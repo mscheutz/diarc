@@ -1,0 +1,104 @@
+{
+  "testName" : "safetyCondition",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "hello evan", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "move(dempster,forward)", "123" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "123", "FAILED" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not move forward because I see obstacle", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "move(dempster,forward)", "131" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "131", "FAILED" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not move forward because I do not see support", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "will(catch(evan,dempster))", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "will(catch(evan,dempster))", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "move(dempster,forward)", "143" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "cancelGoal(dempster)", "170" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "170", "SUCCEEDED" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "143", "CANCELED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "forgetThat(dempster,evan,will(catch(evan,dempster)))", "174" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(self:agent,will(catch(evan,dempster)))", "null" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(dempster,will(catch(evan,dempster)))", "null" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(shafer,will(catch(evan,dempster)))", "null" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "174", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "move(dempster,forward)", "179" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "179", "FAILED" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not move forward because I do not see support", "true" ]
+    } ]
+  } ]
+}

@@ -1,0 +1,825 @@
+{
+  "testName" : "screwingActionModificationTestOrdered",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,setupPoses(self:agent))),indirectSemantics(),suppSemantics())))", "1679593833927" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "setupPoses(self:agent)", "1679593835025" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "objectDefinition(nfsv,0.075,0.09)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "objectDefinition(m3,0.075,0.09)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "objectDefinition(nvfau,0.045,0.07)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "objectDefinition(deepM3,0.045,0.07)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "screwDescent(m3,-0.238)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "screwDescent(deepM3,-0.250)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "at(self:agent,pose_0:pose)", "null" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=650.0, y=0.0, z=300.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=50.0, y=-515.0, z=300.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=-75.0, y=-610.0, z=300.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,defineScrewType(self:agent,m3))),indirectSemantics(),suppSemantics())))", "1679593848726" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "defineScrewType(self:agent,m3)", "1679593849764" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"what is its target torque in millinewton meters\")", "1679593849767" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"what is its target torque in millinewton meters\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(val(150,mNm)),indirectSemantics(),suppSemantics())))", "1679593863726" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"what is its max torque in millinewton meters\")", "1679593863738" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"what is its max torque in millinewton meters\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(val(300,mNm)),indirectSemantics(),suppSemantics())))", "1679593878726" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"what is its max angle in degrees\")", "1679593878738" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"what is its max angle in degrees\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(val(6500,deg)),indirectSemantics(),suppSemantics())))", "1679593893726" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"at which pose can I find m3 screws\")", "1679593893740" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"at which pose can I find m3 screws\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(pose(pose_2:pose)),indirectSemantics(),suppSemantics(semantics(screw feeder(pose_2:pose))))))", "1679593908929" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "foundAt(m3,pose_2:pose)", "null" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"okay\")", "1679593908946" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,updateActionLearning(self:agent,screwIn(self:agent,screw,physobj_0:physobj),start))),indirectSemantics(),suppSemantics(semantics(hole(physobj_0:physobj))))))", "1679593923727" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "updateActionLearning(self:agent,screwIn(self:agent,screw,physobj_0:physobj),start)", "1679593924761" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,perceiveEntity(self:agent,physobj_0:physobj))),indirectSemantics(),suppSemantics(semantics(hole(physobj_0:physobj))))))", "1679593938827" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "perceiveEntity(self:agent,physobj_0:physobj)", "1679593939854" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,mountScrew(self:agent,screw))),indirectSemantics(),suppSemantics())))", "1679593953626" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "mountScrew(self:agent,screw)", "1679593954660" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,alignWith(self:agent,physobj_0:physobj))),indirectSemantics(),suppSemantics(semantics(hole(physobj_0:physobj))))))", "1679593968727" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "alignWith(self:agent,physobj_0:physobj)", "1679593969757" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,runScrewdriverJob(self:agent,screw))),indirectSemantics(),suppSemantics())))", "1679593983726" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "runScrewdriverJob(self:agent,screw)", "1679593984757" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,updateActionLearning(self:agent,screwIn(self:agent,screw,physobj_0:physobj),end))),indirectSemantics(),suppSemantics(semantics(hole(physobj_0:physobj))))))", "1679593998727" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "updateActionLearning(self:agent,screwIn(self:agent,screw,physobj_0:physobj),end)", "1679593999758" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,defineItem(self:agent,nfsv))),indirectSemantics(),suppSemantics())))", "1679594013726" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "defineItem(self:agent,nfsv)", "1679594014755" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"which Cognex job is used to detect it\")", "1679594014761" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"which Cognex job is used to detect it\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(job(cbDet)),indirectSemantics(),suppSemantics())))", "1679594028826" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"okay\")", "1679594028840" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,startLearningAssembleScript(self:agent,physobj_1:physobj))),indirectSemantics(),suppSemantics(semantics(nfsv(physobj_1:physobj))))))", "1679594043627" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "startLearningAssembleScript(self:agent,physobj_1:physobj)", "1679594044666" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_1:physobj", "nfsv" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "object(physobj_1:physobj,physobj)", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,gotoCamerapose(self:agent,pose_0:pose))),indirectSemantics(),suppSemantics(semantics(conveyor(pose_0:pose))))))", "1679594058626" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "gotoCamerapose(self:agent,pose_0:pose)", "1679594059652" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,perceiveEntity(self:agent,physobj_1:physobj))),indirectSemantics(),suppSemantics(semantics(nfsv(physobj_1:physobj))))))", "1679594073727" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "perceiveEntity(self:agent,physobj_1:physobj)", "1679594074770" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,getOn(self:agent,physobj_1:physobj,pose_1:pose))),indirectSemantics(),suppSemantics(semantics(nfsv(physobj_1:physobj)),semantics(work area(pose_1:pose))))))", "1679594088728" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "getOn(self:agent,physobj_1:physobj,pose_1:pose)", "1679594089753" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,observeDescriptor(self:agent,m3,2))),indirectSemantics(),suppSemantics())))", "1679594103826" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "observeDescriptor(self:agent,m3,2)", "1679594104856" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,screwIn(self:agent,m3,physobj_2:physobj))),indirectSemantics(),suppSemantics(semantics(m3(physobj_2:physobj)),semantics(left(physobj_2:physobj))))))", "1679594118826" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "screwIn(self:agent,m3,physobj_2:physobj)", "1679594119850" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,gotoCamerapose(self:agent,pose_1:pose))),indirectSemantics(),suppSemantics(semantics(work area(pose_1:pose))))))", "1679594133626" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "gotoCamerapose(self:agent,pose_1:pose)", "1679594134652" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,screwIn(self:agent,m3,physobj_3:physobj))),indirectSemantics(),suppSemantics(semantics(m3(physobj_3:physobj)),semantics(right(physobj_3:physobj))))))", "1679594148727" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "screwIn(self:agent,m3,physobj_3:physobj)", "1679594149793" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,getOn(self:agent,physobj_1:physobj,pose_0:pose))),indirectSemantics(),suppSemantics(semantics(nfsv(physobj_1:physobj)),semantics(conveyor(pose_0:pose))))))", "1679594163726" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "getOn(self:agent,physobj_1:physobj,pose_0:pose)", "1679594164741" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,moveConveyorForward(self:agent))),indirectSemantics(),suppSemantics())))", "1679594178726" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "moveConveyorForward(self:agent)", "1679594179752" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,endLearningAssembleScript(self:agent,physobj_1:physobj))),indirectSemantics(),suppSemantics(semantics(nfsv(physobj_1:physobj))))))", "1679594193826" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "endLearningAssembleScript(self:agent,physobj_1:physobj)", "1679594194846" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_1:physobj", "nfsv" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,assemble(self:agent,physobj_1:physobj))),indirectSemantics(),suppSemantics(semantics(nfsv(physobj_1:physobj))))))", "1679594208826" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemble(self:agent,physobj_1:physobj)", "1679594209841" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_1:physobj", "nfsv" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemblenfsv(self:agent,physobj_1:physobj)", "1679594209844" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_1:physobj", "nfsv" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "cbDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_1:physobj", "nfsv" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "cbDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=5.8E-4, yAbs=5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}, CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_2:physobj", "m3" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=5.8E-4, yAbs=5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}, CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "physobj_4:physobj", "true" ]
+    }, {
+      "serviceName" : "runScrewdriverProgram",
+      "serviceArgs" : [ "2", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "physobj_2:physobj", "true" ]
+    }, {
+      "serviceName" : "runScrewdriverProgram",
+      "serviceArgs" : [ "1", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_3:physobj", "m3" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=5.8E-4, yAbs=5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}, CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "physobj_5:physobj", "true" ]
+    }, {
+      "serviceName" : "runScrewdriverProgram",
+      "serviceArgs" : [ "2", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "physobj_3:physobj", "true" ]
+    }, {
+      "serviceName" : "runScrewdriverProgram",
+      "serviceArgs" : [ "1", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_1:physobj", "nfsv" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "cbDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,defineItem(self:agent,nvfau))),indirectSemantics(),suppSemantics())))", "1679594223626" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "defineItem(self:agent,nvfau)", "1679594224640" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"which Cognex job is used to detect it\")", "1679594224642" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"which Cognex job is used to detect it\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(job(nvDet)),indirectSemantics(),suppSemantics())))", "1679594238626" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"okay\")", "1679594238634" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,modifyAssemble(self:agent,assemble(self:agent,physobj_6:physobj),assemble(self:agent,physobj_1:physobj)))),indirectSemantics(),suppSemantics(semantics(nvfau(physobj_6:physobj)),semantics(nfsv(physobj_1:physobj))))))", "1679594253726" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "modifyAssemble(self:agent,assemble(self:agent,physobj_6:physobj),assemble(self:agent,physobj_1:physobj))", "1679594254754" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_6:physobj", "nvfau" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_1:physobj", "nfsv" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"what are the differences\")", "1679594254775" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"what are the differences\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(mod(replace(observeDescriptor(self:agent,deepM3,2),observeDescriptor(self:agent,m3,2)))),indirectSemantics(),suppSemantics())))", "1679594268726" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"okay are there any more differences\")", "1679594268735" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay are there any more differences\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(mod(replace(screwIn(self:agent,m3,physobj_7:physobj),screwIn(self:agent,m3,physobj_2:physobj)))),indirectSemantics(),suppSemantics(semantics(m3(physobj_2:physobj)),semantics(left(physobj_2:physobj)),semantics(deepM3(physobj_7:physobj)),semantics(bottom(physobj_7:physobj))))))", "1679594283827" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"okay are there any more differences\")", "1679594283838" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay are there any more differences\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(mod(replace(screwIn(self:agent,m3,physobj_8:physobj),screwIn(self:agent,m3,physobj_3:physobj)))),indirectSemantics(),suppSemantics(semantics(m3(physobj_3:physobj)),semantics(right(physobj_3:physobj)),semantics(deepM3(physobj_8:physobj)),semantics(top(physobj_8:physobj))))))", "1679594298827" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"okay are there any more differences\")", "1679594298838" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay are there any more differences\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(mod(none)),indirectSemantics(),suppSemantics())))", "1679594313626" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "sayText(self:agent,\"okay\")", "1679594313636" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goal(self:agent,handled(self:agent,utterance(brad,self:agent,and(self:agent),semantics(want(brad,assemble(self:agent,physobj_6:physobj))),indirectSemantics(),suppSemantics(semantics(nvfau(physobj_6:physobj))))))", "1679594328726" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"okay\"", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemble(self:agent,physobj_6:physobj)", "1679594329749" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_6:physobj", "nvfau" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemblenvfau(self:agent,physobj_6:physobj)", "1679594329755" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_6:physobj", "nvfau" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "nvDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_6:physobj", "nvfau" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "nvDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDetT", "[]" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_7:physobj", "deepM3" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDetT", "[]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "physobj_9:physobj", "true" ]
+    }, {
+      "serviceName" : "runScrewdriverProgram",
+      "serviceArgs" : [ "2", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "physobj_7:physobj", "false" ]
+    }, {
+      "serviceName" : "runScrewdriverProgram",
+      "serviceArgs" : [ "1", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_8:physobj", "deepM3" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDetT", "[]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "physobj_10:physobj", "true" ]
+    }, {
+      "serviceName" : "runScrewdriverProgram",
+      "serviceArgs" : [ "2", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "physobj_8:physobj", "false" ]
+    }, {
+      "serviceName" : "runScrewdriverProgram",
+      "serviceArgs" : [ "1", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "physobj_6:physobj", "nvfau" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "nvDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    } ]
+  } ]
+}

@@ -1,0 +1,145 @@
+{
+  "configName": "kortex",
+  "rosNamespace": "/my_gen3",
+  "baseLinkString": "base_link",
+  "pointingFrame": "pointing_link",
+  "maxMoveToAttempts": 5,
+  "maxNodeCheckCount": 10,
+  "armReach": 0.7,
+  "graspApproachOffset": 0.265,
+  "graspContactOffset": 0.165,
+  "speedFactor": 1.0,
+  "accelFactor": 1.0,
+  "allowDisableCollisionAvoidance": true,
+  "eeTransform": {
+    "position_x": 0.0,
+    "position_y": 0,
+    "position_z": 0.0,
+    "quaternion_x": 0,
+    "quaternion_y": 0,
+    "quaternion_z": 0,
+    "quaternion_w": 1
+  },
+  "defaultGroupName": "arm",
+  "groups": [
+    {
+      "groupName": "arm",
+      "jointNames": [
+        "joint_1",
+        "joint_2",
+        "joint_3",
+        "joint_4",
+        "joint_5",
+        "joint_6",
+        "joint_7"
+      ],
+      "effectorLinkName": "end_effector_link",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.kortex.RobotiqGripper_2f_85"
+    },
+    {
+      "groupName":"gripper",
+      "jointNames": [
+        "gripper_finger1_finger_tip_joint",
+        "gripper_finger1_inner_knuckle_joint",
+        "gripper_finger1_joint",
+        "gripper_finger2_finger_tip_joint",
+        "gripper_finger2_inner_knuckle_joint",
+        "gripper_finger2_joint"
+      ],
+      "effectorLinkName": "end_effector_link",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.kortex.RobotiqGripper_2f_85"
+    }
+  ],
+  "poses": [
+    {
+      "poseName": "start",
+      "poseGroup": "arm",
+      "jointStates": [
+        0.0,
+        0.26,
+        3.14,
+        -2.27,
+        0.0,
+        0.96,
+        1.57
+      ]
+    },
+    {
+      "poseName": "home",
+      "poseGroup": "arm",
+      "jointStates": [
+        2.822730778377952,
+        1.746875350165175,
+        1.4756997711161837,
+        -0.9327657802136367,
+        -2.6813448876861905,
+        1.83210476084709,
+        0.11843952881790736
+      ]
+    },
+    {
+      "poseName": "vertical",
+      "poseGroup": "arm",
+      "jointStates" : [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "poseName": "opened",
+      "poseGroup": "gripper",
+      "jointStates" : [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "poseName": "closed",
+      "poseGroup": "gripper",
+      "jointStates" : [
+        -0.804,
+        0.804,
+        0.804,
+        -0.804,
+        0.804,
+        0.804
+      ]
+    }
+  ],
+  "localStaticTransforms": [
+    {
+      "parent": "base_link",
+      "child": "pointing_link",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 1.0,
+      "roll": 0,
+      "pitch": 0,
+      "yaw": 0
+    }
+  ],
+  "collisions": [
+    {
+      "parent": "base_link",
+      "name": "table",
+      "x": "0",
+      "y": "0",
+      "z": "-0.025",
+      "roll": "0",
+      "pitch": "0",
+      "yaw": "0",
+      "width": "2",
+      "depth": "2",
+      "height": "0"
+    }
+  ]
+}

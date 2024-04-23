@@ -1,0 +1,7 @@
+#JSGF V1.0;
+grammar jsgf.demo_12_12;
+
+public <s> = <name> ;
+
+<name> = andy | cindy;
+

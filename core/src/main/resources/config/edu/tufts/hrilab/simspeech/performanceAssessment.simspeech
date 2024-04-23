@@ -1,0 +1,60 @@
+approach the caddy location
+go to pose prepare
+|
+what is the probability that you can assemble the caddy
+how long will it take to do that
+where do you foresee issues
+|
+what is the probability that you can assemble the caddy if you do not fetch the screw from the screw location
+what is the probability that you can assemble the caddy if you do not fetch the small gear from the small gear location
+what is the probability that you can assemble the caddy if you do not fetch the large gear from the large gear location
+|
+when you assemble the caddy remove fetch the screw from the screw location
+when you assemble the caddy remove fetch the small gear from the small gear location
+when you assemble the caddy remove fetch the large gear from the large gear location
+|
+describe how to assemble the caddy
+|
+assemble the caddy
+|
+pause
+|
+what is the probability that you can complete the task to assemble the caddy
+where do you foresee issues
+what is the probability that you can complete the task to assemble the caddy if you successfully fetch the small gear from the small gear location
+what is the probability that you can complete the task to assemble the caddy if you successfully fetch the large gear from the large gear location
+|
+resume
+|
+//why did you fail to fetch the screw for the caddy
+what would have been the probability you could complete the task to fetch the screw if you were holding the screw
+how long would it have taken you to do that
+|
+what is the probability that you can complete the task to fetch the small gear for the caddy
+what is the expected remaining time to fetch the small gear for the caddy
+if you are holding the screw what is the probability that you can fetch the screw for the caddy
+if you are grasping the screw what is the probability that you can fetch the screw for the caddy
+|
+do you know how to assemble the caddy
+|
+i will teach you how to assemble the caddy
+execute while learning
+fetch the screw from the screw location
+|
+i will teach you how to fetch a screw from the screw location
+approach the screw location from the caddy location
+//approach the screw location
+pick up the screw
+go to pose prepare
+carry the screw to the caddy location from the screw location
+//carry the screw to the caddy location
+place the screw in the caddy
+that is how you fetch a screw from the screw location
+|
+stop execute while learning
+fetch the small gear from the small gear location
+fetch the large gear from the large gear location
+fetch the gearbox top from the gearbox top location
+fetch the gearbox bottom from the gearbox bottom location
+deliver the caddy to the drop off location
+that is how you assemble the caddy

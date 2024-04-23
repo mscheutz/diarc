@@ -1,0 +1,800 @@
+START-TEMPLATES
+
+%THING: {RN: ?PH : VAR}, {DN: ?PH}
+%ADJ: {RN/RN: #x.?PH($x): MOD}, {DN/DN: #x.?PH($x)}, {PROP: ?PH}
+THING;{RN; ?PH ; VAR}, {DN; ?PH}
+
+%LOC; {LN; ?PH; VAR}, {DN; ?PH}
+%PROPLOC; {LREF; ?PH; DEFINITE}
+
+%intransitive
+VERBI; {C\AGENT ; #x.?PH($x)}, {C ; ?PH(?ADDRESSEE)}
+
+%transitive verb
+VERBT; {(C/REF)\AGENT; #a#y.?PH($a,$y)}, {C/REF ; #x.?PH(?ADDRESSEE,$x)}, {((C/ARM)/REF)\AGENT ; #a#x#r.?PH($a,$y,$r)}, {(C/ARM)/REF ; #x#r.?PH(?ADDRESSEE,$x,$r)}
+
+%transitive verb with direction argument
+%VERBTDDEG; {((C/DEG)/DIR)\AGENT ; #x#y#z.?PH($y,$z)}, {(C/DEG)/DIR ; #x#y.?PH($x,$y)}
+
+%transitive verb with direction argument
+%also supports a distance in the given direction
+%%TODO:brad: It's not great that this case has AGENT on the outside, unlike pretty much everything else. I think ultimately this is the form we want, but with the greedy rule combination parsing algorithm I don't think we can.
+VERBTD; {((C\AGENT)/VAL)/DIR; #x#y#a.?PH($a,$x,$y)}, {(C/VAL)/DIR ; #x#y.?PH(?ADDRESSEE,$x,$y)}, {(C\AGENT)/DIR ; #y#a.?PH($a,$y)}, {C/DIR ; #x.?PH(?ADDRESSEE,$x)}
+
+%ditransitive verb
+VERBDT; {((C/REF)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/REF)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}
+
+ADDRESSABLE; {AGENT ; ?PH}, {G/G, S/S, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
+
+%EFFECTTEMPLATE; {(EFFECT/REF)\AGENT; #x#y.?PH($x,$y)}, {EFFECT/REF; #x.?PH($x)}, {EFFECT; ?PH}
+CONDTEMPLATE; {COND/RN; #x.?PH($x)}, {COND; ?PH}
+END-TEMPLATES
+
+%%%%%%%%%%%  A  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+a; REF/RN ; #x.$x ; INDEFINITE
+a; LREF/LN ; #x.$x ;INDEFINITE
+a; DESC/DN ; #x.$x
+
+%TODO;brad; what was this for
+%above; TDIR; above
+above; ABOVE ;above
+
+actor; AGENT ; ?ADDRESSEE
+
+approach; C/LOC; #x.approach(?ADDRESSEE,$x)
+approach; C/LREF; #x.approach(?ADDRESSEE,$x)
+approach; C/REF; #x.approach(?ADDRESSEE,$x)
+approach; C/DESC; #x.approach(?ADDRESSEE,$x)
+
+add; ((C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,insert($x),$t)
+add; ((C/PP)/C)\ADV; #w#x#y.modifyAction($w,insert($x),$y)
+
+after; PP/C; #x.after($x)
+
+after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction($a,insert($e),$t)
+
+ahead; Adj; ahead
+
+an; REF/RN ; #x.$x ; INDEFINITE
+an; LREF/LN ; #x.$x ; INDEFINITE
+an; DESC/DN ; #x.$x
+
+
+and; (C/C)\C ; #x#y.and($x,$y)
+
+andy; ADDRESSABLE ; andy
+
+another; REF/RN ; #x.$x ; UNFAMILIAR
+another; LREF/LN ; #x.$x ; UNFAMILIAR
+another; DESC/DN ; #x.$x
+
+
+%you are holding the object
+%are; ((EFFECT/REF)/V)\AGENT ; #a#v#r.$v($a,$r,arm)
+are; EFFECT/V ; #a.$a
+were; EFFECT/V ; #x.state($x)
+were; ((EFFECT/REF)\AGENT)/((V/REF)\AGENT) ; #x.state($x)
+
+as ; AS ; as
+
+%area; THING
+the area ; REF; area
+
+arm; RN ; arm
+arm; N ; arm
+arms; N ; arms
+
+%%%%%%%%%%%  B  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+backward; DIR; back
+bathroom; LOC; bathroom
+
+%the area behind you, the cup behind the ball
+%behind; (REF / AGENT) \ REF, (REF / REF) \ REF,; #x#y.behind($x,$y); MOD
+behind; (REF / AGENT) \ REF, (REF / REF) \ REF,; #x#y.behind($x,$y)
+behind; Prep/AGENT ; #a.behind($a)
+
+%before; (C\C)/C; #x#y.before($y,$x)
+before; PP/C; #x.before($x)
+
+blue; RN/RN; #x.blue($x) ; MOD
+
+bottle; THING
+
+box; THING
+
+brad; ADDRESSABLE ; brad
+
+bring; VERBDT
+
+but; ADV\ADV; #x.$x
+
+button; RN\TYPE ; #x.$xbutton ; VAR
+
+bye; G, G[good] ; bye
+
+%%%%%%%%%%%  C  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+can; MODAL / C ; #x.$x
+can; (MODAL\AGENT) / (C\AGENT) ; #x.$x
+can; ((MODAL/REF)\AGENT) / ((C/REF)\AGENT) ; #x.$x
+can; (((MODAL/REF)/REF)\AGENT) / (((C/REF)/REF)\AGENT) ; #x.$x
+can; Q / C ; #x.can($x)
+
+catch; (C\AGENT)/AGENT ; #x#a.catch($a,$x)
+%%TODO:brad: to we care about the imperative "Depmster catch Shafer"
+catch; C/AGENT ; #x.catch(?ADDRESSEE,$x)
+
+chris; ADDRESSABLE ; chris
+
+could; MODAL / C ; #x.$x
+could; (MODAL\AGENT) / (C\AGENT) ; #x.$x
+could; ((MODAL/REF)\AGENT) / ((C/REF)\AGENT) ; #x.$x
+could; (((MODAL/REF)/REF)\AGENT) / (((C/REF)/REF)\AGENT) ; #x.$x
+could; Q/C ; #x.can($x)
+
+commX; AGENT ; commX
+
+complete the task to ; (((C/REF)/REF)\AGENT)/(((C/REF)/REF)\AGENT) ; #x.completeTask($x)
+complete the task to ; ((C/REF)\AGENT)/((C/REF)\AGENT) ; #x.completeTask($x)
+complete the task to ; (C\AGENT)/(C\AGENT) ; #x.completeTask($x)
+%complete the task to ; C/C ; #x.completeTask($x)
+
+condition ; CONDITIONTYPE\CONDITIONTYPEPREFIX ; #x.condition($x)
+
+crouch down; VERBI ; crouchDown
+
+crouch; VERBI ; crouch
+
+cut; VERBT
+
+cuttingboard; THING; cuttingBoard
+%%%%%%%%%%%  D  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+describe how; C/INF; #i.describe(?ADDRESSEE,how($i))
+
+did not ; C/C ; #x.modify(delete($x))
+did not ; (C\AGENT)/(C\AGENT) ; #x.modify(delete($x))
+did ; C/C ; #x.$x
+do not ; C/C ; #x.modify(delete($x))
+do not ;(((C/REF)/REF)\AGENT)/(((C/REF)/REF)\AGENT) ; #x.modify(delete($x))
+%"do you trust me"
+do; Q/ C; #x.$x
+%do; (Q \ WHO)/(Q \ WHO); #x.$x
+%do; (Q/WHO)/(C / AGENT) ; #x.$x
+
+do that; C; dothat:dialog ; ACTIVATED
+
+don't; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,remove($x),$y)
+
+% " does dempster trust me"
+does; Q/C ; #x.$x
+%TODO:brad; we can't have these 2 rules, or rather the second would  never get used?
+%does; Q/C ; #x.$x
+
+down; DIR; down
+down; DOWN ;Down
+down; TYPE; down
+
+degrees; VAL\NUM ; #x.$x
+
+dempster; ADDRESSABLE ; dempster
+
+%%%%%%%%%%%  E  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+effect ; EFFECTTYPE\EFFECTTYPEPREFIX ; #x.effect($x)
+
+eighth; NUM; eighth
+
+evening; G[good] ; evening
+
+evan; ADDRESSABLE ; evan
+
+execute while learning; C ; changeLearningExecution(?ADDRESSEE,execute)
+stop execute while learning; C ; changeLearningExecution(?ADDRESSEE,stop)
+
+exit ; LOC; exit
+
+%%%%%%%%%%%  F  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+failure; EFFECTTYPEPREFIX; failure
+
+fifth; NUM; fifth
+
+find; VERBT ; findObject
+
+first; C/C ; #x. $x
+first; NUM; first
+
+floor; TYPE\NUM; #x.$xfloor
+
+%for; FOR/AGENT; #x. $x
+for; FOR; For
+
+forward; DIR; forward
+
+%forget how; C/INF; #x.forgetHow($x)
+forget how to; C/C; #x.forgetHow(?ADDRESSEE,$x)
+forget that; C/S; #x.forgetThat(?ADDRESSEE,$x)
+
+fourth; NUM; fourth
+
+fridge ; THING
+
+from ; PPadv/C ; #x.from($x)
+from; LOC/LOC; #x.$x
+from; REF/REF; #x.$x
+
+%%%%%%%%%%%  G  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+give; VERBDT ;give
+
+go to pose; C/POSE; #x.goToPose(?ADDRESSEE,$x)
+go to pose; (C/POSE)\AGENT; #y#x.goToPose(?ADDRESSEE,$x)
+
+go to location; C/LOC ; #x.goToLocation(?ADDRESSEE,$x)
+go to location; (C/LOC)\AGENT ; #a#x.goToLocation(?ADDRESSEE,$x)
+
+go to start pose; C ; startOver()
+
+go to; C/LREF; #x.moveTo($x)
+go; VERBTD ;move
+
+goal; QUERYABLE; goal
+
+good; G / G[good]; # x. good_$x
+
+grab; VERBT ;graspObject
+grasp; VERBT ;primitiveGrasp
+
+gray; Adj; gray
+
+green; RN/RN; #x.green($x) ; MOD
+
+%%%%%%%%%%%  H  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+hand; VERBDT; give
+
+hand; N ; hand
+hands; N ; hands
+
+hi; G ; hi
+hi there; G ; hi_there
+
+hello; G ; hello
+%hello; G / N, G \ N ; # x. directAddress($x,hello)
+
+holding; (V/REF)\AGENT; #a#r.holding($a,$r,arm)
+how; HOW; how
+
+how would; (Q/C)/AGENT ; #a#c.how($a,$c)
+how do; (Q/C)/AGENT ; #a#c.how($a,$c)
+
+%%%%%%%%%%%  I  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+is; (S/DESC)\REF; #x#y.instanceOf($x,$y)
+%is; (S / DESC) \ REF; # x #y. definitionOf($x,$y)
+
+is; (((S / NP)  / OF) / COMPOSED)\ REF; #x#c#o#y.composed$o($x,$y)
+is; (S / PROP) \ REF; # x #z. propertyOf($x,$z)
+would have been; (S/PROP)\REF; #x #z. past(propertyOf($x,$z))
+is; (S /DESC)\REF[ACT]  ; #x #y.instanceOf($x,$y)
+%%%%%%%%%%% not changing not(is()) stuff to prop
+is; (S / DESC[not]) \ REF ; # x #y. notDefinitionOf($x,$y)
+is; (S / PROP[not]) \ REF; # x #z. notPropertyOf($x,$z)
+is; (S/VP[how])\N ; #x#y.is($x,$y)
+is; IS; is
+
+is like; (ADV/C)\C ; #x#y.like($x,$y)
+
+i; AGENT ; ?INTERACTOR
+
+in ; PPadv/C; #x.$x
+
+in front of; Prep/AGENT; #a.inFrontOf($a)
+
+is; ((EFFECT/REF)/V)\AGENT ; #a#v#r.$v($a,$r)
+
+is there open space; Q/Prep; #p.openspace($p)
+
+is trusted; S\AGENT ; #a.trusted($a)
+is a novice; S\AGENT; #a.novice($a)
+is in; (S/PLACE)\AGENT; #a#p.isIn($a,$p)
+
+it; REF ; it ; INFOCUS
+
+%%%%%%%%%%%  J  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+jar; THING; jar
+
+%%%%%%%%%%%  K  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+kitchen; LOC ; kitchen
+
+kokomo; PROPLOC; kokomo
+
+knife; THING; knife
+
+know how; (C/INF)\AGENT ; #a#i.knowHow($a,$i)
+know; (C/KNOWABLE)\AGENT ; #a#k.know($a,$k)
+
+%%%%%%%%%%%  L  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+lowerlevelbutton; thing ; LL
+
+left; DIR; left
+%left ninety degrees; DEG; left,ninety
+ninety degrees; DEG; ninety
+left; N/N ; #x.left$x
+
+look; VERBTD ; look
+
+lower; C / NP[your]; # x. lower(?ADDRESSEE,$x)
+lower; (C\AGENT)/ NP[your]; #x#y. lower($y,$x)
+
+%%%%%%%%%%%  M  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+magnet; THING
+
+%makesure; (C/(C\C))/INF; #x#y.modifyAction(insert($x),$y@$x)
+make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
+
+marlow; ADDRESSABLE; marlow
+
+me; AGENT ; ?INTERACTOR
+
+medkit; THING
+
+morning; G[good] ; morning
+
+%move forward
+move; ((C\AGENT)/DIR)/REF; #x#y#a.moveObject($a,$x,$y)
+move; (C/DIR)/REF; #x#y.moveObject(?ADDRESSEE,$x,$y)
+
+%move the object foward one meter
+move; (((C\AGENT)/VAL)/DIR)/REF; #x#y#z#a.moveObject($a,$x,$y,$z)
+move; ((C/VAL)/DIR)/REF; #x#y#z.moveObject(?ADDRESSEE,$x,$y,$z)
+
+%move the object foward one meter with arm one
+%move; ((((C/ARM)/VAL)/DIR)/REF)\AGENT; #g#x#y#z#a.moveObject($x,$y,$z,$a)
+%move; (((C/ARM)/VAL)/DIR)/REF; #x#y#z#a.moveObject($x,$y,$z,$a)
+
+%move the object toward me
+move; (((C\AGENT)/AGENT)/TDIR)/REF; #x#y#z#a.moveObject($a,$x,$y,$z)
+move; ((C/AGENT)/TDIR)/REF; #x#y#z.moveObject(?ADDRESSEE,$x,$y,$z)
+
+%move the object toward the cup
+move; (((C\AGENT)/REF)/TDIR)/REF; #x#y#z#a.moveObject($a,$x,$y,$z)
+move; ((C/REF)/TDIR)/REF; #x#y#z.moveObject(?ADDRESSEE,$x,$y,$z)
+
+%move forward
+move; VERBTD
+
+%move above
+move; ((C/REF)/ABOVE)/REF ; #x#a#y.moveObjectAbove($x,$y)
+
+mug; THING
+
+%%%%%%%%%%%  N  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+near; PP/REF; #x.near($x)
+
+need; ((S/ INF)/AGENT)\ AGENT ; #x#y#z.want($x,$y,$z)
+need; (S/ INF)\ AGENT, (S/REF)\ AGENT, ; #x#y. want($x,$y)
+needs; (S/ INF)\ AGENT, (S/REF)\ AGENT, ; #x#y. want($x,$y)
+
+night; G[good] ; night
+
+no; VAL; val(no)
+
+%% TODO: remove "nod" once TLDL learning is fixed
+nod; VERBI ; nod
+
+not; PROP[not] / Adj; # x. $x
+
+now; C/C, C\C, Q\Q, Q/Q ; #x. $x
+
+%%%%%%%%%%%  O  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+object; THING
+carrot; THING; carrot
+
+%obstacle; THING
+the obstacle; REF ; obstacle
+an obstacle; REF ; obstacle
+
+of ; (REF/REF)\REF ; #x#y.of($x,$y) ; MOD
+
+ok; ACK ; okay
+
+okay ; ACK ; okay
+
+ok; C/C, S/S ; # x. $x
+
+okay; C/C, S/S ; # x. $x
+
+orange; RN/RN; #x.orange($x) ; MOD
+
+orange; Adj; orange
+
+overall; CONDITIONTYPEPREFIX; overall
+
+%%%%%%%%%%%  P  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%part; THING
+
+
+pause; VERBI ; pause
+
+plate; THING
+
+please; C/C, C\C, S\S, (C\AGENT)/(C\AGENT), (C\AGENT)\(C\AGENT) ; #x. $x
+
+point to; VERBT ; pointTo
+
+post; CONDITIONTYPEPREFIX; post
+
+pre; CONDITIONTYPEPREFIX; pre
+
+press; VERBT ; findAndPressObject
+
+put; (C/REF)/REF; #x#y.put(?ADDRESSEE,$x,$y)
+
+putdown; VERBT ; putDown
+
+%pr2; AGENT ; pr2
+%%%%%%%%%%%  Q  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%orange; THING/THING; #x.orange($x) ; MOD
+
+%%%%%%%%%%%  R  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+raise; C / NP[your]; #x. raise(?ADDRESSEE,$x)
+raise; (C\AGENT)/ NP[your]; #x#y. raise(?ADDRESSEE,$x)
+raised; POSE; raised
+
+ravenna; ADDRESSABLE ; ravenna
+
+red; RN/RN; #x.red($x) ; MOD
+
+release; VERBT; releaseObject
+
+relax ; VERBI; rest
+
+%remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction($a,remove($x),$t)
+remove;(C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,remove($x),$t)
+remove ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,$w,remove($x),none())
+remove ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE$w,remove($x),$l)
+
+
+
+replace; (C/WITH)\ADV; #a#w.modifyAction(?ADDRESSEE,$a,replace($w),none())
+replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,replace($x),$t)
+
+resume; VERBI ; resume
+
+right; DIR; right
+%right ninety degrees; DEG; right,ninety
+right; N/N ; #x.right$x
+
+robot; ADDRESSABLE; self
+
+room one; PLACE; roomOne
+
+%%%%%%%%%%%  S  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+safe; PROP; safe
+
+second; NUM; second
+
+% "does dempster see an obstacle"
+%see; VERBT; see
+see; (C/REF)\AGENT ; #x#y.see($x,$y)
+
+sepi; ADDRESSABLE ; Sepi
+
+seventh; NUM; seventh
+
+shafer; ADDRESSABLE ; shafer
+Shafer; ADDRESSABLE ; shafer
+schafer; ADDRESSABLE ; shafer
+Schafer; ADDRESSABLE ; shafer
+schaefer; ADDRESSABLE ; shafer
+Schaefer; ADDRESSABLE ; shafer
+dumpster; ADDRESSABLE ; dempster
+
+%shake your head
+shake your; C/N; #x.shakeyour$x()
+shake your; (C\AGENT)/N; #y#z.shakeyour$y()
+%shake; C / NP[your]; #x. shake($x)
+%shake; (C\AGENT)/ NP[your]; #x#y. shake($x)
+
+sit; VERBI ; sit
+
+sixth; NUM; sixth
+
+solid; Adj; solid
+
+spot; ADDRESSABLE ; spot
+
+stand; VERBI ; stand
+stand up; VERBI ; standUp
+
+%TODO;brad; something about the parenthesis makes it so this can be a VERBI
+%start over; C ; goToStartPose(false)
+%start over; C\AGENT ; #x.goToStartPose(false)
+start over; VERBI ; startOver
+%start over; C\AGENT ; #x.startOver()
+
+
+straight; DIR ; straight
+
+stop; VERBI ; stop
+
+% do you see support
+support; REF ; support
+
+sure; SURE; sure
+
+success; EFFECTTYPEPREFIX; success
+
+successfully; EFFECTTYPE; effect(success)
+
+%%%%%%%%%%%  T  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+take; VERBDT
+
+%% what is the previous/current/next step of <goal> (for actor)
+%% TODO: can these be broken into smaller rules?
+the current step of ; QUERYABLE/C ; #x.describe(stepOf(current,$x))
+the previous step of ; QUERYABLE/C ; #x.describe(stepOf(previous,$x))
+the next step of ; QUERYABLE/C ; #x.describe(stepOf(next,$x))
+the current step of ; ((QUERYABLE/AGENT)/FOR)/C ; #x #y #z.describe(stepOf(current,$x,$z))
+the previous step of ; ((QUERYABLE/AGENT)/FOR)/C ; #x #y #z.describe(stepOf(previous,$x,$z))
+the next step of ; ((QUERYABLE/AGENT)/FOR)/C ; #x #y #z.describe(stepOf(next,$x,$z))
+
+% I will teach you how to pass me the knife
+teach;(((S\AGENT)/INF)/HOW)/AGENT; #l#h#a#t.teach($t,$l,$a)
+
+%tell; ((C/INF)/AGENT)\AGENT ; #x#y#z.directAddress($x,tell($y,$z))
+tell; C/C; #x.tell(?ADDRESSEE,$x)
+tell; (C\AGENT)/C; #x#a.tell($a,$x)
+
+thank you; G ; thank_you
+thanks ; G ; thank_you
+
+that; C ; that ; ACTIVATED
+that; REF ; ACTIVATED
+that; REF/RN ; #x.$x ; FAMILIAR
+that; LREF/LN ; x.$x ; FAMILIAR
+%that is how you
+that; (((S/C)/AGENT)/HOW)/IS ; #i#h#a#c.endTeaching($a,$c)
+
+the; REF/RN ; #x.$x ; DEFINITE
+the; LREF/LN ; #x.$x ; DEFINITE
+
+then; C/C; #x. $x
+
+there; LREF ; ACTIVATED
+here; LREF ; ACTIVATED
+
+there is admin goal ; S ; isAdminGoal(D,Y)
+
+thirdfloorbutton; THING ; thirdfloorbutton
+
+this; REF ; ACTIVATED
+this; REF/RN ; #x.$x ; REFACTIVATED
+this; LREF/LN ; #x.$x ; REFACTIVATED
+
+%TODO;brad; what is the to for, do we need it?
+to; PPadv/C; #x.$x
+to; PP/AGENT ; #x.$x
+to; INF/C; #x.to($x)
+to; REF/REF; #x.$x
+
+to; (C\AGENT)/(C\AGENT); #x.to($x)
+
+tomato; THING
+
+toward; TDIR; toward
+
+%%tust me
+trust; (C/AGENT)\AGENT ; #x#y.trust($x,$y)
+trust; C/AGENT ; #x.trust($x)}
+trust; (Q \ WHO)\AGENT; #x#y.trust($x,$y)
+
+%turn; VERBTDDEG; turn
+turn; VERBTD ; turn
+
+tyler; ADDRESSABLE ; tyler
+Tyler; ADDRESSABLE ; tyler
+
+%%%%%%%%%%%  U  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+up; DIR; up
+up; TYPE; up
+
+used; (PROP/AFFORDANCE)/FOR ; #x #y.usedFor($y)
+
+%%%%%%%%%%%  V  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%  W  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+walk; VERBTD ; move
+
+want; (S/ INF)\ AGENT, (S/REF)\ AGENT, ; #x#y. want($x,$y)
+want; ((S/ INF)/AGENT)\ AGENT ; #x#y#z.want($x,$y,$z)
+
+%what are your goals, what are shafer's goals
+what are; (Q/QUERYABLE)/AGENT; #a#q.whatAre($a,$q)
+
+what time is it; Q; timeIs(WHAT)
+what time it is; KNOWABLE; currentTime
+
+%when cutting a tomato ...
+when; ADV/C ; #x.$x
+
+where do; Q/C; #x.where($x)
+where would; Q/C; #x.where($x)
+
+foresee; (C/N)\AGENT ; #a#x.foresee($a,$x)
+issues; N; issues
+
+where is; Q/AGENT; #x.isLocated($x,WHERE,?ADDRESSEE)
+
+who do; WHO; WHO
+
+will; (S\AGENT)/(S\AGENT), (S\AGENT)/(C\AGENT),((S/REF)\AGENT)/((C/REF)\AGENT) ; #x.will($x)
+
+%with; PP/C; #x.with($x)
+with; (WITH/C)\C; #x#y.with($y,$x)
+
+without ; (C/C)\ADV; #w#x.modifyAction($w,remove($x),none())
+without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction($w,remove($x),$l)
+
+would have been; (S / PROP) \ REF; # x #z. past(propertyOf($x,$z))
+
+%%%%%%%%%%%  X  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%  Y  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+yes; VAL; val(yes)
+
+you; AGENT; ?ADDRESSEE
+
+you are not permitted to ; S/C ; #x.notPermitted($x)
+
+your; AGENT; ?ADDRESSEE
+
+your; NP[your] / N ; # x. $x
+
+%%%%%%%%%%%  Z  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%% DEMO       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%what is the probability that you can X
+%the probability that ; ((QUERYABLE/ MODAL)/AGENT)\IF; #i#a#m.probabilityOf($a,$m,$i)
+the probability that; QUERYABLE/MODAL; #m.probabilityOf($m)
+the duration of ; QUERYABLE/C; #x.durationOf($x)
+the expected remaining time to ; QUERYABLE/C ; #x.expected(timeTo(remaining,$x))
+the expected time to ; QUERYABLE/C ; #x.expected(timeTo($x))
+
+how long will it take to ; Q/C; #x.expected(timeTo($x))
+how long would it have taken to ; Q/C; #x.past(expected(timeTo(remaining,$x)))
+
+%what is the probability that you can Y if X
+%what is; (Q / QUERYABLE)\IF; #x#y.if($x,$y)
+what is; Q / QUERYABLE; #x.$x
+what is; (Q / FOR) / (QUERYABLE/FOR); #x.$x
+
+what would have been; Q / QUERYABLE; #x.past($x)
+what would have been; (Q / FOR) / (QUERYABLE/FOR); #x.past($x)
+
+%do you think the area behind <actor> is safe
+do you think the area behind shafer is safe; Q; bel(?ADDRESSEE,propertyOf(behind(area,shafer),safe))
+do you think the area behind dempster is safe; Q; bel(?ADDRESSEE,propertyOf(behind(area,dempster),safe))
+
+what; (Q/IF)/S; #x#y.if($y,$x)
+what; Q/S; #x.$x
+which; (Q/IF)/S; #x#y.if($y,$x)
+which; Q/S; #x.$x
+
+remaining; REF/REF; #x.remaining($x)
+step of; REF/C; #x.stepOf(WHAT,$x)
+step in; REF/C; #x.stepOf(WHAT,$x)
+most likely; PROP/INF; #x.mostLikely($x)
+
+fail; VERBI
+
+%if you x instead of y, what is the probability that you can a - probabilityOf(if(X,Y),a)
+if; (Q/EFFECT)\Q ; #x#y.if($y,$x)
+if; (Q/IO)\Q ; #x#y.if($y,$x)
+if; (Q/C)\Q; #x#y.if($y,$x)
+
+if; IF/FIRST ; #y.$y
+if; IF/S ; #x.state($x)
+%if; IF/SUCCESS ; #y.complete($y)
+
+
+instead of; (IO/C)/C; #x#y.modify(replace($y,$x))
+successfully; (((C/REF)/REF)\AGENT)/(((C/REF)/REF)\AGENT); #x.complete($x)
+successfully; ((C/REF)\AGENT)/((C/REF)\AGENT); #x.complete($x)
+successfully; (C\AGENT)/(C\AGENT); #x.complete($x)
+%successfully; C/C; #x.complete($x)
+first; FIRST/C; #x.modify(insert($x))
+
+%save this pose as
+
+save this pose as; C/POSE; #x.recordPose($x)
+this pose is; C/POSE; #x.recordPose($x)
+%save this pose as; C/POSE; #x.recordEEPose($x)
+%this pose is; C/POSE; #x.recordEEPose($x)
+prepare; POSE; prepare
+
+move forward; C ; moveForward()
+
+carry; ((C/REF)/REF)/REF; #x#y#z.carry($x,$y,$z)
+table; POSE; table
+assemble; VERBT ; assemble
+caddy location; THING; caddylocation
+caddy; THING; caddy
+%fetch; ((C/REF)/FOR)/REF; #x#y#z.fetch(?ADDRESSEE,$x,$y)
+fetch; ((C/REF)/REF)\AGENT; #a#x#y.fetch($a,$x,$y)
+fetch; (C/REF)/REF; #x#y.fetch(?ADDRESSEE,$x,$y)
+screw location; THING; screwlocation
+%screw; THING; screw
+small gear location; THING; smallgearlocation
+%small gear; THING; smallgear
+large gear location; THING; largegearlocation
+%large gear; THING; largegear
+%gear; N ; Gear
+gearbox top location; THING ; gearboxtoplocation
+%gearbox top; THING ; gearboxtop
+gearbox bottom location; THING ; gearboxbottomlocation
+gearbox bottom; THING ; gearboxbottom
+
+approach ; (C/REF)/REF ; #x#y.approach(?ADDRESSEE,$x,$y)
+drop off location; THING ; dropofflocation
+%drop off ; THING ; dropoff
+
+
+i gave you; S/I; #x.holding(?ADDRESSEE,$x)
+
+with arm one; ARM ; one
+with arm two; ARM ; two
+with arm to; ARM ; two
+with your arm; ARM; arm
+
+deliver; (C/REF)/REF; #x#y.deliver(?ADDRESSEE,$x,$y)
+walkrite; C/VAL; #x.move(right,$x)
+
+
+%I want the object in the box
+want; (C/RELATION)\AGENT; #x#y.want($x,$y)
+in the box; RELATION\REF; #x.at($x,box)
+
+open; PROP ;open
+now; PROP/PROP ;#x.$x
+
+
+place; (C/REF)/REF ; #x#y.placeIn($x,$y)
+on; REF/REF ; #x.$x
+in; REF/REF ; #x.$x
+table; THING ; table
+
+screwbin; THING; screwbin
+part of; (REF\REF)/REF ; #x#y.partOf($y,$x)
+
+% test utterances for spot content
+% if you're reading this then I forgot to move things before the merge, please alphabetize them :) (sorry)
+undock ; VERBI ; undock
+dock ; VERBI ; dock
+use the dock ; VERBI ; dock
+leave the dock ; VERBI ; undock
+open the door ; VERBI ; openDoor
+leave the room ; VERBI ; openDoor
+enter the room ; VERBI ; openDoor
+% the rest of the spot stuff should be covered by movebase

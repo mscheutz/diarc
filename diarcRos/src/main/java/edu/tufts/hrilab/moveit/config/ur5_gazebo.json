@@ -1,0 +1,85 @@
+{
+  "configName": "ur5_gazebo",
+  "pointingFrame": "camera_frame",
+  "baseLinkString": "base_link",
+  "maxMovetoAttempts": 5,
+  "maxNodeCheckCount": 10,
+  "graspApproachOffset": 0.265,
+  "graspContactOffset": 0.165,
+  "speedFactor" : 0.2,
+  "allowDisableCollisionAvoidance": false,
+  "endEffectorTransform" : {
+    "x" : 0,
+    "y" : 0,
+    "z" : 0,
+    "roll" : -1.5707,
+    "pitch" : -1.5707,
+    "yaw" : 0
+  },
+  "localStaticTransforms": [
+    {
+      "parent": "world",
+      "child": "base_link",
+      "x": 0,
+      "y": 0.038,
+      "z": 0.0891,
+      "roll": 0,
+      "pitch": 0,
+      "yaw": -1.5707
+    },
+    {
+      "parent": "wrist_3_link",
+      "child": "ee_link",
+      "x": 0,
+      "y": 0.0823,
+      "z": 0,
+      "roll": 0,
+      "pitch": 0,
+      "yaw": 1.5707
+    }
+  ],
+  "defaultGroupName": "manipulator",
+  "groups": [
+    {
+      "groupName": "manipulator",
+      "jointNames": [
+        "shoulder_pan_joint",
+        "shoulder_lift_joint",
+        "elbow_joint",
+        "wrist_1_joint",
+        "wrist_2_joint",
+        "wrist_3_joint"
+      ],
+      "effectorLinkName": "ee_link"
+    }
+  ],
+  "poses": [
+    {
+      "poseName": "start",
+      "poseGroup": "manipulator",
+      "jointStates": [
+        -1.570,
+        -1.221,
+        -2.094,
+        -0.872,
+        1.5708,
+        0.0
+      ]
+    }
+  ],
+  "collisions": [
+    {
+      "parent": "camera",
+      "name": "camera_collision",
+      "x": "0",
+      "y": "0",
+      "z": "0",
+      "roll": "0",
+      "pitch": "0",
+      "yaw": "0",
+      "width": "0.025",
+      "depth": "0.075",
+      "height": "0.025"
+    }
+  ]
+}

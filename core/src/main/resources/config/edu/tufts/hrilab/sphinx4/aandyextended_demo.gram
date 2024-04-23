@@ -1,0 +1,8 @@
+#JSGF V1.0;
+grammar jsgf.demo_12_12;
+
+public <s> = please <verb> | now can you <verb> | <name> | <name> <s>;
+
+<name> = cindy | andy;
+
+<verb> = pick up the med kit | do it;

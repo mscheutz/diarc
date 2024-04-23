@@ -1,0 +1,20 @@
+PROJECT(learn)
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
+SET(SOURCES 
+	Learner.cpp
+	SegmentedObjectLearner.cpp
+)
+
+ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES} )
+
+# link libraries
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} common stm visionproc display)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${PCL_LIBRARIES} ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES})
+
+# build java wrappers via swig
+ADD_SUBDIRECTORY(swig)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} learn_swig)
+
+

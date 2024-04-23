@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.action.gui.DatabaseViewer">
+  <grid id="a24c6" binding="main" layout-manager="GridBagLayout">
+    <constraints>
+      <xy x="18" y="19" width="860" height="1000"/>
+    </constraints>
+    <properties>
+      <alignmentX value="0.0"/>
+      <alignmentY value="0.0"/>
+    </properties>
+    <border type="none"/>
+    <children>
+      <splitpane id="a0afc">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties>
+          <dividerLocation value="250"/>
+          <minimumSize width="800" height="500"/>
+          <preferredSize width="800" height="500"/>
+        </properties>
+        <border type="none"/>
+        <children>
+          <splitpane id="866ca">
+            <constraints>
+              <splitpane position="left"/>
+            </constraints>
+            <properties>
+              <dividerLocation value="350"/>
+              <orientation value="0"/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <scrollpane id="643f1">
+                <constraints>
+                  <splitpane position="left"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="a57f1" class="javax.swing.JTree" binding="actionBrowser">
+                    <constraints/>
+                    <properties/>
+                  </component>
+                </children>
+              </scrollpane>
+              <scrollpane id="546ae">
+                <constraints>
+                  <splitpane position="right"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="c68a6" class="javax.swing.JTree" binding="fileBrowser">
+                    <constraints/>
+                    <properties/>
+                  </component>
+                </children>
+              </scrollpane>
+            </children>
+          </splitpane>
+          <tabbedpane id="98b6e" binding="editorTabPane">
+            <constraints>
+              <splitpane position="right"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </tabbedpane>
+        </children>
+      </splitpane>
+    </children>
+  </grid>
+</form>

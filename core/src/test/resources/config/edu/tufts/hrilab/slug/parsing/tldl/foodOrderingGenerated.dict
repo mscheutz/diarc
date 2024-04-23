@@ -1,0 +1,71 @@
+%TODO:brad: how is this going to work
+%hamburger; THING
+%TODO: non-spaced version of "french fries" is a hack to get things working for pete
+%frenchfries; THING
+%french fries; THING
+
+%TODO:brad: I guess this is the same as hamburger
+%drink; THING
+%drink; PROPERTY; drink:property
+
+%%TODO:brad: use THING template for these? and update THING template?
+
+bun;REF; bun:physobj;DEFINITE
+bottom bun;REF; "bottom bun":physobj;DEFINITE
+top bun;REF; "top bun":physobj;DEFINITE
+beef patty;REF; "beef patty":physobj;DEFINITE
+veggie patty;REF; "veggie patty":physobj;DEFINITE
+lettuce;REF; lettuce:physobj;DEFINITE
+tomato;REF; tomato:physobj;DEFINITE
+ketchup;REF; ketchup:physobj;DEFINITE
+mustard;REF; mustard:physobj;DEFINITE
+fries box;REF; "fries box":physobj;DEFINITE
+potatoes;REF; potatoes:physobj;DEFINITE
+coke;REF; coke:physobj;DEFINITE
+pepperoni;REF; pepperoni:physobj;DEFINITE
+mushrooms;REF; mushrooms:physobj;DEFINITE
+onions;REF; onion:physobj;DEFINITE
+
+taco meat;RN; "taco meat":physobj;DEFINITE
+taco meat;REF; "taco meat":physobj;DEFINITE
+chicken;REF; chicken:physobj;DEFINITE
+salsa verde;REF; "salsa verde":physobj;DEFINITE
+%
+bun;RN; bun:physobj;VAR
+bottom bun;RN; "bottom bun":physobj;VAR
+top bun;RN; "top bun":physobj;VAR
+beef patty;RN; "beef patty":physobj;VAR
+veggie patty;RN; "veggie patty":physobj;DEFINITE
+lettuce;RN; lettuce:physobj;VAR
+tomato;RN; tomato:physobj;VAR
+ketchup;RN; ketchup:physobj;VAR
+mustard;RN; mustard:physobj;VAR
+fries box;RN; "fries box":physobj;VAR
+potatoes;RN; potatoes:physobj;VAR
+coke;RN; coke:physobj;VAR
+
+pizza; DN; pizza:item
+
+%%TODO:brad: make this more complete to better match what the consultant will assert?
+bun;DN; bun:property
+bottom bun;DN; "bottom bun":property
+top bun;DN; "top bun":property
+beef patty ;DN; "beef patty":property
+veggie patty ;DN; "veggie patty":property
+lettuce;DESC; lettuce:property
+tomato;DN; tomato:property
+ketchup;DESC; ketchup:property
+mustard;DESC; mustard:property
+fries box;DN; "fries box":property
+potatoes;DN; potatoes:property
+coke;DN; coke:property
+
+tray; REF; tray:physobj;DEFINITE
+tray; RN; tray:physobj;VAR
+
+prep area one; REF; "prep area one":pose; DEFINITE
+prep area two; REF; "prep area two":pose; DEFINITE
+prep area three; REF; "prep area three":pose; DEFINITE
+cook top; REF; "cook top":pose; DEFINITE
+frier; REF; frier:pose; DEFINITE
+frier; RN; frier:pose; VAR

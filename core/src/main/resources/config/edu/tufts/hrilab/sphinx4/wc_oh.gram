@@ -1,0 +1,14 @@
+#JSGF V1.0;
+grammar jsgf.wc;
+
+public <main> = /1/ <stop> | /1/ <act_cmd> | /1/ <preset>;
+
+<stop> = stop;
+
+<act_cmd> = <go_cmd> <go_dir>;
+
+<go_dir> = straight | left | right;
+
+<go_cmd> = go;
+
+<preset> = could you go to the lab;

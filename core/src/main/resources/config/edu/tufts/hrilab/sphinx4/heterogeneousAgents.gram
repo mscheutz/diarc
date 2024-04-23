@@ -1,0 +1,78 @@
+#JSGF V1.0;
+grammar heterogeneousAgents.gram;
+
+public <s> = [<directaddress>] <question> [<directaddress>] | [<directaddress>] [<startcommand>] <command> [<endcommand>] [<directaddress>] | [<directaddress>] <greeting> [<directaddress>] | [<directaddress>] <statement> [<directaddress>]| <description> ;
+
+<directaddress> = shafer | dempster | andy | spot;
+
+<human> = ravenna | evan | chris | tyler;
+
+<startcommand> = can you please | please | can (you|<directaddress>) | could (you|<directaddress>) | i (want|need) (you|<directaddress>) to | (<directaddress> | <human>) (wants|needs) (you|<directaddress>) to | great | now | ok |  <startcommand> <startcommand> | first| now| then;
+
+<endcommand> = please | now | <endcommand> <endcommand>;
+
+<command> = <turn> <orient> [ninety degrees] | <walk> <direction> | <sitdown> | <getup> | <stop> | <armact> your <orient> <appendage> | <armact> your <arms> | <walk> | wave | [ok] relax | tell <directaddress> to <command>| <learnable> |<learnable> (me|<directaddress>|<human>) the <object> | look <direction> | start over | [now|okay|first|then] (pickup|find|grab|release|point to) (it | that | (the) <object> [<mod> <part>]) | [now|okay|first|then] move (it | that | the <object>) <direction> [me] | [now|okay|first|then] pass me the <object> [<mod> <part>]| execute while learning| <modify> | patrol the lab | <goto> | <opendoor> | <docking>;
+
+<goto> = (go | move) to location <location> | (go | move) to pose <pose>;
+
+<opendoor> = open the door | leave the room | enter the room;
+
+<docking> = use the dock | leave the dock ;
+
+<question>= <see> | <doyouhaveaname> | <trust> | how would you <command>| describe how to (<command>|<learnable>) | do you know how to <command> | does <directaddress> know how to <command> | what time is it | do you know what time it is | what is the (current|previous|next) step of <command> [for <directaddress>] | what are you doing | what is the probability that (you|<directaddress>) can <command>;
+
+<modify>= when you <command> (make sure you | don't| replace <command> with) <command> [<actionLocation>] | (add|remove) ((success|failure) effect | (pre|overall) condition) <learnable> (to|from|in) <command> | <command> is like <command> but (add| remove| replace <command> with) <command> [<actionLocation>] ;
+
+<actionLocation> = (before|after) you <command>;
+
+<counterfactual> = you [did] <command> [instead of <command>] | you do not <command> | <statement>;
+
+<turn> = turn ;
+
+<orient> = left | right ;
+
+<sitdown> = crouch | crouch down | sit | sit down;
+
+<getup> = stand up | stand;
+
+<walk> = walk | move;
+
+<direction> = forward | backward | straight | back |up | down | toward | left | right;
+
+<location> = alpha | beta | dock | bathroom;
+
+<pose> = prepare | carry | dropoff | start;
+
+<armact> = raise | lower | wave;
+
+<appendage> = arm | hand;
+
+<arms>= arms | hands;
+
+<learnable> = do a squat | pass | hand | pickup | nod | dance with <directaddress> [and <directaddress>] | show | you are holding the <object> | assemble (a|the) <object>;
+
+<stop>= stop | pause | resume;
+
+<doyouhaveaname> = do you have a name | what is your name | whats your name;
+
+<safe> = the obstacle is not solid | the area behind (you| <directaddress>) is safe | i will catch (you| <directaddress>);
+
+<see> =  (do you| does <directaddress>) see [an | the] (obstacle | <object>) [now] | (do you | does <directaddress>) see support [now];
+
+<greeting> = hello | thanks | thank you | good bye| good morning;
+
+<trust> = (do you| does <directaddress>) trust (me | <human>) | who (do you| does <directaddress>) trust;
+
+<statement> =[okay] i will teach you how to <learnable> | that is how you <learnable>| [okay] i will teach you how to <learnable> [me] (the|an) <object> | that is how you <learnable> [me] [the] <object> | i will grab it | <safe> | forget that <safe> | forget that <human> is trusted | forget how to <command> | <human> is (trusted|a novice|in room one) | forget that <human> is a novice | you are not permitted to (hand|give) the plate to staff | you are holding the <object> | assemble the caddy;
+
+<description>= the <object> is (a|an) <object> | the <part> is the <color> part <mod> <object> |the <color> part <mod> <object> is the <part> ;
+
+<color> = gray | orange;
+
+<object> =  object |plate |knife |it | mug | table | caddy | screw| (large|small) gear | gear | gearbox (top|bottom);
+
+<mod> = by the |of the;
+
+<part> = blade |handle;
+
+<poseLoc> = carry | prepare;

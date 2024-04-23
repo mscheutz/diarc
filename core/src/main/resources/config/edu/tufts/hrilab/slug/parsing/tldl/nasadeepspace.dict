@@ -1,0 +1,68 @@
+%%%%%%%%%%%%%%%%%% NASA
+init; C; initGoalQueue(?ADDRESSEE)
+init goal queue problem solving; C; initGoalQueueProblemSolving(?ADDRESSEE)
+%todo: there is weird behavior in nasadeepspace tests when the order of these are switched. somehow semantics and syntax are getting combined
+is like; (C/C)\C ; #x#y.modifyLikeInteractive(?ADDRESSEE,$x,$y)
+is like; (ADV/C)\C ; #x#y.like($x,$y)
+
+
+alpha; RN\RN; #x.in($x,alpha:area); MOD
+beta; RN\RN; #x.in($x,beta:area); MOD
+gamma; RN\RN; #x.in($x,gamma:area); MOD
+right; RN\RN; #x.side($x,right:direction); MOD
+left; RN\RN; #x.side($x,left:direction); MOD
+three; REF\RN; #x.wingid($x,three:id); MOD
+four; REF\RN; #x.wingid($x,four:id); MOD
+five; REF\RN; #x.wingid($x,five:id); MOD
+take materials to; C/REF; #x.takeMaterialsToLocation($x)
+experiment station; RN; experimentStation:location; DEFINITE
+
+%%eval 1
+when is the last time; C/PAST; #x.queryEventTime(?ADDRESSEE,$x)
+experiment; EXPERIMENT/NUM; #x.$x
+run experiment; C/NUM; #x.experiment$x(?ADDRESSEE)
+run experiment; (C/NUM)\AGENT; #a#x.experiment$x($a)
+was run; PAST\EXPERIMENT; #x.experiment$x(X)
+you ran; PAST/EXPERIMENT; #x.experiment$x(X)
+
+was; WAS; was
+successful; (C\WAS)\AREF; #r#w.describeSuccess(?ADDRESSEE,$r)
+it; AREF ; it:context ; INFOCUS
+
+has power been restored to; C/REF; #x.querySupport(?ADDRESSEE,repaired($x))
+
+%eval 2
+how many experiments are currently scheduled; C; respondWithAmount(?ADDRESSEE)
+%how long would it take to execute experiment 3 right now
+how long would it take to; (C/NOW)/C; #g#n.getDurationEstimate(?ACTOR,$g)
+right now; NOW; right now
+yes; VAL; val(yes)
+
+%eval 3
+%describe how to run experiment ; C/NUM; #x.describeAction(?ADDRESSEE,experiment$x())
+
+%eval 4
+check that tube temperature is ; C/VAL; #x.checkTubeTemperatureIs(?ADDRESSEE, $x)
+check that tube pressure is below ; C/VAL; #x.checkTubePressureIsBelow(?ADDRESSEE, $x)
+psi; VAL\NUM ; #x.psi($x)
+degrees; VAL\NUM ; #x.degrees($x)
+
+%eval 5
+add new notification; C/LIT*; #x.addNotification(?ADDRESSEE,$x)
+every time an experiment bay breaks; VAL; mod(broken(X))
+the number of scheduled experiments; VAL; mod(reportExperiments(X))
+the duration of all currently running experiments; VAL; mod(reportExperiments(X))
+that is all; VAL; mod(none)
+test notification; C; testNotification(?ADDRESSEE)
+
+%eval 6
+what are you doing now; C; respondWithGoal(?ADDRESSEE)
+%how long will they take to complete
+how many experiments are in the queue; C; respondWithAmount(?ADDRESSEE)
+add repair; C/REF; #x.not(broken($x))
+%not \REF
+to the top of the schedule; C\REF; #x.submitGoalDialogue(?ADDRESSEE,$x)
+
+add; ADD; add
+to the top of the schedule; (C\ADD)\C; #x#a.submitGoalDialogue(?ADDRESSEE,$x)
+

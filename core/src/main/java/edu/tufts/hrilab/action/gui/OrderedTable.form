@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.action.gui.OrderedTable">
+  <grid id="27dc6" binding="main" layout-manager="GridBagLayout">
+    <constraints>
+      <xy x="20" y="20" width="744" height="371"/>
+    </constraints>
+    <properties>
+      <minimumSize width="50" height="50"/>
+      <preferredSize width="200" height="100"/>
+    </properties>
+    <border type="none"/>
+    <children>
+      <grid id="5c8ad" layout-manager="GridBagLayout">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <scrollpane id="71922">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="40ab" class="javax.swing.JTable" binding="table">
+                <constraints/>
+                <properties/>
+              </component>
+            </children>
+          </scrollpane>
+        </children>
+      </grid>
+      <grid id="d3d1" layout-manager="GridBagLayout">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+          <gridbag weightx="0.0" weighty="1.0"/>
+        </constraints>
+        <properties>
+          <maximumSize width="20" height="2147483647"/>
+          <minimumSize width="20" height="190"/>
+          <preferredSize width="20" height="190"/>
+        </properties>
+        <border type="none"/>
+        <children>
+          <grid id="e5e39" layout-manager="GridBagLayout">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <maximumSize width="20" height="2147483647"/>
+              <minimumSize width="20" height="64"/>
+              <preferredSize width="20" height="64"/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <component id="d5437" class="javax.swing.plaf.basic.BasicArrowButton" binding="up" custom-create="true">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="1.0" weighty="1.0"/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="67aa6" class="javax.swing.plaf.basic.BasicArrowButton" binding="down" custom-create="true">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="1.0" weighty="1.0"/>
+                </constraints>
+                <properties/>
+              </component>
+            </children>
+          </grid>
+          <grid id="baff5" layout-manager="GridBagLayout">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="2" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag weightx="1.0" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <maximumSize width="20" height="2147483647"/>
+              <minimumSize width="20" height="50"/>
+              <preferredSize width="20" height="50"/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <component id="88a0c" class="javax.swing.JButton" binding="remove">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="1.0" weighty="1.0"/>
+                </constraints>
+                <properties>
+                  <margin top="0" left="0" bottom="0" right="0"/>
+                  <maximumSize width="16" height="16"/>
+                  <minimumSize width="16" height="16"/>
+                  <preferredSize width="16" height="16"/>
+                  <text value="-"/>
+                </properties>
+              </component>
+              <component id="79dff" class="javax.swing.JButton" binding="add">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="1.0" weighty="1.0"/>
+                </constraints>
+                <properties>
+                  <margin top="0" left="0" bottom="0" right="0"/>
+                  <maximumSize width="16" height="16"/>
+                  <minimumSize width="16" height="16"/>
+                  <opaque value="false"/>
+                  <preferredSize width="16" height="16"/>
+                  <text value="+"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

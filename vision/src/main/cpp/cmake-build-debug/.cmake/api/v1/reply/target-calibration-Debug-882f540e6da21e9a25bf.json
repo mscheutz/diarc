@@ -1,0 +1,465 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "capture/calibration/libcalibration.a"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"ADD_LIBRARY",
+			"TARGET_LINK_LIBRARIES",
+			"ADD_DEFINITIONS",
+			"add_definitions",
+			"set_property",
+			"include",
+			"find_external_library",
+			"FIND_PACKAGE",
+			"INCLUDE_DIRECTORIES",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"capture/calibration/CMakeLists.txt",
+			"CMakeLists.txt",
+			"/usr/lib/cmake/vtk-6.3/UseVTK.cmake",
+			"/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake",
+			"capture/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 11,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 15,
+				"parent" : 0
+			},
+			{
+				"file" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 31,
+				"parent" : 3
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 108,
+				"parent" : 3
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 99,
+				"parent" : 3
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 116,
+				"parent" : 3
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 119,
+				"parent" : 3
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 145,
+				"parent" : 3
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 252,
+				"parent" : 3
+			},
+			{
+				"command" : 7,
+				"file" : 1,
+				"line" : 105,
+				"parent" : 3
+			},
+			{
+				"file" : 3,
+				"parent" : 11
+			},
+			{
+				"command" : 6,
+				"file" : 3,
+				"line" : 847,
+				"parent" : 12
+			},
+			{
+				"command" : 5,
+				"file" : 3,
+				"line" : 671,
+				"parent" : 13
+			},
+			{
+				"file" : 2,
+				"parent" : 14
+			},
+			{
+				"command" : 4,
+				"file" : 2,
+				"line" : 23,
+				"parent" : 15
+			},
+			{
+				"command" : 8,
+				"file" : 1,
+				"line" : 8,
+				"parent" : 3
+			},
+			{
+				"command" : 8,
+				"file" : 1,
+				"line" : 62,
+				"parent" : 3
+			},
+			{
+				"command" : 8,
+				"file" : 1,
+				"line" : 69,
+				"parent" : 3
+			},
+			{
+				"command" : 9,
+				"file" : 2,
+				"line" : 26,
+				"parent" : 15
+			},
+			{
+				"command" : 8,
+				"file" : 1,
+				"line" : 106,
+				"parent" : 3
+			},
+			{
+				"command" : 8,
+				"file" : 1,
+				"line" : 110,
+				"parent" : 3
+			},
+			{
+				"command" : 8,
+				"file" : 1,
+				"line" : 143,
+				"parent" : 3
+			},
+			{
+				"command" : 8,
+				"file" : 1,
+				"line" : 251,
+				"parent" : 3
+			},
+			{
+				"file" : 4
+			},
+			{
+				"command" : 8,
+				"file" : 4,
+				"line" : 3,
+				"parent" : 25
+			},
+			{
+				"command" : 8,
+				"file" : 0,
+				"line" : 3,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -fdiagnostics-color=always   -fPIC -Werror=return-type  "
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 4,
+					"define" : "BOOST_FILESYSTEM_DEPRECATED"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DISABLE_DAVIDSDK"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DISABLE_DSSDK"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DISABLE_ENSENSO"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DISABLE_LIBUSB_1_0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DISABLE_PCAP"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DISABLE_PNG"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DISABLE_RSSDK"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "FLANN_STATIC"
+				},
+				{
+					"backtrace" : 6,
+					"define" : "OPENCV_TRACKING"
+				},
+				{
+					"backtrace" : 7,
+					"define" : "USE_OPENNI"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "USE_OPENNI2"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "USE_REALSENSE"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "USE_ZBAR"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "qh_QHpointer"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "vtkFiltersFlowPaths_AUTOINIT=1(vtkFiltersParallelFlowPaths)"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "vtkIOExodus_AUTOINIT=1(vtkIOParallelExodus)"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "vtkIOGeometry_AUTOINIT=1(vtkIOMPIParallel)"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "vtkIOImage_AUTOINIT=1(vtkIOMPIImage)"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "vtkIOParallel_AUTOINIT=1(vtkIOMPIParallel)"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "vtkIOSQL_AUTOINIT=2(vtkIOMySQL,vtkIOPostgreSQL)"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "vtkRenderingContext2D_AUTOINIT=1(vtkRenderingContextOpenGL)"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "vtkRenderingCore_AUTOINIT=3(vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingOpenGL)"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "vtkRenderingFreeType_AUTOINIT=2(vtkRenderingFreeTypeFontConfig,vtkRenderingMatplotlib)"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "vtkRenderingLIC_AUTOINIT=1(vtkRenderingParallelLIC)"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "vtkRenderingVolume_AUTOINIT=1(vtkRenderingVolumeOpenGL)"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 17,
+					"path" : "/home/evan/code/ade/vision/src/main/cpp"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/usr/lib/jvm/java-17-openjdk-amd64/include"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/usr/lib/jvm/java-17-openjdk-amd64/include/linux"
+				},
+				{
+					"backtrace" : 19,
+					"path" : "/usr/include/opencv"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/usr/include/vtk-6.3"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/usr/include/freetype2"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent/include"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/usr/include/python2.7"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/usr/include/hdf5/openmpi"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/usr/include/libxml2"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/usr/include/jsoncpp"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/usr/include/tcl"
+				},
+				{
+					"backtrace" : 21,
+					"path" : "/usr/include/pcl-1.8"
+				},
+				{
+					"backtrace" : 21,
+					"path" : "/usr/include/eigen3"
+				},
+				{
+					"backtrace" : 21,
+					"path" : "/usr/include/ni"
+				},
+				{
+					"backtrace" : 21,
+					"path" : "/usr/include/openni2"
+				},
+				{
+					"backtrace" : 22,
+					"path" : "/usr/include/vtk-9.1"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/include/librealsense2"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/zbar"
+				},
+				{
+					"backtrace" : 26,
+					"path" : "/home/evan/code/ade/vision/src/main/cpp/capture"
+				},
+				{
+					"backtrace" : 27,
+					"path" : "/home/evan/code/ade/vision/src/main/cpp/capture/calibration"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "calibration_swig::@c29aa4556decac13d60b"
+		}
+	],
+	"id" : "calibration::@dd70774b097d869df286",
+	"name" : "calibration",
+	"nameOnDisk" : "libcalibration.a",
+	"paths" : 
+	{
+		"build" : "capture/calibration",
+		"source" : "capture/calibration"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "capture/calibration/Cameras.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "capture/calibration/DepthSensorCalibration.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "capture/calibration/StereoCalibration.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

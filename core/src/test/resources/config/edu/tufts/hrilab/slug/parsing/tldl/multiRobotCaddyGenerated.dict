@@ -1,0 +1,14 @@
+med kit; KITTYPE; medkit
+repair kit; KITTYPE; repairkit
+
+%TODO:brad: update THING template to use appropriate semantic types
+screw; THING; screw:physobj
+smallgear; THING; smallgear:physobj
+largegear; THING; largegear:physobj
+
+%TODO:brad: we need to figure out some way to maintain the the space?
+small gear; THING; smallgear:physobj
+large gear; THING; largegear:physobj
+
+
+alpha; LOC; alpha:temilocation; DEFINITE

@@ -1,0 +1,21 @@
+#JSGF V1.0;
+grammar lgosl.gram;
+
+public <s>= <command> | <description>| <handover> | <doyousee>| <startover> | <pointto>;
+
+//<command> = [now] <action> <object> <mod>| <action> <object>| <action>;
+<command> = [now] <action> (<object>) [<mod>];
+//<action> = (pick up| point to) (the|a|an);
+<action> = pick up (the|a|an);
+<pointto> = point to (the|a|an) [<object>];
+<object> =  knife | object ;
+<mod> = by [the] | of [the] ;
+
+<description>=[the] is the <color> part <mod> <object>|the <color> part <mod> <object> is [the]  ;
+<color> = gray | orange;
+
+<handover> = hand it to me;
+
+<doyousee>= do you see (a|the) [<object>];
+
+<startover>= start over;

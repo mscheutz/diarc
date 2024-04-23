@@ -1,0 +1,10 @@
+#JSGF V1.0;
+grammar jsgf.demo_12_12;
+
+public <s> = <verb> | <name> | <name> <s> | can you please <verb> | let me show you | put <bodypart> above the medkit with <bodypart> down like this | close <bodypart> | lift <bodypart> | [ so ] that 's how you <verb> | please tell <name> how to <verb>;
+
+<name> = andy | cindy;
+
+<bodypart> = your hand | your palm;
+
+<verb> = pick up the medkit | pick it up | do it;

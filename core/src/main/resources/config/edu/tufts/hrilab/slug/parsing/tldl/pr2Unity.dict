@@ -1,0 +1,214 @@
+%go to the room1
+%
+%Move to area alpha
+%Move to area beta
+%Move to area gamma
+%
+%Move to tube L eleven
+%Tube L eleven is damaged
+%Tube L eleven is turned off
+%Repair the tube
+%Stop
+
+%tube; (TUBE/NUMBER)/SIDE ; #s#n.$s$n
+%tube; ((TUBE/NUMBER)/SIDE)/AREA ; #a#s#n.$a$,s$n
+
+START-TEMPLATES
+
+TUBECMD; {C/SIDE ; #s.?PH(?ADDRESSEE,$s)}, {((C/AREA)/SIDE)/TUBE ; #t#s#a.?PH(?ADDRESSEE,$a,$s)}, {((C/SIDE)/AREA)/TUBE ; #t#a#s.?PH(?ADDRESSEE,$a,$s)}, {(C/SIDE)/AREA ; #a#s.?PH(?ADDRESSEE,$a,$s)}, {(C/AREA)/SIDE ; #s#a.?PH(?ADDRESSEE,$a,$s)}, {(C/SIDE)/TUBE ; #t#s.?PH(?ADDRESSEE,$s)}
+ADDRESSABLE; {C/C, TUBECMD/TUBECMD, TUBECMD\TUBECMD, Q/Q, C\C, Q\Q; #x.directAddress(?PH,$x)}, {AGENT ; ?PH}
+AREACMD; {C/AREA ; #a.goToArea(?ADDRESSEE, $a)}
+
+END-TEMPLATES
+
+robot one; ADDRESSABLE; robot1
+robot two; ADDRESSABLE; robot2
+
+can; (Q / C) / AGENT ; #x #y.capableOf($x,$y)
+could; (Q / C) / AGENT ; #x #y.capableOf($x,$y)
+please; C / C, C \ C, Pron \ Pron, S \ S ; #x. $x
+now; C/C, C\C, Q\Q, Q/Q ; #x. $x
+
+tube;TUBE;tube
+
+left; SIDE / NUMBER, SIDE \ NUMBER; #n.left$n
+right; SIDE / NUMBER, SIDE \ NUMBER; #n.right$n
+l; SIDE / NUMBER, SIDE \ NUMBER; #n.left$n
+r; SIDE / NUMBER, SIDE \ NUMBER; #n.right$n
+
+left; CSIDE / NUMBER, CSIDE \ NUMBER; #n.Left$n
+right; CSIDE / NUMBER, CSIDE \ NUMBER; #n.Right$n
+l; CSIDE / NUMBER, CSIDE \ NUMBER; #n.Left$n
+r; CSIDE / NUMBER, CSIDE \ NUMBER; #n.Right$n
+
+one; NUMBER ; One
+two; NUMBER ; Two
+three; NUMBER ; Three
+four; NUMBER ; Four
+five; NUMBER ; Five
+six; NUMBER ; Six
+seven; NUMBER ; Seven
+eight; NUMBER ; Eight
+nine; NUMBER ; Nine
+ten; NUMBER ; Ten
+eleven; NUMBER ; Eleven
+twelve; NUMBER ; Twelve
+
+area; AREA/AREA ; #a.$a
+
+alpha; AREA ; alpha
+beta; AREA ; beta
+gamma; AREA ; gamma
+
+alpha; FULLTUBE/CSIDE ; #c.alpha$c
+beta; FULLTUBE/CSIDE ; #c.beta$c
+gamma; FULLTUBE/CSIDE; #c.gamma$c
+
+drive to; AREACMD; goToArea
+drive to; TUBECMD; goToTube
+
+go to; AREACMD; goToArea
+go to; TUBECMD; goToTube
+
+move to; TUBECMD; goToTube
+move to; AREACMD; goToArea
+
+come to; TUBECMD; goToTube
+come to; AREACMD; goToArea
+
+fix; TUBECMD; repairTube
+repair; TUBECMD; repairTube
+
+fix; C/N, C/SIDE ; #x.repairTube(?ADDRESSEE)
+repair; C/N, C/SIDE ; #x.repairTube(?ADDRESSEE)
+it; N ; it
+the tube; N ; theTube
+tube; N, N/SIDE; tube
+
+%stop; C ; stopRobot()
+stop; C ; stop()
+
+autonomy ; C ; autonomy()
+
+what; Q/QUERYABLE; #x.$x
+which; Q/QUERYABLE; #x.$x
+
+tubes are damaged; QUERYABLE; tubesDamaged(WHICH)
+is the damage; QUERYABLE; tubesDamaged(WHICH)
+
+level; Q\Q; #x.$x
+
+at; Q\Q; #x.$x
+located; Q\Q; #x.$x
+
+you; AGENT; ?ACTOR
+
+%what is the radiation level; Q; radiationLevel(WHAT)
+%report the radiation level; Q; radiationLevel(WHAT)
+%check the radiation level; Q; radiationLevel(WHAT)
+what is the situation; Q; tubesDamaged(WHICH)
+which tubes are off; Q ;tubesOff(WHICH)
+where are you; Q ;whereAre(?ACTOR)
+what are you doing; Q ;whatAre(?ACTOR,doing)
+
+monitor; C/AREA ; #x.monitorArea($x)
+monitor tubes ; C ; monitorArea()
+monitor tubes in; C/AREA ; #x.monitorArea($x)
+
+%r2 is monitoring area alpha
+is monitoring ; (C/AREA)\AGENT ; #x#a.changeBelief(monitoring($x,$a))
+
+%r2 is going to area alpha
+is ; ((C/AREA)/MOVESTATUS)\AGENT ; #x#m#a.changeBelief(amIn($x,prep(transit,to($a))))
+is ; (((C/SIDE)/TUBE)/MOVESTATUS)\AGENT ; #x#m#t#s.changeBelief(amAt($x,prep(transit,to($s))))
+is ; ((C/SIDE)/MOVESTATUS)\AGENT ; #x#m#s.changeBelief(amAt($x,prep(transit,to($s))))
+is ; (((C/SIDE)/AREA)/MOVESTATUS)\AGENT ; #x#m#a#s.changeBelief(amAt($x,prep(transit,to($a$s))))
+is ; ((((C/SIDE)/AREA)/TUBE)/MOVESTATUS)\AGENT ; #x#m#t#a#s.changeBelief(amAt($x,prep(transit,to($a$s))))
+
+is in ; (C/AREA)\AGENT ; #x#a.changeBelief(amIn($x,$a))
+is at ; ((C/SIDE)/TUBE)\AGENT ; #x#t#s.changeBelief(amAt($x,$s))
+is at ; (C/SIDE)\AGENT ; #x#s.changeBelief(amAt($x,$s))
+is at ; ((C/SIDE)/AREA)\AGENT ; #x#a#s.changeBelief(amAt($x,$a,$s))
+is at ; ((((C/SIDE)/AREA)/TUBE)/MOVESTATUS)\AGENT ; #x#m#t#a#s.changeBelief(amAt($x,$a,$s))
+
+%r2 is repairing tube alpha right one
+is ; ((((C/CSIDE)/AREA)/TUBE)/FIXSTATUS)\AGENT ; #x#f#t#a#s.forgetThat(?INTERACTOR,propertyOf($a$s,damaged(X)))
+is ; (((C/CSIDE)/AREA)/FIXSTATUS)\AGENT ; #x#f#a#s.forgetThat(?INTERACTOR,propertyOf($a$s,damaged(X)))
+
+%alpha right one is fixed
+is ; ((C/FIXSTATUS)\FULLTUBE)\TUBE ; #t#a#f.forgetThat(?INTERACTOR,propertyOf($a,damaged(X)))
+is ; (C/FIXSTATUS)\FULLTUBE ; #a#f.forgetThat(?INTERACTOR,propertyOf($a,damaged(X)))
+has been ; ((C/FIXSTATUS)\FULLTUBE)\TUBE ; #t#a#f.forgetThat(?INTERACTOR,propertyOf($a,damaged(X)))
+has been ; (C/FIXSTATUS)\FULLTUBE ; #a#f.forgetThat(?INTERACTOR,propertyOf($a,damaged(X)))
+
+going to ; MOVESTATUS; going to
+moving to ; MOVESTATUS; moving to
+driving to; MOVESTATUS; driving to
+%patrolled; MOVESTATUS; patrolled
+
+repairing; FIXSTATUS; repairing
+fixing; FIXSTATUS; fixing
+fixed; FIXSTATUS; fixed
+repaired; FIXSTATUS; repaired
+
+off; (C\TURNED)\FULLTUBE ; #a#d.changeBelief(propertyOf($a,off))
+off; ((C\TURNED)\FULLTUBE)\TUBE ; #t#a#d.changeBelief(propertyOf($a,off))
+
+on; ((C\TURNED)\FULLTUBE)\TUBE ; #t#a#d.forgetThat(?INTERACTOR,propertyOf($a,off))
+on; (C\TURNED)\FULLTUBE ; #a#d.forgetThat(?INTERACTOR,propertyOf($a,off))
+
+is; TURNED; is
+is turned; TURNED; is
+has been turned; TURNED; is
+is now; TURNED; is
+was turned; TURNED; is
+
+%alpha right one is damaged
+is; (C/DAMSTATUS)\FULLTUBE ; #a#d.changeBelief(propertyOf($a,damaged(25)))
+is; ((C/DAMSTATUS)\FULLTUBE)\TUBE ; #t#a#d.changeBelief(propertyOf($a,damaged(25)))
+has been; (C/DAMSTATUS)\FULLTUBE ; #a#d.changeBelief(propertyOf($a,damaged(25)))
+has been; ((C/DAMSTATUS)\FULLTUBE)\TUBE ; #t#a#d.changeBelief(propertyOf($a,damaged(25)))
+
+is; ((C/DAMSTATUS)/PERCENT)\FULLTUBE ; #a#p#d.changeBelief(propertyOf($a,damaged($p)))
+is; (((C/DAMSTATUS)/PERCENT)\FULLTUBE)\TUBE ; #t#a#p#d.changeBelief(propertyOf($a,damaged($p)))
+has been; ((C/DAMSTATUS)/PERCENT)\FULLTUBE ; #a#p#d.changeBelief(propertyOf($a,damaged($p)))
+has been; (((C/DAMSTATUS)/PERCENT)\FULLTUBE)\TUBE ; #t#a#p#d.changeBelief(propertyOf($a,damaged($p)))
+
+damaged; DAMSTATUS; damaged
+percent; PERCENT\TENS; #t.$t0
+percent; (PERCENT\TENS)\ONES; #o#t.$t$o
+percent; PERCENT\ONES; #o.$o
+percent; (PERCENT\ONES)\HUNDRED; #h#o.$o$h
+percent; PERCENT\TEEN; #t.$t
+
+one; ONES ; 1
+two; ONES ; 2
+three; ONES ; 3
+four; ONES ; 4
+five; ONES ; 5
+six; ONES ; 6
+seven; ONES ; 7
+eight; ONES ; 8
+nine; ONES ; 9
+ten; TEEN ; 10
+eleven; TEEN ; 11
+twelve; TEEN ; 12
+thirteen; TEEN ; 13
+fourteen; TEEN; 14
+fifteen; TEEN; 15
+sixteen; TEEN; 16
+seventeen; TEEN; 17
+eighteen; TEEN; 18
+nineteen; TEEN; 19
+twenty; TENS; 2
+thirty; TENS; 3
+forty; TENS; 4
+fifty; TENS; 5
+sixty; TENS; 6
+seventy; TENS; 7
+eighty; TENS; 8
+ninety; TENS; 9
+hundred; HUNDRED; 00
+
+yes; VAL; val(yes)
+no; VAL; val(no)

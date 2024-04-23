@@ -1,0 +1,16 @@
+do a squat; VERBI ; doasquat
+
+dance; C; dance(?ADDRESSEE)
+dance; C\AGENT; #a.dance($a)
+%% TODO: both dance rules can't co-exist
+dance with; (C/AGENT)/AGENT; #x#y.dance(?ADDRESSEE,$x,$y)
+dance with; C/AGENT; #x.dance(?ADDRESSEE,$x)
+%dance with; (C/AGENT)/AGENT; #x#y.dance(?ADDRESSEE,$x,$y)
+and; AGENT/AGENT ; #x.$x
+
+pass; VERBDT
+
+pickup; VERBT; pickup
+pick up; VERBT; pickup
+%pick and place ; VERBT; pickAndPlace
+%pick; VERBT/UP; pickUp

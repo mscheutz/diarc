@@ -1,0 +1,19 @@
+{
+  "testName" : "greetingTest",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "hello evan", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "hello evan", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "hello ravenna", "true" ]
+    } ]
+  } ]
+}

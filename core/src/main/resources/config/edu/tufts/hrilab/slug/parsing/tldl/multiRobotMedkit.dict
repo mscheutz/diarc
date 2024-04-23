@@ -1,0 +1,45 @@
+a; RECIPE/RECIPE; #x.$x
+
+save this pose as; C/LIT*; #x.recordEEPose(?ADDRESSEE,$x)
+save this post as; C/LIT*; #x.recordEEPose(?ADDRESSEE,$x)
+save this cuz as; C/LIT*; #x.recordEEPose(?ADDRESSEE,$x)
+this pose is; C/LIT*; #x.recordEEPose(?ADDRESSEE,$x)
+%save this pose as; C/POSE; #x.recordEEPose($x)
+%this pose is; C/POSE; #x.recordEEPose($x)
+go to pose; C/POSE; #x.goToEEPose(?ADDRESSEE,$x)
+go to pose; (C/POSE)\AGENT; #y#x.goToEEPose(?ADDRESSEE,$x)
+go to start pose; C ; startOver()
+
+contains ; (((S/DESC)/DESC)/DESC)\RECIPE ; #r#x#y#z.recipe($r,contains($x,$y,$z))
+and contains ; ((((S/DESC)/DESC)/DESC)\RECIPE)\DESC ; #c#r#x#y#z.recipe($r,$c,contains($x,$y,$z))
+%
+and; DESC/DESC; #x.$x
+%
+standard medkit; RECIPE; standardMedkit
+standard method; RECIPE; standardMedkit
+standard med kit; RECIPE; standardMedkit
+%
+additional; RECIPE/DESC; #x.additional($x)
+bandages; DESC; bandages
+antiseptic; DESC; antiseptic
+painkillers; DESC; painkillers
+%
+%%for rr/grasping?
+bandages; THING; bandages
+antiseptic; THING; antiseptic
+painkillers; THING; painkillers
+medical caddy; THING; medkit
+
+%
+compartment 1; COMPARTMENT; compartmentOne
+compartment one; COMPARTMENT; compartmentOne
+compartment 2; COMPARTMENT; compartmentTwo
+compartment two; COMPARTMENT; compartmentTwo
+compartment to; COMPARTMENT; compartmentTwo
+compartment too; COMPARTMENT; compartmentTwo
+compartment 3; COMPARTMENT; compartmentThree
+compartment three; COMPARTMENT; compartmentThree
+compartment 4; COMPARTMENT; compartmentFour
+compartment four; COMPARTMENT; compartmentFour
+compartment 5; COMPARTMENT; compartmentFive
+compartment five; COMPARTMENT; compartmentFive

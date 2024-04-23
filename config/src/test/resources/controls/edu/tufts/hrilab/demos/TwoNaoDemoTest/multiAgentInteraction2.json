@@ -1,0 +1,122 @@
+{
+  "testName" : "multiAgentInteraction2",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "stand(dempster)", "432" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "432", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "dance(dempster,shafer)", "435" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "435", "FAILED" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not dance shafer because I do not know how to dance shafer", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "updateActionLearning(dempster,dance(dempster,shafer),start)", "438" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "438", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "raise(dempster,arms)", "441" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "441", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "crouchDown(shafer)", "444" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "444", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "lower(dempster,arms)", "447" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "447", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "standUp(shafer)", "450" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "450", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "updateActionLearning(dempster,dance(dempster,shafer),end)", "453" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "453", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "dance(dempster,shafer)", "456" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "456", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "hello evan", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "dance(shafer,dempster)", "461" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "461", "SUCCEEDED" ]
+    } ]
+  } ]
+}

@@ -1,0 +1,146 @@
+#brad: workarounds because I don't really know how the generation pipeline works
+NEW-SET
+RULES
+REPLY(self,brad,cannot(did(assembleVision(self)),because(not(find(self,knownModelType)))),{}) := REPLY(self,brad,cannot(did(assembleTheModel(self)),because(foundAnUnknownModelType(self))),{})
+END-SET
+
+#recovery plan description specific rules
+NEW-SET
+RULES
+REPLY(A,B,planned(C),Z) := REPLY(A,B,executeThePlan(C),Z)
+REPLY(A,B,gotomovebase(C,D,E,F,G),Z) := REPLY(A,B,goTo(C,E),Z)
+REPLY(A,B,perceiveobjectatlocation(C,D,E,F,G),Z) := REPLY(A,B,lookFor(C,prep(D,at(F))),Z)
+REPLY(A,B,putin(C,D,E,F,G,H),Z) := REPLY(A,B,put(C,prep(D,in(H))),Z)
+REPLY(A,B,perceivecontaineratlocation(C,D,E,F,G,H),Z) := REPLY(A,B,lookFor(C,prep(D,at(F))),Z)
+REPLY(A,B,pickupitem(C,D,E,F,G),Z) := REPLY(A,B,pickUp(C,prep(D,from(F))),Z)
+REPLY(A,B,gotospot(C,D,E,F,G),Z) := REPLY(A,B,goTo(C,E),Z)
+REPLY(A,B,putdownspot(C,D,E,F,G),Z) := REPLY(A,B,putDown(C,prep(D,on(F))),Z)
+REPLY(A,B,receiveitem(C,D,E,F,G),Z) := REPLY(A,B,receive(C,prep(D,at(F))),Z)
+END-SET
+
+#Temi specific
+#TODO: still need to test whether the left side matches after merge (will change again after actor changes anyway)
+NEW-SET
+RULES
+
+#Tested
+REPLY(A,B,cannot(did(goToLocation(A,X,Y)),because(not(go(A,X)))),Z) := REPLY(A,B,cannot(did(goTo(A,X)),because(and(cannot(findAPathTo(A,X))))),Z)
+REPLY(A,B,cannot(did(escort(A,X,C,Y)),because(not(go(A,X)))),Z) := REPLY(A,B,cannot(did(escortYouTo(A,X)),because(and(cannot(findAPathTo(A,X))))),Z)
+REPLY(A,B,cannot(did(escort(A,X,C,Y)),because(not(go(A,Y)))),Z) := REPLY(A,B,cannot(did(escortFrom(A,Y)),because(and(cannot(findAPathTo(A,Y))))),Z)
+REPLY(A,B,cannot(did(escort(A,X,Y)),because(not(go(A,X)))),Z) := REPLY(A,B,cannot(did(escortYouTo(A,X)),because(and(cannot(findAPathTo(A,X))))),Z)
+
+#Can improve grammar of response
+REPLY(A,B,cannot(did(goToLocation(A,X,Y)),because(not(reposition(A)))),Z) := REPLY(A,B,cannot(did(goTo(A,X)),because(failedToRepositionSuccessfully(A))),Z)
+REPLY(A,B,cannot(did(escort(A,X,C,Y)),because(not(reposition(A)))),Z) := REPLY(A,B,cannot(did(escortFrom(A,Y)),because(failedToRepositionSuccessfully(A))),Z)
+REPLY(A,B,cannot(did(escort(A,X,Y)),because(not(reposition(A)))),Z) := REPLY(A,B,cannot(did(escortYouTo(A,X)),because(failedToRepositionSuccessfully(A))),Z)
+REPLY(A,B,cannot(did(fetch(A,X,Y)),because(not(reposition(A)))),Z) := REPLY(A,B,cannot(did(fetch(A,X)),because(failedToRepositionSuccessfully(A))),Z)
+REPLY(A,B,cannot(did(fetch(A,X)),because(not(reposition(A)))),Z) := REPLY(A,B,cannot(did(fetch(A,X)),because(failedToRepositionSuccessfully(A))),Z)
+
+REPLY(A,B,cannot(did(freeze(A)),because(not(freeze(A)))),{}) := REPLY(A,B,cannot(did(pauseGoal(A)),because(and(thereIsNoCurrentGoal()))),Z)
+REPLY(A,B,cannot(did(cancelCurrentGoal(A)),because(not(is(goal,found)))),{}) := REPLY(A,B,cannot(did(cancelCurrentGoal(A)),because(and(thereIsNoCurrentGoal()))),{})
+REPLY(A,B,cannot(did(fetch(A,X,Y)),because(not(knowWhereIAm(A)))),Z) := REPLY(A,B,cannot(did(fetch(A,X)),because(dontKnowWhereIAm(A))),Z)
+REPLY(A,B,cannot(did(fetch(A,X,Y)),because(not(go(A,Y)))),Z) := REPLY(A,B,cannot(did(fetch(A,X)),because(and(cannot(findAPathTo(A,Y))))),Z)
+REPLY(A,B,cannot(did(fetch(A,X,Y)),because(not(go(A,C)))),Z) := REPLY(A,B,cannot(did(return(A,X)),because(and(cannot(findAPathTo(A,C))))),Z)
+REPLY(A,B,cannot(did(fetch(A,X)),because(not(knowWhereIAm(A)))),Z) := REPLY(A,B,cannot(did(fetch(A,X)),because(dontKnowWhereIAm(A))),Z)
+REPLY(A,B,cannot(did(fetch(A,X)),because(not(go(A,C)))),Z) := REPLY(A,B,cannot(did(fetch(A,X)),because(and(cannot(findAPathTo(A,C))))),Z)
+
+#REPLY(A,B,cannot(did(then(goToLocation(A,B,C),goToLocation(A,D,C))),because(not(found(did(then(goToLocation(A,B,C),goToLocation(A,D,C))))))),Z) :=  REPLY(A,B,cannot(doThat(A),because(and(doNotKnowHow(A)))),Z)
+#should be obselete, parser will never know location that agent doesn't
+#Only possible if a location is deleted and then a location deeper in the queue references it
+REPLY(A,B,cannot(did(goToLocation(A,X,Y)),because(not(KnowWhere(A,X)))),Z) := REPLY(A,B,cannot(did(goTo(A,X)),because(and(dontKnowKnowLocation(A,X)))),Z)
+REPLY(A,B,cannot(did(fetch(A,X)),because(not(KnowWhere(A,Y)))),Z) := REPLY(A,B,cannot(did(fetch(A,X)),because(and(dontKnowKnowLocation(A,Y)))),Z)
+REPLY(A,B,cannot(did(fetch(A,X,Y)),because(not(KnowWhere(A,Y)))),Z) := REPLY(A,B,cannot(did(fetch(A,X)),because(and(dontKnowKnowLocation(A,Y)))),Z)
+REPLY(A,B,cannot(did(escort(A,X,Y)),because(not(KnowWhere(A,X)))),Z) := REPLY(A,B,cannot(did(escortYouTo(A,X)),because(and(dontKnowKnowLocation(A,X)))),Z)
+REPLY(A,B,cannot(did(escort(A,X,C,Y)),because(not(KnowWhere(A,X)))),Z) := REPLY(A,B,cannot(did(escortYouTo(A,X)),because(and(dontKnowKnowLocation(A,X)))),Z)
+REPLY(A,B,cannot(did(escort(A,X,C,Y)),because(not(KnowWhere(A,Y)))),Z) := REPLY(A,B,cannot(did(escortFrom(A,Y)),because(and(dontKnowKnowLocation(A,Y)))),Z)
+
+REPLY(A,B,cannot(did(fetch(A,X)),because(and(not(know(A,C))))),Z) := cannot(did(fetch(A,X)),because(and(not(know(A,C)))))
+#Don't think this is possible
+REPLY(A,B,cannot(did(escort(A,X,C,Y)),because(not(go(A,D)))),Z) := cannot(did(returnTo(A,D)),because(and(cannot(findAPathTo(A,D)))))
+
+REPLY(A,B,cannot(did(displayQRCode(A,X,Y)),because(not(did(displayQRCode(A,X,Y))))),Z) := cannot(did(displayQRCode(A)),because(and(cannot(parseTheURL(A)))))
+
+REPLY(A,B,say(X),Z) := ack(X)
+END-SET
+
+NEW-SET
+RULES
+REPLY(A,B,ahead(X,Y),Z) := REPLY(A,B,is(ahead(X,Y)),Z)
+REPLY(A,B,isAdminGoal(X),Z) := REPLY(A,B,is(gerund(X),adminGoal),Z)
+REPLY(A,B,found(C,Y),Z) := REPLY(A,B,know(C,how(Y)),Z)
+REPLY(A,B,propertyOf(X,Y),Z) := REPLY(A,B,is(X,Y),Z)
+REPLY(A,B,bel(X,Y),Z) := REPLY(A,B,know(X,Y),Z)
+REPLY(A,B,unknown(X),Z) := REPLY(A,B,is(there,unknown(X)),Z)
+REPLY(A,B,getActDesc(C,Y),Z) := REPLY(A,B,describe(C,how(Y)),Z)
+REPLY(A,B,updateActionLearning(C,X,Y),Z) := REPLY(A,B,learn(C,how(X)),Z)
+REPLY(A,B,updateActionLearning(X,Y),Z) := REPLY(A,B,learn(A,how(X)),Z)
+REPLY(A,B,forgetThat(A,C,X),Z) := REPLY(A,B,forgetThat(A,X),Z)
+REPLY(A,B,trusted(X),Z) := REPLY(A,B,is(X,trusted),Z)
+REPLY(A,B,behind(area,X),Z) := REPLY(A,B,prep(area,behind(X)),Z)
+END-SET
+
+NEW-SET
+RULES
+REPLY(A,B,bel(X,Y),Z) := REPLY(A,B,know(X,that(Y)),Z)
+REPLY(A,B,updateActionLearning(A,X,Y),Z) := REPLY(A,B,learn(A,how(X)),Z)
+REPLY(A,B,behind(X,Y),Z) := REPLY(A,B,has(X,rearSensors),Z)
+REPLY(A,B,admin_of(X,Y),Z) := REPLY(A,B,propertyOf(X,possessive(Y,admin)),Z)
+REPLY(A,B,currentTime(X,Y),Z) := REPLY(A,B,is(it,X,Y),Z)
+REPLY(A,B,capableOf(Y),Z) := REPLY(A,B,isCapableOf(B,Y),Z)
+END-SET
+
+NEW-SET
+RULES
+REPLY(A,B,durationOf(D,after,WHAT),Z) := REPLY(A,B,past(would(take(it,time(WHAT)))),Z)
+REPLY(A,B,probabilityOf(D,after,WHAT),Z) := REPLY(A,B,past(would(probabilityOf(WHAT))),Z)
+REPLY(A,B,mostLikelyToFailOf(D,after,WHAT),Z) := REPLY(A,B,past(would(propertyOf(WHAT,mostLikelyToFail))),Z)
+REPLY(A,B,durationOf(D,after,E,WHAT),Z) := REPLY(A,B,past(would(take(it,time(WHAT)))),Z)
+REPLY(A,B,probabilityOf(D,after,E,WHAT),Z) := REPLY(A,B,past(would(probabilityOf(WHAT))),Z)
+REPLY(A,B,mostLikelyToFailOf(D,after,E,WHAT),Z) := REPLY(A,B,past(would(propertyOf(WHAT,mostLikelyToFail))),Z)
+END-SET
+
+NEW-SET
+RULES
+REPLY(A,B,durationOf(D,E,WHAT),Z) := REPLY(A,B,will(it,take(time(WHAT))),Z)
+REPLY(A,B,durationOf(D,E,F,WHAT),Z) := REPLY(A,B,will(it,take(time(WHAT))),Z)
+REPLY(A,B,probabilityOf(D,E,WHAT),Z) := REPLY(A,B,probabilityOf(WHAT),Z)
+REPLY(A,B,probabilityOf(D,E,F,WHAT),Z) := REPLY(A,B,probabilityOf(WHAT),Z)
+REPLY(A,B,mostLikelyToFailOf(D,E,WHAT),Z) := REPLY(A,B,propertyOf(WHAT,mostLikelyToFail),Z)
+REPLY(A,B,mostLikelyToFailOf(D,E,F,WHAT),Z) := REPLY(A,B,propertyOf(WHAT,mostLikelyToFail),Z)
+END-SET
+
+NEW-SET
+RULES
+STATEMENT(A,B,false(X),Z) := STATEMENT(A,B,not(X),Z)
+STATEMENT(A,B,goal(C,X,P),Z) := STATEMENT(A,B,is(possessive(C,goal),X),Z)
+END-SET
+
+NEW-SET
+(utterance,1,QUESTION(self,B,should(get_for(self,C,X)),{}))
+(goal(self,have(C,X),P))
+RULES
+ACK(A,B,ack(),Z) := ACK(A,B,will(get(A,one,for(him))),Z)
+END-SET
+
+NEW-SET
+(utterance,0,QUESTION(A,B,should(get_for(A,C,X)),{}))
+RULES
+ACK(A,B,ack(),Z) := ACK(A,B,got(B,it),Z)
+END-SET
+
+NEW-SET
+RULES
+ACK(A,B,ack(),Z) := ACK(A,B,ack(okay),Z)
+END-SET
+
+NEW-SET
+(utterance,0,STATEMENT(A,B,propertyOf(X,Y),{}))
+RULES
+ACK(B,A,ack(),Z) := ACK(B,A,ack(thank you),Z)
+END-SET
+
+NEW-SET
+(utterance,0,STATEMENT(A,B,implies(X,Y),{}))
+RULES
+ACK(B,A,ack(),Z) := ACK(B,A,ack(alright),Z)
+END-SET

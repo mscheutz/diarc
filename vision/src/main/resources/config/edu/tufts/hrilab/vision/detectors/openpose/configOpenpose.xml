@@ -1,0 +1,226 @@
+<OpenPose>
+    <pose_configuration>
+        <!-- Whether to render the output (pose locations, body, background or PAF heat maps) with CPU or GPU.
+           * Select `None` for no rendering, `Cpu` or `Gpu` por CPU and GPU rendering respectively.
+           * Flags:
+           * None = 0
+           * Cpu = 1
+           * Gpu = 2
+           * Default is Gpu-->
+        <render_mode>2</render_mode>
+        <!-- CCN (Conv Net) input size.
+           * The greater, the slower and more memory it will be needed, but it will potentially increase accuracy.
+           * Both width and height must be divisible by 16.
+           * Default is {656, 368}-->
+        <net_input_length>656</net_input_length>
+        <net_input_height>368</net_input_height>
+        <!-- Output size of the final rendered image.
+           * It barely affects performance compared to netInputSize.
+           * The final Datum.poseKeypoints can be scaled with respect to outputSize if `keypointScale` is set to ScaleMode::OutputResolution, even if the
+           * rendering is disabled.
+           * Default is {1280, 720}-->
+        <output_length>320</output_length>
+        <output_height>240</output_height>
+        <!-- Final scale of the Array<float> Datum.poseKeypoints and the writen pose data.
+           * The final Datum.poseKeypoints can be scaled with respect to input size (ScaleMode::InputResolution), net output size (ScaleMode::NetOutputResolution),
+           * output rendering size (ScaleMode::OutputResolution), from 0 to 1 (ScaleMode::ZeroToOne), and -1 to 1 (ScaleMode::PlusMinusOne).
+           * Flags:
+           * InputResolution = 0
+           * NetOutputResolution = 1
+           * OutputResolution = 2
+           * ZeroToOne = 3
+           * PlusMinusOne =4
+           * Default is InputResolution-->
+        <keypoint_scale>0</keypoint_scale>
+        <!-- Number of GPUs processing in parallel.
+           * The greater, the faster the algorithm will run, but potentially higher lag will appear (which only affects in real-time webcam scenarios).
+           * Default is -1-->
+        <gpu_number>-1</gpu_number>
+        <!-- First GPU device.
+           * Such as the GPUs used will be the ones in the range: [gpuNumberStart, gpuNumberStart + gpuNumber].
+           * Default is 0-->
+        <gpu_number_start>0</gpu_number_start>
+        <!-- Number of scales to process.
+           * The greater, the slower and more memory it will be needed, but it will potentially increase accuracy.
+           * This parameter is related with scaleGap, such as the final pose estimation will be an average of the predicted results for each scale.
+           * Default is 1-->
+        <scales_number>1</scales_number>
+        <!-- Gap between successive scales.
+           * The pose estimation will be estimation for the scales in the range [1, 1-scaleGap*scalesNumber], with a gap of scaleGap.
+           * Default is 0.15f-->
+        <scale_gap>0.15</scale_gap>
+        <!-- Pose model, it affects the number of body parts to render
+           * Select PoseModel::COCO_18 for 18 body-part COCO, PoseModel::MPI_15 for 15 body-part MPI, PoseModel::MPI_15_4 for faster version
+           * of MPI, etc.).
+           * Default is COCO_18-->
+        <pose_model>COCO</pose_model>
+        <!-- Whether to blend the final results on top of the original image, or just render them on a flat background.
+           * Default is true-->
+        <blend_original_frame>true</blend_original_frame>
+        <!-- Rendering blending alpha value of the pose point locations with respect to the background image.
+           * Value in the range [0, 1]. 0 will only render the background, 1 will fully render the pose.
+           * Default is 0.6f-->
+        <alpha_keypoint>0.6</alpha_keypoint>
+        <!-- Rendering blending alpha value of the heat maps (body part, background or PAF) with respect to the background image.
+           * Value in the range [0, 1]. 0 will only render the background, 1 will only render the heat map.
+           * Default is 0.7f-->
+        <alpha_heat_map>0.7</alpha_heat_map>
+        <!-- Element to initially render.
+           * Set 0 for pose, [1, #body parts] for each body part following the order on POSE_BODY_PART_MAPPING on
+           * `include/pose/poseParameters.hpp`, #body parts+1 for background, #body parts+2 for all body parts overlapped,
+           * #body parts+3 for all PAFs, and [#body parts+4, #body parts+4+#pair pairs] for each PAF following the order on POSE_BODY_PART_PAIRS.
+           * Default is 0-->
+        <default_part_to_render>0</default_part_to_render>
+        <!-- Folder where the pose Caffe models are located.
+           * Typically /home/USERNAME/openpose/models/-->
+        <model_folder>/home/evan/code/openpose/models/</model_folder>
+        <!-- Whether and which heat maps to save on the Array<float> Datum.heatmaps.
+           * Use HeatMapType::Parts for body parts, HeatMapType::Background for the background, and HeatMapType::PAFs for the Part Affinity Fields.
+           * Default is empty -->
+        <heat_map_parts>false</heat_map_parts>
+        <heat_map_background>false</heat_map_background>
+        <heat_map_PAFs>false</heat_map_PAFs>
+        <!-- Scale of the Datum.heatmaps.
+           * Select ScaleMode::ZeroToOne for range [0,1], ScaleMode::PlusMinusOne for [-1,1] and ScaleMode::UnsignedChar for [0, 255]
+           * If heatMapTypes.empty(), then this parameters makes no effect.
+           * Flags:
+           * PlusMinusOne = 0
+           * ZeroToOne = 1
+           * UnsignedChar = 2
+           * Default is ZeroToOne-->
+        <heat_map_scale>1</heat_map_scale>
+        <!-- Rendering threshold. Only estimated keypoints whose score confidences are higher than this value will be rendered. Generally, a
+           * high threshold (> 0.5) will only render very clear body parts; while small thresholds (~0.1) will also output guessed and occluded
+           * keypoints, but also more false positives (i.e. wrong detections).
+           * Default is 0.05f-->
+        <render_threshold>0.05</render_threshold>
+    </pose_configuration>
+
+    <face_configuration>
+        <!-- Whether to extract face.
+        * Not currently enabled-->
+        <face_enabled>false</face_enabled>
+        <!-- CCN (Conv Net) input size.
+           * The greater, the slower and more memory it will be needed, but it will potentially increase accuracy.
+           * Both width and height must be divisible by 16.
+           * Default is {368, 368}-->
+        <net_face_input_length>368</net_face_input_length>
+        <net_face_input_height>368</net_face_input_height>
+        <!-- Whether to render the output (pose locations, body, background or PAF heat maps) with CPU or GPU.
+           * Select `None` for no rendering, `Cpu` or `Gpu` por CPU and GPU rendering respectively.
+           * Flags:
+           * None = 0
+           * Cpu = 1
+           * Gpu = 2
+           * Default is None-->
+        <face_render_mode>2</face_render_mode>
+        <!-- Rendering blending alpha value of the pose point locations with respect to the background image.
+           * Value in the range [0, 1]. 0 will only render the background, 1 will fully render the pose.
+           * Default is 0.6 (equal to the pose rendering blending alpha value)-->
+        <face_alpha_keypoint>0.6</face_alpha_keypoint>
+        <!-- Rendering blending alpha value of the heat maps (face part, background or PAF) with respect to the background image.
+           * Value in the range [0, 1]. 0 will only render the background, 1 will only render the heat map.
+           * Default is 0.05 (equal to the pose rendering blending alpha value)-->
+        <face_alpha_heat_map>0.05</face_alpha_heat_map>
+        <!-- Rendering threshold. Only estimated keypoints whose score confidences are higher than this value will be rendered. Generally, a
+           * high threshold (> 0.5) will only render very clear body parts; while small thresholds (~0.1) will also output guessed and occluded
+           * keypoints, but also more false positives (i.e. wrong detections).
+           * Default is 0.4f-->
+        <face_render_threshold>0.4</face_render_threshold>
+    </face_configuration>
+
+    <hand_configuration>
+        <!-- Whether to extract hand.
+        * Not currently enabled-->
+        <hand_enabled>false</hand_enabled>
+        <!-- CCN (Conv Net) input size.
+           * The greater, the slower and more memory it will be needed, but it will potentially increase accuracy.
+           * Both width and height must be divisible by 16.
+           * Default is {368, 368}-->
+        <net_hand_input_length>368</net_hand_input_length>
+        <net_hand_input_height>368</net_hand_input_height>
+        <!-- Number of scales to process.
+           * The greater, the slower and more memory it will be needed, but it will potentially increase accuracy.
+           * This parameter is related with scaleRange, such as the final pose estimation will be an average of the predicted results for each scale.
+           * Default is 1-->
+        <hand_scales_number>1</hand_scales_number>
+        <!-- Total range between smallest and biggest scale. The scales will be centered in ratio 1. E.g. if scaleRange = 0.4 and
+           * scalesNumber = 2, then there will be 2 scales, 0.8 and 1.2.
+           * Default is 0.4f-->
+        <hand_scale_range>0.4</hand_scale_range>
+        <!-- Whether to add tracking between frames. Adding hand tracking might improve hand keypoints detection for webcam (if the frame rate
+           * is high enough, i.e. >7 FPS per GPU) and video. This is not person ID tracking, it simply looks for hands in positions at which hands
+           * were located in previous frames, but it does not guarantee the same person id among frames.
+           * Default is false-->
+        <hand_tracking>false</hand_tracking>
+        <!-- Whether to render the output (pose locations, body, background or PAF heat maps) with CPU or GPU.
+           * Select `None` for no rendering, `Cpu` or `Gpu` por CPU and GPU rendering respectively.
+           * Flags:
+           * None = 0
+           * Cpu = 1
+           * Gpu = 2
+           * Default is None-->
+        <hand_render_mode>2</hand_render_mode>
+        <!-- Rendering blending alpha value of the pose point locations with respect to the background image.
+           * Value in the range [0, 1]. 0 will only render the background, 1 will fully render the pose.
+           * Default is 0.6 (equal to the pose rendering blending alpha value)-->
+        <hand_alpha_keypoint>0.6</hand_alpha_keypoint>
+        <!-- Rendering blending alpha value of the heat maps (hand part, background or PAF) with respect to the background image.
+           * Value in the range [0, 1]. 0 will only render the background, 1 will only render the heat map.
+           * Default is 0.05 (equal to the pose rendering blending alpha value)-->
+        <hand_alpha_heat_map>0.05</hand_alpha_heat_map>
+        <!-- Rendering threshold. Only estimated keypoints whose score confidences are higher than this value will be rendered. Generally, a
+           * high threshold (> 0.5) will only render very clear body parts; while small thresholds (~0.1) will also output guessed and occluded
+           * keypoints, but also more false positives (i.e. wrong detections).
+           * Default is 0.2f-->
+        <hand_render_threshold>0.2</hand_render_threshold>
+    </hand_configuration>
+
+    <output_configuration>
+        <!-- Whether to display the OpenPose integrated GUI. 0: NoDisplay, 1: All (2-D and 3-D) displays
+        2: Only 2-D display, 3: Display3D
+        * Disabled bc of redundancy with the ade vision library-->
+        <display_gui>0</display_gui>
+        <!-- Whether to add some information to the frame (number of frame, number people detected, etc.) after it is saved on disk
+           * and before it is displayed and/or returned to the user.
+           * Disabled bc of redundancy with the ade vision library-->
+        <gui_verbose>false</gui_verbose>
+        <!-- Whether to display the OpenPose small integrated GUI on fullscreen mode. It can be changed by interacting with the GUI itself.
+        * Disabled bc of redundancy with the ade vision library-->
+        <full_screen>false</full_screen>
+        <!-- Pose (x, y, score) locations saving folder location.
+           * If it is empty (default), it is disabled.
+           * Select format with writeKeypointFormat.-->
+        <write_keypoint></write_keypoint>
+        <!-- Data format to save Pose (x, y, score) locations.
+           * Options: DataFormat::Json (default), DataFormat::Xml and DataFormat::Yml (equivalent to DataFormat::Yaml)
+           * JSON option only available for OpenCV >= 3.0.
+           * Default is json-->
+        <write_keypoint_format>json</write_keypoint_format>
+        <!-- Pose (x, y, score) locations saving folder location in JSON format (e.g. useful when needed JSON but using OpenCV < 3.0).
+           * If it is empty (default), it is disabled.-->
+        <write_json></write_json>
+        <!-- Pose (x, y, score) locations saving folder location in JSON COCO validation format.
+           * If it is empty (default), it is disabled.-->
+        <write_coco_json></write_coco_json>
+        <!-- Rendered image saving folder.
+           * If it is empty (default), it is disabled.-->
+        <write_images></write_images>
+        <!-- Rendered image saving folder format.
+           * Check your OpenCV version documentation for a list of compatible formats.
+           * E.g. png, jpg, etc.
+           * If writeImages is empty (default), it makes no effect.-->
+        <write_image_format></write_image_format>
+        <!-- Rendered images saving video path.
+           * Please, use *.avi format.
+           * If it is empty (default), it is disabled.-->
+        <write_video></write_video>
+        <!-- Rendered heat maps saving folder.
+           * In order to save the heatmaps, WrapperStructPose.heatMapTypes must also be filled.
+           * If it is empty (default), it is disabled.-->
+        <write_heat_maps></write_heat_maps>
+        <!-- Heat maps image saving format.
+           * Analogous to writeImagesFormat.-->
+        <write_heat_maps_format></write_heat_maps_format>
+    </output_configuration>
+</OpenPose>

@@ -1,0 +1,14 @@
+#JSGF V1.0;
+grammar jsgf.demo_golfcart;
+
+public <utterance> = [<ap>] [<self>] (<c> | <q> | <s>) | <ack>;
+
+<self> = transport;
+<unit> = victim;
+<noun> = goals | supplies;
+<point> = alpha | beta;
+<ap> = yes;
+<ack> = ok;
+<c> = cancel <noun> | deliver <noun> to <unit> | go to <point>;
+<q> = are you at <point> yet | where are you going;
+<s> = <unit> is going to <point>;

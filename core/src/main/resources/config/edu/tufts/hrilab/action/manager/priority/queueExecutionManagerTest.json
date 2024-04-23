@@ -1,0 +1,68 @@
+{
+  "default": {
+    "priority": 1,
+    "priorityTier": "NORMAL"
+  },
+
+  "updateSettings": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+
+  "handled": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "listen": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "endFreeze": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "freeze": {
+    "priority": 9999,
+    "priorityTier": "URGENT"
+  },
+  "cancelGoalInQueue": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelGoalInQueueIndex": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "suspendGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelCurrentGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "suspendCurrentGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeCurrentGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "changeLearningExecution": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "updateActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  }
+}

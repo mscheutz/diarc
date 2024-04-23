@@ -1,0 +1,21 @@
+#JSGF V1.0;
+grammar jsgf.demo_05_17_09;
+
+public <frame> = <s>;
+
+<s> = [(okay | and)] [(um | ah)] (<action> | <info> | <q>);
+
+<action> = keep <np> off | report <place> | proceed | go to <place> | try to <action> | cancel <action> | get to <place>;
+
+<info> = you have [(um | ah)] <time> left to <action> | here are <np> | reporting <place> has priority;
+
+<q> = what are <np> | what is <np> | what are you doing;
+
+<np> = [<det>] [(um | ah)] <noun>;
+
+<det> = your | the;
+
+<place> = the end of the hallway | the locations of wounded [people];
+<noun> = goal | orders | lights | instructions;
+
+<time> = one minute | two minutes;

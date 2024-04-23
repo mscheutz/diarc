@@ -1,0 +1,32 @@
+#JSGF V1.0;
+grammar jsgf.exploration;
+
+public <main> = [rudy] <xmit> | [rudy] <stop> | [rudy] <act_cmd> | [rudy] <reading> | <num>;
+
+<xmit> = transmit | prepare transmission | prepare to transmit;
+
+<stop> = stop | halt;
+
+<act_cmd> = <move_cmd> | <turn_cmd>;
+
+<move_cmd> = go <move_dir> | move <move_dir> | move forward <move_dist> | go <move_dest>;
+
+<move_dir> = forward | straight | left | right;
+
+<move_dist> = one meter | <num> meters | one centimeter | <num> centimeters;
+
+<move_dest> = home;
+
+<turn_cmd> = turn <turn_dir> [<num> degrees] | turn around;
+
+<turn_dir> = left | right;
+
+<reading> = take a reading | get a reading | take reading | get reading;
+
+<num> = [<digit> hundred] [<nty>] <digit> | [<digit> hundred] <teen> | zero | none;
+
+<digit> = one | two | three | four | five | six | seven | eight | nine;
+
+<teen> = ten | eleven | twelve | thirteen | fourteen | fifteen | sixteen | seventeen | eighteen | nineteen;
+
+<nty> = twenty | thirty | forty | fifty | sixty | seventy | eighty | ninety;

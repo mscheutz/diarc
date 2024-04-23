@@ -1,0 +1,276 @@
+{
+  "default": {
+    "priority": 1,
+    "priorityTier": "NORMAL"
+  },
+
+  "endFreeze": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "freeze": {
+    "priority": 9999,
+    "priorityTier": "URGENT"
+  },
+  "endFreezeTemi": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "freezeTemi": {
+    "priority": 9999,
+    "priorityTier": "URGENT"
+  },
+
+  "handled": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "listen": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelGoalInQueue": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelGoalInQueueIndex": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "suspendGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelCurrentGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "supersedeSystemGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "changeLearningExecution": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "updateActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "suspendDefineItem": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeDefineItem": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "planned": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "orderMeal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "acknowledge": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "stopMoving": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "interruptSaveLocation": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "sendPositionUpdate": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "stopListening": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "interruptFollowBlocking": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "interruptGoToLocation": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "uploadMap": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "sendLogs": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "requestPermissions": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "restartApp": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "disableButtons": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "enableButtons": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "showTopBar": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "enableObstacleNotifications": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "disableObstacleNotifications": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "enablePrivacyMode": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "disablePrivacyMode": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "enableVoiceAck": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "disableVoiceAck": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setEscortWaitAttempts": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setEscortWaitDuration": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setBatteryAbortLevel": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setBatteryWarnLevel": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setBatteryChargedLevel": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "enableKidsMode": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "disableKidsMode": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "displayFace": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "downloadVideos": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "interruptCheckIn": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "enableKioskMode": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "disableKioskMode": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setKioskTimeout": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setKioskLocation": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setDisplayAppointmentsSince": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setAllowAppointmentsSince": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setLateAppointmentMessage": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setDisplayAppointmentsUntil": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setAllowAppointmentsUntil": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setEarlyAppointmentMessage": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setSuccessfulCheckInMessage": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setBirthdayMessageRange": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setBirthdayMessage": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setAppointmentLoadErrorMessage": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setAppointmentListEmptyMessage": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setCheckInHeaderMessage": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setStorageArea": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  }
+}

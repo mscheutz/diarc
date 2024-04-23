@@ -1,0 +1,165 @@
+{
+  "testName" : "permissionsTest",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "hello ravenna", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "stand(dempster)", "190" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "190", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "move(dempster,back)", "193" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "193", "FAILED" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not move back because I do not have rear Sensors", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not know area behind me is safe because I do not trust you", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "trusted(ravenna)", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "trusted(ravenna)", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "propertyOf(behind(area,dempster),safe)", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "propertyOf(behind(area,dempster),safe)", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "move(dempster,back)", "209" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "cancelGoal(dempster)", "294" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "294", "SUCCEEDED" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "209", "CANCELED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "forgetThat(dempster,ravenna,propertyOf(behind(area,dempster),safe))", "299" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(self:agent,propertyOf(behind(area,dempster),safe))", "null" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(dempster,propertyOf(behind(area,dempster),safe))", "null" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(shafer,propertyOf(behind(area,dempster),safe))", "null" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "299", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "forgetThat(dempster,ravenna,trusted(evan))", "304" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(self:agent,trusted(evan))", "null" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(dempster,trusted(evan))", "null" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(shafer,trusted(evan))", "null" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "304", "FAILED" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not forget That evan is trusted because that is protected Information", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "forgetThat(dempster,evan,trusted(ravenna))", "309" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(self:agent,trusted(ravenna))", "null" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(dempster,trusted(ravenna))", "null" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "believes(shafer,trusted(ravenna))", "null" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "309", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "move(dempster,back)", "314" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "314", "FAILED" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not move back because I do not have rear Sensors", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not know area behind me is safe because I do not trust you", "true" ]
+    } ]
+  } ]
+}

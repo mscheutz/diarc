@@ -1,0 +1,127 @@
+START-TEMPLATES
+
+STACK; {((C/REF)/ON)/REF; #x#o#y.stack(?ADDRESSEE,$x,$y)},
+UNSTACK; {((C/REF)/ON)/REF; #x#i#y.unstack(?ADDRESSEE,$x,$y)}
+PACK; {((C/REF)/IN)/REF; #x#i#y.pack(?ADDRESSEE,$x,$y)}
+UNPACK; {((C/REF)/IN)/REF; #x#i#y.unpack(?ADDRESSEE,$x,$y)}
+PUTLEFT; {((C/REF)/LEFTOF)/REF; #x#i#y.putleft(?ADDRESSEE,$x,$y)}
+PUTRIGHT; {((C/REF)/RIGHTOF)/REF; #x#i#y.putright(?ADDRESSEE,$x,$y)}
+REMOVE; {((C/REF)/OUTOF)/REF; #x#i#y.unpack(?ADDRESSEE,$x,$y)}
+REMOVEFROM; {((C/REF)/FROM)/REF; #x#i#y.unpack(?ADDRESSEE,$x,$y)}
+REMOVEOFF; {((C/REF)/OFFOF)/REF; #x#i#y.unstack(?ADDRESSEE,$x,$y)}
+
+END-TEMPLATES
+
+%demo specific
+setup demo; C; setupscene(?ADDRESSEE)
+
+%Kitting/delivery specific
+define new kit met; C; defineRecipe(?ADDRESSEE,medkit)
+define new kit met kit; C; defineRecipe(?ADDRESSEE,medkit)
+define new kit med kit; C; defineRecipe(?ADDRESSEE,medkit)
+define new kit; C/LIT*; #x.defineRecipe(?ADDRESSEE,$x)
+it contains; (VAL/DN)/NUM; #n#x.val(contains($n,$x))
+the container is; VAL/DN; #x.val($x)
+it uses a;  VAL/DN; #x.val($x)
+that is all; VAL; val(none)
+there are; (((VAL/AREA)/AT)/DN)/NUM; #n#d#t#a.val(observableAt($n,$d,$a))
+there is; (((VAL/AREA)/AT)/DN)/NUM; #n#d#t#a.val(observableAt($n,$d,$a))
+at; AT; at
+
+%Recovery execution
+yes; VAL; val(yes)
+no; VAL; val(no)
+
+% deliver a repair kit to alpha
+to; LOC/LOC; #x.$x
+deliver medkit; C; deliver(self:agent,medkit,movebaselocation_3)
+deliver present; C; deliver(self:agent,present,movebaselocation_2)
+deliver lunch; C; deliver(self:agent,lunch,movebaselocation_6)
+
+%%% GOAL BASED RULES
+%get [obj] on [location]
+on; (PP\REF)/REF; #x#y.on($x,$y);
+off of; (PP\REF)/REF; #x#y.not(on($x,$y))
+in; (PP\REF)/REF; #x#y.in($x,$y)
+out of; (PP\REF)/REF; #x#y.not(in($x,$y))
+left of; (PP\REF)/REF; #x#y.leftof($x,$y)
+right of; (PP\REF)/REF; #x#y.rightof($x,$y)
+from; (PP\REF)/REF; #x#y.from($x,$y)
+%
+want; C/PP; #x.goal(?ADDRESSEE, $x)
+get; C/PP; #x.goal(?ADDRESSEE, $x)
+
+%unstack; C/PP; #x.$x
+%put; C/PP; #x.goal(?ADDRESSEE, $x)
+%place; C/PP; #x.$x
+%take; C/PP; #x.$x
+
+%%%%% ACTION-BASED RULES
+on; ON; on
+in; IN; in
+left of; LEFTOF; left of
+right of; RIGHTOF; right of
+from; FROM; from
+off of; OFFOF; off of
+out of; OUTOF; out of
+
+put; STACK
+put; PACK
+put; PUTLEFT
+put; PUTRIGHT
+
+stack; STACK
+unstack; UNSTACK
+unstack; REMOVEFROM
+unstack; REMOVEOFF
+
+remove; UNSTACK
+remove; UNPACK
+remove; REMOVE
+remove; REMOVEOFF
+remove; REMOVEFROM
+take; UNSTACK
+take; REMOVE
+take; REMOVEOFF
+take; REMOVEFROM
+
+place; PACK
+place; STACK
+place; PUTLEFT
+place; PUTRIGHT
+
+%TODO: homophones for descriptors
+medical caddy; THING; medicalcaddy:physobj
+tennis ball; THING; tennisball
+computer mouse; THING; computermouse
+flower pot; THING; flowerpot
+plant; THING; flowerpot
+glass bottle; THING; glassbottle
+teddy bear; THING; teddybear
+block; THING; block
+water bottle; THING; waterbottle
+bottle; THING; waterbottle
+bandage box; THING; bandagebox:physobj
+painkiller; THING; painkiller:physobj
+antiseptic; THING; antiseptic:physobj
+tool caddy; THING; toolcaddy:physobj
+small gear; THING; smallgear:physobj
+large ear; THING; largegear:physobj
+screw; THING; screw:physobj
+
+%TODO:brad: figure out how to generate these based on the singular stem
+bandage boxes; DN; bandagebox:property
+painkillers; DN; painkiller:property
+antiseptics; DN; antiseptic:property
+medical caddies; DN; medicalcaddy:property
+screws; DN; screw:property
+large gears; DN; largegear:property
+small gear; DN; smallgear:property
+tool caddies; DN; toolcaddy:property
+
+%For human/spot handover
+ready; VAL; val(ready)
+
+describe your plan; C; describeYourPlan(?ADDRESSEE)
+
+execute your plan; VAL; val(yes)

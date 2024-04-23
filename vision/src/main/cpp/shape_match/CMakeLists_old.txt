@@ -1,0 +1,25 @@
+cmake_minimum_required (VERSION 2.6)
+
+include_directories(.)
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+include_directories(/usr/include/eigen3)
+include_directories(/home/mz/work/extern/PointMatch)
+link_directories(/home/mz/work/extern/PointMatch/BUILD)
+
+SET(BINARY_NAME anglecontext)
+add_executable(${BINARY_NAME} anglecontext.cpp)
+target_link_libraries (${BINARY_NAME} ${PCL_LIBRARIES} ${OPENCV_LIBRARIES})
+target_link_libraries (${BINARY_NAME} opencv_core opencv_imgproc opencv_highgui)
+
+SET(BINARY_NAME testshapematch)
+add_executable(${BINARY_NAME} testshapematch.cpp shapecontext.cpp)
+target_link_libraries (${BINARY_NAME} ${PCL_LIBRARIES} ${OPENCV_LIBRARIES})
+target_link_libraries (${BINARY_NAME} opencv_core opencv_imgproc opencv_highgui opencv_features2d shapecontext)
+
+SET(BINARY_NAME evalshapematch)
+add_executable(${BINARY_NAME} evalshapematch.cpp shapecontext.cpp)
+target_link_libraries (${BINARY_NAME} ${PCL_LIBRARIES} ${OPENCV_LIBRARIES})
+target_link_libraries (${BINARY_NAME} opencv_core opencv_imgproc opencv_highgui opencv_features2d shapecontext)
+

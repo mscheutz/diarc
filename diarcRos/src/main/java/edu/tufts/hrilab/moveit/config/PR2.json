@@ -1,0 +1,89 @@
+{
+  "configName": "PR2",
+  "baseLinkString": "base_link",
+  "pointingFrame": "head_mount_kinect_ir_optical_frame",
+  "maxMoveToAttempts": 5,
+  "maxNodeCheckCount": 10,
+  "graspApproachOffset": 0.22,
+  "graspContactOffset": 0.1625,
+  "armReach": 0.85,
+  "allowDisableCollisionAvoidance": true,
+  "localStaticTransforms": [
+  ],
+  "defaultGroupName": "arms",
+  "groups": [
+    {
+      "groupName": "left_arm",
+      "jointNames": [
+        "l_shoulder_pan_joint",
+        "l_shoulder_lift_joint",
+        "l_upper_arm_roll_joint",
+        "l_elbow_flex_joint",
+        "l_forearm_roll_joint",
+        "l_wrist_flex_joint",
+        "l_wrist_roll_joint"
+      ],
+      "effectorLinkName": "l_wrist_roll_link",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.pr2.PR2LeftGripper"
+    },
+    {
+      "groupName": "right_arm",
+      "jointNames": [
+        "r_shoulder_pan_joint",
+        "r_shoulder_lift_joint",
+        "r_upper_arm_roll_joint",
+        "r_elbow_flex_joint",
+        "r_forearm_roll_joint",
+        "r_wrist_flex_joint",
+        "r_wrist_roll_joint"
+      ],
+      "effectorLinkName": "r_wrist_roll_link",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.pr2.PR2RightGripper"
+    },
+    {
+      "groupName": "arms",
+      "jointNames": [
+        "l_elbow_flex_joint",
+        "l_forearm_roll_joint",
+        "l_shoulder_lift_joint",
+        "l_shoulder_pan_joint",
+        "l_upper_arm_roll_joint",
+        "l_wrist_flex_joint",
+        "l_wrist_roll_joint",
+        "r_elbow_flex_joint",
+        "r_forearm_roll_joint",
+        "r_shoulder_lift_joint",
+        "r_shoulder_pan_joint",
+        "r_upper_arm_roll_joint",
+        "r_wrist_flex_joint",
+        "r_wrist_roll_joint"
+      ],
+      "effectorLinkName": "l_wrist_roll_link",
+      "gripperClassName": "edu.tufts.hrilab.manipulator.pr2.PR2BothGrippers"
+    }
+  ],
+  "poses": [
+    {
+      "poseName": "start",
+      "poseGroup": "arms",
+      "jointStates": [
+        -0.9209,
+        -0.0176,
+        0,
+        1.2906,
+        1.7589,
+        -1.0341,
+        0.8951,
+        -0.9209,
+        -0.0176,
+        0,
+        -1.2906,
+        -1.7589,
+        -1.0341,
+        -0.8951
+      ]
+    }
+  ],
+  "collisions": [
+  ]
+}

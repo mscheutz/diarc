@@ -1,0 +1,14 @@
+#JSGF V1.0;
+grammar jsgf.demo_12_12;
+
+public <s> = <q1> | <q2> | <desc>;
+
+<q1> = andy <q1p> | <q1p>;
+
+<q1p> = do you see <n> | now do you see <n> | how about now;
+
+<n> = a medkit | a red cross | a white box | one;
+
+<q2> = where is it;
+
+<desc> = it is <n> with <n> on it;

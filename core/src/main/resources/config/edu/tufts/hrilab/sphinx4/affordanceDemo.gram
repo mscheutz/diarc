@@ -1,0 +1,4 @@
+#JSGF V1.0;
+grammar affordanceDemo.gram;
+
+public <s> = i want to cut a tomato | bring me something to cut with | thank you | i want you to cut a tomato | grab something to cut with | okay good job | i will demonstrate how to cut a tomato | i want to watch you cut a tomato | now you will cut a tomato | to use an object for cutting grasp it by the handle | to hand over an object grasp it by the blade;

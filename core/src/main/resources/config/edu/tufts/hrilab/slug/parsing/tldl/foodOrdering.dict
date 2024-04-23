@@ -1,0 +1,123 @@
+robot one; AGENT; mobileyumi:mobileyumi
+robot two; AGENT; gofa:gofa
+robot three; AGENT; yumi:yumi
+
+robot 1; AGENT; mobileyumi:mobileyumi
+robot 2; AGENT; gofa:gofa
+robot 3; AGENT; yumi:yumi
+
+mobileyumi; AGENT; mobileyumi:mobileyumi
+gofa; AGENT; gofa:gofa
+yumi; AGENT; yumi:yumi
+
+right arm; AGENT; right:yumi
+left arm; AGENT; left:yumi
+
+%%Define new meal
+init; C; init(?ADDRESSEE)
+
+%
+define new item by analogy; C/LIT*; #x.defineItemByAnalogy(?ADDRESSEE,$x)
+define new ingredient; C/LIT* ; #x.defineIngredient(?ADDRESSEE,$x)
+define new item; C/LIT* ; #x.defineItem(?ADDRESSEE,$x)
+that is how you prepare item; C/DN; #x.endItemDefinition(?ADDRESSEE,$x)
+that is how you prepare a; C/DN; #x.endItemDefinition(?ADDRESSEE,$x)
+modify item; C/DN, C/DESC; #x.modifyPrepare(?ADDRESSEE,$x)
+
+options; VAL\NUM; #o.val($o);
+option; VAL\NUM; #o.val($o);
+option collection; VAL/CONJ; #x.option($x)
+option; VAL/REF; #x.option($x)
+the type of; VAL/REF; #x.option($x)
+
+sauce; VAL\REF; #x.option($x)
+
+type; VAL/LIT*; #t.type($t)
+topping; VAL; type(topping)
+
+define new meal; C ; defineMeal(?ADDRESSEE)
+item; VAL/DESC; #x.item($x)
+
+detect; VAL/LIT*; #j.job($j)
+
+remove ; VAL/REF; #x.mod(removeLocalVar($x),none())
+
+%%
+
+%teach you how to prepare; (S\AGENT)/REF; #m#a.teach($a,?ADDRESSEE,to(prepare($m)))
+%teach you how to prepare a; (S\AGENT)/REF; #m#a.teach($a,?ADDRESSEE,to(prepare($m)))
+%teach you how to prepare an; (S\AGENT)/REF; #m#a.teach($a,?ADDRESSEE,to(prepare($m)))
+
+%that is how you prepare; S/REF; #m.endTeaching(?ADDRESSEE,prepare($m))
+
+prepare; C/DN, C/DESC; #x.prepare(?ADDRESSEE,$x)
+prepare; (C/WITH)/DN, (C/WITH)/DESC ; #x#w.prepare(?ADDRESSEE,$x,$w)
+with; WITH/C; #x.$x
+with; WITH/CONJ; #v.options($v)
+with; WITH/REF; #v.options($v)
+
+%see get and on rules in poc4.dict
+to; (C/REF)\REF; #x#y.getTo(?ADDRESSEE,$x,$y)
+
+get all the; ((C/REF)/ON)/REF; #t#o#l.getAllOn(?ADDRESSEE,$t,$l)
+get all of the; ((C/REF)/ON)/REF; #t#o#l.getAllOn(?ADDRESSEE,$t,$l)
+
+a collection of; REF/REF; #x.$x
+
+on; ON; on
+
+%TODO:brad how do we limit this to bun
+split; C/REF; #x.splitBun(?ADDRESSEE,$x)
+
+drizzle on; (C/REF)\AGENT; #a#x.drizzle($a,$x)
+
+and; (CONJ\REF)/REF, (CONJ\REF)/CONJ, (CONJ\CONJ)/REF, (CONJ\CONJ)/CONJ  ; #x#y.and($y,$x)
+
+%these two definitions of cook don't work simultaneously for scenarios with multiple cook definitions
+%cook; (((C/INTERVAL)/DURATION)/REF)\AGENT; #a#r#d#i.cook($a,$r,$d,$i)
+cook; ((C/DURATION)/REF)\AGENT; #a#r#d.cook($a,$r,$d)
+saute; ((C/DURATION)/REF)\AGENT; #a#r#d.saute($a,$r,$d)
+fry; ((C/DURATION)/REF)\AGENT; #a#r#d.fry($a,$r,$d)
+fried; ((C/DURATION)/REF)\AGENT; #a#r#d.fry($a,$r,$d)
+for; DURATION/VAL; #x.$x
+flipping every; INTERVAL/VAL; #x.$x
+
+minute; VAL\NUM ; #x.val($x,minutes)
+minutes; VAL\NUM ; #x.val($x,minutes)
+second; VAL\NUM ; #x.val($x,seconds)
+seconds; VAL\NUM ; #x.val($x,seconds)
+
+order meal; C/NUM; #x.orderMeal(?ADDRESSEE,$x)
+order meal; (C/WITH)/NUM; #x#y.orderMeal(?ADDRESSEE,$x,$y)
+
+
+suspend current task; C ; freeze(?ADDRESSEE)
+resume previous task; C ; endFreeze(?ADDRESSEE)
+cancel current task; C ; cancelCurrentGoal(?ADDRESSEE)
+remove task from queue at position; C/LIT* ; #x.cancelGoalInQueueIndex(?ADDRESSEE,$x)
+now; C/C; #x.supersedeSystemGoal(?ADDRESSEE,$x)
+right now; C\C; #x.supersedeSystemGoal(?ADDRESSEE,$x)
+
+save this location as; (C/LIT*)\AGENT; #a#x.saveLocation($a,$x)
+save this pose as; (C/LIT*)\AGENT; #a#x.savePose($a,$x)
+no pose; VAL; pose(none)
+
+no more items are included; VAL; item(none)
+no more differences; VAL; mod(none,none)
+
+none; VAL; val(none)
+%TODO:brad: dynamically asser this?
+drink; VAL/REF; #x.val($x)
+
+stop following; VAL; val(none)
+
+set default delivery area to; C/REF; #p.setDeliveryPose(?ADDRESSEE, $p)
+
+here it is; VAL; got(ingredient)
+grasp it here; VAL; grasp(here)
+
+%%%%temporary stuff for pete
+finalize; VAL; response(none)
+setup; C; setupYumi(?ADDRESSEE)
+righttest; C; rightTest(?ADDRESSEE)
+lefttest; C; leftTest(?ADDRESSEE)

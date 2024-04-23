@@ -1,0 +1,327 @@
+
+Noncommercial License Agreement
+
+This Noncommercial License Agreement (Agreement) is a legal agreement
+between you or an entity that you are representing ("you," "your") and
+Thinking Robots, Inc., a Massachusetts corporation ("TR") and Trustees
+of Tufts College, aka Tufts University, a Massachusetts educational
+institution (hereafter "Tufts"), jointly referred to hereafter as
+"we", "our" or "us". This Agreement governs your use of the Platform
+(as defined below) that we make available to you. If you are accessing
+the Platform on behalf of an entity (for example, a company,
+non-profit entity, university, or other business or organization), you
+represent to us that you have authority to bind that entity to these
+terms, and that entity accepts these terms, and the term "you" or
+"your" will apply to such entity. By downloading, using, modifying, or
+otherwise accessing the Platform, whether through a repository like
+GitHub or through any other means, you agree to be bound by this
+Agreement.
+
+Purpose and Philosophy: The goal of this Agreement is to enable you to
+use the software that we make available to you to experiment, conduct
+research, and evaluate the feasibility of developing your own
+commercial products that may use our software. This agreement gives
+you a license to use our software for noncommercial purposes only. We
+ask that you contribute your modifications to the software back to the
+project so other developers can benefit from your progress. If you
+want to use our software for commercial purposes, please contact us
+and we would be happy to help you join our commercial license
+program. To encourage community adoption and experimentation with our
+software, we do not charge any license fees under this Agreement. We
+also allow you to retain ownership of any IP rights that you produce
+under this Agreement by modifying or improving our software, except
+that we ask for a license back to ensure that we and the broader
+developer community can continue to improve and use our
+software. Thank you for joining our developer community, and we look
+forward to a long and happy relationship!
+
+1. Definitions:
+
+  1.1 "Platform" means any software and content that we make available
+to you, in the exact form made available by us to you. The Platform
+may include software that operates on a local computer, software
+deployed within a system or device (e.g., robot, autonomous vehicle,
+drone, etc.), cloud-based software, application programming interfaces
+(APIs), libraries, documentation, test data, and other content made
+available by us. The Platform may be made available to you in source
+code (e.g., software that you can review and modify) or in object code
+(e.g., libraries and other executable modules). The Platform may be
+owned by us and/or by third parties. For example, the Platform may
+include contributions made by other developers, and such contributions
+remain owned by the respective developers while we include them and
+license them to you under this Agreement as part of the Platform (see
+Appendix A for a list of code/ libraries used in the work, names of
+the providers, and locations of or links to the licenses). All
+modifications or additions that we make to Platform and that we make
+available to you over time will be automatically considered part of
+the Platform. You are responsible for complying with all terms and
+conditions of any licenses related to any code/ library contributions,
+including those listed in Appendix A.
+
+  1.2 "IP Rights" means any and all intellectual property rights
+anywhere in the world, including all patents and patent applications
+(Patents), copyrights and all other similar rights in software,
+documentation, and other works of authorship (Copyrights), trade
+secrets rights and other confidentiality rights (Trade Secrets),
+rights in trade names, logos, common law trademarks and service marks,
+trademark and service mark registrations (Trademarks), moral and
+economic rights of authors and inventors, and any other similar,
+corresponding or equivalent rights to any of the foregoing anywhere in
+the world, and including all applications, registrations,
+publications, and grants.
+
+2. License. We grant to you a nonexclusive, nontransferable and
+nonassignable, worldwide license, without the right to sublicense,
+during the Term of this Agreement, (a) to download and use an
+unlimited number of copies of the Platform on an unlimited number of
+computers used solely for noncommercial purposes, (b) to use the
+Platform (including all portions that we make available to you in
+source code or object code format) for noncommercial purposes, and (c)
+to modify (i.e., produce derivative works of) for noncommercial
+purposes the portions of the Platform that we make available to you in
+source code format. For purposes of this Agreement, "noncommercial"
+means that you can use the Platform to conduct research, experiment,
+evaluate how your products work with the Platform, for pedagogical
+uses, and to otherwise use the Platform for lawful applications and
+purposes that do not generate revenue.
+
+3. Ownership.  Except as expressly licensed to you in this Agreement,
+Tufts and TR jointly retain all right, title and interest in and to
+the Platform.
+
+4. Copyright.  All title and copyrights in and to the Platform are
+owned by Tufts and TR:
+
+  Copyright 2024, Thinking Robots, Inc. and Tufts University
+
+5. Other Rights, Obligations and Limitations.
+
+	a. You represent and warrant to us that you will (i) use the
+	   Platform only within the scope of the license in Section 2
+	   above, and in compliance with all applicable laws and
+	   regulations, and (ii) you will not attempt to reverse
+	   engineer, disassemble or decompile any portion of the
+	   Platform that we make available to you in object code or
+	   executable code, except and only to the extent that such
+	   activity is expressly permitted by applicable law,
+	   notwithstanding this limitation.
+
+        b. You may not rent or lease the Platform.
+
+        c. Use of the Platform for any commercial purposes is strictly
+           prohibited. If you would like to use the Platform for
+           commercial purposes (i.e., to generate revenue), please
+           contact TR at the following address for more information:
+
+	     Thinking Robots, Inc.
+	     12 Channel Street, STE 202
+	     Boston, MA 02210-2399 USA
+	     info@thinkingrobots.ai
+	     Attn: Commercial License Requests
+
+	d. The Platform is provided to you by us without any
+	   obligation by Tufts or TR to provide accompanying services
+	   or support.
+
+6. No License Fees. You are not required to pay any fees for the
+license granted to you under this Agreement.
+
+7. Your Modifications. If you make any modification or addition to the
+Platform (e.g., if you improve any software that we make available to
+you under the Platform) (such modification or addition is denoted a
+"Modification"), you will own that Modification together with all IP
+Rights that you produce and that are embedded in that Modification
+("Your New IP") (for clarification, each Modification and all of Your
+New IP exclude the Platform and the IP Rights relating to the
+Platform, which are and will remain owned by us or by our licensors,
+as the case may be). When you produce any Modification, (a) you will
+contribute the Modification back to the Platform repository within a
+reasonable time using the contribution process established for the
+respective hosting platform (e.g., you will use the GitHub
+contribution process if the Platform is hosted on GitHub), and (b) you
+agree to automatically grant, and you hereby grant to us, a
+nonexclusive, worldwide, perpetual and irrevocable, royalty free and
+fully paid up license, with the right to sublicense, in the course of
+our business, your Modification and all of your IP Rights that relate
+to the Modification.
+
+8. IP Rights. As described in Section 4 above, you will own each
+Modification that you make to the Platform, and all of Your New IP
+that you produce under this Agreement. We will own the Platform and
+all modifications and additions to the Platform and all IP Rights that
+relate to the Platform, all modifications and additions to the
+Platform made by us and/or by any other party, except that (a) with
+respect to any portions of the Platform that we license from third
+parties, such third parties will own the respective portions and
+related IP Rights, and (b) you will own all Modifications and all of
+Your New IP as provided in Section 7 above. Except as expressly
+provided in this Agreement, neither we, nor you grant any license or
+right, by implication, statute, inducement, estoppel or otherwise, to
+each other or to any other party, and each party hereby reserves all
+of its rights other than the rights explicitly granted in this
+Agreement.
+
+9. No Warranties. EXCEPT AS OTHERWISE EXPRESSLY PROVIDED IN THIS
+AGREEMENT, (A) NEITHER PARTY MAKES ANY WARRANTIES OR REPRESENTATIONS
+IN CONNECTION WITH THIS AGREEMENT AND/OR THE PLATFORM, AND (B) EACH
+PARTY EXPRESSLY DISCLAIMS ALL IMPLIED WARRANTIES, INCLUDING THE
+IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NON-INFRINGEMENT. You assume the entire risk of using the
+Platform.
+
+10. Limitations. Notwithstanding anything else, neither we nor any of
+its licensors or other business affiliates will be liable to you or to
+any other party in connection with this Agreement and/or the Platform
+(a) for any consequential, incidental, indirect, exemplary, special,
+or other similar damages, even if we have been advised of the
+possibility of such damages and/or (b) for an amount in excess of US
+$100.00, regardless of whether any claim, liability, loss or action is
+based on contract, tort, indemnification, or any other legal theory.
+
+11. Term and Termination. This Agreement becomes effective when you
+first download, use, modify, or otherwise access the Platform, and
+remains in effect until the Agreement is terminated as follows (the "
+Term"): (a) you may terminate this Agreement at any time by stopping
+use of the Platform, and without the need to notify us of such
+termination, or (b) we may terminate this Agreement at any time by
+providing at least 30-days prior written notice to you. We may provide
+such termination notice to you either by contacting you directly
+electronically at an email address that we have for you, or by posting
+a notice of termination in or around the repository or platform
+through which we made the Platform available to you. If you breach
+this Agreement, this Agreement will automatically terminate, unless
+you and we agree otherwise at that time. Upon any termination of this
+Agreement for any reason, you will stop using the Platform and you
+will delete all copies of any portion of the Platform in your
+possession at that time. Upon any termination of this Agreement, all
+Sections of this Agreement other than Section 2 (License) will
+survive.
+
+12. General. This Agreement will be governed by the laws of
+the Commonwealth of Massachusetts without reference to conflict of
+laws principles. In the event of any dispute arising from this
+Agreement or from an alleged violation of its terms, we and you each
+expressly agree (a) that the exclusive jurisdiction for such dispute
+shall be in the state and federal courts located in the Commonwealth
+of Massachusetts and (b) to waive any claim that such courts lack
+appropriate jurisdiction. You agree that any violation of certain
+terms of the Agreement may cause irreparable harm to us and that we
+shall have the right to appropriate relief, including, without
+limitation, injunctive relief. WE AND YOU AGREE THAT ANY AND ALL
+DISPUTES MUST BE BROUGHT IN THE RESPECTIVE PARTY’S INDIVIDUAL CAPACITY
+AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS OR
+REPRESENTATIVE PROCEEDING. BY ENTERING INTO THIS AGREEMENT, YOU AGREE
+TO WAIVE THE RIGHT TO PARTICIPATE IN A CLASS ACTION OR LITIGATE ON A
+CLASS-WIDE BASIS.  YOU AGREE THAT YOU HAVE EXPRESSLY AND KNOWINGLY
+WAIVED THESE RIGHTS.
+
+Notwithstanding anything to the contrary, nothing in this Agreement or
+otherwise prevents us from initiating any litigation or other action
+or claim in any jurisdiction of our choosing in connection with any
+breach or violation of our IP Rights by you or by any other party, or
+to seek any injunction or other form of equitable relief from any
+court of competent jurisdiction to protect the Platform and the IP
+Rights relating to the Platform. You will not assign or delegate this
+Agreement or any of your rights or obligation under this Agreement, in
+whole or in part, without our express prior written approval. We have
+the right to assign this Agreement to any other party without the need
+to notify you and/or without the need to obtain any consent. This
+Agreement contains the entire agreement between you and us in
+connection with its subject matter and may not be amended or waived in
+whole or in part except through an executed agreement of both
+parties. We reserve the right to make changes to this Agreement from
+time to time, and any changes that we make to this Agreement will
+become effective 30 days after we post the updated version of this
+Agreement in the same location of the previous version.
+
+
+Appendix A
+
+Third-party code/ libraries used in the work, names of the providers,
+and locations of or links to the open source licenses.
+
+Hosted on HRI Lab Archiva	
+
+Name						     License
+---------------------------------------------------------------------------------------------
+ai.thinkingrobots.trade-1.0.0			     TR License
+ai.thinkingrobots.rwsclient-1.0			     TR License
+simplenlg.SimpleNLG-4.4.8			     Mozilla 1.1
+de.dfki.mary.marytts-lang-en-5.0		     GNU LGPL 3.0
+de.dfki.mary.marytts-server-with-deps-no-slf4j-5.0   GNU LGPL 3.0
+de.dfki.mary.voice-cmu-slt-hsmm-5.0		     GNU LGPL 3.0
+de.dfki.mary.voice-cmu-rms-hsmm-5.0		     GNU LGPL 3.0
+de.dfki.mary.emospeak-5.0			     GNU LGPL 3.0
+com.aldebaran.qimessaging-2.1.0.19-linux64	     SoftBank Copyright ?
+org.iainhull.ant.cmakeant-1.0			     Apache 2.0
+
+Hosted on MavenCentral
+
+Name						     License
+---------------------------------------------------------------------------------------------
+org.antlr:antlr4-runtime:4.13.1			     BSD-3-Clause
+com.github.pellierd:pddl4j:3.8.3		     GNU Lesser General Public License v3.0
+commons-cli:commons-cli:1.4			     Apache-2.0
+commons-io:commons-io:2.11.0			     Apache-2.0
+org.apache.commons:commons-collections4:4.4	     Apache License, Version 2.0
+org.apache.commons:commons-lang3:3.2		     Apache-2.0
+org.apache.commons:commons-math3:3.0		     Apache License, Version 2.0
+org.apache.ws.commons.util:ws-commons-util:1.0.2     The Apache Software License, Version 2.0
+com.google.code.gson:gson:2.6.2			     Apache-2.0
+com.google.guava:guava:28.2-jre			     Apache License, Version 2.0
+com.fasterxml.jackson.core:jackson-core:2.7.4	     The Apache Software License, Version 2.0
+com.fasterxml.jackson.core:jackson-annotations:2.7.4 The Apache Software License, Version 2.0
+com.fasterxml.jackson.core:jackson-databind:2.7.4    The Apache Software License, Version 2.0
+junit:junit:4.13.1				     Eclipse Public License 1.0
+org.scala-lang:scala-compiler:2.12.4		     Apache-2.0
+org.scala-lang:scala-library:2.12.4		     Apache-2.0
+org.scala-lang:scala-reflect:2.12.4		     Apache-2.0
+org.scalatest:scalatest_2.12:3.0.5		     the Apache License, ASL Version 2.0
+org.scalacheck:scalacheck_2.12:1.14.0		     BSD 3-clause
+org.scalamock:scalamock-scalatest-support_2.12:3.6.0 MIT
+org.scalamock:scalamock-core_2.12:3.6.0		     MIT
+it.unibo.alice.tuprolog:tuprolog:3.3.0		     GNU LGPL 2.1
+javax.vecmath:vecmath:1.5.2			     GPLv2 license, includes the CLASSPATH exception
+de.sciss:sphinx4-core:1.0.0			     BSD-style
+de.sciss:sphinx4-data:1.0.0			     BSD-style
+org.xerial:sqlite-jdbc:3.21.0			     The Apache Software License, Version 2.0
+org.jsoup:jsoup:1.12.1				     The MIT License
+com.intellij:forms_rt:7.0.3			     Apache License 2
+org.skyscreamer:jsonassert:1.5.1		     The Apache Software License, Version 2.0
+ch.qos.logback:logback-classic:1.4.14		     GNU Lesser General Public License, Eclipse Public License - v 1.0
+org.apache.httpcomponents.client5:httpclient5:5.1.3  Apache License, Version 2.0
+org.apache.httpcomponents.core5:httpcore5:5.1.4	     Apache License, Version 2.0
+org.springframework.boot:spring-boot-starter-websocket:3.2.2 Apache License, Version 2.0
+com.google.firebase:firebase-admin:7.1.0 	     Apache License, Version 2.0
+com.google.cloud:google-cloud-firestore:2.1.0	     Apache-2.0
+com.google.cloud:google-cloud-storage:1.113.0	     Apache-2.0
+com.google.api-client:google-api-client-gson:1.30.9  The Apache Software License, Version 2.0
+org.usb4java:usb4java:1.3.0			     MIT
+org.usb4java:libusb4java:1.3.0			     MIT
+com.knuddels:jtokkit:0.4.0			     MIT License
+io.github.cdimascio:dotenv-java:3.0.0"		     Apache License, Version 2.0
+
+
+DIARC Vision Dependencies
+
+Name			License
+---------------------------------------------------------------------------------------------
+OpenCV			3-clause BSD (4.4.0 and older) OR Apache 2 (4.5.0 and newer)
+PCL			3-clause BSD
+boost			https://www.boost.org/users/license.html
+swig			https://swig.org/legal.html
+log4cxx			Apache 2
+jsoncpp			MIT License
+realsense		Apache 2
+cuda			https://docs.nvidia.com/cuda/eula/index.html
+freenect		dual Apache v2/GPL v2 license
+v4r	
+nao			SoftBank Copyright ?
+gstreamer		LGPL
+agilegrasp		BSD
+openpose		https://github.com/CMU-Perceptual-Computing-Lab/openpose?tab=License-1-ov-file#readme
+zbar			GNU LGPL 2.1
+openni			Apache 2.0
+libusb			LGPL-2.1
+libdc1394-22		LGPL
+cmake	 		BSD 3-clause

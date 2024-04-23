@@ -1,0 +1,61 @@
+init
+-
+define new item southwest bowl
+1 option
+the type of sauce
+first get a serving box to serving area
+then get a bell pepper to the cook top
+then right arm saute the bell pepper for 20 seconds
+then get the bell pepper in the serving box
+then get a corn to the hot plate
+then right arm cook a corn for 15 seconds
+then get the corn in the serving box
+then get a carrot to the cook top
+then right arm saute the carrot for 30 seconds
+then get the carrot in the serving box
+then left arm drizzle on the sauce
+that is how you prepare a southwest bowl
+-
+prepare a southwest bowl with chipotle sauce
+-
+here it is
+-
+define new item by analogy puerto rican bowl
+southwest bowl
+replace right arm saute the carrot for 30 seconds with right arm saute the chicken for 45 seconds
+remove the bell pepper
+add get a plantain in the serving box after get the chicken in the serving box
+-
+suspend current task
+-
+now define new ingredient plantain
+pose pantry
+topping
+detect plantain
+grasp it here
+-
+resume previous task
+-
+add get a plantain in the serving box after get the chicken in the serving box
+-
+no more differences
+-
+prepare a puerto rican bowl
+-
+aioli sauce
+-
+here it is
+-
+-
+-
+-
+-
+-
+-
+-
+-
+setup
+lefttest
+righttest
+-
+finalize

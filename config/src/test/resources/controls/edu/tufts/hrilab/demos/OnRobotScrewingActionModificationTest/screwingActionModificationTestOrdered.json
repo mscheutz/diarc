@@ -1,0 +1,874 @@
+{
+  "testName" : "screwingActionModificationTestOrdered",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "init(robotone:agent)", "1706549302308" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "objectDefinition(nf32sv,0.055,0.0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "objectDefinition(m3Hole,0.075,0.0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "objectDefinition(nv30fau,0.045,0.0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "objectDefinition(deepM3Hole,0.045,0.0)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "screwDescent(m3,-0.2055)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "screwDescent(deepM3,-0.218)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "at(robotone:agent,pose_0:pose)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "cameraHeight(robotone:agent,338)", "null" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "at(robottwo:agent,pose_0:pose)", "null" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "cameraHeight(robottwo:agent,338)", "null" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "defineScrewType(robotone:agent,deepM3)", "1706549327024" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "what is its screwing length", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "what is its target torque in millinewton meters", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "at which pose can I find deepM3 screws", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "foundAt(deepM3,pose_2:pose)", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "defineItem(robotone:agent,nv30fau)", "1706549427070" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "which Cognex job is used to detect it", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "startLearningAssembleScript(robotone:agent,robotonephysobj_0:physobj)", "1706549477120" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_0:physobj", "nv30fau" ]
+    }, {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "object(robotonephysobj_0:physobj,physobj)", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goToCameraPose(robotone:agent,pose_0:pose)", "1706549502112" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "perceiveEntity(robotone:agent,robotonephysobj_0:physobj)", "1706549527120" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "getOn(robotone:agent,robotonephysobj_0:physobj,pose_1:pose)", "1706549552144" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "observeDescriptor(robotone:agent,deepM3Hole,2)", "1706549577146" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "screwIn(robotone:agent,deepM3,robotonephysobj_1:physobj)", "1706549602178" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "goToCameraPose(robotone:agent,pose_1:pose)", "1706549627195" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "screwIn(robotone:agent,deepM3,robotonephysobj_2:physobj)", "1706549652225" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "getOn(robotone:agent,robotonephysobj_0:physobj,pose_0:pose)", "1706549677025" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "moveConveyorForward(robotone:agent)", "1706549702024" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "endLearningAssembleScript(robotone:agent,robotonephysobj_0:physobj)", "1706549727042" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_0:physobj", "nv30fau" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemble(robotone:agent,robotonephysobj_0:physobj)", "1706549752063" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_0:physobj", "nv30fau" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemblenv30fau(robotone:agent,robotonephysobj_0:physobj)", "1706549752072" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_0:physobj", "nv30fau" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "nvDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_0:physobj", "nv30fau" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "nvDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDeep", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_4:physobj", "deepM3Hole" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDeep", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.086, x=-217.0, y=-450.56, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robotonephysobj_5:physobj", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robotonephysobj_4:physobj", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_3:physobj", "deepM3Hole" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDeep", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.086, x=-217.0, y=-450.56, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robotonephysobj_6:physobj", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robotonephysobj_3:physobj", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_0:physobj", "nv30fau" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "nvDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "at(robotonephysobj_0:physobj,Y)", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemble(robottwo:agent,robottwophysobj_0:physobj)", "1706549777078" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_0:physobj", "nv30fau" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemblenv30fau(robottwo:agent,robottwophysobj_0:physobj)", "1706549777086" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_0:physobj", "nv30fau" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "nvDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_0:physobj", "nv30fau" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "nvDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDeep", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_2:physobj", "deepM3Hole" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDeep", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.086, x=-217.0, y=-450.56, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robottwophysobj_3:physobj", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robottwophysobj_2:physobj", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_1:physobj", "deepM3Hole" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeDeep", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.086, x=-217.0, y=-450.56, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robottwophysobj_4:physobj", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robottwophysobj_1:physobj", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_0:physobj", "nv30fau" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "nvDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "at(robottwophysobj_0:physobj,Y)", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "defineScrewType(robottwo:agent,m3)", "1706549802073" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "what is its screwing length", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "what is its target torque in millinewton meters", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "at which pose can I find m3 screws", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "foundAt(m3,pose_2:pose)", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "defineItem(robottwo:agent,nf32sv)", "1706549902131" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "which Cognex job is used to detect it", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "modifyAssemble(robottwo:agent,assemble(robottwo:agent,robottwophysobj_5:physobj),assemble(robottwo:agent,robottwophysobj_6:physobj))", "1706549952180" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_5:physobj", "nf32sv" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_6:physobj", "nv30fau" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "what are the differences", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay are there any more differences", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay are there any more differences", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay are there any more differences", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemble(robotone:agent,robotonephysobj_7:physobj)", "1706550077058" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_7:physobj", "nf32sv" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemblenf32sv(robotone:agent,robotonephysobj_7:physobj)", "1706550077060" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_7:physobj", "nf32sv" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "cbDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_7:physobj", "nf32sv" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "cbDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeM3", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_9:physobj", "m3Hole" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeM3", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.086, x=-217.0, y=-450.56, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robotonephysobj_10:physobj", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robotonephysobj_9:physobj", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_8:physobj", "m3Hole" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeM3", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.086, x=-217.0, y=-450.56, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robotonephysobj_11:physobj", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robotonephysobj_8:physobj", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robotonephysobj_7:physobj", "nf32sv" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "cbDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "at(robotonephysobj_7:physobj,Y)", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemble(robottwo:agent,robottwophysobj_5:physobj)", "1706550102089" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_5:physobj", "nf32sv" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "assemblenf32sv(robottwo:agent,robottwophysobj_5:physobj)", "1706550102092" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_5:physobj", "nf32sv" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "cbDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_5:physobj", "nf32sv" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "cbDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeM3", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_10:physobj", "m3Hole" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeM3", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.086, x=-217.0, y=-450.56, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robottwophysobj_11:physobj", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robottwophysobj_10:physobj", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_9:physobj", "m3Hole" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "holeM3", "[CognexResult{xOff=-5.8E-4, xAbs=-5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}, CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.086, x=-217.0, y=-450.56, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robottwophysobj_12:physobj", "true" ]
+    }, {
+      "serviceName" : "moveToCognexTarget",
+      "serviceArgs" : [ "robottwophysobj_9:physobj", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=-0.013, x=-10.0, y=-400.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "getDescriptorForID",
+      "serviceArgs" : [ "robottwophysobj_5:physobj", "nf32sv" ]
+    }, {
+      "serviceName" : "getCameraData",
+      "serviceArgs" : [ "cbDet", "[CognexResult{xOff=5.8E-4, xAbs=5.8E-4, yOff=0.0033900000000000002, yAbs=0.0033900000000000002, theta=-0.0017453292519943296, confidenceScore=63.475, COGNEX_Y_IND=1, COGNEX_X_IND=0, COGNEX_T_IND=5}]" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "closeGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "openGripper",
+      "serviceArgs" : [ "true" ]
+    }, {
+      "serviceName" : "goToPose",
+      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+    }, {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "at(robottwophysobj_5:physobj,Y)", "null" ]
+    } ]
+  } ]
+}

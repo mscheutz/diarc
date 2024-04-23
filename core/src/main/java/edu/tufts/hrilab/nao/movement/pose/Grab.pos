@@ -1,0 +1,10 @@
+LShoulderPitch : 0.3f, 1.0f, true
+LShoulderRoll : -0.2f, 1.0f, true
+LElbowYaw : -0.1f, 1.5f, true
+LElbowRoll : -0.6f, 1.5f, true
+LWristYaw : -1.1f, 1.5f, true
+RShoulderPitch : 0.3f, 1.0f, true
+RShoulderRoll : 0.2f, 1.0f, true
+RElbowYaw : 0.1f, 1.5f, true
+RElbowRoll : 0.6f, 1.5f, true
+RWristYaw : 1.1f, 1.5f, true

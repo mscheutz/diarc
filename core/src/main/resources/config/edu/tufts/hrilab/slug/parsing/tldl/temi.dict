@@ -1,0 +1,560 @@
+START-TEMPLATES
+
+LOCATION;{LOC; ?PH ; DEFINITE}, {DN; ?PH}
+
+%intransitive
+%VERBI; {C\AGENT ; #x.?PH()}, {C ; ?PH()}
+VERBI; {C\AGENT ; #x.?PH($x)}, {C ; ?PH(?ADDRESSEE)}
+
+%ditransitive verb
+%VERBDT; {((C/REF)/AGENT)\AGENT ; #x#y#z.?PH($y,$z)}, {((S/PP)/REF)\AGENT ; #x#y#z.?PH($y,$z)}, {(C/REF)/AGENT ; #x#y.?PH($x,$y)}
+VERBDT; {((C/REF)/AGENT)\AGENT ; #x#y#z.?PH($x,$y,$z)}, {((S/PP)/REF)\AGENT ; #x#y#z.?PH($x,$y,$z)}, {(C/REF)/AGENT ; #x#y.?PH($x,$y)}
+
+ADDRESSABLE; {G/G, S/S, C/C, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}, {AGENT ; ?PH}
+
+
+%follow
+%only one case and it's a VERBI TODO:if we want more ways to do this add it to here
+
+%save location
+
+SAVELOCATION; {C/LIT* ; #x.saveLocation(?ADDRESSEE,$x)}
+%SAVELOCATION; {C/LIT* ; #x.mockSaveLocation(?ADDRESSEE,$x)}
+
+%go to
+%TODO:brad, do we care about the agent case?
+GOTO; {C/LOC ; #x.goToLocation(?ADDRESSEE,$x,true)} ,{(C/LOC)\AGENT ; #agent#x.goToLocation($agent,$x,true)}
+
+%escort
+%escort(destination)
+%TODO: there is no escort 1 arg? get rid of that possibility?
+%ESCORT; {C/LOC ; #x.escort(?ADDRESSEE,$x)}, {(C/LOC)/LOC ; #x#y.escort(?ADDRESSEE,$y,patient,$x)}
+ESCORT; {(C/LOC)/LOC ; #x#y.escort(?ADDRESSEE,$y,patient,$x)}
+ESCORTTO; {C/LOC ; #x.escort(?ADDRESSEE,$x,patient)}
+%fetch
+
+FETCH; {C/LIT* ; #x.fetch(?ADDRESSEE,$x)}
+
+%play video
+
+PLAYVID; {C/VID ; #x.playVideo(?ADDRESSEE,$x)}
+
+%say message
+
+%display message
+
+%greet
+GREET; {C/LOC ; #x.greet(?ADDRESSEE,$x)}
+END-TEMPLATES
+%%%%%%%%%%%  A  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+add; ((C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,insert($x),$t)
+add; ((C/PP)/C)\ADV; #w#x#y.modifyAction($w,insert($x),$y)
+
+after; PP/C; #x.after($x)
+
+after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction($a,insert($e),$t)
+
+an; REF/RN ; #x.$x ; INDEFINITE
+an; DESC/DN ; #x.$x
+
+%you are holding the object
+are; ((EFFECT/REF)/V)\AGENT ; #a#v#r.$v($a,$r)
+
+%%%%%%%%%%%  B  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+backward; DIR; back
+
+%before; (C\C)/C; #x#y.before($y,$x)
+before; PP/C; #x.before($x)
+
+
+bring; VERBDT
+
+but; ADV\ADV; #x.$x
+
+bye; G, G[good] ; bye
+
+%%%%%%%%%%%  C  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%what is the probability that you can X
+the probability that ; (QUERYABLE/ MODAL)/AGENT; #a#m.probabilityOf($a,$m)
+
+what is; Q / QUERYABLE; #x.$x
+what is; (Q / FOR) / (QUERYABLE/FOR); #x.$x
+
+can; MODAL / C ; #x.$x
+could; MODAL / C ; #x.$x
+
+can; (Q / C) / AGENT ; #x #y.capableOf($x,$y)
+
+%catch; (C/REF)\AGENT ; #x#y.catch($x,$y)
+catch; C/AGENT ; #x.catch($x)
+
+could; (Q / C) / AGENT ; #x #y.capableOf($x,$y)
+
+%commX; AGENT ; commX
+
+condition ; CONDITIONTYPE\CONDITIONTYPEPREFIX ; #x.condition($x)
+%%%%%%%%%%%  D  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+describe how; C/INF; #i.describe(how($i))
+
+%"do you trust me"
+do; Q/ C; #x.$x
+
+%do the flossing demo; C/LOC ; #l.doTheFlossingDemo(?ADDRESSEE,$l)
+%do the flossing demo; (C\AGENT)/LOC ; #l#z.doTheFlossingDemo(#z,$l)
+%
+%do the dolphin demo; C/LOC ; #l.doTheDolphinDemo(?ADDRESSEE,$l)
+%do the dolphin demo; (C\AGENT)/LOC ; #l#z.doTheDolphinDemo(#z,$l)
+
+
+don't; ((C/PP)/C)\ADV; #w#x#y.modifyAction($w,remove($x),$y)
+
+
+%%%%%%%%%%%  E  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+effect ; EFFECTTYPE\EFFECTTYPEPREFIX ; #x.effect($x)
+
+evening; G[good] ; evening
+
+execute while learning; C ; changeLearningExecution(execute)
+
+%%%%%%%%%%%  F  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+failure; EFFECTTYPEPREFIX; failure
+
+first; C/C ; #x. $x
+
+%for; FOR/AGENT; #x. $x
+for; FOR; For
+
+forward; DIR; forward
+
+forget how to; C/C; #x.forgetHow($x)
+forget that; C/S; #x.forgetThat($x)
+
+%%%%%%%%%%%  G  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+goal; QUERYABLE; goal
+
+good; G / G[good]; # x. good_$x
+
+%%%%%%%%%%%  H  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+hi; G ; hi
+hi there; G ; hi_there
+
+hello; G ; hello
+
+how; HOW; how
+
+how would; (Q/C)/AGENT ; #a#c.how($a,$c)
+how do; (Q/C)/AGENT ; #a#c.how($a,$c)
+
+%%%%%%%%%%%  I  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+is; (S/DESC)\REF; #x#y.instanceOf($x,$y)
+%is; (S / DESC) \ REF; # x #y. definitionOf($x,$y)
+
+is; (((S / NP)  / OF) / COMPOSED)\ REF; #x#c#o#y.composed$o($x,$y)
+is; (S / PROP) \ REF; # x #z. propertyOf($x,$z)
+is; (S /DESC)\REF[ACT]  ; #x #y.instanceOf($x,$y)
+%%%%%%%%%%% not changing not(is()) stuff to prop
+is; (S / DESC[not]) \ REF ; # x #y. notDefinitionOf($x,$y)
+is; (S / PROP[not]) \ REF; # x #z. notPropertyOf($x,$z)
+is; (S/VP[how])\N ; #x#y.is($x,$y)
+is; IS; is
+
+is like; (ADV/C)\C ; #x#y.like($x,$y)
+
+i; AGENT ; ?INTERACTOR
+
+in; PPadv/C; #x.$x
+
+in; LOC/LOC; #x.$x
+
+is; ((EFFECT/REF)/V)\AGENT ; #a#v#r.$v($a,$r)
+
+is trusted; S\AGENT ; #a.trusted($a)
+is a novice; S\AGENT; #a.novice($a)
+is in; (S/PLACE)\AGENT; #a#p.isIn($a,$p)
+
+it; REF ; it ; INFOCUS
+
+%%%%%%%%%%%  J  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%  K  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+know how; (C/INF)\AGENT ; #a#i.knowHow($a,$i)
+know; (C/KNOWABLE)\AGENT ; #a#k.know($a,$k)
+
+%%%%%%%%%%%  L  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+left; DIR; left
+
+left; N/N ; #x.left$x
+
+%%%%%%%%%%%  M  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction($w,insert($x),$y)
+
+me; AGENT ; ?INTERACTOR
+
+morning; G[good] ; morning
+
+%%%%%%%%%%%  N  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+need; ((S/ INF)/AGENT)\ AGENT ; #x#y#z.want($x,$y,$z)
+need; (S/ INF)\ AGENT, (S/REF)\ AGENT, ; #x#y. want($x,$y)
+needs; (S/ INF)\ AGENT, (S/REF)\ AGENT, ; #x#y. want($x,$y)
+
+night; G[good] ; night
+
+not; PROP[not] / Adj; # x. $x
+
+now; C/C, C\C, Q\Q, Q/Q ; #x. $x
+
+%%%%%%%%%%%  O  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+of ; (REF/REF)\REF ; #x#y.of($x,$y) ; MOD
+
+ok; C/C, S/S ; # x. $x
+
+overall; CONDITIONTYPEPREFIX; overall
+
+%%%%%%%%%%%  P  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%pause; VERBI ; pause
+
+please; C / C, C \ C, Pron \ Pron, S \ S ; #x. $x
+post; CONDITIONTYPEPREFIX; post
+
+pre; CONDITIONTYPEPREFIX; pre
+
+%%%%%%%%%%%  Q  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%  R  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction($a,remove($x),$t)
+remove;(C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,remove($x),$t)
+remove ; (C/C)\ADV; #w#x.modifyAction($w,remove($x),none())
+remove ; ((C/PP)/C)\ADV; #w#x#l.modifyAction($w,remove($x),$l)
+
+replace; (C/WITH)\ADV; #a#w.modifyAction($a,replace($w),none())
+replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction($a,replace($w),$l)
+replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction($a,replace($w),$l)
+replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,replace($x),$t)
+
+resume ; C; endFreezeTemi(?ADDRESSEE)
+
+robot; ADDRESSABLE; self
+
+%%%%%%%%%%%  S  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+stop; VERBI ; freezeTemi
+
+%sure; SURE; sure
+
+success; EFFECTTYPEPREFIX; success
+
+successfully; EFFECTTYPE; effect(success)
+
+%%%%%%%%%%%  T  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% I will teach you how to pass me the knife
+%teach;((S/INF)/HOW)/AGENT; #l#h#a.teach($l,$a)
+
+will; ((S/REF)/(C/REF))\AGENT, ((S/AGENT)/(C/AGENT))\AGENT, ((((S/INF)/HOW)/AGENT)/(((S/INF)/HOW)/AGENT))\AGENT, (S/S)\AGENT ; #x#y.will($x,$y)
+I'll; ((S/REF)/(C/REF)), ((S/AGENT)/(C/AGENT)), (((S/INF)/HOW)/AGENT)/(((S/INF)/HOW)/AGENT), S/S ; #y.will(?ADDRESSEE,$y)
+
+teach you how to ; S/C; #a.teach(?ADDRESSEE,to($a))
+
+%tell; ((C/INF)/AGENT)\AGENT ; #x#y#z.directAddress($x,tell($y,$z))
+tell; (C/INF)/AGENT ; #x#y.tell($x,$y)
+
+thank you; G ; thank_you
+thanks ; G ; thank_you
+
+%that; REF ; ACTIVATED
+%that; REF/RN ; #x.$x ; FAMILIAR
+%that is how you
+%that; (((S/C)/AGENT)/HOW)/IS ; #i#h#a#c.endTeaching($a,$c)
+that is how; (S/C)/AGENT ; #a#c.endTeaching($a,$c)
+
+%the; REF/RN ; #x.$x ; DEFINITE
+
+then; C/C; #x.$x
+
+%this; REF ; ACTIVATED
+%this; REF/RN ; #x.$x ; REFACTIVATED
+
+%to; TO; to
+%%TODO:brad: what is the to for, do we need it?
+%to; PPadv/C; #x.$x
+%to; INF/C; #x.to($x)
+
+toward; TDIR; toward
+
+%%tust me
+trust; (C/AGENT)\AGENT ; #x#y.trust($x,$y)
+trust; C/AGENT ; #x.trust($x)}
+trust; (Q \ WHO)\AGENT; #x#y.trust($x,$y)
+
+%%%%%%%%%%%  U  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+up; UP; Up
+up; DIR; up
+
+%%%%%%%%%%%  V  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%  W  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+want; (S/ INF)\ AGENT, (S/REF)\ AGENT, ; #x#y. want($x,$y)
+want; ((S/ INF)/AGENT)\ AGENT ; #x#y#z.want($x,$y,$z)
+
+%what are your goals, what are shafer's goals
+what are; (Q/QUERYABLE)/AGENT; #a#q.whatAre($a,$q)
+
+what time is it; Q; timeIs(WHAT)
+what time it is; KNOWABLE; currentTime
+
+who do; WHO; WHO
+
+%still not sure how to do the general rule for this
+%will; ((S/REF)/(C/REF))\AGENT, ((S/AGENT)/(C/AGENT))\AGENT, ((((S/INF)/HOW)/AGENT)/(((S/INF)/HOW)/AGENT))\AGENT, (S/S)\AGENT ; #x#y.will($x,$y)
+
+%with; PP/C; #x.with($x)
+with; (WITH/C)\C; #x#y.with($y,$x)
+
+% dance with shafer
+with; AGENT/AGENT ; #x.$x
+
+without ; (C/C)\ADV; #w#x.modifyAction($w,remove($x),none())
+without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction($w,remove($x),$l)
+
+%%%%%%%%%%%  X  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%  Y  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+you; AGENT; ?ADDRESSEE
+
+your; AGENT; ?ADDRESSEE
+
+your; NP[your] / N ; # x. $x
+
+%%%%%%%%%%%  Z  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%% hacks
+
+%Temi stuff
+%homebase; LOCATION
+
+temi; ADDRESSABLE ; self
+
+the; LOC/LOC; #x.$x
+location; LOC/LOC; #x.$x
+
+
+%follow
+%follow me; VERBI  ; followMe
+follow me; VERBI  ; followMeBlocking
+
+%stop following me; VERBI; stopFollowing
+stop following me; VERBI; interruptFollowBlocking
+
+%save location
+
+this location is; SAVELOCATION
+this location is the; SAVELOCATION
+this location is location; SAVELOCATION
+
+save this location as; SAVELOCATION
+save this location as the; SAVELOCATION
+save this location as location; SAVELOCATION
+
+%delete location
+%TODO:brad:add a template if we support more ways of saying this
+delete location; C/LOC ; #x.deleteLocation(?ADDRESSEE,$x)
+
+%go to
+%TODO:brad add numeral 2 here to correct for asr issues?
+go; GOTO
+come; GOTO
+%take this; GOTO
+%take these; GOTO
+
+go to ; C/LOC ; #x.goToLocation(?ADDRESSEE,$x,true)
+%go to ; C/LOC ; #x.goToLoc(?ADDRESSEE,$x)
+
+%%TODO:brad:figure out how to do this in a more general fashion?
+%go to and say go to and play video goto and display message
+then ; (C/C)\C ; #x#y.then(?ADDRESSEE,$x,$y)
+%TODO:pedantry
+and ; (C/C)\C ; #x#y.then(?ADDRESSEE,$x,$y)
+
+%escort
+
+%escort(destination)
+escort to; ESCORTTO
+escort the patient to; ESCORTTO
+escort from; ESCORT
+escort the patient from; ESCORT
+escort * from; (C/LOC)/LOC ; #x#y.escort(?ADDRESSEE,$y,*,$x)
+escort * to; C/LOC ; #l.escort(?ADDRESSEE,$l,*)
+take * from; (C/LOC)/LOC ; #x#y.escort(?ADDRESSEE,$y,*,$x)
+take * to; C/LOC ; #l.escort(?ADDRESSEE,$l,*)
+
+display qr code * with message; C/LIT* ; #x.displayQRCode(?ADDRESSEE,*,$x)
+display qr code; C/LIT* ; #x.displayQRCode(?ADDRESSEE,$x,"")
+
+from; LOC/LOC; #x.$x
+
+to; LOC/LOC; #x.$x
+2; LOC/LOC; #x.$x
+two; LOC/LOC; #x.$x
+too; LOC/LOC; #x.$x
+ii;  LOC/LOC; #x.$x
+
+%fetch
+
+%Brad: unfortunately the order of these entries matters. The more "specific ones need to come before the more "general" ones
+fetch me * from; C/LOC ; #y.fetch(?ADDRESSEE,*,$y)
+fetch me from; C/LOC ; #y.fetch(?ADDRESSEE,undefined item,$y)
+fetch * from; C/LOC ; #y.fetch(?ADDRESSEE,*,$y)
+fetch me; FETCH
+
+get me * from; C/LOC ; #y.fetch(?ADDRESSEE,*,$y)
+get me from; C/LOC ; #y.fetch(?ADDRESSEE,undefined item,$y)
+get * from; C/LOC ; #y.fetch(?ADDRESSEE,*,$y)
+get me; FETCH
+
+bring me * from; C/LOC ; #y.fetch(?ADDRESSEE,*,$y)
+bring me from; C/LOC ; #y.fetch(?ADDRESSEE,undefined item,$y)
+bring * from; C/LOC ; #y.fetch(?ADDRESSEE,*,$y)
+bring me; FETCH
+
+fetch from; C/LOC ; #y.fetch(?ADDRESSEE,undefined item,$y)
+fetch; FETCH
+bring from; C/LOC ; #y.fetch(?ADDRESSEE,undefined item,$y)
+bring; FETCH
+get from; C/LOC ; #y.fetch(?ADDRESSEE,undefined item,$y)
+get; FETCH
+
+%fetch helpers
+%the ; I/I*, I/I; #x.$x
+%a; I/I*; #x.$x
+%some; I/I* ;#x.$x
+
+
+%set storage area
+supplies are stored in; C/LOC ; #x.setStorageArea(?ADDRESSEE,$x)
+things are stored in; C/LOC ; #x.setStorageArea(?ADDRESSEE,$x)
+supplies are stored at; C/LOC ; #x.setStorageArea(?ADDRESSEE,$x)
+things are stored at; C/LOC ; #x.setStorageArea(?ADDRESSEE,$x)
+
+%TODO:item specific storage location
+%is stored in; (C/LOC)\I* ; #i#l.setStorageArea($l)
+%are stored in; (C/LOC)\I* ; #i#l.setStorageArea($l)
+
+%play video
+play; PLAYVID
+play video; PLAYVID
+
+%say message
+say; C/LIT* ; #x.generateResponseFromString(?ADDRESSEE,$x)
+say message; C/LIT* ; #x.generateResponseFromString(?ADDRESSEE,$x)
+
+%display message
+display; C/LIT* ; #x.display(?ADDRESSEE,$x)
+display message; C/LIT* ; #x.display(?ADDRESSEE,$x)
+
+%clear screen
+clear screen; VERBI; clearScreen
+clear your screen; VERBI; clearScreen
+
+%ack
+acknowledge; VAL; waitForAckTemi(ack)
+okay; VAL; waitForAckTemi(ack)
+ok; VAL; waitForAckTemi(ack)
+
+%% greet
+%greet patients in; GREET
+%greet patient in; GREET
+%greet patience in; GREET
+
+%%patients wait in location; C/LOC ; #x.setGreetDest($x)
+%%patience wait in location; C/LOC ; #x.setGreetDest($x)
+%the greeting destination is; C/LOC ; #x.setGreetDest(?ADDRESSEE,$x)
+
+%tour
+give a tour; VERBI ; tour
+
+%turn
+%turn around; VERBI ; turnAround
+%turn; VERBI; turnAround
+
+%remove goals from queue
+remove goal from queue at position; C/LIT* ; #x.cancelGoalInQueueIndex(?ADDRESSEE,$x)
+remove goal from queue ; C/LIT* ; #x.cancelGoal(?ADDRESSEE,$x)
+
+cancel current task; VERBI; cancelCurrentGoal
+remove current task; VERBI; cancelCurrentGoal
+end current task; VERBI; cancelCurrentGoal
+
+cancel task with gid ; C/LIT* ; #x.cancelGoal(?ADDRESSEE,$x)
+
+pause; VERBI; freezeTemi
+wait; VERBI; freezeTemi
+hold on; VERBI; freezeTemi
+
+charge; VERBI; chargeTemi
+
+stop listening; VERBI; stopListening
+
+where are you; VERBI; sendPositionUpdate
+
+set volume to; C/LIT* ; #x.setVolume(?ADDRESSEE,$x)
+set volume; C/LIT* ; #x.setVolume(?ADDRESSEE,$x)
+mute; C; .setVolume(?ADDRESSEE,zero)
+mute volume; C; .setVolume(?ADDRESSEE,zero)
+unmute; C; .setVolume(?ADDRESSEE,three)
+unmute volume; C; .setVolume(?ADDRESSEE,three)
+
+%Do we want to make the language for changing settings actually able to be said? For what reason did
+%  we do this in the first place?
+sendmap; C; sendMap(?ADDRESSEE,true)
+sendlogs; VERBI; sendLogs
+requestpermissions; VERBI; requestPermissions
+restartapp; VERBI; restartApp
+disablebuttons; VERBI; disableButtons
+enablebuttons; VERBI; enableButtons
+showtopbar; VERBI; showTopBar
+enableobstaclenotifications; VERBI; enableObstacleNotifications
+disableobstaclenotifications; VERBI; disableObstacleNotifications
+enableprivacymode; VERBI; enablePrivacyMode
+disableprivacymode; VERBI; disablePrivacyMode
+enablevoiceack; VERBI; enableVoiceAck
+disablevoiceack; VERBI; disableVoiceAck
+setescortattemptsto; C/LIT* ; #x.setEscortWaitAttempts(?ADDRESSEE,$x)
+setescortdurationto; C/LIT* ; #x.setEscortWaitDuration(?ADDRESSEE,$x)
+setbatteryabortlevelto; C/LIT* ; #x.setBatteryAbortLevel(?ADDRESSEE,$x)
+setbatterywarnlevelto; C/LIT* ; #x.setBatteryWarnLevel(?ADDRESSEE,$x)
+setbatterychargedlevelto; C/LIT* ; #x.setBatteryChargedLevel(?ADDRESSEE,$x)
+enablekidsmode; VERBI; enableKidsMode
+disablekidsmode; VERBI; disableKidsMode
+display face; VERBI; displayFace
+reposition; C; .relocalize(?ADDRESSEE,true)
+
+check in patients at; C/LOC ; #x.checkInKiosk(?ADDRESSEE,$x)
+enablekioskmode; VERBI; enableKioskMode
+disablekioskmode; VERBI; disableKioskMode
+setkiosktimeoutto; C/LIT*; #x.setKioskTimeout(?ADDRESSEE,$x)
+setkiosklocationto; C/LIT*; #x.setKioskLocation(?ADDRESSEE,$x)
+setdisplayappointmentssince; C/LIT* ; #x.setDisplayAppointmentsSince(?ADDRESSEE,$x)
+setallowappointmentssince; C/LIT* ; #x.setAllowAppointmentsSince(?ADDRESSEE,$x)
+setlateappointmentmessage; C/LIT* ; #x.setLateAppointmentMessage(?ADDRESSEE,$x)
+setdisplayappointmentsuntil; C/LIT* ; #x.setDisplayAppointmentsUntil(?ADDRESSEE,$x)
+setallowappointmentsuntil; C/LIT* ; #x.setAllowAppointmentsUntil(?ADDRESSEE,$x)
+setearlyappointmentmessage; C/LIT* ; #x.setEarlyAppointmentMessage(?ADDRESSEE,$x)
+setsuccessfulcheckinmessage; C/LIT* ; #x.setSuccessfulCheckInMessage(?ADDRESSEE,$x)
+setbirthdaymessagerange; C/LIT* ; #x.setBirthdayMessageRange(?ADDRESSEE,$x)
+setbirthdaymessage; C/LIT* ; #x.setBirthdayMessage(?ADDRESSEE,$x)
+setappointmentloaderrormessage; C/LIT* ; #x.setAppointmentLoadErrorMessage(?ADDRESSEE,$x)
+setappointmentlistemptymessage; C/LIT* ; #x.setAppointmentListEmptyMessage(?ADDRESSEE,$x)
+setcheckinheadermessage; C/LIT* ; #x.setCheckInHeaderMessage(?ADDRESSEE,$x)

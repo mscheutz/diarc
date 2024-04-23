@@ -1,0 +1,511 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "lib/libcommon.so"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"ADD_LIBRARY",
+			"LINK_DIRECTORIES",
+			"TARGET_LINK_LIBRARIES",
+			"ADD_DEFINITIONS",
+			"add_definitions",
+			"set_property",
+			"include",
+			"find_external_library",
+			"FIND_PACKAGE",
+			"INCLUDE_DIRECTORIES",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"common/CMakeLists.txt",
+			"CMakeLists.txt",
+			"/usr/lib/cmake/vtk-6.3/UseVTK.cmake",
+			"/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 9,
+				"parent" : 0
+			},
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 138,
+				"parent" : 2
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 144,
+				"parent" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 10,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 13,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 17,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 31,
+				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 108,
+				"parent" : 2
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 99,
+				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 116,
+				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 119,
+				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 145,
+				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 252,
+				"parent" : 2
+			},
+			{
+				"command" : 8,
+				"file" : 1,
+				"line" : 105,
+				"parent" : 2
+			},
+			{
+				"file" : 3,
+				"parent" : 15
+			},
+			{
+				"command" : 7,
+				"file" : 3,
+				"line" : 847,
+				"parent" : 16
+			},
+			{
+				"command" : 6,
+				"file" : 3,
+				"line" : 671,
+				"parent" : 17
+			},
+			{
+				"file" : 2,
+				"parent" : 18
+			},
+			{
+				"command" : 5,
+				"file" : 2,
+				"line" : 23,
+				"parent" : 19
+			},
+			{
+				"command" : 9,
+				"file" : 1,
+				"line" : 8,
+				"parent" : 2
+			},
+			{
+				"command" : 9,
+				"file" : 1,
+				"line" : 62,
+				"parent" : 2
+			},
+			{
+				"command" : 9,
+				"file" : 1,
+				"line" : 69,
+				"parent" : 2
+			},
+			{
+				"command" : 10,
+				"file" : 2,
+				"line" : 26,
+				"parent" : 19
+			},
+			{
+				"command" : 9,
+				"file" : 1,
+				"line" : 106,
+				"parent" : 2
+			},
+			{
+				"command" : 9,
+				"file" : 1,
+				"line" : 110,
+				"parent" : 2
+			},
+			{
+				"command" : 9,
+				"file" : 1,
+				"line" : 143,
+				"parent" : 2
+			},
+			{
+				"command" : 9,
+				"file" : 1,
+				"line" : 251,
+				"parent" : 2
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 3,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -fPIC -fdiagnostics-color=always   -fPIC -Werror=return-type  "
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 8,
+					"define" : "BOOST_FILESYSTEM_DEPRECATED"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "DISABLE_DAVIDSDK"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "DISABLE_DSSDK"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "DISABLE_ENSENSO"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "DISABLE_LIBUSB_1_0"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "DISABLE_PCAP"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "DISABLE_PNG"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "DISABLE_RSSDK"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "FLANN_STATIC"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "OPENCV_TRACKING"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "USE_OPENNI"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "USE_OPENNI2"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "USE_REALSENSE"
+				},
+				{
+					"backtrace" : 14,
+					"define" : "USE_ZBAR"
+				},
+				{
+					"define" : "common_EXPORTS"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "qh_QHpointer"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "vtkFiltersFlowPaths_AUTOINIT=1(vtkFiltersParallelFlowPaths)"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "vtkIOExodus_AUTOINIT=1(vtkIOParallelExodus)"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "vtkIOGeometry_AUTOINIT=1(vtkIOMPIParallel)"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "vtkIOImage_AUTOINIT=1(vtkIOMPIImage)"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "vtkIOParallel_AUTOINIT=1(vtkIOMPIParallel)"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "vtkIOSQL_AUTOINIT=2(vtkIOMySQL,vtkIOPostgreSQL)"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "vtkRenderingContext2D_AUTOINIT=1(vtkRenderingContextOpenGL)"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "vtkRenderingCore_AUTOINIT=3(vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingOpenGL)"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "vtkRenderingFreeType_AUTOINIT=2(vtkRenderingFreeTypeFontConfig,vtkRenderingMatplotlib)"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "vtkRenderingLIC_AUTOINIT=1(vtkRenderingParallelLIC)"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "vtkRenderingVolume_AUTOINIT=1(vtkRenderingVolumeOpenGL)"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 21,
+					"path" : "/home/evan/code/ade/vision/src/main/cpp"
+				},
+				{
+					"backtrace" : 22,
+					"path" : "/usr/lib/jvm/java-17-openjdk-amd64/include"
+				},
+				{
+					"backtrace" : 22,
+					"path" : "/usr/lib/jvm/java-17-openjdk-amd64/include/linux"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/include/opencv"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/vtk-6.3"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/freetype2"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent/include"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/python2.7"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/hdf5/openmpi"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/libxml2"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/jsoncpp"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/tcl"
+				},
+				{
+					"backtrace" : 25,
+					"path" : "/usr/include/pcl-1.8"
+				},
+				{
+					"backtrace" : 25,
+					"path" : "/usr/include/eigen3"
+				},
+				{
+					"backtrace" : 25,
+					"path" : "/usr/include/ni"
+				},
+				{
+					"backtrace" : 25,
+					"path" : "/usr/include/openni2"
+				},
+				{
+					"backtrace" : 26,
+					"path" : "/usr/include/vtk-9.1"
+				},
+				{
+					"backtrace" : 27,
+					"path" : "/usr/include/librealsense2"
+				},
+				{
+					"backtrace" : 28,
+					"path" : "/usr/include/zbar"
+				},
+				{
+					"backtrace" : 29,
+					"path" : "/home/evan/code/ade/vision/src/main/cpp/common"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 6,
+			"id" : "fol_swig::@7a18a1e2e212a60ab363"
+		},
+		{
+			"backtrace" : 7,
+			"id" : "common_swig::@6c4fb95ffbc90e1866b1"
+		}
+	],
+	"id" : "common::@bfc844598bd03e848b3c",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-Wl,--no-as-needed",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "-L/home/evan/code/ade/vision/src/main/cpp/third_party/vlfeat/bin/glnxa64",
+				"role" : "libraryPath"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "-L/usr/lib/x86_64-linux-gnu/librealsense2.so",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/evan/code/ade/vision/src/main/cpp/third_party/vlfeat/bin/glnxa64:/usr/lib/x86_64-linux-gnu/librealsense2.so:/home/evan/code/ade/vision/src/main/cpp/cmake-build-debug/lib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "/usr/lib/x86_64-linux-gnu/liblog4cxx.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 6,
+				"fragment" : "lib/libfol_swig.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 7,
+				"fragment" : "lib/libcommon_swig.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "/usr/lib/x86_64-linux-gnu/liblog4cxx.so",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "common",
+	"nameOnDisk" : "libcommon.so",
+	"paths" : 
+	{
+		"build" : "common",
+		"source" : "common"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "common/VisionConstants.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}

@@ -1,0 +1,58 @@
+START-TEMPLATES
+PUTINSIDE;      {((C/REF)/INSIDE)/REF; #x#i#y.putinside(?ADDRESSEE,$x,$y)}
+END-TEMPLATES
+apple; THING; apple:physobj
+donut; THING; donut:physobj
+carrot; THING; carrot:physobj
+blue block; THING; blue_block:physobj
+red block; THING; red_block:physobj
+orange block; THING; orange_block:physobj
+wooden block; THING; wooden_block:physobj
+yellow block; THING; yellow_block:physobj
+
+shutdown; C; shutdownarm(?ADDRESSEE)
+relaunch; C; relauncharm(?ADDRESSEE)
+
+compa; THING; compa:physobj
+compb; THING; compb:physobj
+compc; THING; compc:physobj
+
+pick up ; VERBT; pickUp
+setup demo; C; setupscene(?ADDRESSEE)
+
+inside; INSIDE; inside
+in; INSIDE; inside
+
+put; PUTINSIDE
+
+%in; (PP\REF)/ref; #x#y.in($x,$y)
+%i want; C/PP; #x.goal(?ADDRESSEE, $x)
+%get; C/PP; #x.goal(?ADDRESSEE, $x)
+
+compartment a; VAL; val(compa)
+compartment b; VAL; val(compb)
+compartment c; VAL; val(compc)
+
+section a; VAL; val(compa)
+section b; VAL; val(compb)
+section c; VAL; val(compc)
+okay; VAL; val(okay)
+
+marlow; VAL; val(marlow)
+vasanth; VAL; val(vasanth)
+matt; VAL; val(matt)
+matthew; VAL; val(matthew)
+evan; VAL; val(evan)
+emeka; VAL; val(emeka)
+mitchell; VAL; val(mitchell)
+mitch; VAL; val(mitch)
+sarah; VAL; val(sarah)
+panos; VAL; val(panos)
+helen; VAL; val(helen)
+talha; VAL; val(talha)
+henry; VAL; val(henry)
+molly; VAL; val(molly)
+amanda; VAL; val(amanda)
+rukhshan; VAL; val(rukhshan)
+hayley; VAL; val(hayley)
+my name is; C/LIT*; #x.val($x)

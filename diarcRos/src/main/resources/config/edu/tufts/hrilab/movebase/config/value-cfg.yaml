@@ -1,0 +1,6 @@
+door: [20, 80]
+passage: [81, 100]
+room: [101, 200]
+elevator: [211, 219]
+elevator-button: [220, 225]
+elevator-door: [226, 230]

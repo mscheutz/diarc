@@ -1,0 +1,6 @@
+#JSGF V1.0;
+grammar jsgf.jsgfColors;
+
+public <frame> = <s>;
+
+<s> = [this is] (red | blue | green);

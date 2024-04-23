@@ -1,0 +1,44 @@
+%% spaces
+table one; REF; tableOne:location; DEFINITE
+table one; RN; tableOne:location; VAR
+table two; REF; tableTwo:location; DEFINITE
+table two; RN; tableTwo:location; VAR
+table three; REF; tableThree:location; DEFINITE
+table three; RN; table3Three:location; VAR
+
+cook top; REF; cookTop:pose; DEFINITE
+cook top; RN; cookTop:pose; VAR
+
+%bottom bun;REF; bottomBun:physobj;DEFINITE
+%top bun;REF; topBun:physobj;DEFINITE
+%beef patty;REF; beefPatty:physobj;DEFINITE
+%fries box;REF; friesBox:physobj;DEFINITE
+%%french fries;REF; frenchFries:physobj;DEFINITE
+%
+%bottom bun;RN; bottomBun:physobj;VAR
+%top bun;RN; topBun:physobj;VAR
+%beef patty;RN; beefPatty:physobj;VAR
+%fries box;RN; friesBox:physobj;VAR
+%%french fries;RN; frenchFries:physobj;VAR
+%
+%bottom bun;DN; bottomBun:property
+%top bun;DN; topBun:property
+%beef patty;DN; beefPatty:property
+%fries box;DN; friesBox:property
+
+%french fries;DN; frenchFries:property
+
+%% numbers
+table 1; REF; tableOne:location; DEFINITE
+table 1; RN; tableOne:location; VAR
+table 2; REF; tableTwo:location; DEFINITE
+table 2; RN; tableTwo:location; VAR
+table 3; REF; tableThree:location; DEFINITE
+table 3; RN; table3Three:location; VAR
+
+table1; REF; tableOne:location; DEFINITE
+table1; RN; tableOne:location; VAR
+table2; REF; tableTwo:location; DEFINITE
+table2; RN; tableTwo:location; VAR
+table3; REF; tableThree:location; DEFINITE
+table3; RN; tableThree:location; VAR

@@ -1,0 +1,24 @@
+#JSGF V1.0;
+grammar jsgf.autonomy;
+
+public <main> = <send> | <prepare> | <reading> | <stop> | <act_cmd> | <digit> | hello | jump | quit;
+
+<send> = transmit [data] | send [data];
+
+<prepare> = prepare transmission | prepare to transmit;
+
+<reading> = take a reading | get a reading;
+
+<stop> = stop | halt;
+
+<act_cmd> = <go_cmd> <go_dir> | <turn_cmd> <turn_dir>;
+
+<go_dir> = forward | straight | left | right;
+
+<turn_dir> = left | right;
+
+<go_cmd> = go | move;
+
+<turn_cmd> = turn;
+
+<digit> = zero | none | one | two | three | four | five | six;

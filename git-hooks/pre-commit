@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
+
+MAXFILESIZE="2"
+MAXFILESIZEBYTES=$(( $MAXFILESIZE * 1024 * 1024 ))
+
+PROHIBITED=false
+while read -r FILE; do
+      # check file extension
+      case $FILE in
+      *gradle-wrapper.jar )
+        continue
+        ;;
+      *.zip|*.gz|*.tgz|*.jar|*.wav|*.so|*.o|*.dat|*.class|*.raw )
+        echo "LOCAL COMMIT ERROR: We have restricted committing that filetype:" $FILE ". Please see the git admin for alternatives."
+        PROHIBITED=true
+        ;;
+      *.java )
+        if ! cat $FILE | grep -q -e  "package edu.tufts.hrilab" -e "package ade" -e "package edu.cmu.sphinx."; then
+          echo "LOCAL COMMIT ERROR: It looks like you're trying to commit a file from a third party library (i.e., unknown package): "$FILE". Don't do that. Please see the git admin for alternatives."
+          PROHIBITED=true
+        fi
+        ;;
+      esac
+
+      # check file size (in bytes)
+      actualFileSize=$(wc -c < "$FILE")
+      if [ $actualFileSize -ge $MAXFILESIZEBYTES ]; then
+        echo "LOCAL COMMIT ERROR: File" $FILE "is too large!. We have restricted committing files that are larger than" $MAXFILESIZE "MB. Please see the git admin for alternatives."
+        PROHIBITED=true
+      fi
+done <<<$(git diff --cached --name-only --diff-filter=ACM)
+if [ "$PROHIBITED" = true ] ; then
+  exit 1
+fi

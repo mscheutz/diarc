@@ -1,0 +1,31 @@
+{
+  "testName" : "directAddress",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "hello evan", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "stand(dempster)", "12" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "12", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "crouch(shafer)", "15" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "15", "SUCCEEDED" ]
+    } ]
+  } ]
+}

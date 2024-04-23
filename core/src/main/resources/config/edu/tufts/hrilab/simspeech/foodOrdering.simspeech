@@ -1,0 +1,99 @@
+init
+-
+robot one follow me
+robot one stop following
+-
+robot one save this location as delivery
+robot one save this pose as delivery table
+location delivery
+no pose
+-
+set default delivery area to delivery table
+-
+define new ingredient salsa verde
+pose pantry
+type salsa
+job detect salsa verde
+-
+define new item french fries
+0 options
+first get a tray to prep area one
+then get a fries box on the tray
+then get potatoes to the fryer
+then gofa fry the potatoes for 90 seconds
+then get the potatoes in the fries box
+that is how you prepare item french fries
+-
+define new item hamburger
+0 options
+first get a tray to prep area one
+then get a bun on the tray
+then split the bun
+get a lettuce on the bottom bun
+get a tomato on the lettuce
+then get a beef patty to the cook top
+then gofa cook the beef patty for 2 minutes flipping every thirty seconds
+get the beef patty on the tomato
+get mustard on the beef patty
+get ketchup on the beef patty
+get the top bun on the beef patty
+that is how you prepare item hamburger
+-
+prepare a hamburger
+suspend current task
+prepare french fries right now
+resume current task
+-
+define new item by analogy veggie burger
+item hamburger
+replace gofa cook the beef patty for 2 minutes flipping every thirty seconds with gofa cook the veggie patty for 1 minute flipping every 15 seconds
+no more differences
+-
+modify item veggie burger
+remove get ketchup on the veggie patty
+no more differences
+-
+define new item taco
+2 options
+option a taco meat
+option a salsa
+first get a tray to prep area one
+then get the tortilla on the tray
+get the taco meat to the cook top
+then gofa saute the taco meat for 45 seconds
+then get the taco meat on the tortilla
+the get the salsa on the tortilla
+-
+that is how you prepare item taco
+-
+prepare a taco with pork and salsa verde
+-
+prepare a taco
+option chicken
+option pico de gallo
+-
+define new item pizza
+1 option
+option a collection of topping
+first get a tray to prep area two
+then get a crust on the tray
+then get all the topping on the crust
+-
+that is how you prepare item pizza
+-
+prepare a pizza
+option collection pepperoni and mushrooms and onions
+-
+define new meal
+item taco
+item french fries
+no more items are included
+-
+order meal 0
+option a pork
+option a salsa verde
+drink coke
+-
+order meal 0 with chicken and salsa verde
+-
+define item cake

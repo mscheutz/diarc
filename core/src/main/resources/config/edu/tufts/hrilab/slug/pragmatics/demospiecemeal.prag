@@ -1,0 +1,92 @@
+
+NEW-SET
+(on(X,Y,J,K))
+(property,propertyOf(D,X))
+(property,propertyOf(E,Y))
+(property,propertyOf(L,J),on(L,D))
+(property,propertyOf(M,K),on(M,E))
+RULES
+INSTRUCT(A,B,put(C,D,E),Z) := put(C,L,M)
+END-SET
+
+NEW-SET
+RULES
+#QUESTION(A,B,estimatePerformanceMeasures(did(V,dialogref(C,T,S)),X),Z) := estimatePerformanceMeasures(C,T,S)
+#QUESTION(A,B,estimatePerformanceMeasures(did(V,dialogref(C,T,S)),X),Z) := estimatePerformanceMeasures(C,T,S)
+QUESTION(A,B,estimatePerformanceMeasures(dialogref(C,T,S),X),Z) := estimatePerformanceMeasures(C,T,S)
+END-SET
+
+NEW-SET
+RULES
+QUESTION(A,B,estimatePerformanceMeasures(dialogref(C,T,S),X,Y),Z) := estimatePerformanceMeasures(C,T,Y)
+END-SET
+
+NEW-SET
+RULES
+QUESTION(A,B,estimatePerformanceMeasures(dialogref(C,T),X),Z) := estimatePerformanceMeasures(C,T)
+END-SET
+
+NEW-SET
+RULES
+QUESTION(A,B,estimatePerformanceMeasures(dialogref(C,T),X,Y),Z) := estimatePerformanceMeasures(C,T,Y)
+END-SET
+
+NEW-SET
+RULES
+QUESTION(A,B,mostLikelyToFailOf(dialogref(C,T),E,W),Z) := mostLikelyToFailOf(C,T,WHAT)
+QUESTION(A,B,mostLikelyToFailOf(dialogref(C,T,S),E,W),Z) := mostLikelyToFailOf(C,T,S,WHAT)
+QUESTION(A,B,mostLikelyToFailOf(dialogref(C,T),E,if(S),W),Z) := mostLikelyToFailOf(C,T,if(S),WHAT)
+QUESTION(A,B,mostLikelyToFailOf(dialogref(C,T,Y),E,if(S),W),Z) := mostLikelyToFailOf(C,T,if(S),WHAT)
+
+QUESTION(A,B,durationOf(dialogref(C,T),E,W),Z) := durationOf(C,T,WHAT)
+QUESTION(A,B,durationOf(dialogref(C,T,S),E,W),Z) := durationOf(C,T,S,WHAT)
+QUESTION(A,B,durationOf(dialogref(C,T),E,if(S),W),Z) := durationOf(C,T,if(S),WHAT)
+QUESTION(A,B,durationOf(dialogref(C,T,Y),E,if(S),W),Z) := durationOf(C,T,if(S),WHAT)
+
+QUESTION(A,B,probabilityOf(D,dialogref(C,T),E,W),Z) := probabilityOf(C,T,WHAT)
+QUESTION(A,B,probabilityOf(D,dialogref(C,T,S),E,W),Z) := probabilityOf(C,T,S,WHAT)
+QUESTION(A,B,probabilityOf(D,dialogref(C,T),E,if(S),W),Z) := probabilityOf(C,T,if(S),WHAT)
+QUESTION(A,B,probabilityOf(D,dialogref(C,T,Y),E,if(S),W),Z) := probabilityOf(C,T,if(S),WHAT)
+
+INSTRUCT(A,B,want(A,B,dialogref(X,T,Y)),Z) := want(A,B,executeWithModification(B,X,Y))
+INSTRUCT(A,B,want(A,B,dialogref(X,T)),Z) := want(A,B,X)
+END-SET
+
+
+#NEW-SET
+#RULES
+#QUESTION(A,B,durationOf(did(B,dialogref(C,T)),W),Z) := durationOf(C,WHAT)
+#QUESTION(A,B,probabilityOf(did(B,dialogref(C,T)),W),Z) := probabilityOf(C,WHAT)
+#QUESTION(A,B,durationOf(did(B,dialogref(C,T,S)),W),Z) := durationOf(C,WHAT)
+#QUESTION(A,B,probabilityOf(did(B,dialogref(C,T,S)),W),Z) := probabilityOf(if(S,C),WHAT)
+#QUESTION(A,B,probabilityOf(if(S,did(B,dialogref(C,T))),W),Z) := probabilityOf(if(S,C),WHAT)
+#QUESTION(A,B,probabilityOf(if(S,did(B,dialogref(C,T,Y))),W),Z) := probabilityOf(if(S,C),WHAT)
+#INSTRUCT(A,B,want(A,did(B,dialogref(X,T,Y))),Z) := want(A,did(B,executeWithModification(X,Y)))
+#INSTRUCT(A,B,want(A,did(B,dialogref(X,T))),Z) := want(A,X)
+#END-SET
+
+
+# I want you to stand
+NEW-SET
+RULES
+
+STATEMENT(A,B,want(A,B,to(X)),Z):= want(A,X)
+
+# (dempster) I want shafer to stand
+STATEMENT(A,B,want(A,to(X)),Z):= want(A,tell(B,X))
+
+#commanderZ wants you to grab the medkit
+#STATEMENT(A,B,want(C,B,to(X)),Z):= want(C,B,X)
+
+#shafer, commanderZ wants dempster to grab the medkit
+#STATEMENT(A,B,want(C,D,to(X)),Z):= want(C,D,X)
+END-SET
+
+#brad multi utterance pause/resume
+NEW-SET
+(utterance,1,INSTRUCT(A,B,pause(),{}))
+RULES
+#todo:brad: change this to STI?
+INSTRUCT(A,B,want(B,A,X),Z) := want(A,did(executeThenResume(B,sti(B,X))))
+END-SET
+

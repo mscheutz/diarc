@@ -1,0 +1,34 @@
+#JSGF V1.0;
+grammar jsgf.demo_04_16_09;
+
+public <frame> = [<itj>] [<itj>] <utterance>;
+
+<utterance> = <polite> [<name>] | [<name>] <qu> | [<name>] <cmd>;
+
+<name> = cramer;
+<polite> = hello | thank you;
+
+<cmd> = point to <NP> | come <loc> | look <dirP>;
+
+<qu> = <seequ> | <isqu>;
+<seequ> = do you see <NP> [<time>] | [<time>] do you see <NP> ;
+<isqu> = [<persp>] is <NP> <reldir>;
+
+<persp> = from the perspective of <NP>;
+<reldir> = at <prp> | ( to | on ) <dirP> [of <NP>] ;
+
+<intNP> = <art> [<color>] | <intNP> <rm> <intNP>;
+<NP> = <art> [<color>] <object> | <object> | <art> [<color>] [<object>] | <intNP> <NP> | <prp> | <NP> <rm> <NP>;
+<dirP> = <art> <dir> | <reldir> | <dirP> <rm> <dirP>;
+
+<object> = box | <object> <rm> <object>;
+<env> = table | floor | <env> <rm> <env>;
+<loc> = [over] here ;
+<prp> = me | it;
+<color> = red | blue | green | <color> <rm> <color>;
+<dir> = right | left | <dir> <rm> <dir>;
+<time> = now;
+
+<itj> = oh | well | um;
+<rm> = no | wait | I mean;
+<art> = a | the;

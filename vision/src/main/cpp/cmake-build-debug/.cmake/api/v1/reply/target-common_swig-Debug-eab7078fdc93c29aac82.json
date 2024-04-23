@@ -1,0 +1,551 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "lib/libcommon_swig.so"
+		}
+	],
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"SWIG_ADD_LIBRARY",
+			"LINK_DIRECTORIES",
+			"TARGET_LINK_LIBRARIES",
+			"ADD_DEFINITIONS",
+			"add_definitions",
+			"set_property",
+			"include",
+			"find_external_library",
+			"FIND_PACKAGE",
+			"INCLUDE_DIRECTORIES",
+			"include_directories",
+			"SWIG_ADD_SOURCE_TO_MODULE"
+		],
+		"files" : 
+		[
+			"/snap/clion/274/bin/cmake/linux/x64/share/cmake-3.28/Modules/UseSWIG.cmake",
+			"common/swig/CMakeLists.txt",
+			"CMakeLists.txt",
+			"/usr/lib/cmake/vtk-6.3/UseVTK.cmake",
+			"/usr/lib/x86_64-linux-gnu/cmake/pcl/PCLConfig.cmake",
+			"common/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 11,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 939,
+				"parent" : 1
+			},
+			{
+				"file" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 138,
+				"parent" : 3
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 144,
+				"parent" : 3
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 13,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 2,
+				"line" : 31,
+				"parent" : 3
+			},
+			{
+				"command" : 4,
+				"file" : 2,
+				"line" : 108,
+				"parent" : 3
+			},
+			{
+				"command" : 5,
+				"file" : 2,
+				"line" : 99,
+				"parent" : 3
+			},
+			{
+				"command" : 4,
+				"file" : 2,
+				"line" : 116,
+				"parent" : 3
+			},
+			{
+				"command" : 4,
+				"file" : 2,
+				"line" : 119,
+				"parent" : 3
+			},
+			{
+				"command" : 4,
+				"file" : 2,
+				"line" : 145,
+				"parent" : 3
+			},
+			{
+				"command" : 4,
+				"file" : 2,
+				"line" : 252,
+				"parent" : 3
+			},
+			{
+				"command" : 9,
+				"file" : 2,
+				"line" : 105,
+				"parent" : 3
+			},
+			{
+				"file" : 4,
+				"parent" : 14
+			},
+			{
+				"command" : 8,
+				"file" : 4,
+				"line" : 847,
+				"parent" : 15
+			},
+			{
+				"command" : 7,
+				"file" : 4,
+				"line" : 671,
+				"parent" : 16
+			},
+			{
+				"file" : 3,
+				"parent" : 17
+			},
+			{
+				"command" : 6,
+				"file" : 3,
+				"line" : 23,
+				"parent" : 18
+			},
+			{
+				"command" : 10,
+				"file" : 2,
+				"line" : 8,
+				"parent" : 3
+			},
+			{
+				"command" : 10,
+				"file" : 2,
+				"line" : 62,
+				"parent" : 3
+			},
+			{
+				"command" : 10,
+				"file" : 2,
+				"line" : 69,
+				"parent" : 3
+			},
+			{
+				"command" : 11,
+				"file" : 3,
+				"line" : 26,
+				"parent" : 18
+			},
+			{
+				"command" : 10,
+				"file" : 2,
+				"line" : 106,
+				"parent" : 3
+			},
+			{
+				"command" : 10,
+				"file" : 2,
+				"line" : 110,
+				"parent" : 3
+			},
+			{
+				"command" : 10,
+				"file" : 2,
+				"line" : 143,
+				"parent" : 3
+			},
+			{
+				"command" : 10,
+				"file" : 2,
+				"line" : 251,
+				"parent" : 3
+			},
+			{
+				"file" : 5
+			},
+			{
+				"command" : 10,
+				"file" : 5,
+				"line" : 3,
+				"parent" : 28
+			},
+			{
+				"command" : 10,
+				"file" : 1,
+				"line" : 3,
+				"parent" : 0
+			},
+			{
+				"command" : 12,
+				"file" : 0,
+				"line" : 922,
+				"parent" : 1
+			},
+			{
+				"command" : 6,
+				"file" : 0,
+				"line" : 751,
+				"parent" : 31
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -fPIC -fdiagnostics-color=always   -fPIC -Werror=return-type  "
+				},
+				{
+					"backtrace" : 32,
+					"fragment" : ""
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 7,
+					"define" : "BOOST_FILESYSTEM_DEPRECATED"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "DISABLE_DAVIDSDK"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "DISABLE_DSSDK"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "DISABLE_ENSENSO"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "DISABLE_LIBUSB_1_0"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "DISABLE_PCAP"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "DISABLE_PNG"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "DISABLE_RSSDK"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "FLANN_STATIC"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "OPENCV_TRACKING"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "USE_OPENNI"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "USE_OPENNI2"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "USE_REALSENSE"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "USE_ZBAR"
+				},
+				{
+					"define" : "common_swig_EXPORTS"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "qh_QHpointer"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "vtkFiltersFlowPaths_AUTOINIT=1(vtkFiltersParallelFlowPaths)"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "vtkIOExodus_AUTOINIT=1(vtkIOParallelExodus)"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "vtkIOGeometry_AUTOINIT=1(vtkIOMPIParallel)"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "vtkIOImage_AUTOINIT=1(vtkIOMPIImage)"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "vtkIOParallel_AUTOINIT=1(vtkIOMPIParallel)"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "vtkIOSQL_AUTOINIT=2(vtkIOMySQL,vtkIOPostgreSQL)"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "vtkRenderingContext2D_AUTOINIT=1(vtkRenderingContextOpenGL)"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "vtkRenderingCore_AUTOINIT=3(vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingOpenGL)"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "vtkRenderingFreeType_AUTOINIT=2(vtkRenderingFreeTypeFontConfig,vtkRenderingMatplotlib)"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "vtkRenderingLIC_AUTOINIT=1(vtkRenderingParallelLIC)"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "vtkRenderingVolume_AUTOINIT=1(vtkRenderingVolumeOpenGL)"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 20,
+					"path" : "/home/evan/code/ade/vision/src/main/cpp"
+				},
+				{
+					"backtrace" : 21,
+					"path" : "/usr/lib/jvm/java-17-openjdk-amd64/include"
+				},
+				{
+					"backtrace" : 21,
+					"path" : "/usr/lib/jvm/java-17-openjdk-amd64/include/linux"
+				},
+				{
+					"backtrace" : 22,
+					"path" : "/usr/include/opencv"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/include/vtk-6.3"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/include/freetype2"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent/include"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/lib/x86_64-linux-gnu/openmpi/include"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/include/python2.7"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/include/hdf5/openmpi"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/include/libxml2"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/include/jsoncpp"
+				},
+				{
+					"backtrace" : 23,
+					"path" : "/usr/include/tcl"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/pcl-1.8"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/eigen3"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/ni"
+				},
+				{
+					"backtrace" : 24,
+					"path" : "/usr/include/openni2"
+				},
+				{
+					"backtrace" : 25,
+					"path" : "/usr/include/vtk-9.1"
+				},
+				{
+					"backtrace" : 26,
+					"path" : "/usr/include/librealsense2"
+				},
+				{
+					"backtrace" : 27,
+					"path" : "/usr/include/zbar"
+				},
+				{
+					"backtrace" : 29,
+					"path" : "/home/evan/code/ade/vision/src/main/cpp/common"
+				},
+				{
+					"backtrace" : 30,
+					"path" : "/home/evan/code/ade/vision/src/main/cpp/common/swig"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"id" : "common_swig::@6c4fb95ffbc90e1866b1",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-Wl,--no-as-needed",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "-L/home/evan/code/ade/vision/src/main/cpp/third_party/vlfeat/bin/glnxa64",
+				"role" : "libraryPath"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "-L/usr/lib/x86_64-linux-gnu/librealsense2.so",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/evan/code/ade/vision/src/main/cpp/third_party/vlfeat/bin/glnxa64:/usr/lib/x86_64-linux-gnu/librealsense2.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 6,
+				"fragment" : "/usr/lib/x86_64-linux-gnu/liblog4cxx.so",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "common_swig",
+	"nameOnDisk" : "libcommon_swig.so",
+	"paths" : 
+	{
+		"build" : "common/swig",
+		"source" : "common/swig"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				1,
+				2,
+				4
+			]
+		},
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				3
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"isGenerated" : true,
+			"path" : "/home/evan/code/ade/vision/src/swig/java/edu/tufts/hrilab/vision/common/swig/CommonJAVA_wrap.cxx",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"isGenerated" : true,
+			"path" : "/home/evan/code/ade/vision/src/swig/java/edu/tufts/hrilab/vision/common/swig/CommonModule.java",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"isGenerated" : true,
+			"path" : "/home/evan/code/ade/vision/src/swig/java/edu/tufts/hrilab/vision/common/swig/CommonModuleJNI.java",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "common/swig/CommonJNI.hpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 0,
+			"path" : "common/swig/Common.i",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}

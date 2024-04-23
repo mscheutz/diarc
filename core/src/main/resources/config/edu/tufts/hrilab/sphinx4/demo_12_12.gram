@@ -1,0 +1,20 @@
+#JSGF V1.0;
+grammar jsgf.demo_12_12;
+
+public <s> = that 's how <np> <vprime> | <vp> | <name> <s> | <interjection> <s> | you <vprime> | <vp> <prep> ;
+
+<name> = andy | cindy;
+<polite> = please;
+<interjection> = ok | now | and | first | second | then | next;
+
+<noun> = med kit | palm | hand | handle;
+<prep> = with;
+<pronoun> = you | it | me;
+<nprime> = [the | your] <noun>;
+<np> = <pronoun> | <nprime>;
+<adverb> now;
+
+<demo> = here | like this;
+
+<vprime> = close <np> | put <np> above | move <np> [up] | lift <np> up | lift up <np> | pick up <np> | pick <np> up | try | show <np> | <nprime> down;
+<vp> = <vprime> [<demo> | <nprime>] | <polite> <vp> | let <np>s<vprime> | now <pronoun> <vprime>;

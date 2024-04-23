@@ -1,0 +1,59 @@
+{
+  "testName" : "componentSharingTest",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "tell(shafer,stand(dempster))", "396" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "stand(dempster)", "397" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "396", "SUCCEEDED" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "yes", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "tell(shafer,move(dempster,forward))", "408" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "move(dempster,forward)", "409" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "408", "FAILED" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not tell dempster to move forward because dempster sees obstacle", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "no", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertBelief",
+      "serviceArgs" : [ "capableOf(look(dempster,up))", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "yes", "true" ]
+    }, {
+      "serviceName" : "submitGoal",
+      "serviceArgs" : [ "look(dempster,up)", "428" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "428", "SUCCEEDED" ]
+    } ]
+  } ]
+}

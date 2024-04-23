@@ -1,0 +1,36 @@
+#JSGF V1.0;
+grammar jsgf.planet_command;
+
+public <main> = [rudy] <send> | [rudy] <stop> | [rudy] <act_cmd> | [rudy] <reading> | [rudy] <look_cmd> | [rudy] <wof>;
+
+<wof> = watch out for [a | an | the] <obstacle>;
+
+<obstacle> = box;
+
+<send> = transmit [data] | send [data];
+
+<reading> = take a reading | get a reading;
+
+<stop> = stop | halt;
+
+<act_cmd> = <start_cmd> <dir>;
+
+<look_cmd> = look <dir> <degree_degrees>;
+
+<degree_degrees> = <degree> degrees;
+
+<distance> = <degree> <meas>;
+
+<meas> = foot | feet | meters | meter | inch | inches;
+
+<digit> = zero | one | two | three | four | five | six | seven | eight | nine;
+
+<teens> = ten | eleven | twelve | thirteen | fourteen | fifteen | sixteen | seventeen | eighteen | nineteen;
+
+<tens> = twenty | thirty | forty | fifty | sixty | seventy | eighty | ninety;
+
+<degree> = <digit> | <teens> | <tens> [<digit>] | <digit> hundred [and] [<tens> | <tens> <digit> | <digit>];
+
+<start_cmd> = go | move | head | turn | walk | veer | turn | rotate | travel;
+
+<dir> = forward | straight | left | right | back | backward | backwards | up | down;

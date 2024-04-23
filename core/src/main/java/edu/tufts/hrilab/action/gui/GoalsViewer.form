@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.action.gui.GoalsViewer">
+  <grid id="27dc6" binding="goalsViewerPanel" layout-manager="GridBagLayout">
+    <constraints>
+      <xy x="20" y="20" width="800" height="500"/>
+    </constraints>
+    <properties>
+      <alignmentX value="0.0"/>
+      <alignmentY value="0.0"/>
+      <minimumSize width="800" height="500"/>
+    </properties>
+    <border type="none"/>
+    <children>
+      <splitpane id="73437" binding="goalsViewSplit">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="200"/>
+          </grid>
+          <gridbag weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties>
+          <dividerLocation value="184"/>
+          <lastDividerLocation value="162"/>
+          <minimumSize width="800" height="500"/>
+          <preferredSize width="800" height="500"/>
+        </properties>
+        <border type="none"/>
+        <children>
+          <tabbedpane id="29c44" binding="goalTabPane">
+            <constraints>
+              <splitpane position="right"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
+          </tabbedpane>
+          <splitpane id="af651" binding="goalsSplitPane">
+            <constraints>
+              <splitpane position="left"/>
+            </constraints>
+            <properties>
+              <dividerLocation value="250"/>
+              <doubleBuffered value="false"/>
+              <lastDividerLocation value="250"/>
+              <minimumSize width="160" height="76"/>
+              <name value="CurrentGoals"/>
+              <orientation value="0"/>
+              <resizeWeight value="0.5"/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <splitpane id="643be">
+                <constraints>
+                  <splitpane position="right"/>
+                </constraints>
+                <properties>
+                  <dividerSize value="0"/>
+                  <orientation value="0"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="c5a73" class="javax.swing.JLabel">
+                    <constraints>
+                      <splitpane position="left"/>
+                    </constraints>
+                    <properties>
+                      <horizontalAlignment value="0"/>
+                      <horizontalTextPosition value="0"/>
+                      <text value="Current Goals"/>
+                    </properties>
+                  </component>
+                  <scrollpane id="83675">
+                    <constraints>
+                      <splitpane position="right"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="7f910" class="javax.swing.JList" binding="currentGoalsList">
+                        <constraints/>
+                        <properties/>
+                      </component>
+                    </children>
+                  </scrollpane>
+                </children>
+              </splitpane>
+              <splitpane id="2d566">
+                <constraints>
+                  <splitpane position="left"/>
+                </constraints>
+                <properties>
+                  <dividerSize value="0"/>
+                  <orientation value="0"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="cc12a" class="javax.swing.JLabel">
+                    <constraints>
+                      <splitpane position="left"/>
+                    </constraints>
+                    <properties>
+                      <horizontalAlignment value="0"/>
+                      <horizontalTextPosition value="0"/>
+                      <text value="Past Goals"/>
+                    </properties>
+                  </component>
+                  <scrollpane id="7fed2">
+                    <constraints>
+                      <splitpane position="right"/>
+                    </constraints>
+                    <properties>
+                      <alignmentX value="0.0"/>
+                      <alignmentY value="0.0"/>
+                    </properties>
+                    <border type="none"/>
+                    <children>
+                      <component id="40eb9" class="javax.swing.JList" binding="pastGoalsList">
+                        <constraints/>
+                        <properties>
+                          <alignmentX value="0.0"/>
+                          <alignmentY value="0.0"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </scrollpane>
+                </children>
+              </splitpane>
+            </children>
+          </splitpane>
+        </children>
+      </splitpane>
+    </children>
+  </grid>
+</form>

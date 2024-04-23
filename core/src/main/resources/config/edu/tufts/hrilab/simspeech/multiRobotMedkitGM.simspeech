@@ -1,0 +1,5 @@
+and(at(medkit1,alpha) ,in(medkit1,antiseptic), in(medkit1,bandage), in(medkit1,painkillers))
+and(at(medkit2,alpha) ,in(medkit2,bandage))
+did(setupPoses(armone:agent))
+did(deliver(armone:agent, standardMedkit))
+did(deliver(armone:agent, standardMedkit, container, contains(bandage,syringe)))

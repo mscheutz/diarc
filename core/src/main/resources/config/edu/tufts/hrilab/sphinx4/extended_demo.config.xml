@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+   Sphinx-4 Configuration file
+-->
+
+<!-- ******************************************************** -->
+<!--  an4 configuration file                             -->
+<!-- ******************************************************** -->
+
+<config>
+
+    <!-- ******************************************************** -->
+    <!-- frequently tuned properties                              -->
+    <!-- ******************************************************** -->
+
+    <property name="logLevel" value="WARNING"/>
+
+    <property name="absoluteBeamWidth"  value="-1"/>
+    <property name="relativeBeamWidth"  value="1E-80"/>
+    <property name="wordInsertionProbability" value="1E-36"/>
+    <property name="languageWeight"     value="8"/>
+
+    <property name="frontend" value="epFrontEnd"/>
+    <property name="recognizer" value="recognizer"/>
+    <property name="showCreations" value="false"/>
+    
+    <!-- Zach tuned to these values, haven't texted with new Sphinx
+    <property name="absoluteBeamWidth"  value="800"/>
+    <property name="relativeBeamWidth"  value="1E-75"/>
+    <property name="wordInsertionProbability" value="1E-14"/>
+    <property name="languageWeight"     value="7"/>
+    <property name="silenceInsertionProbability"  value="1"/>
+    <property name="linguist"           value="flatLinguist"/>
+    <property name="recognizer"         value="recognizer"/>
+    <property name="grammar"            value="jsgfGrammar"/>
+    <property name="frontend"   value="epFrontEnd"/>
+    <property name="showCreations"   value="false"/>
+    -->
+
+    <!-- ******************************************************** -->
+    <!-- word recognizer configuration                            -->
+    <!-- ******************************************************** -->
+
+    <component name="recognizer" type="edu.cmu.sphinx.recognizer.Recognizer">
+        <property name="decoder" value="decoder"/>
+        <propertylist name="monitors">
+            <!-- Zach had these commented out -->
+            <item>accuracyTracker </item>
+            <item>speedTracker </item>
+            <item>memoryTracker </item>
+        </propertylist>
+    </component>
+
+    <!-- ******************************************************** -->
+    <!-- The Decoder   configuration                              -->
+    <!-- ******************************************************** -->
+
+    <component name="decoder" type="edu.cmu.sphinx.decoder.Decoder">
+        <property name="searchManager" value="searchManager"/>
+        <!--
+        <property name="featureBlockSize" value="50"/>
+        -->
+    </component>
+
+    <component name="searchManager"
+        type="edu.cmu.sphinx.decoder.search.SimpleBreadthFirstSearchManager">
+        <property name="logMath" value="logMath"/>
+        <property name="linguist" value="flatLinguist"/>
+        <property name="pruner" value="trivialPruner"/>
+        <property name="scorer" value="threadedScorer"/>
+        <property name="activeListFactory" value="activeList"/>
+    </component>
+
+
+    <component name="activeList"
+             type="edu.cmu.sphinx.decoder.search.PartitionActiveListFactory">
+        <property name="logMath" value="logMath"/>
+        <property name="absoluteBeamWidth" value="${absoluteBeamWidth}"/>
+        <property name="relativeBeamWidth" value="${relativeBeamWidth}"/>
+    </component>
+
+    <component name="trivialPruner"
+                type="edu.cmu.sphinx.decoder.pruner.SimplePruner"/>
+
+    <component name="threadedScorer"
+                type="edu.cmu.sphinx.decoder.scorer.ThreadedAcousticScorer">
+        <property name="frontend" value="${frontend}"/>
+        <!--
+        <property name="isCpuRelative" value="true"/>
+        <property name="numThreads" value="0"/>
+        <property name="minScoreablesPerThread" value="10"/>
+        <property name="scoreablesKeepFeature" value="true"/>
+        -->
+    </component>
+
+    <!-- ******************************************************** -->
+    <!-- The linguist  configuration                              -->
+    <!-- ******************************************************** -->
+
+    <component name="flatLinguist"
+                type="edu.cmu.sphinx.linguist.flat.FlatLinguist">
+        <property name="logMath" value="logMath"/>
+        <property name="grammar" value="jsgfGrammar"/>
+        <property name="acousticModel" value="wsj"/>
+        <property name="wordInsertionProbability"
+                value="${wordInsertionProbability}"/>
+        <property name="languageWeight" value="${languageWeight}"/>
+        <property name="unitManager" value="unitManager"/>
+        <!--
+        <property name="addOutOfGrammarBranch" value="true"/>
+        <property name="outOfGrammarProbability" value="1E-30"/>
+        <property name="phoneInsertionProbability" value="1E-10"/>
+        <property name="phoneLoopAcousticModel" value="wsj"/>
+        -->
+    </component>
+
+
+    <!-- ******************************************************** -->
+    <!-- The Grammar  configuration                               -->
+    <!-- ******************************************************** -->
+
+    <component name="jsgfGrammar" type="edu.cmu.sphinx.jsgf.JSGFGrammar">
+        <property name="dictionary" value="dictionary"/>
+        <property name="grammarLocation"
+             value="resource:/com/sphinx4/config/"/>
+        <property name="grammarName" value="names"/>
+        <property name="logMath" value="logMath"/>
+    </component>
+
+
+    <!-- ******************************************************** -->
+    <!-- The Dictionary configuration                            -->
+    <!-- ******************************************************** -->
+
+    <component name="dictionary"
+        type="edu.cmu.sphinx.linguist.dictionary.FastDictionary">
+        <property name="dictionaryPath"
+	 value="resource:/WSJ_8gau_13dCep_16k_40mel_130Hz_6800Hz/dict/cmudict.0.6d"/>
+        <property name="fillerPath"
+	 value="resource:/WSJ_8gau_13dCep_16k_40mel_130Hz_6800Hz/dict/fillerdict"/>
+        <property name="addSilEndingPronunciation" value="false"/>
+        <property name="allowMissingWords" value="false"/>
+        <!--
+        <property name="addSilEndingPronunciation" value="true"/>
+        <property name="wordReplacement" value="&lt;sil&gt;"/>
+        <property name="allowMissingWords" value="true"/>
+        -->
+        <property name="unitManager" value="unitManager"/>
+    </component>
+
+    <!-- ******************************************************** -->
+    <!-- The acoustic model configuration                         -->
+    <!-- ******************************************************** -->
+    <component name="wsj"
+               type="edu.cmu.sphinx.linguist.acoustic.tiedstate.TiedStateAcousticModel">
+        <property name="loader" value="wsjLoader"/>
+        <property name="unitManager" value="unitManager"/>
+    </component>
+
+    <component name="wsjLoader" type="edu.cmu.sphinx.linguist.acoustic.tiedstate.Sphinx3Loader">
+        <property name="logMath" value="logMath"/>
+        <property name="unitManager" value="unitManager"/>
+        <property name="location" value="resource:/WSJ_8gau_13dCep_16k_40mel_130Hz_6800Hz"/>
+        <property name="modelDefinition" value="etc/WSJ_clean_13dCep_16k_40mel_130Hz_6800Hz.4000.mdef"/>
+        <property name="dataLocation" value="cd_continuous_8gau/"/>
+    </component>
+
+
+    <!-- ******************************************************** -->
+    <!-- The unit manager configuration                           -->
+    <!-- ******************************************************** -->
+
+    <component name="unitManager"
+        type="edu.cmu.sphinx.linguist.acoustic.UnitManager"/>
+
+    <!-- ******************************************************** -->
+    <!-- The frontend configuration                               -->
+    <!-- ******************************************************** -->
+
+    <component name="frontEnd" type="edu.cmu.sphinx.frontend.FrontEnd">
+        <propertylist name="pipeline">
+            <item>microphone </item>
+            <item>preemphasizer </item>
+            <item>windower </item>
+            <item>fft </item>
+            <item>melFilterBank </item>
+            <item>dct </item>
+            <item>liveCMN </item>
+            <item>featureExtraction </item>
+        </propertylist>
+    </component>
+
+    <!-- ******************************************************** -->
+    <!-- The live frontend configuration                          -->
+    <!-- ******************************************************** -->
+    <component name="epFrontEnd" type="edu.cmu.sphinx.frontend.FrontEnd">
+        <propertylist name="pipeline">
+            <item>microphone </item>
+            <item>dataBlocker </item>
+            <item>speechClassifier </item>
+            <item>speechMarker </item>
+            <item>nonSpeechDataFilter </item>
+            <item>preemphasizer </item>
+            <item>windower </item>
+            <item>fft </item>
+            <item>melFilterBank </item>
+            <item>dct </item>
+            <item>liveCMN </item>
+            <item>featureExtraction </item>
+        </propertylist>
+    </component>
+
+    <!-- ******************************************************** -->
+    <!-- The frontend pipelines                                   -->
+    <!-- ******************************************************** -->
+
+    <component name="dataBlocker" type="edu.cmu.sphinx.frontend.DataBlocker">
+        <!--<property name="blockSizeMs" value="10"/>-->
+    </component>
+
+    <component name="speechClassifier"
+               type="edu.cmu.sphinx.frontend.endpoint.SpeechClassifier">
+        <!-- 
+        PWS: This "threshold" represents the amount background noise must be
+        exceeded in order to be marked as speech.  The lower it is, the more
+        likely the sound is to be marked as speech.  Not sure where that 13
+        came from, but lowering to 7.5 made "stop" much easier to recognize.
+        -->
+        <!--default = 13, but with bone mic lot less noise so..."4"-->
+        <property name="threshold" value="13"/>
+        <!--
+        <property name="adjustment" value="0.003"/>
+        <property name="minSignal" value="0"/>
+        <property name="frameLengthInMs" value="10"/>
+        <property name="debug" value="false"/>
+        -->
+
+    </component>
+
+    <component name="nonSpeechDataFilter"
+               type="edu.cmu.sphinx.frontend.endpoint.NonSpeechDataFilter"/>
+
+    <component name="speechMarker"
+               type="edu.cmu.sphinx.frontend.endpoint.SpeechMarker" >
+        <property name="speechTrailer" value="50"/>
+        <!-- 
+        PWS: This "startSpeech" is the minimum duration for a sound to be
+        identified as the start of speech.  Decreasing it to 150 made "stop"
+        much easier to recognize.
+        -->
+        <!-- The property for the minimum amount of time in speech (in
+             milliseconds) to be considered as utterance start. -->
+        <!-- <property name="startSpeech" value="150"/> -->
+        <!-- amount of time, msecs, to be considerd as utterence end -->
+        <!-- <property name="endSilence" value="500"/> -->
+        <!-- millisecs before speech start to be included in speech data-->
+        <!-- <property name="speechLeader" value="100"/> -->
+
+        <!-- millisecs after speech ends to be included in speech data-->
+        <!-- <property name="speechTrailer" value="100"/> -->
+        <!-- <property name="endSilenceDecay" value="15.0"/> -->
+        <!-- <property name="speechLeaderFrames" value="30"/> -->
+    </component>
+
+
+    <component name="preemphasizer"
+               type="edu.cmu.sphinx.frontend.filter.Preemphasizer">
+        <!-- <property name="factor" value="0.90"/> -->
+    </component>
+
+    <component name="windower"
+               type="edu.cmu.sphinx.frontend.window.RaisedCosineWindower">
+        <!-- <property name="windowSizeInMs" value="25.625f"/> -->
+        <!-- <property name="windowShiftInMs" value="10"/> -->
+        <!-- <property name="alpha" value="0.46"/> -->
+    </component>
+
+    <component name="fft"
+            type="edu.cmu.sphinx.frontend.transform.DiscreteFourierTransform">
+        <!-- <property name="numberFftPoints" value="512"/> -->
+    </component>
+
+    <component name="melFilterBank"
+        type="edu.cmu.sphinx.frontend.frequencywarp.MelFrequencyFilterBank">
+        <!--
+        <property name="numberFilters" value="50"/>
+        <property name="minimumFrequency" value="130.0"/>
+        <property name="maximumFrequency" value="6800.0"/>
+        -->
+    </component>
+
+    <component name="dct"
+            type="edu.cmu.sphinx.frontend.transform.DiscreteCosineTransform">
+        <!--
+        <property name="numberFilters" value="50"/>
+        <property name="cepstrumLength" value="13"/>
+        -->
+    </component>
+
+    <component name="liveCMN"
+               type="edu.cmu.sphinx.frontend.feature.LiveCMN">
+        <!--
+        <property name="initialMean" value="12.0f"/>
+        <property name="cmnWindow" value="100"/>
+        <property name="shiftWindow" value="160"/>
+        -->
+    </component>
+
+    <component name="featureExtraction"
+               type="edu.cmu.sphinx.frontend.feature.DeltasFeatureExtractor">
+        <!--
+        <property name="windowSize" value="4"/>
+        -->
+    </component>
+
+    <component name="microphone"
+               type="edu.cmu.sphinx.frontend.util.Microphone">
+        <property name="closeBetweenUtterances" value="false"/>
+        <!-- PWS: sometimes need to select a particular mic -->
+        <!--
+        <property name="selectMixer" value="2"/>
+        -->
+    </component>
+
+
+    <!-- ******************************************************* -->
+    <!--  monitors                                               -->
+    <!-- ******************************************************* -->
+
+    <component name="accuracyTracker"
+                type="edu.cmu.sphinx.instrumentation.BestPathAccuracyTracker">
+        <property name="recognizer" value="${recognizer}"/>
+        <property name="showAlignedResults" value="false"/>
+        <property name="showRawResults" value="false"/>
+    </component>
+
+    <component name="memoryTracker"
+                type="edu.cmu.sphinx.instrumentation.MemoryTracker">
+        <property name="recognizer" value="${recognizer}"/>
+	<property name="showSummary" value="false"/>
+	<property name="showDetails" value="false"/>
+    </component>
+
+    <component name="speedTracker"
+                type="edu.cmu.sphinx.instrumentation.SpeedTracker">
+        <property name="recognizer" value="${recognizer}"/>
+        <property name="frontend" value="${frontend}"/>
+	<property name="showSummary" value="true"/>
+	<property name="showDetails" value="false"/>
+    </component>
+
+    <!--
+    <component name="recognizerMonitor" 
+                type="edu.cmu.sphinx.instrumentation.RecognizerMonitor">
+        <property name="recognizer" value="${recognizer}"/>
+        <propertylist name="allocatedMonitors">
+            <item>configMonitor </item>
+        </propertylist>
+    </component>
+    
+    <component name="configMonitor" 
+                    type="edu.cmu.sphinx.instrumentation.ConfigMonitor">
+        <property name="showConfig" value="false"/>
+    </component>
+    
+    <component name="linguistStats" 
+                type="edu.cmu.sphinx.linguist.util.LinguistStats">
+        <property name="linguist" value="${linguist}"/>
+    </component>
+    -->
+
+    <!-- ******************************************************* -->
+    <!--  Miscellaneous components                               -->
+    <!-- ******************************************************* -->
+
+    <component name="logMath" type="edu.cmu.sphinx.util.LogMath">
+        <property name="logBase" value="1.0001"/>
+        <property name="useAddTable" value="true"/>
+    </component>
+</config>

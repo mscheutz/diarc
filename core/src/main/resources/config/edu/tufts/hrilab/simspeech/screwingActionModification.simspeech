@@ -1,0 +1,51 @@
+setup poses
+go to pose conveyor
+go to pose work area
+define new item NV30FAU
+job testnv
+verify that you can see the NV30FAU
+get the NV30FAU on the work area
+get the NV30FAU on the conveyor
+-
+Define new screw type M3
+150 millinewton meters
+300 millinewton meters
+6500 degrees
+pose screw feeder
+-
+I will teach you how to screw a screw into a hole
+first verify that you can see the hole
+then mount the screw
+then align with the hole
+Then run the screwdriver job of the screw
+That is how you screw a screw into a hole
+-
+define new item NF32SV
+job circuit breaker face
+-
+I will teach you how to assemble a NF32SV
+first go to pose conveyor
+then verify that you can see the NF32SV
+Then get the NF32SV on the work area
+then search for 2 m3 holes
+screw a M3 screw into the left M3 hole
+then go to pose work area
+screw a M3 screw into the right M3 hole
+then get the NF32SV on the conveyor
+then advance the conveyor belt
+that is how you assemble a NF32SV
+-
+assemble a NF32SV
+-
+define new item NV30FAU
+job n v face
+-
+assemble an NV30FAU is like assemble an NF32SV
+replace search for 2 m3 holes with search for 2 deep m3 holes
+replace screw an M3 screw into the left M3 hole with screw an M3 screw into the bottom deep M3 hole
+replace screw an M3 screw into the right M3 hole with screw an M3 screw into the top deep M3 hole
+that is all
+-
+assemble an NV30FAU
+-
+robot two assemble an NV30FAU

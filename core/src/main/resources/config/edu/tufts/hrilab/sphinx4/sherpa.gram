@@ -1,0 +1,30 @@
+#JSGF V1.0;
+grammar jsgf.sherpa;
+
+public <main> = <scan> | <act_cmd>;
+
+<scan> = scan <regionnp>;
+
+<regionnp> = <det> <region> | it;
+
+<det> = the | a | this | that;
+
+<region> = area | region | mountain;
+
+<act_cmd> = <go_cmd> to <np> | <help> <animatenp>;
+
+<go_cmd> = go | move;
+
+<help> = aid | help | rescue;
+
+<np> = <animatenp> | <inanimatenp>;
+
+<animatenp> = <det> <animaten>; 
+
+<animatenp_DEP> = <det> <animaten> | him |her; 
+
+<animaten> = victim | person;
+
+<inanimatenp> = <det> <inanimaten> | it | this | that;
+
+<inanimaten> = tree | rock;

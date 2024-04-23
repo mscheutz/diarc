@@ -1,0 +1,24 @@
+setup poses
+-
+i will teach you how to sort
+first advance the conveyor belt
+then go to pose conveyor
+then verify that you can see a pill bottle
+then get the pill bottle on the scale
+If the scale reads over 100 g then get the pill bottle in box a
+otherwise put the pill bottle in box b
+that is how you sort
+-
+sort
+-
+run sort as a persistent goal
+-
+reverse the conveyor belt
+-
+modify action sort
+replace the scale reads over 100 g with the scale reads over 150 g
+that is all
+-
+aendere handlung sortieren
+Ersetze die Wage zeigt ueber 100 Gramm durch die Wage zeigt ueber 150 Gramm
+Das ist alles

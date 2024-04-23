@@ -1,0 +1,52 @@
+{
+  "references": [
+    {
+      "nodeName" : "dock",
+      "graphId" : "lumpen-tapir-7aIuQVGdE6VKGX5XARDULw==",
+      "variable" : "X:movebaselocation",
+      "properties": ["dockLocation(X:movebaselocation)"]
+    },
+    {
+      "nodeName" : "fetch",
+      "graphId" : "pricey-narwal-0VjklBtlNH+IOGbpW4lFoA==",
+      "variable" : "X:movebaselocation",
+      "properties": ["tableGLocation(X:movebaselocation)"]
+    },
+    {
+      "nodeName" : "alphadoor",
+      "graphId" : "barky-pigeon-DisuyBskF9EBZqMJk3FKFg==",
+      "variable" : "X:movebaselocation",
+      "properties": ["alphaDoor(X:movebaselocation)"]
+    },
+    {
+      "nodeName" : "alpha",
+      "graphId" : "uncool-marmot-qWmfUJjK.73z7vPu4OBjfw==",
+      "variable" : "X:movebaselocation",
+      "properties": ["alphaLocation(X:movebaselocation)"]
+    },
+    {
+      "nodeName" : "betadoor",
+      "graphId" : "maxi-giant-E993e96HFHKSNFcBCXO8Fg==",
+      "variable" : "X:movebaselocation",
+      "properties": ["betaDoorLocation(X:movebaselocation)"]
+    },
+    {
+      "nodeName" : "beta",
+      "graphId" : "splay-prawn-ZFrTV9kdbZ3UmI6LUIl9MQ==",
+      "variable" : "X:movebaselocation",
+      "properties": ["betaLocation(X:movebaselocation)"]
+    },
+    {
+      "nodeName" : "doorafteropen",
+      "graphId" : "olden-brahma-J9F6KYY630ui3z4D25QK7w==",
+      "variable" : "X:movebaselocation",
+      "properties": ["insidealphadoor(X:movebaselocation)"]
+    },
+    {
+      "nodeName" : "startlocation",
+      "graphId" : "olden-merlin-vguUN5JWiw3DuHoCl0A8tg==",
+      "variable" : "X:movebaselocation",
+      "properties": ["dockLocation(X:movebaselocation)"]
+    }
+  ]
+}

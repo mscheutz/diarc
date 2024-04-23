@@ -1,0 +1,17 @@
+%% Palettes at X location weigh Y
+
+%% Truck X has Y weight capacity
+
+setup demo; C; setupdemo(?ADDRESSEE)
+
+truck; THING; truck:location
+kg; VAL\NUM ; #x.val($x)
+cargo; VAL ; val(cargo)
+weight; VAL ; val(weight)
+time; VAL ; val(time)
+
+%% Fill the truck
+fill; C/REF; #x.loadLanguage(?ADDRESSEE, $x)
+fill; C/DESC; #x.loadLanguage(?ADDRESSEE, $x)
+%% Fill the truck and [maximize/minimize] for [weight/time/space]
+%% Empty the truck

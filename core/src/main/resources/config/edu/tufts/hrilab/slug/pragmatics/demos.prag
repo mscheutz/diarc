@@ -1,0 +1,253 @@
+NEW-SET
+RULES
+STATEMENT(A,B,if(X,Y),Z) := want(A,goal(B,if(X,Y)))
+STATEMENT(A,B,else(X),Z) := want(A,goal(B,else(X)))
+END-SET
+
+##temi 'representational workarounds'
+#TODO:brad: now that we don't have did, can this be generalize into a "then" action that handles any two goals?
+#how does that work with action learning? perhaps another prag rule to check if we're currently learning?
+NEW-SET
+RULES
+INSTRUCT(A,B,then(B,goToLocation(B,X,C),sayTextDialogueHistory(B,Y)),Z) := want(A,goToThenSay(B,X,Y))
+INSTRUCT(A,B,then(B,goToLocation(B,X,C),display(B,Y)),Z) := want(A,goToThenDisplay(B,X,Y))
+INSTRUCT(A,B,then(B,goToLocation(B,X,C),playVideo(B,Y)),Z) := want(A,goToThenPlay(B,X,Y))
+END-SET
+
+#assemble related workarounds
+NEW-SET
+RULES
+STATEMENT(A,B,will(teach(A,B,to(assemble(X)))),Z):= want(A,startLearningAssembleScript(B,X))
+STATEMENT(A,B,endTeaching(B,assemble(X)),Z) := want(A,endLearningAssembleScript(B,X))
+END-SET
+
+NEW-SET
+RULES
+# (forget that) the obstacle is not solid
+STATEMENT(A,B,notPropertyOf(X,solid),Z) := wantBel(A,B,not(propertyOf(X,solid)))
+INSTRUCT(A,B,forgetThat(notPropertyOf(X,solid)),Z) := want(A,forgetThat(B,A,not(propertyOf(X,solid))))
+
+# what are/is you/shafer doing, what are your goals
+QUESTION(A,B,whatAre(C,goals),Z) := itk(A,currently(is(C,WHAT)))
+QUESTION(A,B,whatAre(C,doing),Z) := itk(A,currently(is(C,WHAT)))
+
+#TODO: remove this in favor of more direct "go to start pose" instruction
+INSTRUCT(A,B,startOver(),Z) := want(A, goToStartPose())
+END-SET
+
+NEW-SET
+(succeeded(estimatePerformanceMeasures(B,G,T,Y)))
+RULES
+QUESTION(A,B,where(foresee(B,issues)),Z) := itk(A,mostLikelyToFailOf(G,T,Y,WHAT))
+END-SET
+
+NEW-SET
+(succeeded(estimatePerformanceMeasures(V,G,T)))
+RULES
+QUESTION(A,B,where(foresee(B,issues)),Z) := itk(A,mostLikelyToFailOf(G,T,WHAT))
+END-SET
+
+NEW-SET
+RULES
+#during - checked
+#What is the probability that you can complete the task to assemble a caddy?
+#QUESTION(A,B,probabilityOf(V,completeTask(Y)),Z) := itk(A,probabilityOf(Y,WHAT), did(B,estimatePerformanceMeasures(Y,during)))
+QUESTION(A,B,probabilityOf(completeTask(G)),Z) := itk(A,probabilityOf(G,during, WHAT))
+
+#What is the expected remaining time to assemble a caddy?
+#QUESTION(A,B,expected(timeTo(remaining,Y)),Z) := itk(A,durationOf(Y,WHAT), did(B,estimatePerformanceMeasures(Y,during)))
+# need to update the timeTo dict entry for the following
+#QUESTION(A,B,expected(timeTo(remaining,V,Y)),Z) := itk(A,durationOf(Y,during,WHAT))
+QUESTION(A,B,expected(timeTo(remaining,Y)),Z) := itk(A,durationOf(Y,during,WHAT))
+
+#What remaining step of G is most likely to fail?
+#QUESTION(A,B,propertyOf(remaining(stepOf(WHAT,G)),mostLikely(to(fail(B)))),Z) := itk(A,propertyOf(WHAT,mostLikelyToFail), did(B,estimatePerformanceMeasures(G,during)))
+# need to update the stepOf dict entry for the following
+#QUESTION(A,B,propertyOf(remaining(stepOf(WHAT,V,G)),mostLikely(to(fail(B)))),Z) := itk(A,propertyOf(V,Y,during,WHAT))
+QUESTION(A,B,propertyOf(remaining(stepOf(WHAT,G)),mostLikely(to(fail(B)))),Z) := itk(A,mostLikelyToFailOf(G,during,WHAT))
+END-SET
+
+NEW-SET
+RULES
+#during - checked
+#what is the probability that you can complete the task to g if... - checked
+#QUESTION(A,B,if(X,probabilityOf(V,completeTask(G))),Z) := itk(A,probabilityOf(if(X,V,G),WHAT), did(B,estimatePerformanceMeasures(G,during,X)))
+QUESTION(A,B,if(X,probabilityOf(completeTask(G))),Z) := itk(A,probabilityOf(G,during,if(X), WHAT))
+
+#what is the expected remaining time to assemble a caddy if...
+#QUESTION(A,B,if(X,expected(timeTo(remaining,Y))),Z) := itk(A,durationOf(Y,WHAT), did(B,estimatePerformanceMeasures(B,Y,during,X)))
+QUESTION(A,B,if(X,expected(timeTo(remaining,G))),Z) := itk(A,durationOf(G,during,if(X), WHAT))
+
+#what remaining step of G is most likely to fail if...
+#QUESTION(A,B,if(X,propertyOf(remaining(stepOf(WHAT,G)),mostLikely(to(fail(B))))),Z) := itk(A,propertyOf(WHAT,mostLikelyToFail), did(B,estimatePerformanceMeasures(B,G,during,X)))
+QUESTION(A,B,if(X,propertyOf(remaining(stepOf(WHAT,G)),mostLikely(to(fail(B))))),Z) := itk(A,mostLikelyToFailOf(G,during,if(X),WHAT))
+END-SET
+
+NEW-SET
+RULES
+#after - check delete, replace, insert, complete
+#What would have been the probability that you could...?
+#QUESTION(A,B,past(probabilityOf(V,G)),Z) := itkL(A,probabilityOf(V,G,WHAT), did(B,estimatePerformanceMeasures(V,G,after)))
+QUESTION(A,B,past(probabilityOf(G)),Z) := itk(A,probabilityOf(G,after,WHAT))
+
+#What would have been th expected remaining time to...?
+#QUESTION(A,B,past(expected(timeTo(remaining,Y))),Z) := itkL(A,durationOf(B,Y,WHAT), did(B,estimatePerformanceMeasures(B,Y,after)))
+QUESTION(A,B,past(expected(timeTo(Y))),Z) := itk(A,durationOf(Y,after,WHAT))
+
+#What step of G would have been most likely to fail?
+#QUESTION(A,B,past(propertyOf(stepOf(WHAT,G),mostLikely(to(fail(B))))),Z) := itkL(A,propertyOf(WHAT,mostLikelyToFail), did(B,estimatePerformanceMeasures(B,G,after)))
+QUESTION(A,B,past(propertyOf(stepOf(WHAT,G),mostLikely(to(fail(B))))),Z) := itk(A,mostLikelyToFailOf(Y,after,WHAT))
+END-SET
+
+NEW-SET
+RULES
+#after - check delete, replace, insert, complete
+#What would have been th probability that you could complete the task to assemble a caddy if you did/did not/...?
+#QUESTION(A,B,if(X,past(probabilityOf(V,G))),Z) := itkL(A,probabilityOf(if(X,V,G),WHAT), did(B,estimatePerformanceMeasures(V,G,after,X)))
+QUESTION(A,B,if(X,past(probabilityOf(G))),Z) := itk(A,probabilityOf(G,after,if(X),WHAT))
+
+#What would have been th expected remaining time to assemble a caddy if...?
+#QUESTION(A,B,if(X,past(expected(timeTo(Y)))),Z) := itkL(A,durationOf(B,Y,WHAT), did(B,estimatePerformanceMeasures(B,Y,after,X)))
+QUESTION(A,B,if(X,past(expected(timeTo(Y)))),Z) := itk(A,durationOf(Y,after,if(X),WHAT))
+
+#What step of G would have been most likely to fail if...?
+#QUESTION(A,B,if(X,past(propertyOf(stepOf(WHAT,G),mostLikely(to(fail(B)))))),Z) := itkL(A,propertyOf(WHAT,mostLikelyToFail), did(B,estimatePerformanceMeasures(B,G,after,X)))
+QUESTION(A,B,if(X,past(propertyOf(stepOf(WHAT,G),mostLikely(to(fail(B)))))),Z) := itk(A,mostLikelyToFailOf(Y,after,if(X),WHAT))
+END-SET
+
+
+NEW-SET # before performance assessment
+RULES
+#What is the prob that you can assemble a caddy?
+QUESTION(A,B,probabilityOf(G),Z) := itk(A,probabilityOf(G,before,WHAT))
+
+#What is the expected time to assemble a caddy?
+# following does not work, but next one does. Why? X (agent to perform goal G, should be a part of the utterance)
+#QUESTION(A,B,expected(timeTo(X,G)),Z) := itk(A,durationOf(X,G,before,WHAT))
+QUESTION(A,B,expected(timeTo(G)),Z) := itk(A,durationOf(G,before,WHAT))
+
+#What step of G  is most likely to fail?
+QUESTION(A,B,propertyOf(stepOf(WHAT,G),mostLikely(to(fail(B)))),Z) := itk(A,mostLikelyToFailOf(G,before,WHAT))
+END-SET
+
+NEW-SET # before performance assessment - if X
+RULES
+#What is the probability that you can assemble a caddy if you are holding the large gear? - check state, insert, replace, delete, complete
+QUESTION(A,B,if(X,probabilityOf(G)),Z) := itk(A,probabilityOf(G,before,if(X), WHAT))
+
+##what is the expected time to assemble a caddy if... - checked
+QUESTION(A,B,if(X,expected(timeTo(G))),Z) := itk(A,durationOf(G,before,if(X), WHAT))
+
+##what step of G is most likely to fail if... - checked
+QUESTION(A,B,if(X,propertyOf(stepOf(WHAT,G),mostLikely(to(fail(B))))),Z) := itk(A,mostLikelyToFailOf(G,before,if(X),WHAT))
+END-SET
+
+
+# "how would you X"
+NEW-SET
+RULES
+INSTRUCT(A,B,describe(B,how(to(X))),Z) := itk(A,actionDescription(X,HOW))
+#QUESTION(brad,shafer,how(shafer,doasquat()),{})
+QUESTION(A,B,how(B,X),Z) := itk(A,actionDescription(X,HOW))
+QUESTION(A,B,timeIs(WHAT),Z) := itk(A,currentTime(HOUR,MIN))
+QUESTION(A,B,know(B,currentTime),Z) := itk(A,capableOf(getTime(B))); itk(A,currentTime(HOUR,MIN))
+END-SET
+
+NEW-SET
+RULES
+# what is the current step (of dance)
+# what is the <LOC> step (of <ACT>)
+QUESTION(A,B,describe(stepOf(LOC,ACT)),Z) := itk(A,contextDescription(stepOf(LOC,ACT),step(STEP)))
+QUESTION(A,B,describe(stepOf(LOC,ACT,AGENT)),Z) := itk(A,contextDescription(stepOf(LOC,ACT),step(STEP)))
+# TODO: What are the effects of the current/previous/next step of dance
+# TODO: INSTRUCT(A,B,describe(effects(stepOf(LOC,ACT))),Z) := itk(A,contextDescription(stepOf(LOC,ACT),effects(E)))
+END-SET
+
+#special cases of the subsequent set
+NEW-SET
+RULES
+#demster tell shafer to walk forward
+INSTRUCT(A,B,tell(B,to(X)),Z) := want(A,tell(B,X))
+END-SET
+
+NEW-SET
+RULES
+#TODO:brad: this case isn't used so I commented it out for clarity
+#dempster, tell shafer the obstacle is not solid
+#INSTRUCT(A,B,tell(C,X),Z) := wantBel(A,C,X)
+#TODO:brad: this could also happen in the parser if we want
+#I will teach you how to dance
+STATEMENT(A,B,will(teach(A,B,to(X))),Z):= want(A,updateActionLearning(B,X,start))
+#That is how you dance
+STATEMENT(A,B,endTeaching(B,X),Z) := want(A,updateActionLearning(B,X,end))
+
+#TODO:brad: this could also happen in the parser if we want
+# this cancels/suspends/resumes the most recently started goal, or X, where X is a goal predicate
+INSTRUCT(A,B,stop(X),Z) := want(A,cancelGoal(X))
+INSTRUCT(A,B,pause(X),Z) := want(A,suspendGoal(X))
+INSTRUCT(A,B,resume(X),Z) := want(A,resumeGoal(X))
+
+#forget that <thing to forget>
+INSTRUCT(A,B,forgetThat(B,X),Z) := want(A,forgetThat(B,A,X))
+# forget how to <thing to forget>
+INSTRUCT(A,B,forgetHow(B,X),Z) := want(A,forgetHow(B,A,X))
+
+QUESTION(A,B,knowHow(B,to(X)),Z) := itk(A,capableOf(X))
+END-SET
+
+# (shafer) can you tell dempster to <>
+NEW-SET
+RULES
+QUESTION(A,B,can(tell(B,to(X))),Z) := itk(A,capableOf(tell(B,X))); want(A,tell(B,X))
+END-SET
+
+# can you <>
+NEW-SET
+RULES
+QUESTION(A,B,can(X),Z) := itk(A,capableOf(X)); want(A,X)
+END-SET
+
+# I want you to stand
+NEW-SET
+RULES
+STATEMENT(A,B,want(A,B,to(X)),Z):= want(A,X)
+END-SET
+
+# general cases of utterances which result in goal submission
+# INSTRUCTions, capableOf ISAs,  "will/want" statements
+NEW-SET
+RULES
+
+INSTRUCT(A,B,X,Z) := want(A,X)
+# shafer can andy look up
+QUESTION(A,B,capableOf(X),Z) := itk(A,capableOf(X)); want(A,tell(B,X))
+
+# (dempster) I want shafer to stand
+STATEMENT(A,B,want(A,to(X)),Z):= want(A,tell(B,X))
+END-SET
+
+#rules for non goal utterances
+NEW-SET
+RULES
+
+GREETING(A,B,X,{}) := greeting(A,B,X)
+STATEMENT(A,B,X,Z) := wantBel(A,B,X)
+QUESTION(A,B,X,Z) := itk(A,X)
+#brad: this is a hack, for handling acks in overhearing
+ACK(A,B,X,Z) := ack(A,okay(A,B))
+END-SET
+
+
+#add addressee to Utterance, and bind in dialogue
+
+#listners aren't included in prag rules, but addressee is
+# updated want(A,B,X) to want(A,X)
+
+#actor of dialogue scripts is a listener who may (or may not) be the addressee
+
+#addressee is a new filed in utterance, which is bound in dialogue
+#we don't mess around with the semantics at all in the action script
+
+#handle the case where the actor is the first arg of the goal predicate in ?semantics within in Action.
+
+#in the short term check in the top level submit goal in the GM, or in dialogue and modify the predicate there.

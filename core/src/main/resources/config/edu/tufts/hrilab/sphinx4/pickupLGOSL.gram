@@ -1,0 +1,32 @@
+#JSGF V1.0;
+grammar jsgf.demo_12_12;
+
+public <s> = <startcommand> <question> | <startcommand> <question> <endcommand> | <question> | <question> <endcommand> |  <startcommand> <command> | <command> <endcommand> | <command> | <startcommand> <command> <endcommand>| <greeting> | <startcommand> <greeting>| good | great | ok | <name> | <greeting> <name> | <statement>;
+
+<startcommand> = can you please | please | can you | could you | are you going to | i need you to | i want you to | great | good | now | just | ok | <name> | <startcommand> <startcommand>;
+
+<endcommand> = please | now | <name> | <endcommand> <endcommand>;
+
+<command> = <pickup> the <object> | <pickup> the knife <byThe> <objectPart> | hand it to me | point to the object | point to the knife | start over;
+
+<question> = <see> | <doyouhaveaname>;
+
+<statement> = the <color> part of the knife is the <objectPart>;
+
+<pickup> = pick up;
+
+<object> = object | knife;
+
+<byThe> = by the;
+
+<objectPart> = handle | blade;
+
+<color> = orange | gray;
+
+<see> = do you see an object | do you see a knife | do you see the object | do you see the knife;
+
+<doyouhaveaname> = do you have a name | what is your name | whats your name;
+
+<greeting> = hello | hi there | thanks | thank you | good bye | good evening | good job;
+
+<name> = pedro;
