@@ -20,16 +20,18 @@ SET(SOURCES
 	hough/GHT.cpp
 	)
 
-SET(YOLO_MODEL_PATH "../data/detectors/yolo/yolov3-tiny.weights")
+SET(CONFIG_DIR "../vision/build/resources/main/config/edu/tufts/hrilab/vision/detectors/")
+
+SET(YOLO_MODEL_PATH "${CONFIG_DIR}yolo/yolov3-tiny.weights")
 SET(YOLO_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/yolo/yolov3-tiny.weights")
 
-SET(BUTTONDETECTOR_MODEL_PATH "../data/detectors/buttondetector/buttonModelS320.onnx")
+SET(BUTTONDETECTOR_MODEL_PATH "${CONFIG_DIR}/buttondetector/buttonModelS320.onnx")
 SET(BUTTONDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/buttondetector/buttonModelS320.onnx")
 
-SET(PERSONDETECTOR_MODEL_PATH "../data/detectors/persondetector/crowdhuman_yolov5m.onnx")
+SET(PERSONDETECTOR_MODEL_PATH "${CONFIG_DIR}/persondetector/crowdhuman_yolov5m.onnx")
 SET(PERSONDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/persondetector/crowdhuman_yolov5m.onnx")
 
-SET(ELEVATORDOORDETECTOR_MODEL_PATH "../data/detectors/elevatordoordetector/elevatordoordetectorS320.onnx")
+SET(ELEVATORDOORDETECTOR_MODEL_PATH "${CONFIG_DIR}/elevatordoordetector/elevatordoordetectorS320.onnx")
 SET(ELEVATORDOORDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/elevatordoordetector/elevatordoordetectorS320.onnx")
 
 # optional sources
