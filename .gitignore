@@ -1,0 +1,7 @@
+.gradle/
+config/build/
+core/build/
+diarcRos/build/
+vision/build/
+vision/src/swig/
+.idea/
