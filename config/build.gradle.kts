@@ -10,7 +10,7 @@ tasks.compileJava {
   if (project.hasProperty("diarc.rosPackages")) {
     val rosPackages = project.findProperty("diarc.rosPackages").toString().split(",")
     for(rosPackage in rosPackages) {
-      dependsOn(":diarcRos:compile" + rosPackage.uppercaseFirstChar() + "Java")
+      dependsOn(":diarcRos:compile" + rosPackage.trim().uppercaseFirstChar() + "Java")
     }
   }
 
@@ -48,6 +48,10 @@ dependencies {
     implementation(project(":diarcRos"))
   }
 
+//  if(project.hasProperty("diarc.enableVision") && project.property("diarc.enableVision").toString().toBoolean()) {
+//    implementation(project(":vision"))
+//  }
+
   testImplementation("junit:junit:4.13.1") //TODO:figure out how to inherit this from the rootProject
   testImplementation("com.fasterxml.jackson.core:jackson-core:2.7.4")
   testImplementation("com.fasterxml.jackson.core:jackson-annotations:2.7.4")
@@ -76,7 +80,7 @@ tasks.named<Test>("test") {
   maxHeapSize = "4g"
   forkEvery = 1
   systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
-  systemProperty("logback.configurationFile", "../" + properties["diarc.loggingConfigFile"])
+  systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
 
   // to run tests with logging printed to console
   if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {
@@ -90,51 +94,69 @@ tasks.named<Test>("test") {
 
   //TODO:brad: is this the best way to include these resources?
   classpath += files("src/test/resources") +
-          files(rootProject.rootDir.path+"/diarcRos/src/main/resources") +
-          files(rootProject.rootDir.path+"/vision/src/main/resources") +
-          files(rootProject.rootDir.path+"/core/src/test/resources")
+          files(project(":diarcRos").projectDir.path+"/src/main/resources") +
+          files(project(":vision").projectDir.path+"/src/main/resources") +
+          files(project(":core").projectDir.path+"/src/test/resources")
 }
 
-tasks.register<JavaCompile>("compileConfig"){
-  if (project.hasProperty("diarc.rosPackages")) {
-    val rosPackages = project.findProperty("diarc.rosPackages").toString().split(",")
-    for(rosPackage in rosPackages) {
-      dependencies {
-        implementation(project(":diarcRos",rosPackage.trim()+"Jar"))
+tasks.register<JavaCompile>("compileConfig") {
+  // compile DIARC configuration file
+  if (rootProject.name == "diarc") {
+    // if executing task from main diarc repo, set source relative to :config subproject
+    source("src/main/java/")
+  } else {
+    // else executing task from a gradle project outside the main diarc repo, assume this full path
+    source(rootProject.rootDir.path + "/src/main/java/")
+  }
+  options.compilerArgs = listOf("-parameters")
+  include(project.findProperty("main").toString().replace(".","/")+".java")
+  classpath = sourceSets.main.get().compileClasspath
+  destinationDirectory = file(project.layout.buildDirectory.get().toString()+"/classes/java/main/")
+
+  // add :diarcRos dependencies
+  if(project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
+    if (project.hasProperty("diarc.rosPackages")) {
+      val rosPackages = project.findProperty("diarc.rosPackages").toString().split(",")
+      for (rosPackage in rosPackages) {
+        dependencies {
+          implementation(project(":diarcRos", rosPackage.trim() + "Jar"))
+        }
       }
     }
   }
 
-  source("src/main/java/")
-  options.compilerArgs = listOf("-parameters")
-  include(project.findProperty("main").toString().replace(".","/")+".java")
-  //TODO:brad:add ros classes to classpath?
-  classpath = sourceSets.main.get().compileClasspath + files(rootProject.rootDir.path.toString()+"/vision/build/classes/java/main/")
-  destinationDirectory = file(project.layout.buildDirectory.get().toString()+"/classes/java/main/")
+  // add :vision dependencies
+  if (project.hasProperty("diarc.enableVision") && project.property("diarc.enableVision").toString().toBoolean()) {
+    // not using vision Jar here because c++ cannot currently read resource files from a Jar
+    classpath += project(":vision").sourceSets.main.get().output
+  }
 }
 
 tasks.register<JavaExec>("launch") {
   dependsOn("compileConfig")
 
-  workingDir = rootDir
-
-  //TODO:brad: add ros classes to classpath
-  classpath =  sourceSets.main.get().runtimeClasspath +
-          files(rootProject.rootDir.path.toString()+"/vision/build/classes/java/main/") +
-          files(rootProject.rootDir.path.toString()+"/vision/build/classes/java/swig/") +
-          files(rootProject.rootDir.path.toString()+"/vision/build/resources/main/")
-
+  classpath = sourceSets.main.get().runtimeClasspath
   mainClass = project.findProperty("main").toString()
+
+  // planner executable path
   systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
 
-  val visionDir = rootProject.rootDir.path.toString() + "/vision"
-  jvmArgs = listOf(
-          "-Dcomponent=" + project.findProperty("main").toString(),
-          "-Dtrade.properties.path=" + properties["diarc.tradePropertiesFile"].toString(),
-          "-DtradeLogging.config.path=" + properties["diarc.tradeLoggingConfigFile"].toString(),
-          "-Dlogback.configurationFile=" + properties["diarc.loggingConfigFile"].toString(),
-          "-Djava.library.path=" + visionDir + "/build/cpp/lib:" + visionDir + "/src/main/cpp/third_party/vlfeat/bin/glnxa64:.:" + environment["LD_LIBRARY_PATH"]
-  )
+  // conditionally add vision
+  if (project.hasProperty("diarc.enableVision") && project.property("diarc.enableVision").toString().toBoolean()) {
+    // add vision classes and resources
+    // not using vision Jar here because c++ cannot currently read resource files from a Jar
+    classpath += project(":vision").sourceSets.main.get().output
+
+    // to find native libraries
+    val visionDir = project(":vision").projectDir.path
+    systemProperty("java.library.path", visionDir + "/build/cpp/lib:" + visionDir + "/src/main/cpp/third_party/vlfeat/bin/glnxa64:.:" + environment["LD_LIBRARY_PATH"])
+  }
+
+  // jvm args
+  systemProperty("component", project.findProperty("main").toString())
+  systemProperty("logback.configurationFile", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString())
+  systemProperty("trade.properties.path", properties.getOrDefault("diarc.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
+  systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
 }
 
 repositories {

@@ -1,3 +1,5 @@
+import groovyjarjarantlr.build.ANTLR
+
 plugins {
   `java-library`
 }
@@ -19,21 +21,17 @@ tasks.named<Test>("test") {
   classpath += files("src/test/resources")
 
   val visionDir = layout.projectDirectory;
-  jvmArgs = listOf("-Dlogback.configurationFile=" + properties["diarc.loggingConfigFile"],
-          "-Djava.library.path=" + visionDir + "/build/cpp/lib:" + visionDir + "/src/main/cpp/third_party/vlfeat/bin/glnxa64:.:" + environment["LD_LIBRARY_PATH"]
-  )
+  systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
+  systemProperty("java.library.path", visionDir.toString() + "/build/cpp/lib:" + visionDir + "/src/main/cpp/third_party/vlfeat/bin/glnxa64:.:" + environment["LD_LIBRARY_PATH"])
 }
 
 sourceSets{
   create("mock") {
   }
-  create("swig") {
-    compileClasspath += project(":core").sourceSets.main.get().compileClasspath + project(":core").sourceSets.main.get().output
-    runtimeClasspath += project(":core").sourceSets.main.get().runtimeClasspath + project(":core").sourceSets.main.get().output
-  }
-  main{
-    compileClasspath += sourceSets.getByName("swig").compileClasspath + sourceSets.getByName("swig").output
-    runtimeClasspath += sourceSets.getByName("swig").runtimeClasspath + sourceSets.getByName("swig").output
+  main {
+    java {
+      setSrcDirs(listOf("src/main/java", "src/swig/java"))
+    }
   }
   test{
     java{
@@ -52,14 +50,6 @@ tasks.compileJava {
     project.hasProperty("diarc.enableVision") && project.property("diarc.enableVision").toString().toBoolean()
   }
   options.compilerArgs = listOf("-parameters")
-  dependsOn("compileSwigJava")
-}
-
-tasks.named("compileSwigJava") {
-  onlyIf{
-    project.hasProperty("diarc.enableVision") && project.property("diarc.enableVision").toString().toBoolean()
-  }
-
   dependsOn("compileVisionNative")
 }
 
@@ -71,7 +61,7 @@ tasks.register<Exec>("compileVisionNative") {
   workingDir("build/cpp")
 
   //on linux
-  commandLine("make", "-j", project.property("diarc.make.j").toString())
+  commandLine("make", "-j", properties.getOrDefault("diarc.make.j", "4").toString())
   dependsOn("cmakeVisionNative")
 }
 
@@ -150,19 +140,4 @@ dependencies {
 
   testImplementation("junit:junit:4.13.1")
 
-}
-
-tasks.register<JavaExec>("launchVision") {
-  workingDir = rootDir
-  classpath =  sourceSets.main.get().runtimeClasspath + sourceSets.getByName("swig").runtimeClasspath
-  mainClass = "edu.tufts.hrilab.vision.VisionComponentImpl"
-
-  val visionDir = layout.projectDirectory;
-  jvmArgs = listOf(
-          "-Dcomponent=edu.tufts.hrilab.vision.VisionComponentImpl",
-          "-Dtrade.properties.path=" + properties["diarc.tradePropertiesFile"].toString(),
-          "-DtradeLogging.config.path=" + properties["diarc.tradeLoggingConfigFile"].toString(),
-          "-Dlogback.configurationFile=" + properties["diarc.loggingConfigFile"].toString(),
-          "-Djava.library.path=" + visionDir + "/build/cpp/lib:" + visionDir + "/src/main/cpp/third_party/vlfeat/bin/glnxa64:.:" + environment["LD_LIBRARY_PATH"]
-  )
 }
