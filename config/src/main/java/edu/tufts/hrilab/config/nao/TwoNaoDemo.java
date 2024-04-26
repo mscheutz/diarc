@@ -12,7 +12,7 @@ import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
-import edu.tufts.hrilab.sphinx4.Sphinx4Component;
+import edu.tufts.hrilab.sphinx4.Sphinx4Component; 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,7 @@ public class TwoNaoDemo extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
 
-    createInstance(SimpleNLGComponent.class, "");
+    createInstance(SimpleNLGComponent.class);
 
     if (mockNao) {
       createInstance(MockNaoComponent.class, "-groups agent:dempster -obstacle true"); // sees obstacle
