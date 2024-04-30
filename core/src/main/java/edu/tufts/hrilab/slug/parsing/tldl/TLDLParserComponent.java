@@ -119,7 +119,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     if (cmdLine.hasOption("dict")) {
       Arrays.asList(cmdLine.getOptionValues("dict"))
               .stream().filter(dict -> !dict.isEmpty())
-              .forEach(dict -> dictionaryFiles.add(Resources.createFilepath(resourceConfigPath, dict)));
+              .forEach(dict -> addDictionary(dict));
     }
     if (cmdLine.hasOption("noUpdateAddressee")) {
       updateAddressHistory = false;
@@ -257,7 +257,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       String token = nextToken.getLeft();
       List<Entry> entries= nextToken.getRight();
       if (entries.isEmpty()){
-        log.warn("[parseUtterance] unknown token:"+token);
+        log.warn("[parseUtterance] unknown token: "+token);
         log.debug("current interactor: " + currentInteractor);
         parses.put(currentInteractor, new Parse(terminalCategories.keySet()));
         // TODO: this should be handled in the NLU scripts
@@ -401,6 +401,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       failureSemantics = Factory.createPredicate("error("+listener+",doNotKnowWhat("+listener+","+reason+",means))");
     }
     utterance.setSemantics( failureSemantics);
+    utterance.setIndirectSemantics(new ArrayList<>());
     log.debug("utterance generated: " + utterance);
     log.debug("utterance words: " + utterance.getWords());
      return utterance;

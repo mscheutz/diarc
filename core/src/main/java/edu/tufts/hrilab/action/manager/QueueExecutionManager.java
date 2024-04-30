@@ -15,6 +15,7 @@ import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.util.Util;
 import org.slf4j.Logger;
@@ -61,8 +62,7 @@ public class QueueExecutionManager extends ExecutionManager {
     }
 
     //Notify UI of new goal
-    //Make this call per agent? TODO: Need to update UI side of this
-    notifyUIActiveGoalUpdated(g, status, updateType == UpdateType.ADDED);
+    notifyUIActiveGoalUpdated(g, status, updateType);
 
     //Assign as many pending goals as possible (in order of priority) with resources freed up by this active goal
     // completing
@@ -136,6 +136,7 @@ public class QueueExecutionManager extends ExecutionManager {
     return cancelCurrentGoal(rootAgent);
   }
 
+  //TODO: return value doesn't make sense anymore if acting on all children
   @Action
   @TRADEService
   public long cancelCurrentGoal(Symbol agent) {
@@ -144,8 +145,15 @@ public class QueueExecutionManager extends ExecutionManager {
     long goalId = getSystemGid(agent);
     if (goalId != -1) {
       cancelGoal(goalId);
-      return goalId;
     }
+
+    AgentTeam agentTeam = agentTeams.get(agent);
+    if (agentTeam != null) {
+      for (Symbol member: agentTeam.getMemberNames()) {
+        cancelCurrentGoal(member);
+      }
+    }
+
     return -1;
   }
 
@@ -155,6 +163,7 @@ public class QueueExecutionManager extends ExecutionManager {
     return suspendCurrentGoal(rootAgent);
   }
 
+  //TODO: return value doesn't make sense anymore if acting on all children
   @Action
   @TRADEService
   public long suspendCurrentGoal(Symbol agent) {
@@ -163,8 +172,15 @@ public class QueueExecutionManager extends ExecutionManager {
     long goalId = getSystemGid(agent);
     if (goalId != -1) {
       suspendGoal(goalId);
-      return goalId;
     }
+
+    AgentTeam agentTeam = agentTeams.get(agent);
+    if (agentTeam != null) {
+      for (Symbol member: agentTeam.getMemberNames()) {
+        suspendCurrentGoal(member);
+      }
+    }
+
     return -1;
   }
 
@@ -174,6 +190,7 @@ public class QueueExecutionManager extends ExecutionManager {
     return resumeCurrentGoal(rootAgent);
   }
 
+  //TODO: return value doesn't make sense anymore if acting on all children
   @Action
   @TRADEService
   public long resumeCurrentGoal(Symbol agent) {
@@ -182,8 +199,15 @@ public class QueueExecutionManager extends ExecutionManager {
     long goalId = getSystemGid(agent);
     if (goalId != -1) {
       resumeGoal(goalId);
-      return goalId;
     }
+
+    AgentTeam agentTeam = agentTeams.get(agent);
+    if (agentTeam != null) {
+      for (Symbol member: agentTeam.getMemberNames()) {
+        resumeCurrentGoal(member);
+      }
+    }
+
     return -1;
   }
 
@@ -195,12 +219,128 @@ public class QueueExecutionManager extends ExecutionManager {
     }
   }
 
-  private void clearQueue() {
-    synchronized (pendingGoalsLock) {
-      while (!pendingGoals.isEmpty()) {
-        log.info("[clearQueue] clearing all goals from queue");
-        cancelGoalInQueueIndex(0);
+  //////////////////////////////////
+  //FoodOrdering QA methods - move//
+  //////////////////////////////////
+  @TRADEService
+  @Action
+  public void cancelAllActiveGoals() {
+    synchronized (goalsLock) {
+      for (Symbol agent: agentGoals.keySet()) {
+        Goal g = agentGoals.get(agent);
+        if (g != null && !g.getStatus().isTerminated()) {
+          agentGoals.get(agent).cancel();
+        }
       }
     }
   }
+
+  //Doesn't work
+  //@TRADEService
+  //@Action
+  //public void cancelAllPendingGoals() {
+  //  synchronized (pendingGoalsLock) {
+  //    while (!pendingGoals.isEmpty()) {
+  //      cancelGoalInQueueIndex(0);
+  //    }
+  //  }
+  //}
+
+  //@TRADEService
+  //@Action
+  //public void cancelAllCurrentGoals() {
+  //  synchronized (goalsLock) {
+  //    synchronized (pendingGoalsLock) {
+  //      cancelAllPendingGoals();
+  //      cancelAllActiveGoals();
+  //    }
+  //  }
+  //}
+
+  @TRADEService
+  @Action
+  public List<Predicate> getPendingGoalsPredicates() {
+    List<Predicate> goalPreds = new ArrayList<>();
+    synchronized (pendingGoalsLock) {
+      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
+      while (pendingGoalIterator.hasNext()) {
+        PendingGoal pendingGoal = pendingGoalIterator.next();
+        goalPreds.add(pendingGoal.getGoal().getPredicate());
+      }
+    }
+    return goalPreds;
+  }
+
+  @TRADEService
+  @Action
+  public List<Predicate> getSystemGoalPredicates(Symbol actor) {
+    return getSystemGoalPredicatesHelper(getUntypedSymbol(actor), new ArrayList<>());
+  }
+
+  private List<Predicate> getSystemGoalPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
+    Goal g = agentGoals.get(actor);
+    if (g != null && !g.getStatus().isTerminated()) {
+      goalPreds.add(Factory.createPredicate(g.getStatus().toString(), g.getPredicate()));
+    }
+
+    AgentTeam agentTeam  = agentTeams.get(actor);
+    if (agentTeam != null) {
+      for (Symbol member: agentTeam.getMemberNames()) {
+        goalPreds.addAll(getSystemGoalPredicates(member));
+      }
+    }
+
+    return goalPreds;
+  }
+
+  @TRADEService
+  @Action
+  public Predicate getNextGoalPredicate() {
+    synchronized (pendingGoalsLock) {
+      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
+      if (pendingGoalIterator.hasNext()) {
+        return pendingGoalIterator.next().getGoal().getPredicate();
+      } else {
+        //TODO: what to return here?
+        return Factory.createPredicate("none()");
+      }
+    }
+  }
+
+  @TRADEService
+  @Action
+  public Predicate getNextGoalPredicate(Symbol agent) {
+    agent = getUntypedSymbol(agent);
+    synchronized (pendingGoalsLock) {
+      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
+      while (pendingGoalIterator.hasNext()) {
+        PendingGoal pg = pendingGoalIterator.next();
+        if (agent == getUntypedSymbol(pg.getGoal().getActor())) {
+          return pg.getGoal().getPredicate();
+        }
+      }
+    }
+    //TODO: what to return here?
+    return Factory.createPredicate("none()");
+  }
+
+  //Issue is this would include all dialogue goals and other goals which skipped the queue
+  //Would need to track separately if we just wanted top level 'system' goals. They are technically still tracked here
+  //  until a new active goal starts for each agent though
+  //@TRADEService
+  //@Action
+  //public Predicate getLastGoal() {
+  //  Goal lastGoal = null;
+  //  for (Goal g: getPastGoals()) {
+  //    if (lastGoal == null || g.getEndTime() > lastGoal.getEndTime()) {
+  //      lastGoal = g;
+  //    }
+  //  }
+  //  if (lastGoal == null) {
+  //    //TODO: what to return here?
+  //    return Factory.createPredicate("none()");
+  //  } else {
+  //    return lastGoal.getPredicate();
+  //  }
+  //}
 }

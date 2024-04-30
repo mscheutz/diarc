@@ -110,7 +110,7 @@ public class PragUtil {
   }
 
   public static Map<Variable, Symbol> getBindingsSymHelper(Map<Variable, Symbol> bindings, Symbol s1, Symbol s2) {
-    if (bindings == null) {
+    if (bindings == null || s1 == null || s2 == null) {
       log.warn("[getBindingsSymHelper] passed in null bindings. Returning null. s1: "+s1+" s2: "+s2);
       return null;
     }

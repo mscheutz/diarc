@@ -11,10 +11,16 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.ActionListener;
+import edu.tufts.hrilab.action.execution.Context;
+import edu.tufts.hrilab.action.execution.ActionContext;
+import edu.tufts.hrilab.action.execution.FailureContext;
+import edu.tufts.hrilab.action.execution.RootContext;
+import edu.tufts.hrilab.action.execution.GoalContext;
+import edu.tufts.hrilab.action.execution.ChildContexts;
+import edu.tufts.hrilab.action.manager.ExecutionManager.UpdateType;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
-import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.execution.control.ExitContext;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.*;
@@ -48,19 +54,22 @@ public abstract class UIComponent extends DiarcComponent implements ActionListen
   private String dbFileDir = "config/edu/tufts/hrilab/action/asl";
   private List<String> actionsToWrite;
   private List<String> actionFilesToWrite;
-
   private Set<String> relevantActions;
   private HashMap<Context, Context> trackedContexts;
-
-  private final Object goalRepLock = new Object();
+  private final Object pendingGoalsLock = new Object();
+  private List<String> pendingGoalAgents;
   private List<String> pendingGoalStrings;
   private List<Long> pendingGoalIds;
-  private List<GoalStatus> pendingGoalStatuses;
-
+  private List<String> pendingGoalStatuses;
+  private List<String> pendingGoalPriorityTiers;
+  private final Object activeGoalsLock = new Object();
+  private List<String> activeGoalAgents;
+  private List<String> activeGoalStrings;
+  private List<Long> activeGoalIds;
+  private List<String> activeGoalStatuses;
+  private List<String> activeGoalPriorityTiers;
   private Map<String, List<Map<Variable, Symbol>>> beliefState;
-
   private TreeSet<String> dictKeys;
-
   //TODO: get rid of this?
   private static AtomicLong orderCounter = new AtomicLong();
 
@@ -85,9 +94,16 @@ public abstract class UIComponent extends DiarcComponent implements ActionListen
 
     dictKeys = null;
 
+    pendingGoalAgents = new ArrayList<>();
     pendingGoalStrings = new ArrayList<>();
     pendingGoalIds = new ArrayList<>();
     pendingGoalStatuses = new ArrayList<>();
+    pendingGoalPriorityTiers = new ArrayList<>();
+    activeGoalAgents = new ArrayList<>();
+    activeGoalStrings = new ArrayList<>();
+    activeGoalIds = new ArrayList<>();
+    activeGoalStatuses = new ArrayList<>();
+    activeGoalPriorityTiers = new ArrayList<>();
 
     shouldRunExecutionLoop = true;
   }
@@ -154,7 +170,7 @@ public abstract class UIComponent extends DiarcComponent implements ActionListen
       //Get New Action Notifications (on startup, learned, plans)
       if (connectToAction && !connectedToAction) {
         try {
-          TRADE.getAvailableService(new TRADEServiceConstraints().name("registerNotification")).call(void.class, getMyService("onNewActionsCallback", List.class));
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("registerNotification").argTypes(TRADEServiceInfo.class)).call(void.class, getMyService("onNewActionsCallback", List.class));
           connectedToAction = true;
         } catch (TRADEException e) {
           log.error("[FirebaseConnectionComponent] Error registering for action notifications: ", e);
@@ -164,8 +180,8 @@ public abstract class UIComponent extends DiarcComponent implements ActionListen
       if (!connectedToBelief && connectToBelief) {
           try {
             //TODO: foodOrdering specific, make this configurable
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("registerForNotification")).call(void.class, Factory.createPredicate("meal", "X", "Y"), getMyService("beliefNotificationCallback", Term.class, List.class));
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("registerForNotification")).call(void.class, Factory.createPredicate("mealReady", "X", "Y"), getMyService("beliefNotificationCallback", Term.class, List.class));
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("registerForNotification").argTypes(Term.class,TRADEServiceInfo.class)).call(void.class, Factory.createPredicate("meal", "X", "Y"), getMyService("beliefNotificationCallback", Term.class, List.class));
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("registerForNotification").argTypes(Term.class,TRADEServiceInfo.class)).call(void.class, Factory.createPredicate("mealReady", "X", "Y"), getMyService("beliefNotificationCallback", Term.class, List.class));
             connectedToBelief = true;
           } catch (TRADEException e) {
             log.error("[FirebaseConnectionComponent] Error registering for AI notifications: ", e);
@@ -186,7 +202,7 @@ public abstract class UIComponent extends DiarcComponent implements ActionListen
       //Get Notifications on AI start/end and cycle progress
       if (!registeredAIListener) {
         try {
-          TRADE.getAvailableService(new TRADEServiceConstraints().name("registerAIListener")).call(void.class, this);
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("registerAIListener").argTypes(ActionListener.class)).call(void.class, this);
           registeredAIListener = true;
         } catch (TRADEException e) {
           log.error("[FirebaseConnectionComponent] Error registering for AI notifications: ", e);
@@ -199,15 +215,11 @@ public abstract class UIComponent extends DiarcComponent implements ActionListen
   @TRADEService
   public abstract void onAgentActionUpdated(String actor, String goal, String status);
 
-  //QueueExecutionManager only - change impl to be more generic, use pending/active goals collections from base EM
-  //  rather than QueueEM specific info/methods
-  //@TRADEService
-  //public abstract void onSystemGoalsUpdated(Map<String,Object> goalInfo);
   @TRADEService
-  public abstract void onActiveGoalUpdated(String goalString, GoalStatus status, long gid);
+  public abstract void onActiveGoalsUpdated(List<String> agentStrings, List<String> goalStrings, List<Long> gids, List<String> goalStatuses, List<String> goalPriorityTiers);
 
   @TRADEService
-  public abstract void onPendingGoalsUpdated(List<String> goalStrings, List<GoalStatus> statuses, List<Long> gids);
+  public abstract void onPendingGoalsUpdated(List<String> agentStrings, List<String> goalStrings, List<Long> gids, List<String> goalStatuses, List<String> goalPriorityTiers);
 
   @TRADEService
   public abstract void onActionGenerated(ActionDBEntry action, boolean onStartup);
@@ -220,24 +232,66 @@ public abstract class UIComponent extends DiarcComponent implements ActionListen
 
   //Called from EM on updates, change how this works
   @TRADEService
-  public void notifyPendingGoalUpdated(Goal g, int index, boolean added) {
-    synchronized (goalRepLock) {
-      if (added) {
+  public void notifyPendingGoalUpdated(Goal g, int index, UpdateType updateType) {
+    synchronized (pendingGoalsLock) {
+      if (updateType == UpdateType.ADDED) {
+        pendingGoalAgents.add(index, g.getActor().toUntypedString());
         pendingGoalStrings.add(index, convertGoalToReadableString(g));
         pendingGoalIds.add(index, g.getId());
-        pendingGoalStatuses.add(index, g.getStatus());
-      } else {
+        pendingGoalStatuses.add(index, g.getStatus().toString());
+        pendingGoalPriorityTiers.add(index, g.getPriorityTier().toString());
+      }
+      else if (updateType == UpdateType.UPDATED) {
+        pendingGoalAgents.set(index, g.getActor().toUntypedString());
+        pendingGoalStrings.set(index, convertGoalToReadableString(g));
+        pendingGoalIds.set(index, g.getId());
+        pendingGoalStatuses.set(index, g.getStatus().toString());
+        pendingGoalPriorityTiers.set(index, g.getPriorityTier().toString());
+      }
+      else if (updateType == UpdateType.REMOVED){
+        pendingGoalAgents.remove(index);
         pendingGoalStrings.remove(index);
         pendingGoalIds.remove(index);
         pendingGoalStatuses.remove(index);
+        pendingGoalPriorityTiers.remove(index);
       }
     }
-    onPendingGoalsUpdated(pendingGoalStrings, pendingGoalStatuses, pendingGoalIds);
+    onPendingGoalsUpdated(pendingGoalAgents, pendingGoalStrings, pendingGoalIds, pendingGoalStatuses, pendingGoalPriorityTiers);
   }
 
   @TRADEService
-  public void notifyActiveGoalUpdated(Goal goal, GoalStatus status) {
-    onActiveGoalUpdated(convertGoalToReadableString(goal), status, goal.getId());
+  public void notifyActiveGoalUpdated(Goal g, UpdateType updateType, GoalStatus status) {
+    synchronized (activeGoalsLock) {
+      if (updateType == UpdateType.ADDED) {
+        activeGoalAgents.add(g.getActor().toUntypedString());
+        activeGoalStrings.add(convertGoalToReadableString(g));
+        activeGoalIds.add(g.getId());
+        activeGoalStatuses.add(status.toString());
+        activeGoalPriorityTiers.add(g.getPriorityTier().toString());
+      } else {
+        int index = 0;
+        for (Long id : activeGoalIds) {
+          if (id.equals(g.getId())) {
+            break;
+          }
+          index += 1;
+        }
+        if (updateType == UpdateType.UPDATED) {
+          activeGoalAgents.set(index, g.getActor().toUntypedString());
+          activeGoalStrings.set(index, convertGoalToReadableString(g));
+          activeGoalIds.set(index, g.getId());
+          activeGoalStatuses.set(index, status.toString());
+          activeGoalPriorityTiers.set(index, g.getPriorityTier().toString());
+        } else if (updateType == UpdateType.REMOVED) {
+          activeGoalAgents.remove(index);
+          activeGoalStrings.remove(index);
+          activeGoalIds.remove(index);
+          activeGoalStatuses.remove(index);
+          activeGoalPriorityTiers.remove(index);
+        }
+      }
+    }
+    onActiveGoalsUpdated(activeGoalAgents, activeGoalStrings, activeGoalIds, activeGoalStatuses, activeGoalPriorityTiers);
   }
 
   private void onAgentActionUpdated(String actor, Predicate goal, String status) {

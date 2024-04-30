@@ -95,6 +95,8 @@ public class ActionLearning {
     ignoreActionSet.add(Factory.createPredicate("cancelGoalInQueueIndex(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelDefineItem(?actor,?itemRefId,?trayRefId,?scriptID)"));
     ignoreActionSet.add(Factory.createPredicate("suspendDefineItem(?actor,?scriptID)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelCurrentGoal(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("suspendCurrentGoal(?actor)"));
   }
 
   /**
@@ -463,7 +465,8 @@ public class ActionLearning {
             break;
           case "insert":  // add action to script
             if (location.getName().equals("none")) {
-              log.warn("Unable to insert new action step. No location specified");
+               ls.addEventSpec(ls.getEventSpecs().size(), (Predicate) modification.get(0));
+              log.warn("[modifyAction] inserting step at end of action");
               return;
             }
             modLocation = ls.getIndexOfConstraint(location);

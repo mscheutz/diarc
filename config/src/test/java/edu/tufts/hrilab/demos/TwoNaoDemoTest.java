@@ -8,6 +8,7 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.config.MockTwoNaoDemo;
 import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
@@ -37,6 +38,7 @@ public class TwoNaoDemoTest extends GenerativeDiarcIntegrationTest {
     addServiceToObserve("assertBelief", Term.class);
     addServiceToObserve("retractBelief", Term.class);
     addServiceToObserve("submitGoal", Predicate.class);
+    addServiceToObserve("submitGoal", Predicate.class, Symbol.class);
     addServiceToObserve("joinOnGoal", Long.class);
     addServiceToObserve("sayText", String.class);
 

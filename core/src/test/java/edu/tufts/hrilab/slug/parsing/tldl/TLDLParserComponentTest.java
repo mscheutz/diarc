@@ -729,8 +729,8 @@ public class TLDLParserComponentTest {
 //    testUtterance("pass me something used for cutting");
 //    semantics.add("INSTRUCT(commX,shafer,pass(shafer,commX,afforadanceOf(cutting,something)),{},{})");
 //    semantics.add("INSTRUCT(commX,shafer,hack(unk1(shafer,unk3),partOf(unk4)),{},{})");
-//    H: “hand me the knife by the handle”
-//    H: “the orange part of the knife is the handle”
+//    H: "hand me the knife by the handle"
+//    H: "the orange part of the knife is the handle"
 
 //    assertTrue(testUtterances(text, semantics));
 
@@ -2292,7 +2292,7 @@ public class TLDLParserComponentTest {
 
         //TODO:brad: define new recipe standard medkit?
 
-        // H:  “a standard medkit contains bandages, antiseptic, and painkillers”
+        // H:  "a standard medkit contains bandages, antiseptic, and painkillers"
         assertTrue(testUtterance("a standard medkit contains bandages antiseptic and painkillers",
                 "STATEMENT(medic,self,recipe(standardMedkit,contains(bandages,antiseptic,painkillers)),{})",
                 "medic",
@@ -2300,7 +2300,7 @@ public class TLDLParserComponentTest {
         ));
 
         //TODO: come up with the target predicate representation for this
-        // H: “a standard medkit uses a medical caddy"
+        // H: "a standard medkit uses a medical caddy"
 
         // Loading teaching:
 
@@ -2321,7 +2321,7 @@ public class TLDLParserComponentTest {
         component.injectDictionaryEntry("loading area", "LOC", "\"loading area\"", "DEFINITE");
 
         //TODO:brad: should self be the actor here?
-//        H: “Save this pose as drop off”
+//        H: "Save this pose as drop off"
                 assertTrue(testUtterance("save this pose as drop off",
                 "INSTRUCT(medic,self,recordEEPose(self,\"drop off\"),{})",
                 "medic",
@@ -2331,21 +2331,21 @@ public class TLDLParserComponentTest {
         component.injectDictionaryEntry("drop off", "POSE", "\"drop off\"", "DEFINITE");
 
        //TODO:brad: actual pose consultant? for UR 5
-//        H(via tts on mobile app): “it is above loading area”
+//        H(via tts on mobile app): "it is above loading area"
         assertTrue(testUtterance("it is above loading area",
                 "INSTRUCT(medic,self,bindPose(self,VAR0,VAR1),{it(VAR0),\"loading area\"(VAR1),INFOCUS(VAR0),DEFINITE(VAR1)})",
                 "medic",
                 "self"
         ));
 
-        // H: “Save this pose as “conveyor pick up”
+        // H: "Save this pose as "conveyor pick up"
         assertTrue(testUtterance("save this pose as conveyor pickup",
                 "INSTRUCT(medic,self,recordEEPose(self,\"conveyor pickup\"),{})",
                 "medic",
                 "self"
         ));
 
-//        H: “it is above conveyor end”
+//        H: "it is above conveyor end"
         assertTrue(testUtterance("it is above conveyor end",
                 "INSTRUCT(medic,self,bindPose(self,VAR0,conveyor_end),{it(VAR0),INFOCUS(VAR0)})",
                 "medic",
@@ -2397,10 +2397,10 @@ public class TLDLParserComponentTest {
                 "robotOne"
         ));
 
-//        Robot one: “Searcher, help is on the way you  can continue searching”
-//*medic goes to wounded person’s room”
+//        Robot one: "Searcher, help is on the way you  can continue searching"
+//*medic goes to wounded person’s room"
 //
-//        Searcher: “follow me”
+//        Searcher: "follow me"
         assertTrue(testUtterance("follow me",
                 "INSTRUCT(searcher,robotOne,followMeBlocking(robotOne),{})",
                 "searcher",
@@ -2646,7 +2646,7 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
-//                Robot: “Okay. Does it have any other features?”
+//                Robot: "Okay. Does it have any other features?"
 //        Human: It has 2 M3 screw holes on top.
 
         //VIDEO B.2
@@ -2811,42 +2811,42 @@ public class TLDLParserComponentTest {
     log.info("tetherBotTest");
     component.addDictionary("tetherbot.dict");
 
-//    “I will teach you how to sterilize the office one”
+//    "I will teach you how to sterilize the office one"
 //    This utterance indicates that the human is going to teach the TetherBot a new custom behavior
 //
-//“First go to the office”
-//    This instructs TetherBot to navigate to the location which has been labeled “office”
+//"First go to the office"
+//    This instructs TetherBot to navigate to the location which has been labeled "office"
 //
-//“Then connect to the dock”
+//"Then connect to the dock"
 //    This instructs TeterBot to connect to the nearest visible dock using the docking behavior described in section XXXX. It is assumed that a dock will be visible to the Tetherbot at this location. If it can not detect one it will provide an error explanation in natural language.
 //
-//“Then turn on payload”
+//"Then turn on payload"
 //    This instructs the tetherbot to provide power to the outlet on it’s payload. Powering on the mounted sterilization device.
 //
-//“Then go to alpha”
-//    TetherBot navigates to location “alpha”.
+//"Then go to alpha"
+//    TetherBot navigates to location "alpha".
 //
-//“Then wait for 10 seconds”
+//"Then wait for 10 seconds"
 //    TetherBot waits for 10 seconds
 //
-//“Then go to beta”
-//    TetherBot navigates to location “beta”.
+//"Then go to beta"
+//    TetherBot navigates to location "beta".
 //
-//“Then wait for 10 seconds”
+//"Then wait for 10 seconds"
 //    TetherBot waits for 10 seconds
 //
-//“Then go to office”
-//    TetherBot navigates to location “office”.
+//"Then go to office"
+//    TetherBot navigates to location "office".
 //
-//“Then undock”
+//"Then undock"
 //    TetherBot disconnects from the dock.
 //
-//“Then go to the hallway”
-//    TetherBot navigates to location “hallway”
+//"Then go to the hallway"
+//    TetherBot navigates to location "hallway"
 //
-//“That is how you sterilize the office”
+//"That is how you sterilize the office"
 //
-//“Sterilize the office.”
+//"Sterilize the office."
 //    The video XXXX shows the execution of this taught behavior.
 
     assertTrue(testUtterance("sterilize the office",
@@ -3537,7 +3537,7 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
-//                Robot: “Okay. Does it have any other features?”
+//                Robot: "Okay. Does it have any other features?"
 //        Human: It has 2 M3 screw holes on top.
 
         //VIDEO B.2

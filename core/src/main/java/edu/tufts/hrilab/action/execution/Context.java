@@ -241,6 +241,9 @@ public abstract class Context {
       } else if (status == ActionStatus.SUCCESS || status == ActionStatus.APPROVED || status == ActionStatus.CANCEL || status.isFailure()) {
         actionStatus = status;
         this.justification = justification;
+      } else if (status == ActionStatus.RESUME) {
+        actionStatus = ActionStatus.PROGRESS;
+        this.justification = justification;
       } else {
         actionStatus = status;
         this.justification = justification;

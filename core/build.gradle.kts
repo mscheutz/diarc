@@ -56,7 +56,7 @@ sourceSets {
   create("controlApp"){
     java{
       srcDir("src/main/java")
-      include(listOf("edu/tufts/hrilab/fol/**" ,"edu/tufts/hrilab/slug/common/**","edu/tufts/hrilab/util/**"))
+      include(listOf("edu/tufts/hrilab/fol/**" ,"edu/tufts/hrilab/slug/common/**","edu/tufts/hrilab/util/**","edu/tufts/hrilab/action/annotations/**","edu/tufts/hrilab/action/ActionStatus.java","edu/tufts/hrilab/action/EffectType.java","edu/tufts/hrilab/action/ConditionType.java","edu/tufts/hrilab/action/util/Utilities.java","edu/tufts/hrilab/action/ActionBinding.java","edu/tufts/hrilab/action/justification/Justification.java"))
       exclude(listOf("edu/tufts/hrilab/slug/common/UtteranceUtil.java"))
       compileClasspath += sourceSets.main.get().compileClasspath
       runtimeClasspath += sourceSets.main.get().runtimeClasspath

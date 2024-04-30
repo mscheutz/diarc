@@ -40,6 +40,7 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     addServiceToObserve("retractBelief", Term.class);
 //    addServiceToObserve("runScrewdriverProgram", Integer.class);
     addServiceToObserve("submitGoal", Predicate.class);
+    addServiceToObserve("submitGoal", Predicate.class, Symbol.class);
     addServiceToObserve("openGripper");
     addServiceToObserve("closeGripper");
     addServiceToObserve("getCameraData", String.class);

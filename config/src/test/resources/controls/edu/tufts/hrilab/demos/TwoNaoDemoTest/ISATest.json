@@ -11,10 +11,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "21" ]
+      "serviceArgs" : [ "stand(dempster)", "NORMAL", "1704824992988" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "21", "SUCCEEDED" ]
+      "serviceArgs" : [ "1704824992988", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -22,10 +22,10 @@
       "serviceArgs" : [ "no", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "doasquat(dempster)", "33" ]
+      "serviceArgs" : [ "doasquat(dempster)", "NORMAL", "1704824998001" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "33", "FAILED" ]
+      "serviceArgs" : [ "1704824998001", "FAILED" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I can not do a squat because I do not know how to do a squat", "true" ]
@@ -39,10 +39,10 @@
       "serviceArgs" : [ "yes", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "39" ]
+      "serviceArgs" : [ "move(dempster,forward)", "NORMAL", "1704825003007" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "39", "FAILED" ]
+      "serviceArgs" : [ "1704825003007", "FAILED" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I can not move forward because I see obstacle", "true" ]
@@ -56,7 +56,7 @@
       "serviceArgs" : [ "yes", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "50" ]
+      "serviceArgs" : [ "move(dempster,forward)", "NORMAL", "1704825007998" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -64,13 +64,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "cancelGoal(dempster)", "73" ]
+      "serviceArgs" : [ "cancelGoal(dempster)", "SKIPPENDING", "1704825013009" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "73", "SUCCEEDED" ]
+      "serviceArgs" : [ "1704825013009", "SUCCEEDED" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "50", "CANCELED" ]
+      "serviceArgs" : [ "1704825007998", "CANCELED" ]
     } ]
   }, {
     "serviceCalls" : [ {

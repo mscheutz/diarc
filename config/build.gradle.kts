@@ -105,7 +105,7 @@ tasks.register<JavaCompile>("compileConfig"){
     }
   }
 
-  source("src/main/java/")
+  source("src/main/java/","src/test/java")
   options.compilerArgs = listOf("-parameters")
   include(project.findProperty("main").toString().replace(".","/")+".java")
   //TODO:brad:add ros classes to classpath?

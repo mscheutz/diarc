@@ -60,7 +60,7 @@ public class GenerativeTestComparator extends DiarcTestComparator {
           List<String> newObserved = new ArrayList(Arrays.stream(observedOutput.serviceArgs).toList());
           newObserved.set(newObserved.size()-1, "GOALID");
           if (newExpected.equals(newObserved)) {
-            goalIdMap.put(observedOutput.serviceArgs[1], expectedOutput.serviceArgs[1]);
+            goalIdMap.put(observedOutput.serviceArgs[newExpected.size()-1], expectedOutput.serviceArgs[newObserved.size()-1]);
             expectedIterator.remove();
             matchFound = true;
           }
