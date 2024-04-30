@@ -94,7 +94,7 @@ tasks.named<Test>("test") {
   maxHeapSize = "4g"
   forkEvery = 1
   classpath += files("src/test/resources") // this is so the ActionASLTest can read/write into this directory
-  jvmArgs = listOf("-Dlogback.configurationFile=" + properties["diarc.loggingConfigFile"])
+  systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
 
   // to run tests with logging printed to console
   if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {

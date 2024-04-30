@@ -194,7 +194,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
     // add local static transforms to TF component when it comes up
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal"));
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("addLocalStaticTransform"));
       addLocalStaticTransforms();
 
     } catch (TRADEException e) {

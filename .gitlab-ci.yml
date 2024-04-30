@@ -1,0 +1,25 @@
+stages:
+  - build
+  - test
+  
+java-only-build:
+  stage: build
+  tags:
+    - java-only
+  script:
+    - ./gradlew clean assemble
+  only:
+    - web
+    #- master
+    #- merge_requests
+
+java-only-tests:
+  stage: test
+  tags:
+    - java-only
+  script:
+    - ./gradlew build -Pdiarc.testLogging=true
+  only:
+    - web
+    #- master
+    #- merge_requests
