@@ -240,6 +240,13 @@ public class NaoComponent extends DiarcComponent implements NaoInterface {
     }
   }
 
+  @Override
+  public void shutdownComponent() {
+    log.info("Closing NaoComponent session for {} ...", getMyGroups());
+    session.close();
+    log.info("... session closed for {}.", getMyGroups());
+  }
+
   public class CallBack {
 
     public void wordRecognized(java.lang.Object o) {

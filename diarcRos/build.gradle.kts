@@ -15,7 +15,7 @@ fun addRosSource(packageName: String, sources: List<String>, depends: List<Strin
         include(sources)
         // Todo: This is caused by map not being a properly separated package.
         // Fix: Move ChangeMapComponent.java to new dir, have movebase not depend on map.
-        if (project.property("diarc.rosVersion").toString() == "indigo") {
+        if (project.hasProperty("diarc.rosVersion") && project.property("diarc.rosVersion").toString() == "indigo") {
           exclude(listOf(
               "edu/tufts/hrilab/diarcros/map/MapServer.java",
               "edu/tufts/hrilab/movebase/ChangeMapComponent.java",
@@ -192,7 +192,7 @@ addRosSource("common", listOf(
 addRosSource("moveit", listOf(
     "edu/tufts/hrilab/moveit/**",
     "edu/tufts/hrilab/diarcros/moveit/GenericMoveGroup.java",
-    "edu/tufts/hrilab/diarcros/moveit/" + project.property("diarc.rosVersion").toString() + "/MoveGroup.java",
+    "edu/tufts/hrilab/diarcros/moveit/" + project.properties.getOrDefault("diarc.rosVersion", "none").toString() + "/MoveGroup.java",
 ))
 
 addRosSource("map", listOf(

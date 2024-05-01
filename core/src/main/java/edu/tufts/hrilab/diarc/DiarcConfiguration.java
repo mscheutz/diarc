@@ -5,16 +5,26 @@
 package edu.tufts.hrilab.diarc;
 
 import edu.tufts.hrilab.action.GoalManagerImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 abstract public class DiarcConfiguration {
+  protected Logger log = LoggerFactory.getLogger(DiarcConfiguration.class);
+
   protected List<DiarcComponent> diarcComponents = new ArrayList<>();
 
   abstract public void runConfiguration();
 
+  public DiarcConfiguration() {
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdownConfiguration()));
+  }
+
   public void shutdownConfiguration() {
+    log.info("Shutting down...");
+
     // find and shutdown GoalManagers first so that goals can be cleanly cancelled while other components are still up
     List<DiarcComponent> gms = diarcComponents.stream().filter(comp -> comp instanceof GoalManagerImpl).toList();
     gms.forEach(gm -> gm.shutdown());
