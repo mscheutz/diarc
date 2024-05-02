@@ -120,7 +120,7 @@ public class CacheDatabase {
     URL u = CacheDatabase.class.getResource(cachePath);
     URI uri = null;
     if (u == null) {
-      log.warn("File " + cachePath + " does not exist");
+      log.warn("No pre-existing " + cachePath + " exists, skipping...");
       return null;
     }
     try {
@@ -211,6 +211,9 @@ public class CacheDatabase {
     }
     for (String loadPath : loadPaths) {
       dbPath = CacheDatabase.getDatabasePath(loadPath);
+      if (dbPath == null) {
+        continue;
+      }
       String connectionString = "jdbc:sqlite:" + dbPath;
       Statement loadStatement = null;
       try {
