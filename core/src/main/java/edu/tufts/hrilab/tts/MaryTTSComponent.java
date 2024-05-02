@@ -94,6 +94,7 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
 
   // if saving to a .wav file, save at this location
   private String wavFilename;
+  private String xmlFilename;
   private boolean speaking;
 
   /**
@@ -132,7 +133,8 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
   public MaryTTSComponent() throws IOException, UnsupportedAudioFileException, InterruptedException {
     super();
 
-    File tempFile = File.createTempFile("diarc-", ".wav");
+    File tempWavFile = File.createTempFile("diarc-utterance-", ".wav");
+    File tempXmlFile = File.createTempFile("diarc-utterance-", ".xml");
 
     outputType = MaryDataType.AUDIO;
     locale = new Locale("en-US");
@@ -157,7 +159,8 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
     config = "default.tts";
     saveToWav = false;
     markup = "SSML";
-    wavFilename = tempFile.getPath();
+    wavFilename = tempWavFile.getPath();
+    xmlFilename = tempXmlFile.getPath();
     speaking = false;
 
     // default to male voice
@@ -557,14 +560,14 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
 
       // transform the document to XML
       DOMSource source = new DOMSource(doc);
-      File tempFile = File.createTempFile("utterance-", ".xml");
+      File tempFile = new File(xmlFilename);
       StreamResult result = new StreamResult(tempFile);
       this.tr.transform(source, result);
 
       fixXML(tempFile.getPath());
 
       // delegate datastream
-      FileInputStream fstream = new FileInputStream(tempFile.getPath());
+      FileInputStream fstream = new FileInputStream(xmlFilename);
       DataInputStream in = new DataInputStream(fstream);
       this.br = new BufferedReader(new InputStreamReader(in));
 
