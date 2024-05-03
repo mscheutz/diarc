@@ -183,7 +183,7 @@ dependencies {
   implementation("org.scalamock:scalamock-core_2.12:3.6.0")
   //belief
   implementation("it.unibo.alice.tuprolog:tuprolog:3.3.0")
-  implementation("org.xerial:sqlite-jdbc:3.21.0")
+  implementation("org.xerial:sqlite-jdbc:3.45.2.0")
 
   //sphinx
   implementation("de.sciss:sphinx4-core:1.0.0")
