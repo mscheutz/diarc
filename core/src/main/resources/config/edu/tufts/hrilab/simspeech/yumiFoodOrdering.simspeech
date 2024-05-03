@@ -1,0 +1,69 @@
+init
+-
+right arm go to prep area
+right arm do you see a bell pepper
+-
+left arm go to box area
+left arm do you see a serving box
+-
+right arm pick up the bell pepper
+pause
+What is your current task
+-
+then right arm go to cooktop
+then right arm put down the bell pepper
+-
+What are your pending tasks
+-
+resume
+-
+get the bell pepper to the prep area
+right arm go to prep area
+now right arm go to prep area
+it is safe to proceed
+-
+reset
+-
+define new item southwest bowl
+first get a serving box to serving area
+then get a bell pepper to the hot plate
+then right arm saute the bell pepper for 2 seconds
+then get the bell pepper in the serving box
+then get a corn to the cooktop
+then right arm cook the corn for 5 seconds
+then get the corn in the serving box
+then get a carrot to the hot plate
+then right arm saute the carrot for 3 seconds
+then get the carrot in the serving box
+then left arm drizzle on chipotle sauce
+that is how you prepare a southwest bowl
+-
+prepare a southwest bowl
+-
+here it is
+-
+define new item by analogy puerto rican bowl
+southwest bowl
+replace right arm saute the carrot for 3 seconds with right arm saute the chicken for 4 seconds
+remove the bell pepper
+add get a plantain in the serving box after get the chicken in the serving box
+-
+suspend current task
+-
+now define new ingredient plantain
+pantry
+detect plantain
+prep area
+grasp it here
+-
+what is your current task
+-
+resume previous task
+-
+add get a plantain in the serving box after get the chicken in the serving box
+-
+no more differences
+-
+prepare a puerto rican bowl
+-
+here it is

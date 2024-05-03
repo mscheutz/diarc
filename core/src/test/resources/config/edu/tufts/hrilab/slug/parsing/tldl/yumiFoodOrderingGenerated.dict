@@ -1,0 +1,55 @@
+%%options
+sauce;RN; sauce:physobj; VAR
+sauce;REF; sauce:physobj;DEFINITE
+
+%% items
+southwest bowl; DN; "southwest bowl"
+southwest bowl; DESC; "southwest bowl"
+southwest bowl; VAL; item("southwest bowl")
+
+puerto rican bowl; DN; "puerto rican bowl"
+puerto rican bowl; DESC; "puerto rican bowl"
+puerto rican bowl; VAL; item("puerto rican bowl")
+%% ingredients
+bell pepper;REF; "bell pepper":physobj;DEFINITE
+bell pepper;RN; "bell pepper":physobj;VAR
+bell pepper;DESC; "bell pepper":property
+bell pepper;DN; "bell pepper":property
+
+corn;REF; corn:physobj;DEFINITE
+corn;RN; corn:physobj;VAR
+corn;DESC; corn:property
+corn;DN; corn:property
+
+chipotle sauce;REF; "chipotle sauce":physobj;DEFINITE
+chipotle sauce;RN; "chipotle sauce":physobj;VAR
+chipotle sauce;DESC; "chipotle sauce":property
+chipotle sauce;DN; "chipotle sauce":property
+
+aoli;REF; aoli:physobj;DEFINITE
+aoli;RN; aoli:physobj;VAR
+aoli;DESC; aoli:property
+aoli;DN; aoli:property
+
+chicken;REF; chicken:physobj;DEFINITE
+chicken;RN; chicken:physobj;VAR
+chicken;DESC; chicken:property
+chicken;DN; chicken:property
+
+plantain;REF; plantain:physobj;DEFINITE
+plantain;RN; plantain:physobj;VAR
+plantain;DESC; plantain:property
+plantain;DN; plantain:property
+
+serving box; REF; "serving box":physobj;DEFINITE
+serving box; RN; "serving box":physobj;VAR
+
+cook top; REF; "cook top":area; DEFINITE
+cook top; RN; "cook top":area; VAR
+fryer; REF; fryer:area; DEFINITE
+fryer; RN; fryer:area; VAR
+
+prep area; REF; "prep area":area; DEFINITE
+
+%pantry; REF; pantry:location; DEFINITE
+pantry; REF; pantry:area; DEFINITE

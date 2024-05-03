@@ -3620,4 +3620,298 @@ public class TLDLParserComponentTest {
 //        replace screw a deep M3 into the top mounting hole with screw an M3 screw into the right M3 hole
 
     }
+
+    @Test
+    public void yumiFoodOrderingTest() {
+
+        component.addDictionary("foodOrdering.dict");
+//        component.addDictionary("foodOrderingHomophones.dict");
+        component.addDictionary("yumiFoodOrderingGenerated.dict");
+        component.setUpdateAddressHistory(false);
+
+//
+//        Basic NL commands
+
+        assertTrue(testUtterance("right arm go to prep area",
+                "INSTRUCT(brad,self,goTo(rightArm:yumi,VAR0:area),{\"prep area\"(VAR0:area),DEFINITE(VAR0:area)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("right arm do you see a bell pepper",
+                "INSTRUCT(brad,self,doYouSee(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("right arm look for a bell pepper",
+                "INSTRUCT(brad,self,lookFor(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("right arm pick up the bell pepper",
+                "INSTRUCT(brad,self,pickUp(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("right arm pick it up",
+                "INSTRUCT(brad,self,pickUp(rightArm:yumi,VAR0:physobj),{it(VAR0:physobj),INFOCUS(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+//
+//        H: then go to cook top
+        assertTrue(testUtterance("right arm go to cook top",
+                "INSTRUCT(brad,self,goTo(rightArm:yumi,VAR0:area),{\"cook top\"(VAR0:area),DEFINITE(VAR0:area)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("then right arm put down the bell pepper",
+                "INSTRUCT(brad,self,putDown(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("pause",
+                "INSTRUCT(brad,self,suspendCurrentGoal(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("What is your current task",
+                "INSTRUCT(brad,self,describeCurrentGoal(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("what are your pending tasks",
+                "INSTRUCT(brad,self,describePendingGoals(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("cancel pending tasks",
+                "INSTRUCT(brad,self,cancelAllPendingGoals(self),{})",
+                "brad",
+                "self"
+        ));
+
+//        H: I cleaned up
+        assertTrue(testUtterance("reset",
+                "INSTRUCT(brad,self,resetDomain(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("define new item southwest bowl",
+                "INSTRUCT(brad,self,defineItem(self,\"southwest bowl\"),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("then get a bell pepper to the cook top",
+                "INSTRUCT(brad,self,getTo(self,VAR0:physobj,VAR1:area),{\"bell pepper\"(VAR0:physobj),\"cook top\"(VAR1:area),DEFINITE(VAR0:physobj),DEFINITE(VAR1:area)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("then right arm saute the bell pepper for 20 seconds ",
+                "INSTRUCT(brad,self,saute(rightArm:yumi,VAR0:physobj,val(20,seconds)),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("the get a bell pepper in the serving box",
+                "INSTRUCT(brad,self,getOn(self,VAR0:physobj,VAR1:physobj),{\"bell pepper\"(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("then right arm cook a corn for 15 seconds",
+                "INSTRUCT(brad,self,cook(rightArm:yumi,VAR0:physobj,val(15,seconds)),{corn(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("then left arm drizzle on the sauce",
+                "INSTRUCT(brad,self,drizzle(leftArm:yumi,VAR0:physobj),{sauce(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("then left arm drizzle on chipotle sauce",
+                "INSTRUCT(brad,self,drizzle(leftArm:yumi,VAR0:physobj),{\"chipotle sauce\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("that is how you prepare a southwest bowl",
+                "INSTRUCT(brad,self,endItemDefinition(self,prepare\"southwest bowl\"(self,\"southwest bowl\")),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("prepare a southwest bowl",
+                "INSTRUCT(brad,self,prepare\"southwest bowl\"(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("describe how to prepare a southwest bowl",
+                "INSTRUCT(brad,self,describe(self,how(to(prepare\"southwest bowl\"(self)))),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("define new item by analogy puerto rican bowl",
+                "INSTRUCT(brad,self,defineItemByAnalogy(self,\"puerto rican bowl\"),{})",
+                "brad",
+                "self"
+        ));
+
+
+        assertTrue(testUtterance("item southwest bowl",
+                "REPLY(brad,self,item(\"southwest bowl\"),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("southwest bowl",
+                "REPLY(brad,self,item(\"southwest bowl\"),{})",
+                "brad",
+                "self"
+        ));
+
+
+        assertTrue(testUtterance("replace right arm saute the carrot for 30 seconds with right arm saute the chicken for 45 seconds",
+                "REPLY(brad,self,mod(replace(saute(rightArm:yumi,VAR1:physobj,val(45,seconds)),saute(rightArm:yumi,VAR0:physobj,val(30,seconds))),none()),{carrot(VAR0:physobj),chicken(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("remove the bell pepper",
+                "REPLY(brad,self,mod(removeLocalVar(VAR0:physobj),none()),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("add get a plantain in the serving box after get the chicken in the serving box",
+                "REPLY(brad,self,mod(insert(getOn(self,VAR0:physobj,VAR1:physobj)),after(getOn(self,VAR2:physobj,VAR3:physobj))),{plantain(VAR0:physobj),\"serving box\"(VAR1:physobj),chicken(VAR2:physobj),\"serving box\"(VAR3:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj),DEFINITE(VAR2:physobj),DEFINITE(VAR3:physobj)})",
+                "brad",
+                "self"
+        ));
+//-
+//suspend current task
+        assertTrue(testUtterance("suspend current task",
+                "INSTRUCT(brad,self,suspendCurrentGoal(self),{})",
+                "brad",
+                "self"
+        ));
+//-
+//define new ingredient plantain
+        assertTrue(testUtterance("now define new ingredient plantain",
+                "INSTRUCT(brad,self,urgentPriority(self,defineIngredient(self,plantain)),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("area pantry",
+                "REPLY(brad,self,area(VAR0:area),{pantry(VAR0:area),DEFINITE(VAR0:area)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("detect plantain",
+                "REPLY(brad,self,job(plantain),{})",
+                "brad",
+                "self"
+        ));
+
+
+        assertTrue(testUtterance("resume previous task",
+                "INSTRUCT(brad,self,resumeCurrentGoal(self),{})",
+                "brad",
+                "self"
+        ));
+
+        //add get a plantain in the serving box after get the chicken in the serving box
+
+        assertTrue(testUtterance("no more differences",
+                "REPLY(brad,self,mod(none,none),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("prepare a puerto rican bowl",
+                "INSTRUCT(brad,self,prepare\"puerto rican bowl\"(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("option aoli",
+                "REPLY(brad,self,option(VAR0:physobj),{aoli(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("here it is",
+                "REPLY(brad,self,got(ingredient),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("do you know how to get the carrot in the serving box",
+                "QUESTION(brad,self,knowHow(self,to(getOn(self,VAR0:physobj,VAR1:physobj))),{carrot(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        //TODO:brad: this seems to not work, but do you know how does?
+        assertTrue(testUtterance("can you get the carrot in the serving box",
+                "QUESTION(brad,self,capableOf(self,getOn(self,VAR0:physobj,VAR1:physobj)),{carrot(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+                "brad",
+                "self"
+        ));
+
+
+
+        //TODO:brad: only describes act specs
+        assertTrue(testUtterance("describe how to get the corn in the serving box",
+                "INSTRUCT(brad,self,describe(self,how(to(getOn(self,VAR0:physobj,VAR1:physobj)))),{corn(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("left arm open gripper",
+                "INSTRUCT(brad,self,openGripper(leftArm:yumi),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("left arm close gripper",
+                "INSTRUCT(brad,self,closeGripper(leftArm:yumi),{})",
+                "brad",
+                "self"
+        ));
+
+
+//        assertTrue(testUtterance("pickup the corn",
+//                "INSTRUCT(brad,self,describe(self,how(to(getOn(self,VAR0:physobj,VAR1:physobj)))),{corn(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+//                "brad",
+//                "self"
+//        ));
+//
+//        assertTrue(testUtterance("pickup the corn from prep area",
+//                "INSTRUCT(brad,self,describe(self,how(to(getOn(self,VAR0:physobj,VAR1:physobj)))),{corn(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+//                "brad",
+//                "self"
+//        ));
+
+
+
+    }
+
 }
