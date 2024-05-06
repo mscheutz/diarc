@@ -101,7 +101,6 @@ sourceSets {
           "edu/tufts/hrilab/diarcros/gazebo/*",
           "edu/tufts/hrilab/diarcros/laserscan/*",
           "edu/tufts/hrilab/diarcros/tf/*",
-          "edu/tufts/hrilab/diarcros/turtlesim/*",
           "edu/tufts/hrilab/diarcros/util/*",
           "edu/tufts/hrilab/diarcros/uvc/*",
       ))
@@ -235,3 +234,7 @@ addRosSource("tower", listOf(
     "edu/tufts/hrilab/tower/*",
     "edu/tufts/hrilab/diarcros/tower/*",
 ), listOf("movebase"))
+
+addRosSource("vision", listOf(
+        "edu/tufts/hrilab/vision/*",
+))
