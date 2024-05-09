@@ -36,6 +36,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private String llm = null;
   private String prompt = null;
 
+  private boolean confirmation = true;
+
   private ExecutorService executor = Executors.newCachedThreadPool();
 
   @Override
@@ -48,6 +50,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     options.add(Option.builder("cacheLoad").hasArgs().argName("file").desc("Load cached database from file, can have multiple").build());
     options.add(Option.builder("cacheName").hasArg().argName("string").desc("Name of cache").build());
     options.add(Option.builder("cachePersist").hasArg().argName("file").desc("Persist cache in on users computer").build());
+    options.add(Option.builder("noConfirmation").argName("boolean").desc("Ask human to confirm LLM parser response for cache").build());
     return options;
   }
 
@@ -73,6 +76,9 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
     if (cmdLine.hasOption("cachePersist")) {
       cachePersist = cmdLine.getOptionValue("cachePersist");
+    }
+    if (cmdLine.hasOption("noConfirmation")) {
+      confirmation = false;
     }
   }
 
@@ -161,7 +167,9 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     if (llmOutput != null) {
       log.debug("Using llm parser response");
       output = llmOutput;
-      output.setNeedsValidation(true);
+      if (confirmation) {
+        output.setNeedsValidation(true);
+      }
     }
 
     return output;
