@@ -56,7 +56,7 @@ public final class PR2Component extends MoveItComponent implements PR2Interface 
 
   public PR2Component() {
     super();
-    configName = "PR2";
+    configName = "PR2.json";
 
     torso = new TorsoControllerPositionJointActionNode();
     torso.waitForNode(10);
@@ -126,7 +126,7 @@ public final class PR2Component extends MoveItComponent implements PR2Interface 
     // get Point3d from object ref
     Point3d location = null;
     try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference"));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class));
       location = tsi.call(Point3d.class, objectRef, Point3d.class);
 
     } catch (TRADEException e) {

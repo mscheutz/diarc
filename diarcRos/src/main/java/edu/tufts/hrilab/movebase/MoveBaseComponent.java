@@ -375,7 +375,8 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
   protected Pose getLocationPose(Symbol refID) {
     Matrix4d transform = null;
     try {
-      transform = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class,Class.class)).call(Matrix4d.class, refID, Matrix4d.class);
+      transform = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class,Class.class))
+              .call(Matrix4d.class, refID, Matrix4d.class);
     } catch (TRADEException e) {
       log.error("[getLocationPose] exception getting Matrix4d from reference, returning null", e);
     }

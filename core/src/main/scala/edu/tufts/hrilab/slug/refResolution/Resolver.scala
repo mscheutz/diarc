@@ -65,8 +65,8 @@ class Resolver( groups: java.util.List[String]){
     }
 
     //call convertToType va tsi, return results
-   TRADE.getAvailableService(c.head.tsc.name( "convertToType").argTypes(classOf[Symbol],classOf[Class[E]])).call(entityJavaType,ref, entityJavaType)
-
+   TRADE.getAvailableService(c.head.tsc.name( "convertToType").argTypes(classOf[Symbol],classOf[Class[E]]))
+     .call(entityJavaType,ref, entityJavaType)
   }
 
   def getEntityForReference[E](ref: edu.tufts.hrilab.fol.Symbol, entityJavaType: Class[E], constraints: java.util.List[Term]) : E = {
@@ -77,8 +77,8 @@ class Resolver( groups: java.util.List[String]){
     }
 
     //call convertToType va tsi, return results
-    TRADE.getAvailableService(c.head.tsc.name("convertToType")).call(entityJavaType,ref, entityJavaType,constraints)
-
+    TRADE.getAvailableService(c.head.tsc.name("convertToType").argTypes(classOf[Symbol],classOf[Class[E]],classOf[java.util.List[Term]]))
+      .call(entityJavaType,ref, entityJavaType,constraints)
   }
 
   def assertProperties(ref: edu.tufts.hrilab.fol.Symbol, properties: java.util.List[Term]): Boolean = {

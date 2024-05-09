@@ -36,7 +36,7 @@ public class FetchItComponent extends FetchComponent implements FetchItInterface
     List<Grasp> graspOptions = null;
     try {
       //this is pretty messy
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference"));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class, List.class));
       graspOptions = Arrays.asList(tsi.call(Grasp[].class, refId, Grasp[].class, constraints));
     } catch (TRADEException e) {
       log.error("[moveTo] exception getting memory object from reference, returning null", e);
@@ -173,16 +173,13 @@ public class FetchItComponent extends FetchComponent implements FetchItInterface
 
   private String getDominantProperty(Symbol objectRef, Set<String> knownObjects) {
     try {
-      Collection<TRADEServiceInfo> tsis = TRADE.getAvailableServices(new TRADEServiceConstraints().name("getProperties"));
+      Collection<TRADEServiceInfo> tsis = TRADE.getAvailableServices(new TRADEServiceConstraints().name("getProperties").argTypes(Symbol.class));
       for (TRADEServiceInfo tsi : tsis) {
-        Object[] props = tsi.call(Object[].class, objectRef);
-        for (Object prop : props) {
-          List<Term> properties = (List<Term>) prop;
-          for (Term property : properties) {
-            String propertyName = property.getName();
-            if (knownObjects.contains(propertyName)) {
-              return propertyName;
-            }
+        List<Term> properties = tsi.call(List.class, objectRef);
+        for (Term property : properties) {
+          String propertyName = property.getName();
+          if (knownObjects.contains(propertyName)) {
+            return propertyName;
           }
         }
 
@@ -197,7 +194,7 @@ public class FetchItComponent extends FetchComponent implements FetchItInterface
     MemoryObject mo = null;
     log.debug("getting Memory Object for " + objectRef);
     try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference"));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class));
       mo = tsi.call(MemoryObject.class, objectRef, MemoryObject.class);
     } catch (TRADEException e) {
       log.error("[getMemoryObject] exception getting memory object from reference, returning null", e);

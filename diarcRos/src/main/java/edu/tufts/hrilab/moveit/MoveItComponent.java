@@ -21,10 +21,11 @@ import edu.tufts.hrilab.fol.Variable;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import edu.tufts.hrilab.manipulator.generic.GenericManipulator;
-import edu.tufts.hrilab.moveit.config.GsonObjects.*;
+import edu.tufts.hrilab.moveit.config.gson.*;
 import edu.tufts.hrilab.diarcros.msg.geometry_msgs.Pose;
 import edu.tufts.hrilab.diarcros.msg.geometry_msgs.Quaternion;
 import edu.tufts.hrilab.diarcros.msg.moveit_msgs.*;
+import edu.tufts.hrilab.util.resource.Resources;
 import edu.tufts.hrilab.vision.stm.Grasp;
 import edu.tufts.hrilab.moveit.util.MoveItHelper;
 import edu.tufts.hrilab.diarcros.util.Convert;
@@ -68,18 +69,23 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
 import javax.vecmath.Vector3d;
 import java.awt.Dimension;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -98,6 +104,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
    * If you're extending this class you can set this one to the config name so it's the default.
    */
   protected String configName;
+  protected String defaultConfigDir = "config/edu/tufts/hrilab/moveit";
 
   // This is the stuff set by the .JSON files. Add a new JSON config instead of writing to this stuff directly.
   // Most data is stored directly in the MoveItConfig, but some data requires additional processing and is stored
@@ -194,15 +201,16 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
     // add local static transforms to TF component when it comes up
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("addLocalStaticTransform"));
-      addLocalStaticTransforms();
+      TRADE.requestNotification(this, "joined", new TRADEServiceConstraints().name("addLocalStaticTransform"), null, "addLocalStaticTransforms");
+      Collection<TRADEServiceInfo> services = TRADE.getAvailableServices(new TRADEServiceConstraints().name("addLocalStaticTransform"));
+      if (services.size() == 1) {
+        addLocalStaticTransforms(services.iterator().next());
 
-    } catch (TRADEException e) {
-      try {
-        TRADE.requestNotification(this, "joined", new TRADEServiceConstraints().name("addLocalStaticTransform"), null, "addLocalStaticTransforms");
-      } catch (TRADEException er) {
-        log.error("Error trying to register for TRADE notification.", er);
+        // cancel notification bc the addLocalStaticTransform service was already up
+        TRADE.cancelNotification(this, "joined", new TRADEServiceConstraints().name("addLocalStaticTransform"));
       }
+    } catch (TRADEException e) {
+      log.error("Error registering for notification: addLocalStaticTransform", e);
     }
 
     // load poses and traj files
@@ -213,8 +221,9 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     // construct pose consultant *after* poses are loaded from file
     consultant = new PoseConsultant(PoseReference.class, "pose", new ArrayList<>());
     try {
-      //TODO:brad: be sure to register the consultant with the component
-      TRADE.registerAllServices(consultant, this.getMyGroups());
+      List<String> groups = this.getMyGroups();
+      groups.add(consultant.getKBName());
+      TRADE.registerAllServices(consultant, groups);
     } catch (TRADEException e) {
       log.error("Error registering with trade ", e);
     }
@@ -278,43 +287,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     }
   }
 
-  //todo: This should be a resource
-  private File getConfigFile(String localConfigName) {
-    String _slash = File.separator;
-    String abspath;
-    String adedir = System.getProperty("user.dir"); // This is a little hacky because we're relying on ./ant forcing the user to be in the root of the DIARC repo. It works while we're using custom ant.
-    /*Regex: ^[\"']|[\"']$ finds " or ' at the beginning of the string, or " or ' at the end of the string*/
-    localConfigName = localConfigName.replaceAll("^[\"']|[\"']$", ""); // Be robust against surrounding quotes (double or single) via regex
-
-    if (localConfigName.charAt(0) == _slash.charAt(0)) { // Allow the user to specify an absolute path (i.e., if it starts with `/home/.../whatev.json, use it directly)
-      abspath = localConfigName;
-    } else if (localConfigName.charAt(0) == '.') {       // If people can give absolute paths, they're going to want to give relative paths.
-      abspath = adedir + localConfigName;
-    } else {                                            // This is the intended, default behavior: assume it's in the config directory where it belongs, and look there
-      abspath = adedir + _slash + "diarcRos" +
-              _slash + "src" + _slash + "main" + _slash + "java" +
-              _slash + "edu" + _slash + "tufts" + _slash + "hrilab" +
-              _slash + "moveit" + _slash + "config" + _slash + localConfigName;
-      if (!abspath.endsWith(".json")) { // Be robust against 'PR2' vs 'PR2.json'
-        abspath += ".json";
-      }
-    }
-
-    File configfile = new File(abspath);
-    if (!configfile.exists()) {
-      log.error("The config file [" + abspath + "] does not exist! Make sure your config is set up as edu/tufts/hrilab/moveit/config/MY-CONFIG.json, and call it using '-config MY-CONFIG'");
-      return null;
-    }
-    return configfile;
-  }
-
   private void loadConfigFile(String localConfigName) {
-    File configfile = getConfigFile(localConfigName);
-    if (configfile == null) {
-      log.error("Loading config failed! Is the getConfigFile absolute path code broken?");
-      return;
-    }
-
     if (System.getenv().get("ROS_DISTRO") == null) {
       log.error("Trying to get your ROS_DISTRO returned null. You have probably not installed ROS properly." +
               "Nothing else will work here, so we will not continue to config.");
@@ -322,18 +295,11 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     }
 
     // Read the JSON object file and dump it into a MoveItConfig object
-    try {
       Gson gson = new Gson();
-      StringBuilder json = new StringBuilder();
-      List<String> jsonList = Files.readAllLines(configfile.toPath(), StandardCharsets.US_ASCII);
-      for (String s : jsonList)
-        json.append(s);
-      moveItConfig = gson.fromJson(json.toString(), MoveItConfig.class);
-    } catch (java.io.IOException io) {
-      log.error("[loadConfigFile] exception while trying to load json config file." +
-              "This component will likely fail to start properly.", io);
-      return;
-    }
+      String configPath = Resources.createFilepath(defaultConfigDir, localConfigName);
+      InputStream in = getClass().getResourceAsStream(configPath);
+      BufferedReader br = new BufferedReader(new InputStreamReader(in));
+      moveItConfig = gson.fromJson(br, MoveItConfig.class);
 
     // These ones are complex enough that we need to parse a special thing together for them.
     groupNames = moveItConfig.getGroupNames();
@@ -405,22 +371,17 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   }
 
   @TRADEService
-  public void addLocalStaticTransforms() {
+  public void addLocalStaticTransforms(TRADEServiceInfo tsi) {
     log.warn("adding local transform");
     LocalStaticTransform[] localStaticTransforms = moveItConfig.localStaticTransforms;
     if (localStaticTransforms == null || localStaticTransforms.length == 0) {
       return;
     }
 
-//    if (!TRADE.isAvailable("addLocalStaticTransform")) {
-//      log.warn("No addLocalStaticTransform service available in the system. Start a TFComponent.");
-//    }
-
     for (LocalStaticTransform lst : localStaticTransforms) {
-      Matrix4d tranform = edu.tufts.hrilab.util.Convert.convertToMatrix4d(new Point3d(lst.x, lst.y, lst.z), RotationHelpers.xyzRotationsToQuaternion(new Vector3d(lst.roll, lst.pitch, lst.yaw)));
+      Matrix4d transform = edu.tufts.hrilab.util.Convert.convertToMatrix4d(new Point3d(lst.x, lst.y, lst.z), RotationHelpers.xyzRotationsToQuaternion(new Vector3d(lst.roll, lst.pitch, lst.yaw)));
       try {
-        TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("addLocalStaticTransform"));
-        tsi.call(void.class, lst.parent, lst.child, tranform);
+        tsi.call(void.class, lst.parent, lst.child, transform);
       } catch (TRADEException e) {
         log.error("Error calling addLocalStaticTransform.", e);
       }
@@ -462,7 +423,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     List<Grasp> graspOptions = null;
     try {
       //this is pretty messy
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference"));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class, List.class));
       graspOptions = Arrays.asList(tsi.call(Grasp[].class, refId, Grasp[].class, constraints));
     } catch (TRADEException e) {
       log.error("[moveTo] exception getting memory object from reference, returning null", e);
@@ -794,7 +755,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
     Point3d location = null;
     try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference"));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class));
       location = tsi.call(Point3d.class, refId, Point3d.class);
 
     } catch (TRADEException e) {
@@ -1141,7 +1102,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
     MemoryObject mo = null;
     try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference"));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class));
       mo = tsi.call(MemoryObject.class, refId, MemoryObject.class);
 
     } catch (TRADEException e) {
@@ -1803,9 +1764,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     groupName = groupNameSafetyClean(groupName);
     GenericManipulator gripper = getGripper(groupName);
     if (gripper != null) {
-      //fixme: always returns false
-      gripper.moveGripper(position);
-      return true;
+      return gripper.moveGripper(position);
     } else {
       return false;
     }
@@ -2170,7 +2129,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
     MemoryObject mo;
     try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference"));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class));
       mo = tsi.call(MemoryObject.class, refID, MemoryObject.class);
 
     } catch (TRADEException e) {
