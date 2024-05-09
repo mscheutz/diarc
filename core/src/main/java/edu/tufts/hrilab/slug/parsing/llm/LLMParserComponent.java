@@ -100,7 +100,7 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
       }
     } else {
       try {
-        response = TRADE.getAvailableService(new TRADEServiceConstraints().name(service)).call(ParserResponse.class, inputString);
+        response = TRADE.getAvailableService(new TRADEServiceConstraints().name(service).argTypes(String.class)).call(ParserResponse.class, inputString);
       } catch (TRADEException ex) {
         log.error("Error calling " + service + ".", ex);
       }
