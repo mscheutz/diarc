@@ -5,3 +5,4 @@ diarcRos/build/
 vision/build/
 vision/src/swig/
 .idea/
+.env

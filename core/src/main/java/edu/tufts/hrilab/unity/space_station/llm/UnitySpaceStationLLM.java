@@ -169,7 +169,7 @@ public class UnitySpaceStationLLM extends DiarcComponent {
     chat.addUserMessage(utterance);
 
     try {
-      oResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion")).call(Completion.class, chat);
+      oResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
     } catch (TRADEException e) {
       log.error("Error performing chat completion", e);
     }
