@@ -21,7 +21,7 @@ public class KinovaDemo extends DiarcConfiguration {
 
     @Override
     public void runConfiguration() {
-        MoveItComponent instance = DiarcComponent.createInstance(MoveItComponent.class, "-config kortex");
+        MoveItComponent instance = DiarcComponent.createInstance(MoveItComponent.class, "-config kortex.json");
 //        DiarcComponent.createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-cameraFrame camera_color_frame -capture kinova.xml -refs refs/visionRefs.json");
         DiarcComponent.createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
                 "-goal startKinova(self) -beliefinitfile demos.pl agents/agents.pl "

@@ -71,7 +71,7 @@ public class FetchComponent extends MoveItComponent implements FetchInterface {
     torso.waitForNode();
     robotDriver.waitForNode();
 
-    configName = "Fetch";
+    configName = "Fetch.json";
   }
 
   @Override
@@ -126,7 +126,7 @@ public class FetchComponent extends MoveItComponent implements FetchInterface {
     // get Point3d from object ref
     Point3d location = null;
     try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference"));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class));
       location = tsi.call(Point3d.class, objectRef, Point3d.class);
     } catch (TRADEException e) {
       log.error("[pointTo] exception getting Point3d from reference, returning null", e);
@@ -244,7 +244,7 @@ public class FetchComponent extends MoveItComponent implements FetchInterface {
   @Override
   public List<Map<Variable, Symbol>> checkGrasping(Term graspingTerm) {
     boolean closed = closeGripper("arm").getValue();
-    ArrayList<Map<Variable, Symbol>> returnVal = new ArrayList<>();
+    List<Map<Variable, Symbol>> returnVal = new ArrayList<>();
     if (!closed) {
       returnVal.add(new HashMap<>());
     }
