@@ -11,7 +11,6 @@ import edu.tufts.hrilab.diarcros.msg.geometry_msgs.Transform;
 import edu.tufts.hrilab.diarcros.msg.geometry_msgs.Vector3;
 
 import edu.tufts.hrilab.diarcros.util.Convert;
-import edu.tufts.hrilab.util.RotationHelpers;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
@@ -38,12 +37,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.vecmath.Matrix4d;
-import javax.vecmath.Quat4d;
-import javax.vecmath.Vector3d;
 import edu.tufts.hrilab.diarcros.msg.std_msgs.Header;
 
 /**
- * @author Evan Krause <evan.krause@tufts.edu>
+ * @author Evan Krause
  */
 public class TF {
   private RosConfiguration rc;

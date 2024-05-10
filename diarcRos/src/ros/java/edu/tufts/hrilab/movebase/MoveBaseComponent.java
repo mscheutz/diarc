@@ -47,11 +47,11 @@ import javax.vecmath.Tuple3d;
 
 /**
  * Provides simplified access to the ROS move base node.
- * <p>
+ *
  * This interface is convenient when you want to be able to send
  * navigation goals without tracking their progress.
  *
- * @author Jeremiah Via <jeremiah.via@gmail.com>
+ * @author Jeremiah Via
  */
 public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterface {
   private RosConfiguration rc = new RosConfiguration();

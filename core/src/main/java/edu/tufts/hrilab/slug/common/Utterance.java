@@ -203,6 +203,12 @@ public final class Utterance implements Serializable {
       return this;
     }
 
+    public Builder setListener(Symbol listener) {
+      this.listeners.clear();
+      this.listeners.add(listener);
+      return this;
+    }
+
     public Builder setUtteranceType(UtteranceType type) {
       this.type = type;
       return this;

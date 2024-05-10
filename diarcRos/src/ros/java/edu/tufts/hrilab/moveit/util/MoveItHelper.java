@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author Evan Krause <evan.krause@tufts.edu>
+ * @author Evan Krause
  */
 public class MoveItHelper {
 

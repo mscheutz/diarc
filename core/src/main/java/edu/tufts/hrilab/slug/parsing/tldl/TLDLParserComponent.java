@@ -219,6 +219,12 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   @Override
   public Utterance parseUtterance(Utterance input) {
     Utterance output = parseUtteranceHelper(input);
+    if (output.getSemantics() == null) {
+      // need this case to correctly set the addressee so it doesn't use default "self"
+      Symbol addressee = addressHistory.get(Pair.of(input.getSpeaker(),input.getAddressee()));
+      addressee = addressee == null ? input.getAddressee() : addressee;
+      output = new Utterance.Builder(output).setListener(addressee).build();
+    }
     log.info("[parseUtterance] Words: {} Result: {}", input.getWordsAsString(), output);
     return output;
   }

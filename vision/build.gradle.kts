@@ -74,6 +74,14 @@ tasks.register<Exec>("cmakeVisionNative") {
   commandLine("cmake", "-Bbuild/cpp", "-Hsrc/main/cpp")
 }
 
+tasks.named<Javadoc>("javadoc") {
+  source = sourceSets.getByName("mock").allJava
+
+  if (project.hasProperty("diarc.enableVision") && project.property("diarc.enableVision").toString().toBoolean()) {
+    source += sourceSets.main.get().allJava
+  }
+}
+
 tasks.named("clean") {
   doLast {
     val path = layout.projectDirectory.toString() + "/src/swig"

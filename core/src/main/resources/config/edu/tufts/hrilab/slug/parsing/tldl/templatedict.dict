@@ -88,6 +88,7 @@ arms; N ; arms
 %%%%%%%%%%%  B  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 backward; DIR; back
+backwards; DIR; back
 bathroom; LOC; bathroom
 
 %the area behind you, the cup behind the ball
@@ -339,6 +340,7 @@ magnet; THING
 %makesure; (C/(C\C))/INF; #x#y.modifyAction(insert($x),$y@$x)
 make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
 
+matt; ADDRESSABLE ; matt
 marlow; ADDRESSABLE; marlow
 
 me; AGENT ; ?INTERACTOR
@@ -503,6 +505,8 @@ schafer; ADDRESSABLE ; shafer
 Schafer; ADDRESSABLE ; shafer
 schaefer; ADDRESSABLE ; shafer
 Schaefer; ADDRESSABLE ; shafer
+shaffer; ADDRESSABLE ; shafer
+Shaffer; ADDRESSABLE ; shafer
 dumpster; ADDRESSABLE ; dempster
 
 %shake your head

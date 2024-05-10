@@ -64,6 +64,10 @@ sourceSets {
   }
 }
 
+tasks.named<Javadoc>("javadoc") {
+  source = sourceSets.main.get().allJava + sourceSets.getByName("mock").allJava
+}
+
 tasks.compileJava {
   options.sourcepath = files(listOf("src/main/java", "src/main/scala"))
   options.compilerArgs = listOf("-parameters")

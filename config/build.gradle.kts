@@ -7,10 +7,12 @@ plugins {
 
 tasks.compileJava {
 
-  if (project.hasProperty("diarc.rosPackages")) {
-    val rosPackages = project.findProperty("diarc.rosPackages").toString().split(",")
-    for(rosPackage in rosPackages) {
-      dependsOn(":diarcRos:compile" + rosPackage.trim().uppercaseFirstChar() + "Java")
+  if (project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
+    if (project.hasProperty("diarc.rosPackages")) {
+      val rosPackages = project.findProperty("diarc.rosPackages").toString().split(",")
+      for (rosPackage in rosPackages) {
+        dependsOn(":diarcRos:compile" + rosPackage.trim().uppercaseFirstChar() + "Java")
+      }
     }
   }
 
@@ -42,6 +44,7 @@ dependencies {
   implementation(project(":core"))
   implementation(project(":core","mockJar"))
   implementation(project(":vision","mockJar"))
+  implementation(project(":diarcRos"))
   implementation(project(":diarcRos","mockJar"))
 
   if(project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
@@ -58,6 +61,7 @@ dependencies {
   testImplementation("com.fasterxml.jackson.core:jackson-databind:2.7.4")
   testImplementation(project(":core"))
   testImplementation(project(":core","mockJar"))
+  testImplementation(project(":diarcRos"))
   testImplementation(project(":diarcRos","mockJar"))
   testImplementation(project(":vision","mockJar"))
 }
@@ -114,7 +118,7 @@ tasks.register<JavaCompile>("compileConfig") {
   destinationDirectory = file(project.layout.buildDirectory.get().toString()+"/classes/java/main/")
 
   // add :diarcRos dependencies
-  if(project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
+  if (project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
     if (project.hasProperty("diarc.rosPackages")) {
       val rosPackages = project.findProperty("diarc.rosPackages").toString().split(",")
       for (rosPackage in rosPackages) {

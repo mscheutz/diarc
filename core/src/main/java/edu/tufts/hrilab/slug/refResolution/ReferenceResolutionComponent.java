@@ -80,7 +80,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
    * Calls down to the resolver to update information about consultants after a new consultant is added.
    * Additionally, registers for notifications from consultants for when new properties are added to the consultant.
    *
-   * @param tsc TRADEServiceConstraints provided by caller.
+   * @param tsi TRADEServiceInfo provided by caller.
    */
   @TRADEService
   public void newConsultantCallback(TRADEServiceInfo tsi) {

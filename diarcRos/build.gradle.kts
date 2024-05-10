@@ -1,58 +1,3 @@
-fun addRosSource(packageName: String, sources: List<String>, depends: List<String> = emptyList()) {
-
-  sourceSets {
-    create(packageName) {
-      java {
-        compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.main.get().output
-        runtimeClasspath += sourceSets.main.get().runtimeClasspath + sourceSets.main.get().output
-
-        for (depend in depends) {
-          compileClasspath += sourceSets.getByName(depend).compileClasspath + sourceSets.getByName(depend).output
-          runtimeClasspath += sourceSets.getByName(depend).runtimeClasspath + sourceSets.getByName(depend).output
-        }
-
-        srcDir("src/main/java")
-        include(sources)
-        // Todo: This is caused by map not being a properly separated package.
-        // Fix: Move ChangeMapComponent.java to new dir, have movebase not depend on map.
-        if (project.hasProperty("diarc.rosVersion") && project.property("diarc.rosVersion").toString() == "indigo") {
-          exclude(listOf(
-              "edu/tufts/hrilab/diarcros/map/MapServer.java",
-              "edu/tufts/hrilab/movebase/ChangeMapComponent.java",
-          ))
-        }
-      }
-    }
-  }
-
-  configurations.create(packageName + "Jar") {
-    isCanBeConsumed = true
-    isCanBeResolved = false
-
-    extendsFrom(configurations[packageName + "Implementation"], configurations[packageName + "RuntimeOnly"])
-  }
-
-  val jarTask = tasks.register<Jar>(packageName + "JarTask") {
-    for (depend in depends) {
-      from(sourceSets.getByName(depend).output)
-    }
-
-    from(sourceSets.getByName(packageName).output)
-    archiveBaseName = "diarc-diarcRos-$packageName"
-    archiveVersion = properties["diarc.version"].toString()
-    archiveExtension = "jar"
-
-    manifest {
-      attributes(
-          "Implementation-Title" to archiveBaseName,
-          "Implementation-Version" to archiveVersion,
-      )
-    }
-  }
-
-  artifacts.add(packageName + "Jar", jarTask)
-}
-
 plugins {
   `java-library`
   `maven-publish`
@@ -65,23 +10,20 @@ java {
   }
 }
 
-tasks.named<Test>("test") {
-  onlyIf {
-    project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()
+repositories {
+  mavenCentral()
+  mavenLocal()
+  maven {
+//      url 'https://maven-us.nuxeo.org/nexus/content/repositories/public'
+    url = uri("https://plugins.gradle.org/m2/")
   }
-}
-
-tasks.compileJava {
-  onlyIf {
-    project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()
+  maven {
+    url = uri("https://clojars.org/repo") //This is needed for diarcros - but technically should come from the closure plugin. todo: Apply closure plugin instead?
   }
-//  options.sourcepath = files(listOf("src/main/java"))
-  options.compilerArgs = listOf("-parameters")
-}
-
-tasks.named<Javadoc>("javadoc") {
-  onlyIf {
-    project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()
+  maven { // hrilab archive
+    name = "HRILabArchiva"
+    url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
+    isAllowInsecureProtocol = true
   }
 }
 
@@ -90,21 +32,34 @@ sourceSets {
     compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.main.get().output
     runtimeClasspath += sourceSets.main.get().runtimeClasspath + sourceSets.main.get().output
   }
-  main {
+  create("ros") {
     java {
-      srcDir("src/main/java")
-      include(listOf(
-          "edu/tufts/hrilab/diarcros/common/*",
-          "edu/tufts/hrilab/manipulator/generic/*",
-          "edu/tufts/hrilab/tf/**", //todo: This requires common, but common is not core?
-          "edu/tufts/hrilab/diarcros/cmd_vel/*",
-          "edu/tufts/hrilab/diarcros/gazebo/*",
-          "edu/tufts/hrilab/diarcros/laserscan/*",
-          "edu/tufts/hrilab/diarcros/tf/*",
-          "edu/tufts/hrilab/diarcros/util/*",
-          "edu/tufts/hrilab/diarcros/uvc/*",
-      ))
+      exclude("**")
     }
+  }
+}
+
+tasks.compileJava {
+  options.compilerArgs = listOf("-parameters")
+}
+
+tasks.named<Javadoc>("javadoc") {
+  source = sourceSets.main.get().allJava + sourceSets.getByName("mock").allJava
+
+  if (project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean() && project.hasProperty("diarc.rosPackages")) {
+    // always add core when enableRos is true
+    source += sourceSets.getByName("core").allJava
+
+    val rosPackages = project.findProperty("diarc.rosPackages").toString().split(",")
+    for (rosPackage in rosPackages) {
+      source += sourceSets.getByName(rosPackage.trim().lowercase()).allJava
+    }
+  }
+}
+
+tasks.named<Test>("test") {
+  onlyIf {
+    project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()
   }
 }
 
@@ -122,7 +77,6 @@ tasks.named<Jar>("jar") {
 }
 
 tasks.named<JavaCompile>("compileMockJava") {
-  options.sourcepath = files(listOf("src/main/java"))
   options.compilerArgs = listOf("-parameters")
 }
 
@@ -154,23 +108,6 @@ artifacts {
   add("mockJar", mockJarTask)
 }
 
-repositories {
-  mavenCentral()
-  mavenLocal()
-  maven {
-//      url 'https://maven-us.nuxeo.org/nexus/content/repositories/public'
-    url = uri("https://plugins.gradle.org/m2/")
-  }
-  maven {
-    url = uri("https://clojars.org/repo") //This is needed for diarcros - but technically should come from the closure plugin. todo: Apply closure plugin instead?
-  }
-  maven { // hrilab archive
-    name = "HRILabArchiva"
-    url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
-    isAllowInsecureProtocol = true
-  }
-}
-
 dependencies {
   configurations.getByName("mockImplementation")(project(":core"))
   api(project(":core"))
@@ -184,8 +121,16 @@ dependencies {
   }
 }
 
-addRosSource("common", listOf(
-    "edu/tufts/hrilab/diarcros/common/*",
+addRosSource("core", listOf(
+        "edu/tufts/hrilab/diarcros/common/*",
+        "edu/tufts/hrilab/manipulator/generic/*",
+        "edu/tufts/hrilab/tf/**",
+        "edu/tufts/hrilab/diarcros/cmd_vel/*",
+        "edu/tufts/hrilab/diarcros/gazebo/*",
+        "edu/tufts/hrilab/diarcros/laserscan/*",
+        "edu/tufts/hrilab/diarcros/tf/*",
+        "edu/tufts/hrilab/diarcros/util/*",
+        "edu/tufts/hrilab/diarcros/uvc/*",
 ))
 
 addRosSource("moveit", listOf(
@@ -196,7 +141,7 @@ addRosSource("moveit", listOf(
 
 addRosSource("map", listOf(
     "edu/tufts/hrilab/diarcros/map/**",
-), listOf("common"))
+))
 
 addRosSource("movebase", listOf(
     "edu/tufts/hrilab/movebase/**",
@@ -235,6 +180,63 @@ addRosSource("tower", listOf(
     "edu/tufts/hrilab/diarcros/tower/*",
 ), listOf("movebase"))
 
-addRosSource("vision", listOf(
-        "edu/tufts/hrilab/vision/*",
-))
+fun addRosSource(packageName: String, sources: List<String>, depends: List<String> = emptyList()) {
+
+  sourceSets {
+    create(packageName) {
+      java {
+        compileClasspath += sourceSets.main.get().compileClasspath + sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().runtimeClasspath + sourceSets.main.get().output
+
+        // prevent circular dependency on "core" sourceSet
+        if (!packageName.equals("core", true)) {
+          compileClasspath += sourceSets.getByName("core").compileClasspath + sourceSets.getByName("core").output
+          runtimeClasspath += sourceSets.getByName("core").runtimeClasspath + sourceSets.getByName("core").output
+        }
+
+        for (depend in depends) {
+          compileClasspath += sourceSets.getByName(depend).compileClasspath + sourceSets.getByName(depend).output
+          runtimeClasspath += sourceSets.getByName(depend).runtimeClasspath + sourceSets.getByName(depend).output
+        }
+
+        srcDir("src/ros/java")
+        include(sources)
+        // Todo: This is caused by map not being a properly separated package.
+        // Fix: Move ChangeMapComponent.java to new dir, have movebase not depend on map.
+        if (project.hasProperty("diarc.rosVersion") && project.property("diarc.rosVersion").toString() == "indigo") {
+          exclude(listOf(
+                  "edu/tufts/hrilab/diarcros/map/MapServer.java",
+                  "edu/tufts/hrilab/movebase/ChangeMapComponent.java",
+          ))
+        }
+      }
+    }
+  }
+
+  configurations.create(packageName + "Jar") {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+
+    extendsFrom(configurations[packageName + "Implementation"], configurations[packageName + "RuntimeOnly"])
+  }
+
+  val jarTask = tasks.register<Jar>(packageName + "JarTask") {
+    for (depend in depends) {
+      from(sourceSets.getByName(depend).output)
+    }
+
+    from(sourceSets.getByName(packageName).output)
+    archiveBaseName = "diarc-diarcRos-$packageName"
+    archiveVersion = properties["diarc.version"].toString()
+    archiveExtension = "jar"
+
+    manifest {
+      attributes(
+              "Implementation-Title" to archiveBaseName,
+              "Implementation-Version" to archiveVersion,
+      )
+    }
+  }
+
+  artifacts.add(packageName + "Jar", jarTask)
+}
