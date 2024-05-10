@@ -128,6 +128,7 @@ public class Pddl {
     }
 
     public PddlBuilder addPredicate(Predicate predicate) {
+      predicate = createSanitizedPredicate(predicate);
       if (predicate.getName().startsWith("and")) {
         for (Symbol s : predicate.getArgs()) {
           if (s.isPredicate()) {
@@ -166,16 +167,17 @@ public class Pddl {
 
 
     public PddlBuilder addObject(String name, String type) {
-      problem.addObject(Factory.createSymbol(name, type));
+      problem.addObject(createSanitizedSymbol(name, type));
       return this;
     }
 
     public PddlBuilder addConstant(String name, String type) {
-      domain.addConstant(Factory.createSymbol(name, type));
+      domain.addConstant(createSanitizedSymbol(name, type));
       return this;
     }
 
     public PddlBuilder addInit(Predicate predicate) {
+      predicate = createSanitizedPredicate(predicate);
       if (predicate.getName().startsWith("and")) {
         for (Symbol s : predicate.getArgs()) {
           if (s.isPredicate()) {
@@ -255,5 +257,29 @@ public class Pddl {
       }
       return (Factory.createPredicate(p.getName(), typedArgs));
     }
+
+    private Symbol createSanitizedSymbol(String name, String type) {
+      return Factory.createSymbol(sanitize(name), sanitize(type));
+    }
+
+    private Predicate createSanitizedPredicate(Predicate input) {
+      List<Symbol> sanitizedArgs = new ArrayList<>();
+      for (Symbol arg : input.getArgs()) {
+        if (arg.isVariable()) {
+          sanitizedArgs.add(Factory.createVariable(sanitize(arg.getName()), sanitize(arg.getType())));
+        } else if (arg.isPredicate()) {
+          sanitizedArgs.add(createSanitizedPredicate((Predicate) arg));
+        } else {
+          sanitizedArgs.add(Factory.createSymbol(sanitize(arg.getName()), sanitize(arg.getType())));
+        }
+      }
+      return Factory.createPredicate(sanitize(input.getName()), sanitizedArgs);
+    }
+
+    private String sanitize(String input) {
+      return input.replaceAll("\"", "QUOTE").replaceAll("\s", "_");
+    }
+
   }
+
 }

@@ -191,8 +191,6 @@ public class GoalContext extends ArgumentBasedContext {
     } else if (this.isTerminated()) {
       log.warn("Trying to set status of previously terminated context: " + this.getSignatureInPredicateForm()
               + ". Current status is: " + this.getStatus() + ", tried to set to: " + eStatus);
-    } else if (eStatus == ActionStatus.RESUME) {
-      super.setStatus(ActionStatus.PROGRESS, justification);
     } else if (!eStatus.isTerminated() || eStatus == ActionStatus.CANCEL || eStatus == ActionStatus.SUCCESS) {
       log.debug("Can't recover from action status: " + eStatus);
       super.setStatus(eStatus, justification);

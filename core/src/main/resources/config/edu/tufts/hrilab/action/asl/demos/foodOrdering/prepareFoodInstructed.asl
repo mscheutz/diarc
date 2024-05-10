@@ -39,8 +39,8 @@ import java.util.ArrayList;
 //todo: should we have preconditions all the way down validating the property of the refId that's getting passed in? really a domain validity sanity check, rather than something we're using right now for failure recovery, etc. but it could be useful?
 
     conditions : {
-        pre : propertyof(?refId, hamburger:property);
-        pre : propertyof(?trayRefId, tray:property);
+        pre : property_of(?refId, hamburger:property);
+        pre : property_of(?trayRefId, tray:property);
     }
     effects : {
         success : prepared(?refId);
@@ -113,8 +113,8 @@ import java.util.ArrayList;
 
     conditions : {
     //todo: should this be configurable?
-        pre : propertyof(?refId, frenchFries:property);
-        pre : propertyof(?trayRefId, tray:property);
+        pre : property_of(?refId, frenchFries:property);
+        pre : property_of(?trayRefId, tray:property);
     }
     effects : {
         success : prepared(?refId);
@@ -145,8 +145,8 @@ import java.util.ArrayList;
 //prepare a type of item: drink
 //() = preparedrink(Symbol ?drinkRefId:physobj, Symbol ?trayRefId:physobj) {
 //    conditions : {
-//        pre : propertyof(?trayRefId, tray:property);
-//        pre : propertyof(?drinkRefId, coke:property);
+//        pre : property_of(?trayRefId, tray:property);
+//        pre : property_of(?drinkRefId, coke:property);
 //    }
 //    effects : {
 //        success : prepared(?drinkRefId);
@@ -162,8 +162,8 @@ import java.util.ArrayList;
 
 () = prepareitempizza(Symbol ?refId:physobj, List ?toppingTypes, Symbol ?trayRefId:physobj) {
     conditions : {
-        pre : propertyof(?refId, pizza:property);
-        pre : propertyof(?trayRefId, tray:property);
+        pre : property_of(?refId, pizza:property);
+        pre : property_of(?trayRefId, tray:property);
     }
     effects : {
         success : prepared(?refId);
@@ -223,8 +223,8 @@ import java.util.ArrayList;
     Symbol !gofa = "gofa:gofa";
 
     conditions : {
-        pre : propertyof(?refId, taco:property);
-        pre : propertyof(?trayRefId, tray:property);
+        pre : property_of(?refId, taco:property);
+        pre : property_of(?trayRefId, tray:property);
     }
     effects : {
         success : prepared(?refId);

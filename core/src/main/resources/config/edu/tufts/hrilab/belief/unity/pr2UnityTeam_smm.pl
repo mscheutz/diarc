@@ -58,7 +58,7 @@ role(brad,admin(X)):-diarcAgent(X).
 role(ravenna,supervisor(X)):-diarcAgent(X).
 role(commX,supervisor(X)):-diarcAgent(X).
 
-is_superior(A,B):-role(A,supervisor(B)).
+is_supervisor(A,B):-role(A,supervisor(B)).
 admin_of(A,B):-role(A,admin(B)).
 explanationType(A, incomplete) :- not(role(A,novice)).
 
@@ -75,7 +75,7 @@ isAdminGoal(D,Y) :- (want(B,Y),Y=did(D,modifyAction(X,S,A))),diarcAgent(D).
 admin goal stuf not currently being used, keeping it like this in case we want to do something with an obligation hirearchy in the future.
 */
 /* obligation rules */
-oblSub1(A,B,X):-(want(B,X),is_superior(B,A),not(isAdminGoal(A,X))).
+oblSub1(A,B,X):-(want(B,X),is_supervisor(B,A),not(isAdminGoal(A,X))).
 %oblSub1(A,B,X):-(want(B,X),X=did(A,Y),is_superior(B,A),not(isAdminGoal(A,X))).
 %oblSub1(A,B,X):-(want(B,X),X=obs(A,Y),is_superior(B,A),not(isAdminGoal(A,X))).
 oblSub2(A,B,X):-(want(B,X),X=did(A,Y),admin_of(B,A),isAdminGoal(A,X)).

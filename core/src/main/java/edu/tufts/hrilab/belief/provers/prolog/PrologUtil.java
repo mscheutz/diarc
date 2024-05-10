@@ -30,7 +30,7 @@ public class PrologUtil {
 
   public static String makePrologSafe(Term t) {
     //factors terms starting with 'not' into a prolog safe form that keeps the negation intact
-    if (t.isNegated()) {
+    if (t.isNegated() && t.isTerm()) {
       Symbol negated = t.getArgs().get(0);
       List<Symbol> args = ((Term) negated).getArgs();
       String str = negated.getName();

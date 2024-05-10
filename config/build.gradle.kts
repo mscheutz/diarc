@@ -103,10 +103,10 @@ tasks.register<JavaCompile>("compileConfig") {
   // compile DIARC configuration file
   if (rootProject.name == "diarc") {
     // if executing task from main diarc repo, set source relative to :config subproject
-    source("src/main/java/")
+    source("src/main/java/", "src/test/java")
   } else {
     // else executing task from a gradle project outside the main diarc repo, assume this full path
-    source(rootProject.rootDir.path + "/src/main/java/")
+    source(rootProject.rootDir.path + "/src/main/java/", rootProject.rootDir.path + "/src/test/java/")
   }
   options.compilerArgs = listOf("-parameters")
   include(project.findProperty("main").toString().replace(".","/")+".java")

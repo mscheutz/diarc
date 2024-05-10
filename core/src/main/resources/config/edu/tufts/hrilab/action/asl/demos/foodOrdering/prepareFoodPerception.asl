@@ -3,25 +3,68 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Term;
 import java.util.List;
 
-() = perceiveitem["top level perception action which binds the refId based on the availability of that type of object at the ?actor's location"](Symbol ?refId:physobj, Symbol ?itemType:property, Symbol ?pose:pose, Symbol ?location:location) {
+() = lookFor(Symbol ?refId:physobj) {
+    Predicate !queryPred;
 
-    conditions : {
-        pre : agentAt(?actor, ?location);
-        pre : propertyof(?refId, ?itemType);
-        pre : observableAt(?itemType,?pose); //TODO:brad: is this in Belief or the consultant?
-        pre : not(itemAt(?refId, ?pose));
-        pre : reachable(?actor, ?pose, ?location);
-        pre : not(beenperceived(?refId));
-    }
+    Symbol !area;
+
     effects : {
-        success : itemAt(?refId, ?pose);
+        success : itemAt(?refId, !area);
         success : beenperceived(?refId);
     }
 
-    act:goToCameraPose(?pose);
-    act:perceiveEntityFromSymbol(?refId);
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "agentAtArea(?actor, X)");
+    !area = act:getBinding(!queryPred);
 
-    //todo: handle failure here. ideally better than we did with multiRobotCaddy in terms of what the failure justification is and how hand-tuned the payload is. might need the new failure recovery code though
+    act:perceiveEntityFromSymbol(?refId);
+}
+
+() = perceiveitem["top level perception action which binds the refId based on the availability of that type of object at the ?actor's location"](Symbol ?refId:physobj, Symbol ?itemType:property, Symbol ?area:area, Symbol ?location:location) {
+
+    java.lang.Boolean !success;
+    Predicate !failCond;
+
+    conditions : {
+        pre : agentAtLocation(?actor, ?location);
+        pre : agentAtArea(?actor, ?area);
+        pre : property_of(?refId, ?itemType);
+        pre : observableAt(?itemType,?area);
+        pre : not(itemAt(?refId, ?area));
+        pre : not(beenperceived(?refId));
+    }
+    effects : {
+        success : itemAt(?refId, ?area);
+        success : beenperceived(?refId);
+    }
+
+    !success = act:perceiveEntityFromSymbol(?refId);
+    if (op:equals(!success, true)) {
+       op:log(debug, "[perceiveitem] succeeded");
+    } else {
+        !failCond = op:invokeStaticMethod("edu.hrilab.tufts.fol.Factory", "createPredicate", "not(perceive(?actor, ?itemType))");
+        exit(FAIL, !failCond);
+    }
+}
+
+() = doYouSee(Symbol ?refId:physobj) {
+    Predicate !queryPred;
+    Symbol !area;
+
+    effects : {
+        success : itemAt(?refId, !area);
+        success : beenperceived(?refId);
+    }
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "agentAtArea(?actor, X)");
+    !area = act:getBinding(!queryPred);
+
+
+    try {
+        act:perceiveEntityFromSymbol(?refId);
+        act:generateResponseFromString("yes");
+    } catch(FAIL_POSTCONDITIONS, !e) {
+        act:generateResponseFromString("no");
+    }
 }
 
 () = perceiveEntityFromSymbol["runs a job for a given pre-existing ?refId and binds the relevant result to that reference"](edu.tufts.hrilab.fol.Symbol ?refId:physobj) {

@@ -175,7 +175,26 @@ import java.lang.Integer;
     }
 }
 
-() = handleWant["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType) {
+() = handleWantDefault["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType) {
+    effects : {
+      success infer : handled(?actor,?addressee,want(?speaker,?state),?semanticType);
+    }
+
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = act:getPriorityTierForGoal(?state);
+    java.lang.String !priorityString = op:invokeMethod(!priorityTier,"name");
+    Symbol !priority = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !priorityString);
+    act:handleWant(?speaker,?addressee,?state,?semanticType,!priority);
+}
+
+() = handleWantPriority["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?priority, Symbol ?semanticType) {
+    effects : {
+      success infer : handled(?actor,?addressee,want(?speaker,?state,?priority),?semanticType);
+    }
+
+    act:handleWant(?speaker,?addressee,?state,?semanticType,?priority);
+}
+
+() = handleWant["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType, Symbol ?priority = uninitialized) {
     Predicate !defaultResponse;
     Predicate !failureEffects;
     edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
@@ -184,15 +203,11 @@ import java.lang.Integer;
     Predicate !becausePredicate;
     Predicate !failureReasonPredicate;
 
-    effects : {
-      success infer : handled(?actor,?addressee,want(?speaker,?state),?semanticType);
-    }
-
     if (op:equals(?addressee, ?actor)) {
 
       try {
         !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(okay)");
-        act:achieveState(?speaker, ?state, !defaultResponse, !defaultResponse, ?semanticType);
+        act:achieveState(?speaker, ?state, !defaultResponse, !defaultResponse, ?semanticType, ?priority);
       } catch(FAIL_OVERALLCONDITIONS, !failureConditions) {
         !becausePredicate = act:createBecausePredicate(?state, ?speaker, !failureConditions);
         !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cannot(continue(?state),!becausePredicate)");
@@ -310,7 +325,7 @@ import java.lang.Integer;
     act:generateResponse(?speaker, ?responseSemantics, ?semanticType);
 }
 
-() = achieveState["try to achieve desired state"](Symbol ?speaker, Predicate ?state, Predicate ?tentativeAcceptSemantics, Predicate ?acceptSemantics, Symbol ?semanticType) {
+() = achieveState["try to achieve desired state"](Symbol ?speaker, Predicate ?state, Predicate ?tentativeAcceptSemantics, Predicate ?acceptSemantics, Symbol ?semanticType, Symbol ?priority = uninitialized) {
     Predicate !defaultResponse;
     Predicate !failureEffects;
     java.lang.Long !goalID;
@@ -322,12 +337,12 @@ import java.lang.Integer;
 
     conditions : {
       or : {
-        pre infer : is_superior(?speaker,?actor);
+        pre infer : is_supervisor(?speaker,?actor);
         pre infer : isAdminGoal(?state);
         pre infer : isOpenGoal(?state);
       }
       or : {
-        pre infer : is_superior(?speaker,?actor);
+        pre infer : is_supervisor(?speaker,?actor);
         pre infer : admin_of(?speaker,?actor);
         pre infer : isOpenGoal(?state);
       }
@@ -347,7 +362,7 @@ import java.lang.Integer;
     }
     !madeTentativeAccept = op:newObject("java.lang.Boolean", "true");
 
-    !goalID = act:submitGoal(?state);
+    !goalID = act:submitGoal(?state,?priority);
     !goalStatus = act:joinOnGoal(!goalID, 1000);
 //    if (~op:invokeMethod(!goalStatus, "isTerminated")) {
 //      op:log("debug", "tentative accept for ?state with status !goalStatus");

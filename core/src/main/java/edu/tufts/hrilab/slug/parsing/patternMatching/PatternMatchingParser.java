@@ -4,9 +4,15 @@
 
 package edu.tufts.hrilab.slug.parsing.patternMatching;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.slug.common.Utterance;
@@ -14,6 +20,7 @@ import edu.tufts.hrilab.slug.common.UtteranceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.HashMap;
@@ -37,6 +44,7 @@ public class PatternMatchingParser extends DiarcComponent implements NLUInterfac
      *
      */
     abstract static class UtterancePattern {
+        final protected Logger log = LoggerFactory.getLogger(this.getClass());
         public UtterancePattern getInstance(){
             return this;
         }
@@ -69,10 +77,134 @@ public class PatternMatchingParser extends DiarcComponent implements NLUInterfac
         }
     }
 
+    static class OptionPattern extends UtterancePattern {
+        /**
+         * @param u
+         * @return
+         */
+        @Override
+        public Utterance matches(Utterance u) {
+            //the $REF the sauce
+            //the type of $REF the type of sauce
+            //where possible values of ref are all of the phyobj properties?
+            //"REPLY(brad,self,option(VAR0:physobj),{sauce(VAR0:physobj),DEFINITE(VAR0:physobj)})
+//            if ( u.getWordsAsString().matches("")) {
+//                Utterance.Builder builder= new Utterance.Builder(u);
+//                builder.setSemantics(Factory.createPredicate("val",Factory.createSymbol(u.getWordsAsString())));
+//                builder.setUtteranceType(UtteranceType.REPLY);
+//                return builder.build();
+//            } else {
+                return null;
+//            }
+        }
+    }
+    static class AreaPattern extends UtterancePattern {
+        /**
+         * @param u
+         * @return
+         */
+        @Override
+        public Utterance matches(Utterance u) {
+
+            List<Term> areaProperties= new ArrayList<>();
+
+            //TODO:brad: what if we need to filter groups by agent?
+            try {
+                areaProperties =TRADE.getAvailableService(new TRADEServiceConstraints().name("getPropertiesHandled").inGroups("area")).call(List.class);
+            } catch (TRADEException e) {
+                log.error("[areaPattern.matches] ",e);
+            }
+
+            for(Term areaProperty: areaProperties){
+                //$REF
+                //area $ref?
+                //values for ref are all of the properties handled by the area consultant
+                //TODO:brad make this an actual regex? and use .matches()
+                String areaPattern = areaProperty.getName();
+                if ( areaPattern.equals("\""+u.getWordsAsString()+"\"")) {
+                    //"REPLY(brad,self,area(VAR0:area),{pantry(VAR0:area),DEFINITE(VAR0:area)})"
+                    Utterance.Builder builder= new Utterance.Builder(u);
+                    builder.setSemantics(Factory.createPredicate("area(VAR0:area)"));
+                    List<Term> supplementalSemantics= new ArrayList<>();
+                    supplementalSemantics.add(Factory.createPredicate(areaProperty.getName(),Factory.createVariable("VAR0","area")));
+                    builder.setSupplementalSemantics(supplementalSemantics);
+                    Map<Variable, Symbol> teirAssignments = new HashMap<>();
+                    teirAssignments.put(Factory.createVariable("VAR0","area"),Factory.createSymbol("DEFINITE"));
+                    builder.setTierAssignments(teirAssignments);
+                    builder.setUtteranceType(UtteranceType.REPLY);
+                    return builder.build();
+                }
+
+            }
+            return null;
+        }
+    }
+
+    static class LocationPattern extends UtterancePattern {
+        /**
+         * @param u
+         * @return
+         */
+        @Override
+        public Utterance matches(Utterance u) {
+
+            List<Term> locationProperties= new ArrayList<>();
+
+            //TODO:brad: what if we need to filter groups by agent?
+            try {
+                locationProperties =TRADE.getAvailableService(new TRADEServiceConstraints().name("getPropertiesHandled").inGroups("location")).call(List.class);
+            } catch (TRADEException e) {
+                log.error("[LocationPattern.matches] ",e);
+            }
+
+            for(Term locationProperty: locationProperties){
+                //$REF
+                //location $ref?
+                //values for ref are all of the properties handled by the location consultant
+                String locationPattern = locationProperty.getName();
+                if ( u.getWordsAsString().matches(locationPattern)) {
+                    //"REPLY(brad,self,location(VAR0:location),{pantry(VAR0:location),DEFINITE(VAR0:location)})"
+                Utterance.Builder builder= new Utterance.Builder(u);
+                builder.setSemantics(Factory.createPredicate("location(VAR0:location)"));
+                List<Term> supplementalSemantics= new ArrayList<>();
+                supplementalSemantics.add(Factory.createPredicate(locationProperty.getName(),Factory.createVariable("VAR0","location")));
+                supplementalSemantics.add(Factory.createPredicate("DEFINITE",Factory.createVariable("VAR0","location")));
+                builder.setSupplementalSemantics(supplementalSemantics);
+                builder.setUtteranceType(UtteranceType.REPLY);
+                return builder.build();
+                }
+
+            }
+            return null;
+        }
+    }
+
+    static class CognexJobPattern extends UtterancePattern {
+        /**
+         * @param u
+         * @return
+         */
+        @Override
+        public Utterance matches(Utterance u) {
+            //plantain
+            //job detect plantain
+            //detect plantain
+//            if ( u.getWordsAsString().matches("")) {
+//                Utterance.Builder builder= new Utterance.Builder(u);
+//                builder.setSemantics(Factory.createPredicate("val",Factory.createSymbol(u.getWordsAsString())));
+//                builder.setUtteranceType(UtteranceType.REPLY);
+//                return builder.build();
+//            } else {
+                return null;
+//            }
+        }
+    }
+
     public PatternMatchingParser(){
         super();
             //TODO:brad: is there a better way to do this?
             knownPatterns.put(IntegerPattern.class.getSimpleName(),IntegerPattern.class);
+            knownPatterns.put("area",AreaPattern.class);
     }
 
     /**

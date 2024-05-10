@@ -38,7 +38,7 @@ import edu.tufts.hrilab.fol.Term;
 
    //Save poses
    //TODO:brad:better name
-   !cookTopRef= !gofa.act:savePoseHelper("cook top",!tableOneRef);
+   !cookTopRef= !gofa.act:savePoseHelper("cooktop",!tableOneRef);
    !fryerRef= !gofa.act:savePoseHelper("fryer",!tableOneRef);
    !prepAreaOneRef= !gofa.act:savePoseHelper("prep area one",!tableOneRef);
 
