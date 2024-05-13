@@ -9,6 +9,9 @@ tasks.compileJava {
 
   if (project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
     if (project.hasProperty("diarc.rosPackages")) {
+      // always include core diarcRos sourceSet
+      dependsOn(":diarcRos:compileCoreJava")
+
       val rosPackages = project.findProperty("diarc.rosPackages").toString().split(",")
       for (rosPackage in rosPackages) {
         dependsOn(":diarcRos:compile" + rosPackage.trim().uppercaseFirstChar() + "Java")
@@ -119,6 +122,10 @@ tasks.register<JavaCompile>("compileConfig") {
 
   // add :diarcRos dependencies
   if (project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
+    dependencies {
+      implementation(project(":diarcRos", "coreJar"))
+    }
+
     if (project.hasProperty("diarc.rosPackages")) {
       val rosPackages = project.findProperty("diarc.rosPackages").toString().split(",")
       for (rosPackage in rosPackages) {
@@ -162,8 +169,6 @@ tasks.register<JavaExec>("launch") {
   systemProperty("trade.properties.path", properties.getOrDefault("diarc.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
   systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
 }
-
-val exportedProjects = arrayOf(":core", ":diarcRos", ":vision")
 
 tasks.register<Javadoc>("allJavadoc") {
 //  dependsOn("assemble")
