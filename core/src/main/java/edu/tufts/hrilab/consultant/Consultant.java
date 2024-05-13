@@ -61,10 +61,10 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   private HashSet<TRADEServiceInfo> propertyNotificationSubscribers;
 
   // TODO: consider replacing Class<T> with Factory<T> interface.
+
   /**
-   *
    * @param refClass - Reference class. Used to construct new instances of Reference.
-   * @param kbName
+   * @param kbName   knowledge base name
    */
   public Consultant(Class<T> refClass, String kbName) {
     try {
@@ -121,15 +121,15 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
         String strippedName = stripQuotesFromMorpheme(propName);
 
         // TODO: this imposes an ordering constraint on diarc components (i.e., RR needs to be up first)
-          try {
-            TRADEServiceInfo injectTSI= TRADE.getAvailableService(new TRADEServiceConstraints().name("injectDictionaryEntry"));
-            injectTSI.call(void.class, strippedName, "RN", propName + ":" + kbName, "VAR");
-            injectTSI.call(void.class, strippedName, "REF", propName + ":" + kbName, "DEFINITE");
-            injectTSI.call(void.class, strippedName, "DESC", propName + ":property", "");
-            injectTSI.call(void.class, strippedName, "DN", propName + ":property", "");
-          } catch (TRADEException e) {
-            log.error("[addPropertiesHandled] unable to add dictionary entry for " + propName, e);
-          }
+        try {
+          TRADEServiceInfo injectTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("injectDictionaryEntry"));
+          injectTSI.call(void.class, strippedName, "RN", propName + ":" + kbName, "VAR");
+          injectTSI.call(void.class, strippedName, "REF", propName + ":" + kbName, "DEFINITE");
+          injectTSI.call(void.class, strippedName, "DESC", propName + ":property", "");
+          injectTSI.call(void.class, strippedName, "DN", propName + ":property", "");
+        } catch (TRADEException e) {
+          log.error("[addPropertiesHandled] unable to add dictionary entry for " + propName, e);
+        }
 
       }
     }
@@ -257,7 +257,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
    *
    * @param var        Variable associated with new reference (only important if properties contain more than one Variable)
    * @param properties semantic properties of reference
-   * @return
+   * @return reference of type T
    */
   public T createReference(Variable var, List<Term> properties) {
     T newRef = null;
@@ -341,7 +341,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   /**
    * Helper method to generate next unique reference ID (e.g., object_3).
    *
-   * @return
+   * @return unique reference ID
    */
   protected Symbol getNextReferenceId() {
     //todo: Now that this has type information, do we still care about kbname? -MF
@@ -394,52 +394,63 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
     return refs;
   }
 
-  /**
-   * Convert refId to target class using the specified constraints to filter the results.
-   * This is to map references onto Java-types. If it's not possible for a refId to be
-   * converted to the specified type, null is returned.
-   *
-   * @param refId
-   * @param type
-   * @param <U>
-   * @return
-   */
+  @Override
   final public <U> U convertToType(Symbol refId, Class<U> type) {
     return convertToType(refId, type, new ArrayList<>());
   }
 
-  /**
-   * Convert refId to target class using the specified constraints for to filter the results.
-   * This is to map references onto Java-types. If it's not possible for a refId to be
-   * converted to the specified type, null is returned. First-order-logic constraints can be
-   * used in some cases to provide additional constraints on the reference.
-   *
-   * @param refId
-   * @param type
-   * @param constraints
-   * @param <U>
-   * @return
-   */
+
+  @Override
   final public <U> U convertToType(Symbol refId, Class<U> type, List<? extends Term> constraints) {
-      return localConvertToType(refId, type, constraints);
+    return localConvertToType(refId, type, constraints);
   }
 
 
+  /**
+   * The local implementation of convertToType.
+   *
+   * @param refId reference resolution ID (e.g.object_3)
+   * @param type  target Java class type
+   * @param <U>   target Java class template type (any)
+   * @return instance of specified target Java class
+   */
   abstract protected <U> U localConvertToType(Symbol refId, Class<U> type);
 
+  /**
+   * The local implementation of convertToType.
+   *
+   * @param refId       reference resolution ID (e.g.object_3)
+   * @param type        target Java class type
+   * @param constraints first-order-logic predicate constraints
+   * @param <U>         target Java class template type (any)
+   * @return instance of specified target Java class
+   */
   abstract protected <U> U localConvertToType(Symbol refId, Class<U> type, List<? extends Term> constraints);
 
 
+  /**
+   * Register to be notified when new properties are added to this consultant.
+   *
+   * @param callback TRADE service to be notified at.
+   */
   @Override
   public void registerForNewPropertyNotification(TRADEServiceInfo callback) {
     propertyNotificationSubscribers.add(callback);
   }
 
+  /**
+   * Un-register from new property notifications
+   *
+   * @param callback TRADE service that was registered
+   */
   @Override
   public void unregisterForNewPropertyNotification(TRADEServiceInfo callback) {
     propertyNotificationSubscribers.remove(callback);
   }
 
+  /**
+   * Notify all new property subscribers.
+   */
   @Override
   public void notifyNewPropertySubscribers() {
     for (TRADEServiceInfo subscriber : propertyNotificationSubscribers) {
@@ -451,6 +462,14 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
     }
   }
 
+  /**
+   * Remove quotes from input String.
+   *
+   * TODO: move this method to utility class
+   *
+   * @param input String with quotes
+   * @return string without quotes
+   */
   public String stripQuotesFromMorpheme(String input) {
     int escapeStart = -1;
     int escapeEnd = -1;

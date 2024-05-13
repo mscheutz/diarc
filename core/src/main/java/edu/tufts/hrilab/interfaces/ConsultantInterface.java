@@ -38,7 +38,7 @@ public interface ConsultantInterface {
    * Returns a list of currently known refIds (it takes a seq of Properties, to optionally
    * do some pre-processing to return a list of relevant candidates).
    *
-   * @param query
+   * @param query properties to optionally do some pre-processing
    * @return list of currently known ids
    */
   //TODO:brad: this should probably be two separate methods,
@@ -72,8 +72,8 @@ public interface ConsultantInterface {
   Map<Variable, Symbol> createReferences(List<Variable> vars);
 
   /**
-   *   an attempt is made to bring the knowledge base in line with the
-   *   provided bindings, list of properties, and probability value.
+   * an attempt is made to bring the knowledge base in line with the
+   * provided bindings, list of properties, and probability value.
    *
    * @param bindings   list of bindings in tuple form (free-variable and refId pair)
    * @param prob       probability value
@@ -105,12 +105,14 @@ public interface ConsultantInterface {
   // signature could just used the existing assert properties under the covers. This is over ridden
   // in a few places, though and I haven't ahd time to see if there is anything different going on
   // there compared with the other assert properties.
+
   /**
    * Add properties to already existing object ref. Each property should contain a connection
-   * to the existing ref either by refId or refId's variable.
-   * @param refId
-   * @param properties
-   * @return
+   * to the existing reference either by refId or refId's variable.
+   *
+   * @param refId      reference
+   * @param properties reference properties
+   * @return if property was successfully added to reference refId
    */
   @TRADEService
   boolean assertProperties(Symbol refId, List<Term> properties);
@@ -118,10 +120,11 @@ public interface ConsultantInterface {
   /**
    * Convert refId to target class. This is a way to map references onto Java-types. If it's
    * not possible for a refId to be converted to the specified type, null is returned.
+   *
    * @param refId - reference resolution ID (e.g.object_3)
-   * @param type - target Java class type
-   * @param <U>
-   * @return
+   * @param type  - target Java class type
+   * @param <U>   target Java class template type (any)
+   * @return instance of specified target Java class
    */
   @TRADEService
   <U> U convertToType(Symbol refId, Class<U> type);
@@ -130,11 +133,12 @@ public interface ConsultantInterface {
    * Convert refId to target class using the specified constraints for to filter the results.
    * This is a way to map references onto Java-types. If it's
    * not possible for a refId to be converted to the specified type, null is returned.
-   * @param refId
-   * @param type
-   * @param constraints
-   * @param <U>
-   * @return
+   *
+   * @param refId       - reference resolution ID (e.g.object_3)
+   * @param type        - target Java class type
+   * @param constraints first-order-logic predicate constraints
+   * @return instance of specified target Java class
+   * @param <U>         target Java class template type (any)
    */
   @TRADEService
   <U> U convertToType(Symbol refId, Class<U> type, List<? extends Term> constraints);

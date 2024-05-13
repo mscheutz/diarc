@@ -163,6 +163,47 @@ tasks.register<JavaExec>("launch") {
   systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
 }
 
+val exportedProjects = arrayOf(":core", ":diarcRos", ":vision")
+
+tasks.register<Javadoc>("allJavadoc") {
+//  dependsOn("assemble")
+
+  title = "DIARC"
+  setDestinationDir(file("${rootDir}/docs"))
+
+  // keep cmu sphinx4 files out of javadoc -- these files should be removed from source tree
+  setExcludes(listOf("edu/tufts/hrilab/sphinx4/SphinxRecognizer.java", "edu/tufts/hrilab/sphinx4/ConfigurableMicrophone.java", "edu/tufts/hrilab/sphinx4/SegmentStorer.java"))
+
+  // :core
+  source += project(":core").sourceSets.main.get().allJava + project(":core").sourceSets.getByName("mock").allJava
+  classpath += project(":core").sourceSets.main.get().compileClasspath + project(":core").sourceSets.getByName("mock").compileClasspath
+
+  // :vision
+  source += project(":vision").sourceSets.getByName("mock").allJava
+  classpath += project(":vision").sourceSets.getByName("mock").compileClasspath
+  if (project.hasProperty("diarc.enableVision") && project.property("diarc.enableVision").toString().toBoolean()) {
+    dependsOn(":vision:compileJava") // need to generate swig Java classes
+    source += project(":vision").sourceSets.main.get().allJava
+    classpath += project(":vision").sourceSets.main.get().compileClasspath
+  }
+
+  // :diarcRos
+  source += project(":diarcRos").sourceSets.main.get().allJava + project(":diarcRos").sourceSets.getByName("mock").allJava
+  classpath += project(":diarcRos").sourceSets.main.get().compileClasspath + project(":diarcRos").sourceSets.getByName("mock").compileClasspath
+  if (project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean() && project.hasProperty("diarc.rosPackages")) {
+    // always add core when enableRos is true
+    source += project(":diarcRos").sourceSets.getByName("core").allJava
+    classpath += project(":diarcRos").sourceSets.getByName("core").compileClasspath
+
+    val rosPackages = project.findProperty("diarc.rosPackages").toString().split(",")
+    for (rosPackage in rosPackages) {
+      val srcSetName = rosPackage.trim().lowercase()
+      source += project(":diarcRos").sourceSets.getByName(srcSetName).allJava
+      classpath += project(":diarcRos").sourceSets.getByName(srcSetName).compileClasspath
+    }
+  }
+}
+
 repositories {
   mavenCentral() // main maven archive
   maven {
