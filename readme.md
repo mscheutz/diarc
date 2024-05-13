@@ -181,13 +181,10 @@ diarcRos
     │   ├── java
     │   │   └── edu
     │   │       └── tufts
-    │   │           └── hrilab : DIARC components and Java classes that depend on ROS
-    │   │               ├── diarcros : rosjava proxy nodes
-    │   │               │   ├── fetch
-    │   │               │   ├── ...
-    │   │               │   └──
-    │   │               ├── fetch : DIARC FetchComponent
-    │   │               ├── pr2 : DIARC PR2Component
+    │   │           └── hrilab : DIARC component interfaces that do not depend on ROS but are needed
+    │   │               │        by "mock" and non-mock diarcRos oocomponents
+    │   │               ├── fetch : DIARC FetchInterface
+    │   │               ├── pr2 : DIARC PR2Interface
     │   │               ├── ...
     │   │               └──
     │   └── resources
@@ -195,11 +192,25 @@ diarcRos
     │           └── edu
     │               └── tufts
     │                   └── hrilab : configuration files for ROS dependent DIARC components
-    └── mock
+    ├── mock
+    │   └── java
+    │       └── edu
+    │           └── tufts
+    │               └── hrilab : "mock" DIARC components that are available without ROS    
+    └── ros
         └── java
             └── edu
                 └── tufts
-                    └── hrilab : "mock" DIARC components that are available without needed ROS
+                    └── hrilab : DIARC components and Java classes that depend on ROS
+                        ├── diarcros : rosjava proxy nodes
+                        │   ├── fetch
+                        │   ├── ...
+                        │   └──
+                        ├── fetch : DIARC FetchComponent
+                        ├── pr2 : DIARC PR2Component
+                        ├── ...
+                        └──
+                        └──
 ```
 </details>
 
@@ -246,6 +257,12 @@ vision
                     └── hrilab : vision specific unit tests
 ```
 </details>
+
+## Javadocs
+
+DIARC javadocs can be found here: https://hrilab.tufts.edu/javadoc
+
+TRADE (middleware used by DIARC) javadocs can be found here: https://thinkingrobots.ai/javadoc
 
 ## Compiling the Code
 
