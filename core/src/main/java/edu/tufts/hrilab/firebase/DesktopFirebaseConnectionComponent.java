@@ -10,6 +10,8 @@ import com.google.cloud.firestore.*;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -19,9 +21,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
 
 public class DesktopFirebaseConnectionComponent extends FirebaseConnectionComponent {
 
@@ -59,10 +58,10 @@ public class DesktopFirebaseConnectionComponent extends FirebaseConnectionCompon
     protected void parseArgs(CommandLine cmdLine) {
         super.parseArgs(cmdLine);
         if (cmdLine.hasOption("firebaseGroup")) {
-        groupName = cmdLine.getOptionValue("firebaseGroup");
+            groupName = cmdLine.getOptionValue("firebaseGroup");
         }
         if (cmdLine.hasOption("emulator")) {
-        useEmulator = true;
+            useEmulator = true;
         }
     }
 
@@ -73,13 +72,15 @@ public class DesktopFirebaseConnectionComponent extends FirebaseConnectionCompon
                 FirebaseOptions options = new FirebaseOptions.Builder()
                         .setCredentials(credentials)
                         .setProjectId("demo-adecontrol-4c267")
+                        .setFirestoreOptions(FirestoreOptions.newBuilder().setEmulatorHost("0.0.0.0:8081").build()) //TODO: set through commandline args
                         .build();
                 try {
-                    FirebaseApp.initializeApp(options);
+                    FirebaseApp app = FirebaseApp.initializeApp(options);
+                    firestore = FirestoreClient.getFirestore(app);
                 } catch (IllegalStateException e) {
                     log.warn("[init] firebase app instance already exists", e);
+                    firestore = FirestoreClient.getFirestore();
                 }
-                firestore = FirestoreClient.getFirestore();
             } else {
                 InputStream serviceAccount = new FileInputStream("C:\\Users\\TR-dev2\\source\\adecontrol-4c267-firebase-adminsdk-f3804-ac996ef58d.json");
                 //InputStream serviceAccount = new FileInputStream("/home/brad/Downloads/adecontrol-4c267-firebase-adminsdk-f3804-876f4265b0.json");

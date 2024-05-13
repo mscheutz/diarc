@@ -11,12 +11,12 @@ SET(SOURCES
 	)
 
 # ROS capture (using ROS messages)
-if(ROS_FOUND)
+IF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf_FOUND AND pcl_ros_FOUND)
 	SET(SOURCES ${SOURCES}
 		CaptureMultisense.cpp
 		CaptureROS.cpp
 	)
-endif(ROS_FOUND)
+ENDIF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf_FOUND AND pcl_ros_FOUND)
 # Intel RealSense capture
 if(REALSENSE_FOUND)
 	SET(SOURCES ${SOURCES}
@@ -57,11 +57,18 @@ ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
 ADD_SUBDIRECTORY(calibration)
 
 # link libraries
+IF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf_FOUND AND pcl_ros_FOUND)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${roscpp_LIBRARIES}
+	                      ${rosconsole_LIBRARIES}
+	                      ${sensor_msgs_LIBRARIES}
+	                      ${stereo_msgs_LIBRARIES}
+	                      ${image_transport_LIBRARIES}
+	                      ${cv_bridge_LIBRARIES}
+	                      ${tf_LIBRARIES}
+	                      ${pcl_ros_LIBRARIES})
+ENDIF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf_FOUND AND pcl_ros_FOUND)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${LOG4CXX_LIBRARIES})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} display common calibration point_clouds)
-if(ROS_FOUND)
-	TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${ROS_LIBRARIES})
-endif(ROS_FOUND)
 if(OPENNI_FOUND)
 	TARGET_LINK_LIBRARIES(${PROJECT_NAME}  ${OPENNI_LIBRARY})
 endif(OPENNI_FOUND)

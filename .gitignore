@@ -6,3 +6,5 @@ vision/build/
 vision/src/swig/
 .idea/
 .env
+docs/
+vision/src/main/cpp/cmake-build-debug/

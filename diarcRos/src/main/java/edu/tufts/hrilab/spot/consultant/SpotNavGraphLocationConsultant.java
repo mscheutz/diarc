@@ -51,7 +51,8 @@ public class SpotNavGraphLocationConsultant extends Consultant<SpotNavGraphLocat
 
     /**
      * Load pre-defined references from file via JSON.
-     * @param filepath
+     * @param dir
+     * @param filename
      */
     public void loadReferencesFromFile(String dir, String filename) {
         String filepath = Resources.createFilepath(dir, filename);

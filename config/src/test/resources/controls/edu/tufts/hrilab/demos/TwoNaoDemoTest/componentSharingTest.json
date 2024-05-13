@@ -6,13 +6,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "tell(shafer,stand(dempster))", "396" ]
+      "serviceArgs" : [ "tell(shafer,stand(dempster))", "NORMAL", "1704827087239" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "397" ]
+      "serviceArgs" : [ "stand(dempster)", "NORMAL", "1704827087241" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "396", "SUCCEEDED" ]
+      "serviceArgs" : [ "1704827087239", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -25,13 +25,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "tell(shafer,move(dempster,forward))", "408" ]
+      "serviceArgs" : [ "tell(shafer,move(dempster,forward))", "NORMAL", "1704827097071" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "409" ]
+      "serviceArgs" : [ "move(dempster,forward)", "NORMAL", "1704827097072" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "408", "FAILED" ]
+      "serviceArgs" : [ "1704827097071", "FAILED" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I can not tell dempster to move forward because dempster sees obstacle", "true" ]
@@ -50,10 +50,10 @@
       "serviceArgs" : [ "yes", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "look(dempster,up)", "428" ]
+      "serviceArgs" : [ "look(dempster,up)", "NORMAL", "1704827107095" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "428", "SUCCEEDED" ]
+      "serviceArgs" : [ "1704827107095", "SUCCEEDED" ]
     } ]
   } ]
 }

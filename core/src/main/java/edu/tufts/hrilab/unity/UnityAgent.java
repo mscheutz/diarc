@@ -97,7 +97,7 @@ public class UnityAgent extends DiarcComponent {
   }
 
   /**
-   * Message received when an agent is connected to Unity<->DIARC socket.
+   * Message received when an agent is connected to Unity to/from DIARC socket.
    * 
    * All "connected" messages will contain the following:
    * actor = connected agent

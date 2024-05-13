@@ -94,7 +94,7 @@ public class LLMComponent extends DiarcComponent {
   /**
    * Sets the LLM service to the given value.
    *
-   * @param serviceStr a string representing the LLM service
+   * @param service a string representing the LLM service
    **/
   @TRADEService
   @Action
@@ -104,7 +104,7 @@ public class LLMComponent extends DiarcComponent {
   /**
    * Sets the LLM service: [openai, llama].
    *
-   * @param {string} serviceStr - The LLM service to set
+   * @param serviceStr - The LLM service to set
    */
   @TRADEService
   public void setLLMService (String serviceStr) {
@@ -113,7 +113,7 @@ public class LLMComponent extends DiarcComponent {
   /**
    * Sets the LLM endpoint (URL).
    *
-   * @param {string} endpoint - The endpoint to set
+   * @param endpoint - The endpoint to set
    */
   @TRADEService
   @Action
@@ -132,7 +132,7 @@ public class LLMComponent extends DiarcComponent {
   /**
    * Sets the language model to use for the language learning model service.
    *
-   * @param modelStr the name of the model to set
+   * @param model the name of the model to set
    **/
   @TRADEService
   @Action
@@ -150,8 +150,7 @@ public class LLMComponent extends DiarcComponent {
   /**
    * Sets the stop words for the LLM to terminate token stream.
    *
-   * @param {string[]} stopWords - An array of stop words to set.
-   * @returns {void}
+   * @param stopWords - An array of stop words to set.
    */
   public void setLLMStopWords (String[] stopWords) {
     if (service.equals("llama")) {
@@ -164,7 +163,7 @@ public class LLMComponent extends DiarcComponent {
   /**
    * Sets the temperature for the LLM.
    *
-   * @param {number} temperatureFloat - The temperature value to set
+   * @param temperatureFloat - The temperature value to set
    */
   public void setLLMTemperature (float temperatureFloat) {
     if (service.equals("llama")) {

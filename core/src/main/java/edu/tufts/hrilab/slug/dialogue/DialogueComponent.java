@@ -7,6 +7,7 @@ package edu.tufts.hrilab.slug.dialogue;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
@@ -37,8 +38,8 @@ public class DialogueComponent extends DiarcComponent {
 
   private DialogueConsultant consultant;
   private List<TRADEServiceInfo> dialogueHistorySubscribers = new ArrayList<>();
-  private ConcurrentHashMap<Predicate, Answer> currentQuestions = new ConcurrentHashMap<>();
-  private ConcurrentHashMap<Predicate, Answer> suspendedQuestions = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<Term, Answer> currentQuestions = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<Term, Answer> suspendedQuestions = new ConcurrentHashMap<>();
   private boolean showDialogueGui = false;
   private DialogueGui dialogueGui;
 
@@ -176,6 +177,17 @@ public class DialogueComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Map<Variable, Symbol> waitForResponse(Predicate responseForm, long waitDuration) {
+
+    //TODO:brad: make this safer
+    if(responseForm.getName().equals("pattern")){
+      responseForm=(Predicate) responseForm.get(0);
+      try {
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("activatePattern").argTypes(String.class)).call(Boolean.class,responseForm.getName());
+      } catch (TRADEException e) {
+        log.error("[waitForResponse]",e);
+      }
+    }
+
     //add response pattern to data structure
     Answer answer;
     if (!currentQuestions.containsKey(responseForm)) {
@@ -217,7 +229,7 @@ public class DialogueComponent extends DiarcComponent {
   @TRADEService
   @Action
   public boolean isQuestionResponse(Symbol speaker, Symbol listener, Term semantics) {
-    List<Predicate> matchingQuestions = currentQuestions.keySet().stream()
+    List<Term> matchingQuestions = currentQuestions.keySet().stream()
             .filter(semantics::instanceOf)
             .collect(Collectors.toList());
 
@@ -244,14 +256,14 @@ public class DialogueComponent extends DiarcComponent {
   public synchronized void answerQuestion(Symbol speaker, Symbol listener, Term answerSemantics) {
 
     //get matching question
-    List<Predicate> matchingQuestions = currentQuestions.keySet().stream()
+    List<Term> matchingQuestions = currentQuestions.keySet().stream()
             .filter(answerSemantics::instanceOf)
-            .collect(Collectors.toList());
+            .toList();
 
     //Bind response
     Answer response;
     if (matchingQuestions.size() == 1) {
-      Predicate question = matchingQuestions.get(0);
+      Term question = matchingQuestions.get(0);
       response = currentQuestions.remove(question);
       response.setAnswerBindings(question.getBindings(answerSemantics));
     } else if (matchingQuestions.isEmpty()) {
@@ -261,7 +273,7 @@ public class DialogueComponent extends DiarcComponent {
     } else {
       //TODO:brad: we should probably have it ask a follow up question if it's unclear what's going on here.
       log.warn("[answerQuestion] unclear which question is being responded to, using the first one... ");
-      Predicate question = matchingQuestions.get(0);
+      Term question = matchingQuestions.get(0);
       response = currentQuestions.remove(question);
       response.setAnswerBindings(question.getBindings(answerSemantics));
     }
@@ -277,7 +289,7 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void cancelWaitForResponse(Predicate responseForm) {
+  public void cancelWaitForResponse(Term responseForm) {
     Answer answer = currentQuestions.remove(responseForm);
 
     if (answer == null) {
@@ -297,7 +309,7 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void suspendWaitForResponse(Predicate responseForm) {
+  public void suspendWaitForResponse(Term responseForm) {
     Answer answer = currentQuestions.remove(responseForm);
 
     if (answer != null) {
@@ -313,7 +325,7 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void resumeWaitForResponse(Predicate responseForm) {
+  public void resumeWaitForResponse(Term responseForm) {
     Answer answer = suspendedQuestions.remove(responseForm);
 
     if (answer != null) {

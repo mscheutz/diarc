@@ -107,7 +107,7 @@ public class OpenaiClient {
 
   /**
    * Calls the OpenAI API to generate a completion based on the given model and prompt.
-   * @param model the model to use when generating a completion
+   * @param modelSym the model to use when generating a completion
    * @param prompt the prompt used to generate the completion
    * @return an OpenaiCompletionResponse object representing the response from the OpenAI completion endpoint
    **/
