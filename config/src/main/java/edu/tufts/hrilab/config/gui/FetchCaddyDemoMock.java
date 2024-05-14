@@ -10,6 +10,17 @@ package edu.tufts.hrilab.config.gui;
 
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.DemoApplication;
+import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
+import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
+import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
+import edu.tufts.hrilab.map.MapComponent;
+
+import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
+import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
+import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
+import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
+import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
+import edu.tufts.hrilab.vision.MockVisionComponent;
 import org.springframework.boot.SpringApplication;
 
 public class FetchCaddyDemoMock extends DiarcConfiguration {
@@ -17,27 +28,27 @@ public class FetchCaddyDemoMock extends DiarcConfiguration {
   @Override
   public void runConfiguration() {
 
-    createInstance(edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponentImpl.class, "-dict templatedict.dict -dict multiRobotCaddy.dict -dict multiRobotCaddyHomophones.dict");
+    createInstance(TLDLParserComponent.class, "-dict templatedict.dict -dict multiRobotCaddy.dict -dict multiRobotCaddyHomophones.dict");
 
-    createInstance(edu.tufts.hrilab.slug.pragmatics.PragmaticsComponentImpl.class, "-pragrules demos.prag");
+    createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
 
-    createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponentImpl.class);
+    createInstance(ReferenceResolutionComponent.class);
 
-    createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
+    createInstance(DialogueComponent.class);
 
-    createInstance(edu.tufts.hrilab.slug.nlg.SimpleNLGComponentImpl.class);
+    createInstance(SimpleNLGComponent.class);
 
-    createInstance(edu.tufts.hrilab.vision.MockVisionComponentImpl.class, "-groups agent:fetch:fetch -belief -sceneClass edu.tufts.hrilab.vision.scene.config.MultiRobotCaddySceneGenerator");
+    createInstance(MockVisionComponent.class, "-groups agent:fetch:fetch -belief -sceneClass edu.tufts.hrilab.vision.scene.config.MultiRobotCaddySceneGenerator");
 
-    createInstance(edu.tufts.hrilab.fetch.MockFetchItComponentImpl.class, "-groups agent:fetch:fetch -simExecTime");
+    createInstance(edu.tufts.hrilab.fetch.MockFetchItComponent.class, "-groups agent:fetch:fetch -simExecTime");
     createInstance(edu.tufts.hrilab.tf.MockTFComponent.class, "-groups agent:fetch:fetch");
 
     // locationRefsMultiRobotCaddy.json locations are for the fetchit_map built on 2023_11_08
-    createInstance(edu.tufts.hrilab.movebase.MapComponent.class, "-kb_name movebaselocation -refs refs/locationRefsMultiRobotCaddy.json -groups agent:fetch:fetch");
+    createInstance(MapComponent.class, "-kb_name movebaselocation -refs refs/locationRefsMultiRobotCaddy.json -groups agent:fetch:fetch");
 
-    createInstance(edu.tufts.hrilab.movebase.MockMoveBaseComponentImpl.class, "-groups agent:fetch:fetch -simExecTime");
+    createInstance(MockMoveBaseComponent.class, "-groups agent:fetch:fetch -simExecTime");
 
-    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponentImpl.class, "");
+    createInstance(SimSpeechProductionComponent.class, "");
 
     String goalManagerArgs = "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
             + "-beliefinitfile demos.pl "
@@ -63,7 +74,7 @@ public class FetchCaddyDemoMock extends DiarcConfiguration {
     //createInstance(com.trade.gui.TRADEServiceGui.class, "-class com.fetch.FetchComponentImpl -groups agent:fetch:fetch");
 
     //brad: this is last so the GUI window is on top
-    createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponentImpl.class,
+    createInstance(SimSpeechRecognitionComponent.class,
             "-config multiRobotCaddy.simspeech -speaker evan");
 //                "-config multiRobotCaddy.simspeech -speaker evan -listener fetch:fetch");
   }
