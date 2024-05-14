@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+//import edu.tufts.hrilab.movebase.map.MapGui;
 
 @Configuration
 @EnableWebSocket
@@ -17,6 +18,7 @@ public class DemoConfig implements WebSocketConfigurer {
 
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
     registry.addHandler(new DemoComponent(), "/user");
+//    registry.addHandler(new MapGui(), "/map");
   }
 
 }
