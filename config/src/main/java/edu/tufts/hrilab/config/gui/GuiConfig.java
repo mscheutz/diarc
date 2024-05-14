@@ -2,6 +2,7 @@ package edu.tufts.hrilab.config.gui;
 
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.gui.DemoApplication;
 import edu.tufts.hrilab.gui.ExampleService;
 import edu.tufts.hrilab.map.MapComponent;
 import org.slf4j.Logger;

@@ -201,6 +201,8 @@ dependencies {
 
   implementation("javax.servlet:servlet-api:2.5")
   implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
+  implementation("org.springdoc:springdoc-openapi-starter-common:2.5.0")
+  implementation("org.json:json:20240303")
 
   //DesktopFirebaseConnectionComponent
   implementation("com.google.firebase:firebase-admin:7.1.0")

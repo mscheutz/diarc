@@ -9,6 +9,7 @@
 package edu.tufts.hrilab.config.gui;
 
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.gui.DemoApplication;
 import org.springframework.boot.SpringApplication;
 
 public class FetchCaddyDemoMock extends DiarcConfiguration {
@@ -32,7 +33,7 @@ public class FetchCaddyDemoMock extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.tf.MockTFComponent.class, "-groups agent:fetch:fetch");
 
     // locationRefsMultiRobotCaddy.json locations are for the fetchit_map built on 2023_11_08
-    createInstance(edu.tufts.hrilab.movebase.map.MapComponent.class, "-kb_name movebaselocation -refs refs/locationRefsMultiRobotCaddy.json -groups agent:fetch:fetch");
+    createInstance(edu.tufts.hrilab.movebase.MapComponent.class, "-kb_name movebaselocation -refs refs/locationRefsMultiRobotCaddy.json -groups agent:fetch:fetch");
 
     createInstance(edu.tufts.hrilab.movebase.MockMoveBaseComponentImpl.class, "-groups agent:fetch:fetch -simExecTime");
 

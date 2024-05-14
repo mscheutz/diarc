@@ -60,6 +60,9 @@ dependencies {
   testImplementation(project(":core","mockJar"))
   testImplementation(project(":diarcRos","mockJar"))
   testImplementation(project(":vision","mockJar"))
+
+  implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
+
 }
 
 // customize diarc-config jar
