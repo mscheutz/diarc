@@ -4,14 +4,11 @@
 
 package edu.tufts.hrilab.llm;
 
-import edu.tufts.hrilab.util.Http;
-import java.io.InputStreamReader;
+import edu.tufts.hrilab.llm.hf.HFClient;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map; 
-import java.util.HashMap;
+
 import static java.util.Map.entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,11 +21,7 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.fol.Symbol;
 
 import edu.tufts.hrilab.llm.openai.OpenaiClient;
-import edu.tufts.hrilab.llm.openai.request.*;
-import edu.tufts.hrilab.llm.openai.response.*;
 import edu.tufts.hrilab.llm.llama.LlamaClient;
-import edu.tufts.hrilab.llm.llama.request.*;
-import edu.tufts.hrilab.llm.llama.response.*;
 
 public class LLMComponent extends DiarcComponent {
   static private Logger log = LoggerFactory.getLogger(LLMComponent.class);
@@ -40,6 +33,7 @@ public class LLMComponent extends DiarcComponent {
   private Tokenizer tokenizer = new Tokenizer();
   private OpenaiClient openai = new OpenaiClient();
   private LlamaClient llama = new LlamaClient();
+  private HFClient hf= new HFClient();
 
   /**
    * LLaMA (llama.cpp server)
@@ -143,6 +137,8 @@ public class LLMComponent extends DiarcComponent {
   public void setLLMModel (String modelStr) {
     if (service.equals("openai")) {
       openai.setModel(modelStr);
+    } else if (service.equals("llamahf") || service.equals("t5hf")) {
+      hf.setModel(service, modelStr);
     }
     model = modelStr;
   }
@@ -169,8 +165,10 @@ public class LLMComponent extends DiarcComponent {
   public void setLLMTemperature (float temperatureFloat) {
     if (service.equals("llama")) {
       llama.setTemperature(temperatureFloat);
-    } else if (service.equals("openai")) {
-      log.warn("OpenAI API does not support temperature");
+    } else if (service.equals("llamahf")) {
+      hf.setTemperature(temperatureFloat);
+    } else {
+      log.warn("Service {} does not support temperature", service);
     }
   }
 
@@ -195,6 +193,8 @@ public class LLMComponent extends DiarcComponent {
         return new Completion(openai.completion(prompt));
       case "llama" :
         return new Completion(llama.completion(prompt));
+      case "t5hf":
+        return new Completion(hf.t5BaseCompletion(prompt));
       default :
         log.error("Service " + service + " not implemented");
         return null;
@@ -225,6 +225,8 @@ public class LLMComponent extends DiarcComponent {
       case "llama" :
         log.warn("llama.cpp server cannot change model to " + model);
         return new Completion(llama.completion(prompt));
+      case "t5hf":
+        return new Completion(hf.t5BaseCompletion(prompt, model));
       default :
         log.error("Service " + service + " not implemented");
         return null;
@@ -252,6 +254,8 @@ public class LLMComponent extends DiarcComponent {
         return new Completion(openai.chatCompletion(prompt));
       case "llama" :
         return new Completion(llama.chatCompletion(prompt));
+      case "llamahf":
+        return new Completion(hf.llamaHFChatCompletion(prompt));
       default :
         log.error("Service " + service + " not implemented.");
         return null;
@@ -278,6 +282,8 @@ public class LLMComponent extends DiarcComponent {
         return new Completion(openai.chatCompletion(model, prompt));
       case "llama" :
         return new Completion(llama.chatCompletion(prompt));
+      case "llamahf" :
+        return new Completion(hf.llamaHFChatCompletion(prompt, model));
       default :
         log.error("Service " + service + " not implemented");
         return null;
@@ -297,6 +303,8 @@ public class LLMComponent extends DiarcComponent {
         return new Completion(openai.chatCompletion(messages));
       case "llama" :
         return new Completion(llama.chatCompletion(messages));
+      case "llamahf" :
+        return new Completion(hf.llamaHFChatCompletion(messages));
       default :
         log.error("Service " + service + " not implemented");
         return null;
@@ -317,6 +325,8 @@ public class LLMComponent extends DiarcComponent {
         return new Completion(openai.chatCompletion(chat));
       case "llama" :
         return new Completion(llama.chatCompletion(chat));
+       case "llamahf" :
+        return new Completion(hf.llamaHFChatCompletion(chat));
       default :
         log.error("Service " + service + " not implemented");
         return null;
@@ -339,6 +349,9 @@ public class LLMComponent extends DiarcComponent {
       case "llama" :
         log.warn("llama.cpp server cannot change model to " + model);
         return new Completion(llama.chatCompletion(chat));
+      case "llamahf" :
+        return new Completion(hf.llamaHFChatCompletion(chat, model));
+
       default :
         log.error("Service " + service + " not implemented");
         return null;

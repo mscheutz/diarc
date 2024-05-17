@@ -145,8 +145,7 @@ public class Http {
         try {
             in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
-            return null;
+            in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
         }
 
         String inputLine;
