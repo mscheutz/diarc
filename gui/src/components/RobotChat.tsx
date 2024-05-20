@@ -6,6 +6,17 @@
  * receiving feedback through DIARC.
  */
 
+// TODO
+/*
+- Add a sidebar to let the user choose which robots they are speaking to
+    - Akin to choosing between message recipients/group chats
+    - This will be used for the .addListener() call for the utterance builder
+    + Switching between channels
+    + Logging of message history
+- Add a text box to let the user specify themselves
+    - This will be used for the .setSpeaker() call for the utterance builder
+*/
+
 import React from 'react';
 
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css"
