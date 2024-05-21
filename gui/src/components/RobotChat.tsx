@@ -17,7 +17,7 @@
     - This will be used for the .setSpeaker() call for the utterance builder
 */
 
-import React from 'react';
+import React, { useState } from 'react';
 
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css"
 import {
@@ -26,68 +26,175 @@ import {
     MessageList,
     Message,
     MessageInput,
+    Conversation,
     ConversationHeader,
+    Sidebar,
     Avatar,
-    MessageGroup
+    ConversationList
 } from "@chatscope/chat-ui-kit-react";
 
+class Chat {
+    robotName: string;
+    robotInfo: string;
+    profileImagePath: string;
+    messageList: MessageProps[]
+
+    constructor(robotName: string, robotInfo: string, profileImagePath: string,
+        messageList: MessageProps[]) {
+        this.robotName = robotName;
+        this.robotInfo = robotInfo;
+        this.profileImagePath = profileImagePath;
+        this.messageList = messageList;
+    }
+
+    avatar() {
+        return (
+            <Avatar
+                name={this.robotName}
+                src={this.profileImagePath}
+            />
+        );
+    }
+
+    conversation(index: number) {
+        return (
+            <Conversation
+                key={index}
+                info={this.messageList.length > 0 ?
+                    this.messageList.slice(-1)[0].message
+                    : "No messages yet"}
+                lastSenderName={this.messageList.length > 0 ?
+                    this.messageList.slice(-1)[0].sender
+                    : ""}
+                name={this.robotName}
+                onClick={(e) => console.log("conversation changed to "
+                    + this.robotName)}
+            >
+                {this.avatar()}
+            </Conversation>
+        );
+    }
+}
+
+// Subset of 'model' prop at https://chatscope.io/storybook/react/?path=/docs/components-message--docs
+type MessageProps = {
+    message: string,
+    sender: string,
+    direction: "incoming" | "outgoing" | 0 | 1,
+    position: "single" | "first" | "normal" | "last" | 0 | 1 | 2 | 3
+}
+
 const RobotChat: React.FC<{}> = () => {
+    const [dempsterChat, setDempsterChat] = useState(
+        new Chat("dempster", "NAO robot", "/heroimage.svg",
+            [{
+                message: "hello dempster",
+                sender: "evan",
+                direction: "outgoing",
+                position: "single"
+            },
+            {
+                message: "hello evan",
+                sender: "dempster",
+                direction: "incoming",
+                position: "single"
+            },
+            {
+                message: "stand",
+                sender: "evan",
+                direction: "outgoing",
+                position: "single"
+            },
+            {
+                message: "okay",
+                sender: "dempster",
+                direction: "incoming",
+                position: "first"
+            },
+            {
+                message: "INFO goToPosture: ([agent:dempster]) Stand",
+                sender: "dempster",
+                direction: "incoming",
+                position: "last"
+            }])
+    );
+
+    const [shaferChat, setShaferChat] = useState(
+        new Chat("shafer", "NAO robot", "/robot.png",
+            [{
+                message: "hello shafer",
+                sender: "ravenna",
+                direction: "outgoing",
+                position: "single"
+            },
+            {
+                message: "hello ravenna",
+                sender: "shafer",
+                direction: "incoming",
+                position: "single"
+            },
+            {
+                message: "please nod",
+                sender: "ravenna",
+                direction: "outgoing",
+                position: "single"
+            },
+            {
+                message: "okay",
+                sender: "shafer",
+                direction: "incoming",
+                position: "first"
+            },
+            {
+                message: "I can not nod because I do not know how to nod",
+                sender: "shafer",
+                direction: "incoming",
+                position: "last"
+            },
+            {
+                message: "i will teach you how to nod",
+                sender: "ravenna",
+                direction: "outgoing",
+                position: "single"
+            },
+            {
+                message: "I can not learn how to nod because learning how to nod is admin Goal",
+                sender: "shafer",
+                direction: "incoming",
+                position: "single"
+            }])
+    );
+
+    let chats = [dempsterChat, shaferChat];
+
+    let conversations = (
+        <ConversationList>
+            {chats.map((chat, index) => chat.conversation(index))}
+        </ConversationList>
+    )
+
+    const [messageList, setMessageList] =
+        useState(dempsterChat.messageList.map(
+            (message, index) => <Message key={index} model={message} />)
+        );
+
     return (
         <div className='size-9/12'>
             <MainContainer>
+                <Sidebar position="left">
+                    {conversations}
+                </Sidebar>
+
                 <ChatContainer>
                     <ConversationHeader>
-                        <Avatar
-                            name='Dempster'
-                            src='/heroimage.svg'
-                        />
+                        {dempsterChat.avatar()}
                         <ConversationHeader.Content
                             info='NAO robot'
-                            userName='Dempster'
+                            userName='dempster'
                         />
                     </ConversationHeader>
                     <MessageList>
-                        <Message
-                            model={{
-                                message: "hello dempster",
-                                sender: "Evan",
-                                position: "single"
-                            }}
-                        />
-                        <Message
-                            model={{
-                                message: "hello evan",
-                                sender: "Dempster",
-                                direction: "incoming",
-                                position: "single"
-                            }}
-                        />
-                        <Message
-                            model={{
-                                message: "stand",
-                                sender: "Evan",
-                                position: "single"
-                            }}
-                        />
-
-                        <MessageGroup direction="incoming" sender="Dempster">
-                            <MessageGroup.Messages>
-                                <Message
-                                    model={{
-                                        message: "okay",
-                                        sender: "Dempster",
-                                        direction: "incoming"
-                                    }}
-                                />
-                                <Message
-                                    model={{
-                                        message: "INFO goToPosture: ([agent:dempster]) Stand",
-                                        sender: "Dempster",
-                                        direction: "incoming"
-                                    }}
-                                />
-                            </MessageGroup.Messages>
-                        </MessageGroup>
+                        {messageList}
                     </MessageList>
 
                     <MessageInput placeholder="Talk with Dempster..."
