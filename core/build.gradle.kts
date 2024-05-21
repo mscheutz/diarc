@@ -240,6 +240,10 @@ dependencies {
   api("io.github.pinorobotics:jros2actionlib:2.0");
   api("io.github.pinorobotics:jros2tf2:1.0")
 
+  //gui
+  implementation("org.reflections:reflections:0.10.2")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.4")
+  implementation("org.apache.commons:commons-imaging:1.0-alpha3")
 }
 
 //TODO:brad: this is potentially no longer needed for mtracs, tbd if it is necessary for the Temi. Those were the two main use cases,

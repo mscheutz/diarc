@@ -13,11 +13,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
-import org.springframework.http.HttpStatus;
+
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,14 +39,26 @@ public class DemoApplication extends SpringBootServletInitializer {
   @Autowired
   private TradeServiceTracker tradeServiceTracker;
 
+  @Autowired
+  private ResourceLoader resourceLoader;
+
   @Override
   protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
     return application.sources(DemoApplication.class);
   }
 
+  @GetMapping("/custom-api-docs")
+  public ResponseEntity<Resource> getCustomApiDocs() {
+    Resource resource = resourceLoader.getResource("classpath:/serviceDocumentation.json");
+    if (!resource.exists()) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok(resource);
+  }
+
   @CrossOrigin(origins = "http://localhost:3000")
   @GetMapping("/services")
-  public Map<String, Map<String, Set<String>>> getServices() {
+  public Map<String, Set<Map<String, String>>> getServices() {
     return tradeServiceIntegrator.getServicesOrganized();
   }
 
@@ -77,24 +95,49 @@ public class DemoApplication extends SpringBootServletInitializer {
             .collect(Collectors.toSet());
   }
 
+  // Method to read and parse the service documentation JSON
+  private Map<String, Map<String, Object>> loadServiceDocumentation() throws Exception {
+    ObjectMapper mapper = new ObjectMapper();
+    InputStream inputStream = new ClassPathResource("serviceDocumentation.json").getInputStream();
+    JsonNode docRoot = mapper.readTree(inputStream);
+    Map<String, Map<String, Object>> serviceMap = new HashMap<>();
+    docRoot.path("paths").fields().forEachRemaining(entry -> {
+      String path = entry.getKey();
+      JsonNode details = entry.getValue().get("post");
+      String serviceName = path.split("\\?")[1].split("=")[1];
+      List<Map<String, Object>> parameters = new ArrayList<>();
+      details.get("parameters").forEach(param -> {
+        Map<String, Object> paramDetails = new HashMap<>();
+        paramDetails.put("name", param.get("name").asText());
+        paramDetails.put("type", param.get("schema").get("type").asText());
+        parameters.add(paramDetails);
+      });
+      serviceMap.put(serviceName, Map.of("parameters", parameters));
+    });
+    return serviceMap;
+  }
+
   @CrossOrigin(origins = "http://localhost:3000")
   @PostMapping("/invoke-service")
   public ResponseEntity<String> invokeService(
           @RequestParam("serviceName") String serviceName,
-          @RequestBody(required = false) JsonNode rawArgs) { // Use JsonNode to raw handle incoming JSON
+          @RequestBody(required = false) JsonNode rawArgs) {
+
     try {
       // Obtain the argument types for the specified service
       Map<String, String[]> servicesToTrack = TradeServiceTracker.parseServiceStrings(listTradeServices());
       String[] argTypes = servicesToTrack.get(serviceName);
 
+      if (argTypes == null) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Service name '" + serviceName + "' is not recognized or is missing argument types.");
+      }
+
       Object[] args; // Prepare the arguments array
       Class<?>[] argClasses;
 
-      // Check if the service expects a single List argument
-      if (argTypes.length == 1 && argTypes[0].equals("java.util.List") && rawArgs.isArray()) {
+      if (argTypes.length == 1 && argTypes[0].equals("java.util.List") && rawArgs != null && rawArgs.isArray()) {
         // Treat the entire array as a single List argument
-        String listValue = rawArgs.toString(); // Convert the raw JSON array to String
-        Object listArg = convertToType(listValue, "java.util.List");
+        List<?> listArg = new ObjectMapper().readValue(rawArgs.toString(), List.class);
         args = new Object[]{listArg};
         argClasses = new Class<?>[]{List.class};
       } else {
@@ -102,30 +145,28 @@ public class DemoApplication extends SpringBootServletInitializer {
         args = new Object[argTypes.length];
         argClasses = new Class<?>[argTypes.length];
         for (int i = 0; i < argTypes.length; i++) {
-          String typeName = argTypes[i];
-          String value = rawArgs.has(i) ? rawArgs.get(i).asText() : null; // Use JsonNode API to get value
-          args[i] = convertToType(value, typeName);
+          assert rawArgs != null;
+          if (!rawArgs.has(i)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing argument at index " + i + " for service '" + serviceName + "'.");
+          }
+          String value = rawArgs.get(i).asText();
+          args[i] = convertToType(value, argTypes[i]);
+          assert args[i] != null;
           argClasses[i] = args[i].getClass();
         }
       }
 
-      // Call the specified service with the constructed arguments
-//      Object result = TRADE.callThe(serviceName, args);
       TRADEServiceConstraints constraints = new TRADEServiceConstraints().name(serviceName).argTypes(argClasses);
       Object result = TRADE.getAvailableService(constraints).call(Object.class, args);
 
       // Convert the result to a JSON string to include in the response
-      ObjectMapper mapper = new ObjectMapper();
-      String jsonResult = mapper.writeValueAsString(result);
-
+      String jsonResult = new ObjectMapper().writeValueAsString(result);
       return ResponseEntity.ok("Service '" + serviceName + "' invoked successfully with arguments: " + Arrays.toString(args) + " and returned: " + jsonResult);
     } catch (Exception e) {
-      e.printStackTrace();  // Log the exception for debugging
+      e.printStackTrace();
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to invoke service '" + serviceName + "': " + e.getMessage());
     }
   }
-
-
   /**
    * Converts a string value to an object of the specified type.
    * Might need to be extended based on the specific types used in your application.

@@ -53,15 +53,15 @@ public class MapComponent extends DiarcComponent {
   /**
    * Robot's current pose on the current map.
    */
-  private Pose currRobotPose = new Pose(new Point3d(0, 0, 0), new Quat4d(0, 0, 0, 1));
+  protected Pose currRobotPose = new Pose(new Point3d(0, 0, 0), new Quat4d(0, 0, 0, 1));
   /**
    * Floor number to FloorMap.
    */
-  private Map<Integer, FloorMap> floorMaps = new HashMap<>();
+  protected Map<Integer, FloorMap> floorMaps = new HashMap<>();
   /**
    * Floor map for the current floor.
    */
-  private FloorMap currFloorMap = null;
+  protected FloorMap currFloorMap = null;
   /**
    * Current floor.
    */
