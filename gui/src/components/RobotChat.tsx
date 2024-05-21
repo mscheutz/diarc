@@ -37,14 +37,16 @@ class Chat {
     robotName: string;
     robotInfo: string;
     profileImagePath: string;
-    messageList: MessageProps[]
+    messageList: MessageProps[];
+    focusThis: any;
 
     constructor(robotName: string, robotInfo: string, profileImagePath: string,
-        messageList: MessageProps[]) {
+        messageList: MessageProps[], focusThis: any) {
         this.robotName = robotName;
         this.robotInfo = robotInfo;
         this.profileImagePath = profileImagePath;
         this.messageList = messageList;
+        this.focusThis = focusThis;
     }
 
     avatar() {
@@ -67,12 +69,28 @@ class Chat {
                     this.messageList.slice(-1)[0].sender
                     : ""}
                 name={this.robotName}
-                onClick={(e) => console.log("conversation changed to "
-                    + this.robotName)}
+                onClick={(e) => this.focusThis(this)}
             >
                 {this.avatar()}
             </Conversation>
         );
+    }
+
+    conversationHeader() {
+        return (
+            <ConversationHeader>
+                {this.avatar()}
+                <ConversationHeader.Content
+                    info={this.robotInfo}
+                    userName={this.robotName}
+                />
+            </ConversationHeader>
+        );
+    }
+
+    renderMessageList() {
+        return this.messageList.map(
+            (message, index) => <Message key={index} model={message} />)
     }
 }
 
@@ -85,6 +103,9 @@ type MessageProps = {
 }
 
 const RobotChat: React.FC<{}> = () => {
+    const [currentChat, setCurrentChat] =
+        useState(new Chat("", "", "", [], null));
+
     const [dempsterChat, setDempsterChat] = useState(
         new Chat("dempster", "NAO robot", "/heroimage.svg",
             [{
@@ -116,7 +137,8 @@ const RobotChat: React.FC<{}> = () => {
                 sender: "dempster",
                 direction: "incoming",
                 position: "last"
-            }])
+            }],
+            setCurrentChat)
     );
 
     const [shaferChat, setShaferChat] = useState(
@@ -162,21 +184,17 @@ const RobotChat: React.FC<{}> = () => {
                 sender: "shafer",
                 direction: "incoming",
                 position: "single"
-            }])
+            }],
+            setCurrentChat)
     );
 
-    let chats = [dempsterChat, shaferChat];
+    const [chats, setChat] = useState([dempsterChat, shaferChat]);
 
-    let conversations = (
+    const [conversations, setConversations] = useState(
         <ConversationList>
             {chats.map((chat, index) => chat.conversation(index))}
         </ConversationList>
     )
-
-    const [messageList, setMessageList] =
-        useState(dempsterChat.messageList.map(
-            (message, index) => <Message key={index} model={message} />)
-        );
 
     return (
         <div className='size-9/12'>
@@ -186,19 +204,17 @@ const RobotChat: React.FC<{}> = () => {
                 </Sidebar>
 
                 <ChatContainer>
-                    <ConversationHeader>
-                        {dempsterChat.avatar()}
-                        <ConversationHeader.Content
-                            info='NAO robot'
-                            userName='dempster'
-                        />
-                    </ConversationHeader>
+                    {currentChat.conversationHeader()}
+
                     <MessageList>
-                        {messageList}
+                        {currentChat.renderMessageList()}
                     </MessageList>
 
-                    <MessageInput placeholder="Talk with Dempster..."
-                        attachButton={false} />
+                    <MessageInput
+                        placeholder={"Talk with " + currentChat.robotName
+                            + "..."}
+                        attachButton={false}
+                    />
                 </ChatContainer>
             </MainContainer>
         </div>
