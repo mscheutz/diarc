@@ -6,17 +6,6 @@
  * receiving feedback through DIARC.
  */
 
-// TODO
-/*
-o Add a sidebar to let the user choose which robots they are speaking to
-    > Akin to choosing between message recipients/group chats
-    > This will be used for the .addListener() call for the utterance builder
-    x Switching between channels
-    o Logging of message history
-x Add a text box to let the user specify themselves
-    - This will be used for the .setSpeaker() call for the utterance builder
-*/
-
 import React, { useState } from 'react';
 
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css"
@@ -93,6 +82,15 @@ class Chat {
         return this.messageList.map(
             (message, index) => <Message key={index} model={message} />)
     }
+
+    postUserMessage(message: string, username: string) {
+        this.messageList.push({
+            message: message,
+            sender: username,
+            direction: "outgoing",
+            position: "single"
+        })
+    }
 }
 
 // Subset of 'model' prop at https://chatscope.io/storybook/react/?path=/docs/components-message--docs
@@ -104,6 +102,10 @@ type MessageProps = {
 }
 
 const RobotChat: React.FC<{}> = () => {
+    // Pure unadulterated jank
+    let [, rerender] = useState({});
+    const forceRerender = React.useCallback(() => rerender({}), []);
+
     const [currentChat, setCurrentChat] =
         useState(new Chat("", "", "", [], () => null));
 
@@ -210,9 +212,16 @@ const RobotChat: React.FC<{}> = () => {
             </MessageList>
 
             <MessageInput
+                autoFocus
                 placeholder={"Talk with " + currentChat.robotName
                     + "..."}
                 attachButton={false}
+                onSend={(message) => {
+                    currentChat.postUserMessage(message, username);
+                    // Since we're mutating state, we need to trick React
+                    // into updating itself
+                    forceRerender();
+                }}
             />
         </ChatContainer>
     );
@@ -240,7 +249,8 @@ const RobotChat: React.FC<{}> = () => {
                                 attachButton={false}
                                 sendButton={false}
                                 placeholder='Set your name here'
-                                onChange={(value) => setUsername(value)}
+                                onChange={(innerHTML, textContent, innerText,
+                                    nodes) => setUsername(innerText)}
                                 sendOnReturnDisabled={true}
                             />
                         </div>
