@@ -8,12 +8,12 @@
 
 // TODO
 /*
-- Add a sidebar to let the user choose which robots they are speaking to
-    - Akin to choosing between message recipients/group chats
-    - This will be used for the .addListener() call for the utterance builder
-    + Switching between channels
-    + Logging of message history
-- Add a text box to let the user specify themselves
+o Add a sidebar to let the user choose which robots they are speaking to
+    > Akin to choosing between message recipients/group chats
+    > This will be used for the .addListener() call for the utterance builder
+    x Switching between channels
+    o Logging of message history
+x Add a text box to let the user specify themselves
     - This will be used for the .setSpeaker() call for the utterance builder
 */
 
@@ -33,20 +33,21 @@ import {
     ConversationList
 } from "@chatscope/chat-ui-kit-react";
 
+// OOP forever, baybee
 class Chat {
     robotName: string;
     robotInfo: string;
     profileImagePath: string;
     messageList: MessageProps[];
-    focusThis: any;
+    focusThisChat: Function;
 
     constructor(robotName: string, robotInfo: string, profileImagePath: string,
-        messageList: MessageProps[], focusThis: any) {
+        messageList: MessageProps[], focusThisChat: Function) {
         this.robotName = robotName;
         this.robotInfo = robotInfo;
         this.profileImagePath = profileImagePath;
         this.messageList = messageList;
-        this.focusThis = focusThis;
+        this.focusThisChat = focusThisChat;
     }
 
     avatar() {
@@ -69,7 +70,7 @@ class Chat {
                     this.messageList.slice(-1)[0].sender
                     : ""}
                 name={this.robotName}
-                onClick={(e) => this.focusThis(this)}
+                onClick={(e) => this.focusThisChat(this)}
             >
                 {this.avatar()}
             </Conversation>
@@ -104,7 +105,7 @@ type MessageProps = {
 
 const RobotChat: React.FC<{}> = () => {
     const [currentChat, setCurrentChat] =
-        useState(new Chat("", "", "", [], null));
+        useState(new Chat("", "", "", [], () => null));
 
     const [dempsterChat, setDempsterChat] = useState(
         new Chat("dempster", "NAO robot", "/heroimage.svg",
@@ -194,28 +195,61 @@ const RobotChat: React.FC<{}> = () => {
         <ConversationList>
             {chats.map((chat, index) => chat.conversation(index))}
         </ConversationList>
-    )
+    );
+
+    const [username, setUsername] = useState("");
+
+    // This is the usual chat container but it only makes sense if there
+    // is a conversation already selected...
+    let chatContainer = (
+        <ChatContainer className='w-3/4'>
+            {currentChat.conversationHeader()}
+
+            <MessageList>
+                {currentChat.renderMessageList()}
+            </MessageList>
+
+            <MessageInput
+                placeholder={"Talk with " + currentChat.robotName
+                    + "..."}
+                attachButton={false}
+            />
+        </ChatContainer>
+    );
+
+    // ...so on startup we just display a welcome message
+    if (currentChat.robotName === "") {
+        chatContainer = (
+            <div className='flex-1 flex items-center justify-center'>
+                <p className='text-gray-600'>
+                    Select a chat on the left to get started!
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className='size-9/12'>
             <MainContainer>
                 <Sidebar position="left">
-                    {conversations}
+                    <div className='flex-col flex space-y-2'>
+                        <div className='flex-1 flex items-center \
+                                    justify-center flex-col'>
+                            <MessageInput
+                                className='w-11/12 mt-3'
+                                attachButton={false}
+                                sendButton={false}
+                                placeholder='Set your name here'
+                                onChange={(value) => setUsername(value)}
+                                sendOnReturnDisabled={true}
+                            />
+                        </div>
+                        {conversations}
+                    </div>
                 </Sidebar>
 
-                <ChatContainer>
-                    {currentChat.conversationHeader()}
+                {chatContainer}
 
-                    <MessageList>
-                        {currentChat.renderMessageList()}
-                    </MessageList>
-
-                    <MessageInput
-                        placeholder={"Talk with " + currentChat.robotName
-                            + "..."}
-                        attachButton={false}
-                    />
-                </ChatContainer>
             </MainContainer>
         </div>
     );
