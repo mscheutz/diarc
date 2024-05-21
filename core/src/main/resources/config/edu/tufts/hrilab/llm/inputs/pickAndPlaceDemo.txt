@@ -1,0 +1,33 @@
+#init state:
+#   2 ingredients: chicken, corn or bell pepper?
+#   3/4 locations: cooktop, hotplate (rename these 2?), prepArea, servingArea
+#   corn at the prep area, chicken out of scene, serving box at servingArea
+#TODO: get proper japanese translation of each of these
+#Goal based pick and place instruction (works)
+Get the corn to the hotplate
+#Goal based pick and place instruction (doesn't know ingredient)
+Get a chicken to the cooktop
+#Ingredient teaching (chicken)
+#TODO: use chat history for this? to show assistant's previous question?
+I will teach you a new ingredient named chicken
+the pantry
+the chicken job
+the prep area
+grasp it here
+#Goal based pick and place #2
+get a chicken to the cooktop
+#Change this to I put the chicken at the preparation area?
+here is the chicken
+#Instruction based pick and place
+Right arm go to the cooktop
+Right arm pick up the corn
+Right arm go to the preparation area
+Right arm put down the corn
+#Goal based pick and place - fails due to object_at
+Get the chicken to the preparation area
+#I cannot ... because ...
+#Get in x2
+Get the corn in the serving box
+Get the chicken in the serving box
+
+#TODO: context dependent prompts? If in QA change prompt to one saying parse responses like ...

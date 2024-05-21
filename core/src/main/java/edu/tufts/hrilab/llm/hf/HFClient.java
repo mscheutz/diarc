@@ -41,7 +41,7 @@ public class HFClient{
 
     private String apiKey = null;
     private int maxNewTokens = 1028;
-    private float temperature = 0.5f;
+    private float temperature = 0.6f;
 
     public HFClient () {
         try {

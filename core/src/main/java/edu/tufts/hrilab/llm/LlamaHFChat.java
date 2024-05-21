@@ -39,7 +39,8 @@ public class LlamaHFChat extends Chat {
         super(systemText, msgs);
     }
 
-    private String messageToString(Message m, boolean user, boolean last, boolean singleMessage) {
+    //position: 0 == first, 1 == in between, 2 == last
+    private String messageToString(Message m, boolean user, int position, boolean singleMessage) {
         StringBuilder sb = new StringBuilder();
 
         if (model.startsWith("Llama-2")) {
@@ -70,14 +71,33 @@ public class LlamaHFChat extends Chat {
             return sb.toString().trim();
         }
 
+        //TODO: add system message with 'first'
         if (model.startsWith("Meta-Llama-3")) {
-            if (user) {
-                sb.append("<|start_header_id|>user<|end_header_id|>");
-            } else {
-                sb.append("<|start_header_id|>assistant<|end_header_id|>");
+            if (position == 0 || singleMessage) {
+                sb.append("<|begin_of_text|>");
+                if (systemMessage != null && !systemMessage.isEmpty()) {
+                    sb.append("<|start_header_id|>system<|end_header_id|>\n\n");
+                    sb.append(systemMessage);
+                    sb.append("<|eot_id|>");
+                }
             }
-            sb.append(m.content);
+
+            if (user) {
+                sb.append("<|start_header_id|>user<|end_header_id|>\n\n");
+            } else {
+                sb.append("<|start_header_id|>assistant<|end_header_id|>\n\n");
+            }
+            String s = m.content;
+            s = s.replace("\n", " ");
+            sb.append(s);
+            //sb.append(m.content);
             sb.append("<|eot_id|>");
+            if (position == 2) {
+                if (!user) {
+                    log.warn("[messageToString] Last message in the chat history should not have assistant header");
+                }
+                sb.append("<|start_header_id|>assistant<|end_header_id|>\n\n");
+            }
             return sb.toString().trim();
         }
 
@@ -90,18 +110,15 @@ public class LlamaHFChat extends Chat {
     public String toPromptString () {
         StringBuilder sb = new StringBuilder();
         boolean singleMessage = messages.size()==1;
-        if (model.startsWith("Meta-Llama-3")) {
-            sb.append("<|begin_of_text|>");
-        }
 
         for (int i=0;i<messages.size()-1;i++) {
             Message message = messages.get(i);
-            sb.append(messageToString(message, message.role.equals("user"), false, singleMessage));
+            sb.append(messageToString(message, message.role.equals("user"), (i==0) ? 0 : 1, singleMessage));
         }
 
         if (messages.size() > 0) {
             Message message = messages.get(messages.size()-1);
-            sb.append(messageToString(message, message.role.equals("user"), true, singleMessage));
+            sb.append(messageToString(message, message.role.equals("user"), 2, singleMessage));
         }
 
         return sb.toString().trim();

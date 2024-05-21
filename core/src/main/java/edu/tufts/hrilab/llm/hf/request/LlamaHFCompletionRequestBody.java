@@ -12,10 +12,10 @@ public class LlamaHFCompletionRequestBody {
 
     private void init() {
         parameters = new HashMap<>();
-        parameters.put("temperature", 0.5f);
-        parameters.put("top_p", 0.1f);
-        parameters.put("top_k", 5);
-        parameters.put("repetition_penalty", 0.1f);
+        parameters.put("temperature", 0.6f);
+        parameters.put("top_p", 0.9f);
+        parameters.put("top_k", 50);
+        parameters.put("repetition_penalty", 1.0f);
         parameters.put("max_new_tokens", 100);
         parameters.put("return_full_text", false);
         parameters.put("max_time", 5);
