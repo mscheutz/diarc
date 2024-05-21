@@ -3,7 +3,6 @@ package edu.tufts.hrilab.config.gui;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.DemoApplication;
-import edu.tufts.hrilab.gui.ExampleService;
 import edu.tufts.hrilab.map.MapComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,13 +16,8 @@ public class GuiConfig extends DiarcConfiguration {
   // start the configuration
   @Override
   public void runConfiguration() {
-    MapComponent map = DiarcComponent.createInstance(MapComponent.class, "-map_folder /home/hrilab/code/diarc/maps/elevator_lab_test/ -start_floor 1");
+    MapComponent map = DiarcComponent.createInstance(MapComponent.class, "-map_folder /home/hrilab/code/diarc-old/maps/elevator_lab_test/ -start_floor 1");
     log.info("Map Component initialized");
-
-    // Initialize and register the ExampleService with DIARC
-    // Passing an empty string array as the command-line arguments
-    createInstance(ExampleService.class);
-    log.info("ExampleService initialized");
   }
 
   public static void main(String[] args) {
