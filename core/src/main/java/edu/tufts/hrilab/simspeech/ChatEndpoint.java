@@ -23,17 +23,18 @@ public class ChatEndpoint extends TextWebSocketHandler {
     final private DialogueComponent dialogueComponent;
     final private String robotName;
 
+    private WebSocketSession session;
+
     /**
      * Constructs the <code>ChatEndpoint</code> given simulated speech
      * recognition and production components.
      * @param recognitionComponent simulated speech recognition component
      */
     public ChatEndpoint(SimSpeechRecognitionComponent recognitionComponent,
-                        DialogueComponent dialogueComponent,
-                        String robotName) {
+                        DialogueComponent dialogueComponent) {
         this.recognitionComponent = recognitionComponent;
         this.dialogueComponent = dialogueComponent;
-        this.robotName = robotName;
+        this.robotName = "dempster";
 
         try {
             TRADE.registerAllServices(this, (String) null);
@@ -47,15 +48,6 @@ public class ChatEndpoint extends TextWebSocketHandler {
         } catch(TRADEException e) {
             log.error("Failed to register methods for dialogue history notifications");
         }
-    }
-
-    @Override
-    protected void handleTextMessage(@Nonnull WebSocketSession session,
-                                     @Nonnull TextMessage message) throws Exception {
-        JSONObject request = new JSONObject(message.getPayload());
-
-        System.out.println(request);
-        // TODO: implement reception of message → pass to recognition component
     }
 
     /**
@@ -74,5 +66,25 @@ public class ChatEndpoint extends TextWebSocketHandler {
         } catch (Exception e) {
             log.error(e.getMessage());
         }
+    }
+
+    //======================
+    // TextWebSocketHandler
+    //======================
+
+    /**
+     * Handle a text message from the user.
+     * @param session the web socket session the message comes over on
+     * @param message the message from the user
+     * @throws Exception ignored
+     */
+    @Override
+    protected void handleTextMessage(@Nonnull WebSocketSession session,
+                                     @Nonnull TextMessage message) throws Exception {
+        this.session = session;
+        JSONObject request = new JSONObject(message.getPayload());
+
+        System.out.println(request);
+        // TODO: implement reception of message → pass to recognition component
     }
 }
