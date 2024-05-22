@@ -68,13 +68,13 @@ namespace ade {
       int getSizeTypeId(const long long& typeId) const;
 
       //native -> java methods
-      void getMemoryObjects(ArrayListInterface& toSend, const double& conf, JNIEnv* env) const;
-      void getMemoryObjectsByTypeId(ArrayListInterface& toSend, const long long& typeId, const double& conf, JNIEnv* env) const;
-      void getMemoryObjectsByTokenId(ArrayListInterface& toSend, const long long& tokenId, const double& conf, JNIEnv* env) const;
-      void getMemoryObjectTypeIds(jlongArray& toSend, const double& conf, JNIEnv* env) const;
-      void getMemoryObjectIds(jlongArray& toSend, const double& conf, JNIEnv* env) const;
-      void getMemoryObjectIds(jlongArray& toSend, const long long& typeId, const double& conf, JNIEnv* env) const;
-      void getMemoryObject(MemoryObjectInterface& toSend, const long long& tokenId, const double& conf, JNIEnv* env) const;
+      void getMemoryObjects(ArrayListInterface& toSend, JNIEnv* env) const;
+      void getMemoryObjectsByTypeId(ArrayListInterface& toSend, const long long& typeId, JNIEnv* env) const;
+      void getMemoryObjectsByTokenId(ArrayListInterface& toSend, const long long& tokenId, JNIEnv* env) const;
+      void getMemoryObjectTypeIds(jlongArray& toSend, JNIEnv* env) const;
+      void getMemoryObjectIds(jlongArray& toSend, JNIEnv* env) const;
+      void getMemoryObjectIds(jlongArray& toSend, const long long& typeId, JNIEnv* env) const;
+      void getMemoryObject(MemoryObjectInterface& toSend, const long long& tokenId, JNIEnv* env) const;
       bool confirmMemoryObject(const long long& tokenId) const;
       void getRemovedMemoryObjects(ArrayListInterface& toSend, JNIEnv* env);
       //end native -> java methods

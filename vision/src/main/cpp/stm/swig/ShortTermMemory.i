@@ -37,10 +37,10 @@
 %typemap(javaout) ArrayList getRemovedMemoryObjects { return $jnicall; }
 
 //native hand-written methods (defined in ShortTermMemoryJNI.hpp)
-%native(getMemoryObjects) ArrayList getMemoryObjects(double conf); //ArrayList<MemoryObject>
-%native(getMemoryObjectsByTypeId) ArrayList getMemoryObjectsByTypeId(long long moTypeId, double conf);
-%native(getMemoryObjectTypeIds) long* getMemoryObjectTypeIds(double conf);
-%native(getMemoryObjectIds) long* getMemoryObjectIds(long long  moTypeId, double conf);
-%native(getMemoryObject) MemoryObject getMemoryObject(long long  tokenId, double conf);
+%native(getMemoryObjects) ArrayList getMemoryObjects(); //ArrayList<MemoryObject>
+%native(getMemoryObjectsByTypeId) ArrayList getMemoryObjectsByTypeId(long long moTypeId);
+%native(getMemoryObjectTypeIds) long* getMemoryObjectTypeIds();
+%native(getMemoryObjectIds) long* getMemoryObjectIds(long long  moTypeId);
+%native(getMemoryObject) MemoryObject getMemoryObject(long long  tokenId);
 %native(clearMemory) void clearMemory(); //delete all tracked objects
 %native(getRemovedMemoryObjects) ArrayList getRemovedMemoryObjects();

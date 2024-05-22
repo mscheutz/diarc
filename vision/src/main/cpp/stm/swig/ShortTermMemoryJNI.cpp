@@ -14,47 +14,47 @@
 
 using namespace ade::stm;
 
-JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjects(JNIEnv* env, jclass cls, jdouble conf) {
+JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjects(JNIEnv* env, jclass cls) {
   ArrayListInterface memoryObjects;
   memoryObjects.initialize(env);
-  TrackedObjects::getInstance()->getMemoryObjects(memoryObjects, (double) conf, env);
+  TrackedObjects::getInstance()->getMemoryObjects(memoryObjects, env);
   return memoryObjects.getJavaObject();
 }
 
-JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjectsByTypeId(JNIEnv* env, jclass cls, jlong typeId, jdouble conf) {
+JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjectsByTypeId(JNIEnv* env, jclass cls, jlong typeId) {
   ArrayListInterface memoryObjects;
   memoryObjects.initialize(env);
-  TrackedObjects::getInstance()->getMemoryObjectsByTypeId(memoryObjects, (long long) typeId, (double) conf, env);
+  TrackedObjects::getInstance()->getMemoryObjectsByTypeId(memoryObjects, (long long) typeId, env);
   //printf("Java_JNIversion_stm_ShortTermMemoryInterface_getMemoryObjectsByTypeId\n");
   return memoryObjects.getJavaObject();
 }
 
-JNIEXPORT jlongArray JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjectTypeIds(JNIEnv* env, jclass cls, jdouble conf) {
+JNIEXPORT jlongArray JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjectTypeIds(JNIEnv* env, jclass cls) {
   jlongArray idsArray;
-  TrackedObjects::getInstance()->getMemoryObjectTypeIds(idsArray, (double) conf, env);
+  TrackedObjects::getInstance()->getMemoryObjectTypeIds(idsArray, env);
   return idsArray;
 }
 
-JNIEXPORT jlongArray JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjectIds(JNIEnv* env, jclass cls, jlong typeId, jdouble conf) {
+JNIEXPORT jlongArray JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjectIds(JNIEnv* env, jclass cls, jlong typeId) {
   jlongArray idsArray; // = NewLongArray();
-  TrackedObjects::getInstance()->getMemoryObjectIds(idsArray, (long long) typeId, (double) conf, env);
+  TrackedObjects::getInstance()->getMemoryObjectIds(idsArray, (long long) typeId, env);
   return idsArray;
 }
 
-JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObject(JNIEnv* env, jclass cls, jlong tokenId, jdouble conf) { //return MO
+JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObject(JNIEnv* env, jclass cls, jlong tokenId) { //return MO
   MemoryObjectInterface memoryObject;
   memoryObject.initialize(env);
   //cout << "jlong: " << tokenId << endl;
   //long nativeid = (long)tokenId;
   //cout << "long: " << nativeid << endl;
-  TrackedObjects::getInstance()->getMemoryObject(memoryObject, (long long) tokenId, (double) conf, env);
+  TrackedObjects::getInstance()->getMemoryObject(memoryObject, (long long) tokenId, env);
   return memoryObject.getJavaObject();
 }
 
-JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjectsByTokenId(JNIEnv* env, jclass cls, jlong tokenId, jdouble conf) { //return MO
+JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjectsByTokenId(JNIEnv* env, jclass cls, jlong tokenId) { //return MO
   ArrayListInterface memoryObjects;
   memoryObjects.initialize(env);
-  TrackedObjects::getInstance()->getMemoryObjectsByTokenId(memoryObjects, (long long) tokenId, (double) conf, env);
+  TrackedObjects::getInstance()->getMemoryObjectsByTokenId(memoryObjects, (long long) tokenId, env);
   return memoryObjects.getJavaObject();
 }
 

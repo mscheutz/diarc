@@ -39,7 +39,7 @@ public class RealVisionConsultant extends VisionConsultant {
   @Override
   public Map<Symbol, Double> getActivatedEntities() {
     // get all tokens in STM
-    List<MemoryObject> tokens = ShortTermMemoryInterface.getTokens(0.0);
+    List<MemoryObject> tokens = ShortTermMemoryInterface.getTokens();
 
     // get/generate the objectRefs
     Map<Symbol, Double> activatedEntities = new HashMap<>();
@@ -124,7 +124,7 @@ public class RealVisionConsultant extends VisionConsultant {
           // new search is already started by call to getTypeId
           long startTime = System.currentTimeMillis();
           long maxWaitTime = 5000;
-          while (ShortTermMemoryInterface.getTokens(visionRef.typeId,0.0).isEmpty()) {
+          while (ShortTermMemoryInterface.getTokens(visionRef.typeId).isEmpty()) {
             if ((System.currentTimeMillis() - startTime) > maxWaitTime) {
               log.warn("[assertProperties] new search did not detect object within allotted timeframe.");
               break;
