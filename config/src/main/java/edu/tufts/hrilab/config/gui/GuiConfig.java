@@ -16,8 +16,6 @@ public class GuiConfig extends DiarcConfiguration {
   // start the configuration
   @Override
   public void runConfiguration() {
-    MapComponent map = DiarcComponent.createInstance(MapComponent.class, "-map_folder /home/hrilab/code/diarc-old/maps/elevator_lab_test/ -start_floor 1");
-    log.info("Map Component initialized");
   }
 
   public static void main(String[] args) {
