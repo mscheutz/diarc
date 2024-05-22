@@ -1,0 +1,33 @@
+<AgileGrasp>
+    <svm_file>svm_032015_20_20_same</svm_file>
+    <workspace>
+        <n_x>-10</n_x>
+        <x>10</x>
+        <n_y>-10</n_y>
+        <y>10</y>
+        <n_z>-10</n_z>
+        <z>10</z>
+    </workspace>
+    <configuration>
+        <samples>400</samples>
+        <threads>3</threads>
+        <min_inliers>3</min_inliers>
+        <taubin_radius>0.03</taubin_radius>
+        <hand_radius>0.08</hand_radius>
+        <finger_width>0.01</finger_width>
+        <hand_outer_diameter>0.09</hand_outer_diameter>
+        <hand_depth>0.06</hand_depth>
+        <hand_height>0.02</hand_height>
+        <initial_bite>0.01</initial_bite>
+        <handle_min_length>0.005</handle_min_length>
+        <x_transform_factor>0.0</x_transform_factor>
+        <y_transform_factor>-0.5</y_transform_factor>
+        <z_transform_factor>1.0</z_transform_factor>
+    </configuration>
+    <options>
+        <plot>0</plot>
+        <pcl_viz>false</pcl_viz>
+        <antipodal>true</antipodal>
+        <clustering_pc>false</clustering_pc>
+    </options>
+</AgileGrasp>

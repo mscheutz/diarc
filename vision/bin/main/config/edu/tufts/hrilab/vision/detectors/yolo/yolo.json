@@ -1,0 +1,338 @@
+{
+  "processor": {
+    "type": "category",
+    "arity": 1
+  },
+  "config": {
+    "model": "yolov3-tiny",
+    "type" : "darknet",
+    "backend": "CPU",
+    "input_size": 416,
+    "conf_thresh": 0.3,
+    "score_thresh": 0.3,
+    "nms_thresh": 0.4,
+    "classes" : 80
+  },
+  "predicates": [
+    {
+      "name": "person",
+      "classID": 0
+    },
+    {
+      "name": "bicycle",
+      "classID": 1
+    },
+    {
+      "name": "car",
+      "classID": 2
+    },
+    {
+      "name": "motorcycle",
+      "classID": 3
+    },
+    {
+      "name": "airplane",
+      "classID": 4
+    },
+    {
+      "name": "bus",
+      "classID": 5
+    },
+    {
+      "name": "train",
+      "classID": 6
+    },
+    {
+      "name": "truck",
+      "classID": 7
+    },
+    {
+      "name": "boat",
+      "classID": 8
+    },
+    {
+      "name": "traffic light",
+      "classID": 9
+    },
+    {
+      "name": "fire hydrant",
+      "classID": 10
+    },
+    {
+      "name": "stop sign",
+      "classID": 11
+    },
+    {
+      "name": "parking meter",
+      "classID": 12
+    },
+    {
+      "name": "bench",
+      "classID": 13
+    },
+    {
+      "name": "bird",
+      "classID": 14
+    },
+    {
+      "name": "cat",
+      "classID": 15
+    },
+    {
+      "name": "dog",
+      "classID": 16
+    },
+    {
+      "name": "horse",
+      "classID": 17
+    },
+    {
+      "name": "sheep",
+      "classID": 18
+    },
+    {
+      "name": "cow",
+      "classID": 19
+    },
+    {
+      "name": "elephant",
+      "classID": 20
+    },
+    {
+      "name": "bear",
+      "classID": 21
+    },
+    {
+      "name": "zebra",
+      "classID": 22
+    },
+    {
+      "name": "giraffe",
+      "classID": 23
+    },
+    {
+      "name": "backpack",
+      "classID": 24
+    },
+    {
+      "name": "umbrella",
+      "classID": 25
+    },
+    {
+      "name": "handbag",
+      "classID": 26
+    },
+    {
+      "name": "tie",
+      "classID": 27
+    },
+    {
+      "name": "suitcase",
+      "classID": 28
+    },
+    {
+      "name": "frisbee",
+      "classID": 29
+    },
+    {
+      "name": "skis",
+      "classID": 30
+    },
+    {
+      "name": "snowboard",
+      "classID": 31
+    },
+    {
+      "name": "sports ball",
+      "classID": 32
+    },
+    {
+      "name": "kite",
+      "classID": 33
+    },
+    {
+      "name": "baseball bat",
+      "classID": 34
+    },
+    {
+      "name": "baseball glove",
+      "classID": 35
+    },
+    {
+      "name": "skateboard",
+      "classID": 36
+    },
+    {
+      "name": "surfboard",
+      "classID": 37
+    },
+    {
+      "name": "tennis racket",
+      "classID": 38
+    },
+    {
+      "name": "bottle",
+      "classID": 39
+    },
+    {
+      "name": "wine glass",
+      "classID": 40
+    },
+    {
+      "name": "cup",
+      "classID": 41
+    },
+    {
+      "name": "fork",
+      "classID": 42
+    },
+    {
+      "name": "knife",
+      "classID": 43
+    },
+    {
+      "name": "spoon",
+      "classID": 44
+    },
+    {
+      "name": "bowl",
+      "classID": 45
+    },
+    {
+      "name": "banana",
+      "classID": 46
+    },
+    {
+      "name": "apple",
+      "classID": 47
+    },
+    {
+      "name": "sandwich",
+      "classID": 48
+    },
+    {
+      "name": "orange",
+      "classID": 49
+    },
+    {
+      "name": "broccoli",
+      "classID": 50
+    },
+    {
+      "name": "carrot",
+      "classID": 51
+    },
+    {
+      "name": "hot dog",
+      "classID": 52
+    },
+    {
+      "name": "pizza",
+      "classID": 53
+    },
+    {
+      "name": "donut",
+      "classID": 54
+    },
+    {
+      "name": "cake",
+      "classID": 55
+    },
+    {
+      "name": "chair",
+      "classID": 56
+    },
+    {
+      "name": "couch",
+      "classID": 57
+    },
+    {
+      "name": "potted plant",
+      "classID": 58
+    },
+    {
+      "name": "bed",
+      "classID": 59
+    },
+    {
+      "name": "dining table",
+      "classID": 60
+    },
+    {
+      "name": "toilet",
+      "classID": 61
+    },
+    {
+      "name": "tv",
+      "classID": 62
+    },
+    {
+      "name": "laptop",
+      "classID": 63
+    },
+    {
+      "name": "mouse",
+      "classID": 64
+    },
+    {
+      "name": "remote",
+      "classID": 65
+    },
+    {
+      "name": "keyboard",
+      "classID": 66
+    },
+    {
+      "name": "cell phone",
+      "classID": 67
+    },
+    {
+      "name": "microwave",
+      "classID": 68
+    },
+    {
+      "name": "oven",
+      "classID": 69
+    },
+    {
+      "name": "toaster",
+      "classID": 70
+    },
+    {
+      "name": "sink",
+      "classID": 71
+    },
+    {
+      "name": "refrigerator",
+      "classID": 72
+    },
+    {
+      "name": "book",
+      "classID": 73
+    },
+    {
+      "name": "clock",
+      "classID": 74
+    },
+    {
+      "name": "vase",
+      "classID": 75
+    },
+    {
+      "name": "scissors",
+      "classID": 76
+    },
+    {
+      "name": "teddy bear",
+      "classID": 77
+    },
+    {
+      "name": "hair drier",
+      "classID": 78
+    },
+    {
+      "name": "toothbrush",
+      "classID": 79
+    }
+  ]
+}
