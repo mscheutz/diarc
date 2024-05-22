@@ -6,6 +6,7 @@ package edu.tufts.hrilab.config.nao;
 
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.DemoApplication;
+import edu.tufts.hrilab.gui.DemoComponent;
 import edu.tufts.hrilab.nao.MockNaoComponent;
 import edu.tufts.hrilab.nao.NaoComponent;
 import edu.tufts.hrilab.simspeech.ChatEndpoint;
@@ -19,8 +20,12 @@ import edu.tufts.hrilab.sphinx4.Sphinx4Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-public class TwoNaoDemo extends DiarcConfiguration {
+public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigurer {
   // for logging
   protected static Logger log = LoggerFactory.getLogger(TwoNaoDemo.class);
 
@@ -33,6 +38,13 @@ public class TwoNaoDemo extends DiarcConfiguration {
    */
   public boolean mockNao = true;
   public boolean useSphinx = false;
+
+  private TextWebSocketHandler handler;
+
+  @Bean
+  String getRobotName() {
+    return "dempster";
+  }
 
   // start the configuration
   @Override
@@ -78,12 +90,17 @@ public class TwoNaoDemo extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
 
-    new ChatEndpoint(a, b, "dempster");
+    this.handler = new ChatEndpoint(a, b, getRobotName());
   }
 
   public static void main(String[] args) {
     TwoNaoDemo demoConfig = new TwoNaoDemo();
 //    SpringApplication.run(DemoApplication.class, args);
     demoConfig.runConfiguration();
+  }
+
+  @Override
+  public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+    registry.addHandler(handler, "/chat");
   }
 }

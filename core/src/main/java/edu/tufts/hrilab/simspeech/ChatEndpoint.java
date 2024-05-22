@@ -54,6 +54,7 @@ public class ChatEndpoint extends TextWebSocketHandler {
                                      @Nonnull TextMessage message) throws Exception {
         JSONObject request = new JSONObject(message.getPayload());
 
+        System.out.println(request);
         // TODO: implement reception of message → pass to recognition component
     }
 
