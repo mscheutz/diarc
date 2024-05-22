@@ -22,6 +22,8 @@ import {
     ConversationList
 } from "@chatscope/chat-ui-kit-react";
 
+import Stomp from '@stomp/stompjs'
+
 // OOP forever, baybee
 class Chat {
     robotName: string;
