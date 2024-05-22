@@ -39,6 +39,7 @@ public class MultiRobotCaddyDemoTest extends GenerativeDiarcIntegrationTest {
         PerformanceMeasures.setSeed(randomNumberSeed);
         addServiceToObserve("reportRecognizedSpeech", Utterance.class);
         addServiceToObserve("submitGoal", Predicate.class);
+        addServiceToObserve("submitGoal", Predicate.class, Symbol.class);
         //TODO:brad: is this signature used in this test?
         addServiceToObserve("sayText", String.class);
         addServiceToObserve("assertBelief", Term.class);

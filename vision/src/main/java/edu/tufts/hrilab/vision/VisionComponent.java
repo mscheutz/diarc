@@ -250,13 +250,13 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
       TRADEServiceConstraints additionalConstraints = this.getMyGroupConstraints();
       try {
         // TODO: replace this with a notify call
-        TRADEServiceInfo getTransformService = TRADE.getAvailableService(additionalConstraints.name("getTransform"));
+        TRADEServiceInfo getTransformService = TRADE.getAvailableService(additionalConstraints.name("getTransform").argTypes(String.class));
         if (!shouldLogTransformMsg) {
           shouldLogTransformMsg = true;
           log.warn("getTransform service is now available.");
         }
         try {
-          Matrix4d tmpTransform = TRADE.getAvailableService(additionalConstraints.name( "getTransform")).call(Matrix4d.class, cameraCoordinateFrame);
+          Matrix4d tmpTransform = getTransformService.call(Matrix4d.class, cameraCoordinateFrame);
           if (tmpTransform != null) {
             currVisionTransform = tmpTransform;
           } else {
@@ -266,8 +266,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
         } catch (TRADEException e) {
           log.warn("Could not call getTransform.", e);
         }
-      }catch (TRADEException e) {
-
+      } catch (TRADEException e) {
         if (shouldLogTransformMsg) {
           shouldLogTransformMsg = false;
           log.warn("getTransform service not yet available. Will only print once.",e);
@@ -527,7 +526,9 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
             VisionReference reference = Vision.consultant.getReference(s);
 
             // add all of ref's properties to toFilter (ignoring properties that have already been filtered to prevent infinite loop)
-            reference.properties.stream().filter(alreadyFiltered::contains).forEach(toFilter::add);
+            reference.properties.stream()
+                    .filter(java.util.function.Predicate.not(alreadyFiltered::contains))
+                    .forEach(toFilter::add);
 
             filteredPred = PredicateHelper.replace(filteredPred, s, reference.variable);
           } else if (!s.isVariable() && Vision.availableSearchTypes.hasExistingSearchManager(PredicateHelper.convertToVisionForm(s))) {

@@ -1,0 +1,35 @@
+bright arm; AGENT; rightArm:yumi
+bright rm; AGENT; rightArm:yumi
+write arm; AGENT; rightArm:yumi
+write rm; AGENT; rightArm:yumi
+red arm; AGENT; rightArm:yumi
+red rm; AGENT; rightArm:yumi
+bright arms; AGENT; rightArm:yumi
+write arms; AGENT; rightArm:yumi
+red arms; AGENT; rightArm:yumi
+right arms; AGENT; rightArm:yumi
+left arms; AGENT; leftArm:yumi
+
+cook top; REF; "cooktop":area; DEFINITE
+cook top; RN; "cooktop":area; VAR
+
+what are your pending task; VERBI; describePendingGoals
+
+ghetto; C/C; #x.$x
+
+sauteed; ((C/DURATION)/REF)\AGENT; #a#r#d.saute($a,$r,$d)
+
+surfing box; REF; "serving box":physobj;DEFINITE
+surfing box; RN; "serving box":physobj;VAR
+box; REF; "serving box":physobj;DEFINITE
+box; RN; "serving box":physobj;VAR
+
+that is how you prepare the; C/DN; #x.endItemDefinition(?ADDRESSEE,prepare$x(?ADDRESSEE,$x))
+that is how you prepare; C/DN; #x.endItemDefinition(?ADDRESSEE,prepare$x(?ADDRESSEE,$x))
+
+define new items; C/LIT* ; #x.defineItem(?ADDRESSEE,$x)
+define new items by analogy; C/LIT*; #x.defineItemByAnalogy(?ADDRESSEE,$x)
+define item by analogy; C/LIT*; #x.defineItemByAnalogy(?ADDRESSEE,$x)
+define the item by analogy; C/LIT*; #x.defineItemByAnalogy(?ADDRESSEE,$x)
+
+here; VAL; got(ingredient)

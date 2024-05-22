@@ -213,6 +213,12 @@ RULES
 STATEMENT(A,B,want(A,B,to(X)),Z):= want(A,X)
 END-SET
 
+NEW-SET
+RULES
+INSTRUCT(A,B,urgentPriority(B,X),Z) := want(A,X,urgent)
+INSTRUCT(A,B,urgentPriority(C,X),Z) := want(A,X,urgent)
+END-SET
+
 # general cases of utterances which result in goal submission
 # INSTRUCTions, capableOf ISAs,  "will/want" statements
 NEW-SET

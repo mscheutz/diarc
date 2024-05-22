@@ -67,13 +67,6 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   private Future overallConditionFuture = null;
 
   /**
-   * Lock to prevent doStep from terminating due to an interruption behavior before setStatus correctly updates this
-   * context's status when an action has been suspended. (practically, stepExecution proceeding before the context's
-   * status is updated prevents the current step from being pushed back onto the action stack to be re-executed)
-   */
-  private Lock interruptStatusUpdateLock = new ReentrantLock();
-
-  /**
    * @param caller
    * @param sm
    * @param action
@@ -517,12 +510,6 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       // tmf: how to properly set return value during simulation
       redistributeArguments();
     }
-
-    //TODO: is this how/where we want to implement this? (see notes above lock definition)
-    //Check if this step completed due to suspend interruption and wait for the status to be set before returning
-    // TODO: EAK: what is this for? this seems hacky at best
-    interruptStatusUpdateLock.lock();
-    interruptStatusUpdateLock.unlock();
   }
 
   /**
@@ -990,9 +977,6 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       // OnResume Recovery Behavior
       interruptEvent = getDBE().getOnResumeEvent();
     } else {
-      if (eStatus == ActionStatus.RESUME) {
-        setStatus(ActionStatus.INITIALIZED);
-      }
       //No need for interruption
       return;
     }
@@ -1000,19 +984,13 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     Predicate interruptGoalPredicate = Factory.createPredicate("interrupt", Factory.createFOL(interruptEvent.getActor()), interruptEvent.getPredicateForm());
     Goal interruptGoal = new Goal(interruptGoalPredicate);
     ActionInterpreter ai = ActionInterpreter.createInterpreterFromEventSpec(interruptGoal, this, interruptEvent);
-
+    //TODO: revisit
+    //The above line was previously adding interruption contexts as a child of the current context, which is called and executed below,
+    // but is not executed as a part of this context's AI. So this context's ChildrenContext counter will never be incremented.
+    // This causes getNextStep() for this context to return the already completed interruption context, which we don't want
+    childContexts.getNextAndIncrement();
     //Call interrupt event
-    //For suspend case, prevent doStep from terminating until this context's status has actually been updated
-    interruptStatusUpdateLock.lock();
-    try {
-      ai.call();
-    } finally {
-      interruptStatusUpdateLock.unlock();
-    }
-
-    if (eStatus == ActionStatus.RESUME) {
-      setStatus(ActionStatus.INITIALIZED);
-    }
+    ai.call();
   }
 
   /**

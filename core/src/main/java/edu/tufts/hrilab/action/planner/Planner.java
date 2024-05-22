@@ -177,11 +177,31 @@ public abstract class Planner {
     return sj.toString();
   }
 
+  private String deSanitize(String input) {
+    int startIndex = input.indexOf("QUOTE");
+    StringBuilder builder = new StringBuilder();
+    if (startIndex != -1) {
+      int endIndex = input.indexOf("QUOTE", startIndex + 5);
+      if (endIndex != -1) {
+        builder.append("\"");
+        builder.append(input.substring(startIndex + 5, endIndex).replaceAll("_", " "));
+        builder.append(("\""));
+        builder.append(input.substring(endIndex + 5));
+      }
+    }
+    if (builder.isEmpty()) {
+      return input;
+    } else {
+      return builder.toString();
+    }
+  }
+
   private Predicate createTypedPredicate(Predicate untypedPredicate, Map<String, Symbol> objectTypeMap) {
     List<Symbol> typedArgs = new ArrayList<>();
     for (Symbol arg : untypedPredicate.getArgs()) {
       if (objectTypeMap.containsKey(arg.getName())) {
-        typedArgs.add(objectTypeMap.get(arg.getName()));
+        Symbol typedButNotSanitized=objectTypeMap.get(arg.getName());
+        typedArgs.add(Factory.createSymbol(deSanitize(typedButNotSanitized.getName()), typedButNotSanitized.getType()));
       } else {
         log.warn("Unknown object. Using untyped: " + arg);
         typedArgs.add(arg);

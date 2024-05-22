@@ -54,7 +54,7 @@ class Resolver( groups: java.util.List[String]){
 
   def updatePropertyCache(): Unit = {
     propertyCache = new mutable.HashMap[ConsultantInfo, mutable.Buffer[Property]]()
-    consultants.map(c => propertyCache += (c -> TRADE.getAvailableService(c.tsc.name("getPropertiesHandled")).call(classOf[java.util.List[Term]]).asScala.map(new Property(_))))
+    consultants.map(c => propertyCache += (c -> TRADE.getAvailableService(c.tsc.name("getPropertiesHandled").argTypes()).call(classOf[java.util.List[Term]]).asScala.map(new Property(_))))
   }
 
   def getEntityForReference[E](ref: edu.tufts.hrilab.fol.Symbol, entityJavaType: Class[E]) : E = {
@@ -65,8 +65,8 @@ class Resolver( groups: java.util.List[String]){
     }
 
     //call convertToType va tsi, return results
-   TRADE.getAvailableService(c.head.tsc.name( "convertToType").argTypes(classOf[Symbol],classOf[Class[E]])).call(entityJavaType,ref, entityJavaType)
-
+   TRADE.getAvailableService(c.head.tsc.name( "convertToType").argTypes(classOf[Symbol],classOf[Class[E]]))
+     .call(entityJavaType,ref, entityJavaType)
   }
 
   def getEntityForReference[E](ref: edu.tufts.hrilab.fol.Symbol, entityJavaType: Class[E], constraints: java.util.List[Term]) : E = {
@@ -77,8 +77,8 @@ class Resolver( groups: java.util.List[String]){
     }
 
     //call convertToType va tsi, return results
-    TRADE.getAvailableService(c.head.tsc.name("convertToType")).call(entityJavaType,ref, entityJavaType,constraints)
-
+    TRADE.getAvailableService(c.head.tsc.name("convertToType").argTypes(classOf[Symbol],classOf[Class[E]],classOf[java.util.List[Term]]))
+      .call(entityJavaType,ref, entityJavaType,constraints)
   }
 
   def assertProperties(ref: edu.tufts.hrilab.fol.Symbol, properties: java.util.List[Term]): Boolean = {
@@ -127,7 +127,7 @@ class Resolver( groups: java.util.List[String]){
 
     val vars: util.List[Variable] = Utilities.getUnboundVariables(properties);
     try {
-      val m = TRADE.getAvailableService(matchingConsultants.head._1.tsc.name("createReferences")).call(classOf[java.util.Map[Variable, Symbol]], vars)
+      val m = TRADE.getAvailableService(matchingConsultants.head._1.tsc.name("createReferences").argTypes(classOf[java.util.List[Variable]])).call(classOf[java.util.Map[Variable, Symbol]], vars)
 
       TRADE.getAvailableService(matchingConsultants.head._1.tsc.name("assertProperties").argTypes(classOf[java.util.Map[Variable,Symbol]],classOf[java.lang.Double],classOf[java.util.List[Term]])).call(classOf[Boolean], m, 1.0.asInstanceOf[Object], properties)
 
@@ -516,7 +516,7 @@ class Resolver( groups: java.util.List[String]){
       var description = new java.util.ArrayList[Property]()
       //changed to prevent distractors from being a list of "objects_objects_#" strings in the case of object consultants
       var domain = new java.util.ArrayList[Symbol]()
-      filteredConsultants.foreach(c => domain.addAll(TRADE.getAvailableService(c.tsc.name( "getInitialDomain")).call(classOf[java.util.List[Symbol]],new java.util.ArrayList[Term]())))
+      filteredConsultants.foreach(c => domain.addAll(TRADE.getAvailableService(c.tsc.name( "getInitialDomain").argTypes(classOf[java.util.List[Term]])).call(classOf[java.util.List[Symbol]],new java.util.ArrayList[Term]())))
       //list of other existing refs
       log.debug("domain: "+domain)
       var distractors: List[Symbol] = domain.asScala.filterNot(_.equals(ref)).toList //This assumes it won't be confused with something from another domain.
@@ -528,7 +528,7 @@ class Resolver( groups: java.util.List[String]){
       filteredConsultants.foreach(c =>
         propsList.addAll(
           //convert to properties for internal rr use
-          TRADE.getAvailableService(c.tsc.name( "getAssertedProperties")).call(classOf[java.util.List[Term]],ref).asScala.map(t =>new Property(t)).asJava
+          TRADE.getAvailableService(c.tsc.name( "getAssertedProperties").argTypes(classOf[Symbol])).call(classOf[java.util.List[Term]],ref).asScala.map(t =>new Property(t)).asJava
         )
       )
 

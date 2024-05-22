@@ -19,7 +19,7 @@ bel(D,X):-believes(A,X),diarcAgent(A),diarcAgent(D), not(A=D).
 propertyOf(X,free) :- bel(A, propertyOf(X,free)), diarcAgent(A).
 propertyOf(X,free) :- not(propertyOf(X,blocked)), propertyOf(X,location).
 
-is_superior(A,B):-role(A,supervisor(B)).
+is_supervisor(A,B):-role(A,supervisor(B)).
 admin_of(A,B):-role(A,admin(B)).
 
 role(Y,novice) :- diarcAgent(X),bel(X,novice(Y)).

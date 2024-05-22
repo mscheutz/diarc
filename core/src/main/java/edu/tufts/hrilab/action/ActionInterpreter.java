@@ -70,6 +70,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   private volatile boolean suspend = false;
   private Lock suspendLock = new ReentrantLock();
   private Condition suspendCondition = suspendLock.newCondition();
+  private AtomicBoolean shouldSuspend = new AtomicBoolean(false);
 
   /**
    * Flag for canceling this ActionInterpreter.
@@ -470,6 +471,9 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         suspendLock.lock();
         try {
           while (suspend) {
+            if (shouldSuspend.get()) {
+              suspendSteps();
+            }
             try {
               suspendCondition.await();
             } catch (InterruptedException e) {
@@ -537,7 +541,25 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     if (currentStep instanceof ActionContext && ((ActionContext) currentStep).getDBE().hasOnSuspendEvent()) {
       log.debug("[suspend] interrupting execution of current step");
       stepInterrupted = true;
-      currentStep.setStatus(ActionStatus.SUSPEND); //Should this be moved out of this block?
+      suspendSteps();
+    } else {
+      log.debug("[suspend] Current step not interruptible, setting shouldSuspend to true to cancel before next step");
+      shouldSuspend.set(true);
+    }
+
+    suspendLock.unlock();
+  }
+
+  private void suspendSteps() {
+    if (currentStep == null) {
+      log.warn("[suspendSteps] AI for goal has already terminated: " + goal);
+      return;
+    } else if (currentStep.isTerminated()) {
+      log.warn("[suspendSteps] Current step already terminated, not setting suspend status.");
+    } else if (currentStep.getStatus() == ActionStatus.INITIALIZED) {
+      log.debug("[suspendSteps] current step is INITIALIZED, not setting suspend status");
+    } else {
+      currentStep.setStatus(ActionStatus.SUSPEND);
     }
 
     //TODO: double check this is fully correct (doesn't affect tests passing)
@@ -549,7 +571,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       caller = caller.getParentContext();
     }
 
-    suspendLock.unlock();
+    shouldSuspend.set(false);
   }
 
   /**
@@ -574,6 +596,8 @@ public class ActionInterpreter implements Callable<ActionStatus> {
             if (grandparentContext instanceof GoalContext) {
               GoalContext grandparentGoalContext = (GoalContext) grandparentContext;
               goalContext = new GoalContext(grandparentGoalContext.getParentContext(), grandparentGoalContext.getStateMachine(), grandparentGoalContext.getGoal(), grandparentGoalContext.getExecType());
+              //grandparentContext.setStatus(ActionStatus.CANCEL);
+              //grandparentContext.addEvent(grandparentGoalContext.getGoal(), grandparentGoalContext.getStateMachine(), grandparentGoalContext.getExecType());
             }
             break;
           }
@@ -586,11 +610,18 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         //              caused by onSuspend services which are waiting for onResume calls.
         //Child of a plan, set the current step as the goal originally prompting planning
         if (goalContext != null) {
+          //goalContext.getParentContext().getChildContexts().add(goalContext); //shallow copy
+          //goalContext.getParentContext().getChildContexts().getNextAndIncrement();
           currentStep = goalContext;
         }
-        //Default case: call any onResume behaviors for the suspended step if present
+        //Default case: call any onResume behaviors for the suspended step if present (if it was interrupted)
         else {
-          currentStep.setStatus(ActionStatus.RESUME);
+          if (stepInterrupted) {
+            if (currentStep instanceof ActionContext) {
+              ((ActionContext) currentStep).handleInterrupt(ActionStatus.RESUME);
+            }
+            currentStep.setStatus(ActionStatus.INITIALIZED);
+          }
         }
 
         //TODO: double check this is fully correct (doesn't affect tests passing)

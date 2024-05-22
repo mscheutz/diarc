@@ -1,5 +1,5 @@
 %% agents the system should know about
-actor(chris).
+actor(matt).
 actor(evan).
 actor(tyler).
 actor(ravenna).
@@ -20,7 +20,7 @@ object(self, agent).
 
 /*rules about who the agent is obliged to listen to */
 %% supervisors
-role(chris,supervisor(X)):-diarcAgent(X).
+role(matt,supervisor(X)):-diarcAgent(X).
 role(evan,supervisor(X)):-diarcAgent(X).
 role(ravenna,supervisor(X)):-diarcAgent(X).
 role(tyler,supervisor(X)):-diarcAgent(X).

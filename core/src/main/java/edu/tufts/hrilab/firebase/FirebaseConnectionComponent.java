@@ -35,8 +35,7 @@ import java.util.stream.Collectors;
 //   are scattered throughout)
 public abstract class FirebaseConnectionComponent extends UIComponent {
 
-  private boolean addedDiarcAgents;
-  private List<String> diarcAgents;
+  private boolean addedAgentHierarchy;
 
   //Android: The group name used is pulled from firebase at runtime from the corresponding entry in the
   //  base "users" collection for this firestore project. The UUID used for the corresponding
@@ -57,10 +56,6 @@ public abstract class FirebaseConnectionComponent extends UIComponent {
 
   public FirebaseConnectionComponent() {
     super();
-
-    addedDiarcAgents = false;
-    diarcAgents = new ArrayList<>();
-
     groupName = "tr_test";
 
     learnedActionsFileString = "";
@@ -130,27 +125,31 @@ public abstract class FirebaseConnectionComponent extends UIComponent {
   @Override
   protected void executionLoop() {
     super.executionLoop();
-
-    //TODO: Specify this through the commandline? Or allow way for external agents which connect delayed to still be
-    //  picked up? Can we do this through TRADE?
-    //Push notion of DIARC agents to firebase for ASR app
-    if (!addedDiarcAgents) {
-        Map<String, Object> groupData = new HashMap<>();
-        Set<Symbol> diarcAgentSet;
-        try {
-          diarcAgentSet = TRADE.getAvailableService(new TRADEServiceConstraints().name("getDiarcAgents")).call(Set.class);
-          for (Symbol agent : diarcAgentSet) {
-            if (!diarcAgents.contains(agent.getName())) {
-              diarcAgents.add(agent.getName());
+    if (!addedAgentHierarchy) {
+      try {
+        Map<Symbol,Set<Symbol>> agentHierarchy = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllAgentTeams")).call(Map.class);
+        if (agentHierarchy != null) {
+          Map<String, List<String>> untypedStringAgentHierarchy = new HashMap<>();
+          for (Map.Entry<Symbol, Set<Symbol>> agentTeam : agentHierarchy.entrySet()) {
+            String teamName = agentTeam.getKey().toUntypedString();
+            Set<Symbol> teamMembers = agentTeam.getValue();
+            List<String> untypedTeamMembers = new ArrayList<>();
+            for (Symbol teamMember : teamMembers) {
+              String name = teamMember.toUntypedString();
+              if (!name.equals(teamName)) {
+                untypedTeamMembers.add(teamMember.toUntypedString());
+              }
             }
+            untypedStringAgentHierarchy.put(teamName, untypedTeamMembers);
           }
-          groupData.put("agents", diarcAgents);
-          writeToDocument("groups/" + groupName, groupData);
-          addedDiarcAgents = true;
-        } catch (TRADEException e) {
-          log.error("[FirebaseConnectionComponent] error calling getDiarcAgents", e);
-        } catch (NullPointerException ignored) {
+          Map<String, Object> data = new HashMap<>();
+          data.put("agentHierarchy", untypedStringAgentHierarchy);
+          writeToDocument("groups/" + groupName, data);
+          addedAgentHierarchy = true;
         }
+      } catch (TRADEException e) {
+        log.error("[FirebaseConnectionComponent] error calling getDiarcAgents", e);
+      }
     }
   }
 
@@ -186,11 +185,9 @@ public abstract class FirebaseConnectionComponent extends UIComponent {
 
   private void initSystemGoals() {
     HashMap<String, Object> systemGoalsInfo = new HashMap<>();
-    systemGoalsInfo.put("currentGoal", "None");
-    systemGoalsInfo.put("currentGid", -1L);
-    systemGoalsInfo.put("currentStatus", null);
-    List<HashMap<String, Object>> pendingGoalsInfo = new ArrayList<>();
-    systemGoalsInfo.put("queue", pendingGoalsInfo);
+    List<HashMap<String, Object>> goalsInfo = new ArrayList<>();
+    systemGoalsInfo.put("pending", goalsInfo);
+    systemGoalsInfo.put("active", goalsInfo);
     writeToDocument("groups/" + groupName + "/systemGoals/goals", systemGoalsInfo);
   }
 
@@ -561,31 +558,26 @@ public abstract class FirebaseConnectionComponent extends UIComponent {
   }
 
   @Override
-  public void onActiveGoalUpdated(String goalString, GoalStatus status, long gid) {
-    HashMap<String, Object> activeGoalInfo = new HashMap<>();
-    activeGoalInfo.put("currentGoal", goalString);
-    if (status.isTerminated()) {
-      activeGoalInfo.put("currentGid", System.currentTimeMillis());
-    } else {
-      activeGoalInfo.put("currentGid", gid);
-    }
-    activeGoalInfo.put("currentStatus", status);
-    updateDocument("groups/" + groupName + "/systemGoals/goals", activeGoalInfo);
-    //TODO: add listener and log success/failure
+  public void onActiveGoalsUpdated(List<String> agentStrings, List<String> goalStrings, List<Long> gids, List<String> statuses, List<String> priorityTiers) {
+    updateGoalCollectionInfoToFirebase("active", agentStrings, goalStrings, gids, statuses, priorityTiers);
   }
 
   @Override
-  public void onPendingGoalsUpdated(List<String> goalStrings, List<GoalStatus> statuses, List<Long> gids) {
-    List<HashMap<String, Object>> pendingGoalsInfo = new ArrayList<>();
+  public void onPendingGoalsUpdated(List<String> agentStrings, List<String> goalStrings, List<Long> gids, List<String> statuses, List<String> priorityTiers) {
+    updateGoalCollectionInfoToFirebase("pending", agentStrings, goalStrings, gids, statuses, priorityTiers);
+  }
+
+  private void updateGoalCollectionInfoToFirebase(String fieldName, List<String> agentStrings, List<String> goalStrings, List<Long> gids, List<String> statuses, List<String> priorityTiers) {
+    List<HashMap<String, Object>> goalsInfo = new ArrayList<>();
     for (int i = 0; i < goalStrings.size(); i++) {
       try {
-        pendingGoalsInfo.add(goalToFirebaseDoc(goalStrings.get(i), gids.get(i), statuses.get(i)));
+        goalsInfo.add(goalToFirebaseDoc(agentStrings.get(i), goalStrings.get(i), gids.get(i), statuses.get(i), priorityTiers.get(i)));
       } catch (Exception e) {
         log.error("[onPendingGoalsUpdated] exception while iterating over goal queue", e);
       }
     }
     Map<String, Object> pendingGoalsInfoMap = new HashMap<>();
-    pendingGoalsInfoMap.put("queue", pendingGoalsInfo);
+    pendingGoalsInfoMap.put(fieldName, goalsInfo);
     updateDocument("groups/" + groupName + "/systemGoals/goals", pendingGoalsInfoMap);
     //TODO: add listener and log success/failure
   }
@@ -631,11 +623,13 @@ public abstract class FirebaseConnectionComponent extends UIComponent {
 
 
   //Helper to create a form good for uploading to firebase
-  private HashMap<String, Object> goalToFirebaseDoc(String goalString, Long gid, GoalStatus status) {
+  private HashMap<String, Object> goalToFirebaseDoc(String agentString, String goalString, Long gid, String status, String priorityTier) {
     HashMap<String, Object> goalDoc = new HashMap<>();
+    goalDoc.put("agent", agentString);
     goalDoc.put("goal", goalString);
     goalDoc.put("gid", gid);
     goalDoc.put("status", status);
+    goalDoc.put("priority", priorityTier);
     return goalDoc;
   }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

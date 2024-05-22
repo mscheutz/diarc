@@ -12,11 +12,13 @@ import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.slug.parsing.cache.CachedParserComponent;
 import edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent;
+import edu.tufts.hrilab.slug.parsing.patternMatching.PatternMatchingParser;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -24,39 +26,58 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class HybridParserComponent extends DiarcComponent implements NLUInterface {
+
+  private boolean useLLM = false;
   private NLUInterface llmParser;
+  private boolean useTLDL = false;
   private NLUInterface tldlParser;
+  private boolean usePMP = false;
+  private NLUInterface patternMatchingParser;
+  private boolean useCache = false;
   private CachedParserComponent cacheParser;
 
   private String endpoint = "http://localhost:8000/parse/";
-  private String tldl = "templatedict.dict";
+  private List<String> tldlDictionaries = new ArrayList<>();
+  private boolean tldlUpdateAddressee = true;
   private String cacheName = null;
   private String[] cacheLoads = null;
   private String cachePersist = null;
   private String llm = null;
   private String prompt = null;
 
+  private boolean confirmation = true;
+
   private ExecutorService executor = Executors.newCachedThreadPool();
 
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("tldl").hasArgs().required().argName("file").desc("load tldl dictionary from file").build());
+    options.add(Option.builder("tldl").hasArgs().required().argName("file").desc("load tldl dictionary from file(s)").build());
     options.add(Option.builder("llm").hasArg().argName("string").desc("Name of TRADE Service to call in LLMParserComponent.parseUtterance()").build());
     options.add(Option.builder("prompt").hasArg().argName("string").desc("Prompt to use with LLM parser").build());
     options.add(Option.builder("endpoint").hasArg().argName("string").desc("Endpoint for LLMParserComponent").build());
     options.add(Option.builder("cacheLoad").hasArgs().argName("file").desc("Load cached database from file, can have multiple").build());
     options.add(Option.builder("cacheName").hasArg().argName("string").desc("Name of cache").build());
     options.add(Option.builder("cachePersist").hasArg().argName("file").desc("Persist cache in on users computer").build());
+    options.add(Option.builder("noConfirmation").argName("boolean").desc("Ask human to confirm LLM parser response for cache").build());
+    options.add(Option.builder("patternMatching").desc("use pattern matching parser").build());
+    options.add(Option.builder("tldlNoUpdateAddressee").desc("TLDL: do not update addressee after direct address").build());
     return options;
   }
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
     if (cmdLine.hasOption("tldl")) {
-      tldl = cmdLine.getOptionValue("tldl");
+      useTLDL = true;
+      Arrays.stream(cmdLine.getOptionValues("tldl"))
+              .filter(dict -> !dict.isEmpty())
+              .forEach(dict -> tldlDictionaries.add("-dict " + dict));
+    }
+    if (cmdLine.hasOption("tldlNoUpdateAddressee")) {
+      tldlUpdateAddressee = false;
     }
     if (cmdLine.hasOption("llm")) {
+      useLLM = true;
       llm = cmdLine.getOptionValue("llm");
     }
     if (cmdLine.hasOption("prompt")) {
@@ -66,6 +87,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       endpoint = cmdLine.getOptionValue("endpoint");
     }
     if (cmdLine.hasOption("cacheName")) {
+      useCache = true;
       cacheName = cmdLine.getOptionValue("cacheName");
     }
     if (cmdLine.hasOption("cacheLoad")) {
@@ -74,33 +96,58 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     if (cmdLine.hasOption("cachePersist")) {
       cachePersist = cmdLine.getOptionValue("cachePersist");
     }
+    if (cmdLine.hasOption("noConfirmation")) {
+      confirmation = false;
+    }
+    if (cmdLine.hasOption("patternMatching")) {
+      usePMP = true;
+    }
   }
 
   @Override
   public void init() {
-    String llmArgs = "-endpoint " + endpoint;
-    String tldlArgs = "-dict " + tldl;
-    String cacheArgs = "";
-    if (llm != null) {
-      llmArgs += " -service " + llm;
-    }
-    if (prompt != null) {
-      llmArgs += " -prompt " + prompt;
-    }
-    if (cacheName != null) {
-      cacheArgs += " -name " + cacheName;
-    }
-    if (cacheLoads != null) {
-      for (String cacheLoad : cacheLoads) {
-        cacheArgs += " -load " + cacheLoad;
+    // init LLMParserComponent
+    if (useLLM) {
+      String llmArgs = "-endpoint " + endpoint;
+      if (llm != null) {
+        llmArgs += " -service " + llm;
       }
+      if (prompt != null) {
+        llmArgs += " -prompt " + prompt;
+      }
+      llmParser = createInstance(LLMParserComponent.class, llmArgs, false);
     }
-    if (cachePersist != null) {
-      cacheArgs += " -persist " + cachePersist;
+
+    // init TLDLParserComponent
+    if (useTLDL) {
+      String tldlArgs = String.join(" ", tldlDictionaries);
+      if (!tldlUpdateAddressee) {
+        tldlArgs += " -noUpdateAddressee";
+      }
+      tldlParser = createInstance(TLDLParserComponent.class, tldlArgs, false);
     }
-    llmParser = createInstance(LLMParserComponent.class, llmArgs, false);
-    tldlParser = createInstance(TLDLParserComponent.class, tldlArgs, false);
-    cacheParser = createInstance(CachedParserComponent.class, cacheArgs, false);
+
+    // init PatternMatchingParser
+    if (usePMP) {
+      patternMatchingParser = createInstance(PatternMatchingParser.class, "", false);
+    }
+
+    // init CachedParserComponent
+    if (useCache) {
+      String cacheArgs = "";
+      if (cacheName != null) {
+        cacheArgs += " -name " + cacheName;
+      }
+      if (cacheLoads != null) {
+        for (String cacheLoad : cacheLoads) {
+          cacheArgs += " -load " + cacheLoad;
+        }
+      }
+      if (cachePersist != null) {
+        cacheArgs += " -persist " + cachePersist;
+      }
+      cacheParser = createInstance(CachedParserComponent.class, cacheArgs, false);
+    }
   }
 
   /**
@@ -114,54 +161,95 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
    */
   @Override
   public Utterance parseUtterance(Utterance incoming) {
-    Future<Utterance> llmFuture = executor.submit(() -> llmParser.parseUtterance(incoming));
-    Future<Utterance> tldlFuture = executor.submit(() -> tldlParser.parseUtterance(incoming));
-    Future<Utterance> cachedFuture = executor.submit(() -> cacheParser.parseUtterance(incoming));
+
+    Future<Utterance> llmFuture = null;
+    Future<Utterance> tldlFuture = null;
+    Future<Utterance> cachedFuture = null;
+    Future<Utterance> pmpFuture = null;
+
+    if (useLLM) {
+      llmFuture = executor.submit(() -> llmParser.parseUtterance(incoming));
+    }
+    if (useTLDL) {
+      tldlFuture = executor.submit(() -> tldlParser.parseUtterance(incoming));
+    }
+    if (useCache) {
+      cachedFuture = executor.submit(() -> cacheParser.parseUtterance(incoming));
+    }
+    if (usePMP) {
+      pmpFuture = executor.submit(() -> patternMatchingParser.parseUtterance(incoming));
+    }
 
     Utterance output = incoming;
     Utterance cachedOutput = null;
+    Utterance pmpOutput = null;
     Utterance tldlOutput = null;
     Utterance llmOutput = null;
 
     //Check cache first
-    try {
-      cachedOutput = cachedFuture.get();
-    } catch (InterruptedException | ExecutionException e) {
-      log.error("Error getting cached parser results.", e);
+    if (cachedFuture != null) {
+      try {
+        cachedOutput = cachedFuture.get();
+      } catch (InterruptedException | ExecutionException e) {
+        log.error("Error getting cached parser results.", e);
+      }
+
+      if (cachedOutput != null && cachedOutput.getSemantics() != null) {
+        log.debug("Using cached parser response");
+        return cachedOutput;
+      }
     }
 
-    if (cachedOutput != null && cachedOutput.getSemantics() != null) {
-      log.debug("Using cached parser response");
-      return cachedOutput;
+    //Try patternmatching parser
+    if (pmpFuture != null) {
+      try {
+        pmpOutput = pmpFuture.get();
+      } catch (InterruptedException | ExecutionException e) {
+        log.error("Error getting pattern matching parser results.", e);
+      }
+
+      //TODO:brad: what should this return in the no match case?
+      if (pmpOutput != null) {
+        return pmpOutput;
+      }
     }
+
 
     //Try TLDLParser, return if not null or UNKNOWN
-    try {
-      tldlOutput = tldlFuture.get();
-    } catch (InterruptedException | ExecutionException e) {
-      log.error("Error getting tldl parser results.", e);
-    }
+    if (tldlFuture != null) {
+      try {
+        tldlOutput = tldlFuture.get();
+      } catch (InterruptedException | ExecutionException e) {
+        log.error("Error getting tldl parser results.", e);
+      }
 
-    if (tldlOutput != null && tldlOutput.getSemantics() != null && tldlOutput.getType() != UtteranceType.UNKNOWN) {
-      log.debug("Using tldl parser response");
-      cacheParse(tldlOutput);
-      return tldlOutput;
-    } else if (tldlOutput != null && tldlOutput.getSemantics() != null && tldlOutput.getType() == UtteranceType.UNKNOWN) {
-      //Use TLDL UNKNOWN parse in case LLM parse fails
-      output = tldlOutput;
+      if (tldlOutput != null && tldlOutput.getSemantics() != null && tldlOutput.getType() != UtteranceType.UNKNOWN) {
+        log.debug("Using tldl parser response");
+        if (useCache) {
+          cacheParse(tldlOutput);
+        }
+        return tldlOutput;
+      } else if (tldlOutput != null && tldlOutput.getSemantics() != null && tldlOutput.getType() == UtteranceType.UNKNOWN) {
+        //Use TLDL UNKNOWN parse in case LLM parse fails
+        output = tldlOutput;
+      }
     }
 
     //Try LLMParser last
-    try {
-      llmOutput = llmFuture.get();
-    } catch (InterruptedException | ExecutionException e) {
-      log.error("Error getting llm parser results.", e);
-    }
+    if (llmFuture != null) {
+      try {
+        llmOutput = llmFuture.get();
+      } catch (InterruptedException | ExecutionException e) {
+        log.error("Error getting llm parser results.", e);
+      }
 
-    if (llmOutput != null) {
-      log.debug("Using llm parser response");
-      output = llmOutput;
-      output.setNeedsValidation(true);
+      if (llmOutput != null) {
+        log.debug("Using llm parser response");
+        output = llmOutput;
+        if (confirmation) {
+          output.setNeedsValidation(true);
+        }
+      }
     }
 
     return output;
@@ -172,4 +260,25 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   public void cacheParse(Utterance utterance) {
     cacheParser.addEntryToCache(utterance);
   }
+
+  @TRADEService
+  @Action
+  public void injectDictionaryEntry(String morpheme, String type, String semantics, String cognitiveStatus) {
+    if (useTLDL) {
+      ((TLDLParserComponent) tldlParser).injectDictionaryEntry(morpheme, type, semantics, cognitiveStatus);
+    } else {
+      log.warn("[injectDictionaryEntry] trying to update TLDL parser dictionary when not using TLDL parser");
+    }
+  }
+
+  @TRADEService
+  public boolean activatePattern(String patternName) {
+    if (usePMP) {
+      return ((PatternMatchingParser) patternMatchingParser).activatePattern(patternName);
+    } else {
+      log.warn("[activatePattern] trying to activate parsing pattern when not using pattern matching parser");
+      return false;
+    }
+  }
+
 }

@@ -4,6 +4,14 @@
     "priorityTier": "NORMAL"
   },
 
+  "describeCurrentGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describePendingGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "endFreeze": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -33,6 +41,10 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "cancelAllActiveGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "cancelGoalInQueueIndex": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -50,6 +62,14 @@
     "priorityTier": "SKIPPENDING"
   },
   "cancelCurrentGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "suspendCurrentGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeCurrentGoal": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

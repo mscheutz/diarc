@@ -23,6 +23,7 @@ public class PendingGoal {
   private final Condition pendingLockCondition = pendingLock.newCondition();
   //(Assuming we are keeping old AIs) Need way to keep track of superseded goals' original futures
   private Future previousAIFuture = null;
+  private GoalStatus previousAIStatus;
 
   public PendingGoal(Goal goal, ExecutionType executionType) {
     this.goal = goal;
@@ -95,5 +96,13 @@ public class PendingGoal {
 
   public void setPreviousAIFuture(Future previousAIFuture) {
     this.previousAIFuture = previousAIFuture;
+  }
+
+  public void setPreviousStatus(GoalStatus previousAIStatus) {
+    this.previousAIStatus = previousAIStatus;
+  }
+
+  public GoalStatus getPreviousStatus() {
+    return previousAIStatus;
   }
 }

@@ -85,8 +85,8 @@ it; N ; it
 the tube; N ; theTube
 tube; N, N/SIDE; tube
 
-%stop; C ; stopRobot()
-stop; C ; stop()
+%stop; C ; stopRobot(?ADDRESSEE)
+stop; C ; stop(?ADDRESSEE)
 
 autonomy ; C ; autonomy()
 

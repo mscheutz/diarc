@@ -194,6 +194,7 @@ import java.util.Map;
     org.apache.commons.lang3.tuple.Pair !supportExplanation;
     Map !explainMap;
     java.util.Set !terms;
+    Symbol !incomplete= "incomplete";
 
     op:log("debug", "justification = ?justification");
     !failureList = op:invokeMethod(?justification, "getFailureReason");
@@ -216,10 +217,10 @@ import java.util.Map;
         !failureCondition = op:invokeMethod(!failureCondition, "copyWithNewBindings", !bindings);
       }
 
-      !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bel(?listener, !failureCondition)");
+      !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bel",?listener, !failureCondition);
       if (~act:querySupport(!query)) {
 
-        !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "explanationType(?listener,incomplete)");
+        !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "explanationType",?listener,!incomplete);
         if (~act:querySupport(!query)) {
 
           !supportExplanation = act:querySupportWithExplanation(!failureCondition);
@@ -232,7 +233,7 @@ import java.util.Map;
             }
 
             //check if failure reason is already known by listener
-            !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bel(?listener, !tmp)");
+            !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bel",?listener, !tmp);
             if (~act:querySupport(!query)) {
               op:invokeMethod(!array, "add", !tmp);
             }
@@ -248,7 +249,7 @@ import java.util.Map;
     !failureConditionsSize = op:invokeMethod(!array, "size");
     op:log("debug", "got size !failureConditionsSize");
 
-    !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "explanationType(?listener,incomplete)");
+    !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "explanationType",?listener,incomplete);
     //add action step that failed if novice listener
     if (~act:querySupport(!query)) {
       !query = op:invokeMethod(?justification, "getStep");
@@ -262,7 +263,7 @@ import java.util.Map;
     if (~op:isNull(!intraExplanation)) {
       if (op:gt(!failureConditionsSize, 0)) {
         !tmp = op:newObject("edu.tufts.hrilab.fol.Predicate", "and", !array);
-        !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(!intraExplanation,!tmp)");
+        !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and",!intraExplanation,!tmp);
         ?becausePredicate = op:newObject("edu.tufts.hrilab.fol.Predicate", "because", !tmp);
         if (act:isRepeatedPredicate(?becausePredicate, ?listener, ?state, 1)) {
            !failureCondition = op:invokeMethod(!array, "get", 0);

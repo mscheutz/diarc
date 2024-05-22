@@ -1,17 +1,8 @@
-%location of stationary robots
-agentAt(left, location_1).
-agentAt(right, location_1).
+gripperOpen(leftArm).
+gripperOpen(rightArm).
 
-%init location of mobile robot
-agentAt(human, location_0).
 free(human).
-free(left).
-free(right).
+free(leftArm).
+free(rightArm).
 
-predicate(propertyof,var,property).
-
-%%todo:brad: should this be done dynamically ssomehwere?
-%constant(frenchfries, property).
-%constant(coke, property).
-%constant(hamburger, property).
-%constant(taco, property).
+predicate(property_of,var,property).

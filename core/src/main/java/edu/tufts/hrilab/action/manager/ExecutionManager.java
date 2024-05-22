@@ -523,7 +523,7 @@ public class ExecutionManager implements ActionListener {
    * Enum used alongside goal notification updates to indicate whether the goal was added, removed, or already present
    * in the relevant collection
    */
-  protected enum UpdateType {
+  public enum UpdateType {
     REMOVED,
     ADDED,
     UPDATED
@@ -546,7 +546,7 @@ public class ExecutionManager implements ActionListener {
    */
   protected void onActiveGoalUpdated(Goal g, GoalStatus status, UpdateType updateType) {
     //Update UI
-    notifyUIActiveGoalUpdated(g, status, updateType == UpdateType.ADDED);
+    notifyUIActiveGoalUpdated(g, status, updateType);
 
     //Assign as many pending goals as possible (in order of priority) with resources freed up by this active goal
     // completing
@@ -564,7 +564,7 @@ public class ExecutionManager implements ActionListener {
    */
   protected void onPendingGoalUpdated(Goal g, int index, UpdateType updateType) {
     //Update UI
-    notifyUIPendingGoalUpdated(g, index, updateType == UpdateType.ADDED);
+    notifyUIPendingGoalUpdated(g, index, updateType);
 
     //If a pending goal was newly added, check if it should be forwarded straight to execution or left in the queue
     if (updateType == UpdateType.ADDED) {
@@ -630,6 +630,47 @@ public class ExecutionManager implements ActionListener {
   ////// End Subclass Overridable Methods //////
   //////////////////////////////////////////////
 
+  @TRADEService
+  @Action
+  public PriorityTier getPriorityTierForGoal(Predicate g) {
+    String goalName = g.getName();
+    if (goalPriorities.containsKey(goalName)) {
+      return goalPriorities.get(g.getName()).getPriorityTier();
+    } else {
+      return goalPriorities.get("default").getPriorityTier();
+    }
+  }
+
+  @TRADEService
+  @Action
+  public long getPriorityForGoal(Predicate g) {
+    String goalName = g.getName();
+    if (goalPriorities.containsKey(goalName)) {
+      return goalPriorities.get(g.getName()).getPriority();
+    } else {
+      return goalPriorities.get("default").getPriority();
+    }
+  }
+
+  //TODO: handle typing in action scripts better and/or refactor submitGoal method interfaces
+  @TRADEService
+  @Action
+  public long submitGoal(Predicate g, Symbol priorityTierSymbol) {
+    log.debug("[submitGoal]: " + g + " with priority tier: " + priorityTierSymbol);
+
+    long priority = getPriorityForGoal(g);
+    PriorityTier priorityTier = PriorityTier.fromString(priorityTierSymbol.getName());
+    if (priorityTier == null || priorityTier == PriorityTier.UNINITIALIZED) {
+      priorityTier = getPriorityTierForGoal(g);
+    }
+
+    Goal goal = submitGoal(g, ExecutionType.ACT, priority, priorityTier);
+    if (goal != null) {
+      return goal.getId();
+    }
+    return -1;
+  }
+
   //TODO: Standing in as a TRADEService for removed submitGoalDirectly method.
   // Only currently used in ActionLearning ExecuteWhileLearning. Remove these
   // annotations when the action learning pipeline is updated.
@@ -670,13 +711,7 @@ public class ExecutionManager implements ActionListener {
    * Calls {@link #submitGoal(Goal, ExecutionType, long, PriorityTier)} with the default values
    */
   public Goal submitGoal(Goal g, ExecutionType execType) {
-    long priority;
-    String goalName = g.getPredicate().getName();
-    if (goalPriorities.containsKey(goalName)) {
-      priority = goalPriorities.get(g.getPredicate().getName()).getPriority();
-    } else {
-      priority = goalPriorities.get("default").getPriority();
-    }
+    long priority = getPriorityForGoal(g.getPredicate());
 
     return submitGoal(g, execType, priority);
   }
@@ -693,13 +728,7 @@ public class ExecutionManager implements ActionListener {
    * Calls {@link #submitGoal(Goal, ExecutionType, long, PriorityTier)} with the default values
    */
   public Goal submitGoal(Goal g, ExecutionType execType, long priority) {
-    PriorityTier priorityTier;
-    String goalName = g.getPredicate().getName();
-    if (goalPriorities.containsKey(goalName)) {
-      priorityTier = goalPriorities.get(g.getPredicate().getName()).getPriorityTier();
-    } else {
-      priorityTier = goalPriorities.get("default").getPriorityTier();
-    }
+    PriorityTier priorityTier = getPriorityTierForGoal(g.getPredicate());
 
     return submitGoal(g, execType, priority, priorityTier);
   }
@@ -878,7 +907,9 @@ public class ExecutionManager implements ActionListener {
       synchronized (goalsLock) {
         //Suspend and remove active goals back to pending first
         List<Future> aiFutures = new ArrayList<>();
+        List<GoalStatus> goalStatuses = new ArrayList<>(); //track original status to know whether to resume when returned to active
         for (Goal activeGoal : activeGoals) {
+          goalStatuses.add(activeGoal.getStatus());
           if (activeGoal.getStatus() == GoalStatus.ACTIVE) {
             suspendGoal(activeGoal.getId());
           }
@@ -895,6 +926,7 @@ public class ExecutionManager implements ActionListener {
         for (Goal activeGoal : activeGoals) {
           PendingGoal pg = new PendingGoal(activeGoal, ExecutionType.ACT);
           pg.setPreviousAIFuture(aiFutures.get(i));
+          pg.setPreviousStatus(goalStatuses.get(i));
           addPendingGoal(pg);
           i++;
         }
@@ -932,9 +964,14 @@ public class ExecutionManager implements ActionListener {
           onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.ADDED);
         }
         else {
-          log.debug("[transferGoalToActive] Resuming goal with previous AI");
-          goal.resume();
-          onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.ADDED);
+          if (pg.getPreviousStatus() == GoalStatus.ACTIVE) {
+            log.debug("[transferGoalToActive] Resuming goal with previous AI");
+            goal.resume();
+            onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.ADDED);
+          } else {
+            log.debug("[transferGoalToActive] Leaving goal with status {}", goal.getStatus());
+            onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.ADDED);
+          }
         }
         return;
       }
@@ -1852,17 +1889,17 @@ public class ExecutionManager implements ActionListener {
   //TODO: Probably want this to exist as a listener/notification system similar to those in other components
   //  and have any UI components which care about these updates to subscribe as listeners. Going to hold off
   //  until other GUI work is more concrete
-  protected void notifyUIActiveGoalUpdated(Goal g, GoalStatus status, boolean added) {
+  protected void notifyUIActiveGoalUpdated(Goal g, GoalStatus status, UpdateType updateType) {
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("notifyActiveGoalUpdated").argTypes(Goal.class,GoalStatus.class)).call(void.class, g, status);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("notifyActiveGoalUpdated").argTypes(Goal.class,UpdateType.class,GoalStatus.class)).call(void.class, g, updateType,  status);
     } catch (TRADEException e) {
       log.debug("[notifyUIActiveGoalUpdated]",e);
     }
   }
 
-  protected void notifyUIPendingGoalUpdated(Goal g, int index, boolean added) {
+  protected void notifyUIPendingGoalUpdated(Goal g, int index, UpdateType updateType) {
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("notifyPendingGoalUpdated").argTypes(Goal.class,int.class,Boolean.class)).call(void.class, g, index,added);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("notifyPendingGoalUpdated").argTypes(Goal.class,Integer.class,UpdateType.class)).call(void.class, g, index, updateType);
     } catch (TRADEException e) {
       log.debug("[notifyUIPendingGoalUpdated]",e);
     }

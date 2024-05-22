@@ -17,7 +17,7 @@ import java.lang.reflect.InvocationTargetException;
  * the BaseNode class. May eventually be extracted to an interface for different ros2 java
  * implementations.
  *
- * @param <T>
+ * @param <T> message type
  * @author Marlow Fawn
  * @see JRosClientNode
  */

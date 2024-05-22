@@ -56,12 +56,16 @@ sourceSets {
   create("controlApp"){
     java{
       srcDir("src/main/java")
-      include(listOf("edu/tufts/hrilab/fol/**" ,"edu/tufts/hrilab/slug/common/**","edu/tufts/hrilab/util/**"))
+      include(listOf("edu/tufts/hrilab/fol/**" ,"edu/tufts/hrilab/slug/common/**","edu/tufts/hrilab/util/**","edu/tufts/hrilab/action/annotations/**","edu/tufts/hrilab/action/ActionStatus.java","edu/tufts/hrilab/action/EffectType.java","edu/tufts/hrilab/action/ConditionType.java","edu/tufts/hrilab/action/util/Utilities.java","edu/tufts/hrilab/action/ActionBinding.java","edu/tufts/hrilab/action/justification/Justification.java"))
       exclude(listOf("edu/tufts/hrilab/slug/common/UtteranceUtil.java"))
       compileClasspath += sourceSets.main.get().compileClasspath
       runtimeClasspath += sourceSets.main.get().runtimeClasspath
     }
   }
+}
+
+tasks.named<Javadoc>("javadoc") {
+  source = sourceSets.main.get().allJava + sourceSets.getByName("mock").allJava
 }
 
 tasks.compileJava {
@@ -183,7 +187,7 @@ dependencies {
   implementation("org.scalamock:scalamock-core_2.12:3.6.0")
   //belief
   implementation("it.unibo.alice.tuprolog:tuprolog:3.3.0")
-  implementation("org.xerial:sqlite-jdbc:3.21.0")
+  implementation("org.xerial:sqlite-jdbc:3.45.2.0")
 
   //sphinx
   implementation("de.sciss:sphinx4-core:1.0.0")
