@@ -3,7 +3,7 @@ package edu.tufts.hrilab.gui;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import org.springframework.stereotype.Service;
-
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,33 +12,27 @@ import java.util.Set;
 @Service
 public class TradeServiceIntegrator {
 
-  public Map<String, Map<String, Set<String>>> getServicesOrganized() {
-    // Initialize the map to organize services by their components and providers
-    Map<String, Map<String, Set<String>>> organizedServices = new HashMap<>();
+  public Map<String, Set<Map<String, String>>> getServicesOrganized() {
+    // Initialize the map to organize services by their groups
+    Map<String, Set<Map<String, String>>> organizedServices = new HashMap<>();
 
-    // Fetch all services
-
-    // Organize services by their component and provider
-    //todo: Update to organize by groups (TSPs no longer exist)
     for (TRADEServiceInfo service : TRADE.getAvailableServices()) {
-//            // Assuming service.tsp.services gives a map of service names to TRADEServiceInfo
-//            service.getGroups().forEach((serviceName, serviceInfo) -> {
-//                // Organize first by component
-//                String component = serviceInfo.tsp.toString().split(" ")[0]; // Assuming toString gives component identifier
-//
-//                // Then organize by service provider within the component
-//                String provider = serviceInfo.serviceString; // serviceString to represent provider
-//
-//                // Add service name to the set
-//                organizedServices
-//                        .computeIfAbsent(component, k -> new HashMap<>())
-//                        .computeIfAbsent(provider, k -> new HashSet<>());
-////                        .add(serviceName);
-//            });
-    }
+      Map<String, String> serviceDetails = new HashMap<>();
+      serviceDetails.put("Description", service.toString());
+      serviceDetails.put("Return Type", service.serviceReturnTypeName);
+      serviceDetails.put("Parameter Names", Arrays.toString(service.serviceParameterNames));
 
+      // Check if the service has groups; if not, assign it to "Ungrouped"
+      Set<String> groups = (Set<String>) service.getGroups();
+      if (groups == null || groups.isEmpty()) {
+        groups = new HashSet<>();
+        groups.add("Ungrouped");  // Default group for ungrouped services
+      }
+
+      for (String groupName : groups) {
+        organizedServices.computeIfAbsent(groupName, k -> new HashSet<>()).add(serviceDetails);
+      }
+    }
     return organizedServices;
   }
-
-
 }
