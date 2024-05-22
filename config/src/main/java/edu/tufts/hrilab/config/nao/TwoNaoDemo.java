@@ -41,11 +41,6 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
 
   private TextWebSocketHandler handler;
 
-  @Bean
-  String getRobotName() {
-    return "dempster";
-  }
-
   // start the configuration
   @Override
   public void runConfiguration() {
@@ -90,7 +85,7 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
 
     createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
 
-    this.handler = new ChatEndpoint(a, b, getRobotName());
+    this.handler = new ChatEndpoint(a, b);
   }
 
   public static void main(String[] args) {
