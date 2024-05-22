@@ -5,9 +5,12 @@
 package edu.tufts.hrilab.config.nao;
 
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.gui.DemoApplication;
 import edu.tufts.hrilab.nao.MockNaoComponent;
 import edu.tufts.hrilab.nao.NaoComponent;
+import edu.tufts.hrilab.simspeech.ChatEndpoint;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
+import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
@@ -15,6 +18,7 @@ import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.sphinx4.Sphinx4Component; 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
 
 public class TwoNaoDemo extends DiarcConfiguration {
   // for logging
@@ -33,9 +37,10 @@ public class TwoNaoDemo extends DiarcConfiguration {
   // start the configuration
   @Override
   public void runConfiguration() {
+    SimSpeechRecognitionComponent a = null;
 
     if (simSpeech) {
-      createInstance(SimSpeechRecognitionComponent.class,
+      a = createInstance(SimSpeechRecognitionComponent.class,
               "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster");
       createInstance(SimSpeechRecognitionComponent.class,
               "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -listener dempster");
@@ -54,7 +59,8 @@ public class TwoNaoDemo extends DiarcConfiguration {
 
     createInstance(ReferenceResolutionComponent.class);
 
-    createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
+    DialogueComponent b;
+    b = createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
 
     createInstance(SimpleNLGComponent.class);
 
@@ -71,10 +77,13 @@ public class TwoNaoDemo extends DiarcConfiguration {
             "-goal listen(self)";
 
     createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
+
+    new ChatEndpoint(a, b, "dempster");
   }
 
   public static void main(String[] args) {
     TwoNaoDemo demoConfig = new TwoNaoDemo();
+//    SpringApplication.run(DemoApplication.class, args);
     demoConfig.runConfiguration();
   }
 }
