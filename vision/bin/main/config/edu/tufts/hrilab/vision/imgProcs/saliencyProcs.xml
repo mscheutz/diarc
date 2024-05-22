@@ -1,0 +1,38 @@
+<!--
+Set which SaliencyProcessors are available to they system, and how they are
+configured and advertised.
+
+Required:
+	type : ImageProcessorType - must match one of the 
+		ImageProcessor enums (case insensitive).
+
+Optional:
+	config : ImageProcessor configuration file used 
+		to configure ImageProcessor instances and also 
+		advertise a processor's low-level capabilites 
+		(e.g., red, round, etc). Relative path from this file.
+	depends : Other ImageProcessorType dependencies that
+		get turned on/off automatically with ImageProcessor
+		- must match one of the ImageProcessor 
+		enums (case insensitive).
+	required : if this detector type requires a particular
+	    runtime configuration to be available.
+	    this must match one of the enums defined in the Java
+	    edu.tufts.hrilab.vision.visionproc.Requirement enum (case insensitive)
+
+example usage:
+<processor type="colorsaliencymap" config="color/file.xml"/>
+
+all processors must be enclosed within the <processors> tag
+-->
+<processors>
+	<processor type="colorsaliencymap" config="color/colormap.xml" required="v4r_v0"/>
+	<processor type="locationsaliency" config="location/location.xml" required="v4r_v0"/>
+	<processor type="relativeheight" config="height/height.xml" depends="plane" required="v4r_v0,depth"/>
+	<processor type="surfacecurvature" config="surface_curvature/curvature.xml" depends="plane" required="v4r_v0,depth"/>
+	<processor type="surfaceorientation" config="surface_orientation/orientation.xml" depends="plane" required="v4r_v0,depth"/>
+	<processor type="symmetrysaliencymap" config="symmetry/symmetry.xml" required="v4r_v0"/>
+	<processor type="orientationsaliency" config="orientation/orientation.xml" required="v4r_v0"/>
+	<processor type="mastersaliency" required="v4r_v0"/>
+	<processor type="iknsaliencymap" required="v4r_v0"/>
+</processors>

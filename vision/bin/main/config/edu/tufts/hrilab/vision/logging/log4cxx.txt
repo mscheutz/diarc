@@ -1,0 +1,79 @@
+# Set root logger level to INFO and its only appender to stdout.
+log4j.rootLogger=INFO, stdout
+
+# stdout is set to be a ConsoleAppender.
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
+
+# file1 is set to be a FileAppender.
+log4j.appender.file1=org.apache.log4j.FileAppender
+log4j.appender.file1.File=logs/vision.log
+log4j.appender.file1.Append=false
+log4j.appender.file1.layout=org.apache.log4j.PatternLayout
+log4j.appender.file1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
+
+# Detectors
+#log4j.logger.ade.detector.BarCodeDetector=DEBUG, file1
+#log4j.logger.ade.detector.BlobDetector=INFO, file1
+#log4j.logger.ade.detector.ColorBasedDetector=DEBUG, file1
+#log4j.logger.ade.detector.ClusterDetectorAdvanced=DEBUG, file1
+#log4j.logger.ade.detector.ClusterDetector2D=DEBUG, file1
+#log4j.logger.ade.detector.ClusterDetector=TRACE
+#log4j.logger.ade.detector.FaceDetector=TRACE, file1
+#log4j.logger.ade.detector.FoodDetectorByHSV=DEBUG
+#log4j.logger.ade.detector.GraspDetector=DEBUG
+#log4j.logger.ade.detector.HoughDetector=TRACE, file1
+#log4j.logger.ade.detector.hough.GHT=DEBUG, file1
+#log4j.logger.ade.detector.SpatialRelationDetector=DEBUG, file1
+#log4j.logger.ade.detector.OpPoseDetector=DEBUG, file1
+#log4j.logger.ade.detector.people_openni.PeopleDetector=TRACE, file1
+#log4j.logger.ade.detector.SiftDetector=DEBUG, file1
+#log4j.logger.ade.detector.V4RDetector=TRACE, file1
+
+# Trackers
+#log4j.logger.ade.opentld.TLD=DEBUG, file1
+#log4j.logger.ade.stm.TrackedObjects=TRACE, file1
+#log4j.logger.ade.tracker.CMTTracker=TRACE, file1
+#log4j.logger.ade.tracker.GenericTracker=TRACE, file1
+log4j.logger.ade.tracker.OpenCVTracker=DEBUG
+#log4j.logger.ade.tracker.RelationTracker=DEBUG, file1
+#log4j.logger.ade.tracker.RelationTracker=DEBUG, file1
+#log4j.logger.ade.tracker.V4RTracker=DEBUG, file1
+
+# Image Processors
+#log4j.logger.ade.imgproc.OpticalFlowProcessor=TRACE, file1
+#log4j.logger.ade.imgproc.PlaneProcessor=DEBUG
+
+# Learners
+#log4j.logger.ade.learn.SegmentedObjectLearner=DEBUG, file1
+
+# Validators
+#log4j.logger.ade.imgproc.validator.ColorValidator=DEBUG
+#log4j.logger.ade.imgproc.validator.GlobalFeatureValidator=DEBUG, file1
+#log4j.logger.ade.imgproc.validator.ShapeValidator=DEBUG, file1
+#log4j.logger.ade.imgproc.validator.SpatialRelationValidator=DEBUG, file1
+#log4j.logger.ade.imgproc.validator.SurfaceMarkingValidator=TRACE, file1
+
+# Saliency
+#log4j.logger.ade.imgproc.saliency.ColorProcessor=TRACE
+#log4j.logger.ade.imgproc.saliency.MasterSaliencyProcessor=TRACE, file1
+
+# FOL (first order logic)
+#log4j.logger.ade.common.fol.PredicateBuilder=DEBUG
+#log4j.logger.ade.common.fol.Predicate=DEBUG
+#log4j.logger.ade.common.fol.Variable=DEBUG
+#log4j.logger.ade.common.fol.Symbol=DEBUG
+#log4j.logger.ade.common.fol.PredicateHelper=DEBUG
+
+# Other
+#log4j.logger.ade.capture.Capture=DEBUG, file1
+#log4j.logger.ade.capture.CapturedFrames=TRACE, file1
+#log4j.logger.ade.detector.grasp.SmallObjectGrasp=DEBUG
+#log4j.logger.ade.display.DisplayUtilities=DEBUG
+#log4j.logger.ade.Display=DEBUG
+#log4j.logger.ade.pc.util.PointCloudUtilities=DEBUG
+#log4j.logger.ade.stm.MemoryObject=DEBUG, file1
+#log4j.logger.ade.stm.MemoryObjectInterface=TRACE, file1
+#log4j.logger.ade.stm.MemoryObjectMask=DEBUG
+#log4j.logger.ade.tools.syncedqueue=TRACE, file1
