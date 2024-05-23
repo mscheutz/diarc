@@ -27,6 +27,8 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.awt.*;
+
 @Configuration
 @EnableWebSocket
 public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigurer {
@@ -43,18 +45,27 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
   public boolean mockNao = true;
   public boolean useSphinx = false;
 
-  private TextWebSocketHandler handler;
+//  @Bean
+  protected SimSpeechRecognitionComponent simSpeech() {
+    return createInstance(SimSpeechRecognitionComponent.class,
+            "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster");
+  }
+
+  @Bean
+  protected DialogueComponent dialogue() {
+    return createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
+  }
 
   // start the configuration
   @Override
   public void runConfiguration() {
     SimSpeechRecognitionComponent a = null;
 
-    if (simSpeech) {
-      a = createInstance(SimSpeechRecognitionComponent.class,
-              "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster");
-      createInstance(SimSpeechRecognitionComponent.class,
-              "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -listener dempster");
+    if (simSpeech) {;
+//      a = createInstance(SimSpeechRecognitionComponent.class,
+//              "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster");
+//      createInstance(SimSpeechRecognitionComponent.class,
+//              "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -listener dempster");
     }
 
     if (useSphinx) {
@@ -70,8 +81,7 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
 
     createInstance(ReferenceResolutionComponent.class);
 
-    DialogueComponent b;
-    b = createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
+//  createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
 
     createInstance(SimpleNLGComponent.class);
 
@@ -87,8 +97,6 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
             "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
             "-goal listen(self)";
 
-    this.handler = new ChatEndpoint(a, b);
-
     createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
   }
 
@@ -100,6 +108,7 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
 
   @Override
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-    registry.addHandler(handler, "/chat");
+    registry.addHandler(new ChatEndpoint(simSpeech(), dialogue()), "/chat")
+            .setAllowedOrigins("http://localhost:3000");
   }
 }

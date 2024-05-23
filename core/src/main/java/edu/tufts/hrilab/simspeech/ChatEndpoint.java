@@ -29,6 +29,7 @@ public class ChatEndpoint extends TextWebSocketHandler {
      * Constructs the <code>ChatEndpoint</code> given simulated speech
      * recognition and production components.
      * @param recognitionComponent simulated speech recognition component
+     * @param dialogueComponent dialogue component to register for utterance notifications.
      */
     public ChatEndpoint(SimSpeechRecognitionComponent recognitionComponent,
                         DialogueComponent dialogueComponent) {
@@ -61,8 +62,11 @@ public class ChatEndpoint extends TextWebSocketHandler {
             return;
 
         try {
-            // TODO: post message
-            System.out.println("I was told to say: " + utterance.getWordsAsString());
+            if(session != null) {
+                session.sendMessage(new TextMessage(utterance.getWordsAsString()));
+            } else {
+                System.out.println("Could not send message: no active session");
+            }
         } catch (Exception e) {
             log.error(e.getMessage());
         }
@@ -83,8 +87,6 @@ public class ChatEndpoint extends TextWebSocketHandler {
                                      @Nonnull TextMessage message) throws Exception {
         this.session = session;
         JSONObject request = new JSONObject(message.getPayload());
-
-        System.out.println(request);
-        // TODO: implement reception of message → pass to recognition component
+        this.recognitionComponent.setText(request.getString("message"));
     }
 }
