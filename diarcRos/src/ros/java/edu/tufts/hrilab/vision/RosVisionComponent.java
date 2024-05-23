@@ -3,7 +3,7 @@ package edu.tufts.hrilab.vision;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import diarc_ros_srvs.*;
+import diarc_vision_ros.*;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarcros.common.RosConfiguration;
 import edu.tufts.hrilab.fol.Factory;
