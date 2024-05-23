@@ -21,10 +21,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+@Configuration
+@EnableWebSocket
 public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigurer {
   // for logging
   protected static Logger log = LoggerFactory.getLogger(TwoNaoDemo.class);
@@ -83,14 +87,14 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
             "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
             "-goal listen(self)";
 
-    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
-
     this.handler = new ChatEndpoint(a, b);
+
+    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
   }
 
   public static void main(String[] args) {
     TwoNaoDemo demoConfig = new TwoNaoDemo();
-//    SpringApplication.run(DemoApplication.class, args);
+    SpringApplication.run(DemoApplication.class, args);
     demoConfig.runConfiguration();
   }
 

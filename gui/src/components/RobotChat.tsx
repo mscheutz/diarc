@@ -22,8 +22,6 @@ import {
     ConversationList
 } from "@chatscope/chat-ui-kit-react";
 
-import Stomp from '@stomp/stompjs'
-
 // OOP forever, baybee
 class Chat {
     robotName: string;
@@ -104,6 +102,16 @@ type MessageProps = {
 }
 
 const RobotChat: React.FC<{}> = () => {
+    const ws = new WebSocket("ws://localhost:8080/chat");
+    ws.onmessage = function (data) { console.log("hello world!") };
+    ws.onopen = function () { console.log("connected") };
+    ws.onclose = function () { console.log("disconnected") };
+    ws.onerror = function (error) { console.error("websocket error: " + error) }
+
+    // ws.on("error", console.error);
+    // ws.on("open", function open() { ws.send("hello world!"); });
+    // ws.on("message", function message(data) { console.log("received: %s", data); });
+
     // Pure unadulterated jank
     let [, rerender] = useState({});
     const forceRerender = React.useCallback(() => rerender({}), []);
