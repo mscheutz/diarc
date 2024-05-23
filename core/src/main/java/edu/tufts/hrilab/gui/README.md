@@ -123,10 +123,11 @@ curl -X POST "http://localhost:8080/invoke-service?serviceName=getPath" \
 -d '[[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], "location_0:location", 0.01, true]'
 ```
 
-Currently two possible results may occur:
+Currently three possible results may occur:
 
     Reference is not known: Y:dest
     Target location must be in a room
+    passing "string" to 'dest' results in the program running indefinitely
 
 ## TODO:
 

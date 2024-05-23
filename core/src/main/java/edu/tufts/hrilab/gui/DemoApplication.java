@@ -27,6 +27,11 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.vecmath.Matrix4d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Quat4d;
+import javax.vecmath.Tuple3d;
+
 @SpringBootApplication
 @RestController
 public class DemoApplication extends SpringBootServletInitializer {
@@ -121,7 +126,7 @@ public class DemoApplication extends SpringBootServletInitializer {
   @PostMapping("/invoke-service")
   public ResponseEntity<String> invokeService(
           @RequestParam("serviceName") String serviceName,
-          @RequestBody(required = false) JsonNode rawArgs) {
+          @RequestBody(required = false) JsonNode rawArgs) { // Use JsonNode to raw handle incoming JSON
 
     try {
       // Obtain the argument types for the specified service
@@ -135,25 +140,69 @@ public class DemoApplication extends SpringBootServletInitializer {
       Object[] args; // Prepare the arguments array
       Class<?>[] argClasses;
 
-      if (argTypes.length == 1 && argTypes[0].equals("java.util.List") && rawArgs != null && rawArgs.isArray()) {
-        // Treat the entire array as a single List argument
-        List<?> listArg = new ObjectMapper().readValue(rawArgs.toString(), List.class);
-        args = new Object[]{listArg};
-        argClasses = new Class<?>[]{List.class};
-      } else {
-        // Treat each item in the JSON array as separate arguments
-        args = new Object[argTypes.length];
-        argClasses = new Class<?>[argTypes.length];
-        for (int i = 0; i < argTypes.length; i++) {
-          assert rawArgs != null;
-          if (!rawArgs.has(i)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing argument at index " + i + " for service '" + serviceName + "'.");
+      switch (rawArgs.getNodeType()) {
+        case OBJECT:
+          // Check if service documentation is loaded for this service
+          Map<String, Map<String, Object>> serviceDetails = loadServiceDocumentation();
+          if (!serviceDetails.containsKey(serviceName)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Service documentation missing for: " + serviceName);
           }
-          String value = rawArgs.get(i).asText();
-          args[i] = convertToType(value, argTypes[i]);
-          assert args[i] != null;
-          argClasses[i] = args[i].getClass();
-        }
+
+          Map<String, Object> paramsInfo = serviceDetails.get(serviceName);
+          List<Map<String, Object>> parameters = (List<Map<String, Object>>) paramsInfo.get("parameters");
+
+          args = new Object[parameters.size()];
+          argClasses = new Class<?>[parameters.size()];
+
+          int index = 0;
+          for (Map<String, Object> paramInfo : parameters) {
+            String paramName = (String) paramInfo.get("name");
+            String typeName = (String) paramInfo.get("type");
+
+            if (!rawArgs.has(paramName)) {
+              return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing parameter: " + paramName);
+            }
+
+            JsonNode paramValue = rawArgs.get(paramName);
+            String valueAsString = paramValue.isValueNode() ? paramValue.asText() : paramValue.toString();
+            args[index] = convertToType(valueAsString, typeName);
+              assert args[index] != null;
+              argClasses[index] = args[index].getClass();
+            index++;
+          }
+          break;
+        case ARRAY:
+          // Check if the service expects a single List argument
+          // && rawArgs != null
+          if (argTypes.length == 1 && argTypes[0].equals("java.util.List") && rawArgs.isArray()) {
+            // Treat the entire array as a single List argument
+            String listValue = rawArgs.toString(); // Convert the raw JSON array to String
+            Object listArg = convertToType(listValue, "java.util.List");
+            args = new Object[]{listArg};
+            argClasses = new Class<?>[]{List.class};
+          } else {
+            // Treat each item in the JSON array as separate arguments
+            args = new Object[argTypes.length];
+            argClasses = new Class<?>[argTypes.length];
+            for (int i = 0; i < argTypes.length; i++) {
+                if (!rawArgs.has(i)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing argument at index " + i + " for service '" + serviceName + "'.");
+              }
+              String typeName = argTypes[i];
+              String value;
+              if ("javax.vecmath.Matrix4d".equals(typeName) && rawArgs.has(i) && rawArgs.get(i).isArray()) {
+                value = rawArgs.get(i).toString(); // Directly convert the JSON array to string
+              } else {
+                value = rawArgs.has(i) ? rawArgs.get(i).asText() : null; // Use JsonNode API to get value
+              }
+              args[i] = convertToType(value, typeName);
+              assert args[i] != null;
+              argClasses[i] = args[i].getClass();
+            }
+          }
+          break;
+        default:
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid JSON input format.");
       }
 
       TRADEServiceConstraints constraints = new TRADEServiceConstraints().name(serviceName).argTypes(argClasses);
@@ -167,6 +216,7 @@ public class DemoApplication extends SpringBootServletInitializer {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to invoke service '" + serviceName + "': " + e.getMessage());
     }
   }
+
   /**
    * Converts a string value to an object of the specified type.
    * Might need to be extended based on the specific types used in your application.
@@ -181,7 +231,10 @@ public class DemoApplication extends SpringBootServletInitializer {
     System.out.println("Converting value: " + value + " to type: " + typeName); // Log the value and type being converted
 
     switch (typeName) {
+//      case "java.lang.String":
+//        return
       case "java.lang.String":
+      case "string":
         return value;
       case "java.lang.Integer":
       case "int":
@@ -193,6 +246,7 @@ public class DemoApplication extends SpringBootServletInitializer {
       case "boolean":
         return Boolean.parseBoolean(value);
       case "java.util.List":
+      case "list":
         JsonNode rootNode = mapper.readTree(value);
         if (rootNode.isArray()) {
           List<Object> list = new ArrayList<>();
@@ -221,10 +275,30 @@ public class DemoApplication extends SpringBootServletInitializer {
         }
         break;
       case "edu.tufts.hrilab.fol.Symbol":
+      case "symbol":
         // Using "name:type" Syntax
         return Factory.createSymbol(value);
       case "edu.tufts.hrilab.fol.Variable":
+      case "variable":
         return Factory.createVariable(value);
+      case "javax.vecmath.Matrix4d":
+      case "matrix4d":
+        try {
+          JsonNode arrayNode = mapper.readTree(value);
+          if (!arrayNode.isArray() || arrayNode.size() != 16) {
+            throw new IllegalArgumentException("Matrix4d requires an array of 16 values.");
+          }
+          double[] matrixValues = new double[16];
+          for (int i = 0; i < 16; i++) {
+            matrixValues[i] = arrayNode.get(i).asDouble();
+          }
+          Matrix4d matrix = new Matrix4d(matrixValues);
+          System.out.println("Successfully created Matrix4d from: " + Arrays.toString(matrixValues));
+          return matrix;
+        } catch (Exception e) {
+          System.out.println("Error parsing Matrix4d values from: " + value);
+          throw new IllegalArgumentException("Invalid format for Matrix4d values.", e);
+        }
       default:
         System.out.println("Unsupported argument type encountered: " + typeName); // Log unsupported type
         throw new IllegalArgumentException("Unsupported argument type: " + typeName);

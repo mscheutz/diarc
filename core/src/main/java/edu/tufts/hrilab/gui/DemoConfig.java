@@ -4,7 +4,6 @@
 
 package edu.tufts.hrilab.gui;
 
-import edu.tufts.hrilab.diarc.DiarcComponent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
@@ -14,9 +13,9 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
+import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.map.MapComponent;
 import edu.tufts.hrilab.map.MapGui;
-
 
 @Configuration
 @EnableWebSocket

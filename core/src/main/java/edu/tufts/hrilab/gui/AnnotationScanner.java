@@ -80,9 +80,10 @@ public class AnnotationScanner {
     private static Map<String, Object> createPropertiesMap(List<Map<String, Object>> parameters) {
         Map<String, Object> properties = new HashMap<>();
         for (Map<String, Object> param : parameters) {
-            Map<String, Object> propertyDetails = new HashMap<>();
-            propertyDetails.put("type", param.get("schema"));
-            properties.put(param.get("name").toString(), propertyDetails);
+            // Assuming the 'schema' key in 'param' map itself is another map which contains the 'type'
+            Map<String, Object> schemaMap = (Map<String, Object>) param.get("schema");
+            String type = (String) schemaMap.get("type");  // Extract the type directly
+            properties.put(param.get("name").toString(), Map.of("type", mapJavaTypeToJsonSchemaType(type)));
         }
         return properties;
     }
@@ -101,7 +102,7 @@ public class AnnotationScanner {
                         "name", parameter.getName(),
                         "in", "query",
                         "required", false,
-                        "schema", Map.of("type", parameter.getType().getSimpleName())
+                        "schema", Map.of("type", parameter.getType().getSimpleName().toLowerCase())
                 ));
             }
             methodDetails.add(new MethodDetail(method.getName(), method.getDeclaringClass().getSimpleName(), parameters));
@@ -120,4 +121,30 @@ public class AnnotationScanner {
             this.parameters = parameters;
         }
     }
+
+
+    private static String mapJavaTypeToJsonSchemaType(String javaType) {
+        // Example of mapping, add more cases as needed
+        switch (javaType.toLowerCase()) {  // b/c toLowerCase used in getMethodsAnnotatedWithTRADEService
+            case "double":
+            case "float":
+            case "bigdecimal":
+                return "number";
+            case "int":
+            case "long":
+            case "short":
+            case "byte":
+                return "integer";
+            case "boolean":
+                return "boolean";
+            case "string":
+                return "string";
+            case "symbol":
+            case "variable":
+                return "name:type";
+            default:
+                return javaType; // Custom types, use original (e.g., list)
+        }
+    }
+
 }
