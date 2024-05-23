@@ -57,7 +57,7 @@ class Chat {
                     : "No messages yet"}
                 lastSenderName={this.messageList.length > 0 ?
                     this.messageList.slice(-1)[0].sender
-                    : ""}
+                    : null}
                 name={this.robotName}
                 onClick={(e) => this.focusThisChat(this)}
             >
@@ -125,88 +125,14 @@ const RobotChat: React.FC<{}> = () => {
         useState(new Chat("", "", "", [], () => null));
 
     const [dempsterChat, setDempsterChat] = useState(
-        new Chat("dempster", "NAO robot", "/heroimage.svg",
-            [{
-                message: "hello dempster",
-                sender: "evan",
-                direction: "outgoing",
-                position: "single"
-            },
-            {
-                message: "hello evan",
-                sender: "dempster",
-                direction: "incoming",
-                position: "single"
-            },
-            {
-                message: "stand",
-                sender: "evan",
-                direction: "outgoing",
-                position: "single"
-            },
-            {
-                message: "okay",
-                sender: "dempster",
-                direction: "incoming",
-                position: "first"
-            },
-            {
-                message: "INFO goToPosture: ([agent:dempster]) Stand",
-                sender: "dempster",
-                direction: "incoming",
-                position: "last"
-            }],
-            setCurrentChat)
+        new Chat("dempster", "NAO robot", "/heroimage.svg", [], setCurrentChat)
     );
 
     const [shaferChat, setShaferChat] = useState(
-        new Chat("shafer", "NAO robot", "/robot.png",
-            [{
-                message: "hello shafer",
-                sender: "ravenna",
-                direction: "outgoing",
-                position: "single"
-            },
-            {
-                message: "hello ravenna",
-                sender: "shafer",
-                direction: "incoming",
-                position: "single"
-            },
-            {
-                message: "please nod",
-                sender: "ravenna",
-                direction: "outgoing",
-                position: "single"
-            },
-            {
-                message: "okay",
-                sender: "shafer",
-                direction: "incoming",
-                position: "first"
-            },
-            {
-                message: "I can not nod because I do not know how to nod",
-                sender: "shafer",
-                direction: "incoming",
-                position: "last"
-            },
-            {
-                message: "i will teach you how to nod",
-                sender: "ravenna",
-                direction: "outgoing",
-                position: "single"
-            },
-            {
-                message: "I can not learn how to nod because learning how to nod is admin Goal",
-                sender: "shafer",
-                direction: "incoming",
-                position: "single"
-            }],
-            setCurrentChat)
+        new Chat("shafer", "NAO robot", "/robot.png", [], setCurrentChat)
     );
 
-    const [chats, setChat] = useState([dempsterChat, shaferChat]);
+    const [chats, setChats] = useState([dempsterChat, shaferChat]);
 
     const [conversations, setConversations] = useState(
         <ConversationList>
@@ -219,7 +145,14 @@ const RobotChat: React.FC<{}> = () => {
     // SET UP WEBSOCKET //
     const ws = new WebSocket("ws://localhost:8080/chat");
     ws.onmessage = (message) => {
-        currentChat.postServerMessage(message.data);
+        // console.log(message.data);
+        const data = JSON.parse(message.data);
+        for (const chat of chats) {
+            if (chat.robotName === data.sender) {
+                chat.postServerMessage(data.message);
+            }
+        }
+        // We're mutating state so make React render the window again
         forceRerender();
     };
     ws.onopen = function () { console.log("connected"); }
@@ -246,7 +179,8 @@ const RobotChat: React.FC<{}> = () => {
                     currentChat.postUserMessage(message, username);
                     ws.send(JSON.stringify({
                         message: clean(message),
-                        username: clean(username)
+                        sender: clean(username),
+                        recipient: currentChat.robotName
                     }));
                     // Since we're mutating state, we need to trick React
                     // into updating itself

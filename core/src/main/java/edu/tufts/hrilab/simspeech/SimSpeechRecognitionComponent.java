@@ -124,6 +124,14 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
     }
   }
 
+  public Symbol getSpeaker() {
+    return this.speaker;
+  }
+
+  public Symbol getListener() {
+    return this.listener;
+  }
+
   public void setSpeaker(Symbol speaker) {
     this.speaker = speaker;
     log.info("speaker set to: " + this.speaker);
