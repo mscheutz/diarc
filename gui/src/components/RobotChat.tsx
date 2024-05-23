@@ -91,6 +91,15 @@ class Chat {
             position: "single"
         })
     }
+
+    postServerMessage(message: string) {
+        this.messageList.push({
+            message: message,
+            sender: this.robotName,
+            direction: "incoming",
+            position: "single"
+        })
+    }
 }
 
 // Subset of 'model' prop at https://chatscope.io/storybook/react/?path=/docs/components-message--docs
@@ -101,17 +110,13 @@ type MessageProps = {
     position: "single" | "first" | "normal" | "last" | 0 | 1 | 2 | 3
 }
 
+// Remove line breaks from messages when sending
+const clean = (message: string) => {
+    return message.replace("<br>", "").replace(/(\r\n|\n|\r)/gm, "")
+}
+
 const RobotChat: React.FC<{}> = () => {
-    const ws = new WebSocket("ws://localhost:8080/chat");
-    ws.onmessage = function (data) { console.log("hello world!") };
-    ws.onopen = function () { console.log("connected") };
-    ws.onclose = function () { console.log("disconnected") };
-    ws.onerror = function (error) { console.error("websocket error: " + error) }
-
-    // ws.on("error", console.error);
-    // ws.on("open", function open() { ws.send("hello world!"); });
-    // ws.on("message", function message(data) { console.log("received: %s", data); });
-
+    // SET UP STATE //
     // Pure unadulterated jank
     let [, rerender] = useState({});
     const forceRerender = React.useCallback(() => rerender({}), []);
@@ -211,6 +216,17 @@ const RobotChat: React.FC<{}> = () => {
 
     const [username, setUsername] = useState("");
 
+    // SET UP WEBSOCKET //
+    const ws = new WebSocket("ws://localhost:8080/chat");
+    ws.onmessage = (message) => {
+        currentChat.postServerMessage(message.data);
+        forceRerender();
+    };
+    ws.onopen = function () { console.log("connected"); }
+    ws.onclose = function () { console.log("disconnected") };
+    ws.onerror = function (error) { console.error("websocket error: " + error) }
+
+    // CREATE RENDER //
     // This is the usual chat container but it only makes sense if there
     // is a conversation already selected...
     let chatContainer = (
@@ -228,6 +244,10 @@ const RobotChat: React.FC<{}> = () => {
                 attachButton={false}
                 onSend={(message) => {
                     currentChat.postUserMessage(message, username);
+                    ws.send(JSON.stringify({
+                        message: clean(message),
+                        username: clean(username)
+                    }));
                     // Since we're mutating state, we need to trick React
                     // into updating itself
                     forceRerender();
