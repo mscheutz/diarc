@@ -84,7 +84,8 @@ public class MapGui extends TextWebSocketHandler {
             // Convert PGM to PNG and get the new file name
             String pngFileName = imageService.convertPGMtoPNG(pgmFilePath);
             response.put("currentFloor", currentFloor);
-            response.put("mapImageUrl", "/images/" + pngFileName);  // see WebMvcConfig
+            // see WebMvcConfig: /images/ b/c addResourceHandlers and http://localhost:8080 b/c addCorsMappings
+            response.put("mapImageUrl", "http://localhost:8080/images/" + pngFileName);
         } catch (Exception e) {
             log.error("Failed to retrieve or convert map data", e);
             response.put("error", "Failed to retrieve map data: " + e.getMessage());

@@ -37,7 +37,9 @@ public class DemoConfig implements WebSocketConfigurer {
   }
 
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-    registry.addHandler(mapGui(mapComponent()), "/map");
-    registry.addHandler(new DemoComponent(), "/user");
+    registry.addHandler(mapGui(mapComponent()), "/map")
+            .setAllowedOrigins("http://localhost:3000");
+    registry.addHandler(new DemoComponent(), "/user")
+            .setAllowedOrigins("http://localhost:3000");
   }
 }
