@@ -1,0 +1,25 @@
+Version 0.1
+
+Image Size =
+320 240
+
+Intrinsic Parameters:
+Camera matrix =
+285.988728 0.000000 164.502726 
+0.000000 281.572529 107.527769 
+0.000000 0.000000 1.000000 
+
+Distortion params =
+0.133255 -0.626112 0.002277 0.007139 0.801247 
+
+Extrinsic Parameters:
+Translation params =
+0.000000
+0.000000
+0.000000
+
+Rotation params =
+0.000000 
+0.000000 
+0.000000 
+

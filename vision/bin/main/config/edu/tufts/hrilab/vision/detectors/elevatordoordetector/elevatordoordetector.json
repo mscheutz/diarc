@@ -1,0 +1,34 @@
+{
+    "processor": {
+      "type": "category",
+      "arity": 1
+    },
+    "config": {
+      "model": "elevatordoordetectorS320",
+      "type" : "onnx",
+      "backend": "CPU",
+      "input_size": 640,
+      "conf_thresh": 0.3,
+      "score_thresh": 0.3,
+      "nms_thresh": 0.4,
+      "classes" : 4
+    },
+    "predicates": [
+      {
+        "name": "nobody_was_in_the_elevator",
+        "classID": 0
+      },
+      {
+        "name": "closed_elevator",
+        "classID": 1
+      },
+      {
+        "name": "open_elevator",
+        "classID": 2
+      },
+      {
+        "name": "people_are_in_the_elevator",
+        "classID": 3
+      }
+    ]
+  }
