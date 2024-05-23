@@ -44,21 +44,9 @@ public class DemoApplication extends SpringBootServletInitializer {
   @Autowired
   private TradeServiceTracker tradeServiceTracker;
 
-  @Autowired
-  private ResourceLoader resourceLoader;
-
   @Override
   protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
     return application.sources(DemoApplication.class);
-  }
-
-  @GetMapping("/custom-api-docs")
-  public ResponseEntity<Resource> getCustomApiDocs() {
-    Resource resource = resourceLoader.getResource("classpath:/serviceDocumentation.json");
-    if (!resource.exists()) {
-      return ResponseEntity.notFound().build();
-    }
-    return ResponseEntity.ok(resource);
   }
 
   @CrossOrigin(origins = "http://localhost:3000")
@@ -100,28 +88,6 @@ public class DemoApplication extends SpringBootServletInitializer {
             .collect(Collectors.toSet());
   }
 
-  // Method to read and parse the service documentation JSON
-  private Map<String, Map<String, Object>> loadServiceDocumentation() throws Exception {
-    ObjectMapper mapper = new ObjectMapper();
-    InputStream inputStream = new ClassPathResource("serviceDocumentation.json").getInputStream();
-    JsonNode docRoot = mapper.readTree(inputStream);
-    Map<String, Map<String, Object>> serviceMap = new HashMap<>();
-    docRoot.path("paths").fields().forEachRemaining(entry -> {
-      String path = entry.getKey();
-      JsonNode details = entry.getValue().get("post");
-      String serviceName = path.split("\\?")[1].split("=")[1];
-      List<Map<String, Object>> parameters = new ArrayList<>();
-      details.get("parameters").forEach(param -> {
-        Map<String, Object> paramDetails = new HashMap<>();
-        paramDetails.put("name", param.get("name").asText());
-        paramDetails.put("type", param.get("schema").get("type").asText());
-        parameters.add(paramDetails);
-      });
-      serviceMap.put(serviceName, Map.of("parameters", parameters));
-    });
-    return serviceMap;
-  }
-
   @CrossOrigin(origins = "http://localhost:3000")
   @PostMapping("/invoke-service")
   public ResponseEntity<String> invokeService(
@@ -143,7 +109,7 @@ public class DemoApplication extends SpringBootServletInitializer {
       switch (rawArgs.getNodeType()) {
         case OBJECT:
           // Check if service documentation is loaded for this service
-          Map<String, Map<String, Object>> serviceDetails = loadServiceDocumentation();
+          Map<String, Map<String, Object>> serviceDetails = DocumentationController.loadServiceDocumentation();
           if (!serviceDetails.containsKey(serviceName)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Service documentation missing for: " + serviceName);
           }
