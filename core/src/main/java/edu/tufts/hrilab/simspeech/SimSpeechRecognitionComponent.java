@@ -40,7 +40,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
   public boolean useUnk = false;
   public boolean useCommand = true;
   public boolean toLower = false;
-  public boolean useGui = true;
+  public boolean useGui = false; // turned off because it gives a java.awt.HeadlessException???
   public Color textColor = Color.BLACK;
   private String input = null; // input from GUI visualizer, typically
   private String output = null; // output saved for getText
