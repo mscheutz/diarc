@@ -2,7 +2,6 @@
 
 import React from "react";
 import Navbar from "../Navbar";
-import HeroBlock from "./HeroBlock";
 import Providers from "../Providers";
 import RobotChat from "../RobotChat";
 
