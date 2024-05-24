@@ -152,6 +152,9 @@ const RobotChat: React.FC<{}> = () => {
                 chat.postServerMessage(data.message);
             }
         }
+        setConversations(<ConversationList>
+            {chats.map((chat, index) => chat.conversation(index))}
+        </ConversationList>);
         // We're mutating state so make React render the window again
         forceRerender();
     };
