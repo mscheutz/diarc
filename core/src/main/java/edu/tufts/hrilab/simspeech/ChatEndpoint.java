@@ -112,6 +112,6 @@ public class ChatEndpoint extends TextWebSocketHandler {
             }
         }
         log.error("Invalid incoming message: no SimSpeechRecognitionComponent"
-                + "matches specified recipient");
+                + "matches specified recipient \"{}\"", recipient);
     }
 }
