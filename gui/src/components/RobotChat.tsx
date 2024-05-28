@@ -158,9 +158,9 @@ const RobotChat: React.FC<{}> = () => {
         // We're mutating state so make React render the window again
         forceRerender();
     };
-    ws.onopen = function () { console.log("connected"); }
-    ws.onclose = function () { console.log("disconnected") };
-    ws.onerror = function (error) { console.error("websocket error: " + error) }
+    // ws.onopen = function () { console.log("chat connected"); };
+    // ws.onclose = function () { console.log("chat disconnected"); };
+    ws.onerror = function (error) { console.error("chat websocket error: " + error); };
 
     // CREATE RENDER //
     // This is the usual chat container but it only makes sense if there
@@ -185,6 +185,9 @@ const RobotChat: React.FC<{}> = () => {
                         sender: clean(username),
                         recipient: currentChat.robotName
                     }));
+                    setConversations(<ConversationList>
+                        {chats.map((chat, index) => chat.conversation(index))}
+                    </ConversationList>);
                     // Since we're mutating state, we need to trick React
                     // into updating itself
                     forceRerender();
