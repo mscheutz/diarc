@@ -88,16 +88,21 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
   }
 
   @Bean
+  public ChatEndpoint chatEndpoint() {
+    return new ChatEndpoint(simSpeechRecognitionComponents(),
+            dialogue(), robotNames());
+  }
+
+  @Bean
   public GoalEndpoint goalEndpoint() {
     return new GoalEndpoint(goalManagerImpl(), robotNames());
   }
 
   @Override
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-    registry.addHandler(new ChatEndpoint(simSpeechRecognitionComponents(),
-                        dialogue(), robotNames()), "/chat")
+    registry.addHandler(chatEndpoint(), "/chat")
             .setAllowedOrigins("http://localhost:3000");
-    registry.addHandler(goalEndpoint(), "/goal").
-            setAllowedOrigins("http://localhost:3000");
+    registry.addHandler(goalEndpoint(), "/goal")
+            .setAllowedOrigins("http://localhost:3000");
   }
 }

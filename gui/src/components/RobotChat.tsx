@@ -208,10 +208,11 @@ const RobotChat: React.FC<{}> = () => {
     }
 
     return (
-        <div className='size-9/12'>
+        <div className='h-[40rem]'>
             <MainContainer>
                 <Sidebar position="left">
                     <div className='flex-col flex space-y-2'>
+                        {/* Name input */}
                         <div className='flex-1 flex items-center \
                                     justify-center flex-col'>
                             <MessageInput
@@ -224,7 +225,13 @@ const RobotChat: React.FC<{}> = () => {
                                 sendOnReturnDisabled={true}
                             />
                         </div>
+
                         {conversations}
+
+                        {/* Connection indicator */}
+                        <div className='justify-self-end outline outline-1'>
+                            Connection
+                        </div>
                     </div>
                 </Sidebar>
 
