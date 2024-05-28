@@ -4,6 +4,8 @@
 
 package edu.tufts.hrilab.config.nao;
 
+import edu.tufts.hrilab.action.GoalEndpoint;
+import edu.tufts.hrilab.action.GoalManagerImpl;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.DemoApplication;
 import edu.tufts.hrilab.nao.MockNaoComponent;
@@ -34,6 +36,10 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
   public final String[] ROBOT_NAMES = {"dempster", "shafer"};
   public final String[] HUMAN_NAMES = {"evan", "ravenna"};
 
+  public final String gmArgs = "-beliefinitfile demos.pl agents/twonaoagents.pl " +
+    "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
+    "-goal listen(self)";
+
   @Bean
   @Primary
   protected String[] robotNames() {
@@ -58,6 +64,10 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
     return createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
   }
 
+  protected GoalManagerImpl goalManagerImpl() {
+    return createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
+  }
+
   // start the configuration
   @Override
   public void runConfiguration() {
@@ -69,18 +79,17 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
 
     createInstance(MockNaoComponent.class, "-groups agent:dempster -obstacle true"); // sees obstacle
     createInstance(MockNaoComponent.class, "-groups agent:shafer -floorSupport false"); // does not see floor support
-
-    String gmArgs = "-beliefinitfile demos.pl agents/twonaoagents.pl " +
-            "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
-            "-goal listen(self)";
-
-    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
   }
 
   public static void main(String[] args) {
     TwoNaoDemo demoConfig = new TwoNaoDemo();
-    SpringApplication.run(DemoApplication.class, args);
     demoConfig.runConfiguration();
+    SpringApplication.run(DemoApplication.class, args);
+  }
+
+  @Bean
+  public GoalEndpoint goalEndpoint() {
+    return new GoalEndpoint(goalManagerImpl(), robotNames());
   }
 
   @Override
@@ -88,5 +97,7 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
     registry.addHandler(new ChatEndpoint(simSpeechRecognitionComponents(),
                         dialogue(), robotNames()), "/chat")
             .setAllowedOrigins("http://localhost:3000");
+    registry.addHandler(goalEndpoint(), "/goal").
+            setAllowedOrigins("http://localhost:3000");
   }
 }

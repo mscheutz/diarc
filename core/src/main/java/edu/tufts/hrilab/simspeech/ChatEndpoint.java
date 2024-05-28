@@ -28,8 +28,9 @@ public class ChatEndpoint extends TextWebSocketHandler {
     /**
      * Constructs the <code>ChatEndpoint</code> given simulated speech
      * recognition and production components.
+     *
      * @param recognitions simulated speech recognition component
-     * @param dialogue dialogue component to register for utterance notifications.
+     * @param dialogue     dialogue component to register for utterance notifications.
      */
     public ChatEndpoint(SimSpeechRecognitionComponent[] recognitions,
                         DialogueComponent dialogue,
@@ -46,33 +47,34 @@ public class ChatEndpoint extends TextWebSocketHandler {
                     dialogue.registerForDialogueHistoryNotifications(service);
                 }
             }
-        } catch(TRADEException e) {
+        } catch (TRADEException e) {
             log.error("Failed to register methods for dialogue history notifications");
         }
     }
 
     /**
      * Sends a message to the chat window.
+     *
      * @param utterance what the robot is saying.
      */
     @TRADEService
     public void sendMessage(Utterance utterance) {
         // Make sure a robot is speaking
         boolean flag = false;
-        for(String robotName : robotNames) {
+        for (String robotName : robotNames) {
             if (utterance.getSpeaker().toString().equals(robotName)) {
                 flag = true;
                 break;
             }
         }
-        if(!flag) return;
+        if (!flag) return;
 
         try {
-            if(session != null) {
+            if (session != null) {
                 session.sendMessage(new TextMessage(
                         "{\"message\":\"" + utterance.getWordsAsString()
-                        + "\", \"sender\":\"" + utterance.getSpeaker()
-                        + "\", \"recipient\":\"" + utterance.getAddressee() + "\"}"
+                                + "\", \"sender\":\"" + utterance.getSpeaker()
+                                + "\", \"recipient\":\"" + utterance.getAddressee() + "\"}"
                 ));
             } else {
                 log.error("Could not send message: no active session");
@@ -88,6 +90,7 @@ public class ChatEndpoint extends TextWebSocketHandler {
 
     /**
      * Handle a text message from the user.
+     *
      * @param session the web socket session the message comes over on
      * @param message the message from the user
      * @throws Exception ignored
@@ -104,8 +107,8 @@ public class ChatEndpoint extends TextWebSocketHandler {
 
         // Find the SimSpeechRecognitionComponent that matches speaker/listener
         // with sender/recipient of this message
-        for(SimSpeechRecognitionComponent recognition : recognitions) {
-            if(recognition.getListener().toString().equals(recipient)) {
+        for (SimSpeechRecognitionComponent recognition : recognitions) {
+            if (recognition.getListener().toString().equals(recipient)) {
                 recognition.setSpeaker(new Symbol(sender));
                 recognition.setText(data);
                 break;
