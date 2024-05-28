@@ -95,7 +95,7 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
 
   @Bean
   public GoalEndpoint goalEndpoint() {
-    return new GoalEndpoint(goalManagerImpl(), robotNames());
+    return new GoalEndpoint(goalManagerImpl());
   }
 
   @Override

@@ -25,7 +25,7 @@ import {
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faX, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-icons'
+import { faBan, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-icons'
 
 // OOP forever, baybee
 class Chat {
@@ -188,14 +188,15 @@ const RobotChat: React.FC<{}> = () => {
         [ReadyState.CONNECTING]: faSync,
         [ReadyState.OPEN]: faCheck,
         [ReadyState.CLOSING]: faSync,
-        [ReadyState.CLOSED]: faX,
+        [ReadyState.CLOSED]: faBan,
         [ReadyState.UNINSTANTIATED]: faQuestion,
     }[readyState]
 
     const handleSendMessage = (message: string) => {
+        message = clean(message)
         currentChat.postUserMessage(message, username);
         sendMessage(JSON.stringify({
-            message: clean(message),
+            message: message,
             sender: clean(username),
             recipient: currentChat.robotName
         }));
