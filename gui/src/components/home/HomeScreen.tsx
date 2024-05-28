@@ -11,8 +11,9 @@ const HomeScreen = ({ navigation }) => {
         <div className="flex flex-col justify-center items-center h-screen">
             <Providers>
                 <Navbar />
-                <div className="flex flex-col justify-center items-center \
-                w-3/4 h-[50rem] space-y-5 py-5">
+                {/* Main body */}
+                <div className="grid grid-cols-2 justify-stretch
+                justify-items-stretch w-11/12 h-[50rem] items-center gap-10">
                     <RobotChat></RobotChat>
                     <GoalView></GoalView>
                 </div>

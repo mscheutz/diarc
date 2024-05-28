@@ -38,6 +38,7 @@
     "react-native-web": "^0.19.10",
     "react-scripts": "5.0.1",
     "react-toastify": "^10.0.5",
+    "react-use-websocket": "^4.8.1",
     "shadcn-ui": "^0.8.0",
     "stompjs": "^2.3.3",
     "tailwind-merge": "^2.2.2",

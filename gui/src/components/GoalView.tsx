@@ -29,7 +29,7 @@ const GoalView: React.FunctionComponent<{}> = () => {
     }[readyState];
 
     return (
-        <div className="flex flex-col size-9/12 outline outline-1">
+        <div className="flex flex-col w-full h-[40rem] outline outline-1">
             <ul>
                 {goals.map((goal) => <li>{goal}</li>)}
             </ul>
