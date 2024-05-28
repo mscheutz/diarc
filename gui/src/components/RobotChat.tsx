@@ -6,7 +6,7 @@
  * receiving feedback through DIARC.
  */
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css"
 import {
@@ -21,6 +21,11 @@ import {
     Avatar,
     ConversationList
 } from "@chatscope/chat-ui-kit-react";
+
+import useWebSocket, { ReadyState } from "react-use-websocket";
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faX, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-icons'
 
 // OOP forever, baybee
 class Chat {
@@ -143,24 +148,64 @@ const RobotChat: React.FC<{}> = () => {
     const [username, setUsername] = useState("");
 
     // SET UP WEBSOCKET //
-    const ws = new WebSocket("ws://localhost:8080/chat");
-    ws.onmessage = (message) => {
-        // console.log(message.data);
-        const data = JSON.parse(message.data);
-        for (const chat of chats) {
-            if (chat.robotName === data.sender) {
-                chat.postServerMessage(data.message);
+    const { sendMessage, lastMessage, readyState } =
+        useWebSocket("ws://localhost:8080/chat");
+
+    useEffect(() => {
+        if (lastMessage !== null) {
+            const data = JSON.parse(lastMessage.data);
+
+            for (const chat of chats) {
+                if (chat.robotName === data.sender) {
+                    chat.postServerMessage(data.message);
+                }
             }
+            setConversations(<ConversationList>
+                {chats.map((chat, index) => chat.conversation(index))}
+            </ConversationList>);
+            // We're mutating state so make React render the window again
+            forceRerender();
         }
+    }, [lastMessage, chats, forceRerender]);
+
+    const connectionStatus = {
+        [ReadyState.CONNECTING]: 'connecting',
+        [ReadyState.OPEN]: 'connected',
+        [ReadyState.CLOSING]: 'connection closing',
+        [ReadyState.CLOSED]: 'connection closed',
+        [ReadyState.UNINSTANTIATED]: 'uninstantiated',
+    }[readyState];
+
+    const statusColor = {
+        [ReadyState.CONNECTING]: '#efd402',
+        [ReadyState.OPEN]: '#00a505',
+        [ReadyState.CLOSING]: '#efd402',
+        [ReadyState.CLOSED]: '#e00b00',
+        [ReadyState.UNINSTANTIATED]: '#efd402',
+    }[readyState]
+
+    const statusIcon = {
+        [ReadyState.CONNECTING]: faSync,
+        [ReadyState.OPEN]: faCheck,
+        [ReadyState.CLOSING]: faSync,
+        [ReadyState.CLOSED]: faX,
+        [ReadyState.UNINSTANTIATED]: faQuestion,
+    }[readyState]
+
+    const handleSendMessage = (message: string) => {
+        currentChat.postUserMessage(message, username);
+        sendMessage(JSON.stringify({
+            message: clean(message),
+            sender: clean(username),
+            recipient: currentChat.robotName
+        }));
         setConversations(<ConversationList>
             {chats.map((chat, index) => chat.conversation(index))}
         </ConversationList>);
-        // We're mutating state so make React render the window again
+        // Since we're mutating state, we need to trick React
+        // into updating itself
         forceRerender();
     };
-    // ws.onopen = function () { console.log("chat connected"); };
-    // ws.onclose = function () { console.log("chat disconnected"); };
-    ws.onerror = function (error) { console.error("chat websocket error: " + error); };
 
     // CREATE RENDER //
     // This is the usual chat container but it only makes sense if there
@@ -178,20 +223,7 @@ const RobotChat: React.FC<{}> = () => {
                 placeholder={"Talk with " + currentChat.robotName
                     + "..."}
                 attachButton={false}
-                onSend={(message) => {
-                    currentChat.postUserMessage(message, username);
-                    ws.send(JSON.stringify({
-                        message: clean(message),
-                        sender: clean(username),
-                        recipient: currentChat.robotName
-                    }));
-                    setConversations(<ConversationList>
-                        {chats.map((chat, index) => chat.conversation(index))}
-                    </ConversationList>);
-                    // Since we're mutating state, we need to trick React
-                    // into updating itself
-                    forceRerender();
-                }}
+                onSend={(message) => handleSendMessage(message)}
             />
         </ChatContainer>
     );
@@ -211,34 +243,42 @@ const RobotChat: React.FC<{}> = () => {
         <div className='h-[40rem]'>
             <MainContainer>
                 <Sidebar position="left">
-                    <div className='flex-col flex space-y-2'>
-                        {/* Name input */}
-                        <div className='flex-1 flex items-center \
-                                    justify-center flex-col'>
-                            <MessageInput
-                                className='w-11/12 mt-3'
-                                attachButton={false}
-                                sendButton={false}
-                                placeholder='Set your name here'
-                                onChange={(innerHTML, textContent, innerText,
-                                    nodes) => setUsername(innerText)}
-                                sendOnReturnDisabled={true}
-                            />
-                        </div>
+                    <div className="flex flex-col justify-between h-full">
 
-                        {conversations}
+                        <div className="flex flex-col space-y-2">
+                            {/* Name input */}
+                            <div className='flex-1 flex items-center \
+                                    justify-center flex-col'>
+                                <MessageInput
+                                    className='w-11/12 mt-3'
+                                    attachButton={false}
+                                    sendButton={false}
+                                    placeholder='Set your name here'
+                                    onChange={(innerHTML, textContent, innerText,
+                                        nodes) => setUsername(innerText)}
+                                    sendOnReturnDisabled={true}
+                                />
+                            </div>
+
+                            {conversations}
+                        </div>
 
                         {/* Connection indicator */}
-                        <div className='justify-self-end outline outline-1'>
-                            Connection
+                        <div className='outline outline-1 p-2 outline-[#e5e7eb]
+                                        text-center'>
+                            Status: &nbsp;
+                            <FontAwesomeIcon icon={statusIcon}
+                                color={statusColor}></FontAwesomeIcon>
+                            {" " + connectionStatus}
                         </div>
+
                     </div>
                 </Sidebar>
 
                 {chatContainer}
 
             </MainContainer>
-        </div>
+        </div >
     );
 }
 
