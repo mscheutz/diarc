@@ -50,7 +50,7 @@ const GoalView: React.FunctionComponent<{}> = () => {
             setActiveDOM(createList(activeGoals, true));
             setPastDOM(createList(pastGoals, false));
         }
-    }, [activeGoals, pastGoals, lastMessage]);
+    }, [activeGoals.toString(), pastGoals.toString(), lastMessage]);
 
     const connectionStatus = {
         [ReadyState.CONNECTING]: 'connecting',

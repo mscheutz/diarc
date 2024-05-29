@@ -6,7 +6,7 @@
  * receiving feedback through DIARC.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css"
 import {
@@ -27,7 +27,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBan, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-icons'
 
-let counter = 0;
+let counter = 0; // list items need unique keys
 
 // Subset of 'model' prop at
 // https://chatscope.io/storybook/react/?path=/docs/components-message--docs
@@ -45,6 +45,8 @@ type Chat = {
     messageList: MessageProps[],
     focusThisChat: Function
 }
+
+export type { Chat };
 
 const createAvatar = (chat: Chat) => {
     return (
@@ -73,6 +75,8 @@ const createConversation = (chat: Chat) => {
     );
 };
 
+export { createConversation };
+
 const createConversationHeader = (chat: Chat) => {
     return (
         <ConversationHeader>
@@ -97,49 +101,16 @@ const clean = (message: string) => {
     return message.replace("<br>", "").replace(/(\r\n|\n|\r)/gm, "")
 }
 
-const RobotChat: React.FC<{}> = () => {
+const RobotChat = (
+    {
+        currentChat, setCurrentChat,
+        chats, setChats,
+        conversations, setConversations,
+        username, setUsername,
+    }
+) => {
     // SET UP STATE //
-    const [currentChat, setCurrentChat] = useState(
-        {
-            robotName: "",
-            robotInfo: "",
-            profileImagePath: "",
-            messageList: [],
-            focusThisChat: () => null
-        }
-    );
-
-    const [chats, setChats] = useState(
-        [
-            // Blank dempster chat
-            {
-                robotName: "dempster",
-                robotInfo: "NAO robot",
-                profileImagePath: "/heroimage.svg",
-                messageList: [],
-                focusThisChat: setCurrentChat
-            },
-            // Blank shafer chat
-            {
-                robotName: "shafer",
-                robotInfo: "NAO robot",
-                profileImagePath: "/robot.png",
-                messageList: [],
-                focusThisChat: setCurrentChat
-            }
-        ] as Chat[]
-    );
-
-    const [conversations, setConversations] = useState(
-        <ConversationList>
-            {chats.map((chat) => createConversation(chat))}
-        </ConversationList>
-    );
-
-    const [username, setUsername] = useState("");
-
     const postUserMessage = (chat: Chat, message: string, username: string) => {
-        console.log("hi");
         let newChats = chats.slice();
         for (let i = 0; i < chats.length; i++) {
             if (chats[i].robotName === chat.robotName) {
@@ -293,6 +264,7 @@ const RobotChat: React.FC<{}> = () => {
                                     onChange={(innerHTML, textContent, innerText,
                                         nodes) => setUsername(innerText)}
                                     sendOnReturnDisabled={true}
+                                    value={username}
                                 />
                             </div>
 
