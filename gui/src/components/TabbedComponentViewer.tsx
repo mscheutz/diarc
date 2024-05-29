@@ -66,6 +66,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                 </TabList>
 
                 <TabPanel>
+                    {/* This is a lil stupid... but it works. :D */}
                     <RobotChat
                         currentChat={currentChat}
                         setCurrentChat={setCurrentChat}
@@ -79,7 +80,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                 </TabPanel>
 
                 <TabPanel>
-                    <GoalView></GoalView>
+                    <GoalView />
                 </TabPanel>
             </Tabs>
         </div>

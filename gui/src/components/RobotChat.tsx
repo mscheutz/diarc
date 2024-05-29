@@ -148,7 +148,7 @@ const RobotChat = (
         setChats(newChats);
     },
         // using chats.toString() as a dep because we need to check if the
-        // object's data actually changed, instead of the reference of `chats`
+        // object's data actually changed, instead of the reference of `chats`.
         // the compiler complains about it but this is why I'm doing it this way
         [chats.toString()]);
 
