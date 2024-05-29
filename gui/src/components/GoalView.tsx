@@ -14,11 +14,19 @@ import NestedList from "./NestedList";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const GoalView: React.FunctionComponent<{}> = () => {
-    const [activeGoals, setActiveGoals] = useState({ "thing1": ["thing2", "thing3"] })
-    const [pastGoals, setPastGoals] = useState({ "foo": ["bar", "baz"] })
+    const [activeGoals, setActiveGoals] = useState({})
+    const [pastGoals, setPastGoals] = useState({})
 
-    const [activeDOM, setActiveDOM] = useState(<div></div>)
-    const [pastDOM, setPastDOM] = useState(<div></div>)
+    const [activeDOM, setActiveDOM] = useState(
+        <div className="px-5">
+            <div className="text-xl mb-2">Active goals</div>
+        </div>
+    )
+    const [pastDOM, setPastDOM] = useState(
+        <div className="px-5">
+            <div className="text-xl mb-2">Past goals</div>
+        </div>
+    )
 
     const createList = (goals, isActive: boolean) => {
         return (

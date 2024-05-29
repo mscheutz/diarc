@@ -29,7 +29,8 @@ import { faBan, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-
 
 let counter = 0;
 
-// Subset of 'model' prop at https://chatscope.io/storybook/react/?path=/docs/components-message--docs
+// Subset of 'model' prop at
+// https://chatscope.io/storybook/react/?path=/docs/components-message--docs
 type MessageProps = {
     message: string,
     sender: string,
@@ -98,16 +99,15 @@ const clean = (message: string) => {
 
 const RobotChat: React.FC<{}> = () => {
     // SET UP STATE //
-    const [currentChat, setCurrentChat] =
-        useState(
-            {
-                robotName: "",
-                robotInfo: "",
-                profileImagePath: "",
-                messageList: [],
-                focusThisChat: () => null
-            }
-        );
+    const [currentChat, setCurrentChat] = useState(
+        {
+            robotName: "",
+            robotInfo: "",
+            profileImagePath: "",
+            messageList: [],
+            focusThisChat: () => null
+        }
+    );
 
     const [chats, setChats] = useState(
         [
@@ -319,6 +319,3 @@ const RobotChat: React.FC<{}> = () => {
 }
 
 export default RobotChat;
-
-// TODO: keep fixing robot chat to not be jank
-// TODO: make GoalView not start with lorem ipsum text
