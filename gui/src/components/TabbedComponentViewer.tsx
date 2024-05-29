@@ -16,7 +16,7 @@ import { ConversationList } from "@chatscope/chat-ui-kit-react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCog } from '@fortawesome/free-solid-svg-icons'
+import { faBan, faCog } from '@fortawesome/free-solid-svg-icons'
 
 import RobotChat, { createConversation } from "./RobotChat";
 import type { Chat } from "./RobotChat";
@@ -76,15 +76,21 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
             "on" : "off");
     }
 
-    setTimeout(check, 5000);
+    setTimeout(check, 1000);
 
     return (
         <div className="w-2/3 h-[50rem]">
             <Tabs>
                 <TabList>
                     {
-                        chatStatus !== "on" && goalStatus !== "on" ?
+                        chatStatus === "wait" || goalStatus === "wait" ?
                             <Tab>Connecting...</Tab>
+
+                            : null
+                    }
+                    {
+                        chatStatus === "off" && goalStatus === "off" ?
+                            <Tab>Connection Failed</Tab>
 
                             : null
                     }
@@ -103,13 +109,33 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                 </TabList>
 
                 { // Loading panel
-                    chatStatus !== "on" && goalStatus !== "on" ?
+                    chatStatus === "wait" || goalStatus === "wait" ?
                         <TabPanel className="grid grid-column h-full m-48">
                             <div className="flex flex-row justify-center">
-                                <FontAwesomeIcon icon={faCog} spin size="10x" />
+                                <FontAwesomeIcon
+                                    icon={faCog} spin size="10x"
+                                    color={"#1d4bb7"}
+                                />
                             </div>
                             <p className="text-center m-10">
                                 Connecting...
+                            </p>
+                        </TabPanel>
+
+                        : null
+                }
+
+                { // Failed panel
+                    chatStatus === "off" && goalStatus === "off" ?
+                        <TabPanel className="grid grid-column h-full m-48">
+                            <div className="flex flex-row justify-center">
+                                <FontAwesomeIcon
+                                    icon={faBan} size="10x"
+                                    color={"#e00b00"}
+                                />
+                            </div>
+                            <p className="text-center m-10">
+                                Connection Failed!
                             </p>
                         </TabPanel>
 
