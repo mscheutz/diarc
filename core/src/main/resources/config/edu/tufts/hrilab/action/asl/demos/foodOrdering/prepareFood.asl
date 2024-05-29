@@ -98,6 +98,7 @@ import edu.tufts.hrilab.fol.Variable;
         success : not(itemAt(?item, ?area));
         success : agentAtArea(?actor, ?safeArea);
         success : not(agentAtArea(?actor, ?area));
+        success : not(occupied(?area));
     }
 
     op:log(info, "[pickup] perceiving ?item from area ?area.");
@@ -125,6 +126,7 @@ import edu.tufts.hrilab.fol.Variable;
         pre : reachable(?actor, ?area, ?location);
         pre : safe(?actor, ?safeArea);
         pre : not(safe(?actor, ?area));
+        pre : not(occupied(?area));
     }
     effects : {
         success : gripperOpen(?actor);
@@ -133,6 +135,7 @@ import edu.tufts.hrilab.fol.Variable;
         success : free(?actor);
         success : not(agentAtArea(?actor, ?area));
         success : agentAtArea(?actor, ?safeArea);
+        success : occupied(?area);
     }
 
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "areaPose(?actor, X, ?area)");
