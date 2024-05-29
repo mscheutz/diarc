@@ -100,8 +100,8 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
 
   @Override
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-    registry.addHandler(chatEndpoint(), "/chat")
-            .setAllowedOrigins("http://localhost:3000");
+//    registry.addHandler(chatEndpoint(), "/chat")
+//            .setAllowedOrigins("http://localhost:3000");
     registry.addHandler(goalEndpoint(), "/goal")
             .setAllowedOrigins("http://localhost:3000");
   }

@@ -13,11 +13,17 @@ import 'react-tabs/style/react-tabs.css';
 
 import { ConversationList } from "@chatscope/chat-ui-kit-react";
 
+import useWebSocket, { ReadyState } from "react-use-websocket";
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCog } from '@fortawesome/free-solid-svg-icons'
+
 import RobotChat, { createConversation } from "./RobotChat";
 import type { Chat } from "./RobotChat";
 import GoalView from "./GoalView";
 
 const TabbedComponentViewer: React.FunctionComponent = () => {
+    // Robot chat state
     const [currentChat, setCurrentChat] = useState(
         {
             robotName: "",
@@ -57,30 +63,85 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 
     const [username, setUsername] = useState("");
 
+    // Websocket to check for the endpoints
+    const [chatStatus, setChatStatus] = useState("wait")
+    const [goalStatus, setGoalStatus] = useState("wait")
+    const chatSocket = useWebSocket("ws://localhost:8080/chat");
+    const goalSocket = useWebSocket("ws://localhost:8080/goal")
+
+    const check = () => {
+        setChatStatus(chatSocket.readyState === ReadyState.OPEN ?
+            "on" : "off");
+        setGoalStatus(goalSocket.readyState === ReadyState.OPEN ?
+            "on" : "off");
+    }
+
+    setTimeout(check, 5000);
+
     return (
         <div className="w-2/3 h-[50rem]">
             <Tabs>
                 <TabList>
-                    <Tab>Robot Chat</Tab>
-                    <Tab>Goal Viewer</Tab>
+                    {
+                        chatStatus !== "on" && goalStatus !== "on" ?
+                            <Tab>Connecting...</Tab>
+
+                            : null
+                    }
+                    {
+                        chatStatus === "on" ?
+                            <Tab>Robot Chat</Tab>
+
+                            : null
+                    }
+                    {
+                        goalStatus === "on" ?
+                            <Tab>Goal Viewer</Tab>
+
+                            : null
+                    }
                 </TabList>
 
-                <TabPanel>
-                    <RobotChat
-                        currentChat={currentChat}
-                        setCurrentChat={setCurrentChat}
-                        chats={chats}
-                        setChats={setChats}
-                        conversations={conversations}
-                        setConversations={setConversations}
-                        username={username}
-                        setUsername={setUsername}
-                    />
-                </TabPanel>
+                { // Loading panel
+                    chatStatus !== "on" && goalStatus !== "on" ?
+                        <TabPanel className="grid grid-column h-full m-48">
+                            <div className="flex flex-row justify-center">
+                                <FontAwesomeIcon icon={faCog} spin size="10x" />
+                            </div>
+                            <p className="text-center m-10">
+                                Connecting...
+                            </p>
+                        </TabPanel>
 
-                <TabPanel>
-                    <GoalView></GoalView>
-                </TabPanel>
+                        : null
+                }
+
+                { // Chat panel
+                    chatStatus === "on" ?
+                        <TabPanel>
+                            <RobotChat
+                                currentChat={currentChat}
+                                setCurrentChat={setCurrentChat}
+                                chats={chats}
+                                setChats={setChats}
+                                conversations={conversations}
+                                setConversations={setConversations}
+                                username={username}
+                                setUsername={setUsername}
+                            />
+                        </TabPanel>
+
+                        : null
+                }
+
+                { // Goal panel
+                    goalStatus === "on" ?
+                        <TabPanel>
+                            <GoalView />
+                        </TabPanel>
+
+                        : null
+                }
             </Tabs>
         </div>
     );
