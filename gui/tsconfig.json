@@ -6,9 +6,11 @@
       /* 
         - configured so that shadcn UI installs packages into the right folder 
         - please do not touch unless absolutely sure that you have to! 
-      */ 
-      "@/*": ["./src/@/components/"]
-    }, 
+      */
+      "@/*": [
+        "./src/@/components/"
+      ]
+    },
     "lib": [
       "dom",
       "dom.iterable",
