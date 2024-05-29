@@ -6,7 +6,7 @@
  * receiving feedback through DIARC.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css"
 import {
@@ -91,30 +91,6 @@ const createMessageList = (chat: Chat) => {
     );
 };
 
-const postUserMessage = (chat: Chat, message: string, username: string) => {
-    chat.messageList = [
-        ...chat.messageList,
-        {
-            message: message,
-            sender: username,
-            direction: "outgoing",
-            position: "single"
-        }
-    ];
-};
-
-const postServerMessage = (chat: Chat, message: string) => {
-    chat.messageList = [
-        ...chat.messageList,
-        {
-            message: message,
-            sender: chat.robotName,
-            direction: "incoming",
-            position: "single"
-        }
-    ];
-};
-
 // Remove line breaks from messages when sending
 const clean = (message: string) => {
     return message.replace("<br>", "").replace(/(\r\n|\n|\r)/gm, "")
@@ -122,10 +98,6 @@ const clean = (message: string) => {
 
 const RobotChat: React.FC<{}> = () => {
     // SET UP STATE //
-    // Pure unadulterated jank
-    let [, rerender] = useState({});
-    const forceRerender = React.useCallback(() => rerender({}), []);
-
     const [currentChat, setCurrentChat] =
         useState(
             {
@@ -155,7 +127,7 @@ const RobotChat: React.FC<{}> = () => {
                 messageList: [],
                 focusThisChat: setCurrentChat
             }
-        ]
+        ] as Chat[]
     );
 
     const [conversations, setConversations] = useState(
@@ -165,6 +137,49 @@ const RobotChat: React.FC<{}> = () => {
     );
 
     const [username, setUsername] = useState("");
+
+    const postUserMessage = (chat: Chat, message: string, username: string) => {
+        console.log("hi");
+        let newChats = chats.slice();
+        for (let i = 0; i < chats.length; i++) {
+            if (chats[i].robotName === chat.robotName) {
+                newChats[i].messageList = [
+                    ...chats[i].messageList,
+                    {
+                        message: message,
+                        sender: username,
+                        direction: "outgoing",
+                        position: "single"
+                    }
+                ];
+                break;
+            }
+        }
+        setChats(newChats);
+    };
+
+    const postServerMessage = useCallback((chat: Chat, message: string) => {
+        let newChats = chats.slice();
+        for (let i = 0; i < chats.length; i++) {
+            if (chats[i].robotName === chat.robotName) {
+                newChats[i].messageList = [
+                    ...chats[i].messageList,
+                    {
+                        message: message,
+                        sender: chat.robotName,
+                        direction: "incoming",
+                        position: "single"
+                    }
+                ];
+                break;
+            }
+        }
+        setChats(newChats);
+    },
+        // using chats.toString() as a dep because we need to check if the
+        // object's data actually changed, instead of the reference of `chats`
+        // the compiler complains about it but this is why I'm doing it this way
+        [chats.toString()]);
 
     // SET UP WEBSOCKET //
     const { sendMessage, lastMessage, readyState } =
@@ -179,13 +194,15 @@ const RobotChat: React.FC<{}> = () => {
                     postServerMessage(chat, data.message);
                 }
             }
-            setConversations(<ConversationList>
-                {chats.map((chat) => createConversation(chat))}
-            </ConversationList>);
-            // We're mutating state so make React render the window again
-            forceRerender();
+            setConversations(
+                <ConversationList>
+                    {chats.map((chat) => createConversation(chat))}
+                </ConversationList>
+            );
         }
-    }, [lastMessage, chats, forceRerender]);
+    },
+        // again, we use chats.toString() to make sure the value is changing
+        [lastMessage, chats.toString(), postServerMessage]);
 
     const connectionStatus = {
         [ReadyState.CONNECTING]: 'connecting',
@@ -219,12 +236,11 @@ const RobotChat: React.FC<{}> = () => {
             sender: clean(username),
             recipient: currentChat.robotName
         }));
-        setConversations(<ConversationList>
-            {chats.map((chat) => createConversation(chat))}
-        </ConversationList>);
-        // Since we're mutating state, we need to trick React
-        // into updating itself
-        forceRerender();
+        setConversations(
+            <ConversationList>
+                {chats.map((chat) => createConversation(chat))}
+            </ConversationList>
+        );
     };
 
     // CREATE RENDER //
