@@ -6,7 +6,7 @@
  * receiving feedback through DIARC.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css"
 import {
@@ -27,85 +27,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBan, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-icons'
 
-// OOP forever, baybee
-class Chat {
-    robotName: string;
-    robotInfo: string;
-    profileImagePath: string;
-    messageList: MessageProps[];
-    focusThisChat: Function;
-
-    constructor(robotName: string, robotInfo: string, profileImagePath: string,
-        messageList: MessageProps[], focusThisChat: Function) {
-        this.robotName = robotName;
-        this.robotInfo = robotInfo;
-        this.profileImagePath = profileImagePath;
-        this.messageList = messageList;
-        this.focusThisChat = focusThisChat;
-    }
-
-    avatar() {
-        return (
-            <Avatar
-                name={this.robotName}
-                src={this.profileImagePath}
-            />
-        );
-    }
-
-    conversation(index: number) {
-        return (
-            <Conversation
-                key={index}
-                info={this.messageList.length > 0 ?
-                    this.messageList.slice(-1)[0].message
-                    : "No messages yet"}
-                lastSenderName={this.messageList.length > 0 ?
-                    this.messageList.slice(-1)[0].sender
-                    : null}
-                name={this.robotName}
-                onClick={(e) => this.focusThisChat(this)}
-            >
-                {this.avatar()}
-            </Conversation>
-        );
-    }
-
-    conversationHeader() {
-        return (
-            <ConversationHeader>
-                {this.avatar()}
-                <ConversationHeader.Content
-                    info={this.robotInfo}
-                    userName={this.robotName}
-                />
-            </ConversationHeader>
-        );
-    }
-
-    renderMessageList() {
-        return this.messageList.map(
-            (message, index) => <Message key={index} model={message} />)
-    }
-
-    postUserMessage(message: string, username: string) {
-        this.messageList.push({
-            message: message,
-            sender: username,
-            direction: "outgoing",
-            position: "single"
-        })
-    }
-
-    postServerMessage(message: string) {
-        this.messageList.push({
-            message: message,
-            sender: this.robotName,
-            direction: "incoming",
-            position: "single"
-        })
-    }
-}
+let counter = 0;
 
 // Subset of 'model' prop at https://chatscope.io/storybook/react/?path=/docs/components-message--docs
 type MessageProps = {
@@ -114,6 +36,84 @@ type MessageProps = {
     direction: "incoming" | "outgoing" | 0 | 1,
     position: "single" | "first" | "normal" | "last" | 0 | 1 | 2 | 3
 }
+
+type Chat = {
+    robotName: string,
+    robotInfo: string,
+    profileImagePath: string,
+    messageList: MessageProps[],
+    focusThisChat: Function
+}
+
+const createAvatar = (chat: Chat) => {
+    return (
+        <Avatar
+            name={chat.robotName}
+            src={chat.profileImagePath}
+        />
+    );
+};
+
+const createConversation = (chat: Chat) => {
+    return (
+        <Conversation
+            key={counter++}
+            info={chat.messageList.length > 0 ?
+                chat.messageList.slice(-1)[0].message
+                : "No messages yet"}
+            lastSenderName={chat.messageList.length > 0 ?
+                chat.messageList.slice(-1)[0].sender
+                : null}
+            name={chat.robotName}
+            onClick={(e) => chat.focusThisChat(chat)}
+        >
+            {createAvatar(chat)}
+        </Conversation>
+    );
+};
+
+const createConversationHeader = (chat: Chat) => {
+    return (
+        <ConversationHeader>
+            {createAvatar(chat)}
+            <ConversationHeader.Content
+                info={chat.robotInfo}
+                userName={chat.robotName}
+            />
+        </ConversationHeader>
+    );
+};
+
+const createMessageList = (chat: Chat) => {
+    return chat.messageList.map(
+        (message, index) =>
+            <Message key={index} model={message} />
+    );
+};
+
+const postUserMessage = (chat: Chat, message: string, username: string) => {
+    chat.messageList = [
+        ...chat.messageList,
+        {
+            message: message,
+            sender: username,
+            direction: "outgoing",
+            position: "single"
+        }
+    ];
+};
+
+const postServerMessage = (chat: Chat, message: string) => {
+    chat.messageList = [
+        ...chat.messageList,
+        {
+            message: message,
+            sender: chat.robotName,
+            direction: "incoming",
+            position: "single"
+        }
+    ];
+};
 
 // Remove line breaks from messages when sending
 const clean = (message: string) => {
@@ -127,21 +127,40 @@ const RobotChat: React.FC<{}> = () => {
     const forceRerender = React.useCallback(() => rerender({}), []);
 
     const [currentChat, setCurrentChat] =
-        useState(new Chat("", "", "", [], () => null));
+        useState(
+            {
+                robotName: "",
+                robotInfo: "",
+                profileImagePath: "",
+                messageList: [],
+                focusThisChat: () => null
+            }
+        );
 
-    const [dempsterChat, setDempsterChat] = useState(
-        new Chat("dempster", "NAO robot", "/heroimage.svg", [], setCurrentChat)
+    const [chats, setChats] = useState(
+        [
+            // Blank dempster chat
+            {
+                robotName: "dempster",
+                robotInfo: "NAO robot",
+                profileImagePath: "/heroimage.svg",
+                messageList: [],
+                focusThisChat: setCurrentChat
+            },
+            // Blank shafer chat
+            {
+                robotName: "shafer",
+                robotInfo: "NAO robot",
+                profileImagePath: "/robot.png",
+                messageList: [],
+                focusThisChat: setCurrentChat
+            }
+        ]
     );
-
-    const [shaferChat, setShaferChat] = useState(
-        new Chat("shafer", "NAO robot", "/robot.png", [], setCurrentChat)
-    );
-
-    const [chats, setChats] = useState([dempsterChat, shaferChat]);
 
     const [conversations, setConversations] = useState(
         <ConversationList>
-            {chats.map((chat, index) => chat.conversation(index))}
+            {chats.map((chat) => createConversation(chat))}
         </ConversationList>
     );
 
@@ -157,11 +176,11 @@ const RobotChat: React.FC<{}> = () => {
 
             for (const chat of chats) {
                 if (chat.robotName === data.sender) {
-                    chat.postServerMessage(data.message);
+                    postServerMessage(chat, data.message);
                 }
             }
             setConversations(<ConversationList>
-                {chats.map((chat, index) => chat.conversation(index))}
+                {chats.map((chat) => createConversation(chat))}
             </ConversationList>);
             // We're mutating state so make React render the window again
             forceRerender();
@@ -194,14 +213,14 @@ const RobotChat: React.FC<{}> = () => {
 
     const handleSendMessage = (message: string) => {
         message = clean(message)
-        currentChat.postUserMessage(message, username);
+        postUserMessage(currentChat, message, username);
         sendMessage(JSON.stringify({
             message: message,
             sender: clean(username),
             recipient: currentChat.robotName
         }));
         setConversations(<ConversationList>
-            {chats.map((chat, index) => chat.conversation(index))}
+            {chats.map((chat) => createConversation(chat))}
         </ConversationList>);
         // Since we're mutating state, we need to trick React
         // into updating itself
@@ -213,10 +232,10 @@ const RobotChat: React.FC<{}> = () => {
     // is a conversation already selected...
     let chatContainer = (
         <ChatContainer className='w-3/4'>
-            {currentChat.conversationHeader()}
+            {createConversationHeader(currentChat)}
 
             <MessageList>
-                {currentChat.renderMessageList()}
+                {createMessageList(currentChat)}
             </MessageList>
 
             <MessageInput
@@ -285,3 +304,5 @@ const RobotChat: React.FC<{}> = () => {
 
 export default RobotChat;
 
+// TODO: keep fixing robot chat to not be jank
+// TODO: make GoalView not start with lorem ipsum text

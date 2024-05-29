@@ -5,7 +5,7 @@
  * GoalView. Defines a component which shows a dynamic list of robot goals.
  */
 
-import React, { useState, useEffect, createElement } from "react";
+import React, { useState, useEffect } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 
 import { faBan, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-icons'
