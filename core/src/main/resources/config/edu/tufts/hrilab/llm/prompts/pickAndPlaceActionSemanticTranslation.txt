@@ -84,8 +84,6 @@ getTo(self:agent,servingBox:physobj,servingArea:area)
 pickUp(leftArm:yumi,carrot:physobj)
 #
 prepare(southwestBowl)
-#
-replace(goTo(self:agent,cookTop:area),getTo(self:agent,hotPlate:area))
 ###
 Alternately, the human may simply be providing general information or responses to earlier questions from the system. In this case, the appropriate semantic form is <description>(<value>). <description> may be a type known to the system or a general descriptor. <value> will then be corresponding information relating to that descriptor, which the human conveys. The list of possible signatures for this semantic form are:
 ###
