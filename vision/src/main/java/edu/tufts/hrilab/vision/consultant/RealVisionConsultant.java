@@ -10,12 +10,13 @@ import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.vision.Vision;
 import edu.tufts.hrilab.vision.VisionInterface;
 import edu.tufts.hrilab.vision.stm.*;
+
 import java.util.*;
 
 public class RealVisionConsultant extends VisionConsultant {
 
   public RealVisionConsultant(VisionInterface visionComponent, String kbName) {
-    super(visionComponent,kbName);
+    super(visionComponent, kbName);
   }
 
   @Override
@@ -54,16 +55,16 @@ public class RealVisionConsultant extends VisionConsultant {
           }
         }
 
-         // TODO: this is a HUGE assumption that only one object exists for a given set of properties
-         // if objectRef wasn't found by tokenId -- search by typeId and properties
-         if (objectRef == null) {
-           for (VisionReference visionRef : visionTypes.get(token.getTypeId())) {
-             if (edu.tufts.hrilab.fol.util.Utilities.containsAllPredicates(new ArrayList<>(MemoryObjectUtil.getSceneGraphDescriptors(token)),
-                     visionRef.properties)) {
+        // TODO: this is a HUGE assumption that only one object exists for a given set of properties
+        // if objectRef wasn't found by tokenId -- search by typeId and properties
+        if (objectRef == null) {
+          for (VisionReference visionRef : visionTypes.get(token.getTypeId())) {
+            if (edu.tufts.hrilab.fol.util.Utilities.containsAllPredicates(new ArrayList<>(MemoryObjectUtil.getSceneGraphDescriptors(token)),
+                    visionRef.properties)) {
               objectRef = visionRef.refId;
-             }
-           }
-         }
+            }
+          }
+        }
       }
 
       // if objectRef wasn't found -- create new one
@@ -124,7 +125,7 @@ public class RealVisionConsultant extends VisionConsultant {
           // new search is already started by call to getTypeId
           long startTime = System.currentTimeMillis();
           long maxWaitTime = 5000;
-          while (ShortTermMemoryInterface.getTokens(visionRef.typeId,0.0).isEmpty()) {
+          while (ShortTermMemoryInterface.getTokens(visionRef.typeId, 0.0).isEmpty()) {
             if ((System.currentTimeMillis() - startTime) > maxWaitTime) {
               log.warn("[assertProperties] new search did not detect object within allotted timeframe.");
               break;
