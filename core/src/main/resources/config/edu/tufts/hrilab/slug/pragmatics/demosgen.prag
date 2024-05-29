@@ -1,6 +1,7 @@
 #brad: workarounds because I don't really know how the generation pipeline works
 NEW-SET
 RULES
+REPLY(A,B,cannot(putDown(C,D),because(occupied(E))),Z) := REPLY(A,B,cannot(did(putDown(C,theChicken)),because(isOccupied(E))),Z)
 REPLY(self,brad,cannot(did(assembleVision(self)),because(not(find(self,knownModelType)))),{}) := REPLY(self,brad,cannot(did(assembleTheModel(self)),because(foundAnUnknownModelType(self))),{})
 END-SET
 
