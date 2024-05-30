@@ -9,7 +9,7 @@ import edu.tufts.hrilab.action.GoalManagerImpl;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.DemoApplication;
 import edu.tufts.hrilab.nao.MockNaoComponent;
-import edu.tufts.hrilab.simspeech.ChatEndpoint;
+import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
@@ -81,6 +81,8 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
 //    createInstance(GoalEndpoint.class,....)
 //    createInstance(Endpointmanagercomponent....)
 
+    // should be like this, doesn't work rn since chat endpoint isn't a component
+//    createInstance(ChatEndpoint.class, "args");
 
     createInstance(MockNaoComponent.class, "-groups agent:dempster -obstacle true"); // sees obstacle
     createInstance(MockNaoComponent.class, "-groups agent:shafer -floorSupport false"); // does not see floor support
@@ -93,8 +95,8 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
   }
 
   @Bean
-  public ChatEndpoint chatEndpoint() {
-    return new ChatEndpoint(simSpeechRecognitionComponents(),
+  public ChatEndpointComponent chatEndpoint() {
+    return new ChatEndpointComponent(simSpeechRecognitionComponents(),
             dialogue(), robotNames());
   }
 
@@ -105,7 +107,7 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
 
   @Override
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-    registry.addHandler(chatEndpoint(), "/chat")
+    registry.addHandler(chatEndpoint().getChatHandler(), "/chat")
             .setAllowedOrigins("http://localhost:3000");
     registry.addHandler(goalEndpoint(), "/goal")
             .setAllowedOrigins("http://localhost:3000");
