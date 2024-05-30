@@ -9,8 +9,7 @@ import javax.vecmath.Matrix4d;
 import ai.thinkingrobots.trade.TRADEService;
 
 /**
- * Core interface for robot coordinate frames and their transformations. This is
- * a highly experimental interface that will likely change.
+ * Core interface for robot coordinate frames and their transformations.
  */
 public interface CoordinateFramesInterface {
 
@@ -38,10 +37,9 @@ public interface CoordinateFramesInterface {
   @TRADEService
   Matrix4d getTransform(String srcFrame, String dstFrame);
 
-  //TODO:brad: what is this supposed to be used for?
-
   /**
    * Get a list of all coordinate frames currently in the system.
+   *
    * @return
    *
    */
@@ -51,6 +49,7 @@ public interface CoordinateFramesInterface {
   /**
    * Add a static transform to the TF tree. This only adds the transform
    * to the local TF instance, and does not add it to the ROS TF tree.
+   *
    * @param parent
    * @param child
    * @param transform

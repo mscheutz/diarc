@@ -28,7 +28,7 @@ public class Resources {
       if (dir.equals("/")) {
         tmpFilename = "/" + filename;
       } else {
-        tmpFilename = "/" + dir + File.separator + filename;
+        tmpFilename = "/" + dir + "/" + filename;
       }
       if (Resources.class.getResource(tmpFilename) != null) {
         return tmpFilename;

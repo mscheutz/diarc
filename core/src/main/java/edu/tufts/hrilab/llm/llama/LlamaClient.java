@@ -48,7 +48,7 @@ public class LlamaClient {
   /**
    * Sets the endpoint for the llama.cpp server.
    *
-   * @param {string} endpoint - The base endpoint to set
+   * @param endpoint - The base endpoint to set
    */
   public void setEndpoint (String endpoint) {
     completionEndpoint = endpoint + "/completion";
@@ -59,7 +59,7 @@ public class LlamaClient {
   /**
    * Sets the stop words array for terminating token stream on matching words.
    *
-   * @param {string[]} stopWordsArr - An array of stop words to set
+   * @param stopWordsArr - An array of stop words to set
    */
   public void setStopWords (String[] stopWordsArr) {
     stopWords = stopWordsArr;
@@ -69,7 +69,7 @@ public class LlamaClient {
   /**
    * Sets the temperature of the model.
    *
-   * @param {number} temperatureFloat - The temperature value to set
+   * @param temperatureFloat - The temperature value to set
    */
   public void setTemperature (float temperatureFloat) {
     temperature = temperatureFloat;

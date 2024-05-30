@@ -3,13 +3,13 @@ sauce;RN; sauce:physobj; VAR
 sauce;REF; sauce:physobj;DEFINITE
 
 %% items
-southwest bowl; DN; "southwest bowl":property
-southwest bowl; DESC; "southwest bowl":property
-southwest bowl; VAL; item("southwest bowl":property)
+southwest bowl; DN; "southwest bowl"
+southwest bowl; DESC; "southwest bowl"
+southwest bowl; VAL; item("southwest bowl")
 
-puerto rican bowl; DN; "puerto rican bowl":property
-puerto rican bowl; DESC; "puerto rican bowl":property
-
+puerto rican bowl; DN; "puerto rican bowl"
+puerto rican bowl; DESC; "puerto rican bowl"
+puerto rican bowl; VAL; item("puerto rican bowl")
 %% ingredients
 bell pepper;REF; "bell pepper":physobj;DEFINITE
 bell pepper;RN; "bell pepper":physobj;VAR
@@ -44,13 +44,12 @@ plantain;DN; plantain:property
 serving box; REF; "serving box":physobj;DEFINITE
 serving box; RN; "serving box":physobj;VAR
 
-prep area one; REF; "prep area one":pose; DEFINITE
-prep area two; REF; "prep area two":pose; DEFINITE
-prep area three; REF; "prep area three":pose; DEFINITE
-cook top; REF; "cook top":pose; DEFINITE
-cook top; RN; "cook top":pose; VAR
-fryer; REF; fryer:pose; DEFINITE
-fryer; RN; fryer:pose; VAR
+cook top; REF; "cook top":area; DEFINITE
+cook top; RN; "cook top":area; VAR
+fryer; REF; fryer:area; DEFINITE
+fryer; RN; fryer:area; VAR
 
+prep area; REF; "prep area":area; DEFINITE
 
-pantry; REF; pantry:location; DEFINITE
+%pantry; REF; pantry:location; DEFINITE
+pantry; REF; pantry:area; DEFINITE

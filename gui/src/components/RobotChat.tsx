@@ -6,7 +6,7 @@
  * receiving feedback through DIARC.
  */
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css"
 import {
@@ -22,87 +22,15 @@ import {
     ConversationList
 } from "@chatscope/chat-ui-kit-react";
 
-// OOP forever, baybee
-class Chat {
-    robotName: string;
-    robotInfo: string;
-    profileImagePath: string;
-    messageList: MessageProps[];
-    focusThisChat: Function;
+import useWebSocket, { ReadyState } from "react-use-websocket";
 
-    constructor(robotName: string, robotInfo: string, profileImagePath: string,
-        messageList: MessageProps[], focusThisChat: Function) {
-        this.robotName = robotName;
-        this.robotInfo = robotInfo;
-        this.profileImagePath = profileImagePath;
-        this.messageList = messageList;
-        this.focusThisChat = focusThisChat;
-    }
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faBan, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-icons'
 
-    avatar() {
-        return (
-            <Avatar
-                name={this.robotName}
-                src={this.profileImagePath}
-            />
-        );
-    }
+let counter = 0; // list items need unique keys
 
-    conversation(index: number) {
-        return (
-            <Conversation
-                key={index}
-                info={this.messageList.length > 0 ?
-                    this.messageList.slice(-1)[0].message
-                    : "No messages yet"}
-                lastSenderName={this.messageList.length > 0 ?
-                    this.messageList.slice(-1)[0].sender
-                    : ""}
-                name={this.robotName}
-                onClick={(e) => this.focusThisChat(this)}
-            >
-                {this.avatar()}
-            </Conversation>
-        );
-    }
-
-    conversationHeader() {
-        return (
-            <ConversationHeader>
-                {this.avatar()}
-                <ConversationHeader.Content
-                    info={this.robotInfo}
-                    userName={this.robotName}
-                />
-            </ConversationHeader>
-        );
-    }
-
-    renderMessageList() {
-        return this.messageList.map(
-            (message, index) => <Message key={index} model={message} />)
-    }
-
-    postUserMessage(message: string, username: string) {
-        this.messageList.push({
-            message: message,
-            sender: username,
-            direction: "outgoing",
-            position: "single"
-        })
-    }
-
-    postServerMessage(message: string) {
-        this.messageList.push({
-            message: message,
-            sender: this.robotName,
-            direction: "incoming",
-            position: "single"
-        })
-    }
-}
-
-// Subset of 'model' prop at https://chatscope.io/storybook/react/?path=/docs/components-message--docs
+// Subset of 'model' prop at
+// https://chatscope.io/storybook/react/?path=/docs/components-message--docs
 type MessageProps = {
     message: string,
     sender: string,
@@ -110,131 +38,191 @@ type MessageProps = {
     position: "single" | "first" | "normal" | "last" | 0 | 1 | 2 | 3
 }
 
+type Chat = {
+    robotName: string,
+    robotInfo: string,
+    profileImagePath: string,
+    messageList: MessageProps[],
+    focusThisChat: Function
+}
+
+export type { Chat };
+
+const createAvatar = (chat: Chat) => {
+    return (
+        <Avatar
+            name={chat.robotName}
+            src={chat.profileImagePath}
+        />
+    );
+};
+
+const createConversation = (chat: Chat) => {
+    return (
+        <Conversation
+            key={counter++}
+            info={chat.messageList.length > 0 ?
+                chat.messageList.slice(-1)[0].message
+                : "No messages yet"}
+            lastSenderName={chat.messageList.length > 0 ?
+                chat.messageList.slice(-1)[0].sender
+                : null}
+            name={chat.robotName}
+            onClick={(e) => chat.focusThisChat(chat)}
+        >
+            {createAvatar(chat)}
+        </Conversation>
+    );
+};
+
+export { createConversation };
+
+const createConversationHeader = (chat: Chat) => {
+    return (
+        <ConversationHeader>
+            {createAvatar(chat)}
+            <ConversationHeader.Content
+                info={chat.robotInfo}
+                userName={chat.robotName}
+            />
+        </ConversationHeader>
+    );
+};
+
+const createMessageList = (chat: Chat) => {
+    return chat.messageList.map(
+        (message, index) =>
+            <Message key={index} model={message} />
+    );
+};
+
 // Remove line breaks from messages when sending
 const clean = (message: string) => {
     return message.replace("<br>", "").replace(/(\r\n|\n|\r)/gm, "")
 }
 
-const RobotChat: React.FC<{}> = () => {
+const RobotChat = (
+    {
+        currentChat, setCurrentChat,
+        chats, setChats,
+        conversations, setConversations,
+        username, setUsername,
+    }
+) => {
     // SET UP STATE //
-    // Pure unadulterated jank
-    let [, rerender] = useState({});
-    const forceRerender = React.useCallback(() => rerender({}), []);
+    const postUserMessage = (chat: Chat, message: string, username: string) => {
+        let newChats = chats.slice();
+        for (let i = 0; i < chats.length; i++) {
+            if (chats[i].robotName === chat.robotName) {
+                newChats[i].messageList = [
+                    ...chats[i].messageList,
+                    {
+                        message: message,
+                        sender: username,
+                        direction: "outgoing",
+                        position: "single"
+                    }
+                ];
+                break;
+            }
+        }
+        setChats(newChats);
+    };
 
-    const [currentChat, setCurrentChat] =
-        useState(new Chat("", "", "", [], () => null));
-
-    const [dempsterChat, setDempsterChat] = useState(
-        new Chat("dempster", "NAO robot", "/heroimage.svg",
-            [{
-                message: "hello dempster",
-                sender: "evan",
-                direction: "outgoing",
-                position: "single"
-            },
-            {
-                message: "hello evan",
-                sender: "dempster",
-                direction: "incoming",
-                position: "single"
-            },
-            {
-                message: "stand",
-                sender: "evan",
-                direction: "outgoing",
-                position: "single"
-            },
-            {
-                message: "okay",
-                sender: "dempster",
-                direction: "incoming",
-                position: "first"
-            },
-            {
-                message: "INFO goToPosture: ([agent:dempster]) Stand",
-                sender: "dempster",
-                direction: "incoming",
-                position: "last"
-            }],
-            setCurrentChat)
-    );
-
-    const [shaferChat, setShaferChat] = useState(
-        new Chat("shafer", "NAO robot", "/robot.png",
-            [{
-                message: "hello shafer",
-                sender: "ravenna",
-                direction: "outgoing",
-                position: "single"
-            },
-            {
-                message: "hello ravenna",
-                sender: "shafer",
-                direction: "incoming",
-                position: "single"
-            },
-            {
-                message: "please nod",
-                sender: "ravenna",
-                direction: "outgoing",
-                position: "single"
-            },
-            {
-                message: "okay",
-                sender: "shafer",
-                direction: "incoming",
-                position: "first"
-            },
-            {
-                message: "I can not nod because I do not know how to nod",
-                sender: "shafer",
-                direction: "incoming",
-                position: "last"
-            },
-            {
-                message: "i will teach you how to nod",
-                sender: "ravenna",
-                direction: "outgoing",
-                position: "single"
-            },
-            {
-                message: "I can not learn how to nod because learning how to nod is admin Goal",
-                sender: "shafer",
-                direction: "incoming",
-                position: "single"
-            }],
-            setCurrentChat)
-    );
-
-    const [chats, setChat] = useState([dempsterChat, shaferChat]);
-
-    const [conversations, setConversations] = useState(
-        <ConversationList>
-            {chats.map((chat, index) => chat.conversation(index))}
-        </ConversationList>
-    );
-
-    const [username, setUsername] = useState("");
+    const postServerMessage = useCallback((chat: Chat, message: string) => {
+        let newChats = chats.slice();
+        for (let i = 0; i < chats.length; i++) {
+            if (chats[i].robotName === chat.robotName) {
+                newChats[i].messageList = [
+                    ...chats[i].messageList,
+                    {
+                        message: message,
+                        sender: chat.robotName,
+                        direction: "incoming",
+                        position: "single"
+                    }
+                ];
+                break;
+            }
+        }
+        setChats(newChats);
+    },
+        // using chats.toString() as a dep because we need to check if the
+        // object's data actually changed, instead of the reference of `chats`
+        // the compiler complains about it but this is why I'm doing it this way
+        [chats.toString()]);
 
     // SET UP WEBSOCKET //
-    const ws = new WebSocket("ws://localhost:8080/chat");
-    ws.onmessage = (message) => {
-        currentChat.postServerMessage(message.data);
-        forceRerender();
+    const { sendMessage, lastMessage, readyState } =
+        useWebSocket("ws://localhost:8080/chat");
+
+    useEffect(() => {
+        if (lastMessage !== null) {
+            const data = JSON.parse(lastMessage.data);
+
+            for (const chat of chats) {
+                if (chat.robotName === data.sender) {
+                    postServerMessage(chat, data.message);
+                }
+            }
+            setConversations(
+                <ConversationList>
+                    {chats.map((chat) => createConversation(chat))}
+                </ConversationList>
+            );
+        }
+    },
+        // again, we use chats.toString() to make sure the value is changing
+        [lastMessage, chats.toString(), postServerMessage]);
+
+    const connectionStatus = {
+        [ReadyState.CONNECTING]: 'connecting',
+        [ReadyState.OPEN]: 'connected',
+        [ReadyState.CLOSING]: 'connection closing',
+        [ReadyState.CLOSED]: 'connection closed',
+        [ReadyState.UNINSTANTIATED]: 'uninstantiated',
+    }[readyState];
+
+    const statusColor = {
+        [ReadyState.CONNECTING]: '#efd402',
+        [ReadyState.OPEN]: '#00a505',
+        [ReadyState.CLOSING]: '#efd402',
+        [ReadyState.CLOSED]: '#e00b00',
+        [ReadyState.UNINSTANTIATED]: '#efd402',
+    }[readyState]
+
+    const statusIcon = {
+        [ReadyState.CONNECTING]: faSync,
+        [ReadyState.OPEN]: faCheck,
+        [ReadyState.CLOSING]: faSync,
+        [ReadyState.CLOSED]: faBan,
+        [ReadyState.UNINSTANTIATED]: faQuestion,
+    }[readyState]
+
+    const handleSendMessage = (message: string) => {
+        message = clean(message)
+        postUserMessage(currentChat, message, username);
+        sendMessage(JSON.stringify({
+            message: message,
+            sender: clean(username),
+            recipient: currentChat.robotName
+        }));
+        setConversations(
+            <ConversationList>
+                {chats.map((chat) => createConversation(chat))}
+            </ConversationList>
+        );
     };
-    ws.onopen = function () { console.log("connected"); }
-    ws.onclose = function () { console.log("disconnected") };
-    ws.onerror = function (error) { console.error("websocket error: " + error) }
 
     // CREATE RENDER //
     // This is the usual chat container but it only makes sense if there
     // is a conversation already selected...
     let chatContainer = (
         <ChatContainer className='w-3/4'>
-            {currentChat.conversationHeader()}
+            {createConversationHeader(currentChat)}
 
             <MessageList>
-                {currentChat.renderMessageList()}
+                {createMessageList(currentChat)}
             </MessageList>
 
             <MessageInput
@@ -242,16 +230,7 @@ const RobotChat: React.FC<{}> = () => {
                 placeholder={"Talk with " + currentChat.robotName
                     + "..."}
                 attachButton={false}
-                onSend={(message) => {
-                    currentChat.postUserMessage(message, username);
-                    ws.send(JSON.stringify({
-                        message: clean(message),
-                        username: clean(username)
-                    }));
-                    // Since we're mutating state, we need to trick React
-                    // into updating itself
-                    forceRerender();
-                }}
+                onSend={(message) => handleSendMessage(message)}
             />
         </ChatContainer>
     );
@@ -268,32 +247,47 @@ const RobotChat: React.FC<{}> = () => {
     }
 
     return (
-        <div className='size-9/12'>
+        <div className='h-[40rem]'>
             <MainContainer>
                 <Sidebar position="left">
-                    <div className='flex-col flex space-y-2'>
-                        <div className='flex-1 flex items-center \
+                    <div className="flex flex-col justify-between h-full">
+
+                        <div className="flex flex-col space-y-2">
+                            {/* Name input */}
+                            <div className='flex-1 flex items-center \
                                     justify-center flex-col'>
-                            <MessageInput
-                                className='w-11/12 mt-3'
-                                attachButton={false}
-                                sendButton={false}
-                                placeholder='Set your name here'
-                                onChange={(innerHTML, textContent, innerText,
-                                    nodes) => setUsername(innerText)}
-                                sendOnReturnDisabled={true}
-                            />
+                                <MessageInput
+                                    className='w-11/12 mt-3'
+                                    attachButton={false}
+                                    sendButton={false}
+                                    placeholder='Set your name here'
+                                    onChange={(innerHTML, textContent, innerText,
+                                        nodes) => setUsername(innerText)}
+                                    sendOnReturnDisabled={true}
+                                    value={username}
+                                />
+                            </div>
+
+                            {conversations}
                         </div>
-                        {conversations}
+
+                        {/* Connection indicator */}
+                        <div className='outline outline-1 p-2 outline-[#e5e7eb]
+                                        text-center'>
+                            Status: &nbsp;
+                            <FontAwesomeIcon icon={statusIcon}
+                                color={statusColor}></FontAwesomeIcon>
+                            {" " + connectionStatus}
+                        </div>
+
                     </div>
                 </Sidebar>
 
                 {chatContainer}
 
             </MainContainer>
-        </div>
+        </div >
     );
 }
 
 export default RobotChat;
-

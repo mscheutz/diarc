@@ -280,7 +280,7 @@ public class LearningState {
         return localVariableProperties.get(key);
       }
     }
-    log.warn("[getLocalVariableForProperties] local variable not found for properties: "+properties);
+    log.debug("[getLocalVariableForProperties] local variable not found for properties: "+properties);
     return null;
   }
 
@@ -363,10 +363,11 @@ public class LearningState {
   public void removeEventSpecsForLocalVariable(Symbol lvRef){
     List<Term> properties = getProperties(lvRef);
 
-    String lvToRemove= localVariableProperties.get(properties);
+    String lvToRemove= getLocalVariableForProperties(properties);
 
     eventSpecs= eventSpecs.stream().filter( e -> !e.getInputArgs().contains(lvToRemove)).collect(Collectors.toList());
 
+    declarationSpecs=declarationSpecs.stream().filter( e -> !e.getReturnArgs().contains(lvToRemove)).collect(Collectors.toList());
   }
 
   /**

@@ -51,8 +51,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
       act:updateDialogueHistory(?utterance);
       !speaker = op:invokeMethod(?utterance, "getSpeaker");
       !addressee = op:invokeMethod(?utterance, "getAddressee");
-      !semantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(understand(?actor,that))");
-      act:handleError(!speaker, !addressee, !semantics, direct);
+      !semantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(understand(!addressee,that))");
+      !addressee.act:handleError(!speaker, !addressee, !semantics, direct);
       return;
     }
 

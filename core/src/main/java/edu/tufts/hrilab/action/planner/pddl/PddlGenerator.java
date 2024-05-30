@@ -271,7 +271,8 @@ public class PddlGenerator {
       Collection<TRADEServiceInfo> initialDomainServices = TRADE.getAvailableServices(new TRADEServiceConstraints().name("getInitialDomain"));
 
       for (TRADEServiceInfo tsi : initialDomainServices) {
-        if (tsi.getGroups().isEmpty() || tsi.getGroups().stream().anyMatch(possibleGroups::contains)) {
+        List<String> agentGroups = tsi.getGroups().stream().filter(e -> e.contains("agent")).toList();
+        if (agentGroups.isEmpty() || agentGroups.stream().anyMatch(possibleGroups::contains)) {
           relevantInitialDomainServices.add(tsi);
         }
       }

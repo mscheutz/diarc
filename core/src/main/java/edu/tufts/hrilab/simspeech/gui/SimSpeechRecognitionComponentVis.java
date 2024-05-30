@@ -178,7 +178,7 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
       } else if (event.getActionCommand().equals("setSpeaker")) {
         String speakerName = SCommandText.getText();
         SCommandText.setText("");
-        component.setListener(Factory.createSymbol(speakerName));
+        component.setSpeaker(Factory.createSymbol(speakerName));
         return;
       } else if (event.getActionCommand().equals("<unk>")) {
         String text;

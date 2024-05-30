@@ -11,10 +11,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "190" ]
+      "serviceArgs" : [ "stand(dempster)", "NORMAL", "1704824680579" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "190", "SUCCEEDED" ]
+      "serviceArgs" : [ "1704824680579", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -22,10 +22,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,back)", "193" ]
+      "serviceArgs" : [ "move(dempster,back)", "NORMAL", "1704824685579" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "193", "FAILED" ]
+      "serviceArgs" : [ "1704824685579", "FAILED" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I can not move back because I do not have rear Sensors", "true" ]
@@ -63,7 +63,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,back)", "209" ]
+      "serviceArgs" : [ "move(dempster,back)", "NORMAL", "1704824705602" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -71,13 +71,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "cancelGoal(dempster)", "294" ]
+      "serviceArgs" : [ "cancelGoal(dempster)", "SKIPPENDING", "1704824710648" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "294", "SUCCEEDED" ]
+      "serviceArgs" : [ "1704824710648", "SUCCEEDED" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "209", "CANCELED" ]
+      "serviceArgs" : [ "1704824705602", "CANCELED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -85,7 +85,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,ravenna,propertyOf(behind(area,dempster),safe))", "299" ]
+      "serviceArgs" : [ "forgetThat(dempster,ravenna,propertyOf(behind(area,agent),safe))", "NORMAL", "1704824715621" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,propertyOf(behind(area,dempster),safe))", "null" ]
@@ -97,7 +97,7 @@
       "serviceArgs" : [ "believes(shafer,propertyOf(behind(area,dempster),safe))", "null" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "299", "SUCCEEDED" ]
+      "serviceArgs" : [ "1704824715621", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -105,7 +105,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,ravenna,trusted(evan))", "304" ]
+      "serviceArgs" : [ "forgetThat(dempster,ravenna,trusted(evan))", "NORMAL", "1704824720655" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,trusted(evan))", "null" ]
@@ -117,7 +117,7 @@
       "serviceArgs" : [ "believes(shafer,trusted(evan))", "null" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "304", "FAILED" ]
+      "serviceArgs" : [ "1704824720655", "FAILED" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I can not forget That evan is trusted because that is protected Information", "true" ]
@@ -128,7 +128,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,evan,trusted(ravenna))", "309" ]
+      "serviceArgs" : [ "forgetThat(dempster,evan,trusted(ravenna))", "NORMAL", "1704824725632" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,trusted(ravenna))", "null" ]
@@ -140,7 +140,7 @@
       "serviceArgs" : [ "believes(shafer,trusted(ravenna))", "null" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "309", "SUCCEEDED" ]
+      "serviceArgs" : [ "1704824725632", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -148,10 +148,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,back)", "314" ]
+      "serviceArgs" : [ "move(dempster,back)", "NORMAL", "1704824730627" ]
     }, {
       "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "314", "FAILED" ]
+      "serviceArgs" : [ "1704824730627", "FAILED" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I can not move back because I do not have rear Sensors", "true" ]

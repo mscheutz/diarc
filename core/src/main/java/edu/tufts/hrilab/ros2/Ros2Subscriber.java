@@ -6,7 +6,7 @@ package edu.tufts.hrilab.ros2;
 
 /**
  * Generic Ros2 Subscriber, which takes in a specific message type
- * @param <T>
+ * @param <T> message type
  */
 public interface Ros2Subscriber<T> {
 

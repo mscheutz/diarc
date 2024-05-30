@@ -38,8 +38,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author Evan Krause evan.krause@tufts.edu
  * @param <T> SWIG wrapped enum class (ImageProcessorType, DetectorType,
- * @param <Detail>
- * @param <NVP>
+ * @param <Detail> VisionProcessDetail
+ * @param <NVP> NativeVisionProcess
  */
 public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProcessDetail<T>, NVP extends NativeVisionProcess> {
 

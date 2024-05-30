@@ -179,7 +179,8 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
   protected Matrix4d getLocationPose(Symbol refID) {
     Matrix4d locPose = null;
     try {
-      locPose = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class,Class.class)).call(Matrix4d.class, refID, Matrix4d.class);
+      locPose = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class,Class.class))
+              .call(Matrix4d.class, refID, Matrix4d.class);
     } catch (TRADEException e) {
       log.error("[getLocationPose] exception getting Matrix4d from reference, returning null", e);
     }
@@ -190,7 +191,8 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
   protected PoseReference getPoseReference(Symbol refID) {
     PoseReference ref = null;
     try {
-      ref = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class,Class.class)).call(PoseReference.class, refID, PoseReference.class);
+      ref = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class,Class.class))
+              .call(PoseReference.class, refID, PoseReference.class);
     } catch (TRADEException e) {
       log.error("[getLocationPose] exception getting PoseReference from reference, returning null", e);
     }

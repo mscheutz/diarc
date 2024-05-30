@@ -4,11 +4,11 @@
 
 package edu.tufts.hrilab.config.nao;
 
+import edu.tufts.hrilab.action.GoalEndpoint;
+import edu.tufts.hrilab.action.GoalManagerImpl;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.DemoApplication;
-import edu.tufts.hrilab.gui.DemoComponent;
 import edu.tufts.hrilab.nao.MockNaoComponent;
-import edu.tufts.hrilab.nao.NaoComponent;
 import edu.tufts.hrilab.simspeech.ChatEndpoint;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
@@ -16,99 +16,98 @@ import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
-import edu.tufts.hrilab.sphinx4.Sphinx4Component; 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
-
-import java.awt.*;
 
 @Configuration
 @EnableWebSocket
 public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigurer {
-  // for logging
   protected static Logger log = LoggerFactory.getLogger(TwoNaoDemo.class);
 
-  /**
-   * Set to true to use gui for speech input
-   */
-  public boolean simSpeech = true;
-  /**
-   * Set
-   */
-  public boolean mockNao = true;
-  public boolean useSphinx = false;
+  // parallel arrays
+  public final int NUM_ROBOTS = 2;
+  public final String[] ROBOT_NAMES = {"dempster", "shafer"};
+  public final String[] HUMAN_NAMES = {"evan", "ravenna"};
 
-//  @Bean
-  protected SimSpeechRecognitionComponent simSpeech() {
-    return createInstance(SimSpeechRecognitionComponent.class,
-            "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster");
+  public final String gmArgs = "-beliefinitfile demos.pl agents/twonaoagents.pl " +
+    "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
+    "-goal listen(self)";
+
+  @Bean
+  @Primary
+  protected String[] robotNames() {
+    return ROBOT_NAMES;
   }
 
   @Bean
+  @Primary
+  protected SimSpeechRecognitionComponent[] simSpeechRecognitionComponents() {
+    SimSpeechRecognitionComponent[] components = new SimSpeechRecognitionComponent[NUM_ROBOTS];
+    for(int i = 0; i < NUM_ROBOTS; i++) {
+      components[i] = createInstance(SimSpeechRecognitionComponent.class,
+              "-config demodialogues/heteroAgentsDemo_trusted.simspeech"
+              + " -speaker " + HUMAN_NAMES[i] + " -listener " + ROBOT_NAMES[i]);
+    }
+    return components;
+  }
+
+  @Bean
+  @Primary
   protected DialogueComponent dialogue() {
     return createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
+  }
+
+  protected GoalManagerImpl goalManagerImpl() {
+    return createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
   }
 
   // start the configuration
   @Override
   public void runConfiguration() {
-    SimSpeechRecognitionComponent a = null;
-
-    if (simSpeech) {;
-//      a = createInstance(SimSpeechRecognitionComponent.class,
-//              "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster");
-//      createInstance(SimSpeechRecognitionComponent.class,
-//              "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -listener dempster");
-    }
-
-    if (useSphinx) {
-      createInstance(Sphinx4Component.class, "-mixer 0 -grammar heterogeneousAgents -nlp -speaker ravenna -listener shafer");
-      createInstance(Sphinx4Component.class, "-mixer 2 -grammar heterogeneousAgents -nlp -speaker evan -listener dempster");
-    }
-
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
-
     createInstance(TLDLParserComponent.class, "-dict templatedict.dict templatedictLearned.dict");
-
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
-
     createInstance(ReferenceResolutionComponent.class);
-
-//  createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
-
     createInstance(SimpleNLGComponent.class);
 
-    if (mockNao) {
-      createInstance(MockNaoComponent.class, "-groups agent:dempster -obstacle true"); // sees obstacle
-      createInstance(MockNaoComponent.class, "-groups agent:shafer -floorSupport false"); // does not see floor support
-    } else {
-      createInstance(NaoComponent.class, "-groups agent:dempster -url 192.168.1.7 -unsafe -doNotWakeUp -voice low");
-//      createInstance(edu.tufts.hrilab.nao.NaoComponent.class, "-groups agent:shafer -url 192.168.1.15 -unsafe -doNotWakeUp -voice high");
-    }
+    // createInstance(ChatEndpoint.class....)
+//    createInstance(GoalEndpoint.class,....)
+//    createInstance(Endpointmanagercomponent....)
 
-    String gmArgs = "-beliefinitfile demos.pl agents/twonaoagents.pl " +
-            "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
-            "-goal listen(self)";
 
-    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
+    createInstance(MockNaoComponent.class, "-groups agent:dempster -obstacle true"); // sees obstacle
+    createInstance(MockNaoComponent.class, "-groups agent:shafer -floorSupport false"); // does not see floor support
   }
 
   public static void main(String[] args) {
     TwoNaoDemo demoConfig = new TwoNaoDemo();
-    SpringApplication.run(DemoApplication.class, args);
     demoConfig.runConfiguration();
+    SpringApplication.run(DemoApplication.class, args);
+  }
+
+  @Bean
+  public ChatEndpoint chatEndpoint() {
+    return new ChatEndpoint(simSpeechRecognitionComponents(),
+            dialogue(), robotNames());
+  }
+
+  @Bean
+  public GoalEndpoint goalEndpoint() {
+    return new GoalEndpoint(goalManagerImpl());
   }
 
   @Override
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-    registry.addHandler(new ChatEndpoint(simSpeech(), dialogue()), "/chat")
+    registry.addHandler(chatEndpoint(), "/chat")
+            .setAllowedOrigins("http://localhost:3000");
+    registry.addHandler(goalEndpoint(), "/goal")
             .setAllowedOrigins("http://localhost:3000");
   }
 }

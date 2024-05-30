@@ -72,6 +72,7 @@ void GraspDetector::handleMemoryObjectNotification(MemoryObjectNotification::Con
     LOG4CXX_DEBUG(logger, "Calculating agile grasps.");
     grasps = agileGrasp.calculateGraspPoses(object);
   }
+  LOG4CXX_DEBUG(logger, boost::format("Detected %d grasp options.") % grasps.size());
 
   // add all grasps to memory object
 
