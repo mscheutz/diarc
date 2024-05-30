@@ -4,6 +4,9 @@
 
 package edu.tufts.hrilab.config.nao;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.GoalEndpoint;
 import edu.tufts.hrilab.action.GoalManagerImpl;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
@@ -22,9 +25,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+
+import java.util.Collection;
 
 @Configuration
 @EnableWebSocket
@@ -46,24 +52,6 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
     return ROBOT_NAMES;
   }
 
-  @Bean
-  @Primary
-  protected SimSpeechRecognitionComponent[] simSpeechRecognitionComponents() {
-    SimSpeechRecognitionComponent[] components = new SimSpeechRecognitionComponent[NUM_ROBOTS];
-    for(int i = 0; i < NUM_ROBOTS; i++) {
-      components[i] = createInstance(SimSpeechRecognitionComponent.class,
-              "-config demodialogues/heteroAgentsDemo_trusted.simspeech"
-              + " -speaker " + HUMAN_NAMES[i] + " -listener " + ROBOT_NAMES[i]);
-    }
-    return components;
-  }
-
-  @Bean
-  @Primary
-  protected DialogueComponent dialogue() {
-    return createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
-  }
-
   protected GoalManagerImpl goalManagerImpl() {
     return createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
   }
@@ -77,7 +65,15 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
     createInstance(ReferenceResolutionComponent.class);
     createInstance(SimpleNLGComponent.class);
 
-    // createInstance(ChatEndpoint.class....)
+    createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
+
+    for(int i = 0; i < NUM_ROBOTS; i++) {
+      createInstance(SimSpeechRecognitionComponent.class,
+              "-config demodialogues/heteroAgentsDemo_trusted.simspeech"
+              + " -speaker " + HUMAN_NAMES[i] + " -listener " + ROBOT_NAMES[i]);
+    }
+
+    createInstance(ChatEndpointComponent.class, "-n dempster shafer");
 //    createInstance(GoalEndpoint.class,....)
 //    createInstance(Endpointmanagercomponent....)
 
@@ -95,21 +91,31 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
   }
 
   @Bean
-  public ChatEndpointComponent chatEndpoint() {
-    return new ChatEndpointComponent(simSpeechRecognitionComponents(),
-            dialogue(), robotNames());
-  }
-
-  @Bean
   public GoalEndpoint goalEndpoint() {
     return new GoalEndpoint(goalManagerImpl());
   }
 
   @Override
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-    registry.addHandler(chatEndpoint().getChatHandler(), "/chat")
-            .setAllowedOrigins("http://localhost:3000");
-    registry.addHandler(goalEndpoint(), "/goal")
-            .setAllowedOrigins("http://localhost:3000");
+    try {
+      WebSocketHandler chatHandler = null;
+      Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
+      for (TRADEServiceInfo service : availableServices) {
+        if (service.serviceString.equals("getChatHandler()")) {
+          chatHandler = service.call(ChatEndpointComponent.ChatHandler.class);
+          break;
+        }
+      }
+
+      if(chatHandler == null)
+        throw new NullPointerException("Failed to find chat handler");
+
+      registry.addHandler(chatHandler, "/chat")
+              .setAllowedOrigins("http://localhost:3000");
+//    registry.addHandler(goalEndpoint(), "/goal")
+//            .setAllowedOrigins("http://localhost:3000");
+    } catch(TRADEException e) {
+      log.error("Chat handler service call failed");
+    }
   }
 }

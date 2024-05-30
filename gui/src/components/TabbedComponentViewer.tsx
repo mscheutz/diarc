@@ -61,7 +61,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
         </ConversationList>
     );
 
-    const [username, setUsername] = useState("");
+    const [username, setUsername] = useState("evan");
 
     // Websocket to check for the endpoints
     const [chatStatus, setChatStatus] = useState("wait")

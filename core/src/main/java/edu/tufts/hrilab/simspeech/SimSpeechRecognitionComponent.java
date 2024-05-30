@@ -67,7 +67,13 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
 
   @Override
   protected void init() {
-    try {
+      try {
+          TRADE.registerAllServices(this, this.listener.getName());
+      } catch (TRADEException e) {
+          log.error("Failed to register TRADE services");
+      }
+
+      try {
       if (autoInput) {
         String file = Resources.createFilepath(resourceConfigPath, SConfig);
         sbr = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(file)));
@@ -118,6 +124,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
    *
    * @param in the new speech input
    */
+  @TRADEService
   public void setText(String in) {
     synchronized (syncObj) {
       input = in;

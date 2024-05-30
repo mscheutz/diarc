@@ -36,7 +36,6 @@ public class EndpointManagerComponent extends DiarcComponent
 
     }
 
-
     // +---------------------+
     // | WebSocketConfigurer |
     // + --------------------+

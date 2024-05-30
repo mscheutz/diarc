@@ -2,9 +2,9 @@ package edu.tufts.hrilab.simspeech;
 
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
-import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +14,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import javax.annotation.Nonnull;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * ChatEndpoint. Wraps a text web socket handler in a DIARC Component.
@@ -24,39 +24,111 @@ public class ChatEndpointComponent extends DiarcComponent {
     private static final Logger log =
             LoggerFactory.getLogger(ChatEndpointComponent.class);
 
-    private final SimSpeechRecognitionComponent[] recognitions;
-    private final String[] robotNames;
+    private String[] robotNames;
+    private HashMap<String, TRADEServiceInfo> robotInputs;
 
     private final ChatHandler chatHandler;
 
     /**
-     * Constructs the <code>ChatEndpoint</code> given simulated speech
-     * recognition and production components.
-     *
-     * @param recognitions simulated speech recognition component
-     * @param dialogue     dialogue component to register for utterance notifications.
+     * Constructs the <code>ChatEndpoint</code>.
      */
-    public ChatEndpointComponent(SimSpeechRecognitionComponent[] recognitions,
-                                 DialogueComponent dialogue,
-                                 String[] robotNames) {
-        this.recognitions = recognitions;
-        this.robotNames = robotNames;
+    public ChatEndpointComponent() {
         this.chatHandler = new ChatHandler();
-
-        try {
-            TRADE.registerAllServices(this, (String) null);
-            Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
-            for (TRADEServiceInfo service : availableServices) {
-                if (service.serviceString.equals("sendMessage(edu.tufts.hrilab."
-                        + "slug.common.Utterance)")) {
-                    dialogue.registerForDialogueHistoryNotifications(service);
-                }
-            }
-        } catch (TRADEException e) {
-            log.error("Failed to register methods for dialogue history notifications");
-        }
     }
 
+    /**
+     * Parse runtime arguments after construction.
+     * @param cmdLine the list of arguments
+     */
+    @Override
+    protected void parseArgs(CommandLine cmdLine) {
+        // This is a required option
+        this.robotNames = cmdLine.getOptionValues("names");
+    }
+
+    /**
+     * Provide a list of arguments available in the command line.
+     * @return the list of arguments
+     */
+    @Override
+    protected List<Option> additionalUsageInfo() {
+        List<Option> options = new ArrayList<>();
+        options.add(Option.builder("n")
+                        .longOpt("names")
+                        .desc("list of robot names, separated by spaces")
+                        .valueSeparator(' ')
+                        .numberOfArgs(Option.UNLIMITED_VALUES)
+                        .required(true)
+                        .build());
+        return options;
+    }
+
+    /**
+     * Complete initialization after construction and parsing of command line
+     * arguments.
+     */
+    @Override
+    protected void init() {
+        // Register for dialogue service
+        try {
+            TRADEServiceInfo sendMessageService = null;
+            TRADEServiceInfo dialogueRegisterService = null;
+            TRADE.registerAllServices(this, (String) null);
+            Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
+            // Find send message service and dialogue register service
+            for (TRADEServiceInfo service : availableServices) {
+                if (service.serviceString.equals("sendMessage(edu.tufts.hrilab."
+                        + "slug.common.Utterance)"))
+                    sendMessageService = service;
+                else if(service.serviceString.equals(
+                        "registerForDialogueHistoryNotifications("
+                        + "ai.thinkingrobots.trade.TRADEServiceInfo)"))
+                    dialogueRegisterService = service;
+
+                if(sendMessageService != null && dialogueRegisterService != null)
+                    break;
+            }
+
+            if(sendMessageService == null || dialogueRegisterService == null)
+                throw new NullPointerException("Could not find service");
+            System.out.println(dialogueRegisterService.serviceString);
+            System.out.println(sendMessageService.serviceString);
+
+            dialogueRegisterService.call(void.class, sendMessageService);
+
+        } catch (TRADEException e) {
+            log.error("Failed to register send message service");
+        } catch (NullPointerException e) {
+            log.error("Failed to register methods for dialogue history notifications");
+        }
+
+        // Find robot input services
+        this.robotInputs = new HashMap<>();
+        int mapped = 0;
+        Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
+        outer:
+        for (TRADEServiceInfo service : availableServices) {
+            if (service.serviceString.equals("setText(java.lang.String)")) {
+                for(String robotName : this.robotNames) {
+                    if(robotName.equals(
+                            service.getGroups().iterator().next())) {
+                        this.robotInputs.put(robotName, service);
+                        mapped++;
+                        continue outer;
+                    }
+                }
+            }
+        }
+
+        if(mapped != this.robotNames.length)
+            log.error("Failed to map all robot names to inputs");
+    }
+
+    /**
+     * Getter for the chat handler instance.
+     * @return the chat handler
+     */
+    @TRADEService
     public ChatHandler getChatHandler() {
         return chatHandler;
     }
@@ -64,23 +136,27 @@ public class ChatEndpointComponent extends DiarcComponent {
     /**
      * Sends a message to the chat window.
      *
-     * @param utterance what the robot is saying.
+     * @param utterance what the robot is saying
      */
     @TRADEService
     public void sendMessage(Utterance utterance) {
+        System.out.println("outer sendmessage called");
         this.chatHandler.sendMessage(utterance);
     }
 
+    /**
+     * ChatHandler inner class. This implements the server.
+     */
     public class ChatHandler extends TextWebSocketHandler {
         private WebSocketSession session;
 
         /**
          * Sends a message to the chat window.
          *
-         * @param utterance what the robot is saying.
+         * @param utterance what the robot is saying
          */
         public void sendMessage(Utterance utterance) {
-            // Make sure a robot is speaking
+            // Make sure the speaker is a robot
             boolean flag = false;
             for (String robotName : robotNames) {
                 if (utterance.getSpeaker().toString().equals(robotName)) {
@@ -119,20 +195,17 @@ public class ChatEndpointComponent extends DiarcComponent {
             JSONObject request = new JSONObject(message.getPayload());
 
             String data = request.getString("message");
-            String sender = request.getString("sender");
+            // currently not needed
+//            String sender = request.getString("sender");
             String recipient = request.getString("recipient");
 
-            // Find the SimSpeechRecognitionComponent that matches speaker/listener
-            // with sender/recipient of this message
-            for (SimSpeechRecognitionComponent recognition : recognitions) {
-                if (recognition.getListener().toString().equals(recipient)) {
-                    recognition.setSpeaker(new Symbol(sender));
-                    recognition.setText(data);
-                    break;
-                }
+            TRADEServiceInfo service = robotInputs.get(recipient);
+            if(service == null) {
+                log.error("Invalid incoming message: no SimSpeechRecognitionComponent"
+                        + "matches specified recipient \"{}\"", recipient);
+                return;
             }
-            log.error("Invalid incoming message: no SimSpeechRecognitionComponent"
-                    + "matches specified recipient \"{}\"", recipient);
+            service.call(void.class, data);
         }
     }
 }
