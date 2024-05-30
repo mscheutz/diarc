@@ -2,7 +2,9 @@ package edu.tufts.hrilab.config.gui;
 
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.DemoApplication;
+import edu.tufts.hrilab.gui.ExampleService;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
+import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -19,6 +21,12 @@ public class GuiConfig extends DiarcConfiguration {
   public void runConfiguration() {
     createInstance(MockMoveBaseComponent.class, "-groups agent:fetch:fetch -simExecTime");
     log.info("MockMoveBaseComponent initialized");
+
+    createInstance(ReferenceResolutionComponent.class);
+    log.info("ReferenceResolutionComponent initialized");
+
+//    createInstance(ExampleService.class);
+//    log.info("ExampleService initialized");
   }
 
   public static void main(String[] args) {

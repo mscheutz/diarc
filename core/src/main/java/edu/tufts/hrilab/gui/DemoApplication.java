@@ -5,6 +5,7 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Variable;
 import org.slf4j.Logger;
@@ -93,93 +94,93 @@ public class DemoApplication extends SpringBootServletInitializer {
           @RequestParam("serviceName") String serviceName,
           @RequestBody(required = false) JsonNode rawArgs) { // Use JsonNode to raw handle incoming JSON
 
-    try {
-      // Obtain the argument types for the specified service
-      Map<String, String[]> servicesToTrack = TradeServiceTracker.parseServiceStrings(listTradeServices());
-      String[] argTypes = servicesToTrack.get(serviceName);
+      String baseServiceName = null;
+      try {
+          // Obtain the argument types for the specified service
+          Map<String, String[]> servicesToTrack = TradeServiceTracker.parseServiceStrings(listTradeServices());
+          baseServiceName = serviceName.split("_")[0];
+          String[] argTypes = servicesToTrack.get(baseServiceName);
 
-      if (argTypes == null) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Service name '" + serviceName + "' is not recognized or is missing argument types.");
-      }
-
-      Object[] args; // Prepare the arguments array
-      Class<?>[] argClasses;
-
-      switch (rawArgs.getNodeType()) {
-        case OBJECT:
-          // Check if service documentation is loaded for this service
-          Map<String, Map<String, Object>> serviceDetails = DocumentationController.loadServiceDocumentation();
-          if (!serviceDetails.containsKey(serviceName)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Service documentation missing for: " + serviceName);
+          if (argTypes == null) {
+              return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Service name '" + baseServiceName + "' is not recognized or is missing argument types.");
           }
 
-          Map<String, Object> paramsInfo = serviceDetails.get(serviceName);
-          List<Map<String, Object>> parameters = (List<Map<String, Object>>) paramsInfo.get("parameters");
+          Object[] args; // Prepare the arguments array
+          Class<?>[] argClasses;
 
-          args = new Object[parameters.size()];
-          argClasses = new Class<?>[parameters.size()];
+          if (Objects.requireNonNull(rawArgs.getNodeType()) == JsonNodeType.OBJECT) {// Check if service documentation is loaded for this service
+              Map<String, Map<String, Object>> serviceDetails = DocumentationController.loadServiceDocumentation();
+              if (!serviceDetails.containsKey(serviceName)) {
+                  return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Service documentation missing for: " + serviceName);
+              }
 
-          int index = 0;
-          for (Map<String, Object> paramInfo : parameters) {
-            String paramName = (String) paramInfo.get("name");
-            String typeName = (String) paramInfo.get("type");
+              Map<String, Object> paramsInfo = serviceDetails.get(serviceName);
+              List<Map<String, Object>> parameters = (List<Map<String, Object>>) paramsInfo.get("parameters");
 
-            if (!rawArgs.has(paramName)) {
-              return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing parameter: " + paramName);
-            }
+              args = new Object[parameters.size()];
+              argClasses = new Class<?>[parameters.size()];
 
-            JsonNode paramValue = rawArgs.get(paramName);
-            String valueAsString = paramValue.isValueNode() ? paramValue.asText() : paramValue.toString();
-            args[index] = convertToType(valueAsString, typeName);
-              assert args[index] != null;
-              argClasses[index] = args[index].getClass();
-            index++;
-          }
-          break;
-        case ARRAY:
-          // Check if the service expects a single List argument
-          // && rawArgs != null
-          if (argTypes.length == 1 && argTypes[0].equals("java.util.List") && rawArgs.isArray()) {
-            // Treat the entire array as a single List argument
-            String listValue = rawArgs.toString(); // Convert the raw JSON array to String
-            Object listArg = convertToType(listValue, "java.util.List");
-            args = new Object[]{listArg};
-            argClasses = new Class<?>[]{List.class};
+              int index = 0;
+              for (Map<String, Object> paramInfo : parameters) {
+                  String paramName = (String) paramInfo.get("name");
+                  String typeName = (String) paramInfo.get("type");
+
+                  if (!rawArgs.has(paramName)) {
+                      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing parameter: " + paramName);
+                  }
+
+                  JsonNode paramValue = rawArgs.get(paramName);
+                  String valueAsString = paramValue.isValueNode() ? paramValue.asText() : paramValue.toString();
+                  args[index] = convertToType(valueAsString, typeName);
+                  assert args[index] != null;
+                  argClasses[index] = args[index].getClass();
+                  index++;
+              }
+//              depreciating
+//              case ARRAY:
+//                  // Check if the service expects a single List argument
+//                  // && rawArgs != null
+//                  if (argTypes.length == 1 && argTypes[0].equals("java.util.List") && rawArgs.isArray()) {
+//                      // Treat the entire array as a single List argument
+//                      String listValue = rawArgs.toString(); // Convert the raw JSON array to String
+//                      Object listArg = convertToType(listValue, "java.util.List");
+//                      args = new Object[]{listArg};
+//                      argClasses = new Class<?>[]{List.class};
+//                  } else {
+//                      // Treat each item in the JSON array as separate arguments
+//                      args = new Object[argTypes.length];
+//                      argClasses = new Class<?>[argTypes.length];
+//                      for (int i = 0; i < argTypes.length; i++) {
+//                          if (!rawArgs.has(i)) {
+//                              return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing argument at index " + i + " for service '" + baseServiceName + "'.");
+//                          }
+//                          String typeName = argTypes[i];
+//                          String value;
+//                          if ("javax.vecmath.Matrix4d".equals(typeName) && rawArgs.has(i) && rawArgs.get(i).isArray()) {
+//                              value = rawArgs.get(i).toString(); // Directly convert the JSON array to string
+//                          } else {
+//                              value = rawArgs.has(i) ? rawArgs.get(i).asText() : null; // Use JsonNode API to get value
+//                          }
+//                          args[i] = convertToType(value, typeName);
+//                          assert args[i] != null;
+//                          argClasses[i] = args[i].getClass();
+//                      }
+//                  }
+//                  break;
           } else {
-            // Treat each item in the JSON array as separate arguments
-            args = new Object[argTypes.length];
-            argClasses = new Class<?>[argTypes.length];
-            for (int i = 0; i < argTypes.length; i++) {
-                if (!rawArgs.has(i)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing argument at index " + i + " for service '" + serviceName + "'.");
-              }
-              String typeName = argTypes[i];
-              String value;
-              if ("javax.vecmath.Matrix4d".equals(typeName) && rawArgs.has(i) && rawArgs.get(i).isArray()) {
-                value = rawArgs.get(i).toString(); // Directly convert the JSON array to string
-              } else {
-                value = rawArgs.has(i) ? rawArgs.get(i).asText() : null; // Use JsonNode API to get value
-              }
-              args[i] = convertToType(value, typeName);
-              assert args[i] != null;
-              argClasses[i] = args[i].getClass();
-            }
+              return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid JSON input format.");
           }
-          break;
-        default:
-          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid JSON input format.");
+
+          TRADEServiceConstraints constraints = new TRADEServiceConstraints().name(baseServiceName).argTypes(argClasses);
+          Object result = TRADE.getAvailableService(constraints).call(Object.class, args);
+
+          // Convert the result to a JSON string to include in the response
+          String jsonResult = new ObjectMapper().writeValueAsString(result);
+          return ResponseEntity.ok("Service '" + baseServiceName + "' invoked successfully with arguments: " + Arrays.toString(args) + " and returned: " + jsonResult);
+      } catch (Exception e) {
+          e.printStackTrace();
+          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to invoke service '" + baseServiceName + "': " + e.getMessage());
       }
-
-      TRADEServiceConstraints constraints = new TRADEServiceConstraints().name(serviceName).argTypes(argClasses);
-      Object result = TRADE.getAvailableService(constraints).call(Object.class, args);
-
-      // Convert the result to a JSON string to include in the response
-      String jsonResult = new ObjectMapper().writeValueAsString(result);
-      return ResponseEntity.ok("Service '" + serviceName + "' invoked successfully with arguments: " + Arrays.toString(args) + " and returned: " + jsonResult);
-    } catch (Exception e) {
-      e.printStackTrace();
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to invoke service '" + serviceName + "': " + e.getMessage());
-    }
   }
 
   /**

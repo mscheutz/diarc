@@ -77,7 +77,7 @@ public class DocumentationController {
             pathsNode.fields().forEachRemaining(entry -> {
                 String path = entry.getKey();
                 JsonNode details = entry.getValue();
-                String operationId = details.path("post").path("operationId").asText();
+                String operationId = details.path("post").path("operationId").asText().split("_")[0];
 
                 if (availableServices.contains(operationId)) {
                     filteredPaths.set(path, details);

@@ -40,16 +40,27 @@
     <div class="row mt-3">
         <div class="col-md-12">
             <h2>Map Actions</h2>
-            <button id="fetchMapData" type="button" class="btn btn-info">Fetch Map Data</button>
+            <button id="fetchMapData" type="button" class="btn btn-info">Display Map</button>
             <button id="navigateToPoint" type="button" class="btn btn-warning">Navigate To Point</button>
-            <button id="updateRobotLocation" type="button" class="btn btn-danger">Update Robot Location</button>
+            <button id="fetchRobotPose" type="button" class="btn btn-danger">Display/Update Robot Location</button>
+            <button id="fetchKeyLocations" type="button" class="btn btn-info">Display Key Locations</button>
         </div>
     </div>
     <div class="row mt-3">
         <div class="col-md-12">
             <!-- Display area for map data and responses -->
-            <div id="mapData"></div>
+            <div id="mapData" style="position: relative;">
+                <img id="mapImage" src="" alt="Map"/>
+                <!-- markers inside mapData -->
+            </div>
+            <div id="poseData">
+                <div id="posePosition"></div>
+                <div id="poseOrientation"></div>
+            </div>
+            <div id="keyLocations"></div>
         </div>
+
+
     </div>
 </div>
 </body>

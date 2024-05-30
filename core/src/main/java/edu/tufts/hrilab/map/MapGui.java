@@ -1,10 +1,20 @@
 package edu.tufts.hrilab.map;
 
 import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.tufts.hrilab.action.justification.ConditionJustification;
+import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.consultant.pose.PoseReference;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.gui.DemoApplication;
 import edu.tufts.hrilab.gui.ImageService;
+import edu.tufts.hrilab.interfaces.MoveBaseInterface;
 import edu.tufts.hrilab.map.PathAction;
+import edu.tufts.hrilab.map.util.Pose;
 import edu.tufts.hrilab.map.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +40,11 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
-
 
 @Component
 public class MapGui extends TextWebSocketHandler {
@@ -59,13 +69,21 @@ public class MapGui extends TextWebSocketHandler {
             case "fetchMapData":
                 fetchMapData(session);
                 break;
-            case "navigateToPoint":
-                double x = request.getDouble("x");
-                double y = request.getDouble("y");
-                navigateToPoint(session, x, y);
+//            case "navigateToPoint":
+//                double x = request.getDouble("x");
+//                double y = request.getDouble("y");
+//                navigateToPoint(session, x, y);
+//                break;
+//            case "goToLocation":
+//                double x = request.getDouble("x");
+//                double y = request.getDouble("y");
+//                goToLocation(session, x, y);
+//                break;
+            case "fetchRobotPose":
+                fetchRobotPose(session);
                 break;
-            case "updateRobotLocation":
-                updateRobotLocation(session);
+            case "fetchKeyLocations":
+                fetchKeyLocations(session);
                 break;
             default:
                 session.sendMessage(new TextMessage("{\"error\":\"Unsupported action\"}"));
@@ -93,38 +111,110 @@ public class MapGui extends TextWebSocketHandler {
         session.sendMessage(new TextMessage(response.toString()));
     }
 
+//    private void navigateToPoint(WebSocketSession session, double x, double y) throws Exception {
+//        Point3d targetPoint = new Point3d(x, y, 0);  // Assuming Z coordinate is 0 for 2D navigation
+//        Pose pose = Utils.convertToPose(transform);
+//        TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation").argTypes(double.class,double.class,double.class,double.class,double.class,double.class,Boolean.class)).call(Justification.class, pose.getPosition().x, pose.getPosition().y,
+//                pose.getOrientation().x, pose.getOrientation().y, pose.getOrientation().z, pose.getOrientation().w,
+//                true);
+//    }
 
 
+    private void fetchKeyLocations(WebSocketSession session) throws Exception {
+        // Call the service and get the initial locations
+        Object result = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActivatedEntities")).call(Object.class);
+        System.out.println("Initial result: " + result);
 
-    private void navigateToPoint(WebSocketSession session, double x, double y) throws Exception {
-        Point3d targetPoint = new Point3d(x, y, 0);  // Assuming Z coordinate is 0 for 2D navigation
-        Symbol dest = mapComponent.currFloorMap.getNearestPortal(targetPoint).getReferenceId();  // Example to get destination symbol
-        double padding = 0.5;  // Example padding
-        boolean canOpenDoors = true;  // Example capability
-        List<PathAction> path = mapComponent.getPath(Utils.convertToMatrix4d(mapComponent.currRobotPose), dest, padding, canOpenDoors);
+        // Check if the result is a Map before proceeding
+        if (result instanceof Map<?, ?> resultMap) {
+            System.out.println("Result is a Map with keys: " + resultMap.keySet());
 
-        JSONArray pathJson = new JSONArray();
-        for (PathAction action : path) {
-            JSONObject actionJson = new JSONObject();
-            actionJson.put("type", action.getType().toString());
-            actionJson.put("x", action.getPose().m03); // Extracting the x-coordinate from the transformation matrix
-            actionJson.put("y", action.getPose().m13); // Extracting the y-coordinate from the transformation matrix
-            pathJson.put(actionJson);
+            // Initialize the final JSON object to hold locations and their positions
+            JSONObject finalLocationsWithPositions = new JSONObject();
+
+            // Iterate over each entry in the resultMap
+            for (Map.Entry<?, ?> entry : resultMap.entrySet()) {
+                Symbol symbol = (Symbol) entry.getKey();
+                System.out.println("Key: " + symbol + " (Type: " + symbol.getClass().getSimpleName() + ")");
+
+                // Call getReference for each symbol to fetch the position
+                Object positionResult = TRADE.getAvailableService(
+                        new TRADEServiceConstraints().name("getReference").argTypes(Symbol.class)
+                ).call(Object.class, symbol);
+                System.out.println("Position result for " + symbol + ": " + positionResult);  // positionResult.getClass() is a PoseReference
+
+                if (positionResult instanceof PoseReference customPositionResult) {
+                    // Convert from PoseReference to Point3d
+                    Point3d meterPosition = customPositionResult.getPosition();
+                    // Convert the meterPosition to pixel coordinates using toPixel
+                    Point2d pixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(meterPosition);
+
+                    // Create a JSON object with pixel coordinates
+                    JSONObject positionJson = new JSONObject();
+                    positionJson.put("x", pixelPosition.getX());
+                    positionJson.put("y", pixelPosition.getY());
+
+                    // Add this position to the final JSON object
+                    finalLocationsWithPositions.put(symbol.toString(), positionJson);
+                } else {
+                    // If positionResult does not have getPosition() or is not the expected class, log this issue
+                    System.out.println("Expected positionResult to be of YourCustomPositionClass but got: " + positionResult.getClass().getSimpleName());
+                }
+            }
+
+            // Create a response JSON object and add the final locations with their positions
+            JSONObject responseWithKeyLocations = new JSONObject();
+            responseWithKeyLocations.put("keyLocations", finalLocationsWithPositions);
+
+            // Send the composed final data back to the client
+            session.sendMessage(new TextMessage(responseWithKeyLocations.toString()));
+        } else {
+            // Handle cases where the result is not a Map as expected
+            System.out.println("Expected a Map but received: " + result.getClass().getSimpleName());
         }
-
-        JSONObject response = new JSONObject();
-        response.put("path", pathJson);
-        session.sendMessage(new TextMessage(response.toString()));
     }
 
-    private void updateRobotLocation(WebSocketSession session) throws Exception {
-        mapComponent.updateRobotPose();
-        JSONObject response = new JSONObject();
-        Point2d robotPixel = mapComponent.currFloorMap.getPixelMap().toPixel(mapComponent.currRobotPose.getPosition());
-        response.put("x", robotPixel.x);
-        response.put("y", robotPixel.y);
-        session.sendMessage(new TextMessage(response.toString()));
+    private void fetchRobotPose(WebSocketSession session) throws Exception {
+        try {
+            // Update the robot's current pose
+            mapComponent.updateRobotPose();
+            Pose currPose = mapComponent.currRobotPose;
+            Point3d position = currPose.getPosition();
+            Quat4d orientation = currPose.getOrientation();
+
+            Point2d robotPixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(position);
+            JSONObject response = new JSONObject()
+                    .put("position", new JSONObject().put("x", position.getX()).put("y", position.getY()).put("z", position.getZ()))
+                    .put("orientation", new JSONObject().put("x", orientation.getX()).put("y", orientation.getY()).put("z", orientation.getZ()).put("w", orientation.getW()))
+                    .put("currRobotPose", new JSONObject().put("x", robotPixelPosition.getX()).put("y", robotPixelPosition.getY()));
+
+            session.sendMessage(new TextMessage(response.toString()));
+            System.out.println("Sent robot pose data: " + response);
+        } catch (Exception e) {
+            System.err.println("Error fetching robot pose: " + e.getMessage());
+            session.sendMessage(new TextMessage(new JSONObject().put("error", "Failed to fetch robot pose").toString()));
+        }
     }
 
+//    private void navigateToPoint(WebSocketSession session, double x, double y) throws Exception {
+//        Point3d targetPoint = new Point3d(x, y, 0);  // Assuming Z coordinate is 0 for 2D navigation
+//        Symbol dest = mapComponent.currFloorMap.getNearestPortal(targetPoint).getReferenceId();  // Example to get destination symbol
+//        double padding = 0.5;  // Example padding
+//        boolean canOpenDoors = true;  // Example capability
+//        List<PathAction> path = mapComponent.getPath(Utils.convertToMatrix4d(mapComponent.currRobotPose), dest, padding, canOpenDoors);
+//
+//        JSONArray pathJson = new JSONArray();
+//        for (PathAction action : path) {
+//            JSONObject actionJson = new JSONObject();
+//            actionJson.put("type", action.getType().toString());
+//            actionJson.put("x", action.getPose().m03); // Extracting the x-coordinate from the transformation matrix
+//            actionJson.put("y", action.getPose().m13); // Extracting the y-coordinate from the transformation matrix
+//            pathJson.put(actionJson);
+//        }
+//
+//        JSONObject response = new JSONObject();
+//        response.put("path", pathJson);
+//        session.sendMessage(new TextMessage(response.toString()));
+//    }
 
 }

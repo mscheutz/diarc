@@ -157,3 +157,12 @@ As part of our ongoing efforts to simplify our application's architecture, we ha
 
 ### Key Changes:
 - **`MapComponent` Integration**: `MapComponent` is now fully managed as a Spring bean. This integration allows direct access to map data throughout the application, ensuring that all components that depend on map data can access the most current and synchronized data directly from `MapComponent`.
+
+
+TODO:
+POST
+/invoke-service?serviceName=getReference_symbol
+{
+"refId": "Unknown Type: location_0:location"
+}
+continues indefinitely

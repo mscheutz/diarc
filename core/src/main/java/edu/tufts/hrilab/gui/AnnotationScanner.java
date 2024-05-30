@@ -92,20 +92,24 @@ public class AnnotationScanner {
         Reflections reflections = new Reflections(new ConfigurationBuilder()
                 .forPackages("edu.tufts.hrilab")
                 .setScanners(Scanners.MethodsAnnotated));
-        Set<Method> methods = reflections.getMethodsAnnotatedWith(TRADEService.class);
+        List<Method> methods = new ArrayList<>(reflections.getMethodsAnnotatedWith(TRADEService.class));
 
         List<MethodDetail> methodDetails = new ArrayList<>();
         for (Method method : methods) {
             List<Map<String, Object>> parameters = new ArrayList<>();
+            StringBuilder signatureBuilder = new StringBuilder(method.getName());
             for (Parameter parameter : method.getParameters()) {
+                String paramType = parameter.getType().getSimpleName().toLowerCase();
                 parameters.add(Map.of(
                         "name", parameter.getName(),
                         "in", "query",
                         "required", false,
-                        "schema", Map.of("type", parameter.getType().getSimpleName().toLowerCase())
+                        "schema", Map.of("type", paramType)
                 ));
+                signatureBuilder.append('_').append(paramType);
             }
-            methodDetails.add(new MethodDetail(method.getName(), method.getDeclaringClass().getSimpleName(), parameters));
+            String methodSignature = signatureBuilder.toString();
+            methodDetails.add(new MethodDetail(methodSignature, method.getDeclaringClass().getSimpleName(), parameters));
         }
         return methodDetails;
     }

@@ -113,3 +113,25 @@ button:hover {
   opacity: 0.75;
   cursor: pointer;
 }
+
+#mapData {
+    position: relative;
+}
+
+#robotMarker {
+    width: 20px;
+    height: 20px;
+    background-color: red;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid white;
+    position: absolute;
+}
+
+.location-marker {
+    width: 10px;
+    height: 10px;
+    background-color: green;
+    transform: translate(-50%, -50%);
+    position: absolute;
+}
