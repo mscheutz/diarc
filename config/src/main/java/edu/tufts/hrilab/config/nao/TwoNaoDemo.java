@@ -77,6 +77,11 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
     createInstance(ReferenceResolutionComponent.class);
     createInstance(SimpleNLGComponent.class);
 
+    // createInstance(ChatEndpoint.class....)
+//    createInstance(GoalEndpoint.class,....)
+//    createInstance(Endpointmanagercomponent....)
+
+
     createInstance(MockNaoComponent.class, "-groups agent:dempster -obstacle true"); // sees obstacle
     createInstance(MockNaoComponent.class, "-groups agent:shafer -floorSupport false"); // does not see floor support
   }
