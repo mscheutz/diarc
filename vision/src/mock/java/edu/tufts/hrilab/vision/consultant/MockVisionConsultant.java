@@ -35,7 +35,7 @@ public class MockVisionConsultant extends VisionConsultant {
     // filter scene graph tokens based on active visual searches
     List<MemoryObject> filteredTokens = new ArrayList<>();
     for (MemoryObject token : tokens) {
-      for (Long typeId : visionComponent.getTypeIds(0)) {
+      for (Long typeId : visionComponent.getTypeIds()) {
         List<Term> descriptors = visionComponent.getDescriptors(typeId);
         if (descriptors.size() == 1 && descriptors.get(0).getName().equals("any")) {
           // use all tokens in this case
@@ -104,7 +104,7 @@ public class MockVisionConsultant extends VisionConsultant {
     // TODO: what to do if more than one token for objectRef ?
     MemoryObject token=null;
     if(visionRef !=null && !visionRef.tokenIds.isEmpty()){
-      token =  visionComponent.getToken(visionRef.tokenIds.get(0), 0.0);
+      token =  visionComponent.getToken(visionRef.tokenIds.get(0));
     }
 
     log.debug("token: "+token);

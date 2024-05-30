@@ -256,12 +256,12 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
       // EAK: this relies on some other mechanism to update visionRefs with native MO results
 //      List<MemoryObject> tokens = new ArrayList();
 //      for (Long tokenId : visionRef.tokenIds) {
-//        MemoryObject token = visionComponent.getToken(tokenId, 0.0);
+//        MemoryObject token = visionComponent.getToken(tokenId);
 //        if (token != null) {
 //          tokens.add(token);
 //        }
 //      }
-      List<MemoryObject> tokens = visionComponent.getTokens(visionRef.typeId, 0.0);
+      List<MemoryObject> tokens = visionComponent.getTokens(visionRef.typeId);
       for (MemoryObject token : tokens) {
         if (!visionRef.tokenIds.contains(token.getTokenId())) {
           visionRef.tokenIds.add(token.getTokenId());
@@ -273,7 +273,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
       // otherwise it's a descriptor
       List<Symbol> descriptors = new ArrayList();
       descriptors.add(objectRef);
-      return visionComponent.getTokens(descriptors, 0.0f);
+      return visionComponent.getTokens(descriptors);
     }
   }
 
@@ -293,13 +293,13 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
       // EAK: this relies on some other mechanism to update visionRefs with native MO results
 //      List<Long> tokenIds = new ArrayList();
 //      for (Long tokenId : visionRef.tokenIds) {
-//        MemoryObject token = visionComponent.getToken(tokenId, 0.0);
+//        MemoryObject token = visionComponent.getToken(tokenId);
 //        if (token != null) {
 //          tokenIds.add(tokenId);
 //        }
 //      }
       // TODO: EAK: this is inconsistent with how getTokens works, and should work the same way
-      List<Long> tokenIds = visionComponent.getTokenIds(visionRef.typeId, 0.0);
+      List<Long> tokenIds = visionComponent.getTokenIds(visionRef.typeId);
       for (Long tokenId : tokenIds) {
         if (!visionRef.tokenIds.contains(tokenId)) {
           visionRef.tokenIds.add(tokenId);
@@ -310,7 +310,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
       // otherwise it's a descriptor
       List<Symbol> descriptors = new ArrayList();
       descriptors.add(objectRef);
-      return visionComponent.getTokenIds(descriptors, 0.0f);
+      return visionComponent.getTokenIds(descriptors);
     }
   }
 
