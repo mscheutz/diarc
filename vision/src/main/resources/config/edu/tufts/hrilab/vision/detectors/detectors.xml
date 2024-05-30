@@ -37,7 +37,6 @@ Optional fields:
   <detector type="hough" trackers="kcf,cmt" config="hough/houghs.xml"/>
   <detector type="motion" trackers="generic" depends="opticalflow" config="motion/motion.xml"/>
   <detector type="sift" trackers="kcf,cmt" depends="sift" config="sift/sifts.xml"/>
-  <detector type="grasp" trackers="kcf,cmt" config="grasp/grasps.xml" required="depth,agilegrasp"/>
   <detector type="surfacemarking" trackers="kcf,cmt" config="surface_marking/surfacemarkings.xml"/>
   <detector type="spatialrelation" trackers="relation" config="spatial_relation/spatial_relations.xml" required="depth"/>
   <detector type="openpose" trackers="generic"  config="openpose/openpose.xml" required="openpose"/>

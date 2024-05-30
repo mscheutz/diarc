@@ -21,10 +21,10 @@
 #include <pcl/pcl_base.h>
 #include <pcl/common/centroid.h>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 //static object(s)
-log4cxx::LoggerPtr MemoryObject::logger(log4cxx::Logger::getLogger("ade.stm.MemoryObject"));
+log4cxx::LoggerPtr MemoryObject::logger(log4cxx::Logger::getLogger("diarc.stm.MemoryObject"));
 ObjectId MemoryObject::trackingIdGenerator;
 TrackedObjects *MemoryObject::trackedObjects = TrackedObjects::getInstance();
 
@@ -159,9 +159,9 @@ double MemoryObject::compare(const MemoryObject::Ptr &other) const {
 
   //compare two bounding boxes
   static const float conf_thresh = 0.3;
-  float overlap = ade::stm::util::calculateBoundBoxOverlap(match->getBoundingBox(),
+  float overlap = diarc::stm::util::calculateBoundBoxOverlap(match->getBoundingBox(),
                                                            other->getDetectionMask()->getBoundingBox());
-  float sizeSim = ade::stm::util::calculateBoundBoxSizeSimilarity(match->getBoundingBox(),
+  float sizeSim = diarc::stm::util::calculateBoundBoxSizeSimilarity(match->getBoundingBox(),
                                                                   other->getDetectionMask()->getBoundingBox());
   float confidence = overlap * sizeSim;
   LOG4CXX_DEBUG(logger,
@@ -422,7 +422,7 @@ void MemoryObject::decayRelationConfidence(const std::string &relationName, cons
   }
 }
 
-void MemoryObject::removeRelations(const ade::stm::MemoryObject::Ptr &relatedObject) {
+void MemoryObject::removeRelations(const diarc::stm::MemoryObject::Ptr &relatedObject) {
   boost::lock_guard<boost::recursive_mutex> lock(data_mutex);
   if (relatedObject) {
     LOG4CXX_DEBUG(logger, boost::format("[removeRelations] thisId: %lld. otherId: %lld.")
@@ -896,9 +896,9 @@ double PointCloudObject::compare(const MemoryObject::Ptr &other) const {
 
   //compare two bounding boxes
   static const float conf_thresh = 0.7;
-  float overlap = ade::stm::util::calculateBoundBoxOverlap(mask->getBoundingBox(),
+  float overlap = diarc::stm::util::calculateBoundBoxOverlap(mask->getBoundingBox(),
                                                            other->getDetectionMask()->getBoundingBox());
-  float sizeSim = ade::stm::util::calculateBoundBoxSizeSimilarity(mask->getBoundingBox(),
+  float sizeSim = diarc::stm::util::calculateBoundBoxSizeSimilarity(mask->getBoundingBox(),
                                                                   other->getDetectionMask()->getBoundingBox());
   float confidence = overlap * sizeSim;
   LOG4CXX_TRACE(logger, boost::format("[compare] thisId: %lld. otherId: %lld. overlap: %f. sizeSim: %f. conf: %f.")
@@ -1037,8 +1037,8 @@ cv::Mat SurfaceObject::getOrthogonallyProjectedSurfaceImage(surface::SurfaceMode
   }
   std::vector<cv::Point2f> surfImgPoints;
   std::vector<cv::Point2f> transformedImgPoints;
-  ade::capture::util::projectPoints(surfacePoints, surfImgPoints, 0);
-  ade::capture::util::projectPoints(transformedPoints, transformedImgPoints, 0);
+  diarc::capture::util::projectPoints(surfacePoints, surfImgPoints, 0);
+  diarc::capture::util::projectPoints(transformedPoints, transformedImgPoints, 0);
 
   //find homography between projected points
   cv::Mat homography = cv::findHomography(surfImgPoints, transformedImgPoints, CV_RANSAC, 5);
@@ -1060,10 +1060,10 @@ cv::Mat SurfaceObject::getOrthogonallyProjectedSurfaceImage(surface::SurfaceMode
   cv::warpPerspective(projectedImg, transformedImg, homography, transformedImg.size());
 
   //  if (logger->isDebugEnabled()) {
-  //    ade::Display::createWindowIfDoesNotExist("original projection");
-  //    ade::Display::displayFrame(projectedImg, "original projection");
-  //    ade::Display::createWindowIfDoesNotExist("transformed projection");
-  //    ade::Display::displayFrame(transformedImg, "transformed projection");
+  //    diarc::Display::createWindowIfDoesNotExist("original projection");
+  //    diarc::Display::displayFrame(projectedImg, "original projection");
+  //    diarc::Display::createWindowIfDoesNotExist("transformed projection");
+  //    diarc::Display::displayFrame(transformedImg, "transformed projection");
   //    sleep(20);
   //  }
 

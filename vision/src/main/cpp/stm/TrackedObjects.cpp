@@ -8,7 +8,7 @@
 #include <tr1/unordered_map>
 #include <opencv2/core/core.hpp>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 TrackedObjects* TrackedObjects::instance = NULL;
 boost::mutex TrackedObjects::instance_mutex;
@@ -36,7 +36,7 @@ TrackedObjects::TrackedObjects()
 : mo_tokenId(),
 mo_typeId(),
 removedMOBuffer() {
-  logger = log4cxx::Logger::getLogger("ade.stm.TrackedObjects");
+  logger = log4cxx::Logger::getLogger("diarc.stm.TrackedObjects");
 }
 
 TrackedObjects::~TrackedObjects() {

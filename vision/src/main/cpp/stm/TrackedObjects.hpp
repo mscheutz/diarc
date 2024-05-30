@@ -25,9 +25,9 @@ namespace std {
   namespace tr1 {
 
     template<>
-    struct hash<ade::stm::MemoryObject::Ptr> : public unary_function<ade::stm::MemoryObject::Ptr, size_t> {
+    struct hash<diarc::stm::MemoryObject::Ptr> : public unary_function<diarc::stm::MemoryObject::Ptr, size_t> {
 
-      size_t operator()(const ade::stm::MemoryObject::Ptr& mo) const {
+      size_t operator()(const diarc::stm::MemoryObject::Ptr& mo) const {
         return static_cast<size_t> (mo->getId());
       }
     };
@@ -37,7 +37,7 @@ namespace std {
 // forward declare friend class from another namespce
 class RelationTracker;
 
-namespace ade {
+namespace diarc {
   namespace stm {
 
     struct memobj_equal_to : std::binary_function<MemoryObject::Ptr, MemoryObject::Ptr, bool> {
@@ -138,6 +138,6 @@ namespace ade {
     };
 
   } //namespace stm
-} //namespace ade
+} //namespace diarc
 
 #endif //TRACKEDOBJECTS_HPP

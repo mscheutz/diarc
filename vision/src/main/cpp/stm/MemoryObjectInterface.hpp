@@ -26,7 +26,7 @@
 
 //NOTE: to generate java method signatures: $ javap -s <class>
 
-namespace ade {
+namespace diarc {
   namespace stm {
 
     class MemoryObjectInterface {
@@ -111,7 +111,7 @@ namespace ade {
     };
 
   } //namespace stm
-} //namespace ade
+} //namespace diarc
 
 #endif
 

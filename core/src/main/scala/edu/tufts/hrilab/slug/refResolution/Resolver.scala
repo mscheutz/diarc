@@ -69,18 +69,6 @@ class Resolver( groups: java.util.List[String]){
      .call(entityJavaType,ref, entityJavaType)
   }
 
-  def getEntityForReference[E](ref: edu.tufts.hrilab.fol.Symbol, entityJavaType: Class[E], constraints: java.util.List[Term]) : E = {
-    val c = consultants.filter(c => ref.getName.contains(c.kbName))
-
-    if (c.size != 1){
-      log.warn("[getEntityForReference] Multiple consultants with the same kbName, using the first one "+c)
-    }
-
-    //call convertToType va tsi, return results
-    TRADE.getAvailableService(c.head.tsc.name("convertToType").argTypes(classOf[Symbol],classOf[Class[E]],classOf[java.util.List[Term]]))
-      .call(entityJavaType,ref, entityJavaType,constraints)
-  }
-
   def assertProperties(ref: edu.tufts.hrilab.fol.Symbol, properties: java.util.List[Term]): Boolean = {
     val c = consultants.filter(c => ref.getName.contains(c.kbName))
 

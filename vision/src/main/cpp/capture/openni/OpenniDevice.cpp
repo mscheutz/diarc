@@ -18,7 +18,7 @@ OpenniDevice::OpenniDevice(bool liveCapture, const std::string& oniPlaybackFilen
 recorder(NULL),
 shouldRecord(false),
 oniFilename(oniPlaybackFilename) {
-  logger = log4cxx::Logger::getLogger("ade.capture.openni.OpenniDevice");
+  logger = log4cxx::Logger::getLogger("diarc.capture.openni.OpenniDevice");
 
   if (liveCapture) {
     initLiveCapture();

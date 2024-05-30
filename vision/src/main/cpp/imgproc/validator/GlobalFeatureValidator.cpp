@@ -39,7 +39,7 @@
 
 #include <Eigen/Geometry>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 GlobalFeatureValidator::GlobalFeatureValidator(const long long &processorId, const unsigned int imgWidth,
                                                const unsigned int imgHeight)
@@ -56,7 +56,7 @@ GlobalFeatureValidator::GlobalFeatureValidator(const long long &processorId, con
           has_learned_mutex_(),
           has_learned_flag_(false) {
   visionProcessName = "GlobalFeatureValidator";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.validator.GlobalFeatureValidator");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.validator.GlobalFeatureValidator");
 
   // Set parameters for global hypothesis verification
   ghv_.setInlierThreshold(0.005f); //(0.01f); //original (0.005f);
@@ -108,7 +108,6 @@ void GlobalFeatureValidator::loadConfig(const std::string &config) {
                       // get all info for model
                       ModelType model;
                       model.type_ = descriptorName;
-                      ade::stm::Grasp grasp;
                       Eigen::Vector3f point;
                       Eigen::Quaternionf orient;
                       std::string cloud_filename;
@@ -143,45 +142,6 @@ void GlobalFeatureValidator::loadConfig(const std::string &config) {
                               //<use_color> tag must be above <cloud> to be used properly
                               else if (infoNode.first.compare("use_color") == 0) {
                                 use_color = static_cast<std::string> (infoNode.second.data()).compare("true");
-                              }
-                              else if (infoNode.first.compare("grasp") == 0) {
-
-                                BOOST_FOREACH(ptree::value_type const& graspNode, infoNode.second) {
-                                        if (graspNode.first.compare("type") == 0) {
-                                          std::string grasp_type = static_cast<std::string> (graspNode.second.data());
-                                          if (grasp_type.compare("PINCH_APART") == 0) {
-                                            grasp.type_ = Grasp::PINCH_APART;
-                                          } else if (grasp_type.compare("PINCH_TOGETHER") == 0) {
-                                            grasp.type_ = Grasp::PINCH_TOGETHER;
-                                          } else if (grasp_type.compare("PUSH") == 0) {
-                                            grasp.type_ = Grasp::PUSH;
-                                          } else if (grasp_type.compare("TWO_ARM") == 0) {
-                                            grasp.type_ = Grasp::TWO_ARM;
-                                          } else {
-                                            LOG4CXX_ERROR(logger,
-                                                          boost::format("Invalid grasp type: %s.") % grasp_type);
-                                          }
-                                        } else if (graspNode.first.compare("point") == 0) {
-                                          point.x() = graspNode.second.get<double>("x", 0);
-                                          point.y() = graspNode.second.get<double>("y", 0);
-                                          point.z() = graspNode.second.get<double>("z", 0);
-                                          grasp.points_.push_back(point);
-                                          LOG4CXX_DEBUG(logger, boost::format("[loadConfig] point: (%f, %f, %f)")
-                                                                % point.x() % point.y() % point.z());
-                                        } else if (graspNode.first.compare("orientation") == 0) {
-                                          orient.x() = graspNode.second.get<double>("x", 0);
-                                          orient.y() = graspNode.second.get<double>("y", 0);
-                                          orient.z() = graspNode.second.get<double>("z", 0);
-                                          orient.w() = graspNode.second.get<double>("w", 1);
-                                          grasp.orientations_.push_back(orient);
-                                          LOG4CXX_DEBUG(logger,
-                                                        boost::format("[loadConfig] orientation: (%f, %f, %f, %f)")
-                                                        % orient.x() % orient.y() % orient.z() % orient.w());
-                                        }
-                                      }
-                                // add new grasp option to model and reset grasp object for next iteration
-                                model.grasp_options_.push_back(grasp);
-                                grasp = Grasp();
                               }
                             }
 
@@ -445,7 +405,7 @@ void GlobalFeatureValidator::displayResults(const pcl::PointCloud<PointType>::Co
 
   pcl::visualization::PointCloudColorHandlerCustom<PointType>::Ptr scene_color_handler(
           new pcl::visualization::PointCloudColorHandlerCustom<PointType>(scene_cloud, 0, 255, 0));
-  ade::Display::displayPointCloud(scene_cloud, scene_color_handler, "scene_cloud", getDisplayName());
+  diarc::Display::displayPointCloud(scene_cloud, scene_color_handler, "scene_cloud", getDisplayName());
 
   // display aligned model candidates
   pcl::PointCloud<PointType>::Ptr models_aligned_cloud(new pcl::PointCloud<PointType>);
@@ -454,7 +414,7 @@ void GlobalFeatureValidator::displayResults(const pcl::PointCloud<PointType>::Co
   }
   pcl::visualization::PointCloudColorHandlerCustom<PointType>::Ptr models_aligned_color_handler(
           new pcl::visualization::PointCloudColorHandlerCustom<PointType>(models_aligned_cloud, 255, 255, 0));
-  ade::Display::displayPointCloud(models_aligned_cloud, models_aligned_color_handler, "aligned_candidates_cloud",
+  diarc::Display::displayPointCloud(models_aligned_cloud, models_aligned_color_handler, "aligned_candidates_cloud",
                                   getDisplayName());
 
   // display matching models and pose aligned matching models
@@ -471,12 +431,12 @@ void GlobalFeatureValidator::displayResults(const pcl::PointCloud<PointType>::Co
   }
   pcl::visualization::PointCloudColorHandlerCustom<PointType>::Ptr matching_models_color_handler(
           new pcl::visualization::PointCloudColorHandlerCustom<PointType>(matching_models_cloud, 0, 0, 255));
-  ade::Display::displayPointCloud(matching_models_cloud, matching_models_color_handler, "matching_models_cloud",
+  diarc::Display::displayPointCloud(matching_models_cloud, matching_models_color_handler, "matching_models_cloud",
                                   getDisplayName());
 
   pcl::visualization::PointCloudColorHandlerCustom<PointType>::Ptr pose_aligned_scene_color_handler(
           new pcl::visualization::PointCloudColorHandlerCustom<PointType>(pose_aligned_matching_models, 255, 0, 0));
-  ade::Display::displayPointCloud(pose_aligned_matching_models, pose_aligned_scene_color_handler,
+  diarc::Display::displayPointCloud(pose_aligned_matching_models, pose_aligned_scene_color_handler,
                                   "aligned_matching_models_cloud",
                                   getDisplayName());
 

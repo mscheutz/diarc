@@ -12,7 +12,7 @@
 #include "common/VisionConstants.hpp"
 #include "stm/TrackedObjects.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjects(JNIEnv* env, jclass cls, jdouble conf) {
   ArrayListInterface memoryObjects;

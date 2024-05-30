@@ -56,14 +56,6 @@ JNIEXPORT jboolean JNICALL Java_edu_tufts_hrilab_vision_common_swig_CommonModule
 #endif  //USE_V4R_V0
 }
 
-JNIEXPORT jboolean JNICALL Java_edu_tufts_hrilab_vision_common_swig_CommonModuleJNI_hasAgileGrasp(JNIEnv* env, jclass cls) {
-#ifdef USE_AGILEGRASP
-  return true;
-#else
-  return false;
-#endif  //USE_AGILEGRASP
-}
-
 JNIEXPORT jboolean JNICALL Java_edu_tufts_hrilab_vision_common_swig_CommonModuleJNI_hasOpenPose(JNIEnv* env, jclass cls) {
 #ifdef USE_OPENPOSE
   return true;

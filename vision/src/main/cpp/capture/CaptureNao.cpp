@@ -11,7 +11,7 @@
 #include <boost/format.hpp>
 #include <iostream>
 
-namespace ade {
+namespace diarc {
   namespace capture {
     using namespace AL;
 
@@ -81,4 +81,4 @@ namespace ade {
     }
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc

@@ -20,17 +20,18 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/foreach.hpp>
 
-using namespace ade::stm;
+using namespace diarc::stm;
+using namespace diarc::grasp;
 
 AgileGrasp::AgileGrasp() {
-  logger = log4cxx::Logger::getLogger("ade.detector.grasp.AgileGrasp");
+  logger = log4cxx::Logger::getLogger("diarc.detector.grasp.AgileGrasp");
 }
 
 AgileGrasp::~AgileGrasp() {
 
 }
 
-std::vector<GraspPose> AgileGrasp::calculateGraspPoses(MemoryObject::Ptr& object) {
+std::vector<Grasp> AgileGrasp::calculateGraspPoses(MemoryObject::Ptr& object) {
   pcl::PointCloud<PointType>::Ptr object_cloud(new pcl::PointCloud<PointType>);
   pcl::copyPointCloud(*(object->getDetectionMask()->getObjectPointCloud()), *object_cloud);
 
@@ -63,7 +64,7 @@ std::vector<GraspPose> AgileGrasp::calculateGraspPoses(MemoryObject::Ptr& object
   std::vector<Handle>::const_iterator handle_itr;
 
   // if there are handles (grasps) found
-  std::vector<GraspPose> grasps;
+  std::vector<Grasp> grasps;
   if (handles.size() > 0) {
     for (handle_itr = handles.begin(); handle_itr != handles.end(); ++handle_itr) {
       // reset reused data structures
@@ -73,7 +74,7 @@ std::vector<GraspPose> AgileGrasp::calculateGraspPoses(MemoryObject::Ptr& object
       calculateGraspPose(*handle_itr, points, orientation);
 
       // add grasp to results
-      grasps.push_back(GraspPose(points, orientation));
+      grasps.push_back(Grasp(points, orientation));
     }
 
     //plot coordinate frames for debugging purposes

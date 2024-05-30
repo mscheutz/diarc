@@ -884,38 +884,4 @@ public class MemoryObject implements Serializable {
 
     return true;
   }
-
-  /**
-   * Transforms a Grasp by a Matrix4d.
-   *
-   * @param grasp       grasp to transform
-   * @param transformTo matrix to transform grasp by
-   * @return transformed grasp
-   */
-  private Grasp transformGrasp(Grasp grasp, Matrix4d transformTo) {
-    Grasp result = new Grasp();
-    result.setType(grasp.getType());
-
-    for (int i = 0; i < grasp.getNumPoints(); i++) {
-      Matrix4d pointMat = new Matrix4d(new Quat4d(0.0, 0.0, 0.0, 1.0), grasp.getPoint(i), 1.0);
-      Matrix4d newMat = new Matrix4d();
-      newMat.mul(transformTo, pointMat);
-      Vector3d point = new Vector3d();
-      newMat.get(point);
-      result.setPoint(i, point);
-      // EAK can't we just do this?
-//      point = new Vector3d(grasp.getPoint(i));
-//      transformTo.transform(point);
-    }
-
-    for (int i = 0; i < grasp.getNumOrientations(); i++) {
-      Matrix4d orientMat = new Matrix4d(grasp.getOrientation(i), new Vector3d(), 1.0);
-      Matrix4d newMat = new Matrix4d();
-      newMat.mul(transformTo, orientMat);
-      Quat4d orient = new Quat4d();
-      newMat.get(orient);
-      result.setOrientation(i, orient);
-    }
-    return result;
-  }
 }

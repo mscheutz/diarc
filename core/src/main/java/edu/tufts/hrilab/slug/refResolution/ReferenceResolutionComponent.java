@@ -298,11 +298,6 @@ public class ReferenceResolutionComponent extends DiarcComponent {
   }
 
   @TRADEService
-  public <E> E getEntityForReference(Symbol ref, Class<E> entityJavaType, List<Term> constraints){
-    return resolver.getEntityForReference(ref,entityJavaType,constraints);
-  }
-
-  @TRADEService
   public void updateFOC(Symbol r) {
     gh.focBuffer.add(r);
   }

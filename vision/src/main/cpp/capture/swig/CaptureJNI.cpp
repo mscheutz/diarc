@@ -9,13 +9,13 @@
 #include "capture/util/CaptureUtilities.hpp"
 
 JNIEXPORT jboolean JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_checkDarkness(JNIEnv *env, jclass jcls) {
-    const cv::Mat frame = ade::capture::Capture::getLastCaptureNotification()->captureData->frame;
-    return ade::capture::util::isFrameDark(frame);
+    const cv::Mat frame = diarc::capture::Capture::getLastCaptureNotification()->captureData->frame;
+    return diarc::capture::util::isFrameDark(frame);
 }
 
 
 JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackImageArray(JNIEnv* env, jclass jcls, jbyteArray passedArray, jint blurAmount) {
-  const cv::Mat frame = ade::capture::Capture::getLastCaptureNotification()->captureData->frame;
+  const cv::Mat frame = diarc::capture::Capture::getLastCaptureNotification()->captureData->frame;
 
   cv::Mat blurFrame;
   if (blurAmount > 0) {
@@ -42,7 +42,7 @@ JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackIma
 }
 
 JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackDisparityArray(JNIEnv* env, jclass jcls, jbyteArray passedArray) {
-  const cv::Mat frame = ade::capture::Capture::getLastCaptureNotification()->captureData->depthFrameIntensity;
+  const cv::Mat frame = diarc::capture::Capture::getLastCaptureNotification()->captureData->depthFrameIntensity;
   float* dataLocal = (float*) env->GetPrimitiveArrayCritical(passedArray, 0);
 
   for (int r = 0; r < frame.rows; ++r) {
@@ -57,7 +57,7 @@ JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackDis
 }
 
 JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackDepthArray(JNIEnv* env, jclass jcls, jbyteArray passedArray) {
-  const cv::Mat frame = ade::capture::Capture::getLastCaptureNotification()->captureData->depthFrame;
+  const cv::Mat frame = diarc::capture::Capture::getLastCaptureNotification()->captureData->depthFrame;
   float* dataLocal = (float*) env->GetPrimitiveArrayCritical(passedArray, 0);
 
   for (int r = 0; r < frame.rows; ++r) {

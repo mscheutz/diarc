@@ -12,7 +12,7 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 
-namespace ade {
+namespace diarc {
   namespace capture {
     class CaptureGStreamer : public Capture {
     public:
@@ -28,6 +28,6 @@ namespace ade {
     };
 
   } //namespace capture
-} //namespace ade
+} //namespace diarc
 
 #endif //CAPTUREGSTREAMER_H

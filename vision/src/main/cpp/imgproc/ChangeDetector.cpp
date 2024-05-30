@@ -18,7 +18,7 @@ ChangeDetector::ChangeDetector(const long long& processorId, const unsigned int 
 : ImageProcessor(processorId, imgWidth, imgHeight, isStereo),
 sceneIsChanging(false) {
   visionProcessName = "ChangeDetector";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.ChangeDetector");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.ChangeDetector");
   bg_model = cv::createBackgroundSubtractorMOG2();
 }
 
@@ -60,7 +60,7 @@ void ChangeDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
   }
 
   if (getDisplayFlag()) {
-    ade::Display::displayFrame(fgMask, getDisplayName());
+    diarc::Display::displayFrame(fgMask, getDisplayName());
   }
 
   /* HACK: For the stereo case we assume that if there is motion in the left image,

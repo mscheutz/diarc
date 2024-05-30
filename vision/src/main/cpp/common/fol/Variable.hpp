@@ -13,7 +13,7 @@
 
 #include "Symbol.hpp"
 
-namespace ade {
+namespace diarc {
   namespace common {
     namespace fol {
 
@@ -25,7 +25,7 @@ namespace ade {
         Variable(const std::string& name, const std::string& type)
         : Symbol(name),
         type_(type) {
-          logger_ = log4cxx::Logger::getLogger("ade.common.fol.Symbol");
+          logger_ = log4cxx::Logger::getLogger("diarc.common.fol.Symbol");
         }
 
         virtual ~Variable() {
@@ -45,7 +45,7 @@ namespace ade {
 
     } //namespace fol
   } //namespace common
-} //namespace ade
+} //namespace diarc
 
 #endif	/* VARIABLE_HPP */
 

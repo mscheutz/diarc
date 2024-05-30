@@ -413,14 +413,6 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
     } else if (type.isAssignableFrom(MemoryObject[].class)) {
       // MemoryObject[]
       return convertToType(mos.toArray(new MemoryObject[0]), type);
-    } else if (type.isAssignableFrom(Grasp.class)) {
-      // Grasp
-      List<Grasp> grasps = convertToGrasps(mos.get(0), constraints);
-      return convertToType(grasps.get(0), type);
-    } else if (type.isAssignableFrom(Grasp[].class)) {
-      // Grasp[]
-      List<Grasp> grasps = convertToGrasps(mos.get(0), constraints);
-      return convertToType(grasps.toArray(new Grasp[0]), type);
     } else if (type.isAssignableFrom(Point3d.class)) {
       // Point3d
       return convertToType(mos.get(0).getLocation(), type);
@@ -428,41 +420,6 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
       log.error("[convertToType] Can not handle conversions to type: " + type);
       return null;
     }
-  }
-
-  protected List<Grasp> convertToGrasps(MemoryObject mo, List<? extends Term> constraints) {
-    if (constraints == null || constraints.isEmpty()) {
-      constraints = new ArrayList<>(MemoryObjectUtil.getSceneGraphDescriptors(mo));
-    }
-
-    List<Grasp> grasps = new ArrayList<>();
-
-    // find variable name of "grasp_point" constraint
-    Variable grasp_var = null;
-    for (Term constraint : constraints) {
-      if (constraint.getName().equals("grasp_point") && constraint.getOrderedVars().size() == 1) {
-        grasp_var = constraint.getOrderedVars().get(0);
-        break;
-      }
-    }
-    if (grasp_var == null) {
-      log.error("[moveTo(group,object,constraints)] must contain a \"grasp_point\" constraint.");
-      return grasps;
-    }
-
-    // before we do anything, make sure the MemoryObject is in base_link frame
-    mo.transformToBase();
-
-    // get all the grasp options
-    List<Map<Variable, MemoryObject>> bindings = new ArrayList<>();
-    if (MemoryObjectUtil.getMemoryObjectBindings(mo, constraints, bindings)) {
-      for (Map<Variable, MemoryObject> bindingsInstance : bindings) {
-        Grasp grasp = MemoryObjectUtil.convertMemoryObjectToGrasp(bindingsInstance.get(grasp_var));
-        grasps.add(grasp);
-      }
-    }
-
-    return grasps;
   }
 
   protected <U> U convertToType(Object object, Class<U> type) {

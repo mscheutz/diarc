@@ -5,8 +5,6 @@
 package edu.tufts.hrilab.vision.stm;
 
 import edu.tufts.hrilab.vision.Vision;
-import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.vision.stm.swig.ShortTermMemoryModule;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,9 +18,6 @@ import org.slf4j.LoggerFactory;
  * off the requested data. The getShortTermMemory() can populate an entire STM
  * and hand it off, but this is only a snapshot of the STM at the time it was
  * requested, and is not updated.
- *
- * TODO: have the Java side STM continually updated to reflect most recent
- * native STM.
  *
  * @author Evan Krause
  */

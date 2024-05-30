@@ -4,7 +4,6 @@
 
 #include "MemoryObjectInterface.hpp"
 #include "visionproc/VisionProcess.hpp"
-#include "GraspValidationResult.hpp"
 #include <stdio.h>
 //NOTE: To get the signatures for the Java functions, use this on the Class:
 // javap -p -s java/util/Vector
@@ -23,9 +22,9 @@
 //  jmethodID MemoryObjectInterface::memoryObject_getframenum;
 //  jmethodID MemoryObjectInterface::memoryObject_getconfidence;
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
-log4cxx::LoggerPtr MemoryObjectInterface::logger = log4cxx::Logger::getLogger("ade.stm.MemoryObjectInterface");
+log4cxx::LoggerPtr MemoryObjectInterface::logger = log4cxx::Logger::getLogger("diarc.stm.MemoryObjectInterface");
 
 MemoryObjectInterface::MemoryObjectInterface() {
 }
@@ -241,15 +240,6 @@ void MemoryObjectInterface::fillJavaMemoryObject(const MemoryObject::ConstPtr& c
   } else if (current->getCaptureData()->hasCloudData()) {
     // just pass point cloud
     setPointCloud(current->getTrackingMask()->getUnorganizedObjectPointCloud());
-  }
-
-  // if MO is a grasp, add orientation -- this is kind of hacky but don't
-  // have a more general way of dealing with this yet
-  GraspValidationResult::ConstPtr graspMask = boost::dynamic_pointer_cast<const GraspValidationResult>(current->getTrackingMask());
-  if (graspMask) {
-    const Eigen::Quaternionf& orient = graspMask->getOrientation();
-    setNumOrientations(1);
-    setOrientation(0, orient.x(), orient.y(), orient.z(), orient.w());
   }
 
 

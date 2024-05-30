@@ -18,7 +18,7 @@ RelativeHeightProcessor::RelativeHeightProcessor(const long long& processorId, c
   surfaceHeightSaliencyMap.setWidth(imgWidth);
   surfaceHeightSaliencyMap.setHeight(imgHeight);
   visionProcessName = "RelativeHeightProcessor";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.saliency.RelativeHeightProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.saliency.RelativeHeightProcessor");
   capturedFrames->registerForNotification(VisionProcess::Ptr(this));
 }
 
@@ -78,7 +78,7 @@ void RelativeHeightProcessor::handlePlaneNotification(PlaneNotification::ConstPt
   sendNotifications(n);
   
   if (getDisplayFlag()) {
-    ade::Display::displayFrame(img, getDisplayName());
+    diarc::Display::displayFrame(img, getDisplayName());
   }
 }
 

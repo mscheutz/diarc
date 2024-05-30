@@ -417,16 +417,18 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   public Justification moveTo(String groupName, Symbol refId, List<? extends Term> constraints) {
     log.debug("[moveTo(group,refId,constraints)] method entered with constraints: " + constraints);
 
-    //TODO:brad: this was previously calling the local convertToType method, which is part of the pose consultant, not the vision consultant. replacing with call to rr
-    //    List<Grasp> graspOptions = Arrays.asList(convertToType(refId, Grasp[].class, constraints));
+    List<Grasp> graspOptions = getOrderedGraspOptions(refId, constraints);
+    return moveToGraspOption(groupName, graspOptions);
+  }
 
-    List<Grasp> graspOptions = null;
+  protected List<Grasp> getOrderedGraspOptions(Symbol refId, List<? extends Term> constraints) {
+    List<Grasp> graspOptions;
     try {
-      //this is pretty messy
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class, List.class));
-      graspOptions = Arrays.asList(tsi.call(Grasp[].class, refId, Grasp[].class, constraints));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("calculateGraspOptions").argTypes(Symbol.class));
+      graspOptions = tsi.call(List.class, refId, constraints);
     } catch (TRADEException e) {
-      log.error("[moveTo] exception getting memory object from reference, returning null", e);
+      log.error("[moveTo] exception getting grasp options from reference, returning null", e);
+      return null;
     }
 
     // Prioritize grasp points from a specific angle. Can be set from JSON, defaults to vertical.
@@ -439,26 +441,30 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
         return (angleA < angleB) ? -1 : 1;
     });
 
+    return graspOptions;
+  }
+
+  protected Justification moveToGraspOption(String groupName, List<Grasp> graspOptions) {
+    // sanity check
+    if (graspOptions == null || graspOptions.isEmpty()) {
+      return new ConditionJustification(false, Factory.createPredicate("found(graspoptions)"));
+    }
+
     // turn on (or update if it's already on) collision avoidance
     enableCollisionAvoidance();
+
     // iterate through grasp options until one works, or we're out of options
     boolean approachSuccess = false;
     int graspIndex = 0;
     while (!approachSuccess && (graspIndex < graspOptions.size())) {
       // pick a grasp option
       log.debug("Grasp index: " + graspIndex);
-
-      // convert grasp MemoryObject option to Grasp
       Grasp grasp = graspOptions.get(graspIndex++);
 
       // doing some basic grasp checks
       if (grasp.getNumPoints() == 0) {
-        log.error("[moveTo(group,object)] failed to find a grasp.");
-        return new ConditionJustification(false);
-      }
-      if (grasp.getType() == null) {
-        log.error("[moveTo(group,object)] grasp type null!");
-        return new ConditionJustification(false);
+        log.error("[moveTo(group,object)] invalid grasp option contains no grasp points.");
+        continue;
       }
 
       if (log.isTraceEnabled()) {
@@ -502,7 +508,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
     if (!approachSuccess) {
       log.debug("[moveTo(group,refId)] failed.");
-      return new ConditionJustification(false);
+      return new ConditionJustification(false, Factory.createPredicate("movedTo(graspoption)"));
     }
 
     log.debug("[moveTo(group,refId)] success!");
@@ -665,32 +671,17 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     return true;
   }
 
-
   protected boolean moveTo(String groupName, Grasp grasp, float grasp_offset) {
     log.debug("[moveTo(group,grasp)] method entered.");
 
-    //TODO: these 4 moveTo grasp methods probably aren't necessary...
-    boolean result;
-    switch (grasp.getType()) {
-      case PINCH_TOGETHER:
-        result = moveToPinchTogetherGrasp(groupName, grasp, grasp_offset);
-        break;
-      case PINCH_APART:
-        result = moveToPinchApartGrasp(groupName, grasp, grasp_offset);
-        break;
-      case PUSH:
-        result = moveToPushGrasp(groupName, grasp, grasp_offset);
-        break;
-      case TWO_ARM:
-        result = moveToTwoArmGrasp(groupName, grasp, grasp_offset);
-        break;
-      default:
-        log.error("[moveTo(group,grasp)] invalid grasp type: " + grasp.getType());
-        result = false;
-        break;
+    if (grasp.getNumPoints() == 1) {
+      return moveToPinchTogetherGrasp(groupName, grasp, grasp_offset);
+    } else if (grasp.getNumPoints() == 2) {
+      return moveToPinchApartGrasp(groupName, grasp, grasp_offset);
+    } else {
+      log.error("Invalid number of grasp points in Grasp option {}", grasp.getNumPoints());
+      return false;
     }
-
-    return result;
   }
 
   @Override
@@ -784,7 +775,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
       log.error("[moveToPinchTogetherGrasp] invalid group name and grasp type combination: " + groupName);
       return false;
     }
-    return moveToGrasp(groupName, grasp.getOrientation(0), new Point3d(grasp.getPoint(0)), grasp_offset);
+    return moveToGrasp(groupName, grasp.getOrientation(), new Point3d(grasp.getPoint(0)), grasp_offset);
   }
 
   private boolean moveToPinchApartGrasp(String groupName, Grasp grasp, float grasp_offset) {
@@ -797,49 +788,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
             (grasp.getPoint(0).y + grasp.getPoint(1).y) / 2.0,
             (grasp.getPoint(0).z + grasp.getPoint(1).z) / 2.0);
 
-    return moveToGrasp(groupName, grasp.getOrientation(0), point, grasp_offset);
-  }
-
-  private boolean moveToPushGrasp(String groupName, Grasp grasp, float grasp_offset) {
-    if (notOneArm(groupName)) {
-      log.error("[moveToPushGrasp] invalid group name and grasp type combination: " + groupName);
-      return false;
-    }
-    return moveToGrasp(groupName, grasp.getOrientation(0), new Point3d(grasp.getPoint(0)), grasp_offset);
-  }
-
-  private boolean moveToTwoArmGrasp(String groupName, Grasp grasp, float grasp_offset) {
-    if (!groupName.equalsIgnoreCase("arms")) {
-      log.error("[moveToTwoArmGrasp] Two arm grasps requires the group name to be 'arms', but you provided " + groupName);
-      return false;
-    }
-
-    // This is an unfortunate hack.  TODO: find better solution
-    // TwoArm requires greater distance to the object than one arm (handles vs surfaces)
-    grasp_offset += 0.01f;
-
-    Point3d point_l;
-    Point3d point_r;
-    Quat4d orient_l;
-    Quat4d orient_r;
-
-    // point arm pairing based on y-coordinate
-    if (grasp.getPoint(0).y > grasp.getPoint(1).y) {
-      point_l = new Point3d(grasp.getPoint(0));
-      point_r = new Point3d(grasp.getPoint(1));
-      orient_l = grasp.getOrientation(0);
-      orient_r = grasp.getOrientation(1);
-    } else {
-      point_r = new Point3d(grasp.getPoint(0));
-      point_l = new Point3d(grasp.getPoint(1));
-      orient_r = grasp.getOrientation(0);
-      orient_l = grasp.getOrientation(1);
-    }
-
-    point_r = MoveItHelper.calcTargetOffset(point_r, orient_r, new Vector3d(-1.0, 0.0, 0.0), grasp_offset);
-    point_l = MoveItHelper.calcTargetOffset(point_l, orient_l, new Vector3d(-1.0, 0.0, 0.0), grasp_offset);
-
-    return moveTo(groupName, point_l, orient_l, point_r, orient_r);
+    return moveToGrasp(groupName, grasp.getOrientation(), point, grasp_offset);
   }
 
   @Override
@@ -1114,7 +1063,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
       setObjectCollisions(refId.getName(), true); // Allow collisions with grippers
       graspedObjects.put(refId, Boolean.TRUE);
     } else {
-      log.debug("[graspObject] could not convert ref to MemoryObject. Not attaching collision object.");
+      log.error("[graspObject] could not convert ref to MemoryObject. Not attaching collision object.");
       graspedObjects.put(refId, Boolean.FALSE);
       result = false;
     }

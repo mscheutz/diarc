@@ -5,12 +5,12 @@
 #include "GenericTracker.hpp"
 #include "stm/util/StmUtilities.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 GenericTracker::GenericTracker(const long long &processorId, const int imgWidth,
                                const int imgHeight)
         : ObjectTracker(processorId, imgWidth, imgHeight) {
-  logger = log4cxx::Logger::getLogger("ade.tracker.GenericTracker");
+  logger = log4cxx::Logger::getLogger("diarc.tracker.GenericTracker");
 }
 
 GenericTracker::~GenericTracker() {
@@ -193,7 +193,7 @@ bool GenericTracker::compare(const MemoryObject::Ptr &mo1, const MemoryObject::P
   // TODO: make this more sophisticated
   bool match = mo1->getValidationResults().containsAllDescriptors(mo2->getValidationResults().getDescriptors());
 
-  float overlap = ade::stm::util::calculateBoundBoxOverlap(mo1->getTrackingMask()->getBoundingBox(),
+  float overlap = diarc::stm::util::calculateBoundBoxOverlap(mo1->getTrackingMask()->getBoundingBox(),
                                                            mo2->getDetectionMask()->getBoundingBox());
   return match && (overlap > 0.0);
 }

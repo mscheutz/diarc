@@ -16,12 +16,13 @@
 #include <pcl/common/transforms.h>
 #include <math.h>
 
-using namespace ade::stm;
+using namespace diarc::stm;
+using namespace diarc::grasp;
 
 SmallObjectGrasp::SmallObjectGrasp()
     : size_thresh(0.07),
       gripper_depth(0.07) {
-  logger = log4cxx::Logger::getLogger("ade.detector.grasp.SmallObjectGrasp");
+  logger = log4cxx::Logger::getLogger("diarc.detector.grasp.SmallObjectGrasp");
 }
 
 SmallObjectGrasp::~SmallObjectGrasp() {
@@ -90,7 +91,7 @@ void SmallObjectGrasp::calculateMinBB(MemoryObject::Ptr &object) {
   pcl::PointXYZ min_point;
   pcl::PointXYZ max_point;
   Eigen::Vector3f mass_center_base_tmp;
-  ade::pc::util::calculateBoundingBox(transformed_cloud, min_point, max_point, mass_center_base_tmp);
+  diarc::pc::util::calculateBoundingBox(transformed_cloud, min_point, max_point, mass_center_base_tmp);
   z_max = max_point.z;
 
   // construct object center of mass with z-value from 3D BB, and x- and y-values from 2D min BB
@@ -100,7 +101,7 @@ void SmallObjectGrasp::calculateMinBB(MemoryObject::Ptr &object) {
       Eigen::Vector3f(center_bb.x, center_bb.y, min_point.z + (max_point.z - min_point.z) / 2.0); // using z midpoint
 }
 
-std::vector<GraspPose> SmallObjectGrasp::calculateGraspPoses(MemoryObject::Ptr &object) {
+std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(MemoryObject::Ptr &object) {
 
   // create vector from center to mid-point of longest side of minimum bb (i.e., parallel to shortest side)
   double bb_width = cv::norm(rrPts[1] - rrPts[2]);
@@ -130,7 +131,7 @@ std::vector<GraspPose> SmallObjectGrasp::calculateGraspPoses(MemoryObject::Ptr &
   Eigen::Affine3f transform = (t * q);
 
   // calculate grasps using 2D BB and center-of-mass (from 3D BB)
-  std::vector<GraspPose> grasps;
+  std::vector<Grasp> grasps;
 
   //////////////// top-down grasp
 
@@ -224,7 +225,7 @@ std::vector<GraspPose> SmallObjectGrasp::calculateGraspPoses(MemoryObject::Ptr &
   return grasps;
 }
 
-GraspPose SmallObjectGrasp::createGraspPose(pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloud,
+Grasp SmallObjectGrasp::createGraspPose(pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloud,
                                             const Eigen::Affine3f &orientation,
                                             const Eigen::Vector3f &location) {
   // transform into camera coordinate frame
@@ -258,7 +259,7 @@ GraspPose SmallObjectGrasp::createGraspPose(pcl::PointCloud<pcl::PointXYZ>::Cons
   LOG4CXX_DEBUG(logger, boost::format("grasp position (%d,%d,%d).")
       % point.x % point.y % point.z);
 
-  return GraspPose(grasp_points, quat);
+  return Grasp(grasp_points, quat);
 }
 
 pcl::PointXYZ SmallObjectGrasp::findClosestPointInCloud(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud,
