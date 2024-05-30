@@ -2,10 +2,8 @@ package edu.tufts.hrilab.gui;
 
 import edu.tufts.hrilab.action.GoalEndpoint;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.simspeech.ChatEndpoint;
+import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
 import org.apache.commons.cli.CommandLine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -22,7 +20,7 @@ import javax.annotation.Nonnull;
 public class EndpointManagerComponent extends DiarcComponent
         implements WebSocketConfigurer {
 
-    private static ChatEndpoint chatEndpoint;
+    private static ChatEndpointComponent chatEndpointComponent;
     private static GoalEndpoint goalEndpoint;
 
     // +----------------+
