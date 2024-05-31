@@ -135,3 +135,10 @@ button:hover {
     transform: translate(-50%, -50%);
     position: absolute;
 }
+
+#goToLocationMsg, #poseData, #keyLocations {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f4f4f4; /* Light background for visibility */
+    border-radius: 5px;
+}

@@ -54,6 +54,8 @@ function connectMapGui() {
                 showRobotPose(event.data); // Handle robot pose data
             } else if (data.keyLocations) { // Check if key locations data is present
                 showKeyLocations(event.data); // Handle key locations data
+            } else if (data.success !== undefined) { // Check if success message data is present
+                updateGoToLocationMessage(data); // Handle goToLocation response
             } else {
                 console.log("Received unhandled data type:", data);
             }
@@ -100,10 +102,33 @@ function showMapData(message) {
 
 
 
-function navigateToPoint(x, y) {
+function navigateToPoint(x, y, quatX, quatY, quatZ, quatW) {
     if (wsMapGui && wsMapGui.readyState === WebSocket.OPEN) {
-        wsMapGui.send(JSON.stringify({ action: 'navigateToPoint', x: x, y: y }));
+        console.log("Sending navigation point to WebSocket.");
+        wsMapGui.send(JSON.stringify({
+            action: 'navigateToPoint',
+            x: parseFloat(x),
+            y: parseFloat(y),
+            quatX: parseFloat(quatX),
+            quatY: parseFloat(quatY),
+            quatZ: parseFloat(quatZ),
+            quatW: parseFloat(quatW)
+        }));
+    } else {
+        console.log("WebSocket is not open. Attempting to connect...");
+        connectMapGui();
+        setTimeout(() => navigateToPoint(x, y, quatX, quatY, quatZ, quatW), 100); // Retry after 100 ms
     }
+}
+function updateGoToLocationMessage(data) {
+    var msgElement = $('#goToLocationMsg');
+    msgElement.text(data.message); // Update the message text
+    if (data.success) {
+        msgElement.removeClass('alert-danger').addClass('alert-success');
+    } else {
+        msgElement.removeClass('alert-success').addClass('alert-danger');
+    }
+    msgElement.show(); // Make sure the message is visible
 }
 
 function updateRobotLocation() {
@@ -198,10 +223,24 @@ $(function() {
         setTimeout(fetchMapData, 100); // Delay the fetch to give connection time to open
     });
     $("#navigateToPoint").click(function() {
+        console.log("Navigate to Point button clicked.");
         var x = prompt("Enter X coordinate:");
         var y = prompt("Enter Y coordinate:");
-        connectMapGui();
-        setTimeout(function() { navigateToPoint(x, y); }, 100); // Delay to ensure connection is open
+        console.log("Coordinates provided by user: X =", x, ", Y =", y);
+
+        // Default quaternion values for no rotation
+        var quatX = 0.0;
+        var quatY = 0.0;
+        var quatZ = 0.0;
+        var quatW = 1.0;
+
+        if (x !== null && y !== null) { // Only proceed if x and y are provided
+            console.log("Connecting to Map GUI WebSocket.");
+            connectMapGui();
+            setTimeout(function() { navigateToPoint(x, y, quatX, quatY, quatZ, quatW); }, 100); // Delay to ensure connection is open
+        } else {
+            console.log("Navigation cancelled or incomplete coordinates provided.");
+        }
     });
     $("#updateRobotLocation").click(function() {
         connectMapGui();
