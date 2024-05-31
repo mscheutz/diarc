@@ -45,6 +45,14 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "cancelAllPendingGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllCurrentGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "cancelGoalInQueueIndex": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -82,14 +90,6 @@
     "priorityTier": "SKIPPENDING"
   },
   "updateActionLearning": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
-  "suspendDefineItem": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
-  "resumeDefineItem": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

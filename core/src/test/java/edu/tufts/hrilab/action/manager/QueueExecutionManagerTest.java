@@ -490,4 +490,11 @@ public class QueueExecutionManagerTest {
 //
 //    cancelAllGoals();
 //  }
+
+  //TODO if not present anywhere:
+  //submitGoal w/ priority pipeline
+  //superseding active vs suspended goal
+  //methods acting on teams vs leaves
+  //shouldSuspend change test
+  //freeze?
 }

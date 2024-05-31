@@ -13,6 +13,7 @@ import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -218,6 +219,61 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
 
     //todo: supervisor stuff?
   }
+
+  //Off scripts tests for robustness and/or desired functionality
+  @Ignore
+  @Test
+  public void questionAskingInterruptionTest() {
+
+    setSingleTestTimeout(10, TimeUnit.SECONDS);
+    addUserInput("init");
+    evaluateResults();
+
+    setSingleTestTimeout(5, TimeUnit.SECONDS);
+    addUserInput("define new item southwest bowl");
+    evaluateResults();
+    addUserInput("suspend current task");
+    evaluateResults();
+    addUserInput("now say hello");
+    evaluateResults();
+    addUserInput("what is your current task");
+    evaluateResults();
+    addUserInput("resume current task");
+    evaluateResults();
+
+    setSingleTestTimeout(2, TimeUnit.SECONDS);
+    addUserInput("first get a serving box to serving area");
+    evaluateResults();
+    addUserInput("then get a bell pepper to the hot plate");
+    evaluateResults();
+    addUserInput("then right arm saute the bell pepper for 2 seconds");
+    evaluateResults();
+    addUserInput("then get the bell pepper in the serving box");
+    evaluateResults();
+    addUserInput("then get a corn to the cooktop");
+    evaluateResults();
+    addUserInput("then right arm cook the corn for 5 seconds");
+    evaluateResults();
+    addUserInput("then get the corn in the serving box");
+    evaluateResults();
+    addUserInput("then get a carrot to the hot plate");
+    evaluateResults();
+    addUserInput("then right arm saute the carrot for 3 seconds");
+    evaluateResults();
+    addUserInput("then get the carrot in the serving box");
+    evaluateResults();
+    addUserInput("then left arm drizzle on chipotle sauce");
+    evaluateResults();
+    addUserInput("that is how you prepare a southwest bowl");
+    evaluateResults();
+  }
+
+  //TODO:
+  //interruption during teaching on first step (before learning)
+  //reset tests?
+  //interruption during prepare
+  //interruption during one offs
+  //Supervisor stuff
 
   //This wrapper exists so that the generator can appropriately catch input
   private void addUserInput(String input) {

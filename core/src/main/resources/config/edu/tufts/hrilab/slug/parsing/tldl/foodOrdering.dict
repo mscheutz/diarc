@@ -547,6 +547,8 @@ right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
 what is your current task; VERBI; describeCurrentGoal
 what are your pending tasks; VERBI; describePendingGoals
 cancel pending tasks; VERBI; cancelAllPendingGoals
+cancel all active tasks; VERBI; cancelAllActiveGoals
+cancel all tasks; VERBI; cancelAllCurrentGoals
 
 
 reset; VERBI; resetDomain

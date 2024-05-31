@@ -235,27 +235,26 @@ public class QueueExecutionManager extends ExecutionManager {
     }
   }
 
-  //Doesn't work
-  //@TRADEService
-  //@Action
-  //public void cancelAllPendingGoals() {
-  //  synchronized (pendingGoalsLock) {
-  //    while (!pendingGoals.isEmpty()) {
-  //      cancelGoalInQueueIndex(0);
-  //    }
-  //  }
-  //}
+  @TRADEService
+  @Action
+  public void cancelAllPendingGoals() {
+    synchronized (pendingGoalsLock) {
+      while (!pendingGoals.isEmpty()) {
+        cancelGoalInQueueIndex(pendingGoals.size()-1);
+      }
+    }
+  }
 
-  //@TRADEService
-  //@Action
-  //public void cancelAllCurrentGoals() {
-  //  synchronized (goalsLock) {
-  //    synchronized (pendingGoalsLock) {
-  //      cancelAllPendingGoals();
-  //      cancelAllActiveGoals();
-  //    }
-  //  }
-  //}
+  @TRADEService
+  @Action
+  public void cancelAllCurrentGoals() {
+    synchronized (goalsLock) {
+      synchronized (pendingGoalsLock) {
+        cancelAllPendingGoals();
+        cancelAllActiveGoals();
+      }
+    }
+  }
 
   @TRADEService
   @Action
