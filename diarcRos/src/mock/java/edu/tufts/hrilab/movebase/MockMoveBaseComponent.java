@@ -16,10 +16,14 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.interfaces.MoveBaseInterface;
+import edu.tufts.hrilab.map.util.Pose;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 import javax.vecmath.Matrix4d;
+import javax.vecmath.Point2d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Quat4d;
 import java.util.*;
 
 public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInterface {
@@ -28,6 +32,8 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
 
   //used to manage the previous and current location, since checkAt doesn't have outside information to handle this. important since checkAt observes facts used in preconditions and effects of asl actions as well
   private Symbol currentLocation = Factory.createSymbol("location_0", "location");
+
+  private Pose currRobotPose;
 
   @Override
   protected List<Option> additionalUsageInfo() {
@@ -64,7 +70,32 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
   @Override
   public double[] getPoseGlobalQuat() {
     simExecTime();
-    return new double[0];
+//    return new double[0];
+    // Mock data for demonstration purposes
+    Point3d meterPosition;
+    Quat4d orientationResult;
+
+    if (currRobotPose != null) {
+      // If currRobotPose is not null, use its position and orientation
+      meterPosition = currRobotPose.getPosition();
+      orientationResult = currRobotPose.getOrientation();
+
+      System.out.println("orientationResult from getPoseGlobalQuat is " + orientationResult);
+    } else {
+      // If currRobotPose is null, fallback to another method to get the pose
+      PoseReference positionResult = getPoseReference(currentLocation);
+      meterPosition = positionResult.getPosition();
+      orientationResult = positionResult.getOrientation();
+    }
+
+    double mockX = meterPosition.getX();
+    double mockY = meterPosition.getY();
+    double mockOrientationX = orientationResult.getX();
+    double mockOrientationY = orientationResult.getY();
+    double mockOrientationZ = orientationResult.getZ();
+    double mockOrientationW = orientationResult.getW();
+
+    return new double[] {mockX, mockY, mockOrientationX, mockOrientationY, mockOrientationZ, mockOrientationW};
   }
 
   @Override
@@ -72,6 +103,7 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
     simExecTime();
     if (getLocationPose(location) != null) {
       currentLocation = location;
+      currRobotPose = null;
       return new ConditionJustification(true);
     }
     return new ConditionJustification(false);
@@ -86,12 +118,15 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
   public Justification goToLocation(Symbol desiredLocation, Symbol initialLocation) {
     simExecTime();
     currentLocation = desiredLocation;
+    currRobotPose = null;
     return null;
   }
 
   @Override
   public Justification goToLocation(double xdest, double ydest, double quat_x, double quat_y, double quat_z, double quat_w, boolean wait) {
     simExecTime();
+//    return new ConditionJustification(true);
+    currRobotPose = new Pose(new Point3d(xdest, ydest, 0.0), new Quat4d(quat_x, quat_y, quat_z, quat_w));
     return new ConditionJustification(true);
   }
 

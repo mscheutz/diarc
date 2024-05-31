@@ -3,11 +3,8 @@ package edu.tufts.hrilab.gui;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import org.springframework.stereotype.Service;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
 
 @Service
 public class TradeServiceIntegrator {
@@ -30,7 +27,9 @@ public class TradeServiceIntegrator {
       }
 
       for (String groupName : groups) {
-        organizedServices.computeIfAbsent(groupName, k -> new HashSet<>()).add(serviceDetails);
+          // Ensure that the group name is not null
+          // Handle the case where groupName is null by assigning these to a special group or logging an error
+          organizedServices.computeIfAbsent(Objects.requireNonNullElse(groupName, "UndefinedGroup"), k -> new HashSet<>()).add(serviceDetails);
       }
     }
     return organizedServices;

@@ -123,10 +123,11 @@ curl -X POST "http://localhost:8080/invoke-service?serviceName=getPath" \
 -d '[[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], "location_0:location", 0.01, true]'
 ```
 
-Currently two possible results may occur:
+Currently three possible results may occur:
 
     Reference is not known: Y:dest
     Target location must be in a room
+    passing "string" to 'dest' results in the program running indefinitely
 
 ## TODO:
 
@@ -156,3 +157,12 @@ As part of our ongoing efforts to simplify our application's architecture, we ha
 
 ### Key Changes:
 - **`MapComponent` Integration**: `MapComponent` is now fully managed as a Spring bean. This integration allows direct access to map data throughout the application, ensuring that all components that depend on map data can access the most current and synchronized data directly from `MapComponent`.
+
+
+TODO:
+POST
+/invoke-service?serviceName=getReference_symbol
+{
+"refId": "Unknown Type: location_0:location"
+}
+continues indefinitely
