@@ -7,7 +7,6 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.llm.*;
 import edu.tufts.hrilab.slug.parsing.llm.*;
-import org.scalacheck.Gen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

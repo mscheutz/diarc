@@ -128,8 +128,10 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
     Predicate semantics;
     if (UtteranceType.valueOf(response.intention.intent.toUpperCase()) == UtteranceType.INSTRUCT) {
       List<Symbol> args = new ArrayList<>();
-      //TODO EW MultiLingualPickAndPlaceDemo: Find how to handle this without stepping on other demos
-      //args.add(input.getAddressee());
+      //EW MultiLingualPickAndPlaceDemo: Can't do this because of possibility of direct address. Response is supplying the actor
+      if (!service.equals("pickAndPlaceLLMParser")) {
+        args.add(input.getAddressee());
+      }
       Arrays.stream(prop.arguments).forEach(arg -> args.add(Factory.createFOL(arg)));
       semantics = Factory.createPredicate(prop.text, args);
     } else {
@@ -144,7 +146,6 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
     }
 
     // add tier assignments to supplemental semantics
-    //TODO EW MultiLingualPickAndPlaceDemo: Find how to handle this without stepping on other demos
     variables.forEach(var -> output.addTierAssignment(var, Factory.createSymbol(referentMap.get(var.getName()).cognitive_status.toUpperCase())));
 
     return output.build();

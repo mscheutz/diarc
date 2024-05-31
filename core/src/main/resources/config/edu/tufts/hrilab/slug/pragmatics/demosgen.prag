@@ -1,7 +1,6 @@
 #brad: workarounds because I don't really know how the generation pipeline works
 NEW-SET
 RULES
-REPLY(A,B,cannot(putDown(C,D),because(occupied(E))),Z) := REPLY(A,B,cannot(did(putDown(C,theCorn)),because(isOccupied(E))),Z)
 REPLY(self,brad,cannot(did(assembleVision(self)),because(not(find(self,knownModelType)))),{}) := REPLY(self,brad,cannot(did(assembleTheModel(self)),because(foundAnUnknownModelType(self))),{})
 END-SET
 
@@ -17,6 +16,12 @@ REPLY(A,B,pickupitem(C,D,E,F,G),Z) := REPLY(A,B,pickUp(C,prep(D,from(F))),Z)
 REPLY(A,B,gotospot(C,D,E,F,G),Z) := REPLY(A,B,goTo(C,E),Z)
 REPLY(A,B,putdownspot(C,D,E,F,G),Z) := REPLY(A,B,putDown(C,prep(D,on(F))),Z)
 REPLY(A,B,receiveitem(C,D,E,F,G),Z) := REPLY(A,B,receive(C,prep(D,at(F))),Z)
+END-SET
+
+#Multilingual PickAndPlace LLM
+NEW-SET
+RULES
+REPLY(A,B,cannot(putDown(C,D),because(occupied(E))),Z) := REPLY(A,B,cannot(did(putDown(C,D)),because(isOccupied(E))),Z)
 END-SET
 
 #Temi specific

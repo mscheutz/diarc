@@ -18,7 +18,7 @@ import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
-import ai.thinkingrobots.abb.RWSRobotComponent;
+//import ai.thinkingrobots.abb.RWSRobotComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
