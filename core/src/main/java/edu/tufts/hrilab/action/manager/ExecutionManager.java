@@ -1463,6 +1463,7 @@ public class ExecutionManager implements ActionListener {
    *
    * @return list of Goals
    */
+  @TRADEService
   public List<Goal> getActiveGoals() {
     Set<Goal> activeGoals = new HashSet<>();
     synchronized (goalsLock) {
@@ -1495,6 +1496,7 @@ public class ExecutionManager implements ActionListener {
    *
    * @return list of Goals
    */
+  @TRADEService
   public List<Goal> getPastGoals() {
     return new ArrayList<>(pastGoals);
   }

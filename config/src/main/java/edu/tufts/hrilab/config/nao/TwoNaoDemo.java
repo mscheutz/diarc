@@ -7,8 +7,7 @@ package edu.tufts.hrilab.config.nao;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
-import edu.tufts.hrilab.action.GoalEndpoint;
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.DemoApplication;
 import edu.tufts.hrilab.nao.MockNaoComponent;
@@ -30,6 +29,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 
 @Configuration
@@ -46,16 +46,6 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
     "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
     "-goal listen(self)";
 
-  @Bean
-  @Primary
-  protected String[] robotNames() {
-    return ROBOT_NAMES;
-  }
-
-  protected GoalManagerImpl goalManagerImpl() {
-    return createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
-  }
-
   // start the configuration
   @Override
   public void runConfiguration() {
@@ -65,7 +55,8 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
     createInstance(ReferenceResolutionComponent.class);
     createInstance(SimpleNLGComponent.class);
 
-    createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
+    createInstance(DialogueComponent.class);
+    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
 
     for(int i = 0; i < NUM_ROBOTS; i++) {
       createInstance(SimSpeechRecognitionComponent.class,
@@ -74,11 +65,8 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
     }
 
     createInstance(ChatEndpointComponent.class, "-n dempster shafer");
-//    createInstance(GoalEndpoint.class,....)
+    createInstance(GoalEndpointComponent.class);
 //    createInstance(Endpointmanagercomponent....)
-
-    // should be like this, doesn't work rn since chat endpoint isn't a component
-//    createInstance(ChatEndpoint.class, "args");
 
     createInstance(MockNaoComponent.class, "-groups agent:dempster -obstacle true"); // sees obstacle
     createInstance(MockNaoComponent.class, "-groups agent:shafer -floorSupport false"); // does not see floor support
@@ -90,30 +78,29 @@ public class TwoNaoDemo extends DiarcConfiguration implements WebSocketConfigure
     SpringApplication.run(DemoApplication.class, args);
   }
 
-  @Bean
-  public GoalEndpoint goalEndpoint() {
-    return new GoalEndpoint(goalManagerImpl());
-  }
-
   @Override
-  public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+  public void registerWebSocketHandlers(@Nonnull WebSocketHandlerRegistry registry) {
     try {
       WebSocketHandler chatHandler = null;
+      WebSocketHandler goalHandler = null;
       Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
       for (TRADEServiceInfo service : availableServices) {
-        if (service.serviceString.equals("getChatHandler()")) {
+        if (service.serviceString.equals("getChatHandler()"))
           chatHandler = service.call(ChatEndpointComponent.ChatHandler.class);
+        else if(service.serviceString.equals("getGoalHandler()"))
+          goalHandler = service.call(GoalEndpointComponent.GoalHandler.class);
+
+        if(chatHandler != null && goalHandler != null)
           break;
-        }
       }
 
-      if(chatHandler == null)
-        throw new NullPointerException("Failed to find chat handler");
+      if(chatHandler == null || goalHandler == null)
+        throw new NullPointerException("Failed to find handler of chat or goal");
 
       registry.addHandler(chatHandler, "/chat")
               .setAllowedOrigins("http://localhost:3000");
-//    registry.addHandler(goalEndpoint(), "/goal")
-//            .setAllowedOrigins("http://localhost:3000");
+      registry.addHandler(goalHandler, "/goal")
+              .setAllowedOrigins("http://localhost:3000");
     } catch(TRADEException e) {
       log.error("Chat handler service call failed");
     }

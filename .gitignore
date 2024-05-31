@@ -8,3 +8,4 @@ vision/src/swig/
 .env
 docs/
 vision/src/main/cpp/cmake-build-debug/
+/.vscode/

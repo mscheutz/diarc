@@ -153,6 +153,8 @@ const RobotChat = (
         [chats.toString()]);
 
     // SET UP WEBSOCKET //
+    // TODO: make websocket belong to tabbed component viewer so it's not
+    // dependent on this being rendered to receive messages
     const { sendMessage, lastMessage, readyState } =
         useWebSocket("ws://localhost:8080/chat");
 

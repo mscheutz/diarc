@@ -1,6 +1,6 @@
 package edu.tufts.hrilab.gui;
 
-import edu.tufts.hrilab.action.GoalEndpoint;
+import edu.tufts.hrilab.action.GoalEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
 import org.apache.commons.cli.CommandLine;
@@ -21,7 +21,7 @@ public class EndpointManagerComponent extends DiarcComponent
         implements WebSocketConfigurer {
 
     private static ChatEndpointComponent chatEndpointComponent;
-    private static GoalEndpoint goalEndpoint;
+    private static GoalEndpointComponent goalEndpointComponent;
 
     // +----------------+
     // | DiarcComponent |

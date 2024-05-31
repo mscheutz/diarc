@@ -6,8 +6,6 @@ import edu.tufts.hrilab.slug.common.Utterance;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -21,9 +19,6 @@ import java.util.*;
  */
 @Component
 public class ChatEndpointComponent extends DiarcComponent {
-    private static final Logger log =
-            LoggerFactory.getLogger(ChatEndpointComponent.class);
-
     private String[] robotNames;
     private HashMap<String, TRADEServiceInfo> robotInputs;
 
@@ -91,8 +86,6 @@ public class ChatEndpointComponent extends DiarcComponent {
 
             if(sendMessageService == null || dialogueRegisterService == null)
                 throw new NullPointerException("Could not find service");
-            System.out.println(dialogueRegisterService.serviceString);
-            System.out.println(sendMessageService.serviceString);
 
             dialogueRegisterService.call(void.class, sendMessageService);
 
@@ -140,7 +133,6 @@ public class ChatEndpointComponent extends DiarcComponent {
      */
     @TRADEService
     public void sendMessage(Utterance utterance) {
-        System.out.println("outer sendmessage called");
         this.chatHandler.sendMessage(utterance);
     }
 
