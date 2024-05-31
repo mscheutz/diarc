@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 import { Button } from "../Button";
 
@@ -132,10 +132,63 @@ const MapViewer = () => {
     // Try to open a web socket connection on load
     connectMapGui();
 
+    // Map drawing
+    const canvasRef = useRef(null);
+    useEffect(() => {
+        const canvas: HTMLCanvasElement = canvasRef.current!;
+        const context = canvas.getContext("2d")!;
+
+        // Make it higher resolution
+        const pixelRatio = 2;
+        canvas.width *= pixelRatio;
+        canvas.height *= pixelRatio;
+
+        // Background
+        context.fillStyle = "#e0e0e0";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Placeholder
+        if (mapImageUrl === "") {
+            context.fillStyle = "#000000";
+            context.textBaseline = "middle";
+            context.textAlign = "center";
+            context.font = "40px Ubuntu";
+            context.fillText("Map will appear here.",
+                canvas.width / 2, canvas.height / 2);
+        }
+        // Map
+        else {
+            const image = document.createElement("img");
+            image.src = mapImageUrl;
+            image.onload = () => {
+                const canvasAspectRatio = canvas.width / canvas.height;
+                const imageAspectRatio = image.width / image.height;
+                if (canvasAspectRatio >= imageAspectRatio) {
+                    // Scale image so that its height equals the canvas height
+                    const newImageWidth = canvas.height / image.height * image.width;
+                    const xPad = (canvas.width - newImageWidth) / 2;
+                    context.drawImage(image, xPad, 0, newImageWidth, canvas.height);
+                } else {
+                    // Scale image so that its width equals the canvas width
+                    const newImageHeight = canvas.width / image.width * image.height;
+                    const yPad = (canvas.height - newImageHeight) / 2;
+                    context.drawImage(image, 0, yPad, image.width, newImageHeight);
+                }
+            }
+        }
+        // const image = document.createElement("img");
+        // image.src = mapImageUrl;
+        // image.onload = () => {
+        //     context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        // }
+    },
+        [mapImageUrl]
+    );
+
     return (
-        <div className="map-container h-full w-full grid grid-cols-1 gap-6">
+        <div className="map-container h-full w-full flex flex-col gap-5">
             {/* Button menu */}
-            <div className="flex flex-row justify-center gap-2">
+            <div className="flex flex-row justify-center gap-2 mt-2">
                 <Button
                     onClick={fetchMapData}>
                     Fetch Map Data
@@ -154,7 +207,8 @@ const MapViewer = () => {
                 </Button>
             </div>
 
-            {mapImageUrl && <img src={mapImageUrl} alt="Map" />}
+            <canvas ref={canvasRef} className='Map' />
+            {/* {mapImageUrl && <img src={mapImageUrl} alt="Map" />} */}
 
             {goToLocationMsg && <div className="alert">{goToLocationMsg}</div>}
 
