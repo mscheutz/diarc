@@ -99,7 +99,7 @@ item(?itemName:item)
 #
 val(?value)
 #
-grasp(here)
+hold(here)
 #
 got(ingredient)
 #

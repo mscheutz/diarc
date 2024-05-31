@@ -567,7 +567,7 @@ stop following; VAL; val(none)
 set default delivery area to; C/REF; #p.setDeliveryPose(?ADDRESSEE, $p)
 
 here it is; VAL; got(ingredient)
-grasp it here; VAL; grasp(here)
+grasp it here; VAL; hold(here)
 
 %define new speaker; S/LIT*; #s.name($s,$s)
 add new supervisor; C/LIT*; #s.defineNewSupervisor(?ADDRESSEE, $s)

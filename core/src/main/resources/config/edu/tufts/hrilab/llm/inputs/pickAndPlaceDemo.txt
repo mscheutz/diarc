@@ -1,30 +1,29 @@
 #init state:
 #   2 ingredients: chicken, corn
-#   3/4 areas: cooktop, hotplate, prepArea, servingArea
-#   corn at the prep area, chicken out of scene(pantry), serving box at servingArea
-#Goal based pick and place instruction (succeeds)
+#   4 areas: cooktop, hotplate, prepArea, servingArea
+#   corn is at the prep area, chicken is out of scene(in the pantry), serving box is at the servingArea
+#1. Goal based pick and place instruction (succeeds)
 Get the corn to the hotplate
-#Goal based pick and place instruction (doesn't know ingredient)
+#2. Goal based pick and place instruction (fails, doesn't know ingredient)
 Get a chicken to the cooktop
-#Ingredient teaching (chicken)
-#TODO: use chat history for this? to show assistant's previous question?
+#3. Ingredient teaching (chicken)
 I will teach you a new ingredient named chicken
 the pantry
 the chicken job
 the prep area
 grasp it here
-#Goal based pick and place #2 (works)
+#4. Goal based pick and place #2 (succeeds)
 get a chicken to the cooktop
 #Change how we phrase this? e.g. "I put the chicken at the preparation area"?
 I got the chicken for you
-#Instruction based pick and place
+#5. Goal based pick and place to get the chicken back to prep area
+Get the chicken to the preparation area
+#6. Instruction based pick and place (ends with failure because area is occupied)
 Right arm go to the hotplate
 Right arm pick up the corn
 Right arm go to the preparation area
 Right arm put down the corn
-#Goal based pick and place (fails due to object_at)
-Get the chicken to the preparation area
-#Response: I cannot ... because ...
-#Get in x2
+#Response: I cannot put down the corn because the prep area is occupied
+#7/8: Get in the serving box x2 (succeeds)
 Get the corn in the serving box
 Get the chicken in the serving box

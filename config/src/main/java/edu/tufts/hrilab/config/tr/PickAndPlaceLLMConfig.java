@@ -18,6 +18,7 @@ import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
+import ai.thinkingrobots.abb.RWSRobotComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,8 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
 
         leftArm = createInstance(MockYumiComponent.class, "-groups agent:leftArm:yumi");
         rightArm = createInstance(MockYumiComponent.class, "-groups agent:rightArm:yumi");
+        //RWSRobotComponent leftArm = DiarcComponent.createInstance(RWSRobotComponent.class, "-basePath http://192.168.125.1 -task T_ROB_L -mainModule module1 -instructionVar instruction -groups agent:leftArm:yumi");
+        //RWSRobotComponent rightArm = DiarcComponent.createInstance(RWSRobotComponent.class, "-basePath http://192.168.125.1 -task T_ROB_R -mainModule module1 -instructionVar instruction -groups agent:rightArm:yumi");
 
         CognexConsultant cognexConsultant = new CognexConsultant();
         try {
@@ -89,7 +92,7 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
                         + "-beliefinitfile demos.pl "
                         + "-beliefinitfile agents/yumiFoodOrderingAgents.pl "
                         + "-beliefinitfile demos/yumiFoodOrdering.pl "
-                        + "-beliefinitfile demos/yumiFoodOrderingHardcodedFacts.pl "
+                        + "-beliefinitfile demos/yumiPickAndPlaceLLMHardcodedFacts.pl "
                         + "-selector edu.tufts.hrilab.action.selector.TypedActionSelector "
                         + "-asl core.asl "
                         + "-asl dialogue/nlg.asl "

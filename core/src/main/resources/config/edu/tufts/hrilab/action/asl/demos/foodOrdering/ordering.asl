@@ -111,7 +111,7 @@ import java.lang.Integer;
 
     act:perceiveEntityFromSymbol(?refId);
 
-    !bindings = act:askQuestionFromString(?actor,"I see a ?itemType, can you show me how to grasp it?", grasp(X));
+    !bindings = act:askQuestionFromString(?actor,"I see a ?itemType, can you show me how to grasp it?", hold(X));
     !response = op:get(!bindings, !x);
     if (~op:equalsValue(!response, none())) {
         act:defineGraspPointForDescriptor(?refId, ?itemType);
