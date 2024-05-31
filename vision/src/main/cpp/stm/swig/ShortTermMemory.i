@@ -17,24 +17,15 @@
 %}
 
 //typemaps
-%typemap(jstype) ArrayList getMemoryObjects "java.util.ArrayList"
-%typemap(jtype) ArrayList getMemoryObjects "java.util.ArrayList"
-%typemap(javaout) ArrayList getMemoryObjects { return $jnicall; }
-%typemap(jstype) ArrayList getMemoryObjectsByTypeId "java.util.ArrayList"
-%typemap(jtype) ArrayList getMemoryObjectsByTypeId "java.util.ArrayList"
-%typemap(javaout) ArrayList getMemoryObjectsByTypeId { return $jnicall; }
-%typemap(jstype) long* getMemoryObjectTypeIds "long[]"
-%typemap(jtype) long* getMemoryObjectTypeIds "long[]"
-%typemap(javaout) long* getMemoryObjectTypeIds { return $jnicall; }
-%typemap(jstype) long* getMemoryObjectIds "long[]"
-%typemap(jtype) long* getMemoryObjectIds "long[]"
-%typemap(javaout) long* getMemoryObjectIds { return $jnicall; }
-%typemap(jstype) MemoryObject getMemoryObject "edu.tufts.hrilab.vision.stm.MemoryObject"
-%typemap(jtype) MemoryObject getMemoryObject "edu.tufts.hrilab.vision.stm.MemoryObject"
-%typemap(javaout) MemoryObject getMemoryObject { return $jnicall; }
-%typemap(jstype) ArrayList getRemovedMemoryObjects "java.util.ArrayList"
-%typemap(jtype) ArrayList getRemovedMemoryObjects "java.util.ArrayList"
-%typemap(javaout) ArrayList getRemovedMemoryObjects { return $jnicall; }
+%typemap(jstype) ArrayList "java.util.ArrayList"
+%typemap(jtype) ArrayList "java.util.ArrayList"
+%typemap(javaout) ArrayList { return $jnicall; }
+%typemap(jstype) long* "long[]"
+%typemap(jtype) long* "long[]"
+%typemap(javaout) long* { return $jnicall; }
+%typemap(jstype) MemoryObject "edu.tufts.hrilab.vision.stm.MemoryObject"
+%typemap(jtype) MemoryObject "edu.tufts.hrilab.vision.stm.MemoryObject"
+%typemap(javaout) MemoryObject { return $jnicall; }
 
 //native hand-written methods (defined in ShortTermMemoryJNI.hpp)
 %native(getMemoryObjects) ArrayList getMemoryObjects(); //ArrayList<MemoryObject>

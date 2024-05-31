@@ -62,8 +62,7 @@ using namespace diarc::stm;
 log4cxx::LoggerPtr ObjectDetector::factoryLogger = log4cxx::Logger::getLogger("diarc.detector.ObjectDetector.Factory");
 
 //Factory method
-ObjectDetector::Ptr
-ObjectDetector::get(const DetectorType type, const long long &processorId, const int imgWidth, const int imgHeight) {
+ObjectDetector::Ptr ObjectDetector::get(const DetectorType type, const long long &processorId, const int imgWidth, const int imgHeight) {
   switch (type) {
     case ARUCO:
       return ArucoDetector::Ptr(new ArucoDetector(processorId, imgWidth, imgHeight));

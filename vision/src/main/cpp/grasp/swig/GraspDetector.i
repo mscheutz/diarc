@@ -13,9 +13,20 @@
 
 %{
 /* native includes */
-#include "../GraspDetector.hpp"
+  #include "GraspsJNI.hpp"
 %}
 
-/* build java wrapper of these classes */
-%include "../GraspDetector.hpp"
+//typemaps
+%typemap(jstype) ArrayList "java.util.ArrayList"
+%typemap(jtype) ArrayList "java.util.ArrayList"
+%typemap(javaout) ArrayList { return $jnicall; }
+
+%typemap(jstype) MemoryObject "edu.tufts.hrilab.vision.stm.MemoryObject"
+%typemap(jtype) MemoryObject "edu.tufts.hrilab.vision.stm.MemoryObject"
+%typemap(jni) MemoryObject "jobject" // C++ MemoryObject is treated as a jobject in the C++ part of the JNI code
+%typemap(javain) MemoryObject "$javainput"
+
+//native hand-written methods (defined in GraspsJNI.hpp)
+// TODO: change this to take in just the segmented point cloud (double[][] or double[]) and transform (double[][] or double[])
+%native(calculateGraspPoses) ArrayList calculateGraspPoses(MemoryObject mo);
 

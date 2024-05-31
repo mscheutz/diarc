@@ -25,6 +25,14 @@
 using namespace diarc::stm;
 using namespace diarc::grasp;
 
+GraspDetector::Ptr GraspDetector::getInstance() {
+  boost::lock_guard<boost::mutex> lock(instance_mutex);
+  if (!instance) {
+    instance = GraspDetector::Ptr(new GraspDetector());
+  }
+   return instance;
+}
+
 GraspDetector::GraspDetector() {
   logger = log4cxx::Logger::getLogger("diarc.detector.GraspDetector");
 
@@ -37,7 +45,7 @@ GraspDetector::GraspDetector() {
 GraspDetector::~GraspDetector() {
 }
 
-std::vector<Grasp> GraspDetector::calculateGraspPoses(diarc::stm::MemoryObject::Ptr &object) {
+std::vector<Grasp> GraspDetector::calculateGraspOptions(diarc::stm::MemoryObject::Ptr &object) {
   LOG4CXX_TRACE(logger, "[calculateGraspPoses] method entered.");
 
   //pcl::ScopeTime t("Grasp Point Detection Time.");

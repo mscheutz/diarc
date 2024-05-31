@@ -41,6 +41,8 @@ namespace diarc {
       void fillJavaMemoryObject(const MemoryObject::ConstPtr& current,
               std::tr1::unordered_map<long long, MemoryObjectInterface>& sceneGraphNodes);
 
+      MemoryObject::Ptr createNativeObject(jobject jMO);
+
     private:
       //set methods
       void setTypeId(const long long& typeId);
@@ -70,6 +72,8 @@ namespace diarc {
       long long getFrameNum();
       double getDetectionConfidence();
       double getTrackingConfidence();
+//      pcl::PointCloud<pcl::PointXYZ>::ConstPtr getPointCloud();
+      cv::Mat getBaseTransform();
 
       static log4cxx::LoggerPtr logger;
 
@@ -107,6 +111,8 @@ namespace diarc {
       jmethodID memoryObject_getframenum;
       jmethodID memoryObject_getdetectionconfidence;
       jmethodID memoryObject_gettrackingconfidence;
+      jmethodID memoryObject_getPointCloud;
+      jmethodID memoryObject_getBaseTransformArray;
 
     };
 

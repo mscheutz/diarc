@@ -18,26 +18,33 @@
 #include "AgileGrasp.hpp"
 #endif
 
+#include <boost/shared_ptr.hpp>
+#include <boost/thread/mutex.hpp>
 #include <log4cxx/logger.h>
 
 namespace diarc {
   namespace grasp {
 
     class GraspDetector {
-      typedef pcl::PointXYZ PointType;
-
     public:
-      GraspDetector();
+      typedef boost::shared_ptr<GraspDetector> Ptr;
+      typedef boost::shared_ptr<const GraspDetector> ConstPtr;
+
+      static GraspDetector::Ptr getInstance();
       ~GraspDetector();
 
       void loadConfig(const std::string& configFile);
+      std::vector<diarc::grasp::Grasp> calculateGraspOptions(diarc::stm::MemoryObject::Ptr &object);
 
     protected:
-      std::vector<Grasp> calculateGraspPoses(diarc::stm::MemoryObject::Ptr &object);
+      GraspDetector();
 
+      static boost::mutex instance_mutex;
+      static GraspDetector::Ptr instance;
       log4cxx::LoggerPtr logger;
 
     private:
+      typedef pcl::PointXYZ PointType;
       SmallObjectGrasp::Ptr smallObjectGrasp;
 #ifdef USE_AGILEGRASP
       AgileGrasp::Ptr agileGrasp;

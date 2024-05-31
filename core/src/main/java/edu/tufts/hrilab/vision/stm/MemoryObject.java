@@ -738,6 +738,16 @@ public class MemoryObject implements Serializable {
     return new Matrix4d(baseTransform);
   }
 
+  public double[] getBaseTransformArray() {
+    double[] transform = new double[16];
+    for (int r = 0; r < 4; ++r) {
+      for (int c = 0; c < 4; ++c) {
+        transform[r + 4*c] = baseTransform.getElement(r, c);
+      }
+    }
+    return transform;
+  }
+
   public List<Term> getDescriptors() {
     return new ArrayList<>(descriptors);
   }

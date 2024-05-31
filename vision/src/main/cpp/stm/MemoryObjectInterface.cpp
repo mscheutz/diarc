@@ -187,6 +187,14 @@ void MemoryObjectInterface::initialize(JNIEnv* newEnv) {
   if (memoryObject_gettrackingconfidence == NULL)
     printf("[MemoryObjectInterface::initialize]: Error! getTrackingConfidence\n");
   //}
+
+  memoryObject_getPointCloud = env->GetMethodID(memoryObjectClass, "getPointCloud", "()[[D");
+  if (memoryObject_getPointCloud == NULL)
+    printf("[MemoryObjectInterface::initialize]: Error! getPointCloud\n");
+
+  memoryObject_getBaseTransformArray = env->GetMethodID(memoryObjectClass, "getBaseTransformArray", "()[D");
+  if (memoryObject_getBaseTransformArray == NULL)
+    printf("[MemoryObjectInterface::initialize]: Error! getBaseTransformArray\n");
 }
 
 jobject MemoryObjectInterface::getJavaObject() const {
@@ -279,6 +287,15 @@ void MemoryObjectInterface::fillJavaMemoryObject(const MemoryObject::ConstPtr& c
   current->unlock();
 
   LOG4CXX_TRACE(logger, boost::format("[fillJavaMemoryObject] done filling java MO for %lld.") % current->getId());
+}
+
+MemoryObject::Ptr createNativeObject(jobject jMO) {
+  memoryObject = jMO;
+  CaptureData::Ptr capture(new CaptureData());
+  MemoryObject::Ptr nativeMO(new MemoryObject());
+  cv::Mat transform = getBaseTransform();
+  nativeMO.setBaseTransform(transform);
+
 }
 
 void MemoryObjectInterface::setTypeId(const long long& typeId) {
@@ -442,4 +459,28 @@ double MemoryObjectInterface::getDetectionConfidence() {
 
 double MemoryObjectInterface::getTrackingConfidence() {
   return env->CallDoubleMethod(memoryObject, memoryObject_gettrackingconfidence);
+}
+
+//pcl::PointCloud<pcl::PointXYZ>::ConstPtr MemoryObjectInterface::getPointCloud() {
+//}
+
+cv::Mat MemoryObjectInterface::getBaseTransform() {
+  jobject mvdata = env->CallObjectMethod(memoryObject, memoryObject_getBaseTransformArray);
+
+  // Cast it to a jdoublearray
+  jdoubleArray arr = static_cast<jdoubleArray>(mvdata);
+
+  // Get the elements (you probably have to fetch the length of the array as well
+  double * data = env->GetDoubleArrayElements(arr, 0);
+
+  // fill matrix
+  cv::Mat matrix = cv::Mat_<double>(4,4);
+  for (int i=0; i < 16; ++i) {
+    matrix.at<double>(i/4,i%4) = data[i];
+  }
+
+  // Don't forget to release it
+  env->ReleaseDoubleArrayElements(arr, data, 0);
+
+  return matrix;
 }
