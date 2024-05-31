@@ -4,7 +4,7 @@ import React from "react";
 import Navbar from "../Navbar";
 import Providers from "../Providers";
 import TabbedComponentViewer from "../diarcGui/TabbedComponentViewer";
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = () => {
     return (
         <div className="flex flex-col justify-center items-center h-screen
                         gap-10">

@@ -69,13 +69,17 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
     // Websocket to check for the endpoints
     const [chatStatus, setChatStatus] = useState("wait")
     const [goalStatus, setGoalStatus] = useState("wait")
+    const [mapStatus, setMapStatus] = useState("wait")
     const chatSocket = useWebSocket("ws://localhost:8080/chat");
-    const goalSocket = useWebSocket("ws://localhost:8080/goal")
+    const goalSocket = useWebSocket("ws://localhost:8080/goal");
+    const mapSocket = useWebSocket("ws://localhost:8080/map");
 
     const check = () => {
         setChatStatus(chatSocket.readyState === ReadyState.OPEN ?
             "on" : "off");
         setGoalStatus(goalSocket.readyState === ReadyState.OPEN ?
+            "on" : "off");
+        setMapStatus(mapSocket.readyState === ReadyState.OPEN ?
             "on" : "off");
     }
 
@@ -87,108 +91,87 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 
     return (
         <div className="w-2/3 h-[50rem]">
-            <Tabs>
+            <Tabs forceRenderTabPanel>
                 <TabList>
-                    {
-                        chatStatus === "wait" || goalStatus === "wait" ?
-                            <Tab>Connecting...</Tab>
-
-                            : null
-                    }
-                    {
-                        chatStatus === "off" && goalStatus === "off" ?
-                            <Tab>Connection Failed</Tab>
-
-                            : null
-                    }
-                    {
-                        chatStatus === "on" ?
-                            <Tab>Robot Chat</Tab>
-
-                            : null
-                    }
-                    {
-                        goalStatus === "on" ?
-                            <Tab>Goal Viewer</Tab>
-
-                            : null
-                    }
-                    {
+                    {chatStatus === "wait" || goalStatus === "wait"
+                        || mapStatus === "wait" ?
+                        <Tab>Connecting...</Tab>
+                        : null}
+                    {chatStatus === "off" && goalStatus === "off"
+                        && mapStatus === "off" ?
+                        <Tab>Connection Failed</Tab>
+                        : null}
+                    {chatStatus === "on" ?
+                        <Tab>Robot Chat</Tab>
+                        : null}
+                    {goalStatus === "on" ?
+                        <Tab>Goal Viewer</Tab>
+                        : null}
+                    {mapStatus === "on" ?
                         <Tab>Map Viewer</Tab>
-                    }
+                        : null}
                 </TabList>
 
-                { // Loading panel
-                    chatStatus === "wait" || goalStatus === "wait" ?
-                        <TabPanel className="grid grid-column h-full m-48">
-                            <div className="flex flex-row justify-center">
-                                <FontAwesomeIcon
-                                    icon={faCog} spin size="10x"
-                                    color={"#1d4bb7"}
-                                />
-                            </div>
-                            <p className="text-center m-10">
-                                Connecting...
-                            </p>
-                        </TabPanel>
-
-                        : null
-                }
-
-                { // Failed panel
-                    chatStatus === "off" && goalStatus === "off" ?
-                        <TabPanel className="grid grid-column h-full m-48">
-                            <div className="flex flex-row justify-center">
-                                <FontAwesomeIcon
-                                    icon={faBan} size="10x"
-                                    color={"#e00b00"}
-                                />
-                            </div>
-                            <p className="text-center m-10">
-                                Connection Failed!
-                            </p>
-                        </TabPanel>
-
-                        : null
-                }
-
-                { // Chat panel
-                    chatStatus === "on" ?
-                        <TabPanel>
-                            <RobotChat
-                                currentChat={currentChat}
-                                setCurrentChat={setCurrentChat}
-                                chats={chats}
-                                setChats={setChats}
-                                conversations={conversations}
-                                setConversations={setConversations}
-                                username={username}
-                                setUsername={setUsername}
-                                sendMessage={sendMessage}
-                                lastMessage={lastMessage}
-                                readyState={readyState}
-                                lastMessageTimeStamp={lastMessageTimeStamp}
-                                setLastMessageTimeStamp={setLastMessageTimeStamp}
+                {/* Loading panel */}
+                {chatStatus === "wait" || goalStatus === "wait" ?
+                    <TabPanel className="grid grid-column h-full m-48">
+                        <div className="flex flex-row justify-center">
+                            <FontAwesomeIcon
+                                icon={faCog} spin size="10x"
+                                color={"#1d4bb7"}
                             />
-                        </TabPanel>
-
-                        : null
-                }
-
-                { // Goal panel
-                    goalStatus === "on" ?
-                        <TabPanel>
-                            <GoalView />
-                        </TabPanel>
-
-                        : null
-                }
-
-                { // Map panel
+                        </div>
+                        <p className="text-center m-10">
+                            Connecting...
+                        </p>
+                    </TabPanel>
+                    : null}
+                {/* Failed panel */}
+                {chatStatus === "off" && goalStatus === "off" ?
+                    <TabPanel className="grid grid-column h-full m-48">
+                        <div className="flex flex-row justify-center">
+                            <FontAwesomeIcon
+                                icon={faBan} size="10x"
+                                color={"#e00b00"}
+                            />
+                        </div>
+                        <p className="text-center m-10">
+                            Connection Failed!
+                        </p>
+                    </TabPanel>
+                    : null}
+                {/* Chat panel */}
+                {chatStatus === "on" ?
+                    <TabPanel>
+                        <RobotChat
+                            currentChat={currentChat}
+                            setCurrentChat={setCurrentChat}
+                            chats={chats}
+                            setChats={setChats}
+                            conversations={conversations}
+                            setConversations={setConversations}
+                            username={username}
+                            setUsername={setUsername}
+                            sendMessage={sendMessage}
+                            lastMessage={lastMessage}
+                            readyState={readyState}
+                            lastMessageTimeStamp={lastMessageTimeStamp}
+                            setLastMessageTimeStamp={setLastMessageTimeStamp}
+                        />
+                    </TabPanel>
+                    : null}
+                {/* Goal panel */}
+                {goalStatus === "on" ?
+                    <TabPanel>
+                        <GoalView />
+                    </TabPanel>
+                    : null}
+                {/* Map panel */}
+                {mapStatus === "on" ?
                     <TabPanel>
                         <MapViewer></MapViewer>
                     </TabPanel>
-                }
+                    : null}
             </Tabs>
         </div>
     );
