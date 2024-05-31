@@ -4,9 +4,7 @@ import React from "react";
 import Navbar from "../Navbar";
 import Providers from "../Providers";
 import TabbedComponentViewer from "../TabbedComponentViewer";
-import User from "../User";
-import Map from "../Map";
-
+import Map from "../Map"
 const HomeScreen = ({ navigation }) => {
     return (
         <div className="flex flex-col justify-center items-center h-screen
@@ -15,10 +13,7 @@ const HomeScreen = ({ navigation }) => {
                 <Navbar />
                 {/* Main body */}
                 <TabbedComponentViewer></TabbedComponentViewer>
-                <div className="flex flex-col justify-center items-center h-[40rem] w-[60rem]">
-                    <User />
-                    <Map />
-                </div>
+                <Map></Map>
             </Providers>
         </div>
     );

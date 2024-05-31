@@ -1,50 +1,26 @@
 package edu.tufts.hrilab.map;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
-import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.gui.DemoApplication;
 import edu.tufts.hrilab.gui.ImageService;
-import edu.tufts.hrilab.interfaces.MoveBaseInterface;
-import edu.tufts.hrilab.map.PathAction;
 import edu.tufts.hrilab.map.util.Pose;
-import edu.tufts.hrilab.map.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.springframework.web.socket.TextMessage;
 import org.json.JSONObject;
-import org.json.JSONArray;
+
 import javax.vecmath.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 @Component
 public class MapGui extends TextWebSocketHandler {
@@ -69,15 +45,18 @@ public class MapGui extends TextWebSocketHandler {
             case "fetchMapData":
                 fetchMapData(session);
                 break;
-//            case "navigateToPoint":
-//                double x = request.getDouble("x");
-//                double y = request.getDouble("y");
-//                navigateToPoint(session, x, y);
-//                break;
+            case "navigateToPoint":
+                double x = request.getDouble("x");
+                double y = request.getDouble("y");
+                double quatX = request.getDouble("quatX");
+                double quatY = request.getDouble("quatY");
+                double quatZ = request.getDouble("quatZ");
+                double quatW = request.getDouble("quatW");
+                navigateToPoint(session, x, y, quatX, quatY, quatZ, quatW);
+                break;
 //            case "goToLocation":
-//                double x = request.getDouble("x");
-//                double y = request.getDouble("y");
-//                goToLocation(session, x, y);
+//                String location = request.getString("s");
+//                goToLocation(session, location);
 //                break;
             case "fetchRobotPose":
                 fetchRobotPose(session);
@@ -111,13 +90,55 @@ public class MapGui extends TextWebSocketHandler {
         session.sendMessage(new TextMessage(response.toString()));
     }
 
-//    private void navigateToPoint(WebSocketSession session, double x, double y) throws Exception {
-//        Point3d targetPoint = new Point3d(x, y, 0);  // Assuming Z coordinate is 0 for 2D navigation
-//        Pose pose = Utils.convertToPose(transform);
-//        TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation").argTypes(double.class,double.class,double.class,double.class,double.class,double.class,Boolean.class)).call(Justification.class, pose.getPosition().x, pose.getPosition().y,
-//                pose.getOrientation().x, pose.getOrientation().y, pose.getOrientation().z, pose.getOrientation().w,
-//                true);
-//    }
+    private void navigateToPoint(WebSocketSession session, double x, double y, double quatX, double quatY, double quatZ, double quatW) {
+        log.info("Attempting to navigate to point: x={}, y={}, quatX={}, quatY={}, quatZ={}, quatW={}", x, y, quatX, quatY, quatZ, quatW);
+
+        // call movebase trade service to go to location
+        try {
+            TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation")
+                    .argTypes(Double.class,Double.class,Double.class,Double.class,Double.class,Double.class,Boolean.class));
+            Justification result = tsi.call(Justification.class, x,y,quatX,quatY,quatZ,quatW,true);
+            // Respond back to the client with the result of the navigation attempt
+            JSONObject response = new JSONObject();
+            if (result != null && result.getValue()) {
+                response.put("success", true);
+                response.put("message", "Navigation to point initiated successfully.");
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to initiate navigation.");
+            }
+            session.sendMessage(new TextMessage(response.toString()));
+        } catch (TRADEException e) {
+            log.error("Service call failed: {}", e.getMessage(), e);
+        } catch (IOException e) {
+            log.error("Error sending WebSocket message: {}", e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void goToLocation(WebSocketSession session, Symbol location) {
+        // call movebase trade service to go to location
+        try {
+            TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation")
+                    .argTypes(Symbol.class));
+            Justification result = tsi.call(Justification.class, location);
+            // Respond back to the client with the result of the navigation attempt
+            JSONObject response = new JSONObject();
+            if (result.getValue()) { // Checking if the result indicates success
+                response.put("success", true);
+                response.put("message", "Navigation to point initiated successfully.");
+            } else {
+                response.put("success", false);
+                response.put("message", "Failed to initiate navigation.");
+            }
+            session.sendMessage(new TextMessage(response.toString()));
+        } catch (TRADEException e) {
+            log.error("Service call failed: {}", e.getMessage(), e);
+        } catch (IOException e) {
+            log.error("Error sending WebSocket message: {}", e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
 
 
     private void fetchKeyLocations(WebSocketSession session) throws Exception {

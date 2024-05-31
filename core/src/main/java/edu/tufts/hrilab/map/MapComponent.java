@@ -397,7 +397,7 @@ public class MapComponent extends DiarcComponent {
     Pose pose = Utils.convertToPose(transform);
     try {
       //double xdest, double ydest, double quat_x, double quat_y, double quat_z, double quat_w, boolean wait
-      return  TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation").argTypes(double.class,double.class,double.class,double.class,double.class,double.class,Boolean.class)).call(Justification.class, pose.getPosition().x, pose.getPosition().y,
+      return  TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation").argTypes(Double.class,Double.class,Double.class,Double.class,Double.class,Double.class,Boolean.class)).call(Justification.class, pose.getPosition().x, pose.getPosition().y,
               pose.getOrientation().x, pose.getOrientation().y, pose.getOrientation().z, pose.getOrientation().w,
               true);
     } catch (TRADEException e) {
