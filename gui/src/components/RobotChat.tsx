@@ -107,6 +107,8 @@ const RobotChat = (
         chats, setChats,
         conversations, setConversations,
         username, setUsername,
+        sendMessage, lastMessage, readyState,
+        lastMessageTimeStamp, setLastMessageTimeStamp
     }
 ) => {
     // SET UP STATE //
@@ -153,13 +155,9 @@ const RobotChat = (
         [chats.toString()]);
 
     // SET UP WEBSOCKET //
-    // TODO: make websocket belong to tabbed component viewer so it's not
-    // dependent on this being rendered to receive messages
-    const { sendMessage, lastMessage, readyState } =
-        useWebSocket("ws://localhost:8080/chat");
-
     useEffect(() => {
-        if (lastMessage !== null) {
+        if (lastMessage !== null && lastMessage.timeStamp != lastMessageTimeStamp) {
+            setLastMessageTimeStamp(lastMessage.timeStamp);
             const data = JSON.parse(lastMessage.data);
 
             for (const chat of chats) {

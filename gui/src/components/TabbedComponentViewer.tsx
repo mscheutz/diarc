@@ -63,6 +63,8 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 
     const [username, setUsername] = useState("evan");
 
+    const [lastMessageTimeStamp, setLastMessageTimeStamp] = useState(0);
+
     // Websocket to check for the endpoints
     const [chatStatus, setChatStatus] = useState("wait")
     const [goalStatus, setGoalStatus] = useState("wait")
@@ -77,6 +79,10 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
     }
 
     setTimeout(check, 1000);
+
+    // Normal chat websocket
+    const { sendMessage, lastMessage, readyState } =
+        useWebSocket("ws://localhost:8080/chat");
 
     return (
         <div className="w-2/3 h-[50rem]">
@@ -154,6 +160,11 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                                 setConversations={setConversations}
                                 username={username}
                                 setUsername={setUsername}
+                                sendMessage={sendMessage}
+                                lastMessage={lastMessage}
+                                readyState={readyState}
+                                lastMessageTimeStamp={lastMessageTimeStamp}
+                                setLastMessageTimeStamp={setLastMessageTimeStamp}
                             />
                         </TabPanel>
 

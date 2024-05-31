@@ -14,7 +14,7 @@ const InnerList: React.FunctionComponent = (props) => {
     let array = props["prop"] as string[];
 
     return array.map((element) =>
-        <li key={counter}>{element}</li>
+        <li key={counter++}>{element}</li>
     );
 }
 

@@ -65,11 +65,9 @@ public class GoalEndpointComponent extends DiarcComponent {
             getPastGoals = null;
             Collection<TRADEServiceInfo> services = TRADE.getAvailableServices();
             for(TRADEServiceInfo service : services) {
-                if(service.serviceString.contains("getActiveGoals(")) {
-                    System.out.println(service.serviceString);
+                if(service.serviceString.equals("getActiveGoals()")) {
                     getActiveGoals = service;
-                } else if(service.serviceString.contains("getPastGoals(")) {
-                    System.out.println(service.serviceString);
+                } else if(service.serviceString.equals("getPastGoals()")) {
                     getPastGoals = service;
                 }
 
