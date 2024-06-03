@@ -40,7 +40,6 @@ type MessageProps = {
 
 type Chat = {
     robotName: string,
-    robotInfo: string,
     profileImagePath: string,
     messageList: MessageProps[],
     focusThisChat: Function
@@ -82,7 +81,6 @@ const createConversationHeader = (chat: Chat) => {
         <ConversationHeader>
             {createAvatar(chat)}
             <ConversationHeader.Content
-                info={chat.robotInfo}
                 userName={chat.robotName}
             />
         </ConversationHeader>
@@ -108,7 +106,6 @@ const RobotChat = (
         conversations, setConversations,
         username, setUsername,
         sendMessage, lastMessage, readyState,
-        lastMessageTimeStamp, setLastMessageTimeStamp
     }
 ) => {
     // SET UP STATE //
@@ -156,21 +153,48 @@ const RobotChat = (
 
     // SET UP WEBSOCKET //
     useEffect(() => {
-        if (lastMessage !== null && lastMessage.timeStamp !== lastMessageTimeStamp) {
-            setLastMessageTimeStamp(lastMessage.timeStamp);
-            const data = JSON.parse(lastMessage.data);
+        if (!lastMessage) return;
+        const data = JSON.parse(lastMessage.data);
 
-            for (const chat of chats) {
-                if (chat.robotName === data.sender) {
-                    postServerMessage(chat, data.message);
+        // Idempotent
+        if (data.names) {
+            const names = (data.names as string)
+                .slice(1, -1)
+                .split(", ");
+
+            let newChats: Chat[] = chats.slice();
+            outer:
+            for (const name of names) {
+                for (const chat of chats) {
+                    if (chat.robotName === name) {
+                        continue outer;
+                    }
                 }
+                newChats.push({
+                    robotName: name,
+                    profileImagePath: "/heroimage.svg",
+                    messageList: [],
+                    focusThisChat: setCurrentChat
+                });
             }
+            setChats(newChats);
             setConversations(
                 <ConversationList>
                     {chats.map((chat) => createConversation(chat))}
                 </ConversationList>
             );
         }
+
+        for (const chat of chats) {
+            if (chat.robotName === data.sender) {
+                postServerMessage(chat, data.message);
+            }
+        }
+        setConversations(
+            <ConversationList>
+                {chats.map((chat) => createConversation(chat))}
+            </ConversationList>
+        );
     },
         // again, we use chats.toString() to make sure the value is changing
         [lastMessage, chats.toString(), postServerMessage]);

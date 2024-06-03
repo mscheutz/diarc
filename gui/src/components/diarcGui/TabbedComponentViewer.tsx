@@ -25,36 +25,16 @@ import MapViewer from "./MapViewer";
 
 const TabbedComponentViewer: React.FunctionComponent = () => {
     // Robot chat state
-    const [currentChat, setCurrentChat] = useState(
+    const [currentChat, setCurrentChat] = useState<Chat>(
         {
             robotName: "",
-            robotInfo: "",
             profileImagePath: "",
             messageList: [],
             focusThisChat: () => null
         }
     );
 
-    const [chats, setChats] = useState(
-        [
-            // Blank dempster chat
-            {
-                robotName: "dempster",
-                robotInfo: "NAO robot",
-                profileImagePath: "/heroimage.svg",
-                messageList: [],
-                focusThisChat: setCurrentChat
-            },
-            // Blank shafer chat
-            {
-                robotName: "shafer",
-                robotInfo: "NAO robot",
-                profileImagePath: "/robot.png",
-                messageList: [],
-                focusThisChat: setCurrentChat
-            }
-        ] as Chat[]
-    );
+    const [chats, setChats] = useState<Chat[]>([]);
 
     const [conversations, setConversations] = useState(
         <ConversationList>
@@ -62,14 +42,12 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
         </ConversationList>
     );
 
-    const [username, setUsername] = useState("evan");
-
-    const [lastMessageTimeStamp, setLastMessageTimeStamp] = useState(0);
+    const [username, setUsername] = useState<string>("evan");
 
     // Websocket to check for the endpoints
-    const [chatStatus, setChatStatus] = useState("wait")
-    const [goalStatus, setGoalStatus] = useState("wait")
-    const [mapStatus, setMapStatus] = useState("wait")
+    const [chatStatus, setChatStatus] = useState<string>("wait")
+    const [goalStatus, setGoalStatus] = useState<string>("wait")
+    const [mapStatus, setMapStatus] = useState<string>("wait")
     const chatSocket = useWebSocket("ws://localhost:8080/chat");
     const goalSocket = useWebSocket("ws://localhost:8080/goal");
     const mapSocket = useWebSocket("ws://localhost:8080/map");
@@ -113,7 +91,8 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                 </TabList>
 
                 {/* Loading panel */}
-                {chatStatus === "wait" || goalStatus === "wait" ?
+                {chatStatus === "wait" || goalStatus === "wait"
+                    || mapStatus === "wait" ?
                     <TabPanel className="grid grid-column h-full m-48">
                         <div className="flex flex-row justify-center">
                             <FontAwesomeIcon
@@ -127,7 +106,8 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                     </TabPanel>
                     : null}
                 {/* Failed panel */}
-                {chatStatus === "off" && goalStatus === "off" ?
+                {chatStatus === "off" && goalStatus === "off"
+                    && mapStatus === "off" ?
                     <TabPanel className="grid grid-column h-full m-48">
                         <div className="flex flex-row justify-center">
                             <FontAwesomeIcon
@@ -155,8 +135,6 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                             sendMessage={sendMessage}
                             lastMessage={lastMessage}
                             readyState={readyState}
-                            lastMessageTimeStamp={lastMessageTimeStamp}
-                            setLastMessageTimeStamp={setLastMessageTimeStamp}
                         />
                     </TabPanel>
                     : null}

@@ -173,6 +173,25 @@ public class ChatEndpointComponent extends DiarcComponent {
             }
         }
 
+        // +----------------------+
+        // | TextWebSocketHandler |
+        // +----------------------+
+
+        /**
+         * Called after being connected to the client.
+         * @param session the web socket session the message comes over on
+         * @throws Exception ignored
+         */
+        @Override
+        public void afterConnectionEstablished(@Nonnull WebSocketSession session)
+                throws Exception {
+            super.afterConnectionEstablished(session);
+
+            JSONObject setupMessage = new JSONObject();
+            setupMessage.put("names", Arrays.toString(robotNames));
+            session.sendMessage(new TextMessage(setupMessage.toString()));
+        }
+
         /**
          * Handle a text message from the user.
          *
@@ -192,7 +211,7 @@ public class ChatEndpointComponent extends DiarcComponent {
             String recipient = request.getString("recipient");
 
             TRADEServiceInfo service = robotInputs.get(recipient);
-            if(service == null) {
+            if (service == null) {
                 log.error("Invalid incoming message: no SimSpeechRecognitionComponent"
                         + "matches specified recipient \"{}\"", recipient);
                 return;

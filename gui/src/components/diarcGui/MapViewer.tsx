@@ -153,7 +153,7 @@ const MapViewer = () => {
             context.textBaseline = "middle";
             context.textAlign = "center";
             context.font = "40px Ubuntu";
-            context.fillText("Map will appear here.",
+            context.fillText("Map not loaded",
                 canvas.width / 2, canvas.height / 2);
         }
         // Map
@@ -176,11 +176,6 @@ const MapViewer = () => {
                 }
             }
         }
-        // const image = document.createElement("img");
-        // image.src = mapImageUrl;
-        // image.onload = () => {
-        //     context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        // }
     },
         [mapImageUrl]
     );
@@ -208,7 +203,6 @@ const MapViewer = () => {
             </div>
 
             <canvas ref={canvasRef} className='Map' />
-            {/* {mapImageUrl && <img src={mapImageUrl} alt="Map" />} */}
 
             {goToLocationMsg && <div className="alert">{goToLocationMsg}</div>}
 
