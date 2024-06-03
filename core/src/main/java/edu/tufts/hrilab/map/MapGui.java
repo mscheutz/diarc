@@ -143,7 +143,7 @@ public class MapGui extends TextWebSocketHandler {
 
     private void fetchKeyLocations(WebSocketSession session) throws Exception {
         // Call the service and get the initial locations
-        Object result = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActivatedEntities")).call(Object.class);
+        Object result = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActivatedEntities").inGroups("location")).call(Object.class);
         System.out.println("Initial result: " + result);
 
         // Check if the result is a Map before proceeding
@@ -160,7 +160,7 @@ public class MapGui extends TextWebSocketHandler {
 
                 // Call getReference for each symbol to fetch the position
                 Object positionResult = TRADE.getAvailableService(
-                        new TRADEServiceConstraints().name("getReference").argTypes(Symbol.class)
+                        new TRADEServiceConstraints().name("getReference").inGroups("location").argTypes(Symbol.class)
                 ).call(Object.class, symbol);
                 System.out.println("Position result for " + symbol + ": " + positionResult);  // positionResult.getClass() is a PoseReference
 

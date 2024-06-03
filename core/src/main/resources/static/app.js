@@ -206,18 +206,6 @@ function showKeyLocations(message) {
 
 
 $(function() {
-    $("form").on('submit', function(e) {
-        e.preventDefault();
-    });
-    $("#connect").click(function() {
-        connect();
-    });
-    $("#disconnect").click(function() {
-        disconnect();
-    });
-    $("#send").click(function() {
-        sendData();
-    });
     $("#fetchMapData").click(function() {
         connectMapGui();
         setTimeout(fetchMapData, 100); // Delay the fetch to give connection time to open
@@ -253,6 +241,18 @@ $(function() {
     $("#fetchKeyLocations").click(function() {
         connectMapGui();
         setTimeout(fetchKeyLocations, 100); // Delay to ensure connection is open
+    });
+    $("form").on('submit', function(e) {
+        e.preventDefault();
+    });
+    $("#connect").click(function() {
+        connect();
+    });
+    $("#disconnect").click(function() {
+        disconnect();
+    });
+    $("#send").click(function() {
+        sendData();
     });
 });
 

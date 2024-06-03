@@ -86,15 +86,45 @@ const MapViewer = () => {
         }
     },
         [lastMessage]
-    )
+    );
 
-    // Sends a request to fetch map data
-    const fetchMapData = () =>
-        sendMessage(JSON.stringify({ action: "fetchMapData" }));
+    const handleNavigateToPoint = () => {
+        const x = prompt("Enter X coordinate:");
+        const y = prompt("Enter Y coordinate:");
+        // Default values for orientation
+        const quatX = 0;
+        const quatY = 0;
+        const quatZ = 0;
+        const quatW = 1;
+
+        if (x && y && !isNaN(Number(x)) && !isNaN(Number(y))) {
+            const newX = Number(x);
+            const newY = Number(y);
+
+            // Set the pose data directly with new coordinates and default orientation
+            const newPoseData = {
+                position: { x: newX, y: newY, z: (poseData?.position.z || 0) }, // Maintain the Z value or default it to 0
+                orientation: { x: quatX, y: quatY, z: quatZ, w: quatW }
+            };
+
+            setPoseData(newPoseData);
+            sendWebSocketRequest('navigateToPoint', {
+                x: newX,
+                y: newY,
+                quatX: quatX,
+                quatY: quatY,
+                quatZ: quatZ,
+                quatW: quatW
+            });
+        } else {
+            alert("Please enter valid numerical coordinates.");
+        }
+    }
 
     // Sends various other requests to the WebSocket
-    const sendWebSocketRequest = (action: string, additionalData?: object) =>
+    const sendWebSocketRequest = useCallback((action: string, additionalData?: object) => {
         sendMessage(JSON.stringify({ action, ...additionalData }));
+    }, [sendMessage]);
 
     // Map drawing
     const canvasRef = useRef(null);
@@ -103,7 +133,7 @@ const MapViewer = () => {
         const context = canvas.getContext("2d")!;
 
         // Make it higher resolution
-        const pixelRatio = 2;
+        const pixelRatio = 1;
         canvas.width *= pixelRatio;
         canvas.height *= pixelRatio;
 
@@ -122,26 +152,31 @@ const MapViewer = () => {
         }
         // Map
         else {
-            const image = document.createElement("img");
+            const image = new Image();
             image.src = mapImageUrl;
             image.onload = () => {
-                const canvasAspectRatio = canvas.width / canvas.height;
-                const imageAspectRatio = image.width / image.height;
-                if (canvasAspectRatio >= imageAspectRatio) {
-                    // Scale image so that its height equals the canvas height
-                    const newImageWidth = canvas.height / image.height * image.width;
-                    const xPad = (canvas.width - newImageWidth) / 2;
-                    context.drawImage(image, xPad, 0, newImageWidth, canvas.height);
-                } else {
-                    // Scale image so that its width equals the canvas width
-                    const newImageHeight = canvas.width / image.width * image.height;
-                    const yPad = (canvas.height - newImageHeight) / 2;
-                    context.drawImage(image, 0, yPad, image.width, newImageHeight);
+                // Image scaling logic
+                const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
+                const x = (canvas.width / 2) - (image.width / 2) * scale;
+                const y = (canvas.height / 2) - (image.height / 2) * scale;
+
+                context.drawImage(image, x, y, image.width * scale, image.height * scale);
+
+                // Draw the robot position if it exists
+                if (poseData) {
+                    const robotX = x + poseData.position.x * scale;
+                    const robotY = y + poseData.position.y * scale;
+                    context.fillStyle = 'red';
+                    context.beginPath();
+                    // Adjust the size of the red dot to be appropriately visible
+                    const radius = 10 * pixelRatio;
+                    context.arc(robotX, robotY, radius, 0, 2 * Math.PI);
+                    context.fill();
                 }
             }
         }
     },
-        [mapImageUrl]
+        [mapImageUrl, poseData]
     );
 
     return (
@@ -150,16 +185,16 @@ const MapViewer = () => {
             {/* Button menu */}
             <div className="flex flex-row justify-center gap-2 mt-3">
                 <Button
-                    onClick={fetchMapData}>
+                    onClick={() => sendWebSocketRequest('fetchMapData')}>
                     Fetch Map Data
                 </Button>
                 <Button
-                    onClick={() => sendWebSocketRequest('updateRobotLocation')}>
-                    Update Robot Location
+                    onClick={handleNavigateToPoint}>
+                    Navigate To Point
                 </Button>
                 <Button
                     onClick={() => sendWebSocketRequest('fetchRobotPose')}>
-                    Fetch Robot Pose
+                    Show/Update Robot Pose
                 </Button>
                 <Button
                     onClick={() => sendWebSocketRequest('fetchKeyLocations')}>
