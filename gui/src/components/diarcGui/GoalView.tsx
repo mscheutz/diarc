@@ -12,6 +12,7 @@ import { faBan, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-
 
 import NestedList from "../NestedList";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import ConnectionIndicator from "./ConnectionIndicator";
 
 const GoalView: React.FunctionComponent<{}> = () => {
     const [activeGoals, setActiveGoals] = useState({})
@@ -52,30 +53,6 @@ const GoalView: React.FunctionComponent<{}> = () => {
         }
     }, [activeGoals.toString(), pastGoals.toString(), lastMessage]);
 
-    const connectionStatus = {
-        [ReadyState.CONNECTING]: 'connecting',
-        [ReadyState.OPEN]: 'connected',
-        [ReadyState.CLOSING]: 'connection closing',
-        [ReadyState.CLOSED]: 'connection closed',
-        [ReadyState.UNINSTANTIATED]: 'uninstantiated',
-    }[readyState];
-
-    const statusColor = {
-        [ReadyState.CONNECTING]: '#efd402',
-        [ReadyState.OPEN]: '#00a505',
-        [ReadyState.CLOSING]: '#efd402',
-        [ReadyState.CLOSED]: '#e00b00',
-        [ReadyState.UNINSTANTIATED]: '#efd402',
-    }[readyState]
-
-    const statusIcon = {
-        [ReadyState.CONNECTING]: faSync,
-        [ReadyState.OPEN]: faCheck,
-        [ReadyState.CLOSING]: faSync,
-        [ReadyState.CLOSED]: faBan,
-        [ReadyState.UNINSTANTIATED]: faQuestion,
-    }[readyState]
-
     return (
         <div className="flex flex-col w-full h-[40rem] outline outline-1
                         outline-[#d1dbe3] justify-between">
@@ -90,14 +67,7 @@ const GoalView: React.FunctionComponent<{}> = () => {
                 </div>
             </div>
 
-            {/* Connection indicator */}
-            <div className='outline outline-1 p-2 outline-[#e5e7eb]
-                                        text-center'>
-                Status: &nbsp;
-                <FontAwesomeIcon icon={statusIcon}
-                    color={statusColor}></FontAwesomeIcon>
-                {" " + connectionStatus}
-            </div>
+            <ConnectionIndicator readyState={readyState} />
         </div>
     )
 }

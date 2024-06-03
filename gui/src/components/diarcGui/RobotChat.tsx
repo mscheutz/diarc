@@ -26,6 +26,7 @@ import { ReadyState } from "react-use-websocket";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBan, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-icons'
+import ConnectionIndicator from './ConnectionIndicator';
 
 let counter = 0; // list items need unique keys
 
@@ -199,30 +200,6 @@ const RobotChat = (
         // again, we use chats.toString() to make sure the value is changing
         [lastMessage, chats.toString(), postServerMessage]);
 
-    const connectionStatus = {
-        [ReadyState.CONNECTING]: 'connecting',
-        [ReadyState.OPEN]: 'connected',
-        [ReadyState.CLOSING]: 'connection closing',
-        [ReadyState.CLOSED]: 'connection closed',
-        [ReadyState.UNINSTANTIATED]: 'uninstantiated',
-    }[readyState];
-
-    const statusColor = {
-        [ReadyState.CONNECTING]: '#efd402',
-        [ReadyState.OPEN]: '#00a505',
-        [ReadyState.CLOSING]: '#efd402',
-        [ReadyState.CLOSED]: '#e00b00',
-        [ReadyState.UNINSTANTIATED]: '#efd402',
-    }[readyState]
-
-    const statusIcon = {
-        [ReadyState.CONNECTING]: faSync,
-        [ReadyState.OPEN]: faCheck,
-        [ReadyState.CLOSING]: faSync,
-        [ReadyState.CLOSED]: faBan,
-        [ReadyState.UNINSTANTIATED]: faQuestion,
-    }[readyState]
-
     const handleSendMessage = (message: string) => {
         message = clean(message)
         postUserMessage(currentChat, message, username);
@@ -295,14 +272,7 @@ const RobotChat = (
                             {conversations}
                         </div>
 
-                        {/* Connection indicator */}
-                        <div className='outline outline-1 p-2 outline-[#e5e7eb]
-                                        text-center'>
-                            Status: &nbsp;
-                            <FontAwesomeIcon icon={statusIcon}
-                                color={statusColor}></FontAwesomeIcon>
-                            {" " + connectionStatus}
-                        </div>
+                        <ConnectionIndicator readyState={readyState} />
 
                     </div>
                 </Sidebar>

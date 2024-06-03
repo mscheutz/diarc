@@ -3,6 +3,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "../Button";
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { faBan, faCheck, faQuestion, faSync } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import ConnectionIndicator from './ConnectionIndicator';
 
 type Location = {
     x: number,
@@ -64,30 +66,6 @@ const MapViewer = () => {
     const { sendMessage, lastMessage, readyState } =
         useWebSocket("ws://localhost:8080/map");
 
-    const connectionStatus = {
-        [ReadyState.CONNECTING]: 'connecting',
-        [ReadyState.OPEN]: 'connected',
-        [ReadyState.CLOSING]: 'connection closing',
-        [ReadyState.CLOSED]: 'connection closed',
-        [ReadyState.UNINSTANTIATED]: 'uninstantiated',
-    }[readyState];
-
-    const statusColor = {
-        [ReadyState.CONNECTING]: '#efd402',
-        [ReadyState.OPEN]: '#00a505',
-        [ReadyState.CLOSING]: '#efd402',
-        [ReadyState.CLOSED]: '#e00b00',
-        [ReadyState.UNINSTANTIATED]: '#efd402',
-    }[readyState]
-
-    const statusIcon = {
-        [ReadyState.CONNECTING]: faSync,
-        [ReadyState.OPEN]: faCheck,
-        [ReadyState.CLOSING]: faSync,
-        [ReadyState.CLOSED]: faBan,
-        [ReadyState.UNINSTANTIATED]: faQuestion,
-    }[readyState]
-
     // const [wsMapGui, setWsMapGui] = useState<WebSocket | null>(null);
     // const [isConnecting, setIsConnecting] = useState(false); // Track if a connection attempt is underway
 
@@ -130,8 +108,8 @@ const MapViewer = () => {
         canvas.height *= pixelRatio;
 
         // Background
-        context.fillStyle = "#e0e0e0";
-        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.strokeStyle = "#d1dbe3";
+        context.strokeRect(1, 1, canvas.width - 1, canvas.height - 1);
 
         // Placeholder
         if (mapImageUrl === "") {
@@ -167,9 +145,10 @@ const MapViewer = () => {
     );
 
     return (
-        <div className="map-container h-full w-full flex flex-col gap-5">
+        <div className="map-container h-full w-full flex flex-col gap-3 outline
+                        outline-1 outline-[#d1dbe3] items-center">
             {/* Button menu */}
-            <div className="flex flex-row justify-center gap-2 mt-2">
+            <div className="flex flex-row justify-center gap-2 mt-3">
                 <Button
                     onClick={fetchMapData}>
                     Fetch Map Data
@@ -188,7 +167,7 @@ const MapViewer = () => {
                 </Button>
             </div>
 
-            <canvas ref={canvasRef} className='Map' />
+            <canvas ref={canvasRef} className='Map w-11/12' />
 
             {goToLocationMsg && <div className="alert">{goToLocationMsg}</div>}
 
@@ -200,6 +179,8 @@ const MapViewer = () => {
             <div className="key-locations">
                 {keyLocations2Elements(keyLocations)}
             </div>
+
+            <ConnectionIndicator readyState={readyState} />
         </div>
     );
 };
