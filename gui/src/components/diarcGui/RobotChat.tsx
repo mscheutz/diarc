@@ -22,7 +22,7 @@ import {
     ConversationList
 } from "@chatscope/chat-ui-kit-react";
 
-import useWebSocket, { ReadyState } from "react-use-websocket";
+import { ReadyState } from "react-use-websocket";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBan, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-icons'

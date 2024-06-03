@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 import { Button } from "../Button";
+import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { faBan, faCheck, faQuestion, faSync } from '@fortawesome/free-solid-svg-icons';
 
 type Location = {
     x: number,
@@ -27,7 +29,7 @@ type Pose = {
 
 export { Location, Position, Orientation, Pose };
 
-const getPositionString = (pose: Pose | null) => {
+const position2String = (pose: Pose | null) => {
     if (pose === null)
         return "Position not known";
 
@@ -35,7 +37,7 @@ const getPositionString = (pose: Pose | null) => {
         `Z: ${pose.position.z}`;
 };
 
-const getOrientationString = (pose: Pose | null) => {
+const orientation2String = (pose: Pose | null) => {
     if (pose === null)
         return "Orientation not known";
 
@@ -43,7 +45,7 @@ const getOrientationString = (pose: Pose | null) => {
         `Z: ${pose.orientation.z}, W: ${pose.orientation.w}`
 };
 
-const getKeyLocations = (keyLocations) => {
+const keyLocations2Elements = (keyLocations) => {
     return Object.keys(keyLocations).map(key => (
         <p key={key}>
             {keyLocations[key].name}: X={keyLocations[key].x}, Y={keyLocations[key].y}
@@ -52,43 +54,47 @@ const getKeyLocations = (keyLocations) => {
 };
 
 const MapViewer = () => {
-    const [wsMapGui, setWsMapGui] = useState<WebSocket | null>(null);
-    const [isConnecting, setIsConnecting] = useState(false); // Track if a connection attempt is underway
-    const [mapImageUrl, setMapImageUrl] = useState<string>("");
-    const [goToLocationMsg, setGoToLocationMsg] = useState<string>("");
+    // State //
     const [poseData, setPoseData] = useState<Pose | null>(null);
+    const [goToLocationMsg, setGoToLocationMsg] = useState<string>("");
     const [keyLocations, setKeyLocations] = useState({});
+    const [mapImageUrl, setMapImageUrl] = useState<string>("");
 
-    // Helper function to initialize WebSocket connection
-    const connectMapGui = useCallback(() => {
-        if (!wsMapGui || wsMapGui.readyState === WebSocket.CLOSED) {
-            if (!isConnecting) {
-                setIsConnecting(true);
-                const websocket = new WebSocket('ws://localhost:8080/map');
-                websocket.onmessage = handleWebSocketMessage;
-                websocket.onopen = () => {
-                    console.log("Connected to MapGui WebSocket");
-                    setIsConnecting(false);
-                };
-                websocket.onerror = error => {
-                    console.error("WebSocket error:", error);
-                    setIsConnecting(false);
-                };
-                websocket.onclose = event => {
-                    console.log("WebSocket connection closed with code:", event.code, "and reason:", event.reason);
-                    setWsMapGui(null);
-                    setIsConnecting(false);
-                };
-                setWsMapGui(websocket);
-            }
-        } else {
-            console.log("WebSocket is already open.");
-        }
-    }, [wsMapGui, isConnecting]);
+    // Set up Websocket
+    const { sendMessage, lastMessage, readyState } =
+        useWebSocket("ws://localhost:8080/map");
 
-    // Handles all WebSocket messages
-    const handleWebSocketMessage = (event: MessageEvent) => {
-        const data = JSON.parse(event.data);
+    const connectionStatus = {
+        [ReadyState.CONNECTING]: 'connecting',
+        [ReadyState.OPEN]: 'connected',
+        [ReadyState.CLOSING]: 'connection closing',
+        [ReadyState.CLOSED]: 'connection closed',
+        [ReadyState.UNINSTANTIATED]: 'uninstantiated',
+    }[readyState];
+
+    const statusColor = {
+        [ReadyState.CONNECTING]: '#efd402',
+        [ReadyState.OPEN]: '#00a505',
+        [ReadyState.CLOSING]: '#efd402',
+        [ReadyState.CLOSED]: '#e00b00',
+        [ReadyState.UNINSTANTIATED]: '#efd402',
+    }[readyState]
+
+    const statusIcon = {
+        [ReadyState.CONNECTING]: faSync,
+        [ReadyState.OPEN]: faCheck,
+        [ReadyState.CLOSING]: faSync,
+        [ReadyState.CLOSED]: faBan,
+        [ReadyState.UNINSTANTIATED]: faQuestion,
+    }[readyState]
+
+    // const [wsMapGui, setWsMapGui] = useState<WebSocket | null>(null);
+    // const [isConnecting, setIsConnecting] = useState(false); // Track if a connection attempt is underway
+
+    // Handle received messages
+    useEffect(() => {
+        if (!lastMessage) return;
+        const data = JSON.parse(lastMessage.data);
         if (data.mapImageUrl) {
             setMapImageUrl(data.mapImageUrl);
         } else if (data.position && data.orientation) {
@@ -100,37 +106,17 @@ const MapViewer = () => {
         } else {
             console.warn("Received unhandled data type:", data);
         }
-    };
+    },
+        [lastMessage]
+    )
 
     // Sends a request to fetch map data
-    const fetchMapData = () => {
-        if (wsMapGui && wsMapGui.readyState === WebSocket.OPEN) {
-            wsMapGui.send(JSON.stringify({ action: 'fetchMapData' }));
-        } else {
-            console.warn("WebSocket is not open. Attempting to reconnect...");
-            connectMapGui();
-        }
-    };
+    const fetchMapData = () =>
+        sendMessage(JSON.stringify({ action: "fetchMapData" }));
 
     // Sends various other requests to the WebSocket
-    const sendWebSocketRequest = (action: string, additionalData?: object) => {
-        if (wsMapGui && wsMapGui.readyState === WebSocket.OPEN) {
-            wsMapGui.send(JSON.stringify({ action, ...additionalData }));
-        } else {
-            console.warn("WebSocket is not open. Attempting to reconnect...");
-            connectMapGui();
-        }
-    };
-
-    // Clean up WebSocket connection
-    useEffect(() => {
-        return () => {
-            if (wsMapGui) wsMapGui.close();
-        };
-    }, [wsMapGui]);
-
-    // Try to open a web socket connection on load
-    connectMapGui();
+    const sendWebSocketRequest = (action: string, additionalData?: object) =>
+        sendMessage(JSON.stringify({ action, ...additionalData }));
 
     // Map drawing
     const canvasRef = useRef(null);
@@ -207,12 +193,12 @@ const MapViewer = () => {
             {goToLocationMsg && <div className="alert">{goToLocationMsg}</div>}
 
             <div className="pose-data">
-                <div>{getPositionString(poseData)}</div>
-                <div>{getOrientationString(poseData)}</div>
+                <div>{position2String(poseData)}</div>
+                <div>{orientation2String(poseData)}</div>
             </div>
 
             <div className="key-locations">
-                {getKeyLocations(keyLocations)}
+                {keyLocations2Elements(keyLocations)}
             </div>
         </div>
     );
