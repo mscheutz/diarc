@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 import { Button } from "../Button";
-import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { faBan, faCheck, faQuestion, faSync } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import useWebSocket from 'react-use-websocket';
 import ConnectionIndicator from './ConnectionIndicator';
 
 type Location = {

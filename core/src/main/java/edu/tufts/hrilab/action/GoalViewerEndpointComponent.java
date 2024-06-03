@@ -18,23 +18,23 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 @Component
-public class GoalEndpointComponent extends DiarcComponent {
-    private final GoalHandler goalHandler;
+public class GoalViewerEndpointComponent extends DiarcComponent {
+    private final GoalViewerHandler goalViewerHandler;
 
     /**
-     * Constructs the <code>GoalEndpoint</code> given a goal manager component.
+     * Constructor.
      */
-    public GoalEndpointComponent() {
-        this.goalHandler = new GoalHandler();
+    public GoalViewerEndpointComponent() {
+        this.goalViewerHandler = new GoalViewerHandler();
     }
 
     /**
-     * Getter for the goal handler instance.
-     * @return the goal handler
+     * Getter for the goal viewer handler instance.
+     * @return the goal viewer handler
      */
     @TRADEService
-    public GoalHandler getGoalHandler() {
-        return goalHandler;
+    public GoalViewerHandler getGoalViewerHandler() {
+        return goalViewerHandler;
     }
 
     /**
@@ -42,13 +42,13 @@ public class GoalEndpointComponent extends DiarcComponent {
      */
     @TRADEService
     public void updateGoals() {
-        this.goalHandler.updateGoals();
+        this.goalViewerHandler.updateGoals();
     }
 
     /**
-     * GoalHandler inner class. This implements the server.
+     * GoalViewerHandler inner class. This implements the server.
      */
-    public class GoalHandler extends TextWebSocketHandler {
+    public class GoalViewerHandler extends TextWebSocketHandler {
         private Timer updateTimer;
         public static final int UPDATE_PERIOD = 1000; // in milliseconds
 
@@ -58,9 +58,9 @@ public class GoalEndpointComponent extends DiarcComponent {
         private WebSocketSession session;
 
         /**
-         * Constructs this GoalEndpoint.
+         * Constructor.
          */
-        public GoalHandler() {
+        public GoalViewerHandler() {
             getActiveGoals = null;
             getPastGoals = null;
             Collection<TRADEServiceInfo> services = TRADE.getAvailableServices();
@@ -131,6 +131,8 @@ public class GoalEndpointComponent extends DiarcComponent {
                     session.sendMessage(new TextMessage(all.toString()));
                 } else {
                     log.error("Could not send message: no active session");
+                    this.session = null;
+                    updateTimer.cancel();
                 }
             } catch (Exception e) {
                 log.error(e.getMessage());

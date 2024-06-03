@@ -1,6 +1,7 @@
 package edu.tufts.hrilab.config.gui;
 
-import edu.tufts.hrilab.action.GoalEndpointComponent;
+import edu.tufts.hrilab.action.GoalManagerEndpointComponent;
+import edu.tufts.hrilab.action.GoalViewerEndpointComponent;
 import edu.tufts.hrilab.action.GoalManagerImpl;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.DemoApplication;
@@ -42,13 +43,14 @@ public class UnifiedGuiConfig extends DiarcConfiguration {
         createInstance(MockNaoComponent.class, "-groups agent:dempster -obstacle true"); // sees obstacle
         createInstance(MockNaoComponent.class, "-groups agent:shafer -floorSupport false"); // does not see floor support
 
-        String gmArgs = "-beliefinitfile demos.pl agents/twonaoagents.pl " +
+        String gmArgs = "-editor -beliefinitfile demos.pl agents/twonaoagents.pl " +
                 "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
                 "-goal listen(self)";
         createInstance(GoalManagerImpl.class, gmArgs);
 
         createInstance(ChatEndpointComponent.class, "-n dempster shafer");
-        createInstance(GoalEndpointComponent.class);
+        createInstance(GoalViewerEndpointComponent.class);
+        createInstance(GoalManagerEndpointComponent.class);
         createInstance(EndpointManagerComponent.class);
 
         // Map demo

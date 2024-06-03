@@ -20,8 +20,9 @@ import { faBan, faCog } from '@fortawesome/free-solid-svg-icons'
 
 import RobotChat, { createConversation } from "./RobotChat";
 import type { Chat } from "./RobotChat";
-import GoalView from "./GoalView";
+import GoalViewer from "./GoalViewer";
 import MapViewer from "./MapViewer";
+import GoalManager from "./GoalManager";
 
 const TabbedComponentViewer: React.FunctionComponent = () => {
     // Robot chat state
@@ -49,7 +50,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
     const [goalStatus, setGoalStatus] = useState<string>("wait")
     const [mapStatus, setMapStatus] = useState<string>("wait")
     const chatSocket = useWebSocket("ws://localhost:8080/chat");
-    const goalSocket = useWebSocket("ws://localhost:8080/goal");
+    const goalSocket = useWebSocket("ws://localhost:8080/goalViewer");
     const mapSocket = useWebSocket("ws://localhost:8080/map");
 
     const check = () => {
@@ -85,12 +86,14 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                     {goalStatus === "on" ?
                         <Tab>Goal Viewer</Tab>
                         : null}
+                    {/* TODO */}
+                    {<Tab>Goal Manager</Tab>}
                     {mapStatus === "on" ?
                         <Tab>Map Viewer</Tab>
                         : null}
                 </TabList>
 
-                {/* Loading panel */}
+                {/* Connecting panel */}
                 {chatStatus === "wait" || goalStatus === "wait"
                     || mapStatus === "wait" ?
                     <TabPanel className="grid grid-column h-full m-48">
@@ -120,7 +123,6 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                         </p>
                     </TabPanel>
                     : null}
-                {/* Chat panel */}
                 {chatStatus === "on" ?
                     <TabPanel>
                         <RobotChat
@@ -138,13 +140,15 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                         />
                     </TabPanel>
                     : null}
-                {/* Goal panel */}
                 {goalStatus === "on" ?
                     <TabPanel>
-                        <GoalView />
+                        <GoalViewer />
                     </TabPanel>
                     : null}
-                {/* Map panel */}
+                {/* TODO */}
+                {<TabPanel>
+                    <GoalManager />
+                </TabPanel>}
                 {mapStatus === "on" ?
                     <TabPanel>
                         <MapViewer></MapViewer>

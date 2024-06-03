@@ -3,10 +3,10 @@ package edu.tufts.hrilab.gui;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
-import edu.tufts.hrilab.action.GoalEndpointComponent;
+import edu.tufts.hrilab.action.GoalManagerEndpointComponent;
+import edu.tufts.hrilab.action.GoalViewerEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
-import org.apache.commons.cli.CommandLine;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -26,7 +26,7 @@ public class EndpointManagerComponent extends DiarcComponent
         implements WebSocketConfigurer {
     // +---------------------+
     // | WebSocketConfigurer |
-    // + --------------------+
+    // +---------------------+
 
     /**
      * Add endpoints and allow the client to access them.
@@ -36,24 +36,33 @@ public class EndpointManagerComponent extends DiarcComponent
     public void registerWebSocketHandlers(@Nonnull WebSocketHandlerRegistry registry) {
         try {
             WebSocketHandler chatHandler = null;
-            WebSocketHandler goalHandler = null;
+            WebSocketHandler goalViewerHandler = null;
+            WebSocketHandler goalManagerHandler = null;
             Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
             for (TRADEServiceInfo service : availableServices) {
-                if (service.serviceString.equals("getChatHandler()"))
-                    chatHandler = service.call(ChatEndpointComponent.ChatHandler.class);
-                else if(service.serviceString.equals("getGoalHandler()"))
-                    goalHandler = service.call(GoalEndpointComponent.GoalHandler.class);
+                switch (service.serviceString) {
+                    case "getChatHandler()" -> chatHandler = service.call(ChatEndpointComponent.ChatHandler.class);
+                    case "getGoalViewerHandler()" ->
+                            goalViewerHandler = service.call(GoalViewerEndpointComponent.GoalViewerHandler.class);
+                    case "getGoalManagerHandler()" ->
+                            goalManagerHandler = service.call(GoalManagerEndpointComponent.GoalManagerHandler.class);
+                }
 
-                if(chatHandler != null && goalHandler != null)
+                if(chatHandler != null && goalViewerHandler != null
+                && goalManagerHandler != null)
                     break;
             }
 
-            if(chatHandler == null || goalHandler == null)
-                throw new NullPointerException("Failed to find handler of chat or goal");
+            if(chatHandler == null || goalViewerHandler == null
+            || goalManagerHandler == null)
+                throw new NullPointerException("Failed to find handler of "
+                + "chat, goal viewer, or goal manager");
 
             registry.addHandler(chatHandler, "/chat")
                     .setAllowedOrigins("http://localhost:3000");
-            registry.addHandler(goalHandler, "/goal")
+            registry.addHandler(goalViewerHandler, "/goalViewer")
+                    .setAllowedOrigins("http://localhost:3000");
+            registry.addHandler(goalManagerHandler, "/goalManager")
                     .setAllowedOrigins("http://localhost:3000");
         } catch(TRADEException e) {
             log.error("Chat handler service call failed");
