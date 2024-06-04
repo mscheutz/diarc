@@ -4,8 +4,12 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.interfaces.NLGInterface;
 import edu.tufts.hrilab.llm.*;
+import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.nlg.NLG;
 import edu.tufts.hrilab.slug.parsing.llm.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,13 +19,21 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PickAndPlaceLLM extends DiarcComponent {
+public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
     static private Logger log = LoggerFactory.getLogger(PickAndPlaceLLM.class);
+    NLG nlg = new NLG(); //TODO: make from semantics directly or from SimpleNLG results configurable
+    Prompt nluPrompt;
+    Prompt nlgPrompt;
+
+    public PickAndPlaceLLM() {
+        super();
+        nluPrompt = Prompts.getPrompt("pickAndPlaceActionSemanticTranslation");
+        nlgPrompt = Prompts.getPrompt("pickAndPlaceNLGTranslation");
+    }
 
     @TRADEService
     public ParserResponse pickAndPlaceLLMParser (String utterance) {
-        Prompt prompt = Prompts.getPrompt("pickAndPlaceActionSemanticTranslation");
-        String userMessage = prompt.getText() + utterance;
+        String userMessage = nluPrompt.getText() + utterance;
         List<Message> chatInput = new ArrayList<>();
         chatInput.add(new Message("user",userMessage));
         Chat chat = new Chat();
@@ -116,5 +128,47 @@ public class PickAndPlaceLLM extends DiarcComponent {
         parserResponse.descriptors = descriptors;
 
         return parserResponse;
+    }
+
+    @Override
+    public Utterance convertSemanticsToText(Utterance u) {
+        return convertSemanticsToText(u,false);
+    }
+
+    @TRADEService
+    @Action
+    public Utterance convertSemanticsToText(Utterance u, boolean hasWords) {
+        String realization;
+        if (hasWords) {
+            realization = u.getWordsAsString();
+        } else {
+            realization = nlg.translate(u);
+        }
+
+        String userMessage = nlgPrompt.getText() + realization;
+        List<Message> chatInput = new ArrayList<>();
+        chatInput.add(new Message("user",userMessage));
+        Chat chat = new Chat();
+        chat.setMessages(chatInput);
+
+        Completion response;
+        try {
+            response = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
+        } catch (TRADEException e) {
+            log.error("Error performing chat completion", e);
+            return null;
+        }
+
+        String responseString = response.toString();
+        Pattern responsePattern = Pattern.compile(".*Step two:(.*)", Pattern.DOTALL);
+        Matcher m = responsePattern.matcher(responseString);
+        if (!m.matches()) {
+            log.error("[pickAndPlaceLLMParser] LLM response malformed, cannot parse");
+            u.setWords(realization);
+        } else {
+            u.setWords(m.group(m.groupCount()).trim());
+        }
+
+        return u;
     }
 }
