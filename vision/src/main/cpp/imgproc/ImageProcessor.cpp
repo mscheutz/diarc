@@ -109,12 +109,7 @@ ImageProcessor::Ptr ImageProcessor::get(const ImageProcessorType type, const lon
 #endif
       break;
     case MASTERSALIENCY:
-#ifdef USE_V4R_V0
       return MasterSaliencyProcessor::Ptr(new MasterSaliencyProcessor(processorId, imgWidth, imgHeight, isStereo));
-#else
-      LOG4CXX_ERROR(factoryLogger, "MasterSaliencyProcessor not available. Did you compile vision with V4R?");
-#endif
-      break;
     case PLANE:
       return PlaneProcessor::Ptr(new PlaneProcessor(processorId, imgWidth, imgHeight, isStereo));
     case COLORVALIDATOR:
