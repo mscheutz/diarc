@@ -1,6 +1,9 @@
 package edu.tufts.hrilab.action;
 
 import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.db.ActionDBEntry;
+import edu.tufts.hrilab.action.db.Database;
+import edu.tufts.hrilab.action.gui.ADBEWrapper;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -10,8 +13,10 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import javax.annotation.Nonnull;
-import java.io.File;
+import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class GoalManagerEndpointComponent extends DiarcComponent {
     private final GoalManagerHandler goalManagerHandler;
@@ -46,41 +51,154 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
         }
 
         /**
+         * Convert the declaration of an action into an action signature.
+         * @param line the line containing the declaration
+         * @return the action signature
+         */
+        private String getActionString(String line) {
+            StringBuilder sb = new StringBuilder();
+            Pattern name = Pattern.compile("= *(\\w*)(\\[.*)? *\\(");
+            Matcher m = name.matcher(line);
+            if(m.find()) {
+                sb.append(m.group(1))
+                        .append("(?actor, ");
+            } else {
+                System.out.println(line);
+                throw new IllegalStateException("Could not find action name");
+            }
+            // Of action name
+            int start = m.start();
+            int end = m.end();
+
+            Pattern arguments = Pattern.compile("(\\?\\w*)");
+            m = arguments.matcher(line.substring(end));
+            while(m.find()) {
+                sb.append(m.group())
+                        .append(", ");
+            }
+
+            // Returns are the same as arguments
+            m = arguments.matcher(line.substring(0, start));
+            while(m.find()) {
+                sb.append(m.group())
+                        .append(", ");
+            }
+
+            sb.delete(sb.length() - 2, sb.length())
+                    .append(')');
+            return sb.toString();
+        }
+
+        /**
          * Crawls the ASL scripts directory recursively to find actions.
          * @return an array containing a list of action signatures.
          */
-        private String[] getActions() {return null;}
+        private String[] getAslActions() {
+            String[] paths = getAslFilesAsArray();
+            ArrayList<String> actions = new ArrayList<>();
+
+            Pattern regex = Pattern.compile("\\(.*\\)\\s?=\\s?.*\\(.*\\)\\s\\{");
+
+            try {
+                for (String path : paths) {
+                    BufferedReader br = new BufferedReader(new FileReader(path));
+                    String line = br.readLine();
+                    while(line != null) {
+
+                        Matcher matcher = regex.matcher(line);
+                        if(matcher.matches()) {
+                            actions.add(getActionString(line));
+                        }
+
+                        line = br.readLine();
+                    }
+                }
+            } catch (IOException ignored) {}
+
+            // Java hates me if I use toArray()
+            String[] result = new String[actions.size()];
+            for(int i = 0; i < actions.size(); i++)
+                result[i] = actions.get(i);
+            return result;
+        }
 
         /**
          * Crawls the ASL scripts directory recursively to find ASL files.
          * @return an array containing a list of ASL files.
          */
-        private String[] getFiles() {
+        @Nonnull
+        private String[] getAslFilesAsArray() {
             File root = new File(ACTION_SCRIPT_PATH);
 
-            if(!root.isDirectory()) {
-                log.error("Invalid action script path");
-                return null;
+            if (!root.isDirectory()) {
+                log.error("Invalid action script path while getting array");
+                return new String[] {};
             }
 
             ArrayList<String> arrayList = new ArrayList<>();
             Deque<File> dfs = new ArrayDeque<>();
             dfs.push(root);
 
-            while(!dfs.isEmpty()) {
+            while (!dfs.isEmpty()) {
                 File file = dfs.pop();
-                if(file.isDirectory()) {
+                if (file.isDirectory()) {
                     // Shouldn't be null, if it's a directory...
-                    for(File f : Objects.requireNonNull(file.listFiles())) {
+                    for (File f : Objects.requireNonNull(file.listFiles())) {
                         dfs.push(f);
                     }
-                } else if(file.isFile()) {
-                    arrayList.add(file.getName());
+                } else if (file.isFile()) {
+                    arrayList.add(file.getPath());
                 }
             }
 
-            //noinspection DataFlowIssue
-            return (String[]) arrayList.toArray();
+            // Java hates me if I use toArray()
+            String[] result = new String[arrayList.size()];
+            for(int i = 0; i < arrayList.size(); i++)
+                result[i] = arrayList.get(i);
+            return result;
+        }
+
+        /**
+         * Crawls the ASL scripts directory recursively to find ASL files.
+         * @return an object containing the hierarchy of ASL files.
+         */
+        @Nonnull
+        private JSONObject getAslFilesAsTree() {
+            File root = new File(ACTION_SCRIPT_PATH);
+
+            if (!root.isDirectory()) {
+                log.error("Invalid action script path while getting tree");
+                return new JSONObject(root.getName());
+            }
+
+            int counter = 0;
+            JSONObject tree = new JSONObject();
+            tree.put("name", root.getName())
+                    .put("id", "" + counter++);
+
+            // Each object in the array is {file, file's JSONObject}
+            Deque<Object[]> dfs = new ArrayDeque<>();
+            dfs.push(new Object[] {root, tree});
+
+            while (!dfs.isEmpty()) {
+                Object[] current = dfs.pop();
+                File file = (File) current[0];
+                JSONObject object = (JSONObject) current[1];
+                if (file.isDirectory()) {
+                    object.put("children", new JSONArray());
+                    // Shouldn't be null, if it's a directory...
+                    for (File childFile : Objects.requireNonNull(file.listFiles())) {
+                        JSONObject childObject = new JSONObject()
+                                .put("name", childFile.getName())
+                                .put("id", "" + counter++);
+                        object.append("children", childObject);
+                        dfs.push(new Object[] {childFile, childObject});
+                    }
+                }
+            }
+
+            System.out.println(tree);
+            return tree;
         }
 
         //======================
@@ -114,8 +232,18 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
 
             JSONObject message = new JSONObject();
 
-            // TODO
-            getActions();
+            JSONArray actions = new JSONArray();
+            SortedSet<ADBEWrapper> actionSet =
+                    new TreeSet<>(Comparator.comparing(ADBEWrapper::getName));
+            for(ActionDBEntry e : Database.getActionDB().getAllActions()) {
+                ADBEWrapper w = new ADBEWrapper(e);
+                actionSet.add(w);
+                actions.put(w.toString());
+            }
+            message.put("actions", actions);
+
+            JSONObject files = getAslFilesAsTree();
+            message.put("files", files);
 
             session.sendMessage(new TextMessage(message.toString()));
         }

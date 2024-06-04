@@ -69,7 +69,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
         useWebSocket("ws://localhost:8080/chat");
 
     return (
-        <div className="w-2/3 h-[50rem]">
+        <div className="w-5/6 h-[50rem]">
             <Tabs forceRenderTabPanel>
                 <TabList>
                     {chatStatus === "wait" || goalStatus === "wait"

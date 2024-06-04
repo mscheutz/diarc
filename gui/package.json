@@ -80,7 +80,8 @@
     ]
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.1"
+    "tailwindcss": "^3.4.1",
+    "use-resize-observer": "^9.1.0"
   },
   "browser": {
     "fs": false,
