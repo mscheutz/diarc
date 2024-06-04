@@ -1,3 +1,5 @@
+// depreciated. real front end in diarc/gui
+
 var ws;
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
@@ -160,8 +162,8 @@ function showRobotPose(message) {
 
         // Update robot marker position on the map
         robotMarker.css({
-            left: data.currRobotPose.x + 'px',
-            top: data.currRobotPose.y + 'px',
+            left: data.robotPixelPosition.x + 'px',
+            top: data.robotPixelPosition.y + 'px',
             display: 'block'
         });
     } else {

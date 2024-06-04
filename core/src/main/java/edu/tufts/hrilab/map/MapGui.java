@@ -1,15 +1,16 @@
 package edu.tufts.hrilab.map;
 
 import ai.thinkingrobots.trade.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.gui.ImageService;
 import edu.tufts.hrilab.map.util.Pose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -19,7 +20,6 @@ import org.json.JSONObject;
 import javax.vecmath.*;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Map;
 
 @Component
@@ -38,7 +38,7 @@ public class MapGui extends TextWebSocketHandler {
     }
 
     @Override
-    public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         JSONObject request = new JSONObject(message.getPayload());
 
         switch (request.getString("action")) {
@@ -54,10 +54,10 @@ public class MapGui extends TextWebSocketHandler {
                 double quatW = request.getDouble("quatW");
                 navigateToPoint(session, x, y, quatX, quatY, quatZ, quatW);
                 break;
-//            case "goToLocation":
-//                String location = request.getString("s");
-//                goToLocation(session, location);
-//                break;
+            case "goToLocation":
+                String locationSymbol = request.getString("locationSymbol");
+                goToLocation(session, Factory.createSymbol(locationSymbol));
+                break;
             case "fetchRobotPose":
                 fetchRobotPose(session);
                 break;
@@ -69,152 +69,187 @@ public class MapGui extends TextWebSocketHandler {
         }
     }
 
-    private void fetchMapData(WebSocketSession session) throws Exception {
+    private void fetchMapData(WebSocketSession session) throws IOException {
+        log.info("Fetching map data for the current floor.");
         JSONObject response = new JSONObject();
+
         try {
             int currentFloor = mapComponent.getCurrFloor();
             FloorMap currentMap = mapComponent.floorMaps.get(currentFloor);
             String pgmFilePath = currentMap.getMapYamlFile().replace(".yaml", ".pgm");
 
-            log.info("Attempting to convert PGM to PNG: {}", pgmFilePath);
+            log.info("Converting PGM to PNG for file: {}", pgmFilePath);
 
-            // Convert PGM to PNG and get the new file name
             String pngFileName = imageService.convertPGMtoPNG(pgmFilePath);
             response.put("currentFloor", currentFloor);
-            // see WebMvcConfig: /images/ b/c addResourceHandlers and http://localhost:8080 b/c addCorsMappings
             response.put("mapImageUrl", "http://localhost:8080/images/" + pngFileName);
+            response.put("success", true);
+            response.put("message", "Map data fetched successfully.");
         } catch (Exception e) {
-            log.error("Failed to retrieve or convert map data", e);
+            log.error("Failed to retrieve or convert map data: {}", e.getMessage(), e);
+            response.put("success", false);
             response.put("error", "Failed to retrieve map data: " + e.getMessage());
         }
+
         session.sendMessage(new TextMessage(response.toString()));
     }
 
-    private void navigateToPoint(WebSocketSession session, double x, double y, double quatX, double quatY, double quatZ, double quatW) {
-        log.info("Attempting to navigate to point: x={}, y={}, quatX={}, quatY={}, quatZ={}, quatW={}", x, y, quatX, quatY, quatZ, quatW);
 
-        // call movebase trade service to go to location
+    private void navigateToPoint(WebSocketSession session, double x, double y, double quatX, double quatY, double quatZ, double quatW) throws IOException {
+        log.info("Initiating navigation to coordinates: x={}, y={}, and quaternion: quatX={}, quatY={}, quatZ={}, quatW={}", x, y, quatX, quatY, quatZ, quatW);
+        JSONObject response = new JSONObject();
+
         try {
-            TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation")
-                    .argTypes(Double.class,Double.class,Double.class,Double.class,Double.class,Double.class,Boolean.class));
-            Justification result = tsi.call(Justification.class, x,y,quatX,quatY,quatZ,quatW,true);
-            // Respond back to the client with the result of the navigation attempt
-            JSONObject response = new JSONObject();
+            // Fetch the trade service information for navigation
+            TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints()
+                    .name("goToLocation")
+                    .argTypes(Double.class, Double.class, Double.class, Double.class, Double.class, Double.class, Boolean.class));
+
+            Justification result = tsi.call(Justification.class, x, y, quatX, quatY, quatZ, quatW, true);
+
+            // Check the result of the navigation attempt
             if (result != null && result.getValue()) {
                 response.put("success", true);
                 response.put("message", "Navigation to point initiated successfully.");
+                log.info("Navigation to point successfully initiated.");
             } else {
                 response.put("success", false);
                 response.put("message", "Failed to initiate navigation.");
+                log.warn("Failed to initiate navigation to point.");
             }
-            session.sendMessage(new TextMessage(response.toString()));
         } catch (TRADEException e) {
-            log.error("Service call failed: {}", e.getMessage(), e);
-        } catch (IOException e) {
-            log.error("Error sending WebSocket message: {}", e.getMessage(), e);
-            throw new RuntimeException(e);
+            log.error("TRADE service call failed: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("message", "TRADE service call failed: " + e.getMessage());
         }
+
+        // Send the response back to the client
+        session.sendMessage(new TextMessage(response.toString()));
     }
 
-    private void goToLocation(WebSocketSession session, Symbol location) {
-        // call movebase trade service to go to location
+
+    private void goToLocation(WebSocketSession session, Symbol location) throws IOException {
+        log.info("Attempting to navigate to location: {}", location);
+        JSONObject response = new JSONObject();
+
         try {
-            TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation")
+            // Call MoveBase TRADEService goToLocation
+            TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints()
+                    .name("goToLocation")
                     .argTypes(Symbol.class));
+
             Justification result = tsi.call(Justification.class, location);
-            // Respond back to the client with the result of the navigation attempt
-            JSONObject response = new JSONObject();
-            if (result.getValue()) { // Checking if the result indicates success
+
+            // Check the result of the navigation attempt
+            if (result != null && result.getValue()) {
                 response.put("success", true);
-                response.put("message", "Navigation to point initiated successfully.");
+                response.put("message", "Navigation to location initiated successfully.");
+                log.info("Navigation to location {} initiated successfully.", location);
             } else {
                 response.put("success", false);
-                response.put("message", "Failed to initiate navigation.");
+                response.put("message", "Failed to initiate navigation to location.");
+                log.warn("Failed to initiate navigation to location {}.", location);
             }
-            session.sendMessage(new TextMessage(response.toString()));
         } catch (TRADEException e) {
             log.error("Service call failed: {}", e.getMessage(), e);
-        } catch (IOException e) {
-            log.error("Error sending WebSocket message: {}", e.getMessage(), e);
-            throw new RuntimeException(e);
+            response.put("success", false);
+            response.put("message", "Service call failed: " + e.getMessage());
         }
+
+        // Send the response to the client
+        session.sendMessage(new TextMessage(response.toString()));
     }
 
+    private void fetchKeyLocations(WebSocketSession session) throws IOException {
+        log.info("Fetching key locations from the TRADE service.");
+        JSONObject response = new JSONObject();
 
-    private void fetchKeyLocations(WebSocketSession session) throws Exception {
-        // Call the service and get the initial locations
-        Object result = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActivatedEntities").inGroups("location")).call(Object.class);
-        System.out.println("Initial result: " + result);
-
-        // Check if the result is a Map before proceeding
-        if (result instanceof Map<?, ?> resultMap) {
-            System.out.println("Result is a Map with keys: " + resultMap.keySet());
-
-            // Initialize the final JSON object to hold locations and their positions
-            JSONObject finalLocationsWithPositions = new JSONObject();
-
-            // Iterate over each entry in the resultMap
-            for (Map.Entry<?, ?> entry : resultMap.entrySet()) {
-                Symbol symbol = (Symbol) entry.getKey();
-                System.out.println("Key: " + symbol + " (Type: " + symbol.getClass().getSimpleName() + ")");
-
-                // Call getReference for each symbol to fetch the position
-                Object positionResult = TRADE.getAvailableService(
-                        new TRADEServiceConstraints().name("getReference").inGroups("location").argTypes(Symbol.class)
-                ).call(Object.class, symbol);
-                System.out.println("Position result for " + symbol + ": " + positionResult);  // positionResult.getClass() is a PoseReference
-
-                if (positionResult instanceof PoseReference customPositionResult) {
-                    // Convert from PoseReference to Point3d
-                    Point3d meterPosition = customPositionResult.getPosition();
-                    // Convert the meterPosition to pixel coordinates using toPixel
-                    Point2d pixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(meterPosition);
-
-                    // Create a JSON object with pixel coordinates
-                    JSONObject positionJson = new JSONObject();
-                    positionJson.put("x", pixelPosition.getX());
-                    positionJson.put("y", pixelPosition.getY());
-
-                    // Add this position to the final JSON object
-                    finalLocationsWithPositions.put(symbol.toString(), positionJson);
-                } else {
-                    // If positionResult does not have getPosition() or is not the expected class, log this issue
-                    System.out.println("Expected positionResult to be of YourCustomPositionClass but got: " + positionResult.getClass().getSimpleName());
-                }
-            }
-
-            // Create a response JSON object and add the final locations with their positions
-            JSONObject responseWithKeyLocations = new JSONObject();
-            responseWithKeyLocations.put("keyLocations", finalLocationsWithPositions);
-
-            // Send the composed final data back to the client
-            session.sendMessage(new TextMessage(responseWithKeyLocations.toString()));
-        } else {
-            // Handle cases where the result is not a Map as expected
-            System.out.println("Expected a Map but received: " + result.getClass().getSimpleName());
-        }
-    }
-
-    private void fetchRobotPose(WebSocketSession session) throws Exception {
         try {
-            // Update the robot's current pose
+            Object result = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActivatedEntities").inGroups("location")).call(Object.class);
+
+            // Check if the result is a Map before proceeding
+            if (result instanceof Map<?, ?> resultMap) {
+                log.info("Result is a Map with keys: {}", resultMap.keySet());
+
+                JSONObject finalLocationsWithPositions = new JSONObject();
+
+                // Iterate over each entry in the resultMap
+                for (Map.Entry<?, ?> entry : resultMap.entrySet()) {
+                    Symbol symbol = (Symbol) entry.getKey();
+                    log.debug("Processing location for key: {}", symbol);
+
+                    Object positionResult = TRADE.getAvailableService(new TRADEServiceConstraints().name("getReference").inGroups("location").argTypes(Symbol.class)).call(Object.class, symbol);
+
+                    if (positionResult instanceof PoseReference customPositionResult) {
+                        Point3d meterPosition = customPositionResult.getPosition();
+                        Point2d pixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(meterPosition);
+
+                        JSONObject positionJson = new JSONObject();
+                        positionJson.put("x", pixelPosition.getX());
+                        positionJson.put("y", pixelPosition.getY());
+
+                        finalLocationsWithPositions.put(symbol.toString(), positionJson);
+                    } else {
+                        log.error("Expected PoseReference but got: {}", positionResult.getClass().getSimpleName());
+                    }
+                }
+
+                response.put("keyLocations", finalLocationsWithPositions);
+                response.put("success", true);
+                response.put("message", "Key locations fetched successfully.");
+            } else {
+                log.error("Expected a Map but received: {}", result.getClass().getSimpleName());
+                response.put("success", false);
+                response.put("error", "Failed to retrieve locations as a Map.");
+            }
+        } catch (Exception e) {
+            log.error("Error fetching key locations: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("error", "Error during service call: " + e.getMessage());
+        }
+
+        // Send the final JSON object back to the client
+        session.sendMessage(new TextMessage(response.toString()));
+    }
+
+    private void fetchRobotPose(WebSocketSession session) throws IOException {
+        log.info("Fetching robot pose.");
+        JSONObject response = new JSONObject();
+
+        try {
             mapComponent.updateRobotPose();
             Pose currPose = mapComponent.currRobotPose;
             Point3d position = currPose.getPosition();
             Quat4d orientation = currPose.getOrientation();
 
             Point2d robotPixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(position);
-            JSONObject response = new JSONObject()
-                    .put("position", new JSONObject().put("x", position.getX()).put("y", position.getY()).put("z", position.getZ()))
-                    .put("orientation", new JSONObject().put("x", orientation.getX()).put("y", orientation.getY()).put("z", orientation.getZ()).put("w", orientation.getW()))
-                    .put("currRobotPose", new JSONObject().put("x", robotPixelPosition.getX()).put("y", robotPixelPosition.getY()));
 
-            session.sendMessage(new TextMessage(response.toString()));
-            System.out.println("Sent robot pose data: " + response);
+            JSONObject positionJson = new JSONObject()
+                    .put("x", position.getX())
+                    .put("y", position.getY())
+                    .put("z", position.getZ());
+            JSONObject orientationJson = new JSONObject()
+                    .put("x", orientation.getX())
+                    .put("y", orientation.getY())
+                    .put("z", orientation.getZ())
+                    .put("w", orientation.getW());
+
+            response.put("position", positionJson);
+            response.put("orientation", orientationJson);
+
+            response.put("robotPixelPosition", new JSONObject()
+                    .put("x", robotPixelPosition.getX())
+                    .put("y", robotPixelPosition.getY()));
+
+            response.put("success", true);
+            response.put("message", "Robot pose fetched successfully.");
         } catch (Exception e) {
-            System.err.println("Error fetching robot pose: " + e.getMessage());
-            session.sendMessage(new TextMessage(new JSONObject().put("error", "Failed to fetch robot pose").toString()));
+            log.error("Error fetching robot pose: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("error", "Failed to fetch robot pose: " + e.getMessage());
         }
+
+        session.sendMessage(new TextMessage(response.toString()));
     }
 
 //    private void navigateToPoint(WebSocketSession session, double x, double y) throws Exception {

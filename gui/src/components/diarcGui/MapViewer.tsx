@@ -7,9 +7,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ConnectionIndicator from './ConnectionIndicator';
 
 type Location = {
-    x: number,
-    y: number
-}
+    x: number;
+    y: number;
+};
 
 type Position = {
     x: number,
@@ -24,12 +24,26 @@ type Orientation = {
     w: number
 };
 
-type Pose = {
-    position: Position,
-    orientation: Orientation
+type RobotPixelPosition = {
+    x: number,
+    y: number
 };
 
-export { Location, Position, Orientation, Pose };
+type Pose = {
+    position: Position,
+    orientation: Orientation,
+    robotPixelPosition: RobotPixelPosition
+};
+
+type KeyLocation = {
+    name: string;
+    x: number;
+    y: number;
+};
+
+type KeyLocations = { [key: string]: KeyLocation };
+
+export { Location, Position, Orientation, RobotPixelPosition, Pose, KeyLocation, KeyLocations };
 
 const position2String = (pose: Pose | null) => {
     if (pose === null)
@@ -58,7 +72,7 @@ const keyLocations2Elements = (keyLocations) => {
 const MapViewer = () => {
     // State //
     const [poseData, setPoseData] = useState<Pose | null>(null);
-    const [goToLocationMsg, setGoToLocationMsg] = useState<string>("");
+    const [responseMsg, setResponseMsg] = useState<string>("");
     const [keyLocations, setKeyLocations] = useState({});
     const [mapImageUrl, setMapImageUrl] = useState<string>("");
 
@@ -73,20 +87,26 @@ const MapViewer = () => {
     useEffect(() => {
         if (!lastMessage) return;
         const data = JSON.parse(lastMessage.data);
+
+        if (data.error) {
+            alert(data.error); // Alert the user about the error
+            console.error("Error received:", data.error);
+            return; // Stop processing further as there was an error
+        }
+
         if (data.mapImageUrl) {
             setMapImageUrl(data.mapImageUrl);
-        } else if (data.position && data.orientation) {
-            setPoseData({ position: data.position, orientation: data.orientation });
-        } else if (data.keyLocations) {
-            setKeyLocations(data.keyLocations);
-        } else if (data.success !== undefined) {
-            setGoToLocationMsg(`${data.success ? 'Success: ' : 'Failure: '} ${data.message}`);
-        } else {
-            console.warn("Received unhandled data type:", data);
         }
-    },
-        [lastMessage]
-    );
+        if (data.position && data.orientation) {
+            setPoseData({ position: data.position, orientation: data.orientation, robotPixelPosition: data.robotPixelPosition });
+        }
+        if (data.keyLocations) {
+            setKeyLocations(data.keyLocations);
+        }
+        if (data.message) {
+            setResponseMsg(`${data.success ? 'Success: ' : 'Failure: '} ${data.message}`);
+        }
+    }, [lastMessage]);
 
     const handleNavigateToPoint = () => {
         const x = prompt("Enter X coordinate:");
@@ -101,13 +121,6 @@ const MapViewer = () => {
             const newX = Number(x);
             const newY = Number(y);
 
-            // Set the pose data directly with new coordinates and default orientation
-            const newPoseData = {
-                position: { x: newX, y: newY, z: (poseData?.position.z || 0) }, // Maintain the Z value or default it to 0
-                orientation: { x: quatX, y: quatY, z: quatZ, w: quatW }
-            };
-
-            setPoseData(newPoseData);
             sendWebSocketRequest('navigateToPoint', {
                 x: newX,
                 y: newY,
@@ -121,6 +134,15 @@ const MapViewer = () => {
         }
     }
 
+    const handleGoToLocation = () => {
+        const symbol = prompt("Enter the symbol for the location (e.g., 'location_0:location'): ");
+        if (symbol && symbol.trim() !== '') {
+            sendWebSocketRequest('goToLocation', { locationSymbol: symbol.trim() });
+        } else {
+            alert("Please enter a valid Symbol for the location in the format of name:type");
+        }
+    };
+
     // Sends various other requests to the WebSocket
     const sendWebSocketRequest = useCallback((action: string, additionalData?: object) => {
         sendMessage(JSON.stringify({ action, ...additionalData }));
@@ -133,9 +155,19 @@ const MapViewer = () => {
         const context = canvas.getContext("2d")!;
 
         // Make it higher resolution
-        const pixelRatio = 1;
-        canvas.width *= pixelRatio;
-        canvas.height *= pixelRatio;
+//         const pixelRatio = 1;
+//         canvas.width *= pixelRatio;
+//         canvas.height *= pixelRatio;
+//         console.log(canvas.width)
+//         console.log(canvas.height)
+
+        const originalWidth = 300;
+        const originalHeight = 150;
+
+        // Make it higher resolution
+        const pixelRatio = 2;
+        canvas.width = originalWidth * pixelRatio;
+        canvas.height = originalHeight * pixelRatio;
 
         // Background
         context.strokeStyle = "#d1dbe3";
@@ -164,19 +196,31 @@ const MapViewer = () => {
 
                 // Draw the robot position if it exists
                 if (poseData) {
-                    const robotX = x + poseData.position.x * scale;
-                    const robotY = y + poseData.position.y * scale;
+                console.log(poseData)
+                    const robotX = x + poseData.robotPixelPosition.x * scale;
+                    const robotY = y + poseData.robotPixelPosition.y * scale;
                     context.fillStyle = 'red';
                     context.beginPath();
                     // Adjust the size of the red dot to be appropriately visible
-                    const radius = 10 * pixelRatio;
+                    const radius = 7;
                     context.arc(robotX, robotY, radius, 0, 2 * Math.PI);
                     context.fill();
                 }
+
+                // Draw green dots for key locations
+                Object.values(keyLocations).forEach(location => {
+                    const locX = x + location.x * scale;
+                    const locY = y + location.y * scale;
+                    context.fillStyle = 'green';
+                    context.beginPath();
+                    context.arc(locX, locY, 5, 0, 2 * Math.PI);
+                    context.fill();
+                });
+
             }
         }
     },
-        [mapImageUrl, poseData]
+        [mapImageUrl, poseData, keyLocations]
     );
 
     return (
@@ -193,6 +237,10 @@ const MapViewer = () => {
                     Navigate To Point
                 </Button>
                 <Button
+                    onClick={handleGoToLocation}>
+                    Go To Location
+                </Button>
+                <Button
                     onClick={() => sendWebSocketRequest('fetchRobotPose')}>
                     Show/Update Robot Pose
                 </Button>
@@ -204,7 +252,7 @@ const MapViewer = () => {
 
             <canvas ref={canvasRef} className='Map w-11/12' />
 
-            {goToLocationMsg && <div className="alert">{goToLocationMsg}</div>}
+            {responseMsg && <div className="alert">{responseMsg}</div>}
 
             <div className="pose-data">
                 <div>{position2String(poseData)}</div>
