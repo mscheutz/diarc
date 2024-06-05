@@ -108,6 +108,15 @@ const MapViewer = () => {
         }
     }, [lastMessage]);
 
+    const handleGoToLocation = () => {
+        const symbol = prompt("Enter the symbol for the location (e.g., location_0:location): ");
+        if (symbol && symbol.trim() !== '') {
+            sendWebSocketRequest('goToLocation', { locationSymbol: symbol.trim() });
+        } else {
+            alert("Please enter a valid Symbol for the location in the format of name:type");
+        }
+    };
+
     const handleNavigateToPoint = () => {
         const x = prompt("Enter X coordinate:");
         const y = prompt("Enter Y coordinate:");
@@ -134,19 +143,64 @@ const MapViewer = () => {
         }
     }
 
-    const handleGoToLocation = () => {
-        const symbol = prompt("Enter the symbol for the location (e.g., 'location_0:location'): ");
-        if (symbol && symbol.trim() !== '') {
-            sendWebSocketRequest('goToLocation', { locationSymbol: symbol.trim() });
-        } else {
-            alert("Please enter a valid Symbol for the location in the format of name:type");
-        }
-    };
-
     // Sends various other requests to the WebSocket
     const sendWebSocketRequest = useCallback((action: string, additionalData?: object) => {
         sendMessage(JSON.stringify({ action, ...additionalData }));
     }, [sendMessage]);
+
+    function mapCoordinates(x: number, y: number, P: number, Q: number, M: number, N: number): {x: number, y: number} {
+        // Calculate the ratio of x and y in the original coordinates
+        const xRatio = x / P;
+        const yRatio = y / Q;
+
+        // Apply the calculated ratio to the target resolution
+        const mappedX = xRatio * M;
+        const mappedY = yRatio * N;
+
+        return { x: mappedX, y: mappedY};
+    }
+
+    const handleCanvasClick = (event) => {
+        const rect = canvasRef.current.getBoundingClientRect();
+        console.log(rect)
+        const x = Math.round((event.clientX - rect.left) * 1000) / 1000;
+        const y = Math.round((event.clientY - rect.top) * 1000) / 1000;
+
+        console.log("x",x)
+        console.log("y",y)
+
+        // Example usage:
+        const P = 791.375;
+        const Q = 395.6875;
+        const M = 303;
+        const N = 367;
+
+        const mappedCoordinates = mapCoordinates(x, y, P, Q, M, N);
+
+        // Default values for orientation
+        const quatX = 0;
+        const quatY = 0;
+        const quatZ = 0;
+        const quatW = 1;
+
+        sendWebSocketRequest('navigateToPoint', {
+            x,
+            y,
+            quatX,
+            quatY,
+            quatZ,
+            quatW
+        });
+    }
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        canvas.addEventListener('click', handleCanvasClick);
+
+        return () => {
+            canvas.removeEventListener('click', handleCanvasClick);
+        }
+    }, []);
 
     // Map drawing
     const canvasRef = useRef(null);
@@ -189,16 +243,22 @@ const MapViewer = () => {
             image.onload = () => {
                 // Image scaling logic
                 const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
-                const x = (canvas.width / 2) - (image.width / 2) * scale;
-                const y = (canvas.height / 2) - (image.height / 2) * scale;
+                const xPad = (canvas.width / 2) - (image.width / 2) * scale;
+                const yPad = (canvas.height / 2) - (image.height / 2) * scale;
 
-                context.drawImage(image, x, y, image.width * scale, image.height * scale);
-
+                context.drawImage(image, xPad, yPad, image.width * scale, image.height * scale);
+                console.log("image.width",image.width)
+                console.log("image.height",image.height)
+                console.log("xPad",xPad)
+                console.log("yPad",yPad)
                 // Draw the robot position if it exists
                 if (poseData) {
-                console.log(poseData)
-                    const robotX = x + poseData.robotPixelPosition.x * scale;
-                    const robotY = y + poseData.robotPixelPosition.y * scale;
+                    const robotX = xPad + poseData.robotPixelPosition.x * scale;
+                    const robotY = yPad + poseData.robotPixelPosition.y * scale;
+                    console.log("poseData.robotPixelPosition.x",poseData.robotPixelPosition.x)
+                    console.log("poseData.robotPixelPosition.y",poseData.robotPixelPosition.y)
+                    console.log("robotX",robotX)
+                    console.log("robotY",robotY)
                     context.fillStyle = 'red';
                     context.beginPath();
                     // Adjust the size of the red dot to be appropriately visible
@@ -209,8 +269,8 @@ const MapViewer = () => {
 
                 // Draw green dots for key locations
                 Object.values(keyLocations).forEach(location => {
-                    const locX = x + location.x * scale;
-                    const locY = y + location.y * scale;
+                    const locX = xPad + location.x * scale;
+                    const locY = yPad + location.y * scale;
                     context.fillStyle = 'green';
                     context.beginPath();
                     context.arc(locX, locY, 5, 0, 2 * Math.PI);
@@ -250,7 +310,7 @@ const MapViewer = () => {
                 </Button>
             </div>
 
-            <canvas ref={canvasRef} className='Map w-11/12' />
+            <canvas ref={canvasRef} className='Map w-11/12' onClick={handleCanvasClick} />
 
             {responseMsg && <div className="alert">{responseMsg}</div>}
 

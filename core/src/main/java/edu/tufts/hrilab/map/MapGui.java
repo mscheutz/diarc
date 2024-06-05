@@ -105,6 +105,12 @@ public class MapGui extends TextWebSocketHandler {
                     .name("goToLocation")
                     .argTypes(Double.class, Double.class, Double.class, Double.class, Double.class, Double.class, Boolean.class));
 
+            Point2d pixelPosition = new Point2d(x, y);
+            Point3d meterPosition = mapComponent.currFloorMap.getPixelMap().toMeter(pixelPosition);
+
+            x = meterPosition.getX();
+            y = meterPosition.getY();
+
             Justification result = tsi.call(Justification.class, x, y, quatX, quatY, quatZ, quatW, true);
 
             // Check the result of the navigation attempt
@@ -183,6 +189,15 @@ public class MapGui extends TextWebSocketHandler {
                     if (positionResult instanceof PoseReference customPositionResult) {
                         Point3d meterPosition = customPositionResult.getPosition();
                         Point2d pixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(meterPosition);
+
+//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getFloor());
+//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getProperty());
+//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getID());
+//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getPosition());
+//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getCenterPixel());
+//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getOrientation());
+//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getReferenceId());
+//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).toString());
 
                         JSONObject positionJson = new JSONObject();
                         positionJson.put("x", pixelPosition.getX());
