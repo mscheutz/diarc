@@ -1,46 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-
 import { Button } from "../Button";
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { faBan, faCheck, faQuestion, faSync } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ConnectionIndicator from './ConnectionIndicator';
 
-type Location = {
-    x: number;
-    y: number;
-};
-
-type Position = {
-    x: number,
-    y: number,
-    z: number
-};
-
-type Orientation = {
-    x: number,
-    y: number,
-    z: number,
-    w: number
-};
-
-type RobotPixelPosition = {
-    x: number,
-    y: number
-};
-
-type Pose = {
-    position: Position,
-    orientation: Orientation,
-    robotPixelPosition: RobotPixelPosition
-};
-
-type KeyLocation = {
-    name: string;
-    x: number;
-    y: number;
-};
-
+type Location = { x: number, y: number };
+type Position = { x: number, y: number, z: number };
+type Orientation = { x: number, y: number, z: number, w: number };
+type RobotPixelPosition = { x: number, y: number };
+type Pose = { position: Position, orientation: Orientation, robotPixelPosition: RobotPixelPosition };
+type KeyLocation = { name: string, x: number, y: number };
 type KeyLocations = { [key: string]: KeyLocation };
 
 export { Location, Position, Orientation, RobotPixelPosition, Pose, KeyLocation, KeyLocations };
@@ -66,8 +36,39 @@ const keyLocations2Elements = (keyLocations) => {
         <p key={key}>
             {keyLocations[key].name}: X={keyLocations[key].x}, Y={keyLocations[key].y}
         </p>
-    ))
+    ));
 };
+
+function computeClickCoordinates(rect, xPad, yPad, canvas, image, scale) {
+    const clickX_leftmost = xPad / canvas.width * rect.width;
+    const clickX_rightmost = (xPad + image.width * scale) / canvas.width * rect.width;
+    const clickY_top = yPad / canvas.height * rect.height;
+    const clickY_bottom = (yPad + image.height * scale) / canvas.height * rect.height;
+
+    return {
+        clickX_leftmost,
+        clickX_rightmost,
+        clickY_top,
+        clickY_bottom
+    };
+}
+
+function mapCoordinates(x, y, rect, xPad, yPad, canvas, image, scale) {
+    const coords = computeClickCoordinates(rect, xPad, yPad, canvas, image, scale);
+
+    // Calculate the percentage of x and y within their ranges
+    const xPercent = (x - coords.clickX_leftmost) / (coords.clickX_rightmost - coords.clickX_leftmost);
+    const yPercent = (y - coords.clickY_top) / (coords.clickY_bottom - coords.clickY_top);
+
+    // Map the percentages to the image's coordinate system
+    const imgX = xPercent * image.width;
+    const imgY = yPercent * image.height;
+
+    return {
+        imgX,
+        imgY
+    };
+}
 
 const MapViewer = () => {
     // State //
@@ -75,6 +76,13 @@ const MapViewer = () => {
     const [responseMsg, setResponseMsg] = useState<string>("");
     const [keyLocations, setKeyLocations] = useState({});
     const [mapImageUrl, setMapImageUrl] = useState<string>("");
+
+    // State for drawing calculations
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const xPadRef = useRef<number>(0);
+    const yPadRef = useRef<number>(0);
+    const scaleRef = useRef<number>(1);
+    const imageRef = useRef<HTMLImageElement | null>(null);
 
     // Set up Websocket
     const { sendMessage, lastMessage, readyState } =
@@ -148,96 +156,59 @@ const MapViewer = () => {
         sendMessage(JSON.stringify({ action, ...additionalData }));
     }, [sendMessage]);
 
-    function mapCoordinates(x: number, y: number, P: number, Q: number, M: number, N: number): {x: number, y: number} {
-        // Calculate the ratio of x and y in the original coordinates
-        const xRatio = x / P;
-        const yRatio = y / Q;
+    const handleCanvasClick = useCallback((event: React.MouseEvent) => {
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (!rect) return;
 
-        // Apply the calculated ratio to the target resolution
-        const mappedX = xRatio * M;
-        const mappedY = yRatio * N;
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
 
-        return { x: mappedX, y: mappedY};
-    }
+        // Ensure all references are valid
+        if (imageRef.current && xPadRef.current !== undefined && yPadRef.current !== undefined && scaleRef.current !== undefined) {
+            const { current: image } = imageRef;
+            const { current: xPad } = xPadRef;
+            const { current: yPad } = yPadRef;
+            const { current: scale } = scaleRef;
 
-    const handleCanvasClick = (event) => {
-        const rect = canvasRef.current.getBoundingClientRect();
-        console.log(rect)
-        const x = Math.round((event.clientX - rect.left) * 1000) / 1000;
-        const y = Math.round((event.clientY - rect.top) * 1000) / 1000;
+            const imageCoordinates = mapCoordinates(clickX, clickY, rect, xPad, yPad, canvasRef.current, image, scale);
 
-        console.log("x",x)
-        console.log("y",y)
+            console.log(`Image Coordinates: X=${imageCoordinates.imgX}, Y=${imageCoordinates.imgY}`);
 
-        // Example usage:
-        const P = 791.375;
-        const Q = 395.6875;
-        const M = 303;
-        const N = 367;
+            sendWebSocketRequest('navigateToPoint', {
+                x: imageCoordinates.imgX,
+                y: imageCoordinates.imgY,
+                quatX: 0,   // Assume defaults for orientation
+                quatY: 0,
+                quatZ: 0,
+                quatW: 1
+            });
 
-        const mappedCoordinates = mapCoordinates(x, y, P, Q, M, N);
-
-        // Default values for orientation
-        const quatX = 0;
-        const quatY = 0;
-        const quatZ = 0;
-        const quatW = 1;
-
-        sendWebSocketRequest('navigateToPoint', {
-            x,
-            y,
-            quatX,
-            quatY,
-            quatZ,
-            quatW
-        });
-    }
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        canvas.addEventListener('click', handleCanvasClick);
-
-        return () => {
-            canvas.removeEventListener('click', handleCanvasClick);
+            console.log(`Navigating to Image Coordinates: X=${imageCoordinates.imgX}, Y=${imageCoordinates.imgY}`);
         }
-    }, []);
+    }, [sendWebSocketRequest]);
 
-    // Map drawing
-    const canvasRef = useRef(null);
+    // Drawing on the canvas
     useEffect(() => {
-        const canvas: HTMLCanvasElement = canvasRef.current!;
+        const canvas = canvasRef.current!;
         const context = canvas.getContext("2d")!;
 
-        // Make it higher resolution
-//         const pixelRatio = 1;
-//         canvas.width *= pixelRatio;
-//         canvas.height *= pixelRatio;
-//         console.log(canvas.width)
-//         console.log(canvas.height)
+        canvas.width = 1920;
+        canvas.height = 1080;
 
-        const originalWidth = 300;
-        const originalHeight = 150;
-
-        // Make it higher resolution
-        const pixelRatio = 2;
-        canvas.width = originalWidth * pixelRatio;
-        canvas.height = originalHeight * pixelRatio;
+        // Clear existing context
+        context.clearRect(0, 0, canvas.width, canvas.height);
 
         // Background
         context.strokeStyle = "#d1dbe3";
         context.strokeRect(1, 1, canvas.width - 1, canvas.height - 1);
 
-        // Placeholder
-        if (mapImageUrl === "") {
+        if (!mapImageUrl) {
             context.fillStyle = "#000000";
             context.textBaseline = "middle";
             context.textAlign = "center";
             context.font = "40px Ubuntu";
-            context.fillText("Map not loaded",
-                canvas.width / 2, canvas.height / 2);
-        }
-        // Map
-        else {
+            context.fillText("Map not loaded", canvas.width / 2, canvas.height / 2);
+        } else {
             const image = new Image();
             image.src = mapImageUrl;
             image.onload = () => {
@@ -247,23 +218,22 @@ const MapViewer = () => {
                 const yPad = (canvas.height / 2) - (image.height / 2) * scale;
 
                 context.drawImage(image, xPad, yPad, image.width * scale, image.height * scale);
-                console.log("image.width",image.width)
-                console.log("image.height",image.height)
-                console.log("xPad",xPad)
-                console.log("yPad",yPad)
+
+                // Update refs
+                xPadRef.current = xPad;
+                yPadRef.current = yPad;
+                scaleRef.current = scale;
+                imageRef.current = image;
+
                 // Draw the robot position if it exists
                 if (poseData) {
                     const robotX = xPad + poseData.robotPixelPosition.x * scale;
                     const robotY = yPad + poseData.robotPixelPosition.y * scale;
-                    console.log("poseData.robotPixelPosition.x",poseData.robotPixelPosition.x)
-                    console.log("poseData.robotPixelPosition.y",poseData.robotPixelPosition.y)
-                    console.log("robotX",robotX)
-                    console.log("robotY",robotY)
                     context.fillStyle = 'red';
                     context.beginPath();
                     // Adjust the size of the red dot to be appropriately visible
                     const radius = 7;
-                    context.arc(robotX, robotY, radius, 0, 2 * Math.PI);
+                    context.arc(robotX, robotY, radius * scale, 0, 2 * Math.PI);
                     context.fill();
                 }
 
@@ -273,7 +243,7 @@ const MapViewer = () => {
                     const locY = yPad + location.y * scale;
                     context.fillStyle = 'green';
                     context.beginPath();
-                    context.arc(locX, locY, 5, 0, 2 * Math.PI);
+                    context.arc(locX, locY, 5 * scale, 0, 2 * Math.PI);
                     context.fill();
                 });
 
