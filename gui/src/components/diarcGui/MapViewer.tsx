@@ -5,15 +5,14 @@ import { faBan, faCheck, faQuestion, faSync } from '@fortawesome/free-solid-svg-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ConnectionIndicator from './ConnectionIndicator';
 
-type Location = { x: number, y: number };
 type Position = { x: number, y: number, z: number };
 type Orientation = { x: number, y: number, z: number, w: number };
 type RobotPixelPosition = { x: number, y: number };
 type Pose = { position: Position, orientation: Orientation, robotPixelPosition: RobotPixelPosition };
-type KeyLocation = { name: string, x: number, y: number };
+type KeyLocation = { x: number, y: number };
 type KeyLocations = { [key: string]: KeyLocation };
 
-export { Location, Position, Orientation, RobotPixelPosition, Pose, KeyLocation, KeyLocations };
+export { Position, Orientation, RobotPixelPosition, Pose, KeyLocation, KeyLocations };
 
 const position2String = (pose: Pose | null) => {
     if (pose === null)
@@ -31,10 +30,10 @@ const orientation2String = (pose: Pose | null) => {
         `Z: ${pose.orientation.z}, W: ${pose.orientation.w}`
 };
 
-const keyLocations2Elements = (keyLocations) => {
+const keyLocations2Elements = (keyLocations: KeyLocations): JSX.Element[] => {
     return Object.keys(keyLocations).map(key => (
         <p key={key}>
-            {keyLocations[key].name}: X={keyLocations[key].x}, Y={keyLocations[key].y}
+            {key}: X={keyLocations[key].x}, Y={keyLocations[key].y}
         </p>
     ));
 };
@@ -74,7 +73,7 @@ const MapViewer = () => {
     // State //
     const [poseData, setPoseData] = useState<Pose | null>(null);
     const [responseMsg, setResponseMsg] = useState<string>("");
-    const [keyLocations, setKeyLocations] = useState({});
+    const [keyLocations, setKeyLocations] = useState<KeyLocations>({});
     const [mapImageUrl, setMapImageUrl] = useState<string>("");
 
     // State for drawing calculations
@@ -87,9 +86,6 @@ const MapViewer = () => {
     // Set up Websocket
     const { sendMessage, lastMessage, readyState } =
         useWebSocket("ws://localhost:8080/map");
-
-    // const [wsMapGui, setWsMapGui] = useState<WebSocket | null>(null);
-    // const [isConnecting, setIsConnecting] = useState(false); // Track if a connection attempt is underway
 
     // Handle received messages
     useEffect(() => {
@@ -110,6 +106,7 @@ const MapViewer = () => {
         }
         if (data.keyLocations) {
             setKeyLocations(data.keyLocations);
+            console.log(data.keyLocations)
         }
         if (data.message) {
             setResponseMsg(`${data.success ? 'Success: ' : 'Failure: '} ${data.message}`);
