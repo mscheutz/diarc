@@ -70,19 +70,9 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             } else {
                 throw new IllegalStateException("Could not find action name");
             }
-            // Of action name
-            int start = m.start();
-            int end = m.end();
 
             Pattern arguments = Pattern.compile("(\\?\\w*)");
-            m = arguments.matcher(line.substring(end));
-            while(m.find()) {
-                sb.append(m.group())
-                        .append(", ");
-            }
-
-            // Returns are the same as arguments
-            m = arguments.matcher(line.substring(0, start));
+            m = arguments.matcher(line.substring(m.end()));
             while(m.find()) {
                 sb.append(m.group())
                         .append(", ");
@@ -252,7 +242,7 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             for(ActionDBEntry e : Database.getActionDB().getAllActions()) {
                 ADBEWrapper w = new ADBEWrapper(e);
                 actionSet.add(w);
-                actions.put(w.toString());
+                actions.put(w.getActionSignature());
             }
             message.put("actions", actions);
 

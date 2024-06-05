@@ -47,16 +47,20 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 
     // Websocket to check for the endpoints
     const [chatStatus, setChatStatus] = useState<string>("wait")
-    const [goalStatus, setGoalStatus] = useState<string>("wait")
+    const [viewerStatus, setViewerStatus] = useState<string>("wait")
+    const [managerStatus, setManagerStatus] = useState<string>("wait")
     const [mapStatus, setMapStatus] = useState<string>("wait")
     const chatSocket = useWebSocket("ws://localhost:8080/chat");
-    const goalSocket = useWebSocket("ws://localhost:8080/goalViewer");
+    const viewerSocket = useWebSocket("ws://localhost:8080/goalViewer");
+    const managerSocket = useWebSocket("ws://localhost:8080/goalManager");
     const mapSocket = useWebSocket("ws://localhost:8080/map");
 
     const check = () => {
         setChatStatus(chatSocket.readyState === ReadyState.OPEN ?
             "on" : "off");
-        setGoalStatus(goalSocket.readyState === ReadyState.OPEN ?
+        setViewerStatus(viewerSocket.readyState === ReadyState.OPEN ?
+            "on" : "off");
+        setManagerStatus(managerSocket.readyState === ReadyState.OPEN ?
             "on" : "off");
         setMapStatus(mapSocket.readyState === ReadyState.OPEN ?
             "on" : "off");
@@ -72,29 +76,30 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
         <div className="w-5/6 h-[50rem]">
             <Tabs forceRenderTabPanel>
                 <TabList>
-                    {chatStatus === "wait" || goalStatus === "wait"
+                    {chatStatus === "wait" || viewerStatus === "wait"
                         || mapStatus === "wait" ?
                         <Tab>Connecting...</Tab>
                         : null}
-                    {chatStatus === "off" && goalStatus === "off"
+                    {chatStatus === "off" && viewerStatus === "off"
                         && mapStatus === "off" ?
                         <Tab>Connection Failed</Tab>
                         : null}
                     {chatStatus === "on" ?
                         <Tab>Robot Chat</Tab>
                         : null}
-                    {goalStatus === "on" ?
+                    {viewerStatus === "on" ?
                         <Tab>Goal Viewer</Tab>
                         : null}
-                    {/* TODO */}
-                    {<Tab>Goal Manager</Tab>}
+                    {managerStatus === "on" ?
+                        <Tab>Goal Manager</Tab>
+                        : null}
                     {mapStatus === "on" ?
                         <Tab>Map Viewer</Tab>
                         : null}
                 </TabList>
 
                 {/* Connecting panel */}
-                {chatStatus === "wait" || goalStatus === "wait"
+                {chatStatus === "wait" || viewerStatus === "wait"
                     || mapStatus === "wait" ?
                     <TabPanel className="grid grid-column h-full m-48">
                         <div className="flex flex-row justify-center">
@@ -109,7 +114,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                     </TabPanel>
                     : null}
                 {/* Failed panel */}
-                {chatStatus === "off" && goalStatus === "off"
+                {chatStatus === "off" && viewerStatus === "off"
                     && mapStatus === "off" ?
                     <TabPanel className="grid grid-column h-full m-48">
                         <div className="flex flex-row justify-center">
@@ -140,15 +145,16 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                         />
                     </TabPanel>
                     : null}
-                {goalStatus === "on" ?
+                {viewerStatus === "on" ?
                     <TabPanel>
                         <GoalViewer />
                     </TabPanel>
                     : null}
-                {/* TODO */}
-                {<TabPanel>
-                    <GoalManager />
-                </TabPanel>}
+                {managerStatus === "on" ?
+                    <TabPanel>
+                        <GoalManager />
+                    </TabPanel>
+                    : null}
                 {mapStatus === "on" ?
                     <TabPanel>
                         <MapViewer></MapViewer>
@@ -160,3 +166,24 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 };
 
 export default TabbedComponentViewer;
+
+/*
+TODO
+* make sure the goal manager gui is loaded
+* consider names for the goal viewer/manager components
+o goal viewer
+    o be able to ___ current goals
+        o pause
+        o resume
+        o cancel
+o goal manager
+    * don't need editor (for now)
+    * remove return values from actions
+    o tabbed panel
+        o submit actions
+            o should create a form from action parameters
+        o submit goals
+            * agent field
+            * goal field
+
+*/
