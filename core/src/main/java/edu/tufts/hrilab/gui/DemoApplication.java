@@ -136,42 +136,17 @@ public class DemoApplication extends SpringBootServletInitializer {
                   argClasses[index] = args[index].getClass();
                   index++;
               }
-//              depreciating
-//              case ARRAY:
-//                  // Check if the service expects a single List argument
-//                  // && rawArgs != null
-//                  if (argTypes.length == 1 && argTypes[0].equals("java.util.List") && rawArgs.isArray()) {
-//                      // Treat the entire array as a single List argument
-//                      String listValue = rawArgs.toString(); // Convert the raw JSON array to String
-//                      Object listArg = convertToType(listValue, "java.util.List");
-//                      args = new Object[]{listArg};
-//                      argClasses = new Class<?>[]{List.class};
-//                  } else {
-//                      // Treat each item in the JSON array as separate arguments
-//                      args = new Object[argTypes.length];
-//                      argClasses = new Class<?>[argTypes.length];
-//                      for (int i = 0; i < argTypes.length; i++) {
-//                          if (!rawArgs.has(i)) {
-//                              return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing argument at index " + i + " for service '" + baseServiceName + "'.");
-//                          }
-//                          String typeName = argTypes[i];
-//                          String value;
-//                          if ("javax.vecmath.Matrix4d".equals(typeName) && rawArgs.has(i) && rawArgs.get(i).isArray()) {
-//                              value = rawArgs.get(i).toString(); // Directly convert the JSON array to string
-//                          } else {
-//                              value = rawArgs.has(i) ? rawArgs.get(i).asText() : null; // Use JsonNode API to get value
-//                          }
-//                          args[i] = convertToType(value, typeName);
-//                          assert args[i] != null;
-//                          argClasses[i] = args[i].getClass();
-//                      }
-//                  }
-//                  break;
           } else {
               return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid JSON input format.");
           }
 
+          // Initialize TRADEServiceConstraints with group information if provided
           TRADEServiceConstraints constraints = new TRADEServiceConstraints().name(baseServiceName).argTypes(argClasses);
+          if (rawArgs.has("group")) {
+              String group = rawArgs.get("group").asText();
+              constraints.inGroups(group);
+          }
+
           Object result = TRADE.getAvailableService(constraints).call(Object.class, args);
 
           // Convert the result to a JSON string to include in the response

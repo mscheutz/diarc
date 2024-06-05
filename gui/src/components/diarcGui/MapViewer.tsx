@@ -9,7 +9,7 @@ type Position = { x: number, y: number, z: number };
 type Orientation = { x: number, y: number, z: number, w: number };
 type RobotPixelPosition = { x: number, y: number };
 type Pose = { position: Position, orientation: Orientation, robotPixelPosition: RobotPixelPosition };
-type KeyLocation = { x: number, y: number };
+type KeyLocation = { x: number, y: number, description: string };
 type KeyLocations = { [key: string]: KeyLocation };
 
 export { Position, Orientation, RobotPixelPosition, Pose, KeyLocation, KeyLocations };
@@ -33,7 +33,7 @@ const orientation2String = (pose: Pose | null) => {
 const keyLocations2Elements = (keyLocations: KeyLocations): JSX.Element[] => {
     return Object.keys(keyLocations).map(key => (
         <p key={key}>
-            {key}: X={keyLocations[key].x}, Y={keyLocations[key].y}
+            <strong>{key}</strong>&nbsp;&nbsp;&nbsp;&nbsp;{keyLocations[key].description}
         </p>
     ));
 };

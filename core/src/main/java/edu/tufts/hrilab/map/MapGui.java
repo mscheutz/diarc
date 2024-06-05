@@ -21,6 +21,7 @@ import javax.vecmath.*;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 public class MapGui extends TextWebSocketHandler {
@@ -167,65 +168,106 @@ public class MapGui extends TextWebSocketHandler {
     }
 
     private void fetchKeyLocations(WebSocketSession session) throws IOException {
-        log.info("Fetching key locations from the TRADE service.");
+        log.info("Fetching key locations from FloorMap.");
+
         JSONObject response = new JSONObject();
+        JSONObject finalLocationsWithPositions = new JSONObject();
 
         try {
-            Object result = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActivatedEntities").inGroups("location")).call(Object.class);
+            Set<MapObject> objects = mapComponent.currFloorMap.getAllObjects();
+            if (objects != null) {
+                log.info("Fetched {} objects from the current floor map.", objects.size());
 
-            // Check if the result is a Map before proceeding
-            if (result instanceof Map<?, ?> resultMap) {
-                log.info("Result is a Map with keys: {}", resultMap.keySet());
+                for (MapObject object : objects) {
+                    Point2d pixelPosition = object.getCenterPixel();
+                    Symbol symbol = object.getReferenceId();
 
-                JSONObject finalLocationsWithPositions = new JSONObject();
+                    // Get the full description and modify it
+                    String description = object.toString();
+                    Point3d position = object.getPosition();
+                    // Regex to find and replace the coordinate part of the description
+                    description = description.replaceAll("\\(\\d+\\.\\d+, \\d+\\.\\d+\\)$", "(" + position.getX() + ", " + position.getY() + ")");
 
-                // Iterate over each entry in the resultMap
-                for (Map.Entry<?, ?> entry : resultMap.entrySet()) {
-                    Symbol symbol = (Symbol) entry.getKey();
-                    log.debug("Processing location for key: {}", symbol);
+                    JSONObject positionJson = new JSONObject();
+                    positionJson.put("x", pixelPosition.getX());
+                    positionJson.put("y", pixelPosition.getY());
+                    positionJson.put("description", description);
 
-                    Object positionResult = TRADE.getAvailableService(new TRADEServiceConstraints().name("getReference").inGroups("location").argTypes(Symbol.class)).call(Object.class, symbol);
-
-                    if (positionResult instanceof PoseReference customPositionResult) {
-                        Point3d meterPosition = customPositionResult.getPosition();
-                        Point2d pixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(meterPosition);
-
-//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getFloor());
-//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getProperty());
-//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getID());
-//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getPosition());
-//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getCenterPixel());
-//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getOrientation());
-//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).getReferenceId());
-//                        System.out.println(mapComponent.currFloorMap.getMapObjectAt(meterPosition).toString());
-
-                        JSONObject positionJson = new JSONObject();
-                        positionJson.put("x", pixelPosition.getX());
-                        positionJson.put("y", pixelPosition.getY());
-
-                        finalLocationsWithPositions.put(symbol.toString(), positionJson);
-                    } else {
-                        log.error("Expected PoseReference but got: {}", positionResult.getClass().getSimpleName());
-                    }
+                    finalLocationsWithPositions.put(symbol.toString(), positionJson);
                 }
 
                 response.put("keyLocations", finalLocationsWithPositions);
                 response.put("success", true);
                 response.put("message", "Key locations fetched successfully.");
             } else {
-                log.error("Expected a Map but received: {}", result.getClass().getSimpleName());
+                log.error("No objects found in the current floor map.");
                 response.put("success", false);
-                response.put("error", "Failed to retrieve locations as a Map.");
+                response.put("error", "No objects available in the current floor map.");
             }
         } catch (Exception e) {
             log.error("Error fetching key locations: {}", e.getMessage(), e);
             response.put("success", false);
-            response.put("error", "Error during service call: " + e.getMessage());
+            response.put("error", "Error during map data retrieval: " + e.getMessage());
         }
 
         // Send the final JSON object back to the client
         session.sendMessage(new TextMessage(response.toString()));
     }
+
+
+    // depreciated. Fetching key locations from the TRADE service.
+    // replaced with MapComponent native methods getAllObjects from FloorMap.
+//    private void fetchKeyLocations(WebSocketSession session) throws IOException {
+//        log.info("Fetching key locations from the TRADE service.");
+//        JSONObject response = new JSONObject();
+//
+//        try {
+//            Object result = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActivatedEntities").inGroups("location")).call(Object.class);
+//
+//            // Check if the result is a Map before proceeding
+//            if (result instanceof Map<?, ?> resultMap) {
+//                log.info("Result is a Map with keys: {}", resultMap.keySet());
+//
+//                JSONObject finalLocationsWithPositions = new JSONObject();
+//
+//                // Iterate over each entry in the resultMap
+//                for (Map.Entry<?, ?> entry : resultMap.entrySet()) {
+//                    Symbol symbol = (Symbol) entry.getKey();
+//                    log.debug("Processing location for key: {}", symbol);
+//
+//                    Object positionResult = TRADE.getAvailableService(new TRADEServiceConstraints().name("getReference").inGroups("location").argTypes(Symbol.class)).call(Object.class, symbol);
+//
+//                    if (positionResult instanceof PoseReference customPositionResult) {
+//                        Point3d meterPosition = customPositionResult.getPosition();
+//                        Point2d pixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(meterPosition);
+//
+//                        JSONObject positionJson = new JSONObject();
+//                        positionJson.put("x", pixelPosition.getX());
+//                        positionJson.put("y", pixelPosition.getY());
+//
+//                        finalLocationsWithPositions.put(symbol.toString(), positionJson);
+//                    } else {
+//                        log.error("Expected PoseReference but got: {}", positionResult.getClass().getSimpleName());
+//                    }
+//                }
+//
+//                response.put("keyLocations", finalLocationsWithPositions);
+//                response.put("success", true);
+//                response.put("message", "Key locations fetched successfully.");
+//            } else {
+//                log.error("Expected a Map but received: {}", result.getClass().getSimpleName());
+//                response.put("success", false);
+//                response.put("error", "Failed to retrieve locations as a Map.");
+//            }
+//        } catch (Exception e) {
+//            log.error("Error fetching key locations: {}", e.getMessage(), e);
+//            response.put("success", false);
+//            response.put("error", "Error during service call: " + e.getMessage());
+//        }
+//
+//        // Send the final JSON object back to the client
+//        session.sendMessage(new TextMessage(response.toString()));
+//    }
 
     private void fetchRobotPose(WebSocketSession session) throws IOException {
         log.info("Fetching robot pose.");
