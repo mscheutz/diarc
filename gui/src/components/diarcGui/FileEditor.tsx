@@ -14,6 +14,7 @@ const FileEditor = ({ fileContents }) => {
         <Editor
             defaultLanguage="java"
             value={fileContents}
+            options={{ readOnly: true }}
         />
     );
 };
