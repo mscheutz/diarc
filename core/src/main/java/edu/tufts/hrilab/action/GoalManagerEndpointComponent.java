@@ -14,6 +14,8 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import javax.annotation.Nonnull;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,10 +46,13 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
     public class GoalManagerHandler extends TextWebSocketHandler {
         private WebSocketSession session;
 
+        private final HashMap<Integer, File> aslFileMap;
+
         /**
          * Constructs this GoalEndpoint.
          */
         public GoalManagerHandler() {
+            aslFileMap = new HashMap<>();
         }
 
         /**
@@ -63,7 +68,6 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
                 sb.append(m.group(1))
                         .append("(?actor, ");
             } else {
-                System.out.println(line);
                 throw new IllegalStateException("Could not find action name");
             }
             // Of action name
@@ -173,6 +177,7 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
 
             int counter = 0;
             JSONObject tree = new JSONObject();
+            aslFileMap.put(counter, root);
             tree.put("name", root.getName())
                     .put("id", "" + counter++);
 
@@ -188,6 +193,7 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
                     object.put("children", new JSONArray());
                     // Shouldn't be null, if it's a directory...
                     for (File childFile : Objects.requireNonNull(file.listFiles())) {
+                        aslFileMap.put(counter, childFile);
                         JSONObject childObject = new JSONObject()
                                 .put("name", childFile.getName())
                                 .put("id", "" + counter++);
@@ -197,7 +203,6 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
                 }
             }
 
-            System.out.println(tree);
             return tree;
         }
 
@@ -217,7 +222,16 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
                                          @Nonnull TextMessage message) throws Exception {
             super.handleTextMessage(session, message);
             this.session = session;
-            // Don't need to send anything
+
+            String request = (String) new JSONObject(message.getPayload())
+                                                .get("fileId");
+            int requestId = Integer.parseInt(request);
+            File file = aslFileMap.get(requestId);
+            String response = Files.readString(Path.of(file.getPath()));
+
+            JSONObject responseObject = new JSONObject();
+            responseObject.put("contents", response);
+            session.sendMessage(new TextMessage(responseObject.toString()));
         }
 
         /**

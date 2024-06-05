@@ -7,27 +7,50 @@
 
 import React from "react";
 
-import { Tree } from "react-arborist"
+import { faFolderClosed, faFolderOpen, faFile } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-const FileBrowser = ({ fileTree, width, height }) => {
+import TreeView, { flattenTree } from "react-accessible-treeview";
+
+import "./FileBrowser.css";
+
+const FileBrowser = ({ fileTree, sendMessage }) => {
+    const getFileOnSelect = (e) => {
+        const element = e.element;
+        const name: string = element.name;
+        if (name.length < 5 || name.slice(-4) !== ".asl")
+            return;
+
+        sendMessage(JSON.stringify({ fileId: element.id }));
+    }
 
     return (
-        <Tree
-            data={[fileTree]}
-            width={width}
-            height={height}
-        >
-            {Node}
-        </Tree>
-    );
-};
-
-const Node = ({ node, style }) => {
-    return (
-        <div style={style}>
-            {node.isLeaf ? "📄" : "📁"}
-            {node.data.name}
-        </div>
+        <TreeView
+            data={flattenTree(fileTree)}
+            className="basic"
+            onNodeSelect={getFileOnSelect}
+            nodeRenderer={
+                ({ element, getNodeProps, level, isBranch, isExpanded }) => {
+                    return (
+                        <div
+                            {...getNodeProps()}
+                            style={{ paddingLeft: 20 * level - 15 }}
+                        >
+                            {isBranch ?
+                                isExpanded ?
+                                    <FontAwesomeIcon icon={faFolderOpen}
+                                        color="#50b3ff" />
+                                    : <FontAwesomeIcon icon={faFolderClosed}
+                                        color="#50b3ff" />
+                                : <FontAwesomeIcon icon={faFile}
+                                    color="#e8be00" />
+                            }
+                            {" " + element.name}
+                        </div>
+                    )
+                }
+            }
+        />
     );
 }
 

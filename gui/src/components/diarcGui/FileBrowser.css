@@ -1,0 +1,16 @@
+/* Custom styling for react-accessible-treeview classes */
+
+.tree-node {
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tree-node:hover {
+    background: #C6E3FA;
+}
+
+.tree .tree-node--selected {
+    background: #3e8ce6;
+}

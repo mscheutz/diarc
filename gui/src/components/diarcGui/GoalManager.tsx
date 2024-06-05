@@ -13,10 +13,11 @@ import useWebSocket from "react-use-websocket";
 import "allotment/dist/style.css"
 import { Allotment } from "allotment";
 
-import useResizeObserver from "use-resize-observer";
+// import useResizeObserver from "use-resize-observer";
 
 import ActionBrowser from "./ActionBrowser";
 import FileBrowser from "./FileBrowser";
+import FileEditor from "./FileEditor";
 
 const GoalManager = () => {
     const { sendMessage, lastMessage, readyState } =
@@ -25,8 +26,11 @@ const GoalManager = () => {
     const [actionList, setActionList] = useState<string[]>([]);
     const [fileTree, setFileTree] = useState<object>({
         id: "0",
-        name: "asl"
+        name: "asl",
+        children: []
     });
+    const [fileContents, setFileContents] =
+        useState<string>("Selected file contents will appear here.");
 
     useEffect(() => {
         if (!lastMessage) return;
@@ -35,15 +39,16 @@ const GoalManager = () => {
         if (data.actions) {
             setActionList(data.actions.sort());
         }
-
         if (data.files) {
             setFileTree(data.files);
-            console.debug(data.files);
+        }
+        if (data.contents) {
+            setFileContents(data.contents);
         }
     },
         [lastMessage]);
 
-    const { ref, width, height } = useResizeObserver();
+    // const { ref, width, height } = useResizeObserver();
 
     return (
         <div className="map-container h-[40rem] w-full flex flex-col gap-3 outline
@@ -55,25 +60,16 @@ const GoalManager = () => {
                     <Allotment vertical>
                         {/* Action database */}
                         <Allotment.Pane preferredSize={"60%"}>
-                            <div className="w-full h-full overflow-auto">
-                                <div className="p-2 text-lg outline outline-1
-                                            outline-[#d1dbe3] bg-slate-100">
-                                    Action Browser
-                                </div>
-                                <ActionBrowser actionList={actionList} />
-                            </div>
+                            <ActionBrowser actionList={actionList} />
                         </Allotment.Pane>
 
                         {/* File browser */}
                         <Allotment.Pane>
-                            <div className="w-full h-full overflow-y-auto"
-                                ref={ref}>
-                                <div className="p-2 text-lg outline outline-1
-                                            outline-[#d1dbe3] bg-slate-100">
-                                    File Browser
-                                </div>
-                                <FileBrowser fileTree={fileTree} width={width}
-                                    height={height} />
+                            <div className="w-full h-full overflow-y-auto">
+                                <FileBrowser
+                                    fileTree={fileTree}
+                                    sendMessage={sendMessage}
+                                />
                             </div>
                         </Allotment.Pane>
                     </Allotment>
@@ -81,12 +77,14 @@ const GoalManager = () => {
 
                 {/* Right pane: editor view */}
                 <Allotment.Pane>
-                    <div>hi2</div>
+                    <FileEditor
+                        fileContents={fileContents}
+                    />
                 </Allotment.Pane>
             </Allotment>
 
             {/* Everything else */}
-            <div className="outline outline-1">Bottom stuff</div>
+            <div className="outline outline-1 w-full">Bottom stuff</div>
         </div>
     );
 };

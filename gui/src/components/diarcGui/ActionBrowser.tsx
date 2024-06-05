@@ -9,10 +9,10 @@ import React from "react";
 
 const ActionBrowser = ({ actionList }) => {
     return (
-        <div className="w-full h-full">
+        <div className="w-full h-full overflow-auto">
             {actionList.map((item: string, index) => (
                 <p key={index} className="w-full hover:bg-[#C6E3FA] px-1
-                hover:cursor-pointer text-sm leading-4 py-0.5">
+                hover:cursor-pointer text-sm leading-4 py-0.5 truncate">
                     {item}
                 </p>
             ))}
