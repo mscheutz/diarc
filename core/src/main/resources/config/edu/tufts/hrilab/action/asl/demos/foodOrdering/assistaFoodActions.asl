@@ -36,6 +36,7 @@ import java.util.Map;
         success : holding(?actor, ?physobj);
         success : not(free(?actor));
         success : not(at(?physobj,?pose));
+        success : not(occupied(?pose));
         nonperf : not(at(?actor,?pose));
         nonperf : unknownlocation(?actor);
     }
@@ -69,11 +70,13 @@ import java.util.Map;
     conditions : {
         pre : holding(?actor, ?physobj);
         pre : at(?actor,?pose);
+        pre : not(occupied(?pose));
     }
     effects : {
         success : not(holding(?actor, ?physobj));
         success : free(?actor);
         success : at(?physobj,?pose);
+        success : occupied(?pose);
     }
 
     edu.tufts.hrilab.fol.Symbol !default = "default";
@@ -88,6 +91,24 @@ import java.util.Map;
     act:rotateToEE(!default);
 
     op:log(info, "[putdown] ?physobj + ?pose complete");
+}
+
+() = putingredient["stacks ingredient on another ingredient and un-binds that ingredient for all manipulation actions"](Symbol ?item:physobj, Symbol ?destination:physobj, Symbol ?pose:pose) {
+
+    conditions : {
+        pre : holding(?actor, ?item);
+        pre : at(?actor, ?pose);
+        pre : at(?destination, ?pose);
+    }
+    effects : {
+        success : itemOn(?item, ?destination);
+        success : not(holding(?actor, ?item));
+        success : free(?actor);
+        success : not(beenperceived(?item));
+        success : not(occupied(?pose)); //todo: this is a hack
+    }
+
+    act:putdown(?item, ?pose);
 }
 
 
@@ -140,25 +161,6 @@ import java.util.Map;
     op:log(debug, "Finished going to pose ?pose1");
 }
 
-() = putingredient["stacks ingredient on another ingredient and un-binds that ingredient for all manipulation actions"](Symbol ?item:physobj, Symbol ?destination:physobj, Symbol ?pose:pose) {
-    Predicate !queryPred;
-    Symbol !pose;
-
-    conditions : {
-        pre : holding(?actor, ?item);
-        pre : at(?actor, ?pose);
-        pre : at(?destination, ?pose);
-    }
-    effects : {
-        success : gripperOpen(?actor);
-        success : itemOn(?item, ?destination);
-        success : not(holding(?actor, ?item));
-        success : free(?actor);
-        success : not(beenperceived(?item));
-    }
-
-    act:putdown(?item, !pose);
-}
 
 () = getTo(Symbol ?item:physobj, Symbol ?destination:pose) {
     goal:at(?item, ?destination);
@@ -178,7 +180,7 @@ import java.util.Map;
     }
     effects : {
         success : beenperceived(?refId);
-        success : at(?refId,pose);
+        success : at(?refId,?pose);
     }
 
     act:perceiveEntity(?refId);
@@ -191,7 +193,7 @@ import java.util.Map;
     Symbol !pose;
     Symbol !job;
 
-    !bindings = act:askQuestionFromString(?actor,"Where is it located?", pattern(pose(X)));
+    !bindings = act:askQuestionFromString(?actor,"Where is it located?", pose(X));
     !pose= op:get(!bindings, !x);
 
     !bindings = act:askQuestionFromString(?actor,"Okay, what vision job is used to detect it?", job(X));

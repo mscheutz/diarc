@@ -16,12 +16,12 @@ import edu.tufts.hrilab.fol.Term;
     Symbol !cookTopHeight = "52";
     Symbol !default = "default";
     Symbol !prepAreaPose;
+    Symbol !servingAreaPose;
     ai.thinkingrobots.mtracs.util.MPose !pose;
 
     edu.tufts.hrilab.fol.Term !toAssert;
     edu.tufts.hrilab.fol.Symbol !robotone="robotone:agent";
 
-    edu.tufts.hrilab.fol.Symbol !chicken="chicken";
     edu.tufts.hrilab.fol.Symbol !corn="corn";
 
 //TODO:brad: what is this for? how should we handle it?
@@ -38,7 +38,7 @@ import edu.tufts.hrilab.fol.Term;
     op:log(info, "Setup !prepArea for ?actor");
 
     (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 510.00f, 100.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
-    !robotone.tsc:recordPose(!servingArea, !pose, !conveyorHeight);
+    !servingAreaPose = !robotone.tsc:recordPose(!servingArea, !pose, !conveyorHeight);
     op:log(info, "Setup !servingArea for ?actor");
 
     (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 138.6f, -460.00f, 200.00f, 3.14159f, 0.0f, 3.14159f);
@@ -61,7 +61,7 @@ import edu.tufts.hrilab.fol.Term;
     //objectDefinition(descriptor,zOffset,xOffset,)
 
     !robotone.act:defineIngredientHelper(!corn, !prepAreaPose, "cornDet");
-    !robotone.act:defineIngredientHelper(!chicken, !prepAreaPose, "detectChicken");
+   !robotone.act:defineIngredientHelper("\"serving box\"",!servingAreaPose,"detBox");
 
     !robotone.act:goTo(!prepAreaPose);
 }

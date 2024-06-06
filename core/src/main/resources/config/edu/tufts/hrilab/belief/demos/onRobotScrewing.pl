@@ -29,3 +29,6 @@ subtype(pose, location).
 actor(james).
 role(james,supervisor(X)):-diarcAgent(X).
 role(james,admin(X)):-diarcAgent(X).
+
+%todo: we shouldn't have to assert this.
+predicate(property_of,var,property).
