@@ -82,7 +82,7 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
         createInstance(ReferenceResolutionComponent.class);
         createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
         createInstance(DialogueComponent.class, "");
-        createInstance(SimpleNLGComponent.class, "");
+        //createInstance(SimpleNLGComponent.class, "");
 
         createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
 

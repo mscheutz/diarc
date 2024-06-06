@@ -30,9 +30,9 @@ public class LLMTranslationTester {
     String service = "llamahf";//"t5hf";//"openai";
     String model = "Meta-Llama-3-70B-Instruct";//"Llama-2-70b-chat-hf";//"gpt-3.5-turbo";
     String inputDirectory = "/config/edu/tufts/hrilab/llm/inputs/";
-    String inputFile = "pickAndPlaceDemoJapanese";
+    String inputFile = "pickAndPlaceAssistaJapanese";
     String outputFile = "/home/eric/code/diarc/core/src/main/resources/config/edu/tufts/hrilab/llm/outputs/%s/%s/%s_prompt_%s.txt";
-    List<String> promptFiles = Arrays.asList("pickAndPlaceActionSemanticTranslation");
+    List<String> promptFiles = Arrays.asList("pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationAssista");
     List<String> systemPromptFiles = Arrays.asList("");
     boolean performTranslationTask = true;
     boolean performSemanticsToTextTask = false; //old
@@ -141,7 +141,8 @@ public class LLMTranslationTester {
                 String result = translate(prompt,systemPrompt,utterance,language);
                 sb.append(result);
                 sb.append("\n");
-                Pattern semanticPattern = Pattern.compile(".*Step two:.*\\s(.*\\(.*\\))\\s*", Pattern.DOTALL);
+//                Pattern semanticPattern = Pattern.compile(".*Step two:.*\\s(.*\\(.*\\))\\s*", Pattern.DOTALL);
+                Pattern semanticPattern = Pattern.compile(".*Step two:(.*)", Pattern.DOTALL);
                 Matcher m = semanticPattern.matcher(result);
                 if (m.matches()) {
                     result = m.group(m.groupCount());

@@ -4,6 +4,7 @@ Okay, what vision job is used to detect it?
 At which area should I look for a chicken?
 Okay, I know what chicken is
 I cannot put down the corn because the prep area is occupied
+I do not know what chicken means
 ############
 #Test lines#
 ############

@@ -23,12 +23,14 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
     static private Logger log = LoggerFactory.getLogger(PickAndPlaceLLM.class);
     NLG nlg = new NLG(); //TODO: make from semantics directly or from SimpleNLG results configurable
     Prompt nluPrompt;
-    Prompt nlgPrompt;
+    Prompt wordsNLGPrompt;
+    Prompt semanticNLGPrompt;
 
     public PickAndPlaceLLM() {
         super();
         nluPrompt = Prompts.getPrompt("pickAndPlaceActionSemanticTranslation");
-        nlgPrompt = Prompts.getPrompt("pickAndPlaceNLGTranslation");
+        wordsNLGPrompt = Prompts.getPrompt("pickAndPlaceNLGTranslation");
+        semanticNLGPrompt = Prompts.getPrompt("pickAndPlaceSemanticsNLGTranslation");
     }
 
     @TRADEService
@@ -139,10 +141,13 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
     @Action
     public Utterance convertSemanticsToText(Utterance u, boolean hasWords) {
         String realization;
+        Prompt nlgPrompt;
         if (hasWords) {
             realization = u.getWordsAsString();
+            nlgPrompt = wordsNLGPrompt;
         } else {
             realization = nlg.translate(u);
+            nlgPrompt = semanticNLGPrompt;
         }
 
         String userMessage = nlgPrompt.getText() + realization;
@@ -167,6 +172,7 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
             u.setWords(realization);
         } else {
             u.setWords(m.group(m.groupCount()).trim());
+            u.setLanguage("ja");
         }
 
         return u;
