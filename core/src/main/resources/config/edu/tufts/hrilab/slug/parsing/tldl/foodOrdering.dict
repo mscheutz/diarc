@@ -444,6 +444,7 @@ send message; C/LIT* ; #x.sendMessage(?ADDRESSEE,$x)
 job; VAL/JOB; #j.job($j)
 location; VAL/REF; #l.location($l);
 area; VAL/REF; #a.area($a);
+pose; VAL/REF; #a.pose($a);
 
 the; DESC/DESC ; #x.$x
 
@@ -577,3 +578,11 @@ is an admin; S\AGENT ; #a.admin($a)
 
 it is safe to proceed; VAL; safeToProceed(true)
 it is not safe to proceed; VAL; safeToProceed(false)
+
+
+%%%% todo: remove. these should be handled by the consultant
+chicken; RN; chicken; VAR
+chicken; DESC; chicken
+
+corn; RN; corn; VAR
+corn; DESC; corn

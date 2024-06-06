@@ -1,0 +1,232 @@
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Variable;
+import java.util.Map;
+
+() = pickUp(Symbol ?item:physobj) {
+    Predicate !queryPred;
+    Symbol !pose;
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, X)");
+    !pose = act:getBinding(!queryPred);
+
+    act:pickup(?item, !pose);
+
+}
+
+() = putDown(Symbol ?item:physobj) {
+    Predicate !queryPred;
+    Symbol !pose;
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, X)");
+    !pose = act:getBinding(!queryPred);
+
+    act:putdown(?item, !pose);
+
+}
+
+() = pickup["?actor grabs ?physobj"](edu.tufts.hrilab.fol.Symbol ?physobj:physobj, edu.tufts.hrilab.fol.Symbol ?pose:pose) {
+
+    conditions : {
+        pre : free(?actor);
+        pre : at(?physobj,?pose);
+        pre : at(?actor, ?pose);
+    }
+    effects : {
+        success : holding(?actor, ?physobj);
+        success : not(free(?actor));
+        success : not(at(?physobj,?pose));
+        nonperf : not(at(?actor,?pose));
+        nonperf : unknownlocation(?actor);
+    }
+
+    edu.tufts.hrilab.fol.Symbol !default = "default";
+    edu.tufts.hrilab.fol.Symbol !gripper = "gripper";
+
+    op:log(info, "[grab] ?physobj");
+    act:goTo(?pose);
+    act:perceiveEntity(?physobj);
+
+    act:rotateToEE(!gripper);
+    tsc:openGripper();
+    tsc:moveAndOrientToCognexTarget(?physobj);
+    act:moveToObjectHeight();
+    tsc:closeGripper();
+    act:moveToCameraHeight();
+    act:rotateToEE(!default);
+    op:log(info, "[grab] ?physobj complete");
+}
+
+() = openGripper() {
+    tsc:openGripper();
+}
+
+() = closeGripper() {
+    tsc:closeGripper();
+}
+
+() = putdown["?actor releases ?physobj"](edu.tufts.hrilab.fol.Symbol ?physobj:physobj, edu.tufts.hrilab.fol.Symbol ?pose:pose) {
+    conditions : {
+        pre : holding(?actor, ?physobj);
+        pre : at(?actor,?pose);
+    }
+    effects : {
+        success : not(holding(?actor, ?physobj));
+        success : free(?actor);
+        success : at(?physobj,?pose);
+    }
+
+    edu.tufts.hrilab.fol.Symbol !default = "default";
+    edu.tufts.hrilab.fol.Symbol !gripper = "gripper";
+
+    op:log(info, "[putdown] ?physobj + ?pose");
+
+    act:rotateToEE(!gripper);
+    act:moveToObjectHeight();
+    tsc:openGripper();
+    act:moveToCameraHeight();
+    act:rotateToEE(!default);
+
+    op:log(info, "[putdown] ?physobj + ?pose complete");
+}
+
+
+() = goTo["goes to pose at camera height"](edu.tufts.hrilab.fol.Symbol ?pose:pose) {
+    edu.tufts.hrilab.fol.Predicate !queryPred;
+    java.util.List !bindings;
+
+    java.util.HashMap !elem;
+    edu.tufts.hrilab.fol.Symbol !currPose = "current";
+    edu.tufts.hrilab.fol.Variable !bindingVar;
+    !bindingVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,X)");
+    !bindings = act:queryBelief(!queryPred);
+    op:log(debug, "[goTo] bindings: !bindings");
+    if (~op:isEmpty(!bindings)) {
+        !elem = op:get(!bindings, 0);
+        (!currPose) =op:get(!elem,!bindingVar);
+    }
+
+    op:log(info, "[goTo] going to pose ?pose");
+    act:gotocamerapose(?pose, !currPose);
+}
+
+
+() = gotocamerapose["moves to ?pose1, from ?pose2"](edu.tufts.hrilab.fol.Symbol ?pose1:pose, edu.tufts.hrilab.fol.Symbol ?pose2:pose) {
+    conditions : {
+        pre : at(?actor, ?pose2);
+    }
+    effects : {
+        success : not(at(?actor, ?pose2));
+        success : at(?actor,?pose1);
+        nonperf : not(at(?actor,?pose1));
+        nonperf : not(at(?actor,?pose2));
+        nonperf : unknownlocation(?actor);
+    }
+
+    edu.tufts.hrilab.fol.Predicate !queryPred;
+    java.util.List !bindings;
+    java.util.HashMap !elem;
+    edu.tufts.hrilab.fol.Symbol !cameraHeight;
+    edu.tufts.hrilab.fol.Variable !bindingVar = "X";
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cameraHeight(?actor,!bindingVar)");
+    !bindings = act:queryBelief(!queryPred);
+    op:log(debug, "[gotocamerapose] bindings: !bindings");
+    !elem = op:get(!bindings, 0);
+    op:log(debug, "[gotocamerapose] cameraHeight found for query !queryPred: !bindings");
+    !cameraHeight = op:get(!elem, !bindingVar);
+    act:goToPose(?pose1, !cameraHeight);
+    op:log(debug, "Finished going to pose ?pose1");
+}
+
+() = putingredient["stacks ingredient on another ingredient and un-binds that ingredient for all manipulation actions"](Symbol ?item:physobj, Symbol ?destination:physobj, Symbol ?pose:pose) {
+    Predicate !queryPred;
+    Symbol !pose;
+
+    conditions : {
+        pre : holding(?actor, ?item);
+        pre : at(?actor, ?pose);
+        pre : at(?destination, ?pose);
+    }
+    effects : {
+        success : gripperOpen(?actor);
+        success : itemOn(?item, ?destination);
+        success : not(holding(?actor, ?item));
+        success : free(?actor);
+        success : not(beenperceived(?item));
+    }
+
+    act:putdown(?item, !pose);
+}
+
+() = getTo(Symbol ?item:physobj, Symbol ?destination:pose) {
+    goal:at(?item, ?destination);
+}
+
+() = getOn(Symbol ?item:physobj, Symbol ?destination:physobj) {
+    goal:itemOn(?item, ?destination);
+}
+
+() = perceiveitem["top level perception action which binds the refId based on the availability of that type of object at the ?actor's location"](Symbol ?refId:physobj, Symbol ?itemType:property, Symbol ?pose:pose) {
+
+    conditions : {
+        pre : at(?actor, ?pose);
+        pre : property_of(?refId, ?itemType);
+        pre : observableAt(?itemType,?pose);
+        pre : not(beenperceived(?refId));
+    }
+    effects : {
+        success : beenperceived(?refId);
+        success : at(?refId,pose);
+    }
+
+    act:perceiveEntity(?refId);
+}
+
+() = defineIngredient["defines a new ingredient and asks where it is located"](edu.tufts.hrilab.fol.Symbol ?descriptor){
+
+    Map !bindings;
+    Variable !x = "X";
+    Symbol !pose;
+    Symbol !job;
+
+    !bindings = act:askQuestionFromString(?actor,"Where is it located?", pattern(pose(X)));
+    !pose= op:get(!bindings, !x);
+
+    !bindings = act:askQuestionFromString(?actor,"Okay, what vision job is used to detect it?", job(X));
+    !job = op:get(!bindings, !x);
+
+    act:defineIngredientHelper(?descriptor,!pose,!job);
+
+    act:generateResponseFromString("Okay, I know what ?descriptor is");
+}
+
+() = defineIngredientHelper["helper method to standardize interaction based item definition with asl based definition"](Symbol ?descriptor, Symbol ?pose, Symbol ?job){
+
+    Predicate !tmp;
+
+    ?descriptor=tsc:addDetectionType(?descriptor,?job);
+
+    !tmp= op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(?descriptor,0.0,0.0)");
+    act:assertBelief(!tmp);
+
+    !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "observableAt(?descriptor,?pose)");
+    act:assertBelief(!tmp);
+}
+
+//todo: consolidate this.
+(Symbol ?result) = getBinding(Predicate ?queryPred) {
+    Variable !queryKey = X;
+    java.util.List !bindings;
+    java.util.Map !binding;
+
+    !bindings = act:queryBelief(?queryPred);
+    if (op:isEmpty(!bindings)) {
+        op:log("error", "[getBinding] query ?queryPred returned no results");
+    } else {
+        !binding = op:get(!bindings, 0);
+        ?result= op:get(!binding, !queryKey);
+        op:log("debug", "[getBinding] query ?queryPred result: ?result");
+    }
+}
