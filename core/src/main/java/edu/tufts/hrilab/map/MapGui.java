@@ -2,11 +2,15 @@ package edu.tufts.hrilab.map;
 
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.consultant.pose.PoseConsultant;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.gui.ImageService;
 import edu.tufts.hrilab.map.util.Pose;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +24,7 @@ import org.json.JSONObject;
 import javax.vecmath.*;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Component
 public class MapGui extends TextWebSocketHandler {
@@ -37,6 +40,8 @@ public class MapGui extends TextWebSocketHandler {
     public MapGui(MapComponent mapComponent) {
         this.mapComponent = mapComponent;
     }
+
+    private Map<Symbol,Pair<Point3d,Quat4d>>storedPoses = new HashMap<>();
 
     @Override
     public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
@@ -65,6 +70,9 @@ public class MapGui extends TextWebSocketHandler {
             case "fetchKeyLocations":
                 fetchKeyLocations(session);
                 break;
+            case "fetchPastLocations":
+                fetchPastLocations(session);
+                break;
             default:
                 session.sendMessage(new TextMessage("{\"error\":\"Unsupported action\"}"));
         }
@@ -86,15 +94,22 @@ public class MapGui extends TextWebSocketHandler {
             response.put("mapImageUrl", "http://localhost:8080/images/" + pngFileName);
             response.put("success", true);
             response.put("message", "Map data fetched successfully.");
+            // Send the initial map data response
+            session.sendMessage(new TextMessage(response.toString()));
+
+            // Fetch and send robot pose
+            fetchRobotPose(session);
+
+            // Fetch and send key locations
+            fetchKeyLocations(session);
+
         } catch (Exception e) {
             log.error("Failed to retrieve or convert map data: {}", e.getMessage(), e);
             response.put("success", false);
             response.put("error", "Failed to retrieve map data: " + e.getMessage());
+            session.sendMessage(new TextMessage(response.toString()));
         }
-
-        session.sendMessage(new TextMessage(response.toString()));
     }
-
 
     private void navigateToPoint(WebSocketSession session, double x, double y, double quatX, double quatY, double quatZ, double quatW) throws IOException {
         log.info("Initiating navigation to coordinates: x={}, y={}, and quaternion: quatX={}, quatY={}, quatZ={}, quatW={}", x, y, quatX, quatY, quatZ, quatW);
@@ -108,7 +123,7 @@ public class MapGui extends TextWebSocketHandler {
 
             Point2d pixelPosition = new Point2d(x, y);
             Point3d meterPosition = mapComponent.currFloorMap.getPixelMap().toMeter(pixelPosition);
-
+            recordLocation(meterPosition);
             x = meterPosition.getX();
             y = meterPosition.getY();
 
@@ -119,6 +134,8 @@ public class MapGui extends TextWebSocketHandler {
                 response.put("success", true);
                 response.put("message", "Navigation to point initiated successfully.");
                 log.info("Navigation to point successfully initiated.");
+                fetchRobotPose(session);  // Call to fetch robot pose after successful navigation
+                fetchPastLocations(session);
             } else {
                 response.put("success", false);
                 response.put("message", "Failed to initiate navigation.");
@@ -133,7 +150,6 @@ public class MapGui extends TextWebSocketHandler {
         // Send the response back to the client
         session.sendMessage(new TextMessage(response.toString()));
     }
-
 
     private void goToLocation(WebSocketSession session, Symbol location) throws IOException {
         log.info("Attempting to navigate to location: {}", location);
@@ -152,6 +168,8 @@ public class MapGui extends TextWebSocketHandler {
                 response.put("success", true);
                 response.put("message", "Navigation to location initiated successfully.");
                 log.info("Navigation to location {} initiated successfully.", location);
+                fetchRobotPose(session);  // Call to fetch robot pose after successful navigation
+                fetchPastLocations(session);
             } else {
                 response.put("success", false);
                 response.put("message", "Failed to initiate navigation to location.");
@@ -164,6 +182,46 @@ public class MapGui extends TextWebSocketHandler {
         }
 
         // Send the response to the client
+        session.sendMessage(new TextMessage(response.toString()));
+    }
+
+    private void fetchRobotPose(WebSocketSession session) throws IOException {
+        log.info("Fetching robot pose.");
+        JSONObject response = new JSONObject();
+
+        try {
+            mapComponent.updateRobotPose();
+            Pose currPose = mapComponent.currRobotPose;
+            Point3d position = currPose.getPosition();
+            Quat4d orientation = currPose.getOrientation();
+
+            Point2d robotPixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(position);
+
+            JSONObject positionJson = new JSONObject()
+                    .put("x", position.getX())
+                    .put("y", position.getY())
+                    .put("z", position.getZ());
+            JSONObject orientationJson = new JSONObject()
+                    .put("x", orientation.getX())
+                    .put("y", orientation.getY())
+                    .put("z", orientation.getZ())
+                    .put("w", orientation.getW());
+
+            response.put("position", positionJson);
+            response.put("orientation", orientationJson);
+
+            response.put("robotPixelPosition", new JSONObject()
+                    .put("x", robotPixelPosition.getX())
+                    .put("y", robotPixelPosition.getY()));
+
+            response.put("success", true);
+            response.put("message", "Robot pose fetched successfully.");
+        } catch (Exception e) {
+            log.error("Error fetching robot pose: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("error", "Failed to fetch robot pose: " + e.getMessage());
+        }
+
         session.sendMessage(new TextMessage(response.toString()));
     }
 
@@ -214,6 +272,61 @@ public class MapGui extends TextWebSocketHandler {
         session.sendMessage(new TextMessage(response.toString()));
     }
 
+    // resembling recordPose from ForkLift / MockArmComponent
+    public void recordLocation(Point3d meterPosition) {
+        // Accessing consultant from mapComponent instance
+        PoseConsultant consultant = mapComponent.consultant;
+
+        Variable var = Factory.createVariable("VAR0", mapComponent.poseKBName);
+        List<Term> properties = new ArrayList<>();
+        PoseReference ref = consultant.createReference(var, properties);
+//        PoseReference ref = consultant.createReference(Factory.createVariable("VAR0", mapComponent.poseKBName), List.of(Factory.createPredicate(poseName.toString(), Factory.createVariable("VAR0", mapComponent.poseKBName))));
+
+        Pair<Point3d, Quat4d> currPose = Pair.of(meterPosition, new Quat4d(0,0,0,1));
+        ref.setPose(currPose.getLeft(), currPose.getRight());
+
+        storedPoses.put(ref.refId, currPose);
+    }
+
+    private void fetchPastLocations(WebSocketSession session) throws IOException {
+        log.info("Fetching past locations.");
+
+        JSONObject response = new JSONObject();
+        JSONObject finalLocationsWithPositions = new JSONObject();
+
+        try {
+            if (storedPoses.isEmpty()) {
+                log.info("No past locations stored.");
+                response.put("success", false);
+                response.put("error", "No past locations available.");
+            } else {
+                for (Map.Entry<Symbol, Pair<Point3d, Quat4d>> entry : storedPoses.entrySet()) {
+                    Symbol symbol = entry.getKey();
+                    Pair<Point3d, Quat4d> pose = entry.getValue();
+                    Point3d position = pose.getLeft();
+
+                    Point2d robotPixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(position);
+
+                    JSONObject positionJson = new JSONObject();
+                    positionJson.put("x", robotPixelPosition.getX());
+                    positionJson.put("y", robotPixelPosition.getY());
+
+                    finalLocationsWithPositions.put(symbol.toString(), positionJson);
+                }
+
+                response.put("pastLocations", finalLocationsWithPositions);
+                response.put("success", true);
+                response.put("message", "Past locations fetched successfully.");
+            }
+        } catch (Exception e) {
+            log.error("Error fetching past locations: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("error", "Error during map data retrieval: " + e.getMessage());
+        }
+
+        // Send the final JSON object back to the client
+        session.sendMessage(new TextMessage(response.toString()));
+    }
 
     // depreciated. Fetching key locations from the TRADE service.
     // replaced with MapComponent native methods getAllObjects from FloorMap.
@@ -268,46 +381,6 @@ public class MapGui extends TextWebSocketHandler {
 //        // Send the final JSON object back to the client
 //        session.sendMessage(new TextMessage(response.toString()));
 //    }
-
-    private void fetchRobotPose(WebSocketSession session) throws IOException {
-        log.info("Fetching robot pose.");
-        JSONObject response = new JSONObject();
-
-        try {
-            mapComponent.updateRobotPose();
-            Pose currPose = mapComponent.currRobotPose;
-            Point3d position = currPose.getPosition();
-            Quat4d orientation = currPose.getOrientation();
-
-            Point2d robotPixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(position);
-
-            JSONObject positionJson = new JSONObject()
-                    .put("x", position.getX())
-                    .put("y", position.getY())
-                    .put("z", position.getZ());
-            JSONObject orientationJson = new JSONObject()
-                    .put("x", orientation.getX())
-                    .put("y", orientation.getY())
-                    .put("z", orientation.getZ())
-                    .put("w", orientation.getW());
-
-            response.put("position", positionJson);
-            response.put("orientation", orientationJson);
-
-            response.put("robotPixelPosition", new JSONObject()
-                    .put("x", robotPixelPosition.getX())
-                    .put("y", robotPixelPosition.getY()));
-
-            response.put("success", true);
-            response.put("message", "Robot pose fetched successfully.");
-        } catch (Exception e) {
-            log.error("Error fetching robot pose: {}", e.getMessage(), e);
-            response.put("success", false);
-            response.put("error", "Failed to fetch robot pose: " + e.getMessage());
-        }
-
-        session.sendMessage(new TextMessage(response.toString()));
-    }
 
 //    private void navigateToPoint(WebSocketSession session, double x, double y) throws Exception {
 //        Point3d targetPoint = new Point3d(x, y, 0);  // Assuming Z coordinate is 0 for 2D navigation

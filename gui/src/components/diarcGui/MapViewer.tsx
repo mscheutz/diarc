@@ -9,10 +9,10 @@ type Position = { x: number, y: number, z: number };
 type Orientation = { x: number, y: number, z: number, w: number };
 type RobotPixelPosition = { x: number, y: number };
 type Pose = { position: Position, orientation: Orientation, robotPixelPosition: RobotPixelPosition };
-type KeyLocation = { x: number, y: number, description: string };
-type KeyLocations = { [key: string]: KeyLocation };
+type Location = { x: number, y: number, description?: string };
+type Locations = { [key: string]: Location };
 
-export { Position, Orientation, RobotPixelPosition, Pose, KeyLocation, KeyLocations };
+export { Position, Orientation, RobotPixelPosition, Pose, Location, Locations };
 
 const position2String = (pose: Pose | null) => {
     if (pose === null)
@@ -30,10 +30,20 @@ const orientation2String = (pose: Pose | null) => {
         `Z: ${pose.orientation.z}, W: ${pose.orientation.w}`
 };
 
-const keyLocations2Elements = (keyLocations: KeyLocations): JSX.Element[] => {
-    return Object.keys(keyLocations).map(key => (
-        <p key={key}>
-            <strong>{key}</strong>&nbsp;&nbsp;&nbsp;&nbsp;{keyLocations[key].description}
+const Locations2Elements = (Locations: Locations, tailwindClass: string): JSX.Element[] => {
+    const sortedKeys = Object.keys(Locations).sort((a, b) => {
+        const numA = parseInt(a.substring(a.lastIndexOf('_') + 1), 10);
+        const numB = parseInt(b.substring(b.lastIndexOf('_') + 1), 10);
+        if (numA !== numB) {
+            return numA - numB;
+        }
+        return a.localeCompare(b);
+    });
+
+    return sortedKeys.map(key => (
+        <p key={key} className={`${tailwindClass}`}>
+            <strong>{key}</strong>&nbsp;&nbsp;&nbsp;&nbsp;
+            {Locations[key].description ? Locations[key].description : ''}
         </p>
     ));
 };
@@ -69,11 +79,29 @@ function mapCoordinates(x, y, rect, xPad, yPad, canvas, image, scale) {
     };
 }
 
+const drawDot = (context, x, y, radius, color) => {
+    context.fillStyle = color;
+    context.beginPath();
+    context.arc(x, y, radius, 0, 2 * Math.PI);
+    context.fill();
+};
+
+const drawText = (context, text, x, y, scale, color) => {
+    context.fillStyle = color;
+    context.font = `${10 * scale}px Arial`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(text, x, y);
+};
+
+const extractLocationNumber = (key) => key.split(':')[0].split('_')[1];
+
 const MapViewer = () => {
     // State //
     const [poseData, setPoseData] = useState<Pose | null>(null);
     const [responseMsg, setResponseMsg] = useState<string>("");
-    const [keyLocations, setKeyLocations] = useState<KeyLocations>({});
+    const [keyLocations, setKeyLocations] = useState<Locations>({});
+    const [pastLocations, setPastLocations] = useState<Locations>({});
     const [mapImageUrl, setMapImageUrl] = useState<string>("");
 
     // State for drawing calculations
@@ -106,7 +134,11 @@ const MapViewer = () => {
         }
         if (data.keyLocations) {
             setKeyLocations(data.keyLocations);
-            console.log(data.keyLocations)
+            console.log("keyLocations",data.keyLocations)
+        }
+        if (data.pastLocations) {
+            setPastLocations(data.pastLocations);
+            console.log("pastLocations",data.pastLocations)
         }
         if (data.message) {
             setResponseMsg(`${data.success ? 'Success: ' : 'Failure: '} ${data.message}`);
@@ -226,28 +258,28 @@ const MapViewer = () => {
                 if (poseData) {
                     const robotX = xPad + poseData.robotPixelPosition.x * scale;
                     const robotY = yPad + poseData.robotPixelPosition.y * scale;
-                    context.fillStyle = 'red';
-                    context.beginPath();
-                    // Adjust the size of the red dot to be appropriately visible
-                    const radius = 7;
-                    context.arc(robotX, robotY, radius * scale, 0, 2 * Math.PI);
-                    context.fill();
+                    drawDot(context, robotX, robotY, 7 * scale, 'red');
                 }
 
-                // Draw green dots for key locations
-                Object.values(keyLocations).forEach(location => {
+                // Draw Key Locations
+                Object.entries(keyLocations).forEach(([key, location]) => {
                     const locX = xPad + location.x * scale;
                     const locY = yPad + location.y * scale;
-                    context.fillStyle = 'green';
-                    context.beginPath();
-                    context.arc(locX, locY, 5 * scale, 0, 2 * Math.PI);
-                    context.fill();
+                    drawDot(context, locX, locY, 5 * scale, 'green');
+                    drawText(context, extractLocationNumber(key), locX, locY, scale, 'black');
                 });
 
+                // Draw Past Locations
+                Object.entries(pastLocations).forEach(([key, location]) => {
+                    const locX = xPad + location.x * scale;
+                    const locY = yPad + location.y * scale;
+                    drawDot(context, locX, locY, 5 * scale, 'orange');
+                    drawText(context, extractLocationNumber(key), locX, locY, scale, 'white');
+                });
             }
         }
     },
-        [mapImageUrl, poseData, keyLocations]
+        [mapImageUrl, poseData, keyLocations, pastLocations]
     );
 
     return (
@@ -260,6 +292,7 @@ const MapViewer = () => {
                     Fetch Map Data
                 </Button>
                 <Button
+                    className="hidden"
                     onClick={handleNavigateToPoint}>
                     Navigate To Point
                 </Button>
@@ -268,18 +301,25 @@ const MapViewer = () => {
                     Go To Location
                 </Button>
                 <Button
+                    className="hidden"
                     onClick={() => sendWebSocketRequest('fetchRobotPose')}>
                     Show/Update Robot Pose
                 </Button>
                 <Button
+                    className="hidden"
                     onClick={() => sendWebSocketRequest('fetchKeyLocations')}>
                     Fetch Key Locations
+                </Button>
+                <Button
+                    className="hidden"
+                    onClick={() => sendWebSocketRequest('fetchPastLocations')}>
+                    Fetch Past Locations
                 </Button>
             </div>
 
             <canvas ref={canvasRef} className='Map w-11/12' onClick={handleCanvasClick} />
 
-            {responseMsg && <div className="alert">{responseMsg}</div>}
+            {responseMsg && <div className="alert font-bold">{responseMsg}</div>}
 
             <div className="pose-data">
                 <div>{position2String(poseData)}</div>
@@ -287,7 +327,7 @@ const MapViewer = () => {
             </div>
 
             <div className="key-locations">
-                {keyLocations2Elements(keyLocations)}
+                {Locations2Elements(keyLocations, 'text-black')}
             </div>
 
             <ConnectionIndicator readyState={readyState} />

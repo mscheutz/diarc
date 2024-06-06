@@ -77,9 +77,9 @@ public class MapComponent extends DiarcComponent {
 
   private RosPackPathHelper rosPackageHelper;
 
-  private PoseConsultant consultant;
+  protected PoseConsultant consultant;
 
-  private String poseKBName = "location";
+  protected String poseKBName = "location";
 
   private String refsConfigFile;
 
