@@ -181,7 +181,7 @@ o goal manager
     * remove return values from actions
     o tabbed panel
         o submit actions
-            o should create a form from action parameters
+            * should create a form from action parameters
         o submit goals
             * agent field
             * goal field

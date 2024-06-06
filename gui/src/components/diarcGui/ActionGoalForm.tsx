@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import ActionFormContext from "./ActionFormContext";
 
 const textBoxClassName = "block box-border w-full rounded mt-1 mb-2 text-sm "
-    + "border border-slate-500 p-2";
+    + "border border-slate-500 p-2 font-mono";
 const submitClassName = "bg-slate-900 text-white hover:bg-slate-800 "
     + "dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-100 "
     + "active:scale-95 inline-flex items-center justify-center "
@@ -25,11 +25,16 @@ const submitClassName = "bg-slate-900 text-white hover:bg-slate-800 "
     + "disabled:bg-slate-400 disabled:dark:bg-slate-400 h-10 py-2 px-4 "
     + "cursor-pointer"
 
-const ActionForm = () => {
+const ActionForm = ({ sendMessage }) => {
     const custom = useForm();
     const onSubmitCustom = (data) => {
         custom.reset();
-        console.log("custom", data);
+        sendMessage(JSON.stringify(
+            {
+                form: "custom",
+                formData: data
+            }
+        ));
     };
 
     const generated = useForm();
@@ -37,10 +42,10 @@ const ActionForm = () => {
     const generateForm = () => {
         return (
             actionFormContext.length > 0 ?
-                actionFormContext.map((param, index) => {
+                actionFormContext.slice(1).map((param, index) => {
                     return (
                         <div key={index}>
-                            <label>{param}</label>
+                            <label className="font-mono">{param}</label>
                             <input type="text" {...generated.register(param)}
                                 className={textBoxClassName} required />
                         </div>
@@ -52,11 +57,21 @@ const ActionForm = () => {
     const onSubmitGenerated = (data) => {
         generated.reset();
         for (let [key, value] of Object.entries(data)) {
-            if (value === "") {
+            if (!actionFormContext.includes(key) || value === "") {
                 delete data[key];
             }
         }
-        console.log("generated", data);
+
+        let array: string[] = [actionFormContext[0]]
+        for (let i = 1; i < actionFormContext.length; i++) {
+            array.push(data[actionFormContext[i]]);
+        }
+        sendMessage(JSON.stringify(
+            {
+                form: "generated",
+                formData: array
+            }
+        ));
     };
 
     return (
@@ -83,24 +98,55 @@ const ActionForm = () => {
                 onSubmit={generated.handleSubmit(onSubmitGenerated)}
                 className="flex flex-col mx-5 my-4"
             >
-                <label className="text-lg">Selected Action</label>
+                <label className="text-lg">
+                    Selected Action
+                    {/* Looks a bit weird in code but I want to make only
+                    part of the label monospace */}
+                    {
+                        actionFormContext.length > 0
+                            ? ": "
+                            : ""
+                    }
+                    {
+                        actionFormContext.length > 0
+                            ? <span className="font-mono">
+                                {actionFormContext[0]}
+                            </span>
+                            : ""
+                    }
+                </label>
 
                 {generateForm()}
 
-                <input type="submit" value="Submit"
-                    // From Button.tsx
-                    className={submitClassName}
-                />
+                {
+                    actionFormContext.length > 0
+                        ?
+                        <>
+                            <label className="text-sm pt-2 pb-2">
+                                All fields are required.
+                            </label>
+                            <input type="submit" value="Submit"
+                                // From Button.tsx
+                                className={submitClassName}
+                            />
+                        </>
+                        : null
+                }
             </form>
         </div>
     );
 };
 
-const GoalForm = () => {
+const GoalForm = ({ sendMessage }) => {
     const { register, handleSubmit, reset, formState: { errors } } = useForm();
     const onSubmitGoal = (data) => {
         reset();
-        console.log(data);
+        sendMessage(JSON.stringify(
+            {
+                form: "goal",
+                formData: data
+            }
+        ));
     };
 
     return (
@@ -110,11 +156,15 @@ const GoalForm = () => {
         >
             <label>Agent</label>
             <input type="text" defaultValue="self" {...register("agent")}
-                className={textBoxClassName} />
+                className={textBoxClassName} required />
 
             <label>Goal</label>
             <input type="text" {...register("goal")}
-                className={textBoxClassName} />
+                className={textBoxClassName} required />
+
+            <label className="text-sm pt-2 pb-2">
+                All fields are required.
+            </label>
 
             <input type="submit" value="Submit"
                 // From Button.tsx
@@ -124,7 +174,7 @@ const GoalForm = () => {
     );
 };
 
-const ActionGoalForm = () => {
+const ActionGoalForm = ({ sendMessage }) => {
     return (
         <div>
             <Tabs>
@@ -134,11 +184,11 @@ const ActionGoalForm = () => {
                 </TabList>
 
                 <TabPanel>
-                    <ActionForm />
+                    <ActionForm sendMessage={sendMessage} />
                 </TabPanel>
 
                 <TabPanel>
-                    <GoalForm />
+                    <GoalForm sendMessage={sendMessage} />
                 </TabPanel>
             </Tabs>
         </div>

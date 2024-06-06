@@ -1,10 +1,12 @@
 package edu.tufts.hrilab.action;
 
-import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.Database;
+import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.gui.ADBEWrapper;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.web.socket.CloseStatus;
@@ -44,15 +46,48 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
      * GoalManagerHandler inner class. This implements the server.
      */
     public class GoalManagerHandler extends TextWebSocketHandler {
-        private WebSocketSession session;
-
         private final HashMap<Integer, File> aslFileMap;
+        private TRADEServiceInfo submitGoalService;
+        private TRADEServiceInfo submitActionService;
 
         /**
          * Constructs this GoalEndpoint.
          */
         public GoalManagerHandler() {
             aslFileMap = new HashMap<>();
+            try {
+                initializeServices();
+            } catch(TRADEException e) {
+                log.error("Failed to get TRADE services");
+                log.error(e.getMessage());
+            } catch(NullPointerException e) {
+                log.error(e.getMessage());
+            }
+        }
+
+        /**
+         * Find this instance's required TRADE services.
+         */
+        private void initializeServices() throws TRADEException {
+            submitGoalService = TRADE.getAvailableService(
+                new TRADEServiceConstraints()
+                        .name("submitGoal")
+                        .argTypes(Goal.class)
+            );
+            // For some reason there are multiple submitGoal() functions that
+            // take a Predicate (they have the same service string)
+            // ... which should not be happening but anyway...
+            Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
+            for (TRADEServiceInfo service : availableServices) {
+                if (service.serviceString.equals("submitGoal(edu.tufts.hrilab.fol.Predicate)")) {
+                    submitActionService = service;
+                    break;
+                }
+            }
+            if(submitActionService == null)
+                throw new NullPointerException("Could not find submitActionService");
+            if(submitGoalService == null)
+                throw new NullPointerException("Could not find submitGoalService");
         }
 
         /**
@@ -211,17 +246,57 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
         protected void handleTextMessage(@Nonnull WebSocketSession session,
                                          @Nonnull TextMessage message) throws Exception {
             super.handleTextMessage(session, message);
-            this.session = session;
+            JSONObject payload = new JSONObject(message.getPayload());
 
-            String request = (String) new JSONObject(message.getPayload())
-                                                .get("fileId");
-            int requestId = Integer.parseInt(request);
-            File file = aslFileMap.get(requestId);
-            String response = Files.readString(Path.of(file.getPath()));
+            if(payload.has("fileId")) {
+                String request = (String) new JSONObject(message.getPayload())
+                        .get("fileId");
+                int requestId = Integer.parseInt(request);
+                File file = aslFileMap.get(requestId);
+                String response = Files.readString(Path.of(file.getPath()));
 
-            JSONObject responseObject = new JSONObject();
-            responseObject.put("contents", response);
-            session.sendMessage(new TextMessage(responseObject.toString()));
+                JSONObject responseObject = new JSONObject();
+                responseObject.put("contents", response);
+                session.sendMessage(new TextMessage(responseObject.toString()));
+            } else if(payload.has("form")) {
+                // Handle goal submission
+                if(payload.get("form").equals("goal")) {
+                    String agent = payload.getJSONObject("formData")
+                                          .getString("agent");
+                    String goal = payload.getJSONObject("formData")
+                                         .getString("goal");
+                    submitGoalService.call(
+                        Goal.class,
+                        new Goal(Factory.createSymbol(agent),
+                                Factory.createPredicate(goal))
+                    );
+                }
+                // Handle custom action submission
+                else if(payload.get("form").equals("custom")){
+                    String customAction = payload.getJSONObject("formData")
+                                                 .getString("custom");
+                    submitActionService.call(
+                        Goal.class,
+                        Factory.createPredicate(customAction)
+                    );
+                }
+                // Handle generated action submission
+                else {
+                    JSONArray arguments = payload.getJSONArray("formData");
+                    StringBuilder sb = new StringBuilder(arguments.getString(0))
+                            .append('(');
+                    for(int i = 1; i < arguments.length(); i++) {
+                        sb.append(arguments.getString(i))
+                                .append(',');
+                    }
+                    sb.delete(sb.length() - 1, sb.length())
+                            .append(')');
+                    submitActionService.call(
+                        Goal.class,
+                        Factory.createPredicate(sb.toString())
+                    );
+                }
+            }
         }
 
         /**
@@ -230,8 +305,8 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
          * @param session the web socket session this endpoint communicates over
          */
         @Override
-        public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-            this.session = session;
+        public void afterConnectionEstablished(@Nonnull WebSocketSession session)
+                throws Exception {
             log.info("Connection established");
 
             JSONObject message = new JSONObject();
@@ -250,19 +325,6 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             message.put("files", files);
 
             session.sendMessage(new TextMessage(message.toString()));
-        }
-
-        /**
-         * Performs cleanup when the connection is closed.
-         * @param session the session that is ending
-         * @param status close status of the connection
-         * @throws Exception ignored
-         */
-        @Override
-        public void afterConnectionClosed(@Nonnull WebSocketSession session,
-                                          @Nonnull CloseStatus status) throws Exception {
-            super.afterConnectionClosed(session, status);
-            this.session = null;
         }
     }
 }

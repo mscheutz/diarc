@@ -8,13 +8,20 @@
 import React from "react";
 
 const ActionBrowser = ({ actionList, setActionFormContext }) => {
+    // Returns a string[] whose first el't is the name of the action and any
+    // further el'ts are its parameters
     const handleOnClick = (e) => {
-        let actionSignature: string = e.target.innerHTML;
+        const actionSignature: string = e.target.innerHTML;
         const openParenthesis = actionSignature.indexOf("(");
-        actionSignature = actionSignature.slice(openParenthesis + 1, -1);
-        const parameters = actionSignature.split(", ");
-        // take off the "?" at the start of each parameter
-        setActionFormContext(parameters.map((str) => (str.slice(1))));
+        const actionName = actionSignature.slice(0, openParenthesis);
+        const parameterString = actionSignature.slice(openParenthesis + 1, -1);
+        const parameters = parameterString.split(", ");
+        setActionFormContext(
+            [actionName].concat(
+                // take off the "?" at the start of each parameter
+                parameters.map((str) => (str.slice(1)))
+            )
+        );
     };
 
     return (
@@ -22,7 +29,7 @@ const ActionBrowser = ({ actionList, setActionFormContext }) => {
             {actionList.map((item: string, index) => (
                 <p
                     key={index}
-                    className="w-full hover:bg-[#C6E3FA] px-1
+                    className="w-full hover:bg-[#C6E3FA] px-1 font-mono
                         hover:cursor-pointer text-sm leading-4 py-0.5 truncate"
                     onClick={handleOnClick}
                 >

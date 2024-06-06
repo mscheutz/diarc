@@ -56,7 +56,7 @@ const GoalManager = () => {
 
     return (
         <ActionFormContext.Provider value={actionFormContext}>
-            <div className="map-container h-[40rem] w-full flex flex-col gap-3 outline
+            <div className="map-container h-[40rem] w-full flex flex-col outline
                         outline-1 outline-[#d1dbe3] items-center">
                 {/* Upper split pane */}
                 <Allotment className="h-full overflow-scroll">
@@ -73,10 +73,12 @@ const GoalManager = () => {
 
                             {/* File browser */}
                             <Allotment.Pane>
-                                <FileBrowser
-                                    fileTree={fileTree}
-                                    sendMessage={sendMessage}
-                                />
+                                <div className="w-full h-full overflow-y-auto">
+                                    <FileBrowser
+                                        fileTree={fileTree}
+                                        sendMessage={sendMessage}
+                                    />
+                                </div>
                             </Allotment.Pane>
                         </Allotment>
                     </Allotment.Pane>
@@ -87,7 +89,7 @@ const GoalManager = () => {
                         fileContents={fileContents}
                     /> */}
                         <div className="w-full h-full overflow-y-auto">
-                            <ActionGoalForm />
+                            <ActionGoalForm sendMessage={sendMessage} />
                         </div>
                     </Allotment.Pane>
                 </Allotment>

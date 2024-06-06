@@ -687,6 +687,7 @@ public class ExecutionManager implements ActionListener {
   /**
    * Calls {@link #submitGoal(Goal, ExecutionType, long, PriorityTier)} with the default values
    */
+  @TRADEService
   public Goal submitGoal(Predicate g) {
     Goal goal = new Goal(g);
     return submitGoal(goal, ExecutionType.ACT);
