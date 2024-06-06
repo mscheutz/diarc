@@ -45,7 +45,7 @@ const GoalManager = () => {
             setActionList(data.actions.sort());
         }
         if (data.files) {
-            setFileTree(data.files);
+            setFileTree({ name: "", children: [data.files] });
         }
         // if (data.contents) {
         //     setFileContents(data.contents);

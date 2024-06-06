@@ -80,14 +80,16 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
         }
 
         /**
-         * Converts a list of goals into a JSON object where the keys are the
-         * goals' agents and the values are JSON arrays of those agents' goals.
+         * Converts a list of goals into a JSON array of JSON objects. Each
+         * JSON object has a "name" field storing the agent's name and a
+         * "children" field storing the agent's goals as an array. Each goal
+         * is a JSON object with its own "name" field.
          * @param goals a list of goals to convert
-         * @return a JSONObject of goals, grouped by agent
+         * @return a JSON array
          */
-        private JSONObject goals2JSONObject(List<Goal> goals) {
-            if(goals.isEmpty()) return new JSONObject(); // no goals
-            JSONObject result = new JSONObject();
+        private JSONArray goals2JSONArray(List<Goal> goals) {
+            if(goals.isEmpty()) return new JSONArray(); // no goals
+            JSONArray result = new JSONArray();
 
             // Group goals by actor
             goals.sort(Comparator.comparing((Goal o) ->
@@ -95,22 +97,34 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
 
             Symbol groupActor = goals.get(0).getActor();
             JSONArray group = new JSONArray();
-            group.put(goals.get(0).toString());
+            group.put(new JSONObject()
+                    .put("name", goals.get(0).toString()));
             for(int i = 1; i < goals.size(); i++) {
                 Symbol currentActor = goals.get(i).getActor();
                 // If actor matches group, add it
                 if(groupActor.equals(currentActor)) {
-                    group.put(goals.get(i).toString());
+                    group.put(new JSONObject()
+                            .put("name", goals.get(i).toString()));
                 }
                 // If actor is new, then update JSON and start new group
                 else {
-                    result.put(groupActor.toString(), group);
+                    result.put(
+                            new JSONObject()
+                                    .put("name", groupActor.toString())
+                                    .put("children", group)
+                    );
+
                     group = new JSONArray();
-                    group.put(goals.get(i).toString());
+                    group.put(new JSONObject()
+                            .put("name", goals.get(i).toString()));
                     groupActor = goals.get(i).getActor();
                 }
             }
-            result.put(groupActor.toString(), group);
+            result.put(
+                    new JSONObject()
+                            .put("name", groupActor.toString())
+                            .put("children", group)
+            );
             return result;
         }
 
@@ -121,13 +135,22 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
         public void updateGoals() {
             try {
                 if (session != null) {
-                    JSONObject active = goals2JSONObject(
-                            getActiveGoals.call(List.class));
-                    JSONObject past = goals2JSONObject(
-                            getPastGoals.call(List.class));
+                    JSONObject active = new JSONObject()
+                            .put("name", "active")
+                            .put("children", goals2JSONArray(
+                                    getActiveGoals.call(List.class))
+                            );
+                    JSONObject past = new JSONObject()
+                            .put("name", "past")
+                            .put("children", goals2JSONArray(
+                                    getPastGoals.call(List.class))
+                            );
+                    JSONArray children = new JSONArray()
+                            .put(active)
+                            .put(past);
                     JSONObject all = new JSONObject()
-                            .put("active", active)
-                            .put("past", past);
+                            .put("name", "")
+                            .put("children", children);
                     session.sendMessage(new TextMessage(all.toString()));
                 } else {
                     log.error("Could not send message: no active session");

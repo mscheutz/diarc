@@ -6,37 +6,43 @@
  */
 
 import React, { useState, useEffect } from "react";
+
 import useWebSocket from "react-use-websocket";
 
+import {
+    faCaretDown,
+    faCaretRight,
+    faFolder,
+    faRobot,
+    faFlag
+} from "@fortawesome/free-solid-svg-icons"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-import NestedList from "../NestedList";
+import TreeView, { flattenTree } from "react-accessible-treeview"
+
+import "./GoalViewer.css";
 import ConnectionIndicator from "./ConnectionIndicator";
 
 const GoalViewer: React.FunctionComponent<{}> = () => {
-    const [activeGoals, setActiveGoals] = useState({})
-    const [pastGoals, setPastGoals] = useState({})
-
-    const [activeDOM, setActiveDOM] = useState(
-        <div className="px-5">
-            <div className="text-xl mb-2">Active goals</div>
-        </div>
-    )
-    const [pastDOM, setPastDOM] = useState(
-        <div className="px-5">
-            <div className="text-xl mb-2">Past goals</div>
-        </div>
-    )
-
-    const createList = (goals, isActive: boolean) => {
-        return (
-            <div className="px-5">
-                <div className="text-xl mb-2">
-                    {(isActive ? "Active" : "Past") + " goals"}
-                </div>
-                {NestedList(goals)}
-            </div>
-        );
-    };
+    const [goals, setGoals] = useState({
+        name: "",
+        children: [
+            {
+                id: "1", name: "active", children: [{
+                    id: "2", name: "dempster", children: [{
+                        id: "3", name: "goal1"
+                    }]
+                }]
+            },
+            {
+                id: "4", name: "past", children: [{
+                    id: "5", name: "shafer", children: [{
+                        id: "6", name: "goal2"
+                    }]
+                }]
+            }
+        ]
+    });
 
     const { sendMessage, lastMessage, readyState } =
         useWebSocket("ws://localhost:8080/goalViewer");
@@ -44,24 +50,61 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
     useEffect(() => {
         if (lastMessage !== null) {
             const data = JSON.parse(lastMessage.data);
-            setActiveGoals(data.active);
-            setPastGoals(data.past);
-            setActiveDOM(createList(activeGoals, true));
-            setPastDOM(createList(pastGoals, false));
+            setGoals(data);
         }
-    }, [activeGoals.toString(), pastGoals.toString(), lastMessage]);
+    }, [lastMessage]);
+
+    const getTree = () => {
+        return (
+            <TreeView
+                data={flattenTree(goals)}
+                className="basic"
+                // onNodeSelect={getFileOnSelect}
+                nodeRenderer={
+                    ({ element, getNodeProps, level, isExpanded }) => {
+                        return (
+                            <div
+                                {...getNodeProps()}
+                                style={{ paddingLeft: 20 * level - 15 }}
+                            >
+                                {level < 3 && // group or agent (not goal)
+                                    (isExpanded
+                                        ? <>
+                                            <FontAwesomeIcon icon={faCaretDown} />
+                                            &nbsp;
+                                        </>
+                                        : <>
+                                            <FontAwesomeIcon icon={faCaretRight} />
+                                            &nbsp;
+                                        </>)}
+                                {level === 1 &&
+                                    <FontAwesomeIcon icon={faFolder}
+                                        color="#ffdc55" />}
+                                {level === 2 &&
+                                    <FontAwesomeIcon icon={faRobot}
+                                        color="#4d4dff" />}
+                                {level === 3 &&
+                                    <FontAwesomeIcon icon={faFlag}
+                                        color="#f00" />}
+                                {" " + element.name}
+                            </div>
+                        )
+                    }
+                }
+            />
+        );
+    };
 
     return (
         <div className="flex flex-col w-full h-[40rem] outline outline-1
                         outline-[#d1dbe3] justify-between">
-            <div>
+            <div className="flex flex-col p-5 grow">
                 {/* Header */}
-                <div className="p-5 text-2xl">DIARC Goal Viewer</div>
+                <div className="pb-3 text-2xl">DIARC Goal Viewer</div>
 
                 {/* Actual lists */}
-                <div className="grid grid-cols-2">
-                    {activeDOM}
-                    {pastDOM}
+                <div className="shadow-md grow">
+                    {getTree()}
                 </div>
             </div>
 
