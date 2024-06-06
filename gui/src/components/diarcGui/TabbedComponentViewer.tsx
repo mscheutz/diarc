@@ -169,21 +169,9 @@ export default TabbedComponentViewer;
 
 /*
 TODO
-* make sure the goal manager gui is loaded
-* consider names for the goal viewer/manager components
 o goal viewer
     o be able to ___ current goals
         o pause
         o resume
         o cancel
-o goal manager
-    * don't need editor (for now)
-    * remove return values from actions
-    o tabbed panel
-        o submit actions
-            * should create a form from action parameters
-        o submit goals
-            * agent field
-            * goal field
-
 */

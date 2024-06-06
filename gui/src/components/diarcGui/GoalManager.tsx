@@ -17,6 +17,7 @@ import ActionBrowser from "./ActionBrowser";
 import FileBrowser from "./FileBrowser";
 import ActionGoalForm from "./ActionGoalForm";
 import ActionFormContext from "./ActionFormContext";
+import ConnectionIndicator from "./ConnectionIndicator";
 
 const GoalManager = () => {
     const { sendMessage, lastMessage, readyState } =
@@ -95,7 +96,7 @@ const GoalManager = () => {
                 </Allotment>
 
                 {/* Everything else */}
-                <div className="outline outline-1 w-full">Bottom stuff</div>
+                <ConnectionIndicator readyState={readyState} />
             </div>
         </ActionFormContext.Provider>
     );

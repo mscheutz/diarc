@@ -11,6 +11,7 @@ import React, { useContext } from "react";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 
 import { useForm } from "react-hook-form";
+
 import ActionFormContext from "./ActionFormContext";
 
 const textBoxClassName = "block box-border w-full rounded mt-1 mb-2 text-sm "
@@ -82,7 +83,7 @@ const ActionForm = ({ sendMessage }) => {
             >
                 <label className="text-lg">Custom Action</label>
                 <textarea {...custom.register("custom")}
-                    className={textBoxClassName} />
+                    className={textBoxClassName} required />
 
                 <input type="submit" value="Submit"
                     // From Button.tsx
