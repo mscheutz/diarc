@@ -25,7 +25,7 @@ const ActionBrowser = ({ actionList, setActionFormContext }) => {
     };
 
     return (
-        <div className="w-full h-full overflow-auto">
+        <div className="w-full h-full overflow-auto p-5">
             {actionList.map((item: string, index) => (
                 <p
                     key={index}

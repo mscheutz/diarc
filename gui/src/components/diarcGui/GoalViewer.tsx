@@ -97,18 +97,19 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
 
     return (
         <div className="flex flex-col w-full h-[40rem] outline outline-1
-                        outline-[#d1dbe3] justify-between">
-            <div className="flex flex-col p-5 grow">
+                        outline-[#d1dbe3] justify-between shadow-md">
+            <div className="flex flex-col p-5 grow gap-5">
                 {/* Header */}
-                <div className="pb-3 text-2xl">DIARC Goal Viewer</div>
+                <div className="text-2xl">DIARC Goal Viewer</div>
 
                 {/* Actual lists */}
-                <div className="shadow-md grow">
+                <div className="shadow-md grow outline outline-1
+                                outline-[#d1dbe3] p-5">
                     {getTree()}
                 </div>
-            </div>
 
-            <ConnectionIndicator readyState={readyState} />
+                <ConnectionIndicator readyState={readyState} />
+            </div>
         </div>
     )
 }

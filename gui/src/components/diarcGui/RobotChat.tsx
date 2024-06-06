@@ -244,10 +244,10 @@ const RobotChat = (
     }
 
     return (
-        <div className='h-[40rem]'>
+        <div className='h-[40rem] shadow-md'>
             <MainContainer>
                 <Sidebar position="left">
-                    <div className="flex flex-col justify-between h-full">
+                    <div className="flex flex-col justify-between h-full p-5">
 
                         <div className="flex flex-col space-y-2">
                             {/* Name input */}

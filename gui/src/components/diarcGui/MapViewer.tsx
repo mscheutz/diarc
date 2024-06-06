@@ -143,10 +143,10 @@ const MapViewer = () => {
     );
 
     return (
-        <div className="map-container h-full w-full flex flex-col gap-3 outline
-                        outline-1 outline-[#d1dbe3] items-center">
+        <div className="map-container h-full w-full flex flex-col gap-5 outline
+                        outline-1 outline-[#d1dbe3] items-center p-5">
             {/* Button menu */}
-            <div className="flex flex-row justify-center gap-2 mt-3">
+            <div className="flex flex-row justify-center gap-2">
                 <Button
                     onClick={fetchMapData}>
                     Fetch Map Data

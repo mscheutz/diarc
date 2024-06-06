@@ -177,7 +177,7 @@ const GoalForm = ({ sendMessage }) => {
 
 const ActionGoalForm = ({ sendMessage }) => {
     return (
-        <div>
+        <div className="p-5">
             <Tabs>
                 <TabList>
                     <Tab>Submit Action</Tab>

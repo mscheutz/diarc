@@ -27,7 +27,7 @@ const FileBrowser = ({ fileTree, sendMessage }) => {
     return (
         <TreeView
             data={flattenTree(fileTree)}
-            className="basic"
+            className="basic p-5"
             onNodeSelect={getFileOnSelect}
             nodeRenderer={
                 ({ element, getNodeProps, level, isBranch, isExpanded }) => {

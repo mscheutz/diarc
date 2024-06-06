@@ -38,7 +38,7 @@ const ConnectionIndicator = ({ readyState }) => {
 
     return (
         <div className='outline outline-1 p-2 outline-[#e5e7eb]
-                                        text-center w-full'>
+                        shadow-md text-center w-full'>
             Status: &nbsp;
             <FontAwesomeIcon icon={statusIcon}
                 color={statusColor}></FontAwesomeIcon>
