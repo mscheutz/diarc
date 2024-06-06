@@ -11,6 +11,14 @@ java {
   }
 }
 
+tasks.register<Copy>("copyGitHooks") {
+  from(file(rootDir.path + "/git-hooks"))
+  include("pre-commit")
+  into(rootDir.path + "/.git/hooks")
+}
+tasks.named("compileJava").get().dependsOn("copyGitHooks")
+
+
 // the repositories used to search for dependencies
 repositories {
   mavenCentral()
