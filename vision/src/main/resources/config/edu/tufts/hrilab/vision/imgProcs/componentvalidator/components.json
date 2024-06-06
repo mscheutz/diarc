@@ -1,0 +1,17 @@
+{
+    "processor": {
+      "type": "category",
+      "arity": 1
+    },
+    "config": {
+      "model": "semanticEncoder",
+      "type" : "onnx",
+      "backend": "CPU"
+    },
+    "predicates": [
+      {
+        "name": "comp",
+        "classID": 0
+      }
+    ]
+}

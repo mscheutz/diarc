@@ -21,6 +21,16 @@ SET(SOURCES
 	)
 
 # optional sources
+if (OpenCV_dnn_FOUND)
+	SET(SOURCES ${SOURCES}
+	    validator/ComponentValidator.cpp
+		)
+	# if (NOT EXISTS "${YOLO_MODEL_PATH}")
+	# 	message("Downloading YOLOv3 model ${YOLO_MODEL_URL}")
+	# 	file(DOWNLOAD "${YOLO_MODEL_URL}" "${YOLO_MODEL_PATH}")
+	# endif(NOT EXISTS "${YOLO_MODEL_PATH}")
+endif(OpenCV3_dnn_FOUND)
+
 if (V4R_V0_FOUND)
 	SET(SOURCES ${SOURCES}
 		saliency/ColorProcessor.cpp

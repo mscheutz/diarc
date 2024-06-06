@@ -22,6 +22,10 @@
 #include "validator/GlobalFeatureValidator.hpp"
 #include "validator/SpatialRelationValidator.hpp"
 
+#if defined(OPENCV_DNN)
+#include "validator/ComponentValidator.hpp"
+#endif //OPENCV_DNN
+
 #ifdef USE_V4R_V0
 //#include "saliency/RelativeHeightProcessor.hpp"
 //#include "saliency/SurfaceOrientationProcessor.hpp"
@@ -125,6 +129,13 @@ ImageProcessor::Ptr ImageProcessor::get(const ImageProcessorType type, const lon
       return GlobalFeatureValidator::Ptr(new GlobalFeatureValidator(processorId, imgWidth, imgHeight));
     case SIZEVALIDATOR:
       return SizeValidator::Ptr(new SizeValidator(processorId, imgWidth, imgHeight, isStereo));
+    case COMPONENTVALIDATOR:
+#if defined(OPENCV_DNN)
+      return ComponentValidator::Ptr(new ComponentValidator(processorId, imgWidth, imgHeight));
+#else
+      LOG4CXX_ERROR(factoryLogger, "ComponentValidator not available. This require OpenCV DNN module 4.5+.");
+      break;
+#endif
     case SHAPEVALIDATOR:
 #ifdef USE_V4R_V0
       return ShapeValidator::Ptr(new ShapeValidator(processorId, imgWidth, imgHeight, isStereo));

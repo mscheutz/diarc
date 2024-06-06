@@ -4,10 +4,16 @@
 
 package edu.tufts.hrilab.vision.imgproc;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import edu.tufts.hrilab.vision.detector.swig.NativeDetector;
 import edu.tufts.hrilab.vision.imgproc.swig.ImageProcessorType;
 import edu.tufts.hrilab.vision.common.swig.CommonModule;
-import java.util.ArrayList;
-import java.util.HashSet;
+
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.*;
 import javax.swing.AbstractListModel;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -16,9 +22,6 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.vision.util.NonEDTListModel;
 import edu.tufts.hrilab.vision.util.PredicateHelper;
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
 
 import edu.tufts.hrilab.vision.visionproc.Requirement;
 import org.slf4j.Logger;
@@ -87,7 +90,6 @@ public class AvailableImageProcessors extends AbstractListModel {
       String predicateName;
       int arity;
       ImageProcessorType type;
-      String filename;
       String[] requirements;
       String[] dependencies;
 
@@ -143,16 +145,6 @@ public class AvailableImageProcessors extends AbstractListModel {
             }
           }
 
-          //get config filename (if any)
-          filename = null;
-          if (processor.containsAttribute("config")) {
-            try {
-              filename = processor.string("config");
-            } catch (RuntimeException e) {
-              log.error("Could not parse " + type + "'s config filename.");
-            }
-          }
-
           //add type to available options
           if (!typesDetail.containsKey(type)) {
             ImageProcessorDetail newProcDetail = new ImageProcessorDetail(type, imgWidth, imgHeight, isStereo);
@@ -170,64 +162,136 @@ public class AvailableImageProcessors extends AbstractListModel {
             typesDetail.put(type, newProcDetail);
             orderedTypesDetail.add(newProcDetail);
           } else {
-            log.warn(String.format("\"%s\" ImageProcessor has already been loaded. Ignoring duplicate request.",
-                                   type.toString()));
+            log.warn("{} ImageProcessor has already been loaded. Ignoring duplicate request.", type);
           }
 
-          //parase ImageProcessor's config file to get info for each predicate option
+          //parse ImageProcessor's config file (if any) to get info for each predicate option
+          String imgProcConfigFile = null;
+          if (processor.containsAttribute("config")) {
+            try {
+              imgProcConfigFile = processor.string("config");
+            } catch (RuntimeException e) {
+              log.error("Could not parse {}'s config filename.", type);
+            }
+          }
+
           try {
-            if (filename != null && !filename.isEmpty()) {
-              filename = dir + filename;
-              Xml ipConfig = new Xml(filename, "processor");
-              predicateType = ipConfig.string("type");
-              arity = ipConfig.numInt("arity");
-              for (Xml predicate : ipConfig.children("predicate")) {
+            if (imgProcConfigFile != null && !imgProcConfigFile.isEmpty()) {
 
-                predicateName = predicate.string("name");
-                if (arity == 1) {
-                  advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
-                } else if (arity == 2) {
-                  advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
-                } else {
-                  log.error(String.format("Can't handle Predicates with arity: %d.", arity));
-                  continue;
-                }
-
-                //testing
-                //for (Term n : processorOptionInfo.keySet()) {
-                //  if (name.equals(n)) {
-                //    System.out.println("ImgProc: " + name.toString() + " ImgProc: " + n.toString() + " Equal");
-                //  }
-                //}
-                //end testing
-                //add ImageProcessor option
-                HashMap<String, List<InstanceInfo>> descriptorMatches = processorOptionInfo.get(predicateName);
-                if (descriptorMatches == null) {
-                  descriptorMatches = new HashMap();
-                  processorOptionInfo.put(predicateName, descriptorMatches);
-                }
-                List<InstanceInfo> processorOptions = descriptorMatches.get(predicateType);
-                if (processorOptions == null) {
-                  processorOptions = new ArrayList();
-                  descriptorMatches.put(predicateType, processorOptions);
-                  advertisedPredicates.add(advertisement);
-                }
-                processorOptions.add(new InstanceInfo(type, filename));
-
+              imgProcConfigFile = dir + imgProcConfigFile;
+              if (imgProcConfigFile.endsWith(".json")) {
+                parseConfigFileJSON(imgProcConfigFile, type);
+              } else if (imgProcConfigFile.endsWith(".xml")) {
+                parseConfigFileXML(imgProcConfigFile, type);
+              } else {
+                log.error("Invalid image processor config file format. Must be XML or JSON. File: " + imgProcConfigFile);
               }
-              //add config file info for ImageProcessorType
-              configFiles.put(type, filename);
+
             }
           } catch (Exception e) {
-            log.error(String.format("Error parsing config file: %s.", filename), e);
+            log.error("Error parsing config file: {}.", imgProcConfigFile, e);
           }
 
         }
       } catch (Exception e) {
-        log.error(String.format("Error parsing config file: %s.", configFile), e);
+        log.error("Error parsing config file: {}.", configFile, e);
       }
     }
 
+  }
+
+  private void parseConfigFileJSON(String configFile, ImageProcessorType type) throws FileNotFoundException {
+    Predicate advertisement;
+    String predicateType;
+    int arity;
+    String predicateName;
+
+    JsonParser parser = new JsonParser();
+    JsonObject root = parser.parse(new FileReader(configFile)).getAsJsonObject();
+    predicateType = root.getAsJsonObject("processor").get("type").getAsString();
+    arity = root.getAsJsonObject("processor").get("arity").getAsInt();
+
+    if (arity == 1) {
+      advertisement = new Predicate(predicateType, new Variable("X", PredicateHelper.varType));
+    } else if (arity == 2) {
+      advertisement = new Predicate(predicateType, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
+    } else {
+      log.error(String.format("Can't handle Predicates with arity: %d.", arity));
+      return;
+    }
+
+    Iterator<JsonElement> predicateItr = root.getAsJsonArray("predicates").iterator();
+    while (predicateItr.hasNext()) {
+      JsonObject predicateObj = predicateItr.next().getAsJsonObject();
+
+      predicateName = predicateObj.get("name").getAsString();
+      if (arity == 1) {
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
+      } else if (arity == 2) {
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
+      } else {
+        log.error("Can't handle Predicates with arity: {}}.", arity);
+        continue;
+      }
+
+      //add ImageProcessor option
+      HashMap<String, List<InstanceInfo>> descriptorMatches = processorOptionInfo.get(predicateName);
+      if (descriptorMatches == null) {
+        descriptorMatches = new HashMap();
+        processorOptionInfo.put(predicateName, descriptorMatches);
+      }
+      List<InstanceInfo> processorOptions = descriptorMatches.get(predicateType);
+      if (processorOptions == null) {
+        processorOptions = new ArrayList();
+        descriptorMatches.put(predicateType, processorOptions);
+        advertisedPredicates.add(advertisement);
+      }
+      processorOptions.add(new InstanceInfo(type, configFile));
+
+    }
+
+    //add config file info for ImageProcessorType
+    configFiles.put(type, configFile);
+  }
+
+  private void parseConfigFileXML(String configFile, ImageProcessorType type) throws FileNotFoundException {
+    Predicate advertisement;
+    String predicateType;
+    int arity;
+    String predicateName;
+
+    Xml ipConfig = new Xml(configFile, "processor");
+    predicateType = ipConfig.string("type");
+    arity = ipConfig.numInt("arity");
+    for (Xml predicate : ipConfig.children("predicate")) {
+
+      predicateName = predicate.string("name");
+      if (arity == 1) {
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
+      } else if (arity == 2) {
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
+      } else {
+        log.error("Can't handle Predicates with arity: {}}.", arity);
+        continue;
+      }
+
+      //add ImageProcessor option
+      HashMap<String, List<InstanceInfo>> descriptorMatches = processorOptionInfo.get(predicateName);
+      if (descriptorMatches == null) {
+        descriptorMatches = new HashMap();
+        processorOptionInfo.put(predicateName, descriptorMatches);
+      }
+      List<InstanceInfo> processorOptions = descriptorMatches.get(predicateType);
+      if (processorOptions == null) {
+        processorOptions = new ArrayList();
+        descriptorMatches.put(predicateType, processorOptions);
+        advertisedPredicates.add(advertisement);
+      }
+      processorOptions.add(new InstanceInfo(type, configFile));
+
+    }
+    //add config file info for ImageProcessorType
+    configFiles.put(type, configFile);
   }
 
   /**
