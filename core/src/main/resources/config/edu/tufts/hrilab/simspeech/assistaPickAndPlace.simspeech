@@ -1,0 +1,18 @@
+Get the corn to the hotplate
+Get a chicken to the cooktop
+-
+define new ingredient chicken
+pose prep area
+detect chicken
+-
+get a chicken to the cooktop
+-
+Get the chicken to the prep area
+-
+go to the hotplate
+pick up the corn
+go to the prep area
+put down the corn
+-
+Get the corn in the serving box
+Get the chicken in the serving box
