@@ -121,14 +121,17 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
         String strippedName = stripQuotesFromMorpheme(propName);
 
         // TODO: this imposes an ordering constraint on diarc components (i.e., RR needs to be up first)
-        try {
-          TRADEServiceInfo injectTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("injectDictionaryEntry"));
-          injectTSI.call(void.class, strippedName, "RN", propName + ":" + kbName, "VAR");
-          injectTSI.call(void.class, strippedName, "REF", propName + ":" + kbName, "DEFINITE");
-          injectTSI.call(void.class, strippedName, "DESC", propName + ":property", "");
-          injectTSI.call(void.class, strippedName, "DN", propName + ":property", "");
-        } catch (TRADEException e) {
-          log.error("[addPropertiesHandled] unable to add dictionary entry for " + propName, e);
+        List<TRADEServiceInfo> injectTSIs = new ArrayList<>(TRADE.getAvailableServices(new TRADEServiceConstraints().name("injectDictionaryEntry")));
+        if (!injectTSIs.isEmpty()) {
+          try {
+            TRADEServiceInfo injectTSI = injectTSIs.get(0);
+            injectTSI.call(void.class, strippedName, "RN", propName + ":" + kbName, "VAR");
+            injectTSI.call(void.class, strippedName, "REF", propName + ":" + kbName, "DEFINITE");
+            injectTSI.call(void.class, strippedName, "DESC", propName + ":property", "");
+            injectTSI.call(void.class, strippedName, "DN", propName + ":property", "");
+          } catch (TRADEException e) {
+            log.error("[addPropertiesHandled] unable to add dictionary entry for " + propName, e);
+          }
         }
 
       }
@@ -464,7 +467,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
 
   /**
    * Remove quotes from input String.
-   *
+   * <p>
    * TODO: move this method to utility class
    *
    * @param input String with quotes

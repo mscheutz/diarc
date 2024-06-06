@@ -111,7 +111,7 @@ tasks.named("processMockResources") {
 }
 
 val mockJarTask = tasks.register<Jar>("mockJar") {
-  from(sourceSets.getByName("mock").output)
+  from(sourceSets.getByName("mock").output + sourceSets.getByName("main").resources)
   archiveBaseName = "diarc-vision-mock"
   archiveVersion = properties["diarc.version"].toString()
   archiveExtension = "jar"

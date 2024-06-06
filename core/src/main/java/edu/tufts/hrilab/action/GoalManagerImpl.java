@@ -33,9 +33,11 @@ import edu.tufts.hrilab.util.Util;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import edu.tufts.hrilab.util.resource.Resources;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -79,7 +81,7 @@ public class GoalManagerImpl extends DiarcComponent {
   /**
    * Default pddl file directory to make command line args cleaner.
    */
-  private String pddlFireDir = "resources/config/edu/tufts/hrilab/action/pddl";
+  private String pddlFireDir = "config/edu/tufts/hrilab/action/pddl";
   /**
    * PDDL domain and problem file to load into the DIARC.
    */
@@ -197,17 +199,7 @@ public class GoalManagerImpl extends DiarcComponent {
 
     // Add PDDL model to action db and belief
     if (pddlFiles != null) {
-      String pddlDomainFilename = pddlFireDir + File.separator + pddlFiles.getLeft();
-      String pddlProblemFilename = pddlFireDir + File.separator + pddlFiles.getRight();
-      File file = new File(pddlDomainFilename);
-      if (!file.exists()) {
-        pddlDomainFilename = pddlFiles.getLeft();
-      }
-      file = new File(pddlProblemFilename);
-      if (!file.exists()) {
-        pddlProblemFilename = pddlFiles.getRight();
-      }
-      loadPDDLFiles(pddlDomainFilename, pddlProblemFilename);
+      loadPDDLFiles(Resources.createFilepath(pddlFireDir,pddlFiles.getLeft()), Resources.createFilepath(pddlFireDir,pddlFiles.getRight()));
     }
 
     // Add performance models

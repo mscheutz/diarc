@@ -72,7 +72,7 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
   private boolean registerForBeliefNotifications;
 
   private String refsConfigFile;
-  private String refsConfigDir = "config/edu/tufts/hrilab/vision/";
+  private String refsConfigDir = "config/edu/tufts/hrilab/vision";
 
   private SceneGenerator selectedScene;
 
