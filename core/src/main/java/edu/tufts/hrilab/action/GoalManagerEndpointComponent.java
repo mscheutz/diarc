@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 
 public class GoalManagerEndpointComponent extends DiarcComponent {
     private final GoalManagerHandler goalManagerHandler;
-    public final String ACTION_SCRIPT_PATH = "../core/src/main/resources/config/edu/tufts/hrilab/action/asl";
+    public final String ACTION_SCRIPT_PATH = "core/src/main/resources/config/edu/tufts/hrilab/action/asl";
 
     /**
      * Constructor.

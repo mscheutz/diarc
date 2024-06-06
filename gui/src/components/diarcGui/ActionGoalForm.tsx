@@ -13,7 +13,7 @@ import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import { useForm } from "react-hook-form";
 import ActionFormContext from "./ActionFormContext";
 
-const textBoxClassName = "block box-border w-full rounded mt-2 mb-4 text-sm "
+const textBoxClassName = "block box-border w-full rounded mt-1 mb-2 text-sm "
     + "border border-slate-500 p-2";
 const submitClassName = "bg-slate-900 text-white hover:bg-slate-800 "
     + "dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-100 "
@@ -63,7 +63,7 @@ const ActionForm = () => {
         <div className="flex flex-col gap-1 w-full h-full">
             <form
                 onSubmit={custom.handleSubmit(onSubmitCustom)}
-                className="flex flex-col mx-5 my-3"
+                className="flex flex-col mx-5 my-4"
             >
                 <label className="text-lg">Custom Action</label>
                 <textarea {...custom.register("custom")}
@@ -81,7 +81,7 @@ const ActionForm = () => {
 
             <form
                 onSubmit={generated.handleSubmit(onSubmitGenerated)}
-                className="flex flex-col mx-5 my-3"
+                className="flex flex-col mx-5 my-4"
             >
                 <label className="text-lg">Selected Action</label>
 

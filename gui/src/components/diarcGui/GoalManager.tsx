@@ -73,12 +73,10 @@ const GoalManager = () => {
 
                             {/* File browser */}
                             <Allotment.Pane>
-                                <div className="w-full h-full overflow-y-auto">
-                                    <FileBrowser
-                                        fileTree={fileTree}
-                                        sendMessage={sendMessage}
-                                    />
-                                </div>
+                                <FileBrowser
+                                    fileTree={fileTree}
+                                    sendMessage={sendMessage}
+                                />
                             </Allotment.Pane>
                         </Allotment>
                     </Allotment.Pane>
@@ -88,7 +86,9 @@ const GoalManager = () => {
                         {/* <FileEditor
                         fileContents={fileContents}
                     /> */}
-                        <ActionGoalForm />
+                        <div className="w-full h-full overflow-y-auto">
+                            <ActionGoalForm />
+                        </div>
                     </Allotment.Pane>
                 </Allotment>
 
