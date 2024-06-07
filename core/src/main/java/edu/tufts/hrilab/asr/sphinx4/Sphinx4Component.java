@@ -1,7 +1,7 @@
 /*
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
-package edu.tufts.hrilab.sphinx4;
+package edu.tufts.hrilab.asr.sphinx4;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
@@ -23,7 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import edu.cmu.sphinx.result.WordResult;
 
-import edu.tufts.hrilab.sphinx4.gui.Sphinx4GUIPanel;
+import edu.tufts.hrilab.asr.sphinx4.gui.Sphinx4GUIPanel;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -44,7 +44,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
   private Queue<SpeechResult> speechResults = new LinkedList<>();
 
   boolean useDefaultConfig;
-  private final String defaultRecognizerConfig = "resource:/config/edu/tufts/hrilab/sphinx4/defaultConfig.xml";
+  private final String defaultRecognizerConfig = "resource:/config/edu/tufts/hrilab/asr/sphinx4/defaultConfig.xml";
 
   private final String defaultAcousticModel = "resource:/edu/cmu/sphinx/models/en-us/en-us";
   private final String defaultDictionary = "resource:/edu/cmu/sphinx/models/en-us/cmudict-en-us.dict";
@@ -124,7 +124,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
 
 
     if (useGrammar) {
-      configuration.setGrammarPath("resource:/config/edu/tufts/hrilab/sphinx4/");
+      configuration.setGrammarPath("resource:/config/edu/tufts/hrilab/asr/sphinx4/");
       configuration.setGrammarName(grammarName);
       configuration.setUseGrammar(true);
     } else {
@@ -157,7 +157,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
   }
 
   public void setConfig(String path) {
-    recognizerConfig = "resource:/config/edu/tufts/hrilab/sphinx4/" + path;
+    recognizerConfig = "resource:/config/edu/tufts/hrilab/asr/sphinx4/" + path;
   }
 
   public void setGrammar(String path) {
@@ -398,7 +398,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("grammar").hasArg().argName("path").desc("set grammar. File must be located in /resources/config/edu/tufts/hrilab/sphinx4/").build());
+    options.add(Option.builder("grammar").hasArg().argName("path").desc("set grammar. File must be located in /resources/config/edu/tufts/hrilab/asr/sphinx4/").build());
     options.add(Option.builder("nlp").desc("use nlp").build());
     options.add(Option.builder("oov").desc("use ASR for OOV detection").build());
     options.add(Option.builder("config").hasArg().argName("path").desc("set relative path to Sphinx4 config file (if not specified, will use a default config)").build());
