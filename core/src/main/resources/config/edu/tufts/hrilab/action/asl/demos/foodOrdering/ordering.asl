@@ -53,16 +53,19 @@ import java.lang.Integer;
     edu.tufts.hrilab.fol.Symbol !right="rightArm:yumi";
     edu.tufts.hrilab.fol.Symbol !detectionArea;
 
-
-    !bindings = act:askQuestionFromString(?actor,"Where is it located?", pattern(area(X)));
+    !bindings = act:askQuestionFromString(?actor,"それはどこにありますか？", pattern(area(X)));
+    //!bindings = act:askQuestionFromString(?actor,"Where is it located?", pattern(area(X)));
     !area= op:get(!bindings, !x);
 
-    !bindings = act:askQuestionFromString(?actor,"Okay, what vision job is used to detect it?", job(X));
+    //!bindings = act:askQuestionFromString(?actor,"Okay, what vision job is used to detect it?", job(X));
+    !bindings = act:askQuestionFromString(?actor,"OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
     !job = op:get(!bindings, !x);
 
     act:defineIngredientHelper(?descriptor,!area,!job);
 
-    !bindings = act:askQuestionFromString(?actor,"At which area should I look for a ?descriptor?", pattern(area(X)));
+    !bindings = act:askQuestionFromString(?actor,"OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
+    //!bindings = act:askQuestionFromString(?actor,"OK、どのあたりで?descriptorを探せばいいですか？", job(X));
+    //!bindings = act:askQuestionFromString(?actor,"At which area should I look for a ?descriptor?", pattern(area(X)));
     !detectionArea = op:get(!bindings, !x);
 
     !right.act:goTo(!detectionArea);
@@ -73,7 +76,9 @@ import java.lang.Integer;
     op:sleep(2000);
     !right.act:goTo(!detectionArea);
 
-    act:generateResponseFromString("Okay, I know what ?descriptor is");
+    act:generateResponseFromString("OK、鶏肉が何か分かりました。");
+    //act:generateResponseFromString("OK、?descriptorが何か分かりました。");
+    //act:generateResponseFromString("Okay, I know what ?descriptor is");
 }
 
 () = defineIngredientHelper["helper method to standardize interaction based item definition with asl based definition"](Symbol ?descriptor, Symbol ?area, Symbol ?job){

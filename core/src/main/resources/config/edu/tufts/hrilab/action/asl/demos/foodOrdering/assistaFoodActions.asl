@@ -136,6 +136,7 @@ import java.util.Map;
 () = gotocamerapose["moves to ?pose1, from ?pose2"](edu.tufts.hrilab.fol.Symbol ?pose1:pose, edu.tufts.hrilab.fol.Symbol ?pose2:pose) {
     conditions : {
         pre : at(?actor, ?pose2);
+        pre : reachable(?actor, ?pose2);
     }
     effects : {
         success : not(at(?actor, ?pose2));
@@ -193,15 +194,18 @@ import java.util.Map;
     Symbol !pose;
     Symbol !job;
 
-    !bindings = act:askQuestionFromString(?actor,"Where is it located?", pose(X));
+    !bindings = act:askQuestionFromString(?actor,"それはどこにありますか？", pose(X));
+    //!bindings = act:askQuestionFromString(?actor,"Where is it located?", pose(X));
     !pose= op:get(!bindings, !x);
 
-    !bindings = act:askQuestionFromString(?actor,"Okay, what vision job is used to detect it?", job(X));
+    !bindings = act:askQuestionFromString(?actor,"OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
+    //!bindings = act:askQuestionFromString(?actor,"Okay, what vision job is used to detect it?", job(X));
     !job = op:get(!bindings, !x);
 
     act:defineIngredientHelper(?descriptor,!pose,!job);
 
-    act:generateResponseFromString("Okay, I know what ?descriptor is");
+    act:generateResponseFromString("OK、鶏肉が何か分かりました。");
+    //act:generateResponseFromString("Okay, I know what ?descriptor is");
 }
 
 () = defineIngredientHelper["helper method to standardize interaction based item definition with asl based definition"](Symbol ?descriptor, Symbol ?pose, Symbol ?job){
@@ -231,4 +235,36 @@ import java.util.Map;
         ?result= op:get(!binding, !queryKey);
         op:log("debug", "[getBinding] query ?queryPred result: ?result");
     }
+}
+
+() = getingredient(Symbol ?actor:mobileManipulator, Symbol ?refId:physobj, Symbol ?itemType:property,
+                   Symbol ?perceptionArea:pose, Symbol ?putdownArea:pose) {
+
+    conditions : {
+        pre : property_of(?refId, ?itemType);
+        pre : observableAt(?itemType,?perceptionArea);
+        pre : not(beenperceived(?refId));
+        pre : free(?actor);
+        pre : reachable(?actor, ?perceptionArea);
+        pre : reachable(?actor, ?putdownArea);
+    }
+    effects : {
+        success : beenperceived(?refId);
+        success : at(?refId, ?putdownArea);
+    }
+
+    java.util.Map !bindings;
+    Variable !x = "X";
+    Predicate !response;
+
+    java.lang.String !questionString;
+
+    !questionString = act:getQuestionFromRefs(?itemType, ?perceptionArea, ?putdownArea);
+
+    //!bindings = act:askQuestionFromString(?actor, !questionString, got(X));
+    //TODO: hardcoded to pantry/corn/cooktop for this demo - don't know how to generally do ref replacement in Japanese but theoretically could
+    //      in the method above
+    !bindings = act:askQuestionFromString(?actor, "鶏肉を食料庫からクックトップまで持ってきてくれませんか？", got(X));
+
+    !response = op:get(!bindings, !x);
 }

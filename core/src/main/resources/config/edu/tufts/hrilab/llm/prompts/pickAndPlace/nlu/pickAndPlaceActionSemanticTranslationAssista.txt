@@ -6,18 +6,18 @@ The form of the semantics understood by the system is: <actionName>(<actor>,<arg
 <arguments> is a comma delimited list of the arguments to the instructed action. Different actions take in different numbers of arguments, anywhere between 0 and an arbitrarily large amount. Each argument may have an associated type, which defines the set of values assignable to that argument. For example, an argument denoted as ?item:physobj in a semantic signature has the variable name ?item and type physobj. The variable name is a placeholder to be populated with the supplied value from the instruction, the type physobj denotes that the chosen value must be defined as a physobj. In contrast, an argument denoted simply as, for example, ?varName has no type and does not have a restricted set of possible inputs. Examples of types of arguments are the name of an area where the action is being performed, the objects which the action is being performed on, the duration which the action is to be performed over, and other types of information parameterizing the corresponding action.
 The list of <actor> available in the system are:
 ###
-assista:arm # self:agent
+self:agent # assista:agent
 ###
 self:agent is the default actor if no further information is supplied to indicate a specific actor.
 The types known to the system are:
 ###
-physobj # area # item # job
+physobj # pose # item # job
 ###
 The list of physobj known to the system are:
 ###
 bellPepper # carrot # corn # chipotleSauce # servingBox # plantain
 ###
-The list of area known to the system are:
+The list of pose known to the system are:
 ###
 boxArea # prepArea # servingArea # sauceArea # cookTop # hotPlate # pantry
 ###
@@ -39,7 +39,7 @@ pickUp(?item:physobj)
 #
 putDown(?item:physobj)
 #
-goTo(?destination:area)
+goTo(?destination:pose)
 #
 lookFor(?refId:physobj)
 #
@@ -59,7 +59,7 @@ defineItemByAnalogy(?newItem)
 #
 getIn(?item:physobj,?destination:physobj)
 #
-getTo(?item:physobj,?destination:area)
+getTo(?item:physobj,?destination:pose)
 #
 describePendingGoals()
 #
@@ -79,17 +79,17 @@ Examples of final forms of action semantics understood by the system are:
 ###
 cook(self:agent,bellPepper:physobj,5)
 #
-getTo(self:agent,servingBox:physobj,servingArea:area)
+getTo(self:agent,servingBox:physobj,servingArea:pose)
 #
-pickUp(assista:arm,carrot:physobj)
+pickUp(assista:agent,carrot:physobj)
 #
 prepare(southwestBowl)
 ###
-Alternately, the human may simply be providing general information or responses to earlier questions from the system. In this case, the appropriate semantic form is <description>(<value>). <description> may be a type known to the system or a general descriptor. <value> will then be corresponding information relating to that descriptor, which the human conveys. The list of possible signatures for this semantic form are:
+Alternately, the human may simply be providing general information or responses to earlier questions from the system. In this case, the appropriate semantic form is <description>(<value>). <description> may be a type known to the system or a general descriptor. <value> will then be corresponding information relating to that descriptor, which the human conveys. Like <arguments>, if any <value> is typed (as indicated by a : and a suffix), then the chosen replacement must have been defined as being of that type earlier. The list of possible signatures for this semantic form are:
 ###
 job(?jobName)
 #
-area(?areaName:area)
+pose(?poseName:pose)
 #
 mod(?modification,none)
 #
@@ -111,24 +111,24 @@ job(detectPepper)
 #
 mod(replace(pepper),none)
 #
-area(servingArea:area)
+pose(servingArea:pose)
 #
 item(southwestBowl:item)
 ###
 Think of this task in two steps. Step one, translate the human input to English. Step two, modify the generic translation to fit the semantics of the system.
 Examples of this task being performed correctly are as follows:
 ###
-Input: Assista, geh zu dem Vorbereitungsbereich
+Input: geh zu dem Vorbereitungsbereich
 ->
-Step one: Assista, go to the preparation area
+Step one: go to the prep area
 ->
-Step two: goTo(assista:arm,prepArea:area)
+Step two: goTo(self:agent,prepArea:pose)
 #
 Input: Stell die Paprika auf den HeissTeller
 ->
-Step one: Place the pepper on the plate
+Step one: Assista, Place the pepper on the plate
 ->
-Step two: putDown(self:agent,bellPepper:physobj,plate:area)
+Step two: putDown(assista:agent,bellPepper:physobj,plate:pose)
 #
 Input: What are you doing next
 ->
@@ -150,15 +150,15 @@ Step two: resumeGoal(self:agent)
 #
 Input: I want the corn in the serving box
 ->
-Step one: I want the corn in the serving box
+Step one: Assista, I want the corn in the serving box
 ->
-Step two: getIn(self:agent,corn:physobj,servingBox:physobj)
+Step two: getIn(assista:agent,corn:physobj,servingBox:physobj)
 #
 Input: the serving area
 ->
 Step one: the serving area
 ->
-Step two: area(servingArea:area)
+Step two: pose(servingArea:pose)
 #
 Input: I have given you the bell pepper
 ->

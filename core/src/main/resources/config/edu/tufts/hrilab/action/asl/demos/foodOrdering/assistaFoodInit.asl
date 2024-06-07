@@ -6,10 +6,12 @@ import edu.tufts.hrilab.fol.Term;
 //====================== Setup action scripts ======================
 () = init["workaround for not being able to retract facts from belief init files"](){
 
-    Symbol !prepArea = "prep area";
-    Symbol !servingArea = "serving area";
-    Symbol !hotPlate = "hotplate";
-    Symbol !cookTop = "cooktop";
+    Predicate !tmp;
+    Symbol !prepArea = "prepArea";
+    Symbol !servingArea = "servingArea";
+    Symbol !hotPlate = "hotPlate";
+    Symbol !cookTop = "cookTop";
+    Symbol !pantry = "pantry";
 
     Symbol !conveyorHeight = "50";
     Symbol !hotPlateHeight = "58";
@@ -17,10 +19,15 @@ import edu.tufts.hrilab.fol.Term;
     Symbol !default = "default";
     Symbol !prepAreaPose;
     Symbol !servingAreaPose;
+    Symbol !pantryAreaPose;
+    Symbol !hotPlatePose;
+    Symbol !cookTopPose;
+    Symbol !pantryPose;
     ai.thinkingrobots.mtracs.util.MPose !pose;
 
     edu.tufts.hrilab.fol.Term !toAssert;
-    edu.tufts.hrilab.fol.Symbol !robotone="robotone:agent";
+    edu.tufts.hrilab.fol.Symbol !assista="assista:agent";
+    Symbol !human= "human:mobileManipulator";
 
     edu.tufts.hrilab.fol.Symbol !corn="corn";
 
@@ -32,26 +39,44 @@ import edu.tufts.hrilab.fol.Term;
     edu.tufts.hrilab.fol.Predicate !cameraHeight;
     !cameraHeight = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cameraHeight(?actor,338)");
     act:assertBelief(!cameraHeight);
+    !cameraHeight = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cameraHeight(!assista,338)");
+    act:assertBelief(!cameraHeight);
+
 
     (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 510.00f, -100.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
-    !prepAreaPose = !robotone.tsc:recordPose(!prepArea, !pose, !conveyorHeight);
+    !prepAreaPose = !assista.tsc:recordPose(!prepArea, !pose, !conveyorHeight);
+    !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reachable(!assista, !prepAreaPose)");
+    act:assertBelief(!tmp);
+    !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reachable(!human, !prepAreaPose)");
+    act:assertBelief(!tmp);
     op:log(info, "Setup !prepArea for ?actor");
 
     (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 510.00f, 100.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
-    !servingAreaPose = !robotone.tsc:recordPose(!servingArea, !pose, !conveyorHeight);
+    !servingAreaPose = !assista.tsc:recordPose(!servingArea, !pose, !conveyorHeight);
+    !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reachable(!assista, !servingAreaPose)");
+    act:assertBelief(!tmp);
     op:log(info, "Setup !servingArea for ?actor");
 
     (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 138.6f, -460.00f, 200.00f, 3.14159f, 0.0f, 3.14159f);
-    !robotone.tsc:recordPose(!hotPlate, !pose, !hotPlateHeight);
+    !hotPlatePose = !assista.tsc:recordPose(!hotPlate, !pose, !hotPlateHeight);
+    !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reachable(!assista, !hotPlatePose)");
+    act:assertBelief(!tmp);
     op:log(info, "Setup !hotPlate for ?actor");
 
     (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", -217.00f, -460.00f, 200.0f, 3.14159f, 0.0f, 3.14159f);
-    !robotone.tsc:recordPose(!cookTop, !pose, !cookTopHeight);
+    !cookTopPose = !assista.tsc:recordPose(!cookTop, !pose, !cookTopHeight);
+    !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reachable(!assista, !cookTopPose)");
+    act:assertBelief(!tmp);
     op:log(info, "Setup !cookTop for ?actor");
 
+    //TODO: make pantry it's own real pose
+    !pantryPose = !assista.tsc:recordPose(!pantry, !pose, !cookTopHeight);
+    !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reachable(!human, !pantryPose)");
+    act:assertBelief(!tmp);
+
     //These are here so they are done for each robot
-    !robotone.tsc:openGripper();
-    !robotone.act:rotateToEE(!default);
+    !assista.tsc:openGripper();
+    !assista.act:rotateToEE(!default);
 
     //add descriptor -> Cognex job mappings
     //This is mainly left as example code, this is handled within CognexConsultant now
@@ -60,8 +85,12 @@ import edu.tufts.hrilab.fol.Term;
     //for running Cognex Jobs
     //objectDefinition(descriptor,zOffset,xOffset,)
 
-    !robotone.act:defineIngredientHelper(!corn, !prepAreaPose, "cornDet");
-   !robotone.act:defineIngredientHelper("\"serving box\"",!servingAreaPose,"detBox");
+    !assista.act:defineIngredientHelper(!corn, !prepAreaPose, "cornDet");
+    !assista.act:defineIngredientHelper("servingBox",!servingAreaPose,"detBox");
 
-    !robotone.act:goTo(!prepAreaPose);
+    !assista.act:goTo(!prepAreaPose);
+}
+
+() = getIn(Symbol ?item:physobj, Symbol ?destination:physobj) {
+    goal:itemOn(?item, ?destination);
 }

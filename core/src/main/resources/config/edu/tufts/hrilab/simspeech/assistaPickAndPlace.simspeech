@@ -1,18 +1,54 @@
 Get the corn to the hotplate
 Get a chicken to the cooktop
 -
-define new ingredient chicken
-pose prep area
-detect chicken
+I will teach you a new ingredient named chicken
+the pantry
+the chicken job
 -
 get a chicken to the cooktop
+I got the chicken for you
 -
 Get the chicken to the prep area
 -
-go to the hotplate
-pick up the corn
-go to the prep area
-put down the corn
+Assista, go to the hotplate
+Assista, pick up the corn
+Assista, go to the prep area
+Assista, put down the corn
 -
 Get the corn in the serving box
 Get the chicken in the serving box
+-
+-
+#bring the corn to the hot plate
+トウモロコシをホットプレートに持ってきます
+#bring the chicken to the cooktop
+ニワトリをクックトップに持ってきます
+-
+#I will tell you about a new ingredient called chicken
+チキンと言う新しい食材について教えます
+#pantry
+パントリー
+#job chicken
+ジョブチキン
+-
+#bring the chicken to the cooktop
+ニワトリをクックトップに持ってきます
+#I brought chicken for you
+あなたのために鶏肉を持ってきました
+-
+#Transport the chicken to the preparation area
+チキンを準備エリアに運びます
+-
+#go to the hot plate
+Assista, ホットプレートに行く
+#pick up corn
+Assista, トウモロコシを拾う
+#go to preparation area
+Assista, 準備エリアに行く
+#please put down the corn
+Assista, トウモロコシを下ろしてください
+-
+#place the corn in the serving box
+トウモロコシをサービングボックスに入れる
+#place the chicken in the serving box
+鶏肉をサービングボックスに入れます

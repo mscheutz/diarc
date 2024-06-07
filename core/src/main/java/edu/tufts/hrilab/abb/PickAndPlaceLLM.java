@@ -28,9 +28,10 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
 
     public PickAndPlaceLLM() {
         super();
-        nluPrompt = Prompts.getPrompt("pickAndPlaceActionSemanticTranslation");
-        wordsNLGPrompt = Prompts.getPrompt("pickAndPlaceNLGTranslation");
-        semanticNLGPrompt = Prompts.getPrompt("pickAndPlaceSemanticsNLGTranslation");
+        //TODO: make prompts configurable
+        nluPrompt = Prompts.getPrompt("pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationAssista");
+        wordsNLGPrompt = Prompts.getPrompt("pickAndPlace/nlg/pickAndPlaceNLGTranslation");
+        semanticNLGPrompt = Prompts.getPrompt("pickAndPlace/nlg/pickAndPlaceSemanticsNLGTranslation");
     }
 
     @TRADEService
@@ -146,8 +147,10 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
             realization = u.getWordsAsString();
             nlgPrompt = wordsNLGPrompt;
         } else {
+            //TODO: make this behavior configurable
+            //nlgPrompt = semanticNLGPrompt;
             realization = nlg.translate(u);
-            nlgPrompt = semanticNLGPrompt;
+            nlgPrompt = wordsNLGPrompt;
         }
 
         String userMessage = nlgPrompt.getText() + realization;
@@ -176,5 +179,10 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
         }
 
         return u;
+    }
+
+    //To prevent TRADEExceptions when not running TLDL. May need to remove if using HybridParser
+    @TRADEService
+    public void injectDictionaryEntry(String morpheme, String type, String semantics, String cognitiveStatus) {
     }
 }
