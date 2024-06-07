@@ -12,7 +12,7 @@ import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
-import edu.tufts.hrilab.sphinx4.Sphinx4Component; 
+import edu.tufts.hrilab.asr.sphinx4.Sphinx4Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

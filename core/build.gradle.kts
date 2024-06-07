@@ -201,6 +201,9 @@ dependencies {
   implementation("de.sciss:sphinx4-core:1.0.0")
   implementation("de.sciss:sphinx4-data:1.0.0")
 
+  //whisper
+  implementation("io.github.givimad:whisper-jni:1.6.1")
+
   //TLDL Parser component GUI
   implementation("org.jsoup:jsoup:1.12.1")
 
@@ -226,6 +229,8 @@ dependencies {
 
   //LLM Tokenizers
   implementation("com.knuddels:jtokkit:0.4.0")
+
+  //Environment Configuration
   implementation("io.github.cdimascio:dotenv-java:3.0.0")
 
   //hosted on HRI LAB
