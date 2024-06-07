@@ -17,6 +17,10 @@ while read -r FILE; do
       *gradle-wrapper.jar )
         continue
         ;;
+      *pre-commit )
+        echo "LOCAL COMMIT ERROR: We have restricted committing changes to the" $FILE "file."
+        PROHIBITED=true
+        ;;
       *gradle.properties )
         echo "LOCAL COMMIT ERROR: We have restricted committing changes to the core DIARC" $FILE "file. Please use your local properties file instead (usually ~/.gradle/gradle.properties)."
         PROHIBITED=true
