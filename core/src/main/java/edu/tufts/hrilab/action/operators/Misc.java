@@ -8,6 +8,7 @@
 package edu.tufts.hrilab.action.operators;
 
 import edu.tufts.hrilab.action.util.Utilities;
+import edu.tufts.hrilab.fol.Symbol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,8 +59,8 @@ public final class Misc {
     }
   }
 
-  public static boolean isVariable(String str) {
-    return Utilities.isScriptVariable(str);
+  public static boolean isVariable(Symbol symbol) {
+    return symbol.isVariable();
   }
 
   /**

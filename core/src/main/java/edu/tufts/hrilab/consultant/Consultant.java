@@ -9,7 +9,6 @@ import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
-import edu.tufts.hrilab.consultant.util.Utilities;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
@@ -17,7 +16,6 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.interfaces.ConsultantInterface;
 import edu.tufts.hrilab.vision.util.PredicateHelper;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

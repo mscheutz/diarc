@@ -23,10 +23,9 @@ public class GroceryTaskSceneGenerator extends SceneGenerator {
   public SceneCollection generateSceneCollection() {
 
     Variable x = Factory.createVariable("X", "physobj");
-    Variable y = Factory.createVariable("Y");
+    Variable y = Factory.createVariable("Y", "physobj");
     List<Term> knownProperties = Arrays.asList(
             Factory.createPredicate("grasp_point", x),
-            Factory.createPredicate("physobj", x),
             Factory.createPredicate("on", y, x),
             Factory.createPredicate("apple", x),
             Factory.createPredicate("grocery", x),
@@ -98,7 +97,6 @@ public class GroceryTaskSceneGenerator extends SceneGenerator {
     mo.setDetectionConfidence(0.8f);
     mo.addDescriptor(Factory.createPredicate(objName, x), 0.9f);
     mo.addDescriptor(Factory.createPredicate("grocery", x), 0.9f);
-    mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
     mo.setLocation(1, 0, 1);
 
     return mo;
@@ -115,7 +113,6 @@ public class GroceryTaskSceneGenerator extends SceneGenerator {
     mo.setDetectionConfidence(0.8f);
     mo.addDescriptor(Factory.createPredicate(objName, var), 0.9f);
     mo.addDescriptor(Factory.createPredicate("grocery", var), 0.9f);
-    mo.addDescriptor(Factory.createPredicate("physobj", var), 0.9f);
     mo.setLocation(x, y, 1);
 
     return mo;

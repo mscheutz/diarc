@@ -168,7 +168,11 @@ final public class SimpleSearchManager extends SearchManager {
     List<ImageProcessorType> detectorDependencyType = detector.getDependencies();
     for (ImageProcessorType dependencyType : detectorDependencyType) {
       ImageProcessor dependency = detector.getDependency(dependencyType);
-      dependency.registerForNotification(detector, typeId);
+      if (dependency == null) {
+        log.warn("Dependency not available: {}", dependencyType);
+      } else {
+        dependency.registerForNotification(detector, typeId);
+      }
     }
 
     //register detector to be notified by existing saliencyOperators

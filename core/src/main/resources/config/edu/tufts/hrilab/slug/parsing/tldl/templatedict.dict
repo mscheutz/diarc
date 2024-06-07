@@ -164,6 +164,8 @@ do; Q/ C; #x.$x
 %do; (Q \ WHO)/(Q \ WHO); #x.$x
 %do; (Q/WHO)/(C / AGENT) ; #x.$x
 
+do you see ; Q/REF ; #x.see(?ADDRESSEE,$x)
+
 do that; C; dothat:dialog ; ACTIVATED
 
 don't; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,remove($x),$y)
@@ -632,6 +634,8 @@ want; ((S/ INF)/AGENT)\ AGENT ; #x#y#z.want($x,$y,$z)
 
 %what are your goals, what are shafer's goals
 what are; (Q/QUERYABLE)/AGENT; #a#q.whatAre($a,$q)
+
+what do you see ; Q ; see(?ADDRESSEE,WHAT)
 
 what time is it; Q; timeIs(WHAT)
 what time it is; KNOWABLE; currentTime

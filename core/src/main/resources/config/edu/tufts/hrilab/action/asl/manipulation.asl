@@ -76,7 +76,7 @@ import edu.tufts.hrilab.fol.Predicate;
     !armPose =  act:getPose(?arm);
 
     // find objectRef_2
-    (!typeId, !tokenIds) = act:findObject(?objectRef_2);
+    !tokenIds = act:findObject(?objectRef_2);
 
     // get objectRef_2 token from tokenId
     op:log("debug", "Found ?objectRef_2");
