@@ -245,7 +245,7 @@ const RobotChat = (
 
     return (
         <div className='h-[40rem] shadow-md'>
-            <MainContainer>
+            <MainContainer className='rounded-md'>
                 <Sidebar position="left">
                     <div className="flex flex-col justify-between h-full p-5">
 

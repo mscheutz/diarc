@@ -166,21 +166,21 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
 
     return (
         <div className="flex flex-col w-full h-[40rem] outline outline-1
-                        outline-[#d1dbe3] justify-between shadow-md">
+                        outline-[#d1dbe3] justify-between shadow-md rounded-md">
             <div className="flex flex-col p-5 grow gap-5">
                 {/* Header */}
                 <div className="text-2xl">DIARC Goal Viewer</div>
 
                 {/* Actual lists */}
                 <div className="shadow-md grow outline outline-1
-                                outline-[#d1dbe3] p-5 overflow-auto"
+                                outline-[#d1dbe3] p-5 overflow-auto rounded-md"
                 >
                     {getTree()}
                 </div>
 
                 {/* Button menu */}
                 <div className="shadow-md outline outline-1 outline-[#d1dbe3]
-                                p-5 flex flex-row justify-center gap-5"
+                                p-3 flex flex-row justify-center gap-5 rounded-md"
                 >
                     {/* TODO */}
                     <Button onClick={handleSuspend} disabled>

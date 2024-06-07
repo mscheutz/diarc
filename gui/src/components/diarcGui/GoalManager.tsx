@@ -58,10 +58,11 @@ const GoalManager = () => {
     return (
         <ActionFormContext.Provider value={actionFormContext}>
             <div className="map-container h-[40rem] w-full flex flex-col outline
-                        outline-1 outline-[#d1dbe3] items-center p-5 gap-5">
+                        outline-1 outline-[#d1dbe3] items-center p-5 gap-5
+                        rounded-md">
                 {/* Upper split pane */}
                 <Allotment className="h-full overflow-scroll outline outline-1
-                                      outline-[#d1dbe3] shadow-md">
+                                      outline-[#d1dbe3] shadow-md rounded-md">
                     {/* Left split pane */}
                     <Allotment.Pane preferredSize={"50%"}>
                         <Allotment vertical>

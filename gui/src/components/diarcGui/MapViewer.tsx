@@ -144,7 +144,7 @@ const MapViewer = () => {
 
     return (
         <div className="map-container h-full w-full flex flex-col gap-5 outline
-                        outline-1 outline-[#d1dbe3] items-center p-5">
+                        outline-1 outline-[#d1dbe3] items-center p-5 rounded-md">
             {/* Button menu */}
             <div className="flex flex-row justify-center gap-2">
                 <Button
