@@ -1296,6 +1296,7 @@ public class ExecutionManager implements ActionListener {
    * @param gid
    * @return boolean indicating whether the goal was found in one of the collections or not
    */
+  @TRADEService
   public boolean cancelGoal(long gid) {
     // if goal to cancel is pending
     PendingGoal pg = getPendingGoal(gid);

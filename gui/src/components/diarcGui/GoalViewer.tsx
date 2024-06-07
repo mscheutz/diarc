@@ -12,7 +12,7 @@ import useWebSocket from "react-use-websocket";
 import {
     faCaretDown,
     faCaretRight,
-    faFolder,
+    faStopwatch,
     faRobot,
     faFlag
 } from "@fortawesome/free-solid-svg-icons"
@@ -22,24 +22,41 @@ import TreeView, { flattenTree } from "react-accessible-treeview"
 
 import "./GoalViewer.css";
 import ConnectionIndicator from "./ConnectionIndicator";
+import { Button } from "../Button";
+
+
+
+/*
+MONDAY MONDAY MONDAY MONDAY MONDAY
+
+    talk w/ Evan about redundancy of
+    "submit goal" form --- custom action
+    covers this functionality
+
+MONDAY MONDAY MONDAY MONDAY MONDAY
+*/
+
+type Node = {
+    name: string,
+    id?: number | string,
+    children: Node[]
+};
+
+type Selection = {
+    name: string,
+    id: string
+};
 
 const GoalViewer: React.FunctionComponent<{}> = () => {
-    const [goals, setGoals] = useState({
-        name: "",
+    const [goals, setGoals] = useState<Node>({
+        name: "root", // root is not displayed
+        id: "root",
         children: [
             {
-                id: "1", name: "active", children: [{
-                    id: "2", name: "dempster", children: [{
-                        id: "3", name: "goal1"
-                    }]
-                }]
+                id: "active", name: "active", children: []
             },
             {
-                id: "4", name: "past", children: [{
-                    id: "5", name: "shafer", children: [{
-                        id: "6", name: "goal2"
-                    }]
-                }]
+                id: "past", name: "past", children: []
             }
         ]
     });
@@ -54,12 +71,64 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
         }
     }, [lastMessage]);
 
+    // Determines if the node with the given id is in the "active" group.
+    const hasActiveAncestor = (id: number | string) => {
+        const active = goals.children[0];
+        for (const agentIndex in active.children) {
+            const agent = active.children[agentIndex];
+            for (const taskIndex in agent.children) {
+                const task = agent.children[taskIndex]
+                if (task.id! == id) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    const [selected, setSelected] = useState<Selection>({ name: "", id: "" });
+    const handleSelect = (e) => {
+        const { element } = e;
+        // A goal and not a group or agent
+        if ((element.name as string).includes("(")) {
+            // TODO: when we add suspended category, this should allow
+            // suspended task as well
+            if (hasActiveAncestor(element.id)) {
+                setSelected({ name: element.name, id: element.id });
+                return;
+            }
+        }
+        setSelected({ name: "", id: "" });
+    };
+
+    const hasSelected = () => {
+        return selected && selected.name && selected.id;
+    }
+
+    const handleSuspend = () => {
+
+    };
+
+    const handleResume = () => {
+
+    };
+
+    const handleCancel = () => {
+        // We may assume there is a selected goal since the button is disabled
+        // if not
+        sendMessage(JSON.stringify({
+            "method": "cancel",
+            "goalId": selected.id.slice(4)
+        }))
+        setSelected({ name: "", id: "" });
+    };
+
     const getTree = () => {
         return (
             <TreeView
                 data={flattenTree(goals)}
                 className="basic"
-                // onNodeSelect={getFileOnSelect}
+                onNodeSelect={handleSelect}
                 nodeRenderer={
                     ({ element, getNodeProps, level, isExpanded }) => {
                         return (
@@ -78,8 +147,8 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
                                             &nbsp;
                                         </>)}
                                 {level === 1 &&
-                                    <FontAwesomeIcon icon={faFolder}
-                                        color="#ffdc55" />}
+                                    <FontAwesomeIcon icon={faStopwatch}
+                                        color="#009933" />}
                                 {level === 2 &&
                                     <FontAwesomeIcon icon={faRobot}
                                         color="#4d4dff" />}
@@ -104,8 +173,28 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
 
                 {/* Actual lists */}
                 <div className="shadow-md grow outline outline-1
-                                outline-[#d1dbe3] p-5">
+                                outline-[#d1dbe3] p-5 overflow-auto"
+                >
                     {getTree()}
+                </div>
+
+                {/* Button menu */}
+                <div className="shadow-md outline outline-1 outline-[#d1dbe3]
+                                p-5 flex flex-row justify-center gap-5"
+                >
+                    {/* TODO */}
+                    <Button onClick={handleSuspend} disabled>
+                        Suspend Goal
+                    </Button>
+                    {/* TODO */}
+                    <Button onClick={handleResume} disabled>
+                        Resume Goal
+                    </Button>
+                    <Button
+                        title="Cancel the selected active goal"
+                        onClick={handleCancel} disabled={!hasSelected()}>
+                        Cancel Goal
+                    </Button>
                 </div>
 
                 <ConnectionIndicator readyState={readyState} />

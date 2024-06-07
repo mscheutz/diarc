@@ -69,20 +69,21 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
          * Find this instance's required TRADE services.
          */
         private void initializeServices() throws TRADEException {
-            submitGoalService = TRADE.getAvailableService(
-                new TRADEServiceConstraints()
-                        .name("submitGoal")
-                        .argTypes(Goal.class)
-            );
+            submitActionService = null;
+            submitGoalService = null;
             // For some reason there are multiple submitGoal() functions that
-            // take a Predicate (they have the same service string)
+            // will not be differentiated via TRADEServiceConstraints
             // ... which should not be happening but anyway...
             Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
             for (TRADEServiceInfo service : availableServices) {
                 if (service.serviceString.equals("submitGoal(edu.tufts.hrilab.fol.Predicate)")) {
                     submitActionService = service;
-                    break;
                 }
+                else if(service.serviceString.equals("submitGoal(edu.tufts.hrilab.action.Goal)")) {
+                    submitGoalService = service;
+                }
+                if(submitGoalService != null && submitActionService != null)
+                    break;
             }
             if(submitActionService == null)
                 throw new NullPointerException("Could not find submitActionService");
@@ -275,10 +276,15 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
                 else if(payload.get("form").equals("custom")){
                     String customAction = payload.getJSONObject("formData")
                                                  .getString("custom");
-                    submitActionService.call(
-                        Goal.class,
-                        Factory.createPredicate(customAction)
-                    );
+                    try {
+                        submitActionService.call(
+                                Goal.class,
+                                Factory.createPredicate(customAction)
+                        );
+                    } catch (TRADEException e) {
+                        log.error("TRADEException occured in invocation of "
+                                + "custom action");
+                    }
                 }
                 // Handle generated action submission
                 else {
@@ -307,7 +313,7 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
         @Override
         public void afterConnectionEstablished(@Nonnull WebSocketSession session)
                 throws Exception {
-            log.info("Connection established");
+            log.debug("Goal manager connection established");
 
             JSONObject message = new JSONObject();
 

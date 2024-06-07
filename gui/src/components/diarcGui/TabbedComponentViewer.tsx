@@ -166,12 +166,3 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 };
 
 export default TabbedComponentViewer;
-
-/*
-TODO
-o goal viewer
-    o be able to ___ current goals
-        o pause
-        o resume
-        o cancel
-*/

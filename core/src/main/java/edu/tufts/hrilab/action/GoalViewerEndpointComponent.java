@@ -54,6 +54,7 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
 
         TRADEServiceInfo getActiveGoals;
         TRADEServiceInfo getPastGoals;
+        TRADEServiceInfo cancelGoal;
 
         private WebSocketSession session;
 
@@ -63,20 +64,23 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
         public GoalViewerHandler() {
             getActiveGoals = null;
             getPastGoals = null;
+            cancelGoal = null;
             Collection<TRADEServiceInfo> services = TRADE.getAvailableServices();
             for(TRADEServiceInfo service : services) {
-                if(service.serviceString.equals("getActiveGoals()")) {
-                    getActiveGoals = service;
-                } else if(service.serviceString.equals("getPastGoals()")) {
-                    getPastGoals = service;
+                switch (service.serviceString) {
+                    case "getActiveGoals()" -> getActiveGoals = service;
+                    case "getPastGoals()" -> getPastGoals = service;
+                    case "cancelGoal(long)" -> cancelGoal = service;
                 }
 
-                if(getActiveGoals != null && getPastGoals != null)
+                if(getActiveGoals != null && getPastGoals != null
+                && cancelGoal != null)
                     break;
             }
 
-            if(getActiveGoals == null || getPastGoals == null)
-                log.error("Failed to find getter for active or passive goals");
+            if(getActiveGoals == null || getPastGoals == null
+            || cancelGoal == null)
+                log.error("Failed to find required TRADE service");
         }
 
         /**
@@ -85,9 +89,10 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
          * "children" field storing the agent's goals as an array. Each goal
          * is a JSON object with its own "name" field.
          * @param goals a list of goals to convert
+         * @param goalType the group the goals belong to; e.g., "past" or "active"
          * @return a JSON array
          */
-        private JSONArray goals2JSONArray(List<Goal> goals) {
+        private JSONArray goals2JSONArray(List<Goal> goals, String goalType) {
             if(goals.isEmpty()) return new JSONArray(); // no goals
             JSONArray result = new JSONArray();
 
@@ -98,33 +103,34 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
             Symbol groupActor = goals.get(0).getActor();
             JSONArray group = new JSONArray();
             group.put(new JSONObject()
-                    .put("name", goals.get(0).toString()));
+                    .put("name", goals.get(0).toString())
+                    .put("id", "goal" + goals.get(0).getId()));
             for(int i = 1; i < goals.size(); i++) {
                 Symbol currentActor = goals.get(i).getActor();
                 // If actor matches group, add it
                 if(groupActor.equals(currentActor)) {
                     group.put(new JSONObject()
-                            .put("name", goals.get(i).toString()));
+                            .put("name", goals.get(i).toString())
+                            .put("id", "goal" + goals.get(i).getId()));
                 }
                 // If actor is new, then update JSON and start new group
                 else {
-                    result.put(
-                            new JSONObject()
-                                    .put("name", groupActor.toString())
-                                    .put("children", group)
-                    );
+                    result.put(new JSONObject()
+                            .put("name", groupActor.toString())
+                            .put("children", group)
+                            .put("id", goalType + groupActor));
 
                     group = new JSONArray();
                     group.put(new JSONObject()
-                            .put("name", goals.get(i).toString()));
+                            .put("name", goals.get(i).toString())
+                            .put("id", "goal" + goals.get(i).getId()));
                     groupActor = goals.get(i).getActor();
                 }
             }
-            result.put(
-                    new JSONObject()
-                            .put("name", groupActor.toString())
-                            .put("children", group)
-            );
+            result.put(new JSONObject()
+                    .put("name", groupActor.toString())
+                    .put("children", group)
+                    .put("id", goalType + groupActor));
             return result;
         }
 
@@ -138,18 +144,23 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
                     JSONObject active = new JSONObject()
                             .put("name", "active")
                             .put("children", goals2JSONArray(
-                                    getActiveGoals.call(List.class))
-                            );
+                                    getActiveGoals.call(List.class),
+                                    "active")
+                            )
+                            .put("id", "active");
                     JSONObject past = new JSONObject()
                             .put("name", "past")
                             .put("children", goals2JSONArray(
-                                    getPastGoals.call(List.class))
-                            );
+                                    getPastGoals.call(List.class),
+                                    "past")
+                            )
+                            .put("id", "past");
                     JSONArray children = new JSONArray()
                             .put(active)
                             .put(past);
                     JSONObject all = new JSONObject()
-                            .put("name", "")
+                            .put("name", "root")
+                            .put("id", "root")
                             .put("children", children);
                     session.sendMessage(new TextMessage(all.toString()));
                 } else {
@@ -178,7 +189,13 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
                         @Nonnull TextMessage message) throws Exception {
             super.handleTextMessage(session, message);
             this.session = session;
-            // Don't need to send anything
+
+            JSONObject payload = new JSONObject(message.getPayload());
+
+            if(payload.get("method").equals("cancel")) {
+                cancelGoal.call(Boolean.class,
+                        Long.parseLong((String) payload.get("goalId")));
+            }
         }
 
         /**
@@ -189,7 +206,7 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
         @Override
         public void afterConnectionEstablished(@Nonnull WebSocketSession session) {
             this.session = session;
-            log.info("Connection established");
+            log.debug("Goal viewer connection established");
 
             updateTimer = new Timer();
             updateTimer.scheduleAtFixedRate(new TimerTask() {
