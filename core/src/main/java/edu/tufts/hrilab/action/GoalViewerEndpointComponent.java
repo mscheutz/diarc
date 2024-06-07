@@ -4,7 +4,9 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.goal.Goal;
+import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -54,6 +56,7 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
 
         TRADEServiceInfo getActiveGoals;
         TRADEServiceInfo getPastGoals;
+        TRADEServiceInfo submitGoal;
         TRADEServiceInfo cancelGoal;
 
         private WebSocketSession session;
@@ -64,6 +67,7 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
         public GoalViewerHandler() {
             getActiveGoals = null;
             getPastGoals = null;
+            submitGoal = null;
             cancelGoal = null;
             Collection<TRADEServiceInfo> services = TRADE.getAvailableServices();
             for(TRADEServiceInfo service : services) {
@@ -71,16 +75,32 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
                     case "getActiveGoals()" -> getActiveGoals = service;
                     case "getPastGoals()" -> getPastGoals = service;
                     case "cancelGoal(long)" -> cancelGoal = service;
+                    case "submitGoal(edu.tufts.hrilab.fol.Predicate)" ->
+                            submitGoal = service;
                 }
 
                 if(getActiveGoals != null && getPastGoals != null
-                && cancelGoal != null)
+                && submitGoal != null && cancelGoal != null)
                     break;
             }
 
             if(getActiveGoals == null || getPastGoals == null
-            || cancelGoal == null)
+            || submitGoal == null || cancelGoal == null)
                 log.error("Failed to find required TRADE service");
+        }
+
+        /**
+         * Removes goals from the given list if they don't match the given
+         * status.
+         * @param goals list of goals to filter
+         * @param status desired status
+         */
+        private void filterListByGoalStatus(List<Goal> goals, GoalStatus status) {
+            List<Goal> toRemove = new ArrayList<>();
+            for(Goal g : goals)
+                if(g.getStatus() != status)
+                    toRemove.add(g);
+            goals.removeAll(toRemove);
         }
 
         /**
@@ -89,10 +109,28 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
          * "children" field storing the agent's goals as an array. Each goal
          * is a JSON object with its own "name" field.
          * @param goals a list of goals to convert
-         * @param goalType the group the goals belong to; e.g., "past" or "active"
+         * @param goalType the group the goals belong to; can be
+         *                 <code>"past"</code>, <code>"active"</code>, or
+         *                 <code>"suspended"</code>. If <code>"active"</code> or
+         *                 <code>"suspended"</code>, will filter active goals
+         *                 for that specific <code>GoalStatus</code>.
+         * @throws IllegalArgumentException if <code>goalType</code> is not
+         *                                  a legal value
          * @return a JSON array
          */
-        private JSONArray goals2JSONArray(List<Goal> goals, String goalType) {
+        private JSONArray goals2JSONArray(List<Goal> goals, String goalType)
+            throws IllegalArgumentException {
+            if(!goalType.equals("past") && !goalType.equals("active")
+            && !goalType.equals("suspended"))
+                throw new IllegalArgumentException("value of goalType is not"
+                    + " accepted");
+
+            // Filter goals by goal status
+            if(goalType.equals("active"))
+                filterListByGoalStatus(goals, GoalStatus.ACTIVE);
+            else if(goalType.equals("suspended"))
+                filterListByGoalStatus(goals, GoalStatus.SUSPENDED);
+
             if(goals.isEmpty()) return new JSONArray(); // no goals
             JSONArray result = new JSONArray();
 
@@ -148,6 +186,13 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
                                     "active")
                             )
                             .put("id", "active");
+                    JSONObject suspended = new JSONObject()
+                            .put("name", "suspended")
+                            .put("children", goals2JSONArray(
+                                    getActiveGoals.call(List.class),
+                                    "suspended")
+                            )
+                            .put("id", "suspended");
                     JSONObject past = new JSONObject()
                             .put("name", "past")
                             .put("children", goals2JSONArray(
@@ -157,6 +202,7 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
                             .put("id", "past");
                     JSONArray children = new JSONArray()
                             .put(active)
+                            .put(suspended)
                             .put(past);
                     JSONObject all = new JSONObject()
                             .put("name", "root")
@@ -195,6 +241,20 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
             if(payload.get("method").equals("cancel")) {
                 cancelGoal.call(Boolean.class,
                         Long.parseLong((String) payload.get("goalId")));
+            } else if(payload.get("method").equals("suspend")) {
+                submitGoal.call(Goal.class,
+                        Factory.createPredicate(
+                                "suspendGoal",
+                                (String) payload.get("agent"),
+                                (String) payload.get("goal")
+                        ));
+            } else if(payload.get("method").equals("resume")) {
+                submitGoal.call(Goal.class,
+                        Factory.createPredicate(
+                                "resumeGoal",
+                                (String) payload.get("agent"),
+                                (String) payload.get("goal")
+                        ));
             }
         }
 

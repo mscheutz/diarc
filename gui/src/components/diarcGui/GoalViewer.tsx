@@ -44,7 +44,8 @@ type Node = {
 
 type Selection = {
     name: string,
-    id: string
+    id: string,
+    type: string
 };
 
 const GoalViewer: React.FunctionComponent<{}> = () => {
@@ -54,6 +55,9 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
         children: [
             {
                 id: "active", name: "active", children: []
+            },
+            {
+                id: "suspended", name: "suspended", children: []
             },
             {
                 id: "past", name: "past", children: []
@@ -71,34 +75,68 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
         }
     }, [lastMessage]);
 
-    // Determines if the node with the given id is in the "active" group.
-    const hasActiveAncestor = (id: number | string) => {
+    // Determines if the node with the given id is in the "active" or
+    // "suspended" groups.
+    const isSelectable = (id: number | string) => {
         const active = goals.children[0];
         for (const agentIndex in active.children) {
             const agent = active.children[agentIndex];
             for (const taskIndex in agent.children) {
                 const task = agent.children[taskIndex]
                 if (task.id! == id) {
-                    return true;
+                    return "active";
                 }
             }
         }
-        return false;
+        const suspended = goals.children[1];
+        for (const agentIndex in suspended.children) {
+            const agent = suspended.children[agentIndex];
+            for (const taskIndex in agent.children) {
+                const task = agent.children[taskIndex]
+                if (task.id! == id) {
+                    return "suspended";
+                }
+            }
+        }
+        return "";
     }
 
-    const [selected, setSelected] = useState<Selection>({ name: "", id: "" });
+    const getAgent = (id: number | string) => {
+        const active = goals.children[0];
+        for (const agentIndex in active.children) {
+            const agent = active.children[agentIndex];
+            for (const taskIndex in agent.children) {
+                const task = agent.children[taskIndex]
+                if (task.id! == id) {
+                    return agent.name;
+                }
+            }
+        }
+        const suspended = goals.children[1];
+        for (const agentIndex in suspended.children) {
+            const agent = suspended.children[agentIndex];
+            for (const taskIndex in agent.children) {
+                const task = agent.children[taskIndex]
+                if (task.id! == id) {
+                    return agent.name;
+                }
+            }
+        }
+        return "";
+    };
+
+    const [selected, setSelected] = useState<Selection>({ name: "", id: "", type: "" });
     const handleSelect = (e) => {
         const { element } = e;
         // A goal and not a group or agent
         if ((element.name as string).includes("(")) {
-            // TODO: when we add suspended category, this should allow
-            // suspended task as well
-            if (hasActiveAncestor(element.id)) {
-                setSelected({ name: element.name, id: element.id });
+            const selectable = isSelectable(element.id);
+            if (selectable !== "") {
+                setSelected({ name: element.name, id: element.id, type: selectable });
                 return;
             }
         }
-        setSelected({ name: "", id: "" });
+        setSelected({ name: "", id: "", type: "" });
     };
 
     const hasSelected = () => {
@@ -106,11 +144,23 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
     }
 
     const handleSuspend = () => {
-
+        const agent = getAgent(selected.id);
+        sendMessage(JSON.stringify({
+            "method": "suspend",
+            "agent": agent,
+            "goal": selected.name
+        }));
+        setSelected({ name: "", id: "", type: "" });
     };
 
     const handleResume = () => {
-
+        const agent = getAgent(selected.id);
+        sendMessage(JSON.stringify({
+            "method": "resume",
+            "agent": agent,
+            "goal": selected.name
+        }));
+        setSelected({ name: "", id: "", type: "" });
     };
 
     const handleCancel = () => {
@@ -118,9 +168,9 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
         // if not
         sendMessage(JSON.stringify({
             "method": "cancel",
-            "goalId": selected.id.slice(4)
+            "goalId": selected.id.slice(4) // remove "goal" prefix
         }))
-        setSelected({ name: "", id: "" });
+        setSelected({ name: "", id: "", type: "" });
     };
 
     const getTree = () => {
@@ -182,17 +232,25 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
                 <div className="shadow-md outline outline-1 outline-[#d1dbe3]
                                 p-3 flex flex-row justify-center gap-5 rounded-md"
                 >
-                    {/* TODO */}
-                    <Button onClick={handleSuspend} disabled>
+                    <Button
+                        title="Suspend the selected active goal"
+                        onClick={handleSuspend}
+                        disabled={!(hasSelected() && selected.type === "active")}
+                    >
                         Suspend Goal
                     </Button>
-                    {/* TODO */}
-                    <Button onClick={handleResume} disabled>
+                    <Button
+                        title="Resume the selected suspended goal"
+                        onClick={handleResume}
+                        disabled={!(hasSelected() && selected.type === "suspended")}
+                    >
                         Resume Goal
                     </Button>
                     <Button
                         title="Cancel the selected active goal"
-                        onClick={handleCancel} disabled={!hasSelected()}>
+                        onClick={handleCancel}
+                        disabled={!hasSelected()}
+                    >
                         Cancel Goal
                     </Button>
                 </div>
