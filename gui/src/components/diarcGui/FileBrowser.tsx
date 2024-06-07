@@ -35,17 +35,21 @@ const FileBrowser = ({ fileTree, sendMessage }) => {
                         <div
                             {...getNodeProps()}
                             style={{ paddingLeft: 20 * level - 15 }}
+                            title={element.name}
+                            className="overflow-scroll-x"
                         >
-                            {isBranch ?
-                                isExpanded ?
-                                    <FontAwesomeIcon icon={faFolderOpen}
-                                        color="#50b3ff" />
-                                    : <FontAwesomeIcon icon={faFolderClosed}
-                                        color="#50b3ff" />
-                                : <FontAwesomeIcon icon={faFile}
-                                    color="#e8be00" />
-                            }
-                            {" " + element.name}
+                            <p className="text-nowrap">
+                                {isBranch ?
+                                    isExpanded ?
+                                        <FontAwesomeIcon icon={faFolderOpen}
+                                            color="#006ec2" />
+                                        : <FontAwesomeIcon icon={faFolderClosed}
+                                            color="#006ec2" />
+                                    : <FontAwesomeIcon icon={faFile}
+                                        color="#e8be00" />
+                                }
+                                {" " + element.name}
+                            </p>
                         </div>
                     )
                 }

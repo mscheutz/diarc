@@ -25,13 +25,15 @@ const ActionBrowser = ({ actionList, setActionFormContext }) => {
     };
 
     return (
-        <div className="w-full h-full overflow-auto p-5">
+        <div className="w-full h-full overflow-auto overflow-x-scroll p-5">
             {actionList.map((item: string, index) => (
                 <p
                     key={index}
-                    className="w-full hover:bg-[#C6E3FA] px-1 font-mono
-                        hover:cursor-pointer text-sm leading-4 py-0.5 truncate"
+                    className="w-full hover:bg-[#C6E3FA] px-1 font-mono py-0.5
+                               hover:cursor-pointer text-sm leading-4
+                               text-nowrap"
                     onClick={handleOnClick}
+                    title={item}
                 >
                     {item}
                 </p>

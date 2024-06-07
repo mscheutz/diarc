@@ -185,27 +185,31 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
                             <div
                                 {...getNodeProps()}
                                 style={{ paddingLeft: 20 * level - 15 }}
+                                title={element.name}
+                                className="whitespace-nowrap"
                             >
-                                {level < 3 && // group or agent (not goal)
-                                    (isExpanded
-                                        ? <>
-                                            <FontAwesomeIcon icon={faCaretDown} />
-                                            &nbsp;
-                                        </>
-                                        : <>
-                                            <FontAwesomeIcon icon={faCaretRight} />
-                                            &nbsp;
-                                        </>)}
-                                {level === 1 &&
-                                    <FontAwesomeIcon icon={faStopwatch}
-                                        color="#009933" />}
-                                {level === 2 &&
-                                    <FontAwesomeIcon icon={faRobot}
-                                        color="#4d4dff" />}
-                                {level === 3 &&
-                                    <FontAwesomeIcon icon={faFlag}
-                                        color="#f00" />}
-                                {" " + element.name}
+                                <p className="text-nowrap">
+                                    {level < 3 && // group or agent (not goal)
+                                        (isExpanded
+                                            ? <>
+                                                <FontAwesomeIcon icon={faCaretDown} />
+                                                &nbsp;
+                                            </>
+                                            : <>
+                                                <FontAwesomeIcon icon={faCaretRight} />
+                                                &nbsp;
+                                            </>)}
+                                    {level === 1 &&
+                                        <FontAwesomeIcon icon={faStopwatch}
+                                            color="#009933" />}
+                                    {level === 2 &&
+                                        <FontAwesomeIcon icon={faRobot}
+                                            color="#4d4dff" />}
+                                    {level === 3 &&
+                                        <FontAwesomeIcon icon={faFlag}
+                                            color="#f00" />}
+                                    {" " + element.name}
+                                </p>
                             </div>
                         )
                     }
@@ -222,7 +226,7 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
                 <div className="text-2xl">DIARC Goal Viewer</div>
 
                 {/* Actual lists */}
-                <div className="shadow-md grow outline outline-1
+                <div className="shadow-md grow outline outline-1 overflow-x-scroll
                                 outline-[#d1dbe3] p-5 overflow-auto rounded-md"
                 >
                     {getTree()}

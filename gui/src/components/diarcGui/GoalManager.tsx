@@ -61,13 +61,20 @@ const GoalManager = () => {
                         outline-1 outline-[#d1dbe3] items-center p-5 gap-5
                         rounded-md">
                 {/* Upper split pane */}
-                <Allotment className="h-full overflow-scroll outline outline-1
-                                      outline-[#d1dbe3] shadow-md rounded-md">
+                <Allotment
+                    className="h-full overflow-scroll outline outline-1
+                               outline-[#d1dbe3] shadow-md rounded-md"
+                    minSize={150}
+                    snap
+                >
                     {/* Left split pane */}
                     <Allotment.Pane preferredSize={"50%"}>
-                        <Allotment vertical>
+                        <Allotment vertical snap>
                             {/* Action database */}
-                            <Allotment.Pane preferredSize={"50%"}>
+                            <Allotment.Pane
+                                preferredSize={"50%"}
+                                minSize={150}
+                            >
                                 <ActionBrowser
                                     actionList={actionList}
                                     setActionFormContext={setActionFormContext}
@@ -75,7 +82,7 @@ const GoalManager = () => {
                             </Allotment.Pane>
 
                             {/* File browser */}
-                            <Allotment.Pane>
+                            <Allotment.Pane minSize={150}>
                                 <div className="w-full h-full overflow-y-auto">
                                     <FileBrowser
                                         fileTree={fileTree}
@@ -87,10 +94,10 @@ const GoalManager = () => {
                     </Allotment.Pane>
 
                     {/* Right pane: form view */}
-                    <Allotment.Pane className="overflow-y-auto">
-                        {/* <FileEditor
-                        fileContents={fileContents}
-                    /> */}
+                    <Allotment.Pane
+                        className="overflow-y-auto"
+                        minSize={300}
+                    >
                         <div className="w-full h-full overflow-y-auto">
                             <ActionGoalForm sendMessage={sendMessage} />
                         </div>
