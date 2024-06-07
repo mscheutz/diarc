@@ -20,16 +20,22 @@ SET(SOURCES
 	validator/SizeValidator.cpp
 	)
 
+SET(CONFIG_DIR "../vision/build/resources/main/config/edu/tufts/hrilab/vision/imageProcs")
+
 # optional sources
 if (OpenCV_dnn_FOUND)
 	SET(SOURCES ${SOURCES}
 	    validator/ComponentValidator.cpp
 		)
-	# if (NOT EXISTS "${YOLO_MODEL_PATH}")
-	# 	message("Downloading YOLOv3 model ${YOLO_MODEL_URL}")
-	# 	file(DOWNLOAD "${YOLO_MODEL_URL}" "${YOLO_MODEL_PATH}")
-	# endif(NOT EXISTS "${YOLO_MODEL_PATH}")
-endif(OpenCV3_dnn_FOUND)
+
+    SET(COMPONENT_MODEL_PATH "${CONFIG_DIR}/componentvalidator/semanticEncoder.onnx")
+    SET(COMPONENT_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/semanticEncoder.onnx")
+
+    if (NOT EXISTS "${COMPONENT_MODEL_PATH}")
+    	message("Downloading semanticEncoder model ${COMPONENT_MODEL_URL}")
+    	file(DOWNLOAD "${COMPONENT_MODEL_URL}" "${COMPONENT_MODEL_PATH}")
+    endif(NOT EXISTS "${COMPONENT_MODEL_PATH}")
+endif(OpenCV_dnn_FOUND)
 
 if (V4R_V0_FOUND)
 	SET(SOURCES ${SOURCES}
