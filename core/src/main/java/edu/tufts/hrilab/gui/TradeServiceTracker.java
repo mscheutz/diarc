@@ -113,11 +113,11 @@ public class TradeServiceTracker {
 
   @TRADEService
   public void beforeServiceWrapper(Object[] args) {
-    log.info("Before service call... Args: {}", args);
+    log.debug("Before service call... Args: {}", args);
   }
 
   @TRADEService
   public void afterServiceWrapper(Object[] args) {
-    log.info("After service call... Args: {}", args);
+    log.debug("After service call... Args: {}", args);
   }
 }

@@ -1,6 +1,7 @@
 package edu.tufts.hrilab.config.gui;
 
-import edu.tufts.hrilab.action.GoalEndpointComponent;
+import edu.tufts.hrilab.action.GoalManagerEndpointComponent;
+import edu.tufts.hrilab.action.GoalViewerEndpointComponent;
 import edu.tufts.hrilab.action.GoalManagerImpl;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.DemoApplication;
@@ -48,7 +49,8 @@ public class UnifiedGuiConfig extends DiarcConfiguration {
         createInstance(GoalManagerImpl.class, gmArgs);
 
         createInstance(ChatEndpointComponent.class, "-n dempster shafer");
-        createInstance(GoalEndpointComponent.class);
+        createInstance(GoalViewerEndpointComponent.class);
+        createInstance(GoalManagerEndpointComponent.class);
         createInstance(EndpointManagerComponent.class);
 
         // Map demo

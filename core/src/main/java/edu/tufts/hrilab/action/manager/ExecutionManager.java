@@ -687,6 +687,7 @@ public class ExecutionManager implements ActionListener {
   /**
    * Calls {@link #submitGoal(Goal, ExecutionType, long, PriorityTier)} with the default values
    */
+  @TRADEService
   public Goal submitGoal(Predicate g) {
     Goal goal = new Goal(g);
     return submitGoal(goal, ExecutionType.ACT);
@@ -1295,6 +1296,7 @@ public class ExecutionManager implements ActionListener {
    * @param gid
    * @return boolean indicating whether the goal was found in one of the collections or not
    */
+  @TRADEService
   public boolean cancelGoal(long gid) {
     // if goal to cancel is pending
     PendingGoal pg = getPendingGoal(gid);

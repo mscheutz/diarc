@@ -5,7 +5,7 @@
 package edu.tufts.hrilab.config.nao;
 import edu.tufts.hrilab.action.GoalManagerImpl;
 import edu.tufts.hrilab.slug.listen.ListenerComponent;
-import edu.tufts.hrilab.action.GoalEndpointComponent;
+import edu.tufts.hrilab.action.GoalViewerEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.DemoApplication;
 import edu.tufts.hrilab.gui.EndpointManagerComponent;
@@ -50,7 +50,7 @@ public class TwoNaoDemo extends DiarcConfiguration {
     createInstance(GoalManagerImpl.class, gmArgs);
 
     createInstance(ChatEndpointComponent.class, "-n dempster shafer");
-    createInstance(GoalEndpointComponent.class);
+    createInstance(GoalViewerEndpointComponent.class);
     createInstance(EndpointManagerComponent.class);
   }
 

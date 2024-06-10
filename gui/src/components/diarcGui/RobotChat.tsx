@@ -22,10 +22,6 @@ import {
     ConversationList
 } from "@chatscope/chat-ui-kit-react";
 
-import { ReadyState } from "react-use-websocket";
-
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBan, faSync, faCheck, faQuestion } from '@fortawesome/free-solid-svg-icons'
 import ConnectionIndicator from './ConnectionIndicator';
 
 let counter = 0; // list items need unique keys
@@ -248,10 +244,10 @@ const RobotChat = (
     }
 
     return (
-        <div className='h-[40rem]'>
-            <MainContainer>
+        <div className='h-[40rem] shadow-md'>
+            <MainContainer className='rounded-md'>
                 <Sidebar position="left">
-                    <div className="flex flex-col justify-between h-full">
+                    <div className="flex flex-col justify-between h-full p-5">
 
                         <div className="flex flex-col space-y-2">
                             {/* Name input */}

@@ -2,6 +2,7 @@ package edu.tufts.hrilab.simspeech;
 
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.slug.common.Utterance;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -21,6 +22,7 @@ import java.util.*;
 public class ChatEndpointComponent extends DiarcComponent {
     private String[] robotNames;
     private HashMap<String, TRADEServiceInfo> robotInputs;
+    private HashMap<String, TRADEServiceInfo> robotSetSpeakers;
 
     private final ChatHandler chatHandler;
 
@@ -112,9 +114,28 @@ public class ChatEndpointComponent extends DiarcComponent {
                 }
             }
         }
-
         if(mapped != this.robotNames.length)
             log.error("Failed to map all robot names to inputs");
+        
+        // Find robot set-speaker services
+        this.robotSetSpeakers = new HashMap<>();
+        mapped = 0;
+        outer:
+        for (TRADEServiceInfo service : availableServices) {
+            if (service.serviceString.equals("setSpeaker(edu.tufts.hrilab.fol.Symbol)")) {
+                for(String robotName : this.robotNames) {
+                    if(robotName.equals(
+                            service.getGroups().iterator().next())) {
+                        this.robotSetSpeakers.put(robotName, service);
+                        mapped++;
+                        continue outer;
+                    }
+                }
+            }
+        }
+
+        if(mapped != this.robotNames.length)
+            log.error("Failed to find setSpeaker TRADE services");
     }
 
     /**
@@ -207,16 +228,13 @@ public class ChatEndpointComponent extends DiarcComponent {
 
             String data = request.getString("message");
             // currently not needed
-//            String sender = request.getString("sender");
+            String sender = request.getString("sender");
             String recipient = request.getString("recipient");
 
-            TRADEServiceInfo service = robotInputs.get(recipient);
-            if (service == null) {
-                log.error("Invalid incoming message: no SimSpeechRecognitionComponent"
-                        + "matches specified recipient \"{}\"", recipient);
-                return;
-            }
-            service.call(void.class, data);
+            TRADEServiceInfo setSpeaker = robotSetSpeakers.get(recipient);
+            TRADEServiceInfo setText = robotInputs.get(recipient);
+            setSpeaker.call(void.class, Factory.createSymbol(sender));
+            setText.call(void.class, data);
         }
     }
 }

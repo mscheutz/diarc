@@ -20,8 +20,9 @@ import { faBan, faCog } from '@fortawesome/free-solid-svg-icons'
 
 import RobotChat, { createConversation } from "./RobotChat";
 import type { Chat } from "./RobotChat";
-import GoalView from "./GoalView";
+import GoalViewer from "./GoalViewer";
 import MapViewer from "./MapViewer";
+import GoalManager from "./GoalManager";
 
 const TabbedComponentViewer: React.FunctionComponent = () => {
     // Robot chat state
@@ -46,17 +47,20 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 
     // Websocket to check for the endpoints
     const [chatStatus, setChatStatus] = useState<string>("wait")
-    const [goalStatus, setGoalStatus] = useState<string>("wait")
+    const [viewerStatus, setViewerStatus] = useState<string>("wait")
+    const [managerStatus, setManagerStatus] = useState<string>("wait")
     const [mapStatus, setMapStatus] = useState<string>("wait")
-    const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
-    const chatSocket = useWebSocket(`${wsBaseUrl}/chat`);
-    const goalSocket = useWebSocket(`${wsBaseUrl}/goal`);
-    const mapSocket = useWebSocket(`${wsBaseUrl}/map`);
+    const chatSocket = useWebSocket("ws://localhost:8080/chat");
+    const viewerSocket = useWebSocket("ws://localhost:8080/goalViewer");
+    const managerSocket = useWebSocket("ws://localhost:8080/goalManager");
+    const mapSocket = useWebSocket("ws://localhost:8080/map");
 
     const check = () => {
         setChatStatus(chatSocket.readyState === ReadyState.OPEN ?
             "on" : "off");
-        setGoalStatus(goalSocket.readyState === ReadyState.OPEN ?
+        setViewerStatus(viewerSocket.readyState === ReadyState.OPEN ?
+            "on" : "off");
+        setManagerStatus(managerSocket.readyState === ReadyState.OPEN ?
             "on" : "off");
         setMapStatus(mapSocket.readyState === ReadyState.OPEN ?
             "on" : "off");
@@ -66,33 +70,36 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 
     // Normal chat websocket
     const { sendMessage, lastMessage, readyState } =
-        useWebSocket(`${wsBaseUrl}/chat`);
+        useWebSocket("ws://localhost:8080/chat");
 
     return (
-        <div className="w-2/3 h-[50rem]">
+        <div className="w-5/6 h-[50rem]">
             <Tabs forceRenderTabPanel>
                 <TabList>
-                    {chatStatus === "wait" || goalStatus === "wait"
+                    {chatStatus === "wait" || viewerStatus === "wait"
                         || mapStatus === "wait" ?
                         <Tab>Connecting...</Tab>
                         : null}
-                    {chatStatus === "off" && goalStatus === "off"
+                    {chatStatus === "off" && viewerStatus === "off"
                         && mapStatus === "off" ?
                         <Tab>Connection Failed</Tab>
                         : null}
                     {chatStatus === "on" ?
                         <Tab>Robot Chat</Tab>
                         : null}
-                    {goalStatus === "on" ?
+                    {viewerStatus === "on" ?
                         <Tab>Goal Viewer</Tab>
+                        : null}
+                    {managerStatus === "on" ?
+                        <Tab>Goal Manager</Tab>
                         : null}
                     {mapStatus === "on" ?
                         <Tab>Map Viewer</Tab>
                         : null}
                 </TabList>
 
-                {/* Loading panel */}
-                {chatStatus === "wait" || goalStatus === "wait"
+                {/* Connecting panel */}
+                {chatStatus === "wait" || viewerStatus === "wait"
                     || mapStatus === "wait" ?
                     <TabPanel className="grid grid-column h-full m-48">
                         <div className="flex flex-row justify-center">
@@ -107,7 +114,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                     </TabPanel>
                     : null}
                 {/* Failed panel */}
-                {chatStatus === "off" && goalStatus === "off"
+                {chatStatus === "off" && viewerStatus === "off"
                     && mapStatus === "off" ?
                     <TabPanel className="grid grid-column h-full m-48">
                         <div className="flex flex-row justify-center">
@@ -119,13 +126,8 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                         <p className="text-center m-10">
                             Connection Failed!
                         </p>
-                        <p className="text-center m-10">
-                            WebSocket URLs:<br/>
-                            {wsBaseUrl}
-                        </p>
                     </TabPanel>
                     : null}
-                {/* Chat panel */}
                 {chatStatus === "on" ?
                     <TabPanel>
                         <RobotChat
@@ -143,13 +145,16 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                         />
                     </TabPanel>
                     : null}
-                {/* Goal panel */}
-                {goalStatus === "on" ?
+                {viewerStatus === "on" ?
                     <TabPanel>
-                        <GoalView />
+                        <GoalViewer />
                     </TabPanel>
                     : null}
-                {/* Map panel */}
+                {managerStatus === "on" ?
+                    <TabPanel>
+                        <GoalManager />
+                    </TabPanel>
+                    : null}
                 {mapStatus === "on" ?
                     <TabPanel>
                         <MapViewer></MapViewer>

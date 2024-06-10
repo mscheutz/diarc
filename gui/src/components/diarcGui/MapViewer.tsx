@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "../Button";
-import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { faBan, faCheck, faQuestion, faSync } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import useWebSocket from 'react-use-websocket';
 import ConnectionIndicator from './ConnectionIndicator';
 
 type Position = { x: number, y: number, z: number };
@@ -283,10 +281,10 @@ const MapViewer = () => {
     );
 
     return (
-        <div className="map-container h-full w-full flex flex-col gap-3 outline
-                        outline-1 outline-[#d1dbe3] items-center">
+        <div className="map-container h-full w-full flex flex-col gap-5 outline
+                        outline-1 outline-[#d1dbe3] items-center p-5 rounded-md">
             {/* Button menu */}
-            <div className="flex flex-row justify-center gap-2 mt-3">
+            <div className="flex flex-row justify-center gap-2">
                 <Button
                     onClick={() => sendWebSocketRequest('fetchMapData')}>
                     Fetch Map Data
