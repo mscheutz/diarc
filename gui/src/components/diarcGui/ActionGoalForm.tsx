@@ -26,9 +26,10 @@ const submitClassName = "bg-slate-900 text-white hover:bg-slate-800 "
     + "disabled:bg-slate-400 disabled:dark:bg-slate-400 h-10 py-2 px-4 "
     + "cursor-pointer"
 
+// @ts-ignore
 const ActionForm = ({ sendMessage }) => {
     const custom = useForm();
-    const onSubmitCustom = (data) => {
+    const onSubmitCustom = (data: any) => {
         custom.reset();
         sendMessage(JSON.stringify(
             {
@@ -55,7 +56,7 @@ const ActionForm = ({ sendMessage }) => {
                 : <div className="py-2">No action selected.</div>
         );
     };
-    const onSubmitGenerated = (data) => {
+    const onSubmitGenerated = (data: any) => {
         generated.reset();
         for (let [key, value] of Object.entries(data)) {
             if (!actionFormContext.includes(key) || value === "") {
@@ -138,9 +139,10 @@ const ActionForm = ({ sendMessage }) => {
     );
 };
 
+// @ts-ignore
 const GoalForm = ({ sendMessage }) => {
     const { register, handleSubmit, reset, formState: { errors } } = useForm();
-    const onSubmitGoal = (data) => {
+    const onSubmitGoal = (data: any) => {
         reset();
         sendMessage(JSON.stringify(
             {
@@ -175,6 +177,7 @@ const GoalForm = ({ sendMessage }) => {
     );
 };
 
+// @ts-ignore
 const ActionGoalForm = ({ sendMessage }) => {
     return (
         <div className="p-5">

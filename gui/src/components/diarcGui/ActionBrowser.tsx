@@ -29,9 +29,9 @@ const ActionBrowser = ({ actionList, setActionFormContext }) => {
             {actionList.map((item: string, index) => (
                 <p
                     key={index}
-                    className="w-full hover:bg-[#C6E3FA] px-1 font-mono py-0.5
+                    className="w-full hover:bg-[#C6E3FA] px-1
                                hover:cursor-pointer text-sm leading-4
-                               text-nowrap"
+                               text-nowrap font-mono py-0.5"
                     onClick={handleOnClick}
                     title={item}
                 >

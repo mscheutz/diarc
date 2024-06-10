@@ -83,7 +83,8 @@ const GoalManager = () => {
 
                             {/* File browser */}
                             <Allotment.Pane minSize={150}>
-                                <div className="w-full h-full overflow-y-auto">
+                                <div className="w-full h-full overflow-y-auto
+                                                overflow-x-scroll">
                                     <FileBrowser
                                         fileTree={fileTree}
                                         sendMessage={sendMessage}

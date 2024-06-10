@@ -30,13 +30,13 @@ const FileBrowser = ({ fileTree, sendMessage }) => {
             className="basic p-5"
             onNodeSelect={getFileOnSelect}
             nodeRenderer={
-                ({ element, getNodeProps, level, isBranch, isExpanded }) => {
+                ({ element, getNodeProps, level, isBranch, isExpanded, isSelected }) => {
                     return (
                         <div
                             {...getNodeProps()}
                             style={{ paddingLeft: 20 * level - 15 }}
                             title={element.name}
-                            className="overflow-scroll-x"
+                            className={isSelected ? "selected" : "tree-node"}
                         >
                             <p className="text-nowrap">
                                 {isBranch ?

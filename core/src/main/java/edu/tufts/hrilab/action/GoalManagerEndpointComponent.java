@@ -9,7 +9,6 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -24,7 +23,9 @@ import java.util.regex.Pattern;
 
 public class GoalManagerEndpointComponent extends DiarcComponent {
     private final GoalManagerHandler goalManagerHandler;
-    public final String ACTION_SCRIPT_PATH = "core/src/main/resources/config/edu/tufts/hrilab/action/asl";
+//    public final String ACTION_SCRIPT_PATH = "core/src/main/resources/config/edu/tufts/hrilab/action/asl";
+    public final String ACTION_SCRIPT_PATH = "../core/src/main/resources/config/edu/tufts/hrilab/action/asl";
+
 
     /**
      * Constructor.

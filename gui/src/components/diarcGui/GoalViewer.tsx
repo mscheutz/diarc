@@ -180,13 +180,13 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
                 className="basic"
                 onNodeSelect={handleSelect}
                 nodeRenderer={
-                    ({ element, getNodeProps, level, isExpanded }) => {
+                    ({ element, getNodeProps, level, isExpanded, isSelected }) => {
                         return (
                             <div
                                 {...getNodeProps()}
                                 style={{ paddingLeft: 20 * level - 15 }}
                                 title={element.name}
-                                className="whitespace-nowrap"
+                                className={isSelected ? "selected" : "tree-node"}
                             >
                                 <p className="text-nowrap">
                                     {level < 3 && // group or agent (not goal)

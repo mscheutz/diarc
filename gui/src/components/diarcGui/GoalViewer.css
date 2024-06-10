@@ -2,8 +2,6 @@
 
 .tree-node {
     cursor: pointer;
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
@@ -11,6 +9,7 @@
     background: #C6E3FA;
 }
 
-.tree .tree-node--selected {
+.selected {
+    cursor: pointer;
     background: #6ab0ff;
 }
