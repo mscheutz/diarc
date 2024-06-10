@@ -5,6 +5,7 @@
 package edu.tufts.hrilab.gui;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,13 @@ public class DemoConfig implements WebSocketConfigurer {
   @Autowired
   private ConfigurableApplicationContext applicationContext;
 
+  @Value("${cors.origin}")
+  private String corsOrigin;
+
+  private String[] parseCorsOrigins() {
+    return corsOrigin.split(",");
+  }
+
   @Bean
   public MapComponent mapComponent() {
     MapComponent component = DiarcComponent.createInstance(MapComponent.class, "-map_folder /home/hrilab/code/diarc-old/maps/elevator_lab_test/ -start_floor 1");
@@ -38,8 +46,8 @@ public class DemoConfig implements WebSocketConfigurer {
 
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
     registry.addHandler(mapGui(mapComponent()), "/map")
-            .setAllowedOrigins("http://localhost:3000");
+            .setAllowedOrigins(parseCorsOrigins());
     registry.addHandler(new DemoComponent(), "/user")
-            .setAllowedOrigins("http://localhost:3000");
+            .setAllowedOrigins(parseCorsOrigins());
   }
 }

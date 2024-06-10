@@ -7,6 +7,7 @@ import edu.tufts.hrilab.action.GoalEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
 import org.apache.commons.cli.CommandLine;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -27,6 +28,14 @@ public class EndpointManagerComponent extends DiarcComponent
     // +---------------------+
     // | WebSocketConfigurer |
     // + --------------------+
+
+    @Value("${cors.origin}")
+    private String corsOrigin;
+
+    // Convert the comma-separated String to an array
+    private String[] parseCorsOrigins() {
+        return corsOrigin.split(",");
+    }
 
     /**
      * Add endpoints and allow the client to access them.
@@ -52,9 +61,9 @@ public class EndpointManagerComponent extends DiarcComponent
                 throw new NullPointerException("Failed to find handler of chat or goal");
 
             registry.addHandler(chatHandler, "/chat")
-                    .setAllowedOrigins("http://localhost:3000");
+                    .setAllowedOrigins(parseCorsOrigins());
             registry.addHandler(goalHandler, "/goal")
-                    .setAllowedOrigins("http://localhost:3000");
+                    .setAllowedOrigins(parseCorsOrigins());
         } catch(TRADEException e) {
             log.error("Chat handler service call failed");
         }

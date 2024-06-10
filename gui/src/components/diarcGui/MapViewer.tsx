@@ -110,10 +110,10 @@ const MapViewer = () => {
     const yPadRef = useRef<number>(0);
     const scaleRef = useRef<number>(1);
     const imageRef = useRef<HTMLImageElement | null>(null);
-
+    const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
     // Set up Websocket
     const { sendMessage, lastMessage, readyState } =
-        useWebSocket("ws://localhost:8080/map");
+        useWebSocket(`${wsBaseUrl}/map`);
 
     // Handle received messages
     useEffect(() => {

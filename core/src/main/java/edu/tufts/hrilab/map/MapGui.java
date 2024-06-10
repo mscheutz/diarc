@@ -14,6 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
@@ -28,13 +29,15 @@ import java.util.*;
 
 @Component
 public class MapGui extends TextWebSocketHandler {
-    private static final Logger log = LoggerFactory.getLogger(MapGui.class);
+
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     @Autowired
     private MapComponent mapComponent;
-
     @Autowired
     private ImageService imageService;
+    private static final Logger log = LoggerFactory.getLogger(MapGui.class);
 
     @Autowired
     public MapGui(MapComponent mapComponent) {
@@ -91,7 +94,7 @@ public class MapGui extends TextWebSocketHandler {
 
             String pngFileName = imageService.convertPGMtoPNG(pgmFilePath);
             response.put("currentFloor", currentFloor);
-            response.put("mapImageUrl", "http://localhost:8080/images/" + pngFileName);
+            response.put("mapImageUrl", baseUrl + "/images/" + pngFileName);
             response.put("success", true);
             response.put("message", "Map data fetched successfully.");
             // Send the initial map data response

@@ -39,10 +39,9 @@ const GoalView: React.FunctionComponent<{}> = () => {
             </div>
         );
     };
-
+    const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
     const { sendMessage, lastMessage, readyState } =
-        useWebSocket("ws://localhost:8080/goal");
-
+        useWebSocket(`${wsBaseUrl}/goal`);
     useEffect(() => {
         if (lastMessage !== null) {
             const data = JSON.parse(lastMessage.data);

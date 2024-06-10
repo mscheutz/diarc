@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# depreciated
 # Check if 'xdotool' command is available
 if ! command -v xdotool &> /dev/null; then
     echo "Error: 'xdotool' command not found. Make sure it is installed."

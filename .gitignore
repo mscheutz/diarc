@@ -1,6 +1,9 @@
 .gradle/
 config/build/
 core/build/
+core/src/main/resources/*-prod.properties
+core/src/main/resources/*-dev.properties
+core/src/main/resources/*-test.properties
 diarcRos/build/
 vision/build/
 vision/src/swig/

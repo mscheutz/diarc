@@ -49,7 +49,6 @@ public class DemoApplication extends SpringBootServletInitializer {
     return application.sources(DemoApplication.class);
   }
 
-  @CrossOrigin(origins = "http://localhost:3000")
   @GetMapping("/services")
   public Map<String, Set<Map<String, String>>> getServices() {
     return tradeServiceIntegrator.getServicesOrganized();
@@ -88,7 +87,6 @@ public class DemoApplication extends SpringBootServletInitializer {
             .collect(Collectors.toSet());
   }
 
-  @CrossOrigin(origins = "http://localhost:3000")
   @PostMapping("/invoke-service")
   public ResponseEntity<String> invokeService(
           @RequestParam("serviceName") String serviceName,

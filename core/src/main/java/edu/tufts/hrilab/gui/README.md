@@ -166,3 +166,20 @@ POST
 "refId": "Unknown Type: location_0:location"
 }
 continues indefinitely
+
+### application.properties
+Setting the Environment Variable Manually before running the application:
+
+On Linux/MacOS:
+```bash
+export SPRING_PROFILES_ACTIVE=prod
+./gradlew launch
+```
+
+On Windows:
+```cmd
+set SPRING_PROFILES_ACTIVE=prod
+./gradlew launch
+```
+
+This method sets the SPRING_PROFILES_ACTIVE environment variable, which Spring Boot automatically uses to determine the active profile.
