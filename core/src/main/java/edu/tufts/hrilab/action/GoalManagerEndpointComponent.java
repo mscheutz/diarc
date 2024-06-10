@@ -80,7 +80,7 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
                 if (service.serviceString.equals("submitGoal(edu.tufts.hrilab.fol.Predicate)")) {
                     submitActionService = service;
                 }
-                else if(service.serviceString.equals("submitGoal(edu.tufts.hrilab.action.Goal)")) {
+                else if(service.serviceString.equals("submitGoal(edu.tufts.hrilab.action.goal.Goal)")) {
                     submitGoalService = service;
                 }
                 if(submitGoalService != null && submitActionService != null)
