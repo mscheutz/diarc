@@ -24,7 +24,11 @@ const GoalManager = () => {
     const { sendMessage, lastMessage, readyState } =
         useWebSocket(`${wsBaseUrl}/goalManager`);
 
-    const [actionList, setActionList] = useState<string[]>([]);
+    const [actionList, setActionList] = useState<object>({
+        id: "0",
+        name: "",
+        children: []
+    });
     const [fileTree, setFileTree] = useState<object>({
         id: "0",
         name: "asl",
@@ -43,7 +47,7 @@ const GoalManager = () => {
         const data = JSON.parse(lastMessage.data);
 
         if (data.actions) {
-            setActionList(data.actions.sort());
+            setActionList({ name: "", children: data.actions });
         }
         if (data.files) {
             setFileTree({ name: "", children: [data.files] });
@@ -76,10 +80,13 @@ const GoalManager = () => {
                                 preferredSize={"50%"}
                                 minSize={150}
                             >
-                                <ActionBrowser
-                                    actionList={actionList}
-                                    setActionFormContext={setActionFormContext}
-                                />
+                                <div className="w-full h-full overflow-y-scroll 
+                                overflow-x-scroll">
+                                    <ActionBrowser
+                                        actionList={actionList}
+                                        setActionFormContext={setActionFormContext}
+                                    />
+                                </div>
                             </Allotment.Pane>
 
                             {/* File browser */}

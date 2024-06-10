@@ -7,6 +7,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.gui.ADBEWrapper;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.util.IdGenerator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.web.socket.TextMessage;
@@ -51,6 +52,8 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
         private TRADEServiceInfo submitGoalService;
         private TRADEServiceInfo submitActionService;
 
+        private List<ActionDBEntry> actionList;
+
         /**
          * Constructs this GoalEndpoint.
          */
@@ -64,6 +67,8 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             } catch(NullPointerException e) {
                 log.error(e.getMessage());
             }
+
+            actionList = new ArrayList<>();
         }
 
         /**
@@ -319,14 +324,17 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             JSONObject message = new JSONObject();
 
             JSONArray actions = new JSONArray();
-            SortedSet<ADBEWrapper> actionSet =
-                    new TreeSet<>(Comparator.comparing(ADBEWrapper::getName));
-            for(ActionDBEntry e : Database.getActionDB().getAllActions()) {
-                ADBEWrapper w = new ADBEWrapper(e);
-                actionSet.add(w);
-                actions.put(w.getActionSignature());
+            actionList.addAll(Database.getActionDB().getAllActions());
+            actionList.sort(Comparator.comparing(ActionDBEntry::getName));
+
+            for(int i = 0; i < actionList.size(); i++) {
+                actions.put(
+                        new JSONObject()
+                                .put("name", actionList.get(i).getName())
+                                .put("id", i)
+                );
             }
-            message.put("actions", actions);
+            message.put("actions", actions); // TODO: left off trying to get unique IDs to work
 
             JSONObject files = getAslFilesAsTree();
             message.put("files", files);
