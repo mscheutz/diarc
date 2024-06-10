@@ -50,10 +50,11 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
     const [viewerStatus, setViewerStatus] = useState<string>("wait")
     const [managerStatus, setManagerStatus] = useState<string>("wait")
     const [mapStatus, setMapStatus] = useState<string>("wait")
-    const chatSocket = useWebSocket("ws://localhost:8080/chat");
-    const viewerSocket = useWebSocket("ws://localhost:8080/goalViewer");
-    const managerSocket = useWebSocket("ws://localhost:8080/goalManager");
-    const mapSocket = useWebSocket("ws://localhost:8080/map");
+    const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
+    const chatSocket = useWebSocket(`${wsBaseUrl}/chat`);
+    const viewerSocket = useWebSocket(`${wsBaseUrl}/goalViewer`);
+    const managerSocket = useWebSocket(`${wsBaseUrl}/goalManager`);
+    const mapSocket = useWebSocket(`${wsBaseUrl}/map`);
 
     const check = () => {
         setChatStatus(chatSocket.readyState === ReadyState.OPEN ?
@@ -70,7 +71,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 
     // Normal chat websocket
     const { sendMessage, lastMessage, readyState } =
-        useWebSocket("ws://localhost:8080/chat");
+        useWebSocket(`${wsBaseUrl}/chat`);
 
     return (
         <div className="w-5/6 h-[50rem]">
@@ -124,7 +125,9 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                             />
                         </div>
                         <p className="text-center m-10">
-                            Connection Failed!
+                            Connection Failed!<br/>
+                            WebSocket URL:<br/>
+                            {wsBaseUrl}
                         </p>
                     </TabPanel>
                     : null}

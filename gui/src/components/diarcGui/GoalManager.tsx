@@ -20,8 +20,9 @@ import ActionFormContext from "./ActionFormContext";
 import ConnectionIndicator from "./ConnectionIndicator";
 
 const GoalManager = () => {
+    const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
     const { sendMessage, lastMessage, readyState } =
-        useWebSocket("ws://localhost:8080/goalManager");
+        useWebSocket(`${wsBaseUrl}/goalManager`);
 
     const [actionList, setActionList] = useState<string[]>([]);
     const [fileTree, setFileTree] = useState<object>({

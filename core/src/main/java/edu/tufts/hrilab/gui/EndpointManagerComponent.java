@@ -7,6 +7,7 @@ import edu.tufts.hrilab.action.GoalManagerEndpointComponent;
 import edu.tufts.hrilab.action.GoalViewerEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -27,6 +28,14 @@ public class EndpointManagerComponent extends DiarcComponent
     // +---------------------+
     // | WebSocketConfigurer |
     // +---------------------+
+
+    @Value("${cors.origin}")
+    private String corsOrigin;
+
+    // Helper method to convert comma-separated String to an array
+    private String[] parseCorsOrigins() {
+        return corsOrigin.split(",");
+    }
 
     /**
      * Add endpoints and allow the client to access them.
@@ -59,11 +68,11 @@ public class EndpointManagerComponent extends DiarcComponent
                 + "chat, goal viewer, or goal manager");
 
             registry.addHandler(chatHandler, "/chat")
-                    .setAllowedOrigins("http://localhost:3000");
+                    .setAllowedOrigins(parseCorsOrigins());
             registry.addHandler(goalViewerHandler, "/goalViewer")
-                    .setAllowedOrigins("http://localhost:3000");
+                    .setAllowedOrigins(parseCorsOrigins());
             registry.addHandler(goalManagerHandler, "/goalManager")
-                    .setAllowedOrigins("http://localhost:3000");
+                    .setAllowedOrigins(parseCorsOrigins());
         } catch(TRADEException e) {
             log.error("Chat handler service call failed");
         }

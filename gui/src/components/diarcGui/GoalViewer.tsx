@@ -65,8 +65,9 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
         ]
     });
 
+    const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
     const { sendMessage, lastMessage, readyState } =
-        useWebSocket("ws://localhost:8080/goalViewer");
+        useWebSocket(`${wsBaseUrl}/goalViewer`);
 
     useEffect(() => {
         if (lastMessage !== null) {
