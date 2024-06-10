@@ -25,6 +25,9 @@
 using namespace diarc::stm;
 using namespace diarc::grasp;
 
+GraspDetector::Ptr GraspDetector::instance = NULL;
+boost::mutex GraspDetector::instance_mutex;
+
 GraspDetector::Ptr GraspDetector::getInstance() {
   boost::lock_guard<boost::mutex> lock(instance_mutex);
   if (!instance) {

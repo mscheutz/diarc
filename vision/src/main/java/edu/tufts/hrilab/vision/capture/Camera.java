@@ -35,11 +35,6 @@ public class Camera {
   //(ie. must appear before other static blocks that use any JNI methods)
 
   static {
-    //System.out.println("JAVA LIB PATHS: " + System.getProperty("java.library.path"));
-    System.setProperty("java.library.path", ".");
-    System.setProperty("java.library.path", "./JNIversion");
-    //System.loadLibrary("camera");
-    //System.loadLibrary("capture_swig");
     System.loadLibrary("capture");
   }
 
@@ -497,64 +492,6 @@ public class Camera {
     captureDevice.setUndistortFlag(undistort);
   }
 
-
-  //TODO: port to native code
-//    private void adjustFastBlobColorRangesIfNecessary()
-//    {
-//        FaceData blob = findLargestBlob();
-//        // only try to adjust if blob exists, and if user's not trying to select via frame
-//        if (   (blob != null) && myFastBlobAdaptColors &&
-//                (!myControlPanel.myBlobColorSelectionFrame.isVisible())   )
-//        {
-//            System.out.println("largest blob id = " + blob.getColorID());
-//
-//            int[] start = new int[3];
-//            int[] end = new int[3];
-//            int[] sizes = new int[2]; // keeping same
-//            String name = myControlPanel.ReturnNameAndPassBackColorListItemComponents(
-//                                (String)myControlPanel.myControlFastBlobColorListModel
-//                                            .getElementAt(blob.getColorID()),
-//                                start, end, sizes);
-//
-//            int[] thisColor = {blob.getColorR(), blob.getColorG(), blob.getColorB()};
-//            int[] definedAvg = Misc.averageOfArrays(start, end);
-//
-//            int[] diff = new int[thisColor.length];
-//            for (int i = 0; i < thisColor.length; i++)
-//                diff[i] = thisColor[i] - definedAvg[i];
-//
-//            System.out.println("color diff: " +
-//                                "  R = " + diff[0] +
-//                                "  G = " + diff[1] +
-//                                "  B = " + diff[2]);
-//
-//            int TOO_GREAT_A_DIFFERENCE = 10;
-//            if (   (Math.abs(diff[0]) > TOO_GREAT_A_DIFFERENCE) ||
-//                   (Math.abs(diff[1]) > TOO_GREAT_A_DIFFERENCE) ||
-//                   (Math.abs(diff[2]) > TOO_GREAT_A_DIFFERENCE)     )
-//            {
-//                System.out.println("\t\tDifferences too large to adapt.  exiting.");
-//                return;
-//            }
-//
-//
-//            Misc.adjustArray(start, diff);
-//            Misc.adjustArray(end, diff);
-//
-//            // update the text:
-//            myControlPanel.myControlFastBlobColorListModel.set(blob.getColorID(),
-//                    myControlPanel.getColorConfigurationTextBasedOnParameters(name, start, end, sizes));
-//
-//            myControlPanel.myControlFastBlobColorList.setSelectedIndex(blob.getColorID());
-//            myControlPanel.myControlFastBlobColorRangeStart.setBackground(Misc.validColor(start));
-//            myControlPanel.myControlFastBlobColorRangeEnd.setBackground(Misc.validColor(end));
-//                    // just to update the colors visually
-//
-//            CameraInitProfile fastBlobInitProfile = new CameraInitProfile();
-//            myControlPanel.ApplyChangesFastBlobDetectAndInitProfile(fastBlobInitProfile);
-//            UpdateFastBlobColorsUponPausingCamera(fastBlobInitProfile);
-//        }
-//    }
   // for testing only
   public static void main(String args[]) {
     /*

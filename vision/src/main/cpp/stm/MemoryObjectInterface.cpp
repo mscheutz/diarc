@@ -247,7 +247,7 @@ void MemoryObjectInterface::fillJavaMemoryObject(const MemoryObject::ConstPtr& c
     }
   } else if (current->getCaptureData()->hasCloudData()) {
     // just pass point cloud
-    setPointCloud(current->getTrackingMask()->getUnorganizedObjectPointCloud());
+    setPointCloud(current->getDetectionMask()->getObjectPointCloud());
   }
 
 
@@ -287,15 +287,6 @@ void MemoryObjectInterface::fillJavaMemoryObject(const MemoryObject::ConstPtr& c
   current->unlock();
 
   LOG4CXX_TRACE(logger, boost::format("[fillJavaMemoryObject] done filling java MO for %lld.") % current->getId());
-}
-
-MemoryObject::Ptr createNativeObject(jobject jMO) {
-  memoryObject = jMO;
-  CaptureData::Ptr capture(new CaptureData());
-  MemoryObject::Ptr nativeMO(new MemoryObject());
-  cv::Mat transform = getBaseTransform();
-  nativeMO.setBaseTransform(transform);
-
 }
 
 void MemoryObjectInterface::setTypeId(const long long& typeId) {

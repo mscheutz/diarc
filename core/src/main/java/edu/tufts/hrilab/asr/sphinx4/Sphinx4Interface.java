@@ -1,7 +1,7 @@
 /*
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
-package edu.tufts.hrilab.sphinx4;
+package edu.tufts.hrilab.asr.sphinx4;
 
 import ai.thinkingrobots.trade.TRADEService;
 

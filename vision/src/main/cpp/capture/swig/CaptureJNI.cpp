@@ -8,13 +8,13 @@
 #include "capture/Capture.hpp"
 #include "capture/util/CaptureUtilities.hpp"
 
-JNIEXPORT jboolean JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_checkDarkness(JNIEnv *env, jclass jcls) {
+JNIEXPORT jboolean JNICALL Java_edu_tufts_hrilab_vision_capture_swig_CaptureModuleJNI_checkDarkness(JNIEnv *env, jclass jcls) {
     const cv::Mat frame = diarc::capture::Capture::getLastCaptureNotification()->captureData->frame;
     return diarc::capture::util::isFrameDark(frame);
 }
 
 
-JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackImageArray(JNIEnv* env, jclass jcls, jbyteArray passedArray, jint blurAmount) {
+JNIEXPORT void JNICALL Java_edu_tufts_hrilab_vision_capture_swig_CaptureModuleJNI_passBackImageArray(JNIEnv* env, jclass jcls, jbyteArray passedArray, jint blurAmount) {
   const cv::Mat frame = diarc::capture::Capture::getLastCaptureNotification()->captureData->frame;
 
   cv::Mat blurFrame;
@@ -41,7 +41,7 @@ JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackIma
   env->ReleasePrimitiveArrayCritical(passedArray, dataLocal, 0);
 }
 
-JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackDisparityArray(JNIEnv* env, jclass jcls, jbyteArray passedArray) {
+JNIEXPORT void JNICALL Java_edu_tufts_hrilab_vision_capture_swig_CaptureModuleJNI_passBackDisparityArray(JNIEnv* env, jclass jcls, jbyteArray passedArray) {
   const cv::Mat frame = diarc::capture::Capture::getLastCaptureNotification()->captureData->depthFrameIntensity;
   float* dataLocal = (float*) env->GetPrimitiveArrayCritical(passedArray, 0);
 
@@ -56,7 +56,7 @@ JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackDis
   env->ReleasePrimitiveArrayCritical(passedArray, dataLocal, 0);
 }
 
-JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackDepthArray(JNIEnv* env, jclass jcls, jbyteArray passedArray) {
+JNIEXPORT void JNICALL Java_edu_tufts_hrilab_vision_capture_swig_CaptureModuleJNI_passBackDepthArray(JNIEnv* env, jclass jcls, jbyteArray passedArray) {
   const cv::Mat frame = diarc::capture::Capture::getLastCaptureNotification()->captureData->depthFrame;
   float* dataLocal = (float*) env->GetPrimitiveArrayCritical(passedArray, 0);
 

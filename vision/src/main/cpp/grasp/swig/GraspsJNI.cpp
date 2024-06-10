@@ -14,19 +14,18 @@
 
 using namespace diarc::stm;
 
-JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_grasp_swig_GraspsJNI_calculateGraspPoses(JNIEnv* env, jclass cls, jobject mo) {
-  MemoryObjectInterface moJNI;
-  moJNI.initialize(env, mo);
-  MemoryObject memoryObject = moJNI.
+JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_grasp_swig_GraspDetectorModuleJNI_calculateGraspPoses(JNIEnv* env, jclass cls, jobject mo) {
+  MemoryObject::Ptr memoryObject;
 
   ArrayListInterface graspsJNI;
   graspsJNI.initialize(env);
-  std::vector<diarc::grasp::Grasp> grasps = diarc::grasp::GraspDetector::getInstance()->calculateGraspOptions(memoryObject, env);
+
+  std::vector<diarc::grasp::Grasp> grasps = diarc::grasp::GraspDetector::getInstance()->calculateGraspOptions(memoryObject);
   for (auto grasp : grasps) {
     GraspInterface graspJNI;
     graspJNI.initialize(env);
     int i = 0;
-    for (auto point : grasp.points) {
+    for (auto point : grasp.points->points) {
       graspJNI.setPoint(i++, point.x, point.y, point.z);
     }
     graspJNI.setOrientation(grasp.orientation.x(), grasp.orientation.y(), grasp.orientation.z(), grasp.orientation.w());

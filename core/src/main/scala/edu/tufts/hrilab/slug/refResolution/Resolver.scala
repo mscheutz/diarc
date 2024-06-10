@@ -41,11 +41,11 @@ class Resolver( groups: java.util.List[String]){
     //todo: (pete, brad) this feels kind of hacky. specifically distinguishing between the "self wants everything" vs "!self only wants its own agent group" fixable with better groups implementations?
     if (actor != null && !actor.contains("self")) {
       //TODO:brad:make agent lookup more general
-      consultants = TRADE.getAvailableServices(new TRADEServiceConstraints().name("getKBName").inGroups("agent:" + actor)).asScala.map(
+      consultants = TRADE.getAvailableServices(new TRADEServiceConstraints().name("getKBName").argTypes().inGroups("agent:" + actor)).asScala.map(
         c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)):_*))
       )
     } else {
-      consultants = TRADE.getAvailableServices(additionalConstraints.name("getKBName")).asScala.map(
+      consultants = TRADE.getAvailableServices(additionalConstraints.name("getKBName").argTypes()).asScala.map(
         c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)):_*))
       )
     }
@@ -54,7 +54,8 @@ class Resolver( groups: java.util.List[String]){
 
   def updatePropertyCache(): Unit = {
     propertyCache = new mutable.HashMap[ConsultantInfo, mutable.Buffer[Property]]()
-    consultants.map(c => propertyCache += (c -> TRADE.getAvailableService(c.tsc.name("getPropertiesHandled").argTypes()).call(classOf[java.util.List[Term]]).asScala.map(new Property(_))))
+    consultants.map(c => propertyCache += (c -> TRADE.getAvailableService(c.tsc.name("getPropertiesHandled").argTypes())
+      .call(classOf[java.util.List[Term]]).asScala.map(new Property(_))))
   }
 
   def getEntityForReference[E](ref: edu.tufts.hrilab.fol.Symbol, entityJavaType: Class[E]) : E = {
@@ -90,7 +91,8 @@ class Resolver( groups: java.util.List[String]){
   def positReference(properties: java.util.List[Term], actor: Symbol): Symbol ={
     updateConsultCache(if (actor != null) actor.toString else null)
     val allProperties = consultants.map(
-      c => (c, TRADE.getAvailableService(c.tsc.name( "getPropertiesHandled")).call(classOf[java.util.List[Term]]))
+      c => (c, TRADE.getAvailableService(c.tsc.name("getPropertiesHandled").argTypes())
+        .call(classOf[java.util.List[Term]]))
     )
 
     val matchingConsultants = allProperties.filter(
@@ -115,9 +117,11 @@ class Resolver( groups: java.util.List[String]){
 
     val vars: util.List[Variable] = Utilities.getUnboundVariables(properties);
     try {
-      val m = TRADE.getAvailableService(matchingConsultants.head._1.tsc.name("createReferences").argTypes(classOf[java.util.List[Variable]])).call(classOf[java.util.Map[Variable, Symbol]], vars)
+      val m = TRADE.getAvailableService(matchingConsultants.head._1.tsc.name("createReferences").argTypes(classOf[java.util.List[Variable]]))
+        .call(classOf[java.util.Map[Variable, Symbol]], vars)
 
-      TRADE.getAvailableService(matchingConsultants.head._1.tsc.name("assertProperties").argTypes(classOf[java.util.Map[Variable,Symbol]],classOf[java.lang.Double],classOf[java.util.List[Term]])).call(classOf[Boolean], m, 1.0.asInstanceOf[Object], properties)
+      TRADE.getAvailableService(matchingConsultants.head._1.tsc.name("assertProperties").argTypes(classOf[java.util.Map[Variable, Symbol]], classOf[java.lang.Double], classOf[java.util.List[Term]]))
+        .call(classOf[Boolean], m, 1.0.asInstanceOf[Object], properties)
 
       if (m.size() > 1) {
         log.warn("[positReference] created more than 1 reference. Returning first reference. Properties: " + properties)
@@ -182,7 +186,9 @@ class Resolver( groups: java.util.List[String]){
           .flatMap {
             p =>
               consultants.find {
-                c => TRADE.getAvailableService(c.tsc.name( "getPropertiesHandled").argTypes()).call(classOf[java.util.List[Term]]).asScala.exists(new Property(_).matches(p))
+                c =>
+                  TRADE.getAvailableService(c.tsc.name("getPropertiesHandled").argTypes())
+                    .call(classOf[java.util.List[Term]]).asScala.exists(new Property(_).matches(p))
               }
           }
       }
@@ -195,7 +201,8 @@ class Resolver( groups: java.util.List[String]){
       varConMap.flatMap {
         case (v: Variable, c: ConsultantInfo) => {
           val vars =Seq(new Variable(v.getName, c.kbName)).asJava
-          TRADE.getAvailableService(c.tsc.name("createReferences").argTypes(classOf[java.util.List[Variable]])).call(classOf[java.util.Map[Variable, Symbol]], vars).asScala
+          TRADE.getAvailableService(c.tsc.name("createReferences").argTypes(classOf[java.util.List[Variable]]))
+            .call(classOf[java.util.Map[Variable, Symbol]], vars).asScala
         }
       }
 
@@ -203,7 +210,8 @@ class Resolver( groups: java.util.List[String]){
     // log.debug("CONS: " + cons)
     consultants.foreach { c =>
       try {
-        TRADE.getAvailableService(c.tsc.name("assertProperties").argTypes(classOf[java.util.Map[Variable,Symbol]],classOf[java.lang.Double],classOf[java.util.List[Term]])).call(classOf[Boolean],
+        TRADE.getAvailableService(c.tsc.name("assertProperties").argTypes(classOf[java.util.Map[Variable, Symbol]], classOf[java.lang.Double], classOf[java.util.List[Term]]))
+          .call(classOf[Boolean],
           //        newAssignments.map(a => new Variable(a._1) -> new Symbol(a._2)).asJava,
           new java.util.HashMap[Variable,Symbol](newAssignments.asJava),
           1.0.asInstanceOf[Object], //brad:this needs to bee like this for Scala serialization
@@ -331,7 +339,8 @@ class Resolver( groups: java.util.List[String]){
   protected def initialDomain(v: String): Seq[Symbol] ={
 
     consultants.find( _.kbName.equals(v) ) match {
-      case Some(c) => TRADE.getAvailableService(c.tsc.name("getInitialDomain").argTypes(classOf[java.util.List[Term]])).call(classOf[java.util.List[Symbol]],new java.util.ArrayList(Seq[Property]().asJava)).asScala
+      case Some(c) => TRADE.getAvailableService(c.tsc.name("getInitialDomain").argTypes(classOf[java.util.List[Term]]))
+        .call(classOf[java.util.List[Symbol]], new java.util.ArrayList(Seq[Property]().asJava)).asScala
       case None  => throw new Exception("No consultant keyed with name " + v)
     }
   }
@@ -351,7 +360,8 @@ class Resolver( groups: java.util.List[String]){
         log.debug("Chose consultant: " + consultantInfo.kbName)
 //        TRADE.callThe(consultantInfo.tsi, "process",prop, hMap.asJava).asInstanceOf[Double]
         try {
-          TRADE.getAvailableService(consultantInfo.tsc.name( "process").argTypes(classOf[Term],classOf[java.util.Map[Variable,Symbol]])).call(classOf[Double], prop.nonDSPredicateForm, new java.util.HashMap[Variable,Symbol](h.assignments.asJava))
+          TRADE.getAvailableService(consultantInfo.tsc.name("process").argTypes(classOf[Term], classOf[java.util.Map[Variable, Symbol]]))
+            .call(classOf[Double], prop.nonDSPredicateForm, new java.util.HashMap[Variable, Symbol](h.assignments.asJava))
         } catch {
           case e:Exception => log.error("[Assess] Exception calling process", e)
             val zero: java.lang.Double = 0.0
@@ -373,7 +383,8 @@ class Resolver( groups: java.util.List[String]){
         (c:ConsultantInfo, r:java.util.HashMap[Symbol,java.lang.Double] ) =>
           r.putAll(
             try {
-              TRADE.getAvailableService(c.tsc.name( "getActivatedEntities").argTypes()).call(classOf[java.util.Map[Symbol, java.lang.Double]])
+              TRADE.getAvailableService(c.tsc.name("getActivatedEntities").argTypes())
+                .call(classOf[java.util.Map[Symbol, java.lang.Double]])
             } catch {
               case e: Exception => {
                 log.error("[getAllActivatedEntities] consultant: " + c.kbName, e);
@@ -385,6 +396,14 @@ class Resolver( groups: java.util.List[String]){
       }
     log.debug("[gAAE] Result: " + result)
     result
+  }
+
+  protected def getActivatedEntities(groups: util.Collection[String]): java.util.Map[Symbol, java.lang.Double] = {
+    consultants.find(_.tsi.getGroups.containsAll(groups)) match {
+      case Some(c) => TRADE.getAvailableService(c.tsc.name("getActivatedEntities").argTypes())
+        .call(classOf[java.util.Map[Symbol, java.lang.Double]])
+      case None => throw new Exception("No consultant keyed with groups " + groups)
+    }
   }
 
   protected def getConsultant(h: Hypothesis, p: Property): Option[ConsultantInfo] = {
@@ -441,7 +460,9 @@ class Resolver( groups: java.util.List[String]){
     val candLists: Seq[Seq[mutable.ListMap[Symbol, Symbol]]] = args.flatMap { case v: Variable =>
       //changed to prevent redundant type expression (i.e. objects_objects_4 instead of objects_4)
       consultants.find(_.kbName.equalsIgnoreCase(v.getType)).map( c =>
-        TRADE.getAvailableService(c.tsc.name("getInitialDomain")).call(classOf[java.util.List[Symbol]], new util.ArrayList[Property]()).asScala.map(id => mutable.ListMap(v.asInstanceOf[Symbol]-> id))
+        TRADE.getAvailableService(c.tsc.name("getInitialDomain").argTypes(classOf[java.util.List[Term]]))
+          .call(classOf[java.util.List[Symbol]], new util.ArrayList[Property]())
+          .asScala.map(id => mutable.ListMap(v.asInstanceOf[Symbol] -> id))
       )
     }
     log.debug("candLists: " + candLists)
@@ -459,7 +480,8 @@ class Resolver( groups: java.util.List[String]){
     log.debug("CONSULTANTNAME: " + consultantName)
     val consultant: ConsultantInfo = consultants.find(_.kbName.equalsIgnoreCase(consultantName)).getOrElse(return new java.util.ArrayList[Term])
     try {
-      TRADE.getAvailableService(consultant.tsc.name( "getAssertedProperties").argTypes(classOf[Symbol])).call(classOf[java.util.List[Term]], ref)
+      TRADE.getAvailableService(consultant.tsc.name("getAssertedProperties").argTypes(classOf[Symbol]))
+        .call(classOf[java.util.List[Term]], ref)
     }catch{
       case e:TRADEException => log.error("[getProperties] call of getAssertedProperties for ref: "+ref+" from: "+consultant.kbName,e)
         new java.util.ArrayList[Term]()
@@ -504,7 +526,8 @@ class Resolver( groups: java.util.List[String]){
       var description = new java.util.ArrayList[Property]()
       //changed to prevent distractors from being a list of "objects_objects_#" strings in the case of object consultants
       var domain = new java.util.ArrayList[Symbol]()
-      filteredConsultants.foreach(c => domain.addAll(TRADE.getAvailableService(c.tsc.name( "getInitialDomain").argTypes(classOf[java.util.List[Term]])).call(classOf[java.util.List[Symbol]],new java.util.ArrayList[Term]())))
+      filteredConsultants.foreach(c => domain.addAll(TRADE.getAvailableService(c.tsc.name("getInitialDomain").argTypes(classOf[java.util.List[Term]]))
+        .call(classOf[java.util.List[Symbol]], new java.util.ArrayList[Term]())))
       //list of other existing refs
       log.debug("domain: "+domain)
       var distractors: List[Symbol] = domain.asScala.filterNot(_.equals(ref)).toList //This assumes it won't be confused with something from another domain.
@@ -516,7 +539,8 @@ class Resolver( groups: java.util.List[String]){
       filteredConsultants.foreach(c =>
         propsList.addAll(
           //convert to properties for internal rr use
-          TRADE.getAvailableService(c.tsc.name( "getAssertedProperties").argTypes(classOf[Symbol])).call(classOf[java.util.List[Term]],ref).asScala.map(t =>new Property(t)).asJava
+          TRADE.getAvailableService(c.tsc.name("getAssertedProperties").argTypes(classOf[Symbol]))
+            .call(classOf[java.util.List[Term]], ref).asScala.map(t => new Property(t)).asJava
         )
       )
 
@@ -592,7 +616,8 @@ class Resolver( groups: java.util.List[String]){
 
       var description = stmTuple._2
       var distractors = d
-      val propsList= TRADE.getAvailableService(new TRADEServiceConstraints().name("getPropertiesHandled").inGroups(consultant.tsi.getGroups.toArray(new Array[String](0)): _*)).call(classOf[java.util.List[Term]]).asScala.map(new Property(_))
+      val propsList = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPropertiesHandled").argTypes().inGroups(consultant.tsi.getGroups.toArray(new Array[String](0)): _*))
+        .call(classOf[java.util.List[Term]]).asScala.map(new Property(_))
       val props = mutable.Stack(propsList.map((_, mutable.ListMap[Symbol, Symbol]())): _*) //LINE 1
       log.debug("PROPS: " + props)
       //TODO: old code didn't account for there only being a single object ref, thus no distractors

@@ -6,11 +6,13 @@ package edu.tufts.hrilab.vision;
 
 import java.io.IOException;
 import java.awt.Dimension;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.util.resource.Resources;
 import edu.tufts.hrilab.vision.capture.Camera;
 import edu.tufts.hrilab.vision.gui.VideoDisplay;
 import edu.tufts.hrilab.vision.util.CompressionUtil;
@@ -19,53 +21,41 @@ import org.apache.commons.cli.Option;
 
 public class VideoSendComponent extends DiarcComponent {
 
-  private boolean display;
-  private String visionDir;
-  private final String configDir;
-  private String captureConfig;
-  private String calibConfig;
+  private boolean display = false;
+  /**
+   * Default path to vision resources (configs).
+   */
+  private String defaultConfigPath = "config/edu/tufts/hrilab/vision";
+  private String captureConfig = "default.xml";
+  private String calibConfig = null;
   //capture object
   private Camera camera;
   //image display
   private VideoDisplay videoDisplay;
-
-  // ********************************************************************
-  // *** Local methods
-  // ********************************************************************
 
   /**
    * VideoSendComponent constructor.
    */
   public VideoSendComponent() {
     super();
+  }
 
-    // default file paths
-    configDir = visionDir + "/native/data/";
+  @Override
+  protected void init() {
 
-    //set default path for config files if it hasn't been specified
-    captureConfig = setFilenamePath(captureConfig, "capture");
-    calibConfig = setFilenamePath(calibConfig, "calibration");
+    //set paths for config files
+    captureConfig = createFilepath(defaultConfigPath, "capture", captureConfig);
+    calibConfig = createFilepath(defaultConfigPath, "calibration", calibConfig);
 
     // init vision and start camera(s)
     camera = new Camera(false, captureConfig, calibConfig);
     camera.start();
-
-    // The server can also set its own loop time (the default is 10x/second).
-    //this.setUpdateLoopTime(this, 1); // the amount is in milliseconds.
 
     if (display) {
       videoDisplay = new VideoDisplay(getImageSize());
     }
 
     shouldRunExecutionLoop = true;
-  }
-
-  @Override
-  protected void init() {
-    display = false;
-    visionDir = "../vision";
-    captureConfig = "default.xml";
-    calibConfig = null;
   }
 
   @Override
@@ -81,7 +71,6 @@ public class VideoSendComponent extends DiarcComponent {
     options.add(Option.builder("display").desc("display window capture frames").build());
     options.add(Option.builder("capture").hasArg().argName("file").desc("file specifying camera capture configuration").build());
     options.add(Option.builder("calib").hasArg().argName("file").desc("stereo calibration parameters (must be running stereo cameras)").build());
-    options.add(Option.builder("visiondir").hasArg().argName("relative path").desc("path from diarc to vision directory").build());
     return options;
   }
 
@@ -99,15 +88,7 @@ public class VideoSendComponent extends DiarcComponent {
     if (cmdLine.hasOption("calib")) {
       calibConfig = cmdLine.getOptionValue("calib");
     }
-    if (cmdLine.hasOption("visiondir")) {
-      visionDir = cmdLine.getOptionValue("visiondir");
-    }
   }
-
-  // ***********************************************************************
-  // Methods available to remote objects via RMI
-  // ***********************************************************************
-  // Implement here whatever interface is defined in VideoSendComponent.java
 
   /**
    * An example of a remote call that fetches data from the server.
@@ -136,26 +117,29 @@ public class VideoSendComponent extends DiarcComponent {
     return new Dimension(camera.getImageWidth(), camera.getImageHeight());
   }
 
-
-  /**
-   * Implements the local shutdown mechanism that derived classes need to
-   * implement to cleanly shutdown
-   */
-  protected void localshutdown() {
+  @Override
+  protected void shutdownComponent() {
     camera.stopAndWait();
   }
 
   /**
    * Helper method to add default path if only filename had been specified.
    *
+   * @param defaultDir
+   * @param subDir
    * @param filename
    * @return
    */
-  private String setFilenamePath(String filename, String defaultDirName) {
-    if (filename != null && filename.indexOf("/") == -1 && filename.indexOf("\\") == -1) {
-      return String.format("%s%s/%s", configDir, defaultDirName, filename);
-    } else {
+  private String createFilepath(String defaultDir, String subDir, String filename) {
+    if (filename == null || filename.isEmpty()) {
       return filename;
+    }
+    URL url = Resources.getResource(defaultDir + "/" + subDir, filename);
+    if (url == null) {
+      log.warn("Filepath resource not found: {}", filename);
+      return null;
+    } else {
+      return url.getPath();
     }
   }
 }

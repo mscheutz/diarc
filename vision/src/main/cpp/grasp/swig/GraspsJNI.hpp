@@ -20,7 +20,7 @@ extern "C" {
 /////////////////////////////////////////////////////////////////////////////////////
 // Native Grasps -> Java Grasps ///////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
-JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_grasp_swig_GraspsJNI_calculateGraspPoses
+JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_grasp_swig_GraspDetectorModuleJNI_calculateGraspPoses
 (JNIEnv* env, jclass cls, jobject mo);
 
 #ifdef __cplusplus

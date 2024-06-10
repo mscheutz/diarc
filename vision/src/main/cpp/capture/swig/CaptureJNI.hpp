@@ -18,16 +18,16 @@
 extern "C" {
 #endif
 
-JNIEXPORT jboolean JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_checkDarkness
+JNIEXPORT jboolean JNICALL Java_edu_tufts_hrilab_vision_capture_swig_CaptureModuleJNI_checkDarkness
         (JNIEnv *env, jclass jcls);
 
-JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackImageArray
+JNIEXPORT void JNICALL Java_edu_tufts_hrilab_vision_capture_swig_CaptureModuleJNI_passBackImageArray
         (JNIEnv *env, jclass jcls, jbyteArray passedArray, jint blurAmount);
 
-JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackDisparityArray
+JNIEXPORT void JNICALL Java_edu_tufts_hrilab_vision_capture_swig_CaptureModuleJNI_passBackDisparityArray
         (JNIEnv *env, jclass jcls, jbyteArray passedArray);
 
-JNIEXPORT void JNICALL Java_com_vision_capture_swig_CaptureModuleJNI_passBackDepthArray
+JNIEXPORT void JNICALL Java_edu_tufts_hrilab_vision_capture_swig_CaptureModuleJNI_passBackDepthArray
         (JNIEnv *env, jclass jcls, jbyteArray passedArray);
 
 

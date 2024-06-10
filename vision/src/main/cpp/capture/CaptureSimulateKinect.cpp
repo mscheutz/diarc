@@ -145,6 +145,14 @@ namespace diarc {
           }
         }
 
+        if (!tmpColorCloud->isOrganized()) {
+          LOG4CXX_ERROR(logger, boost::format("[captureSimPC2]: PCD file must contain an organized point cloud: %s.") % pcdFilename);
+          return false;
+        }
+
+        //diarc::Display::createWindowIfDoesNotExist("temp");
+        //diarc::Display::displayPointCloud(tmpColorCloud, "temp", "temp");
+
         //resize pointcloud (if necessary) and fill rgb and depth frames
         if (tmpColorCloud->width != imgWidth || tmpColorCloud->height != imgHeight) {
           //allocate tmp images

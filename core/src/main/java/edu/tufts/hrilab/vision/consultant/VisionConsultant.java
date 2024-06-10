@@ -279,12 +279,14 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
 
   @Override
   public List<Long> getTokenIds(Symbol objectRef) {
-    if(!objectRef.hasType()) {
-      objectRef = Factory.createSymbol(objectRef.getName() + ":" + objectRef.getName().split("_")[0]);
-    }
     log.debug("[getTokenIds] objectRef: " + objectRef);
     // if objectRef is actually a reference resolution id
-    if (!objectRef.isTerm() && objectRef.getName().startsWith(kbName)) {
+    if (!objectRef.isTerm() && !objectRef.isPredicate() && objectRef.getName().startsWith(kbName)) {
+
+      if(!objectRef.hasType()) {
+        objectRef = Factory.createSymbol(objectRef.getName() + ":" + this.kbName);
+      }
+
       VisionReference visionRef = references.get(objectRef);
       // With object permanance changes, tokenId list for any objectRef should be of length 1
       // In this case we don't want to check to add the tokenId to the visionRef, because it

@@ -76,6 +76,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
   }
 
   //todo: not great to implement callbacks here instead of in the Resolver, but I needed "getMyService" which is implemented on DiarcComponent
+
   /**
    * Calls down to the resolver to update information about consultants after a new consultant is added.
    * Additionally, registers for notifications from consultants for when new properties are added to the consultant.
@@ -245,6 +246,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
 
   /**
    * Converts hypotheses list to the form used in Utterance.getBindings() and then adds those bindings to the Utterance.
+   *
    * @param u
    * @param hypotheses
    */
@@ -290,6 +292,11 @@ public class ReferenceResolutionComponent extends DiarcComponent {
   public List<Term> getProperties(Symbol ref) {
     log.debug("[getProperties] ref: "+ref);
     return resolver.getProperties(ref);
+  }
+
+  @TRADEService
+  public Map<Symbol, Double> getActivatedEntities(List<String> groupConstraints) {
+    return resolver.getActivatedEntities(groupConstraints);
   }
 
   @TRADEService
@@ -358,8 +365,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
           binding.put((Variable) queryProperty, Factory.createSymbol(p.getName()));
           bindings.add(binding);
         }
-      }
-      else if(queryProperty.isTerm()){
+      } else if (queryProperty.isTerm()) {
         log.warn("[observeProperties] invalid query format, second arg can't be a Term: "+query);
       } else{
         for (Term p : properties) {

@@ -51,12 +51,11 @@ namespace diarc {
           return (false);
 
         if (pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames[currentIndex], *cloudRGB) == -1) {
-          std::cerr << "CapturePCDFile: Failed to read file '" << fileNames[currentIndex] << "'\n";
+          LOG4CXX_ERROR(logger, boost::format("CapturePCDFile: Failed to read file %s") % fileNames[currentIndex]);
           return (false);
         }
         if (!cloudRGB->isOrganized()) {
-          std::cerr << "CapturePCDFile: we require organized point clouds, and the one in '"
-                    << fileNames[currentIndex] << "' is not.\n";
+          LOG4CXX_ERROR(logger, boost::format("CapturePCDFile: we require organized point clouds, and the one in %s is not.") % fileNames[currentIndex]);
           return (false);
         }
 

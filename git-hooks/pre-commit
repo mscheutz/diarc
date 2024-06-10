@@ -17,12 +17,20 @@ while read -r FILE; do
       *gradle-wrapper.jar )
         continue
         ;;
-      *.zip|*.gz|*.tgz|*.jar|*.wav|*.so|*.o|*.dat|*.class|*.raw )
+      *pre-commit )
+        echo "LOCAL COMMIT ERROR: We have restricted committing changes to the" $FILE "file."
+        PROHIBITED=true
+        ;;
+      *gradle.properties )
+        echo "LOCAL COMMIT ERROR: We have restricted committing changes to the core DIARC" $FILE "file. Please use your local properties file instead (usually ~/.gradle/gradle.properties)."
+        PROHIBITED=true
+        ;;
+      *.zip|*.gz|*.tgz|*.jar|*.wav|*.so|*.o|*.dat|*.class|*.raw|*.onnx|*.jpg|*.png|*.pcd|*.DS_Store )
         echo "LOCAL COMMIT ERROR: We have restricted committing that filetype:" $FILE ". Please see the git admin for alternatives."
         PROHIBITED=true
         ;;
       *.java )
-        if ! cat $FILE | grep -q -e  "package edu.tufts.hrilab" -e "package ade" -e "package edu.cmu.sphinx."; then
+        if ! cat $FILE | grep -q -e  "package edu.tufts.hrilab" -e "package edu.cmu.sphinx."; then
           echo "LOCAL COMMIT ERROR: It looks like you're trying to commit a file from a third party library (i.e., unknown package): "$FILE". Don't do that. Please see the git admin for alternatives."
           PROHIBITED=true
         fi
