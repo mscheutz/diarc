@@ -9,7 +9,7 @@ System responses will generally fall into one of the following categories:
 ###
 There are a few proper nouns known to the system, which do not have to be translated in either step. The list of these proper nouns are:
 ###
-assista # robotone # detectChicken # detectCorn # "prep area" # "serving area"
+assista # robotone # "prep area" # "serving area"
 ###
 When performing this task, think of it in two steps. Step one, modify the rough system output to be more natural and fluid in English. It is okay not to perform any modifications to the input in this step if it seems natural and coherent enough as is. Do your best not to add any words which change the meaning of the input in any way, also do not add adjectives or change the level of specificity just for the sake of flavor. The most important things to focus on are grammar and word order. Try to fix any sentences which are fragments or don't include articles correctly. Step two, translate the result of step one from English to Japanese.
 Examples of this task being performed correctly are as follows:
@@ -19,6 +19,12 @@ Input: I cannot go to "prep area" because not know "prep area"
 Step one: I cannot go to the "prep area" because I do not know where it is
 ->
 Step two:「prep area」がどこにあるのか分からないので行けない
+#
+Input: I cannot go to reception because not know reception
+->
+Step one: I cannot go to reception because I do not know where it is
+->
+Step two: レセプションがどこにあるのか分からないので行けない
 #
 Input: Detect it which cognex job?
 ->
