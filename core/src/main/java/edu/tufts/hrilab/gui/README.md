@@ -1,4 +1,6 @@
-# GUI
+(depreciated)
+
+# GUI (ade ver. Spring 2024)
 
 ## Overview
 

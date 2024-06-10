@@ -1,98 +1,70 @@
-# Project overview
+## Setup Instructions (dirac ver.)
 
-All of the code containing the React frontend is found within this directory.
-If that is not the case, here is the absolute path to the project:
+This setup includes two components:
 
-```
-/ade/src/main/resources/hrilab-frontend
-```
+* **Backend**: Spring Boot application server
+* **Frontend**: React web-based GUI
 
-Double-check this path; it may have changed.
+### Backend Setup
 
-## Frontend directory structure
+1. **Navigate to Root Directory:**
+   ```
+   cd dirac
+   ```
+   
+2. **Common Settings**:
+   Default settings applicable to all environments are in `core/src/main/resources/application.properties`.
 
-Here is the rundown of the project:
+3. **Create Development Properties**:
+   Generate a new `application-dev.properties` file. Example settings to include:
+   ```
+   cors.origin=http://localhost:3000,http://<ip-address>:3000,https://<ngrok-url>
+   app.base-url=http://localhost:8080
+   ```
 
-- `app` → contains only a `global.css` file  
-    - ***DO NOT TOUCH THE CSS FILE!*** It contains the Tailwind classes that
-  apply the styles. Without it, no styles are applied at all!
+4. **Customize the Properties**
+   Edit your `.properties` with appropriate settings for each environment.
+   Additionally, if you need to make your server accessible from different networks, add this line:
+   ```
+   server.address=0.0.0.0
+   ```
 
-- `components.json` → required for some frontend components to work. Do not 
-modify unless absolutely sure!
+5. **Set Active Profile:**
+   Export the development profile environment variable:
+   ```
+   export SPRING_PROFILES_ACTIVE=dev
+   ```
 
-- `launch` → simple shell script that launches 2 terminals: one for the frontend
-React app and one for the backend Spring Boot server. 
-    - See the contents of the script to see which commands are run to start the
-  servers! 
-    - Requires the `xdotool` to be installed.  
+5. **Launch Application:**
+   Run your config:
+   ```
+   ./gradlew launch -Pmain=edu.tufts.hrilab.config.gui.UnifiedGuiConfig
+   ```
 
-- `node_modules` → ***DO NOT TOUCH!*** 
-    - Contains the packages required for the React application to run. Debugging
-  missing packages is rather difficult and causes unnecessary pain. 
-    - If required, please use `npm` to add and remove packages. 
+### Frontend Setup
 
-- `package.json` and `package-lock.json`
-    - Contains the settings for the application. Do not touch unless absolutely 
-  sure. 
+1. **Navigate to `gui` Directory:**
+    ```
+    cd dirac/gui
+    ```
 
-- `public` 
-    - Contains images and commonly used files
+2. **Duplicate `.env.example`:**
+   ```
+   cp .env.example .env.development
+   ```
+   
+3. **Edit `.env.development`.**
 
-- `src`
-    - Contains all of the code required for the frontend. Contains the following
-subdirectories:  
-        - `@` → houses all of the prebuilt components that are used in the
-      application (I believe it's the `shadcn` library's components)
-        - `api` → contains REST principle logic. (i.e. code for POST / GET
-      requests wrapped in a function) 
-        - `App.css` → also contains the tailwind css directories.
-      ***DO NOT TOUCH!*** 
-        - `components` → contains custom built components. Edit as needed. 
-        - `lib` → contains `util.ts` (this is required because it merges
-      Tailwind classes for components)
-            - For some reason this doesn't commit to git.
-            - The solution for now is to create a folder at
-          `/ade/src/main/resources/hrilab-frontend/src/lib (if path exists)` 
-          and paste in the following code:
+4. **Start the Application:**
+    ```
+    npm start
+    ```
 
-```typescript
-import { ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+    A browser window should pop up with the website.
+    If it doesn't, you can join manually to `localhost:3000` in your browser.
+    For more information, see §Available Scripts below.
 
-export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs))
-}
-```
-
-> Note: sometimes the fetch request from the backend for services doesn't quite
-> work. Refresh for now to refetch. Should implement a try again method if the
-> fetch doesn't work the first time. 
-
-## Frontend instructions
-
-There are two parts to running:
-
-* The backend (Spring Boot application server)
-* The frontend (React web-based GUI)
-
-For the backend, run the Unified GUI config:
-
-```shell
-./gradlew launch -Pmain=edu.tufts.hrilab.config.gui.UnifiedGuiConfig
-```
-
-For the frontend, `cd` to `diarc/gui/` (the directory this README is in), then
-run the Node server:
-
-```shell
-npm start
-```
-
-A browser window should pop up with the website. If it doesn't, you can join
-manually to `localhost:3000` in your browser. For more information, see
-§Available Scripts below.
-
-## Component summary
+## Component Summary
 
 After the webpage loads, it tries to connect to the different endpoints for
 about 1 second ("Connecting..."). After this time, if none are found, it will
@@ -236,3 +208,77 @@ You don’t have to ever use `eject`. The curated feature set is suitable for sm
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
+
+---
+
+Below is the README from old repo.
+
+## Project Overview (ade ver. Spring 2024)
+
+All of the code containing the React frontend is found within this directory.
+If that is not the case, here is the absolute path to the project:
+
+```
+/ade/src/main/resources/hrilab-frontend
+```
+
+Double-check this path; it may have changed.
+
+### Frontend directory structure
+
+Here is the rundown of the project:
+
+- `app` → contains only a `global.css` file
+    - ***DO NOT TOUCH THE CSS FILE!*** It contains the Tailwind classes that
+      apply the styles. Without it, no styles are applied at all!
+
+- `components.json` → required for some frontend components to work. Do not
+  modify unless absolutely sure!
+
+- `launch` → simple shell script that launches 2 terminals: one for the frontend
+  React app and one for the backend Spring Boot server.
+    - See the contents of the script to see which commands are run to start the
+      servers!
+    - Requires the `xdotool` to be installed.
+
+- `node_modules` → ***DO NOT TOUCH!***
+    - Contains the packages required for the React application to run. Debugging
+      missing packages is rather difficult and causes unnecessary pain.
+    - If required, please use `npm` to add and remove packages.
+
+- `package.json` and `package-lock.json`
+    - Contains the settings for the application. Do not touch unless absolutely
+      sure.
+
+- `public`
+    - Contains images and commonly used files
+
+- `src`
+    - Contains all of the code required for the frontend. Contains the following
+      subdirectories:
+        - `@` → houses all of the prebuilt components that are used in the
+          application (I believe it's the `shadcn` library's components)
+        - `api` → contains REST principle logic. (i.e. code for POST / GET
+          requests wrapped in a function)
+        - `App.css` → also contains the tailwind css directories.
+          ***DO NOT TOUCH!***
+        - `components` → contains custom built components. Edit as needed.
+        - `lib` → contains `util.ts` (this is required because it merges
+          Tailwind classes for components)
+            - For some reason this doesn't commit to git.
+            - The solution for now is to create a folder at
+              `/ade/src/main/resources/hrilab-frontend/src/lib (if path exists)`
+              and paste in the following code:
+
+```typescript
+import { ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+export function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs))
+}
+```
+
+> Note: sometimes the fetch request from the backend for services doesn't quite
+> work. Refresh for now to refetch. Should implement a try again method if the
+> fetch doesn't work the first time. 
