@@ -91,7 +91,20 @@ component being rendered.
           addition, clicking an action signature on the menu will generate a form
           containing text boxes for each of its fields.
         * Submit goal: submit a goal in agent-predicate form.
-* Map viewer: *Hengxu could you fill this out*
+* Map viewer:
+  * **Configuration**
+    - **Map Component Initialization**: Directly initialized within `EndpointManagerComponent` using `createInstance(MapComponent.class)`.
+        - Set `mapConfig` to `""` if `MapComponent` is not used.
+  * **Features**
+    - **Fetch Map Data**
+        - **Action**: Retrieves map data from specified folder and floor.
+        - **Configuration**: Specified by `mapConfig` during initialization.
+    - **Go To Location**
+        - **Action**: Directs the robot to a known location.
+        - **Input**: Symbol format `location_0:location`.
+        - **Implementation**: Depends on successful `TRADEService` call.
+    - **Map Interaction**
+        - **Click Response**: Clicks on the map trigger the `goToLocation` action if `TRADEService` succeeds.
 
 Finally, each GUI component has a connection indicator on the bottom
 ("Status: [...]").

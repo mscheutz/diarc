@@ -19,9 +19,7 @@ import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
 public class UnifiedGuiConfig extends DiarcConfiguration {
     protected static Logger log = LoggerFactory.getLogger(UnifiedGuiConfig.class);
 

@@ -36,13 +36,12 @@ public class MapGui extends TextWebSocketHandler {
     @Autowired
     private MapComponent mapComponent;
     @Autowired
-    private ImageService imageService;
-    private static final Logger log = LoggerFactory.getLogger(MapGui.class);
-
-    @Autowired
     public MapGui(MapComponent mapComponent) {
         this.mapComponent = mapComponent;
     }
+    @Autowired
+    private ImageService imageService;
+    private static final Logger log = LoggerFactory.getLogger(MapGui.class);
 
     private Map<Symbol,Pair<Point3d,Quat4d>>storedPoses = new HashMap<>();
 
