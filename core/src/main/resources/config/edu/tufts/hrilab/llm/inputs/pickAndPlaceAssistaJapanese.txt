@@ -1,7 +1,7 @@
 #bring the corn to the hot plate
 トウモロコシをホットプレートに持ってきます
 #bring the chicken to the cooktop
-ニワトリをクックトップに持ってきます
+チキンをクックトップに持っていきます
 #I will tell you about a new ingredient called chicken
 チキンと言う新しい食材について教えます
 #pantry
