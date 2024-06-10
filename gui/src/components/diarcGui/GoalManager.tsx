@@ -6,7 +6,7 @@
  * files and to submit actions and goals.
  */
 
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 
 import useWebSocket from "react-use-websocket";
 

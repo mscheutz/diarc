@@ -1,62 +1,191 @@
-###############################################################################
-# - project overview 
-###############################################################################
+# Project overview
 
-######
-# project structure
-######
+All of the code containing the React frontend is found within this directory.
+If that is not the case, here is the absolute path to the project:
 
-All of the code containing the react frontend is found within this directory, if that is not the case 
-here is the absolute path to the project: /ade/src/main/resources/hrilab-frontend <em>(double check this path, possible it has changed)</em>
+```
+/ade/src/main/resources/hrilab-frontend
+```
 
-- **Contents of the frontend**: 
+Double-check this path; it may have changed.
 
-Here is the rundown of the project 
-    - app -> contains only a global.css file  
-        - DO NOT TOUCH THE CSS FILE -> it contains the tailwind classes that applies the styles. Without it no styles are applied at all!  
-    
-    - components.json -> required for some frontend components to work. Do not modify unless absolutely sure! 
-    
-    - launch -> simple shell script that launches 2 terminals. One for the frontend react app and one for the backend springboot server. 
-        - see the contents of the script to see which commands are run to start the servers! 
-        - requires the xdotool to be installed.  
+## Frontend directory structure
 
-    - node_modules -> DO NOT TOUCH 
-        - contains the packages required for the react application to run. Debugging missing packages is rather difficult and causes unnecessary pain. 
-        - if required, please use npm to remove packages or add them. 
+Here is the rundown of the project:
 
-    - package.json / package-lock.json 
-        - contains the settings for the application. Do not touch unless absolutely sure. 
+- `app` → contains only a `global.css` file  
+    - ***DO NOT TOUCH THE CSS FILE!*** It contains the Tailwind classes that
+  apply the styles. Without it, no styles are applied at all!
 
-    - public 
-        - contains images or commonly used files
+- `components.json` → required for some frontend components to work. Do not 
+modify unless absolutely sure!
 
-    - src 
-        - Contains all of the code required for the frontend. Contains the following subdirectories:  
-            - @ -> houses all of the prebuilt components that are used in the application (I believe it's the shadcn library's components)
-            - api -> contains REST principle logic. (i.e. code for POST / GET requests wrapped in a function) 
-            - App.css -> also contains the tailwind css directories. DO NOT TOUCH 
-            - components -> contains custom built components. Edit as needed. 
-            - lib -> contains util.ts (this is required because it merges tailwind classes for components) 
-                - for some reason this doesn't commit to git.
-                - the solution for now is to create a folder at /ade/src/main/resources/hrilab-frontend/src/lib (if path exists) 
-                and paste in the following code
+- `launch` → simple shell script that launches 2 terminals: one for the frontend
+React app and one for the backend Spring Boot server. 
+    - See the contents of the script to see which commands are run to start the
+  servers! 
+    - Requires the `xdotool` to be installed.  
 
-            `
-                import { ClassValue, clsx } from 'clsx'
-                import { twMerge } from 'tailwind-merge'
+- `node_modules` → ***DO NOT TOUCH!*** 
+    - Contains the packages required for the React application to run. Debugging
+  missing packages is rather difficult and causes unnecessary pain. 
+    - If required, please use `npm` to add and remove packages. 
 
-                export function cn(...inputs: ClassValue[]) {
-                    return twMerge(clsx(inputs))
-                }
-            `
+- `package.json` and `package-lock.json`
+    - Contains the settings for the application. Do not touch unless absolutely 
+  sure. 
 
-    - note : sometimes the fetch request from the backend for services doesn't quite work. Refresh for now to refetch. 
-        - should implement a try again method if the fetch doesn't work the first time. 
+- `public` 
+    - Contains images and commonly used files
 
-###############################################################################
-# - below contains the boilerplate README that came with the project startup, contains all of the instructions for running the application 
-###############################################################################
+- `src`
+    - Contains all of the code required for the frontend. Contains the following
+subdirectories:  
+        - `@` → houses all of the prebuilt components that are used in the
+      application (I believe it's the `shadcn` library's components)
+        - `api` → contains REST principle logic. (i.e. code for POST / GET
+      requests wrapped in a function) 
+        - `App.css` → also contains the tailwind css directories.
+      ***DO NOT TOUCH!*** 
+        - `components` → contains custom built components. Edit as needed. 
+        - `lib` → contains `util.ts` (this is required because it merges
+      Tailwind classes for components)
+            - For some reason this doesn't commit to git.
+            - The solution for now is to create a folder at
+          `/ade/src/main/resources/hrilab-frontend/src/lib (if path exists)` 
+          and paste in the following code:
+
+```typescript
+import { ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+export function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs))
+}
+```
+
+> Note: sometimes the fetch request from the backend for services doesn't quite
+> work. Refresh for now to refetch. Should implement a try again method if the
+> fetch doesn't work the first time. 
+
+## Frontend instructions
+
+There are two parts to running:
+
+* The backend (Spring Boot application server)
+* The frontend (React web-based GUI)
+
+For the backend, run the Unified GUI config:
+
+```shell
+./gradlew launch -Pmain=edu.tufts.hrilab.config.gui.UnifiedGuiConfig
+```
+
+For the frontend, `cd` to `diarc/gui/` (the directory this README is in), then
+run the Node server:
+
+```shell
+npm start
+```
+
+A browser window should pop up with the website. If it doesn't, you can join
+manually to `localhost:3000` in your browser. For more information, see
+§Available Scripts below.
+
+## Component summary
+
+After the webpage loads, it tries to connect to the different endpoints for
+about 1 second ("Connecting..."). After this time, if none are found, it will
+say "Connection Failed!". Any that are found will result in their respective
+component being rendered.
+
+* Robot chat: a messaging-app-like UI to talk with robots.
+  * Name bar: type in the name of human speaker.
+  * Conversation menu: select the robot you are talking to.
+  * Message window: a list of previous messages and an input to send new ones.
+* Goal viewer: an interface to see a list of goals and options to interact with
+them.
+  * Goal tree: there are three levels, goal type (active/suspended/past), agent,
+  and goal. Goal types and agents are like folders and can be expanded/closed.
+  * Button menu: clicking a goal will select it. Once selected, active and
+  suspended goals can be canceled, active goals can be suspended, and suspended
+  goals can be resumed.
+* Goal manager: allows for submission of goals/actions.
+  * Action menu: shows a list of all loaded action signatures. Clicking one of
+  these will generate a form in the "Submit Action" tab in the right panel.
+  * File tree: shows a file explorer view of loaded `.asl` files.
+  * Submission panel: has two tabs.
+    * Submit action: here a custom action may be typed and submitted. In
+    addition, clicking an action signature on the menu will generate a form
+    containing text boxes for each of its fields.
+    * Submit goal: submit a goal in agent-predicate form.
+* Map viewer: *Hengxu could you fill this out*
+
+Finally, each GUI component has a connection indicator on the bottom
+("Status: [...]").
+
+## Developing new components
+
+### Creating the frontend
+
+#### Creating the React component
+
+1. Create a new React component (`.tsx` file) in
+`diarc/gui/src/components/diarcGui`.
+2. Define a function component and export it.
+3. It should have a Web Socket connection; the `npm` package
+`react-use-websocket` is recommended.
+4. If you need to send messages from the client to the server, you can use the
+`sendMessage()` function.
+5. If you need to receive messages from the server, put this in your component
+  (before you return the DOM):
+
+```typescript
+useEffect(() => {
+    if (lastMessage !== null) {
+        const data = JSON.parse(lastMessage.data);
+        // Do stuff with the data...
+    }
+}, [lastMessage]);
+```
+
+#### Adding your component to the website
+1. Import your component in `TabbedComponentViewer.tsx` in the same directory.
+2. Create a new Web Socket to check the connection.
+3. Add its name to the `<TabList>`.
+4. Create a new `<TabPanel>` with the component.
+
+### Creating the backend
+
+#### Creating the DIARC component
+
+1. Create a new DIARC Component (`.java` file) in
+`diarc/core/src/main/java/edu/tufts/hrilab/[your package]`.
+2. Your component should extend `DiarcComponent`. 
+3. Create an inner class that will handle the Web Socket server side. This
+inner class will extend `TextWebSocketHandler`. 
+   1. You will be required to implement the `handleTextMessage()` function.
+   2. If you need to send a message to the client on startup, implement
+  `afterConnectionEstablished()`.
+   3. If you need to keep sending messages, then introduce an instance variable
+  for your Web Socket session, then use `session.sendMessage()`.
+4. In the component, create an instance variable to hold an instance of your
+inner class. Make sure to initialize it.
+5. Write a getter for the inner class instance. Mark it as a TRADE Service with
+`@TRADEService`.
+
+#### Adding your component to the server
+
+1. Add your component to `EndpointManagerComponent.java`. This file is in
+`diarc/core/src/main/java/edu/tufts/hrilab/gui`.
+2. Find your getter service and use it to find the Web Socket handler you
+defined in point 3 above.
+3. Add your handler to the registry.
+
+---
+
+Below is the boilerplate README that comes with the project and contains the
+instructions for starting up the application.
 
 # Getting Started with Create React App
 
