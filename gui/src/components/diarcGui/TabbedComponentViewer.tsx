@@ -45,16 +45,22 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 
     const [username, setUsername] = useState<string>("evan");
 
+    const url: URL = new URL(document.location.toString());
+    url.port = "8080";
+    url.protocol = "ws";
+
     // Websocket to check for the endpoints
     const [chatStatus, setChatStatus] = useState<string>("wait")
     const [viewerStatus, setViewerStatus] = useState<string>("wait")
     const [managerStatus, setManagerStatus] = useState<string>("wait")
     const [mapStatus, setMapStatus] = useState<string>("wait")
-    const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
-    const chatSocket = useWebSocket(`${wsBaseUrl}/chat`);
-    const viewerSocket = useWebSocket(`${wsBaseUrl}/goalViewer`);
-    const managerSocket = useWebSocket(`${wsBaseUrl}/goalManager`);
-    const mapSocket = useWebSocket(`${wsBaseUrl}/map`);
+
+    const wsBaseUrl = url.toString();
+
+    const chatSocket = useWebSocket(`${wsBaseUrl}chat`);
+    const viewerSocket = useWebSocket(`${wsBaseUrl}goalViewer`);
+    const managerSocket = useWebSocket(`${wsBaseUrl}goalManager`);
+    const mapSocket = useWebSocket(`${wsBaseUrl}map`);
 
     const check = () => {
         setChatStatus(chatSocket.readyState === ReadyState.OPEN ?
@@ -71,7 +77,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 
     // Normal chat websocket
     const { sendMessage, lastMessage, readyState } =
-        useWebSocket(`${wsBaseUrl}/chat`);
+        useWebSocket(`${wsBaseUrl}chat`);
 
     return (
         <div className="w-5/6 h-[50rem]">
@@ -125,9 +131,10 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                             />
                         </div>
                         <p className="text-center m-10">
-                            Connection Failed!<br/>
-                            WebSocket URL:<br/>
-                            {wsBaseUrl}
+                            Connection Failed!
+                        </p>
+                        <p>
+                            WebSocket URL: {wsBaseUrl}
                         </p>
                     </TabPanel>
                     : null}

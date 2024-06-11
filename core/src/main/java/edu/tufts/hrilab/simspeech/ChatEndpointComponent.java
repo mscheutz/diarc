@@ -208,6 +208,8 @@ public class ChatEndpointComponent extends DiarcComponent {
                 throws Exception {
             super.afterConnectionEstablished(session);
 
+            System.out.println("=================================connected");
+
             JSONObject setupMessage = new JSONObject();
             setupMessage.put("names", Arrays.toString(robotNames));
             session.sendMessage(new TextMessage(setupMessage.toString()));

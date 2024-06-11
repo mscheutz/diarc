@@ -7,14 +7,15 @@
 
 import React from "react";
 
-import TreeView, { flattenTree } from "react-accessible-treeview";
+import TreeView from "react-accessible-treeview";
 
 import "./TreeStyle.css";
 
+// @ts-ignore
 const ActionBrowser = ({ actionList, setActionFormContext, setSelectedIds }) => {
     // ActionFormContext is a string[] whose first el't is the name of the
     // action and any further el'ts are its parameters
-    const handleSelect = (e) => {
+    const handleSelect = (e: any) => {
         setSelectedIds(e.treeState.selectedIds);
 
         const actionSignature: string = e.element.name;

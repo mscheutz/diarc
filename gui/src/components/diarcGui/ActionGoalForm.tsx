@@ -142,7 +142,7 @@ const ActionForm = ({ sendMessage }) => {
 
 // @ts-ignore
 const GoalForm = ({ sendMessage }) => {
-    const { register, handleSubmit, reset, formState: { errors } } = useForm();
+    const { register, handleSubmit, reset } = useForm();
     const onSubmitGoal = (data: any) => {
         reset();
         sendMessage(JSON.stringify(

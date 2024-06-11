@@ -44,7 +44,7 @@ const GoalManager = () => {
     ]
   });
 
-  const filterNodes = (value) => {
+  const filterNodes = (value: string) => {
     if (value && value !== "") {
       const filtered: any[] = [];
       baseActionList.forEach((item) => {
@@ -58,7 +58,7 @@ const GoalManager = () => {
       filtered.unshift(
         Object.assign({
           ...baseActionList[0],
-          children: baseActionList[0].children.filter((id) =>
+          children: baseActionList[0].children.filter((id: any) =>
             filtered.find((fitem) => fitem.id === id)
           ),
         })
@@ -75,6 +75,7 @@ const GoalManager = () => {
   const handleExport = () => {
     setExportStatus("wait");
     let array: number[] = [];
+    // @ts-ignore
     for (const [value] of selectedIds.entries()) {
       array.push(value);
     }
@@ -82,9 +83,13 @@ const GoalManager = () => {
   };
 
   // Configure websocket
-  const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
+  const url: URL = new URL(document.location.toString());
+  url.port = "8080";
+  url.protocol = "ws";
+
+  const wsBaseUrl = url.toString();
   const { sendMessage, lastMessage, readyState } =
-    useWebSocket(`${wsBaseUrl}/goalManager`);
+    useWebSocket(`${wsBaseUrl}goalManager`);
 
   useEffect(() => {
     if (!lastMessage) return;
