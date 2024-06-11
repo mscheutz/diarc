@@ -52,7 +52,7 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
         private TRADEServiceInfo submitGoalService;
         private TRADEServiceInfo submitActionService;
 
-        private List<ActionDBEntry> actionList;
+        private final List<ActionDBEntry> actionList;
 
         /**
          * Constructs this GoalEndpoint.
@@ -69,6 +69,9 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             }
 
             actionList = new ArrayList<>();
+            actionList.addAll(Database.getActionDB().getAllActions());
+            actionList.sort(Comparator.comparing(e ->
+                    new ADBEWrapper(e).getActionSignature()));
         }
 
         /**
@@ -324,17 +327,15 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             JSONObject message = new JSONObject();
 
             JSONArray actions = new JSONArray();
-            actionList.addAll(Database.getActionDB().getAllActions());
-            actionList.sort(Comparator.comparing(ActionDBEntry::getName));
-
             for(int i = 0; i < actionList.size(); i++) {
                 actions.put(
                         new JSONObject()
-                                .put("name", actionList.get(i).getName())
-                                .put("id", i)
+                                .put("name", new ADBEWrapper(actionList.get(i))
+                                        .getActionSignature())
+                                .put("id", i+1) // id 0 is taken by the root
                 );
             }
-            message.put("actions", actions); // TODO: left off trying to get unique IDs to work
+            message.put("actions", actions);
 
             JSONObject files = getAslFilesAsTree();
             message.put("files", files);

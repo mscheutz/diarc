@@ -33,30 +33,32 @@ const ActionBrowser = ({ actionList, setActionFormContext }) => {
     };
 
     return (
-        <TreeView
-            data={flattenTree(actionList)}
-            className="basic"
-            onNodeSelect={handleSelect}
-            multiSelect
-            clickAction="EXCLUSIVE_SELECT"
-            nodeRenderer={
-                ({ element, getNodeProps, level, isSelected }) => {
-                    return (
-                        <div
-                            {...getNodeProps()}
-                            style={{ paddingLeft: 20 * level - 15 }}
-                            title={element.name}
-                            className={isSelected ? "selected" : "tree-node"}
-                        >
-                            <p className="text-nowrap text-sm font-mono
+        <div className="w-full h-full overflow-x-scroll overflow-y-scroll">
+            <TreeView
+                data={actionList}
+                className="basic"
+                onNodeSelect={handleSelect}
+                multiSelect
+                clickAction="EXCLUSIVE_SELECT"
+                nodeRenderer={
+                    ({ element, getNodeProps, level, isSelected }) => {
+                        return (
+                            <div
+                                {...getNodeProps()}
+                                style={{ paddingLeft: 20 * level - 15 }}
+                                title={element.name}
+                                className={isSelected ? "selected" : "tree-node"}
+                            >
+                                <p className="text-nowrap text-sm font-mono
                                           select-none">
-                                {element.name}
-                            </p>
-                        </div>
-                    )
+                                    {element.name}
+                                </p>
+                            </div>
+                        )
+                    }
                 }
-            }
-        />
+            />
+        </div>
     );
 };
 
