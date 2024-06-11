@@ -29,10 +29,9 @@ SmallObjectGrasp::~SmallObjectGrasp() {
 
 }
 
-bool SmallObjectGrasp::canCalculateGraspPoses(MemoryObject::Ptr &object) {
-  pcl::PointCloud<pcl::PointXYZ>::ConstPtr object_cloud = object->getDetectionMask()->getObjectPointCloud();
+bool SmallObjectGrasp::canCalculateGraspPoses(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, const cv::Mat &transform) {
 
-  calculateMinBB(object);
+  calculateMinBB(cloud, transform);
 
   double bb_width = cv::norm(rrPts[1] - rrPts[2]);
   double bb_length = cv::norm(rrPts[0] - rrPts[1]);
@@ -45,10 +44,10 @@ bool SmallObjectGrasp::canCalculateGraspPoses(MemoryObject::Ptr &object) {
   return false;
 }
 
-void SmallObjectGrasp::calculateMinBB(MemoryObject::Ptr &object) {
+void SmallObjectGrasp::calculateMinBB(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, const cv::Mat &transform) {
 
 // based on transform (4x4) inverse (ie, transpose) rotation matrix from robot base coordinates to the camera coordinates
-  const double *transform_data = object->getCaptureData()->transform.ptr<double>(0);
+  const double *transform_data = transform.ptr<double>(0);
   Eigen::Matrix4f cameraTransformMat;
   cameraTransformMat << transform_data[0], transform_data[4], transform_data[8], transform_data[12],
       transform_data[1], transform_data[5], transform_data[9], transform_data[13],
@@ -58,7 +57,7 @@ void SmallObjectGrasp::calculateMinBB(MemoryObject::Ptr &object) {
 
   // transform object cloud into robot base frame (which is assumed to be parallel to table plane)
   pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::transformPointCloud(*(object->getDetectionMask()->getObjectPointCloud()),
+  pcl::transformPointCloud(*cloud,
                            *transformed_cloud,
                            cameraTrans.inverse());
 
@@ -101,7 +100,7 @@ void SmallObjectGrasp::calculateMinBB(MemoryObject::Ptr &object) {
       Eigen::Vector3f(center_bb.x, center_bb.y, min_point.z + (max_point.z - min_point.z) / 2.0); // using z midpoint
 }
 
-std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(MemoryObject::Ptr &object) {
+std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, const cv::Mat &cam_transform) {
 
   // create vector from center to mid-point of longest side of minimum bb (i.e., parallel to shortest side)
   double bb_width = cv::norm(rrPts[1] - rrPts[2]);
@@ -147,7 +146,7 @@ std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(MemoryObject::Ptr &obje
   float z_val = z_max;
   Eigen::Vector3f position(mass_center_base(0), mass_center_base(1), z_val);
 
-  grasps.push_back(createGraspPose(object->getDetectionMask()->getObjectPointCloud(), RXYZ, position));
+  grasps.push_back(createGraspPose(cloud, RXYZ, position));
 
   ///////////////// 2 grasps along width axis (i.e., short side) of 2D non-axis-aligned BB
 
@@ -161,12 +160,12 @@ std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(MemoryObject::Ptr &obje
     // rotate z-y_angle so y-axis is aligned along minor axis of 2D BB (i.e., gripper is grasping along short edge)
     Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle, Eigen::Vector3f::UnitZ()));
     RXYZ = transform * Z;
-    grasps.push_back(createGraspPose(object->getDetectionMask()->getObjectPointCloud(), RXYZ, mass_center_base));
+    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
 
     // rotate z-y_angle+180
     Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle + M_PI, Eigen::Vector3f::UnitZ()));
     RXYZ = transform * Z;
-    grasps.push_back(createGraspPose(object->getDetectionMask()->getObjectPointCloud(), RXYZ, mass_center_base));
+    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
   }
 
 
@@ -181,12 +180,12 @@ std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(MemoryObject::Ptr &obje
     // rotate z90 so y-axis is aligned along major axis of 2D BB (i.e., gripper is grasping along long edge)
     Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle + 0.5 * M_PI, Eigen::Vector3f::UnitZ()));
     RXYZ = transform * Z;
-    grasps.push_back(createGraspPose(object->getDetectionMask()->getObjectPointCloud(), RXYZ, mass_center_base));
+    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
 
     // rotate z270
     Z = Eigen::Affine3f(Eigen::AngleAxisf(y_angle + 1.5 * M_PI, Eigen::Vector3f::UnitZ()));
     RXYZ = transform * Z;
-    grasps.push_back(createGraspPose(object->getDetectionMask()->getObjectPointCloud(), RXYZ, mass_center_base));
+    grasps.push_back(createGraspPose(cloud, RXYZ, mass_center_base));
   }
 
   //  ////////////////////// DEBUG VIZ CODE /////////////////////////////
@@ -196,7 +195,7 @@ std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(MemoryObject::Ptr &obje
 //
 //  //add cloud to viewer
 //  viewer->addPointCloud<pcl::PointXYZRGB>(object->getCaptureData()->cloudRGB, "scene_cloud");
-//  viewer->addPointCloud<pcl::PointXYZ>(object->getDetectionMask()->getObjectPointCloud(), "object_cloud");
+//  viewer->addPointCloud<pcl::PointXYZ>(cloud, "object_cloud");
 //
 //  viewer->initCameraParameters();
 //  viewer->addCoordinateSystem(0.1, "camera", 0);

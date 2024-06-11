@@ -200,17 +200,6 @@ public class AvailableDetectors {
       predicateType = root.getAsJsonObject("processor").get("type").getAsString();
       arity = root.getAsJsonObject("processor").get("arity").getAsInt();
 
-      if (arity == 1) {
-        advertisement = new Predicate(predicateType, new Variable("X", PredicateHelper.varType));
-      } else if (arity == 2) {
-        advertisement = new Predicate(predicateType, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
-      } else {
-        log.error(String.format("Can't handle Predicates with arity: %d.", arity));
-        return;
-      }
-      //add Detector option (for type of detector, which indicates to search for all detector options)
-      addDetectorOption(advertisement, detectorType, detectorConfigFile);
-
       Iterator<JsonElement> predicateItr = root.getAsJsonArray("predicates").iterator();
       while (predicateItr.hasNext()) {
         JsonObject predicateObj = predicateItr.next().getAsJsonObject();
@@ -220,6 +209,9 @@ public class AvailableDetectors {
           advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
         } else if (arity == 2) {
           advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
+        } else {
+          log.error("Predicate arity not supported: {}", arity);
+          continue;
         }
 
         //add Detector option

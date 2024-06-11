@@ -108,12 +108,18 @@ public class MemoryObject implements Serializable {
    */
   private int[][] faceIndices = new int[0][0];
   /**
-   * Orientations for grasp info. This is only relevant for grasp MemoryObjects
-   * (usually has descriptor grasp_point(X)). This probably shouldn't be in this
-   * class (maybe a MemoryObject subclass??) as it doesn't apply to all
-   * MemoryObjects.
+   * Width of image (or point cloud) used to detection this MemoryObject.
    */
-  private double[][] orientations = new double[0][0];
+  private int imgWidth;
+  /**
+   * Height of image (or point cloud) used to detection this MemoryObject.
+   */
+  private int imgHeight;
+  /**
+   * Orientations of MemoryObject. This is usually null, as there is often not a meaningful
+   * definition of an orientation for a MO.
+   */
+  private Quat4d orientation = null;
   /**
    * Transform from base to vision coordinate frame.
    */
@@ -534,30 +540,16 @@ public class MemoryObject implements Serializable {
   }
 
   /**
-   * Set number of orientations.
+   * Set orientation.
    *
-   * @param size
-   */
-  public void setNumOrientations(int size) {
-    orientations = new double[size][4];
-  }
-
-  /**
-   * Add orientation. Assumes setNumOrientations has been called to allocate
-   * space for orientations.
-   *
-   * @param index
    * @param x
    * @param y
    * @param z
    * @param w
    */
-  public void addOrientation(int index, double x, double y, double z, double w) {
-    log.debug(String.format("[addOrientation]: index: %d. orientation: (%f,%f,%f,%f).", index, x, y, z, w));
-    orientations[index][0] = x;
-    orientations[index][1] = y;
-    orientations[index][2] = z;
-    orientations[index][3] = w;
+  public void setOrientation(double x, double y, double z, double w) {
+    log.debug(String.format("[setOrientation]: (%f,%f,%f,%f).", x, y, z, w));
+    orientation = new Quat4d(x, y, z, w);
   }
 
   /**
@@ -722,12 +714,25 @@ public class MemoryObject implements Serializable {
     return pointCloud;
   }
 
+  public void setImageSize(int width, int height) {
+    imgWidth = width;
+    imgHeight = height;
+  }
+
+  public int getImageWidth() {
+    return imgWidth;
+  }
+
+  public int getImageHeight() {
+    return imgHeight;
+  }
+
   public int[][] getFaceIndices() {
     return faceIndices;
   }
 
-  public double[][] getOrientations() {
-    return orientations;
+  public Quat4d getOrientation() {
+    return orientation;
   }
 
   public int[] getMaskIndices() {
@@ -742,7 +747,7 @@ public class MemoryObject implements Serializable {
     double[] transform = new double[16];
     for (int r = 0; r < 4; ++r) {
       for (int c = 0; c < 4; ++c) {
-        transform[r + 4*c] = baseTransform.getElement(r, c);
+        transform[c + 4 * r] = baseTransform.getElement(r, c);
       }
     }
     return transform;
@@ -853,18 +858,13 @@ public class MemoryObject implements Serializable {
       v[2] = p.z;
     }
 
-    // transform orientation(s)
-    for (double[] o : orientations) {
-      Matrix4d orientMat = new Matrix4d(new Quat4d(o), new Vector3d(), 1.0);
-      Matrix4d newMat = new Matrix4d();
-      newMat.mul(transform, orientMat);
-      Quat4d orient = new Quat4d();
-      newMat.get(orient);
-      o[0] = orient.x;
-      o[1] = orient.y;
-      o[2] = orient.z;
-      o[3] = orient.w;
-    }
+    // transform orientation
+    Matrix4d orientMat = new Matrix4d(orientation, new Vector3d(), 1.0);
+    Matrix4d newMat = new Matrix4d();
+    newMat.mul(transform, orientMat);
+    Quat4d orient = new Quat4d();
+    newMat.get(orient);
+    orientation = new Quat4d(orient.x, orient.y, orient.z, orient.w);
 
     // transform primitives
     for (MemoryPrimitive primitive : primitives) {

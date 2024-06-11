@@ -9,7 +9,6 @@
 #ifndef DIARC_VISION_GRASP_SMALLOBJECTGRASPS_HPP
 #define DIARC_VISION_GRASP_SMALLOBJECTGRASPS_HPP
 
-#include "stm/MemoryObject.hpp"
 #include "Grasp.hpp"
 #include <log4cxx/logger.h>
 
@@ -25,15 +24,15 @@ namespace diarc {
       ~SmallObjectGrasp();
 
       //! determine if calculateGraspPoses will result in useful grasps for the MO
-      bool canCalculateGraspPoses(diarc::stm::MemoryObject::Ptr &object);
+      bool canCalculateGraspPoses(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, const cv::Mat &transform);
 
       //! calculate grasp pose (currently only one is calculated) for MO
       //! NOTE: it is assumed that canCalculateGraspPoses is called before this method is called, with the same MO
-      std::vector<Grasp> calculateGraspPoses(diarc::stm::MemoryObject::Ptr &object);
+      std::vector<Grasp> calculateGraspPoses(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, const cv::Mat &transform);
 
      private:
       //! calculate the minimum bounding box in base coordinate frame and store relevant results in class fields
-      void calculateMinBB(diarc::stm::MemoryObject::Ptr &object);
+      void calculateMinBB(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, const cv::Mat &transform);
 
       Grasp createGraspPose(pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloud,
                                 const Eigen::Affine3f &RXYZ,

@@ -20,7 +20,6 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/foreach.hpp>
 
-using namespace diarc::stm;
 using namespace diarc::grasp;
 
 AgileGrasp::AgileGrasp() {
@@ -31,14 +30,13 @@ AgileGrasp::~AgileGrasp() {
 
 }
 
-std::vector<Grasp> AgileGrasp::calculateGraspPoses(MemoryObject::Ptr& object) {
+std::vector<Grasp> AgileGrasp::calculateGraspPoses(pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud, const cv::Mat &transform) {
   pcl::PointCloud<PointType>::Ptr object_cloud(new pcl::PointCloud<PointType>);
-  pcl::copyPointCloud(*(object->getDetectionMask()->getObjectPointCloud()), *object_cloud);
+  pcl::copyPointCloud(*cloud, *object_cloud);
 
-  //get camera Transform Base of the robot. This transformation is defined in CaptureData
-  cv::Mat cam_transform = object->getDetectionMask()->getTransform();
+  //get camera Transform Base of the robot
   Eigen::Matrix4d cam_tf; //Matrix4d <double,4,4>
-  cv2eigen(cam_transform, cam_tf);
+  cv2eigen(transform, cam_tf);
 
   //cam_tf appears twice since the original method uses two cameras. We only use one, thus, the same camera is the input for the two options (ONLY ONE PERSPECTIVE)
   localization->setCameraTransforms(cam_tf, cam_tf); //sets the camera transformation every iteration since it is not fixed
@@ -58,7 +56,7 @@ std::vector<Grasp> AgileGrasp::calculateGraspPoses(MemoryObject::Ptr& object) {
     LOG4CXX_DEBUG(logger, "[HANDLES DONE]");
   }
 
-  //objects to collect the quaternion and points for all grasp info that will populate MemoryObject
+  //objects to collect the quaternion and points for all grasp info that will populate grasps
   pcl::PointCloud<pcl::PointXYZ>::Ptr points;
   Eigen::Quaternionf orientation;
   std::vector<Handle>::const_iterator handle_itr;
@@ -80,7 +78,7 @@ std::vector<Grasp> AgileGrasp::calculateGraspPoses(MemoryObject::Ptr& object) {
     //plot coordinate frames for debugging purposes
     if (pcl_viz) { //to turn on/off, make changes in config XML
       pcl::PointCloud<PointType>::Ptr object_cloud_display(new pcl::PointCloud<PointType>);
-      pcl::copyPointCloud(*(object->getDetectionMask()->getObjectPointCloud()), *object_cloud_display);
+      pcl::copyPointCloud(*cloud, *object_cloud_display);
       plotAntipodalFrames(handles, object_cloud_display);
     }
   }

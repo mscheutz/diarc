@@ -34,7 +34,7 @@ namespace diarc {
       ~GraspDetector();
 
       void loadConfig(const std::string& configFile);
-      std::vector<diarc::grasp::Grasp> calculateGraspOptions(diarc::stm::MemoryObject::Ptr &object);
+      std::vector<diarc::grasp::Grasp> calculateGraspOptions(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, const cv::Mat &transform);
 
     protected:
       GraspDetector();
