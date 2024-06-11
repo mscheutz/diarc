@@ -1,4 +1,4 @@
-## Setup Instructions (dirac ver.)
+## Setup Instructions (DIARC ver.)
 
 This setup includes two components:
 
@@ -35,7 +35,7 @@ This setup includes two components:
    export SPRING_PROFILES_ACTIVE=dev
    ```
 
-5. **Launch Application:**
+6. **Launch Application:**
    Run your config:
    ```
    ./gradlew launch -Pmain=edu.tufts.hrilab.config.gui.UnifiedGuiConfig
@@ -145,6 +145,18 @@ useEffect(() => {
    inner class. Make sure to initialize it.
 5. Write a getter for the inner class instance. Mark it as a TRADE Service with
    `@TRADEService`.
+
+> **Why do we need an inner class?**
+> 
+> We need to do two things at once:
+> 
+> 1. Create a DIARC component, and
+> 2. Set up the server side.
+> 
+> This means we have to have something `extend DiarcComponent` *and* `extend
+> TextWebSocketHandler`. However, multiple inheritance is not allowed in Java,
+> so to get around this we bundle the `TextWebSocketHandler`'s behavior inside an
+> inner class.
 
 #### Adding your component to the server
 

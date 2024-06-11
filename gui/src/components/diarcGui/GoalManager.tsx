@@ -32,6 +32,7 @@ const GoalManager = () => {
   }));
   const [actionList, setActionList] = useState<any[]>(baseActionList.slice());
   const [actionFormContext, setActionFormContext] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const [fileTree, setFileTree] = useState<object>({
     id: "0",
@@ -42,7 +43,7 @@ const GoalManager = () => {
   });
 
   const filterNodes = (value) => {
-    if (value !== "") {
+    if (value && value !== "") {
       const filtered: any[] = [];
       baseActionList.forEach((item) => {
         if (item.id === 0) {
@@ -66,6 +67,15 @@ const GoalManager = () => {
     }
   };
 
+  // Export button
+  const handleExport = () => {
+    let array: number[] = [];
+    for (const [value] of selectedIds.entries()) {
+      array.push(value);
+    }
+    sendMessage(JSON.stringify({ "selected": array }));
+  };
+
   // Configure websocket
   const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
   const { sendMessage, lastMessage, readyState } =
@@ -79,7 +89,9 @@ const GoalManager = () => {
       setBaseActionList(flattenTree({
         name: "", children: data.actions
       }));
-      setActionList(baseActionList.slice());
+      setActionList(flattenTree({
+        name: "", children: data.actions
+      }));
     }
     if (data.files) {
       setFileTree({ name: "", children: [data.files] });
@@ -124,7 +136,7 @@ const GoalManager = () => {
                     }}
                   >
                   </input>
-                  <Button>
+                  <Button onClick={handleExport}>
                     Export selected
                   </Button>
                 </div>
@@ -134,6 +146,7 @@ const GoalManager = () => {
                   <ActionBrowser
                     actionList={actionList}
                     setActionFormContext={setActionFormContext}
+                    setSelectedIds={setSelectedIds}
                   />
                 )}
               </Allotment.Pane>

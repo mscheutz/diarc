@@ -11,11 +11,11 @@ import TreeView, { flattenTree } from "react-accessible-treeview";
 
 import "./TreeStyle.css";
 
-const ActionBrowser = ({ actionList, setActionFormContext }) => {
+const ActionBrowser = ({ actionList, setActionFormContext, setSelectedIds }) => {
     // ActionFormContext is a string[] whose first el't is the name of the
     // action and any further el'ts are its parameters
     const handleSelect = (e) => {
-        console.log(e.treeState.selectedIds);
+        setSelectedIds(e.treeState.selectedIds);
 
         const actionSignature: string = e.element.name;
         const openParenthesis = actionSignature.indexOf("(");

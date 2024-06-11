@@ -1,6 +1,7 @@
 package edu.tufts.hrilab.action;
 
 import ai.thinkingrobots.trade.*;
+import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.goal.Goal;
@@ -18,6 +19,7 @@ import javax.annotation.Nonnull;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,6 +56,8 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
 
         private final List<ActionDBEntry> actionList;
 
+        private final ActionScriptLanguageWriter aslWriter;
+
         /**
          * Constructs this GoalEndpoint.
          */
@@ -72,6 +76,8 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             actionList.addAll(Database.getActionDB().getAllActions());
             actionList.sort(Comparator.comparing(e ->
                     new ADBEWrapper(e).getActionSignature()));
+
+            aslWriter = new ActionScriptLanguageWriter();
         }
 
         /**
@@ -241,6 +247,39 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             return tree;
         }
 
+        /**
+         * Generates a filepath for the ASL writer to create a new file at.
+         * @return a String representation of a file path
+         */
+        private String generateAslWriteFilePath() {
+            LocalDateTime now = LocalDateTime.now();
+            return ACTION_SCRIPT_PATH
+                    + "/custom/"
+                    + "gui-export-script-"
+                    + now
+                        .toString()
+                        .replace(':', '-')
+                        .replace('.', '-')
+                    + ".asl";
+        }
+
+        /**
+         * Given a list of action IDs, export those actions to a file.
+         * @param toExport list of action IDs
+         */
+        private void exportActionsAsFile(List<Object> toExport) {
+            // Make sure the custom/ directory exists
+            new File(ACTION_SCRIPT_PATH + "/custom").mkdirs();
+
+            List<ActionDBEntry> toWrite = new ArrayList<>();
+            for(Object o : toExport) {
+                int i = ((Integer) o) - 1; // unshift index
+                toWrite.add(actionList.get(i));
+            }
+
+            aslWriter.writeToFile(toWrite, generateAslWriteFilePath());
+        }
+
         //======================
         // TextWebSocketHandler
         //======================
@@ -311,6 +350,11 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
                         Factory.createPredicate(sb.toString())
                     );
                 }
+            }
+            // Handle export ASL actions
+            else if(payload.has("selected")) {
+                exportActionsAsFile(payload.getJSONArray("selected")
+                        .toList());
             }
         }
 
