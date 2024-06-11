@@ -8,9 +8,9 @@ import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.gui.ADBEWrapper;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.util.IdGenerator;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -50,6 +50,8 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
      * GoalManagerHandler inner class. This implements the server.
      */
     public class GoalManagerHandler extends TextWebSocketHandler {
+        private WebSocketSession session;
+
         private final HashMap<Integer, File> aslFileMap;
         private TRADEServiceInfo submitGoalService;
         private TRADEServiceInfo submitActionService;
@@ -278,6 +280,16 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             }
 
             aslWriter.writeToFile(toWrite, generateAslWriteFilePath());
+
+            try {
+                if(session != null && session.isOpen()) {
+                    session.sendMessage(new TextMessage(
+                            new JSONObject()
+                                    .put("export", "successful")
+                                    .toString()
+                    ));
+                }
+            } catch(IOException ignored) {}
         }
 
         //======================
@@ -366,6 +378,7 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
         @Override
         public void afterConnectionEstablished(@Nonnull WebSocketSession session)
                 throws Exception {
+            this.session = session;
             log.debug("Goal manager connection established");
 
             JSONObject message = new JSONObject();
@@ -385,6 +398,19 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             message.put("files", files);
 
             session.sendMessage(new TextMessage(message.toString()));
+        }
+
+        /**
+         * Called when the connection is closed.
+         * @param session the session that was terminated
+         * @param status close status
+         * @throws Exception ignored
+         */
+        @Override
+        public void afterConnectionClosed(@Nonnull WebSocketSession session,
+                                          @Nonnull CloseStatus status) throws Exception {
+            super.afterConnectionClosed(session, status);
+            this.session = null;
         }
     }
 }

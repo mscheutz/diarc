@@ -23,6 +23,8 @@ import ActionFormContext from "./ActionFormContext";
 import ConnectionIndicator from "./ConnectionIndicator";
 import { Button } from "../Button";
 import { flattenTree } from "react-accessible-treeview";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faSync } from "@fortawesome/free-solid-svg-icons";
 
 const GoalManager = () => {
   // Action list state
@@ -68,7 +70,10 @@ const GoalManager = () => {
   };
 
   // Export button
+  const [exportStatus, setExportStatus] = useState<string>("");
+
   const handleExport = () => {
+    setExportStatus("wait");
     let array: number[] = [];
     for (const [value] of selectedIds.entries()) {
       array.push(value);
@@ -96,6 +101,9 @@ const GoalManager = () => {
     if (data.files) {
       setFileTree({ name: "", children: [data.files] });
     }
+    if (data.export) {
+      setExportStatus("successful")
+    }
   },
     [lastMessage]);
 
@@ -121,9 +129,9 @@ const GoalManager = () => {
                 preferredSize={"60%"}
                 minSize={150}
               >
-                <div className="p-3 rounded-md outline
-                                outline-1 outline-[#d1dbe3]
-                                flex flex-row gap-3 overflow-auto"
+                <div className="p-3 rounded-md outline outline-1
+                                outline-[#d1dbe3] flex flex-row gap-3
+                                overflow-auto items-stretch"
                 >
                   <input
                     type="text"
@@ -139,9 +147,17 @@ const GoalManager = () => {
                   <Button onClick={handleExport}>
                     Export selected
                   </Button>
+                  {exportStatus ? (
+                    <div className="flex flex-rol items-center">
+                      {exportStatus === "wait" ? (
+                        <FontAwesomeIcon icon={faSync} color="#efd402" spin />
+                      ) : (
+                        <FontAwesomeIcon icon={faCheck} color="#00a505" />
+                      )}
+                    </div>) : null}
                 </div>
                 {actionList.length === 1 ? (
-                  <div>No actions match filter.</div>
+                  <div className="pl-1">No actions match filter.</div>
                 ) : (
                   <ActionBrowser
                     actionList={actionList}
