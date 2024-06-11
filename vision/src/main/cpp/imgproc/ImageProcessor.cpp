@@ -22,11 +22,11 @@
 #include "validator/GlobalFeatureValidator.hpp"
 #include "validator/SpatialRelationValidator.hpp"
 
+#include "saliency/MasterSaliencyProcessor.hpp"
 #ifdef USE_V4R_V0
 //#include "saliency/RelativeHeightProcessor.hpp"
 //#include "saliency/SurfaceOrientationProcessor.hpp"
 //#include "saliency/SurfaceCurvatureProcessor.hpp"
-#include "saliency/MasterSaliencyProcessor.hpp"
 #include "saliency/IKNSaliencyMapProcessor.hpp"
 #include "saliency/ColorProcessor.hpp"
 #include "saliency/SymmetryProcessor.hpp"
@@ -109,12 +109,7 @@ ImageProcessor::Ptr ImageProcessor::get(const ImageProcessorType type, const lon
 #endif
       break;
     case MASTERSALIENCY:
-#ifdef USE_V4R_V0
       return MasterSaliencyProcessor::Ptr(new MasterSaliencyProcessor(processorId, imgWidth, imgHeight, isStereo));
-#else
-      LOG4CXX_ERROR(factoryLogger, "MasterSaliencyProcessor not available. Did you compile vision with V4R?");
-#endif
-      break;
     case PLANE:
       return PlaneProcessor::Ptr(new PlaneProcessor(processorId, imgWidth, imgHeight, isStereo));
     case COLORVALIDATOR:

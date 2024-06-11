@@ -1,9 +1,9 @@
 /*
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
-package edu.tufts.hrilab.sphinx4.gui;
+package edu.tufts.hrilab.asr.sphinx4.gui;
 
-import edu.tufts.hrilab.sphinx4.Sphinx4Component;
+import edu.tufts.hrilab.asr.sphinx4.Sphinx4Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
