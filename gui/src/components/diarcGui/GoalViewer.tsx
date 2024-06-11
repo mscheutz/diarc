@@ -20,21 +20,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import TreeView, { flattenTree } from "react-accessible-treeview"
 
-import "./GoalViewer.css";
+import "./TreeStyle.css";
 import ConnectionIndicator from "./ConnectionIndicator";
 import { Button } from "../Button";
-
-
-
-/*
-MONDAY MONDAY MONDAY MONDAY MONDAY
-
-    talk w/ Evan about redundancy of
-    "submit goal" form --- custom action
-    covers this functionality
-
-MONDAY MONDAY MONDAY MONDAY MONDAY
-*/
 
 type Node = {
     name: string,
@@ -228,7 +216,7 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
 
                 {/* Actual lists */}
                 <div className="shadow-md grow outline outline-1 overflow-x-scroll
-                                outline-[#d1dbe3] p-5 overflow-auto rounded-md"
+                                outline-[#d1dbe3] overflow-auto rounded-md"
                 >
                     {getTree()}
                 </div>

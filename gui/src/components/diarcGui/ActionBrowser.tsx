@@ -7,17 +7,25 @@
 
 import React from "react";
 
-const ActionBrowser = ({ actionList, setActionFormContext }) => {
-    // Returns a string[] whose first el't is the name of the action and any
-    // further el'ts are its parameters
-    const handleOnClick = (e) => {
-        const actionSignature: string = e.target.innerHTML;
+import TreeView, { flattenTree } from "react-accessible-treeview";
+
+import "./TreeStyle.css";
+
+const ActionBrowser = ({ actionList, setActionFormContext, setSelectedIds }) => {
+    // ActionFormContext is a string[] whose first el't is the name of the
+    // action and any further el'ts are its parameters
+    const handleSelect = (e) => {
+        setSelectedIds(e.treeState.selectedIds);
+
+        const actionSignature: string = e.element.name;
         const openParenthesis = actionSignature.indexOf("(");
-        const actionName = actionSignature.slice(0, openParenthesis);
-        const parameterString = actionSignature.slice(openParenthesis + 1, -1);
-        const parameters = parameterString.split(", ");
+        const name = actionSignature.slice(0, openParenthesis);
+        const parameters =
+            actionSignature
+                .slice(openParenthesis + 1, -1)
+                .split(", ");
         setActionFormContext(
-            [actionName].concat(
+            [name].concat(
                 // take off the "?" at the start of each parameter
                 parameters.map((str) => (str.slice(1)))
             )
@@ -25,19 +33,31 @@ const ActionBrowser = ({ actionList, setActionFormContext }) => {
     };
 
     return (
-        <div className="w-full h-full overflow-auto overflow-x-scroll p-5">
-            {actionList.map((item: string, index) => (
-                <p
-                    key={index}
-                    className="w-full hover:bg-[#C6E3FA] px-1
-                               hover:cursor-pointer text-sm leading-4
-                               text-nowrap font-mono py-0.5"
-                    onClick={handleOnClick}
-                    title={item}
-                >
-                    {item}
-                </p>
-            ))}
+        <div className="w-full h-full overflow-x-scroll overflow-y-scroll">
+            <TreeView
+                data={actionList}
+                className="basic"
+                onNodeSelect={handleSelect}
+                multiSelect
+                clickAction="EXCLUSIVE_SELECT"
+                nodeRenderer={
+                    ({ element, getNodeProps, level, isSelected }) => {
+                        return (
+                            <div
+                                {...getNodeProps()}
+                                style={{ paddingLeft: 20 * level - 15 }}
+                                title={element.name}
+                                className={isSelected ? "selected" : "tree-node"}
+                            >
+                                <p className="text-nowrap text-sm font-mono
+                                          select-none">
+                                    {element.name}
+                                </p>
+                            </div>
+                        )
+                    }
+                }
+            />
         </div>
     );
 };

@@ -16,6 +16,7 @@ import ActionFormContext from "./ActionFormContext";
 
 const textBoxClassName = "block box-border w-full rounded mt-1 mb-2 text-sm "
     + "border border-slate-500 p-2 font-mono";
+export { textBoxClassName };
 const submitClassName = "bg-slate-900 text-white hover:bg-slate-800 "
     + "dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-100 "
     + "active:scale-95 inline-flex items-center justify-center "

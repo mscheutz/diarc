@@ -1,4 +1,4 @@
-## Setup Instructions (dirac ver.)
+## Setup Instructions (DIARC ver.)
 
 This setup includes two components:
 
@@ -9,33 +9,21 @@ This setup includes two components:
 
 1. **Navigate to Root Directory:**
    ```
-   cd dirac
+   cd diarc
    ```
-   
+
 2. **Common Settings**:
    Default settings applicable to all environments are in `core/src/main/resources/application.properties`.
 
-3. **Create Development Properties**:
-   Generate a new `application-dev.properties` file. Example settings to include:
-   ```
-   cors.origin=http://localhost:3000,http://<ip-address>:3000,https://<ngrok-url>
-   app.base-url=http://localhost:8080
-   ```
-
-4. **Customize the Properties**
+3. **(Optional) Create Development Properties**:
+   Generate a new `application-dev.properties` file.
    Edit your `.properties` with appropriate settings for each environment.
-   Additionally, if you need to make your server accessible from different networks, add this line:
-   ```
-   server.address=0.0.0.0
-   ```
-
-5. **Set Active Profile:**
-   Export the development profile environment variable:
+   In the terminal, export the development profile environment variable:
    ```
    export SPRING_PROFILES_ACTIVE=dev
    ```
 
-5. **Launch Application:**
+4. **Launch Application:**
    Run your config:
    ```
    ./gradlew launch -Pmain=edu.tufts.hrilab.config.gui.UnifiedGuiConfig
@@ -45,24 +33,24 @@ This setup includes two components:
 
 1. **Navigate to `gui` Directory:**
     ```
-    cd dirac/gui
+    cd diarc/gui
     ```
 
-2. **Duplicate `.env.example`:**
+2. **Copy the provided `.env.example`:**
    ```
    cp .env.example .env.development
    ```
-   
-3. **Edit `.env.development`.**
+
+3. **You can edit your `.env.development` for development.**
 
 4. **Start the Application:**
     ```
     npm start
     ```
 
-    A browser window should pop up with the website.
-    If it doesn't, you can join manually to `localhost:3000` in your browser.
-    For more information, see §Available Scripts below.
+   A browser window should pop up with the website.
+   If it doesn't, you can join manually to `localhost:3000` in your browser.
+   For more information, see §Available Scripts below.
 
 ## Component Summary
 
@@ -72,26 +60,54 @@ say "Connection Failed!". Any that are found will result in their respective
 component being rendered.
 
 * Robot chat: a messaging-app-like UI to talk with robots.
-  * Name bar: type in the name of human speaker.
-  * Conversation menu: select the robot you are talking to.
-  * Message window: a list of previous messages and an input to send new ones.
+    * Name bar: type in the name of human speaker.
+    * Conversation menu: select the robot you are talking to.
+    * Message window: a list of previous messages and an input to send new ones.
 * Goal viewer: an interface to see a list of goals and options to interact with
-them.
-  * Goal tree: there are three levels, goal type (active/suspended/past), agent,
-  and goal. Goal types and agents are like folders and can be expanded/closed.
-  * Button menu: clicking a goal will select it. Once selected, active and
-  suspended goals can be canceled, active goals can be suspended, and suspended
-  goals can be resumed.
+  them.
+    * Goal tree: there are three levels, goal type (active/suspended/past), agent,
+      and goal. Goal types and agents are like folders and can be expanded/closed.
+    * Button menu: clicking a goal will select it. Once selected, active and
+      suspended goals can be canceled, active goals can be suspended, and suspended
+      goals can be resumed.
 * Goal manager: allows for submission of goals/actions.
-  * Action menu: shows a list of all loaded action signatures. Clicking one of
-  these will generate a form in the "Submit Action" tab in the right panel.
-  * File tree: shows a file explorer view of loaded `.asl` files.
-  * Submission panel: has two tabs.
-    * Submit action: here a custom action may be typed and submitted. In
-    addition, clicking an action signature on the menu will generate a form
-    containing text boxes for each of its fields.
-    * Submit goal: submit a goal in agent-predicate form.
-* Map viewer: *Hengxu could you fill this out*
+    * Action menu: shows a list of all loaded action signatures. Clicking one of
+      these will generate a form in the "Submit Action" tab in the right panel.
+    * File tree: shows a file explorer view of loaded `.asl` files.
+    * Submission panel: has two tabs.
+        * Submit action: here a custom action may be typed and submitted. In
+          addition, clicking an action signature on the menu will generate a form
+          containing text boxes for each of its fields.
+        * Submit goal: submit a goal in agent-predicate form.
+* Map viewer:
+    * **Configuration**
+        - **Setup**:
+            - Configure the path for "-map_folder" in `application.properties`:
+              ```properties
+              # Set the directory for -map_folder
+              map.base.path=/path/to/map/folder/
+              ```
+        - **Usage**:
+            - Initialize `MapComponent` in your config file with the `map.base.path`.
+              ```java
+              @Bean
+              public MapComponent mapComponent(@Value("${map.base.path}") String mapFolderPath) {
+                  return createInstance(MapComponent.class, "-map_folder " + mapFolderPath + " -start_floor 1");
+              }
+              ```
+        - **Customization**:
+            - Exclude `MapComponent` by not declaring it if not needed.
+            - Update `map.base.path` to change "-map_folder" dynamically.
+    * **Features**
+        - **Fetch Map Data**
+            - **Action**: Retrieves map data from specified folder and floor.
+            - **Configuration**: Specified by `mapConfig` during initialization.
+        - **Go To Location**
+            - **Action**: Directs the robot to a known location.
+            - **Input**: Symbol format `location_0:location`.
+            - **Implementation**: Depends on successful `TRADEService` call.
+        - **Map Interaction**
+            - **Click Response**: Clicks on the map trigger `goToLocation` TRADEService if it succeeds.
 
 Finally, each GUI component has a connection indicator on the bottom
 ("Status: [...]").
@@ -103,14 +119,14 @@ Finally, each GUI component has a connection indicator on the bottom
 #### Creating the React component
 
 1. Create a new React component (`.tsx` file) in
-`diarc/gui/src/components/diarcGui`.
+   `diarc/gui/src/components/diarcGui`.
 2. Define a function component and export it.
 3. It should have a Web Socket connection; the `npm` package
-`react-use-websocket` is recommended.
+   `react-use-websocket` is recommended.
 4. If you need to send messages from the client to the server, you can use the
-`sendMessage()` function.
+   `sendMessage()` function.
 5. If you need to receive messages from the server, put this in your component
-  (before you return the DOM):
+   (before you return the DOM):
 
 ```typescript
 useEffect(() => {
@@ -132,26 +148,38 @@ useEffect(() => {
 #### Creating the DIARC component
 
 1. Create a new DIARC Component (`.java` file) in
-`diarc/core/src/main/java/edu/tufts/hrilab/[your package]`.
-2. Your component should extend `DiarcComponent`. 
+   `diarc/core/src/main/java/edu/tufts/hrilab/[your package]`.
+2. Your component should extend `DiarcComponent`.
 3. Create an inner class that will handle the Web Socket server side. This
-inner class will extend `TextWebSocketHandler`. 
-   1. You will be required to implement the `handleTextMessage()` function.
-   2. If you need to send a message to the client on startup, implement
-  `afterConnectionEstablished()`.
-   3. If you need to keep sending messages, then introduce an instance variable
-  for your Web Socket session, then use `session.sendMessage()`.
+   inner class will extend `TextWebSocketHandler`.
+    1. You will be required to implement the `handleTextMessage()` function.
+    2. If you need to send a message to the client on startup, implement
+       `afterConnectionEstablished()`.
+    3. If you need to keep sending messages, then introduce an instance variable
+       for your Web Socket session, then use `session.sendMessage()`.
 4. In the component, create an instance variable to hold an instance of your
-inner class. Make sure to initialize it.
+   inner class. Make sure to initialize it.
 5. Write a getter for the inner class instance. Mark it as a TRADE Service with
-`@TRADEService`.
+   `@TRADEService`.
+
+> **Why do we need an inner class?**
+> 
+> We need to do two things at once:
+> 
+> 1. Create a DIARC component, and
+> 2. Set up the server side.
+> 
+> This means we have to have something `extend DiarcComponent` *and* `extend
+> TextWebSocketHandler`. However, multiple inheritance is not allowed in Java,
+> so to get around this we bundle the `TextWebSocketHandler`'s behavior inside an
+> inner class.
 
 #### Adding your component to the server
 
 1. Add your component to `EndpointManagerComponent.java`. This file is in
-`diarc/core/src/main/java/edu/tufts/hrilab/gui`.
+   `diarc/core/src/main/java/edu/tufts/hrilab/gui`.
 2. Find your getter service and use it to find the Web Socket handler you
-defined in point 3 above.
+   defined in point 3 above.
 3. Add your handler to the registry.
 
 ---
@@ -167,8 +195,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 In the project directory, you can run: <br>
 
-**MAKE SURE THAT YOU ARE IN THE CORRECT DIRECTORY (CURRENTLY NAMED HRILAB-FRONTEND)** \ 
-the commands will not register without being in the right directory. 
+**MAKE SURE THAT YOU ARE IN THE CORRECT DIRECTORY (CURRENTLY NAMED HRILAB-FRONTEND)** \
+the commands will not register without being in the right directory.
 
 ### `npm start`
 
@@ -176,7 +204,7 @@ Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
 The page will reload if you make edits.\
-You will also see any lint errors in the console. 
+You will also see any lint errors in the console.
 
 ### `npm test`
 
