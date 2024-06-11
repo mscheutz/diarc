@@ -1,6 +1,7 @@
 package edu.tufts.hrilab.action;
 
 import ai.thinkingrobots.trade.*;
+import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.goal.Goal;
@@ -9,6 +10,7 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -17,6 +19,7 @@ import javax.annotation.Nonnull;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,9 +50,15 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
      * GoalManagerHandler inner class. This implements the server.
      */
     public class GoalManagerHandler extends TextWebSocketHandler {
+        private WebSocketSession session;
+
         private final HashMap<Integer, File> aslFileMap;
         private TRADEServiceInfo submitGoalService;
         private TRADEServiceInfo submitActionService;
+
+        private final List<ActionDBEntry> actionList;
+
+        private final ActionScriptLanguageWriter aslWriter;
 
         /**
          * Constructs this GoalEndpoint.
@@ -64,6 +73,13 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             } catch(NullPointerException e) {
                 log.error(e.getMessage());
             }
+
+            actionList = new ArrayList<>();
+            actionList.addAll(Database.getActionDB().getAllActions());
+            actionList.sort(Comparator.comparing(e ->
+                    new ADBEWrapper(e).getActionSignature()));
+
+            aslWriter = new ActionScriptLanguageWriter();
         }
 
         /**
@@ -233,6 +249,49 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             return tree;
         }
 
+        /**
+         * Generates a filepath for the ASL writer to create a new file at.
+         * @return a String representation of a file path
+         */
+        private String generateAslWriteFilePath() {
+            LocalDateTime now = LocalDateTime.now();
+            return ACTION_SCRIPT_PATH
+                    + "/custom/"
+                    + "gui-export-script-"
+                    + now
+                        .toString()
+                        .replace(':', '-')
+                        .replace('.', '-')
+                    + ".asl";
+        }
+
+        /**
+         * Given a list of action IDs, export those actions to a file.
+         * @param toExport list of action IDs
+         */
+        private void exportActionsAsFile(List<Object> toExport) {
+            // Make sure the custom/ directory exists
+            new File(ACTION_SCRIPT_PATH + "/custom").mkdirs();
+
+            List<ActionDBEntry> toWrite = new ArrayList<>();
+            for(Object o : toExport) {
+                int i = ((Integer) o) - 1; // unshift index
+                toWrite.add(actionList.get(i));
+            }
+
+            aslWriter.writeToFile(toWrite, generateAslWriteFilePath());
+
+            try {
+                if(session != null && session.isOpen()) {
+                    session.sendMessage(new TextMessage(
+                            new JSONObject()
+                                    .put("export", "successful")
+                                    .toString()
+                    ));
+                }
+            } catch(IOException ignored) {}
+        }
+
         //======================
         // TextWebSocketHandler
         //======================
@@ -304,6 +363,11 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
                     );
                 }
             }
+            // Handle export ASL actions
+            else if(payload.has("selected")) {
+                exportActionsAsFile(payload.getJSONArray("selected")
+                        .toList());
+            }
         }
 
         /**
@@ -314,17 +378,19 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
         @Override
         public void afterConnectionEstablished(@Nonnull WebSocketSession session)
                 throws Exception {
+            this.session = session;
             log.debug("Goal manager connection established");
 
             JSONObject message = new JSONObject();
 
             JSONArray actions = new JSONArray();
-            SortedSet<ADBEWrapper> actionSet =
-                    new TreeSet<>(Comparator.comparing(ADBEWrapper::getName));
-            for(ActionDBEntry e : Database.getActionDB().getAllActions()) {
-                ADBEWrapper w = new ADBEWrapper(e);
-                actionSet.add(w);
-                actions.put(w.getActionSignature());
+            for(int i = 0; i < actionList.size(); i++) {
+                actions.put(
+                        new JSONObject()
+                                .put("name", new ADBEWrapper(actionList.get(i))
+                                        .getActionSignature())
+                                .put("id", i+1) // id 0 is taken by the root
+                );
             }
             message.put("actions", actions);
 
@@ -332,6 +398,19 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             message.put("files", files);
 
             session.sendMessage(new TextMessage(message.toString()));
+        }
+
+        /**
+         * Called when the connection is closed.
+         * @param session the session that was terminated
+         * @param status close status
+         * @throws Exception ignored
+         */
+        @Override
+        public void afterConnectionClosed(@Nonnull WebSocketSession session,
+                                          @Nonnull CloseStatus status) throws Exception {
+            super.afterConnectionClosed(session, status);
+            this.session = null;
         }
     }
 }

@@ -12,7 +12,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import TreeView, { flattenTree } from "react-accessible-treeview";
 
-import "./FileBrowser.css";
+import "./TreeStyle.css";
 
 const FileBrowser = ({ fileTree, sendMessage }) => {
     const getFileOnSelect = (e) => {
@@ -27,7 +27,7 @@ const FileBrowser = ({ fileTree, sendMessage }) => {
     return (
         <TreeView
             data={flattenTree(fileTree)}
-            className="basic p-5"
+            className="basic"
             onNodeSelect={getFileOnSelect}
             nodeRenderer={
                 ({ element, getNodeProps, level, isBranch, isExpanded, isSelected }) => {
