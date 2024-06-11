@@ -30,20 +30,21 @@ import java.util.*;
 @Component
 public class MapGui extends TextWebSocketHandler {
 
-    @Value("${app.base-url}")
-    private String baseUrl;
-
+    private final MapComponent mapComponent; // Can be null
+    private final ImageService imageService;
+    private final String baseUrl;
     @Autowired
-    private MapComponent mapComponent;
-    @Autowired
-    public MapGui(MapComponent mapComponent) {
+    public MapGui(@Value("${app.base-url}") String baseUrl,
+                  @Autowired(required = false) MapComponent mapComponent,
+                  ImageService imageService) {
+        this.baseUrl = baseUrl;
         this.mapComponent = mapComponent;
+        this.imageService = imageService;
     }
-    @Autowired
-    private ImageService imageService;
+
     private static final Logger log = LoggerFactory.getLogger(MapGui.class);
 
-    private Map<Symbol,Pair<Point3d,Quat4d>>storedPoses = new HashMap<>();
+    private final Map<Symbol,Pair<Point3d,Quat4d>>storedPoses = new HashMap<>();
 
     @Override
     public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
@@ -83,6 +84,13 @@ public class MapGui extends TextWebSocketHandler {
     private void fetchMapData(WebSocketSession session) throws IOException {
         log.info("Fetching map data for the current floor.");
         JSONObject response = new JSONObject();
+
+        if (imageService == null) {
+            log.error("ImageService is not injected");
+            response.put("error", "Server configuration error.");
+            session.sendMessage(new TextMessage(response.toString()));
+            return;
+        }
 
         try {
             int currentFloor = mapComponent.getCurrFloor();
@@ -329,6 +337,18 @@ public class MapGui extends TextWebSocketHandler {
         // Send the final JSON object back to the client
         session.sendMessage(new TextMessage(response.toString()));
     }
+
+    // depreciated. replaced with constructor injection
+    //    @Value("${app.base-url}")
+//    private String baseUrl;
+//    @Autowired
+//    private MapComponent mapComponent;
+//    @Autowired
+//    private ImageService imageService;
+//    @Autowired
+//    public MapGui(MapComponent mapComponent) {
+//        this.mapComponent = mapComponent;
+//    }
 
     // depreciated. Fetching key locations from the TRADE service.
     // replaced with MapComponent native methods getAllObjects from FloorMap.

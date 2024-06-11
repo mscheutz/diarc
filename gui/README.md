@@ -15,27 +15,15 @@ This setup includes two components:
 2. **Common Settings**:
    Default settings applicable to all environments are in `core/src/main/resources/application.properties`.
 
-3. **Create Development Properties**:
-   Generate a new `application-dev.properties` file. Example settings to include:
-   ```
-   cors.origin=http://localhost:3000,http://<ip-address>:3000,https://<ngrok-url>
-   app.base-url=http://localhost:8080
-   ```
-
-4. **Customize the Properties**
+3. **(Optional) Create Development Properties**:
+   Generate a new `application-dev.properties` file.
    Edit your `.properties` with appropriate settings for each environment.
-   Additionally, if you need to make your server accessible from different networks, add this line:
-   ```
-   server.address=0.0.0.0
-   ```
-
-5. **Set Active Profile:**
    In the terminal, export the development profile environment variable:
    ```
    export SPRING_PROFILES_ACTIVE=dev
    ```
 
-6. **Launch Application:**
+4. **Launch Application:**
    Run your config:
    ```
    ./gradlew launch -Pmain=edu.tufts.hrilab.config.gui.UnifiedGuiConfig
@@ -92,19 +80,34 @@ component being rendered.
           containing text boxes for each of its fields.
         * Submit goal: submit a goal in agent-predicate form.
 * Map viewer:
-  * **Configuration**
-    - **Map Component Initialization**: Directly initialized within `EndpointManagerComponent` using `createInstance(MapComponent.class)`.
-        - Set `mapConfig` to `""` if `MapComponent` is not used.
-  * **Features**
-    - **Fetch Map Data**
-        - **Action**: Retrieves map data from specified folder and floor.
-        - **Configuration**: Specified by `mapConfig` during initialization.
-    - **Go To Location**
-        - **Action**: Directs the robot to a known location.
-        - **Input**: Symbol format `location_0:location`.
-        - **Implementation**: Depends on successful `TRADEService` call.
-    - **Map Interaction**
-        - **Click Response**: Clicks on the map trigger the `goToLocation` action if `TRADEService` succeeds.
+    * **Configuration**
+        - **Setup**:
+            - Configure the path for "-map_folder" in `application.properties`:
+              ```properties
+              # Set the directory for -map_folder
+              map.base.path=/path/to/map/folder/
+              ```
+        - **Usage**:
+            - Initialize `MapComponent` in your config file with the `map.base.path`.
+              ```java
+              @Bean
+              public MapComponent mapComponent(@Value("${map.base.path}") String mapFolderPath) {
+                  return createInstance(MapComponent.class, "-map_folder " + mapFolderPath + " -start_floor 1");
+              }
+              ```
+        - **Customization**:
+            - Exclude `MapComponent` by not declaring it if not needed.
+            - Update `map.base.path` to change "-map_folder" dynamically.
+    * **Features**
+        - **Fetch Map Data**
+            - **Action**: Retrieves map data from specified folder and floor.
+            - **Configuration**: Specified by `mapConfig` during initialization.
+        - **Go To Location**
+            - **Action**: Directs the robot to a known location.
+            - **Input**: Symbol format `location_0:location`.
+            - **Implementation**: Depends on successful `TRADEService` call.
+        - **Map Interaction**
+            - **Click Response**: Clicks on the map trigger `goToLocation` TRADEService if it succeeds.
 
 Finally, each GUI component has a connection indicator on the bottom
 ("Status: [...]").

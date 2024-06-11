@@ -9,11 +9,9 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.map.MapComponent;
 import edu.tufts.hrilab.map.MapGui;
 import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.WebSocketHandler;
@@ -39,30 +37,13 @@ public class EndpointManagerComponent extends DiarcComponent
 
     @Autowired
     private ConfigurableApplicationContext applicationContext;
-
+    @Value("${app.base-url}")
+    private String baseUrl;
     @Value("${cors.origin}")
     private String corsOrigin;
-
     // Helper method to convert comma-separated String to an array
     private String[] parseCorsOrigins() {
         return corsOrigin.split(",");
-    }
-
-    @Bean
-    public MapGui mapGui(MapComponent mapComponent) {
-        return new MapGui(mapComponent);
-    }
-
-    @Bean
-    public MapComponent mapComponent() {
-        String mapConfig = "-map_folder /home/hrilab/code/diarc-old/maps/elevator_lab_test/ -start_floor 1";
-        if (mapConfig.isEmpty()) {
-            // If the configuration string is empty, do not create the MapComponent
-            return null;
-        }
-        MapComponent component = createInstance(MapComponent.class, mapConfig);
-        applicationContext.getBeanFactory().registerSingleton("mapComponent", component);
-        return component;
     }
 
     /**
@@ -86,14 +67,14 @@ public class EndpointManagerComponent extends DiarcComponent
                 }
 
                 if(chatHandler != null && goalViewerHandler != null
-                && goalManagerHandler != null)
+                        && goalManagerHandler != null)
                     break;
             }
 
             if(chatHandler == null || goalViewerHandler == null
-            || goalManagerHandler == null)
+                    || goalManagerHandler == null)
                 throw new NullPointerException("Failed to find handler of "
-                + "chat, goal viewer, or goal manager");
+                        + "chat, goal viewer, or goal manager");
 
             registry.addHandler(chatHandler, "/chat")
                     .setAllowedOrigins(parseCorsOrigins());
@@ -101,14 +82,20 @@ public class EndpointManagerComponent extends DiarcComponent
                     .setAllowedOrigins(parseCorsOrigins());
             registry.addHandler(goalManagerHandler, "/goalManager")
                     .setAllowedOrigins(parseCorsOrigins());
-            // Conditionally add MapGui handler if MapComponent is available
-            MapComponent mapComponent = applicationContext.getBean(MapComponent.class);
-            if (mapComponent != null) {
-                registry.addHandler(mapGui(mapComponent), "/map")
-                        .setAllowedOrigins(parseCorsOrigins());
+
+            // Ensure MapComponent is configured
+            if (applicationContext.getBeanNamesForType(MapComponent.class).length > 0) {
+                MapComponent mapComponent = applicationContext.getBean(MapComponent.class);
+                if (applicationContext.getBeanNamesForType(ImageService.class).length > 0) {
+                    ImageService imageService = applicationContext.getBean(ImageService.class);
+                    MapGui mapGui = new MapGui(baseUrl, mapComponent, imageService);
+                    registry.addHandler(mapGui, "/map").setAllowedOrigins(parseCorsOrigins());
+                } else {
+                    log.info("ImageService is not configured. Map GUI cannot be initialized without ImageService.");
+                }
+            } else {
+                log.info("MapComponent is not configured. Map GUI will not be available.");
             }
-        } catch (NoSuchBeanDefinitionException e) {
-            log.info("MapComponent is not defined in the application context");
         } catch(TRADEException e) {
             log.error("Chat handler service call failed");
         }
