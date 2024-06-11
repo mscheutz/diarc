@@ -25,7 +25,7 @@ public class KinovaDemo extends DiarcConfiguration {
 
     createInstance(MoveItComponent.class, "-config kortex.json");
     createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
-               "-goal startKinova(self)" +
+               "-goal startKinova(self) " +
                     "-beliefinitfile agents/agents.pl " +
                     "-asl kinova/kinova_examples.asl ");
 

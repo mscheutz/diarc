@@ -8,6 +8,7 @@ diarcRos/build/
 vision/build/
 vision/src/swig/
 .idea/
+.vscode/
 .env
 docs/
 vision/src/main/cpp/cmake-build-debug/

@@ -65,6 +65,7 @@ public interface MoveBaseInterface {
       type = EffectType.SUCCESS,
       observable = {"at(?actor,?location"}
   )
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol location) ;
 
   /**

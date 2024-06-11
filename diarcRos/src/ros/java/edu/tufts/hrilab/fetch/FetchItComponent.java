@@ -30,6 +30,15 @@ import java.util.*;
  */
 public class FetchItComponent extends FetchComponent implements FetchItInterface {
 
+  /**
+   * Override to handle special cases for "caddy" and "medical caddy".
+   *
+   * @param groupName
+   * @param refId
+   * @param constraints a list of predicate constraints
+   * @return
+   */
+  @Override
   public Justification moveTo(String groupName, Symbol refId, List<? extends Term> constraints) {
     log.debug("[moveTo(group,refId,constraints)] method entered with constraints: " + constraints);
 
@@ -132,6 +141,7 @@ public class FetchItComponent extends FetchComponent implements FetchItInterface
     return new ConditionJustification(true);
   }
 
+  @Override
   public Justification moveObjectAbove(Symbol objectRef_0, Symbol objectRef_1, String groupName) {
     Point3d point;
     double zOff = 1.2;

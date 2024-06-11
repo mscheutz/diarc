@@ -9,6 +9,7 @@ import java.io.IOException;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.vision.gui.VideoDisplay;
 import edu.tufts.hrilab.vision.util.CompressionUtil;
@@ -18,6 +19,8 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.util.Collection;
+import java.util.List;
 import java.util.zip.DataFormatException;
 
 /**
@@ -52,7 +55,16 @@ public class VideoReceiveComponent extends DiarcComponent {
     if (imageSize == null) {
       //initialize other objects
       try {
-        imageSize = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageSize")).call(Dimension.class);
+        Collection<TRADEServiceInfo> imgSizeTsis = TRADE.getAvailableServices(new TRADEServiceConstraints().name("getImageSize").argTypes());
+        if (imgSizeTsis.isEmpty()) {
+          log.info("Waiting on getImageSize service...");
+          return;
+        } else if (imgSizeTsis.size() != 1) {
+          log.warn("More than one getImageSize service found. Using first one in collection.");
+        }
+
+        log.info("Found getImageSize service.");
+        imageSize = imgSizeTsis.iterator().next().call(Dimension.class);
       } catch (TRADEException e) {
         log.warn("Failed to call getImageSize.", e);
         return;
@@ -63,9 +75,9 @@ public class VideoReceiveComponent extends DiarcComponent {
     }
 
     //get image data
-    byte[] frameComp = new byte[0];
+    byte[] frameComp;
     try {
-      frameComp = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFrame")).call(byte[].class);
+      frameComp = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFrame").argTypes()).call(byte[].class);
     } catch (TRADEException e) {
       log.warn("Failed to call getFrame.", e);
       return;

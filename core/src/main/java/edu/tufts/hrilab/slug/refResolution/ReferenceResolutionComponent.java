@@ -51,7 +51,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
 
     //subscribe to join notifications from consultants
     try {
-      TRADE.requestNotification(this, "joined", new TRADEServiceConstraints().name("getKBName"),null, "newConsultantCallback");
+      TRADE.requestNotification(this, "joined", new TRADEServiceConstraints().name("getKBName"), null, "newConsultantCallback");
     } catch (TRADEException e) {
       log.error("[init] error registering for TRADE notification for new consultant join");
     }
@@ -60,7 +60,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
   @Override
   protected void shutdownComponent() {
     try {
-      TRADE.cancelNotification(this, "joined",null);
+      TRADE.cancelNotification(this, "joined", null);
     } catch (TRADEException e) {
       log.error("[init] error canceling TRADE notification for new consultant join");
     }
@@ -70,12 +70,13 @@ public class ReferenceResolutionComponent extends DiarcComponent {
       try {
         x.call(void.class, updatePropertiesHandledService);
       } catch (TRADEException e) {
-        log.error("[shutdownComponent] error unregistering for new property notifications from consultants when shutting down",e);
+        log.error("[shutdownComponent] error unregistering for new property notifications from consultants when shutting down", e);
       }
     });
   }
 
   //todo: not great to implement callbacks here instead of in the Resolver, but I needed "getMyService" which is implemented on DiarcComponent
+
   /**
    * Calls down to the resolver to update information about consultants after a new consultant is added.
    * Additionally, registers for notifications from consultants for when new properties are added to the consultant.
@@ -87,19 +88,18 @@ public class ReferenceResolutionComponent extends DiarcComponent {
     resolver.updateConsultCache(null);
 
     TRADEServiceInfo updatePropertiesHandledService = getMyService("updateResolverPropertiesHandled");
-    TRADE.getAvailableServices(new TRADEServiceConstraints().name("registerForNewPropertyNotification")).forEach( x -> {
-      try {
-        x.call(void.class, updatePropertiesHandledService);
-      } catch (TRADEException e) {
-        log.error("[newConsultantCallback] error registering for new properties callback after a new consultant joined",e);
-      }
+    TRADE.getAvailableServices(new TRADEServiceConstraints().name("registerForNewPropertyNotification")).forEach(x -> {
+              try {
+                x.call(void.class, updatePropertiesHandledService);
+              } catch (TRADEException e) {
+                log.error("[newConsultantCallback] error registering for new properties callback after a new consultant joined", e);
+              }
             }
     );
   }
 
   /**
    * Callback for a new property being added to a consultant.
-   *
    */
   @TRADEService
   public void updateResolverPropertiesHandled() {
@@ -190,7 +190,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
         log.warn("Found no bindings found for utterance: " + utterance);
       } else {
         log.info("Bound Utterances: " + utterance);
-        log.debug("bindings: {}",utterance.getBindings());
+        log.debug("bindings: {}", utterance.getBindings());
       }
 
     } else {
@@ -226,7 +226,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
                 //TODO:brad:this was probably a bug in the original hyperresolver, or at least never used...
                 relevanceMap.put(s, new EntityScore(false, 0, 0, e.getValue()));
               }
-              log.debug("[getSalientRefs] Got Salient Refs ({}}) -- rM ({})",s,relevanceMap);
+              log.debug("[getSalientRefs] Got Salient Refs ({}}) -- rM ({})", s, relevanceMap);
               return s;
             }
     ).collect(Collectors.toList());
@@ -245,6 +245,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
 
   /**
    * Converts hypotheses list to the form used in Utterance.getBindings() and then adds those bindings to the Utterance.
+   *
    * @param u
    * @param hypotheses
    */
@@ -255,7 +256,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
       for (Hypothesis h : hypotheses) {
         //fixme
         Map<Variable, Symbol> filtered = JavaConverters.mapAsJavaMap(h.assignments()).entrySet().stream()
-            .filter(a -> !a.getValue().getName().contains("?")).collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .filter(a -> !a.getValue().getName().contains("?")).collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
         u.addBinding(filtered);
       }
 
@@ -288,18 +289,23 @@ public class ReferenceResolutionComponent extends DiarcComponent {
 
   @TRADEService
   public List<Term> getProperties(Symbol ref) {
-    log.debug("[getProperties] ref: "+ref);
+    log.debug("[getProperties] ref: " + ref);
     return resolver.getProperties(ref);
   }
 
   @TRADEService
-  public <E> E getEntityForReference(Symbol ref, Class<E> entityJavaType){
-    return resolver.getEntityForReference(ref,entityJavaType);
+  public Map<Symbol, Double> getActivatedEntities(List<String> groupConstraints) {
+    return resolver.getActivatedEntities(groupConstraints);
   }
 
   @TRADEService
-  public <E> E getEntityForReference(Symbol ref, Class<E> entityJavaType, List<Term> constraints){
-    return resolver.getEntityForReference(ref,entityJavaType,constraints);
+  public <E> E getEntityForReference(Symbol ref, Class<E> entityJavaType) {
+    return resolver.getEntityForReference(ref, entityJavaType);
+  }
+
+  @TRADEService
+  public <E> E getEntityForReference(Symbol ref, Class<E> entityJavaType, List<Term> constraints) {
+    return resolver.getEntityForReference(ref, entityJavaType, constraints);
   }
 
   @TRADEService
@@ -333,13 +339,13 @@ public class ReferenceResolutionComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public Symbol positReference(Symbol actor,Term propertiesList) {
+  public Symbol positReference(Symbol actor, Term propertiesList) {
     List<Term> props = new ArrayList<>();
-    for(Symbol prop: propertiesList.getArgs()){
-      if(prop.isTerm()){
+    for (Symbol prop : propertiesList.getArgs()) {
+      if (prop.isTerm()) {
         props.add((Term) prop);
-      }else{
-        log.warn("[positReference] and valid property: "+prop);
+      } else {
+        log.warn("[positReference] and valid property: " + prop);
       }
     }
     return resolver.positReference(props, actor);
@@ -350,32 +356,31 @@ public class ReferenceResolutionComponent extends DiarcComponent {
   @Action
   @Observes({"property_of(X,Y)"})
   public List<Map<Variable, Symbol>> observeProperties(Symbol actor, Term query) {
-    List<Map<Variable,Symbol>> bindings = new ArrayList<>();
-    if(query.getArgs().size() ==2) {
+    List<Map<Variable, Symbol>> bindings = new ArrayList<>();
+    if (query.getArgs().size() == 2) {
 
       Symbol refID = query.get(0);
-      List<Term> properties =resolver.getProperties(refID);
+      List<Term> properties = resolver.getProperties(refID);
 
       Symbol queryProperty = query.get(1);
-      if(queryProperty.isVariable()) {
+      if (queryProperty.isVariable()) {
         for (Term p : properties) {
           Map<Variable, Symbol> binding = new HashMap<>();
           binding.put((Variable) queryProperty, Factory.createSymbol(p.getName()));
           bindings.add(binding);
         }
-      }
-      else if(queryProperty.isTerm()){
-        log.warn("[observeProperties] invalid query format, second arg can't be a Term: "+query);
-      } else{
+      } else if (queryProperty.isTerm()) {
+        log.warn("[observeProperties] invalid query format, second arg can't be a Term: " + query);
+      } else {
         for (Term p : properties) {
-          if(queryProperty.getName().equals(p.getName())) {
+          if (queryProperty.getName().equals(p.getName())) {
             bindings.add(new HashMap<>());
             return bindings;
           }
         }
       }
-    }else{
-      log.warn("[observeProperties] invalid observation predicate: "+query);
+    } else {
+      log.warn("[observeProperties] invalid observation predicate: " + query);
     }
 
     return bindings;
@@ -525,7 +530,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
       log.debug("FOC updated: " + focBuffer);
     }
 
-    void updateFOC(Symbol r){
+    void updateFOC(Symbol r) {
       focBuffer.add(r);
     }
 

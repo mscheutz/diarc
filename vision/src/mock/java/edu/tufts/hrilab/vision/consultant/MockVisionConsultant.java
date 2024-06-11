@@ -19,7 +19,7 @@ public class MockVisionConsultant extends VisionConsultant {
   private SceneCollection sceneCollection;
 
   public MockVisionConsultant(VisionInterface visionComponent, String kbName, SceneCollection sceneCollection) {
-    super(visionComponent,kbName);
+    super(visionComponent, kbName);
     this.sceneCollection = sceneCollection;
     addPropertiesHandled(this.sceneCollection.getProperties());
   }
@@ -85,7 +85,7 @@ public class MockVisionConsultant extends VisionConsultant {
       activatedEntities.put(objectRef, 10.0);
     }
 
-    log.debug("activated entities: "+activatedEntities);
+    log.debug("activated entities: " + activatedEntities);
     return activatedEntities;
   }
 
@@ -96,23 +96,23 @@ public class MockVisionConsultant extends VisionConsultant {
     // get any objectRef -- all of them should have full set of properties, including the constraint
     Symbol objectRef = (Symbol) bindings.values().toArray()[0];
     VisionReference visionRef = references.get(objectRef);
-    if(visionRef != null){
-      log.debug("properties: "+visionRef.properties);
-      log.debug("constraint: "+constraint);
-      log.debug("contains: "+visionRef.properties.stream().filter(refProp -> edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(refProp, constraint)).toArray().length);
+    if (visionRef != null) {
+      log.debug("properties: " + visionRef.properties);
+      log.debug("constraint: " + constraint);
+      log.debug("contains: " + visionRef.properties.stream().filter(refProp -> edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(refProp, constraint)).toArray().length);
     }
     // TODO: what to do if more than one token for objectRef ?
-    MemoryObject token=null;
-    if(visionRef !=null && !visionRef.tokenIds.isEmpty()){
-      token =  visionComponent.getToken(visionRef.tokenIds.get(0), 0.0);
+    MemoryObject token = null;
+    if (visionRef != null && !visionRef.tokenIds.isEmpty()) {
+      token = visionComponent.getToken(visionRef.tokenIds.get(0), 0.0);
     }
 
-    log.debug("token: "+token);
+    log.debug("token: " + token);
     if (token == null) {
       //TODO:brad: convert to allMatch? anyMatch?
       if (visionRef != null && visionRef.properties.stream().filter(refProp -> edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(refProp, constraint)).toArray().length > 0) {
         return 1.0;
-      }else {
+      } else {
         return 0.0;
       }
     }
