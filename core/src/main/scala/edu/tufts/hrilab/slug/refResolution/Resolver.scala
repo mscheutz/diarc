@@ -16,19 +16,19 @@ import edu.tufts.hrilab.fol.util.Utilities
 import org.slf4j.{Logger, LoggerFactory}
 
 //TODO:brad: at some point this could be optimized to make some of the methods static via Scala companion object
-class Resolver(groups: java.util.List[String]) {
+class Resolver( groups: java.util.List[String]){
   val orderer: ConstraintOrderer = new sizeOrderer
-  final val log: Logger = LoggerFactory.getLogger(getClass)
+  final val log:Logger = LoggerFactory.getLogger(getClass)
   val TAU = 0.1
   final val GENTAU = 0.8
 
   val additionalConstraints = new TRADEServiceConstraints()
-  if (!groups.isEmpty) {
+  if(!groups.isEmpty){
     groups.asScala.foreach(additionalConstraints.inGroups(_))
   }
 
-  class ConsultantInfo(val kbName: String, val tsi: TRADEServiceInfo, val tsc: TRADEServiceConstraints) {
-    override def toString: String = kbName + "Info"
+  class ConsultantInfo(val kbName: String, val tsi: TRADEServiceInfo, val tsc: TRADEServiceConstraints){
+    override def toString: String = kbName+"Info"
   }
 
   var consultants: Iterable[ConsultantInfo] = null
@@ -42,11 +42,11 @@ class Resolver(groups: java.util.List[String]) {
     if (actor != null && !actor.contains("self")) {
       //TODO:brad:make agent lookup more general
       consultants = TRADE.getAvailableServices(new TRADEServiceConstraints().name("getKBName").argTypes().inGroups("agent:" + actor)).asScala.map(
-        c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)): _*))
+        c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)):_*))
       )
     } else {
       consultants = TRADE.getAvailableServices(additionalConstraints.name("getKBName").argTypes()).asScala.map(
-        c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)): _*))
+        c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)):_*))
       )
     }
     updatePropertyCache();
@@ -58,49 +58,37 @@ class Resolver(groups: java.util.List[String]) {
       .call(classOf[java.util.List[Term]]).asScala.map(new Property(_))))
   }
 
-  def getEntityForReference[E](ref: edu.tufts.hrilab.fol.Symbol, entityJavaType: Class[E]): E = {
+  def getEntityForReference[E](ref: edu.tufts.hrilab.fol.Symbol, entityJavaType: Class[E]) : E = {
     val c = consultants.filter(c => ref.getName.contains(c.kbName))
 
-    if (c.size != 1) {
-      log.warn("[getEntityForReference] Multiple consultants with the same kbName, using the first one " + c)
+    if (c.size != 1){
+      log.warn("[getEntityForReference] Multiple consultants with the same kbName, using the first one "+c)
     }
 
     //call convertToType va tsi, return results
-    TRADE.getAvailableService(c.head.tsc.name("convertToType").argTypes(classOf[Symbol], classOf[Class[E]]))
-      .call(entityJavaType, ref, entityJavaType)
-  }
-
-  def getEntityForReference[E](ref: edu.tufts.hrilab.fol.Symbol, entityJavaType: Class[E], constraints: java.util.List[Term]): E = {
-    val c = consultants.filter(c => ref.getName.contains(c.kbName))
-
-    if (c.size != 1) {
-      log.warn("[getEntityForReference] Multiple consultants with the same kbName, using the first one " + c)
-    }
-
-    //call convertToType va tsi, return results
-    TRADE.getAvailableService(c.head.tsc.name("convertToType").argTypes(classOf[Symbol], classOf[Class[E]], classOf[java.util.List[Term]]))
-      .call(entityJavaType, ref, entityJavaType, constraints)
+   TRADE.getAvailableService(c.head.tsc.name( "convertToType").argTypes(classOf[Symbol],classOf[Class[E]]))
+     .call(entityJavaType,ref, entityJavaType)
   }
 
   def assertProperties(ref: edu.tufts.hrilab.fol.Symbol, properties: java.util.List[Term]): Boolean = {
     val c = consultants.filter(c => ref.getName.contains(c.kbName))
 
     if (c.size != 1) {
-      log.warn("[assertProperties] Multiple consultants with the same kbName, using the first one " + c)
+      log.warn("[assertProperties] Multiple consultants with the same kbName, using the first one "+c)
     }
 
     var success = false;
     try {
-      success = TRADE.getAvailableService(c.head.tsc.name("assertProperties").argTypes(classOf[Symbol], classOf[java.util.List[Term]])).call(classOf[Boolean], ref, properties)
+      success = TRADE.getAvailableService(c.head.tsc.name("assertProperties").argTypes(classOf[Symbol],classOf[java.util.List[Term]])).call(classOf[Boolean], ref, properties)
     } catch {
       case e: Exception => {
-        log.error("exception calling assertProperties on: " + c.head.kbName, e);
+        log.error("exception calling assertProperties on: "+ c.head.kbName, e);
       }
     }
     success;
   }
 
-  def positReference(properties: java.util.List[Term], actor: Symbol): Symbol = {
+  def positReference(properties: java.util.List[Term], actor: Symbol): Symbol ={
     updateConsultCache(if (actor != null) actor.toString else null)
     val allProperties = consultants.map(
       c => (c, TRADE.getAvailableService(c.tsc.name("getPropertiesHandled").argTypes())
@@ -154,7 +142,7 @@ class Resolver(groups: java.util.List[String]) {
   def resolve(query: Seq[Property], co: Seq[Variable], initialHyps: Seq[Hypothesis], posit: Boolean): Seq[Hypothesis] = {
     log.debug("[resolve]")
     val T: List[Variable] = getVariableMapping(query)
-    log.debug("[resolve] T: {}", T)
+    log.debug("[resolve] T: {}",T)
     val boundOrderedQuery = query.map(_.boundForm(T)).filter(t =>
       initialHyps.headOption match {
         case Some(h) => true //t.predicateForm.getVars.exists(v => !h.assignments.exists(vId => vId._1.equals(v.getName)))
@@ -178,13 +166,13 @@ class Resolver(groups: java.util.List[String]) {
 
   def completeSolutions(s: Seq[Hypothesis], av: Seq[Variable], q: Seq[Property]): Seq[Hypothesis] = {
     //remove 'unfamiliar' property from q since it is not an actual identifying property
-    var filtered: Set[Property] = q.toSet
+    var filtered : Set[Property] = q.toSet
     q.foreach { t =>
       if (t.nonDSPredicateForm.getName().equals("unfamiliar")) {
         filtered -= t
       }
     }
-    val q2: Seq[Property] = filtered.toSeq
+    val q2 : Seq[Property] = filtered.toSeq
     //version without "unfamiliar" properties
 
     //Only complete most likely hypothesis, as there's no MHT currently
@@ -212,7 +200,7 @@ class Resolver(groups: java.util.List[String]) {
     val newAssignments = bestS.assignments ++
       varConMap.flatMap {
         case (v: Variable, c: ConsultantInfo) => {
-          val vars = Seq(new Variable(v.getName, c.kbName)).asJava
+          val vars =Seq(new Variable(v.getName, c.kbName)).asJava
           TRADE.getAvailableService(c.tsc.name("createReferences").argTypes(classOf[java.util.List[Variable]]))
             .call(classOf[java.util.Map[Variable, Symbol]], vars).asScala
         }
@@ -224,12 +212,12 @@ class Resolver(groups: java.util.List[String]) {
       try {
         TRADE.getAvailableService(c.tsc.name("assertProperties").argTypes(classOf[java.util.Map[Variable, Symbol]], classOf[java.lang.Double], classOf[java.util.List[Term]]))
           .call(classOf[Boolean],
-            //        newAssignments.map(a => new Variable(a._1) -> new Symbol(a._2)).asJava,
-            new java.util.HashMap[Variable, Symbol](newAssignments.asJava),
-            1.0.asInstanceOf[Object], //brad:this needs to bee like this for Scala serialization
-            q2.map(_.nonDSPredicateForm).asJava)
+          //        newAssignments.map(a => new Variable(a._1) -> new Symbol(a._2)).asJava,
+          new java.util.HashMap[Variable,Symbol](newAssignments.asJava),
+          1.0.asInstanceOf[Object], //brad:this needs to bee like this for Scala serialization
+          q2.map(_.nonDSPredicateForm).asJava)
       } catch {
-        case e: TRADEException => log.error("[completeSolutions] exception calling assertProperties", e)
+        case e: TRADEException => log.error("[completeSolutions] exception calling assertProperties",e)
       }
     }
 
@@ -262,12 +250,12 @@ class Resolver(groups: java.util.List[String]) {
         return (solutions, co.tail)
       }
     }
-    log.debug("[getSolutions] returning ({},{}) ", solutions, co, "")
+    log.debug("[getSolutions] returning ({},{}) ",solutions,co,"")
     (solutions, co)
   }
 
   def removeReferences(query: Seq[Property], variable: Variable): Seq[Property] = {
-    log.debug("removing {} from {}", variable, query, "")
+    log.debug("removing {} from {}", variable,query,"")
     log.debug("types: {}", query.flatMap(_.predicateForm.getVars.asScala).map(_.getType))
     log.debug("names: {}", query.flatMap(_.predicateForm.getVars.asScala).map(_.getName))
     query.filterNot(_.predicateForm.getVars.asScala.exists(_.equals(variable)))
@@ -285,7 +273,7 @@ class Resolver(groups: java.util.List[String]) {
         prod + Pts(s, s.boundForm(t))
     )
     t foreach { v =>
-      log.debug("Variable " + v + " Type " + v.getType() + " Properties " + S + " Score " + ret)
+      log.debug("Variable "+ v + " Type "+v.getType()+" Properties "+S+" Score "+ret)
     }
     ret
   }
@@ -298,16 +286,16 @@ class Resolver(groups: java.util.List[String]) {
     }
     var sarg = s.predicateForm.get(0).asInstanceOf[Term].get(0);
     var starg = st.predicateForm.get(0).asInstanceOf[Term].get(0);
-    log.debug("Pts for " + sarg.asInstanceOf[Variable].getType() + " " + s + " / " + starg.asInstanceOf[Variable].getType() + " " + st + ": " + ret)
+    log.debug("Pts for " + sarg.asInstanceOf[Variable].getType()+" "+s + " / " + starg.asInstanceOf[Variable].getType()+" "+st + ": " + ret)
     ret
   }
 
   def gamma(s: Property): Int = {
-    //    log.trace("[GAMMA] consultants: "+consultants)
-    //    log.trace("[GAMMA] PC: "+propertyCache.values.flatten)
-    //    log.trace("[GAMMA] match: "+propertyCache.values.flatten.filter(_.matches(s)))
-    //    log.trace("[GAMMA] handled properties: "+consultants.flatMap(_.getPropertiesHandled.asScala))
-    //    log.trace("[GAMMA] matching: "+consultants.flatMap(_.getPropertiesHandled.asScala).count(_.matches(s)))
+//    log.trace("[GAMMA] consultants: "+consultants)
+//    log.trace("[GAMMA] PC: "+propertyCache.values.flatten)
+//    log.trace("[GAMMA] match: "+propertyCache.values.flatten.filter(_.matches(s)))
+//    log.trace("[GAMMA] handled properties: "+consultants.flatMap(_.getPropertiesHandled.asScala))
+//    log.trace("[GAMMA] matching: "+consultants.flatMap(_.getPropertiesHandled.asScala).count(_.matches(s)))
     //consultants.flatMap(_.getPropertiesHandled.asScala).count(_.matches(s))
     val g = propertyCache.values.flatten.count(_.matches(s))
     g
@@ -322,9 +310,9 @@ class Resolver(groups: java.util.List[String]) {
   //========================================================================
 
   def getVariableMapping(S: Seq[Property]): List[Variable] = {
-    //    log.debug("gVM: CONSULTANTS: " + consultants.map(_.getKBName))
+//    log.debug("gVM: CONSULTANTS: " + consultants.map(_.getKBName))
     val SV = S.flatMap(_.predicateForm.getOrderedVars.asScala).distinct
-    SV foreach { x => log.debug("[getVariableMapping] {} -> {}", SV, x, "") }
+    SV foreach { x => log.debug("[getVariableMapping] {} -> {}",SV,x,"") }
     val T: Seq[List[Variable]] = SV.tail.foldLeft(
       //Brad: if the variable has a semantic type use it, otherwise assume you don't know which consultant...
       consultants.map(c => List(new Variable(SV.head.getName, if (SV.head.getType.isEmpty) c.kbName else SV.head.getType))).toList
@@ -348,12 +336,12 @@ class Resolver(groups: java.util.List[String]) {
   }
 
   //line 8
-  protected def initialDomain(v: String): Seq[Symbol] = {
+  protected def initialDomain(v: String): Seq[Symbol] ={
 
-    consultants.find(_.kbName.equals(v)) match {
+    consultants.find( _.kbName.equals(v) ) match {
       case Some(c) => TRADE.getAvailableService(c.tsc.name("getInitialDomain").argTypes(classOf[java.util.List[Term]]))
         .call(classOf[java.util.List[Symbol]], new java.util.ArrayList(Seq[Property]().asJava)).asScala
-      case None => throw new Exception("No consultant keyed with name " + v)
+      case None  => throw new Exception("No consultant keyed with name " + v)
     }
   }
 
@@ -364,18 +352,18 @@ class Resolver(groups: java.util.List[String]) {
     //val jLikelihood: java.lang.Double = h.likelihood
     //    val hMap = h.assignments.map { case (v, cid) => v -> long2Long(cid.split("_")(1).toLong) }.toMap
     //    val hMap = h.assignments.map { case (v, cid) => new Variable(v) -> new Symbol(cid) }
-    //        val hMap = h.assignments.map { case (v, cid) => v -> cid }
-    //    val hMap = h.assignments.map { case (v, cid) => Factory.createVariable(v) -> Factory.createSymbol(cid) }
+//        val hMap = h.assignments.map { case (v, cid) => v -> cid }
+//    val hMap = h.assignments.map { case (v, cid) => Factory.createVariable(v) -> Factory.createSymbol(cid) }
 
     val propLikelihood: Double = getConsultant(h, prop) match {
       case Some(consultantInfo) =>
         log.debug("Chose consultant: " + consultantInfo.kbName)
-        //        TRADE.callThe(consultantInfo.tsi, "process",prop, hMap.asJava).asInstanceOf[Double]
+//        TRADE.callThe(consultantInfo.tsi, "process",prop, hMap.asJava).asInstanceOf[Double]
         try {
           TRADE.getAvailableService(consultantInfo.tsc.name("process").argTypes(classOf[Term], classOf[java.util.Map[Variable, Symbol]]))
             .call(classOf[Double], prop.nonDSPredicateForm, new java.util.HashMap[Variable, Symbol](h.assignments.asJava))
         } catch {
-          case e: Exception => log.error("[Assess] Exception calling process", e)
+          case e:Exception => log.error("[Assess] Exception calling process", e)
             val zero: java.lang.Double = 0.0
             zero
         }
@@ -388,11 +376,11 @@ class Resolver(groups: java.util.List[String]) {
   }
 
   def getAllActivatedEntities: java.util.Map[Symbol, java.lang.Double] = {
-    //    log.debug("[gAAE] Consultants = " + consultants.map(_.getKBName))
+//    log.debug("[gAAE] Consultants = " + consultants.map(_.getKBName))
 
     val result: java.util.Map[Symbol, java.lang.Double] =
-      consultants.foldRight(new java.util.HashMap[Symbol, java.lang.Double]()) {
-        (c: ConsultantInfo, r: java.util.HashMap[Symbol, java.lang.Double]) =>
+      consultants.foldRight( new java.util.HashMap[Symbol, java.lang.Double]()){
+        (c:ConsultantInfo, r:java.util.HashMap[Symbol,java.lang.Double] ) =>
           r.putAll(
             try {
               TRADE.getAvailableService(c.tsc.name("getActivatedEntities").argTypes())
@@ -430,16 +418,16 @@ class Resolver(groups: java.util.List[String]) {
         a => a._2.getType.equals(c.kbName))
     )
 
-    //    val filteredConsultants = consultants.filter(c => h.assignments.exists(a =>
-    //      a._2.getName.split("_")(0).equals(c.getKBName)))
+//    val filteredConsultants = consultants.filter(c => h.assignments.exists(a =>
+//      a._2.getName.split("_")(0).equals(c.getKBName)))
 
     log.debug("filtered consultants: {}", filteredConsultants)
     log.trace("property cache: {}", propertyCache)
 
-    //    filteredConsultants.foreach(c => {
-    //      log.trace(c + " handles: " + propertyCache(c).map(x => x.toString + " / " + x.predicateForm.toString))
-    //      log.debug(c + " handles " + bf + "?" + propertyCache(c).exists(_.matches(bf)))
-    //    })
+//    filteredConsultants.foreach(c => {
+//      log.trace(c + " handles: " + propertyCache(c).map(x => x.toString + " / " + x.predicateForm.toString))
+//      log.debug(c + " handles " + bf + "?" + propertyCache(c).exists(_.matches(bf)))
+//    })
 
     filteredConsultants.find {
       propertyCache(_).exists(_.matches(bf))
@@ -471,7 +459,7 @@ class Resolver(groups: java.util.List[String]) {
     log.debug("ACB CALLED WITH: " + args)
     val candLists: Seq[Seq[mutable.ListMap[Symbol, Symbol]]] = args.flatMap { case v: Variable =>
       //changed to prevent redundant type expression (i.e. objects_objects_4 instead of objects_4)
-      consultants.find(_.kbName.equalsIgnoreCase(v.getType)).map(c =>
+      consultants.find(_.kbName.equalsIgnoreCase(v.getType)).map( c =>
         TRADE.getAvailableService(c.tsc.name("getInitialDomain").argTypes(classOf[java.util.List[Term]]))
           .call(classOf[java.util.List[Symbol]], new util.ArrayList[Property]())
           .asScala.map(id => mutable.ListMap(v.asInstanceOf[Symbol] -> id))
@@ -494,8 +482,8 @@ class Resolver(groups: java.util.List[String]) {
     try {
       TRADE.getAvailableService(consultant.tsc.name("getAssertedProperties").argTypes(classOf[Symbol]))
         .call(classOf[java.util.List[Term]], ref)
-    } catch {
-      case e: TRADEException => log.error("[getProperties] call of getAssertedProperties for ref: " + ref + " from: " + consultant.kbName, e)
+    }catch{
+      case e:TRADEException => log.error("[getProperties] call of getAssertedProperties for ref: "+ref+" from: "+consultant.kbName,e)
         new java.util.ArrayList[Term]()
     }
   }
@@ -505,7 +493,7 @@ class Resolver(groups: java.util.List[String]) {
     log.debug("generating RE -resolver")
     updateConsultCache(null)
 
-    //    var idToUse = 0
+//    var idToUse = 0
     var found: java.util.LinkedHashMap[Symbol, java.util.List[Property]] = new java.util.LinkedHashMap[Symbol, java.util.List[Property]]()
     val refQueue: mutable.Queue[Symbol] = mutable.Queue(ref)
     while (refQueue.nonEmpty) {
@@ -541,9 +529,9 @@ class Resolver(groups: java.util.List[String]) {
       filteredConsultants.foreach(c => domain.addAll(TRADE.getAvailableService(c.tsc.name("getInitialDomain").argTypes(classOf[java.util.List[Term]]))
         .call(classOf[java.util.List[Symbol]], new java.util.ArrayList[Term]())))
       //list of other existing refs
-      log.debug("domain: " + domain)
+      log.debug("domain: "+domain)
       var distractors: List[Symbol] = domain.asScala.filterNot(_.equals(ref)).toList //This assumes it won't be confused with something from another domain.
-      log.debug("distractors: " + distractors)
+      log.debug("distractors: "+distractors)
 
       //instead of getPropertiesHandled, we get the STM
       //proties of ref
@@ -614,7 +602,7 @@ class Resolver(groups: java.util.List[String]) {
         case v: Variable =>
           log.debug("refsInS: considering: " + v.getName + " - " + v.getType)
           //TODO: is there a better name for this
-          if (v.getType.contains("_")) Seq(Factory.createSymbol(v.getType + ":" + v.getType.split("_")(0))) else Seq()
+          if (v.getType.contains("_")) Seq(Factory.createSymbol(v.getType+":"+v.getType.split("_")(0))) else Seq()
         case t: Term => t.getArgs.asScala.toList.flatMap(refsInS)
         case _ => Seq()
       }
@@ -640,7 +628,7 @@ class Resolver(groups: java.util.List[String]) {
         log.debug("TRYING: " + prop)
         val args: List[Symbol] = prop.predicateForm.get(0).asInstanceOf[Term].getArgs.asScala.toList
         //val args: List[Variable] = prop.predicateForm.get(0).asInstanceOf[Term].getOrderedVars.asScala.toList
-        log.debug("args: " + args)
+        log.debug("args: "+args)
         if (args.size > 1 && bindings.isEmpty) {
           //LINE 3
           log.debug("FOLDING ON ACB")
@@ -650,7 +638,7 @@ class Resolver(groups: java.util.List[String]) {
             case v: Variable if v.getType.equalsIgnoreCase(consultantName) => Option(v)
             case _ => None
           }
-          log.debug("candidate variables: " + candidateVariables)
+          log.debug("candidate variables: "+ candidateVariables)
           candidateVariables.flatMap {
             cv => allComboBindings(args.filterNot(x => x.getName.equals(cv.getName)))
           }.foreach {
@@ -698,7 +686,7 @@ class Resolver(groups: java.util.List[String]) {
 
     //convert Properties to Terms for use outside of RR
     val ret: java.util.LinkedHashMap[Symbol, java.util.List[Term]] = new java.util.LinkedHashMap[Symbol, java.util.List[Term]]()
-    found.asScala.map(pair => ret.put(pair._1, pair._2.asScala.map(_.nonDSPredicateForm).asJava))
+    found.asScala.map(pair => ret.put(pair._1,pair._2.asScala.map(_.nonDSPredicateForm).asJava))
     ret
   }
 
@@ -727,7 +715,7 @@ class Resolver(groups: java.util.List[String]) {
       val n = hypothesisQueue.dequeue()
       //DIST-COWER Line 4
       if (n._2.nonEmpty)
-        //DIST-COWER Line 5ish
+      //DIST-COWER Line 5ish
         newVariable(n._1, n._2) match {
           //DIST-COWER Lines 5ish-10
           case Some(v: Variable) => expandVariable(n._1, n._2, v)
@@ -798,12 +786,12 @@ class Resolver(groups: java.util.List[String]) {
         //TODO:brad: took this from closed world implementation, wasn't in OW, do we still want/need it?
         //line 21
         if (mbTail.isEmpty)
-          //line 22
+        //line 22
           solutions += Hypothesis(h.assignments, newLikelihood)
         //line 23
         else
-          //line 24
-          //Dist-COWER Line 16
+        //line 24
+        //Dist-COWER Line 16
           hypothesisQueue.enqueue((Hypothesis(h.assignments, newLikelihood), mbTail))
       }
     }

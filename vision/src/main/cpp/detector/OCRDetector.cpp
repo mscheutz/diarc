@@ -8,7 +8,7 @@ OCRDetector::OCRDetector(const long long &processorId, const int imgWidth, const
         : NeuralDetector(processorId, imgWidth, imgHeight)
 {
   visionProcessName = "OCRDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.OCRDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.OCRDetector");
 }
 
 OCRDetector::~OCRDetector() {}

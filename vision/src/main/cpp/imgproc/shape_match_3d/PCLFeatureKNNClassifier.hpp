@@ -46,7 +46,7 @@ public:
       tempStrVec.resize(k);
       k_types_.resize(num_features, tempStrVec);
       //k_types_ = flann::Matrix<std::string>(new std::string[num_features_ * k], num_features_, k);
-      logger = log4cxx::Logger::getLogger("ade.imgproc.shape_match_3d.PCLFeatureKNNClassifier.Results");
+      logger = log4cxx::Logger::getLogger("diarc.imgproc.shape_match_3d.PCLFeatureKNNClassifier.Results");
     }
 
     ~Results() {
@@ -105,7 +105,7 @@ public:
 
   PCLFeatureKNNClassifier(const int featureLength)
   : feature_length(featureLength) {
-    logger = log4cxx::Logger::getLogger("ade.imgproc.shape_match_3d.PCLFeatureKNNClassifier");
+    logger = log4cxx::Logger::getLogger("diarc.imgproc.shape_match_3d.PCLFeatureKNNClassifier");
   }
 
   ~PCLFeatureKNNClassifier() {

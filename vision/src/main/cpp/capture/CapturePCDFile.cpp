@@ -19,7 +19,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     class CapturePCDFile : public Capture {
@@ -51,12 +51,11 @@ namespace ade {
           return (false);
 
         if (pcl::io::loadPCDFile<pcl::PointXYZRGB>(fileNames[currentIndex], *cloudRGB) == -1) {
-          std::cerr << "CapturePCDFile: Failed to read file '" << fileNames[currentIndex] << "'\n";
+          LOG4CXX_ERROR(logger, boost::format("CapturePCDFile: Failed to read file %s") % fileNames[currentIndex]);
           return (false);
         }
         if (!cloudRGB->isOrganized()) {
-          std::cerr << "CapturePCDFile: we require organized point clouds, and the one in '"
-                    << fileNames[currentIndex] << "' is not.\n";
+          LOG4CXX_ERROR(logger, boost::format("CapturePCDFile: we require organized point clouds, and the one in %s is not.") % fileNames[currentIndex]);
           return (false);
         }
 
@@ -64,7 +63,7 @@ namespace ade {
 
         cv::Mat tmpFrame(cloudRGB->height, cloudRGB->width, CV_8UC3);
         cv::Mat tmpDepth(cloudRGB->height, cloudRGB->width, CV_32FC1);
-        ade::pc::util::pointCloudToDepthAndColor(tmpDepth, tmpFrame, cloudRGB);
+        diarc::pc::util::pointCloudToDepthAndColor(tmpDepth, tmpFrame, cloudRGB);
         cv::resize(tmpFrame, frame, frame.size(), 0, 0, cv::INTER_LINEAR);
         cv::resize(tmpDepth, depthFrame, depthFrame.size(), 0, 0, cv::INTER_NEAREST);
 
@@ -102,4 +101,4 @@ namespace ade {
     };
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc

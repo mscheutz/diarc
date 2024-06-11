@@ -19,7 +19,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl/point_cloud.h>
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     class CaptureROS : public Capture {
@@ -92,7 +92,7 @@ namespace ade {
 
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc
 
 
 #endif  //CAPTUREROS_HPP

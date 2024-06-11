@@ -24,7 +24,7 @@
 #include <openpose/headers.hpp>
 
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 OpPoseDetector::OpPoseDetector(const long long &processorId, const int imgWidth, const int imgHeight)
         : ObjectDetector(processorId, imgWidth, imgHeight),
@@ -35,7 +35,7 @@ OpPoseDetector::OpPoseDetector(const long long &processorId, const int imgWidth,
           wrapperStructOutput(),
           jointMap() {
   visionProcessName = "OpPoseDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.OpPoseDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.OpPoseDetector");
 }
 
 OpPoseDetector::~OpPoseDetector()
@@ -261,7 +261,7 @@ void OpPoseDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
     // datumProcessed->at(0)->cvOutputData.copyTo(opDisplayFrame);
     successfullyEmplaced->at(0)->cvOutputData.copyTo(opDisplayFrame);
 
-    ade::Display::displayFrame(OP_OP2CVMAT(opDisplayFrame), getDisplayName());
+    diarc::Display::displayFrame(OP_OP2CVMAT(opDisplayFrame), getDisplayName());
   }
 }
 

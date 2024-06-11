@@ -5,8 +5,8 @@
 
 #include "ValidationResult.hpp"
 
-using namespace ade::stm;
-//using namespace ade::fol;
+using namespace diarc::stm;
+//using namespace diarc::fol;
 
 ValidationResult::ValidationResult(const float& confidence, const PredicateHelper& descriptor,
         MemoryObjectMask::ConstPtr mask)

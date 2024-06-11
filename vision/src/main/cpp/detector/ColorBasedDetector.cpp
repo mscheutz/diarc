@@ -12,12 +12,12 @@
 #include "capture/util/CaptureUtilities.hpp"
 #include "display/Display.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 ColorBasedDetector::ColorBasedDetector(const long long &processorId, const int imgWidth, const int imgHeight)
         : ObjectDetector(processorId, imgWidth, imgHeight) {
   visionProcessName = "ColorBasedDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.ColorBasedDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.ColorBasedDetector");
 
   colorSpaceMap["HLS"] = cv::COLOR_BGR2HLS;
   colorSpaceMap["HSV"] = cv::COLOR_BGR2HSV;
@@ -159,7 +159,7 @@ MemoryObject::VecPtr ColorBasedDetector::detectObjects(const cv::Mat &currFrame,
                   lineThickness, 8, 0);
     }
 
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 
   return newObjects;
@@ -174,16 +174,16 @@ std::vector<MemoryObject::Ptr> ColorBasedDetector::getMemoryObjects(const cv::Ma
   // get color mask for entire frame
   cv::Mat colorMask = getColorMask(currFrame, colorRanges);
 
-//  ade::Display::createWindowIfDoesNotExist("colorMask");
-//  ade::Display::displayFrame(colorMask, "colorMask");
+//  diarc::Display::createWindowIfDoesNotExist("colorMask");
+//  diarc::Display::displayFrame(colorMask, "colorMask");
 
   // perform morphological operation to minimize holes and number of clusters
   int kernel_size = (img_width/320.0) * 5; // scale to image size;
   cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT,cv::Point(kernel_size,kernel_size));
   cv::morphologyEx(colorMask, colorMask, cv::MORPH_CLOSE, kernel);
 
-//  ade::Display::createWindowIfDoesNotExist("colorMask_morph");
-//  ade::Display::displayFrame(colorMask, "colorMask_morph");
+//  diarc::Display::createWindowIfDoesNotExist("colorMask_morph");
+//  diarc::Display::displayFrame(colorMask, "colorMask_morph");
 
   // segment mask frame into clusters
   cv::Mat labelImage(currFrame.size(), CV_32S);
@@ -219,8 +219,8 @@ std::vector<MemoryObject::Ptr> ColorBasedDetector::getMemoryObjects(const cv::Ma
       LOG4CXX_DEBUG(logger, boost::format("num non-zero pixels, %d.") % cv::countNonZero(componentMask));
     }
 
-    //ade::Display::createWindowIfDoesNotExist("colorMask");
-    //ade::Display::displayFrame(colorMask, "colorMask");
+    //diarc::Display::createWindowIfDoesNotExist("colorMask");
+    //diarc::Display::displayFrame(colorMask, "colorMask");
 
     // create MemoryObject for each relevant typeId
     for (const auto& typeId : typeIds) {

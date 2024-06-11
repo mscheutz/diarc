@@ -15,7 +15,7 @@
 #include "imgproc/saliency/SaliencyProcessor.hpp"
 #include "point_clouds/sorted_extract_clusters.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 bool IndexedValueTypeSortFunction(IndexedValueType i, IndexedValueType j) {
   return (i.value > j.value);
@@ -28,7 +28,7 @@ object_cluster_min_size(20 * (imgWidth / 320) * (imgHeight / 240)) {
   salmap = cv::Mat_<float>::ones(imgHeight, imgWidth);
   visionProcessName = "ClusterDetector";
   plane = ExtractedPlane::Ptr(new ExtractedPlane());
-  logger = log4cxx::Logger::getLogger("ade.detector.ClusterDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.ClusterDetector");
 }
 
 ClusterDetector::~ClusterDetector() {
@@ -87,7 +87,7 @@ void ClusterDetector::handlePlaneNotification(PlaneNotification::ConstPtr notifi
 
     objectPoints.at(i) = point;
   }
-  ade::capture::util::projectPoints(objectPoints, imagePoints, 0);
+  diarc::capture::util::projectPoints(objectPoints, imagePoints, 0);
   assert(imagePoints.size() == cloud->points.size());
 
   sortPointcloud();
@@ -209,7 +209,7 @@ void ClusterDetector::display(MemoryObject::VecPtr newClusterObjects) {
   }
 
   //draw on cluster boxes
-  ade::Display::displayFrame(displayFrame, getDisplayName());
+  diarc::Display::displayFrame(displayFrame, getDisplayName());
 
   // set objects point cloud to yellow
   for (unsigned long i = 0; i < plane->getFilteredObjectsIndices()->indices.size(); ++i) {
@@ -241,11 +241,11 @@ void ClusterDetector::display(MemoryObject::VecPtr newClusterObjects) {
       //pcl::PolygonMesh::Ptr polygonMesh(new pcl::PolygonMesh());
       //pcl::toROSMsg(*clusterCloud, polygonMesh->cloud);
       //polygonMesh->polygons = *(currPCObj->getWireframePolygons());
-      //ade::Display::displayPolygonMesh(polygonMesh, "cluster_mesh", getDisplayName());
+      //diarc::Display::displayPolygonMesh(polygonMesh, "cluster_mesh", getDisplayName());
     } else {
       //displayCloud->operator+=(*((*newClusterIter)->getDetectionMask()->getObjectPointCloudRGB()));
     }
   }
 
-  ade::Display::displayPointCloud(displayCloud, "cluster", getDisplayName());
+  diarc::Display::displayPointCloud(displayCloud, "cluster", getDisplayName());
 }

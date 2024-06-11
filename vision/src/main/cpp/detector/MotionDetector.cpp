@@ -16,12 +16,12 @@
 #include "capture/util/CaptureUtilities.hpp"
 #include "display/Display.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 MotionDetector::MotionDetector(const long long &processorId, const int imgWidth, const int imgHeight)
     : ObjectDetector(processorId, imgWidth, imgHeight) {
   visionProcessName = "MotionDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.MotionDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.MotionDetector");
 }
 
 MotionDetector::~MotionDetector() {
@@ -106,7 +106,7 @@ void MotionDetector::handleMotionNotification(MotionNotification::ConstPtr notif
                   lineThickness, 8, 0);
     }
 
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 
   // send MO notifications

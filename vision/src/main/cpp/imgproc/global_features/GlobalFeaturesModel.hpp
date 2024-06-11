@@ -11,7 +11,6 @@
 #include <pcl/features/our_cvfh.h>
 #include <pcl/features/board.h>
 #include <pcl/common/transforms.h>
-#include "stm/Grasp.hpp"
 
 template <typename PointType, typename NormalType, typename DescriptorType>
 class GlobalFeaturesModel {
@@ -27,7 +26,6 @@ public:
   descriptors_(new pcl::PointCloud<DescriptorType> ()),
   crh_(new pcl::PointCloud<CRH90>),
   centroid_(),
-  grasp_options_(),
   cloudHist_(),
   hasRGB(false) {
 
@@ -44,7 +42,6 @@ public:
   typename pcl::PointCloud<DescriptorType>::Ptr descriptors_;
   pcl::PointCloud<CRH90>::Ptr crh_;
   Eigen::Vector4f centroid_;
-  std::vector<ade::stm::Grasp> grasp_options_;
   cv::Mat cloudHist_;
   bool hasRGB;
 };

@@ -12,7 +12,7 @@ OpticalFlowProcessor::OpticalFlowProcessor(const long long& processorId, const u
 opticalFlow(),
   grayPrevFrame(),
   grayCurrentFrame() {
-  logger = log4cxx::Logger::getLogger("ade.imgproc.OpticalFlowProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.OpticalFlowProcessor");
 
 //  grayPrevFrame.create(imgHeight, imgWidth, CV_8UC1);
 //  grayCurrentFrame.create(imgHeight, imgWidth, CV_8UC1);
@@ -44,13 +44,13 @@ void OpticalFlowProcessor::handleCaptureNotification(CaptureNotification::ConstP
   sendNotifications(motionNotification);
 
   if (getDisplayFlag()) {
-    ade::Display::displayFrame(opticalFlow, getDisplayName());
+    diarc::Display::displayFrame(opticalFlow, getDisplayName());
   }
   LOG4CXX_TRACE(logger, "[handleNotification] done.");
 
   if (is_stereo) {
     calcOpticalFlow(prevCaptureData->frame2, currCaptureData->frame2, opticalFlow);
-    ade::Display::displayFrame(opticalFlow, "opticalflow 2");
+    diarc::Display::displayFrame(opticalFlow, "opticalflow 2");
 
     LOG4CXX_WARN(logger, "[handleCaptureNotification] motion notifications not sent for second stereo image.");
   }

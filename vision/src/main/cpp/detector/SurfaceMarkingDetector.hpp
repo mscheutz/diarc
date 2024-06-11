@@ -32,7 +32,7 @@ protected:
   virtual void handleCaptureNotification(CaptureNotification::ConstPtr capture);
 
 private:
-  ade::stm::MemoryObject::Ptr createMemoryObject(const cv::Rect& rect,
+  diarc::stm::MemoryObject::Ptr createMemoryObject(const cv::Rect& rect,
           const std::string& label, const float& confidence,
           const boost::unordered_set<long long>& typeIds,
           CaptureData::ConstPtr captureData);

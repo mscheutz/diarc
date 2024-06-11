@@ -14,13 +14,13 @@
 #include "imgproc/SiftProcessor.hpp"
 #include "common/notification/SiftNotification.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 SiftDetector::SiftDetector(const long long& processorId, const int imgWidth, const int imgHeight)
 : ObjectDetector(processorId, imgWidth, imgHeight),
 SIFT_MATCH_THRESH(10) {
   visionProcessName = "SiftDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.SiftDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.SiftDetector");
 }
 
 SiftDetector::~SiftDetector() {
@@ -145,7 +145,7 @@ void SiftDetector::handleSiftNotification(SiftNotification::ConstPtr notificatio
               CV_RGB(255, 0, 0), 2, 8, 0);
     }
 
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 }
 
@@ -195,8 +195,8 @@ bool SiftDetector::findSiftObject(const SiftFeatureVectPtr& targetSifts,
       //            cvCircle(displayImage, cvPoint((int)(*matchItr)->x, (int)(*matchItr)->y), (int)(*matchItr)->sigma, CV_RGB(255, 0, 0), 1, 8, 0);
       cv::circle(debugFrame, cv::Point((int) (*nonMatchItr)->x, (int) (*nonMatchItr)->y), (int) (*nonMatchItr)->sigma, CV_RGB(255, 255, 0), 1, 8, 0);
     }
-    ade::Display::createWindowIfDoesNotExist(getDisplayName() + "_debug");
-    ade::Display::displayFrame(debugFrame, getDisplayName() + "_debug");
+    diarc::Display::createWindowIfDoesNotExist(getDisplayName() + "_debug");
+    diarc::Display::displayFrame(debugFrame, getDisplayName() + "_debug");
   }
 
   //create detected object from matches

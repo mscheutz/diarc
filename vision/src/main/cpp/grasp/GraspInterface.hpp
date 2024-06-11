@@ -26,9 +26,8 @@ public:
   void initialize(JNIEnv* newEnv);
   jobject getJavaObject();
 
-  void setType(ade::stm::Grasp::Type type);
   void setPoint(int i, double x, double y, double z);
-  void setOrientation(int i, double x, double y, double z, double w);
+  void setOrientation(double x, double y, double z, double w);
 
 private:
   JNIEnv *env;
@@ -36,7 +35,6 @@ private:
   jclass j_class;
   jmethodID j_constructor;
 
-  jmethodID jmethod_setType;
   jmethodID jmethod_setPoint;
   jmethodID jmethod_setOrientation;
 

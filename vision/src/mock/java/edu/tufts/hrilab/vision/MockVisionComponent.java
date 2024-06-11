@@ -254,7 +254,7 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
   }
 
   @Override
-  public List<Long> getTypeIds(double conf) {
+  public List<Long> getTypeIds() {
     return new ArrayList<>(typeIdDescriptors.keySet());
   }
 
@@ -289,13 +289,13 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
   }
 
   @Override
-  public Long getTypeId(final Symbol objectRef) {
+  public Long getTypeId(Symbol objectRef) {
     log.debug("[getTypeId] objectRef: " + objectRef);
     return visionConsultant.getTypeId(objectRef);
   }
 
   @Override
-  public boolean nameDescriptors(final List<? extends Symbol> descriptors, final Symbol type) {
+  public boolean nameDescriptors(List<? extends Symbol> descriptors, Symbol type) {
     log.debug("[nameDescriptors]: " + type);
     for (Term t : PredicateHelper.convertToVisionForm(type)) {
       if (t.isPredicate()) {
@@ -320,7 +320,7 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
   }
 
   @Override
-  public boolean nameDescriptors(final Long typeId, final Symbol type) {
+  public boolean nameDescriptors(Long typeId, Symbol type) {
     log.debug("[nameDescriptors]: " + type);
     nameDescriptors(typeIdDescriptors.get(typeId), type);
     return true;
@@ -333,14 +333,14 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
   }
 
   @Override
-  public List<Long> getTokenIds(double conf) {
+  public List<Long> getTokenIds() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override
-  public List<Long> getTokenIds(long typeId, double conf) {
+  public List<Long> getTokenIds(long typeId) {
     log.debug("[getTokenIds] typeId: " + typeId);
-    List<MemoryObject> tokens = getTokens(typeId, conf);
+    List<MemoryObject> tokens = getTokens(typeId);
 
     List<Long> results = new ArrayList<>();
     for (MemoryObject token : tokens) {
@@ -350,13 +350,13 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
   }
 
   @Override
-  public List<Long> getTokenIds(List<? extends Symbol> descriptors, double conf) {
+  public List<Long> getTokenIds(List<? extends Symbol> descriptors) {
     Long typeId = getTypeId(descriptors);
-    return getTokenIds(typeId, conf);
+    return getTokenIds(typeId);
   }
 
   @Override
-  public List<MemoryObject> getTokens(double conf) {
+  public List<MemoryObject> getTokens() {
     List<MemoryObject> results = new ArrayList<>();
     if (sceneCollection != null) {
       float noise = sceneCollection.getNoise();
@@ -378,7 +378,7 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
   }
 
   @Override
-  public List<MemoryObject> getTokens(long typeId, double conf) {
+  public List<MemoryObject> getTokens(long typeId) {
     List<MemoryObject> tokensOut = new ArrayList<>();
 
     if (typeIdDescriptors.containsKey(typeId)) {
@@ -406,14 +406,14 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
   }
 
   @Override
-  public List<MemoryObject> getTokens(List<? extends Symbol> descriptors, double conf) {
+  public List<MemoryObject> getTokens(List<? extends Symbol> descriptors) {
     Long typeId = getTypeId(descriptors);
-    return getTokens(typeId, conf);
+    return getTokens(typeId);
   }
 
 
   @Override
-  public MemoryObject getToken(long tokenId, double conf) {
+  public MemoryObject getToken(long tokenId) {
     // NOTE: This only checks the top-level scene graphs for matching tokenIds
     for (MemoryObject mo : sceneCollection.getSceneDetectionResults()) {
       if (mo.getTokenId() == tokenId) {

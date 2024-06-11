@@ -31,13 +31,13 @@ protected:
 
 private:
   bool calculateSpatialRelation(const PredicateHelper& descriptor,
-          ade::stm::MemoryObject::Ptr& mo0, ade::stm::MemoryObject::Ptr& mo1);
+          diarc::stm::MemoryObject::Ptr& mo0, diarc::stm::MemoryObject::Ptr& mo1);
 
   bool calculateNearRelation(const PredicateHelper& descriptor,
-        ade::stm::MemoryObject::Ptr& mo0, ade::stm::MemoryObject::Ptr& mo1);
+        diarc::stm::MemoryObject::Ptr& mo0, diarc::stm::MemoryObject::Ptr& mo1);
     
   bool calculateOnRelation(const PredicateHelper& descriptor,
-        ade::stm::MemoryObject::Ptr& mo0, ade::stm::MemoryObject::Ptr& mo1);
+        diarc::stm::MemoryObject::Ptr& mo0, diarc::stm::MemoryObject::Ptr& mo1);
 };
 
 #endif	/* SPATIALRELATIONVALIDATOR_HPP */

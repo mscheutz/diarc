@@ -20,24 +20,23 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/foreach.hpp>
 
-using namespace ade::stm;
+using namespace diarc::grasp;
 
 AgileGrasp::AgileGrasp() {
-  logger = log4cxx::Logger::getLogger("ade.detector.grasp.AgileGrasp");
+  logger = log4cxx::Logger::getLogger("diarc.detector.grasp.AgileGrasp");
 }
 
 AgileGrasp::~AgileGrasp() {
 
 }
 
-std::vector<GraspPose> AgileGrasp::calculateGraspPoses(MemoryObject::Ptr& object) {
+std::vector<Grasp> AgileGrasp::calculateGraspPoses(pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud, const cv::Mat &transform) {
   pcl::PointCloud<PointType>::Ptr object_cloud(new pcl::PointCloud<PointType>);
-  pcl::copyPointCloud(*(object->getDetectionMask()->getObjectPointCloud()), *object_cloud);
+  pcl::copyPointCloud(*cloud, *object_cloud);
 
-  //get camera Transform Base of the robot. This transformation is defined in CaptureData
-  cv::Mat cam_transform = object->getDetectionMask()->getTransform();
+  //get camera Transform Base of the robot
   Eigen::Matrix4d cam_tf; //Matrix4d <double,4,4>
-  cv2eigen(cam_transform, cam_tf);
+  cv2eigen(transform, cam_tf);
 
   //cam_tf appears twice since the original method uses two cameras. We only use one, thus, the same camera is the input for the two options (ONLY ONE PERSPECTIVE)
   localization->setCameraTransforms(cam_tf, cam_tf); //sets the camera transformation every iteration since it is not fixed
@@ -57,13 +56,13 @@ std::vector<GraspPose> AgileGrasp::calculateGraspPoses(MemoryObject::Ptr& object
     LOG4CXX_DEBUG(logger, "[HANDLES DONE]");
   }
 
-  //objects to collect the quaternion and points for all grasp info that will populate MemoryObject
+  //objects to collect the quaternion and points for all grasp info that will populate grasps
   pcl::PointCloud<pcl::PointXYZ>::Ptr points;
   Eigen::Quaternionf orientation;
   std::vector<Handle>::const_iterator handle_itr;
 
   // if there are handles (grasps) found
-  std::vector<GraspPose> grasps;
+  std::vector<Grasp> grasps;
   if (handles.size() > 0) {
     for (handle_itr = handles.begin(); handle_itr != handles.end(); ++handle_itr) {
       // reset reused data structures
@@ -73,13 +72,13 @@ std::vector<GraspPose> AgileGrasp::calculateGraspPoses(MemoryObject::Ptr& object
       calculateGraspPose(*handle_itr, points, orientation);
 
       // add grasp to results
-      grasps.push_back(GraspPose(points, orientation));
+      grasps.push_back(Grasp(points, orientation));
     }
 
     //plot coordinate frames for debugging purposes
     if (pcl_viz) { //to turn on/off, make changes in config XML
       pcl::PointCloud<PointType>::Ptr object_cloud_display(new pcl::PointCloud<PointType>);
-      pcl::copyPointCloud(*(object->getDetectionMask()->getObjectPointCloud()), *object_cloud_display);
+      pcl::copyPointCloud(*cloud, *object_cloud_display);
       plotAntipodalFrames(handles, object_cloud_display);
     }
   }

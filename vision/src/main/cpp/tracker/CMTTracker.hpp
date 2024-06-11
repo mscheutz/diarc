@@ -37,9 +37,9 @@ protected:
     virtual void haveNewImage(CaptureNotification::ConstPtr notification);
 
 private:
-  virtual bool canTrack(const ade::stm::MemoryObject::Ptr& newMemObj);
-  virtual void startTracking(const ade::stm::MemoryObject::Ptr& newMemObj);
-  virtual void stopTracking(const ade::stm::MemoryObject::Ptr& existingMemObj);
+  virtual bool canTrack(const diarc::stm::MemoryObject::Ptr& newMemObj);
+  virtual void startTracking(const diarc::stm::MemoryObject::Ptr& newMemObj);
+  virtual void stopTracking(const diarc::stm::MemoryObject::Ptr& existingMemObj);
   virtual void displayResults(CaptureData::ConstPtr capture);
   void drawCMTStatus(cv::Mat& im, cmt::CMT &cmt);
     
