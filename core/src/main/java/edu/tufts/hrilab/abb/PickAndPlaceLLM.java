@@ -11,6 +11,8 @@ import edu.tufts.hrilab.llm.*;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.nlg.NLG;
 import edu.tufts.hrilab.slug.parsing.llm.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,17 +23,45 @@ import java.util.regex.Pattern;
 
 public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
     static private Logger log = LoggerFactory.getLogger(PickAndPlaceLLM.class);
-    NLG nlg = new NLG(); //TODO: make from semantics directly or from SimpleNLG results configurable
-    Prompt nluPrompt;
-    Prompt wordsNLGPrompt;
-    Prompt semanticNLGPrompt;
+    NLG nlg = new NLG();
+    Prompt nluPrompt = Prompts.getPrompt("pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationAssista");
+    boolean fromSemantics = false;
+    Prompt wordsNLGPrompt = Prompts.getPrompt("pickAndPlace/nlg/pickAndPlaceNLGTranslation");;
+    Prompt semanticsNLGPrompt = Prompts.getPrompt("pickAndPlace/nlg/pickAndPlaceSemanticsNLGTranslation");
+    String outputLanguage = "en";
 
     public PickAndPlaceLLM() {
         super();
-        //TODO: make prompts configurable
-        nluPrompt = Prompts.getPrompt("pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationAssista");
-        wordsNLGPrompt = Prompts.getPrompt("pickAndPlace/nlg/pickAndPlaceNLGTranslation");
-        semanticNLGPrompt = Prompts.getPrompt("pickAndPlace/nlg/pickAndPlaceSemanticsNLGTranslation");
+    }
+
+    @Override
+    protected List<Option> additionalUsageInfo() {
+        List<Option> options = new ArrayList<>();
+        options.add(Option.builder("nluPrompt").numberOfArgs(1).desc("filepath of NLU prompt text").build());
+        options.add(Option.builder("wordsNLGPrompt").numberOfArgs(1).desc("filepath of NLG from words prompt text").build());
+        options.add(Option.builder("semanticsNLGPrompt").numberOfArgs(1).desc("filepath to NLG from semantics prompt text").build());
+        options.add(Option.builder("outputLanguage").numberOfArgs(1).desc("BCP-47 Code defining output language of utterances from LLM NLG prompt").build());
+        options.add(Option.builder("fromSemantics").desc("use semanticsNLGPrompt with the LLM to perform NLG straight from semantics. Otherwise uses NLG to get a words string first").build());
+        return options;
+    }
+
+    @Override
+    public void parseArgs(CommandLine cmdLine) {
+        if (cmdLine.hasOption("nluPrompt")) {
+            nluPrompt = Prompts.getPrompt(cmdLine.getOptionValue("nluPrompt"));
+        }
+        if (cmdLine.hasOption("semanticsNLGPrompt")) {
+            semanticsNLGPrompt = Prompts.getPrompt(cmdLine.getOptionValue("semanticsNLGPrompt"));
+        }
+        if (cmdLine.hasOption("wordsNLGPrompt")) {
+            wordsNLGPrompt = Prompts.getPrompt(cmdLine.getOptionValue("wordsNLGPrompt"));
+        }
+        if (cmdLine.hasOption("outputLanguage")) {
+            outputLanguage = cmdLine.getOptionValue("outputLanguage");
+        }
+        if (cmdLine.hasOption("fromSemantics")) {
+            fromSemantics = true;
+        }
     }
 
     @TRADEService
@@ -147,10 +177,13 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
             realization = u.getWordsAsString();
             nlgPrompt = wordsNLGPrompt;
         } else {
-            //TODO: make this behavior configurable
-            //nlgPrompt = semanticNLGPrompt;
-            realization = nlg.translate(u);
-            nlgPrompt = wordsNLGPrompt;
+            if (fromSemantics) {
+                nlgPrompt = semanticsNLGPrompt;
+                realization = u.getWordsAsString();
+            } else {
+                realization = nlg.translate(u);
+                nlgPrompt = wordsNLGPrompt;
+            }
         }
 
         String userMessage = nlgPrompt.getText() + realization;
@@ -175,7 +208,7 @@ public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
             u.setWords(realization);
         } else {
             u.setWords(m.group(m.groupCount()).trim());
-            u.setLanguage("ja");
+            u.setLanguage(outputLanguage);
         }
 
         return u;

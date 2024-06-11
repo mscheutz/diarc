@@ -70,7 +70,9 @@ public final class Utterance implements Serializable {
   //TODO:brad: this should be part of supplemental semantics
   private Map<Variable, Symbol> tierAssignments = new LinkedHashMap<>();
 
-  //TODO:add:getters and update builder for these, add javadoc
+  /**
+   * BCP-47 Code defining the base language of this utterance
+   */
   private String language = "en";
   private Map<String,String> translations = new HashMap<>();
 
@@ -592,17 +594,49 @@ public final class Utterance implements Serializable {
     return true;
   }
 
+  /**
+   * Add a translation of this utterance's words
+   * @param language BCP-47 Code defining the language of this translation
+   * @param translatedWordsAsString The translated string
+   */
   public void addTranslation(String language, String translatedWordsAsString){
     translations.put(language,translatedWordsAsString);
   }
 
+  /**
+   * Get a Map of all present String representations of this Utterance (BCP-47 Code -> String)
+   * @return String map
+   */
   public Map<String, String> getTranslations() {
     return translations;
   }
 
+  /**
+   * Get String representation of this Utterance for the supplied language tag
+   * @param tag BCP-47 code
+   * @return String representation of this Utterance for this code, if currently stored. Null otherwise.
+   */
+  public String getTranslatedString(String tag) {
+    if (language.equals(tag)) {
+      return getWordsAsString();
+    } else if (translations.containsKey(tag)) {
+      return translations.get(tag);
+    } else {
+      log.warn("[getTranslatedString] utterance has no translation for tag {}", translations);
+      return "";
+    }
+  }
+
+  /**
+   * Set BCP-47 code for the default representation of this Utterance
+   * @param localeCode
+   */
   public void setLanguage(String localeCode){
     language=localeCode;
   }
+  /**
+   * Get BCP-47 code for the default representation of this Utterance
+   */
   public String getLanguage(){
     return language;
   }
