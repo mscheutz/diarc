@@ -112,8 +112,12 @@ public class MapGui extends TextWebSocketHandler {
 
     public String convertPGMtoPNG(String pgmPathStr) throws ImageReadException, ImageWriteException, IOException {
         Path pgmPath = Paths.get(pgmPathStr);
-        String pngFilename = pgmPathStr.replace(".pgm", ".png");
-        Path pngPath = pgmPath.resolveSibling(pngFilename);
+        String pngFilename = pgmPath.getFileName().toString().replace(".pgm", ".png");
+
+        // Calculate the output directory based on the current working directory
+        String outputDirectory = Paths.get("../core/src/main/resources/static/images/").toAbsolutePath().normalize() + "/";
+
+        Path pngPath = Paths.get(outputDirectory, pngFilename);
 
         log.info("Reading PGM file from: {}", pgmPath);
         BufferedImage image = Imaging.getBufferedImage(pgmPath.toFile());
@@ -123,8 +127,7 @@ public class MapGui extends TextWebSocketHandler {
 
         log.info("Converted PGM to PNG: {} to {}", pgmPath, pngPath);
 
-        // Return the relative path to the PNG file, relative to wherever you serve your images from
-        return pngPath.getFileName().toString();
+        return pngFilename;
     }
 
     private void navigateToPoint(WebSocketSession session, double x, double y, double quatX, double quatY, double quatZ, double quatW) throws IOException {
@@ -343,18 +346,6 @@ public class MapGui extends TextWebSocketHandler {
         // Send the final JSON object back to the client
         session.sendMessage(new TextMessage(response.toString()));
     }
-
-    // depreciated. replaced with constructor injection
-    //    @Value("${app.base-url}")
-//    private String baseUrl;
-//    @Autowired
-//    private MapComponent mapComponent;
-//    @Autowired
-//    private ImageService imageService;
-//    @Autowired
-//    public MapGui(MapComponent mapComponent) {
-//        this.mapComponent = mapComponent;
-//    }
 
     // depreciated. Fetching key locations from the TRADE service.
     // replaced with MapComponent native methods getAllObjects from FloorMap.

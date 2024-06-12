@@ -80,28 +80,9 @@ component being rendered.
           containing text boxes for each of its fields.
         * Submit goal: submit a goal in agent-predicate form.
 * Map viewer:
-    * **Configuration**
-        - **Setup**:
-            - Configure the path for "-map_folder" in `application.properties`:
-              ```properties
-              # Set the directory for -map_folder
-              map.base.path=/path/to/map/folder/
-              ```
-        - **Usage**:
-            - Initialize `MapComponent` in your config file with the `map.base.path`.
-              ```java
-              @Bean
-              public MapComponent mapComponent(@Value("${map.base.path}") String mapFolderPath) {
-                  return createInstance(MapComponent.class, "-map_folder " + mapFolderPath + " -start_floor 1");
-              }
-              ```
-        - **Customization**:
-            - Exclude `MapComponent` by not declaring it if not needed.
-            - Update `map.base.path` to change "-map_folder" dynamically.
     * **Features**
         - **Fetch Map Data**
-            - **Action**: Retrieves map data from specified folder and floor.
-            - **Configuration**: Specified by `mapConfig` during initialization.
+            - **Action**: Retrieves map data from specified folder and floor during `createInstance(MapComponent.class,...)`.
         - **Go To Location**
             - **Action**: Directs the robot to a known location.
             - **Input**: Symbol format `location_0:location`.

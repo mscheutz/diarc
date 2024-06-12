@@ -4,6 +4,7 @@ core/build/
 core/src/main/resources/*-prod.properties
 core/src/main/resources/*-dev.properties
 core/src/main/resources/*-test.properties
+core/src/main/resources/static/images/*
 diarcRos/build/
 vision/build/
 vision/src/swig/

@@ -18,14 +18,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        String resourceLocation = "file:/home/hrilab/code/diarc-old/maps/elevator_lab_test/";
-        registry.addResourceHandler("/images/**").addResourceLocations(resourceLocation);
-        // This configures Spring MVC to serve image files from dynamically configured directory
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations("classpath:/static/images/");
     }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // Allow specific origins or use "*" to allow all origins
-        registry.addMapping("/images/**").allowedOrigins(parseCorsOrigins());
+        registry.addMapping("/images/**")
+                .allowedOrigins(parseCorsOrigins());
     }
 }
