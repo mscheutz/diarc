@@ -81,7 +81,7 @@ const ActionForm = ({ sendMessage }) => {
         <div className="flex flex-col gap-1 w-full h-full">
             <form
                 onSubmit={custom.handleSubmit(onSubmitCustom)}
-                className="flex flex-col mx-5 my-4"
+                className="flex flex-col"
             >
                 <label className="text-lg">Custom Action</label>
                 <textarea {...custom.register("custom")}
@@ -93,13 +93,13 @@ const ActionForm = ({ sendMessage }) => {
                 />
             </form>
 
-            <div className="separator text-slate-500 text-center italic">
+            <div className="separator text-slate-500 text-center italic my-4">
                 ——— OR ———
             </div>
 
             <form
                 onSubmit={generated.handleSubmit(onSubmitGenerated)}
-                className="flex flex-col mx-5 my-4"
+                className="flex flex-col"
             >
                 <label className="text-lg">
                     Selected Action
@@ -156,7 +156,7 @@ const GoalForm = ({ sendMessage }) => {
     return (
         <form
             onSubmit={handleSubmit(onSubmitGoal)}
-            className="flex flex-col m-5"
+            className="flex flex-col"
         >
             <label>Agent</label>
             <input type="text" defaultValue="self" {...register("agent")}
