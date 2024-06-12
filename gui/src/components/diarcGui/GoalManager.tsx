@@ -127,16 +127,21 @@ const GoalManager = () => {
           snap
         >
           {/* Left split pane */}
-          <Allotment.Pane preferredSize={"50%"}>
+          <Allotment.Pane
+            preferredSize={"50%"}
+            minSize={350}
+          >
             <Allotment vertical snap>
               {/* Action database */}
               <Allotment.Pane
                 preferredSize={"60%"}
                 minSize={150}
+                className="flex flex-col"
               >
+                {/* Menu bar */}
                 <div className="p-3 rounded-md outline outline-1
                                 outline-[#d1dbe3] flex flex-row gap-3
-                                overflow-auto items-stretch"
+                                overflow-auto items-stretch shrink-0"
                 >
                   <input
                     type="text"
@@ -161,15 +166,19 @@ const GoalManager = () => {
                       )}
                     </div>) : null}
                 </div>
-                {actionList.length === 1 ? (
-                  <div className="pl-1">No actions match filter.</div>
-                ) : (
-                  <ActionBrowser
-                    actionList={actionList}
-                    setActionFormContext={setActionFormContext}
-                    setSelectedIds={setSelectedIds}
-                  />
-                )}
+
+                {/* Results */}
+                <div className="w-full h-1/2 grow">
+                  {actionList.length === 1 ? (
+                    <div className="pl-1">No actions match filter.</div>
+                  ) : (
+                    <ActionBrowser
+                      actionList={actionList}
+                      setActionFormContext={setActionFormContext}
+                      setSelectedIds={setSelectedIds}
+                    />
+                  )}
+                </div>
               </Allotment.Pane>
 
               {/* File browser */}
