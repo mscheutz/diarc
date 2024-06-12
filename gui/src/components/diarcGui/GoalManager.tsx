@@ -116,7 +116,7 @@ const GoalManager = () => {
   // Render
   return (
     <ActionFormContext.Provider value={actionFormContext}>
-      <div className="map-container h-[40rem] w-full flex flex-col outline
+      <div className="h-[40rem] w-full flex flex-col outline shadow-md
                       outline-1 outline-[#d1dbe3] items-center p-5 gap-5
                       rounded-md">
         {/* Upper split pane */}
