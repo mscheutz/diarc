@@ -21,26 +21,46 @@ import javax.annotation.Nonnull;
 import java.util.Collection;
 
 /**
- * EndpointManagerComponent. A DIARC component that sets up and maintains
- * a websocket server that communicates to the browser-based GUI.
+ * A DIARC component that sets up and maintains a websocket server that
+ * communicates to the browser-based GUI. Depending on command-line arguments,
+ * will initiate and expose the various endpoints.
+ * @author Lucien Bao, Hengxu Li
+ * @version 1.0
  */
 @Configuration
 @EnableWebSocket
-@ComponentScan(basePackages= "edu.tufts.hrilab")
+@ComponentScan(basePackages="edu.tufts.hrilab")
 public class EndpointManagerComponent extends DiarcComponent
         implements WebSocketConfigurer {
-    // +---------------------+
-    // | WebSocketConfigurer |
-    // +---------------------+
+    //==========================================================================
+    // Fields
+    //==========================================================================
+    /**
+     * The base URL for the server.
+     */
     @Value("${app.base-url}")
     private String baseUrl;
+
+    /**
+     * Allowed cross-origin URLs, separated by commas.
+     */
     @Value("${cors.origin}")
     private String corsOrigin;
-    // Helper method to convert comma-separated String to an array
+
+    //==========================================================================
+    // Methods
+    //==========================================================================
+    /**
+     * Helper method to convert the cross-origin URL string to a string array.
+     * @return a string array of allowed cross origins.
+     */
     private String[] parseCorsOrigins() {
         return corsOrigin.split(",");
     }
 
+    //==========================================================================
+    // Implement methods | WebSocketConfigurer
+    //==========================================================================
     /**
      * Add endpoints and allow the client to access them.
      * @param registry registry object that configures request mappings

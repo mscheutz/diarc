@@ -35,7 +35,7 @@ public class ChatEndpointComponent extends DiarcComponent {
     private String[] robotNames;
     /**
      * Maps each robot name to a TRADE service to make that robot receive text
-     * messages through their SimSpeechRecognitionComponents.
+     * messages through their <code>SimSpeechRecognitionComponent</code>s.
      */
     private HashMap<String, TRADEServiceInfo> robotInputs;
     /**
@@ -48,7 +48,6 @@ public class ChatEndpointComponent extends DiarcComponent {
      * The component's instance of the inner class.
      */
     private final ChatHandler chatHandler;
-    //endregion
 
     //==========================================================================
     // Constructor

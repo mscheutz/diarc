@@ -52,9 +52,10 @@ public class UnifiedGuiConfig extends DiarcConfiguration {
         createInstance(GoalManagerEndpointComponent.class);
         createInstance(EndpointManagerComponent.class);
 
-        // movebase
         createInstance(MockMoveBaseComponent.class, "-groups agent:fetch:fetch -simExecTime");
-        createInstance(MapComponent.class, "-map_folder /home/hrilab/code/diarc-old/maps/elevator_lab_test/ -start_floor 1");
+
+        // TODO: This should really be taking the map files from some resource folder, independent of the user
+        createInstance(MapComponent.class, "-map_folder /home/lucien/Documents/diarc/elevator_lab_test -start_floor 1");
     }
 
     public static void main(String[] args) {
