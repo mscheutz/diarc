@@ -8,15 +8,11 @@ import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.gui.ImageService;
 import edu.tufts.hrilab.map.util.Pose;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.springframework.web.socket.TextMessage;
@@ -27,19 +23,19 @@ import javax.vecmath.*;
 import java.io.IOException;
 import java.util.*;
 
-@Component
+import org.apache.commons.imaging.*;
+import java.awt.image.BufferedImage;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class MapGui extends TextWebSocketHandler {
 
-    private final MapComponent mapComponent; // Can be null
-    private final ImageService imageService;
     private final String baseUrl;
-    @Autowired
-    public MapGui(@Value("${app.base-url}") String baseUrl,
-                  @Autowired(required = false) MapComponent mapComponent,
-                  ImageService imageService) {
+    private final MapComponent mapComponent;
+
+    public MapGui(String baseUrl, MapComponent mapComponent) {
         this.baseUrl = baseUrl;
         this.mapComponent = mapComponent;
-        this.imageService = imageService;
     }
 
     private static final Logger log = LoggerFactory.getLogger(MapGui.class);
@@ -85,13 +81,6 @@ public class MapGui extends TextWebSocketHandler {
         log.info("Fetching map data for the current floor.");
         JSONObject response = new JSONObject();
 
-        if (imageService == null) {
-            log.error("ImageService is not injected");
-            response.put("error", "Server configuration error.");
-            session.sendMessage(new TextMessage(response.toString()));
-            return;
-        }
-
         try {
             int currentFloor = mapComponent.getCurrFloor();
             FloorMap currentMap = mapComponent.floorMaps.get(currentFloor);
@@ -99,7 +88,7 @@ public class MapGui extends TextWebSocketHandler {
 
             log.info("Converting PGM to PNG for file: {}", pgmFilePath);
 
-            String pngFileName = imageService.convertPGMtoPNG(pgmFilePath);
+            String pngFileName = convertPGMtoPNG(pgmFilePath);
             response.put("currentFloor", currentFloor);
             response.put("mapImageUrl", baseUrl + "/images/" + pngFileName);
             response.put("success", true);
@@ -119,6 +108,23 @@ public class MapGui extends TextWebSocketHandler {
             response.put("error", "Failed to retrieve map data: " + e.getMessage());
             session.sendMessage(new TextMessage(response.toString()));
         }
+    }
+
+    public String convertPGMtoPNG(String pgmPathStr) throws ImageReadException, ImageWriteException, IOException {
+        Path pgmPath = Paths.get(pgmPathStr);
+        String pngFilename = pgmPathStr.replace(".pgm", ".png");
+        Path pngPath = pgmPath.resolveSibling(pngFilename);
+
+        log.info("Reading PGM file from: {}", pgmPath);
+        BufferedImage image = Imaging.getBufferedImage(pgmPath.toFile());
+
+        log.info("Writing PNG file to: {}", pngPath);
+        Imaging.writeImage(image, pngPath.toFile(), ImageFormats.PNG);
+
+        log.info("Converted PGM to PNG: {} to {}", pgmPath, pngPath);
+
+        // Return the relative path to the PNG file, relative to wherever you serve your images from
+        return pngPath.getFileName().toString();
     }
 
     private void navigateToPoint(WebSocketSession session, double x, double y, double quatX, double quatY, double quatZ, double quatW) throws IOException {

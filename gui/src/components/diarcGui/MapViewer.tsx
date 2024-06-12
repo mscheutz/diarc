@@ -126,6 +126,7 @@ const MapViewer = () => {
 
         if (data.mapImageUrl) {
             setMapImageUrl(data.mapImageUrl);
+            console.log(data.mapImageUrl)
         }
         if (data.position && data.orientation) {
             setPoseData({ position: data.position, orientation: data.orientation, robotPixelPosition: data.robotPixelPosition });

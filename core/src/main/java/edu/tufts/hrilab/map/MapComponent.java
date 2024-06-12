@@ -89,6 +89,15 @@ public class MapComponent extends DiarcComponent {
     super();
   }
 
+  /**
+   * Returns the current instance of this MapComponent.
+   * @return the current MapComponent instance
+   */
+  @TRADEService
+  public MapComponent getMapComponent() {
+    return this;
+  }
+
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();

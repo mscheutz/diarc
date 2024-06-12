@@ -11,10 +11,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Value("${cors.origin}")
     private String corsOrigin;
-
-    @Value("${map.base.path}")
-    private String mapBasePath;
-
     // Helper method to convert comma-separated String to an array
     private String[] parseCorsOrigins() {
         return corsOrigin.split(",");
@@ -22,7 +18,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        String resourceLocation = "file:" + mapBasePath;
+        String resourceLocation = "file:/home/hrilab/code/diarc-old/maps/elevator_lab_test/";
         registry.addResourceHandler("/images/**").addResourceLocations(resourceLocation);
         // This configures Spring MVC to serve image files from dynamically configured directory
     }

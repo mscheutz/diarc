@@ -19,19 +19,10 @@ import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
 public class UnifiedGuiConfig extends DiarcConfiguration {
     protected static Logger log = LoggerFactory.getLogger(UnifiedGuiConfig.class);
-
-    @Bean
-    public MapComponent mapComponent(@Value("${map.base.path}") String mapFolderPath) {
-        return createInstance(MapComponent.class, "-map_folder " + mapFolderPath + " -start_floor 1");
-    }
 
     @Override
     public void runConfiguration() {
@@ -63,6 +54,7 @@ public class UnifiedGuiConfig extends DiarcConfiguration {
 
         // movebase
         createInstance(MockMoveBaseComponent.class, "-groups agent:fetch:fetch -simExecTime");
+        createInstance(MapComponent.class, "-map_folder /home/hrilab/code/diarc-old/maps/elevator_lab_test/ -start_floor 1");
     }
 
     public static void main(String[] args) {

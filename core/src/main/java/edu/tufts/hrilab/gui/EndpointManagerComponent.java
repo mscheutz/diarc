@@ -9,9 +9,7 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.map.MapComponent;
 import edu.tufts.hrilab.map.MapGui;
 import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.WebSocketHandler;
@@ -34,9 +32,6 @@ public class EndpointManagerComponent extends DiarcComponent
     // +---------------------+
     // | WebSocketConfigurer |
     // +---------------------+
-
-    @Autowired
-    private ConfigurableApplicationContext applicationContext;
     @Value("${app.base-url}")
     private String baseUrl;
     @Value("${cors.origin}")
@@ -56,6 +51,7 @@ public class EndpointManagerComponent extends DiarcComponent
             WebSocketHandler chatHandler = null;
             WebSocketHandler goalViewerHandler = null;
             WebSocketHandler goalManagerHandler = null;
+            MapComponent mapComponent = null;
             Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
             for (TRADEServiceInfo service : availableServices) {
                 switch (service.serviceString) {
@@ -64,6 +60,8 @@ public class EndpointManagerComponent extends DiarcComponent
                             goalViewerHandler = service.call(GoalViewerEndpointComponent.GoalViewerHandler.class);
                     case "getGoalManagerHandler()" ->
                             goalManagerHandler = service.call(GoalManagerEndpointComponent.GoalManagerHandler.class);
+                    case "getMapComponent()" ->
+                            mapComponent = service.call(MapComponent.class);
                 }
 
                 if(chatHandler != null && goalViewerHandler != null
@@ -82,17 +80,9 @@ public class EndpointManagerComponent extends DiarcComponent
                     .setAllowedOrigins(parseCorsOrigins());
             registry.addHandler(goalManagerHandler, "/goalManager")
                     .setAllowedOrigins(parseCorsOrigins());
-
-            // Ensure MapComponent is configured
-            if (applicationContext.getBeanNamesForType(MapComponent.class).length > 0) {
-                MapComponent mapComponent = applicationContext.getBean(MapComponent.class);
-                if (applicationContext.getBeanNamesForType(ImageService.class).length > 0) {
-                    ImageService imageService = applicationContext.getBean(ImageService.class);
-                    MapGui mapGui = new MapGui(baseUrl, mapComponent, imageService);
-                    registry.addHandler(mapGui, "/map").setAllowedOrigins(parseCorsOrigins());
-                } else {
-                    log.info("ImageService is not configured. Map GUI cannot be initialized without ImageService.");
-                }
+            if (mapComponent != null) {
+                registry.addHandler(new MapGui(baseUrl, mapComponent), "/map")
+                        .setAllowedOrigins(parseCorsOrigins());
             } else {
                 log.info("MapComponent is not configured. Map GUI will not be available.");
             }
