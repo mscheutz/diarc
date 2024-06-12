@@ -258,8 +258,7 @@ const RobotChat = (
                                     attachButton={false}
                                     sendButton={false}
                                     placeholder='Set your name here'
-                                    onChange={(innerHTML, textContent, innerText,
-                                        nodes) => setUsername(innerText)}
+                                    onChange={(innerText) => setUsername(innerText)}
                                     sendOnReturnDisabled={true}
                                     value={username}
                                 />

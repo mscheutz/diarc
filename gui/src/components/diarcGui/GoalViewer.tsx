@@ -53,9 +53,13 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
         ]
     });
 
-    const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
+    const url: URL = new URL(document.location.toString());
+    url.port = "8080";
+    url.protocol = "ws";
+
+    const wsBaseUrl = url.toString();
     const { sendMessage, lastMessage, readyState } =
-        useWebSocket(`${wsBaseUrl}/goalViewer`);
+        useWebSocket(`${wsBaseUrl}goalViewer`);
 
     useEffect(() => {
         if (lastMessage !== null) {
@@ -211,9 +215,6 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
         <div className="flex flex-col w-full h-[40rem] outline outline-1
                         outline-[#d1dbe3] justify-between shadow-md rounded-md">
             <div className="flex flex-col p-5 grow gap-5">
-                {/* Header */}
-                <div className="text-2xl">DIARC Goal Viewer</div>
-
                 {/* Actual lists */}
                 <div className="shadow-md grow outline outline-1 overflow-x-scroll
                                 outline-[#d1dbe3] overflow-auto rounded-md"

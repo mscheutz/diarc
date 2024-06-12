@@ -8,8 +8,10 @@ import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.gui.ADBEWrapper;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -17,24 +19,177 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import javax.annotation.Nonnull;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+/**
+ * Wraps a text web socket handler in a DIARC component. Handles the server side
+ * which sits between the <code>GoalManagerImpl</code> and the frontend goal
+ * manager GUI.
+ * @author Lucien Bao
+ * @version 1.0
+ */
+@Component
 public class GoalManagerEndpointComponent extends DiarcComponent {
-    private final GoalManagerHandler goalManagerHandler;
-//    public final String ACTION_SCRIPT_PATH = "core/src/main/resources/config/edu/tufts/hrilab/action/asl";
-    public final String ACTION_SCRIPT_PATH = "../core/src/main/resources/config/edu/tufts/hrilab/action/asl";
+    //==========================================================================
+    // Constants
+    //==========================================================================
+    /**
+     * Path to the folder containing all .asl files. Depending on method of
+     * launch, might require prefix ".." or might not.
+     */
+    public final String ACTION_SCRIPT_PATH =
+            "../core/src/main/resources/config/edu/tufts/hrilab/action/asl";
 
+    //==========================================================================
+    // Fields
+    //==========================================================================
+    /**
+     * The component's instance of the inner class.
+     */
+    private final GoalManagerHandler goalManagerHandler;
 
     /**
-     * Constructor.
+     * TRADE service to submit a goal.
+     */
+    private TRADEServiceInfo submitGoalService;
+
+    /**
+     * TRADE service to submit an action.
+     */
+    private TRADEServiceInfo submitActionService;
+
+    /**
+     * List of actions in the databse.
+     */
+    private final List<ActionDBEntry> actionList;
+
+    /**
+     * Utility object to write actions to an ASL file.
+     */
+    private final ActionScriptLanguageWriter aslWriter;
+
+    //==========================================================================
+    // Constructor
+    //==========================================================================
+    /**
+     * Constructor. Instantiates the inner class.
      */
     public GoalManagerEndpointComponent() {
         this.goalManagerHandler = new GoalManagerHandler();
+
+        initializeServices();
+
+        actionList = new ArrayList<>();
+        actionList.addAll(Database.getActionDB().getAllActions());
+        actionList.sort(Comparator.comparing(e ->
+                new ADBEWrapper(e).getActionSignature()));
+
+        aslWriter = new ActionScriptLanguageWriter();
+    }
+
+    //==========================================================================
+    // Methods
+    //==========================================================================
+    /**
+     * Find this instance's required TRADE services.
+     */
+    private void initializeServices() {
+        try {
+            submitActionService = TRADE.getAvailableService(
+                    new TRADEServiceConstraints()
+                            .name("submitGoal")
+                            .argTypes(Predicate.class)
+                            .returnType(long.class)
+            );
+            submitGoalService = TRADE.getAvailableService(
+                    new TRADEServiceConstraints()
+                            .name("submitGoal")
+                            .argTypes(Goal.class)
+                            .returnType(Goal.class)
+            );
+        } catch(TRADEException e) {
+            log.error("Failed to get TRADE services for goal manager");
+        }
+    }
+
+    /**
+     * Crawls the ASL scripts directory recursively to find ASL files.
+     * @return a JSON object containing the hierarchy of ASL files.
+     */
+    @Nonnull
+    private JSONObject getAslFilesAsTree() {
+        File root = new File(ACTION_SCRIPT_PATH);
+
+        if (!root.isDirectory()) {
+            log.error("Invalid action script path while getting tree");
+            return new JSONObject(root.getName());
+        }
+
+        int counter = 0;
+        JSONObject tree = new JSONObject();
+        tree.put("name", root.getName())
+                .put("id", "" + counter++);
+
+        // Each object in the array is {file, file's JSONObject}
+        Deque<Object[]> dfs = new ArrayDeque<>();
+        dfs.push(new Object[] {root, tree});
+
+        while (!dfs.isEmpty()) {
+            Object[] current = dfs.pop();
+            File file = (File) current[0];
+            JSONObject object = (JSONObject) current[1];
+            if (file.isDirectory()) {
+                object.put("children", new JSONArray());
+                // Shouldn't be null, if it's a directory...
+                for (File childFile : Objects.requireNonNull(file.listFiles())) {
+                    JSONObject childObject = new JSONObject()
+                            .put("name", childFile.getName())
+                            .put("id", "" + counter++);
+                    object.append("children", childObject);
+                    dfs.push(new Object[] {childFile, childObject});
+                }
+            }
+        }
+
+        return tree;
+    }
+
+    /**
+     * Generates a filepath for the ASL writer to create a new file at.
+     * @return a String representation of a file path
+     */
+    private String generateAslWriteFilePath() {
+        LocalDateTime now = LocalDateTime.now();
+        return ACTION_SCRIPT_PATH
+                + "/custom/"
+                + "gui-export-script-"
+                + now
+                .toString()
+                // replace invalid or confusing chars
+                .replace(':', '-')
+                .replace('.', '-')
+                + ".asl";
+    }
+
+    /**
+     * Given a list of action IDs, export those actions to a file.
+     * @param toExport list of action IDs
+     */
+    private void exportActionsAsFile(List<Object> toExport) {
+        if(!new File(ACTION_SCRIPT_PATH + "/custom").mkdirs()) {
+            log.error("Failed to ensure custom/ directory exists for asl files");
+        }
+
+        List<ActionDBEntry> toWrite = new ArrayList<>();
+        for(Object o : toExport) {
+            int i = ((Integer) o) - 1; // unshift index
+            toWrite.add(actionList.get(i));
+        }
+
+        aslWriter.writeToFile(toWrite, generateAslWriteFilePath());
+
+        goalManagerHandler.notifyExportSuccessful();
     }
 
     /**
@@ -46,241 +201,28 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
         return this.goalManagerHandler;
     }
 
+    //==========================================================================
+    // Inner class | GoalManagerHandler
+    //==========================================================================
     /**
-     * GoalManagerHandler inner class. This implements the server.
+     * Inner class which handles all server functions.
      */
     public class GoalManagerHandler extends TextWebSocketHandler {
+        //======================================================================
+        // Fields
+        //======================================================================
+        /**
+         * Current session.
+         */
         private WebSocketSession session;
 
-        private final HashMap<Integer, File> aslFileMap;
-        private TRADEServiceInfo submitGoalService;
-        private TRADEServiceInfo submitActionService;
-
-        private final List<ActionDBEntry> actionList;
-
-        private final ActionScriptLanguageWriter aslWriter;
-
+        //======================================================================
+        // Methods
+        //======================================================================
         /**
-         * Constructs this GoalEndpoint.
+         * Send a message to the client that the ASL export was successful.
          */
-        public GoalManagerHandler() {
-            aslFileMap = new HashMap<>();
-            try {
-                initializeServices();
-            } catch(TRADEException e) {
-                log.error("Failed to get TRADE services");
-                log.error(e.getMessage());
-            } catch(NullPointerException e) {
-                log.error(e.getMessage());
-            }
-
-            actionList = new ArrayList<>();
-            actionList.addAll(Database.getActionDB().getAllActions());
-            actionList.sort(Comparator.comparing(e ->
-                    new ADBEWrapper(e).getActionSignature()));
-
-            aslWriter = new ActionScriptLanguageWriter();
-        }
-
-        /**
-         * Find this instance's required TRADE services.
-         */
-        private void initializeServices() throws TRADEException {
-            submitActionService = null;
-            submitGoalService = null;
-            // For some reason there are multiple submitGoal() functions that
-            // will not be differentiated via TRADEServiceConstraints
-            // ... which should not be happening but anyway...
-            Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
-            for (TRADEServiceInfo service : availableServices) {
-                if (service.serviceString.equals("submitGoal(edu.tufts.hrilab.fol.Predicate)")) {
-                    submitActionService = service;
-                }
-                else if(service.serviceString.equals("submitGoal(edu.tufts.hrilab.action.goal.Goal)")) {
-                    submitGoalService = service;
-                }
-                if(submitGoalService != null && submitActionService != null)
-                    break;
-            }
-            if(submitActionService == null)
-                throw new NullPointerException("Could not find submitActionService");
-            if(submitGoalService == null)
-                throw new NullPointerException("Could not find submitGoalService");
-        }
-
-        /**
-         * Convert the declaration of an action into an action signature.
-         * @param line the line containing the declaration
-         * @return the action signature
-         */
-        private String getActionString(String line) {
-            StringBuilder sb = new StringBuilder();
-            Pattern name = Pattern.compile("= *(\\w*)(\\[.*)? *\\(");
-            Matcher m = name.matcher(line);
-            if(m.find()) {
-                sb.append(m.group(1))
-                        .append("(?actor, ");
-            } else {
-                throw new IllegalStateException("Could not find action name");
-            }
-
-            Pattern arguments = Pattern.compile("(\\?\\w*)");
-            m = arguments.matcher(line.substring(m.end()));
-            while(m.find()) {
-                sb.append(m.group())
-                        .append(", ");
-            }
-
-            sb.delete(sb.length() - 2, sb.length())
-                    .append(')');
-            return sb.toString();
-        }
-
-        /**
-         * Crawls the ASL scripts directory recursively to find actions.
-         * @return an array containing a list of action signatures.
-         */
-        private String[] getAslActions() {
-            String[] paths = getAslFilesAsArray();
-            ArrayList<String> actions = new ArrayList<>();
-
-            Pattern regex = Pattern.compile("\\(.*\\)\\s?=\\s?.*\\(.*\\)\\s\\{");
-
-            try {
-                for (String path : paths) {
-                    BufferedReader br = new BufferedReader(new FileReader(path));
-                    String line = br.readLine();
-                    while(line != null) {
-
-                        Matcher matcher = regex.matcher(line);
-                        if(matcher.matches()) {
-                            actions.add(getActionString(line));
-                        }
-
-                        line = br.readLine();
-                    }
-                }
-            } catch (IOException ignored) {}
-
-            // Java hates me if I use toArray()
-            String[] result = new String[actions.size()];
-            for(int i = 0; i < actions.size(); i++)
-                result[i] = actions.get(i);
-            return result;
-        }
-
-        /**
-         * Crawls the ASL scripts directory recursively to find ASL files.
-         * @return an array containing a list of ASL files.
-         */
-        @Nonnull
-        private String[] getAslFilesAsArray() {
-            File root = new File(ACTION_SCRIPT_PATH);
-
-            if (!root.isDirectory()) {
-                log.error("Invalid action script path while getting array");
-                return new String[] {};
-            }
-
-            ArrayList<String> arrayList = new ArrayList<>();
-            Deque<File> dfs = new ArrayDeque<>();
-            dfs.push(root);
-
-            while (!dfs.isEmpty()) {
-                File file = dfs.pop();
-                if (file.isDirectory()) {
-                    // Shouldn't be null, if it's a directory...
-                    for (File f : Objects.requireNonNull(file.listFiles())) {
-                        dfs.push(f);
-                    }
-                } else if (file.isFile()) {
-                    arrayList.add(file.getPath());
-                }
-            }
-
-            // Java hates me if I use toArray()
-            String[] result = new String[arrayList.size()];
-            for(int i = 0; i < arrayList.size(); i++)
-                result[i] = arrayList.get(i);
-            return result;
-        }
-
-        /**
-         * Crawls the ASL scripts directory recursively to find ASL files.
-         * @return an object containing the hierarchy of ASL files.
-         */
-        @Nonnull
-        private JSONObject getAslFilesAsTree() {
-            File root = new File(ACTION_SCRIPT_PATH);
-
-            if (!root.isDirectory()) {
-                log.error("Invalid action script path while getting tree");
-                return new JSONObject(root.getName());
-            }
-
-            int counter = 0;
-            JSONObject tree = new JSONObject();
-            aslFileMap.put(counter, root);
-            tree.put("name", root.getName())
-                    .put("id", "" + counter++);
-
-            // Each object in the array is {file, file's JSONObject}
-            Deque<Object[]> dfs = new ArrayDeque<>();
-            dfs.push(new Object[] {root, tree});
-
-            while (!dfs.isEmpty()) {
-                Object[] current = dfs.pop();
-                File file = (File) current[0];
-                JSONObject object = (JSONObject) current[1];
-                if (file.isDirectory()) {
-                    object.put("children", new JSONArray());
-                    // Shouldn't be null, if it's a directory...
-                    for (File childFile : Objects.requireNonNull(file.listFiles())) {
-                        aslFileMap.put(counter, childFile);
-                        JSONObject childObject = new JSONObject()
-                                .put("name", childFile.getName())
-                                .put("id", "" + counter++);
-                        object.append("children", childObject);
-                        dfs.push(new Object[] {childFile, childObject});
-                    }
-                }
-            }
-
-            return tree;
-        }
-
-        /**
-         * Generates a filepath for the ASL writer to create a new file at.
-         * @return a String representation of a file path
-         */
-        private String generateAslWriteFilePath() {
-            LocalDateTime now = LocalDateTime.now();
-            return ACTION_SCRIPT_PATH
-                    + "/custom/"
-                    + "gui-export-script-"
-                    + now
-                        .toString()
-                        .replace(':', '-')
-                        .replace('.', '-')
-                    + ".asl";
-        }
-
-        /**
-         * Given a list of action IDs, export those actions to a file.
-         * @param toExport list of action IDs
-         */
-        private void exportActionsAsFile(List<Object> toExport) {
-            // Make sure the custom/ directory exists
-            new File(ACTION_SCRIPT_PATH + "/custom").mkdirs();
-
-            List<ActionDBEntry> toWrite = new ArrayList<>();
-            for(Object o : toExport) {
-                int i = ((Integer) o) - 1; // unshift index
-                toWrite.add(actionList.get(i));
-            }
-
-            aslWriter.writeToFile(toWrite, generateAslWriteFilePath());
-
+        private void notifyExportSuccessful() {
             try {
                 if(session != null && session.isOpen()) {
                     session.sendMessage(new TextMessage(
@@ -292,10 +234,59 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             } catch(IOException ignored) {}
         }
 
-        //======================
-        // TextWebSocketHandler
-        //======================
+        /**
+         * Called on receipt of custom-action message.
+         * @param customAction the action string
+         */
+        private void submitCustomAction(String customAction) {
+            try {
+                submitActionService.call(
+                        Goal.class,
+                        Factory.createPredicate(customAction)
+                );
+            } catch (TRADEException e) {
+                log.error("TRADEException occurred during invocation of custom action");
+            }
+        }
 
+        /**
+         * Called on receipt of form-action message.
+         * @param arguments the array of arguments
+         */
+        private void submitFormAction(JSONArray arguments) {
+            try {
+                StringBuilder sb = new StringBuilder(arguments.getString(0))
+                        .append('(');
+                for (int i = 1; i < arguments.length(); i++) {
+                    sb.append(arguments.getString(i))
+                            .append(',');
+                }
+                sb.delete(sb.length() - 1, sb.length())
+                        .append(')');
+                submitActionService.call(
+                        Goal.class,
+                        Factory.createPredicate(sb.toString())
+                );
+            } catch(TRADEException e) {
+                log.error("TRADEException occurred during invocation of form action");
+            }
+        }
+        
+        private void submitGoal(String agent, String goal) {
+            try {
+                submitGoalService.call(
+                        Goal.class,
+                        new Goal(Factory.createSymbol(agent),
+                                Factory.createPredicate(goal))
+                );
+            } catch (TRADEException e) {
+                log.error("TRADEException occurred during invocation of goal");
+            }
+        }
+
+        //======================================================================
+        // Implement methods | TextWebSockethandler
+        //======================================================================
         /**
          * Handle a text message from the user.
          *
@@ -309,64 +300,16 @@ public class GoalManagerEndpointComponent extends DiarcComponent {
             super.handleTextMessage(session, message);
             JSONObject payload = new JSONObject(message.getPayload());
 
-            if(payload.has("fileId")) {
-                String request = (String) new JSONObject(message.getPayload())
-                        .get("fileId");
-                int requestId = Integer.parseInt(request);
-                File file = aslFileMap.get(requestId);
-                String response = Files.readString(Path.of(file.getPath()));
-
-                JSONObject responseObject = new JSONObject();
-                responseObject.put("contents", response);
-                session.sendMessage(new TextMessage(responseObject.toString()));
-            } else if(payload.has("form")) {
-                // Handle goal submission
-                if(payload.get("form").equals("goal")) {
-                    String agent = payload.getJSONObject("formData")
-                                          .getString("agent");
-                    String goal = payload.getJSONObject("formData")
-                                         .getString("goal");
-                    submitGoalService.call(
-                        Goal.class,
-                        new Goal(Factory.createSymbol(agent),
-                                Factory.createPredicate(goal))
-                    );
-                }
-                // Handle custom action submission
-                else if(payload.get("form").equals("custom")){
-                    String customAction = payload.getJSONObject("formData")
-                                                 .getString("custom");
-                    try {
-                        submitActionService.call(
-                                Goal.class,
-                                Factory.createPredicate(customAction)
-                        );
-                    } catch (TRADEException e) {
-                        log.error("TRADEException occured in invocation of "
-                                + "custom action");
-                    }
-                }
-                // Handle generated action submission
-                else {
-                    JSONArray arguments = payload.getJSONArray("formData");
-                    StringBuilder sb = new StringBuilder(arguments.getString(0))
-                            .append('(');
-                    for(int i = 1; i < arguments.length(); i++) {
-                        sb.append(arguments.getString(i))
-                                .append(',');
-                    }
-                    sb.delete(sb.length() - 1, sb.length())
-                            .append(')');
-                    submitActionService.call(
-                        Goal.class,
-                        Factory.createPredicate(sb.toString())
-                    );
-                }
-            }
-            // Handle export ASL actions
-            else if(payload.has("selected")) {
-                exportActionsAsFile(payload.getJSONArray("selected")
-                        .toList());
+            switch ((String) payload.get("type")) {
+                case "custom" -> submitCustomAction(
+                        payload.getJSONObject("formData").getString("custom"));
+                case "form" -> submitFormAction(payload.getJSONArray("formData"));
+                case "goal" -> submitGoal(
+                        payload.getJSONObject("formData").getString("agent"),
+                        payload.getJSONObject("formData").getString("goal")
+                );
+                case "export" -> exportActionsAsFile(
+                        payload.getJSONArray("selected").toList());
             }
         }
 

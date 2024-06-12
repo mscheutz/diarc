@@ -14,47 +14,39 @@ import TreeView, { flattenTree } from "react-accessible-treeview";
 
 import "./TreeStyle.css";
 
-const FileBrowser = ({ fileTree, sendMessage }) => {
-    const getFileOnSelect = (e) => {
-        const element = e.element;
-        const name: string = element.name;
-        if (name.length < 5 || name.slice(-4) !== ".asl")
-            return;
-
-        sendMessage(JSON.stringify({ fileId: element.id }));
-    }
-
+const FileBrowser = ({ fileTree }) => {
     return (
-        <TreeView
-            data={flattenTree(fileTree)}
-            className="basic"
-            onNodeSelect={getFileOnSelect}
-            nodeRenderer={
-                ({ element, getNodeProps, level, isBranch, isExpanded, isSelected }) => {
-                    return (
-                        <div
-                            {...getNodeProps()}
-                            style={{ paddingLeft: 20 * level - 15 }}
-                            title={element.name}
-                            className={isSelected ? "selected" : "tree-node"}
-                        >
-                            <p className="text-nowrap">
-                                {isBranch ?
-                                    isExpanded ?
-                                        <FontAwesomeIcon icon={faFolderOpen}
-                                            color="#006ec2" />
-                                        : <FontAwesomeIcon icon={faFolderClosed}
-                                            color="#006ec2" />
-                                    : <FontAwesomeIcon icon={faFile}
-                                        color="#e8be00" />
-                                }
-                                {" " + element.name}
-                            </p>
-                        </div>
-                    )
+        <div className="w-full h-full overflow-x-scroll overflow-y-scroll">
+            <TreeView
+                data={flattenTree(fileTree)}
+                className="basic"
+                nodeRenderer={
+                    ({ element, getNodeProps, level, isBranch, isExpanded, isSelected }) => {
+                        return (
+                            <div
+                                {...getNodeProps()}
+                                style={{ paddingLeft: 20 * level - 15 }}
+                                title={element.name}
+                                className={isSelected ? "selected" : "tree-node"}
+                            >
+                                <p className="text-nowrap select-none">
+                                    {isBranch ?
+                                        isExpanded ?
+                                            <FontAwesomeIcon icon={faFolderOpen}
+                                                color="#006ec2" />
+                                            : <FontAwesomeIcon icon={faFolderClosed}
+                                                color="#006ec2" />
+                                        : <FontAwesomeIcon icon={faFile}
+                                            color="#e8be00" />
+                                    }
+                                    {" " + element.name}
+                                </p>
+                            </div>
+                        )
+                    }
                 }
-            }
-        />
+            />
+        </div>
     );
 }
 

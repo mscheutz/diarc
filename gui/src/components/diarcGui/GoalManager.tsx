@@ -44,7 +44,7 @@ const GoalManager = () => {
     ]
   });
 
-  const filterNodes = (value) => {
+  const filterNodes = (value: string) => {
     if (value && value !== "") {
       const filtered: any[] = [];
       baseActionList.forEach((item) => {
@@ -58,7 +58,7 @@ const GoalManager = () => {
       filtered.unshift(
         Object.assign({
           ...baseActionList[0],
-          children: baseActionList[0].children.filter((id) =>
+          children: baseActionList[0].children.filter((id: any) =>
             filtered.find((fitem) => fitem.id === id)
           ),
         })
@@ -75,16 +75,21 @@ const GoalManager = () => {
   const handleExport = () => {
     setExportStatus("wait");
     let array: number[] = [];
+    // @ts-ignore
     for (const [value] of selectedIds.entries()) {
       array.push(value);
     }
-    sendMessage(JSON.stringify({ "selected": array }));
+    sendMessage(JSON.stringify({ "type": "export", "selected": array }));
   };
 
   // Configure websocket
-  const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
+  const url: URL = new URL(document.location.toString());
+  url.port = "8080";
+  url.protocol = "ws";
+
+  const wsBaseUrl = url.toString();
   const { sendMessage, lastMessage, readyState } =
-    useWebSocket(`${wsBaseUrl}/goalManager`);
+    useWebSocket(`${wsBaseUrl}goalManager`);
 
   useEffect(() => {
     if (!lastMessage) return;
@@ -111,7 +116,7 @@ const GoalManager = () => {
   // Render
   return (
     <ActionFormContext.Provider value={actionFormContext}>
-      <div className="map-container h-[40rem] w-full flex flex-col outline
+      <div className="h-[40rem] w-full flex flex-col outline shadow-md
                       outline-1 outline-[#d1dbe3] items-center p-5 gap-5
                       rounded-md">
         {/* Upper split pane */}
@@ -122,16 +127,21 @@ const GoalManager = () => {
           snap
         >
           {/* Left split pane */}
-          <Allotment.Pane preferredSize={"50%"}>
+          <Allotment.Pane
+            preferredSize={"50%"}
+            minSize={350}
+          >
             <Allotment vertical snap>
               {/* Action database */}
               <Allotment.Pane
                 preferredSize={"60%"}
                 minSize={150}
+                className="flex flex-col"
               >
+                {/* Menu bar */}
                 <div className="p-3 rounded-md outline outline-1
                                 outline-[#d1dbe3] flex flex-row gap-3
-                                overflow-auto items-stretch"
+                                overflow-auto items-stretch shrink-0"
                 >
                   <input
                     type="text"
@@ -156,22 +166,25 @@ const GoalManager = () => {
                       )}
                     </div>) : null}
                 </div>
-                {actionList.length === 1 ? (
-                  <div className="pl-1">No actions match filter.</div>
-                ) : (
-                  <ActionBrowser
-                    actionList={actionList}
-                    setActionFormContext={setActionFormContext}
-                    setSelectedIds={setSelectedIds}
-                  />
-                )}
+
+                {/* Results */}
+                <div className="w-full h-1/2 grow">
+                  {actionList.length === 1 ? (
+                    <div className="pl-1">No actions match filter.</div>
+                  ) : (
+                    <ActionBrowser
+                      actionList={actionList}
+                      setActionFormContext={setActionFormContext}
+                      setSelectedIds={setSelectedIds}
+                    />
+                  )}
+                </div>
               </Allotment.Pane>
 
               {/* File browser */}
               <Allotment.Pane minSize={150}>
                 <FileBrowser
                   fileTree={fileTree}
-                  sendMessage={sendMessage}
                 />
               </Allotment.Pane>
             </Allotment>

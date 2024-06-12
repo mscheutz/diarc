@@ -108,10 +108,14 @@ const MapViewer = () => {
     const yPadRef = useRef<number>(0);
     const scaleRef = useRef<number>(1);
     const imageRef = useRef<HTMLImageElement | null>(null);
-    const wsBaseUrl = process.env.REACT_APP_WEBSOCKET_URL;
+
     // Set up Websocket
+    const url: URL = new URL(document.location.toString());
+    url.port = "8080";
+    url.protocol = "ws";
+    const wsBaseUrl = url.toString();
     const { sendMessage, lastMessage, readyState } =
-        useWebSocket(`${wsBaseUrl}/map`);
+        useWebSocket(`${wsBaseUrl}map`);
 
     // Handle received messages
     useEffect(() => {
@@ -133,11 +137,11 @@ const MapViewer = () => {
         }
         if (data.keyLocations) {
             setKeyLocations(data.keyLocations);
-            console.log("keyLocations",data.keyLocations)
+            console.log("keyLocations", data.keyLocations)
         }
         if (data.pastLocations) {
             setPastLocations(data.pastLocations);
-            console.log("pastLocations",data.pastLocations)
+            console.log("pastLocations", data.pastLocations)
         }
         if (data.message) {
             setResponseMsg(`${data.success ? 'Success: ' : 'Failure: '} ${data.message}`);
