@@ -176,7 +176,6 @@ const GoalManager = () => {
               <Allotment.Pane minSize={150}>
                 <FileBrowser
                   fileTree={fileTree}
-                  sendMessage={sendMessage}
                 />
               </Allotment.Pane>
             </Allotment>
