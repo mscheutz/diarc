@@ -3,6 +3,7 @@ package edu.tufts.hrilab.simspeech;
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -13,26 +14,55 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.*;
 
 /**
- * ChatEndpoint. Wraps a text web socket handler in a DIARC Component.
+ * Wraps a text web socket handler in a DIARC component. Handles the server side
+ * which sits between <code>SimSpeechRecognitionComponent</code>s and the
+ * frontend chat GUI.
+ * @author Lucien Bao
+ * @version 1.0
  */
 @Component
 public class ChatEndpointComponent extends DiarcComponent {
+    //==========================================================================
+    // Fields
+    //==========================================================================
+    /**
+     * List of robot agents.
+     */
     private String[] robotNames;
+    /**
+     * Maps each robot name to a TRADE service to make that robot receive text
+     * messages through their SimSpeechRecognitionComponents.
+     */
     private HashMap<String, TRADEServiceInfo> robotInputs;
+    /**
+     * Maps each robot name to a TRADE service to set the current speaker for
+     * that robot. This allows different people to talk to the robots.
+     */
     private HashMap<String, TRADEServiceInfo> robotSetSpeakers;
 
-    private final ChatHandler chatHandler;
-
     /**
-     * Constructs the <code>ChatEndpoint</code>.
+     * The component's instance of the inner class.
+     */
+    private final ChatHandler chatHandler;
+    //endregion
+
+    //==========================================================================
+    // Constructor
+    //==========================================================================
+    /**
+     * Constructor. Instantiates the inner class.
      */
     public ChatEndpointComponent() {
         this.chatHandler = new ChatHandler();
     }
 
+    //==========================================================================
+    // Methods
+    //==========================================================================
     /**
      * Parse runtime arguments after construction.
      * @param cmdLine the list of arguments
@@ -66,75 +96,86 @@ public class ChatEndpointComponent extends DiarcComponent {
      */
     @Override
     protected void init() {
-        // Register for dialogue service
+        registerForDialogueService();
+        mapRobotInputs();
+        mapRobotSetSpeakers();
+    }
+
+    /**
+     * Registers this component's <code>sendMessage()</code> TRADE service
+     * and links it to the <code>DialogueComponent</code>'s notification
+     * registry so that it will be called when new <code>Utterances</code> are
+     * added.
+     */
+    private void registerForDialogueService() {
         try {
-            TRADEServiceInfo sendMessageService = null;
-            TRADEServiceInfo dialogueRegisterService = null;
+            // We must register this component's `sendMessage()` service first
             TRADE.registerAllServices(this, (String) null);
-            Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
-            // Find send message service and dialogue register service
-            for (TRADEServiceInfo service : availableServices) {
-                if (service.serviceString.equals("sendMessage(edu.tufts.hrilab."
-                        + "slug.common.Utterance)"))
-                    sendMessageService = service;
-                else if(service.serviceString.equals(
-                        "registerForDialogueHistoryNotifications("
-                        + "ai.thinkingrobots.trade.TRADEServiceInfo)"))
-                    dialogueRegisterService = service;
 
-                if(sendMessageService != null && dialogueRegisterService != null)
-                    break;
-            }
-
-            if(sendMessageService == null || dialogueRegisterService == null)
-                throw new NullPointerException("Could not find service");
+            TRADEServiceInfo sendMessageService = TRADE.getAvailableService(
+                    new TRADEServiceConstraints()
+                            .name("sendMessage")
+                            .argTypes(Utterance.class)
+            );
+            TRADEServiceInfo dialogueRegisterService = TRADE.getAvailableService(
+                    new TRADEServiceConstraints()
+                            .name("registerForDialogueHistoryNotifications")
+                            .argTypes(TRADEServiceInfo.class)
+            );
 
             dialogueRegisterService.call(void.class, sendMessageService);
-
         } catch (TRADEException e) {
             log.error("Failed to register send message service");
-        } catch (NullPointerException e) {
-            log.error("Failed to register methods for dialogue history notifications");
+        }
+    }
+
+    /**
+     * Find the <code>setText()</code> TRADE services for each robot and store
+     * them for later use.
+     */
+    private void mapRobotInputs() {
+        robotInputs = new HashMap<>();
+
+        try {
+            for (String robotName : robotNames) {
+                TRADEServiceInfo service = TRADE.getAvailableService(
+                        new TRADEServiceConstraints()
+                                .name("setText")
+                                .argTypes(String.class)
+                                .inGroups(robotName)
+                );
+                robotInputs.put(robotName, service);
+            }
+        } catch(TRADEException e) {
+            log.error("Failed to find robot input TRADE service");
         }
 
-        // Find robot input services
-        this.robotInputs = new HashMap<>();
-        int mapped = 0;
-        Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
-        outer:
-        for (TRADEServiceInfo service : availableServices) {
-            if (service.serviceString.equals("setText(java.lang.String)")) {
-                for(String robotName : this.robotNames) {
-                    if(robotName.equals(
-                            service.getGroups().iterator().next())) {
-                        this.robotInputs.put(robotName, service);
-                        mapped++;
-                        continue outer;
-                    }
-                }
-            }
-        }
-        if(mapped != this.robotNames.length)
+        if(robotInputs.size() != robotNames.length)
             log.error("Failed to map all robot names to inputs");
-        
-        // Find robot set-speaker services
-        this.robotSetSpeakers = new HashMap<>();
-        mapped = 0;
-        outer:
-        for (TRADEServiceInfo service : availableServices) {
-            if (service.serviceString.equals("setSpeaker(edu.tufts.hrilab.fol.Symbol)")) {
-                for(String robotName : this.robotNames) {
-                    if(robotName.equals(
-                            service.getGroups().iterator().next())) {
-                        this.robotSetSpeakers.put(robotName, service);
-                        mapped++;
-                        continue outer;
-                    }
-                }
+    }
+
+    /**
+     * Find the <code>setSpeaker()</code> TRADE services for each robot and
+     * store them for later use.
+     */
+    private void mapRobotSetSpeakers() {
+        robotSetSpeakers = new HashMap<>();
+
+        try {
+            for(String robotName : robotNames) {
+                TRADEServiceInfo service = TRADE.getAvailableService(
+                        new TRADEServiceConstraints()
+                                .name("setSpeaker")
+                                .argTypes(Symbol.class)
+                                .inGroups(robotName)
+                );
+                robotSetSpeakers.put(robotName, service);
             }
+        } catch (TRADEException e) {
+            log.error("Failed to find robot setSpeaker TRADE service");
         }
 
-        if(mapped != this.robotNames.length)
+        if(robotSetSpeakers.size() != robotNames.length)
             log.error("Failed to find setSpeaker TRADE services");
     }
 
@@ -157,11 +198,39 @@ public class ChatEndpointComponent extends DiarcComponent {
         this.chatHandler.sendMessage(utterance);
     }
 
+    //==========================================================================
+    // Inner class | ChatHandler
+    //==========================================================================
     /**
-     * ChatHandler inner class. This implements the server.
+     * Inner class which handles all server functions.
      */
     public class ChatHandler extends TextWebSocketHandler {
+        //======================================================================
+        // Fields
+        //======================================================================
+        /**
+         * Current session.
+         */
         private WebSocketSession session;
+
+        //======================================================================
+        // Methods
+        //======================================================================
+        /**
+         * Check if the speaker of the given utterance is a robot tracked by
+         * this component.
+         * @param utterance utterance to check
+         * @return true if the given utterance was spoken by on of this
+         * component's tracked robots
+         */
+        private boolean isSpeakerRobot(Utterance utterance) {
+            for(String robotName : robotNames) {
+                if(utterance.getSpeaker().toString().equals(robotName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         /**
          * Sends a message to the chat window.
@@ -169,35 +238,28 @@ public class ChatEndpointComponent extends DiarcComponent {
          * @param utterance what the robot is saying
          */
         public void sendMessage(Utterance utterance) {
-            // Make sure the speaker is a robot
-            boolean flag = false;
-            for (String robotName : robotNames) {
-                if (utterance.getSpeaker().toString().equals(robotName)) {
-                    flag = true;
-                    break;
-                }
-            }
-            if (!flag) return;
+            if (!isSpeakerRobot(utterance)) return;
 
             try {
                 if (session != null) {
                     session.sendMessage(new TextMessage(
-                            "{\"message\":\"" + utterance.getWordsAsString()
-                                    + "\", \"sender\":\"" + utterance.getSpeaker()
-                                    + "\", \"recipient\":\"" + utterance.getAddressee() + "\"}"
+                            new JSONObject()
+                                    .put("message", utterance.getWordsAsString())
+                                    .put("sender", utterance.getSpeaker())
+                                    .put("recipient", utterance.getAddressee())
+                                    .toString()
                     ));
                 } else {
                     log.error("Could not send message: no active session");
                 }
-            } catch (Exception e) {
-                log.error(e.getMessage());
+            } catch (IOException e) {
+                log.error("Failed to send message to chat");
             }
         }
 
-        // +----------------------+
-        // | TextWebSocketHandler |
-        // +----------------------+
-
+        //======================================================================
+        // Implementing methods | TextWebSocketHandler
+        //======================================================================
         /**
          * Called after being connected to the client.
          * @param session the web socket session the message comes over on
@@ -207,8 +269,6 @@ public class ChatEndpointComponent extends DiarcComponent {
         public void afterConnectionEstablished(@Nonnull WebSocketSession session)
                 throws Exception {
             super.afterConnectionEstablished(session);
-
-            System.out.println("=================================connected");
 
             JSONObject setupMessage = new JSONObject();
             setupMessage.put("names", Arrays.toString(robotNames));
@@ -229,13 +289,13 @@ public class ChatEndpointComponent extends DiarcComponent {
             JSONObject request = new JSONObject(message.getPayload());
 
             String data = request.getString("message");
-            // currently not needed
             String sender = request.getString("sender");
             String recipient = request.getString("recipient");
 
             TRADEServiceInfo setSpeaker = robotSetSpeakers.get(recipient);
-            TRADEServiceInfo setText = robotInputs.get(recipient);
             setSpeaker.call(void.class, Factory.createSymbol(sender));
+
+            TRADEServiceInfo setText = robotInputs.get(recipient);
             setText.call(void.class, data);
         }
     }

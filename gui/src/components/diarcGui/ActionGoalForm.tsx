@@ -34,7 +34,7 @@ const ActionForm = ({ sendMessage }) => {
         custom.reset();
         sendMessage(JSON.stringify(
             {
-                form: "custom",
+                type: "custom",
                 formData: data
             }
         ));
@@ -71,7 +71,7 @@ const ActionForm = ({ sendMessage }) => {
         }
         sendMessage(JSON.stringify(
             {
-                form: "generated",
+                type: "form",
                 formData: array
             }
         ));
@@ -147,7 +147,7 @@ const GoalForm = ({ sendMessage }) => {
         reset();
         sendMessage(JSON.stringify(
             {
-                form: "goal",
+                type: "goal",
                 formData: data
             }
         ));

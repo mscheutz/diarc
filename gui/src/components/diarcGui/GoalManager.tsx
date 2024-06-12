@@ -79,7 +79,7 @@ const GoalManager = () => {
     for (const [value] of selectedIds.entries()) {
       array.push(value);
     }
-    sendMessage(JSON.stringify({ "selected": array }));
+    sendMessage(JSON.stringify({ "type": "export", "selected": array }));
   };
 
   // Configure websocket

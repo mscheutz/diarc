@@ -1,12 +1,11 @@
 package edu.tufts.hrilab.action;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceInfo;
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -19,15 +18,84 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import javax.annotation.Nonnull;
 import java.util.*;
 
+/**
+ * Wraps a text web socket handler in a DIARC component. Handles a server which
+ * sits between TRADE's <code>ExecutionManager</code> and the frontend goal
+ * viewer GUI.
+ * @author Lucien
+ * @version 1.0
+ */
 @Component
 public class GoalViewerEndpointComponent extends DiarcComponent {
+    //==========================================================================
+    // Fields
+    //==========================================================================
+    /**
+     * This component's instance of the inner class.
+     */
     private final GoalViewerHandler goalViewerHandler;
 
     /**
-     * Constructor.
+     * TRADE service to get the current active goals.
+     */
+    TRADEServiceInfo getActiveGoals;
+    /**
+     * TRADE service to get past goals.
+     */
+    TRADEServiceInfo getPastGoals;
+    /**
+     * TRADE service to submit a goal.
+     */
+    TRADEServiceInfo submitGoal;
+    /**
+     * TRADE service to cancel a goal.
+     */
+    TRADEServiceInfo cancelGoal;
+
+    //==========================================================================
+    // Constructor
+    //==========================================================================
+    /**
+     * Constructor. Instiantiates the inner class.
      */
     public GoalViewerEndpointComponent() {
         this.goalViewerHandler = new GoalViewerHandler();
+        initializeServices();
+    }
+
+    //==========================================================================
+    // Methods
+    //==========================================================================
+    /**
+     * Find all TRADE services required.
+     */
+    private void initializeServices() {
+        try {
+            getActiveGoals = TRADE.getAvailableService(
+                    new TRADEServiceConstraints()
+                            .name("getActiveGoals")
+                            .argTypes()
+                            .returnType(List.class)
+            );
+            getPastGoals = TRADE.getAvailableService(
+                    new TRADEServiceConstraints()
+                            .name("getPastGoals")
+                            .returnType(List.class)
+            );
+            cancelGoal = TRADE.getAvailableService(
+                    new TRADEServiceConstraints()
+                            .name("cancelGoal")
+                            .returnType(boolean.class)
+            );
+            submitGoal = TRADE.getAvailableService(
+                    new TRADEServiceConstraints()
+                            .name("submitGoal")
+                            .argTypes(Predicate.class)
+                            .returnType(long.class)
+            );
+        } catch(TRADEException e) {
+            log.error("Failed to get TRADE services for goal viewer");
+        }
     }
 
     /**
@@ -47,48 +115,37 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
         this.goalViewerHandler.updateGoals();
     }
 
+    //==========================================================================
+    // Inner class | GoalViewerHandler
+    //==========================================================================
     /**
-     * GoalViewerHandler inner class. This implements the server.
+     * Inner class which handles all server functions.
      */
     public class GoalViewerHandler extends TextWebSocketHandler {
+        //======================================================================
+        // Constants
+        //======================================================================
+        /**
+         * Timer update period, in milliseconds.
+         */
+        public static final int UPDATE_PERIOD = 1000;
+
+        //======================================================================
+        // Fields
+        //======================================================================
+        /**
+         * Timer that periodically updates the client with current goal info.
+         */
         private Timer updateTimer;
-        public static final int UPDATE_PERIOD = 1000; // in milliseconds
-
-        TRADEServiceInfo getActiveGoals;
-        TRADEServiceInfo getPastGoals;
-        TRADEServiceInfo submitGoal;
-        TRADEServiceInfo cancelGoal;
-
-        private WebSocketSession session;
 
         /**
-         * Constructor.
+         * Current session.
          */
-        public GoalViewerHandler() {
-            getActiveGoals = null;
-            getPastGoals = null;
-            submitGoal = null;
-            cancelGoal = null;
-            Collection<TRADEServiceInfo> services = TRADE.getAvailableServices();
-            for(TRADEServiceInfo service : services) {
-                switch (service.serviceString) {
-                    case "getActiveGoals()" -> getActiveGoals = service;
-                    case "getPastGoals()" -> getPastGoals = service;
-                    case "cancelGoal(long)" -> cancelGoal = service;
-                    case "submitGoal(edu.tufts.hrilab.fol.Predicate)" ->
-                            submitGoal = service;
-                }
+        private WebSocketSession session;
 
-                if(getActiveGoals != null && getPastGoals != null
-                && submitGoal != null && cancelGoal != null)
-                    break;
-            }
-
-            if(getActiveGoals == null || getPastGoals == null
-            || submitGoal == null || cancelGoal == null)
-                log.error("Failed to find required TRADE service");
-        }
-
+        //======================================================================
+        // Methods
+        //======================================================================
         /**
          * Removes goals from the given list if they don't match the given
          * status.
@@ -120,18 +177,16 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
          */
         private JSONArray goals2JSONArray(List<Goal> goals, String goalType)
             throws IllegalArgumentException {
-            if(!goalType.equals("past") && !goalType.equals("active")
-            && !goalType.equals("suspended"))
-                throw new IllegalArgumentException("value of goalType is not"
-                    + " accepted");
-
-            // Filter goals by goal status
             if(goalType.equals("active"))
                 filterListByGoalStatus(goals, GoalStatus.ACTIVE);
             else if(goalType.equals("suspended"))
                 filterListByGoalStatus(goals, GoalStatus.SUSPENDED);
+            else if(!goalType.equals("past"))
+                throw new IllegalArgumentException(
+                        "value of goalType is not accepted");
 
-            if(goals.isEmpty()) return new JSONArray(); // no goals
+            // No goals
+            if(goals.isEmpty()) return new JSONArray();
             JSONArray result = new JSONArray();
 
             // Group goals by actor
@@ -219,10 +274,9 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
             }
         }
 
-        //======================
-        // TextWebSocketHandler
-        //======================
-
+        //======================================================================
+        // Implementing methods | TextWebSocketHandler
+        //======================================================================
         /**
          * Handle a text message from the user.
          *
