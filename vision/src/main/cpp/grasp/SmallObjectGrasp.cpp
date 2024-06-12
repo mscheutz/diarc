@@ -16,7 +16,6 @@
 #include <pcl/common/transforms.h>
 #include <math.h>
 
-using namespace diarc::stm;
 using namespace diarc::grasp;
 
 SmallObjectGrasp::SmallObjectGrasp()

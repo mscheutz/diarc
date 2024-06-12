@@ -11,6 +11,7 @@
 
 #include "Grasp.hpp"
 #include <log4cxx/logger.h>
+#include <opencv2/opencv.hpp>
 
 namespace diarc {
   namespace grasp {

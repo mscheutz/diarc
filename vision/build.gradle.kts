@@ -111,7 +111,12 @@ tasks.named("processMockResources") {
 }
 
 val mockJarTask = tasks.register<Jar>("mockJar") {
-  from(sourceSets.getByName("mock").output + sourceSets.getByName("main").resources)
+  // if vision is not building, include the main resources in the mockJar so they can be used by mock vision components
+  if (project.hasProperty("diarc.enableVision") && project.property("diarc.enableVision").toString().toBoolean()) {
+    from(sourceSets.getByName("mock").output)
+  } else {
+    from(sourceSets.getByName("mock").output + sourceSets.getByName("main").resources)
+  }
   archiveBaseName = "diarc-vision-mock"
   archiveVersion = properties["diarc.version"].toString()
   archiveExtension = "jar"

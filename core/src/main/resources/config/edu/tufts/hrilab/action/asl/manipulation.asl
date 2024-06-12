@@ -55,9 +55,7 @@ import edu.tufts.hrilab.fol.Predicate;
  * ?actor uses ?arm to move ?objectRef_1 ?relation ?objectRef_2
  */
 () = moveObject(Symbol ?objectRef_1, Symbol ?relation, Symbol ?objectRef_2, Symbol ?arm = arm, double ?dist = 0.5) {
-    java.lang.Long !typeId;
-    java.util.List !tokenIds;
-    java.lang.Long !tokenId;
+    java.util.List !tokens;
     edu.tufts.hrilab.vision.stm.MemoryObject !token_2;
     org.apache.commons.lang3.tuple.Pair !armPose;
     javax.vecmath.Point3d !armLoc;
@@ -76,12 +74,12 @@ import edu.tufts.hrilab.fol.Predicate;
     !armPose =  act:getPose(?arm);
 
     // find objectRef_2
-    !tokenIds = act:findObject(?objectRef_2);
+    act:findObject(?objectRef_2);
 
-    // get objectRef_2 token from tokenId
+    // get MemoryObject for ?bjectRef_2
     op:log("debug", "Found ?objectRef_2");
-    !tokenId = op:get(!tokenIds, 0);
-    !token_2 = act:getToken(!tokenId, 0.5);
+    !tokens = act:getTokens(?objectRef_2);
+    !token_2 = op:get(!tokens, 0);
 
     // transform object to base coordinate frame
     op:invokeMethod(!token_2, "transformToBase");
@@ -104,7 +102,7 @@ import edu.tufts.hrilab.fol.Predicate;
     } elseif (op:equalsValue(?relation, above)) {
       // calculate target location
       !targetLoc = op:invokeMethod(!token_2, "getLocation");
-      !zDir = op:newObject("javax.vecmath.Point3d" ,0,0,0.1);
+      !zDir = op:newObject("javax.vecmath.Point3d" ,0,0,0.1); // add 0.1m to z-height of target object's location
       op:invokeMethod(!targetLoc, "add", !zDir);
 
       // move arm and object
@@ -134,7 +132,7 @@ import edu.tufts.hrilab.fol.Predicate;
     }
 
     act:graspObject(?objectRef, ?arm);
-    act:moveObject(?objectRef, ?arm, up);
+    act:moveObject(?objectRef, up, ?arm);
     op:log("debug", "[graspObject] successfully grasped ?objectRef");
 }
 
@@ -146,14 +144,13 @@ import edu.tufts.hrilab.fol.Predicate;
       success infer : touching(?actor,?objectRef);
     }
 
-    act:findGraspableObject(?objectRef);
+    act:findObject(?objectRef);
     act:openGripper(?arm);
     act:moveTo(?arm, ?objectRef);
     act:graspObject(?arm, ?objectRef, !closePosition);
     act:stopAllSearches();
     op:log(debug, "[graspObject] successfully grasped ?objectRef");
 }
-
 
 /**
  * ?actor releases object ?objectRef

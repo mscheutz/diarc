@@ -15,6 +15,8 @@ import edu.tufts.hrilab.fol.Symbol;
     }
 
     op: log ("info",">> pickup ?obj");
+
+    act:pickUp(?obj);
 }
 
 () = putdown(Symbol ?obj:physobj) {
@@ -47,6 +49,11 @@ import edu.tufts.hrilab.fol.Symbol;
     }
 
     op: log ("info",">> stack ?obj1 on ?obj2");
+
+    act:moveObject(?obj1, above, ?obj2);
+    // TODO: move object down
+    // act:moveObject(?obj1, down, arm, 0.05);
+    act:releaseObject(?obj1);
 }
 
 () = unstack(Symbol ?obj1:physobj, Symbol ?obj2:physobj) {
@@ -65,4 +72,6 @@ import edu.tufts.hrilab.fol.Symbol;
     }
 
     op: log ("info",">> unstack ?obj1 from ?obj2");
+
+    act:pickUp(?obj1);
 }

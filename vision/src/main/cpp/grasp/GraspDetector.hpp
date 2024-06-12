@@ -20,6 +20,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/format.hpp>
 #include <log4cxx/logger.h>
 
 namespace diarc {

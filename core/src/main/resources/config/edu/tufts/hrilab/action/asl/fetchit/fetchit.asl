@@ -46,7 +46,7 @@ import edu.tufts.hrilab.fol.Symbol;
     }
 
     act:openGripper(?arm);
-    act:findGraspableObject(?objectRef);
+    act:findObject(?objectRef);
     act:moveTo(?arm, ?objectRef);
     act:graspObject(?arm, ?objectRef, !closePosition);
     //act:stopAllSearches();
@@ -64,13 +64,8 @@ import edu.tufts.hrilab.fol.Symbol;
     }
     act:releaseObject(?arm, ?objectRef, 1.0);
     act:goToPose(release); // TODO: EAK: why isn't this move up?
-    //act:moveObject(?objectRef_0, ?arm, up);
+    //act:moveObject(?objectRef_0, up, ?arm);
     act:goToPose(carry);
-}
-
-() = moveObject(Symbol ?objectRef, Symbol ?dir) {
-    Symbol !arm = "arm";
-    act:moveObject(?objectRef, !arm, ?dir);
 }
 
 () = pickup(Symbol ?objectRef, Symbol ?arm="arm") {
@@ -81,6 +76,6 @@ import edu.tufts.hrilab.fol.Symbol;
       success : holding(?actor,?objectRef,?arm);
     }
     act:graspObject(?objectRef, ?arm);
-    act:moveObject(?objectRef, ?arm, up);
+    act:moveObject(?objectRef, up, ?arm);
     op:log(debug, "[pickup] successfully picked up ?objectRef");
 }

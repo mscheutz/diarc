@@ -22,7 +22,6 @@
 #include <pcl/point_types.h>
 #include <vector>
 
-using namespace diarc::stm;
 using namespace diarc::grasp;
 
 GraspDetector::Ptr GraspDetector::instance = NULL;
