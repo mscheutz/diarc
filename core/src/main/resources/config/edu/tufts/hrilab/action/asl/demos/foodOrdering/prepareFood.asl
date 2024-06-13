@@ -192,6 +192,7 @@ import edu.tufts.hrilab.fol.Variable;
         success : not(holding(?actor, ?item));
         success : free(?actor);
         success : not(beenperceived(?item));
+        success : not(occupied(?area)); //todo: this is a hack
     }
 
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "areaPose(?actor, X, ?area)");

@@ -354,6 +354,8 @@ public class ActionLearning {
     return executeAction;
   }
 
+  //TODO: cancelTeachingByModification
+  //  Remove new entry that was formed but canceled halfway through teaching template
 //Brad: moved from ActionModification.java which no longer exists.
 
   /**

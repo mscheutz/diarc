@@ -26,7 +26,6 @@ public class LLMTranslationTester {
 
     protected static Logger log = LoggerFactory.getLogger(LLMTranslationTester.class);
     int numTranslations = 1;
-    String language = "German";
     String service = "llamahf";//"t5hf";//"openai";
     String model = "Meta-Llama-3-70B-Instruct";//"Llama-2-70b-chat-hf";//"gpt-3.5-turbo";
     String inputDirectory = "/config/edu/tufts/hrilab/llm/inputs/";
@@ -34,68 +33,37 @@ public class LLMTranslationTester {
     String outputFile = "/home/eric/code/diarc/core/src/main/resources/config/edu/tufts/hrilab/llm/outputs/%s/%s/%s_prompt_%s.txt";
     List<String> promptFiles = Arrays.asList("pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationAssista");
     List<String> systemPromptFiles = Arrays.asList("");
-    boolean performTranslationTask = true;
-    boolean performSemanticsToTextTask = false; //old
-    boolean performJointTask = false; //old
 
-    public SimSpeechRecognitionComponent simspeech;
-    public HybridParserComponent parser;
     public LLMComponent llmComponent;
     public LLMTranslationTester() {
-        simspeech = DiarcComponent.createInstance(SimSpeechRecognitionComponent.class, "-speaker brad -config yumiFoodOrdering.simspeech");
-        parser = DiarcComponent.createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl foodOrdering.dict -tldl yumiFoodOrderingHomophones.dict -patternMatching");
-
         llmComponent= DiarcComponent.createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.6", service, model));
     }
 
     /**
      * Input:
-     *      Single input file containing a list of utterances to translate
-     *      Output filepath to write results (translations) to
-     *      List of languages to test
-     *      List of prompt format strings to test
-     *      Number of times to translate each utterance (often results are not consistent)
-     *  Each language will be tested alongside each prompt and have results written to correspondingly labeled fies
+     *      Single input file containing a list of utterances to run through the LLM
+     *      Output filepath to write results to
+     *      List of prompt files to test
+     *      List of system prompt files to test
+     *      Number of times to process each utterance (often results are not consistent)
      */
     public void run() {
-        //Translation task only
-        if (performTranslationTask) {
-            //for (String language : languages) {
-            List<Prompt> prompts = new ArrayList<>();
-            List<Prompt> systemPrompts = new ArrayList<>();
-            for (int i=0;i<promptFiles.size();i++) {
-                prompts.add(Prompts.getPrompt(promptFiles.get(i)));
-                String systemPromptFileName = systemPromptFiles.get(i);
-                if (systemPromptFileName.isEmpty()) {
-                    systemPrompts.add(new Prompt(""));
-                } else {
-                    systemPrompts.add(Prompts.getPrompt(systemPromptFiles.get(i)));
-                }
-            }
-            //}
-
-            for (int i = 0; i < prompts.size(); i++) {
-                log.info("[LLMTranslationTester] prompt: " + i);
-                testUtterances(prompts.get(i), systemPrompts.get(i), String.format(outputFile, service, model, inputFile, promptFiles.get(i)),0);
+        List<Prompt> prompts = new ArrayList<>();
+        List<Prompt> systemPrompts = new ArrayList<>();
+        for (int i=0;i<promptFiles.size();i++) {
+            prompts.add(Prompts.getPrompt(promptFiles.get(i)));
+            String systemPromptFileName = systemPromptFiles.get(i);
+            if (systemPromptFileName.isEmpty()) {
+                systemPrompts.add(new Prompt(""));
+            } else {
+                systemPrompts.add(Prompts.getPrompt(systemPromptFiles.get(i)));
             }
         }
 
-        ////SemanticsToText task only
-        //if (performSemanticsToTextTask) {
-        //    NLGPrompt prompt = new NLGPrompt();
-        //    llmnlComponent.setPerformTranslation(false);
-        //    llmnlComponent.setPerformSemanticsToText(true);
-        //    llmnlComponent.setNLGPrompt(prompt);
-        //    testUtterances("test/resources/config/com/llm/inputs/semantics.txt", "test/resources/config/com/llm/outputs/textToSemanticsOutputs.txt",1);
-        //}
-
-        ////Both
-        //if (performJointTask) {
-        //    llmnlComponent.setPerformTranslation(true);
-        //    llmnlComponent.setPerformSemanticsToText(true);
-        //    llmnlComponent.setOutputLanguage("german");
-        //    testUtterances("test/resources/config/com/llm/inputs/semantics.txt", String.format(outputFile, language, "_combined"),2);
-        //}
+        for (int i = 0; i < prompts.size(); i++) {
+            log.info("[LLMTranslationTester] prompt: " + i);
+            testUtterances(prompts.get(i), systemPrompts.get(i), String.format(outputFile, service, model, inputFile, promptFiles.get(i)));
+        }
 
         System.exit(0);
     }
@@ -117,17 +85,9 @@ public class LLMTranslationTester {
     /**
      * translate each line present in the input file using LLMNLComponent and write results to output file
      */
-    private void testUtterances(Prompt prompt, Prompt systemPrompt, String outputFilepath, int task) {
-        //Reason this isnt a stringbuilder?
+    private void testUtterances(Prompt prompt, Prompt systemPrompt, String outputFilepath) {
         List<String> translatedUtterances = new ArrayList<>();
         List<String> sanitizedResults = new ArrayList<>();
-        if (task == 0) {
-            translatedUtterances.add("Translation prompt:\n");
-        } else if (task == 1) {
-            translatedUtterances.add("SemanticsToText prompt:\n");
-        } else if (task == 2) {
-            translatedUtterances.add("Joint prompt:\n");
-        }
         translatedUtterances.add(prompt.getText()+"\n\n");
 
         for (String utterance : gatherUtterancesFromFile(inputDirectory + inputFile +".txt")) {
@@ -138,7 +98,7 @@ public class LLMTranslationTester {
             StringBuilder sb = new StringBuilder();
             sb.append(String.format("Input: %s\nOutputs:", utterance));
             for (int i=0;i<numTranslations;i++) {
-                String result = translate(prompt,systemPrompt,utterance,language);
+                String result = callCompletion(prompt,systemPrompt,utterance);
                 sb.append(result);
                 sb.append("\n");
 //                Pattern semanticPattern = Pattern.compile(".*Step two:.*\\s(.*\\(.*\\))\\s*", Pattern.DOTALL);
@@ -182,7 +142,7 @@ public class LLMTranslationTester {
         }
     }
 
-    public String translate(Prompt prompt, Prompt systemPrompt, String input, String language) {
+    public String callCompletion(Prompt prompt, Prompt systemPrompt, String input) {
         long startTime = System.currentTimeMillis();
         Completion completion;
         String userMessage = prompt.getText() + input;

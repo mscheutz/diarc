@@ -23,12 +23,14 @@ import java.util.concurrent.TimeUnit;
 public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
   private YumiFoodOrderingMock diarcConfig;
   private SimSpeechRecognitionComponent simSpeechRec;
+  private SimSpeechRecognitionComponent untrustedSimSpeechRec;
 
   @Before
   public void initializeDiarc() {
     diarcConfig = new YumiFoodOrderingMock(true);
     diarcConfig.runConfiguration();
     simSpeechRec = diarcConfig.simSpeechRec;
+    untrustedSimSpeechRec = diarcConfig.untrustedSimSpeechRec;
 
     addServiceToObserve("sayText", String.class);
     addServiceToObserve("assertProperties", Map.class, Double.class, List.class);
@@ -36,7 +38,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     addServiceToObserve("openGripperRapid");
     addServiceToObserve("closeGripperRapid");
     addServiceToObserve("pourSauce");
-    addServiceToObserve("sayText", String.class);
+    addServiceToObserve("sayText", String.class, Boolean.class);
     addServiceToObserve("perceiveEntityFromSymbol", Symbol.class);
     addServiceToObserve("pickupItem", Symbol.class);
     addServiceToObserve("putDownItem", Symbol.class, Symbol.class);
@@ -70,6 +72,12 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     simSpeechRec.setText(input);
   }
 
+  public void sendUntrustedUserInput(String input) {
+    tester.markNewInput();
+    untrustedSimSpeechRec.setText(input);
+  }
+
+  //demo script
   @Test
   public void yumiFoodOrderingTest() {
 
@@ -156,7 +164,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     addUserInput("here it is");
     evaluateResults();
 
-    setSingleTestTimeout(3, TimeUnit.SECONDS);
+    setSingleTestTimeout(6, TimeUnit.SECONDS);
     addUserInput("define new item by analogy puerto rican bowl");
     evaluateResults();
 
@@ -217,11 +225,31 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     addUserInput("here it is");
     evaluateResults();
 
-    //todo: supervisor stuff?
+    setSingleTestTimeout(5, TimeUnit.SECONDS);
+    sendUntrustedUserInput("right arm go to prep area");
+    evaluateResults();
+
+    addUserInput("add new supervisor front");
+    evaluateResults();
+
+    sendUntrustedUserInput("right arm go to prep area");
+    evaluateResults();
+
+    sendUntrustedUserInput("define new item puerto rican bowl");
+    evaluateResults();
+
+    addUserInput("add new admin front");
+    evaluateResults();
+
+    sendUntrustedUserInput("define new item puerto rican bowl");
+    evaluateResults();
   }
 
   //Off scripts tests for robustness and/or desired functionality
-  @Ignore
+  //TODO: Need to create methods to do and then actually correctly test that defineItem, defineItemByAnalogy, and defineIngredient
+  //  (and all internal methods with side effects - positReference, addDetectionType, defineIngredientHelper, ...) can be
+  //  properly interrupted and/or canceled while having all side effects undone. Currently this is not the case and it is
+  //  not safe to arbitrarily perform off-script behaviors during/after interruptions.
   @Test
   public void questionAskingInterruptionTest() {
 
@@ -238,7 +266,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     evaluateResults();
     addUserInput("what is your current task");
     evaluateResults();
-    addUserInput("resume current task");
+    addUserInput("resume previous task");
     evaluateResults();
 
     setSingleTestTimeout(2, TimeUnit.SECONDS);
@@ -266,14 +294,26 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     evaluateResults();
     addUserInput("that is how you prepare a southwest bowl");
     evaluateResults();
+
+    setSingleTestTimeout(25, TimeUnit.SECONDS);
+    addUserInput("prepare a southwest bowl");
+    evaluateResults();
+
+    addUserInput("here it is");
+    evaluateResults();
+
+    addUserInput("here it is");
+    evaluateResults();
+
+    addUserInput("here it is");
+    evaluateResults();
   }
 
-  //TODO:
-  //interruption during teaching on first step (before learning)
-  //reset tests?
-  //interruption during prepare
-  //interruption during one offs
-  //Supervisor stuff
+  //TODO: Other tests that would be required if the underlying functionality was actually implemented (which would be
+  // required if this domain is to be safely used for off script interactions or further dev on these fronts)
+  //Interruption of all the other teaching scripts and during different points within these script
+  //(If extended to actually fully reset domain) thorough reset tests
+  //Interruption and/or failure during all primitives and planner actions
 
   //This wrapper exists so that the generator can appropriately catch input
   private void addUserInput(String input) {

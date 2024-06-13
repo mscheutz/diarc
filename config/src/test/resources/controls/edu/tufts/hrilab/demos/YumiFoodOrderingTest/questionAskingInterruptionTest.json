@@ -1,0 +1,645 @@
+{
+  "testName" : "questionAskingInterruptionTest",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "leftArmpose_0:leftArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:item=item_0:item}", "1.0", "[\"southwest bowl\"(X:item)]", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Okay. How do I prepare a \"southwest bowl\" ?", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "hello", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "SUSPENDED task:", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I define Item \"southwest bowl\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[corn(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[carrot(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_4:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_4:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_4:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_4:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_4:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_4:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_4:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_4:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_5:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_7:physobj}", "1.0", "[corn(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_8:physobj}", "1.0", "[carrot(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_9:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "leftArmpose_3:leftArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_5:physobj", "true" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_5:physobj", "true" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_5:physobj", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "leftArmpose_0:leftArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "leftArmpose_1:leftArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_5:physobj", "leftArmpose_5:leftArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "leftArmpose_0:leftArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Could you please bring a \"bell pepper\" from the \"pantry\" to the \"prep area\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_6:physobj", "true" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_6:physobj", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_2:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_6:physobj", "rightArmpose_8:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "sauteing", "true" ]
+    }, {
+      "serviceName" : "sauteItem",
+      "serviceArgs" : [ "physobj_6:physobj", "val(2,seconds)", "justifications()" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_2:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_6:physobj", "true" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_6:physobj", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_4:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_6:physobj", "rightArmpose_5:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Could you please bring a corn from the \"pantry\" to the \"prep area\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_7:physobj", "true" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_7:physobj", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_1:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_7:physobj", "rightArmpose_7:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "cooking", "true" ]
+    }, {
+      "serviceName" : "cookItem",
+      "serviceArgs" : [ "physobj_7:physobj", "val(5,seconds)", "justifications()" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_1:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_7:physobj", "true" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_7:physobj", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_4:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_7:physobj", "rightArmpose_5:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Could you please bring a carrot from the \"pantry\" to the \"prep area\"", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_8:physobj", "true" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_8:physobj", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_2:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_8:physobj", "rightArmpose_8:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "sauteing", "true" ]
+    }, {
+      "serviceName" : "sauteItem",
+      "serviceArgs" : [ "physobj_8:physobj", "val(3,seconds)", "justifications()" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_2:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_8:physobj", "true" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_8:physobj", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_4:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_8:physobj", "rightArmpose_5:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_9:physobj", "true" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_9:physobj", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "leftArmpose_0:leftArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "pourSauce",
+      "serviceArgs" : [ "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "leftArmpose_0:leftArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_9:physobj", "leftArmpose_7:leftArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "leftArmpose_0:leftArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "\"southwest bowl\" is Complete", "true" ]
+    } ]
+  } ]
+}

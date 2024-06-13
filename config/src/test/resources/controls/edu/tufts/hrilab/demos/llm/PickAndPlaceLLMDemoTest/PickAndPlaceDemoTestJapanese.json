@@ -1,0 +1,333 @@
+{
+  "testName" : "PickAndPlaceDemoTestJapanese",
+  "testlets" : [ {
+    "serviceCalls" : [ {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "leftArmpose_0:leftArmpose", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "addDetectionType",
+      "serviceArgs" : [ "\"bell pepper\"", "detBellPepper", "\"bell pepper\"" ]
+    }, {
+      "serviceName" : "addDetectionType",
+      "serviceArgs" : [ "corn", "detCorn", "corn" ]
+    }, {
+      "serviceName" : "addDetectionType",
+      "serviceArgs" : [ "carrot", "detCarrot", "carrot" ]
+    }, {
+      "serviceName" : "addDetectionType",
+      "serviceArgs" : [ "servingBox", "detBox", "servingBox" ]
+    }, {
+      "serviceName" : "addDetectionType",
+      "serviceArgs" : [ "\"chipotle sauce\"", "detChipotle", "\"chipotle sauce\"" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_0:physobj}", "1.0", "[corn(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "オーケー", "true" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_0:physobj", "true" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_0:physobj", "true" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_0:physobj", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_2:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_0:physobj", "rightArmpose_8:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "「チキン」とは何を意味するのか分かりません。", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "オーケー", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Where is it located?", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Okay, what vision job is used to detect it?", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "addDetectionType",
+      "serviceArgs" : [ "chicken", "detectChicken", "chicken" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "At which area should I look for a chicken?", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:physobj=physobj_1:physobj}", "1.0", "[chicken(X:physobj)]", "true" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_1:physobj", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I see a chicken, can you show me how to grasp it?", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Okay, I know what chicken is", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR1:physobj=physobj_2:physobj}", "1.0", "[chicken(VAR1:physobj)]", "false" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "オーケー", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Could you please bring a chicken from the pantry to the prepArea", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_2:physobj", "true" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_2:physobj", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_1:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_2:physobj", "rightArmpose_7:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "オーケー", "true" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_1:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_2:physobj", "true" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_2:physobj", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_2:physobj", "rightArmpose_6:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "オーケー", "true" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_2:rightArmpose", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "オーケー", "true" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_0:physobj", "true" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_0:physobj", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "オーケー", "true" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "オーケー", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "コーンを降ろせないのは、\"prep area\"が占有されているため右腕です。", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR2:physobj=physobj_3:physobj}", "1.0", "[servingBox(VAR2:physobj)]", "false" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "オーケー", "true" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_4:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_0:physobj", "rightArmpose_5:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "オーケー", "true" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "perceiveEntityFromSymbol",
+      "serviceArgs" : [ "physobj_2:physobj", "true" ]
+    }, {
+      "serviceName" : "pickupItem",
+      "serviceArgs" : [ "physobj_2:physobj", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_4:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "putDownItem",
+      "serviceArgs" : [ "physobj_2:physobj", "rightArmpose_5:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    } ]
+  } ]
+}

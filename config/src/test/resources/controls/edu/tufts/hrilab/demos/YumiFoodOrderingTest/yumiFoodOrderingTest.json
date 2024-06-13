@@ -1305,5 +1305,47 @@
       "serviceName" : "sayText",
       "serviceArgs" : [ "\"puerto rican bowl\" is Complete", "true" ]
     } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "right Arm can not go To the \"prep area\" because you are not me supervisor", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_3:rightArmpose", "null" ]
+    }, {
+      "serviceName" : "checkError",
+      "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "I can not define Item \"puerto rican bowl\" because defining Item \"puerto rican bowl\" is admin Goal", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    } ]
+  }, {
+    "serviceCalls" : [ {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{X:item=item_1:item}", "1.0", "[\"puerto rican bowl\"(X:item)]", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Okay. How do I prepare a \"puerto rican bowl\" ?", "true" ]
+    } ]
   } ]
 }

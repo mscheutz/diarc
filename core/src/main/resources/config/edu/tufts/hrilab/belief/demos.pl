@@ -21,6 +21,7 @@ propertyOf(X,free) :- not(propertyOf(X,blocked)), propertyOf(X,location).
 
 is_supervisor(A,B):-role(A,supervisor(B)).
 admin_of(A,B):-role(A,admin(B)).
+is_supervisor(A,B):-admin_of(A,B).
 
 role(Y,novice) :- diarcAgent(X),bel(X,novice(Y)).
 

@@ -573,8 +573,10 @@ here it is; VAL; got(ingredient)
 grasp it here; VAL; hold(here)
 
 %define new speaker; S/LIT*; #s.name($s,$s)
-add new supervisor; C/LIT*; #s.defineNewSupervisor(?ADDRESSEE, $s)
-is an admin; S\AGENT ; #a.admin($a)
+add new supervisor; S/LIT*; #s.is_supervisor($s,?ADDRESSEE)
+add new supervisor; (S/LIT*)\AGENT; #a#s.is_supervisor($a,$s)
+add new admin; S/LIT* ; #a.admin_of($a,?ADDRESSEE)
+add new admin; (S/LIT*)\AGENT; #a#s.admin_of(#a,#s)
 
 it is safe to proceed; VAL; safeToProceed(true)
 it is not safe to proceed; VAL; safeToProceed(false)

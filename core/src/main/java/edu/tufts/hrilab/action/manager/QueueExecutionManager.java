@@ -240,7 +240,7 @@ public class QueueExecutionManager extends ExecutionManager {
   public void cancelAllPendingGoals() {
     synchronized (pendingGoalsLock) {
       while (!pendingGoals.isEmpty()) {
-        cancelGoalInQueueIndex(pendingGoals.size()-1);
+        cancelGoalInQueueIndex(0);
       }
     }
   }
@@ -314,7 +314,7 @@ public class QueueExecutionManager extends ExecutionManager {
       Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
       while (pendingGoalIterator.hasNext()) {
         PendingGoal pg = pendingGoalIterator.next();
-        if (agent == getUntypedSymbol(pg.getGoal().getActor())) {
+        if (agent.equals(getUntypedSymbol(pg.getGoal().getActor()))) {
           return pg.getGoal().getPredicate();
         }
       }
