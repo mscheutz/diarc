@@ -75,7 +75,8 @@ public class EndpointManagerComponent extends DiarcComponent
             Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
             for (TRADEServiceInfo service : availableServices) {
                 switch (service.serviceString) {
-                    case "getChatHandler()" -> chatHandler = service.call(ChatEndpointComponent.ChatHandler.class);
+                    case "getChatHandler()" ->
+                            chatHandler = service.call(ChatEndpointComponent.ChatHandler.class);
                     case "getGoalViewerHandler()" ->
                             goalViewerHandler = service.call(GoalViewerEndpointComponent.GoalViewerHandler.class);
                     case "getGoalManagerHandler()" ->
@@ -85,29 +86,24 @@ public class EndpointManagerComponent extends DiarcComponent
                 }
 
                 if(chatHandler != null && goalViewerHandler != null
-                        && goalManagerHandler != null)
+                && goalManagerHandler != null && mapComponent != null)
                     break;
             }
 
-            if(chatHandler == null || goalViewerHandler == null
-                    || goalManagerHandler == null)
-                throw new NullPointerException("Failed to find handler of "
-                        + "chat, goal viewer, or goal manager");
-
-            registry.addHandler(chatHandler, "/chat")
-                    .setAllowedOrigins(parseCorsOrigins());
-            registry.addHandler(goalViewerHandler, "/goalViewer")
-                    .setAllowedOrigins(parseCorsOrigins());
-            registry.addHandler(goalManagerHandler, "/goalManager")
-                    .setAllowedOrigins(parseCorsOrigins());
-            if (mapComponent != null) {
+            if(chatHandler != null)
+                registry.addHandler(chatHandler, "/chat")
+                        .setAllowedOrigins(parseCorsOrigins());
+            if(goalViewerHandler != null)
+                registry.addHandler(goalViewerHandler, "/goalViewer")
+                        .setAllowedOrigins(parseCorsOrigins());
+            if(goalManagerHandler != null)
+                registry.addHandler(goalManagerHandler, "/goalManager")
+                        .setAllowedOrigins(parseCorsOrigins());
+            if (mapComponent != null)
                 registry.addHandler(new MapGui(baseUrl, mapComponent), "/map")
                         .setAllowedOrigins(parseCorsOrigins());
-            } else {
-                log.info("MapComponent is not configured. Map GUI will not be available.");
-            }
         } catch(TRADEException e) {
-            log.error("Chat handler service call failed");
+            log.error("Endpoint get service call failed");
         }
     }
 }

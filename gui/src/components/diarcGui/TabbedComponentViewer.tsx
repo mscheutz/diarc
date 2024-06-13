@@ -123,19 +123,19 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                 {/* Failed panel */}
                 {chatStatus === "off" && viewerStatus === "off"
                     && mapStatus === "off" ?
-                    <TabPanel className="grid grid-column h-full m-48">
-                        <div className="flex flex-row justify-center">
+                    <TabPanel className="grid grid-column h-full m-48 space-y-5">
+                        <div className="flex flex-row justify-center m-10">
                             <FontAwesomeIcon
                                 icon={faBan} size="10x"
                                 color={"#e00b00"}
                             />
                         </div>
-                        <p className="text-center m-10">
+                        <div className="text-center">
                             Connection Failed!
-                        </p>
-                        <p>
+                        </div>
+                        <div className="text-center">
                             WebSocket URL: {wsBaseUrl}
-                        </p>
+                        </div>
                     </TabPanel>
                     : null}
                 {chatStatus === "on" ?

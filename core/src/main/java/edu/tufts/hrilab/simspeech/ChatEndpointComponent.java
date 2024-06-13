@@ -19,8 +19,8 @@ import java.util.*;
 
 /**
  * Wraps a text web socket handler in a DIARC component. Handles the server side
- * which sits between <code>SimSpeechRecognitionComponent</code>s and the
- * frontend chat GUI.
+ * which sits between the <code>ListenerComponent</code> and the frontend chat
+ * GUI.
  * @author Lucien Bao
  * @version 1.0
  */
@@ -30,19 +30,9 @@ public class ChatEndpointComponent extends DiarcComponent {
     // Fields
     //==========================================================================
     /**
-     * List of robot agents.
+     * List of robots.
      */
-    private String[] robotNames;
-    /**
-     * Maps each robot name to a TRADE service to make that robot receive text
-     * messages through their <code>SimSpeechRecognitionComponent</code>s.
-     */
-    private HashMap<String, TRADEServiceInfo> robotInputs;
-    /**
-     * Maps each robot name to a TRADE service to set the current speaker for
-     * that robot. This allows different people to talk to the robots.
-     */
-    private HashMap<String, TRADEServiceInfo> robotSetSpeakers;
+    private Symbol[] robots;
 
     /**
      * The component's instance of the inner class.
@@ -62,44 +52,6 @@ public class ChatEndpointComponent extends DiarcComponent {
     //==========================================================================
     // Methods
     //==========================================================================
-    /**
-     * Parse runtime arguments after construction.
-     * @param cmdLine the list of arguments
-     */
-    @Override
-    protected void parseArgs(CommandLine cmdLine) {
-        // This is a required option
-        this.robotNames = cmdLine.getOptionValues("names");
-    }
-
-    /**
-     * Provide a list of arguments available in the command line.
-     * @return the list of arguments
-     */
-    @Override
-    protected List<Option> additionalUsageInfo() {
-        List<Option> options = new ArrayList<>();
-        options.add(Option.builder("n")
-                        .longOpt("names")
-                        .desc("list of robot names, separated by spaces")
-                        .valueSeparator(' ')
-                        .numberOfArgs(Option.UNLIMITED_VALUES)
-                        .required(true)
-                        .build());
-        return options;
-    }
-
-    /**
-     * Complete initialization after construction and parsing of command line
-     * arguments.
-     */
-    @Override
-    protected void init() {
-        registerForDialogueService();
-        mapRobotInputs();
-        mapRobotSetSpeakers();
-    }
-
     /**
      * Registers this component's <code>sendMessage()</code> TRADE service
      * and links it to the <code>DialogueComponent</code>'s notification
@@ -129,56 +81,6 @@ public class ChatEndpointComponent extends DiarcComponent {
     }
 
     /**
-     * Find the <code>setText()</code> TRADE services for each robot and store
-     * them for later use.
-     */
-    private void mapRobotInputs() {
-        robotInputs = new HashMap<>();
-
-        try {
-            for (String robotName : robotNames) {
-                TRADEServiceInfo service = TRADE.getAvailableService(
-                        new TRADEServiceConstraints()
-                                .name("setText")
-                                .argTypes(String.class)
-                                .inGroups(robotName)
-                );
-                robotInputs.put(robotName, service);
-            }
-        } catch(TRADEException e) {
-            log.error("Failed to find robot input TRADE service");
-        }
-
-        if(robotInputs.size() != robotNames.length)
-            log.error("Failed to map all robot names to inputs");
-    }
-
-    /**
-     * Find the <code>setSpeaker()</code> TRADE services for each robot and
-     * store them for later use.
-     */
-    private void mapRobotSetSpeakers() {
-        robotSetSpeakers = new HashMap<>();
-
-        try {
-            for(String robotName : robotNames) {
-                TRADEServiceInfo service = TRADE.getAvailableService(
-                        new TRADEServiceConstraints()
-                                .name("setSpeaker")
-                                .argTypes(Symbol.class)
-                                .inGroups(robotName)
-                );
-                robotSetSpeakers.put(robotName, service);
-            }
-        } catch (TRADEException e) {
-            log.error("Failed to find robot setSpeaker TRADE service");
-        }
-
-        if(robotSetSpeakers.size() != robotNames.length)
-            log.error("Failed to find setSpeaker TRADE services");
-    }
-
-    /**
      * Getter for the chat handler instance.
      * @return the chat handler
      */
@@ -194,7 +96,50 @@ public class ChatEndpointComponent extends DiarcComponent {
      */
     @TRADEService
     public void sendMessage(Utterance utterance) {
-        this.chatHandler.sendMessage(utterance);
+        chatHandler.sendMessage(utterance);
+    }
+
+    //==========================================================================
+    // Implement methods | DiarcComponent
+    //==========================================================================
+    /**
+     * Parse runtime arguments after construction.
+     * @param cmdLine the list of arguments
+     */
+    @Override
+    protected void parseArgs(CommandLine cmdLine) {
+        // This is a required option
+        String[] robotStrings = cmdLine.getOptionValues("robots");
+
+        robots = new Symbol[robotStrings.length];
+        for(int i = 0; i < robotStrings.length; i++)
+            robots[i] = Factory.createSymbol(robotStrings[i]);
+    }
+
+    /**
+     * Provide a list of arguments available in the command line.
+     * @return the list of arguments
+     */
+    @Override
+    protected List<Option> additionalUsageInfo() {
+        List<Option> options = new ArrayList<>();
+        options.add(Option.builder("r")
+                        .longOpt("robots")
+                        .desc("list of robots, separated by spaces")
+                        .valueSeparator(' ')
+                        .numberOfArgs(Option.UNLIMITED_VALUES)
+                        .required(true)
+                        .build());
+        return options;
+    }
+
+    /**
+     * Complete initialization after construction and parsing of command line
+     * arguments.
+     */
+    @Override
+    protected void init() {
+        registerForDialogueService();
     }
 
     //==========================================================================
@@ -219,12 +164,12 @@ public class ChatEndpointComponent extends DiarcComponent {
          * Check if the speaker of the given utterance is a robot tracked by
          * this component.
          * @param utterance utterance to check
-         * @return true if the given utterance was spoken by on of this
+         * @return true if the given utterance was spoken by one of this
          * component's tracked robots
          */
         private boolean isSpeakerRobot(Utterance utterance) {
-            for(String robotName : robotNames) {
-                if(utterance.getSpeaker().toString().equals(robotName)) {
+            for(Symbol robot : robots) {
+                if(utterance.getSpeaker().equalsIgnoreType(robot)) {
                     return true;
                 }
             }
@@ -270,7 +215,7 @@ public class ChatEndpointComponent extends DiarcComponent {
             super.afterConnectionEstablished(session);
 
             JSONObject setupMessage = new JSONObject();
-            setupMessage.put("names", Arrays.toString(robotNames));
+            setupMessage.put("names", Arrays.toString(robots));
             session.sendMessage(new TextMessage(setupMessage.toString()));
         }
 
@@ -288,14 +233,25 @@ public class ChatEndpointComponent extends DiarcComponent {
             JSONObject request = new JSONObject(message.getPayload());
 
             String data = request.getString("message");
-            String sender = request.getString("sender");
-            String recipient = request.getString("recipient");
+            String senderString = request.getString("sender");
+            String recipientString = request.getString("recipient");
 
-            TRADEServiceInfo setSpeaker = robotSetSpeakers.get(recipient);
-            setSpeaker.call(void.class, Factory.createSymbol(sender));
+            Symbol sender = Factory.createSymbol(senderString);
+            Symbol recipient = Factory.createSymbol(recipientString);
 
-            TRADEServiceInfo setText = robotInputs.get(recipient);
-            setText.call(void.class, data);
+            Utterance.Builder ub = new Utterance.Builder()
+                    .setWords(Arrays.asList(data.split(" ")))
+                    .setSpeaker(sender)
+                    .addListener(recipient)
+                    .setIsInputUtterance(true);
+
+            TRADEServiceInfo reportSpeech =
+                    TRADE.getAvailableService(new TRADEServiceConstraints()
+                            .name("reportRecognizedSpeech").
+                            argTypes(Utterance.class)
+                    );
+
+            reportSpeech.call(void.class, ub.build());
         }
     }
 }

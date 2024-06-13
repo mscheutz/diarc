@@ -10,7 +10,6 @@ import edu.tufts.hrilab.map.MapComponent;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
 import edu.tufts.hrilab.nao.MockNaoComponent;
 import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
-import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
@@ -26,12 +25,6 @@ public class UnifiedGuiConfig extends DiarcConfiguration {
 
     @Override
     public void runConfiguration() {
-        // Two Nao demo + web endpoints
-        createInstance(SimSpeechRecognitionComponent.class,
-                "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster");
-        createInstance(SimSpeechRecognitionComponent.class,
-                "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -listener shafer");
-
         createInstance(ListenerComponent.class);
         createInstance(TLDLParserComponent.class, "-dict templatedict.dict templatedictLearned.dict");
         createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
@@ -47,15 +40,16 @@ public class UnifiedGuiConfig extends DiarcConfiguration {
                 "-goal listen(self)";
         createInstance(GoalManagerImpl.class, gmArgs);
 
-        createInstance(ChatEndpointComponent.class, "-n dempster shafer");
+        createInstance(ChatEndpointComponent.class, "-r dempster shafer");
         createInstance(GoalViewerEndpointComponent.class);
         createInstance(GoalManagerEndpointComponent.class);
-        createInstance(EndpointManagerComponent.class);
 
         createInstance(MockMoveBaseComponent.class, "-groups agent:fetch:fetch -simExecTime");
 
         // TODO: This should really be taking the map files from some resource folder, independent of the user
         createInstance(MapComponent.class, "-map_folder /home/lucien/Documents/diarc/elevator_lab_test -start_floor 1");
+
+        createInstance(EndpointManagerComponent.class);
     }
 
     public static void main(String[] args) {

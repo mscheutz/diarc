@@ -247,9 +247,9 @@ const RobotChat = (
         <div className='h-[40rem] shadow-md'>
             <MainContainer className='rounded-md'>
                 <Sidebar position="left">
-                    <div className="flex flex-col justify-between h-full p-5">
+                    <div className="flex flex-col justify-between h-full">
 
-                        <div className="flex flex-col space-y-2">
+                        <div className="flex flex-col space-y-2 p-2">
                             {/* Name input */}
                             <div className='flex-1 flex items-center \
                                     justify-center flex-col'>
@@ -267,8 +267,9 @@ const RobotChat = (
                             {conversations}
                         </div>
 
-                        <ConnectionIndicator readyState={readyState} />
-
+                        <div className='p-5'>
+                            <ConnectionIndicator readyState={readyState} />
+                        </div>
                     </div>
                 </Sidebar>
 
