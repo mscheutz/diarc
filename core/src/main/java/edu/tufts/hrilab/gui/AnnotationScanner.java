@@ -126,7 +126,6 @@ public class AnnotationScanner {
         }
     }
 
-
     private static String mapJavaTypeToJsonSchemaType(String javaType) {
         // Example of mapping, add more cases as needed
         switch (javaType.toLowerCase()) {  // b/c toLowerCase used in getMethodsAnnotatedWithTRADEService

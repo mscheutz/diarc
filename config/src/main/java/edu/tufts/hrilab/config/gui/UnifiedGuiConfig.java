@@ -4,8 +4,7 @@ import edu.tufts.hrilab.action.GoalManagerEndpointComponent;
 import edu.tufts.hrilab.action.GoalViewerEndpointComponent;
 import edu.tufts.hrilab.action.GoalManagerImpl;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
-import edu.tufts.hrilab.gui.DemoApplication;
-import edu.tufts.hrilab.gui.EndpointManagerComponent;
+import edu.tufts.hrilab.gui.GuiManager;
 import edu.tufts.hrilab.map.MapComponent;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
 import edu.tufts.hrilab.nao.MockNaoComponent;
@@ -49,12 +48,12 @@ public class UnifiedGuiConfig extends DiarcConfiguration {
         // TODO: This should really be taking the map files from some resource folder, independent of the user
         createInstance(MapComponent.class, "-map_folder /home/lucien/Documents/diarc/elevator_lab_test -start_floor 1");
 
-        createInstance(EndpointManagerComponent.class);
+        createInstance(GuiManager.class);
     }
 
     public static void main(String[] args) {
         UnifiedGuiConfig config = new UnifiedGuiConfig();
         config.runConfiguration();
-        SpringApplication.run(DemoApplication.class, args);
+        SpringApplication.run(GuiManager.class, args);
     }
 }

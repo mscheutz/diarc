@@ -10,7 +10,6 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Component
 public class TradeServiceTracker {
@@ -31,7 +30,6 @@ public class TradeServiceTracker {
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     executorService.scheduleAtFixedRate(this::trackAllTradeCalls, 5, 10, TimeUnit.SECONDS);
   }
-
 
   private void trackAllTradeCalls() {
     TRADEServiceInfo beforeService;
@@ -56,7 +54,7 @@ public class TradeServiceTracker {
     }
   }
 
-  // also used in DemoApplication @PostMapping("/invoke-service"), so made public
+  // also used in GuiManager @PostMapping("/invoke-service"), so made public
   public static Map<String, String[]> parseServiceStrings(Set<String> serviceStrings) {
     Map<String, String[]> servicesToTrack = new HashMap<>();
 
