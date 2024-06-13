@@ -157,7 +157,7 @@ useEffect(() => {
 
 #### Adding your component to the server
 
-1. Add your component to `EndpointManagerComponent.java`. This file is in
+1. Add your component to `GuiManager.java`. This file is in
    `diarc/core/src/main/java/edu/tufts/hrilab/gui`.
 2. Find your getter service and use it to find the Web Socket handler you
    defined in point 3 above.

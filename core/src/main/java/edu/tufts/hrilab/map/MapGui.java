@@ -124,8 +124,9 @@ public class MapGui extends TextWebSocketHandler {
             // Fetch and send robot pose
             fetchRobotPose(session);
 
-            // Fetch and send key locations
+            // Fetch and send key/past locations
             fetchKeyLocations(session);
+            fetchPastLocations(session);
 
         } catch (Exception e) {
             log.error("Failed to retrieve or convert map data: {}", e.getMessage(), e);
@@ -186,7 +187,6 @@ public class MapGui extends TextWebSocketHandler {
 
             Point2d pixelPosition = new Point2d(x, y);
             Point3d meterPosition = mapComponent.currFloorMap.getPixelMap().toMeter(pixelPosition);
-            recordLocation(meterPosition);
             x = meterPosition.getX();
             y = meterPosition.getY();
 
@@ -198,6 +198,7 @@ public class MapGui extends TextWebSocketHandler {
                 response.put("message", "Navigation to point initiated successfully.");
                 log.info("Navigation to point successfully initiated.");
                 fetchRobotPose(session);  // Call to fetch robot pose after successful navigation
+                recordLocation(meterPosition);  // Create new location and add to past locations
                 fetchPastLocations(session);
             } else {
                 response.put("success", false);
@@ -239,7 +240,6 @@ public class MapGui extends TextWebSocketHandler {
                 response.put("message", "Navigation to location initiated successfully.");
                 log.info("Navigation to location {} initiated successfully.", location);
                 fetchRobotPose(session);  // Call to fetch robot pose after successful navigation
-                fetchPastLocations(session);
             } else {
                 response.put("success", false);
                 response.put("message", "Failed to initiate navigation to location.");
@@ -374,32 +374,34 @@ public class MapGui extends TextWebSocketHandler {
         log.info("Fetching past locations.");
 
         JSONObject response = new JSONObject();
+
+        // Early exit if no locations are stored
+        // initial location is excluded from "pastLocations"
+        if (storedPoses.isEmpty()) {
+            response.put("pastLocations", new JSONObject()); // Empty object for no locations
+            session.sendMessage(new TextMessage(response.toString()));
+            return;
+        }
+
         JSONObject finalLocationsWithPositions = new JSONObject();
-
         try {
-            if (storedPoses.isEmpty()) {
-                log.info("No past locations stored.");
-                response.put("success", false);
-                response.put("error", "No past locations available.");
-            } else {
-                for (Map.Entry<Symbol, Pair<Point3d, Quat4d>> entry : storedPoses.entrySet()) {
-                    Symbol symbol = entry.getKey();
-                    Pair<Point3d, Quat4d> pose = entry.getValue();
-                    Point3d position = pose.getLeft();
+            for (Map.Entry<Symbol, Pair<Point3d, Quat4d>> entry : storedPoses.entrySet()) {
+                Symbol symbol = entry.getKey();
+                Pair<Point3d, Quat4d> pose = entry.getValue();
+                Point3d position = pose.getLeft();
 
-                    Point2d robotPixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(position);
+                Point2d robotPixelPosition = mapComponent.currFloorMap.getPixelMap().toPixel(position);
 
-                    JSONObject positionJson = new JSONObject();
-                    positionJson.put("x", robotPixelPosition.getX());
-                    positionJson.put("y", robotPixelPosition.getY());
+                JSONObject positionJson = new JSONObject();
+                positionJson.put("x", robotPixelPosition.getX());
+                positionJson.put("y", robotPixelPosition.getY());
 
-                    finalLocationsWithPositions.put(symbol.toString(), positionJson);
-                }
-
-                response.put("pastLocations", finalLocationsWithPositions);
-                response.put("success", true);
-                response.put("message", "Past locations fetched successfully.");
+                finalLocationsWithPositions.put(symbol.toString(), positionJson);
             }
+
+            response.put("pastLocations", finalLocationsWithPositions);
+            response.put("success", true);
+            response.put("message", "Past locations fetched successfully.");
         } catch (Exception e) {
             log.error("Error fetching past locations: {}", e.getMessage(), e);
             response.put("success", false);
