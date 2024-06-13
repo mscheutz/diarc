@@ -257,11 +257,9 @@ public class Camera {
 
   //FIXME
   private void cleanup() {
-    cleanupFuture = executor.submit(new Runnable() {
-      public void run() {
-        captureDevice.delete();
-        captureDevice = null;
-      }
+    cleanupFuture = executor.submit(() -> {
+      captureDevice.delete();
+      captureDevice = null;
     });
   }
 
