@@ -19,9 +19,12 @@ using namespace ade::stm;
 
 void NeuralDetector::loadConfig(const std::string &configFile) {
   //get directory
-  unsigned found = configFile.find_last_of("/\\"); // check if config file is filename or path
-  std::string dir = configFile.substr(0, found + 1);
-  std::string model_file;
+  fs::path homedir(getenv("HOME"));
+  fs::path diarc(".diarc");
+  fs::path vision("vision");
+  fs::path detectors("detectors");
+  fs::path p(configFile);
+  fs::path dir = homedir / diarc / vision / detectors / p.stem();
   std::string backEnd;
   std::string type;
   uint64_t totalClasses;
@@ -47,7 +50,8 @@ void NeuralDetector::loadConfig(const std::string &configFile) {
 
   // dnn configuration options
   Json::Value config = root["config"];
-  model_file = dir + config["model"].asString();
+  fs::path model_file(config["model"].asString());
+  fs::path model_path = dir / model_file;
   inputSize = config["input_size"].asInt64();
   backEnd = config["backend"].asString();
   confidence_thresh = config["conf_thresh"].asDouble();
@@ -58,7 +62,7 @@ void NeuralDetector::loadConfig(const std::string &configFile) {
 
   fillClassNames(totalClasses);
 
-  NeuralDetector::initModel(model_file, backEnd, type);
+  NeuralDetector::initModel(model_path.string(), backEnd, type);
 }
 
 NeuralDetector::NeuralDetector(const long long &processorId, const int imgWidth, const int imgHeight)
