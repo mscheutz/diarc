@@ -126,10 +126,6 @@ void MemoryObjectInterface::initialize(JNIEnv* newEnv) {
   if (memoryObject_addFace == NULL)
     printf("[MemoryObjectInterface::initialize]: Error! addFace\n");
 
-  memoryObject_setNumOrientations = env->GetMethodID(memoryObjectClass, "setNumOrientations", "(I)V");
-  if (memoryObject_setNumOrientations == NULL)
-    printf("[MemoryObjectInterface::initialize]: Error! setNumOrientations\n");
-
   memoryObject_setNumMaskIndices = env->GetMethodID(memoryObjectClass, "setNumMaskIndices", "(I)V");
   if (memoryObject_setNumMaskIndices == NULL)
     printf("[MemoryObjectInterface::initialize]: Error! setNumMaskIndices\n");
@@ -138,9 +134,13 @@ void MemoryObjectInterface::initialize(JNIEnv* newEnv) {
   if (memoryObject_addMaskIndex == NULL)
     printf("[MemoryObjectInterface::initialize]: Error! addMaskIndex\n");
 
-  memoryObject_addOrientation = env->GetMethodID(memoryObjectClass, "addOrientation", "(IDDDD)V");
-  if (memoryObject_addOrientation == NULL)
-    printf("[MemoryObjectInterface::initialize]: Error! addOrientation\n");
+  memoryObject_setOrientation = env->GetMethodID(memoryObjectClass, "setOrientation", "(DDDD)V");
+  if (memoryObject_setOrientation == NULL)
+    printf("[MemoryObjectInterface::initialize]: Error! setOrientation\n");
+
+  memoryObject_setImageSize = env->GetMethodID(memoryObjectClass, "setImageSize", "(II)V");
+  if (memoryObject_setImageSize == NULL)
+    printf("[MemoryObjectInterface::initialize]: Error! setImageSize\n");
 
   memoryObject_setbasetransform = env->GetMethodID(memoryObjectClass, "setBaseTransform", "([D)V");
   if (memoryObject_setbasetransform == NULL)
@@ -230,6 +230,7 @@ void MemoryObjectInterface::fillJavaMemoryObject(const MemoryObject::ConstPtr& c
   const cv::Point3d& dimensions = current->getTrackingMask()->getDimensions();
   setDimensions(dimensions.x, dimensions.y, dimensions.z);
   setBaseTransform(current->getTrackingMask()->getTransform());
+  setImageSize(current->getCaptureData()->frame.cols, current->getCaptureData()->frame.rows);
 
   // add mask
   setImageMask(current->getDetectionMask()->getIndicesMask());
@@ -384,13 +385,13 @@ void MemoryObjectInterface::setMesh(pcl::PointCloud<pcl::PointXYZ>::ConstPtr poi
   }
 }
 
-void MemoryObjectInterface::setNumOrientations(const int size) {
-  env->CallVoidMethod(memoryObject, memoryObject_setNumOrientations, (jint) size);
+void MemoryObjectInterface::setOrientation(const double& x, const double& y, const double& z, const double& w) {
+  LOG4CXX_DEBUG(logger, boost::format("[setOrientation] orientation: (%f,%f,%f,%f).") % x % y % z % w);
+  env->CallVoidMethod(memoryObject, memoryObject_setOrientation, (jdouble) x, (jdouble) y, (jdouble) z, (jdouble) w);
 }
 
-void MemoryObjectInterface::setOrientation(const int index, const double& x, const double& y, const double& z, const double& w) {
-  LOG4CXX_DEBUG(logger, boost::format("[setOrientation] index: %d. orientation: (%f,%f,%f,%f).") % index % x % y % z % w);
-  env->CallVoidMethod(memoryObject, memoryObject_addOrientation, (jint) index, (jdouble) x, (jdouble) y, (jdouble) z, (jdouble) w);
+void MemoryObjectInterface::setImageSize(const int& width, const int& height) {
+  env->CallVoidMethod(memoryObject, memoryObject_setImageSize, (jint) width, (jint) height);
 }
 
 void MemoryObjectInterface::setBaseTransform(const cv::Mat& transform) {

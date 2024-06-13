@@ -9,7 +9,6 @@
 #ifndef DIARC_VISION_GRASP_AGILEGRASP_HPP
 #define DIARC_VISION_GRASP_AGILEGRASP_HPP
 
-#include "stm/MemoryObject.hpp"
 #include "Grasp.hpp"
 
 #include <agile_grasp/localization.h>
@@ -32,7 +31,7 @@ namespace diarc {
 
       void loadConfig(const std::string &config);
 
-      std::vector<Grasp> calculateGraspPoses(diarc::stm::MemoryObject::Ptr& object);
+      std::vector<Grasp> calculateGraspPoses(pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud, const cv::Mat &transform);
 
      private:
 

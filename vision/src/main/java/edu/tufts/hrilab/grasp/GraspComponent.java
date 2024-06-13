@@ -2,6 +2,7 @@ package edu.tufts.hrilab.grasp;
 
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.util.resource.Resources;
@@ -12,7 +13,6 @@ import edu.tufts.hrilab.vision.stm.MemoryObject;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
-import javax.vecmath.Matrix4d;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +39,15 @@ public class GraspComponent extends DiarcComponent {
     } else {
       log.error("Could not find log4cxx configuration file: {}.", log4cxxConfig);
     }
+    shouldRunExecutionLoop = false;
+  }
+
+  @Override
+  protected void executionLoop() {
+    if (TRADE.getAvailableServices(new TRADEServiceConstraints().name("getTypeId").argTypes(Symbol.class)).isEmpty()) {
+      return;
+    }
+
     sandbox();
   }
 
@@ -75,13 +84,37 @@ public class GraspComponent extends DiarcComponent {
   }
 
   public List<Grasp> calculateGraspOptions(MemoryObject mo, List<? extends Term> constraints) {
-    GraspDetectorModule.calculateGraspPoses(mo);
-    return new ArrayList<>();
+    double[][] cloud = mo.getPointCloud();
+    int numPoints = cloud.length;
+    double[] cloudArray = new double[numPoints * 3];
+    for (int n = 0; n < numPoints; ++n) {
+      for (int dim = 0; dim < 3; ++dim) {
+        cloudArray[dim + n*3] = cloud[n][dim];
+      }
+    }
+
+    List<Grasp> graspOptions = GraspDetectorModule.calculateGraspPoses(mo.getBaseTransformArray(), cloudArray, mo.getImageWidth(), mo.getImageHeight());
+    return graspOptions;
   }
 
   private void sandbox() {
-    MemoryObject mo = new MemoryObject();
-    mo.setBaseTransform(new Matrix4d(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
-    calculateGraspOptions(mo);
+//    MemoryObject mo = new MemoryObject();
+//    mo.setBaseTransform(new Matrix4d(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15));
+//    mo.setNumPoints(3);
+//    mo.addPoint(0, 1,2,3);
+//    mo.addPoint(1, 4,5,6);
+//    mo.addPoint(2, 7,8,9);
+//    mo.setImageSize(1,3);
+
+    try {
+      long typeId = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTypeId").argTypes(Symbol.class).notInGroups("physobj")).call(Long.class, Factory.createPredicate("object(X)"));
+      List<MemoryObject> mos = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTokens").argTypes(Long.class).notInGroups("physobj")).call(List.class, typeId);
+
+      for (MemoryObject mo : mos) {
+        calculateGraspOptions(mo);
+      }
+    } catch (TRADEException e) {
+      log.error("Error in sandbox", e);
+    }
   }
 }
