@@ -19,8 +19,13 @@ using namespace ade::stm;
 
 void NeuralDetector::loadConfig(const std::string &configFile) {
   //get directory
-  unsigned found = configFile.find_last_of("/\\"); // check if config file is filename or path
-  std::string dir = configFile.substr(0, found + 1);
+  fs::path homedir(getenv("HOME"));
+  fs::path diarc(".diarc");
+  fs::path vision("vision");
+  fs::path detectors("detectors");
+  fs::path p(configFile);
+  fs::path full_path = homedir / diarc / vision / detectors / p.stem();
+  std::string dir = full_path.string();
   std::string model_file;
   std::string backEnd;
   std::string type;
