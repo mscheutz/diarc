@@ -6,9 +6,19 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+/**
+ * Organizes TRADE services into structured data for easier access.
+ * It groups services by their designated groups or defaults them to "Ungrouped" if none is specified.
+ */
 @Service
 public class TradeServiceIntegrator {
 
+  /**
+   * Organizes available TRADE services into groups for better accessibility.
+   * Each service is represented with its description, return type, and parameter names.
+   *
+   * @return A map of service group names to sets of service details.
+   */
   public Map<String, Set<Map<String, String>>> getServicesOrganized() {
     // Initialize the map to organize services by their groups
     Map<String, Set<Map<String, String>>> organizedServices = new HashMap<>();

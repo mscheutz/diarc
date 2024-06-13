@@ -11,11 +11,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Tracks TRADE services, including initialization and periodic updates.
+ * It registers services at startup and schedules periodic checks to manage service interactions.
+ */
 @Component
 public class TradeServiceTracker {
 
   private static final Logger log = LoggerFactory.getLogger(TradeServiceTracker.class);
 
+  /**
+   * Initializes the component by registering all TRADE services and setting up a scheduled task
+   * to track service calls.
+   */
   @PostConstruct
   public void initializeAndRegister() {
     try {
@@ -31,6 +39,10 @@ public class TradeServiceTracker {
     executorService.scheduleAtFixedRate(this::trackAllTradeCalls, 5, 10, TimeUnit.SECONDS);
   }
 
+  /**
+   * Periodically tracks all TRADE service calls, invoking pre- and post-service hooks for monitoring
+   * and logging purposes.
+   */
   private void trackAllTradeCalls() {
     TRADEServiceInfo beforeService;
     TRADEServiceInfo afterService;
@@ -54,7 +66,13 @@ public class TradeServiceTracker {
     }
   }
 
-  // also used in GuiManager @PostMapping("/invoke-service"), so made public
+  /**
+   * Parses a set of service descriptions into a more structured form, detailing service names and their
+   * respective argument types.
+   *
+   * @param serviceStrings A set of service descriptions.
+   * @return A map of service names to their corresponding argument type arrays.
+   */
   public static Map<String, String[]> parseServiceStrings(Set<String> serviceStrings) {
     Map<String, String[]> servicesToTrack = new HashMap<>();
 
@@ -80,11 +98,11 @@ public class TradeServiceTracker {
   }
 
   /**
-   * Converts a type string to its full class name representation.
-   * Might need to be extended based on the specific types.
+   * Converts a simplified type string into a fully qualified class name, supporting both primitive
+   * types and array representations.
    *
    * @param type The type string to convert.
-   * @return The full class name representation of the type.
+   * @return The full class name of the given type.
    */
   private static String convertToFullClassName(String type) {
     Map<String, String> typeMappings = new HashMap<>();
@@ -109,11 +127,21 @@ public class TradeServiceTracker {
     return type;
   }
 
+  /**
+   * TRADE service method to be invoked before a service call for monitoring.
+   *
+   * @param args Arguments passed to the service call.
+   */
   @TRADEService
   public void beforeServiceWrapper(Object[] args) {
     log.debug("Before service call... Args: {}", args);
   }
 
+  /**
+   * TRADE service method to be invoked after a service call for monitoring.
+   *
+   * @param args Arguments passed to the service call.
+   */
   @TRADEService
   public void afterServiceWrapper(Object[] args) {
     log.debug("After service call... Args: {}", args);

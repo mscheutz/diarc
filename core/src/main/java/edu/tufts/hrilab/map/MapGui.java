@@ -28,11 +28,22 @@ import java.awt.image.BufferedImage;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Handles WebSocket messages for MapComponent-related functionalities within the web interface.
+ * This class processes and responds to various navigation and location requests, converting
+ * them into TRADEService calls and updates within the application.
+ */
 public class MapGui extends TextWebSocketHandler {
 
     private final String baseUrl;
     private final MapComponent mapComponent;
 
+    /**
+     * Constructs a MapGui handler with specified base URL and map component.
+     *
+     * @param baseUrl The base URL for building image resource paths.
+     * @param mapComponent The component responsible for map and navigation operations.
+     */
     public MapGui(String baseUrl, MapComponent mapComponent) {
         this.baseUrl = baseUrl;
         this.mapComponent = mapComponent;
@@ -42,6 +53,14 @@ public class MapGui extends TextWebSocketHandler {
 
     private final Map<Symbol,Pair<Point3d,Quat4d>>storedPoses = new HashMap<>();
 
+    /**
+     * Handles incoming WebSocket messages by identifying the action requested
+     * and delegating to the appropriate method.
+     *
+     * @param session The current WebSocket session.
+     * @param message The text message received from the client.
+     * @throws Exception Throws if an error occurs during message processing or handling.
+     */
     @Override
     public void handleTextMessage(@NonNull WebSocketSession session, TextMessage message) throws Exception {
         JSONObject request = new JSONObject(message.getPayload());
@@ -77,6 +96,12 @@ public class MapGui extends TextWebSocketHandler {
         }
     }
 
+    /**
+     * Fetches and sends map data to the client, including current floor and associated metadata.
+     *
+     * @param session The current WebSocket session.
+     * @throws IOException Throws if an error occurs in retrieving or sending map data.
+     */
     private void fetchMapData(WebSocketSession session) throws IOException {
         log.info("Fetching map data for the current floor.");
         JSONObject response = new JSONObject();
@@ -110,6 +135,13 @@ public class MapGui extends TextWebSocketHandler {
         }
     }
 
+    /**
+     * Converts a PGM image file to a PNG image file and returns the new filename.
+     *
+     * @param pgmPathStr The path string of the PGM file to convert.
+     * @return The filename of the converted PNG image.
+     * @throws ImageReadException, ImageWriteException, IOException Throws if reading from or writing to the file system fails.
+     */
     public String convertPGMtoPNG(String pgmPathStr) throws ImageReadException, ImageWriteException, IOException {
         Path pgmPath = Paths.get(pgmPathStr);
         String pngFilename = pgmPath.getFileName().toString().replace(".pgm", ".png");
@@ -130,6 +162,18 @@ public class MapGui extends TextWebSocketHandler {
         return pngFilename;
     }
 
+    /**
+     * Initiates navigation to a specified point and orientation based on client requests.
+     *
+     * @param session The current WebSocket session.
+     * @param x The x-coordinate to navigate to.
+     * @param y The y-coordinate to navigate to.
+     * @param quatX The x-component of the quaternion representing orientation.
+     * @param quatY The y-component of the quaternion representing orientation.
+     * @param quatZ The z-component of the quaternion representing orientation.
+     * @param quatW The w-component (scalar) of the quaternion representing orientation.
+     * @throws IOException Throws if an error occurs in sending responses to the client.
+     */
     private void navigateToPoint(WebSocketSession session, double x, double y, double quatX, double quatY, double quatZ, double quatW) throws IOException {
         log.info("Initiating navigation to coordinates: x={}, y={}, and quaternion: quatX={}, quatY={}, quatZ={}, quatW={}", x, y, quatX, quatY, quatZ, quatW);
         JSONObject response = new JSONObject();
@@ -170,6 +214,13 @@ public class MapGui extends TextWebSocketHandler {
         session.sendMessage(new TextMessage(response.toString()));
     }
 
+    /**
+     * Navigates to a known location identified by a Symbol reference.
+     *
+     * @param session The current WebSocket session.
+     * @param location The Symbol reference of the location to navigate to.
+     * @throws IOException Throws if an error occurs in sending responses to the client.
+     */
     private void goToLocation(WebSocketSession session, Symbol location) throws IOException {
         log.info("Attempting to navigate to location: {}", location);
         JSONObject response = new JSONObject();
@@ -204,6 +255,12 @@ public class MapGui extends TextWebSocketHandler {
         session.sendMessage(new TextMessage(response.toString()));
     }
 
+    /**
+     * Fetches and sends the current pose of the robot to the client.
+     *
+     * @param session The current WebSocket session.
+     * @throws IOException Throws if an error occurs in sending responses to the client.
+     */
     private void fetchRobotPose(WebSocketSession session) throws IOException {
         log.info("Fetching robot pose.");
         JSONObject response = new JSONObject();
@@ -244,6 +301,12 @@ public class MapGui extends TextWebSocketHandler {
         session.sendMessage(new TextMessage(response.toString()));
     }
 
+    /**
+     * Fetches and sends information about key locations and their properties to the client.
+     *
+     * @param session The current WebSocket session.
+     * @throws IOException Throws if an error occurs in sending responses to the client.
+     */
     private void fetchKeyLocations(WebSocketSession session) throws IOException {
         log.info("Fetching key locations from FloorMap.");
 
@@ -347,7 +410,7 @@ public class MapGui extends TextWebSocketHandler {
         session.sendMessage(new TextMessage(response.toString()));
     }
 
-    // depreciated. Fetching key locations from the TRADE service.
+    // @Deprecated. Fetching key locations from the TRADE service.
     // replaced with MapComponent native methods getAllObjects from FloorMap.
 //    private void fetchKeyLocations(WebSocketSession session) throws IOException {
 //        log.info("Fetching key locations from the TRADE service.");

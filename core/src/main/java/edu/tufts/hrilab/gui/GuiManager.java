@@ -138,10 +138,23 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
     //==========================================================================
     // RESTful endpoints
     //==========================================================================
+    /**
+     * Retrieves an organized map of available TRADE services grouped by their groups.
+     * This method utilizes TradeServiceIntegrator to provide a structured view of services.
+     *
+     * @return A map where each key is a group name and the value is a set of maps detailing service properties.
+     */
     @GetMapping("/services")
     public Map<String, Set<Map<String, String>>> getServices() {
         return tradeServiceIntegrator.getServicesOrganized();
     }
+
+    /**
+     * Lists all available TRADE services by extracting the service string from each service info.
+     * This method provides a simple way to view all the services that can be invoked.
+     *
+     * @return A set containing strings that represent each available TRADE service.
+     */
     @GetMapping("/list-trade-services")
     public Set<String> listTradeServices() {
         Collection<TRADEServiceInfo> services = TRADE.getAvailableServices();
@@ -150,6 +163,14 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Invokes a specified TRADE service using parameters provided in JSON format.
+     * Validates the service name and parameters, handles service invocation and error management.
+     *
+     * @param serviceName The name of the service to invoke.
+     * @param rawArgs     The JSON node containing arguments for the service invocation.
+     * @return A ResponseEntity containing the result of the service invocation or an error message.
+     */
     @PostMapping("/invoke-service")
     public ResponseEntity<String> invokeService(
             @RequestParam("serviceName") String serviceName,
@@ -223,13 +244,12 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
     // Methods
     //==========================================================================
     /**
-     * Converts a string value to an object of the specified type.
-     * Might need to be extended based on the specific types.
+     * Converts a string value to an object of the specified type, supporting basic and complex data types.
      *
      * @param value    The string value to convert.
      * @param typeName The type name to convert the value to.
      * @return The object of the specified type.
-     * @throws Exception If the conversion fails or the type is unsupported.
+     * @throws IOException, ClassNotFoundException if conversion fails.
      */
     private Object convertToType(String value, String typeName) throws IOException, ClassNotFoundException {
         ObjectMapper mapper = new ObjectMapper();

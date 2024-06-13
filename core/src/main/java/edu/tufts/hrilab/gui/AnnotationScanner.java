@@ -11,8 +11,19 @@ import java.util.*;
 
 import ai.thinkingrobots.trade.TRADEService;
 
+/**
+ * Scans and generates OpenAPI documentation for all methods annotated with TRADEService.
+ * This class uses reflection to find all annotated methods and constructs an OpenAPI specification
+ * as a JSON file that details each service's endpoints, parameters, and responses.
+ */
 public class AnnotationScanner {
 
+    /**
+     * Main method to execute the AnnotationScanner.
+     * It generates the OpenAPI specification and writes it to a JSON file.
+     *
+     * @param args Command line arguments (not used).
+     */
     public static void main(String[] args) {
         try {
             Map<String, Object> openApiSpec = generateOpenAPISpecification();
@@ -29,6 +40,12 @@ public class AnnotationScanner {
         }
     }
 
+    /**
+     * Generates an OpenAPI 3.0 specification for all methods annotated with TRADEService.
+     * It organizes API details into paths, operations, and responses.
+     *
+     * @return A map representing the OpenAPI specification.
+     */
     private static Map<String, Object> generateOpenAPISpecification() {
         Map<String, Object> openApiSpec = new HashMap<>();
         openApiSpec.put("openapi", "3.0.0");
@@ -64,7 +81,7 @@ public class AnnotationScanner {
     }
 
     private static Map<String, Object> createRequestBodyExample(MethodDetail methodDetail) {
-        // This is a simplified example. You need to adjust it based on the actual requirements and parameters.
+        // This is a simplified example. Can be customized to add example values for parameters, etc.
         Map<String, Object> requestBody = new HashMap<>();
         Map<String, Object> content = new HashMap<>();
         Map<String, Object> applicationJson = new HashMap<>();

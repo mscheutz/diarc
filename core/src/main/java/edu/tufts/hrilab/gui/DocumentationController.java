@@ -15,17 +15,25 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.ResourceLoader;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Provides RESTful access to dynamically generated API documentation
+ * based on TRADE service annotations and OpenAPI specifications.
+ */
 @RestController
 public class DocumentationController {
 
     @Autowired
     private ResourceLoader resourceLoader;
 
+    /**
+     * Retrieves and serves the pre-generated OpenAPI JSON documentation.
+     *
+     * @return A ResponseEntity containing the API documentation as a Resource.
+     */
     @GetMapping("/all-api-docs")
     public ResponseEntity<Resource> getCustomApiDocs() {
         Resource resource = resourceLoader.getResource("classpath:/serviceDocumentation.json");
@@ -35,7 +43,13 @@ public class DocumentationController {
         return ResponseEntity.ok(resource);
     }
 
-    // Method to read and parse the service documentation JSON
+    /**
+     * Loads, parses, and returns a structured map of service documentation
+     * from the serviceDocumentation.json file.
+     *
+     * @return A map containing the structured documentation data.
+     * @throws Exception if there is an error reading or parsing the documentation.
+     */
     public static Map<String, Map<String, Object>> loadServiceDocumentation() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         InputStream inputStream = new ClassPathResource("serviceDocumentation.json").getInputStream();
@@ -57,6 +71,12 @@ public class DocumentationController {
         return serviceMap;
     }
 
+    /**
+     * Filters and returns API documentation for currently available TRADE services.
+     * It adjusts the full documentation based on the services that are actively available.
+     *
+     * @return A ResponseEntity with the filtered API documentation as a JSON string.
+     */
     @GetMapping("/available-api-docs")
     public ResponseEntity<String> getAvailableApiDocs() {
         try {
