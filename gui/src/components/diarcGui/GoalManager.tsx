@@ -19,7 +19,7 @@ import { Allotment } from "allotment";
 import { flattenTree } from "react-accessible-treeview";
 
 import FileBrowser from "./FileBrowser";
-import ActionGoalForm from "./ActionGoalForm";
+import ActionGoalForm, { ActionForm, GoalForm } from "./ActionGoalForm";
 import ActionFormContext from "./ActionFormContext";
 import ConnectionIndicator from "./ConnectionIndicator";
 import ActionDatabase from "./ActionDatabase";
@@ -120,7 +120,7 @@ const GoalManager = () => {
                       rounded-md justify-items-stretch">
                 {/* Fully tabbed view, for mobile */}
                 <Tabs className="max-h-full shrink md:hidden flex flex-col">
-                    <TabList>
+                    <TabList className="select-none">
                         <Tab>Action Database</Tab>
                         <Tab>File Browser</Tab>
                         <Tab>Submit Action</Tab>
@@ -144,7 +144,12 @@ const GoalManager = () => {
                     </TabPanel>
                     <TabPanel>
                         <div className="w-full h-full overflow-y-auto">
-                            <ActionGoalForm sendMessage={sendMessage} />
+                            <ActionForm sendMessage={sendMessage} />
+                        </div>
+                    </TabPanel>
+                    <TabPanel>
+                        <div className="w-full h-full overflow-y-auto">
+                            <GoalForm sendMessage={sendMessage} />
                         </div>
                     </TabPanel>
                 </Tabs>
