@@ -4,6 +4,9 @@
 
 package edu.tufts.hrilab.llm;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.util.Http;
 
 import java.beans.Transient;
@@ -350,7 +353,7 @@ public class LLMComponent extends DiarcComponent {
   @Action
   public Completion visionCompletion (Prompt prompt, byte[] image) {
     List<VisionMessage> vmessages = new ArrayList<VisionMessage>();
-    vmessages.add(new VisionMessage(prompt.toString(), image));
+    vmessages.add(new VisionMessage("user", prompt.toString(), image));
     return visionCompletion(vmessages);
   }
 
@@ -370,5 +373,18 @@ public class LLMComponent extends DiarcComponent {
         log.error("Service " + service + " not implemented");
         return null;
     }
+  }
+
+  @TRADEService
+  @Action
+  public Completion visionCompletion (Prompt prompt) {
+    byte[] image = null;
+    try {
+      image = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFrame")).call(byte[].class);
+    } catch (TRADEException ex) {
+      log.error("Cannot get frame for vision inference");
+      return null;
+    }
+    return visionCompletion(prompt, image);
   }
 }

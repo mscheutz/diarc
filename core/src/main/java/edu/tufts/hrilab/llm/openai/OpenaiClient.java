@@ -291,6 +291,7 @@ public class OpenaiClient {
       headers.put("Authorization", "Bearer " + apiKey);
     }
     Gson gson = new Gson();
+    log.debug(gson.toJson(requestBody));
     String response = Http.sendPostRequest(chatCompletionEndpoint, requestBody, headers);
     log.debug("Response: " + response);
     return gson.fromJson(response, OpenaiChatCompletionResponse.class);

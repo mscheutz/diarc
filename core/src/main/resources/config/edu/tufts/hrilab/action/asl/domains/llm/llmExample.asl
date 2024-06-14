@@ -96,10 +96,11 @@ import edu.tufts.hrilab.llm.Prompt;
 }
 
 () = llmVisionExample() {
-  op:log("info", "llmExample()");
-  String !message = "You are a robot. Describe what you see in the image, dispassionately.";
+  op:log("info", "llmVisionExample()");
+  String !message = "You are a robot. Describe what you see in the image dispassionately.";
   Prompt !prompt = op:newObject("edu.tufts.hrilab.llm.Prompt", !message);
   op:sleep(5000);
-  byte[] !image = act:getFrame();
-  op:log("info", "got image");
+  Completion !res = act:visionCompletion(!prompt);
+  String !text = op:invokeMethod(!res, "getText");
+  op:log("info", "!text");
 }
