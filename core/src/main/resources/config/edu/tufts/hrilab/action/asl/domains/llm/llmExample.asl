@@ -94,3 +94,12 @@ import edu.tufts.hrilab.llm.Prompt;
 () = stringTest () {
   String !test = "This is a test";
 }
+
+() = llmVisionExample() {
+  op:log("info", "llmExample()");
+  String !message = "You are a robot. Describe what you see in the image, dispassionately.";
+  Prompt !prompt = op:newObject("edu.tufts.hrilab.llm.Prompt", !message);
+  op:sleep(5000);
+  byte[] !image = act:getFrame();
+  op:log("info", "got image");
+}
