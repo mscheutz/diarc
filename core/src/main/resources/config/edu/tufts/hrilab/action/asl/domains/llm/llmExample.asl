@@ -14,8 +14,8 @@ import edu.tufts.hrilab.llm.Prompt;
 () = llmExample() {
   op:log("info", "llmExample()");
   String !prompt = "Create a javascript function that takes a string and returns it in reverse character order.";
-  //String !model = "text-davinci-003";
   Completion !res = act:chatCompletion(!prompt);
+  op:log("info", "got res");
   String !text = op:invokeMethod(!res, "getText");
   java.util.List !codeList = op:invokeMethod(!res, "getCode");
   String !code;

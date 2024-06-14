@@ -44,6 +44,8 @@ public class OpenaiClient {
   // https://platform.openai.com/docs/models
   // 2024-02-09
   public static Map<String, Integer> chatCompletionModels = Map.ofEntries(
+    entry("gpt-4o", 128000),
+    entry("gpt-4o-2024-05-13", 128000),
     entry("gpt-3.5-turbo", 4096),
     entry("gpt-3.5-turbo-0125", 16385),
     entry("gpt-3.5-turbo-0301", 4096),
