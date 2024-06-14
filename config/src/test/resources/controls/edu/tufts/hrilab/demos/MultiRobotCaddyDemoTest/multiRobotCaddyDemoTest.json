@@ -319,7 +319,7 @@
       "serviceArgs" : [ "I have found a plan to recover", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "it will take about 25 seconds", "true" ]
+      "serviceArgs" : [ "it will take about 23 seconds", "true" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "Do you want me to execute it?", "true" ]
@@ -441,8 +441,8 @@
       "serviceName" : "goToPose",
       "serviceArgs" : [ "dropOff", "true" ]
     }, {
-      "serviceName" : "moveToRelative",
-      "serviceArgs" : [ "arm", "(0.0, 0.0, -0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
+      "serviceName" : "moveObjectFetchItPrimitive",
+      "serviceArgs" : [ "physobj_4:physobj", "arm", "down", "justifications()" ]
     }, {
       "serviceName" : "releaseObject",
       "serviceArgs" : [ "arm", "physobj_4:physobj", "1.0", "justifications()" ]

@@ -57,6 +57,7 @@ public class MultiRobotCaddyDemoTest extends GenerativeDiarcIntegrationTest {
         addServiceToObserve("moveTo", String.class, Symbol.class);
         addServiceToObserve("moveToRelative", String.class, Point3d.class, Quat4d.class);
         addServiceToObserve("moveObjectAbove", Symbol.class, Symbol.class, String.class);
+        addServiceToObserve("moveObjectFetchItPrimitive", Symbol.class, String.class, String.class);
         addServiceToObserve("getTypeId", List.class);
         addServiceToObserve("graspObject", String.class, Symbol.class, Float.class);
         addServiceToObserve("goToPose", String.class, Symbol.class);

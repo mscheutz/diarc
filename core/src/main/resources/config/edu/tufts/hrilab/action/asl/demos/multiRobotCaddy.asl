@@ -245,7 +245,7 @@ import java.util.List;
     act:startVisualSearch(!receiverRef);
     act:getTokenIds(!receiverRef);
 
-    act:moveObjectAbove(?item, !receiverRef);
+    act:moveObjectAbove(?item, !receiverRef, "arm");
     act:moveObjectInDirection(?item, down);
     act:releaseObject(?item);
 
