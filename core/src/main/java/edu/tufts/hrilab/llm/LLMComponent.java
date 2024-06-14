@@ -5,6 +5,8 @@
 package edu.tufts.hrilab.llm;
 
 import edu.tufts.hrilab.util.Http;
+
+import java.beans.Transient;
 import java.io.InputStreamReader;
 
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ public class LLMComponent extends DiarcComponent {
   static private Logger log = LoggerFactory.getLogger(LLMComponent.class);
 
   public String service = "openai";
-  public String model = "gpt-3.5-turbo";
+  public String model = "gpt-4o";
   public float temperature = 0.5f;
 
   private Tokenizer tokenizer = new Tokenizer();
@@ -338,6 +340,32 @@ public class LLMComponent extends DiarcComponent {
       case "llama" :
         log.warn("llama.cpp server cannot change model to " + model);
         return new Completion(llama.chatCompletion(chat));
+      default :
+        log.error("Service " + service + " not implemented");
+        return null;
+    }
+  }
+
+  @TRADEService
+  @Action
+  public Completion visionCompletion (Prompt prompt, byte[] image) {
+    List<VisionMessage> vmessages = new ArrayList<VisionMessage>();
+    vmessages.add(new VisionMessage(prompt.toString(), image));
+    return visionCompletion(vmessages);
+  }
+
+  /**
+   * Generates a chat completion using a vision model
+   * method based on the currently set service.
+   * @param vmessages The vision messages to use
+   * @return a Completion object containing the chat completion response
+   **/
+  @TRADEService
+  @Action
+  public Completion visionCompletion (List <VisionMessage> vmessages) {
+    switch (service) {
+      case "openai" :
+        return new Completion(openai.visionCompletion(vmessages));
       default :
         log.error("Service " + service + " not implemented");
         return null;

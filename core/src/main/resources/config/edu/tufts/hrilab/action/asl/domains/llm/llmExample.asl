@@ -13,7 +13,8 @@ import edu.tufts.hrilab.llm.Prompt;
 //["LLM Example"]
 () = llmExample() {
   op:log("info", "llmExample()");
-  String !prompt = "Create a javascript function that takes a string and returns it in reverse character order.";
+  String !message = "Create a javascript function that takes a string and returns it in reverse character order.";
+  Prompt !prompt = op:newObject("edu.tufts.hrilab.llm.Prompt", !message);
   Completion !res = act:chatCompletion(!prompt);
   op:log("info", "got res");
   String !text = op:invokeMethod(!res, "getText");
@@ -88,4 +89,8 @@ import edu.tufts.hrilab.llm.Prompt;
   op:invokeMethod(!chat, "addUserMessage", !message);
   !response = act:chatCompletion(!chat);
   act:toGoal(!response);
+}
+
+() = stringTest () {
+  String !test = "This is a test";
 }
