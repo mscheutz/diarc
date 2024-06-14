@@ -16,196 +16,199 @@ import useWebSocket from "react-use-websocket";
 import "allotment/dist/style.css"
 import { Allotment } from "allotment";
 
-import ActionBrowser from "./ActionBrowser";
+import { flattenTree } from "react-accessible-treeview";
+
 import FileBrowser from "./FileBrowser";
-import ActionGoalForm from "./ActionGoalForm";
+import ActionGoalForm, { ActionForm, GoalForm } from "./ActionGoalForm";
 import ActionFormContext from "./ActionFormContext";
 import ConnectionIndicator from "./ConnectionIndicator";
-import { Button } from "../Button";
-import { flattenTree } from "react-accessible-treeview";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faSync } from "@fortawesome/free-solid-svg-icons";
+import ActionDatabase from "./ActionDatabase";
+import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
 const GoalManager = () => {
-  // Action list state
-  const [baseActionList, setBaseActionList] = useState<any[]>(flattenTree({
-    name: "",
-    children: []
-  }));
-  const [actionList, setActionList] = useState<any[]>(baseActionList.slice());
-  const [actionFormContext, setActionFormContext] = useState<string[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    // Action list state
+    const [baseActionList, setBaseActionList] = useState<any[]>(flattenTree({
+        name: "",
+        children: []
+    }));
+    const [actionList, setActionList] = useState<any[]>(baseActionList.slice());
+    const [actionFormContext, setActionFormContext] = useState<string[]>([]);
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
-  const [fileTree, setFileTree] = useState<object>({
-    id: "0",
-    name: "asl",
-    children: [
-      { id: "1", name: "subfolder", children: [] }
-    ]
-  });
+    const [fileTree, setFileTree] = useState<object>({
+        id: "0",
+        name: "asl",
+        children: [
+            { id: "1", name: "subfolder", children: [] }
+        ]
+    });
 
-  const filterNodes = (value: string) => {
-    if (value && value !== "") {
-      const filtered: any[] = [];
-      baseActionList.forEach((item) => {
-        if (item.id === 0) {
-          return;
+    const filterNodes = (value: string) => {
+        if (value && value !== "") {
+            const filtered: any[] = [];
+            baseActionList.forEach((item) => {
+                if (item.id === 0) {
+                    return;
+                }
+                if (item.name.toUpperCase().includes(value.toUpperCase())) {
+                    filtered.push(item);
+                }
+            });
+            filtered.unshift(
+                Object.assign({
+                    ...baseActionList[0],
+                    children: baseActionList[0].children.filter((id: any) =>
+                        filtered.find((fitem) => fitem.id === id)
+                    ),
+                })
+            );
+            setActionList(filtered);
+        } else {
+            setActionList(baseActionList.slice());
         }
-        if (item.name.toUpperCase().includes(value.toUpperCase())) {
-          filtered.push(item);
+    };
+
+    // Export button
+    const [exportStatus, setExportStatus] = useState<string>("");
+
+    const handleExport = () => {
+        setExportStatus("wait");
+        let array: number[] = [];
+        // @ts-ignore
+        for (const [value] of selectedIds.entries()) {
+            array.push(value);
         }
-      });
-      filtered.unshift(
-        Object.assign({
-          ...baseActionList[0],
-          children: baseActionList[0].children.filter((id: any) =>
-            filtered.find((fitem) => fitem.id === id)
-          ),
-        })
-      );
-      setActionList(filtered);
-    } else {
-      setActionList(baseActionList.slice());
-    }
-  };
+        sendMessage(JSON.stringify({ "type": "export", "selected": array }));
+    };
 
-  // Export button
-  const [exportStatus, setExportStatus] = useState<string>("");
+    // Configure websocket
+    const url: URL = new URL(document.location.toString());
+    url.port = "8080";
+    url.protocol = "ws";
 
-  const handleExport = () => {
-    setExportStatus("wait");
-    let array: number[] = [];
-    // @ts-ignore
-    for (const [value] of selectedIds.entries()) {
-      array.push(value);
-    }
-    sendMessage(JSON.stringify({ "type": "export", "selected": array }));
-  };
+    const wsBaseUrl = url.toString();
+    const { sendMessage, lastMessage, readyState } =
+        useWebSocket(`${wsBaseUrl}goalManager`);
 
-  // Configure websocket
-  const url: URL = new URL(document.location.toString());
-  url.port = "8080";
-  url.protocol = "ws";
+    useEffect(() => {
+        if (!lastMessage) return;
+        const data = JSON.parse(lastMessage.data);
 
-  const wsBaseUrl = url.toString();
-  const { sendMessage, lastMessage, readyState } =
-    useWebSocket(`${wsBaseUrl}goalManager`);
-
-  useEffect(() => {
-    if (!lastMessage) return;
-    const data = JSON.parse(lastMessage.data);
-
-    if (data.actions) {
-      setBaseActionList(flattenTree({
-        name: "", children: data.actions
-      }));
-      setActionList(flattenTree({
-        name: "", children: data.actions
-      }));
-    }
-    if (data.files) {
-      setFileTree({ name: "", children: [data.files] });
-    }
-    if (data.export) {
-      setExportStatus("successful")
-    }
-  },
-    [lastMessage]);
+        if (data.actions) {
+            setBaseActionList(flattenTree({
+                name: "", children: data.actions
+            }));
+            setActionList(flattenTree({
+                name: "", children: data.actions
+            }));
+        }
+        if (data.files) {
+            setFileTree({ name: "", children: [data.files] });
+        }
+        if (data.export) {
+            setExportStatus("successful")
+        }
+    },
+        [lastMessage]);
 
 
-  // Render
-  return (
-    <ActionFormContext.Provider value={actionFormContext}>
-      <div className="h-[40rem] w-full flex flex-col outline shadow-md
+    // Render
+    return (
+        <ActionFormContext.Provider value={actionFormContext}>
+            <div className="h-[40rem] max-h-[40rem] w-full flex flex-col outline shadow-md
                       outline-1 outline-[#d1dbe3] items-center p-5 gap-5
-                      rounded-md">
-        {/* Upper split pane */}
-        <Allotment
-          className="h-full overflow-scroll outline outline-1
-                     outline-[#d1dbe3] shadow-md rounded-md"
-          minSize={150}
-          snap
-        >
-          {/* Left split pane */}
-          <Allotment.Pane
-            preferredSize={"50%"}
-            minSize={350}
-          >
-            <Allotment vertical snap>
-              {/* Action database */}
-              <Allotment.Pane
-                preferredSize={"60%"}
-                minSize={150}
-                className="flex flex-col"
-              >
-                {/* Menu bar */}
-                <div className="p-3 rounded-md outline outline-1
-                                outline-[#d1dbe3] flex flex-row gap-3
-                                overflow-auto items-stretch shrink-0"
+                      rounded-md justify-items-stretch">
+                {/* Fully tabbed view, for mobile */}
+                <Tabs className="max-h-full shrink md:hidden flex flex-col">
+                    <TabList className="select-none">
+                        <Tab>Action Database</Tab>
+                        <Tab>File Browser</Tab>
+                        <Tab>Submit Action</Tab>
+                        <Tab>Submit Goal</Tab>
+                    </TabList>
+
+                    <TabPanel className="flex flex-col flex-1 w-[90vw] min-h-0 shrink">
+                        <ActionDatabase
+                            actionList={actionList}
+                            setActionFormContext={setActionFormContext}
+                            setSelectedIds={setSelectedIds}
+                            filterNodes={filterNodes}
+                            handleExport={handleExport}
+                            exportStatus={exportStatus}
+                        />
+                    </TabPanel>
+                    <TabPanel>
+                        <FileBrowser
+                            fileTree={fileTree}
+                        />
+                    </TabPanel>
+                    <TabPanel>
+                        <div className="w-full h-full overflow-y-auto">
+                            <ActionForm sendMessage={sendMessage} />
+                        </div>
+                    </TabPanel>
+                    <TabPanel>
+                        <div className="w-full h-full overflow-y-auto">
+                            <GoalForm sendMessage={sendMessage} />
+                        </div>
+                    </TabPanel>
+                </Tabs>
+
+                {/* Split pane, for wide screens */}
+                {/* Horizontal split pane */}
+                <Allotment
+                    className="h-full overflow-scroll outline outline-1
+                     outline-[#d1dbe3] shadow-md rounded-md hidden md:block"
+                    minSize={150}
+                    snap
                 >
-                  <input
-                    type="text"
-                    className="block box-border rounded 
-                               text-sm border border-slate-500
-                               font-mono grow pl-2"
-                    placeholder="Filter actions..."
-                    onChange={(e) => {
-                      filterNodes(e.target.value);
-                    }}
-                  >
-                  </input>
-                  <Button onClick={handleExport}>
-                    Export selected
-                  </Button>
-                  {exportStatus ? (
-                    <div className="flex flex-rol items-center">
-                      {exportStatus === "wait" ? (
-                        <FontAwesomeIcon icon={faSync} color="#efd402" spin />
-                      ) : (
-                        <FontAwesomeIcon icon={faCheck} color="#00a505" />
-                      )}
-                    </div>) : null}
-                </div>
+                    {/* Left pane */}
+                    <Allotment.Pane
+                        preferredSize={"50%"}
+                        minSize={350}
+                    >
+                        {/* Vertical split pane */}
+                        <Allotment vertical snap>
+                            {/* Top pane */}
+                            <Allotment.Pane
+                                preferredSize={"60%"}
+                                minSize={150}
+                                className="flex flex-col"
+                            >
+                                <ActionDatabase
+                                    actionList={actionList}
+                                    setActionFormContext={setActionFormContext}
+                                    setSelectedIds={setSelectedIds}
+                                    filterNodes={filterNodes}
+                                    handleExport={handleExport}
+                                    exportStatus={exportStatus}
+                                />
+                            </Allotment.Pane>
 
-                {/* Results */}
-                <div className="w-full h-1/2 grow">
-                  {actionList.length === 1 ? (
-                    <div className="pl-1">No actions match filter.</div>
-                  ) : (
-                    <ActionBrowser
-                      actionList={actionList}
-                      setActionFormContext={setActionFormContext}
-                      setSelectedIds={setSelectedIds}
-                    />
-                  )}
-                </div>
-              </Allotment.Pane>
+                            {/* Bottom pane */}
+                            <Allotment.Pane minSize={150}>
+                                <FileBrowser
+                                    fileTree={fileTree}
+                                />
+                            </Allotment.Pane>
+                        </Allotment>
+                    </Allotment.Pane>
 
-              {/* File browser */}
-              <Allotment.Pane minSize={150}>
-                <FileBrowser
-                  fileTree={fileTree}
-                />
-              </Allotment.Pane>
-            </Allotment>
-          </Allotment.Pane>
+                    {/* Right pane */}
+                    <Allotment.Pane
+                        className="overflow-y-auto"
+                        minSize={300}
+                    >
+                        <div className="w-full h-full overflow-y-auto">
+                            <ActionGoalForm sendMessage={sendMessage} />
+                        </div>
+                    </Allotment.Pane>
+                </Allotment>
 
-          {/* Right pane: form view */}
-          <Allotment.Pane
-            className="overflow-y-auto"
-            minSize={300}
-          >
-            <div className="w-full h-full overflow-y-auto">
-              <ActionGoalForm sendMessage={sendMessage} />
+                <ConnectionIndicator readyState={readyState} />
             </div>
-          </Allotment.Pane>
-        </Allotment>
-
-        {/* Everything else */}
-        <ConnectionIndicator readyState={readyState} />
-      </div>
-    </ActionFormContext.Provider>
-  );
+        </ActionFormContext.Provider>
+    );
 };
 
 export default GoalManager;

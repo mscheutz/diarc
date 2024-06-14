@@ -140,6 +140,8 @@ const ActionForm = ({ sendMessage }) => {
     );
 };
 
+export { ActionForm };
+
 // @ts-ignore
 const GoalForm = ({ sendMessage }) => {
     const { register, handleSubmit, reset } = useForm();
@@ -178,12 +180,14 @@ const GoalForm = ({ sendMessage }) => {
     );
 };
 
+export { GoalForm };
+
 // @ts-ignore
 const ActionGoalForm = ({ sendMessage }) => {
     return (
         <div className="p-5">
             <Tabs>
-                <TabList>
+                <TabList className="select-none">
                     <Tab>Submit Action</Tab>
                     <Tab>Submit Goal</Tab>
                 </TabList>

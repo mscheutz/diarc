@@ -6,7 +6,7 @@
  * receiving feedback through DIARC.
  */
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css"
 import {
@@ -23,6 +23,9 @@ import {
 } from "@chatscope/chat-ui-kit-react";
 
 import ConnectionIndicator from './ConnectionIndicator';
+import useWebSocket from 'react-use-websocket';
+
+import "./RobotChat.css"
 
 let counter = 0; // list items need unique keys
 
@@ -44,68 +47,149 @@ type Chat = {
 
 export type { Chat };
 
-const createAvatar = (chat: Chat) => {
-    return (
-        <Avatar
-            name={chat.robotName}
-            src={chat.profileImagePath}
-        />
-    );
-};
-
-const createConversation = (chat: Chat) => {
-    return (
-        <Conversation
-            key={counter++}
-            info={chat.messageList.length > 0 ?
-                chat.messageList.slice(-1)[0].message
-                : "No messages yet"}
-            lastSenderName={chat.messageList.length > 0 ?
-                chat.messageList.slice(-1)[0].sender
-                : null}
-            name={chat.robotName}
-            onClick={(e) => chat.focusThisChat(chat)}
-        >
-            {createAvatar(chat)}
-        </Conversation>
-    );
-};
-
-export { createConversation };
-
-const createConversationHeader = (chat: Chat) => {
-    return (
-        <ConversationHeader>
-            {createAvatar(chat)}
-            <ConversationHeader.Content
-                userName={chat.robotName}
-            />
-        </ConversationHeader>
-    );
-};
-
-const createMessageList = (chat: Chat) => {
-    return chat.messageList.map(
-        (message, index) =>
-            <Message key={index} model={message} />
-    );
-};
-
 // Remove line breaks from messages when sending
 const clean = (message: string) => {
     return message.replace("<br>", "").replace(/(\r\n|\n|\r)/gm, "")
 }
 
-const RobotChat = (
-    {
-        currentChat, setCurrentChat,
-        chats, setChats,
-        conversations, setConversations,
-        username, setUsername,
-        sendMessage, lastMessage, readyState,
-    }
-) => {
+const RobotChat = () => {
+    // SET UP MOBILE NAVIGATION //
+    // Adapted from "Toggle conversation list using the back button" example at
+    // https://chatscope.io/storybook/react/?path=/docs/components-maincontainer--docs
+    const [sidebarVisible, setSidebarVisible] = useState<boolean>(false);
+    const [sidebarStyle, setSidebarStyle] = useState<object>({});
+    const [chatContainerStyle, setChatContainerStyle] = useState<object>({});
+
+    const handleBackClick = useCallback(() => {
+        setSidebarVisible(!sidebarVisible);
+    }, [sidebarVisible, setSidebarVisible]);
+    const handleConversationClick = useCallback(() => {
+        setSidebarVisible(false);
+    }, [sidebarVisible, setSidebarVisible]);
+
+    useEffect(() => {
+        if (sidebarVisible) {
+            setSidebarStyle({
+                display: "flex",
+                flexBasis: "auto",
+                width: "100%",
+                maxWidth: "100%"
+            });
+            setChatContainerStyle({ display: "none" });
+        } else {
+            setSidebarStyle({});
+            setChatContainerStyle({});
+        }
+    }, [sidebarVisible, setSidebarVisible, setSidebarStyle,
+        setChatContainerStyle])
+
+    // COMPONENT CREATION METHODS //
+    const createConversation = (chat: Chat) => {
+        return (
+            <Conversation
+                key={counter++}
+                onClick={() => {
+                    chat.focusThisChat(chats.indexOf(chat));
+                    handleConversationClick();
+                }}
+            >
+                <Avatar
+                    name={chat.robotName}
+                    src={chat.profileImagePath}
+                    className='marginRightImportant'
+                />
+                <Conversation.Content
+                    name={chat.robotName}
+                    lastSenderName={chat.messageList.length > 0 ?
+                        chat.messageList.slice(-1)[0].sender
+                        : null}
+                    info={chat.messageList.length > 0 ?
+                        chat.messageList.slice(-1)[0].message
+                        : "No messages yet"}
+                    className="displayFlexImportant"
+                />
+            </Conversation>
+        );
+    };
+
+    const createConversationHeader = (chat: Chat) => {
+        return (
+            <ConversationHeader>
+                <ConversationHeader.Back onClick={() => handleBackClick()} />
+                <Avatar
+                    name={chat.robotName}
+                    src={chat.profileImagePath}
+                    className='marginRightImportant'
+                />
+                <ConversationHeader.Content
+                    userName={chat.robotName}
+                />
+            </ConversationHeader>
+        );
+    };
+
+    const nameInput = () => {
+        return (
+            <>
+                {/* Normally hidden, appears on large screens */}
+                <div className="flex-1 items-center justify-center
+                                flex-col space-y-2 mx-2 hidden
+                                md:flex">
+                    <label className='self-start text-xs mt-2'>
+                        Speaker name
+                    </label>
+                    <MessageInput
+                        className='w-full'
+                        attachButton={false}
+                        sendButton={false}
+                        placeholder='Set your name here'
+                        onChange={(innerText) => setUsername(innerText)}
+                        sendOnReturnDisabled={true}
+                        value={username}
+                    />
+                </div>
+
+                {/* Normally visible, hides on large screens. However, also
+                requires the sidebar be visible */}
+                {<div className="flex-1 items-center justify-center
+                                        flex-col space-y-2 mx-2 md:hidden">
+                    <label className='self-start text-xs mt-2'>
+                        Speaker name
+                    </label>
+                    <MessageInput
+                        className='w-full'
+                        attachButton={false}
+                        sendButton={false}
+                        placeholder='Set your name here'
+                        onChange={(innerText) => setUsername(innerText)}
+                        sendOnReturnDisabled={true}
+                        value={username}
+                    />
+                </div> && sidebarVisible}
+            </>
+        );
+    };
+
     // SET UP STATE //
+    const [currentChat, setCurrentChat] = useState<number>(0);
+
+    const [chats, setChats] = useState<Chat[]>([
+        {
+            robotName: "",
+            profileImagePath: "",
+            messageList: [],
+            focusThisChat: () => null
+        }
+    ]);
+
+    const [conversations, setConversations] = useState(
+        <ConversationList>
+            {chats.map((chat) => createConversation(chat))}
+        </ConversationList>
+    );
+
+    const [username, setUsername] = useState<string>("evan");
+
     const postUserMessage = (chat: Chat, message: string, username: string) => {
         let newChats = chats.slice();
         for (let i = 0; i < chats.length; i++) {
@@ -149,6 +233,12 @@ const RobotChat = (
         [chats.toString()]);
 
     // SET UP WEBSOCKET //
+    const url: URL = new URL(document.location.toString());
+    url.port = "8080";
+    url.protocol = "ws";
+    const wsBaseUrl = url.toString();
+    const { sendMessage, lastMessage, readyState } = useWebSocket(`${wsBaseUrl}chat`);
+
     useEffect(() => {
         if (!lastMessage) return;
         const data = JSON.parse(lastMessage.data);
@@ -159,7 +249,12 @@ const RobotChat = (
                 .slice(1, -1)
                 .split(", ");
 
-            let newChats: Chat[] = chats.slice();
+            let newChats: Chat[];
+            if (!chats[0].robotName)
+                newChats = chats.slice(1);
+            else
+                newChats = chats.slice();
+
             outer:
             for (const name of names) {
                 for (const chat of chats) {
@@ -198,11 +293,11 @@ const RobotChat = (
 
     const handleSendMessage = (message: string) => {
         message = clean(message)
-        postUserMessage(currentChat, message, username);
+        postUserMessage(chats[currentChat], message, username);
         sendMessage(JSON.stringify({
             message: message,
             sender: clean(username),
-            recipient: currentChat.robotName
+            recipient: chats[currentChat].robotName
         }));
         setConversations(
             <ConversationList>
@@ -212,19 +307,20 @@ const RobotChat = (
     };
 
     // CREATE RENDER //
-    // This is the usual chat container but it only makes sense if there
-    // is a conversation already selected...
     let chatContainer = (
-        <ChatContainer className='w-3/4'>
-            {createConversationHeader(currentChat)}
+        <ChatContainer className='w-3/4' style={chatContainerStyle}>
+            {createConversationHeader(chats[currentChat])}
 
             <MessageList>
-                {createMessageList(currentChat)}
+                {chats[currentChat].messageList.map(
+                    (message, index) =>
+                        <Message key={index} model={message} />
+                )}
             </MessageList>
 
             <MessageInput
                 autoFocus
-                placeholder={"Talk with " + currentChat.robotName
+                placeholder={"Talk with " + chats[currentChat].robotName
                     + "..."}
                 attachButton={false}
                 onSend={(message) => handleSendMessage(message)}
@@ -232,51 +328,27 @@ const RobotChat = (
         </ChatContainer>
     );
 
-    // ...so on startup we just display a welcome message
-    if (currentChat.robotName === "") {
-        chatContainer = (
-            <div className='flex-1 flex items-center justify-center'>
-                <p className='text-gray-600'>
-                    Select a chat on the left to get started!
-                </p>
-            </div>
-        );
-    }
-
     return (
-        <div className='h-[40rem] shadow-md'>
-            <MainContainer className='rounded-md'>
-                <Sidebar position="left">
+        <div className="flex flex-col w-full h-[40rem] outline outline-1
+                        outline-[#d1dbe3] justify-between shadow-md rounded-md
+                        p-3 gap-3 md:p-5 md:gap-5">
+            <MainContainer className='rounded-md shadow-md' responsive>
+                <Sidebar position="left" style={sidebarStyle}>
                     <div className="flex flex-col justify-between h-full">
 
-                        <div className="flex flex-col space-y-2 p-2">
-                            {/* Name input */}
-                            <div className='flex-1 flex items-center \
-                                    justify-center flex-col'>
-                                <MessageInput
-                                    className='w-11/12 mt-3'
-                                    attachButton={false}
-                                    sendButton={false}
-                                    placeholder='Set your name here'
-                                    onChange={(innerText) => setUsername(innerText)}
-                                    sendOnReturnDisabled={true}
-                                    value={username}
-                                />
-                            </div>
-
+                        <div className="flex flex-col space-y-1 md:space-y-2
+                                        p-1 md:p-2">
+                            {nameInput()}
                             {conversations}
-                        </div>
-
-                        <div className='p-5'>
-                            <ConnectionIndicator readyState={readyState} />
                         </div>
                     </div>
                 </Sidebar>
 
                 {chatContainer}
-
             </MainContainer>
-        </div >
+
+            <ConnectionIndicator readyState={readyState} />
+        </div>
     );
 }
 
