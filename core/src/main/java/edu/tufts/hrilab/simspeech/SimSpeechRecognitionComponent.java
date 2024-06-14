@@ -40,7 +40,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
   public boolean useUnk = false;
   public boolean useCommand = true;
   public boolean toLower = false;
-  public boolean useGui = false; // turned off because it gives a java.awt.HeadlessException???
+  public boolean useGui = true;
   public Color textColor = Color.BLACK;
   private String input = null; // input from GUI visualizer, typically
   private String output = null; // output saved for getText
@@ -67,13 +67,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
 
   @Override
   protected void init() {
-      try {
-          TRADE.registerAllServices(this, this.listener.getName());
-      } catch (TRADEException e) {
-          log.error("Failed to register TRADE services");
-      }
-
-      try {
+    try {
       if (autoInput) {
         String file = Resources.createFilepath(resourceConfigPath, SConfig);
         sbr = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(file)));
@@ -124,22 +118,12 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
    *
    * @param in the new speech input
    */
-  @TRADEService
   public void setText(String in) {
     synchronized (syncObj) {
       input = in;
     }
   }
 
-  public Symbol getSpeaker() {
-    return this.speaker;
-  }
-
-  public Symbol getListener() {
-    return this.listener;
-  }
-
-  @TRADEService
   public void setSpeaker(Symbol speaker) {
     this.speaker = speaker;
       log.info("speaker set to: {}", this.speaker);

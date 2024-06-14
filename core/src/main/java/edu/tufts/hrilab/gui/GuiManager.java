@@ -15,8 +15,6 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.map.MapComponent;
 import edu.tufts.hrilab.map.MapGui;
 import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -38,8 +36,8 @@ import java.util.stream.Collectors;
 
 /**
  * A DIARC component that sets up and maintains a websocket server that
- * communicates to the browser-based GUI. Depending on command-line arguments,
- * will initiate and expose the various endpoints.
+ * communicates to the browser-based GUI. Detects the presence of configured
+ * endpoints and registers them so they can be accessed.
  * @author Lucien Bao, Hengxu Li
  * @version 1.0
  */
@@ -49,10 +47,8 @@ import java.util.stream.Collectors;
 @EnableWebSocket
 @ComponentScan(basePackages = "edu.tufts.hrilab")
 public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
-    private static final Logger log = LoggerFactory.getLogger(GuiManager.class);
-
     //==========================================================================
-    // configuration properties
+    // Configuration properties
     //==========================================================================
     /**
      * The base URL for the server.
@@ -75,6 +71,92 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
      */
     private String[] parseCorsOrigins() {
         return corsOrigin.split(",");
+    }
+
+    /**
+     * Converts a string value to an object of the specified type, supporting basic and complex data types.
+     *
+     * @param value    The string value to convert.
+     * @param typeName The type name to convert the value to.
+     * @return The object of the specified type.
+     * @throws IOException, ClassNotFoundException if conversion fails.
+     */
+    private Object convertToType(String value, String typeName) throws IOException, ClassNotFoundException {
+        ObjectMapper mapper = new ObjectMapper();
+        System.out.println("Converting value: " + value + " to type: " + typeName); // Log the value and type being converted
+
+        switch (typeName) {
+            case "java.lang.String":
+            case "string":
+                return value;
+            case "java.lang.Integer":
+            case "int":
+                return Integer.parseInt(value);
+            case "java.lang.Double":
+            case "double":
+                return Double.parseDouble(value);
+            case "java.lang.Boolean":
+            case "boolean":
+                return Boolean.parseBoolean(value);
+            case "java.util.List":
+            case "list":
+                JsonNode rootNode = mapper.readTree(value);
+                if (rootNode.isArray()) {
+                    List<Object> list = new ArrayList<>();
+                    System.out.println("List detected in JSON: " + rootNode.toString()); // Print the entire list for debugging
+                    for (JsonNode node : rootNode) {
+                        if (node.isTextual()) {
+                            String text = node.asText();
+                            System.out.println("Processing list item: " + text); // Print each list item
+                            // Assuming a "name:type" representation for a Variable or Symbol
+                            try {
+                                Variable var = Factory.createVariable(text);
+                                list.add(var);
+                                System.out.println("Successfully created Variable: " + text);
+                            } catch (Exception e) {
+                                System.out.println("Failed to create Variable from: " + text);
+                                // Handle failure to create Variable
+                            }
+                        } else {
+                            // Handle other types of list elements as needed
+                            System.out.println("Non-textual list item encountered: " + node.toString());
+                        }
+                    }
+                    return list;
+                } else {
+                    System.out.println("Expected a JSON array but found: " + rootNode.getNodeType()); // Log unexpected node type
+                }
+                break;
+            case "edu.tufts.hrilab.fol.Symbol":
+            case "symbol":
+                // Using "name:type" Syntax
+                return Factory.createSymbol(value);
+            case "edu.tufts.hrilab.fol.Variable":
+            case "variable":
+                return Factory.createVariable(value);
+            case "javax.vecmath.Matrix4d":
+            case "matrix4d":
+                try {
+                    JsonNode arrayNode = mapper.readTree(value);
+                    if (!arrayNode.isArray() || arrayNode.size() != 16) {
+                        throw new IllegalArgumentException("Matrix4d requires an array of 16 values.");
+                    }
+                    double[] matrixValues = new double[16];
+                    for (int i = 0; i < 16; i++) {
+                        matrixValues[i] = arrayNode.get(i).asDouble();
+                    }
+                    Matrix4d matrix = new Matrix4d(matrixValues);
+                    System.out.println("Successfully created Matrix4d from: " + Arrays.toString(matrixValues));
+                    return matrix;
+                } catch (Exception e) {
+                    System.out.println("Error parsing Matrix4d values from: " + value);
+                    throw new IllegalArgumentException("Invalid format for Matrix4d values.", e);
+                }
+            default:
+                System.out.println("Unsupported argument type encountered: " + typeName); // Log unsupported type
+                throw new IllegalArgumentException("Unsupported argument type: " + typeName);
+        }
+        return null;
     }
 
     //==========================================================================
@@ -127,7 +209,7 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
     }
 
     //==========================================================================
-    // autowired components
+    // Autowired components
     //==========================================================================
     @Autowired
     private TradeServiceIntegrator tradeServiceIntegrator;
@@ -238,94 +320,5 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to invoke service '" + baseServiceName + "': " + e.getMessage());
         }
-    }
-
-    //==========================================================================
-    // Methods
-    //==========================================================================
-    /**
-     * Converts a string value to an object of the specified type, supporting basic and complex data types.
-     *
-     * @param value    The string value to convert.
-     * @param typeName The type name to convert the value to.
-     * @return The object of the specified type.
-     * @throws IOException, ClassNotFoundException if conversion fails.
-     */
-    private Object convertToType(String value, String typeName) throws IOException, ClassNotFoundException {
-        ObjectMapper mapper = new ObjectMapper();
-        System.out.println("Converting value: " + value + " to type: " + typeName); // Log the value and type being converted
-
-        switch (typeName) {
-            case "java.lang.String":
-            case "string":
-                return value;
-            case "java.lang.Integer":
-            case "int":
-                return Integer.parseInt(value);
-            case "java.lang.Double":
-            case "double":
-                return Double.parseDouble(value);
-            case "java.lang.Boolean":
-            case "boolean":
-                return Boolean.parseBoolean(value);
-            case "java.util.List":
-            case "list":
-                JsonNode rootNode = mapper.readTree(value);
-                if (rootNode.isArray()) {
-                    List<Object> list = new ArrayList<>();
-                    System.out.println("List detected in JSON: " + rootNode.toString()); // Print the entire list for debugging
-                    for (JsonNode node : rootNode) {
-                        if (node.isTextual()) {
-                            String text = node.asText();
-                            System.out.println("Processing list item: " + text); // Print each list item
-                            // Assuming a "name:type" representation for a Variable or Symbol
-                            try {
-                                Variable var = Factory.createVariable(text);
-                                list.add(var);
-                                System.out.println("Successfully created Variable: " + text);
-                            } catch (Exception e) {
-                                System.out.println("Failed to create Variable from: " + text);
-                                // Handle failure to create Variable
-                            }
-                        } else {
-                            // Handle other types of list elements as needed
-                            System.out.println("Non-textual list item encountered: " + node.toString());
-                        }
-                    }
-                    return list;
-                } else {
-                    System.out.println("Expected a JSON array but found: " + rootNode.getNodeType()); // Log unexpected node type
-                }
-                break;
-            case "edu.tufts.hrilab.fol.Symbol":
-            case "symbol":
-                // Using "name:type" Syntax
-                return Factory.createSymbol(value);
-            case "edu.tufts.hrilab.fol.Variable":
-            case "variable":
-                return Factory.createVariable(value);
-            case "javax.vecmath.Matrix4d":
-            case "matrix4d":
-                try {
-                    JsonNode arrayNode = mapper.readTree(value);
-                    if (!arrayNode.isArray() || arrayNode.size() != 16) {
-                        throw new IllegalArgumentException("Matrix4d requires an array of 16 values.");
-                    }
-                    double[] matrixValues = new double[16];
-                    for (int i = 0; i < 16; i++) {
-                        matrixValues[i] = arrayNode.get(i).asDouble();
-                    }
-                    Matrix4d matrix = new Matrix4d(matrixValues);
-                    System.out.println("Successfully created Matrix4d from: " + Arrays.toString(matrixValues));
-                    return matrix;
-                } catch (Exception e) {
-                    System.out.println("Error parsing Matrix4d values from: " + value);
-                    throw new IllegalArgumentException("Invalid format for Matrix4d values.", e);
-                }
-            default:
-                System.out.println("Unsupported argument type encountered: " + typeName); // Log unsupported type
-                throw new IllegalArgumentException("Unsupported argument type: " + typeName);
-        }
-        return null;
     }
 }
