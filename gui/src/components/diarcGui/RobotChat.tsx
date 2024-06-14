@@ -321,6 +321,24 @@ const RobotChat = () => {
                                 />
                             </div>
 
+                            {sidebarVisible ?
+                                <div
+                                    className="flex-1 items-center justify-center
+                                       flex-col space-y-2 mx-2 md:hidden">
+                                    <label className='self-start text-xs mt-2'>
+                                        Speaker name
+                                    </label>
+                                    <MessageInput
+                                        className='w-full'
+                                        attachButton={false}
+                                        sendButton={false}
+                                        placeholder='Set your name here'
+                                        onChange={(innerText) => setUsername(innerText)}
+                                        sendOnReturnDisabled={true}
+                                        value={username}
+                                    />
+                                </div> : null}
+
                             {conversations}
                         </div>
                     </div>
