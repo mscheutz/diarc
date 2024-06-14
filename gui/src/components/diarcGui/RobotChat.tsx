@@ -84,16 +84,6 @@ const RobotChat = () => {
         setChatContainerStyle])
 
     // COMPONENT CREATION METHODS //
-    const createAvatar = (chat: Chat) => {
-        return (
-            <Avatar
-                name={chat.robotName}
-                src={chat.profileImagePath}
-                className="marginRightImportant"
-            />
-        );
-    };
-
     const createConversation = (chat: Chat) => {
         return (
             <Conversation
@@ -103,7 +93,11 @@ const RobotChat = () => {
                     handleConversationClick();
                 }}
             >
-                {createAvatar(chat)}
+                <Avatar
+                    name={chat.robotName}
+                    src={chat.profileImagePath}
+                    className='marginRightImportant'
+                />
                 <Conversation.Content
                     name={chat.robotName}
                     lastSenderName={chat.messageList.length > 0 ?
@@ -122,7 +116,11 @@ const RobotChat = () => {
         return (
             <ConversationHeader>
                 <ConversationHeader.Back onClick={() => handleBackClick()} />
-                {createAvatar(chat)}
+                <Avatar
+                    name={chat.robotName}
+                    src={chat.profileImagePath}
+                    className='marginRightImportant'
+                />
                 <ConversationHeader.Content
                     userName={chat.robotName}
                 />
@@ -130,10 +128,45 @@ const RobotChat = () => {
         );
     };
 
-    const createMessageList = (chat: Chat) => {
-        return chat.messageList.map(
-            (message, index) =>
-                <Message key={index} model={message} />
+    const nameInput = () => {
+        return (
+            <>
+                {/* Normally hidden, appears on large screens */}
+                <div className="flex-1 items-center justify-center
+                                flex-col space-y-2 mx-2 hidden
+                                md:flex">
+                    <label className='self-start text-xs mt-2'>
+                        Speaker name
+                    </label>
+                    <MessageInput
+                        className='w-full'
+                        attachButton={false}
+                        sendButton={false}
+                        placeholder='Set your name here'
+                        onChange={(innerText) => setUsername(innerText)}
+                        sendOnReturnDisabled={true}
+                        value={username}
+                    />
+                </div>
+
+                {/* Normally visible, hides on large screens. However, also
+                requires the sidebar be visible */}
+                {<div className="flex-1 items-center justify-center
+                                        flex-col space-y-2 mx-2 md:hidden">
+                    <label className='self-start text-xs mt-2'>
+                        Speaker name
+                    </label>
+                    <MessageInput
+                        className='w-full'
+                        attachButton={false}
+                        sendButton={false}
+                        placeholder='Set your name here'
+                        onChange={(innerText) => setUsername(innerText)}
+                        sendOnReturnDisabled={true}
+                        value={username}
+                    />
+                </div> && sidebarVisible}
+            </>
         );
     };
 
@@ -279,7 +312,10 @@ const RobotChat = () => {
             {createConversationHeader(chats[currentChat])}
 
             <MessageList>
-                {createMessageList(chats[currentChat])}
+                {chats[currentChat].messageList.map(
+                    (message, index) =>
+                        <Message key={index} model={message} />
+                )}
             </MessageList>
 
             <MessageInput
@@ -302,43 +338,7 @@ const RobotChat = () => {
 
                         <div className="flex flex-col space-y-1 md:space-y-2
                                         p-1 md:p-2">
-                            {/* Name input */}
-                            <div
-                                className="flex-1 items-center justify-center
-                                           flex-col space-y-2 mx-2 hidden
-                                           md:flex">
-                                <label className='self-start text-xs mt-2'>
-                                    Speaker name
-                                </label>
-                                <MessageInput
-                                    className='w-full'
-                                    attachButton={false}
-                                    sendButton={false}
-                                    placeholder='Set your name here'
-                                    onChange={(innerText) => setUsername(innerText)}
-                                    sendOnReturnDisabled={true}
-                                    value={username}
-                                />
-                            </div>
-
-                            {sidebarVisible ?
-                                <div
-                                    className="flex-1 items-center justify-center
-                                       flex-col space-y-2 mx-2 md:hidden">
-                                    <label className='self-start text-xs mt-2'>
-                                        Speaker name
-                                    </label>
-                                    <MessageInput
-                                        className='w-full'
-                                        attachButton={false}
-                                        sendButton={false}
-                                        placeholder='Set your name here'
-                                        onChange={(innerText) => setUsername(innerText)}
-                                        sendOnReturnDisabled={true}
-                                        value={username}
-                                    />
-                                </div> : null}
-
+                            {nameInput()}
                             {conversations}
                         </div>
                     </div>

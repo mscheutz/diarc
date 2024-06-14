@@ -72,7 +72,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
     setTimeout(check, 1000);
 
     return (
-        <div className="w-full grow md:w-5/6 md:h-[50rem]">
+        <div className="w-full flex-1 md:w-5/6 mt-20">
             <Tabs forceRenderTabPanel>
                 <TabList hidden={waiting || failed} className="select-none">
                     {waiting ?
@@ -96,7 +96,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                 </TabList>
 
                 {waiting ?
-                    <TabPanel className="grid grid-column h-full m-48 space-y-5">
+                    <TabPanel className="grid grid-column m-48 space-y-5">
                         <div className="flex flex-row justify-center m-10">
                             <FontAwesomeIcon
                                 icon={faCog} spin size="10x"
@@ -109,7 +109,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                     </TabPanel>
                     : null}
                 {failed ?
-                    <TabPanel className="grid grid-column h-full m-48 space-y-5">
+                    <TabPanel className="grid grid-column m-48 space-y-5">
                         <div className="flex flex-row justify-center justify-items-center
                                         m-10">
                             <FontAwesomeIcon
