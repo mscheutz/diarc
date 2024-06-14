@@ -34,7 +34,9 @@ const ActionBrowser = ({ actionList, setActionFormContext, setSelectedIds }) => 
     };
 
     return (
-        <div className="w-full h-full overflow-x-scroll overflow-y-scroll">
+        <div className="flex flex-col w-full min-h-0 max-h-96 md:max-h-full
+                        shrink overflow-x-scroll overflow-y-scroll grow-0"
+        >
             <TreeView
                 data={actionList}
                 className="basic"

@@ -244,17 +244,24 @@ const RobotChat = (
     }
 
     return (
-        <div className='h-[40rem] shadow-md'>
-            <MainContainer className='rounded-md'>
+        <div className="flex flex-col w-full h-[40rem] outline outline-1
+        outline-[#d1dbe3] justify-between shadow-md rounded-md p-3 gap-3
+        md:p-5 md:gap-5">
+            <MainContainer className='rounded-md shadow-md'>
                 <Sidebar position="left">
                     <div className="flex flex-col justify-between h-full">
 
-                        <div className="flex flex-col space-y-2 p-2">
+                        <div className="flex flex-col space-y-1 md:space-y-2
+                        p-1 md:p-2">
                             {/* Name input */}
-                            <div className='flex-1 flex items-center \
-                                    justify-center flex-col'>
+                            <div className='flex-1 flex items-center
+                                    justify-center flex-col space-y-2'>
+                                <label className='self-start text-xs mt-2 ml-2
+                                    md:ml-3'>
+                                    Speaker name
+                                </label>
                                 <MessageInput
-                                    className='w-11/12 mt-3'
+                                    className='w-11/12'
                                     attachButton={false}
                                     sendButton={false}
                                     placeholder='Set your name here'
@@ -266,17 +273,14 @@ const RobotChat = (
 
                             {conversations}
                         </div>
-
-                        <div className='p-5'>
-                            <ConnectionIndicator readyState={readyState} />
-                        </div>
                     </div>
                 </Sidebar>
 
                 {chatContainer}
-
             </MainContainer>
-        </div >
+
+            <ConnectionIndicator readyState={readyState} />
+        </div>
     );
 }
 
