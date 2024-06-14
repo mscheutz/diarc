@@ -649,7 +649,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("move the plate up",
-                "INSTRUCT(commX,shafer,moveObject(shafer,VAR0,up),{plate(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(commX,shafer,moveObjectInDirection(shafer,VAR0,up),{plate(VAR0),DEFINITE(VAR0)})",
                 "commX",
                 "shafer"
         ));
@@ -661,19 +661,19 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("now move the plate forward",
-                "INSTRUCT(commX,shafer,moveObject(shafer,VAR0,forward),{plate(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(commX,shafer,moveObjectInDirection(shafer,VAR0,forward),{plate(VAR0),DEFINITE(VAR0)})",
                 "commX",
                 "shafer"
         ));
 
         assertTrue(testUtterance("now move the plate toward me",
-                "INSTRUCT(commX,shafer,moveObject(shafer,VAR0,toward,commX),{plate(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(commX,shafer,moveObjectRelativeTo(shafer,VAR0,toward,commX),{plate(VAR0),DEFINITE(VAR0)})",
                 "commX",
                 "shafer"
         ));
 
         assertTrue(testUtterance("move it toward me",
-                "INSTRUCT(commX,shafer,moveObject(shafer,VAR0,toward,commX),{it(VAR0),INFOCUS(VAR0)})",
+                "INSTRUCT(commX,shafer,moveObjectRelativeTo(shafer,VAR0,toward,commX),{it(VAR0),INFOCUS(VAR0)})",
                 "commX",
                 "shafer"
         ));

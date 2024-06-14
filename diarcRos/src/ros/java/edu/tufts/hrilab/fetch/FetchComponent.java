@@ -252,27 +252,6 @@ public class FetchComponent extends MoveItComponent implements FetchInterface {
   }
 
   @Override
-  public Justification moveObject(Symbol objectRef, String arm, String direction) {
-    log.debug("Starting moveObject " + direction);
-    Point3d relPoint = new Point3d(0, 0, 0);
-    switch (direction) {
-      case "up":
-        relPoint = new Point3d(0.0, 0.0, 0.15);
-        break;
-      case "down":
-        relPoint = new Point3d(0.0, 0.0, -0.10);
-        break;
-      case "forward":
-        relPoint = new Point3d(0.30, 0.0, 0.0);
-        break;
-      case "right":
-        relPoint = new Point3d(0.0, -0.30, 0.0);
-        break;
-    }
-    return moveToRelative(arm, relPoint, new Quat4d(0, 0, 0, 1));
-  }
-
-  @Override
   public Justification look(String direction) {
     Point3d point;
     switch (direction) {

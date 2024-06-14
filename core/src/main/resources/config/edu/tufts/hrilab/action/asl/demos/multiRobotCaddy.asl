@@ -246,7 +246,7 @@ import java.util.List;
     act:getTokenIds(!receiverRef);
 
     act:moveObjectAbove(?item, !receiverRef);
-    act:moveObject(?item, down);
+    act:moveObjectInDirection(?item, down);
     act:releaseObject(?item);
 
 }

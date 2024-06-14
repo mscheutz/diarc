@@ -28,7 +28,7 @@ import edu.tufts.hrilab.fol.Symbol;
     }
 
     act:goToPose(dropOff);
-    act:moveObject(?objectRef_0, down, ?arm);
+    act:moveObjectFetchItPrimitive(?objectRef_0, ?arm, down);
     act:releaseObject(?objectRef_0);
     op:log("debug", "[placeOn] successfully placed ?objectRef_0 on ?objectRef_1");
 }

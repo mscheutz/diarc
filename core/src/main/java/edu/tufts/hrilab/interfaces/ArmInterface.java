@@ -283,7 +283,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  public Justification pressObject(String group_name, Point3d object_location, Quat4d object_orientation);
+  Justification pressObject(String group_name, Point3d object_location, Quat4d object_orientation);
 
   /**
    * Presses an object based off a given symbol
@@ -294,5 +294,5 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  public Justification pressObject(String group_name, Symbol refID);
+  Justification pressObject(String group_name, Symbol refID);
 }

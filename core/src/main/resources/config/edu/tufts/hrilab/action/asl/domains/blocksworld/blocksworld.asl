@@ -50,9 +50,9 @@ import edu.tufts.hrilab.fol.Symbol;
 
     op: log ("info",">> stack ?obj1 on ?obj2");
 
-    act:moveObject(?obj1, above, ?obj2);
+    act:moveObjectRelativeTo(?obj1, above, ?obj2);
     // TODO: move object down
-    // act:moveObject(?obj1, down, arm, 0.05);
+    // act:moveObjectInDirection(?obj1, down, arm, 0.05);
     act:releaseObject(?obj1);
 }
 

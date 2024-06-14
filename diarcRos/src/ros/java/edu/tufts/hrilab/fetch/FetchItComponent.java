@@ -99,6 +99,36 @@ public class FetchItComponent extends FetchComponent implements FetchItInterface
     return new ConditionJustification(moved);
   }
 
+  /**
+   * This primitive action exists purely for the fetchit performance assessment test which needs moveObject to
+   * be a primitive action.
+   *
+   * @param objectRef
+   * @param arm
+   * @param direction
+   * @return
+   */
+  @Override
+  public Justification moveObjectFetchItPrimitive(Symbol objectRef, String arm, String direction) {
+    log.debug("Starting moveObject " + direction);
+    Point3d relPoint = new Point3d(0, 0, 0);
+    switch (direction) {
+      case "up":
+        relPoint = new Point3d(0.0, 0.0, 0.15);
+        break;
+      case "down":
+        relPoint = new Point3d(0.0, 0.0, -0.10);
+        break;
+      case "forward":
+        relPoint = new Point3d(0.30, 0.0, 0.0);
+        break;
+      case "right":
+        relPoint = new Point3d(0.0, -0.30, 0.0);
+        break;
+    }
+    return moveToRelative(arm, relPoint, new Quat4d(0, 0, 0, 1));
+  }
+
   private String getDominantProperty(Symbol objectRef, Set<String> knownObjects) {
     try {
       Collection<TRADEServiceInfo> tsis = TRADE.getAvailableServices(new TRADEServiceConstraints().name("getProperties").argTypes(Symbol.class));

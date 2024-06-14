@@ -411,12 +411,6 @@
       "serviceName" : "approachLocation",
       "serviceArgs" : [ "movebaselocation_6:movebaselocation", "justifications()" ]
     }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_4:physobj", "[on(grasp_point(ACTION_VAR0),physobj_4:physobj)]", "true" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_4:physobj", "[on(grasp_point(ACTION_VAR0),physobj_4:physobj)]", "true" ]
-    }, {
       "serviceName" : "getTypeId",
       "serviceArgs" : [ "physobj_4:physobj", "2" ]
     }, {
@@ -435,8 +429,8 @@
       "serviceName" : "graspObject",
       "serviceArgs" : [ "arm", "physobj_4:physobj", "0.0", "justifications()" ]
     }, {
-      "serviceName" : "moveObject",
-      "serviceArgs" : [ "physobj_4:physobj", "arm", "up", "justifications()" ]
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]
@@ -447,23 +441,20 @@
       "serviceName" : "goToPose",
       "serviceArgs" : [ "dropOff", "true" ]
     }, {
-      "serviceName" : "moveObject",
-      "serviceArgs" : [ "physobj_4:physobj", "arm", "down", "justifications()" ]
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, -0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
     }, {
       "serviceName" : "releaseObject",
       "serviceArgs" : [ "arm", "physobj_4:physobj", "1.0", "justifications()" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "Recovery completed resuming original goal", "true" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_4:physobj", "[on(grasp_point(ACTION_VAR0),physobj_4:physobj)]", "true" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_4:physobj", "[on(grasp_point(ACTION_VAR0),physobj_4:physobj)]", "true" ]
     }, {
       "serviceName" : "getTypeId",
       "serviceArgs" : [ "physobj_4:physobj", "2" ]
@@ -483,8 +474,8 @@
       "serviceName" : "graspObject",
       "serviceArgs" : [ "arm", "physobj_4:physobj", "0.0", "justifications()" ]
     }, {
-      "serviceName" : "moveObject",
-      "serviceArgs" : [ "physobj_4:physobj", "arm", "up", "justifications()" ]
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]
@@ -516,17 +507,14 @@
       "serviceName" : "releaseObject",
       "serviceArgs" : [ "arm", "physobj_4:physobj", "1.0", "justifications()" ]
     }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
+    }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]
     }, {
       "serviceName" : "approachLocation",
       "serviceArgs" : [ "movebaselocation_1:movebaselocation", "justifications()" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_2:physobj", "[on(grasp_point(ACTION_VAR0),physobj_2:physobj)]", "true" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_2:physobj", "[on(grasp_point(ACTION_VAR0),physobj_2:physobj)]", "true" ]
     }, {
       "serviceName" : "getTypeId",
       "serviceArgs" : [ "physobj_2:physobj", "1" ]
@@ -546,8 +534,8 @@
       "serviceName" : "graspObject",
       "serviceArgs" : [ "arm", "physobj_2:physobj", "0.0", "justifications()" ]
     }, {
-      "serviceName" : "moveObject",
-      "serviceArgs" : [ "physobj_2:physobj", "arm", "up", "justifications()" ]
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]
@@ -573,17 +561,14 @@
       "serviceName" : "releaseObject",
       "serviceArgs" : [ "arm", "physobj_2:physobj", "1.0", "justifications()" ]
     }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
+    }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]
     }, {
       "serviceName" : "approachLocation",
       "serviceArgs" : [ "movebaselocation_2:movebaselocation", "justifications()" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_3:physobj", "[on(grasp_point(ACTION_VAR0),physobj_3:physobj)]", "true" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_3:physobj", "[on(grasp_point(ACTION_VAR0),physobj_3:physobj)]", "true" ]
     }, {
       "serviceName" : "getTypeId",
       "serviceArgs" : [ "physobj_3:physobj", "0" ]
@@ -603,8 +588,8 @@
       "serviceName" : "graspObject",
       "serviceArgs" : [ "arm", "physobj_3:physobj", "0.0", "justifications()" ]
     }, {
-      "serviceName" : "moveObject",
-      "serviceArgs" : [ "physobj_3:physobj", "arm", "up", "justifications()" ]
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]
@@ -627,17 +612,14 @@
       "serviceName" : "releaseObject",
       "serviceArgs" : [ "arm", "physobj_3:physobj", "1.0", "justifications()" ]
     }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
+    }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]
     }, {
       "serviceName" : "approachLocation",
       "serviceArgs" : [ "movebaselocation_1:movebaselocation", "justifications()" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_1:physobj", "[on(grasp_point(ACTION_VAR0),physobj_1:physobj)]", "true" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_1:physobj", "[on(grasp_point(ACTION_VAR0),physobj_1:physobj)]", "true" ]
     }, {
       "serviceName" : "getTypeId",
       "serviceArgs" : [ "physobj_1:physobj", "1" ]
@@ -657,8 +639,8 @@
       "serviceName" : "graspObject",
       "serviceArgs" : [ "arm", "physobj_1:physobj", "0.0", "justifications()" ]
     }, {
-      "serviceName" : "moveObject",
-      "serviceArgs" : [ "physobj_1:physobj", "arm", "up", "justifications()" ]
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]
@@ -681,17 +663,14 @@
       "serviceName" : "releaseObject",
       "serviceArgs" : [ "arm", "physobj_1:physobj", "1.0", "justifications()" ]
     }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
+    }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]
     }, {
       "serviceName" : "goToLocation",
       "serviceArgs" : [ "spotlocation_2:spotlocation", "justifications()" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_0:physobj", "[on(grasp_point(ACTION_VAR0),physobj_0:physobj)]", "true" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "physobj_0:physobj", "[on(grasp_point(ACTION_VAR0),physobj_0:physobj)]", "true" ]
     }, {
       "serviceName" : "getTypeId",
       "serviceArgs" : [ "physobj_0:physobj", "3" ]
@@ -711,8 +690,8 @@
       "serviceName" : "graspObject",
       "serviceArgs" : [ "arm", "physobj_0:physobj", "0.0", "justifications()" ]
     }, {
-      "serviceName" : "moveObject",
-      "serviceArgs" : [ "physobj_0:physobj", "arm", "up", "justifications()" ]
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]
@@ -744,11 +723,14 @@
       "serviceName" : "moveObjectAbove",
       "serviceArgs" : [ "physobj_0:physobj", "physobj_5:physobj", "arm", "justifications()" ]
     }, {
-      "serviceName" : "moveObject",
-      "serviceArgs" : [ "physobj_0:physobj", "arm", "down", "justifications()" ]
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, -0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
     }, {
       "serviceName" : "releaseObject",
       "serviceArgs" : [ "arm", "physobj_0:physobj", "1.0", "justifications()" ]
+    }, {
+      "serviceName" : "moveToRelative",
+      "serviceArgs" : [ "arm", "(0.0, 0.0, 0.15)", "(0.0, 0.0, 0.0, 1.0)", "justifications()" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "carry", "true" ]

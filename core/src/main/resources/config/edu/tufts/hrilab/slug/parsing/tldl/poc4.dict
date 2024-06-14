@@ -322,24 +322,24 @@ medkit; THING
 morning; G[good] ; morning
 
 %move forward
-%move; ((C/DIR)/REF)\AGENT; #a#x#y.moveObject($x,$y)
-%move; (C/DIR)/REF; #x#y.moveObject($x,$y)
+%move; ((C/DIR)/REF)\AGENT; #a#x#y.moveObjectInDirection($x,$y)
+%move; (C/DIR)/REF; #x#y.moveObjectInDirection($x,$y)
 
 %move the object foward one meter
-move; (((C/VAL)/DIR)/REF)\AGENT; #a#x#y#z.moveObject($x,$y,$z)
-move; ((C/VAL)/DIR)/REF; #x#y#z.moveObject($x,$y,$z)
+move; (((C/VAL)/DIR)/REF)\AGENT; #a#x#y#z.moveObjectInDirection($x,$y,$z)
+move; ((C/VAL)/DIR)/REF; #x#y#z.moveObjectInDirection($x,$y,$z)
 
 %move the object foward one meter with arm one
-%move; ((((C/ARM)/VAL)/DIR)/REF)\AGENT; #g#x#y#z#a.moveObject($x,$y,$z,$a)
-%move; (((C/ARM)/VAL)/DIR)/REF; #x#y#z#a.moveObject($x,$y,$z,$a)
+%move; ((((C/ARM)/VAL)/DIR)/REF)\AGENT; #g#x#y#z#a.moveObjectInDirection($x,$y,$z,$a)
+%move; (((C/ARM)/VAL)/DIR)/REF; #x#y#z#a.moveObjectInDirection($x,$y,$z,$a)
 
 %move the object toward me
-move; (((C/AGENT)/TDIR)/REF)\AGENT; #a#x#y#z.moveObject($x,$y,$z)
-move; ((C/AGENT)/TDIR)/REF; #x#y#z.moveObject($x,$y,$z)
+move; (((C/AGENT)/TDIR)/REF)\AGENT; #a#x#y#z.moveObjectRelativeTo($x,$y,$z)
+move; ((C/AGENT)/TDIR)/REF; #x#y#z.moveObjectRelativeTo($x,$y,$z)
 
 %move the object toward the cup
-move; (((C/REF)/TDIR)/REF)\AGENT; #a#x#y#z.moveObject($x,$y,$z)
-move; ((C/REF)/TDIR)/REF; #x#y#z.moveObject($x,$y,$z)
+move; (((C/REF)/TDIR)/REF)\AGENT; #a#x#y#z.moveObjectRelativeTo($x,$y,$z)
+move; ((C/REF)/TDIR)/REF; #x#y#z.moveObjectRelativeTo($x,$y,$z)
 
 %move forward
 move; VERBTD

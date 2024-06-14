@@ -136,7 +136,7 @@ public class MockMoveItComponent extends DiarcComponent implements MoveItInterfa
 
   @Override
   public Pair<Point3d, Quat4d> getPose(String link_name) {
-    log.info("[pointHeadTo] location method entered.");
+    log.info("[getPose] method entered.");
     simExecTime();
     return new MutablePair<>(new Point3d(1, 1, 1), new Quat4d(0, 0, 0, 1));
   }

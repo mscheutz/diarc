@@ -4,9 +4,12 @@ import edu.tufts.hrilab.fol.Predicate;
 /**
  * ?actor moves ?objectRef in ?direction with ?arm (assumed that object is already being grasped)
  */
-() = moveObject(Symbol ?objectRef, Symbol ?direction, Symbol ?arm = arm, double ?dist = 0.15) {
+() = moveObjectInDirection(Symbol ?objectRef, Symbol ?direction, Symbol ?arm = arm, double ?dist = 0.15) {
     conditions : {
       pre : grasping(?actor,?objectRef,?arm);
+    }
+    effects : {
+      success : grasping(?actor,?objectRef,?arm);
     }
 
     op:log("debug", "moving ?objectRef ?direction");
@@ -17,13 +20,10 @@ import edu.tufts.hrilab.fol.Predicate;
  * ?actor moves ?arm in ?direction a distance of ?dist.
  */
 () = moveToRelative(Symbol ?direction, Symbol ?arm = arm, double ?dist = 0.15) {
-    double !negDist;
+    double !negDist = op:*(?dist, -1.0);
     javax.vecmath.Point3d !relativeLoc;
-    javax.vecmath.Quat4d !relativeOrient; // = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
+    javax.vecmath.Quat4d !relativeOrient = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
     Predicate !failCond;
-
-    !relativeOrient = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
-    !negDist = op:*(?dist, -1.0);
 
     op:log("debug", "moving ?arm ?direction");
     if (op:equalsValue(?direction, up)) {
@@ -54,7 +54,7 @@ import edu.tufts.hrilab.fol.Predicate;
 /**
  * ?actor uses ?arm to move ?objectRef_1 ?relation ?objectRef_2
  */
-() = moveObject(Symbol ?objectRef_1, Symbol ?relation, Symbol ?objectRef_2, Symbol ?arm = arm, double ?dist = 0.5) {
+() = moveObjectRelativeTo(Symbol ?objectRef_1, Symbol ?relation, Symbol ?objectRef_2, Symbol ?arm = arm, double ?dist = 0.5) {
     java.util.List !tokens;
     edu.tufts.hrilab.vision.stm.MemoryObject !token_2;
     org.apache.commons.lang3.tuple.Pair !armPose;
@@ -63,10 +63,8 @@ import edu.tufts.hrilab.fol.Predicate;
     javax.vecmath.Vector3d !dirVec;
     javax.vecmath.Point3d !zDir;
     javax.vecmath.Point3d !targetLoc;
-    javax.vecmath.Quat4d !targetOrient; // = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
+    javax.vecmath.Quat4d !targetOrient = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
     Predicate !failCond;
-
-    !targetOrient = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
 
     op:log("debug", "moving ?objectRef_1 ?relation ?objectRef_2");
 
@@ -132,7 +130,7 @@ import edu.tufts.hrilab.fol.Predicate;
     }
 
     act:graspObject(?objectRef, ?arm);
-    act:moveObject(?objectRef, up, ?arm);
+    act:moveObjectInDirection(?objectRef, up, ?arm);
     op:log("debug", "[graspObject] successfully grasped ?objectRef");
 }
 

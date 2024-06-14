@@ -6,11 +6,7 @@ package edu.tufts.hrilab.fetch;
 
 
 import ai.thinkingrobots.trade.TRADEService;
-import edu.tufts.hrilab.action.ConditionType;
-import edu.tufts.hrilab.action.EffectType;
 import edu.tufts.hrilab.action.annotations.Action;
-import edu.tufts.hrilab.action.annotations.Condition;
-import edu.tufts.hrilab.action.annotations.Effect;
 import edu.tufts.hrilab.action.annotations.Observes;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.fol.Symbol;
@@ -73,21 +69,6 @@ public interface FetchInterface extends MoveItInterface {
   @TRADEService
   @Observes({"holding(?actor,?objectRef,?arm)", "grasping(?actor,?objectRef,?arm)"})
   List<Map<Variable, Symbol>> checkGrasping(Term graspingTerm);
-
-
-  @TRADEService
-  @Action
-  @Condition(
-          condition={"grasping(?actor,?objectRef,?arm)"},
-          type= ConditionType.PRE,
-          observable={"grasping(?actor,?objectRef,?arm)"}
-  )
-  @Effect(
-          effect={"grasping(?actor,?objectRef,?arm)"},
-          type = EffectType.SUCCESS,
-          observable={"grasping(?actor,?objectRef,?arm)"}
-  )
-  Justification moveObject(Symbol objectRef, String arm, String direction);
 
   @TRADEService
   @Action

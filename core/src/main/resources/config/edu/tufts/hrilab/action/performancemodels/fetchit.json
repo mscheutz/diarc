@@ -3118,7 +3118,7 @@
             }
         }
     },
-    "moveObject(?actor,?objectRef,?arm,?direction)": {
+    "moveObjectFetchItPrimitive(?actor,?objectRef,?arm,?direction)": {
         "effects": {
             "dependent": [
                 {

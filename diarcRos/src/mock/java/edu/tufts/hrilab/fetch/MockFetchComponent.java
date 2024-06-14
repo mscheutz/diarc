@@ -67,13 +67,6 @@ public class MockFetchComponent extends MockMoveItComponent implements FetchInte
   }
 
   @Override
-  public Justification moveObject(Symbol objectRef, String groupName, String direction) {
-    log.info("[moveObject]");
-    simExecTime();
-    return new ConditionJustification(true);
-  }
-
-  @Override
   public List<Map<Variable, Symbol>> checkGrasping(Term graspingTerm) {
     log.info("[checkGrasping] " + graspingTerm);
     simExecTime();
@@ -102,7 +95,7 @@ public class MockFetchComponent extends MockMoveItComponent implements FetchInte
     return FetchBreakerStates.STATE_ENABLED;
   }
 
-  private void simExecTime() {
+  protected void simExecTime() {
     if (shouldSimExecTime) {
       try {
         Thread.sleep(simExecTimeout);

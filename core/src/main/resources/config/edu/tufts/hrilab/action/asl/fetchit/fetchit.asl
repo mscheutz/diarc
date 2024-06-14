@@ -63,8 +63,7 @@ import edu.tufts.hrilab.fol.Symbol;
       success infer : not(holding(?actor,?objectRef,?arm));
     }
     act:releaseObject(?arm, ?objectRef, 1.0);
-    act:goToPose(release); // TODO: EAK: why isn't this move up?
-    //act:moveObject(?objectRef_0, up, ?arm);
+    act:goToPose(release);
     act:goToPose(carry);
 }
 
@@ -76,6 +75,6 @@ import edu.tufts.hrilab.fol.Symbol;
       success : holding(?actor,?objectRef,?arm);
     }
     act:graspObject(?objectRef, ?arm);
-    act:moveObject(?objectRef, up, ?arm);
+    act:moveObjectFetchItPrimitive(?objectRef, ?arm, up);
     op:log(debug, "[pickup] successfully picked up ?objectRef");
 }

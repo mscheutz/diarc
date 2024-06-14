@@ -95,7 +95,7 @@ tasks.named<Test>("test") {
   }
 
   // to run integration test(s) in generative  mode
-  if (project.hasProperty("generativeMode") && project.property("generativeMode").toString().toBoolean()) {
+  if (project.hasProperty("diarc.generativeMode") && project.property("diarc.generativeMode").toString().toBoolean()) {
     systemProperty("generativeMode", "true")
   }
 
