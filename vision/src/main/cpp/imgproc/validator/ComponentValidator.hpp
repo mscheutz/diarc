@@ -51,6 +51,12 @@ protected:
 
   virtual void handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification);
   virtual void initModel(const std::string& model_path);
+
+private:
+  std::vector<std::string> semanticProperties;
+
+  bool calculateSemProperty(const cv::Mat& semMat, const std::string& semPred);
+
 };
 
 

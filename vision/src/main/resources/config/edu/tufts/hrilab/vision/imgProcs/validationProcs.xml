@@ -34,5 +34,5 @@ all processors must be enclosed within the <processors> tag
 	<!--<processor type="shapevalidator" config="shape/shapes.xml" required="depth"/>-->
 	<processor type="spatialrelationvalidator" config="spatial_relation/spatial_relations.xml" required="depth"/>
 	<processor type="surfacemarkingvalidator" config="surface_marking/surfacemarkings.xml"/>
-	<processor type="componentvalidator" config="componentvalidator/components.json" required="depth"/>
+	<processor type="componentvalidator" config="componentvalidator/components.xml"/>
 </processors>

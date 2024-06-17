@@ -62,6 +62,8 @@ void ComponentValidator::loadConfig(const std::string& config) {
       ComponentValidator::initModel(model_file);
       LOG4CXX_DEBUG(logger, boost::format("[loadConfig] modelFilename: %s.") % model_file);
       std::cout << model_file << std::endl;
+      semanticProperties.push_back(descriptorName);
+
     }
   }
 }
@@ -108,6 +110,7 @@ void ComponentValidator::initModel(const std::string &model_path) {
 
 void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification) {
   LOG4CXX_TRACE(logger, "[ComponentValidation] method entered.");
+  std::cout << "hallo" << std::endl;
 
   // get current descriptors to process
   TypesByDescriptorConstPtr descriptors = getDescriptors();
@@ -164,33 +167,66 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
   // Extract Semantic Descriptions 
   net.setInput(blob);
-  cv::Mat semPar = net.forward();
-  cv::Mat semParSig = semPar.clone();
-  LocationCoords baseLocation;
-  double maxValue;
-  double distanceX;
-  double distanceY;
-  double distanceZ;
-  cv::Point maxLoc;
+
+  cv::Mat semMatrix = net.forward();
+  cv::Mat semMatrixSig = semMatrix.clone();
 
   // Iterate over Semantic Descriptions and print values
-  if (!semPar.empty() && semPar.cols == 24 && semPar.rows == 1) {
+  if (!semMatrix.empty() && semMatrix.cols == 24 && semMatrix.rows == 1) {
     
-    for (int i = 0; i < semPar.cols; ++i) {
+    for (int i = 0; i < semMatrix.cols; ++i) {
   
-        semParSig.at<float>(0, i) = sigmoid(semPar.at<float>(0, i));
+        semMatrixSig.at<float>(0, i) = sigmoid(semMatrix.at<float>(0, i));
+        std::cout << "semantic parameter" << semMatrixSig.at<float>(0, i) << std::endl;
     }
   } else {
       std::cerr << "Invalid matrix dimensions!" << std::endl;
   }
 
+  TypesByDescriptor::const_iterator descriptors_itr;
+  for (descriptors_itr = descriptors->begin(); descriptors_itr != descriptors->end(); ++descriptors_itr) {
+    
+    auto it = std::find(semanticProperties.begin(), semanticProperties.end(), descriptors_itr->first.getName());
+    
+    if (it == semanticProperties.end()) {
+      continue;
+    } 
+
+    std::string predicateName = *it;
+
+    bool found = calculateSemProperty(semMatrixSig, predicateName);
+
+  }
+
+}
+
+
+bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const std::string& semPred) {
+
+  ComponentValidator::shapeIdcs = {
+    {0, 1, 2, 3},  //shape indices of base component indices
+    {8, 9, 10, 11},  //shape indices of side component 1
+    {16, 17, 18, 19}  //shape indices of side component 2
+  };
+
+  ComponentValidator::shapeNames = {
+    "cone",
+    "cube",
+    "cylinder",
+    "sphere"
+  };
+
+  bool shapeFound = false;
+  double maxValue;
+  cv::Point maxLoc;
+
   for (size_t groupIndex = 0; groupIndex < shapeIdcs.size(); ++groupIndex) {
 
     const auto& idcs = shapeIdcs[groupIndex];
     // Extract the specified columns for the current group
-    cv::Mat shapeParams = semParSig.col(idcs[0]);
+    cv::Mat shapeParams = semMat.col(idcs[0]);
     for (size_t i = 1; i < idcs.size(); ++i) {
-      cv::hconcat(shapeParams, semParSig.col(idcs[i]), shapeParams);
+      cv::hconcat(shapeParams, semMat.col(idcs[i]), shapeParams);
     }
 
     // Find the maximum value among the selected elements for the current group
@@ -202,72 +238,15 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
       int chosenIndex = maxLoc.x;
       std::string chosenString = shapeNames[chosenIndex];
       
-      ComponentCandidate component;
-      component.shape = chosenString;
+      if (chosenString == semPred) {
 
-      // if we have the base component, we know its the most central one
-      if (groupIndex == 0 ) {
-        component.relativeLocationX = "central";
-        component.relativeLocationY = "central";
-        component.relativeLocationZ = "central";
+        shapeFound = true;
+      } else {
 
-        baseLocation.x = semParSig.at<float>(0, shapeIdcs[0][0]);
-        baseLocation.y = semParSig.at<float>(0, shapeIdcs[0][1]);
-        baseLocation.z = semParSig.at<float>(0, shapeIdcs[0][2]);
+        shapeFound = false;
       }
-
-      // if we have a side component, we need to determine its relative position
-      if (groupIndex == 1 || groupIndex == 2) {
-        distanceX = baseLocation.x - semParSig.at<float>(0, shapeIdcs[groupIndex][0]);
-        distanceY = baseLocation.y - semParSig.at<float>(0, shapeIdcs[groupIndex][1]);
-        distanceZ = baseLocation.z - semParSig.at<float>(0, shapeIdcs[groupIndex][2]);
-
-        if (distanceX <= 0){
-          component.relativeLocationX = "left";
-        }else {
-         component.relativeLocationX = "right";}
-
-        if (distanceY <= 0){
-          component.relativeLocationY = "top";
-        }else {
-         component.relativeLocationY = "botton";}
-
-        if (distanceZ <= 0){
-          component.relativeLocationZ = "in front";
-        }else {
-         component.relativeLocationZ = "behind";}
-      }
-
-      //TO-DO: finish the spatical relation assignment
-
-      candidates.push_back(component);
-
-    }else {
-      std::cout << "The max. value in the current group is not greater than 0.5." << std::endl;
     }
-
   }
-
-  for (descriptor_iter = descriptors->begin(); descriptor_iter != descriptors->end(); ++descriptor_iter) {
-
-    int compCounter = 1;
-    
-    for(std::vector<ComponentCandidate>::iterator it = candidates.begin(); it != candidates.end(); ++it) {
-
-      std::cout << "CompCounter " << compCounter << std::endl;
-      compCounter++;
-
-      for (typeIds_itr = descriptor_iter->second.begin(); typeIds_itr != descriptor_iter->second.end(); ++typeIds_itr) {
-        
-        // for every found component, I add the shape (not sure if this is correct)
-        object->addValidationResult(0.9, PredicateHelper(
-                    it->shape + "(" + descriptor_iter->first.getArg(0) + ")"));
-
-        std::cout << "Shape is " << it->shape << std::endl;
-        
-      }
-    }
-  } 
-
-  sendValidationNotifications(object);
+  
+  return shapeFound;
 }
