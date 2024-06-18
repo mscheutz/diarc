@@ -31,30 +31,118 @@ Example:
 
 -->
 
+<!--
+  The side components are described using the base component as
+  reference. 
+  
+  So, if the base component is smaller than side
+  component 1, then:
+  *side component 1 is larger* than the base component
+
+  If side component 2 is attached on top of the base component,
+  then:
+  *side component 2 is on top* of the base component 
+-->
+
 <processor type="category" arity="1">
-    <predicate name="cone">
+    <!--
+      Base Component predicates
+    -->
+    <predicate name="cube base component">
+      <model filename="semanticEncoder"/>
+      <shape>0</shape>
+    </predicate>
+    <predicate name="sphere base component">
+      <model filename="semanticEncoder"/>
+      <shape>1</shape>
+    </predicate>
+    <predicate name="cone base component">
+      <model filename="semanticEncoder"/>
+      <shape>2</shape>
+    </predicate>
+    <predicate name="cylinder base component">
+      <model filename="semanticEncoder"/>
+      <shape>3</shape>
+    </predicate>
+    <!--
+      Side component 1 shape predicates
+    -->
+    <predicate name="cube side component 1">
+      <model filename="semanticEncoder"/>
+      <shape>0</shape>
+    </predicate>
+    <predicate name="sphere side component 1">
+      <model filename="semanticEncoder"/>
+      <shape>1</shape>
+    </predicate>
+    <predicate name="cone side component 1">
+      <model filename="semanticEncoder"/>
+      <shape>2</shape>
+    </predicate>
+    <predicate name="cylinder side component 1">
+      <model filename="semanticEncoder"/>
+      <shape>3</shape>
+    </predicate>
+    <!--
+      Side component 1 spatial relation predicates
+    -->
+    <predicate name="side component 1 is on top">
     <model filename="semanticEncoder"/>
     </predicate>
-    <predicate name="cube">
+    <predicate name="side component 1 is at bottom">
     <model filename="semanticEncoder"/>
     </predicate>
-    <predicate name="cylinder">
+    <predicate name="side component 1 is to the left">
     <model filename="semanticEncoder"/>
     </predicate>
-    <predicate name="sphere">
+    <predicate name="side component 1 is to the right">
     <model filename="semanticEncoder"/>
     </predicate>
-    <predicate name="on top">
+    <!--
+      Side component 1 size predicates
+    -->
+    <predicate name="side component 1 is larger">
     <model filename="semanticEncoder"/>
     </predicate>
-    <predicate name="at bottom">
-    <model filename="semanticEncoder"/>
+    <!--
+      Side component 2 shape predicates
+    -->
+    <predicate name="cube side component 2">
+      <model filename="semanticEncoder"/>
+      <shape>0</shape>
     </predicate>
-    <predicate name="to the left">
-    <model filename="semanticEncoder"/>
+    <predicate name="sphere side component 2">
+      <model filename="semanticEncoder"/>
+      <shape>1</shape>
     </predicate>
-    <predicate name="to the right">
-    <model filename="semanticEncoder"/>
+    <predicate name="cone side component 2">
+      <model filename="semanticEncoder"/>
+      <shape>2</shape>
+    </predicate>
+    <predicate name="cylinder side component 2">
+      <model filename="semanticEncoder"/>
+      <shape>3</shape>
+    </predicate>
+    <!--
+      Side component 2 spatial relation predicates
+    -->
+    <predicate name="side component 2 is on top">
+      <model filename="semanticEncoder"/>
+    </predicate>
+    <predicate name="side component 2 is at bottom">
+      <model filename="semanticEncoder"/>
+    </predicate>
+    <predicate name="side component 2 is to the left">
+      <model filename="semanticEncoder"/>
+    </predicate>
+    <predicate name="side component 2 is to the right">
+      <model filename="semanticEncoder"/>
+    </predicate>
+    <!--
+      Side component 2 size predicates
+    -->
+    <predicate name="side component 2 is larger">
+      <model filename="semanticEncoder"/>
     </predicate>
 </processor>
 

@@ -34,12 +34,7 @@ public:
       int z;
     } LocationCoords;
 
-  typedef struct {
-    std::string shape;
-    std::string relativeLocationX;
-    std::string relativeLocationY;
-    std::string relativeLocationZ;
-  } ComponentCandidate;
+  
 
 protected:
   cv::dnn::Net net;
@@ -53,9 +48,16 @@ protected:
   virtual void initModel(const std::string& model_path);
 
 private:
-  std::vector<std::string> semanticProperties;
 
-  bool calculateSemProperty(const cv::Mat& semMat, const std::string& semPred);
+  typedef struct {
+    std::string predicateKey;
+    int predicateShape;
+    int predicateIndex;
+  } predicateFeatures;
+
+  std::vector<predicateFeatures> semanticProperties;
+
+  bool calculateSemProperty(const cv::Mat& semMat, const int semPredShape, const int semPredIdx);
 
 };
 

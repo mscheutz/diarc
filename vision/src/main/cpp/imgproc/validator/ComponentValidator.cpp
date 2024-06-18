@@ -51,19 +51,37 @@ void ComponentValidator::loadConfig(const std::string& config) {
   using boost::property_tree::ptree;
   ptree pt;
   read_xml(config, pt);
+  int predicateCounter = 0;
+
+  // Set to track loaded models
+  std::set<std::string> loadedModels;
 
   // parse xml file
   BOOST_FOREACH(ptree::value_type const& predicateNode, pt.get_child("processor")) {
     if (predicateNode.first.compare("predicate") == 0) {
       std::string descriptorName = predicateNode.second.get<std::string> ("<xmlattr>.name", "unknown");
       LOG4CXX_DEBUG(logger, boost::format("[loadConfig] descriptorName: %s.") % descriptorName);
+      
 
       model_file = dir + predicateNode.second.get_child("model").get<std::string> ("<xmlattr>.filename", "unknown");
-      ComponentValidator::initModel(model_file);
-      LOG4CXX_DEBUG(logger, boost::format("[loadConfig] modelFilename: %s.") % model_file);
-      std::cout << model_file << std::endl;
-      semanticProperties.push_back(descriptorName);
+      
+      if (loadedModels.find(model_file) == loadedModels.end()) {
+                // Load the model if it hasn't been loaded yet
+                ComponentValidator::initModel(model_file);
+                loadedModels.insert(model_file); // Mark this model as loaded
+                LOG4CXX_DEBUG(logger, boost::format("[loadConfig] Loaded model: %s.") % model_file);
+                std::cout << "Model loaded from: " << model_file << std::endl;
+            } else {
+                LOG4CXX_DEBUG(logger, "[loadConfig] Model already loaded, skipping.");
+                std::cout << "Model loading skipped for: " << model_file << std::endl;
+            }
 
+      // -1 if we do not ask for the component's shape
+      // shape value 0 -> cube, 1 -> sphere, 2 -> cone, 3 -> cylinder
+      int shape = predicateNode.second.get("shape", -1);
+
+      semanticProperties.push_back({descriptorName, shape, predicateCounter});
+      predicateCounter = predicateCounter + 1;
     }
   }
 }
@@ -119,8 +137,6 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
   
   MemoryObject::Ptr object = notification->object;
 
-  std::vector<ComponentCandidate> candidates;
-  
   // get captured frames info
   const cv::Mat currFrame = object->getCaptureData()->frame;
 
@@ -137,24 +153,12 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
   cv::Size size(width, height);
 
-  ComponentValidator::shapeIdcs = {
-    {0, 1, 2, 3},  //shape indices of base component indices
-    {8, 9, 10, 11},  //shape indices of side component 1
-    {16, 17, 18, 19}  //shape indices of side component 2
-  };
-
   ComponentValidator::spatialIdcs = {
     {12, 13, 14, 15},  //spatial indices of side component 1
     {20, 21, 22, 23}  //spatial indices of side component 2
   };
 
-  ComponentValidator::shapeNames = {
-    "cube",
-    "sphere",
-    "cone",
-    "cylinder"
-  };
-
+  
   // convert image to grayscale and floats
   cv::Mat grayscaleFrame;
   cv::cvtColor(currFrame, grayscaleFrame, cv::COLOR_BGR2GRAY);
@@ -177,31 +181,46 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
     for (int i = 0; i < semMatrix.cols; ++i) {
   
         semMatrixSig.at<float>(0, i) = sigmoid(semMatrix.at<float>(0, i));
-        std::cout << "semantic parameter" << semMatrixSig.at<float>(0, i) << std::endl;
+        //std::cout << "semantic parameter " << i << " is " << semMatrixSig.at<float>(0, i) << std::endl;
     }
   } else {
       std::cerr << "Invalid matrix dimensions!" << std::endl;
   }
 
+  float confidence = 1.0f; //TODO: How could I set this in a good way?
+
   TypesByDescriptor::const_iterator descriptors_itr;
   for (descriptors_itr = descriptors->begin(); descriptors_itr != descriptors->end(); ++descriptors_itr) {
     
-    auto it = std::find(semanticProperties.begin(), semanticProperties.end(), descriptors_itr->first.getName());
-    
+    std::string keyToFind = descriptors_itr->first.getName(); // Assuming you have this key
+    auto it = std::find_if(semanticProperties.begin(), semanticProperties.end(),
+      [&keyToFind](const predicateFeatures& pf) {
+        return pf.predicateKey == keyToFind;
+    });
+
+    // Check if the element was found
     if (it == semanticProperties.end()) {
       continue;
     } 
 
-    std::string predicateName = *it;
+    int predShape = it->predicateShape;
+    int predIdx = it->predicateIndex;
 
-    bool found = calculateSemProperty(semMatrixSig, predicateName);
+    bool predFound = calculateSemProperty(semMatrixSig, predShape, predIdx);
+    std::cout << "Predicate " << it->predicateKey << " found? " << predFound << std::endl;
+    
+    result = calculateColor(image, indices, it->second, confidence, imageMask);
+    if (!predFound) {
+      LOG4CXX_DEBUG(logger, boost::format("Semantic Property not found") % it->first % confidence);
+      continue;
+    }
 
+    object->addValidationResult(confidence, *descriptors_itr);
+    
   }
-
 }
 
-
-bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const std::string& semPred) {
+bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int semPredShape, const int semPredIdx) {
 
   ComponentValidator::shapeIdcs = {
     {0, 1, 2, 3},  //shape indices of base component indices
@@ -209,18 +228,44 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const std::
     {16, 17, 18, 19}  //shape indices of side component 2
   };
 
-  ComponentValidator::shapeNames = {
-    "cone",
-    "cube",
-    "cylinder",
-    "sphere"
-  };
-
-  bool shapeFound = false;
+  bool semMatch = false;
   double maxValue;
+  int maxIndex;
   cv::Point maxLoc;
 
-  for (size_t groupIndex = 0; groupIndex < shapeIdcs.size(); ++groupIndex) {
+  std::cout << "semPredShape " << semPredShape << std::endl;
+  std::cout << "semPredIdx " << semPredIdx << std::endl;
+
+  // If we want to determine shape of base component
+  if (semPredIdx >= 0 && semPredIdx <= 3){
+
+    std::cout << "Looking for shape of base component" << std::endl;
+
+    const auto& baseIdcs = shapeIdcs[0];
+    // Extract the specified columns for the base component group
+    cv::Mat baseShapeParams = semMat.col(baseIdcs[0]);
+    for (size_t i = 1; i < baseIdcs.size(); ++i) {
+      cv::hconcat(baseShapeParams, semMat.col(baseIdcs[i]), baseShapeParams);
+    }
+
+    // Find the maximum value among the potential base component shapes
+    cv::minMaxLoc(baseShapeParams, nullptr, &maxValue, nullptr, &maxLoc);
+
+    maxIndex = maxLoc.x;
+    
+    // if the maximum semantic parameter appears at the predicate "slot"
+    if (maxIndex == semPredShape) {
+        // the shape is assumed to be present
+        semMatch = true;
+    }
+  }
+
+  // If we want to determine shape of side component 1
+  if (semPredIdx >= 4 && semPredIdx <= 7){
+
+    std::cout << "Looking for shape of side component 1" << std::endl;
+
+    int groupIndex = 1; 
 
     const auto& idcs = shapeIdcs[groupIndex];
     // Extract the specified columns for the current group
@@ -229,24 +274,50 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const std::
       cv::hconcat(shapeParams, semMat.col(idcs[i]), shapeParams);
     }
 
-    // Find the maximum value among the selected elements for the current group
+    // Find the maximum value among the values of side component 1
     cv::minMaxLoc(shapeParams, nullptr, &maxValue, nullptr, &maxLoc);
+    maxIndex = maxLoc.x;
 
-    // Check if the maximum value is greater than 0.5 for the current group
+    // If the maximum value is less than 0.5, component is not present
     if (maxValue > 0.5) {
-      std::cout << "The max. value in the current group is greater than 0.5." << std::endl;
       int chosenIndex = maxLoc.x;
       std::string chosenString = shapeNames[chosenIndex];
       
-      if (chosenString == semPred) {
-
-        shapeFound = true;
-      } else {
-
-        shapeFound = false;
-      }
+      if (maxIndex == semPredShape) {
+        semMatch = true;
+      } 
     }
   }
   
-  return shapeFound;
+  // If we want to determine shape of side component 1
+  if (semPredIdx >= 13 && semPredIdx <= 16){
+
+    std::cout << "Looking for shape of side component 2" << std::endl;
+
+    int groupIndex = 2; 
+
+    const auto& idcs = shapeIdcs[groupIndex];
+    // Extract the specified columns for the current group
+    cv::Mat shapeParams = semMat.col(idcs[0]);
+    for (size_t i = 1; i < idcs.size(); ++i) {
+      cv::hconcat(shapeParams, semMat.col(idcs[i]), shapeParams);
+    }
+
+    // Find the maximum value among the values of side component 1
+    cv::minMaxLoc(shapeParams, nullptr, &maxValue, nullptr, &maxLoc);
+    maxIndex = maxLoc.x;
+
+    // If the maximum value is less than 0.5, component is not present
+    if (maxValue > 0.5) {
+      int chosenIndex = maxLoc.x;
+      std::string chosenString = shapeNames[chosenIndex];
+      
+      if (maxIndex == semPredShape) {
+        semMatch = true;
+      } 
+    }
+  }
+  
+  return semMatch;
+
 }
