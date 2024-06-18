@@ -24,6 +24,8 @@ import BeliefViewer from "./BeliefViewer";
 
 import "./StyleOverrides.css";
 
+const flexTabPanelClass = "hidden flex-col min-h-0 grow";
+
 const TabbedComponentViewer: React.FunctionComponent = () => {
     const url: URL = new URL(document.location.toString());
     url.port = "8080";
@@ -77,7 +79,8 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
     return (
         <Tabs
             forceRenderTabPanel
-            className="displayFlexImportant flex-col min-h-0 grow w-full mt-20 w-full md:w-5/6">
+            className="displayFlexImportant flex-col min-h-0 grow w-full mt-20
+                       w-full md:w-5/6">
             <TabList hidden={waiting || failed} className="select-none">
                 {waiting ?
                     <Tab>Connecting...</Tab>
@@ -101,50 +104,54 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
             </TabList>
 
             {waiting ?
-                <TabPanel className="grid grid-column mt-48 space-y-5">
-                    <div className="flex flex-row justify-center m-10">
-                        <FontAwesomeIcon
-                            icon={faCog} spin size="10x"
-                            color={"#1d4bb7"}
-                        />
-                    </div>
-                    <div className="text-center w-full">
-                        Connecting...
+                <TabPanel className={flexTabPanelClass}>
+                    <div className="grid grid-column mt-48 space-y-5">
+                        <div className="flex flex-row justify-center m-10">
+                            <FontAwesomeIcon
+                                icon={faCog} spin size="10x"
+                                color={"#1d4bb7"}
+                            />
+                        </div>
+                        <div className="text-center w-full">
+                            Connecting...
+                        </div>
                     </div>
                 </TabPanel>
                 : null}
             {failed ?
-                <TabPanel className="grid grid-column mt-48 space-y-5">
-                    <div className="flex flex-row justify-center justify-items-center
+                <TabPanel className={flexTabPanelClass}>
+                    <div className="grid grid-column mt-48 space-y-5">
+                        <div className="flex flex-row justify-center justify-items-center
                                         m-10">
-                        <FontAwesomeIcon
-                            icon={faBan} size="10x"
-                            color={"#e00b00"}
-                        />
-                    </div>
-                    <div className="text-center">
-                        Connection Failed!
-                    </div>
-                    <div className="text-center">
-                        WebSocket URL: {wsBaseUrl}
+                            <FontAwesomeIcon
+                                icon={faBan} size="10x"
+                                color={"#e00b00"}
+                            />
+                        </div>
+                        <div className="text-center">
+                            Connection Failed!
+                        </div>
+                        <div className="text-center">
+                            WebSocket URL: {wsBaseUrl}
+                        </div>
                     </div>
                 </TabPanel>
                 : null}
-            {<TabPanel className="hidden flex-col min-h-0 grow">
+            {<TabPanel className={flexTabPanelClass}>
                 <BeliefViewer />
             </TabPanel>}
             {chatStatus === "on" ?
-                <TabPanel>
+                <TabPanel className={flexTabPanelClass}>
                     <RobotChat />
                 </TabPanel>
                 : null}
             {viewerStatus === "on" ?
-                <TabPanel>
+                <TabPanel className={flexTabPanelClass}>
                     <GoalViewer />
                 </TabPanel>
                 : null}
             {managerStatus === "on" ?
-                <TabPanel>
+                <TabPanel className={flexTabPanelClass}>
                     <GoalManager />
                 </TabPanel>
                 : null}

@@ -290,9 +290,9 @@ const RobotChat = () => {
     );
 
     return (
-        <div className="flex flex-col w-full h-[40rem] outline outline-1
-                        outline-[#d1dbe3] justify-between shadow-md rounded-md
-                        p-3 gap-3 md:p-5 md:gap-5">
+        <div className="flex flex-col w-full min-h-0 basis-0 grow outline
+                        outline-1 outline-[#d1dbe3] justify-between shadow-md
+                        rounded-md p-3 gap-3 md:p-5 md:gap-5">
             {nameInput()}
 
             <MainContainer className='rounded-md shadow-md' responsive>

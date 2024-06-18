@@ -212,13 +212,13 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
     };
 
     return (
-        <div className="flex flex-col w-full h-[40rem] outline outline-1 p-5
-                        outline-[#d1dbe3] justify-stretch shadow-md rounded-md
-                        gap-5">
+        <div className="flex flex-col w-full min-h-0 basis-0 grow outline
+                        outline-1 p-5 outline-[#d1dbe3] justify-stretch
+                        shadow-md rounded-md gap-5">
             {/* Actual lists */}
             <div className="shadow-md grow outline outline-1 overflow-x-scroll
                             overflow-y-scroll outline-[#d1dbe3] overflow-auto 
-                            rounded-md max-h-[56dvh]"
+                            rounded-md min-h-0"
             >
                 {getTree()}
             </div>

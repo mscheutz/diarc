@@ -102,9 +102,9 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
     };
 
     return (
-        <div className="flex flex-col w-full min-h-0 basis-0 grow outline outline-1 p-5
-                        outline-[#d1dbe3] justify-stretch shadow-md rounded-md
-                        gap-5">
+        <div className="flex flex-col w-full min-h-0 basis-0 grow outline
+                        outline-1 p-5 outline-[#d1dbe3] justify-stretch
+                        shadow-md rounded-md gap-5">
             {/* Main display (mobile) */}
             <Tabs className="flex flex-col min-h-0 grow md:hidden">
                 <TabList>
