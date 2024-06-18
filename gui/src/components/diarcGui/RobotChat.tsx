@@ -25,7 +25,7 @@ import {
 import ConnectionIndicator from './ConnectionIndicator';
 import useWebSocket from 'react-use-websocket';
 
-import "./RobotChat.css"
+import "./StyleOverrides.css"
 
 let counter = 0; // list items need unique keys
 
@@ -56,16 +56,16 @@ const RobotChat = () => {
     // SET UP MOBILE NAVIGATION //
     // Adapted from "Toggle conversation list using the back button" example at
     // https://chatscope.io/storybook/react/?path=/docs/components-maincontainer--docs
-    const [sidebarVisible, setSidebarVisible] = useState<boolean>(false);
+    const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
     const [sidebarStyle, setSidebarStyle] = useState<object>({});
     const [chatContainerStyle, setChatContainerStyle] = useState<object>({});
 
     const handleBackClick = useCallback(() => {
-        setSidebarVisible(!sidebarVisible);
-    }, [sidebarVisible, setSidebarVisible]);
+        setSidebarVisible(true);
+    }, [setSidebarVisible]);
     const handleConversationClick = useCallback(() => {
         setSidebarVisible(false);
-    }, [sidebarVisible, setSidebarVisible]);
+    }, [setSidebarVisible]);
 
     useEffect(() => {
         if (sidebarVisible) {
@@ -84,12 +84,12 @@ const RobotChat = () => {
         setChatContainerStyle])
 
     // COMPONENT CREATION METHODS //
-    const createConversation = (chat: Chat) => {
+    const createConversation = (chat: Chat, index: number) => {
         return (
             <Conversation
                 key={counter++}
                 onClick={() => {
-                    chat.focusThisChat(chats.indexOf(chat));
+                    chat.focusThisChat(index);
                     handleConversationClick();
                 }}
             >
@@ -130,43 +130,21 @@ const RobotChat = () => {
 
     const nameInput = () => {
         return (
-            <>
-                {/* Normally hidden, appears on large screens */}
-                <div className="flex-1 items-center justify-center
-                                flex-col space-y-2 mx-2 hidden
-                                md:flex">
-                    <label className='self-start text-xs mt-2'>
-                        Speaker name
-                    </label>
-                    <MessageInput
-                        className='w-full'
-                        attachButton={false}
-                        sendButton={false}
-                        placeholder='Set your name here'
-                        onChange={(innerText) => setUsername(innerText)}
-                        sendOnReturnDisabled={true}
-                        value={username}
-                    />
-                </div>
-
-                {/* Normally visible, hides on large screens. However, also
-                requires the sidebar be visible */}
-                {<div className="flex-1 items-center justify-center
-                                        flex-col space-y-2 mx-2 md:hidden">
-                    <label className='self-start text-xs mt-2'>
-                        Speaker name
-                    </label>
-                    <MessageInput
-                        className='w-full'
-                        attachButton={false}
-                        sendButton={false}
-                        placeholder='Set your name here'
-                        onChange={(innerText) => setUsername(innerText)}
-                        sendOnReturnDisabled={true}
-                        value={username}
-                    />
-                </div> && sidebarVisible}
-            </>
+            <div className="flex-1 items-center justify-center
+                            flex-col space-y-1 flex">
+                <label className='self-start text-xs'>
+                    Speaker name
+                </label>
+                <MessageInput
+                    className='w-full overflow-scroll'
+                    attachButton={false}
+                    sendButton={false}
+                    placeholder='Set your name here'
+                    onChange={(innerText) => setUsername(innerText)}
+                    sendOnReturnDisabled={true}
+                    value={username}
+                />
+            </div>
         );
     };
 
@@ -184,7 +162,7 @@ const RobotChat = () => {
 
     const [conversations, setConversations] = useState(
         <ConversationList>
-            {chats.map((chat) => createConversation(chat))}
+            {chats.map((chat, index) => createConversation(chat, index))}
         </ConversationList>
     );
 
@@ -207,30 +185,10 @@ const RobotChat = () => {
             }
         }
         setChats(newChats);
+        <ConversationList>
+            {newChats.map((chat, index) => createConversation(chat, index))}
+        </ConversationList>
     };
-
-    const postServerMessage = useCallback((chat: Chat, message: string) => {
-        let newChats = chats.slice();
-        for (let i = 0; i < chats.length; i++) {
-            if (chats[i].robotName === chat.robotName) {
-                newChats[i].messageList = [
-                    ...chats[i].messageList,
-                    {
-                        message: message,
-                        sender: chat.robotName,
-                        direction: "incoming",
-                        position: "single"
-                    }
-                ];
-                break;
-            }
-        }
-        setChats(newChats);
-    },
-        // using chats.toString() as a dep because we need to check if the
-        // object's data actually changed, instead of the reference of `chats`
-        // the compiler complains about it but this is why I'm doing it this way
-        [chats.toString()]);
 
     // SET UP WEBSOCKET //
     const url: URL = new URL(document.location.toString());
@@ -243,17 +201,17 @@ const RobotChat = () => {
         if (!lastMessage) return;
         const data = JSON.parse(lastMessage.data);
 
-        // Idempotent
+        let newChats: Chat[];
+        if (!chats[0].robotName)
+            newChats = chats.slice(1);
+        else
+            newChats = chats.slice();
+
+        // Update list of robot names; idempotent
         if (data.names) {
             const names = (data.names as string)
                 .slice(1, -1)
                 .split(", ");
-
-            let newChats: Chat[];
-            if (!chats[0].robotName)
-                newChats = chats.slice(1);
-            else
-                newChats = chats.slice();
 
             outer:
             for (const name of names) {
@@ -269,27 +227,30 @@ const RobotChat = () => {
                     focusThisChat: setCurrentChat
                 });
             }
-            setChats(newChats);
-            setConversations(
-                <ConversationList>
-                    {chats.map((chat) => createConversation(chat))}
-                </ConversationList>
-            );
         }
 
-        for (const chat of chats) {
+        for (const chat of newChats) {
             if (chat.robotName === data.sender) {
-                postServerMessage(chat, data.message);
+                chat.messageList = [
+                    ...chat.messageList,
+                    {
+                        message: data.message,
+                        sender: chat.robotName,
+                        direction: "incoming",
+                        position: "single"
+                    }
+                ];
             }
         }
+        setChats(newChats);
         setConversations(
             <ConversationList>
-                {chats.map((chat) => createConversation(chat))}
+                {newChats.map((chat, index) => createConversation(chat, index))}
             </ConversationList>
         );
     },
-        // again, we use chats.toString() to make sure the value is changing
-        [lastMessage, chats.toString(), postServerMessage]);
+        // we use chats.toString() to make sure the value is changing
+        [lastMessage, chats.toString()]);
 
     const handleSendMessage = (message: string) => {
         message = clean(message)
@@ -301,7 +262,7 @@ const RobotChat = () => {
         }));
         setConversations(
             <ConversationList>
-                {chats.map((chat) => createConversation(chat))}
+                {chats.map((chat, index) => createConversation(chat, index))}
             </ConversationList>
         );
     };
@@ -332,13 +293,14 @@ const RobotChat = () => {
         <div className="flex flex-col w-full h-[40rem] outline outline-1
                         outline-[#d1dbe3] justify-between shadow-md rounded-md
                         p-3 gap-3 md:p-5 md:gap-5">
+            {nameInput()}
+
             <MainContainer className='rounded-md shadow-md' responsive>
                 <Sidebar position="left" style={sidebarStyle}>
                     <div className="flex flex-col justify-between h-full">
 
                         <div className="flex flex-col space-y-1 md:space-y-2
                                         p-1 md:p-2">
-                            {nameInput()}
                             {conversations}
                         </div>
                     </div>

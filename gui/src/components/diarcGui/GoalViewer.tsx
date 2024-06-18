@@ -2,7 +2,7 @@
  * @author Lucien Bao
  * @version 0.9
  * @date 24 May 2024
- * GoalView. Defines a component which shows a dynamic list of robot goals.
+ * GoalViewer. Defines a component which shows a dynamic list of robot goals.
  */
 
 import React, { useState, useEffect } from "react";
@@ -76,7 +76,7 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
             const agent = active.children[agentIndex];
             for (const taskIndex in agent.children) {
                 const task = agent.children[taskIndex]
-                if (task.id! == id) {
+                if (task.id! === id) {
                     return "active";
                 }
             }
@@ -86,7 +86,7 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
             const agent = suspended.children[agentIndex];
             for (const taskIndex in agent.children) {
                 const task = agent.children[taskIndex]
-                if (task.id! == id) {
+                if (task.id! === id) {
                     return "suspended";
                 }
             }
@@ -100,7 +100,7 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
             const agent = active.children[agentIndex];
             for (const taskIndex in agent.children) {
                 const task = agent.children[taskIndex]
-                if (task.id! == id) {
+                if (task.id! === id) {
                     return agent.name;
                 }
             }
@@ -110,7 +110,7 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
             const agent = suspended.children[agentIndex];
             for (const taskIndex in agent.children) {
                 const task = agent.children[taskIndex]
-                if (task.id! == id) {
+                if (task.id! === id) {
                     return agent.name;
                 }
             }
@@ -212,45 +212,45 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
     };
 
     return (
-        <div className="flex flex-col w-full h-[40rem] outline outline-1
-                        outline-[#d1dbe3] justify-between shadow-md rounded-md">
-            <div className="flex flex-col p-5 grow gap-5">
-                {/* Actual lists */}
-                <div className="shadow-md grow outline outline-1 overflow-x-scroll
-                                outline-[#d1dbe3] overflow-auto rounded-md"
-                >
-                    {getTree()}
-                </div>
-
-                {/* Button menu */}
-                <div className="shadow-md outline outline-1 outline-[#d1dbe3]
-                                p-3 flex flex-row justify-center gap-5 rounded-md"
-                >
-                    <Button
-                        title="Suspend the selected active goal"
-                        onClick={handleSuspend}
-                        disabled={!(hasSelected() && selected.type === "active")}
-                    >
-                        Suspend Goal
-                    </Button>
-                    <Button
-                        title="Resume the selected suspended goal"
-                        onClick={handleResume}
-                        disabled={!(hasSelected() && selected.type === "suspended")}
-                    >
-                        Resume Goal
-                    </Button>
-                    <Button
-                        title="Cancel the selected active goal"
-                        onClick={handleCancel}
-                        disabled={!hasSelected()}
-                    >
-                        Cancel Goal
-                    </Button>
-                </div>
-
-                <ConnectionIndicator readyState={readyState} />
+        <div className="flex flex-col w-full h-[40rem] outline outline-1 p-5
+                        outline-[#d1dbe3] justify-stretch shadow-md rounded-md
+                        gap-5">
+            {/* Actual lists */}
+            <div className="shadow-md grow outline outline-1 overflow-x-scroll
+                            overflow-y-scroll outline-[#d1dbe3] overflow-auto 
+                            rounded-md max-h-[56dvh]"
+            >
+                {getTree()}
             </div>
+
+            {/* Button menu */}
+            <div className="shadow-md outline outline-1 outline-[#d1dbe3]
+                                p-3 flex flex-row justify-center gap-5 rounded-md"
+            >
+                <Button
+                    title="Suspend the selected active goal"
+                    onClick={handleSuspend}
+                    disabled={!(hasSelected() && selected.type === "active")}
+                >
+                    Suspend Goal
+                </Button>
+                <Button
+                    title="Resume the selected suspended goal"
+                    onClick={handleResume}
+                    disabled={!(hasSelected() && selected.type === "suspended")}
+                >
+                    Resume Goal
+                </Button>
+                <Button
+                    title="Cancel the selected active goal"
+                    onClick={handleCancel}
+                    disabled={!hasSelected()}
+                >
+                    Cancel Goal
+                </Button>
+            </div>
+
+            <ConnectionIndicator readyState={readyState} />
         </div>
     )
 }

@@ -36,7 +36,7 @@ public class UnifiedGuiConfig extends DiarcConfiguration {
 
         String gmArgs = "-beliefinitfile demos.pl agents/twonaoagents.pl " +
                 "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
-                "-goal listen(self)";
+                "-goal listen(self) -beliefg";
         createInstance(GoalManagerImpl.class, gmArgs);
 
         createInstance(ChatEndpointComponent.class, "-r dempster shafer");

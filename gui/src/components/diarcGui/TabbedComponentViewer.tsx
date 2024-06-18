@@ -20,6 +20,9 @@ import RobotChat from "./RobotChat";
 import GoalViewer from "./GoalViewer";
 import MapViewer from "./MapViewer";
 import GoalManager from "./GoalManager";
+import BeliefViewer from "./BeliefViewer";
+
+import "./StyleOverrides.css";
 
 const TabbedComponentViewer: React.FunctionComponent = () => {
     const url: URL = new URL(document.location.toString());
@@ -72,81 +75,85 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
     setTimeout(check, 1000);
 
     return (
-        <div className="w-full flex-1 md:w-5/6 mt-20">
-            <Tabs forceRenderTabPanel>
-                <TabList hidden={waiting || failed} className="select-none">
-                    {waiting ?
-                        <Tab>Connecting...</Tab>
-                        : null}
-                    {failed ?
-                        <Tab>Connection Failed</Tab>
-                        : null}
-                    {chatStatus === "on" ?
-                        <Tab>Robot Chat</Tab>
-                        : null}
-                    {viewerStatus === "on" ?
-                        <Tab>Goal Viewer</Tab>
-                        : null}
-                    {managerStatus === "on" ?
-                        <Tab>Goal Manager</Tab>
-                        : null}
-                    {mapStatus === "on" ?
-                        <Tab>Map Viewer</Tab>
-                        : null}
-                </TabList>
-
+        <Tabs
+            forceRenderTabPanel
+            className="displayFlexImportant flex-col min-h-0 grow w-full mt-20 w-full md:w-5/6">
+            <TabList hidden={waiting || failed} className="select-none">
                 {waiting ?
-                    <TabPanel className="grid grid-column m-48 space-y-5">
-                        <div className="flex flex-row justify-center m-10">
-                            <FontAwesomeIcon
-                                icon={faCog} spin size="10x"
-                                color={"#1d4bb7"}
-                            />
-                        </div>
-                        <div className="text-center w-full">
-                            Connecting...
-                        </div>
-                    </TabPanel>
+                    <Tab>Connecting...</Tab>
                     : null}
                 {failed ?
-                    <TabPanel className="grid grid-column m-48 space-y-5">
-                        <div className="flex flex-row justify-center justify-items-center
-                                        m-10">
-                            <FontAwesomeIcon
-                                icon={faBan} size="10x"
-                                color={"#e00b00"}
-                            />
-                        </div>
-                        <div className="text-center">
-                            Connection Failed!
-                        </div>
-                        <div className="text-center">
-                            WebSocket URL: {wsBaseUrl}
-                        </div>
-                    </TabPanel>
+                    <Tab>Connection Failed</Tab>
                     : null}
+                {<Tab>Belief Viewer</Tab>}
                 {chatStatus === "on" ?
-                    <TabPanel>
-                        <RobotChat />
-                    </TabPanel>
+                    <Tab>Robot Chat</Tab>
                     : null}
                 {viewerStatus === "on" ?
-                    <TabPanel>
-                        <GoalViewer />
-                    </TabPanel>
+                    <Tab>Goal Viewer</Tab>
                     : null}
                 {managerStatus === "on" ?
-                    <TabPanel>
-                        <GoalManager />
-                    </TabPanel>
+                    <Tab>Goal Manager</Tab>
                     : null}
                 {mapStatus === "on" ?
-                    <TabPanel>
-                        <MapViewer></MapViewer>
-                    </TabPanel>
+                    <Tab>Map Viewer</Tab>
                     : null}
-            </Tabs>
-        </div>
+            </TabList>
+
+            {waiting ?
+                <TabPanel className="grid grid-column mt-48 space-y-5">
+                    <div className="flex flex-row justify-center m-10">
+                        <FontAwesomeIcon
+                            icon={faCog} spin size="10x"
+                            color={"#1d4bb7"}
+                        />
+                    </div>
+                    <div className="text-center w-full">
+                        Connecting...
+                    </div>
+                </TabPanel>
+                : null}
+            {failed ?
+                <TabPanel className="grid grid-column mt-48 space-y-5">
+                    <div className="flex flex-row justify-center justify-items-center
+                                        m-10">
+                        <FontAwesomeIcon
+                            icon={faBan} size="10x"
+                            color={"#e00b00"}
+                        />
+                    </div>
+                    <div className="text-center">
+                        Connection Failed!
+                    </div>
+                    <div className="text-center">
+                        WebSocket URL: {wsBaseUrl}
+                    </div>
+                </TabPanel>
+                : null}
+            {<TabPanel className="hidden flex-col min-h-0 grow">
+                <BeliefViewer />
+            </TabPanel>}
+            {chatStatus === "on" ?
+                <TabPanel>
+                    <RobotChat />
+                </TabPanel>
+                : null}
+            {viewerStatus === "on" ?
+                <TabPanel>
+                    <GoalViewer />
+                </TabPanel>
+                : null}
+            {managerStatus === "on" ?
+                <TabPanel>
+                    <GoalManager />
+                </TabPanel>
+                : null}
+            {mapStatus === "on" ?
+                <TabPanel>
+                    <MapViewer></MapViewer>
+                </TabPanel>
+                : null}
+        </Tabs>
     );
 };
 

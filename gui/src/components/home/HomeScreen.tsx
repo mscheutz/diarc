@@ -6,8 +6,8 @@ import Providers from "../Providers";
 import TabbedComponentViewer from "../diarcGui/TabbedComponentViewer";
 const HomeScreen = () => {
     return (
-        <div className="flex flex-col items-center h-screen
-                        w-full md:gap-10">
+        <div className="flex flex-col items-center h-dvh shrink-0
+                        w-full pb-10 md:gap-10">
             <Providers>
                 <Navbar />
                 {/* Main body */}
