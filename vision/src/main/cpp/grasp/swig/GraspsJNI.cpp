@@ -27,10 +27,10 @@ JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_grasp_swig_GraspDetectorM
     point.y = cloud_data[i+1];
     point.z = cloud_data[i+2];
   }
-  std::cout << "point cloud values: " << std::endl;
-  for (const auto& p: cloud->points) {
-    std::cout << "point " << p << std::endl;
-  }
+//  std::cout << "point cloud values: " << std::endl;
+//  for (const auto& p: cloud->points) {
+//    std::cout << "point " << p << std::endl;
+//  }
   env->ReleaseDoubleArrayElements(pointcloud, cloud_data, 0);
 
   jdouble* data = env->GetDoubleArrayElements(transform, 0);
@@ -38,7 +38,7 @@ JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_grasp_swig_GraspDetectorM
   for (int i=0; i < 16; ++i) {
     transform_matrix.at<double>(i/4,i%4) = data[i];
   }
-  std::cout << "trasnform matrix " << transform_matrix << std::endl;
+//  std::cout << "trasnform matrix " << transform_matrix << std::endl;
   env->ReleaseDoubleArrayElements(transform, data, 0);
 
   ArrayListInterface graspsJNI;

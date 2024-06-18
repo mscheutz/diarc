@@ -72,6 +72,7 @@ import edu.tufts.hrilab.fol.Predicate;
     !armPose =  act:getPose(?arm);
 
     // find objectRef_2
+    act:look(down);
     act:findObject(?objectRef_2);
 
     // get MemoryObject for ?bjectRef_2
@@ -142,6 +143,7 @@ import edu.tufts.hrilab.fol.Predicate;
       success infer : touching(?actor,?objectRef);
     }
 
+    act:look(down);
     act:findObject(?objectRef);
     act:openGripper(?arm);
     act:moveTo(?arm, ?objectRef);
@@ -229,6 +231,7 @@ import edu.tufts.hrilab.fol.Predicate;
     }
 
     // find object
+    act:look(down);
     act:findObject(?objectRef, !typeId);
 
     // close gripper(s)

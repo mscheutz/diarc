@@ -859,12 +859,14 @@ public class MemoryObject implements Serializable {
     }
 
     // transform orientation
-    Matrix4d orientMat = new Matrix4d(orientation, new Vector3d(), 1.0);
-    Matrix4d newMat = new Matrix4d();
-    newMat.mul(transform, orientMat);
-    Quat4d orient = new Quat4d();
-    newMat.get(orient);
-    orientation = new Quat4d(orient.x, orient.y, orient.z, orient.w);
+    if (orientation != null) {
+      Matrix4d orientMat = new Matrix4d(orientation, new Vector3d(), 1.0);
+      Matrix4d newMat = new Matrix4d();
+      newMat.mul(transform, orientMat);
+      Quat4d orient = new Quat4d();
+      newMat.get(orient);
+      orientation = new Quat4d(orient.x, orient.y, orient.z, orient.w);
+    }
 
     // transform primitives
     for (MemoryPrimitive primitive : primitives) {

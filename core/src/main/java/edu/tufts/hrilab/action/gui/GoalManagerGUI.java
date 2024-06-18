@@ -210,7 +210,7 @@ public class GoalManagerGUI {
             public void mouseClicked(MouseEvent mouseEvent) {
                 super.mouseClicked(mouseEvent);
                 getAgent();
-                executionManager.submitGoal(Factory.createPredicate("goToPose", agent.toString(), "prepare"));
+                executionManager.submitGoal(Factory.createPredicate("goToPose", agent.toString(), "carry"));
             }
         });
         ap_caddy.addMouseListener(new MouseAdapter() {

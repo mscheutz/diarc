@@ -207,7 +207,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
         addLocalStaticTransforms(services.iterator().next());
 
         // cancel notification bc the addLocalStaticTransform service was already up
-        TRADE.cancelNotification(this, "joined", new TRADEServiceConstraints().name("addLocalStaticTransform"));
+//        TRADE.cancelNotification(this, "joined", new TRADEServiceConstraints().name("addLocalStaticTransform"));
       }
     } catch (TRADEException e) {
       log.error("Error registering for notification: addLocalStaticTransform", e);
@@ -424,7 +424,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   protected List<Grasp> getOrderedGraspOptions(Symbol refId, List<? extends Term> constraints) {
     List<Grasp> graspOptions;
     try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("calculateGraspOptions").argTypes(Symbol.class));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("calculateGraspOptions").argTypes(Symbol.class, List.class));
       graspOptions = tsi.call(List.class, refId, constraints);
     } catch (TRADEException e) {
       log.error("[moveTo] exception getting grasp options from reference, returning null", e);
@@ -1065,9 +1065,9 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     } else {
       log.error("[graspObject] could not convert ref to MemoryObject. Not attaching collision object.");
       graspedObjects.put(refId, Boolean.FALSE);
-      result = false;
     }
 
+    // NOTE: currently can't fail (i.e., results always true)
     return new ConditionJustification(result, Factory.createPredicate("succeeded(graspObject)"));
   }
 
