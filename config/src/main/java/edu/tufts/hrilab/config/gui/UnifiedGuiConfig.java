@@ -3,6 +3,8 @@ package edu.tufts.hrilab.config.gui;
 import edu.tufts.hrilab.action.GoalManagerEndpointComponent;
 import edu.tufts.hrilab.action.GoalViewerEndpointComponent;
 import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.belief.BeliefComponent;
+import edu.tufts.hrilab.belief.gui.BeliefEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.GuiManager;
 import edu.tufts.hrilab.map.MapComponent;
@@ -36,16 +38,16 @@ public class UnifiedGuiConfig extends DiarcConfiguration {
 
         String gmArgs = "-beliefinitfile demos.pl agents/twonaoagents.pl " +
                 "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
-                "-goal listen(self) -beliefg";
+                "-goal listen(self)";
         createInstance(GoalManagerImpl.class, gmArgs);
 
+        createInstance(BeliefEndpointComponent.class);
         createInstance(ChatEndpointComponent.class, "-r dempster shafer");
         createInstance(GoalViewerEndpointComponent.class);
         createInstance(GoalManagerEndpointComponent.class);
 
         createInstance(MockMoveBaseComponent.class, "-groups agent:fetch:fetch -simExecTime");
 
-        // TODO: This should really be taking the map files from some resource folder, independent of the user
         createInstance(MapComponent.class, "-map_folder /home/lucien/Documents/diarc/elevator_lab_test -start_floor 1");
 
         createInstance(GuiManager.class);

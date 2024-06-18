@@ -1060,6 +1060,7 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface {
    *
    * @return
    */
+  @TRADEService
   public Prover getNotificationProver() {
     return notificationProver;
   }

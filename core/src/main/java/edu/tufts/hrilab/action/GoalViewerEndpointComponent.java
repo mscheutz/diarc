@@ -279,7 +279,6 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
         //======================================================================
         /**
          * Handle a text message from the user.
-         *
          * @param session the web socket session the message comes over on
          * @param message the message from the user
          * @throws Exception ignored

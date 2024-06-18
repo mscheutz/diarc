@@ -83,7 +83,7 @@ const ActionForm = ({ sendMessage }) => {
                 onSubmit={custom.handleSubmit(onSubmitCustom)}
                 className="flex flex-col"
             >
-                <label className="text-lg">Custom Action</label>
+                <label className="text-lg mt-2">Custom Action</label>
                 <textarea {...custom.register("custom")}
                     className={textBoxClassName} required />
 
@@ -101,7 +101,7 @@ const ActionForm = ({ sendMessage }) => {
                 onSubmit={generated.handleSubmit(onSubmitGenerated)}
                 className="flex flex-col"
             >
-                <label className="text-lg">
+                <label className="text-lg mt-2">
                     Selected Action
                     {/* Looks a bit weird in code but I want to make only
                     part of the label monospace */}
@@ -160,7 +160,7 @@ const GoalForm = ({ sendMessage }) => {
             onSubmit={handleSubmit(onSubmitGoal)}
             className="flex flex-col"
         >
-            <label>Agent</label>
+            <label className="mt-2">Agent</label>
             <input type="text" defaultValue="self" {...register("agent")}
                 className={textBoxClassName} required />
 

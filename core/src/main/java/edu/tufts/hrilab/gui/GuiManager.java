@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import edu.tufts.hrilab.action.GoalManagerEndpointComponent;
 import edu.tufts.hrilab.action.GoalViewerEndpointComponent;
+import edu.tufts.hrilab.belief.gui.BeliefEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Variable;
@@ -169,6 +170,7 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(@Nonnull WebSocketHandlerRegistry registry) {
         try {
+            WebSocketHandler beliefHandler = null;
             WebSocketHandler chatHandler = null;
             WebSocketHandler goalViewerHandler = null;
             WebSocketHandler goalManagerHandler = null;
@@ -176,6 +178,8 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
             Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
             for (TRADEServiceInfo service : availableServices) {
                 switch (service.serviceString) {
+                    case "getBeliefHandler()" ->
+                            beliefHandler = service.call(BeliefEndpointComponent.BeliefHandler.class);
                     case "getChatHandler()" ->
                             chatHandler = service.call(ChatEndpointComponent.ChatHandler.class);
                     case "getGoalViewerHandler()" ->
@@ -186,11 +190,15 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
                             mapComponent = service.call(MapComponent.class);
                 }
 
-                if(chatHandler != null && goalViewerHandler != null
-                        && goalManagerHandler != null && mapComponent != null)
+                if(beliefHandler != null && chatHandler != null
+                && goalViewerHandler != null && goalManagerHandler != null
+                && mapComponent != null)
                     break;
             }
 
+            if(beliefHandler != null)
+                registry.addHandler(beliefHandler, "/belief")
+                        .setAllowedOrigins(parseCorsOrigins());
             if(chatHandler != null)
                 registry.addHandler(chatHandler, "/chat")
                         .setAllowedOrigins(parseCorsOrigins());

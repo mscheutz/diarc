@@ -20,16 +20,26 @@ import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
 const GoalViewer: React.FunctionComponent<{}> = () => {
     // SET UP STATE //
-    const [beliefTimeline, setBeliefTimeline] = useState<string[]>(["fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs",]);
+    const [timelineBeliefs, setTimelineBeliefs] = useState<string[]>(["fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs",]);
     const [currentBeliefs, setCurrentBeliefs] = useState<string[]>(["fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs",]);
 
     const generateBeliefTimeline = useCallback(() => {
         return (
-            beliefTimeline.length > 0 ?
-                beliefTimeline.map((value, index) => <p key={index}>{value}</p>)
+            timelineBeliefs.length > 0 ?
+                timelineBeliefs
+                    .map((value) =>
+                        [value.startsWith("assert:"), value.slice()])
+                    .map((value, index) =>
+                        <p
+                            key={index}
+                            title={value[1] as string}
+                            className={value[0] ? "text-green-600" : "text-red-600"}>
+                            {value[1]}
+                        </p>
+                    )
                 : <p>Belief timeline empty</p>
         );
-    }, [beliefTimeline]);
+    }, [timelineBeliefs]);
 
     const generateCurrentBeliefs = useCallback(() => {
         return (
@@ -40,6 +50,9 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
     }, [currentBeliefs]);
 
     const [inputValue, setInputValue] = useState<string>("");
+
+    const [resultValue, setResultValue] =
+        useState<string>("Query result will appear here.");
 
     // SET UP WEBSOCKET //
     const url: URL = new URL(document.location.toString());
@@ -53,29 +66,39 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
     useEffect(() => {
         if (lastMessage !== null) {
             const data = JSON.parse(lastMessage.data);
-            console.debug(data);
+
+            if (data.current)
+                setCurrentBeliefs(data.current);
+            if (data.timeline)
+                setTimelineBeliefs(data.timeline);
+            if (data.result)
+                setResultValue(data.result);
         }
     }, [lastMessage]);
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
+        sendMessage(JSON.stringify({
+            "method": "query",
+            "input": inputValue
+        }));
         setInputValue("");
-        console.debug("submit");
-        // sendMessage(JSON.stringify({
-        //     "method": "cancel",
-        //     "goalId": selected.id.slice(4) // remove "goal" prefix
-        // }))
-        // setSelected({ name: "", id: "", type: "" });
     };
 
     const handleAssert = () => {
+        sendMessage(JSON.stringify({
+            "method": "assert",
+            "input": inputValue
+        }));
         setInputValue("");
-        console.debug("assert");
     };
 
     const handleRetract = () => {
+        sendMessage(JSON.stringify({
+            "method": "retract",
+            "input": inputValue
+        }));
         setInputValue("");
-        console.debug("retract")
     };
 
     return (
@@ -104,63 +127,77 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
             </Tabs>
             {/* Main display (large screen) */}
             <div className="grow grid-cols-2 gap-5 hidden md:grid min-h-0">
-                <div className="rounded-md shadow-md outline outline-1 p-2
-                                outline-[#d1dbe3] overflow-scroll text-sm
-                                min-h-0 grow">
-                    {generateBeliefTimeline()}
+                <div className="grow flex flex-col min-h-0 rounded-md shadow-md
+                                outline outline-1 p-2 outline-[#d1dbe3]">
+                    <div className="mb-1 text-lg">Belief Timeline</div>
+                    <div className="overflow-scroll text-sm min-h-0 grow text-nowrap">
+                        {generateBeliefTimeline()}
+                    </div>
                 </div>
-                <div className="rounded-md shadow-md outline outline-1 p-2
-                                outline-[#d1dbe3] overflow-scroll text-sm
-                                min-h-0 grow">
-                    {generateCurrentBeliefs()}
+                <div className="grow flex flex-col min-h-0 rounded-md shadow-md
+                                outline outline-1 p-2 outline-[#d1dbe3]">
+                    <div className="mb-1 text-lg">Current Beliefs</div>
+                    <div className="overflow-scroll text-sm min-h-0 grow text-nowrap">
+                        {generateCurrentBeliefs()}
+                    </div>
                 </div>
             </div>
 
             {/* Menu */}
-            <form onSubmit={(e) => handleSubmit(e)}>
-                <div className="shadow-md outline outline-1 outline-[#d1dbe3]
-                            p-3 justify-center gap-3 rounded-md
-                            grid grid-cols-1
-                            md:flex md:flex-row md:flex-wrap">
-                    <input
-                        type="text"
-                        className="block box-border rounded text-sm border
+            <div className="shadow-md outline outline-1 outline-[#d1dbe3]
+                            p-3 rounded-md">
+                <form onSubmit={(e) => handleSubmit(e)}>
+                    <div className="justify-center gap-3 grid grid-cols-1
+                                    md:flex md:flex-row md:flex-wrap">
+                        <input
+                            type="text"
+                            className="block box-border rounded text-sm border
                                border-slate-500 font-mono grow p-2
                                overflow-x-auto self-stretch"
-                        placeholder="Query..."
-                        value={inputValue}
-                        onChange={(e) => {
-                            setInputValue(e.target.value);
-                        }}
-                    >
-                    </input>
-                    <div className="flex flex-row gap-3 flex-wrap justify-center">
-                        <Button
-                            type="submit"
-                            title="Submit query"
-                        // disabled={!(hasSelected() && selected.type === "active")}
+                            placeholder="Query/assert/retract..."
+                            value={inputValue}
+                            onChange={(e) => {
+                                setInputValue(e.target.value);
+                            }}
+                            autoFocus
+                            required
                         >
-                            Submit
-                        </Button>
-                        <Button
-                            type="button"
-                            title="Assert belief"
-                            onClick={handleAssert}
-                        // disabled={!(hasSelected() && selected.type === "suspended")}
-                        >
-                            Assert
-                        </Button>
-                        <Button
-                            type="button"
-                            title="Retract belief"
-                            onClick={handleRetract}
-                        // disabled={!(hasSelected() && selected.type === "suspended")}
-                        >
-                            Retract
-                        </Button>
+                        </input>
+                        <div className="flex flex-row gap-3 flex-wrap justify-center">
+                            <Button
+                                type="submit"
+                                title="Submit query"
+                                disabled={inputValue === ""}
+                            >
+                                Submit
+                            </Button>
+                            <Button
+                                type="button"
+                                title="Assert belief (not supported yet)"
+                                onClick={handleAssert}
+                                disabled={inputValue === ""}
+                            >
+                                Assert
+                            </Button>
+                            <Button
+                                type="button"
+                                title="Retract belief (not supported yet)"
+                                onClick={handleRetract}
+                                disabled={inputValue === ""}
+                            >
+                                Retract
+                            </Button>
+                        </div>
                     </div>
+                </form>
+
+                <div
+                    title="Query result"
+                    className="mt-2 md:mt-1"
+                >
+                    {resultValue}
                 </div>
-            </form>
+            </div>
 
             <ConnectionIndicator readyState={readyState} />
         </div >
