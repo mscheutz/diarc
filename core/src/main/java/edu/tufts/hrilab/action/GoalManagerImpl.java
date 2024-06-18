@@ -393,6 +393,28 @@ public class GoalManagerImpl extends DiarcComponent {
   }
 
   /**
+   * Get a copied list of the previously executed goals
+   *
+   * @return list of Goals
+   */
+  @TRADEService
+  @Action
+  public List<Goal> getPastGoals() {
+    return em.getPastGoals();
+  }
+
+  /**
+   * Get a copied list of the goals currently undergoing execution.
+   *
+   * @return list of Goals
+   */
+  @TRADEService
+  @Action
+  public List<Goal> getActiveGoals() {
+    return em.getActiveGoals();
+  }
+
+  /**
    * Get the goals that are currently being pursued by the Basic Goal Manager for a particular actor.
    *
    * @return a list of predicates representing the goal

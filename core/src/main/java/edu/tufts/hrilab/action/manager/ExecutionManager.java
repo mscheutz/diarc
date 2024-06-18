@@ -1295,7 +1295,6 @@ public class ExecutionManager implements ActionListener {
    * @param gid
    * @return boolean indicating whether the goal was found in one of the collections or not
    */
-  @TRADEService
   public boolean cancelGoal(long gid) {
     // if goal to cancel is pending
     PendingGoal pg = getPendingGoal(gid);
@@ -1464,7 +1463,6 @@ public class ExecutionManager implements ActionListener {
    *
    * @return list of Goals
    */
-  @TRADEService
   public List<Goal> getActiveGoals() {
     Set<Goal> activeGoals = new HashSet<>();
     synchronized (goalsLock) {
@@ -1497,7 +1495,6 @@ public class ExecutionManager implements ActionListener {
    *
    * @return list of Goals
    */
-  @TRADEService
   public List<Goal> getPastGoals() {
     return new ArrayList<>(pastGoals);
   }

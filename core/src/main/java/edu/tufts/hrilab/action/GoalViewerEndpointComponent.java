@@ -82,10 +82,17 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
                             .name("getPastGoals")
                             .returnType(List.class)
             );
+
+            for(TRADEServiceInfo serviceInfo : TRADE.getAvailableServices()) {
+                if(serviceInfo.serviceString.contains("cancelGoal(")) {
+                    System.out.println(serviceInfo.serviceString);
+                }
+            }
+
             cancelGoal = TRADE.getAvailableService(
                     new TRADEServiceConstraints()
                             .name("cancelGoal")
-                            .returnType(boolean.class)
+                            .argTypes(Long.class)
             );
             submitGoal = TRADE.getAvailableService(
                     new TRADEServiceConstraints()
@@ -292,17 +299,17 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
             JSONObject payload = new JSONObject(message.getPayload());
 
             if(payload.get("method").equals("cancel")) {
-                cancelGoal.call(Boolean.class,
+                cancelGoal.call(void.class,
                         Long.parseLong((String) payload.get("goalId")));
             } else if(payload.get("method").equals("suspend")) {
-                submitGoal.call(Goal.class,
+                submitGoal.call(long.class,
                         Factory.createPredicate(
                                 "suspendGoal",
                                 (String) payload.get("agent"),
                                 (String) payload.get("goal")
                         ));
             } else if(payload.get("method").equals("resume")) {
-                submitGoal.call(Goal.class,
+                submitGoal.call(long.class,
                         Factory.createPredicate(
                                 "resumeGoal",
                                 (String) payload.get("agent"),
