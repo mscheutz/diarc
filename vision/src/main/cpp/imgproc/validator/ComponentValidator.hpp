@@ -56,8 +56,8 @@ private:
   } predicateFeatures;
 
   std::vector<predicateFeatures> semanticProperties;
-
   bool calculateSemProperty(const cv::Mat& semMat, const int semPredShape, const int semPredIdx);
+  cv::Mat applySigmoidToMatrix(const cv::Mat& semMatrix);
 
 };
 

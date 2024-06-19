@@ -144,74 +144,87 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
   cv::Scalar noMean(0.0, 0.0, 0.0);  // we do not want any mean subtraction
   int width = 256;
   int height = 192;
-  float threshold = 0.5;
-
   cv::Size size(width, height);
 
-  ComponentValidator::spatialIdcs = {
-    {12, 13, 14, 15},  //spatial indices of side component 1
-    {20, 21, 22, 23}  //spatial indices of side component 2
-  };
-
-  
   // convert image to grayscale and floats
   cv::Mat grayscaleFrame;
   cv::cvtColor(currFrame, grayscaleFrame, cv::COLOR_BGR2GRAY);
-  std::cout << "size of frame: " << grayscaleFrame.size() << std::endl;
-
+  
   // convert image to Semantic Encoder dimensions  
   cv::Mat blob;
   cv::dnn::blobFromImage(grayscaleFrame, blob, scalefactor, size, noMean, false); 
-  
   // Extract Semantic Descriptions 
   net.setInput(blob);
-
   cv::Mat semMatrix = net.forward();
-  cv::Mat semMatrixSig = semMatrix.clone();
+  // Apply sigmoid to the matrix
+  cv::Mat semMatrixSig = applySigmoidToMatrix(semMatrix);
 
-  // Iterate over Semantic Descriptions and print values
-  if (!semMatrix.empty() && semMatrix.cols == 24 && semMatrix.rows == 1) {
-    
-    for (int i = 0; i < semMatrix.cols; ++i) {
-  
-        semMatrixSig.at<float>(0, i) = sigmoid(semMatrix.at<float>(0, i));
-        //std::cout << "semantic parameter " << i << " is " << semMatrixSig.at<float>(0, i) << std::endl;
-    }
-  } else {
-      std::cerr << "Invalid matrix dimensions!" << std::endl;
+  // Check if the output matrix is valid before using it
+  if (semMatrixSig.empty()) {
+        std::cerr << "Failed to apply Sigmoid to matrix." << std::endl;
   }
 
   float confidence = 1.0f; //TODO: How could I set this in a good way?
+  int predShape;
+  int predIdx;
+  bool predFound;
+
+  PredicateHelper::Set::const_iterator descriptors_itr;
+  DescriptorsByTypeConstPtr types = getTypes();
+  DescriptorsByType::const_iterator types_itr = types->find(object->getTypeId());
   
-  TypesByDescriptor::const_iterator descriptors_itr;
-  for (descriptors_itr = descriptors->begin(); descriptors_itr != descriptors->end(); ++descriptors_itr) {
+  for (descriptors_itr = types_itr->second.begin(); descriptors_itr != types_itr->second.end(); ++descriptors_itr) {
     
-    std::string keyToFind = descriptors_itr->first.getName(); // Assuming you have this key
-    auto it = std::find_if(semanticProperties.begin(), semanticProperties.end(),
-      [&keyToFind](const predicateFeatures& pf) {
-        return pf.predicateKey == keyToFind;
-    });
+    std::string keyToFind = descriptors_itr->getName();
+    
+    if (keyToFind == "any")
+    {
+      // Access all elements except the last one
+      for (auto sp = semanticProperties.begin(); sp != semanticProperties.end() - 1; ++sp) {
+        predShape = sp->predicateShape;
+        predIdx = sp->predicateIndex;
+        predFound = calculateSemProperty(semMatrixSig, predShape, predIdx);
 
-    // Check if the element was found
-    if (it == semanticProperties.end()) {
-      continue;
+        if (predFound) {
+          object->addValidationResult(confidence, PredicateHelper(*descriptors_itr));
+          object->addValidationResult(confidence, PredicateHelper(sp->predicateKey + 
+                                  "(" + descriptors_itr->getArg(0) + ")"));
+        }
+        std::cout << "Predicate " << sp->predicateKey + 
+                                  "(" + descriptors_itr->getArg(0) + ")" << " found? " << predFound << std::endl;
+      }
+    } else {
+    
+      auto it = std::find_if(semanticProperties.begin(), semanticProperties.end(),
+        [&keyToFind](const predicateFeatures& pf) {
+          return pf.predicateKey == keyToFind;
+      });
+
+      // Check if the element was found
+      if (it == semanticProperties.end()) {
+        continue;
+      } 
+
+      predShape = it->predicateShape;
+      predIdx = it->predicateIndex;
+
+      predFound = calculateSemProperty(semMatrixSig, predShape, predIdx);
+      std::cout << "Predicate " << it->predicateKey + 
+                                  "(" + descriptors_itr->getArg(0) + ")" << " found? " << predFound << std::endl;
+      
+      if (!predFound) {
+        LOG4CXX_DEBUG(logger, boost::format("Semantic Property not found"));
+        continue;
+      }
+
+      //object->addValidationResult(confidence, *descriptors_itr);
+      object->addValidationResult(confidence, PredicateHelper(*descriptors_itr));
+      object->addValidationResult(confidence, PredicateHelper(it->predicateKey + 
+                                  "(" + descriptors_itr->getArg(0) + ")"));
     } 
-
-    int predShape = it->predicateShape;
-    int predIdx = it->predicateIndex;
-
-    bool predFound = calculateSemProperty(semMatrixSig, predShape, predIdx);
-    std::cout << "Predicate " << it->predicateKey << " found? " << predFound << std::endl;
-    
-    if (!predFound) {
-      LOG4CXX_DEBUG(logger, boost::format("Semantic Property not found"));
-      continue;
-    }
-
-    object->addValidationResult(confidence, descriptors_itr->first);
-    
+   
   }
-
+  
   sendValidationNotifications(object);
 
 }
@@ -247,8 +260,8 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
       std::cout << "Determine shape of side 2" << std::endl;
       break;
     default:
-      std::cerr << "Invalid semPredIdx value: " << semPredIdx << std::endl;
-      break;
+      std::cerr << "semPredIdx not defined " << semPredIdx << std::endl;
+      return semMatch;
   }
 
   const auto& idcs = shapeIdcs[groupIndex];
@@ -277,5 +290,26 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
   }
 
   return semMatch;
+
+}
+
+// Function to apply sigmoid to matrix and check dimensions
+cv::Mat ComponentValidator::applySigmoidToMatrix(const cv::Mat& matrix) {
+  // Initialize the output matrix
+  cv::Mat matrixSig = matrix.clone();
+
+  // Check if the matrix is not empty and has the correct dimensions
+  if (!matrix.empty() && matrix.cols == 24 && matrix.rows == 1) {
+    // Apply the sigmoid function to each element in the matrix
+    for (int i = 0; i < matrix.cols; ++i) {
+      matrixSig.at<float>(0, i) = sigmoid(matrix.at<float>(0, i));
+      std::cout << "Element " << i << " is " << matrixSig.at<float>(0, i) << std::endl;
+    }
+  } else {
+    std::cerr << "Invalid matrix dimensions!" << std::endl;
+    return cv::Mat(); // Return an empty matrix to indicate an error
+  }
+
+  return matrixSig; // Return the modified matrix
 
 }
