@@ -218,7 +218,11 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
 
   @Override
   public void shutdownComponent() {
-    return;
+    try {
+      TRADE.deregister(rwsPoseConsultant);
+    } catch (TRADEException e) {
+      log.error("[shutdownComponent] exception deregistering RWSPoseConsultant", e);
+    }
   }
 
 }

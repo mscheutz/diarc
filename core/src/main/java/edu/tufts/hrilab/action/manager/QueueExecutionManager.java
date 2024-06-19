@@ -225,54 +225,77 @@ public class QueueExecutionManager extends ExecutionManager {
   @TRADEService
   @Action
   public void cancelAllActiveGoals() {
+    log.info("[cancelAllActiveGoals] in method");
     synchronized (goalsLock) {
+      Set<Goal> goalsToCancel = new HashSet<>();
+      log.trace("[cancelAllActiveGoals] have goalsLock");
       for (Symbol agent: agentGoals.keySet()) {
         Goal g = agentGoals.get(agent);
         if (g != null && !g.getStatus().isTerminated()) {
-          agentGoals.get(agent).cancel();
+          goalsToCancel.add(g);
         }
       }
+      for (Goal g: goalsToCancel) {
+        cancelGoal(g.getId());
+      }
     }
+    log.trace("[cancelAllActiveGoals] released goalsLock");
   }
 
   @TRADEService
   @Action
   public void cancelAllPendingGoals() {
+    log.info("[cancelAllPendingGoals] in method");
     synchronized (pendingGoalsLock) {
+      log.trace("[cancelAllPendingGoals] have pendingGoalsLock");
       while (!pendingGoals.isEmpty()) {
-        cancelGoalInQueueIndex(0);
+        int size = pendingGoals.size();
+        cancelGoalInQueueIndex(size-1);
+        if (pendingGoals.size() == size) {
+          log.error("[cancelPendingGoals] canceled goal which was not removed from the collection, exiting loop");
+          return;
+        }
       }
     }
+    log.trace("[cancelAllPendingGoals] released pendingGoalsLock");
   }
 
   @TRADEService
   @Action
   public void cancelAllCurrentGoals() {
+    log.info("[cancelAllCurrentGoals] in method");
     synchronized (goalsLock) {
+      log.trace("[cancelAllCurrentGoals] have goalsLock");
       synchronized (pendingGoalsLock) {
+        log.trace("[cancelAllCurrentGoals] have pendingGoalsLock");
         cancelAllPendingGoals();
         cancelAllActiveGoals();
       }
     }
+    log.trace("[cancelAllCurrentGoals] released locks");
   }
 
   @TRADEService
   @Action
   public List<Predicate> getPendingGoalsPredicates() {
+    log.trace("[getPendingGoalsPredicates] in method");
     List<Predicate> goalPreds = new ArrayList<>();
     synchronized (pendingGoalsLock) {
+      log.trace("[getPendingGoalsPredicates] have pendingGoalsLock");
       Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
       while (pendingGoalIterator.hasNext()) {
         PendingGoal pendingGoal = pendingGoalIterator.next();
         goalPreds.add(pendingGoal.getGoal().getPredicate());
       }
     }
+    log.trace("[getPendingGoalsPredicates] released pendingGoalsLock");
     return goalPreds;
   }
 
   @TRADEService
   @Action
   public List<Predicate> getSystemGoalPredicates(Symbol actor) {
+    log.trace("[getSystemGoalsPredicates] {}", actor);
     return getSystemGoalPredicatesHelper(getUntypedSymbol(actor), new ArrayList<>());
   }
 
@@ -295,12 +318,16 @@ public class QueueExecutionManager extends ExecutionManager {
   @TRADEService
   @Action
   public Predicate getNextGoalPredicate() {
+    log.trace("[getNextGoalPredicate] in method");
     synchronized (pendingGoalsLock) {
+      log.trace("[getNextGoalPredicate] have pendingGoalsLock");
       Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
       if (pendingGoalIterator.hasNext()) {
+        log.trace("[getNextGoalPredicate] releasing pendingGoalsLock");
         return pendingGoalIterator.next().getGoal().getPredicate();
       } else {
         //TODO: what to return here?
+        log.trace("[getNextGoalPredicate] releasing pendingGoalsLock");
         return Factory.createPredicate("none()");
       }
     }
@@ -309,17 +336,21 @@ public class QueueExecutionManager extends ExecutionManager {
   @TRADEService
   @Action
   public Predicate getNextGoalPredicate(Symbol agent) {
+    log.trace("[getNextGoalPredicate] {}", agent);
     agent = getUntypedSymbol(agent);
     synchronized (pendingGoalsLock) {
+      log.trace("[getNextGoalPredicate] {} have pendingGoalsLock", agent);
       Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
       while (pendingGoalIterator.hasNext()) {
         PendingGoal pg = pendingGoalIterator.next();
         if (agent.equals(getUntypedSymbol(pg.getGoal().getActor()))) {
+          log.trace("[getNextGoalPredicate] {} releasing pendingGoalsLock", agent);
           return pg.getGoal().getPredicate();
         }
       }
     }
     //TODO: what to return here?
+    log.trace("[getNextGoalPredicate] {} releasing pendingGoalsLock", agent);
     return Factory.createPredicate("none()");
   }
 

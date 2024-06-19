@@ -28,6 +28,10 @@ public class PickAndPlaceLLMDemo extends DiarcConfiguration {
     public SimSpeechRecognitionComponent simSpeechRec;
     public MockYumiComponent leftArm;
     public MockYumiComponent rightArm;
+    private CognexConsultant cognexConsultant;
+    private ItemConsultant itemConsultant;
+    private ABBAreaConsultant areaConsultant;
+    private ABBLocationConsultant locationConsultant;
     String service = "llamahf";
     String model = "Meta-Llama-3-70B-Instruct";
 
@@ -38,7 +42,7 @@ public class PickAndPlaceLLMDemo extends DiarcConfiguration {
         leftArm = createInstance(MockYumiComponent.class, "-groups agent:leftArm:yumi");
         rightArm = createInstance(MockYumiComponent.class, "-groups agent:rightArm:yumi");
 
-        CognexConsultant cognexConsultant = new CognexConsultant();
+        cognexConsultant = new CognexConsultant();
         try {
             TRADE.registerAllServices(cognexConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "agent:human:mobileManipulator", "physobj")));
         } catch (TRADEException e) {
@@ -49,28 +53,28 @@ public class PickAndPlaceLLMDemo extends DiarcConfiguration {
 
         createInstance(RequestFromHumanComponent.class, "-groups agent:human:mobileManipulator");
 
-        ItemConsultant itemConsultant = new ItemConsultant();
+        itemConsultant = new ItemConsultant();
         try {
             TRADE.registerAllServices(itemConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "item")));
         } catch (TRADEException e) {
             log.error("error registering item consultant in DIARC config", e);
         }
 
-        ABBAreaConsultant areaConsultant = new ABBAreaConsultant();
+        areaConsultant = new ABBAreaConsultant();
         try {
             TRADE.registerAllServices(areaConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "area")));
         } catch (TRADEException e) {
             log.error("error registering area consultant in DIARC config", e);
         }
 
-        ABBLocationConsultant locationConsultant = new ABBLocationConsultant();
+        locationConsultant = new ABBLocationConsultant();
         try {
             TRADE.registerAllServices(locationConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "agent:human:mobileManipulator", "location")));
         } catch (TRADEException e) {
             log.error("error registering location consultant in DIARC config" + e);
         }
 
-        DiarcComponent.createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.6", service, model));
+        createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.01", service, model));
         createInstance(PickAndPlaceLLM.class, "-nluPrompt pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationYumi -outputLanguage ja");
         createInstance(edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent.class, "-service pickAndPlaceLLMParser");
 
@@ -104,6 +108,19 @@ public class PickAndPlaceLLMDemo extends DiarcConfiguration {
         createInstance(GoalManagerImpl.class, gmArgs);
 
         simSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker eric -config yumiPickAndPlace.simspeech -nogui");
+    }
+
+    @Override
+    public void shutdownConfiguration() {
+        super.shutdownConfiguration();
+        try {
+            TRADE.deregister(areaConsultant);
+            TRADE.deregister(itemConsultant);
+            TRADE.deregister(cognexConsultant);
+            TRADE.deregister(locationConsultant);
+        } catch (TRADEException e) {
+            log.error("[shutdownConfiguration] Error deregistering consultants", e);
+        }
     }
 
     public static void main(String[] args) {

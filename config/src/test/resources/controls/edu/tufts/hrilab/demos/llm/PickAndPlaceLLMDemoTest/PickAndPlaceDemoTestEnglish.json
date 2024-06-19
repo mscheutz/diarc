@@ -70,12 +70,12 @@
     }, {
       "serviceName" : "putDownItem",
       "serviceArgs" : [ "physobj_0:physobj", "rightArmpose_8:rightArmpose", "null" ]
-    }, {
-      "serviceName" : "goToCameraPose",
-      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
     } ]
   }, {
     "serviceCalls" : [ {
+      "serviceName" : "goToCameraPose",
+      "serviceArgs" : [ "rightArmpose_0:rightArmpose", "null" ]
+    }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
     }, {
@@ -263,7 +263,7 @@
       "serviceArgs" : [ "オーケー", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "コーンを下ろせないのは、\"prep area\"が占有されているため右アームです。", "true" ]
+      "serviceArgs" : [ "コーンを下ろせないのは、\"prep area\"が占有されているため右腕です。", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {

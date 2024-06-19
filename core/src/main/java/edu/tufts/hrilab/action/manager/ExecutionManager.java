@@ -403,7 +403,9 @@ public class ExecutionManager implements ActionListener {
    * collection has a resource conflict with the supplied set.
    */
   protected boolean resourceConflictInPending(Set<Resource> requiredResources, int maxIndex) {
+    log.trace("[resourceConflictInPending] in method {}", requiredResources);
     synchronized (pendingGoalsLock) {
+      log.trace("[resourceConflictInPending] have pendingGoalsLock");
       Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.descendingIterator();
       int i = 0;
       while (pendingGoalsIterator.hasNext() && i < maxIndex) {
@@ -412,9 +414,11 @@ public class ExecutionManager implements ActionListener {
         // available for the other to be executed, then there is a conflict
         //TODO: Store resources in PendingGoal rather than recomputing each submission?
         if (getRequiredResourcesForGoal(pg.getGoal()).stream().anyMatch(requiredResources::contains)) {
+          log.debug("[resourceConflictInPending] found conflicting goal in pending collection");
           return true;
         }
       }
+      log.trace("[resourceConflictInPending] no conflicting goal found");
       return false;
     }
   }
@@ -423,6 +427,7 @@ public class ExecutionManager implements ActionListener {
    * Activate as many pending goals as possible in order of priority while avoiding resource conflicts
    */
   protected void activateValidPendingGoals() {
+    log.trace("[activateNextPendingGoals] in method");
     Goal assignedGoal = activateNextValidPendingGoal();
     while (assignedGoal != null) {
       assignedGoal = activateNextValidPendingGoal();
@@ -436,9 +441,12 @@ public class ExecutionManager implements ActionListener {
    * valid goal existed, returns null.
    */
   protected Goal activateNextValidPendingGoal() {
-    synchronized (resourceLock) {
-      //iterate through pending goals in order of priority
-      synchronized (pendingGoalsLock) {
+    log.trace("[activateNextPendingGoal] in method");
+    synchronized (pendingGoalsLock) {
+      log.trace("[activateNextPendingGoal] have pendingGoals lock");
+      synchronized (resourceLock) {
+        log.trace("[activateNextPendingGoal] have resourceLock");
+        //iterate through pending goals in order of priority
         Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.descendingIterator();
         while (pendingGoalsIterator.hasNext()) {
           PendingGoal pg = pendingGoalsIterator.next();
@@ -446,12 +454,14 @@ public class ExecutionManager implements ActionListener {
           Set<Resource> necessaryResources = getRequiredResourcesForGoal(pg.getGoal());
           //If all resources are available, submit goal
           if (necessaryResources.stream().allMatch(Resource::isAvailable)) {
+            log.debug("[activateNextPendingGoal] found valid goal {}, locking resources {}", pg.getGoal(), necessaryResources);
             lockResources(pg.getGoal(), necessaryResources);
             transferGoalToActive(pg.getGoal());
             return pg.getGoal();
           }
         }
         //No valid goals found
+        log.trace("[activateNextPendingGoal] no valid goal found");
         return null;
       }
     }
@@ -474,6 +484,7 @@ public class ExecutionManager implements ActionListener {
    * subset of the supplied resource set.
    */
   protected Set<Goal> getResourceConflictingActiveGoals(Set<Resource> requiredResources) {
+    log.trace("[getResourceConflictingActiveGoals] in method {}", requiredResources);
     Set<Goal> conflictingGoals = new HashSet<>();
 
     //for all required resources, if res is unavailable then add holder to set
@@ -484,6 +495,7 @@ public class ExecutionManager implements ActionListener {
       }
     }
 
+    log.debug("[getResourceConflictingActiveGoals] conflicting active goals: {}", conflictingGoals);
     return conflictingGoals;
   }
 
@@ -545,12 +557,14 @@ public class ExecutionManager implements ActionListener {
    * @param updateType indicates whether the active goal was newly added, already existed, or removed
    */
   protected void onActiveGoalUpdated(Goal g, GoalStatus status, UpdateType updateType) {
+    log.trace("[onActiveGoalUpdated] {}, {}, {}", g, status, updateType.name());
     //Update UI
     notifyUIActiveGoalUpdated(g, status, updateType);
 
     //Assign as many pending goals as possible (in order of priority) with resources freed up by this active goal
     // completing
     if (status.isTerminated() && !pendingGoals.isEmpty() && consumedResources(g)) {
+      log.debug("[onActiveGoalUpdated] active goal terminated, searching for pending goals to activate");
       activateValidPendingGoals();
     }
   }
@@ -563,35 +577,45 @@ public class ExecutionManager implements ActionListener {
    *              updateType indicates whether the active goal was newly added, already existed, or removed
    */
   protected void onPendingGoalUpdated(Goal g, int index, UpdateType updateType) {
+    log.trace("[onPendingGoalUpdated] {} at index {}", g, index);
     //Update UI
     notifyUIPendingGoalUpdated(g, index, updateType);
 
     //If a pending goal was newly added, check if it should be forwarded straight to execution or left in the queue
     if (updateType == UpdateType.ADDED) {
-
+      log.trace("[onPendingGoalUpdated] pending goal has been added");
       synchronized (resourceLock) {
         //Gather required resources for the added goal
+        log.trace("[onPendingGoalUpdated] have resourceLock");
         Set<Resource> necessaryResources = getRequiredResourcesForGoal(g);
         //Gather active goals which are occupying resources necessary for this one
         Set<Goal> conflictingGoals = getResourceConflictingActiveGoals(necessaryResources);
         //Transfer to active immediately if the newly submitted goal:
         //1. Does not conflict with any currently active goal
         if (conflictingGoals.isEmpty()) {
+          log.trace("[onPendingGoalUpdated] no conflicting active goals");
           //2. Does not share relevant resources with any higher priority goal currently in the queue
           if (!resourceConflictInPending(necessaryResources,index)) {
+            log.debug("[onPendingGoalUpdated] no conflicting goals, transferring to active");
             lockResources(g, necessaryResources);
             transferGoalToActive(g);
+          } else {
+            log.debug("[onPendingGoalUpdated] conflicting higher priority pending goal exists, leaving in pending");
           }
         }
         //If there is a conflict with an active goal(s), check if the new one should supersede execution
         else {
+          log.trace("[onPendingGoalUpdated] conflicting active goals exist");
           if (shouldSupersede(g, conflictingGoals)) {
+            log.debug("[onPendingGoalUpdated] superseding conflicting active goals");
             supersedeGoals(g, conflictingGoals, necessaryResources);
           } else {
+            log.debug("[onPendingGoalUpdated] Submitted goal is lower priority than conflicting active goal");
             handleConflictingLowerPriorityGoal(g, necessaryResources);
           }
         }
       }
+      log.trace("[onPendingGoalUpdated] releasing resourceLock");
     }
   }
 
@@ -602,6 +626,7 @@ public class ExecutionManager implements ActionListener {
    * @param necessaryResources the required resources which are unavailable
    */
   protected void handleConflictingLowerPriorityGoal(Goal g, Set<Resource> necessaryResources) {
+    log.trace("[handleConflictingLowerPriorityGoal] {}, {}", g, necessaryResources);
     //TODO: is this check specific enough? And do we want this?
     //If the goal was superseded due to resource conflicts with a higher priority
     //  goal, allow it to sit in pending and eventually resumed when the prior goal
@@ -613,11 +638,13 @@ public class ExecutionManager implements ActionListener {
     //  as is for the queue EM). Could also look to just handle persistent goals
     //  specially instead
     if (g.getActionInterpreter() != null) {
+      log.trace("[handleConflictingLowerPriorityGoal] superseded goal will be left untouched");
       return;
     }
 
     //Default behavior: Terminate the goal with a relevant failure justification
     // if required resources are not available
+    log.debug("[handleConflictingLowerPriorityGoal] setting failure justification due to unavailable resources");
     List<Symbol> lockedResources = getLockedResourceNames(necessaryResources);
     //TODO: make sure this is sensible and add pragrule
     Justification justification = new ConditionJustification(false, Factory.createPredicate("availableResources", lockedResources));
@@ -656,8 +683,6 @@ public class ExecutionManager implements ActionListener {
   @TRADEService
   @Action
   public long submitGoal(Predicate g, Symbol priorityTierSymbol) {
-    log.debug("[submitGoal]: " + g + " with priority tier: " + priorityTierSymbol);
-
     long priority = getPriorityForGoal(g);
     PriorityTier priorityTier = PriorityTier.fromString(priorityTierSymbol.getName());
     if (priorityTier == null || priorityTier == PriorityTier.UNINITIALIZED) {
@@ -749,7 +774,7 @@ public class ExecutionManager implements ActionListener {
    * @return The duplicate goal if present, otherwise the newly submitted goal
    */
   public Goal submitGoal(Goal g, ExecutionType execType, long priority, PriorityTier priorityTier) {
-    log.debug("[submitGoal] submitting goal " + g + " with exec type " + execType);
+    log.info("[submitGoal] submitting goal {} with exec type {}, priority {}, tier {}", g, execType, priority, priorityTier);
 
     Symbol untypedActor = getUntypedSymbol(g.getActor());
     if (getAgentTeam(untypedActor) == null) {
@@ -762,6 +787,7 @@ public class ExecutionManager implements ActionListener {
     }
 
     if (actionLearning.getLearningStatus() == ActionLearningStatus.ACTIVE && !actionLearning.shouldIgnore(g)) {
+      log.debug("[submitGoal] handing {} off to action learning", g);
       actionLearning.addGoal(g);
       if (!actionLearning.shouldExecute()) {
         pastGoals.add(g);
@@ -809,6 +835,7 @@ public class ExecutionManager implements ActionListener {
       log.error("[joinOnGoal] Error waiting on goal: " + goal, e);
     }
 
+    log.trace("[joinOnGoal] returning for gid {}", gid);
     return goal.getStatus();
   }
 
@@ -825,6 +852,7 @@ public class ExecutionManager implements ActionListener {
     // first wait for goal to no longer be pending
     long startTime = System.currentTimeMillis();
     if (!joinOnPendingGoal(gid, millis)) {
+      log.trace("[joinOnGoal] timed out for gid {}", gid);
       // returned while waiting for pending goal to no longer be pending
       return GoalStatus.PENDING;
     }
@@ -852,10 +880,11 @@ public class ExecutionManager implements ActionListener {
         goalFuture.get(millis, TimeUnit.MILLISECONDS);
       }
     } catch (InterruptedException | ExecutionException e) {
-      log.error("[join] Error waiting on goal: " + goal, e);
+      log.error("[joinOnGoal] Error waiting on goal: " + goal, e);
     } catch (TimeoutException e) {
-      log.trace("[join] Timeout waiting on goal: " + goal + " timeout: " + millis, e);
+      log.debug("[joinOnGoal] Timeout waiting on goal: " + goal + " timeout: " + millis, e);
     }
+    log.trace("[joinOnGoal] returning for gid {}", gid);
     return goal.getStatus();
   }
 
@@ -863,7 +892,9 @@ public class ExecutionManager implements ActionListener {
    * Add the supplied PendingGoal to the pending collection and notify of update
    */
   private void addPendingGoal(PendingGoal pg) {
+    log.trace("[addPendingGoal] in method with goal {}", pg.getGoal().getId());
     synchronized (pendingGoalsLock) {
+      log.trace("[addPendingGoal] have pendingGoalsLock");
       pendingGoals.add(pg);
 
       int index = getIndexOfPendingGoal(pg); //not ideal, see if we want to change UI hook signature
@@ -878,19 +909,23 @@ public class ExecutionManager implements ActionListener {
    * @return a boolean indicating whether the new goal's execution should take priority over all supplied active goals
    */
   protected boolean shouldSupersede(Goal newGoal, Set<Goal> activeGoals) {
+    log.trace("[shouldSupersede] in method with goals {}, {}", newGoal, activeGoals);
     //This shouldn't be possible with current hooks
     if (activeGoals.isEmpty()) {
+      log.warn("[shouldSupersede] method called with empty active goals set");
       return true;
     }
     //Compare priority of new goals and existing goal
     //Taking approach that the single highest priority goal takes precedence, regardless of the number of agents involved
     else {
       for (Goal g : activeGoals) {
-        if (goalComparator.compareGoalPriority(newGoal, g) > 0) {
-          return true;
+        if (goalComparator.compareGoalPriority(newGoal, g) <= 0) {
+          log.trace("[shouldSupersede] {} has lower priority than an active goal, returning false", newGoal);
+          return false;
         }
       }
-      return false;
+      log.debug("[shouldSupersede] {} has higher priority than all active goals, returning true", newGoal);
+      return true;
     }
   }
 
@@ -902,28 +937,35 @@ public class ExecutionManager implements ActionListener {
    * @param activeGoals a list of currently active goals to be pushed back to pending
    */
   protected void supersedeGoals(Goal newGoal, Set<Goal> activeGoals, Set<Resource> relevantResources) {
+    log.info("[supersedeGoals] {} superseding {}, requiring locking of {}", newGoal, activeGoals, relevantResources);
     //Send active goals back to pending
     synchronized (pendingGoalsLock) {
+      log.trace("[supersedeGoals] have pendingGoalsLock");
       synchronized (goalsLock) {
+        log.trace("[supersedeGoals] have goalsLock");
         //Suspend and remove active goals back to pending first
         List<Future> aiFutures = new ArrayList<>();
         List<GoalStatus> goalStatuses = new ArrayList<>(); //track original status to know whether to resume when returned to active
         for (Goal activeGoal : activeGoals) {
           goalStatuses.add(activeGoal.getStatus());
           if (activeGoal.getStatus() == GoalStatus.ACTIVE) {
+            log.trace("[supersedeGoals] suspending active goal {}", activeGoal);
             suspendGoal(activeGoal.getId());
           }
+          log.debug("[supersedeGoals] unlocking resources and removing active goal {}", activeGoal);
           unlockResources(relevantResources);
           aiFutures.add(removeActiveGoal(activeGoal));
         }
 
         //Set new Goal as active
+        log.debug("[supersedeGoals] setting new goal to active {}", newGoal);
         lockResources(newGoal, relevantResources);
         transferGoalToActive(newGoal);
 
         //Add superseded goals back to pending
         int i = 0;
         for (Goal activeGoal : activeGoals) {
+          log.debug("[supersedeGoals] returning superseded goal to pending {}", activeGoal);
           PendingGoal pg = new PendingGoal(activeGoal, ExecutionType.ACT);
           pg.setPreviousAIFuture(aiFutures.get(i));
           pg.setPreviousStatus(goalStatuses.get(i));
@@ -945,7 +987,7 @@ public class ExecutionManager implements ActionListener {
     log.debug("[transferGoalToActive] in method with goal: " + goal);
 
     synchronized (pendingGoalsLock) {
-
+      log.trace("[transferGoalToActive] have pendingGoalsLock");
       PendingGoal pg = removePendingGoal(goal);
       if (pg == null) {
         log.error("[transferGoalToActive] attempting to submit goal which doesn't exist in pending queue");
@@ -969,7 +1011,7 @@ public class ExecutionManager implements ActionListener {
             goal.resume();
             onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.ADDED);
           } else {
-            log.debug("[transferGoalToActive] Leaving goal with status {}", goal.getStatus());
+            log.debug("[transferGoalToActive] Leaving goal with current status {}", goal.getStatus());
             onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.ADDED);
           }
         }
@@ -994,6 +1036,7 @@ public class ExecutionManager implements ActionListener {
       log.error("[addActiveGoal] received goal with actor not found in hierarchy: {}", actor);
       return;
     }
+    log.debug("[addActiveGoal] adding goal {} to agentTeam {}", g, agentTeam.getName());
     agentTeam.addGoal(g, future);
   }
 
@@ -1005,7 +1048,9 @@ public class ExecutionManager implements ActionListener {
   }
 
   private boolean lockResources(Goal g, Set<Resource> resources) {
+    log.debug("[lockResources] {}, {}", g, resources);
     synchronized (resourceLock) {
+      log.trace("[lockResources] have resourceLock");
         for (Resource res : resources) {
           if (!res.isAvailable()) {
             log.warn("[lockResources] attempting to lock resource which is not available: {}", res.getName());
@@ -1013,10 +1058,12 @@ public class ExecutionManager implements ActionListener {
           }
         }
 
+      log.trace("[lockResources] locking resources {}", resources);
       for (Resource res : resources) {
         res.setHolder(g);
       }
     }
+    log.trace("[lockResources] released resourceLock");
     return true;
   }
 
@@ -1026,6 +1073,7 @@ public class ExecutionManager implements ActionListener {
    * @return The goal's associated ActionInterpreter future
    */
   private Future removeActiveGoal(Goal g) {
+    log.debug("[removeActiveGoal] {}", g);
     Symbol actor = g.getActor();
     AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
@@ -1043,11 +1091,14 @@ public class ExecutionManager implements ActionListener {
   }
 
   private boolean unlockResources(Set<Resource> resources) {
+    log.debug("[unlockResources] {}", resources);
     synchronized (resourceLock) {
+      log.trace("[unlockResources] unlocking resources {}", resources);
       for (Resource res : resources) {
         res.releaseHolder();
       }
     }
+    log.trace("[unlockResources] released resourceLock");
     return true;
   }
 
@@ -1082,15 +1133,16 @@ public class ExecutionManager implements ActionListener {
       // Attach this ExecutionManager as Listener
       ai.addListener(this);
 
+      log.trace("[executeGoal] starting action interpreter");
       startActionInterpreter(ai);
       return true;
     } else {
-      log.debug("Goal " + goal + " is not permissible.");
+      log.info("[executeGoal] Goal " + goal + " is not permissible.");
       goal.setFailConditions(constraintCheck);
       goal.setAsTerminated(GoalStatus.FAILED);
     }
 
-    log.debug("Failed to add goal!");
+    log.info("[executeGoal] Failed to add goal! {}", goal);
     pastGoals.add(goal);
     return false;
   }
@@ -1099,13 +1151,12 @@ public class ExecutionManager implements ActionListener {
    * Submits the supplied actionInterpreter to this class' ExecutorService while doing associated bookkeeping
    */
   private void startActionInterpreter(ActionInterpreter ai) {
-    log.debug("Starting interpreter for goal " + ai.getGoal() + "...");
+    log.info("Starting interpreter for goal " + ai.getGoal() + "...");
     Future aiFuture = executor.submit(ai);
 
     Goal goal = ai.getGoal();
     addActiveGoal(goal, aiFuture);
     onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.ADDED);
-    log.debug("Added goal " + goal);
     //updatePriorities();
   }
 
@@ -1121,10 +1172,13 @@ public class ExecutionManager implements ActionListener {
   @Override
   public void actionComplete(ActionInterpreter ai) {
     Goal goal = ai.getGoal();
+    log.info("[actionComplete] {}", goal);
 
     synchronized (goalsLock) {
+      log.trace("[actionComplete] {} have goalsLock", goal);
       transferGoalToPastGoals(goal);
     }
+    log.trace("[actionComplete] {} release goalsLock", goal);
   }
 
   public void actionStarted(ActionInterpreter ai) {
@@ -1147,25 +1201,29 @@ public class ExecutionManager implements ActionListener {
     log.debug("[transferGoalToPastGoals] in method with goal: " + goal);
 
     synchronized (pendingGoalsLock) {
+      log.trace("[transferGoalToPastGoals] {} have pendingGoalsLock", goal);
       PendingGoal pg = removePendingGoal(goal);
       if (pg != null) {
         pastGoals.add(goal);
         pg.notifyOfNoLongerPending();
+        log.trace("[transferGoalToPastGoals] {} releasing pendingGoalsLock", goal);
         return;
       }
     }
 
     synchronized (goalsLock) {
+      log.trace("[transferGoalToPastGoals] {} have goalsLock", goal);
       // goal is an active goal
       if (getActiveGoal(goal.getId()) != null) {
         unlockResources(goal);
         removeActiveGoal(goal);
         pastGoals.add(goal);
+        log.trace("[transferGoalToPastGoals] {} releasing goalsLock", goal);
         return;
       }
     }
 
-    log.warn("[transferGoalToPastGoals] No matching pending or active goal could be found for: {}", goal);
+    log.debug("[transferGoalToPastGoals] No matching pending or active goal could be found for: {}", goal);
   }
 
   /**
@@ -1173,12 +1231,13 @@ public class ExecutionManager implements ActionListener {
    * not found or pending.
    */
   protected void joinOnPendingGoal(long gid) {
+    log.trace("[joinOnPendingGoal] {} in method", gid);
     PendingGoal pg = getPendingGoal(gid);
 
     // if goal is pending, wait for it to become active (or cancelled)
     if (pg != null) {
       pg.waitForNoLongerPending();
-      log.debug("[joinOnGoal] done waiting for pending goal to be activated");
+      log.trace("[joinOnPendingGoal] done waiting for pending goal to be updated");
     }
   }
 
@@ -1189,11 +1248,11 @@ public class ExecutionManager implements ActionListener {
    * @return true: goal not pending or not found. false: goal found and is still pending
    */
   private boolean joinOnPendingGoal(long gid, long millis) {
+    log.trace("[joinOnPendingGoal] {}, {} in method", gid, millis);
     PendingGoal pg = getPendingGoal(gid);
 
     // if goal is pending, wait for it to become active (or cancelled)
     if (pg != null) {
-      log.debug("[joinOnGoal] waiting for pending goal to be activated");
       return pg.waitForNoLongerPending(millis);
     }
 
@@ -1241,6 +1300,7 @@ public class ExecutionManager implements ActionListener {
    * @param priorityTier priority tier of the provided goal
    */
   protected void addPendingGoal(Goal g, ExecutionType execType, long priority, PriorityTier priorityTier) {
+    log.debug("[addPendingGoal] {}, {}, {}, {}", g, execType, priority, priorityTier);
     g.setPriority(priority);
     g.setPriorityTier(priorityTier);
     PendingGoal pg = new PendingGoal(g, execType); //PendingGoal is primed to block on waitForNoLongerPending by default
@@ -1251,18 +1311,22 @@ public class ExecutionManager implements ActionListener {
    * Remove the matching PendingGoal from the pending collection and notify of update
    */
   private PendingGoal removePendingGoal(Goal g) {
+    log.debug("[removePendingGoal] {}", g);
     synchronized (pendingGoalsLock) {
+      log.trace("[removePendingGoal] {} have pendingGoalsLock", g);
       Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
       int index = 0;
       while (pendingGoalIterator.hasNext()) {
         PendingGoal pendingGoal = pendingGoalIterator.next();
         if (pendingGoal.getGoal().getId() == g.getId()) {
+          log.trace("[removePendingGoal] {} found goal", g);
           pendingGoalIterator.remove();
           onPendingGoalUpdated(g, index, UpdateType.REMOVED); //updating signature to remove index removes need for iterator
           return pendingGoal;
         }
         index++;
       }
+      log.trace("[removePendingGoal] {} didn't find goal", g);
       return null;
     }
   }
@@ -1272,10 +1336,12 @@ public class ExecutionManager implements ActionListener {
    * if not found.
    */
   private int getIndexOfPendingGoal(PendingGoal pg) {
+    log.trace("[getIndexOfPendingGoal] {}", pg.getGoal());
     //Can't do this because this doesn't give any indication of how ties are broken
     //pendingGoals.tailSet(pg, false).size();
 
     synchronized (pendingGoalsLock) {
+      log.trace("[getIndexOfPendingGoal] {} have pendingGoalsLock", pg.getGoal());
       Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
       int index = 0;
       while (pendingGoalIterator.hasNext()) {
@@ -1299,6 +1365,7 @@ public class ExecutionManager implements ActionListener {
     // if goal to cancel is pending
     PendingGoal pg = getPendingGoal(gid);
     if (pg != null) {
+      log.info("[cancelGoal] {} canceling pending goal {}", gid, pg.getGoal());
       cancelPendingGoal(pg);
       return true;
     }
@@ -1306,10 +1373,12 @@ public class ExecutionManager implements ActionListener {
     // else if goal to cancel is active
     Goal goal = getActiveGoal(gid);
     if (goal != null) {
+      log.trace("[cancelGoal] {} canceling active goal {}", gid, goal);
       cancelActiveGoal(goal);
       return true;
     }
 
+    log.info("[cancelGoal] cannot find current goal for gid {}", gid);
     return false;
   }
 
@@ -1321,12 +1390,14 @@ public class ExecutionManager implements ActionListener {
   private void cancelPendingGoal(PendingGoal pg) {
     // cancel pending goal
     Goal goal = pg.getGoal();
+    log.debug("[cancelPendingGoal] {}", goal);
     if (goal.getActionInterpreter() == null) {
       goal.setStatus(GoalStatus.CANCELED);
       transferGoalToPastGoals(goal);
     }
     //If this goal was previously superseded and has an associated AI, it needs to be canceled
     else {
+      log.debug("[cancelPendingGoal] {} canceling superseded goal", goal);
       cancelActiveGoal(goal);
     }
     pg.notifyOfNoLongerPending();
@@ -1335,6 +1406,7 @@ public class ExecutionManager implements ActionListener {
     //If going by the logic that there can be resource conflicts between
     // pending goals, then we need to check if any lower priority pending goals
     // can now be executed immediately due to this goal being canceled.
+    log.trace("[cancelPendingGoal] {} searching for lower priority which may have been unblocked", pg.getGoal());
     activateValidPendingGoals();
   }
 
@@ -1346,14 +1418,7 @@ public class ExecutionManager implements ActionListener {
   private void cancelActiveGoal(Goal goal) {
     log.debug("[cancelActiveGoal] goal: {}", goal.getPredicate());
     goal.cancel();
-
-    // if goal doesn't have an AI, remove it from goals list and add to pastGoals
-    // if goal does have an AI, the actionCompleted method will be called to
-    // take care of that
-    boolean hasAI = goal.getActionInterpreter() == null ? false : true;
-    if (!hasAI) {
-      transferGoalToPastGoals(goal);
-    }
+    transferGoalToPastGoals(goal); //This will cause actionComplete's call to this method not find the goal, is that okay?
   }
 
   /**
@@ -1364,6 +1429,7 @@ public class ExecutionManager implements ActionListener {
    */
   public boolean suspendGoal(long gid) {
     Goal g = getGoal(gid);
+    log.info("[suspendGoal] {} {}", gid, g);
 
     if (g == null) {
       log.warn("[suspendGoal] goal is null.");
@@ -1376,6 +1442,7 @@ public class ExecutionManager implements ActionListener {
       log.warn("[suspendGoal] attempting to suspend an already terminated goal");
       return false;
     } else {
+      log.debug("[suspendGoal] suspending active goal {}", g);
       return suspendActiveGoal(g);
     }
   }
@@ -1387,12 +1454,12 @@ public class ExecutionManager implements ActionListener {
    * @return true if the goal was found, otherwise false
    */
   private boolean suspendActiveGoal(Goal goal) {
-    log.debug("[suspendGoal] " + goal.getPredicate());
+    log.trace("[suspendActiveGoal] " + goal.getPredicate());
     if (goal == null) {
-      log.warn("[suspendGoal] goal is null.");
+      log.warn("[suspendActiveGoal] goal is null.");
       return false;
     } else if (goal.getStatus() == GoalStatus.SUSPENDED) {
-      log.warn("[suspendGoal] goal status is already SUSPENDED");
+      log.warn("[suspendActiveGoal] goal status is already SUSPENDED");
       return false;
     } else {
       goal.suspend();
@@ -1409,6 +1476,7 @@ public class ExecutionManager implements ActionListener {
    */
   public boolean resumeGoal(long gid) {
     Goal g = getGoal(gid);
+    log.info("[resumeGoal] {} {}", gid, g);
 
     if (g == null) {
       log.warn("[resumeGoal] goal is null.");
@@ -1421,6 +1489,7 @@ public class ExecutionManager implements ActionListener {
       log.warn("[resumeGoal] attempting to resume an already terminated goal");
       return false;
     } else {
+      log.debug("[resumeGoal] resuming active goal {}", g);
       return resumeActiveGoal(g);
     }
   }
@@ -1433,7 +1502,7 @@ public class ExecutionManager implements ActionListener {
    * @return true if the goal was found, otherwise false
    */
   private boolean resumeActiveGoal(Goal goal) {
-    log.debug("[resumeGoal] " + goal);
+    log.trace("[resumeGoal] " + goal);
     if (goal == null) {
       log.warn("[resumeGoal] goal is null.");
       return false;
@@ -1449,12 +1518,16 @@ public class ExecutionManager implements ActionListener {
    */
   public List<Goal> getCurrentGoals() {
     List<Goal> currentGoals;
-    synchronized (goalsLock) {
-      synchronized (pendingGoalsLock) {
+    log.trace("[getCurrentGoals] in method");
+    synchronized (pendingGoalsLock) {
+      log.trace("[getCurrentGoals] have pendingGoalsLock");
+      synchronized (goalsLock) {
+        log.trace("[getCurrentGoals] have goalsLock");
         currentGoals = getActiveGoals();
         currentGoals.addAll(getPendingGoals().stream().map(PendingGoal::getGoal).collect(Collectors.toList()));
       }
     }
+    log.trace("[getCurrentGoals] released locks");
     return currentGoals;
   }
 
@@ -1465,9 +1538,12 @@ public class ExecutionManager implements ActionListener {
    */
   public List<Goal> getActiveGoals() {
     Set<Goal> activeGoals = new HashSet<>();
+    log.trace("[getActiveGoals] in method");
     synchronized (goalsLock) {
+      log.trace("[getActiveGoals] have goalsLock");
       getActiveGoalsHelper(rootAgent, activeGoals);
     }
+    log.trace("[getActiveGoals] released goalsLock");
     return new ArrayList<>(activeGoals);
   }
 
@@ -1506,15 +1582,19 @@ public class ExecutionManager implements ActionListener {
    * @return the goal corresponding to the ID.
    */
   public Goal getGoal(long gid) {
+    log.trace("[getGoal] {}", gid);
     Goal g = null;
     PendingGoal pg = getPendingGoal(gid);
     if (pg != null) {
+      log.trace("[getGoal] {} is pending goal", gid);
       g = pg.getGoal();
     }
     if (g == null) {
+      log.trace("[getGoal] {} is active goal", gid);
       g = getActiveGoal(gid);
     }
     if (g == null) {
+      log.trace("[getGoal] {} is past goal", gid);
       g = getPastGoal(gid);
     }
     return g;
@@ -1530,6 +1610,7 @@ public class ExecutionManager implements ActionListener {
    * @return n-th most recently start goal, or null if no n-th goal is being executed
    */
   public Goal getCurrentGoal(Symbol actor, int index) {
+    log.trace("[getCurrentGoal] {}, {}", actor, index);
     return getGoalHelper(getCurrentGoals(), actor, index);
   }
 
@@ -1543,6 +1624,7 @@ public class ExecutionManager implements ActionListener {
    * @return n-th most recently start goal, or null if no n-th goal is being executed
    */
   public Goal getActiveGoal(Symbol actor, int index) {
+    log.trace("[getActiveGoal] {}, {}", actor, index);
     return getGoalHelper(getActiveGoals(), actor, index);
   }
 
@@ -1552,16 +1634,20 @@ public class ExecutionManager implements ActionListener {
    * @param gid goal id
    * @return the goal
    */
-  private Goal getActiveGoal(long gid) {
+  public Goal getActiveGoal(long gid) {
+    log.trace("[getActiveGoal] {}", gid);
     synchronized (goalsLock) {
+      log.trace("[getActiveGoal] {} have goalsLock", gid);
       Goal g;
       for (Symbol agent : agentTeams.keySet()) {
         g = agentTeams.get(agent).getActiveGoal(gid);
         if (g != null) {
+          log.trace("[getActiveGoal] {} releasing goalsLock", gid);
           return g;
         }
       }
     }
+    log.trace("[getActiveGoal] {} released goalsLock", gid);
     return null;
   }
 
@@ -1571,14 +1657,18 @@ public class ExecutionManager implements ActionListener {
    * @param gid goal id
    * @return the goal
    */
-  private PendingGoal getPendingGoal(long gid) {
+  public PendingGoal getPendingGoal(long gid) {
+    log.trace("[getPendingGoal] {} ", gid);
     synchronized (pendingGoalsLock) {
+      log.trace("[getPendingGoal] {} have pendingGoalsLock", gid);
       for (PendingGoal pg : pendingGoals) {
         if (pg.getGoal().getId() == gid) {
+          log.trace("[getPendingGoal] {} releasing pendingGoalsLock", gid);
           return pg;
         }
       }
     }
+    log.trace("[getPendingGoal] {} released pendingGoalsLock", gid);
     return null;
   }
 
@@ -1588,14 +1678,18 @@ public class ExecutionManager implements ActionListener {
    * @param gid goal id.
    * @return the goal corresponding to the ID.
    */
-  private Goal getPastGoal(long gid) {
+  public Goal getPastGoal(long gid) {
+    log.trace("[getPastGoal] {} ", gid);
     synchronized (pastGoals) {
+      log.trace("[getPastGoal] {} have pastGoals lock", gid);
       for (Goal g : pastGoals) {
         if (g.getId() == gid) {
+          log.trace("[getPastGoal] {} releasing pastGoals lock", gid);
           return g;
         }
       }
     }
+    log.trace("[getPastGoal] {} released pastGoals lock", gid);
     return null;
   }
 
@@ -1605,6 +1699,7 @@ public class ExecutionManager implements ActionListener {
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
   protected List<Goal> getActiveGoals(Goal queryGoal) {
+    log.debug("[getActiveGoals] {}", queryGoal);
     return getGoalHelper(getActiveGoals(), queryGoal);
   }
 
@@ -1614,6 +1709,7 @@ public class ExecutionManager implements ActionListener {
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
   public List<Goal> getPastGoals(Goal queryGoal) {
+    log.debug("[getPastGoals] {}", queryGoal);
     return getGoalHelper(getPastGoals(), queryGoal);
   }
 
@@ -1625,6 +1721,7 @@ public class ExecutionManager implements ActionListener {
   @Action
   @TRADEService
   public List<Goal> getCurrentGoals(Goal queryGoal) {
+    log.debug("[getCurrentGoals] {}", queryGoal);
     return getGoalHelper(getCurrentGoals(), queryGoal);
   }
 
@@ -1634,11 +1731,16 @@ public class ExecutionManager implements ActionListener {
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
   public List<Goal> getAllGoals(Goal queryGoal) {
-    synchronized (pastGoals) {
-      synchronized (pendingGoalsLock) {
+    log.debug("[getAllGoals] {}", queryGoal);
+    synchronized (pendingGoalsLock) {
+      log.trace("[getAllGoals] {} have pendingGoalsLock", queryGoal);
+      synchronized (pastGoals) {
+        log.trace("[getAllGoals] {} have pastGoalsLock", queryGoal);
         synchronized (goalsLock) {
+          log.trace("[getAllGoals] {} have goalsLock", queryGoal);
           List<Goal> goals = getCurrentGoals(queryGoal);
           goals.addAll(getPastGoals(queryGoal));
+          log.trace("[getCurrentGoals] {} releasing all locks", queryGoal);
           return goals;
         }
       }
@@ -1652,7 +1754,7 @@ public class ExecutionManager implements ActionListener {
    * @return GoalStatus object indicating the status
    */
   public GoalStatus getGoalStatus(long gid) {
-    log.trace("enter goalStatus(long gid)");
+    log.trace("[getGoalStatus] {}", gid);
     Goal goal = getGoal(gid);
 
     if (goal != null) {
@@ -1669,7 +1771,7 @@ public class ExecutionManager implements ActionListener {
    * @return GoalStatus object indicating the status
    */
   public GoalStatus getActiveGoalStatus(long gid) {
-    log.trace("enter goalStatus(long gid)");
+    log.trace("[getActiveGoalStatus] {}", gid);
     Goal goal = getActiveGoal(gid);
 
     if (goal != null) {
@@ -1687,7 +1789,7 @@ public class ExecutionManager implements ActionListener {
    * @return ActionStatus enum indicating the status
    */
   public ActionStatus getActionStatus(long gid) {
-    log.trace("enter getActionStatus(long gid)");
+    log.trace("[getActionStatus] {}", gid);
     Goal goal = getGoal(gid);
 
     if (goal != null) {
@@ -1704,7 +1806,7 @@ public class ExecutionManager implements ActionListener {
    * @return a list of Predicates describing the failure
    */
   public Justification getGoalFailConditions(long gid) {
-    log.debug("[getGoalFailConditions(long gid)] method entered.");
+    log.trace("[getGoalFailConditions] {}", gid);
 
     Goal goal = getGoal(gid);
 
@@ -1724,7 +1826,7 @@ public class ExecutionManager implements ActionListener {
     // sort using goal start time
 //        currGoals.sort((a, b) -> Long.compare(b.getStartTime(), a.getStartTime()));
     currGoals.sort((a, b) -> Long.compare(b.getId(), a.getId()));
-    log.debug("[getCurrentGoal(" + actor + "," + index + ")] time ordered goals: " + Arrays.toString(currGoals.toArray()));
+    log.trace("[getGoalHelper(" + actor + "," + index + ")] time ordered goals: " + Arrays.toString(currGoals.toArray()));
 
     //
     if (index < 0) {
@@ -1735,12 +1837,13 @@ public class ExecutionManager implements ActionListener {
     if (index < currGoals.size()) {
       returnGoal = currGoals.get(index);
     } else {
-      log.debug("[getCurrentGoal(" + actor + "," + index + ")] no matching goal found.");
+      log.trace("[getGoalHelper(" + actor + "," + index + ")] no matching goal found.");
     }
     return returnGoal;
   }
 
   private List<Goal> getGoalHelper(List<Goal> goalCollection, Goal queryGoal) {
+    log.trace("[getGoalHelper] {}. {}", goalCollection, queryGoal);
     List<Goal> matchingGoals = new ArrayList<>();
     for (Goal currGoal : goalCollection) {
       if (currGoal.getActor().equals(queryGoal.getActor()) && currGoal.getPredicate().instanceOf(queryGoal.getPredicate())) {
@@ -1812,6 +1915,7 @@ public class ExecutionManager implements ActionListener {
       freezeLock.unlock();
     }
 
+    log.debug("[freeze] {}, done waiting on condition", agent);
     if (!alreadyFrozen) {
       freezeLocks.remove(agent);
       freezeConditions.remove(agent);
@@ -1856,12 +1960,14 @@ public class ExecutionManager implements ActionListener {
 
     agentTeam.unfreeze();
 
+    log.trace("[unfreeze] {}, signalling condition", agent);
     freezeLock.lock();
     try {
       freezeCondition.signalAll();
     } finally {
       freezeLock.unlock();
     }
+    log.trace("[unfreeze] {}, signalled condition", agent);
   }
 
   //TODO: implement and make configurable similar to skipsQueue
@@ -1958,7 +2064,7 @@ public class ExecutionManager implements ActionListener {
   }
 
   public void pruneOldData() {
-    log.debug("Pruning...");
+    log.info("Pruning...");
 
     // prune old goals (which have references to context tree)
     long pruneTime = System.currentTimeMillis() - historyLength;
@@ -1978,7 +2084,7 @@ public class ExecutionManager implements ActionListener {
       log.error("Exception caught while pruning.", e);
     }
 
-    log.debug("...done pruning.");
+    log.info("...done pruning.");
   }
 
   /**
@@ -2001,11 +2107,14 @@ public class ExecutionManager implements ActionListener {
    * Note: the goals are automagically moved to the pastGoals list by the ActionListener mechanism.
    */
   public void shutdown() {
-    log.debug("Shutting down and cancelling all goals...");
+    log.info("Shutting down and cancelling all goals... 0");
 
-    synchronized (resourceLock) {
+    synchronized (pendingGoalsLock) {
+      log.trace("[shutdown] have pendingGoalsLock]");
       synchronized (goalsLock) {
-        synchronized (pendingGoalsLock) {
+        log.trace("[shutdown] have goalsLock]");
+        synchronized (resourceLock) {
+          log.trace("[shutdown] have resourceLock]");
           List<PendingGoal> pendingGoals = getPendingGoals();
           for (PendingGoal g : pendingGoals) {
             cancelGoal(g.getGoal().getId());
@@ -2017,6 +2126,7 @@ public class ExecutionManager implements ActionListener {
           }
         }
       }
+      log.trace("[shutdown] released all locks");
     }
 
     memoryManager.shutdown();

@@ -387,7 +387,7 @@ public class QueueExecutionManagerTest {
     em.cancelGoal(freeze1Goal.getId());
     em.joinOnGoal(freeze1Goal.getId());
     assertSame(freeze1Goal.getStatus(), GoalStatus.CANCELED);
-    //TODO: make sure goal is in pastGoals?
+    assertNotNull(em.getPastGoal(freeze1Goal.getId()));
 
     cancelAllGoals();
   }

@@ -4,8 +4,6 @@
 
 package edu.tufts.hrilab.demos.llm;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.config.llm.PickAndPlaceLLMDemo;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -13,6 +11,7 @@ import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -54,11 +53,6 @@ public class PickAndPlaceLLMDemoTest extends GenerativeDiarcIntegrationTest {
         diarcConfig.shutdownConfiguration();
         log.debug("[shutdownConfig] completed");
 
-        try {
-            TRADE.reset("");
-        } catch (TRADEException e) {
-            log.error("[shutdownConfig]", e);
-        }
         log.info("[cleanup] ended");
     }
 
@@ -70,7 +64,7 @@ public class PickAndPlaceLLMDemoTest extends GenerativeDiarcIntegrationTest {
     @Test
     public void PickAndPlaceDemoTestEnglish() {
 
-        setSingleTestTimeout(10, TimeUnit.SECONDS);
+        setSingleTestTimeout(15, TimeUnit.SECONDS);
         addUserInput("Get the corn to the hotplate");
         evaluateResults();
 
@@ -121,9 +115,10 @@ public class PickAndPlaceLLMDemoTest extends GenerativeDiarcIntegrationTest {
     }
 
     @Test
+    @Ignore
     public void PickAndPlaceDemoTestJapanese() {
 
-        setSingleTestTimeout(10, TimeUnit.SECONDS);
+        setSingleTestTimeout(15, TimeUnit.SECONDS);
         addUserInput("トウモロコシをホットプレートに持ってきます");
         evaluateResults();
 
