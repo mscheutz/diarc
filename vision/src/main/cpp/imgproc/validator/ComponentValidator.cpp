@@ -128,22 +128,17 @@ void ComponentValidator::initModel(const std::string &model_path) {
 
 void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification) {
   LOG4CXX_TRACE(logger, "[ComponentValidation] method entered.");
-  std::cout << "hallo" << std::endl;
-
+  
   // get current descriptors to process
   TypesByDescriptorConstPtr descriptors = getDescriptors();
   TypesByDescriptor::const_iterator descriptor_iter;
   std::tr1::unordered_set<long long>::const_iterator typeIds_itr;
   
   MemoryObject::Ptr object = notification->object;
-
+  
   // get captured frames info
   const cv::Mat currFrame = object->getCaptureData()->frame;
 
-  // This is just for myself to see what is happening
-  std::string filename = "/home/schneiders/Documents/currFrame.jpg"; 
-  bool result = cv::imwrite(filename, currFrame);
-  
   // Pre-processing values for the input image
   double scalefactor = 1.0;
   cv::Scalar noMean(0.0, 0.0, 0.0);  // we do not want any mean subtraction
@@ -167,8 +162,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
   // convert image to Semantic Encoder dimensions  
   cv::Mat blob;
   cv::dnn::blobFromImage(grayscaleFrame, blob, scalefactor, size, noMean, false); 
-  //cv::normalize(blob, blob, 41, 82, cv::NORM_MINMAX);
-
+  
   // Extract Semantic Descriptions 
   net.setInput(blob);
 
@@ -188,7 +182,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
   }
 
   float confidence = 1.0f; //TODO: How could I set this in a good way?
-
+  
   TypesByDescriptor::const_iterator descriptors_itr;
   for (descriptors_itr = descriptors->begin(); descriptors_itr != descriptors->end(); ++descriptors_itr) {
     
@@ -209,21 +203,23 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
     bool predFound = calculateSemProperty(semMatrixSig, predShape, predIdx);
     std::cout << "Predicate " << it->predicateKey << " found? " << predFound << std::endl;
     
-    result = calculateColor(image, indices, it->second, confidence, imageMask);
     if (!predFound) {
-      LOG4CXX_DEBUG(logger, boost::format("Semantic Property not found") % it->first % confidence);
+      LOG4CXX_DEBUG(logger, boost::format("Semantic Property not found"));
       continue;
     }
 
-    object->addValidationResult(confidence, *descriptors_itr);
+    object->addValidationResult(confidence, descriptors_itr->first);
     
   }
+
+  sendValidationNotifications(object);
+
 }
 
 bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int semPredShape, const int semPredIdx) {
 
   ComponentValidator::shapeIdcs = {
-    {0, 1, 2, 3},  //shape indices of base component indices
+    {0, 1, 2, 3},  //shape indices of base component 
     {8, 9, 10, 11},  //shape indices of side component 1
     {16, 17, 18, 19}  //shape indices of side component 2
   };
@@ -232,92 +228,54 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
   double maxValue;
   int maxIndex;
   cv::Point maxLoc;
+  int groupIndex = -1;
 
-  std::cout << "semPredShape " << semPredShape << std::endl;
-  std::cout << "semPredIdx " << semPredIdx << std::endl;
-
-  // If we want to determine shape of base component
-  if (semPredIdx >= 0 && semPredIdx <= 3){
-
-    std::cout << "Looking for shape of base component" << std::endl;
-
-    const auto& baseIdcs = shapeIdcs[0];
-    // Extract the specified columns for the base component group
-    cv::Mat baseShapeParams = semMat.col(baseIdcs[0]);
-    for (size_t i = 1; i < baseIdcs.size(); ++i) {
-      cv::hconcat(baseShapeParams, semMat.col(baseIdcs[i]), baseShapeParams);
-    }
-
-    // Find the maximum value among the potential base component shapes
-    cv::minMaxLoc(baseShapeParams, nullptr, &maxValue, nullptr, &maxLoc);
-
-    maxIndex = maxLoc.x;
-    
-    // if the maximum semantic parameter appears at the predicate "slot"
-    if (maxIndex == semPredShape) {
-        // the shape is assumed to be present
-        semMatch = true;
-    }
+  switch (semPredIdx) {
+    //we look for base component shape predicates
+    case 0: case 1: case 2: case 3:
+      groupIndex = 0;
+      std::cout << "Determine shape of base" << std::endl;
+      break;
+    //we look for side component 1 shape predicates
+    case 4: case 5: case 6: case 7:
+      groupIndex = 1;
+      std::cout << "Determine shape of side 1" << std::endl;
+      break;
+    //we look for side component 2 shape predicates
+    case 13: case 14: case 15: case 16:
+      groupIndex = 2;
+      std::cout << "Determine shape of side 2" << std::endl;
+      break;
+    default:
+      std::cerr << "Invalid semPredIdx value: " << semPredIdx << std::endl;
+      break;
   }
 
-  // If we want to determine shape of side component 1
-  if (semPredIdx >= 4 && semPredIdx <= 7){
+  const auto& idcs = shapeIdcs[groupIndex];
+  // Extract the specified semantic matrix column for the current component
+  cv::Mat shapeParams = semMat.col(idcs[0]);
+  for (size_t i = 1; i < idcs.size(); ++i) {
+    cv::hconcat(shapeParams, semMat.col(idcs[i]), shapeParams);
+  }
 
-    std::cout << "Looking for shape of side component 1" << std::endl;
+  // Find the maximum value among the values of side component 2
+  cv::minMaxLoc(shapeParams, nullptr, &maxValue, nullptr, &maxLoc);
+  maxIndex = maxLoc.x;
 
-    int groupIndex = 1; 
-
-    const auto& idcs = shapeIdcs[groupIndex];
-    // Extract the specified columns for the current group
-    cv::Mat shapeParams = semMat.col(idcs[0]);
-    for (size_t i = 1; i < idcs.size(); ++i) {
-      cv::hconcat(shapeParams, semMat.col(idcs[i]), shapeParams);
-    }
-
-    // Find the maximum value among the values of side component 1
-    cv::minMaxLoc(shapeParams, nullptr, &maxValue, nullptr, &maxLoc);
-    maxIndex = maxLoc.x;
-
-    // If the maximum value is less than 0.5, component is not present
-    if (maxValue > 0.5) {
+  // Determine shape only if side component is present
+  if (groupIndex != 0 && maxValue > 0.5) {
       int chosenIndex = maxLoc.x;
-      std::string chosenString = shapeNames[chosenIndex];
-      
+      // If the shape is the same as the shape we are looking for
       if (maxIndex == semPredShape) {
-        semMatch = true;
-      } 
-    }
-  }
-  
-  // If we want to determine shape of side component 1
-  if (semPredIdx >= 13 && semPredIdx <= 16){
-
-    std::cout << "Looking for shape of side component 2" << std::endl;
-
-    int groupIndex = 2; 
-
-    const auto& idcs = shapeIdcs[groupIndex];
-    // Extract the specified columns for the current group
-    cv::Mat shapeParams = semMat.col(idcs[0]);
-    for (size_t i = 1; i < idcs.size(); ++i) {
-      cv::hconcat(shapeParams, semMat.col(idcs[i]), shapeParams);
-    }
-
-    // Find the maximum value among the values of side component 1
-    cv::minMaxLoc(shapeParams, nullptr, &maxValue, nullptr, &maxLoc);
-    maxIndex = maxLoc.x;
-
-    // If the maximum value is less than 0.5, component is not present
-    if (maxValue > 0.5) {
-      int chosenIndex = maxLoc.x;
-      std::string chosenString = shapeNames[chosenIndex];
-      
+          semMatch = true;
+      }
+  } else if (groupIndex == 0) {
+      // The base component will always exist
       if (maxIndex == semPredShape) {
-        semMatch = true;
-      } 
-    }
+          semMatch = true;
+      }
   }
-  
+
   return semMatch;
 
 }

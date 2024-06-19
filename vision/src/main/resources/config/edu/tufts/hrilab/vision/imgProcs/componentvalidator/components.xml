@@ -144,6 +144,10 @@ Example:
     <predicate name="side component 2 is larger">
       <model filename="semanticEncoder"/>
     </predicate>
+    <predicate name="any">
+      <!-- kind of a sneaky way to look for any objects in this list -->
+      <model filename="semanticEncoder"/>
+    </predicate>
 </processor>
 
 
