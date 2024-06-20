@@ -52,10 +52,6 @@ public class UnityDIARCSpaceStationSMM {
     DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:robot1 -point_dist_thresh 0.5");
     DiarcComponent.createInstance(TFComponent.class, " -groups agent:robot1");
 
-    DiarcComponent.createInstance(MapComponent.class, "-groups agent:robot2 -refs refs/unity_space_station_tube_positions.json");
-    DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:robot2 -point_dist_thresh 0.5");
-    DiarcComponent.createInstance(TFComponent.class, " -groups agent:robot2");
-
     DiarcComponent.createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     DiarcComponent.createInstance(ReferenceResolutionComponent.class, "");
     DiarcComponent.createInstance(DialogueComponent.class, "");
@@ -67,7 +63,6 @@ public class UnityDIARCSpaceStationSMM {
     DiarcComponent.createInstance(UnitySpaceStationLLM.class, "-groups agent:robot1 agent:robot2 -refs refs/unity_space_station_tube_positions.json");
     DiarcComponent.createInstance(UnityAgent.class, "-agent rover -groups agent:robot1 agent:robot2");
     DiarcComponent.createInstance(UnityPR2.class, "-agent robot1 -groups agent:robot1");
-    DiarcComponent.createInstance(UnityPR2.class, "-agent robot1 -groups agent:robot2");
 
     DiarcComponent.createInstance(GoalManagerImpl.class, goalManagerArgs);
   }
