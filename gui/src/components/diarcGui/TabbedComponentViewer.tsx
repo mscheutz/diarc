@@ -16,13 +16,14 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBan, faCog } from '@fortawesome/free-solid-svg-icons'
 
-import RobotChat from "./RobotChat";
+import ChatViewer from "./ChatViewer";
 import GoalViewer from "./GoalViewer";
 import MapViewer from "./MapViewer";
 import GoalManager from "./GoalManager";
 import BeliefViewer from "./BeliefViewer";
 
 import "./StyleOverrides.css";
+import VisionManager from "./vision/VisionManager";
 
 const flexTabPanelClass = "hidden flex-col min-h-0 grow";
 
@@ -78,7 +79,6 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 
     return (
         <Tabs
-            forceRenderTabPanel
             className="displayFlexImportant flex-col min-h-0 grow w-full mt-20
                        w-full md:w-5/6">
             <TabList hidden={waiting || failed} className="select-none">
@@ -90,7 +90,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                     : null}
                 {<Tab>Belief Viewer</Tab>}
                 {chatStatus === "on" ?
-                    <Tab>Robot Chat</Tab>
+                    <Tab>Chat Viewer</Tab>
                     : null}
                 {viewerStatus === "on" ?
                     <Tab>Goal Viewer</Tab>
@@ -101,6 +101,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                 {mapStatus === "on" ?
                     <Tab>Map Viewer</Tab>
                     : null}
+                {<Tab>Vision Manager</Tab>}
             </TabList>
 
             {waiting ?
@@ -137,29 +138,32 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                     </div>
                 </TabPanel>
                 : null}
-            {<TabPanel className={flexTabPanelClass}>
+            {<TabPanel className={flexTabPanelClass} forceRender>
                 <BeliefViewer />
             </TabPanel>}
             {chatStatus === "on" ?
-                <TabPanel className={flexTabPanelClass}>
-                    <RobotChat />
+                <TabPanel className={flexTabPanelClass} forceRender>
+                    <ChatViewer />
                 </TabPanel>
                 : null}
             {viewerStatus === "on" ?
-                <TabPanel className={flexTabPanelClass}>
+                <TabPanel className={flexTabPanelClass} forceRender>
                     <GoalViewer />
                 </TabPanel>
                 : null}
             {managerStatus === "on" ?
-                <TabPanel className={flexTabPanelClass}>
+                <TabPanel className={flexTabPanelClass} forceRender>
                     <GoalManager />
                 </TabPanel>
                 : null}
             {mapStatus === "on" ?
-                <TabPanel>
-                    <MapViewer></MapViewer>
+                <TabPanel forceRender>
+                    <MapViewer />
                 </TabPanel>
                 : null}
+            {<TabPanel className={flexTabPanelClass} forceRender>
+                <VisionManager />
+            </TabPanel>}
         </Tabs>
     );
 };

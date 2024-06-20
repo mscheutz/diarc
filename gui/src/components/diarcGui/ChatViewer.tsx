@@ -2,7 +2,7 @@
  * @author Lucien Bao
  * @version 0.9
  * @date 20 May 2024
- * RobotChat. Defines a chat interface component for issuing commands and
+ * ChatViewer. Defines a chat interface component for issuing commands and
  * receiving feedback through DIARC.
  */
 
@@ -52,7 +52,7 @@ const clean = (message: string) => {
     return message.replace("<br>", "").replace(/(\r\n|\n|\r)/gm, "")
 }
 
-const RobotChat = () => {
+const ChatViewer = () => {
     // SET UP MOBILE NAVIGATION //
     // Adapted from "Toggle conversation list using the back button" example at
     // https://chatscope.io/storybook/react/?path=/docs/components-maincontainer--docs
@@ -314,4 +314,4 @@ const RobotChat = () => {
     );
 }
 
-export default RobotChat;
+export default ChatViewer;
