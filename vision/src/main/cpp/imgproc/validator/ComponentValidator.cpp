@@ -80,7 +80,7 @@ void ComponentValidator::loadConfig(const std::string& config) {
                 std::cout << "Model loaded from: " << model_file << std::endl;
             } else {
                 LOG4CXX_DEBUG(logger, "[loadConfig] Model already loaded, skipping.");
-                std::cout << "Model loading skipped for: " << model_file << std::endl;
+                //std::cout << "Model loading skipped for: " << model_file << std::endl;
             }
 
       // -1 if we do not ask for the component's shape
@@ -133,7 +133,6 @@ void ComponentValidator::loadConfig(const std::string &configFile) {
 
 void ComponentValidator::initModel(const std::string &model_path) {
   fs::path onnx_model_abs = fs::canonical(model_path + ".onnx");
-  std::cout << onnx_model_abs << std::endl;
   net = cv::dnn::readNetFromONNX(onnx_model_abs.string());
 }
 
@@ -261,43 +260,36 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
     case 0: case 1: case 2: case 3:
       compIndex = 0;
       shapePredicate = true;
-      std::cout << "Determine shape of base" << std::endl;
       break;
     //we look for side component 1 shape predicates
     case 4: case 5: case 6: case 7:
       compIndex = 1;
       shapePredicate = true;
-      std::cout << "Determine shape of side 1" << std::endl;
       break;
     //we look for side component 2 shape predicates
     case 16: case 17: case 18: case 19:
       compIndex = 2;
       shapePredicate = true;
-      std::cout << "Determine shape of side 2" << std::endl;
       break;
     //we look for side component 1 position predicates
     case 8: case 9: case 10: case 11: case 12: case 13:
       compIndex = 1;
       positionPredicate = true;
-      std::cout << "Determine relative position of side 1" << std::endl;
       break;
       //we look for side component 2 position predicates
     case 20: case 21: case 22: case 23: case 24: case 25:
       compIndex = 2;
       positionPredicate = true;
-      std::cout << "Determine relative position of side 2" << std::endl;
       break;
     //we look for side component 1 size predicates
     case 14: case 15:
       compIndex = 1;
       sizePredicate = true;
-      std::cout << "Determine relative position of side 1" << std::endl;
       break;
     //we look for side component 2 size predicates
     case 26: case 27:
       compIndex = 2;
       sizePredicate = true;
-      std::cout << "Determine relative position of side 1" << std::endl;
       break;
     default:
       std::cerr << "semPredIdx not defined " << semPredIdx << std::endl;
@@ -393,7 +385,7 @@ bool ComponentValidator::processPosition(const int compIndex, const cv::Mat& sem
     baseLocation = semMat.at<float>(0, positionIdcs[0][2]); 
     sideLocation = semMat.at<float>(0, positionIdcs[compIndex][2]);   
   } else {
-    std::cout << "Axis " << semPredAxis << " is not part of the defined groups." << std::endl;
+    std::cerr << "Axis " << semPredAxis << " is not part of the defined groups." << std::endl;
   }
 
   float baseLocationDeNorm = denormalize(baseLocation, -maxShift, maxShift);
@@ -456,7 +448,7 @@ cv::Mat ComponentValidator::applySigmoidToMatrix(const cv::Mat& matrix) {
     // Apply the sigmoid function to each element in the matrix
     for (int i = 0; i < matrix.cols; ++i) {
       matrixSig.at<float>(0, i) = sigmoid(matrix.at<float>(0, i));
-      std::cout << "Element " << i << " is " << matrixSig.at<float>(0, i) << std::endl;
+      //std::cout << "Element " << i << " is " << matrixSig.at<float>(0, i) << std::endl;
     }
   } else {
     std::cerr << "Invalid matrix dimensions!" << std::endl;
