@@ -3,7 +3,6 @@ package edu.tufts.hrilab.config.gui;
 import edu.tufts.hrilab.action.GoalManagerEndpointComponent;
 import edu.tufts.hrilab.action.GoalViewerEndpointComponent;
 import edu.tufts.hrilab.action.GoalManagerImpl;
-import edu.tufts.hrilab.belief.BeliefComponent;
 import edu.tufts.hrilab.belief.gui.BeliefEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.GuiManager;
