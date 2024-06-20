@@ -48,7 +48,7 @@ public class UnityDIARCSpaceStationSMM {
 
     DiarcComponent.createInstance(TLDLParserComponent.class, "-dict pr2Unity.dict");
 
-    DiarcComponent.createInstance(MapComponent.class, "-groups agent:robot1 -refs refs/unity_space_station_tube_positions.json");
+    DiarcComponent.createInstance(MapComponent.class, "-groups agent:robot1 agent:robot2 -refs refs/unity_space_station_tube_positions.json");
     DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:robot1 -point_dist_thresh 0.5");
     DiarcComponent.createInstance(TFComponent.class, " -groups agent:robot1");
 

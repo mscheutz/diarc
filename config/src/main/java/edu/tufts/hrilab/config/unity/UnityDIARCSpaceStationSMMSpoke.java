@@ -34,12 +34,9 @@ public class UnityDIARCSpaceStationSMMSpoke {
     public static void main(String[] args) {
         List<String> largs = Arrays.asList(args);
 
-        DiarcComponent.createInstance(MapComponent.class, "-groups agent:robot2 -refs refs/unity_space_station_tube_positions.json");
         DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:robot2 -point_dist_thresh 0.5");
         DiarcComponent.createInstance(TFComponent.class, " -groups agent:robot2");
 
         DiarcComponent.createInstance(UnityPR2.class, "-agent robot2 -groups agent:robot2");
-
-        DiarcComponent.createInstance(GoalManagerImpl.class, goalManagerArgs);
     }
 }
