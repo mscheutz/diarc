@@ -25,17 +25,9 @@ public:
 
   // indices of shape and spatial parameters in the Semantic Vector
   std::vector<std::vector<int>> shapeIdcs;
-  std::vector<std::vector<int>> spatialIdcs;
-  std::vector<std::string> shapeNames;
-
-  typedef struct {
-      int x;
-      int y;
-      int z;
-    } LocationCoords;
-
+  std::vector<std::vector<int>> positionIdcs;
+  std::vector<std::vector<int>> sizeIdcs;
   
-
 protected:
   cv::dnn::Net net;
 
@@ -52,11 +44,15 @@ private:
   typedef struct {
     std::string predicateKey;
     int predicateShape;
+    int predicateAxis;
     int predicateIndex;
   } predicateFeatures;
 
   std::vector<predicateFeatures> semanticProperties;
-  bool calculateSemProperty(const cv::Mat& semMat, const int semPredShape, const int semPredIdx);
+  bool calculateSemProperty(const cv::Mat& semMat, const int semPredShape, const int semPredAxis, const int semPredIdx);
+  bool processShape(const int compIndex, const cv::Mat& semMat, const int semPredShape);
+  bool processPosition(const int compIndex, const cv::Mat& semMat, const int semPredAxis);
+  bool processSize(const int compIndex, const cv::Mat& semMat, const int semPredIdx);                                   
   cv::Mat applySigmoidToMatrix(const cv::Mat& semMatrix);
 
 };

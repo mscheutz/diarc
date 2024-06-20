@@ -51,18 +51,22 @@ Example:
     <predicate name="cube base component">
       <model filename="semanticEncoder"/>
       <shape>0</shape>
+      <index>0</index>
     </predicate>
     <predicate name="sphere base component">
       <model filename="semanticEncoder"/>
       <shape>1</shape>
+      <index>1</index>
     </predicate>
     <predicate name="cone base component">
       <model filename="semanticEncoder"/>
       <shape>2</shape>
+      <index>2</index>
     </predicate>
     <predicate name="cylinder base component">
       <model filename="semanticEncoder"/>
       <shape>3</shape>
+      <index>3</index>
     </predicate>
     <!--
       Side component 1 shape predicates
@@ -70,83 +74,138 @@ Example:
     <predicate name="cube side component 1">
       <model filename="semanticEncoder"/>
       <shape>0</shape>
+      <index>4</index>
     </predicate>
     <predicate name="sphere side component 1">
       <model filename="semanticEncoder"/>
       <shape>1</shape>
+      <index>5</index>
     </predicate>
     <predicate name="cone side component 1">
       <model filename="semanticEncoder"/>
       <shape>2</shape>
+      <index>6</index>
     </predicate>
     <predicate name="cylinder side component 1">
       <model filename="semanticEncoder"/>
       <shape>3</shape>
+      <index>7</index>
     </predicate>
     <!--
-      Side component 1 spatial relation predicates
+      Side component 1 position predicates
     -->
-    <predicate name="side component 1 is on top">
+    <predicate name="side component 1 is to the right">
     <model filename="semanticEncoder"/>
-    </predicate>
-    <predicate name="side component 1 is at bottom">
-    <model filename="semanticEncoder"/>
+    <axis>0</axis>
+    <index>8</index>
     </predicate>
     <predicate name="side component 1 is to the left">
     <model filename="semanticEncoder"/>
+    <axis>1</axis>
+    <index>9</index>
     </predicate>
-    <predicate name="side component 1 is to the right">
+    <predicate name="side component 1 is on top">
     <model filename="semanticEncoder"/>
+    <axis>2</axis>
+    <index>10</index>
+    </predicate>
+    <predicate name="side component 1 is at bottom">
+    <model filename="semanticEncoder"/>
+    <axis>3</axis>
+    <index>11</index>
+    </predicate>
+    <predicate name="side component 1 is in front">
+    <model filename="semanticEncoder"/>
+    <axis>4</axis>
+    <index>12</index>
+    </predicate>
+    <predicate name="side component 1 is behind">
+    <model filename="semanticEncoder"/>
+    <axis>5</axis>
+    <index>13</index>
     </predicate>
     <!--
       Side component 1 size predicates
     -->
     <predicate name="side component 1 is larger">
     <model filename="semanticEncoder"/>
+    <index>14</index>
+    </predicate>
+    <predicate name="side component 1 is smaller">
+    <model filename="semanticEncoder"/>
+    <index>15</index>
     </predicate>
     <!--
       Side component 2 shape predicates
-    -->
+    -->spatial indices (x,y,z)
     <predicate name="cube side component 2">
       <model filename="semanticEncoder"/>
       <shape>0</shape>
+      <index>16</index>
     </predicate>
     <predicate name="sphere side component 2">
       <model filename="semanticEncoder"/>
       <shape>1</shape>
+      <index>17</index>
     </predicate>
     <predicate name="cone side component 2">
       <model filename="semanticEncoder"/>
       <shape>2</shape>
+      <index>18</index>
     </predicate>
     <predicate name="cylinder side component 2">
       <model filename="semanticEncoder"/>
       <shape>3</shape>
+      <index>19</index>
     </predicate>
     <!--
-      Side component 2 spatial relation predicates
+      Side component 2 position predicates
     -->
-    <predicate name="side component 2 is on top">
+    <predicate name="side component 2 is to the right">
       <model filename="semanticEncoder"/>
-    </predicate>
-    <predicate name="side component 2 is at bottom">
-      <model filename="semanticEncoder"/>
+      <axis>0</axis>
+      <index>20</index>
     </predicate>
     <predicate name="side component 2 is to the left">
       <model filename="semanticEncoder"/>
+      <axis>1</axis>
+      <index>21</index>
     </predicate>
-    <predicate name="side component 2 is to the right">
+    <predicate name="side component 2 is on top">
       <model filename="semanticEncoder"/>
+      <axis>2</axis>
+      <index>22</index>
+    </predicate>
+    <predicate name="side component 2 is at bottom">
+      <model filename="semanticEncoder"/>
+      <axis>3</axis>
+      <index>23</index>
+    </predicate>
+    <predicate name="side component 2 is in front">
+      <model filename="semanticEncoder"/>
+      <axis>4</axis>
+      <index>24</index>
+    </predicate>
+    <predicate name="side component 2 is behind">
+      <model filename="semanticEncoder"/>
+      <axis>5</axis>
+      <index>25</index>
     </predicate>
     <!--
       Side component 2 size predicates
     -->
     <predicate name="side component 2 is larger">
       <model filename="semanticEncoder"/>
+      <index>26</index>
     </predicate>
-    <predicate name="any">
-      <!-- kind of a sneaky way to look for any objects in this list -->
+    <predicate name="side component 2 is smaller">
       <model filename="semanticEncoder"/>
+      <index>27</index>
+    </predicate>
+    <!-- kind of a sneaky way to look for any objects in this list -->
+    <predicate name="any">
+      <model filename="semanticEncoder"/>
+      <index>28</index>
     </predicate>
 </processor>
 

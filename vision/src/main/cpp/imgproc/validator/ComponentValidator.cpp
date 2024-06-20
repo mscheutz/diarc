@@ -1,4 +1,3 @@
-
 /*
  Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
@@ -6,22 +5,21 @@
 #include "ComponentValidator.hpp"
 
 #include <opencv2/opencv.hpp>
+#include <jsoncpp/json/reader.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/foreach.hpp>
-
-#include "capture/calibration/Cameras.hpp"
-#include "display/Display.hpp"
-
-#include <jsoncpp/json/reader.h>
-
-#include "capture/util/CaptureUtilities.hpp"
-#include "common/notification/CaptureNotification.hpp"
-#include "stm/util/StmUtilities.hpp"
 #include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
+
+#include "capture/calibration/Cameras.hpp"
+#include "display/Display.hpp"
+#include "capture/util/CaptureUtilities.hpp"
+#include "common/notification/CaptureNotification.hpp"
+#include "stm/util/StmUtilities.hpp"
+
 
 using namespace ade::stm;
 namespace fs = std::experimental::filesystem;
@@ -30,14 +28,23 @@ float sigmoid(float x) {
     return 1.0 / (1.0 + std::exp(-x));
 }
 
+
+// Function to denormalize values
+double denormalize(float norm_value, float min_value, float max_value) {
+    return norm_value * (max_value - min_value) + min_value;
+}
+
+
 ComponentValidator::ComponentValidator(const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight)
 : ObjectValidator(processorId, imgWidth, imgHeight, false) {
   visionProcessName = "ComponentValidator";
   logger = log4cxx::Logger::getLogger("ade.imgproc.validator.ComponentValidator");
 }
 
+
 ComponentValidator::~ComponentValidator() {
 }
+
 
 void ComponentValidator::loadConfig(const std::string& config) {
   LOG4CXX_TRACE(logger, "[loadConfig] method entered.");
@@ -79,12 +86,15 @@ void ComponentValidator::loadConfig(const std::string& config) {
       // -1 if we do not ask for the component's shape
       // shape value 0 -> cube, 1 -> sphere, 2 -> cone, 3 -> cylinder
       int shape = predicateNode.second.get("shape", -1);
+      int axis = predicateNode.second.get("axis", -1);
+      int index = predicateNode.second.get("index", -1);
 
-      semanticProperties.push_back({descriptorName, shape, predicateCounter});
+      semanticProperties.push_back({descriptorName, shape, axis, index});
       predicateCounter = predicateCounter + 1;
     }
   }
 }
+
 
 /*
 void ComponentValidator::loadConfig(const std::string &configFile) {
@@ -120,11 +130,13 @@ void ComponentValidator::loadConfig(const std::string &configFile) {
 }
 */
 
+
 void ComponentValidator::initModel(const std::string &model_path) {
   fs::path onnx_model_abs = fs::canonical(model_path + ".onnx");
   std::cout << onnx_model_abs << std::endl;
   net = cv::dnn::readNetFromONNX(onnx_model_abs.string());
 }
+
 
 void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification) {
   LOG4CXX_TRACE(logger, "[ComponentValidation] method entered.");
@@ -166,6 +178,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
   float confidence = 1.0f; //TODO: How could I set this in a good way?
   int predShape;
+  int predAxis;
   int predIdx;
   bool predFound;
 
@@ -182,8 +195,9 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
       // Access all elements except the last one
       for (auto sp = semanticProperties.begin(); sp != semanticProperties.end() - 1; ++sp) {
         predShape = sp->predicateShape;
+        predAxis = sp->predicateAxis;
         predIdx = sp->predicateIndex;
-        predFound = calculateSemProperty(semMatrixSig, predShape, predIdx);
+        predFound = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
 
         if (predFound) {
           object->addValidationResult(confidence, PredicateHelper(*descriptors_itr));
@@ -206,9 +220,10 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
       } 
 
       predShape = it->predicateShape;
+      predAxis = it->predicateAxis;
       predIdx = it->predicateIndex;
 
-      predFound = calculateSemProperty(semMatrixSig, predShape, predIdx);
+      predFound = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
       std::cout << "Predicate " << it->predicateKey + 
                                   "(" + descriptors_itr->getArg(0) + ")" << " found? " << predFound << std::endl;
       
@@ -229,42 +244,97 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
 }
 
-bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int semPredShape, const int semPredIdx) {
 
-  ComponentValidator::shapeIdcs = {
-    {0, 1, 2, 3},  //shape indices of base component 
-    {8, 9, 10, 11},  //shape indices of side component 1
-    {16, 17, 18, 19}  //shape indices of side component 2
-  };
+bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int semPredShape, const int semPredAxis, const int semPredIdx) {
 
   bool semMatch = false;
   double maxValue;
   int maxIndex;
   cv::Point maxLoc;
-  int groupIndex = -1;
+  int compIndex = -1;
+  bool shapePredicate = false;
+  bool positionPredicate = false;
+  bool sizePredicate = false;
 
   switch (semPredIdx) {
     //we look for base component shape predicates
     case 0: case 1: case 2: case 3:
-      groupIndex = 0;
+      compIndex = 0;
+      shapePredicate = true;
       std::cout << "Determine shape of base" << std::endl;
       break;
     //we look for side component 1 shape predicates
     case 4: case 5: case 6: case 7:
-      groupIndex = 1;
+      compIndex = 1;
+      shapePredicate = true;
       std::cout << "Determine shape of side 1" << std::endl;
       break;
     //we look for side component 2 shape predicates
-    case 13: case 14: case 15: case 16:
-      groupIndex = 2;
+    case 16: case 17: case 18: case 19:
+      compIndex = 2;
+      shapePredicate = true;
       std::cout << "Determine shape of side 2" << std::endl;
+      break;
+    //we look for side component 1 position predicates
+    case 8: case 9: case 10: case 11: case 12: case 13:
+      compIndex = 1;
+      positionPredicate = true;
+      std::cout << "Determine relative position of side 1" << std::endl;
+      break;
+      //we look for side component 2 position predicates
+    case 20: case 21: case 22: case 23: case 24: case 25:
+      compIndex = 2;
+      positionPredicate = true;
+      std::cout << "Determine relative position of side 2" << std::endl;
+      break;
+    //we look for side component 1 size predicates
+    case 14: case 15:
+      compIndex = 1;
+      sizePredicate = true;
+      std::cout << "Determine relative position of side 1" << std::endl;
+      break;
+    //we look for side component 2 size predicates
+    case 26: case 27:
+      compIndex = 2;
+      sizePredicate = true;
+      std::cout << "Determine relative position of side 1" << std::endl;
       break;
     default:
       std::cerr << "semPredIdx not defined " << semPredIdx << std::endl;
       return semMatch;
   }
 
-  const auto& idcs = shapeIdcs[groupIndex];
+  if (shapePredicate) {
+    semMatch = processShape(compIndex, semMat, semPredShape);
+  }
+
+  if (positionPredicate) {
+    semMatch = processPosition(compIndex, semMat, semPredAxis);
+  }
+
+  if (sizePredicate) {
+    semMatch = processSize(compIndex, semMat, semPredIdx);
+  }
+
+  return semMatch;
+
+}
+
+
+bool ComponentValidator::processShape(const int compIndex, const cv::Mat& semMat, const int semPredShape) {
+  
+  ComponentValidator::shapeIdcs = {
+    {0, 1, 2, 3},  //shape indices of base component 
+    {8, 9, 10, 11},  //shape indices of side component 1
+    {16, 17, 18, 19}  //shape indices of side component 2
+  };
+  
+  // Initialize semMatch to false
+  bool semShapeMatch = false;
+  double maxValue;
+  cv::Point maxLoc;
+
+  const auto& idcs = shapeIdcs[compIndex];
   // Extract the specified semantic matrix column for the current component
   cv::Mat shapeParams = semMat.col(idcs[0]);
   for (size_t i = 1; i < idcs.size(); ++i) {
@@ -273,25 +343,108 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
 
   // Find the maximum value among the values of side component 2
   cv::minMaxLoc(shapeParams, nullptr, &maxValue, nullptr, &maxLoc);
-  maxIndex = maxLoc.x;
+  int maxIndex = maxLoc.x;
 
   // Determine shape only if side component is present
-  if (groupIndex != 0 && maxValue > 0.5) {
-      int chosenIndex = maxLoc.x;
-      // If the shape is the same as the shape we are looking for
-      if (maxIndex == semPredShape) {
-          semMatch = true;
-      }
-  } else if (groupIndex == 0) {
-      // The base component will always exist
-      if (maxIndex == semPredShape) {
-          semMatch = true;
-      }
+  if (compIndex != 0 && maxValue > 0.5) {
+    int chosenIndex = maxLoc.x;
+    // If the shape is the same as the shape we are looking for
+    if (maxIndex == semPredShape) {
+      semShapeMatch = true;
+    }
+  } else if (compIndex == 0) {
+    // The base component will always exist
+    if (maxIndex == semPredShape) {
+      semShapeMatch = true;
+    }
   }
 
-  return semMatch;
+  // Return the result
+  return semShapeMatch;
 
 }
+
+
+bool ComponentValidator::processPosition(const int compIndex, const cv::Mat& semMat, const int semPredAxis) {
+
+  ComponentValidator::positionIdcs = {
+    {4, 5, 6},  // spatial indices (x,y,z) of base component
+    {12, 13, 14},  // spatial indices (x,y,z) of side component 1
+    {20, 21, 22}  // spatial indices (x,y,z) of side component 2
+  };
+
+  float maxLength = 10;
+  float maxShift = 3.5;
+  
+  // Initialize semMatch to false
+  bool semPositionMatch = false;
+
+  float baseLocation; 
+  float sideLocation;
+  float distance;
+  
+  if (semPredAxis == 0 || semPredAxis == 1 ) {  // x-axis distance
+    baseLocation = semMat.at<float>(0, positionIdcs[0][0]);
+    sideLocation = semMat.at<float>(0, positionIdcs[compIndex][0]);
+  } else if (semPredAxis == 2 || semPredAxis == 3) {  // y-axis distance
+    baseLocation = semMat.at<float>(0, positionIdcs[0][1]);  
+    sideLocation = semMat.at<float>(0, positionIdcs[compIndex][1]);
+  } else if (semPredAxis == 4 || semPredAxis == 5) {  // z-axis distance
+    baseLocation = semMat.at<float>(0, positionIdcs[0][2]); 
+    sideLocation = semMat.at<float>(0, positionIdcs[compIndex][2]);   
+  } else {
+    std::cout << "Axis " << semPredAxis << " is not part of the defined groups." << std::endl;
+  }
+
+  float baseLocationDeNorm = denormalize(baseLocation, -maxShift, maxShift);
+  float sideLocationDeNorm = denormalize(sideLocation, -maxShift - maxLength, maxShift + maxLength);
+
+  distance =  sideLocationDeNorm - baseLocationDeNorm;
+
+  if ((semPredAxis == 0 || semPredAxis == 2 || semPredAxis == 4) && distance > 0) {
+    // to the right (x-axis), on top (y-axis), in front (z-axis)
+    semPositionMatch = true;  
+   
+  } else if ((semPredAxis == 1 || semPredAxis == 3 || semPredAxis == 5) && distance < 0) {
+    // to the left (x-axis), at bottom (y-axis), behind (z-axis)
+    semPositionMatch = true;
+
+  } 
+
+  // Return the result
+  return semPositionMatch;
+
+}
+
+
+bool ComponentValidator::processSize(const int compIndex, const cv::Mat& semMat, const int semPredIdx) {
+
+  ComponentValidator::sizeIdcs = {
+    {7},  // size indices of base component
+    {15},  // size indices of side component 1
+    {23}  // size indices of side component 2
+  };
+  
+  // Initialize semMatch to false
+  bool semSizeMatch = false;
+
+  float baseSize = semMat.at<float>(0, sizeIdcs[0][0]); 
+  float sideSize = semMat.at<float>(0, sizeIdcs[compIndex][0]); 
+  float difference = sideSize - baseSize;
+
+  if ((semPredIdx == 14 || semPredIdx == 26) && difference >= 0) {
+    semSizeMatch = true;
+  }
+  
+  if ((semPredIdx == 15 || semPredIdx == 27) && difference < 0) {
+    semSizeMatch = true;
+  }
+  
+  // Return the result
+  return semSizeMatch;
+
+}
+
 
 // Function to apply sigmoid to matrix and check dimensions
 cv::Mat ComponentValidator::applySigmoidToMatrix(const cv::Mat& matrix) {
