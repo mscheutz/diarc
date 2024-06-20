@@ -83,12 +83,6 @@ public class GoalViewerEndpointComponent extends DiarcComponent {
                             .returnType(List.class)
             );
 
-            for(TRADEServiceInfo serviceInfo : TRADE.getAvailableServices()) {
-                if(serviceInfo.serviceString.contains("cancelGoal(")) {
-                    System.out.println(serviceInfo.serviceString);
-                }
-            }
-
             cancelGoal = TRADE.getAvailableService(
                     new TRADEServiceConstraints()
                             .name("cancelGoal")

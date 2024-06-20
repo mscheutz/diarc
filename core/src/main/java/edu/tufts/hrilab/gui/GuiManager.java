@@ -13,8 +13,7 @@ import edu.tufts.hrilab.belief.gui.BeliefEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.map.MapComponent;
-import edu.tufts.hrilab.map.MapGui;
+import edu.tufts.hrilab.map.MapEndpointComponent;
 import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,12 +50,6 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
     //==========================================================================
     // Configuration properties
     //==========================================================================
-    /**
-     * The base URL for the server.
-     */
-    @Value("${app.base-url}")
-    private String baseUrl;
-
     /**
      * Allowed cross-origin URLs, separated by commas.
      */
@@ -174,7 +167,7 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
             WebSocketHandler chatHandler = null;
             WebSocketHandler goalViewerHandler = null;
             WebSocketHandler goalManagerHandler = null;
-            MapComponent mapComponent = null;
+            WebSocketHandler mapHandler = null;
             Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
             for (TRADEServiceInfo service : availableServices) {
                 switch (service.serviceString) {
@@ -186,13 +179,13 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
                             goalViewerHandler = service.call(GoalViewerEndpointComponent.GoalViewerHandler.class);
                     case "getGoalManagerHandler()" ->
                             goalManagerHandler = service.call(GoalManagerEndpointComponent.GoalManagerHandler.class);
-                    case "getMapComponent()" ->
-                            mapComponent = service.call(MapComponent.class);
+                    case "getMapHandler()" ->
+                            mapHandler = service.call(MapEndpointComponent.MapHandler.class);
                 }
 
                 if(beliefHandler != null && chatHandler != null
                 && goalViewerHandler != null && goalManagerHandler != null
-                && mapComponent != null)
+                && mapHandler != null)
                     break;
             }
 
@@ -208,8 +201,8 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
             if(goalManagerHandler != null)
                 registry.addHandler(goalManagerHandler, "/goalManager")
                         .setAllowedOrigins(parseCorsOrigins());
-            if (mapComponent != null)
-                registry.addHandler(new MapGui(baseUrl, mapComponent), "/map")
+            if (mapHandler != null)
+                registry.addHandler(mapHandler, "/map")
                         .setAllowedOrigins(parseCorsOrigins());
         } catch(TRADEException e) {
             log.error("Endpoint get service call failed");
