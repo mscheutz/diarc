@@ -143,7 +143,7 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
             "agent": agent,
             "goal": selected.name
         }));
-        setSelected({ name: "", id: "", type: "" });
+        setSelected({ ...selected, type: "suspended" });
     };
 
     const handleResume = () => {
@@ -153,7 +153,7 @@ const GoalViewer: React.FunctionComponent<{}> = () => {
             "agent": agent,
             "goal": selected.name
         }));
-        setSelected({ name: "", id: "", type: "" });
+        setSelected({ ...selected, type: "active" });
     };
 
     const handleCancel = () => {
