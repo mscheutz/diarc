@@ -14,7 +14,7 @@ import 'react-tabs/style/react-tabs.css';
 
 import { Button } from "../../Button.tsx";
 import VisionSearches from "./VisionSearches.tsx";
-import "../StyleOverrides.css";
+import "../util/StyleOverrides.css";
 import VideoStream from "./VideoStream.tsx";
 
 const flexTabPanelClass = "hidden flex-col min-h-0 grow";

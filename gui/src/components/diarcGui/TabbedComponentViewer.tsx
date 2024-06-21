@@ -19,11 +19,11 @@ import { faBan, faCog } from '@fortawesome/free-solid-svg-icons'
 import ChatViewer from "./ChatViewer";
 import GoalViewer from "./GoalViewer";
 import MapViewer from "./MapViewer";
-import GoalManager from "./GoalManager";
+import GoalManager from "./goalManager/GoalManager";
 import BeliefViewer from "./BeliefViewer";
 import VisionManager from "./vision/VisionManager";
 
-import "./StyleOverrides.css";
+import "./util/StyleOverrides.css";
 
 const flexTabPanelClass = "hidden flex-col min-h-0 grow";
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "../Button";
 import useWebSocket from 'react-use-websocket';
-import ConnectionIndicator from './ConnectionIndicator';
+import ConnectionIndicator from './util/ConnectionIndicator';
 
 type Position = { x: number, y: number, z: number };
 type Orientation = { x: number, y: number, z: number, w: number };

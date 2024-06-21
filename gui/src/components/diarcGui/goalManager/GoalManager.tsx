@@ -21,7 +21,7 @@ import { flattenTree } from "react-accessible-treeview";
 import FileBrowser from "./FileBrowser";
 import ActionGoalForm, { ActionForm, GoalForm } from "./ActionGoalForm";
 import ActionFormContext from "./ActionFormContext";
-import ConnectionIndicator from "./ConnectionIndicator";
+import ConnectionIndicator from "../util/ConnectionIndicator";
 import ActionDatabase from "./ActionDatabase";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
