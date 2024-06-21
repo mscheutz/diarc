@@ -25,10 +25,12 @@ object(self, agent).
 
 %% init world state -- TODO: observe this
 clear(physobj_0).
+clear(physobj_1).
 clear(physobj_2).
 clear(physobj_3).
 ontable(physobj_0).
 ontable(physobj_1).
+ontable(physobj_2).
 ontable(physobj_3).
-on(physobj_2,physobj_1).
+%on(physobj_2,physobj_1).
 handempty(self).

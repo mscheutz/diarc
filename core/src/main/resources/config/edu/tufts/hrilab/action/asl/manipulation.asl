@@ -69,7 +69,7 @@ import edu.tufts.hrilab.fol.Predicate;
     op:log("debug", "moving ?objectRef_1 ?relation ?objectRef_2");
 
     // get pose of ?arm, instead of ?objectRef_1 (robot might be not be looking at the object)
-    !armPose =  act:getPose(?arm);
+    !armPose =  act:getEEPose(?arm);
 
     // find objectRef_2
     act:look(down);
@@ -101,7 +101,9 @@ import edu.tufts.hrilab.fol.Predicate;
     } elseif (op:equalsValue(?relation, above)) {
       // calculate target location
       !targetLoc = op:invokeMethod(!token_2, "getLocation");
-      !zDir = op:newObject("javax.vecmath.Point3d" ,0,0,0.1); // add 0.1m to z-height of target object's location
+      // add dist in meters to z-height of target object's location
+      // NOTE: this needs to include distance from eeLink to gripper tip (i.e., graspContactOffset)
+      !zDir = op:newObject("javax.vecmath.Point3d" ,0,0,0.3);
       op:invokeMethod(!targetLoc, "add", !zDir);
 
       // move arm and object
@@ -167,7 +169,7 @@ import edu.tufts.hrilab.fol.Predicate;
     }
 
     op:log("debug", "Trying to release ?objectRef.");
-    act:releaseObject(?arm, ?objectRef, 1.0);
+    act:releaseObject(?arm, ?objectRef, 0.1); // meters between grippers
     act:moveToRelative(up, ?arm);
     act:goToPose(carry);
 }
