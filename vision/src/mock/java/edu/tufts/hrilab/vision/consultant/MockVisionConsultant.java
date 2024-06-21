@@ -69,7 +69,7 @@ public class MockVisionConsultant extends VisionConsultant {
         objectRef = getNextReferenceId();
         List<Long> tokenIds = Arrays.asList(token.getTokenId());
         VisionReference visionRef = new VisionReference(objectRef, token.getVariable(), token.getTypeId(), tokenIds, new ArrayList<>());
-        references.put(objectRef, visionRef);
+        addReference(visionRef);
         if (visionTypes.containsKey(token.getTypeId())) {
           visionTypes.get(token.getTypeId()).add(visionRef);
         } else {
@@ -95,7 +95,7 @@ public class MockVisionConsultant extends VisionConsultant {
 
     // get any objectRef -- all of them should have full set of properties, including the constraint
     Symbol objectRef = (Symbol) bindings.values().toArray()[0];
-    VisionReference visionRef = references.get(objectRef);
+    VisionReference visionRef = getReference(objectRef);
     if(visionRef != null){
       log.debug("properties: "+visionRef.properties);
       log.debug("constraint: "+constraint);

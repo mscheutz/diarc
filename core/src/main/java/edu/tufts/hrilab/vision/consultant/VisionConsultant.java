@@ -76,7 +76,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
 
       JsonClass jsonClass = new JsonClass();
       jsonClass.visionReferences = new ArrayList<>();
-      jsonClass.visionReferences.addAll(references.values().stream().map(VisionReferenceJson::new).collect(Collectors.toList()));
+      jsonClass.visionReferences.addAll(getAllReferences().stream().map(VisionReferenceJson::new).collect(Collectors.toList()));
       gson.toJson(jsonClass, writer);
       writer.flush();
     } catch (IOException e) {
@@ -133,7 +133,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
     if(!refId.hasType()) {
       refId = Factory.createSymbol(refId.getName(), refId.getName().split("_")[0]);
     }
-    Reference ref = references.get(refId);
+    Reference ref = getReference(refId);
     if (ref == null) {
       log.error("[assertProperties] couldn't find existing ref: " + refId);
       return false;
@@ -160,17 +160,17 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   public List<Symbol> getInitialDomain(List<Term> query) {
     log.debug("[getInitialDomain] " + query);
     // convert query Properties to Predicates
-    log.debug("[getInitialDomain] vision refs: " + references.values());
+    log.debug("[getInitialDomain] vision refs: " + getAllReferences());
     List<Symbol> objectRefs = new ArrayList<>();
 
     if (query.isEmpty()) {
-      return new ArrayList<>(references.keySet());
+      return super.getInitialDomain(query);
     } else {
-      for (Symbol objectRef : references.keySet()) {
+      for (VisionReference ref : getAllReferences()) {
         // compare query with objectRef properties
         //TODO: temporary fix, domain wasn't getting filled; figure out why
-        if (edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(query, references.get(objectRef).properties)) {
-          objectRefs.add(objectRef);
+        if (edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(query, ref.properties)) {
+          objectRefs.add(ref.refId);
         }
       }
 
@@ -180,7 +180,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   }
 
   public void setTypeId(Symbol objectRef, Long typeId) {
-    VisionReference visionRef = references.get(objectRef);
+    VisionReference visionRef = getReference(objectRef);
 
     // remove from visionTypes container as old typeId
     Set<VisionReference> referencesByType = visionTypes.get(visionRef.typeId);
@@ -208,7 +208,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
     }
     // if objectRef is actually a reference resolution id
     if (!objectRef.isTerm() && objectRef.getName().startsWith(kbName)) {
-      VisionReference visionRef = references.get(objectRef);
+      VisionReference visionRef = getReference(objectRef);
       if (visionRef == null) {
         log.error("[getTypeId] vision has not created object ref: " + objectRef);
         return -1L;
@@ -248,7 +248,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
     log.debug("[getTokens] objectRef: " + objectRef);
     // if objectRef is actually a reference resolution id
     if (!objectRef.isTerm() && objectRef.getName().startsWith(kbName)) {
-      VisionReference visionRef = references.get(objectRef);
+      VisionReference visionRef = getReference(objectRef);
       // With object permanance changes, tokenId list for any objectRef should be of length 1
       // In this case we don't want to check to add the tokenId to the visionRef, because it
       //   should always already be there
@@ -287,7 +287,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
         objectRef = Factory.createSymbol(objectRef.getName() + ":" + this.kbName);
       }
 
-      VisionReference visionRef = references.get(objectRef);
+      VisionReference visionRef = getReference(objectRef);
       // With object permanance changes, tokenId list for any objectRef should be of length 1
       // In this case we don't want to check to add the tokenId to the visionRef, because it
       //   should always already be there
@@ -317,24 +317,6 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   }
 
   /**
-   * This method should probably be removed. Only added for object learning hack in AvailableLearners.
-   *
-   * @param objectRef
-   * @return
-   */
-  public boolean removeReference(Symbol objectRef) {
-    if(!objectRef.hasType()) {
-      objectRef = Factory.createSymbol(objectRef.getName() + ":" + objectRef.getName().split("_")[0]);
-    }
-    if (references.containsKey(objectRef)) {
-      references.remove(objectRef);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  /**
    * Get POWER reference for vision type ID.
    *
    * @param typeId
@@ -354,15 +336,6 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   }
 
   /**
-   * Get all POWER references known to vision.
-   *
-   * @return
-   */
-  public List<Symbol> getReferences() {
-    return new ArrayList<>(references.keySet());
-  }
-
-  /**
    * Get POWER reference that contain all specified properties.
    *
    * @param properties
@@ -371,7 +344,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   public List<Symbol> getReferences(List<Term> properties) {
     List<Symbol> objectRefs = new ArrayList<>();
 
-    for (VisionReference visionRef : references.values()) {
+    for (VisionReference visionRef : getAllReferences()) {
       if (edu.tufts.hrilab.fol.util.Utilities.containsAllPredicates(visionRef.properties, properties)) {
         objectRefs.add(visionRef.refId);
       }
@@ -386,8 +359,9 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
    * @return
    */
   public Variable getVariable(Symbol objectRef) {
-    if (references.containsKey(objectRef)) {
-      return references.get(objectRef).variable;
+    VisionReference ref = getReference(objectRef);
+    if (ref != null) {
+      return ref.variable;
     } else {
       return null;
     }

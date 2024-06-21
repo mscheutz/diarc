@@ -534,7 +534,8 @@ public class MockCR800Component extends DiarcComponent implements CR800Component
                     if (kbname.equals("physobj") && Collections.disjoint(this.getMyGroups(), kbNameService.getGroups())) { //this can be removed with proper filtering
                         CognexReference ref = TRADE.getAvailableService(new TRADEServiceConstraints().inGroups(kbNameService.getGroups().toArray(new String[0])).name( "removeReference")).call(CognexReference.class, refId);
                         ref.setResult(null);
-                        if (cognexConsultant.insertReference(refId, ref)) {
+                        if (cognexConsultant.getReference(refId) == null) {
+                            cognexConsultant.addReference(ref);
                             return ref;
                         }
                         log.error("Error transferring reference from remote to local");

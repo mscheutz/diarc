@@ -15,13 +15,6 @@ import java.util.List;
 public class MPoseReference extends Reference {
     MPose pose;
 
-    @Override
-    public String toString() {
-        return "MPoseReference{" +
-                "pose=" + pose +
-                '}';
-    }
-
     public MPoseReference(Symbol ref, Variable variable) {
         super(ref, variable);
     }
@@ -46,5 +39,10 @@ public class MPoseReference extends Reference {
 
     public boolean hasPose() {
         return pose != null;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + " pose = " + ((pose == null) ? " (is null)" : pose);
     }
 }

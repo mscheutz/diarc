@@ -82,7 +82,7 @@ public class RealVisionConsultant extends VisionConsultant {
 
         List<Long> tokenIds = Arrays.asList(token.getTokenId());
         VisionReference visionRef = new VisionReference(objectRef, token.getVariable(), token.getTypeId(), tokenIds, properties);
-        references.put(objectRef, visionRef);
+        addReference(visionRef);
         if (visionTypes.containsKey(token.getTypeId())) {
           visionTypes.get(token.getTypeId()).add(visionRef);
         } else {
@@ -110,7 +110,7 @@ public class RealVisionConsultant extends VisionConsultant {
     //
     // get visual search capable of detecting all objectRef's new properties, change the typeId of the objectRef, and
     // start the new search if the old search was
-    VisionReference visionRef = references.get(objectRef);
+    VisionReference visionRef = getReference(objectRef);
     if (!visionRef.typeId.equals(-1L)) {
       SearchManager currSearchManager = Vision.availableSearchTypes.getInstance(this, visionRef.typeId);
       boolean isCurrentSearchRunning = currSearchManager.isRunning();

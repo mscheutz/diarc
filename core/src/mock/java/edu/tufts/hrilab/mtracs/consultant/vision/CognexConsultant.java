@@ -115,8 +115,8 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
     @Override
     public boolean assertProperties(Map<Variable, Symbol> bindings, Double prob, List<Term> properties) {
         for (Symbol refId : bindings.values()) {
-            if (references.containsKey(refId)) {
-                CognexReference ref = references.get(refId);
+            CognexReference ref = getReference(refId);
+            if (ref != null) {
                 ref.properties.addAll(properties);
                 for (Term p : ref.properties) {
                     if (boundJobs.containsKey(p.getName())) {
@@ -134,7 +134,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
     @Override
     public boolean assertProperties(Symbol refId, List<Term> properties) {
-        CognexReference ref = references.get(refId);
+        CognexReference ref = getReference(refId);
         ref.properties.addAll(properties);
         for (Term p : ref.properties) {
             if (boundJobs.containsKey(p.getName())) {
@@ -214,7 +214,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
     public CognexReference createCognexRef(CognexJob job, List<Term> additionalProps) {
 
         //if there are any matching hypothetical bind them first
-        for (CognexReference r : references.values()) {
+        for (CognexReference r : getAllReferences()) {
             if (r.cognexJob == job &&
                     r.result == null &&
                     //if there is a matching property for each additionalProp we're good
@@ -266,64 +266,8 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
     @TRADEService
     public CognexReference removeReference(Symbol refId) {
-        if (this.references.containsKey(refId)) {
-            return this.references.remove(refId);
-        }
-        return null;
-    }
-
-    public boolean insertReference(Symbol refId, CognexReference ref) {
-        return (this.references.putIfAbsent(refId, ref) == null);
+        return super.removeReference(refId);
     }
 
 
-//    //todo: does not handle general race conditions on ref management across consultants.
-//    //todo: duplicates code in the diarc PoseConsultant. We didn't want to implement a non-general
-//    //  version of reference sharing in the base Consultant class, but this is needed since
-//    //  the reference counter is no longer static in the base class.
-//    /**
-//     * Generates the new refId based on the refNumber counter, and increments. Informs all other
-//     * consultants with the same kbName of the current ref being allocated to attempt to maintain sync
-//     * and avoid duplicating refs.
-//     *
-//     * @return
-//     */
-//    @Override
-//    protected Symbol getNextReferenceId() {
-//        //todo: Now that this has type information, do we still care about kbname? -MF
-//        Symbol newReferenceId = Factory.createSymbol(kbName + "_" + refNumber + ":" + kbName);
-//        Set<TRADEServiceInfo> consultants = TRADE.getAvailable("getActivatedEntities", new String[0]);
-//        for (TRADEServiceInfo consultant : consultants) {
-//            try {
-//                String kbName = (String) TRADE.callThe(consultant, "getKBName");
-//                if (kbName.equals(this.kbName)) { //this can be removed with proper filtering
-//                    TRADE.callThe(consultant, "externalUpdateReferenceNumber", refNumber);
-//                }
-//            } catch (TRADEException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
-//        return newReferenceId;
-//    }
-
-
-    //todo: see getNextReferenceId. this is duplicate code.
-    /**
-     * Handles updating the refNumber when there are multiple consultants which could be generating new references.
-     * Takes the current reference being allocated from the external consultant, and increments its current ref, assuming
-     * the passed current ref has been allocated. Logs an error if the external current ref is less than the internal current ref,
-     * which indicates that the local consultant value got updated at some point when the external consultant was missed.
-     * Does not handle general race conditions wrt simultanous allocations, etc.
-     *
-     * @param externalCurrentRefNumber
-     */
-//    @TRADEService
-//    public void externalUpdateReferenceNumber(int externalCurrentRefNumber) {
-//        //todo: will catch some cases where ref has already been created. does not handle actual race conditions.
-//        if (externalCurrentRefNumber < refNumber) {
-//            log.error("[externalUpdateReferenceNumber] external " + kbName + " consultant allocating reference number " + externalCurrentRefNumber + " but internal refNumber is " + refNumber);
-//        } else {
-//            refNumber = ++externalCurrentRefNumber;
-//        }
-//    }
 }

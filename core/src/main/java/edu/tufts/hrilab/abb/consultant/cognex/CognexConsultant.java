@@ -64,7 +64,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   @Override
   public boolean assertProperties(Map<Variable, Symbol> bindings, Double prob, List<Term> properties) {
     for (Symbol refId : bindings.values()) {
-      CognexReference ref = references.get(refId);
+      CognexReference ref = getReference(refId);
       if (ref == null) {
         log.warn("[assertProperties] trying to assert properties to a null reference");
         return false;
@@ -77,9 +77,8 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
           break;
         }
       }
-      for (Symbol existingRefId : references.keySet()) {
-        CognexReference existingRef = references.get(existingRefId);
-        if (existingRefId != refId) {
+      for (CognexReference existingRef : getAllReferences()) {
+        if (existingRef.refId != refId) {
           boolean matching = false;
           for (Term property : ref.properties) {
             for (Term eProperty : existingRef.properties) {
@@ -93,7 +92,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
             }
           }
           if (matching) {
-            lessSalientRefIds.add(existingRefId);
+            lessSalientRefIds.add(existingRef.refId);
           }
         }
       }
@@ -103,7 +102,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
   @Override
   public boolean assertProperties(Symbol refId, List<Term> properties) {
-    CognexReference ref = references.get(refId);
+    CognexReference ref = getReference(refId);
     ref.properties.addAll(properties);
     for (Term p : ref.properties) {
       if (boundJobs.containsKey(p.getName())) {
@@ -112,9 +111,8 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
         break;
       }
     }
-    for (Symbol existingRefId : references.keySet()) {
-      CognexReference existingRef = references.get(existingRefId);
-      if (existingRefId != refId) {
+    for (CognexReference existingRef : getAllReferences()) {
+      if (existingRef.refId != refId) {
         boolean matching = false;
         for (Term property : ref.properties) {
           for (Term eProperty : existingRef.properties) {
@@ -128,7 +126,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
           }
         }
         if (matching) {
-          lessSalientRefIds.add(existingRefId);
+          lessSalientRefIds.add(existingRef.refId);
         }
       }
     }
@@ -178,7 +176,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   public CognexReference createCognexRef(CognexJob job, List<Term> additionalProps) {
 
     //if there are any matching hypothetical bind them first
-    for (CognexReference r : references.values()) {
+    for (CognexReference r : getAllReferences()) {
       if (r.cognexJob == job &&
               r.result == null &&
               //if there is a matching property for each additionalProp we're good
@@ -228,16 +226,8 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   @TRADEService
   @Action
   public CognexReference removeReference(Symbol refId) {
-    if (this.references.containsKey(refId)) {
-      return this.references.remove(refId);
-    }
-    return null;
+    return super.removeReference(refId);
   }
-
-  public boolean insertReference(Symbol refId, CognexReference ref) {
-    return (this.references.putIfAbsent(refId, ref) == null);
-  }
-
 
   //todo: does not handle general race conditions on ref management across consultants.
   //todo: duplicates code in the diarc PoseConsultant. We didn't want to implement a non-general
@@ -342,9 +332,9 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   public Symbol createCogRefWithProperty(Symbol jobDescriptor, Term property) {
     CognexReference ref = createCogRefWithProps(getCognexJobForDescriptor(jobDescriptor), new ArrayList<>(Arrays.asList(property)));
     //todo: shouldn't have to do this lookup this way. should have the refId already.
-    for (Map.Entry<Symbol, CognexReference> e : references.entrySet()) {
-      if (e.getValue().equals(ref)) {
-        return e.getKey();
+    for (CognexReference existingRef : getAllReferences()) {
+      if (existingRef.equals(ref)) {
+        return existingRef.refId;
       }
     }
     return null;
@@ -366,10 +356,9 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   @Override
   public void addReference(CognexReference newRef) {
     super.addReference(newRef);
-    for (Symbol refId : references.keySet()) {
-      CognexReference ref = references.get(refId);
+    for (CognexReference ref : getAllReferences()) {
       if (ref.properties.containsAll(newRef.properties) && newRef.properties.containsAll(ref.properties)) {
-        lessSalientRefIds.add(refId);
+        lessSalientRefIds.add(ref.refId);
       }
     }
   }

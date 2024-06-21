@@ -34,7 +34,7 @@ public class ContextConsultant extends Consultant<ContextReference> {
 
     @Override
     protected <U> U localConvertToType(Symbol refId, Class<U> type) {
-        ContextReference ref = references.get(refId);
+        ContextReference ref = getReference(refId);
         if(ref == null){
             log.warn("[localConvertToType] no refrence found for id: "+refId+" returning null");
             return null;
@@ -50,7 +50,7 @@ public class ContextConsultant extends Consultant<ContextReference> {
 
     @Override
     protected <U> U localConvertToType(Symbol refId, Class<U> type, List<? extends Term> constraints) {
-        ContextReference ref = references.get(refId);
+        ContextReference ref = getReference(refId);
         Context context = ref.context;
         if (type.isAssignableFrom(Context.class)) {
             // Point3d
@@ -115,7 +115,7 @@ public class ContextConsultant extends Consultant<ContextReference> {
 
     private ContextReference createAndAddReference(Context c){
         ContextReference ref = new ContextReference(getNextReferenceId(),c);
-        references.put(ref.refId,ref);
+        addReference(ref);
         return ref;
     }
 
@@ -170,14 +170,14 @@ public class ContextConsultant extends Consultant<ContextReference> {
     @Action
     @TRADEService
     public Justification getSuccessFromRef(Symbol refId) {
-        return references.get(refId).getContext().getJustification();
+        return getReference(refId).getContext().getJustification();
 //        ActionContextDescription d = (ActionContextDescription) c.getContextDescription();
 //        return d.getSuccessWithReason();
     }
     @Action
     @TRADEService
     public boolean getStatusFromRef(Symbol refId) {
-       return references.get(refId).getContext().getStatus().isFailure();
+       return getReference(refId).getContext().getStatus().isFailure();
 //        ActionContextDescription d = (ActionContextDescription) c.getContextDescription();
 //        return d.getSuccessWithReason();
     }
