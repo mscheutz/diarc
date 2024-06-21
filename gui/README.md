@@ -169,8 +169,10 @@ useEffect(() => {
 #### Adding your component to the server
 
 1. Open `GuiManager.java`. This file is in
-   `diarc/core/src/main/java/edu/tufts/hrilab/gui`.
+   `core/src/main/java/edu/tufts/hrilab/gui`.
 2. Add your component's class and path string to the `ENABLED_ENDPOINTS` list.
+3. Initialize your component in your config file. The one we're using is
+   `config/src/main/java/edu/tufts/hrilab/config/gui/UnifiedGuiConfig.java`.
 
 ---
 
