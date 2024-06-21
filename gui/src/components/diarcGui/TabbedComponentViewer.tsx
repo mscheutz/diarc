@@ -33,6 +33,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
     url.protocol = "ws";
 
     // Websocket to check for the endpoints
+    const [beliefStatus, setBeliefStatus] = useState<string>("wait");
     const [chatStatus, setChatStatus] = useState<string>("wait")
     const [viewerStatus, setViewerStatus] = useState<string>("wait")
     const [managerStatus, setManagerStatus] = useState<string>("wait")
@@ -40,6 +41,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
 
     const wsBaseUrl = url.toString();
 
+    const beliefSocket = useWebSocket(`${wsBaseUrl}belief`);
     const chatSocket = useWebSocket(`${wsBaseUrl}chat`);
     const viewerSocket = useWebSocket(`${wsBaseUrl}goalViewer`);
     const managerSocket = useWebSocket(`${wsBaseUrl}goalManager`);
@@ -49,20 +51,26 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
     const [failed, setFailed] = useState<boolean>(false);
 
     const checkWait = () => {
-        setWaiting(chatStatus === "wait"
+        setWaiting(
+            beliefStatus === "wait"
+            || chatStatus === "wait"
             || viewerStatus === "wait"
             || managerStatus === "wait"
             || mapStatus === "wait");
     }
 
     const checkFailed = () => {
-        setFailed(chatStatus === "off"
+        setFailed(
+            beliefStatus === "off"
+            && chatStatus === "off"
             && viewerStatus === "off"
             && managerStatus === "off"
             && mapStatus === "off");
     }
 
     const check = () => {
+        setBeliefStatus(beliefSocket.readyState === ReadyState.OPEN ?
+            "on" : "off");
         setChatStatus(chatSocket.readyState === ReadyState.OPEN ?
             "on" : "off");
         setViewerStatus(viewerSocket.readyState === ReadyState.OPEN ?
@@ -88,7 +96,9 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                 {failed ?
                     <Tab>Connection Failed</Tab>
                     : null}
-                {<Tab>Belief Viewer</Tab>}
+                {beliefStatus === "on" ?
+                    <Tab>Belief Viewer</Tab>
+                    : null}
                 {chatStatus === "on" ?
                     <Tab>Chat Viewer</Tab>
                     : null}
@@ -138,9 +148,11 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                     </div>
                 </TabPanel>
                 : null}
-            {<TabPanel className={flexTabPanelClass} forceRender>
-                <BeliefViewer />
-            </TabPanel>}
+            {beliefStatus === "on" ?
+                <TabPanel className={flexTabPanelClass} forceRender>
+                    <BeliefViewer />
+                </TabPanel>
+                : null}
             {chatStatus === "on" ?
                 <TabPanel className={flexTabPanelClass} forceRender>
                     <ChatViewer />

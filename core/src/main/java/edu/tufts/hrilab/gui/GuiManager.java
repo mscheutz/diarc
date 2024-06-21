@@ -13,9 +13,9 @@ import edu.tufts.hrilab.belief.gui.BeliefEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.map.MapComponent;
-import edu.tufts.hrilab.map.MapGui;
+import edu.tufts.hrilab.map.MapEndpointComponent;
 import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -28,6 +28,7 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import javax.annotation.Nonnull;
 import javax.vecmath.Matrix4d;
@@ -51,11 +52,14 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
     //==========================================================================
     // Configuration properties
     //==========================================================================
-    /**
-     * The base URL for the server.
-     */
-    @Value("${app.base-url}")
-    private String baseUrl;
+    private static final List<Pair<Class<? extends TextWebSocketHandler>, String>>
+            ENABLED_ENDPOINTS = Arrays.asList(
+                    Pair.of(BeliefEndpointComponent.BeliefHandler.class, "belief"),
+                    Pair.of(ChatEndpointComponent.ChatHandler.class, "chat"),
+                    Pair.of(GoalViewerEndpointComponent.GoalViewerHandler.class, "goalViewer"),
+                    Pair.of(GoalManagerEndpointComponent.GoalManagerHandler.class, "goalManager"),
+                    Pair.of(MapEndpointComponent.MapHandler.class, "map")
+            );
 
     /**
      * Allowed cross-origin URLs, separated by commas.
@@ -170,47 +174,18 @@ public class GuiManager extends DiarcComponent implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(@Nonnull WebSocketHandlerRegistry registry) {
         try {
-            WebSocketHandler beliefHandler = null;
-            WebSocketHandler chatHandler = null;
-            WebSocketHandler goalViewerHandler = null;
-            WebSocketHandler goalManagerHandler = null;
-            MapComponent mapComponent = null;
-            Collection<TRADEServiceInfo> availableServices = TRADE.getAvailableServices();
-            for (TRADEServiceInfo service : availableServices) {
-                switch (service.serviceString) {
-                    case "getBeliefHandler()" ->
-                            beliefHandler = service.call(BeliefEndpointComponent.BeliefHandler.class);
-                    case "getChatHandler()" ->
-                            chatHandler = service.call(ChatEndpointComponent.ChatHandler.class);
-                    case "getGoalViewerHandler()" ->
-                            goalViewerHandler = service.call(GoalViewerEndpointComponent.GoalViewerHandler.class);
-                    case "getGoalManagerHandler()" ->
-                            goalManagerHandler = service.call(GoalManagerEndpointComponent.GoalManagerHandler.class);
-                    case "getMapComponent()" ->
-                            mapComponent = service.call(MapComponent.class);
-                }
+            for(var pair : ENABLED_ENDPOINTS) {
+                Class<? extends TextWebSocketHandler> clazz = pair.getLeft();
+                String path = pair.getRight();
 
-                if(beliefHandler != null && chatHandler != null
-                && goalViewerHandler != null && goalManagerHandler != null
-                && mapComponent != null)
-                    break;
+                WebSocketHandler handler = TRADE.getAvailableService(
+                        new TRADEServiceConstraints()
+                                .returnType(clazz)
+                ).call(clazz);
+
+                registry.addHandler(handler, "/" + path)
+                        .setAllowedOrigins(parseCorsOrigins());
             }
-
-            if(beliefHandler != null)
-                registry.addHandler(beliefHandler, "/belief")
-                        .setAllowedOrigins(parseCorsOrigins());
-            if(chatHandler != null)
-                registry.addHandler(chatHandler, "/chat")
-                        .setAllowedOrigins(parseCorsOrigins());
-            if(goalViewerHandler != null)
-                registry.addHandler(goalViewerHandler, "/goalViewer")
-                        .setAllowedOrigins(parseCorsOrigins());
-            if(goalManagerHandler != null)
-                registry.addHandler(goalManagerHandler, "/goalManager")
-                        .setAllowedOrigins(parseCorsOrigins());
-            if (mapComponent != null)
-                registry.addHandler(new MapGui(baseUrl, mapComponent), "/map")
-                        .setAllowedOrigins(parseCorsOrigins());
         } catch(TRADEException e) {
             log.error("Endpoint get service call failed");
         }

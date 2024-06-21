@@ -3,11 +3,11 @@ package edu.tufts.hrilab.config.gui;
 import edu.tufts.hrilab.action.GoalManagerEndpointComponent;
 import edu.tufts.hrilab.action.GoalViewerEndpointComponent;
 import edu.tufts.hrilab.action.GoalManagerImpl;
-import edu.tufts.hrilab.belief.BeliefComponent;
 import edu.tufts.hrilab.belief.gui.BeliefEndpointComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.gui.GuiManager;
 import edu.tufts.hrilab.map.MapComponent;
+import edu.tufts.hrilab.map.MapEndpointComponent;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
 import edu.tufts.hrilab.nao.MockNaoComponent;
 import edu.tufts.hrilab.simspeech.ChatEndpointComponent;
@@ -49,6 +49,7 @@ public class UnifiedGuiConfig extends DiarcConfiguration {
         createInstance(MockMoveBaseComponent.class, "-groups agent:fetch:fetch -simExecTime");
 
         createInstance(MapComponent.class, "-map_folder /home/lucien/Documents/diarc/elevator_lab_test -start_floor 1");
+        createInstance(MapEndpointComponent.class);
 
         createInstance(GuiManager.class);
     }
