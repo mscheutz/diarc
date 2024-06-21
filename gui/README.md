@@ -59,26 +59,36 @@ about 1 second ("Connecting..."). After this time, if none are found, it will
 say "Connection Failed!". Any that are found will result in their respective
 component being rendered.
 
-* Robot chat: a messaging-app-like UI to talk with robots.
-    * Name bar: type in the name of human speaker.
-    * Conversation menu: select the robot you are talking to.
-    * Message window: a list of previous messages and an input to send new ones.
-* Goal viewer: an interface to see a list of goals and options to interact with
+* **Belief viewer**: an interface with a list of current beliefs, a belief
+  timeline, and a means of querying, asserting, and retracting beliefs.
+    * **Belief timeline** (left): a chronologically-ordered list of belief
+      assertions and retractions, with the most recent at the top.
+    * **Current beliefs** (right): a list of all currently-held beliefs.
+    * **Menu** (bottom): an input bar and buttons to query, assert, and retract.
+* **Chat viewer**: a messaging-app-like UI to talk with robots.
+    * **Name bar**: type in the name of human speaker (your name).
+    * **Conversation menu**: select the robot you are talking to.
+    * **Message window**: a list of previous messages and an input to send new ones.
+> On mobile or small screens, click a conversation to start messaging and
+      use the back button on the top left to exit the conversation.
+* **Goal viewer**: an interface to see a list of goals and options to interact with
   them.
-    * Goal tree: there are three levels, goal type (active/suspended/past), agent,
+    * **Goal tree**: there are three levels, goal type (active/suspended/past), agent,
       and goal. Goal types and agents are like folders and can be expanded/closed.
-    * Button menu: clicking a goal will select it. Once selected, active and
+    * **Button menu**: clicking a goal will select it. Once selected, active and
       suspended goals can be canceled, active goals can be suspended, and suspended
       goals can be resumed.
-* Goal manager: allows for submission of goals/actions.
-    * Action menu: shows a list of all loaded action signatures. Clicking one of
-      these will generate a form in the "Submit Action" tab in the right panel.
-    * File tree: shows a file explorer view of loaded `.asl` files.
-    * Submission panel: has two tabs.
-        * Submit action: here a custom action may be typed and submitted. In
-          addition, clicking an action signature on the menu will generate a form
-          containing text boxes for each of its fields.
-        * Submit goal: submit a goal in agent-predicate form.
+* **Goal manager**: allows for submission of goals/actions.
+    * **Action browser** (top left): shows a list of all loaded action signatures.
+      Clicking one of these will generate a form in the "Submit Action" tab in
+      the right panel.
+    * **File tree** (bottom left): shows a file explorer view of loaded `.asl`
+      files.
+    * **Submission panel** (right): has two tabs.
+        * **Submit action**: here a custom action may be entered and submitted. In
+          addition, clicking an action signature on the Action Browser will
+          generate a form containing text boxes for each of its parameters.
+        * **Submit goal**: submit a goal in agent-predicate form.
 * Map viewer:
     * **Features**
         - **Fetch Map Data**
@@ -89,6 +99,7 @@ component being rendered.
             - **Implementation**: Depends on successful `TRADEService` call.
         - **Map Interaction**
             - **Click Response**: Clicks on the map trigger `goToLocation` TRADEService if it succeeds.
+* **Vision manager**: coming soon!
 
 Finally, each GUI component has a connection indicator on the bottom
 ("Status: [...]").
@@ -102,8 +113,8 @@ Finally, each GUI component has a connection indicator on the bottom
 1. Create a new React component (`.tsx` file) in
    `diarc/gui/src/components/diarcGui`.
 2. Define a function component and export it.
-3. It should have a Web Socket connection; the `npm` package
-   `react-use-websocket` is recommended.
+3. Most use a Web Socket connection to communicate with the backend; the `npm`
+   package `react-use-websocket` is recommended.
 4. If you need to send messages from the client to the server, you can use the
    `sendMessage()` function.
 5. If you need to receive messages from the server, put this in your component
@@ -148,7 +159,7 @@ useEffect(() => {
 > We need to do two things at once:
 > 
 > 1. Create a DIARC component, and
-> 2. Set up the server side.
+> 2. Expose the endpoint to the server registry.
 > 
 > This means we have to have something `extend DiarcComponent` *and* `extend
 > TextWebSocketHandler`. However, multiple inheritance is not allowed in Java,
@@ -157,11 +168,9 @@ useEffect(() => {
 
 #### Adding your component to the server
 
-1. Add your component to `GuiManager.java`. This file is in
+1. Open `GuiManager.java`. This file is in
    `diarc/core/src/main/java/edu/tufts/hrilab/gui`.
-2. Find your getter service and use it to find the Web Socket handler you
-   defined in point 3 above.
-3. Add your handler to the registry.
+2. Add your component's class and path string to the `ENABLED_ENDPOINTS` list.
 
 ---
 
