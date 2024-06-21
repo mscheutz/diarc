@@ -15,6 +15,7 @@ import 'react-tabs/style/react-tabs.css';
 import { Button } from "../../Button.tsx";
 import VisionSearches from "./VisionSearches.tsx";
 import "../StyleOverrides.css";
+import VideoStream from "./VideoStream.tsx";
 
 const flexTabPanelClass = "hidden flex-col min-h-0 grow";
 
@@ -27,11 +28,16 @@ const VisionManager = () => {
                       rounded-md justify-items-stretch">
             <Tabs className="w-full min-h-0 grow flex flex-col">
                 <TabList className="select-none">
+                    <Tab>Video Stream</Tab>
                     <Tab>Vision Searches</Tab>
                 </TabList>
 
                 <TabPanel className={flexTabPanelClass} forceRender>
                     {/* TODO: pass web RTC props here */}
+                    <VideoStream />
+                </TabPanel>
+
+                <TabPanel className={flexTabPanelClass} forceRender>
                     <VisionSearches />
                 </TabPanel>
             </Tabs>

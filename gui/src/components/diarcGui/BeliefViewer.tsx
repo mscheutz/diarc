@@ -20,8 +20,8 @@ import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
 const GoalViewer: React.FunctionComponent<{}> = () => {
     // SET UP STATE //
-    const [timelineBeliefs, setTimelineBeliefs] = useState<string[]>(["fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs",]);
-    const [currentBeliefs, setCurrentBeliefs] = useState<string[]>(["fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs",]);
+    const [timelineBeliefs, setTimelineBeliefs] = useState<string[]>([]);
+    const [currentBeliefs, setCurrentBeliefs] = useState<string[]>([]);
 
     const generateBeliefTimeline = useCallback(() => {
         return (
