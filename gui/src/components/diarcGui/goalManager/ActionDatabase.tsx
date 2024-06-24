@@ -7,7 +7,7 @@
  */
 
 import React from "react";
-import { Button } from "../Button";
+import { Button } from "../../Button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faSync } from "@fortawesome/free-solid-svg-icons";
 import ActionBrowser from "./ActionBrowser";

@@ -11,17 +11,14 @@ import React, { useState, useEffect, useCallback, FormEvent } from "react";
 
 import useWebSocket from "react-use-websocket";
 
-import { faCirclePlus, faCircleMinus } from "@fortawesome/free-solid-svg-icons"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
-import ConnectionIndicator from "./ConnectionIndicator";
+import ConnectionIndicator from "./util/ConnectionIndicator";
 import { Button } from "../Button";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
 const GoalViewer: React.FunctionComponent<{}> = () => {
     // SET UP STATE //
-    const [timelineBeliefs, setTimelineBeliefs] = useState<string[]>(["fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs",]);
-    const [currentBeliefs, setCurrentBeliefs] = useState<string[]>(["fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs", "fdjsklkfjdsljkfs",]);
+    const [timelineBeliefs, setTimelineBeliefs] = useState<string[]>([]);
+    const [currentBeliefs, setCurrentBeliefs] = useState<string[]>([]);
 
     const generateBeliefTimeline = useCallback(() => {
         return (

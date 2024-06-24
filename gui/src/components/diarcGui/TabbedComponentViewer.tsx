@@ -19,11 +19,11 @@ import { faBan, faCog } from '@fortawesome/free-solid-svg-icons'
 import ChatViewer from "./ChatViewer";
 import GoalViewer from "./GoalViewer";
 import MapViewer from "./MapViewer";
-import GoalManager from "./GoalManager";
+import GoalManager from "./goalManager/GoalManager";
 import BeliefViewer from "./BeliefViewer";
-
-import "./StyleOverrides.css";
 import VisionManager from "./vision/VisionManager";
+
+import "./util/StyleOverrides.css";
 
 const flexTabPanelClass = "hidden flex-col min-h-0 grow";
 
@@ -31,6 +31,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
     const url: URL = new URL(document.location.toString());
     url.port = "8080";
     url.protocol = "ws";
+    const wsBaseUrl = url.toString();
 
     // Websocket to check for the endpoints
     const [beliefStatus, setBeliefStatus] = useState<string>("wait");
@@ -38,49 +39,35 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
     const [viewerStatus, setViewerStatus] = useState<string>("wait")
     const [managerStatus, setManagerStatus] = useState<string>("wait")
     const [mapStatus, setMapStatus] = useState<string>("wait")
-
-    const wsBaseUrl = url.toString();
+    const [videoStatus, setVideoStatus] = useState<string>("wait");
 
     const beliefSocket = useWebSocket(`${wsBaseUrl}belief`);
     const chatSocket = useWebSocket(`${wsBaseUrl}chat`);
     const viewerSocket = useWebSocket(`${wsBaseUrl}goalViewer`);
     const managerSocket = useWebSocket(`${wsBaseUrl}goalManager`);
     const mapSocket = useWebSocket(`${wsBaseUrl}map`);
+    const videoSocket = useWebSocket(`${wsBaseUrl}video`);
 
     const [waiting, setWaiting] = useState<boolean>(true);
     const [failed, setFailed] = useState<boolean>(false);
 
-    const checkWait = () => {
-        setWaiting(
-            beliefStatus === "wait"
-            || chatStatus === "wait"
-            || viewerStatus === "wait"
-            || managerStatus === "wait"
-            || mapStatus === "wait");
-    }
-
-    const checkFailed = () => {
-        setFailed(
-            beliefStatus === "off"
-            && chatStatus === "off"
-            && viewerStatus === "off"
-            && managerStatus === "off"
-            && mapStatus === "off");
-    }
-
     const check = () => {
-        setBeliefStatus(beliefSocket.readyState === ReadyState.OPEN ?
-            "on" : "off");
-        setChatStatus(chatSocket.readyState === ReadyState.OPEN ?
-            "on" : "off");
-        setViewerStatus(viewerSocket.readyState === ReadyState.OPEN ?
-            "on" : "off");
-        setManagerStatus(managerSocket.readyState === ReadyState.OPEN ?
-            "on" : "off");
-        setMapStatus(mapSocket.readyState === ReadyState.OPEN ?
-            "on" : "off");
-        checkWait();
-        checkFailed();
+        const belief = beliefSocket.readyState === ReadyState.OPEN;
+        const chat = chatSocket.readyState === ReadyState.OPEN;
+        const viewer = viewerSocket.readyState === ReadyState.OPEN;
+        const manager = managerSocket.readyState === ReadyState.OPEN;
+        const map = mapSocket.readyState === ReadyState.OPEN;
+        const video = videoSocket.readyState === ReadyState.OPEN;
+
+        setBeliefStatus(belief ? "on" : "off");
+        setChatStatus(chat ? "on" : "off");
+        setViewerStatus(viewer ? "on" : "off");
+        setManagerStatus(manager ? "on" : "off");
+        setMapStatus(map ? "on" : "off");
+        setVideoStatus(video ? "on" : "off");
+
+        setWaiting(false);
+        setFailed(!belief && !chat && !viewer && !manager && !map && !video);
     }
 
     setTimeout(check, 1000);
@@ -111,6 +98,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                 {mapStatus === "on" ?
                     <Tab>Map Viewer</Tab>
                     : null}
+                {/* TODO: check for connection */}
                 {<Tab>Vision Manager</Tab>}
             </TabList>
 
@@ -173,6 +161,7 @@ const TabbedComponentViewer: React.FunctionComponent = () => {
                     <MapViewer />
                 </TabPanel>
                 : null}
+            {/* TODO: check for connection */}
             {<TabPanel className={flexTabPanelClass} forceRender>
                 <VisionManager />
             </TabPanel>}

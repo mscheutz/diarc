@@ -22,10 +22,10 @@ import {
     ConversationList
 } from "@chatscope/chat-ui-kit-react";
 
-import ConnectionIndicator from './ConnectionIndicator';
+import ConnectionIndicator from './util/ConnectionIndicator';
 import useWebSocket from 'react-use-websocket';
 
-import "./StyleOverrides.css"
+import "./util/StyleOverrides.css"
 
 let counter = 0; // list items need unique keys
 

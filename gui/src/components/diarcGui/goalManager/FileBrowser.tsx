@@ -12,7 +12,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import TreeView, { flattenTree } from "react-accessible-treeview";
 
-import "./TreeStyle.css";
+import "../util/TreeStyle.css";
 
 const FileBrowser = ({ fileTree }) => {
     return (

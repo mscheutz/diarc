@@ -10,6 +10,18 @@ import React, { useState, useEffect } from "react";
 
 import { Button } from "../../Button";
 
+type Node = {
+    name: string,
+    id?: number | string,
+    children: Node[]
+};
+
+type Selection = {
+    name: string,
+    id: string,
+    type: string
+};
+
 const VisionSearches = () => {
     // ----------------^
     // TODO: need to receive props for send message callback and for server
@@ -39,12 +51,12 @@ const VisionSearches = () => {
     return (
         <div className="min-h-0 w-full flex flex-col outline shadow-md outline-1
                         outline-[#d1dbe3] items-center p-5 gap-5 rounded-md
-                        justify-items-stretch">
+                        justify-items-stretch grow">
             {/* Add searches */}
             <div className="min-h-0 w-full grid grid-cols-1 outline
                             shadow-md outline-1 outline-[#d1dbe3] items-center
                             p-5 gap-2 rounded-md justify-items-stretch
-                            lg:px-40 xl:px-56 2xl:px-72">
+                            lg:px-40 xl:px-56 2xl:px-72 overflow-scroll">
                 <p className="text-lg">Add Searches</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-1 items-center">
                     <label id="predefined-search">Add predefined search</label>
@@ -95,13 +107,18 @@ const VisionSearches = () => {
             </div>
 
             {/* Search viewer */}
-            <div className="min-h-0 w-full grid grid-cols-1 outline
-                        shadow-md outline-1 outline-[#d1dbe3] items-center
-                        p-5 gap-2 rounded-md justify-items-stretch
-                        lg:px-40 xl:px-56 2xl:px-72">
-                <p className="text-lg">Available Searches</p>
-                <div className="flex flex-row items-center justify-items-stretch">
-                    <div>fjdskls</div>
+            <div className="min-h-0 w-full outline shadow-md outline-1
+                            outline-[#d1dbe3] items-center p-5 gap-2 rounded-md
+                            justify-items-stretch grow overflow-scroll">
+                <p className="text-lg mb-2">Available Searches</p>
+                <div className="flex flex-row items-center justify-items-stretch
+                                grow">
+                    <div className="outline outline-1 grow">
+                        fjdskls
+                    </div>
+                    <div className="outline outline-1 grow">
+                        bar
+                    </div>
                 </div>
             </div>
         </div>

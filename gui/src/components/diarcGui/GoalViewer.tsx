@@ -20,8 +20,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import TreeView, { flattenTree } from "react-accessible-treeview"
 
-import "./TreeStyle.css";
-import ConnectionIndicator from "./ConnectionIndicator";
+import "./util/TreeStyle.css";
+import ConnectionIndicator from "./util/ConnectionIndicator";
 import { Button } from "../Button";
 
 type Node = {
