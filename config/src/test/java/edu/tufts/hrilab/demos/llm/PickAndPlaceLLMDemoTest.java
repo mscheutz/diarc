@@ -48,6 +48,11 @@ public class PickAndPlaceLLMDemoTest extends GenerativeDiarcIntegrationTest {
 
     @After
     public void shutdownDiarc() {
+        //Give last step a chance to properly complete
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException ignored) {
+        }
         log.debug("[cleanup] started");
         log.debug("[shutdownConfig] tester shutdown");
         diarcConfig.shutdownConfiguration();
@@ -115,7 +120,6 @@ public class PickAndPlaceLLMDemoTest extends GenerativeDiarcIntegrationTest {
     }
 
     @Test
-    @Ignore
     public void PickAndPlaceDemoTestJapanese() {
 
         setSingleTestTimeout(15, TimeUnit.SECONDS);
