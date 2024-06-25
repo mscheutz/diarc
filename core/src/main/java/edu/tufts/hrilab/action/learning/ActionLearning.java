@@ -79,24 +79,28 @@ public class ActionLearning {
       learningGui = new ActionLearningGui();
     }
 
-    // set which actions/goals to ignore and pass through to be executed during learning
-    ignoreActionSet.add(Factory.createPredicate("sayText(?actor,?text)"));
+    //TODO:EW: I don't like this mechanism to determine what is a taught step vs a current command.
+    //  No flexibility, hard to maintain
+    //set which actions/goals to ignore and pass through to be executed during learning
+    //ignoreActionSet.add(Factory.createPredicate("sayText(?actor,?text)"));
+    ignoreActionSet.add(Factory.createPredicate("handled(?actor,?utterance)"));
     ignoreActionSet.add(Factory.createPredicate("modifyAction(?actor,?action,?modification,?location)"));
     ignoreActionSet.add(Factory.createPredicate("updateActionLearning(?actor,?action,?status)"));
-    ignoreActionSet.add(Factory.createPredicate("handled(?actor,?utterance)"));
-    //TODO:brad:test this at some point?
     ignoreActionSet.add(Factory.createPredicate("changeLearningExecution(?actor,?status)"));
-
-    //TODO:brad: generalize this case?
     ignoreActionSet.add(Factory.createPredicate("endLearningAssembleScript(?actor,?action)"));
-    ignoreActionSet.add(Factory.createPredicate("cancelCurrentGoal(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("freeze(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("endFreeze(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("cancelGoalInQueueIndex(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("cancelDefineItem(?actor,?itemRefId,?trayRefId,?scriptID)"));
-    ignoreActionSet.add(Factory.createPredicate("suspendDefineItem(?actor,?scriptID)"));
+
     ignoreActionSet.add(Factory.createPredicate("cancelCurrentGoal(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("suspendCurrentGoal(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeCurrentGoal(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelCurrentGoal(?actor,?agent)"));
+    ignoreActionSet.add(Factory.createPredicate("suspendCurrentGoal(?actor,?agent)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeCurrentGoal(?actor,?agent)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelAllCurrentGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelAllPendingGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelAllActiveGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelGoalInQueueIndex(?actor)"));
   }
 
   /**
@@ -350,6 +354,8 @@ public class ActionLearning {
     return executeAction;
   }
 
+  //TODO: cancelTeachingByModification
+  //  Remove new entry that was formed but canceled halfway through teaching template
 //Brad: moved from ActionModification.java which no longer exists.
 
   /**

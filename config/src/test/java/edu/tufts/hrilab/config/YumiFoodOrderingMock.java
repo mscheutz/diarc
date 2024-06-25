@@ -28,6 +28,7 @@ import java.util.Arrays;
 public class YumiFoodOrderingMock extends DiarcConfiguration {
   protected static Logger log = LoggerFactory.getLogger(YumiFoodOrderingMock.class);
   static public SimSpeechRecognitionComponent simSpeechRec;
+  static public SimSpeechRecognitionComponent untrustedSimSpeechRec;
   public MockYumiComponent leftArm;
   public MockYumiComponent rightArm;
 
@@ -114,7 +115,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
     createInstance(GoalManagerImpl.class, gmArgs);
 
     if (test) {
-      createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech -nogui");
+      untrustedSimSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech -nogui");
       simSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker brad -config yumiFoodOrdering.simspeech -nogui");
     } else {
       createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech");

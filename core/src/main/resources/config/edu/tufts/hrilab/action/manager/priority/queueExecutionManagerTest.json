@@ -64,5 +64,25 @@
   "updateActionLearning": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "describeCurrentGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describePendingGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllActiveGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllPendingGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllCurrentGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

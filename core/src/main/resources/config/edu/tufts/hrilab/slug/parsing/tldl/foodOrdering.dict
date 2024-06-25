@@ -444,6 +444,7 @@ send message; C/LIT* ; #x.sendMessage(?ADDRESSEE,$x)
 job; VAL/JOB; #j.job($j)
 location; VAL/REF; #l.location($l);
 area; VAL/REF; #a.area($a);
+pose; VAL/REF; #a.pose($a);
 
 the; DESC/DESC ; #x.$x
 
@@ -547,6 +548,8 @@ right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
 what is your current task; VERBI; describeCurrentGoal
 what are your pending tasks; VERBI; describePendingGoals
 cancel pending tasks; VERBI; cancelAllPendingGoals
+cancel all active tasks; VERBI; cancelAllActiveGoals
+cancel all tasks; VERBI; cancelAllCurrentGoals
 
 
 reset; VERBI; resetDomain
@@ -567,11 +570,21 @@ stop following; VAL; val(none)
 set default delivery area to; C/REF; #p.setDeliveryPose(?ADDRESSEE, $p)
 
 here it is; VAL; got(ingredient)
-grasp it here; VAL; grasp(here)
+grasp it here; VAL; hold(here)
 
 %define new speaker; S/LIT*; #s.name($s,$s)
-add new supervisor; C/LIT*; #s.defineNewSupervisor(?ADDRESSEE, $s)
-is an admin; S\AGENT ; #a.admin($a)
+add new supervisor; S/LIT*; #s.is_supervisor($s,?ADDRESSEE)
+add new supervisor; (S/LIT*)\AGENT; #a#s.is_supervisor($a,$s)
+add new admin; S/LIT* ; #a.admin_of($a,?ADDRESSEE)
+add new admin; (S/LIT*)\AGENT; #a#s.admin_of(#a,#s)
 
 it is safe to proceed; VAL; safeToProceed(true)
 it is not safe to proceed; VAL; safeToProceed(false)
+
+
+%%%% todo: remove. these should be handled by the consultant
+chicken; RN; chicken; VAR
+chicken; DESC; chicken
+
+corn; RN; corn; VAR
+corn; DESC; corn

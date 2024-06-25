@@ -31,6 +31,10 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
   private boolean errorState = false;
   private boolean cameraResultDetected = true;
 
+  public void setSleepTime(long sleepTime) {
+    this.sleepTime = sleepTime;
+  }
+
   private void sleep(long ms) {
     try {
       Thread.sleep(ms);
@@ -77,19 +81,19 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
   @Override
   public void openGripperRapid() {
     log.info("[openGripper] opening gripper");
-    sleep(250);
+    sleep(sleepTime);
   }
 
   @Override
   public void closeGripperRapid() {
     log.info("[closeGripper] closing gripper");
-    sleep(250);
+    sleep(sleepTime);
   }
 
   @Override
   public void putDownItem(Symbol refId, Symbol pose) {
     log.info("[putDownObject] putting down item " + refId + " at pose " + pose);
-    sleep(250);
+    sleep(sleepTime);
   }
 
   @Override
@@ -108,20 +112,20 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
   public void goToCameraPose(Symbol locationRef) {
     String target = rwsPoseConsultant.getReference(locationRef).getPose();
     log.info("[goToCameraPose]: " + locationRef.getName() + " pose: " + target);
-    sleep(500);
+    sleep(sleepTime);
   }
 
   @Override
   public boolean defineGraspPointForDescriptor(Symbol refId, Symbol itemType) {
     log.info("[defineGraspPointForDescriptor] " + refId + " " + itemType);
-    sleep(250);
+    sleep(sleepTime);
     return true;
   }
 
   @Override
   public boolean perceiveEntityFromSymbol(Symbol refId) {
     log.info("[perceiveEntityFromSymbol] " + refId);
-    sleep(250);
+    sleep(sleepTime);
     CognexReference ref = cognexConsultant.getCognexReferenceForID(refId);
 
     CognexJob job = cognexConsultant.getCognexJobForCognexReference(ref);
@@ -158,7 +162,7 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
   @Override
   public void pourSauce() {
     log.info("[pourSauce] pouring sauce");
-    sleep(1000);
+    sleep(sleepTime);
   }
 
   @Override
@@ -214,7 +218,11 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
 
   @Override
   public void shutdownComponent() {
-    return;
+    try {
+      TRADE.deregister(rwsPoseConsultant);
+    } catch (TRADEException e) {
+      log.error("[shutdownComponent] exception deregistering RWSPoseConsultant", e);
+    }
   }
 
 }

@@ -3877,7 +3877,6 @@ public class TLDLParserComponentTest {
         ));
 
 
-
         //TODO:brad: only describes act specs
         assertTrue(testUtterance("describe how to get the corn in the serving box",
                 "INSTRUCT(brad,self,describe(self,how(to(getOn(self,VAR0:physobj,VAR1:physobj)))),{corn(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",

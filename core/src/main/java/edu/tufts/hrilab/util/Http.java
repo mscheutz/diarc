@@ -13,8 +13,8 @@ import java.io.DataOutputStream;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,14 +118,14 @@ public class Http {
         con.setDoOutput(true);
 
         // Convert request body to JSON string
-        Gson gson = new GsonBuilder().serializeNulls().create();
+        Gson gson = new GsonBuilder().serializeNulls().disableHtmlEscaping().create();
         String requestBodyJson = gson.toJson(requestBody);
         log.debug("Request: " + requestBodyJson);
         // Send request body
         DataOutputStream wr;
         try {
             wr = new DataOutputStream(con.getOutputStream());
-            wr.writeBytes(requestBodyJson);
+            wr.write(requestBodyJson.getBytes(StandardCharsets.UTF_8));
             wr.flush();
             wr.close();
         } catch (Exception e) {
@@ -145,8 +145,7 @@ public class Http {
         try {
             in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
-            return null;
+            in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
         }
 
         String inputLine;

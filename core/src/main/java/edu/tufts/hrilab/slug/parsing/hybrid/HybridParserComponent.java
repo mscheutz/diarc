@@ -14,6 +14,7 @@ import edu.tufts.hrilab.slug.parsing.cache.CachedParserComponent;
 import edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent;
 import edu.tufts.hrilab.slug.parsing.patternMatching.PatternMatchingParser;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
+import edu.tufts.hrilab.util.resource.Resources;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 

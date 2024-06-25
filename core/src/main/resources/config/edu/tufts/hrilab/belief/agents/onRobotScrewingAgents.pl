@@ -20,7 +20,9 @@ team(self).
 %% supervisors
 role(brad,supervisor(X)):-diarcAgent(X).
 role(james,supervisor(X)):-diarcAgent(X).
+role(eric,supervisor(X)):-diarcAgent(X).
 
 %% admin
 role(brad,admin(X)):-diarcAgent(X).
 role(james,admin(X)):-diarcAgent(X).
+role(eric,admin(X)):-diarcAgent(X).

@@ -118,6 +118,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
         String propName = property.getName();
         String strippedName = stripQuotesFromMorpheme(propName);
 
+        // TODO: this should only occur if TLDL is present in the system (i.e. don't attempt this block if using just an llm)
         // TODO: this imposes an ordering constraint on diarc components (i.e., RR needs to be up first)
         try {
           TRADEServiceInfo injectTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("injectDictionaryEntry"));

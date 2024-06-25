@@ -18,6 +18,12 @@ REPLY(A,B,putdownspot(C,D,E,F,G),Z) := REPLY(A,B,putDown(C,prep(D,on(F))),Z)
 REPLY(A,B,receiveitem(C,D,E,F,G),Z) := REPLY(A,B,receive(C,prep(D,at(F))),Z)
 END-SET
 
+#Multilingual PickAndPlace LLM
+NEW-SET
+RULES
+REPLY(A,B,cannot(putDown(C,D),because(occupied(E))),Z) := REPLY(A,B,cannot(did(putDown(C,D)),because(isOccupied(E))),Z)
+END-SET
+
 #Temi specific
 #TODO: still need to test whether the left side matches after merge (will change again after actor changes anyway)
 NEW-SET

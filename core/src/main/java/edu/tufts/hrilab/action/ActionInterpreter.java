@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -71,11 +72,13 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   private Lock suspendLock = new ReentrantLock();
   private Condition suspendCondition = suspendLock.newCondition();
   private AtomicBoolean shouldSuspend = new AtomicBoolean(false);
+  private Semaphore suspendedStepSignal = new Semaphore(0);
 
   /**
    * Flag for canceling this ActionInterpreter.
    */
   private AtomicBoolean shouldCancel = new AtomicBoolean(false);
+  private Semaphore canceledStepSignal = new Semaphore(0);
 
   /**
    * Class for handling action execution.
@@ -473,6 +476,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           while (suspend) {
             if (shouldSuspend.get()) {
               suspendSteps();
+              suspendedStepSignal.release(1); //Indicate we are done waiting on the previous step to terminate and have now suspended the AI
             }
             try {
               suspendCondition.await();
@@ -494,6 +498,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
             currentStep.setStatus(ActionStatus.CANCEL);
             shouldCancel.set(false);
           }
+          canceledStepSignal.release(1); //Indicate we are done waiting on the previous step to terminate and have now canceled the AI
         }
 
         goal.setCurrentContext(currentStep);
@@ -542,12 +547,19 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       log.debug("[suspend] interrupting execution of current step");
       stepInterrupted = true;
       suspendSteps();
+      suspendLock.unlock();
     } else {
       log.debug("[suspend] Current step not interruptible, setting shouldSuspend to true to cancel before next step");
       shouldSuspend.set(true);
-    }
+      suspendLock.unlock();
 
-    suspendLock.unlock();
+      //Wait for the current step to terminate before returning - do we always want this?
+      try {
+        log.debug("[suspend] waiting for current step to terminate and AI to fully be suspended");
+        suspendedStepSignal.acquire();
+      } catch (InterruptedException e) {
+      }
+    }
   }
 
   private void suspendSteps() {
@@ -562,7 +574,6 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       currentStep.setStatus(ActionStatus.SUSPEND);
     }
 
-    //TODO: double check this is fully correct (doesn't affect tests passing)
     //Is there a distinction for parents whose completion is pending this context's completion?
     //Propagate status up the tree to be handled per context
     Context caller = currentStep.getParentContext();
@@ -624,7 +635,6 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           }
         }
 
-        //TODO: double check this is fully correct (doesn't affect tests passing)
         //Propagate status up the tree to be handled per context
         Context caller = currentStep.getParentContext();
         while (caller != null) {
@@ -658,8 +668,14 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       stepInterrupted = true;
       currentStep.setStatus(ActionStatus.CANCEL);
     } else {
-      log.debug("[cancel] Current step not interruptable, setting shouldCancel to true to cancel before next step");
+      log.debug("[cancel] Current step not interruptible, setting shouldCancel to true to cancel before next step");
       shouldCancel.set(true);
+      //Wait for the current step to terminate before returning - do we always want this?
+      try {
+        log.debug("[suspend] waiting for current step to terminate and AI to fully be suspended");
+        canceledStepSignal.acquire();
+      } catch (InterruptedException e) {
+      }
     }
 
     //If canceling from a suspended state, we need to unblock the suspend
