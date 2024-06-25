@@ -1,0 +1,90 @@
+{
+    "processor": {
+      "type": "category",
+      "arity": 1
+    },
+    "config": {
+      "model": "buttonModelS320",
+      "type" : "onnx",
+      "backend": "CPU",
+      "input_size": 640,
+      "conf_thresh": 0.3,
+      "score_thresh": 0.3,
+      "nms_thresh": 0.4,
+      "classes" : 368
+    },
+    "predicates": [
+      {
+        "name": "button_1",
+        "classID": 9
+      },
+      {
+        "name": "button_2",
+        "classID": 35
+      },
+      {
+        "name": "button_3",
+        "classID": 53
+      },
+      {
+        "name": "button_4",
+        "classID": 72
+      },
+      {
+        "name": "button_5",
+        "classID": 85
+      },
+      {
+        "name": "button_6",
+        "classID": 99
+      },
+      {
+        "name": "button_7",
+        "classID": 110
+      },
+      {
+        "name": "button_8",
+        "classID": 111
+      },
+      {
+        "name": "button_ll",
+        "classID": 181
+      },
+      {
+        "name": "alarm",
+        "classID": 259
+      },
+      {
+        "name": "bt_keyhole",
+        "classID": 261
+      },
+      {
+        "name": "button_down",
+        "classID": 265
+      },
+      {
+        "name": "emptybutton",
+        "classID": 266
+      },
+      {
+        "name": "keyhole",
+        "classID": 272
+      },
+      {
+        "name": "ledscreen",
+        "classID": 273
+      },
+      {
+        "name": "starfirstfloorbutton",
+        "classID": 277
+      },
+      {
+        "name": "unknownbutton",
+        "classID": 365
+      },
+      {
+        "name": "button_up",
+        "classID": 366
+      }
+    ]
+  }

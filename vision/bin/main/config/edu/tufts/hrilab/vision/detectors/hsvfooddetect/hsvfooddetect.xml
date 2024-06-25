@@ -1,0 +1,44 @@
+<!--
+Set runtime configuration for a VisionProcessor.
+
+
+Fields (required unless noted otherwise):
+
+  processor tag:
+
+    type        : type using an "isA" heirarchy (e.g., color, shape)
+
+  arity       : number of arguments (including variables, descriptors, etc.)
+
+  predicate tag(s):
+
+  name        : leading atom's name (e.g., red) and
+
+  data        : (Optional) whatever data is needed for run-time processing
+
+Example:
+              <processor type="color" arity="1">
+                <predicate name="red">
+                  <r>250</r>
+                  <g>0</g>
+                  <b>0</b>
+                </predicate>
+                <predicate name="blue">
+                  <r>0</r>
+                  <g>0</g>
+                  <b>250</b>
+                </predicate>
+              </processor>
+
+-->
+
+<processor type="food" arity="1">
+    <predicate name="carrot">
+    </predicate>
+    <predicate name="cucumber">
+    </predicate>
+    <predicate name="pear">
+    </predicate>
+    <predicate name="tomato">
+    </predicate>
+</processor>

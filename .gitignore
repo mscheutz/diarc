@@ -1,6 +1,9 @@
 .gradle/
 config/build/
 core/build/
+core/src/main/resources/*-prod.properties
+core/src/main/resources/*-dev.properties
+core/src/main/resources/*-test.properties
 diarcRos/build/
 vision/build/
 vision/src/swig/
@@ -9,3 +12,10 @@ vision/src/swig/
 .env
 docs/
 vision/src/main/cpp/cmake-build-debug/
+elevator_lab_test/extended_lab_doors1.json
+elevator_lab_test/extended_lab_doors1.pgm
+elevator_lab_test/extended_lab_doors1.png
+elevator_lab_test/extended_lab_doors1.yaml
+elevator_lab_test/jcc_markup1.pgm
+elevator_lab_test/jcc_markup1.yaml
+/core/src/main/resources/config/edu/tufts/hrilab/action/asl/custom/

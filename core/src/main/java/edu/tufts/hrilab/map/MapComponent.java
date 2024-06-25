@@ -53,15 +53,15 @@ public class MapComponent extends DiarcComponent {
   /**
    * Robot's current pose on the current map.
    */
-  private Pose currRobotPose = new Pose(new Point3d(0, 0, 0), new Quat4d(0, 0, 0, 1));
+  protected Pose currRobotPose = new Pose(new Point3d(0, 0, 0), new Quat4d(0, 0, 0, 1));
   /**
    * Floor number to FloorMap.
    */
-  private Map<Integer, FloorMap> floorMaps = new HashMap<>();
+  protected Map<Integer, FloorMap> floorMaps = new HashMap<>();
   /**
    * Floor map for the current floor.
    */
-  private FloorMap currFloorMap = null;
+  protected FloorMap currFloorMap = null;
   /**
    * Current floor.
    */
@@ -77,9 +77,9 @@ public class MapComponent extends DiarcComponent {
 
   private RosPackPathHelper rosPackageHelper;
 
-  private PoseConsultant consultant;
+  protected PoseConsultant consultant;
 
-  private String poseKBName = "location";
+  protected String poseKBName = "location";
 
   private String refsConfigFile;
 
@@ -87,6 +87,15 @@ public class MapComponent extends DiarcComponent {
 
   public MapComponent() {
     super();
+  }
+
+  /**
+   * Returns the current instance of this MapComponent.
+   * @return the current MapComponent instance
+   */
+  @TRADEService
+  public MapComponent getMapComponent() {
+    return this;
   }
 
   @Override
@@ -397,7 +406,7 @@ public class MapComponent extends DiarcComponent {
     Pose pose = Utils.convertToPose(transform);
     try {
       //double xdest, double ydest, double quat_x, double quat_y, double quat_z, double quat_w, boolean wait
-      return  TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation").argTypes(double.class,double.class,double.class,double.class,double.class,double.class,Boolean.class)).call(Justification.class, pose.getPosition().x, pose.getPosition().y,
+      return  TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation").argTypes(Double.class,Double.class,Double.class,Double.class,Double.class,Double.class,Boolean.class)).call(Justification.class, pose.getPosition().x, pose.getPosition().y,
               pose.getOrientation().x, pose.getOrientation().y, pose.getOrientation().z, pose.getOrientation().w,
               true);
     } catch (TRADEException e) {

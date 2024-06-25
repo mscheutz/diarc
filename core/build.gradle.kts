@@ -216,6 +216,8 @@ dependencies {
 
   implementation("javax.servlet:servlet-api:2.5")
   implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
+  implementation("org.springdoc:springdoc-openapi-starter-common:2.5.0")
+  implementation("org.json:json:20240303")
 
   //DesktopFirebaseConnectionComponent
   implementation("com.google.firebase:firebase-admin:7.1.0")
@@ -251,6 +253,10 @@ dependencies {
   api("io.github.pinorobotics:jros2actionlib:2.0");
   api("io.github.pinorobotics:jros2tf2:1.0")
 
+  //gui
+  implementation("org.reflections:reflections:0.10.2")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.4")
+  implementation("org.apache.commons:commons-imaging:1.0-alpha3")
 }
 
 //TODO:brad: this is potentially no longer needed for mtracs, tbd if it is necessary for the Temi. Those were the two main use cases,

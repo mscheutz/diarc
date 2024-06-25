@@ -1,0 +1,42 @@
+#!/bin/bash
+# depreciated
+# Check if 'xdotool' command is available
+if ! command -v xdotool &> /dev/null; then
+    echo "Error: 'xdotool' command not found. Make sure it is installed."
+    exit 1
+fi
+
+compile_backend() {
+    xdotool keydown ctrl
+    xdotool keydown shift
+    xdotool key grave
+    xdotool keyup shift
+    xdotool keyup ctrl
+    sleep 1
+    xdotool type "cd ade"
+    xdotool key Return
+    xdotool type "ant"
+    xdotool key Return
+    xdotool type "ant gui"
+    xdotool key Return
+    xdotool type "launch"
+    xdotool key Return
+}
+
+start_frontend() {
+    xdotool keydown ctrl
+    xdotool keydown shift
+    xdotool key grave
+    xdotool keyup shift
+    xdotool keyup ctrl
+    sleep 1
+    xdotool type "cd ade/src/main/resources/hrilab-frontend"
+    xdotool key Return
+    xdotool type "npm start"
+    xdotool key Return
+}
+
+# Execute the shortcut
+compile_backend  # Example: Opens a terminal (change this to your desired shortcut)
+start_frontend 
+echo "Processes have finished running -> please check that nothing broke"

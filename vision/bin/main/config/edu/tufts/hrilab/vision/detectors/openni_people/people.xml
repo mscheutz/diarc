@@ -1,0 +1,174 @@
+<!--
+Set runtime configuration for a VisionProcessor.
+
+Required fields:
+
+  predicate   : prolog predicate representation of VisionProcessor
+                (e.g., color(X,red)).
+
+  functorname : leading atom's name (e.g., color) and
+  
+  arity       : number of arguments (including
+                  variables, descriptors, etc.)
+
+  descriptor  : name of a particular predicate instance
+                (e.g., red) with the appropriate data
+                contained in the tags.
+
+NOTE: All left and right joints are switched because OpenNI
+assumes captured frames are mirrored. When the system is not
+mirrored (how vision system runs) things need to be switched.
+
+-->
+
+<processor>
+  <openni config="openniConfig.xml"/>
+  <predicate functorname="type" arity="2">
+    <descriptor name="head">
+      <enum>1</enum>
+    </descriptor>
+    <descriptor name="neck">
+      <enum>2</enum>
+    </descriptor>
+    <descriptor name="torso">
+      <enum>3</enum>
+    </descriptor>
+    <descriptor name="waist">
+      <enum>4</enum>
+    </descriptor>
+    <descriptor name="left shoulder">
+      <enum>12</enum>
+    </descriptor>
+    <descriptor name="left elbow">
+      <enum>13</enum>
+    </descriptor>
+    <descriptor name="left wrist">
+      <enum>14</enum>
+    </descriptor>
+    <descriptor name="left hand">
+      <enum>15</enum>
+    </descriptor>
+    <descriptor name="left fingertip">
+      <enum>16</enum>
+    </descriptor>
+    <descriptor name="right shoulder">
+      <enum>6</enum>
+    </descriptor>
+    <descriptor name="right elbow">
+      <enum>7</enum>
+    </descriptor>
+    <descriptor name="right wrist">
+      <enum>8</enum>
+    </descriptor>
+    <descriptor name="right hand">
+      <enum>9</enum>
+    </descriptor>
+    <descriptor name="right fingertip">
+      <enum>10</enum>
+    </descriptor>
+    <descriptor name="left hip">
+      <enum>21</enum>
+    </descriptor>
+    <descriptor name="left knee">
+      <enum>22</enum>
+    </descriptor>
+    <descriptor name="left foot">
+      <enum>24</enum>
+    </descriptor>
+    <descriptor name="right hip">
+      <enum>17</enum>
+    </descriptor>
+    <descriptor name="right knee">
+      <enum>18</enum>
+    </descriptor>
+    <descriptor name="right foot">
+      <enum>20</enum>
+    </descriptor>
+
+    <descriptor name="shoulder">
+      <enum>6</enum>
+      <enum>12</enum>
+    </descriptor>
+    <descriptor name="elbow">
+      <enum>7</enum>
+      <enum>13</enum>
+    </descriptor>
+    <descriptor name="wrist">
+      <enum>8</enum>
+      <enum>14</enum>
+    </descriptor>
+    <descriptor name="hand">
+      <enum>9</enum>
+      <enum>15</enum>
+    </descriptor>
+    <descriptor name="fingertip">
+      <enum>10</enum>
+      <enum>16</enum>
+    </descriptor>
+    <descriptor name="hip">
+      <enum>17</enum>
+      <enum>21</enum>
+    </descriptor>
+    <descriptor name="knee">
+      <enum>18</enum>
+      <enum>22</enum>
+    </descriptor>
+    <descriptor name="foot">
+      <enum>20</enum>
+      <enum>24</enum>
+    </descriptor>
+    <descriptor name="person">
+      <enum>1</enum>
+      <enum>2</enum>
+      <enum>3</enum>
+      <enum>4</enum>
+      <enum>6</enum>
+      <enum>7</enum>
+      <enum>8</enum>
+      <enum>9</enum>
+      <enum>10</enum>
+      <enum>12</enum>
+      <enum>13</enum>
+      <enum>14</enum>
+      <enum>15</enum>
+      <enum>16</enum>
+      <enum>17</enum>
+      <enum>18</enum>
+      <enum>20</enum>
+      <enum>21</enum>
+      <enum>22</enum>
+      <enum>24</enum>
+    </descriptor>
+  </predicate>
+</processor>
+
+<!--	
+	XN_SKEL_HEAD			= 1,
+	XN_SKEL_NECK			= 2,
+	XN_SKEL_TORSO			= 3,
+	XN_SKEL_WAIST			= 4,
+
+	XN_SKEL_LEFT_COLLAR		= 5,
+	XN_SKEL_LEFT_SHOULDER	= 6,
+	XN_SKEL_LEFT_ELBOW		= 7,
+	XN_SKEL_LEFT_WRIST		= 8,
+	XN_SKEL_LEFT_HAND		= 9,
+	XN_SKEL_LEFT_FINGERTIP	=10,
+
+	XN_SKEL_RIGHT_COLLAR	=11,
+	XN_SKEL_RIGHT_SHOULDER	=12,
+	XN_SKEL_RIGHT_ELBOW		=13,
+	XN_SKEL_RIGHT_WRIST		=14,
+	XN_SKEL_RIGHT_HAND		=15,
+	XN_SKEL_RIGHT_FINGERTIP	=16,
+
+	XN_SKEL_LEFT_HIP		=17,
+	XN_SKEL_LEFT_KNEE		=18,
+	XN_SKEL_LEFT_ANKLE		=19,
+	XN_SKEL_LEFT_FOOT		=20,
+
+        XN_SKEL_RIGHT_HIP		=21,
+        XN_SKEL_RIGHT_KNEE		=22,
+        XN_SKEL_RIGHT_ANKLE		=23,
+        XN_SKEL_RIGHT_FOOT		=24	
+-->

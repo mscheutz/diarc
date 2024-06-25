@@ -42,6 +42,7 @@ import org.apache.commons.cli.Option;
 import ai.thinkingrobots.trade.*;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.stereotype.Component;
 
 /**
  * The Goal Manager (also called the Action Manager or simply “Action”)
@@ -51,6 +52,7 @@ import org.apache.commons.lang3.tuple.Pair;
  * conditions for their execution are met. When interfaced with a Planner
  * the Goal Manager can plan as well as avoid and resolve conflicting actions.
  */
+@Component
 public class GoalManagerImpl extends DiarcComponent {
   /**
    * ExecutionManager instance.
@@ -388,6 +390,28 @@ public class GoalManagerImpl extends DiarcComponent {
       }
     }
     return pg;
+  }
+
+  /**
+   * Get a copied list of the previously executed goals
+   *
+   * @return list of Goals
+   */
+  @TRADEService
+  @Action
+  public List<Goal> getPastGoals() {
+    return em.getPastGoals();
+  }
+
+  /**
+   * Get a copied list of the goals currently undergoing execution.
+   *
+   * @return list of Goals
+   */
+  @TRADEService
+  @Action
+  public List<Goal> getActiveGoals() {
+    return em.getActiveGoals();
   }
 
   /**
@@ -879,6 +903,10 @@ public class GoalManagerImpl extends DiarcComponent {
     }
     em.shutdown();
     Database.destroyInstance();
+  }
+
+  public ExecutionManager getExecutionManager() {
+    return this.em;
   }
 
 }

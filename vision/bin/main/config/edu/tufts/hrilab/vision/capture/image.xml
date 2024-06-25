@@ -1,0 +1,24 @@
+<!--
+Set the runtime camera capture configuration for the vision system.
+
+Required:
+	camMode: camera mode - see options in capture/util/CaptureUtilities.cpp's stringToCAM_MODE method
+	imageWidth: image width in pixels
+	imageHeight: image height in pixels
+	hasStereo: is capture mode stereo
+	hasDepth: does capture mode produce depth info
+	publishCloudToRos: should captured point cloud be published to ROS (only possible if
+						VisionComponent is compiled with ROS support and hasDepth is true)
+
+    imgFilename: relative path (from <Vision-Home>/native/data) or full path to image
+
+-->
+<capture>
+	<camMode>MONO_FILE</camMode>
+	<imgFilename>../test/food-1.jpg</imgFilename>
+	<imageWidth>320</imageWidth>
+	<imageHeight>240</imageHeight>
+	<hasStereo>false</hasStereo>
+	<hasDepth>false</hasDepth>
+	<publishCloudToRos>false</publishCloudToRos>
+</capture>
