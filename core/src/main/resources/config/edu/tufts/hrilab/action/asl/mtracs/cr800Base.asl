@@ -4,7 +4,7 @@
 
 //====================== Robot arm movement action scripts ============
 () = goToPose["goes to pose without adjustment"](edu.tufts.hrilab.fol.Symbol ?pose) {
-    ai.thinkingrobots.mtracs.util.MPose !goalPose;
+    edu.tufts.hrilab.mtracs.util.MPose !goalPose;
 
     op:log(debug, "[goToPose] pose only");
     (!goalPose) = tsc:getPoseFromSymbol(?pose);
@@ -12,7 +12,7 @@
 }
 
 () = goToPoseLong["goes to pose without adjustment the long way around"](edu.tufts.hrilab.fol.Symbol ?pose) {
-    ai.thinkingrobots.mtracs.util.MPose !goalPose;
+    edu.tufts.hrilab.mtracs.util.MPose !goalPose;
     java.lang.Boolean !success;
 
     (!goalPose) = tsc:getPoseFromSymbol(?pose);
@@ -20,14 +20,14 @@
 }
 
 () = goToPose["goes to pose with adjustment to the given cameraHeight"](edu.tufts.hrilab.fol.Symbol ?pose, edu.tufts.hrilab.fol.Symbol ?cameraHeight) {
-    ai.thinkingrobots.mtracs.util.MPose !goal;
+    edu.tufts.hrilab.mtracs.util.MPose !goal;
     (!goal) = tsc:getPoseFromSymbol(?pose);
     (!goal) = tsc:adjustPoseToCameraHeight(!goal, ?cameraHeight);
     tsc:goToPose(!goal);
 }
 
 () = goToPoseLong["goes to pose with adjustment to the given cameraHeight the long way around"](edu.tufts.hrilab.fol.Symbol ?pose, edu.tufts.hrilab.fol.Symbol ?cameraHeight) {
-    ai.thinkingrobots.mtracs.util.MPose !goal;
+    edu.tufts.hrilab.mtracs.util.MPose !goal;
     (!goal) = tsc:getPoseFromSymbol(?pose);
     (!goal) = tsc:adjustPoseToCameraHeight(!goal, ?cameraHeight);
     tsc:goToPoseLong(!goal);
@@ -61,8 +61,8 @@
 
 //====================== Gripper Switching =====================
 () = rotateToEE["changes TCP of robot to refer to a new EE attached to the cuff at a different offset"](edu.tufts.hrilab.fol.Symbol ?gripperType) {
-    ai.thinkingrobots.mtracs.util.MPose !currentPose;
-    ai.thinkingrobots.mtracs.util.MPose !newTCP;
+    edu.tufts.hrilab.mtracs.util.MPose !currentPose;
+    edu.tufts.hrilab.mtracs.util.MPose !newTCP;
     (!currentPose) = tsc:getCurrentPose();
      op:log(debug, "getting tcp for ?gripperType in rotate");
     (!newTCP) = tsc:getTCPForEE(?gripperType);
@@ -72,8 +72,8 @@
 
 () = putAwayGripper(edu.tufts.hrilab.fol.Symbol ?gripperType) {
     java.lang.Double !asc = 0.10;
-    ai.thinkingrobots.mtracs.util.MPose !pose;
-    ai.thinkingrobots.mtracs.util.MPose !approachPose;
+    edu.tufts.hrilab.mtracs.util.MPose !pose;
+    edu.tufts.hrilab.mtracs.util.MPose !approachPose;
     (!pose) = tsc:getGripDropoff(?gripperType);
     (!approachPose) = op:invokeMethod(!pose, "getHorizontalApproachPose");
     tsc:goToPose(!approachPose);
@@ -88,8 +88,8 @@
 () = getGripper(edu.tufts.hrilab.fol.Symbol ?gripperType) {
     java.lang.Double !proj = 0.10;
     java.lang.Double !dly = 0.5;
-    ai.thinkingrobots.mtracs.util.MPose !pose;
-    ai.thinkingrobots.mtracs.util.MPose !approachPose;
+    edu.tufts.hrilab.mtracs.util.MPose !pose;
+    edu.tufts.hrilab.mtracs.util.MPose !approachPose;
     (!pose) = tsc:getGripDropoff(?gripperType);
     (!approachPose) = op:invokeMethod(!pose, "getVerticalApproachPose");
     tsc:goToPose(!approachPose);

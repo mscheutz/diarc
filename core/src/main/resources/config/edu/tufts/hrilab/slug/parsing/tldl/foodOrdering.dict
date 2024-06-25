@@ -580,11 +580,3 @@ add new admin; (S/LIT*)\AGENT; #a#s.admin_of(#a,#s)
 
 it is safe to proceed; VAL; safeToProceed(true)
 it is not safe to proceed; VAL; safeToProceed(false)
-
-
-%%%% todo: remove. these should be handled by the consultant
-chicken; RN; chicken; VAR
-chicken; DESC; chicken
-
-corn; RN; corn; VAR
-corn; DESC; corn

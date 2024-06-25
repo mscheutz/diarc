@@ -31,7 +31,10 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
   static public SimSpeechRecognitionComponent untrustedSimSpeechRec;
   public MockYumiComponent leftArm;
   public MockYumiComponent rightArm;
-
+  private CognexConsultant cognexConsultant;
+  private ItemConsultant itemConsultant;
+  private ABBAreaConsultant areaConsultant;
+  private ABBLocationConsultant locationConsultant;
   private boolean firebase;
   private boolean test;
 
@@ -46,7 +49,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
     leftArm = createInstance(MockYumiComponent.class, "-groups agent:leftArm:yumi");
     rightArm = createInstance(MockYumiComponent.class, "-groups agent:rightArm:yumi");
 
-    CognexConsultant cognexConsultant = new CognexConsultant();
+    cognexConsultant = new CognexConsultant();
     try {
       TRADE.registerAllServices(cognexConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "agent:human:mobileManipulator", "physobj")));
     } catch (TRADEException e) {
@@ -57,21 +60,21 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
 
     createInstance(RequestFromHumanComponent.class, "-groups agent:human:mobileManipulator");
 
-    ItemConsultant itemConsultant = new ItemConsultant();
+    itemConsultant = new ItemConsultant();
     try {
       TRADE.registerAllServices(itemConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "item")));
     } catch (TRADEException e) {
       log.error("error registering item consultant in DIARC config", e);
     }
 
-    ABBAreaConsultant areaConsultant = new ABBAreaConsultant();
+    areaConsultant = new ABBAreaConsultant();
     try {
       TRADE.registerAllServices(areaConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "area")));
     } catch (TRADEException e) {
       log.error("error registering area consultant in DIARC config", e);
     }
 
-    ABBLocationConsultant locationConsultant = new ABBLocationConsultant();
+    locationConsultant = new ABBLocationConsultant();
     try {
       TRADE.registerAllServices(locationConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "agent:human:mobileManipulator", "location")));
     } catch (TRADEException e) {
@@ -123,6 +126,19 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
     }
 
 
+  }
+
+  @Override
+  public void shutdownConfiguration() {
+    super.shutdownConfiguration();
+    try {
+      TRADE.deregister(areaConsultant);
+      TRADE.deregister(itemConsultant);
+      TRADE.deregister(cognexConsultant);
+      TRADE.deregister(locationConsultant);
+    } catch (TRADEException e) {
+      log.error("[shutdownConfiguration] Error deregistering consultants", e);
+    }
   }
 
   public static void main(String[] args) {

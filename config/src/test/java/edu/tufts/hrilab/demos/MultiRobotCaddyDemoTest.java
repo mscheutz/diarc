@@ -82,17 +82,15 @@ public class MultiRobotCaddyDemoTest extends GenerativeDiarcIntegrationTest {
 
     @After
     public void shutdownDiarc() {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException ignored) {
+        }
+
         log.debug("[cleanup] started");
         log.debug("[shutdownConfig] tester shutdown");
         diarcConfig.shutdownConfiguration();
         log.debug("[shutdownConfig] completed");
-
-        try {
-            // TODO: EAK: what does this do?
-            TRADE.reset("");
-        } catch (TRADEException e) {
-            log.error("[shutdownConfig]", e);
-        }
         log.info("[cleanup] ended");
     }
 

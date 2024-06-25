@@ -54,16 +54,15 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
 
   @After
   public void shutdownDiarc() {
+    try {
+      Thread.sleep(2000);
+    } catch (InterruptedException ignored) {
+    }
+
     log.debug("[cleanup] started");
     log.debug("[shutdownConfig] tester shutdown");
     diarcConfig.shutdownConfiguration();
     log.debug("[shutdownConfig] completed");
-
-    try {
-      TRADE.reset("");
-    } catch (TRADEException e) {
-      log.error("[shutdownConfig]", e);
-    }
     log.info("[cleanup] ended");
   }
 
@@ -242,6 +241,9 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     evaluateResults();
 
     sendUntrustedUserInput("define new item puerto rican bowl");
+    evaluateResults();
+
+    sendUntrustedUserInput("cancel current task");
     evaluateResults();
   }
 

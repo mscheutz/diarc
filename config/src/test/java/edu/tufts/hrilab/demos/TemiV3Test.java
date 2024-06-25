@@ -111,18 +111,18 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
   @Override
   public void shutdownDiarc() {
+    //Give last step a chance to properly complete
+    try {
+      Thread.sleep(2000);
+    } catch (InterruptedException ignored) {
+    }
+
     log.debug("[cleanup] started");
     tester.shutdown();
     tester = null;
     log.debug("[shutdownConfig] tester shutdown");
     config.shutdownConfiguration();
     log.debug("[shutdownConfig] completed");
-
-    try {
-      TRADE.reset("");
-    } catch (TRADEException e) {
-      log.error("[shutdownConfig]", e);
-    }
     log.info("[cleanup] ended");
   }
 

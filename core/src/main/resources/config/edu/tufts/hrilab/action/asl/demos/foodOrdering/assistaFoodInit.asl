@@ -23,7 +23,7 @@ import edu.tufts.hrilab.fol.Term;
     Symbol !hotPlatePose;
     Symbol !cookTopPose;
     Symbol !pantryPose;
-    ai.thinkingrobots.mtracs.util.MPose !pose;
+    edu.tufts.hrilab.mtracs.util.MPose !pose;
 
     edu.tufts.hrilab.fol.Term !toAssert;
     edu.tufts.hrilab.fol.Symbol !assista="assista:agent";
@@ -43,7 +43,7 @@ import edu.tufts.hrilab.fol.Term;
     act:assertBelief(!cameraHeight);
 
 
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 510.00f, -100.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", 510.00f, -100.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
     !prepAreaPose = !assista.tsc:recordPose(!prepArea, !pose, !conveyorHeight);
     !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reachable(!assista, !prepAreaPose)");
     act:assertBelief(!tmp);
@@ -51,19 +51,19 @@ import edu.tufts.hrilab.fol.Term;
     act:assertBelief(!tmp);
     op:log(info, "Setup !prepArea for ?actor");
 
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 510.00f, 100.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", 510.00f, 100.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
     !servingAreaPose = !assista.tsc:recordPose(!servingArea, !pose, !conveyorHeight);
     !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reachable(!assista, !servingAreaPose)");
     act:assertBelief(!tmp);
     op:log(info, "Setup !servingArea for ?actor");
 
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 138.6f, -460.00f, 200.00f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", 138.6f, -460.00f, 200.00f, 3.14159f, 0.0f, 3.14159f);
     !hotPlatePose = !assista.tsc:recordPose(!hotPlate, !pose, !hotPlateHeight);
     !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reachable(!assista, !hotPlatePose)");
     act:assertBelief(!tmp);
     op:log(info, "Setup !hotPlate for ?actor");
 
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", -217.00f, -460.00f, 200.0f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", -217.00f, -460.00f, 200.0f, 3.14159f, 0.0f, 3.14159f);
     !cookTopPose = !assista.tsc:recordPose(!cookTop, !pose, !cookTopHeight);
     !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reachable(!assista, !cookTopPose)");
     act:assertBelief(!tmp);

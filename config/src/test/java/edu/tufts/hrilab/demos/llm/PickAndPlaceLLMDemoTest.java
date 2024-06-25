@@ -57,7 +57,6 @@ public class PickAndPlaceLLMDemoTest extends GenerativeDiarcIntegrationTest {
         log.debug("[shutdownConfig] tester shutdown");
         diarcConfig.shutdownConfiguration();
         log.debug("[shutdownConfig] completed");
-
         log.info("[cleanup] ended");
     }
 

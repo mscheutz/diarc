@@ -35,31 +35,31 @@
     !cameraHeight = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cameraHeight(?actor,338)");
     act:assertBelief(!cameraHeight);
 
-    ai.thinkingrobots.mtracs.util.MPose !pose;
+    edu.tufts.hrilab.mtracs.util.MPose !pose;
 
     act:initPose();
     tsc:openGripper();
 
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 650.00f, 0.0f, 300.00f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", 650.00f, 0.0f, 300.00f, 3.14159f, 0.0f, 3.14159f);
     tsc:goToPose(!pose);
     tsc:recordPose(!conveyor, !conveyorHeight);
     //tsc:bindToSurface(!pose, !conveyorHeight);
 
     op:log(info, "Setup conveyor");
 
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 150.87f, -494.98f, 186.97f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", 150.87f, -494.98f, 186.97f, 3.14159f, 0.0f, 3.14159f);
     tsc:goToPose(!pose);
     tsc:recordPose(!workArea, !workHeight);
 
     op:log(info, "Setup scale");
 
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", -188.55f, -359.07f, 184.76f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", -188.55f, -359.07f, 184.76f, 3.14159f, 0.0f, 3.14159f);
     tsc:goToPose(!pose);
     tsc:recordPose(!binOne, !binOneHeight);
 
     op:log(info, "Setup bin one area");
 
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", -188.55f, -542.07f, 184.76f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", -188.55f, -542.07f, 184.76f, 3.14159f, 0.0f, 3.14159f);
     tsc:goToPose(!pose);
     tsc:recordPose(!binTwo, !binTwoHeight);
 
