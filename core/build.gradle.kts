@@ -325,11 +325,11 @@ publishing {
       pom {
         name = "diarc core"
         description = "core diarc functionality"
-        url = "https://hrilab.tufts.edu:22280/ade/ade"
+        url = "https://hrilab.tufts.edu:22280/diarc/diarc"
 //                licenses {
 //                    license {
 //                        name = "DIARC License"
-//                        url = "https://hrilab.tufts.edu:22280/ade/ade"
+//                        url = "https://hrilab.tufts.edu:22280/diarc/diarc"
 //                    }
 //                }
       }
@@ -346,7 +346,7 @@ publishing {
       pom {
         name = "diarc control app"
         description = "diarc libs used in control app"
-        url = "https://hrilab.tufts.edu:22280/ade/ade"
+        url = "https://hrilab.tufts.edu:22280/diarc/diarc"
 //                licenses {
 //                    license {
 //                        name = "DIARC License"
