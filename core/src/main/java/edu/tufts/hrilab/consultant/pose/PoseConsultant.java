@@ -4,7 +4,6 @@
 
 package edu.tufts.hrilab.consultant.pose;
 
-import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.consultant.Consultant;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;

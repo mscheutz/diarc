@@ -14,7 +14,7 @@ import edu.tufts.hrilab.fol.Symbol;
         success : holding(?actor, ?obj);
     }
 
-    op: log ("info",">> pickup ?obj");
+    op:log("info",">> pickup ?obj");
 
     act:pickUp(?obj);
 }
@@ -31,7 +31,16 @@ import edu.tufts.hrilab.fol.Symbol;
         success : ontable(?obj);
     }
 
-    op: log ("info",">> putdown ?obj");
+    op:log("info",">> putdown ?obj");
+
+    // get location on table to set down ?obj
+    Symbol !tableRef; // TODO: how to get this? maybe query belief for onTableLocation(?obj, !tableRef)
+
+    // move ?obj2 above !tableRef
+    act:moveObjectRelativeTo(?obj1, above, !tableRef, 0.3);
+
+    // release ?obj
+    act:releaseObject(?obj);
 }
 
 () = stack(Symbol ?obj1:physobj, Symbol ?obj2:physobj) {
@@ -48,9 +57,10 @@ import edu.tufts.hrilab.fol.Symbol;
         success : on(?obj1, ?obj2);
     }
 
-    op: log ("info",">> stack ?obj1 on ?obj2");
+    op:log("info",">> stack ?obj1 on ?obj2");
 
-    act:moveObjectRelativeTo(?obj1, above, ?obj2);
+    act:findObject(?obj2);
+    act:moveObjectRelativeTo(?obj1, above, ?obj2, 0.3);
     // TODO: move object down
     // act:moveObjectInDirection(?obj1, down, arm, 0.05);
     act:releaseObject(?obj1);
@@ -71,7 +81,7 @@ import edu.tufts.hrilab.fol.Symbol;
         success : not(on(?obj1, ?obj2));
     }
 
-    op: log ("info",">> unstack ?obj1 from ?obj2");
+    op:log("info",">> unstack ?obj1 from ?obj2");
 
     act:pickUp(?obj1);
 }

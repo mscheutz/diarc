@@ -586,7 +586,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Start over",
-                "INSTRUCT(commX,self,goToStartPose(false),{},{})",
+                "INSTRUCT(commX,self,goToPose(start),{},{})",
                 "commX",
                 "self"
         ));

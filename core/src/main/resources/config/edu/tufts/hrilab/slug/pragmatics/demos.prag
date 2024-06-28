@@ -32,7 +32,7 @@ QUESTION(A,B,whatAre(C,goals),Z) := itk(A,currently(is(C,WHAT)))
 QUESTION(A,B,whatAre(C,doing),Z) := itk(A,currently(is(C,WHAT)))
 
 #TODO: remove this in favor of more direct "go to start pose" instruction
-INSTRUCT(A,B,startOver(),Z) := want(A, goToStartPose())
+INSTRUCT(A,B,startOver(),Z) := want(A, goToPose(start))
 END-SET
 
 NEW-SET

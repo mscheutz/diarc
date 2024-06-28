@@ -95,8 +95,7 @@ public class FetchItComponent extends FetchComponent implements FetchItInterface
     }
     Quat4d orientation = new Quat4d(0.7, 0.03, -0.7, 0.03);
     lookAround();
-    boolean moved = moveTo(groupName, point, orientation);
-    return new ConditionJustification(moved);
+    return moveTo(groupName, point, orientation);
   }
 
   /**

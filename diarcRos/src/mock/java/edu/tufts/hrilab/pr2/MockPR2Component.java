@@ -25,15 +25,15 @@ public class MockPR2Component extends DiarcComponent implements PR2Interface {
   }
 
   @Override
-  public boolean moveTo(String group_name, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r)  {
+  public Justification moveTo(String group_name, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r)  {
     log.info("[moveTo] method entered.");
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean moveTo(String group_name, Point3d point, Quat4d orientation)  {
+  public Justification moveTo(String group_name, Point3d point, Quat4d orientation)  {
     log.info("[moveTo] method entered.");
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -85,8 +85,8 @@ public class MockPR2Component extends DiarcComponent implements PR2Interface {
   }
 
   @Override
-  public boolean moveToCartesian(String group_name, Point3d point, Quat4d orientation) {
-    return true;
+  public Justification moveToCartesian(String group_name, Point3d point, Quat4d orientation) {
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -102,15 +102,15 @@ public class MockPR2Component extends DiarcComponent implements PR2Interface {
   }
 
   @Override
-  public boolean pointTo(String group_name, Symbol objectRef)  {
+  public Justification pointTo(String group_name, Symbol objectRef)  {
     log.info("[pointTo] object method entered.");
-    return true;
+    return new ConditionJustification(true);
   }
   
   @Override
-  public boolean pointTo(String group_name, Point3d targetLocation)  {
+  public Justification pointTo(String group_name, Point3d targetLocation)  {
     log.info("[pointTo] location method entered.");
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -120,20 +120,14 @@ public class MockPR2Component extends DiarcComponent implements PR2Interface {
   }
 
   @Override
-  public boolean goToStartPose(boolean safe)  {
-    log.info("[goToStartPose] method entered.");
-    return true;
-  }
-
-  @Override
-  public boolean recordPose(Symbol pose_name)  {
+  public Justification recordPose(Symbol pose_name)  {
     log.info("[recordPose]");
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean saveEEPosesToFile(String filename) {
-    return false;
+  public Justification saveEEPosesToFile(String filename) {
+    return new ConditionJustification(false);
   }
 
   @Override
@@ -142,20 +136,15 @@ public class MockPR2Component extends DiarcComponent implements PR2Interface {
   }
 
   @Override
-  public boolean goToPose(Symbol pose_name)  {
+  public Justification goToPose(Symbol pose_name)  {
     log.info("[goToPose]");
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean goToStartPose() {
-    return true;
-  }
-
-  @Override
-    public boolean goToPose(String pose_name, Symbol group_name)  {
+    public Justification goToPose(String pose_name, Symbol group_name)  {
     log.info("[goToPose] group_name: " + group_name);
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -174,23 +163,23 @@ public class MockPR2Component extends DiarcComponent implements PR2Interface {
     log.info("[stopRecordingTrajectory]");
   }
 
-  public boolean executeTrajectory(String trajectory_name)  {
+  public Justification executeTrajectory(String trajectory_name)  {
     log.info("[executeTrajectory]");
-    return true;
+    return new ConditionJustification(true);
   }
 
-  public boolean savePosesToFile(String filename)  {
+  public Justification savePosesToFile(String filename)  {
     log.info("[savePosesToFile]");
-    return true;
+    return new ConditionJustification(true);
   }
 
   public void loadPosesFromFile(String filename)  {
     log.info("[loadPosesFromFile]");
   }
 
-  public boolean saveTrajectoriesToFile(String filename)  {
+  public Justification saveTrajectoriesToFile(String filename)  {
     log.info("[saveTrajectoriesToFile]");
-    return true;
+    return new ConditionJustification(true);
   }
 
   public void loadTrajectoriesFromFile(String filename)  {
@@ -208,8 +197,8 @@ public class MockPR2Component extends DiarcComponent implements PR2Interface {
   }
 
   @Override
-  public boolean moveGripper(String groupName, float position) {
-    return true;
+  public Justification moveGripper(String groupName, float position) {
+    return new ConditionJustification(true);
   }
 
   @Override

@@ -508,7 +508,7 @@
       "serviceArgs" : [ "sauteing", "true" ]
     }, {
       "serviceName" : "sauteItem",
-      "serviceArgs" : [ "physobj_8:physobj", "val(2,seconds)", "justifications()" ]
+      "serviceArgs" : [ "physobj_8:physobj", "val(2,seconds)", "justification(true)" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_2:rightArmpose", "null" ]
@@ -603,7 +603,7 @@
       "serviceArgs" : [ "cooking", "true" ]
     }, {
       "serviceName" : "cookItem",
-      "serviceArgs" : [ "physobj_9:physobj", "val(5,seconds)", "justifications()" ]
+      "serviceArgs" : [ "physobj_9:physobj", "val(5,seconds)", "justification(true)" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_1:rightArmpose", "null" ]
@@ -698,7 +698,7 @@
       "serviceArgs" : [ "sauteing", "true" ]
     }, {
       "serviceName" : "sauteItem",
-      "serviceArgs" : [ "physobj_10:physobj", "val(3,seconds)", "justifications()" ]
+      "serviceArgs" : [ "physobj_10:physobj", "val(3,seconds)", "justification(true)" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_2:rightArmpose", "null" ]
@@ -1068,7 +1068,7 @@
       "serviceArgs" : [ "cooking", "true" ]
     }, {
       "serviceName" : "cookItem",
-      "serviceArgs" : [ "physobj_16:physobj", "val(5,seconds)", "justifications()" ]
+      "serviceArgs" : [ "physobj_16:physobj", "val(5,seconds)", "justification(true)" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_1:rightArmpose", "null" ]
@@ -1163,7 +1163,7 @@
       "serviceArgs" : [ "sauteing", "true" ]
     }, {
       "serviceName" : "sauteItem",
-      "serviceArgs" : [ "physobj_18:physobj", "val(4,seconds)", "justifications()" ]
+      "serviceArgs" : [ "physobj_18:physobj", "val(4,seconds)", "justification(true)" ]
     }, {
       "serviceName" : "goToCameraPose",
       "serviceArgs" : [ "rightArmpose_2:rightArmpose", "null" ]

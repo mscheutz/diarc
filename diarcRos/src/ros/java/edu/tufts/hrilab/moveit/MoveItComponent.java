@@ -685,7 +685,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   }
 
   @Override
-  public boolean pointTo(String groupName, Point3d location) {
+  public Justification pointTo(String groupName, Point3d location) {
     log.debug("[pointTo] target location: " + location);
 
     // get pointingFrame (or optical frame if not defined) relative to base link coord. frame
@@ -706,7 +706,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
       } catch (TRADEException e) {
         log.error("Error calling getTransform.", e);
-        return false;
+        return new ConditionJustification(false, Factory.createPredicate("received(transform)"));
       }
       linkLocation = new Point3d(linkTransform.m03, linkTransform.m13, linkTransform.m23);
     }
@@ -740,7 +740,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   }
 
   @Override
-  public boolean pointTo(String groupName, Symbol refId) {
+  public Justification pointTo(String groupName, Symbol refId) {
     //TODO:brad: this was previously calling the local convertToType method, which is part of the pose consultant, not the vision consultant. replacing with call to rr
 //    Point3d location = convertToType(refId,Point3d.class);
 
@@ -767,7 +767,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     log.debug("[moveToGrasp] point: " + point + " orient: " + orient + " offset: " + grasp_offset);
     // TODO: is using (-1,0,0) general or does the eeTransform need to be used here?
     point = MoveItHelper.calcTargetOffset(point, orient, new Vector3d(-1.0, 0.0, 0.0), grasp_offset);
-    return moveTo(groupName, point, orient);
+    return moveTo(groupName, point, orient).getValue();
   }
 
   private boolean moveToPinchTogetherGrasp(String groupName, Grasp grasp, float grasp_offset) {
@@ -792,7 +792,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   }
 
   @Override
-  public boolean moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
+  public Justification moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
     log.debug("[moveTo(String, Point3d, Quat4d, Point3d, Quat4d)] method entered.");
     log.debug(String.format("[moveTo] \n\t\t point_l: %s \n\t\t orient_l: %s \n\t\t point_r: %s \n\t\t orient_r: %s \n\t\t",
             point_l, orientation_l, point_r, orientation_r));
@@ -804,8 +804,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     String effectorLink = endEffectorNames.get(groupName);
     if (effectorLink == null) {
       log.error("groupName does not appear to be valid (no associated end effector to plan for)");
-      return false;
-
+      return new ConditionJustification(false, Factory.createPredicate("valid(groupName)"));
     } else if (notOneArm(groupName)) {
       // This is a special case in which we need two independent arm movements.
       // TODO: there's no way to use ee_transform for more than one right at the moment
@@ -903,21 +902,21 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
           }
         } else {
           log.error("Took too long to halt after motion plan returned true, returning false.");
-          return false;
+          return new ConditionJustification(false);
         }
       }
     }
-    return motionPlanResult;
+    return new ConditionJustification(motionPlanResult);
   }
 
   @Override
-  public boolean moveTo(String groupName, Point3d point, Quat4d orientation) {
+  public Justification moveTo(String groupName, Point3d point, Quat4d orientation) {
     log.debug("Entered MoveItComponent moveTo(String, Point3d, Quat4d)");
     groupName = groupNameSafetyClean(groupName);
 
     if (!Arrays.asList(groupNames).contains(groupName)) {
-      log.error(String.format("[moveTo] %s is not a valid groupName.", groupName));
-      return false;
+      log.error("[moveTo] {} is not a valid groupName.", groupName);
+      return new ConditionJustification(false, Factory.createPredicate("valid(groupName)"));
     }
 
     if (groupName.equalsIgnoreCase("arms")) {
@@ -973,20 +972,16 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     //Todo: Will: Perhaps make this back up behavior configurable? It doesn't seem like we'd always want this to be a
     //back up plan
     // Go to the computed goal. Our general usage with moveToRelative is that we want a cartesian plan.
-    boolean result = moveToCartesian(groupName, Convert.convertToPoint3d(pose.getPosition()), Convert.convertToQuat4d(pose.getOrientation()));
-    if (!result) {
+    Justification result = moveToCartesian(groupName, Convert.convertToPoint3d(pose.getPosition()), Convert.convertToQuat4d(pose.getOrientation()));
+    if (!result.getValue()) {
       log.warn("[moveToRelative] moveToCartesian failed. Attempting non-cartesian moveTo.");
-    } else {
-      return new ConditionJustification(true);
-    }
-    result = moveTo(groupName, Convert.convertToPoint3d(pose.getPosition()), Convert.convertToQuat4d(pose.getOrientation()));
-    if (!result) {
-      log.warn("[moveToRelative] Non-cartesian moveTo failed.");
-    } else {
-      return new ConditionJustification(true);
+      result = moveTo(groupName, Convert.convertToPoint3d(pose.getPosition()), Convert.convertToQuat4d(pose.getOrientation()));
+      if (!result.getValue()) {
+        log.warn("[moveToRelative] non-cartesian moveTo also failed.");
+      }
     }
 
-    return new ConditionJustification(false);
+    return result;
   }
 
   @Override
@@ -1005,7 +1000,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   }
 
   @Override
-  public boolean moveToCartesian(String groupName, Point3d point, Quat4d orientation) {
+  public Justification moveToCartesian(String groupName, Point3d point, Quat4d orientation) {
     log.debug("Starting moveToCartesian");
     groupName = groupNameSafetyClean(groupName);
 
@@ -1027,18 +1022,22 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
             endEffectorNames.get(groupName),
             moveItConfig.baseLinkString,
             groupName);
-    if (!moveGroup.callComputeCartesianPath(request, response))
-      return false; // Computation failed, so return false before trying the rest here
+    if (!moveGroup.callComputeCartesianPath(request, response)) {
+      // Computation failed, so return false before trying the rest here
+      return new ConditionJustification(false, Factory.createPredicate("found(path)"));
+    }
 
     JointTrajectory plan = response.getSolution().getJointTrajectory();
     //MoveItHelper.smoothCartesianRotation(plan);
 
     try {
-      return moveGroup.executeKinematicPath(new RobotTrajectory(plan, new MultiDOFJointTrajectory()));
+      moveGroup.executeKinematicPath(new RobotTrajectory(plan, new MultiDOFJointTrajectory()));
     } catch (InterruptedException | RosException e) {
       log.error("Cartesian path execution failed: " + e);
-      return false;
+      return new ConditionJustification(false, Factory.createPredicate("execute(cartesianPath)"));
     }
+
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -1077,7 +1076,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
     if (!graspedObjects.containsKey(refId)) {
       log.error("[releaseObject] Trying to release object that hasn't been grasped. RefId: " + refId);
-      return new ConditionJustification(false);
+      return new ConditionJustification(false, Factory.createPredicate("grasping", refId));
     }
 
     if (position > moveItConfig.maxGripperPosition) {
@@ -1086,7 +1085,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     }
 
     // move gripper(s)
-    boolean result = moveGripper(groupName, position);
+    Justification result = moveGripper(groupName, position);
     log.debug(String.format("Finished releasing grippers by %f in releaseObject with result: %b", position, result));
 
     if (graspedObjects.get(refId)) {
@@ -1094,7 +1093,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
       log.debug("[releaseObject] Finished detaching collision object.");
     }
     graspedObjects.remove(refId);
-    return new ConditionJustification(result);
+    return result;
   }
 
   public boolean pushObject(String group_name, float position, MemoryObject object, Pose destination) {
@@ -1431,7 +1430,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
   //TODO: this needs to be connected to the learn method to update the component? or at least that logic needs to get transported here
   @Override
-  public boolean recordPose(Symbol poseName) {
+  public Justification recordPose(Symbol poseName) {
     GetPlanningSceneRequest gps_req = new GetPlanningSceneRequest();
     GetPlanningSceneResponse gps_res = new GetPlanningSceneResponse();
     gps_req.setComponents(new PlanningSceneComponents(PlanningSceneComponents.ROBOT_STATE));
@@ -1439,12 +1438,12 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     if (result) {
       poses.put(poseName.getName(), gps_res.getScene().getRobotState());
     }
-    return result;
+    return new ConditionJustification(result);
   }
 
   @TRADEService
   @Action
-  public boolean recordEEPose(Symbol poseName) {
+  public Justification recordEEPose(Symbol poseName) {
     Pair<Point3d, Quat4d> curPose = getEEPose("manipulator");
     eePoses.put(poseName.getName(), curPose);
 
@@ -1473,16 +1472,16 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     } catch (TRADEException e) {
       log.error("unable to add dictionary entry for " + poseName, e);
     }
-    return true;
+    return new ConditionJustification(true);
   }
 
   @TRADEService
   @Action
-  public boolean goToEEPose(Symbol poseName) {
+  public Justification goToEEPose(Symbol poseName) {
     Pair<Point3d, Quat4d> goalPose = eePoses.get(poseName.getName());
     if (goalPose == null) {
       log.error("[goToEEPose] Unable to go to ee pose that hasn't been saved yet, exiting.");
-      return false;
+      return new ConditionJustification(false, Factory.createPredicate("known(endEffectorPose)"));
     }
     return moveTo("manipulator", goalPose.getLeft(), goalPose.getRight(), null, null);
   }
@@ -1490,12 +1489,13 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
   @Override
   @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
-  public boolean goToPose(Symbol pose_name) {
+  public Justification goToPose(Symbol pose_name) {
     return goToPose(moveItConfig.defaultGroupName, pose_name);
   }
 
   @Override
-  public boolean goToPose(String groupName, Symbol poseName) {
+  @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
+  public Justification goToPose(String groupName, Symbol poseName) {
     boolean result = false;
     groupName = groupNameSafetyClean(groupName);
 
@@ -1506,7 +1506,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
       String jointName[] = jointNames.get(groupName);
       if (jointName == null || jointName.length == 0) {
         log.error("Joint Name list for group " + groupName + " was invalid (empty or null)");
-        return false;
+        return new ConditionJustification(false, Factory.createPredicate("known(jointNames)"));
       }
 
       joints_to_use = Arrays.asList(jointName);
@@ -1535,45 +1535,18 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     if (!result) {
       log.error("[goToPose] Unable to find and execute plan." + ((configName.equalsIgnoreCase("pr2")) ? " Have you modified your MoveIt! groups to include a whole_body_no_base group containing (arms,torso,head) sub-groups?" : ""));
     }
-    return result;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean goToStartPose() {
-    openGripper(moveItConfig.defaultGroupName);
-    return goToPose(Factory.createSymbol("start"));
-  }
-
-  @Override
-  @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
-  public boolean goToStartPose(boolean safe) {
-    if (!moveItConfig.allowDisableCollisionAvoidance && !safe) {
-      log.warn("[goToStartPose] has been called with safe mode disabled, but allowDisableCollisionAvoidance is set to false by your config. Ignoring the parameter 'safe' and sticking with not allowing collision disabling.");
-    }
-
-    if (moveItConfig.allowDisableCollisionAvoidance && !safe) {
-      disableCollisionAvoidance();
-    }
-
-    boolean result = goToStartPose();
-
-    // (re)enable collision avoidance
-    if (moveItConfig.allowDisableCollisionAvoidance && !safe) {
-      enableCollisionAvoidance();
-    }
-
-    return result;
-  }
-
-  @Override
-  final public boolean savePosesToFile(String filename) {
+  final public Justification savePosesToFile(String filename) {
     try {
       File file = new File(filename);
 
       // if file doesnt exists, then create it
       if (!file.exists()) {
         if (!file.createNewFile())
-          return false; // Something failed somehow, so stop trying
+          return new ConditionJustification(false); // Something failed somehow, so stop trying
       }
 
       FileOutputStream fout = new FileOutputStream(file);
@@ -1584,20 +1557,20 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
     } catch (IOException e) {
       log.error("Error writing poses to file.", e);
-      return false;
+      return new ConditionJustification(false);
     }
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  final public boolean saveEEPosesToFile(String filename) {
+  final public Justification saveEEPosesToFile(String filename) {
     try {
       File file = new File(filename);
 
       // if file doesnt exists, then create it
       if (!file.exists()) {
         if (!file.createNewFile())
-          return false; // Something failed somehow, so stop trying
+          return new ConditionJustification(false); // Something failed somehow, so stop trying
       }
 
       FileOutputStream fout = new FileOutputStream(file);
@@ -1608,9 +1581,9 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
     } catch (IOException e) {
       log.error("Error writing poses to file.", e);
-      return false;
+      return new ConditionJustification(false);
     }
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -1707,16 +1680,20 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   }
 
   @Override
-  public boolean moveGripper(String groupName, float position) {
+  public Justification moveGripper(String groupName, float position) {
     log.debug("[moveGripper] taking " + groupName + " to " + position + ".");
 
     groupName = groupNameSafetyClean(groupName);
     GenericManipulator gripper = getGripper(groupName);
     if (gripper != null) {
-      return gripper.moveGripper(position);
+      if (!gripper.moveGripper(position)) {
+        return new ConditionJustification(false, Factory.createPredicate("moved(gripper)"));
+      }
     } else {
-      return false;
+      return new ConditionJustification(false, Factory.createPredicate("known(gripper)"));
     }
+
+    return new ConditionJustification(true);
   }
 
   /**
@@ -1786,10 +1763,10 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   }
 
   @Override
-  public boolean executeTrajectory(String trajectory_name) {
+  public Justification executeTrajectory(String trajectory_name) {
     if (!recordedTrajectories.containsKey(trajectory_name)) {
       log.error("[executeTrajectory] couldn't find a trajectory named '" + trajectory_name + "', so trajectory execution failed.");
-      return false;
+      return new ConditionJustification(false, Factory.createPredicate("found(trajectory)"));
     }
 
     JointTrajectory trajectory = recordedTrajectories.get(trajectory_name);
@@ -1806,7 +1783,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     if (!executeMotionPlanRequest(req)) { // HACK-- sometimes we overshoot the point too far, so execute the request twice to make sure we get there.
       if (!executeMotionPlanRequest(req)) {
         log.error("[executeTrajectory] couldn't plan/execute to starting position.");
-        return false;
+        return new ConditionJustification(false, Factory.createPredicate("execute(plan)"));
       }
     }
 
@@ -1814,8 +1791,9 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
       // execute recorded trajectory
       ExecuteKnownTrajectoryResponse ex_res = new ExecuteKnownTrajectoryResponse();
       RobotTrajectory rt = new RobotTrajectory(trajectory, new MultiDOFJointTrajectory());
-      if (moveGroup.callExecuteKinematicPath(new ExecuteKnownTrajectoryRequest(rt, true), ex_res))
-        return true;
+      if (moveGroup.callExecuteKinematicPath(new ExecuteKnownTrajectoryRequest(rt, true), ex_res)) {
+        return new ConditionJustification(true);
+      }
     } catch (NullPointerException ne) {
       log.warn("[executeTrajectory] Standard trajectory execution failed (threw null), trying fallback.");
     }
@@ -1834,23 +1812,23 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
       currentRequest.setStartState(getRobotState());
       if (!executeMotionPlanRequest(currentRequest) || !executeMotionPlanRequest(currentRequest)) { // Same hack as before: try to get there twice if need be
         log.error("[executeTrajectory] Fallback failed to execute the trajectory.");
-        return false;
+        return new ConditionJustification(false, Factory.createPredicate("execute(fallbackTrajectory)"));
       }
     }
 
     log.debug("Fallback attempt succeeded!");
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean saveTrajectoriesToFile(String filename) {
+  public Justification saveTrajectoriesToFile(String filename) {
     try {
       File file = new File(filename);
 
       // if file doesn't exist, create it
       if (!file.exists()) {
         if (!file.createNewFile())
-          return false; // Unable to create new file
+          return new ConditionJustification(false); // Unable to create new file
       }
 
       FileOutputStream fout = new FileOutputStream(file);
@@ -1861,9 +1839,9 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
     } catch (IOException e) {
       log.error("Error writing poses to file.", e);
-      return false;
+      return new ConditionJustification(false);
     }
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -1899,7 +1877,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
   @Override
   public Justification closeGripper(String groupName) {
-    return new ConditionJustification(moveGripper(groupName, 0.0f));
+    return (moveGripper(groupName, 0.0f));
   }
 
   @Override
@@ -1996,7 +1974,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   @TRADEService
   @Action
   @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
-  public boolean pour(boolean forward) {
+  public Justification pour(boolean forward) {
     String group_name = "manipulator";
 
     //Todo: Will: very very manual - fix later
@@ -2014,7 +1992,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     String jointName[] = jointNames.get(group_name);
     if (jointName == null || jointName.length == 0) {
       log.error("Joint Name list for group " + group_name + " was invalid (empty or null)");
-      return false;
+      return new ConditionJustification(false);
     }
 
     joints_to_use = Arrays.asList(jointName);
@@ -2026,15 +2004,21 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     MotionPlanRequest req = MoveItHelper.makeDefaultMotionPlanRequest(moveItConfig.maxPlanningTime);
     req.setGoalConstraints(goal_constraints);
     req.setGroupName(group_name);
-    return executeMotionPlanRequest(req);
+
+    // execute motion plan
+    if (executeMotionPlanRequest(req)) {
+      return new ConditionJustification(false, Factory.createPredicate("execute(plan)"));
+    }
+
+    return new ConditionJustification(true);
   }
 
-  public boolean moveTo(String groupName, Point3d point, Quat4d orientation, int maxAttempts) {
+  protected boolean moveTo(String groupName, Point3d point, Quat4d orientation, int maxAttempts) {
     int counter = 0;
-    boolean succeeded = moveTo(groupName, point, orientation);
+    boolean succeeded = moveTo(groupName, point, orientation).getValue();
     while (!succeeded && counter < maxAttempts) {
       ++counter;
-      succeeded = moveTo(groupName, point, orientation);
+      succeeded = moveTo(groupName, point, orientation).getValue();
     }
     return succeeded;
   }

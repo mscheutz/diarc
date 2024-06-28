@@ -32,7 +32,7 @@ public interface FetchInterface extends MoveItInterface {
    */
   @TRADEService
   @Action
-  boolean setTorsoPosition(double position) ;
+  Justification setTorsoPosition(double position) ;
 
   /**
   * Point head in direction of target object in base_link coordinate frame.
@@ -42,7 +42,7 @@ public interface FetchInterface extends MoveItInterface {
   */
   @TRADEService
   @Action
-  boolean pointHeadTo(MemoryObject target_object) ;
+  Justification pointHeadTo(MemoryObject target_object) ;
 
   /**
   * Point head in direction of target object in base_link coordinate frame.
@@ -53,7 +53,7 @@ public interface FetchInterface extends MoveItInterface {
   */
   @TRADEService
   @Action
-  boolean pointHeadTo(Symbol objectRef) ;
+  Justification pointHeadTo(Symbol objectRef) ;
 
   /**
   * Point head in direction of target point in base_link coordinate frame.
@@ -64,7 +64,7 @@ public interface FetchInterface extends MoveItInterface {
   */
   @TRADEService
   @Action
-  boolean pointHeadTo(Point3d target_point) ;
+  Justification pointHeadTo(Point3d target_point) ;
 
   @TRADEService
   @Observes({"holding(?actor,?objectRef,?arm)", "grasping(?actor,?objectRef,?arm)"})
