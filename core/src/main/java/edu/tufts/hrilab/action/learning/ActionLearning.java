@@ -11,6 +11,7 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.Effect;
 import edu.tufts.hrilab.action.ConditionType;
 import edu.tufts.hrilab.action.EffectType;
+import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
@@ -91,16 +92,16 @@ public class ActionLearning {
     ignoreActionSet.add(Factory.createPredicate("freeze(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("endFreeze(?actor)"));
 
-    ignoreActionSet.add(Factory.createPredicate("cancelCurrentGoal(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("suspendCurrentGoal(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("resumeCurrentGoal(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("cancelCurrentGoal(?actor,?agent)"));
-    ignoreActionSet.add(Factory.createPredicate("suspendCurrentGoal(?actor,?agent)"));
-    ignoreActionSet.add(Factory.createPredicate("resumeCurrentGoal(?actor,?agent)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelSystemGoal(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("suspendSystemGoal(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeSystemGoal(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelSystemGoal(?actor,?agent)"));
+    ignoreActionSet.add(Factory.createPredicate("suspendSystemGoal(?actor,?agent)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeSystemGoal(?actor,?agent)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllCurrentGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllPendingGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllActiveGoals(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("cancelGoalInQueueIndex(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelPendingGoalByIndex(?actor)"));
   }
 
   /**
@@ -123,7 +124,7 @@ public class ActionLearning {
             ignoreActionSet.add(g.getPredicate());
             //execute it and if it succeeds add it if not don't add it
             try {
-              TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Goal.class)).call(Long.class, g);
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Goal.class, ExecutionType.class)).call(Long.class, g, ExecutionType.ACT);
             } catch (TRADEException e) {
               log.error("exception executing goal while learning [submitGoalDirectly]", e);
             }

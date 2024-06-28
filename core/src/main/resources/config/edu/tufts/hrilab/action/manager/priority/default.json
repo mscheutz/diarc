@@ -44,7 +44,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "cancelGoalInQueueIndex": {
+  "cancelPendingGoalByIndex": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -60,15 +60,15 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "cancelCurrentGoal": {
+  "cancelSystemGoal": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "suspendCurrentGoal": {
+  "suspendSystemGoal": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "resumeCurrentGoal": {
+  "resumeSystemGoal": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

@@ -7972,7 +7972,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=suspendCurrentGoal_symbol" : {
+    "/invoke-service?serviceName=suspendSystemGoal_symbol" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -7990,7 +7990,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "suspendCurrentGoal_symbol",
+        "operationId" : "suspendSystemGoal_symbol",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -9239,7 +9239,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=cancelCurrentGoal_symbol" : {
+    "/invoke-service?serviceName=cancelSystemGoal_symbol" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -9257,7 +9257,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "cancelCurrentGoal_symbol",
+        "operationId" : "cancelSystemGoal_symbol",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -9857,7 +9857,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=resumeCurrentGoal" : {
+    "/invoke-service?serviceName=resumeSystemGoal" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -9871,7 +9871,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "resumeCurrentGoal",
+        "operationId" : "resumeSystemGoal",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -10246,7 +10246,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=getSystemGoalPredicates_symbol" : {
+    "/invoke-service?serviceName=getActiveGoalsPredicates_symbol" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -10264,7 +10264,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "getSystemGoalPredicates_symbol",
+        "operationId" : "getActiveGoalsPredicates_symbol",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -10344,9 +10344,9 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=cancelGoalInQueueIndex_int" : {
+    "/invoke-service?serviceName=cancelPendingGoalByIndex_int" : {
       "post" : {
-        "summary" : "Operation in QueueExecutionManager",
+        "summary" : "Operation in ExecutionManager",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -10362,7 +10362,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "cancelGoalInQueueIndex_int",
+        "operationId" : "cancelPendingGoalByIndex_int",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -10379,7 +10379,7 @@
             "type" : "int"
           }
         } ],
-        "tags" : [ "QueueExecutionManager" ],
+        "tags" : [ "ExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -17892,7 +17892,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=resumeCurrentGoal_symbol" : {
+    "/invoke-service?serviceName=resumeSystemGoal_symbol" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -17910,7 +17910,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "resumeCurrentGoal_symbol",
+        "operationId" : "resumeSystemGoal_symbol",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -20131,7 +20131,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=suspendCurrentGoal" : {
+    "/invoke-service?serviceName=suspendSystemGoal" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -20145,7 +20145,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "suspendCurrentGoal",
+        "operationId" : "suspendSystemGoal",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -24671,7 +24671,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=cancelCurrentGoal" : {
+    "/invoke-service?serviceName=cancelSystemGoal" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -24685,7 +24685,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "cancelCurrentGoal",
+        "operationId" : "cancelSystemGoal",
         "responses" : {
           "200" : {
             "description" : "Successful operation"

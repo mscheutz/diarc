@@ -4,15 +4,22 @@
 
 package edu.tufts.hrilab.action;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.description.ActionContextDescription;
 import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
+import edu.tufts.hrilab.action.goal.PendingGoal;
 import edu.tufts.hrilab.action.goal.PriorityTier;
+import edu.tufts.hrilab.action.gui.GoalManagerGUI;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.action.manager.ExecutionManager;
+import edu.tufts.hrilab.action.manager.PriorityInfo;
 import edu.tufts.hrilab.action.planner.pddl.PddlParser;
 import edu.tufts.hrilab.action.selector.ActionSelector;
 import edu.tufts.hrilab.action.db.Database;
@@ -31,11 +38,14 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.util.Util;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import edu.tufts.hrilab.util.resource.Resources;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -54,6 +64,10 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class GoalManagerImpl extends DiarcComponent {
+  /**
+   * Optional GUI.
+   */
+  private GoalManagerGUI gui = null;
   /**
    * ExecutionManager instance.
    */
@@ -98,6 +112,11 @@ public class GoalManagerImpl extends DiarcComponent {
    * Default performance measures directory to make command line args cleaner.
    */
   private String performanceFileDir = "config/edu/tufts/hrilab/action/performancemodels";
+  /**
+   * A map of goal names to priority information (tier and value) to be used by the execution manager to order goals.
+   * These are loaded from json files found in config.action.manager.priority
+   */
+  private Map<String, PriorityInfo> goalPriorities;
   /**
    * Main GoalManager gui flag.
    */
@@ -152,8 +171,17 @@ public class GoalManagerImpl extends DiarcComponent {
     initializeDB();
     notifier = new GoalManagerNotifier();
     if (showEditor) {
-      em.showEditor("config/edu/tufts/hrilab/action/asl");
+      showEditor("config/edu/tufts/hrilab/action/asl");
     }
+
+    //Load goal priorities
+    String filepath = Resources.createFilepath("config/edu/tufts/hrilab/action/manager/priority", priorityFile);
+    if (!loadGoalPriorities(filepath)) {
+      goalPriorities = new HashMap<>();
+      goalPriorities.put("default", new PriorityInfo(1L, PriorityTier.NORMAL));
+    }
+
+    PerformanceAssessment.setGoalManager(this, false);
 
     //TODO:brad: do we need type in the KB name?
     contextConsultant = new ContextConsultant(em.getRootContext(), "context");
@@ -181,7 +209,7 @@ public class GoalManagerImpl extends DiarcComponent {
     }
     StateMachine sm = new StateMachine(beliefArgs.toArray(new String[0]));
     RootContext rootContext = new RootContext(initialConstraints, sm);
-    em = ExecutionManager.createInstance(executionManagerType, sm, rootContext, priorityFile,myGroups);
+    em = ExecutionManager.createInstance(executionManagerType, sm, rootContext,myGroups);
     em.configPruningMechanism(useMemoryManager, historyLength);
   }
 
@@ -221,6 +249,13 @@ public class GoalManagerImpl extends DiarcComponent {
     }
 
     log.debug("DB initialized");
+  }
+
+  /**
+   * Display a GUI for this goal manager
+   */
+  public void showEditor(String path) {
+    gui = new GoalManagerGUI(this, path, new HashMap<>(), new HashSet<>());
   }
 
   /**
@@ -283,6 +318,69 @@ public class GoalManagerImpl extends DiarcComponent {
   }
 
   /**
+   * Attempts to load goal priority information defined in the provided json file. If any issues occur, priorities
+   * are reset to be equal for all goals.
+   *
+   * @param filepath the path to the file starting from config.action.manager.priority
+   * @return boolean indicating whether the priority information was loaded successfully or not
+   */
+  private boolean loadGoalPriorities(String filepath) {
+    Gson gson = new Gson();
+    BufferedReader reader;
+    try {
+      reader = new BufferedReader((new InputStreamReader(ExecutionManager.class.getResourceAsStream(filepath))));
+    } catch (NullPointerException ex) {
+      log.error("[loadGoalPriorities] Error loading file {}", filepath, ex);
+      return false;
+    }
+
+    try {
+      goalPriorities = gson.fromJson(reader, new TypeToken<Map<String, PriorityInfo>>() {
+      }.getType());
+    } catch (JsonSyntaxException e) {
+      log.error("[loadGoalPriorities] malformed json in file {}", filepath, e);
+      return false;
+    } catch (JsonIOException e) {
+      log.error("[loadGoalPriorities] unable to load json from file {}", filepath, e);
+      return false;
+    }
+
+    if (!goalPriorities.containsKey("default")) {
+      log.warn("[loadGoalPriorities] don't have 'default' entry, setting to 1");
+      goalPriorities.put("default", new PriorityInfo(1L, PriorityTier.NORMAL));
+    }
+    return true;
+  }
+
+  /**
+   * Get the default priority tier that would be assigned upon submission for the supplied goal predicate
+   */
+  @TRADEService
+  @Action
+  public PriorityTier getPriorityTierForGoal(Predicate g) {
+    String goalName = g.getName();
+    if (goalPriorities.containsKey(goalName)) {
+      return goalPriorities.get(g.getName()).getPriorityTier();
+    } else {
+      return goalPriorities.get("default").getPriorityTier();
+    }
+  }
+
+  /**
+   * Get the default priority value that would be assigned upon submission for the supplied goal predicate
+   */
+  @TRADEService
+  @Action
+  public long getPriorityForGoal(Predicate g) {
+    String goalName = g.getName();
+    if (goalPriorities.containsKey(goalName)) {
+      return goalPriorities.get(g.getName()).getPriority();
+    } else {
+      return goalPriorities.get("default").getPriority();
+    }
+  }
+
+  /**
    * Submit a goal to be achieved.
    *
    * @param g the goal in goal(actor,state) or action(actor,args) form
@@ -293,7 +391,68 @@ public class GoalManagerImpl extends DiarcComponent {
   public long submitGoal(Predicate g) {
     log.debug("[submitGoal]: " + g);
 
-    Goal goal = em.submitGoal(g);
+    return submitGoal(g, ExecutionType.ACT);
+  }
+
+  /**
+   * Submit a goal to be achieved.
+   *
+   * @param g the goal in goal(actor,state) or action(actor,args) form
+   * @param type action execution type
+   * @return the goal ID (for checking status)
+   */
+  @TRADEService
+  @Action
+  public long submitGoal(Predicate g, ExecutionType type) {
+    log.debug("[submitGoal]: " + g + " with execution type: " + type);
+    PriorityTier priorityTier = getPriorityTierForGoal(g);
+    return submitGoal(g, type, priorityTier);
+  }
+
+  /**
+   * Submit a goal to be achieved.
+   *
+   * @param g the goal in goal(actor,state) or action(actor,args) form
+   * @param type action execution type
+   * @param priorityTier priority tier for the submitted goal (overrides default value)
+   * @return the goal ID (for checking status)
+   */
+  @TRADEService
+  @Action
+  public long submitGoal(Predicate g, ExecutionType type, PriorityTier priorityTier) {
+    log.debug("[submitGoal]: " + g + " with execution type: " + type + " and priority tier: " + priorityTier);
+
+    long priority = getPriorityForGoal(g);
+    if (priorityTier == null || priorityTier == PriorityTier.UNINITIALIZED) {
+      priorityTier = getPriorityTierForGoal(g);
+    }
+    return submitGoal(g, type, priorityTier, priority);
+  }
+  @TRADEService
+  @Action
+  public long submitGoal(Predicate g, ExecutionType type, Symbol priorityTier) {
+    return submitGoal(g, type, PriorityTier.fromString(priorityTier.toString()));
+  }
+
+
+  /**
+   * Submit a goal to be achieved.
+   *
+   * @param g the goal in goal(actor,state) or action(actor,args) form
+   * @param type action execution type
+   * @param priorityTier priority tier for the submitted goal (overrides default value)
+   * @param priority priority value for the submitted goal (overrides default value)
+   * @return the goal ID (for checking status)
+   */
+  @TRADEService
+  @Action
+  public long submitGoal(Predicate g, ExecutionType type, PriorityTier priorityTier, long priority) {
+    log.debug("[submitGoal]: " + g + " with execution type: " + type + ", priority: " + priority + ", and priority tier: " + priorityTier);
+
+    Goal goal = new Goal(g);
+    goal.setPriority(priority);
+    goal.setPriorityTier(priorityTier);
+    goal = em.submitGoal(goal, type);
     if (goal != null) {
       return goal.getId();
     }
@@ -310,63 +469,77 @@ public class GoalManagerImpl extends DiarcComponent {
   @Action
   public long submitGoalWithMetric(Predicate g, Predicate metric) {
     log.debug("[submitGoal]: " + g);
-
-    Goal goal = em.submitGoal(g, metric);
+    PriorityTier priorityTier = getPriorityTierForGoal(g);
+    long priority = getPriorityForGoal(g);
+    Goal goal = new Goal(g);
+    goal.setPriorityTier(priorityTier);
+    goal.setPriority(priority);
+    goal.setMetric(metric);
+    goal = em.submitGoal(goal, ExecutionType.ACT);
     if (goal != null) {
       return goal.getId();
     }
     return -1;
   }
 
-
-  @TRADEService
-  @Action
-  public long submitGoal(Predicate g, ExecutionType type) {
-    log.debug("[submitGoal]: " + g + " with execution type: " + type);
-
-    Goal goal = em.submitGoal(g, type);
-    if (goal != null) {
-      return goal.getId();
-    }
-    return -1;
-  }
-
-  @TRADEService
-  @Action
-  public long submitGoal(Predicate g, ExecutionType type, long priority) {
-    log.debug("[submitGoal]: " + g + " with execution type: " + type + " and priority: " + priority);
-
-    Goal goal = em.submitGoal(g, type, priority);
-    if (goal != null) {
-      return goal.getId();
-    }
-    return -1;
-  }
-
-  @TRADEService
-  @Action
-  public long submitGoal(Predicate g, ExecutionType type, long priority, PriorityTier priorityTier) {
-    log.debug("[submitGoal]: " + g + " with execution type: " + type + ", priority: " + priority + ", and priority tier: " + priorityTier);
-
-    Goal goal = em.submitGoal(g, type, priority, priorityTier);
-    if (goal != null) {
-      return goal.getId();
-    }
-    return -1;
-  }
-
+  /**
+   * Searches pending and active goals to cancel the goal corresponding to the supplied goalId
+   */
   @TRADEService
   @Action
   public void cancelGoal(long gid) {
     em.cancelGoal(gid);
   }
 
+  /**
+   * Cancels all pending and active goals (other than the listen goal)
+   */
+  @TRADEService
+  @Action
+  public void cancelAllCurrentGoals() {
+    em.cancelAllCurrentGoals();
+  }
+
+  /**
+   * Cancels all active goals (other than the listen goal)
+   */
+  @TRADEService
+  @Action
+  public void cancelAllActiveGoals() {
+    em.cancelAllActiveGoals();
+  }
+
+  /**
+   * Cancels all pending goals
+   */
+  @TRADEService
+  @Action
+  public void cancelAllPendingGoals() {
+    em.cancelAllPendingGoals();
+  }
+
+  /**
+   * Cancels the upcoming pending goal at the supplied index (ordered in descending priority)
+   */
+  @TRADEService
+  @Action
+  public boolean cancelPendingGoalByIndex(int index) {
+    return em.cancelPendingGoalByIndex(index);
+  }
+
+
+  /**
+   * Searches pending and active goals to suspend the goal corresponding to the supplied goalId
+   */
   @TRADEService
   @Action
   public void suspendGoal(long gid) {
     em.suspendGoal(gid);
   }
 
+  /**
+   * Searches pending and active goals to resume the goal corresponding to the supplied goalId
+   */
   @TRADEService
   @Action
   public void resumeGoal(long gid) {
@@ -375,8 +548,8 @@ public class GoalManagerImpl extends DiarcComponent {
 
   /**
    * Get the goals that are currently being pursued by the Execution Manager for a particular actor.
-   * This includes both goals which are actively being pursued by the BGM (have a corresponding Action Interpreter)
-   *   and goals which are being considered by the Execution Manager but may not have been passed on to the BGM yet
+   * This includes both goals which are actively undergoing execution (have a corresponding Action Interpreter)
+   *   and goals which are being considered by the Execution Manager but may not have been passed on to execution yet
    *
    * @return a list of predicates representing the goal
    */
@@ -390,6 +563,26 @@ public class GoalManagerImpl extends DiarcComponent {
       }
     }
     return pg;
+  }
+
+  /**
+   * Get a list of all pending and active goals
+   */
+  @TRADEService
+  @Action
+  public List<Goal> getCurrentGoals() {
+    return em.getCurrentGoals();
+  }
+
+  /**
+   * Get a list of all current pending and/or active goals matching the goalPredicate query.
+   *
+   * @return goals with matching goalPredicate, or null if no matching goal found
+   */
+  @Action
+  @TRADEService
+  public List<Goal> getCurrentGoals(Goal queryGoal) {
+    return em.getCurrentGoals();
   }
 
   /**
@@ -429,6 +622,60 @@ public class GoalManagerImpl extends DiarcComponent {
       }
     }
     return pg;
+  }
+
+  /**
+   * Get a list of predicates of all active goals for all agentTeams
+   */
+  @TRADEService
+  @Action
+  public List<Predicate> getActiveGoalsPredicates() {
+    return em.getActiveGoalsPredicates();
+  }
+
+  /**
+   * Get a list of predicates of all active goals for the supplied agentTeam and all members
+   */
+  @TRADEService
+  @Action
+  public List<Predicate> getActiveGoalsPredicates(Symbol actor) {
+    return em.getActiveGoalsPredicates(actor);
+  }
+
+  /**
+   * Get a copied list of the goals currently pending active execution
+   */
+  @TRADEService
+  @Action
+  public List<Goal> getPendingGoals() {
+    return em.getPendingGoals();
+  }
+
+  /**
+   * Get a list of predicates of all pending goals
+   */
+  @TRADEService
+  @Action
+  public List<Predicate> getPendingGoalsPredicates() {
+    return em.getPendingGoalsPredicates();
+  }
+
+  /**
+   * Get the predicate of the pending goal currently with the highest priority
+   */
+  @TRADEService
+  @Action
+  public Predicate getNextGoalPredicate() {
+    return em.getNextGoalPredicate();
+  }
+
+  /**
+   * Get the predicate of the pending goal for a specific agentTeam currently with the highest priority
+   */
+  @TRADEService
+  @Action
+  public Predicate getNextGoalPredicate(Symbol agent) {
+    return em.getNextGoalPredicate(agent);
   }
 
   /**
@@ -477,6 +724,19 @@ public class GoalManagerImpl extends DiarcComponent {
   @Action
   public Goal getCurrentGoal(Symbol actorToCheck, int index) {
     return em.getCurrentGoal(actorToCheck, index);
+  }
+
+  /**
+   * Get the Goal for a particular goal ID. This checks past goals.
+   * Returns null if no matching goal ID is found.
+   *
+   * @param gid goal id.
+   * @return the Goal corresponding to the ID.
+   */
+  @TRADEService
+  @Action
+  public Goal getPastGoal(long gid) {
+    return em.getPastGoal(gid);
   }
 
   /**
@@ -890,7 +1150,7 @@ public class GoalManagerImpl extends DiarcComponent {
   @Override
   public void shutdownComponent() {
     // cancel all pending and active goals and wait for them to terminate
-    em.getPendingGoals().forEach(goal -> em.cancelGoal(goal.getGoal().getId()));
+    em.getPendingGoals().forEach(goal -> em.cancelGoal(goal.getId()));
     List<Goal> activeGoals = em.getActiveGoals();
     activeGoals.forEach(goal -> em.cancelGoal(goal.getId()));
     activeGoals.forEach(goal -> em.joinOnGoal(goal.getId()));

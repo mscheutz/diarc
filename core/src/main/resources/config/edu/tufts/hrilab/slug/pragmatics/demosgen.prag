@@ -43,7 +43,7 @@ REPLY(A,B,cannot(did(fetch(A,X,Y)),because(not(reposition(A)))),Z) := REPLY(A,B,
 REPLY(A,B,cannot(did(fetch(A,X)),because(not(reposition(A)))),Z) := REPLY(A,B,cannot(did(fetch(A,X)),because(failedToRepositionSuccessfully(A))),Z)
 
 REPLY(A,B,cannot(did(freeze(A)),because(not(freeze(A)))),{}) := REPLY(A,B,cannot(did(pauseGoal(A)),because(and(thereIsNoCurrentGoal()))),Z)
-REPLY(A,B,cannot(did(cancelCurrentGoal(A)),because(not(is(goal,found)))),{}) := REPLY(A,B,cannot(did(cancelCurrentGoal(A)),because(and(thereIsNoCurrentGoal()))),{})
+REPLY(A,B,cannot(did(cancelSystemGoal(A)),because(not(is(goal,found)))),{}) := REPLY(A,B,cannot(did(cancelCurrentGoal(A)),because(and(thereIsNoCurrentGoal()))),{})
 REPLY(A,B,cannot(did(fetch(A,X,Y)),because(not(knowWhereIAm(A)))),Z) := REPLY(A,B,cannot(did(fetch(A,X)),because(dontKnowWhereIAm(A))),Z)
 REPLY(A,B,cannot(did(fetch(A,X,Y)),because(not(go(A,Y)))),Z) := REPLY(A,B,cannot(did(fetch(A,X)),because(and(cannot(findAPathTo(A,Y))))),Z)
 REPLY(A,B,cannot(did(fetch(A,X,Y)),because(not(go(A,C)))),Z) := REPLY(A,B,cannot(did(return(A,X)),because(and(cannot(findAPathTo(A,C))))),Z)

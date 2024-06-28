@@ -8396,7 +8396,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=resumeCurrentGoal" : {
+    "/invoke-service?serviceName=resumeSystemGoal" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -8416,7 +8416,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "resumeCurrentGoal",
+        "operationId" : "resumeSystemGoal",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -14529,9 +14529,9 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=cancelGoalInQueueIndex" : {
+    "/invoke-service?serviceName=cancelPendingGoalByIndex" : {
       "post" : {
-        "summary" : "Operation in QueueExecutionManager",
+        "summary" : "Operation in ExecutionManager",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -14549,7 +14549,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "cancelGoalInQueueIndex",
+        "operationId" : "cancelPendingGoalByIndex",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -14566,7 +14566,7 @@
             "type" : "int"
           }
         } ],
-        "tags" : [ "QueueExecutionManager" ],
+        "tags" : [ "ExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -15890,7 +15890,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=suspendCurrentGoal" : {
+    "/invoke-service?serviceName=suspendSystemGoal" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -15904,7 +15904,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "suspendCurrentGoal",
+        "operationId" : "suspendSystemGoal",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -19481,7 +19481,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=cancelCurrentGoal" : {
+    "/invoke-service?serviceName=cancelSystemGoal" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -19501,7 +19501,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "cancelCurrentGoal",
+        "operationId" : "cancelSystemGoal",
         "responses" : {
           "200" : {
             "description" : "Successful operation"

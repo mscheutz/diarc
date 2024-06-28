@@ -10,7 +10,6 @@ import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.execution.RootContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
-import edu.tufts.hrilab.action.goal.PendingGoal;
 import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.fol.Factory;
@@ -58,7 +57,7 @@ public class QueueExecutionManagerTest {
     StateMachine sm = StateMachine.createTestStateMachine(initFacts);
     RootContext rootContext = new RootContext(new ActionConstraints(), sm);
     try {
-      em = (QueueExecutionManager) ExecutionManager.createInstance((Class<ExecutionManager>)Class.forName("edu.tufts.hrilab.action.manager.QueueExecutionManager"), sm, rootContext, "queueExecutionManagerTest.json",new ArrayList<>());
+      em = (QueueExecutionManager) ExecutionManager.createInstance((Class<ExecutionManager>)Class.forName("edu.tufts.hrilab.action.manager.QueueExecutionManager"), sm, rootContext, new ArrayList<>());
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
     }
@@ -92,7 +91,33 @@ public class QueueExecutionManagerTest {
   }
 
   private Goal submitGoalAndWait(Predicate goalPred) {
-    Goal g = em.submitGoal(goalPred);
+    PriorityTier priorityTier = PriorityTier.NORMAL;
+    long priority = 1;
+    if (goalPred.getName().equals("freeze")) {
+      priorityTier = PriorityTier.URGENT;
+      priority = 9999;
+    } else if (goalPred.getName().equals("endFreeze")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("updateSettings")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("cancelSystemGoal")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("suspendSystemGoal")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("resumeSystemGoal")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("cancelAllPendingGoals")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("cancelAllActiveGoals")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("cancelAllCurrentGoals")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    }
+    Goal g = new Goal(goalPred);
+    g.setPriorityTier(priorityTier);
+    g.setPriority(priority);
+
+    g = em.submitGoal(g, ExecutionType.ACT);
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
@@ -102,7 +127,10 @@ public class QueueExecutionManagerTest {
   }
 
   private Goal submitGoalAndWait(Predicate goalPred, ExecutionType executionType, long priority, PriorityTier priorityTier) {
-    Goal g = em.submitGoal(goalPred, executionType, priority, priorityTier);
+    Goal g = new Goal(goalPred);
+    g.setPriority(priority);
+    g.setPriorityTier(priorityTier);
+    em.submitGoal(g, executionType);
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
@@ -114,12 +142,6 @@ public class QueueExecutionManagerTest {
   private void cancelAllGoals() {
     log.info("[cancelAllGoals] cleaning up");
     em.cancelAllCurrentGoals();
-//    for (PendingGoal pg: em.getPendingGoals()) {
-//      em.cancelGoal(pg.getGoal().getId());
-//    }
-//    for (Goal g: em.getActiveGoals()) {
-//      em.cancelGoal(g.getId());
-//    }
   }
 
   /**
@@ -407,7 +429,7 @@ public class QueueExecutionManagerTest {
     Goal lookGoal = submitGoalAndWait(goalPred);
     assertSame(driveGoal.getStatus(), GoalStatus.PENDING);
     assertSame(lookGoal.getStatus(), GoalStatus.PENDING);
-    Goal cancelGoal = submitGoalAndWait(Factory.createPredicate("cancelCurrentGoal", "self:agent"));
+    Goal cancelGoal = submitGoalAndWait(Factory.createPredicate("cancelSystemGoal", "self:agent"));
     em.joinOnGoal(cancelGoal.getId());
     em.joinOnGoal(freezeGoal.getId());
     assertSame(freezeGoal.getStatus(), GoalStatus.CANCELED);
@@ -541,11 +563,7 @@ public class QueueExecutionManagerTest {
     assertSame(driveGoal.getStatus(), GoalStatus.PENDING);
     assertSame(lookGoal.getStatus(), GoalStatus.PENDING);
 
-
-    goalPred = Factory.createPredicate("cancelAllPendingGoals", "self:agent");
-    Goal cancelGoal = submitGoalAndWait(goalPred);
-    em.joinOnGoal(cancelGoal.getId());
-    assertSame(cancelGoal.getStatus(), GoalStatus.SUCCEEDED);
+    em.cancelAllPendingGoals();
     em.joinOnGoal(driveGoal.getId());
     em.joinOnGoal(lookGoal.getId());
     assertSame(driveGoal.getStatus(), GoalStatus.CANCELED);
@@ -567,11 +585,7 @@ public class QueueExecutionManagerTest {
     assertSame(freeze2Goal.getStatus(), GoalStatus.ACTIVE);
     assertSame(driveGoal.getStatus(), GoalStatus.PENDING);
 
-
-    goalPred = Factory.createPredicate("cancelAllActiveGoals", "self:agent");
-    Goal cancelGoal = submitGoalAndWait(goalPred);
-    em.joinOnGoal(cancelGoal.getId());
-    assertSame(cancelGoal.getStatus(), GoalStatus.SUCCEEDED);
+    em.cancelAllActiveGoals();
     em.joinOnGoal(freezeGoal.getId());
     em.joinOnGoal(freeze2Goal.getId());
     em.joinOnGoal(driveGoal.getId());
@@ -594,11 +608,7 @@ public class QueueExecutionManagerTest {
     assertSame(freeze2Goal.getStatus(), GoalStatus.ACTIVE);
     assertSame(driveGoal.getStatus(), GoalStatus.PENDING);
 
-
-    goalPred = Factory.createPredicate("cancelAllCurrentGoals", "self:agent");
-    Goal cancelGoal = submitGoalAndWait(goalPred);
-    em.joinOnGoal(cancelGoal.getId());
-    assertSame(cancelGoal.getStatus(), GoalStatus.SUCCEEDED);
+    em.cancelAllCurrentGoals();
     em.joinOnGoal(freezeGoal.getId());
     em.joinOnGoal(freeze2Goal.getId());
     em.joinOnGoal(driveGoal.getId());
@@ -631,10 +641,10 @@ public class QueueExecutionManagerTest {
 
     List<Predicate> systemList = new ArrayList<>();
     systemList.add(Factory.createPredicate("ACTIVE",goalPred2));
-    assertEquals(em.getSystemGoalPredicates(Factory.createSymbol("agent3:agent")), systemList);
+    assertEquals(em.getActiveGoalsPredicates(Factory.createSymbol("agent3:agent")), systemList);
 
     systemList.add(Factory.createPredicate("ACTIVE",goalPred));
-    assertEquals(em.getSystemGoalPredicates(Factory.createSymbol("self:agent")), systemList);
+    assertEquals(em.getActiveGoalsPredicates(Factory.createSymbol("self:agent")), systemList);
 
     assertSame(em.getNextGoalPredicate(), goalPred3);
     assertSame(em.getNextGoalPredicate(Factory.createSymbol("team1:agent")), goalPred5);
@@ -644,7 +654,7 @@ public class QueueExecutionManagerTest {
   }
 
   @Test
-  public void testCancelCurrentGoal() {
+  public void testcancelSystemGoal() {
     Predicate goalPred = Factory.createPredicate("freeze", "agent1:agent", "agent1:agent");
     Goal freezeGoal1 = submitGoalAndWait(goalPred);
     goalPred = Factory.createPredicate("freeze", "agent2:agent", "agent2:agent");
@@ -652,29 +662,24 @@ public class QueueExecutionManagerTest {
     assertSame(freezeGoal1.getStatus(), GoalStatus.ACTIVE);
     assertSame(freezeGoal2.getStatus(), GoalStatus.ACTIVE);
 
-    goalPred = Factory.createPredicate("cancelCurrentGoal", "self:agent", "agent1:agent");
-    submitGoalAndWait(goalPred);
+    em.cancelSystemGoal(Factory.createSymbol("agent1:agent"));
     assertSame(freezeGoal1.getStatus(), GoalStatus.CANCELED);
     assertSame(freezeGoal2.getStatus(), GoalStatus.ACTIVE);
 
-    goalPred = Factory.createPredicate("cancelCurrentGoal", "self:agent", "team1:agent");
-    submitGoalAndWait(goalPred);
+    em.cancelSystemGoal(Factory.createSymbol("team1:agent"));
     assertSame(freezeGoal2.getStatus(), GoalStatus.CANCELED);
 
     goalPred = Factory.createPredicate("freeze", "self:agent", "self:agent");
     Goal freezeGoal3 = submitGoalAndWait(goalPred);
     assertSame(freezeGoal3.getStatus(), GoalStatus.ACTIVE);
-    goalPred = Factory.createPredicate("cancelCurrentGoal", "self:agent", "team1:agent");
-    Goal cancelGoal = submitGoalAndWait(goalPred);
-    em.joinOnGoal(cancelGoal.getId());
-    assertSame(cancelGoal.getStatus(), GoalStatus.SUCCEEDED);
+    em.cancelSystemGoal(Factory.createSymbol("team1:agent"));
     assertSame(freezeGoal2.getStatus(), GoalStatus.CANCELED);
 
     cancelAllGoals();
   }
 
   @Test
-  public void testSuspendResumeCurrentGoal() {
+  public void testSuspendresumeSystemGoal() {
     Predicate goalPred = Factory.createPredicate("freeze", "agent1:agent", "agent1:agent");
     Goal freezeGoal1 = submitGoalAndWait(goalPred);
     goalPred = Factory.createPredicate("freeze", "agent2:agent", "agent2:agent");
@@ -682,17 +687,14 @@ public class QueueExecutionManagerTest {
     assertSame(freezeGoal1.getStatus(), GoalStatus.ACTIVE);
     assertSame(freezeGoal2.getStatus(), GoalStatus.ACTIVE);
 
-    goalPred = Factory.createPredicate("suspendCurrentGoal", "self:agent", "agent1:agent");
-    submitGoalAndWait(goalPred);
+    em.suspendSystemGoal(Factory.createSymbol("agent1:agent"));
     assertSame(freezeGoal1.getStatus(), GoalStatus.SUSPENDED);
     assertSame(freezeGoal2.getStatus(), GoalStatus.ACTIVE);
 
-    goalPred = Factory.createPredicate("suspendCurrentGoal", "self:agent", "team1:agent");
-    submitGoalAndWait(goalPred);
+    em.suspendSystemGoal(Factory.createSymbol("team1:agent"));
     assertSame(freezeGoal2.getStatus(), GoalStatus.SUSPENDED);
 
-    goalPred = Factory.createPredicate("resumeCurrentGoal", "self:agent", "team1:agent");
-    submitGoalAndWait(goalPred);
+    em.resumeSystemGoal(Factory.createSymbol("team1:agent"));
     assertSame(freezeGoal1.getStatus(), GoalStatus.ACTIVE);
     assertSame(freezeGoal2.getStatus(), GoalStatus.ACTIVE);
 
@@ -701,10 +703,8 @@ public class QueueExecutionManagerTest {
 
     goalPred = Factory.createPredicate("freeze", "team1:agent", "team1:agent");
     Goal freezeGoal4 = submitGoalAndWait(goalPred);
-    goalPred = Factory.createPredicate("suspendCurrentGoal", "self:agent", "agent2:agent");
-    Goal suspendGoal = submitGoalAndWait(goalPred);
+    em.suspendSystemGoal(Factory.createSymbol("agent2:agent"));
     assertSame(freezeGoal4.getStatus(), GoalStatus.ACTIVE);
-    assertSame(suspendGoal.getStatus(), GoalStatus.SUCCEEDED);
 
     cancelAllGoals();
   }

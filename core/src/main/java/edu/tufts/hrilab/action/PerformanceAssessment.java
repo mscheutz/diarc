@@ -12,7 +12,6 @@ import edu.tufts.hrilab.action.execution.GoalContext;
 import edu.tufts.hrilab.action.execution.RootContext;
 import edu.tufts.hrilab.action.execution.util.ContextUtils;
 import edu.tufts.hrilab.action.goal.Goal;
-import edu.tufts.hrilab.action.manager.ExecutionManager;
 import edu.tufts.hrilab.action.state.State;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.util.Utilities;
@@ -40,7 +39,7 @@ import org.slf4j.LoggerFactory;
 
 public class PerformanceAssessment {
   private static long lastQueryTime = 0;
-  private static ExecutionManager executionManager;
+  private static GoalManagerImpl goalManager;
   private static StateMachine stateMachine;
   private static Lock lock = new ReentrantLock();
   private static boolean runParallel = true;
@@ -53,8 +52,8 @@ public class PerformanceAssessment {
 
  private static final Logger log = LoggerFactory.getLogger(PerformanceAssessment.class);
 
-  public static void setExecutionManager(ExecutionManager em, boolean shouldRunParallel) {
-    executionManager = em;
+  public static void setGoalManager(GoalManagerImpl gm, boolean shouldRunParallel) {
+    goalManager = gm;
     runParallel = shouldRunParallel;
   }
 
@@ -80,7 +79,7 @@ public class PerformanceAssessment {
       return Triple.of(lastProb, lastDur, lastFail);
     }
     log.info("assessing: " + goalPred + " " + temporal + " execution with assessment modification " + assessmentModification + " " + numSamples + " times ");
-    retractPriorAssessment(goalPred, assessmentModification, executionManager.getStateMachine());
+    retractPriorAssessment(goalPred, assessmentModification, goalManager.getStateMachine());
 
     Pair<Goal, StateMachine> simInfo = prepareSimulation(goalPred, temporal, assessmentModification);
     Goal simGoal = simInfo.getLeft();
@@ -194,8 +193,8 @@ public class PerformanceAssessment {
    */
   private static Pair<Goal, Goal> generateGoalPlan(Predicate goalPred, StateMachine simStateMachine) {
     // simulate goal to get plan
-    Goal goal = executionManager.submitGoal(new Goal(goalPred), ExecutionType.SIMULATE_PERFORMANCE);
-    executionManager.joinOnGoal(goal.getId());
+    Goal goal = goalManager.getGoal(goalManager.submitGoal(goalPred, ExecutionType.SIMULATE_PERFORMANCE));
+    goalManager.joinOnGoal(goal.getId());
     // clone simulated goal and root context node
     Goal clonedGoal = new Goal(goal.getPredicate().clone());
     //clonedGoal.setStatus(GoalStatus.PENDING);
@@ -205,7 +204,7 @@ public class PerformanceAssessment {
     // get the state before simulation of the goal -- use the first non-GoalContext node because GoalContext not in SM
     State simStartingState = goalRootContext.getStateMachine().findStartingState(goalRootContext.getChildContexts().get(0), true);
     // create simulation root with simulation state machine
-    Context simRootContext = executionManager.getRootContext().createSimulationRoot(new StateMachine(simStartingState), ExecutionType.SIMULATE_PERFORMANCE);
+    Context simRootContext = goalManager.getExecutionManager().getRootContext().createSimulationRoot(new StateMachine(simStartingState), ExecutionType.SIMULATE_PERFORMANCE);
     // clone the context
     Context clonedContext = goal.getRootContext().copy(simRootContext);
     // reset children of the cloned root context node
@@ -231,7 +230,7 @@ public class PerformanceAssessment {
     Context goalContext = goal.getRootContext();
     // get the current state used to generate new state machine for simulation
     State simStartingState = goalContext.getStateMachine().getCurrentState();
-    RootContext simRootContext = executionManager.getRootContext().createSimulationRoot(new StateMachine(simStartingState), ExecutionType.SIMULATE_PERFORMANCE);
+    RootContext simRootContext = goalManager.getExecutionManager().getRootContext().createSimulationRoot(new StateMachine(simStartingState), ExecutionType.SIMULATE_PERFORMANCE);
     Context simGoalContext = goal.getRootContext().copy(simRootContext);
     simGoal.setRootContext(simGoalContext);
     return Pair.of(goal, simGoal);
@@ -249,9 +248,9 @@ public class PerformanceAssessment {
     List<Goal> goals;
 
     if (temporal.toString().equals("during")) {
-      goals = executionManager.getCurrentGoals();
+      goals = goalManager.getCurrentGoals();
     } else {
-      goals = executionManager.getPastGoals();
+      goals = goalManager.getPastGoals();
     }
     boolean goalFound = false;
     for (Goal tmpGoal : goals) { // convert following to stream?
@@ -490,8 +489,8 @@ public class PerformanceAssessment {
         Context tmpContext = failedContext.copy(tmpRoot);
         tmpGoal.setRootContext(tmpContext);
 
-        executionManager.submitGoalContext(tmpGoal, tmpContext);
-        executionManager.joinOnGoal(tmpGoal.getId());
+        goalManager.getExecutionManager().submitGoalContext(tmpGoal, tmpContext);
+        goalManager.joinOnGoal(tmpGoal.getId());
 
       }
     } else {
@@ -625,8 +624,8 @@ public class PerformanceAssessment {
     } else {
       simContext = goal.getRootContext().copy(simRootContext);
     }
-    Context simulationStartStep = executionManager.submitGoalContext(simGoal, simContext);
-    executionManager.joinOnGoal(simGoal.getId());
+    Context simulationStartStep = goalManager.getExecutionManager().submitGoalContext(simGoal, simContext);
+    goalManager.joinOnGoal(simGoal.getId());
     long dur1 = System.currentTimeMillis()-t0;
     // FIXME: need better way to get child if start step is a goal context
     if (simulationStartStep instanceof GoalContext) {
@@ -733,7 +732,7 @@ public class PerformanceAssessment {
     //prob = Math.floor(prob *100) / 100;
     double dur = time.getLeft()/Math.pow(10,3);
     //dur = Math.floor(dur * 100) / 100;
-    StateMachine stateMachine = executionManager.getStateMachine();
+    StateMachine stateMachine = goalManager.getStateMachine();
     stateMachine.assertBelief(Factory.createPredicate("probabilityOf",goalPred.toString(),Double.toString(prob)));
     Predicate d = Factory.createPredicate(durStr, goal.toString(), Double.toString(dur));
     stateMachine.assertBelief(d);

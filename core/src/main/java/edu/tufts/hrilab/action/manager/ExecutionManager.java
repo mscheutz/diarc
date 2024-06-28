@@ -9,17 +9,12 @@ import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
-import com.google.gson.Gson;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.ActionListener;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
-import edu.tufts.hrilab.action.PerformanceAssessment;
 import edu.tufts.hrilab.action.goal.PendingGoal;
 import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.action.state.StateMachine;
@@ -27,20 +22,16 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.execution.RootContext;
-import edu.tufts.hrilab.action.gui.GoalManagerGUI;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.action.learning.ActionLearning;
 import edu.tufts.hrilab.action.learning.ActionLearningStatus;
-import edu.tufts.hrilab.action.priority.PriorityCalculator;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.util.resource.Resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -52,11 +43,6 @@ import java.util.stream.Collectors;
 
 public class ExecutionManager implements ActionListener {
   private static final Logger log = LoggerFactory.getLogger(ExecutionManager.class);
-
-  /**
-   * Optional GUI.
-   */
-  private GoalManagerGUI gui = null;
 
   /**
    * How often the memory pruning thread should execute pruning mechanism (in milliseconds).
@@ -143,12 +129,6 @@ public class ExecutionManager implements ActionListener {
   private final Set<Goal> pastGoals = Collections.synchronizedSet(new HashSet());
 
   /**
-   * A map of goal names to priority information (tier and value) to be used in ordering pendingGoals before execution.
-   * These are loaded from json files found in config.action.manager.priority
-   */
-  private Map<String, PriorityInfo> goalPriorities;
-
-  /**
    * Handles thread(s) that execute ActionInterpreters.
    */
   private final ExecutorService executor = Executors.newCachedThreadPool();
@@ -187,7 +167,7 @@ public class ExecutionManager implements ActionListener {
   public ExecutionManager() {
   }
 
-  protected void init(StateMachine sm, RootContext rootContext, String priorityFile, Collection<String> groups) {
+  protected void init(StateMachine sm, RootContext rootContext, Collection<String> groups) {
     this.sm = sm;
     this.rootContext = rootContext;
 
@@ -197,19 +177,10 @@ public class ExecutionManager implements ActionListener {
     actionLearning = new ActionLearning(sm, rootContext, false);
     actionLearning.registerWithTRADE(groups);
 
-    PerformanceAssessment.setExecutionManager(this, false);
-
     //TODO:brad: prune based on context size not time
     //start memory management thread to prune every N seconds
     if (useMemoryManager) {
       memoryManager.scheduleAtFixedRate(this::pruneOldData, pruneCycleTime, pruneCycleTime, TimeUnit.MILLISECONDS);
-    }
-
-    //Load goal priorities
-    String filepath = Resources.createFilepath("config/edu/tufts/hrilab/action/manager/priority", priorityFile);
-    if (!loadGoalPriorities(filepath)) {
-      goalPriorities = new HashMap<>();
-      goalPriorities.put("default", new PriorityInfo(1L, PriorityTier.NORMAL));
     }
 
     //Get agent/team hierarchy from belief
@@ -276,55 +247,19 @@ public class ExecutionManager implements ActionListener {
   }
 
   /**
-   * Attempts to load goal priority information defined in the provided json file. If any issues occur, priorities
-   * are reset to be equal for all goals.
-   *
-   * @param filepath the path to the file starting from config.action.manager.priority
-   * @return boolean indicating whether the priority information was loaded successfully or not
-   */
-  private boolean loadGoalPriorities(String filepath) {
-    Gson gson = new Gson();
-    BufferedReader reader;
-    try {
-      reader = new BufferedReader((new InputStreamReader(ExecutionManager.class.getResourceAsStream(filepath))));
-    } catch (NullPointerException ex) {
-      log.error("[loadGoalPriorities] Error loading file {}", filepath, ex);
-      return false;
-    }
-
-    try {
-      goalPriorities = gson.fromJson(reader, new TypeToken<Map<String, PriorityInfo>>() {
-      }.getType());
-    } catch (JsonSyntaxException e) {
-      log.error("[loadGoalPriorities] malformed json in file {}", filepath, e);
-      return false;
-    } catch (JsonIOException e) {
-      log.error("[loadGoalPriorities] unable to load json from file {}", filepath, e);
-      return false;
-    }
-
-    if (!goalPriorities.containsKey("default")) {
-      log.warn("[loadGoalPriorities] don't have 'default' entry, setting to 1");
-      goalPriorities.put("default", new PriorityInfo(1L, PriorityTier.NORMAL));
-    }
-    return true;
-  }
-
-  /**
    * @param instanceType ExecutionManager class or subclass to be used
    * @param sm           state machine for root context
    * @param rootContext  base context at the root of all execution
-   * @param priorityFile the path to the file starting from config.action.manager.priority containing goal priority information
    * @param groups DIARC group constraints used to register this EM and its class instances that are registered with TRADE (e.g., ActionLearning)
    * @return ExecutionManager instance
    */
-  static public ExecutionManager createInstance(Class<ExecutionManager> instanceType, StateMachine sm, RootContext rootContext, String priorityFile, Collection<String> groups) {
+  static public ExecutionManager createInstance(Class<ExecutionManager> instanceType, StateMachine sm, RootContext rootContext, Collection<String> groups) {
     ExecutionManager instance = null;
     try {
       Class[] cArgs = new Class[]{};
       Constructor<? extends ExecutionManager> c = instanceType.getDeclaredConstructor(cArgs);
       instance = c.newInstance();
-      instance.init(sm, rootContext, priorityFile, groups);
+      instance.init(sm, rootContext, groups);
     } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
       log.error("couldn't instantiate execution manager " + instanceType, exception);
     }
@@ -379,25 +314,6 @@ public class ExecutionManager implements ActionListener {
     return agentList;
   }
 
-  ////TODO: Extend definition of resources past just whole agents/teams
-  ///**
-  // * Returns the set of resources in the system not currently reserved towards
-  // * execution of already active goals
-  // */
-  //private Set<Resource> getAvailableResources() {
-  //  Set<Resource> availableResources = new HashSet<>();
-  //  synchronized (resourceLock) {
-  //    for (AgentTeam agentTeam : agentTeams.values()) {
-  //      for (Symbol resName: agentTeam.getResourceNames()) {
-  //        if (agentTeam.getResource(resName).isAvailable()) {
-  //          availableResources.add(agentTeam.getResource(resName));
-  //        }
-  //      }
-  //    }
-  //    return availableResources;
-  //  }
-  //}
-
   /**
    * Returns a boolean indicating whether any goal up to maxIndex in the pending
    * collection has a resource conflict with the supplied set.
@@ -412,7 +328,6 @@ public class ExecutionManager implements ActionListener {
         PendingGoal pg = pendingGoalsIterator.next();
         //If either goal execution would lock resources that need to be
         // available for the other to be executed, then there is a conflict
-        //TODO: Store resources in PendingGoal rather than recomputing each submission?
         if (getRequiredResourcesForGoal(pg.getGoal()).stream().anyMatch(requiredResources::contains)) {
           log.debug("[resourceConflictInPending] found conflicting goal in pending collection");
           return true;
@@ -657,124 +572,22 @@ public class ExecutionManager implements ActionListener {
   ////// End Subclass Overridable Methods //////
   //////////////////////////////////////////////
 
-  @TRADEService
-  @Action
-  public PriorityTier getPriorityTierForGoal(Predicate g) {
-    String goalName = g.getName();
-    if (goalPriorities.containsKey(goalName)) {
-      return goalPriorities.get(g.getName()).getPriorityTier();
-    } else {
-      return goalPriorities.get("default").getPriorityTier();
-    }
-  }
-
-  @TRADEService
-  @Action
-  public long getPriorityForGoal(Predicate g) {
-    String goalName = g.getName();
-    if (goalPriorities.containsKey(goalName)) {
-      return goalPriorities.get(g.getName()).getPriority();
-    } else {
-      return goalPriorities.get("default").getPriority();
-    }
-  }
-
-  //TODO: handle typing in action scripts better and/or refactor submitGoal method interfaces
-  @TRADEService
-  @Action
-  public long submitGoal(Predicate g, Symbol priorityTierSymbol) {
-    long priority = getPriorityForGoal(g);
-    PriorityTier priorityTier = PriorityTier.fromString(priorityTierSymbol.getName());
-    if (priorityTier == null || priorityTier == PriorityTier.UNINITIALIZED) {
-      priorityTier = getPriorityTierForGoal(g);
-    }
-
-    Goal goal = submitGoal(g, ExecutionType.ACT, priority, priorityTier);
-    if (goal != null) {
-      return goal.getId();
-    }
-    return -1;
-  }
-
   //TODO: Standing in as a TRADEService for removed submitGoalDirectly method.
   // Only currently used in ActionLearning ExecuteWhileLearning. Remove these
   // annotations when the action learning pipeline is updated.
-  @Deprecated
   @Action
   @TRADEService
   /**
-   * Calls {@link #submitGoal(Goal, ExecutionType, long, PriorityTier)} with the default values
-   */
-  public Goal submitGoal(Goal g) {
-    return submitGoal(g, ExecutionType.ACT);
-  }
-
-  /**
-   * Calls {@link #submitGoal(Goal, ExecutionType, long, PriorityTier)} with the default values
-   */
-  public Goal submitGoal(Predicate g) {
-    Goal goal = new Goal(g);
-    return submitGoal(goal, ExecutionType.ACT);
-  }
-
-  /**
-   * Calls {@link #submitGoal(Goal, ExecutionType, long, PriorityTier)} with the default values
-   */
-  public Goal submitGoal(Predicate g, ExecutionType executionType) {
-    Goal goal = new Goal(g);
-    return submitGoal(goal, executionType);
-  }
-
-  public Goal submitGoal(Predicate g, Predicate metric) {
-    Goal goal = new Goal(g);
-    goal.setMetric(metric);
-    return submitGoal(goal, ExecutionType.ACT);
-  }
-
-
-  /**
-   * Calls {@link #submitGoal(Goal, ExecutionType, long, PriorityTier)} with the default values
-   */
-  public Goal submitGoal(Goal g, ExecutionType execType) {
-    long priority = getPriorityForGoal(g.getPredicate());
-
-    return submitGoal(g, execType, priority);
-  }
-
-  /**
-   * Calls {@link #submitGoal(Goal, ExecutionType, long, PriorityTier)} with the default values
-   */
-  public Goal submitGoal(Predicate g, ExecutionType execType, long priority) {
-    Goal goal = new Goal(g);
-    return submitGoal(goal, execType, priority);
-  }
-
-  /**
-   * Calls {@link #submitGoal(Goal, ExecutionType, long, PriorityTier)} with the default values
-   */
-  public Goal submitGoal(Goal g, ExecutionType execType, long priority) {
-    PriorityTier priorityTier = getPriorityTierForGoal(g.getPredicate());
-
-    return submitGoal(g, execType, priority, priorityTier);
-  }
-
-  /**
-   * Calls {@link #submitGoal(Goal, ExecutionType, long, PriorityTier)} with the default values
-   */
-  public Goal submitGoal(Predicate g, ExecutionType execType, long priority, PriorityTier priorityTier) {
-    Goal goal = new Goal(g);
-    return submitGoal(goal, execType, priority, priorityTier);
-  }
-
-  /**
    * Submits the goal the execution manager using {@link #addPendingGoal(Goal, ExecutionType, long, PriorityTier)}.
-   * This goal will be added to the pool of goals under consideration by the execution manager
+   * This goal will be added to the pool of goals under consideration by the execution manager. When and if execution of
+   * the provided goal occurs is subject to the ExecutionManager implementation. Generally, higher priority goals will
+   * be executed first.
    *
    * @param g the goal to be added
    * @return The duplicate goal if present, otherwise the newly submitted goal
    */
-  public Goal submitGoal(Goal g, ExecutionType execType, long priority, PriorityTier priorityTier) {
-    log.info("[submitGoal] submitting goal {} with exec type {}, priority {}, tier {}", g, execType, priority, priorityTier);
+  public Goal submitGoal(Goal g, ExecutionType execType) {
+    log.info("[submitGoal] submitting goal {} with exec type {}, priority {}, tier {}", g, execType, g.getPriority(), g.getPriorityTier());
 
     Symbol untypedActor = getUntypedSymbol(g.getActor());
     if (getAgentTeam(untypedActor) == null) {
@@ -795,7 +608,7 @@ public class ExecutionManager implements ActionListener {
       return g;
     }
 
-    addPendingGoal(g, execType, priority, priorityTier);
+    addPendingGoal(new PendingGoal(g, execType));
     return g;
   }
 
@@ -1260,54 +1073,6 @@ public class ExecutionManager implements ActionListener {
   }
 
   /**
-   * Adds a pending goal with default priority. See {@link #addPendingGoal(Goal, ExecutionType, long, PriorityTier)}
-   */
-  protected void addPendingGoal(Goal g, ExecutionType execType) {
-    long priority;
-    String goalName = g.getPredicate().getName();
-    if (goalPriorities.containsKey(goalName)) {
-      priority = goalPriorities.get(g.getPredicate().getName()).getPriority();
-    } else {
-      priority = goalPriorities.get("default").getPriority();
-    }
-    addPendingGoal(g, execType, priority);
-
-  }
-
-  /**
-   * Adds a pending goal with default priority tier, but overridden value. See
-   * {@link #addPendingGoal(Goal, ExecutionType, long, PriorityTier)}
-   */
-  protected void addPendingGoal(Goal g, ExecutionType execType, long priority) {
-    PriorityTier priorityTier;
-    String goalName = g.getPredicate().getName();
-    if (goalPriorities.containsKey(goalName)) {
-      priorityTier = goalPriorities.get(g.getPredicate().getName()).getPriorityTier();
-    } else {
-      priorityTier = goalPriorities.get("default").getPriorityTier();
-    }
-    addPendingGoal(g, execType, priority, priorityTier);
-  }
-
-  /**
-   * Add the goal to the pool of goals being considered by this execution manager. When and if execution of the provided
-   * goal occurs is subject to the ExecutionManager implementation. Generally, higher priority goals will be executed
-   * first.
-   *
-   * @param g            the submitted goal
-   * @param execType     the execution type of the submitted goal
-   * @param priority     priority value of the provided goal
-   * @param priorityTier priority tier of the provided goal
-   */
-  protected void addPendingGoal(Goal g, ExecutionType execType, long priority, PriorityTier priorityTier) {
-    log.debug("[addPendingGoal] {}, {}, {}, {}", g, execType, priority, priorityTier);
-    g.setPriority(priority);
-    g.setPriorityTier(priorityTier);
-    PendingGoal pg = new PendingGoal(g, execType); //PendingGoal is primed to block on waitForNoLongerPending by default
-    addPendingGoal(pg);
-  }
-
-  /**
    * Remove the matching PendingGoal from the pending collection and notify of update
    */
   private PendingGoal removePendingGoal(Goal g) {
@@ -1408,6 +1173,29 @@ public class ExecutionManager implements ActionListener {
     // can now be executed immediately due to this goal being canceled.
     log.trace("[cancelPendingGoal] {} searching for lower priority which may have been unblocked", pg.getGoal());
     activateValidPendingGoals();
+  }
+
+  /**
+   * Remove a pending goal based on index before it is transferred to active
+   */
+  public boolean cancelPendingGoalByIndex(int index) {
+    log.info("[cancelPendingGoalByIndex] removing pending goal with index: " + index);
+    synchronized (pendingGoalsLock) {
+      if (index < pendingGoals.size()) {
+        Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.iterator();
+        int i = 0;
+        while (i < index) {
+          pendingGoalsIterator.next();
+          i++;
+        }
+        PendingGoal entry = pendingGoalsIterator.next();
+        cancelPendingGoal(entry);
+        return true;
+      }
+      log.warn("[cancelPendingGoalByIndex] Queue is of length: " + pendingGoals.size() + ", cannot remove goal with index: " + index);
+    }
+
+    return false;
   }
 
   /**
@@ -1524,7 +1312,7 @@ public class ExecutionManager implements ActionListener {
       synchronized (goalsLock) {
         log.trace("[getCurrentGoals] have goalsLock");
         currentGoals = getActiveGoals();
-        currentGoals.addAll(getPendingGoals().stream().map(PendingGoal::getGoal).collect(Collectors.toList()));
+        currentGoals.addAll(getPendingGoals());
       }
     }
     log.trace("[getCurrentGoals] released locks");
@@ -1560,10 +1348,10 @@ public class ExecutionManager implements ActionListener {
   /**
    * Get a copied list of the currently managed pending goals waiting to begin execution.
    *
-   * @return list of PendingGoals
+   * @return list of Goals
    */
-  public List<PendingGoal> getPendingGoals() {
-    return new ArrayList(pendingGoals);
+  public List<Goal> getPendingGoals() {
+    return pendingGoals.stream().map(PendingGoal::getGoal).toList();
   }
 
   /**
@@ -1573,6 +1361,126 @@ public class ExecutionManager implements ActionListener {
    */
   public List<Goal> getPastGoals() {
     return new ArrayList<>(pastGoals);
+  }
+
+  public void cancelAllPendingGoals() {
+    log.info("[cancelAllPendingGoals] in method");
+    synchronized (pendingGoalsLock) {
+      log.trace("[cancelAllPendingGoals] have pendingGoalsLock");
+      while (!pendingGoals.isEmpty()) {
+        int size = pendingGoals.size();
+        cancelPendingGoalByIndex(size-1);
+        if (pendingGoals.size() == size) {
+          log.error("[cancelPendingGoals] canceled goal which was not removed from the collection, exiting loop");
+          return;
+        }
+      }
+    }
+    log.trace("[cancelAllPendingGoals] released pendingGoalsLock");
+  }
+
+  public void cancelAllCurrentGoals() {
+    log.info("[cancelAllCurrentGoals] in method");
+    synchronized (goalsLock) {
+      log.trace("[cancelAllCurrentGoals] have goalsLock");
+      synchronized (pendingGoalsLock) {
+        log.trace("[cancelAllCurrentGoals] have pendingGoalsLock");
+        cancelAllPendingGoals();
+        cancelAllActiveGoals();
+      }
+    }
+    log.trace("[cancelAllCurrentGoals] released locks");
+  }
+
+  //TODO: do we want to make equivalent methods for all of these which ignores all persistent goals?
+  public void cancelAllActiveGoals() {
+    synchronized (goalsLock) {
+      Set<Goal> goalsToCancel = new HashSet<>();
+      for (Symbol agentTeam : agentTeams.keySet()) {
+        for (Goal g: agentTeams.get(agentTeam).getActiveGoals()) {
+          if (!g.getPredicate().getName().equals("listen")) {
+            goalsToCancel.add(g);
+          }
+        }
+      }
+      for (Goal g: goalsToCancel) {
+        cancelActiveGoal(g);
+      }
+    }
+  }
+
+  public List<Predicate> getPendingGoalsPredicates() {
+    log.trace("[getPendingGoalsPredicates] in method");
+    List<Predicate> goalPreds = new ArrayList<>();
+    synchronized (pendingGoalsLock) {
+      log.trace("[getPendingGoalsPredicates] have pendingGoalsLock");
+      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
+      while (pendingGoalIterator.hasNext()) {
+        PendingGoal pendingGoal = pendingGoalIterator.next();
+        goalPreds.add(pendingGoal.getGoal().getPredicate());
+      }
+    }
+    log.trace("[getPendingGoalsPredicates] released pendingGoalsLock");
+    return goalPreds;
+  }
+
+  public List<Predicate> getActiveGoalsPredicates() {
+    return getActiveGoalsPredicates(rootAgent);
+  }
+
+  public List<Predicate> getActiveGoalsPredicates(Symbol actor) {
+    log.trace("[getActiveGoalsPredicates] {}", actor);
+    return getActiveGoalsPredicatesHelper(getUntypedSymbol(actor), new ArrayList<>());
+  }
+
+  private List<Predicate> getActiveGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      return goalPreds;
+    }
+
+    for (Goal g: agentTeam.getActiveGoals()) {
+      goalPreds.add(Factory.createPredicate(g.getStatus().toString(), g.getPredicate()));
+    }
+
+    for (Symbol member: agentTeam.getMemberNames()) {
+      goalPreds.addAll(getActiveGoalsPredicates(member));
+    }
+
+    return goalPreds;
+  }
+
+  public Predicate getNextGoalPredicate() {
+    log.trace("[getNextGoalPredicate] in method");
+    synchronized (pendingGoalsLock) {
+      log.trace("[getNextGoalPredicate] have pendingGoalsLock");
+      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
+      if (pendingGoalIterator.hasNext()) {
+        log.trace("[getNextGoalPredicate] releasing pendingGoalsLock");
+        return pendingGoalIterator.next().getGoal().getPredicate();
+      } else {
+        log.trace("[getNextGoalPredicate] releasing pendingGoalsLock");
+        return Factory.createPredicate("none()");
+      }
+    }
+  }
+
+  public Predicate getNextGoalPredicate(Symbol agent) {
+    log.trace("[getNextGoalPredicate] {}", agent);
+    agent = getUntypedSymbol(agent);
+    synchronized (pendingGoalsLock) {
+      log.trace("[getNextGoalPredicate] {} have pendingGoalsLock", agent);
+      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
+      while (pendingGoalIterator.hasNext()) {
+        PendingGoal pg = pendingGoalIterator.next();
+        if (agent.equals(getUntypedSymbol(pg.getGoal().getActor()))) {
+          log.trace("[getNextGoalPredicate] {} releasing pendingGoalsLock", agent);
+          return pg.getGoal().getPredicate();
+        }
+      }
+    }
+    log.trace("[getNextGoalPredicate] {} releasing pendingGoalsLock", agent);
+    return Factory.createPredicate("none()");
   }
 
   /**
@@ -1718,8 +1626,6 @@ public class ExecutionManager implements ActionListener {
    *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
-  @Action
-  @TRADEService
   public List<Goal> getCurrentGoals(Goal queryGoal) {
     log.debug("[getCurrentGoals] {}", queryGoal);
     return getGoalHelper(getCurrentGoals(), queryGoal);
@@ -2087,13 +1993,6 @@ public class ExecutionManager implements ActionListener {
     log.info("...done pruning.");
   }
 
-  /**
-   * Display a GUI for this goal manager
-   */
-  public void showEditor(String path) {
-    gui = new GoalManagerGUI(this, path, new HashMap<>(), new HashSet<>());
-  }
-
   public StateMachine getStateMachine() {
     return sm;
   }
@@ -2115,9 +2014,9 @@ public class ExecutionManager implements ActionListener {
         log.trace("[shutdown] have goalsLock]");
         synchronized (resourceLock) {
           log.trace("[shutdown] have resourceLock]");
-          List<PendingGoal> pendingGoals = getPendingGoals();
-          for (PendingGoal g : pendingGoals) {
-            cancelGoal(g.getGoal().getId());
+          List<Goal> pendingGoals = getPendingGoals();
+          for (Goal g : pendingGoals) {
+            cancelGoal(g.getId());
           }
 
           List<Goal> goals = getActiveGoals();

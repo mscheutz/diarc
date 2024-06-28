@@ -4,7 +4,8 @@
 
 package edu.tufts.hrilab.action.gui;
 
-import edu.tufts.hrilab.action.manager.ExecutionManager;
+import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
@@ -70,7 +71,7 @@ public class GoalManagerGUI {
     private JTextField submitActionField;
     private JButton submitActionButton;
     private JLabel submitActionLabel;
-    private static ExecutionManager executionManager;
+    private static GoalManagerImpl goalManager;
     private String dir;
     private DatabaseViewer dbViewer;
     private GoalsViewer goalsViewer;
@@ -79,11 +80,11 @@ public class GoalManagerGUI {
     //FIXME: better way to handle agents for submitting goals, right now hardcoded to andy for fetch stuff
     private Symbol agent;
 
-    public GoalManagerGUI(ExecutionManager em, String path, Map<Goal, Future> goals, Set<Goal> pastGoals) {
-        executionManager = em;
+    public GoalManagerGUI(GoalManagerImpl gm, String path, Map<Goal, Future> goals, Set<Goal> pastGoals) {
+        goalManager = gm;
         dir = path;
-        goalsViewer = new GoalsViewer(em, goals, pastGoals);
-        dbViewer = new DatabaseViewer(em, path);
+        goalsViewer = new GoalsViewer(gm, goals, pastGoals);
+        dbViewer = new DatabaseViewer(gm, path);
         gmGUI = new JFrame("Goal Manager GUI");
         gmGUI.setContentPane(gmPanel);
         gmGUI.setVisible(true);
@@ -159,8 +160,8 @@ public class GoalManagerGUI {
                 super.mouseClicked(mouseEvent);
                 if (!submitGoalField.getText().isEmpty()) {
                     getAgent();
-                    executionManager.submitGoal(new Goal(agent,
-                        Factory.createPredicate(submitGoalField.getText())));
+                    goalManager.getExecutionManager().submitGoal(new Goal(agent,
+                        Factory.createPredicate(submitGoalField.getText())), ExecutionType.ACT);
                 }
             }
         });
@@ -169,8 +170,8 @@ public class GoalManagerGUI {
             public void actionPerformed(ActionEvent actionEvent) {
                 if (!submitGoalField.getText().isEmpty()) {
                     getAgent();
-                    executionManager.submitGoal(new Goal(agent,
-                        Factory.createPredicate(submitGoalField.getText())));
+                    goalManager.getExecutionManager().submitGoal(new Goal(agent,
+                        Factory.createPredicate(submitGoalField.getText())), ExecutionType.ACT);
                 }
             }
         });
@@ -180,7 +181,7 @@ public class GoalManagerGUI {
                 super.mouseClicked(mouseEvent);
                 if (!submitActionField.getText().isEmpty()) {
                     getAgent();
-                    executionManager.submitGoal(Factory.createPredicate(submitActionField.getText()));
+                    goalManager.submitGoal(Factory.createPredicate(submitActionField.getText()));
                 }
             }
         });
@@ -189,7 +190,7 @@ public class GoalManagerGUI {
             public void actionPerformed(ActionEvent actionEvent) {
                 if (!submitActionField.getText().isEmpty()) {
                     getAgent();
-                    executionManager.submitGoal(Factory.createPredicate(submitActionField.getText()));
+                    goalManager.submitGoal(Factory.createPredicate(submitActionField.getText()));
                 }
             }
         });
@@ -200,7 +201,7 @@ public class GoalManagerGUI {
                 if (!perfFileNameTxtField.getText().isEmpty()) {
                     getAgent();
                     String fn = perfFileNameTxtField.getText();
-                    executionManager.submitGoal(
+                    goalManager.submitGoal(
                         Factory.createPredicate("savePerformanceMeasures", agent.toString(), fn));
                 }
             }
@@ -210,7 +211,7 @@ public class GoalManagerGUI {
             public void mouseClicked(MouseEvent mouseEvent) {
                 super.mouseClicked(mouseEvent);
                 getAgent();
-                executionManager.submitGoal(Factory.createPredicate("goToPose", agent.toString(), "prepare"));
+                goalManager.submitGoal(Factory.createPredicate("goToPose", agent.toString(), "prepare"));
             }
         });
         ap_caddy.addMouseListener(new MouseAdapter() {
@@ -218,7 +219,7 @@ public class GoalManagerGUI {
             public void mouseClicked(MouseEvent mouseEvent) {
                 super.mouseClicked(mouseEvent);
                 getAgent();
-                executionManager.submitGoal(Factory.createPredicate("approach", agent.toString(), "location_0"));
+                goalManager.submitGoal(Factory.createPredicate("approach", agent.toString(), "location_0"));
             }
         });
         assembleButton.addMouseListener(new MouseAdapter() {
@@ -226,7 +227,7 @@ public class GoalManagerGUI {
             public void mouseClicked(MouseEvent mouseEvent) {
                 super.mouseClicked(mouseEvent);
                 getAgent();
-                executionManager.submitGoal(Factory.createPredicate("assemble", agent.toString(), "object_0"));
+                goalManager.submitGoal(Factory.createPredicate("assemble", agent.toString(), "object_0"));
             }
         });
         submitEstPerfButton.addMouseListener(new MouseAdapter() {
@@ -251,7 +252,7 @@ public class GoalManagerGUI {
                     modification = Factory.createPredicate("if", Factory.createPredicate(type, assessMod.getText())).toString();
                 }
                 getAgent();
-                executionManager.submitGoal(
+                goalManager.submitGoal(
                     Factory.createPredicate("estimatePerformanceMeasures",
                         agent.toString(),
                         estGoal.getText(),
@@ -267,7 +268,7 @@ public class GoalManagerGUI {
                 if (!suspendGoalField.getText().isEmpty()) {
                     getAgent();
                     String goal = suspendGoalField.getText();
-                    executionManager.submitGoal(
+                    goalManager.submitGoal(
                         Factory.createPredicate("suspendGoal", agent.toString(), goal));
                 }
             }
@@ -279,7 +280,7 @@ public class GoalManagerGUI {
                 if (!resumeGoalField.getText().isEmpty()) {
                     getAgent();
                     String goal = suspendGoalField.getText();
-                    executionManager.submitGoal(
+                    goalManager.submitGoal(
                         Factory.createPredicate("resumeGoal", agent.toString(), goal));
                 }
             }
@@ -290,7 +291,7 @@ public class GoalManagerGUI {
                 super.mouseClicked(mouseEvent);
                 if (!setStateTextField.getText().isEmpty()) {
                     getAgent();
-                    executionManager.submitGoal(
+                    goalManager.submitGoal(
                         Factory.createPredicate("setState", agent.toString(), setStateTextField.getText()));
                 }
             }
@@ -302,7 +303,7 @@ public class GoalManagerGUI {
                 if (!fetchObjField.getText().isEmpty()) {
                     getAgent();
                     String obj = fetchObjField.getText();
-                    executionManager.submitGoal(
+                    goalManager.submitGoal(
                         Factory.createPredicate("fetch", agent.toString(), "object_" + obj, "location_" + obj));
                 }
             }
@@ -313,7 +314,7 @@ public class GoalManagerGUI {
                 if (!fetchObjField.getText().isEmpty()) {
                     getAgent();
                     String obj = fetchObjField.getText();
-                    executionManager.submitGoal(
+                    goalManager.submitGoal(
                         Factory.createPredicate("fetch", agent.toString(), "object_" + obj, "location_" + obj));
                 }
             }

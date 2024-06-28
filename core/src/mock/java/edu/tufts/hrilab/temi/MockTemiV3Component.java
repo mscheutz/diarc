@@ -1072,9 +1072,9 @@ public class MockTemiV3Component extends DiarcComponent implements TemiV3Interfa
     @TRADEService
     public boolean skipsQueue(String funcName) {
         switch (funcName) {
-            case "cancelCurrentGoal":
+            case "cancelSystemGoal":
             case "cancelGoalInQueue":
-            case "cancelGoalInQueueIndex":
+            case "cancelPendingGoalByIndex":
             case "acknowledge":
             case "freeze":
             case "endFreeze":
