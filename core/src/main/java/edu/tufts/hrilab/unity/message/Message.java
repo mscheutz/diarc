@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.unity.message;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,7 +13,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import com.google.gson.Gson;
 import com.google.gson.annotations.Expose;
 
-public class Message {
+public class Message implements Serializable {
 
   private static Gson gson = new Gson();
 

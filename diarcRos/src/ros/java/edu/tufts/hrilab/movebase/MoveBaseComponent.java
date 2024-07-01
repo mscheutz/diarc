@@ -109,7 +109,7 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
       log.warn("Known locations written to a new file: knownLocations.json. Use this file in a MapComponent. The locations will not be used here!");
     }
 
-    base = new MoveBase(rc, mapFrame, baseFrame);
+    base = new MoveBase(rc, mapFrame, baseFrame, this.getMyGroups());
     amcl = new Amcl();
     amcl.waitForNode();
     moveTowardsEnabler = new MoveTowardsEnabler();
