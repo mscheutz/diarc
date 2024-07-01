@@ -71,7 +71,7 @@ public class UnityDIARCSpaceStationHybrid {
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.space_station.UnitySpaceStation.class, "-agent spacestation -groups agent:"  + agentName);
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityAgent.class, "-agent rover -groups agent:" + agentName);
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityPR2.class, "-agent robot1 -groups agent:"  + agentName );
+    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityPR2.class, "-agent " + agentName + " -groups agent:"  + agentName );
 
     DiarcComponent.createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, goalManagerArgs);
   }
