@@ -35,6 +35,7 @@ public class UnityDIARCSpaceStationSMM {
     List<String> largs = Arrays.asList(args);
     String unityIP = "127.0.0.1";
     String unityPort = "1755";
+    String agentName = "robot1";
 
     if (largs.contains("-unity")) {
       unityIP = largs.get(largs.indexOf("-unity") + 1);
@@ -48,6 +49,10 @@ public class UnityDIARCSpaceStationSMM {
       log.warn("No unity port provided, using default: " + unityPort);
     }
 
+    if (largs.contains("-agent")) {
+      agentName = largs.get(largs.indexOf("-agent") + 1);
+    }
+
     String goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(robot1:agent) -goal initializeTrial(robot2:agent) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
     if (largs.contains("--autonomy") || largs.contains("-a")) {
       goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(robot1:agent) -goal initializeTrial(robot2:agent) -goal startAutonomy(robot1:agent) -goal listen(self) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
@@ -56,8 +61,8 @@ public class UnityDIARCSpaceStationSMM {
     DiarcComponent.createInstance(TLDLParserComponent.class, "-dict pr2Unity.dict");
 
     DiarcComponent.createInstance(MapComponent.class, "-groups agent:robot1 agent:robot2 -refs refs/unity_space_station_tube_positions.json");
-    DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:robot1 -point_dist_thresh 0.5");
-    DiarcComponent.createInstance(TFComponent.class, " -groups agent:robot1");
+    DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:" + agentName + " -point_dist_thresh 0.5");
+    DiarcComponent.createInstance(TFComponent.class, " -groups agent:" + agentName);
 
     DiarcComponent.createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     DiarcComponent.createInstance(ReferenceResolutionComponent.class, "");
@@ -69,7 +74,7 @@ public class UnityDIARCSpaceStationSMM {
     DiarcComponent.createInstance(UnitySpaceStation.class, "-agent spacestation -groups agent:robot1 agent:robot2");
     DiarcComponent.createInstance(UnitySpaceStationLLM.class, "-groups agent:robot1 agent:robot2 -refs refs/unity_space_station_tube_positions.json");
     DiarcComponent.createInstance(UnityAgent.class, "-agent rover -groups agent:robot1 agent:robot2");
-    DiarcComponent.createInstance(UnityPR2.class, "-agent robot1 -groups agent:robot1");
+    DiarcComponent.createInstance(UnityPR2.class, "-agent " + agentName + " -groups agent:" + agentName);
 
     DiarcComponent.createInstance(GoalManagerImpl.class, goalManagerArgs);
   }

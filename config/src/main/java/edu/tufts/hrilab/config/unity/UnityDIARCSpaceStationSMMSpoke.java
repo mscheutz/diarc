@@ -33,10 +33,15 @@ public class UnityDIARCSpaceStationSMMSpoke {
 
     public static void main(String[] args) {
         List<String> largs = Arrays.asList(args);
+        String agentName = "robot2";
 
-        DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:robot2 -point_dist_thresh 0.5");
-        DiarcComponent.createInstance(TFComponent.class, " -groups agent:robot2");
+        if (largs.contains("-agent")) {
+            agentName = largs.get(largs.indexOf("-agent") + 1);
+        }
 
-        DiarcComponent.createInstance(UnityPR2.class, "-agent robot2 -groups agent:robot2");
+        DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:" + agentName + " -point_dist_thresh 0.5");
+        DiarcComponent.createInstance(TFComponent.class, " -groups agent:" + agentName);
+
+        DiarcComponent.createInstance(UnityPR2.class, "-agent " + agentName + " -groups agent:" + agentName);
     }
 }
