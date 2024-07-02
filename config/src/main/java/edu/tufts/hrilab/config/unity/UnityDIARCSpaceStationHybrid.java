@@ -61,7 +61,7 @@ public class UnityDIARCSpaceStationHybrid {
 
     //DiarcComponent.createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl pr2Unity.dict -llm spaceStationLLMParser -cacheName unity_space_station -cachePersist true -noConfirmation");
     DiarcComponent.createInstance(edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent.class, "-dict pr2Unity.dict");
-    
+
     DiarcComponent.createInstance(edu.tufts.hrilab.map.MapComponent.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
     DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:" + agentName + " -point_dist_thresh 0.5");
     DiarcComponent.createInstance(edu.tufts.hrilab.tf.TFComponent.class, " -groups agent:"  + agentName);
