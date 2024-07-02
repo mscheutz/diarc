@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
 public class SortingDemoMock extends DiarcConfiguration {
     protected static Logger log = LoggerFactory.getLogger(SortingDemoMock.class);
     public SimSpeechRecognitionComponent simspeech;
-    public CR800ComponentInterface assista;
-    public PLCComponentInterface plc;
+    public ai.thinkingrobots.mtracs.interfaces.CR800ComponentInterface assista;
+    public ai.thinkingrobots.mtracs.interfaces.PLCComponentInterface plc;
 
     public SortingDemoMock() {
 
@@ -27,8 +27,8 @@ public class SortingDemoMock extends DiarcConfiguration {
 
     @Override
     public void runConfiguration(){
-        assista = createInstance(ai.thinkingrobots.mtracs.MockCR800Component.class, "-config mtracs/assista.json");
-        plc = createInstance(ai.thinkingrobots.mtracs.MockPLCComponent.class);
+        assista = createInstance(ai.thinkingrobots.mtracs.mock.MockCR800Component.class, "-config mtracs/assista.json");
+        plc = createInstance(ai.thinkingrobots.mtracs.mock.MockPLCComponent.class);
         createInstance(MockScaleComponent.class);
 
         createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);

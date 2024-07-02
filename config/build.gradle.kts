@@ -58,6 +58,8 @@ dependencies {
 //    implementation(project(":vision"))
 //  }
 
+  testImplementation("ai.thinkingrobots:mtracs-mock:1.11")
+
   testImplementation("junit:junit:4.13.1") //TODO:figure out how to inherit this from the rootProject
   testImplementation("com.fasterxml.jackson.core:jackson-core:2.7.4")
   testImplementation("com.fasterxml.jackson.core:jackson-annotations:2.7.4")

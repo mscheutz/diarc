@@ -47,7 +47,7 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     addServiceToObserve("moveToCognexTarget", Symbol.class);
     addServiceToObserve("getDescriptorForID", Symbol.class);
     addServiceToObserve("sayText", String.class);
-    addServiceToObserve("goToPose", ai.thinkingrobots.mtracs.MPose.class);
+    addServiceToObserve("goToPose", ai.thinkingrobots.mtracs.util.MPose.class);
     tester.setTimeoutDuration(25, TimeUnit.SECONDS);
   }
 

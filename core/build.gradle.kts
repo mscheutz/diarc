@@ -22,7 +22,7 @@ tasks.named("compileJava").get().dependsOn("copyGitHooks")
 // the repositories used to search for dependencies
 repositories {
   mavenCentral()
-//  mavenLocal()
+  mavenLocal()
   maven {
     name = "HRILabArchiva"
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
@@ -250,6 +250,9 @@ dependencies {
   api("io.github.lambdaprime:jros2client:6.0")
   api("io.github.pinorobotics:jros2actionlib:2.0");
   api("io.github.pinorobotics:jros2tf2:1.0")
+
+  //mtracs mock for tests
+  testImplementation("ai.thinkingrobots:mtracs-mock:1.11")
 
 }
 
