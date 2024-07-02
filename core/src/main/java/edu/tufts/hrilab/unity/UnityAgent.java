@@ -89,7 +89,7 @@ public class UnityAgent extends DiarcComponent {
     String text = msg.arguments.get(1);
 
     Symbol speaker = Factory.createSymbol("commX");
-    Symbol listener = nullListener ? Factory.createSymbol("nobody") : Factory.createSymbol(this.agent);
+    Symbol listener = nullListener ? null: Factory.createSymbol(this.agent);
     Utterance utterance = new Utterance(speaker, listener, Arrays.asList(text.split(" ")), null, true);
     listen(utterance);
   }
