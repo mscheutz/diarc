@@ -32,8 +32,9 @@ public class UnityAgent extends DiarcComponent {
 	static private Logger log = LoggerFactory.getLogger(UnityAgent.class);
 	
 	public String agent = ""; //name of agent, must match Unity
-    public boolean isConnected = false;
-    private boolean nullListener = false;
+  public boolean isConnected = false;
+
+  private Symbol listener;
 
 	public UnityAgent() {
     super();
@@ -55,8 +56,10 @@ public class UnityAgent extends DiarcComponent {
     	log.error("Agent name is required to route messages from Unity");
     }
     if (cmdLine.hasOption("nullListener")) {
-      nullListener = true;
+      listener = Factory.createSymbol("null");
       log.debug("Agent " + agent + " is using a default null listener");
+    } else {
+      listener = Factory.createSymbol(this.agent);
     }
   }
 
@@ -87,9 +90,7 @@ public class UnityAgent extends DiarcComponent {
    */
   protected void listen (Message msg) {
     String text = msg.arguments.get(1);
-
-    Symbol speaker = Factory.createSymbol("commX");
-    Symbol listener = nullListener ? null: Factory.createSymbol(this.agent);
+    Symbol speaker = Factory.createSymbol(msg.arguments.get(0));
     Utterance utterance = new Utterance(speaker, listener, Arrays.asList(text.split(" ")), null, true);
     listen(utterance);
   }
