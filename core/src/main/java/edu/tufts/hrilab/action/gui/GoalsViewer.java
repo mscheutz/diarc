@@ -13,80 +13,69 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Future;
+import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class GoalsViewer extends JPanel {
     private static final Logger log = LoggerFactory.getLogger(GoalsViewer.class);
-    private JList currentGoalsList;
+    private JList activeGoalsList;
     private JPanel goalsViewerPanel;
     private JTabbedPane goalTabPane;
     private JList pastGoalsList;
     private JSplitPane goalsSplitPane;
     private JSplitPane goalsViewSplit;
     private ExecutionManager executionManager;
-    private Map<Goal, Future> currentGoalsMap;
-    private ArrayList<Goal> currentGoals;
-    private Set<Goal> pastGoalsSet;
-    private ArrayList<Goal> pastGoals;
-    private DefaultListModel currentGoalsModel;
+    private DefaultListModel activeGoalsModel;
     private DefaultListModel pastGoalsModel;
+    private final ScheduledExecutorService guiUpdateExecutor = Executors.newScheduledThreadPool(1);
 
-    GoalsViewer(ExecutionManager em, Map<Goal, Future> currentGoalsMap, Set<Goal> pastGoalsSet) {
-        this.currentGoalsMap = currentGoalsMap;
-        this.pastGoalsSet = pastGoalsSet;
+    GoalsViewer(ExecutionManager em) {
         executionManager = em;
-        currentGoalsModel = new DefaultListModel<>();
-        currentGoalsList.setModel(currentGoalsModel);
-        for (Goal goal : currentGoalsMap.keySet()) {
-            currentGoals.add(goal);
-            currentGoalsModel.addElement(goal.toString());
-        }
+        activeGoalsModel = new DefaultListModel<>();
+        activeGoalsList.setModel(activeGoalsModel);
         pastGoalsModel = new DefaultListModel<>();
         pastGoalsList.setModel(pastGoalsModel);
-        for (Goal goal : pastGoalsSet) {
-            pastGoals.add(goal);
-            pastGoalsModel.addElement(goal.toString());
-        }
 
-
-        currentGoals = new ArrayList<>();
         add(goalsViewerPanel);
-        currentGoalsList.setVisible(true);
-        setVisible(true);
+        activeGoalsList.setVisible(true);
+        pastGoalsList.setVisible(true);
+        this.setVisible(true);
         setupListeners();
+
+        guiUpdateExecutor.scheduleAtFixedRate(() -> {
+            try {
+                EventQueue.invokeAndWait(() -> updateGoals());
+            } catch (InterruptedException | InvocationTargetException e) {
+                log.error("Error updating BeliefGui.", e);
+            }
+        }, 0, 500, TimeUnit.MILLISECONDS);
     }
 
     public void updateGoals() {
-        currentGoalsModel.clear();
-        log.warn("updating goals");
-        currentGoals = new ArrayList<>();
-        for (Goal goal : currentGoalsMap.keySet()) {
-            //log.error(goal.toString());
-            currentGoals.add(goal);
-            currentGoalsModel.addElement(goal.toString());
+        activeGoalsModel.clear();
+        for (Goal goal : executionManager.getActiveGoals()) {
+            activeGoalsModel.addElement(goal);
         }
-        currentGoalsList.setVisible(true);
+        activeGoalsList.setVisible(true);
         pastGoalsModel.clear();
-        pastGoals = new ArrayList<>();
-        for (Goal goal : pastGoalsSet) {
-            //log.error(goal.toString());
-            pastGoals.add(goal);
-            pastGoalsModel.addElement(goal.toString());
+        for (Goal goal : executionManager.getPastGoals()) {
+            pastGoalsModel.addElement(goal);
         }
         pastGoalsList.setVisible(true);
     }
 
     private void setupListeners() {
-        currentGoalsList.addMouseListener(new MouseAdapter() {
+        activeGoalsList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
                 super.mouseClicked(mouseEvent);
                 JList list = (JList) mouseEvent.getSource();
                 int index = list.locationToIndex(mouseEvent.getPoint());
-                GoalInfo goalInfo = new GoalInfo(currentGoals.get(index));
+                GoalInfo goalInfo = new GoalInfo((Goal) activeGoalsModel.get(index));
+                goalTabPane.removeAll();
                 goalTabPane.add(goalInfo);
             }
         });
@@ -96,7 +85,8 @@ public class GoalsViewer extends JPanel {
                 super.mouseClicked(mouseEvent);
                 JList list = (JList) mouseEvent.getSource();
                 int index = list.locationToIndex(mouseEvent.getPoint());
-                GoalInfo goalInfo = new GoalInfo(pastGoals.get(index));
+                GoalInfo goalInfo = new GoalInfo((Goal) pastGoalsModel.get(index));
+                goalTabPane.removeAll();
                 goalTabPane.add(goalInfo);
             }
         });
@@ -152,8 +142,8 @@ public class GoalsViewer extends JPanel {
         splitPane1.setLeftComponent(label1);
         final JScrollPane scrollPane1 = new JScrollPane();
         splitPane1.setRightComponent(scrollPane1);
-        currentGoalsList = new JList();
-        scrollPane1.setViewportView(currentGoalsList);
+        activeGoalsList = new JList();
+        scrollPane1.setViewportView(activeGoalsList);
         final JSplitPane splitPane2 = new JSplitPane();
         splitPane2.setDividerSize(0);
         splitPane2.setOrientation(0);
