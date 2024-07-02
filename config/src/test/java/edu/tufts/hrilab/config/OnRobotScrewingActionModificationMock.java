@@ -4,8 +4,6 @@
 
 package edu.tufts.hrilab.config;
 
-import edu.tufts.hrilab.mtracs.CR800ComponentInterface;
-import edu.tufts.hrilab.mtracs.PLCComponentInterface;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
@@ -33,11 +31,11 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
     @Override
     public void runConfiguration() {
 
-        assista = DiarcComponent.createInstance(edu.tufts.hrilab.mtracs.MockCR800Component.class, "-config /config/edu/tufts/hrilab/mtracs/robotone.json -groups agent:robotone:agent");
-        rv4fr = DiarcComponent.createInstance(edu.tufts.hrilab.mtracs.MockCR800Component.class, "-config /config/edu/tufts/hrilab/mtracs/robottwo.json -groups agent:robottwo:agent");
-        DiarcComponent.createInstance(edu.tufts.hrilab.mtracs.MockOnRobotScrewingComponent.class, "-groups agent:robotone:agent");
-        DiarcComponent.createInstance(edu.tufts.hrilab.mtracs.MockOnRobotScrewingComponent.class, "-groups agent:robottwo:agent");
-        plc = DiarcComponent.createInstance(edu.tufts.hrilab.mtracs.MockPLCComponent.class, "-groups agent:robotone:agent agent:robottwo:agent");
+        assista = DiarcComponent.createInstance(ai.thinkingrobots.mtracs.MockCR800Component.class, "-config /config/edu/tufts/hrilab/mtracs/robotone.json -groups agent:robotone:agent");
+        rv4fr = DiarcComponent.createInstance(ai.thinkingrobots.mtracs.MockCR800Component.class, "-config /config/edu/tufts/hrilab/mtracs/robottwo.json -groups agent:robottwo:agent");
+        DiarcComponent.createInstance(ai.thinkingrobots.mtracs.MockOnRobotScrewingComponent.class, "-groups agent:robotone:agent");
+        DiarcComponent.createInstance(ai.thinkingrobots.mtracs.MockOnRobotScrewingComponent.class, "-groups agent:robottwo:agent");
+        plc = DiarcComponent.createInstance(ai.thinkingrobots.mtracs.MockPLCComponent.class, "-groups agent:robotone:agent agent:robottwo:agent");
 
         createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
         createInstance(TLDLParserComponent.class, "-dict poc4.dict -dict assemblyHomophones.dict ");

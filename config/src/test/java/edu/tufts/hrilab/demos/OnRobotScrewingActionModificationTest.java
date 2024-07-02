@@ -8,7 +8,6 @@ import edu.tufts.hrilab.config.OnRobotScrewingActionModificationMock;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.mtracs.util.MPose;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.slf4j.Logger;
@@ -48,7 +47,7 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     addServiceToObserve("moveToCognexTarget", Symbol.class);
     addServiceToObserve("getDescriptorForID", Symbol.class);
     addServiceToObserve("sayText", String.class);
-    addServiceToObserve("goToPose", MPose.class);
+    addServiceToObserve("goToPose", ai.thinkingrobots.mtracs.MPose.class);
     tester.setTimeoutDuration(25, TimeUnit.SECONDS);
   }
 

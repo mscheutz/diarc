@@ -54,7 +54,7 @@
     edu.tufts.hrilab.fol.Symbol !screwHeight = "86";
     edu.tufts.hrilab.fol.Symbol !default = "default";
 
-    edu.tufts.hrilab.mtracs.util.MPose !pose;
+    ai.thinkingrobots.mtracs.util.MPose !pose;
 
 //TODO:brad: what is this for? how should we handle it?
     edu.tufts.hrilab.fol.Predicate !fact;
@@ -65,15 +65,15 @@
     !cameraHeight = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cameraHeight(?actor,338)");
     act:assertBelief(!cameraHeight);
 
-    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", 510.00f, 0.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 510.00f, 0.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
     tsc:recordPose(!conveyor, !pose, !conveyorHeight);
     op:log(info, "Setup !conveyor for ?actor");
 
-    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", -10.00f, -400.00f, 200.00f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", -10.00f, -400.00f, 200.00f, 3.14159f, 0.0f, 3.14159f);
     tsc:recordPose(!workArea, !pose, !workHeight);
     op:log(info, "Setup !workArea for ?actor");
 
-    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", -217.00f, -450.56f, 200.0f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", -217.00f, -450.56f, 200.0f, 3.14159f, 0.0f, 3.14159f);
     tsc:recordPose(!screwFeeder, !pose, !screwHeight);
     op:log(info, "Setup !screwFeeder for ?actor");
 

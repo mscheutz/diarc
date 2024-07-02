@@ -82,7 +82,7 @@
     java.lang.Integer !i = 0;
     java.util.List !cameraResults;
     java.lang.String !jobName;
-    edu.tufts.hrilab.mtracs.util.CognexJob !job;
+    ai.thinkingrobots.mtracs.util.CognexJob !job;
 
     edu.tufts.hrilab.fol.Predicate !queryPred;
     java.util.List !bindings;
@@ -129,7 +129,7 @@
     tsc:moveXRelative(!backDist);
 }
 
-() = bindResultsRecursive["Recursively iterates through the given ?cameraResults and binds them to references"](edu.tufts.hrilab.mtracs.util.CognexJob ?job, java.util.List ?cameraResults, java.lang.Integer ?i) {
+() = bindResultsRecursive["Recursively iterates through the given ?cameraResults and binds them to references"](ai.thinkingrobots.mtracs.util.CognexJob ?job, java.util.List ?cameraResults, java.lang.Integer ?i) {
     java.util.List !additionalProps;
     edu.tufts.hrilab.fol.Predicate !leftPred;
     edu.tufts.hrilab.fol.Predicate !rightPred;
@@ -137,8 +137,8 @@
     java.lang.Integer !first = 0;
     java.lang.Integer !iCopy;
 
-    edu.tufts.hrilab.mtracs.util.CognexResult !result;
-    edu.tufts.hrilab.mtracs.consultant.vision.CognexReference !ref;
+    ai.thinkingrobots.mtracs.util.CognexResult !result;
+    ai.thinkingrobots.mtracs.consultant.vision.CognexReference !ref;
 
     if (op:isEmpty(?cameraResults)) {
         return;
@@ -174,9 +174,9 @@
 (edu.tufts.hrilab.fol.Symbol ?return) = getRefForJob["runs a job for the given ?descriptor and saves and returns the first result"](edu.tufts.hrilab.fol.Symbol ?descriptor) {
     java.util.List !cameraResults;
     java.lang.String !jobName;
-    edu.tufts.hrilab.mtracs.util.CognexJob !job;
-    edu.tufts.hrilab.mtracs.util.CognexResult !result;
-    edu.tufts.hrilab.mtracs.consultant.vision.CognexReference !ref;
+    ai.thinkingrobots.mtracs.util.CognexJob !job;
+    ai.thinkingrobots.mtracs.util.CognexResult !result;
+    ai.thinkingrobots.mtracs.consultant.vision.CognexReference !ref;
     java.util.List !additionalProps;
 
     (!job) = tsc:getCognexJobForDescriptor(?descriptor);
@@ -199,9 +199,9 @@
 () = perceiveEntityFromSymbol["runs a job for a given pre-existing ?refId and binds the relevant result to that reference"](edu.tufts.hrilab.fol.Symbol ?refId) {
     java.util.List !cameraResults;
     java.lang.String !jobName;
-    edu.tufts.hrilab.mtracs.util.CognexJob !job;
-    edu.tufts.hrilab.mtracs.util.CognexResult !result;
-    edu.tufts.hrilab.mtracs.consultant.vision.CognexReference !ref;
+    ai.thinkingrobots.mtracs.util.CognexJob !job;
+    ai.thinkingrobots.mtracs.util.CognexResult !result;
+    ai.thinkingrobots.mtracs.consultant.vision.CognexReference !ref;
 
     (!ref) = tsc:getCognexReferenceForID(?refId);
 
