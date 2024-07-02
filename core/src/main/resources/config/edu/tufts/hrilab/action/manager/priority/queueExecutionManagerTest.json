@@ -61,7 +61,19 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "updateActionLearning": {
+  "endActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "pauseActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelActionLearning": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

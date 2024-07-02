@@ -68,7 +68,7 @@ public class QueueExecutionManager extends ExecutionManager {
   }
 
   @Override
-  protected void handleConflictingLowerPriorityGoal(Goal g, Set<Resource> necessaryResources) {
+  protected void handleConflictingLowerPriorityGoal(Goal g) {
     //QueueEM: Simply leave in the pending queue rather than rejecting
   }
 
@@ -82,17 +82,51 @@ public class QueueExecutionManager extends ExecutionManager {
 
       //Iterate over all gathered agents and pool agent wide resources
       for (Symbol agent : getDescendants(goal.getActor())) {
-        //Until we have a better definition of resources per agentTeam, currently
-        // assuming any goal locks the whole agentTeam.
         //If the goal skips the queue, it has no resource dependencies.
-        // Otherwise, takes the agent-wide lock.
         if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
-          //resourceSet.add(agentTeams.get(agent).getResource(agent));
-          resourceSet.addAll(agentTeams.get(agent).getResources());
+          //If it is a learning goal, only requires the agent-wide lock to be available.
+          if (goal.isLearningGoal()) {
+            resourceSet.add(agentTeams.get(agent).getResource(agent));
+          }
+          //Otherwise it requires both the learning and agent-wide lock to be available
+          else {
+            resourceSet.addAll(agentTeams.get(agent).getResources());
+          }
         }
       }
       //Store required resources in goal to prevent constantly recomputing set
       goal.setRequiredResources(resourceSet);
+
+      return resourceSet;
+    }
+  }
+  @Override
+  protected Set<Resource> getHeldResourcesForGoal(Goal goal) {
+    if (goal.getHeldResources() != null) {
+      return goal.getHeldResources();
+    } else {
+      Set<Resource> resourceSet = new HashSet<>();
+
+      //Iterate over all gathered agents and pool agent wide resources
+      for (Symbol agent : getDescendants(goal.getActor())) {
+        //If the goal skips the queue, it holds no resources
+        if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
+          //Exception to the rule - action learning itself takes only the learning lock
+          if (goal.getPredicate().getName().equals("learnAction")) {
+            resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
+          }
+          //If it is a learning goal, takes just the agent-wide lock.
+          if (goal.isLearningGoal()) {
+            resourceSet.add(agentTeams.get(agent).getResource(agent));
+          }
+          //Otherwise it takes both the learning and agent-wide lock
+          else {
+            resourceSet.addAll(agentTeams.get(agent).getResources());
+          }
+        }
+      }
+      //Store required resources in goal to prevent constantly recomputing set
+      goal.setHeldResources(resourceSet);
 
       return resourceSet;
     }

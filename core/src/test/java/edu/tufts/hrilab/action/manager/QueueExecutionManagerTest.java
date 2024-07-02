@@ -112,6 +112,8 @@ public class QueueExecutionManagerTest {
       priorityTier = PriorityTier.SKIPPENDING;
     } else if (goalPred.getName().equals("cancelAllCurrentGoals")) {
       priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("endActionLearning")) {
+      priorityTier = PriorityTier.SKIPPENDING;
     }
     Goal g = new Goal(goalPred);
     g.setPriorityTier(priorityTier);
@@ -447,9 +449,9 @@ public class QueueExecutionManagerTest {
    */
   @Test
   public void testActionLearning() {
-    Predicate goalPred = Factory.createPredicate("updateActionLearning", "self:agent", "testAction()", "start");
+    Predicate goalPred = Factory.createPredicate("learnAction", "self:agent", "self:agent", "testAction()");
     Goal learningGoal = submitGoalAndWait(goalPred);
-    assertSame(learningGoal.getStatus(), GoalStatus.SUCCEEDED);
+    assertSame(learningGoal.getStatus(), GoalStatus.ACTIVE);
 
     goalPred = Factory.createPredicate("drive", "self:agent");
     Goal driveGoal = submitGoalAndWait(goalPred);
@@ -460,11 +462,12 @@ public class QueueExecutionManagerTest {
     em.joinOnGoal(lookGoal.getId());
     assertSame(lookGoal.getStatus(), GoalStatus.SUCCEEDED);
 
-    goalPred = Factory.createPredicate("updateActionLearning", "self:agent", "testAction()", "end");
+    goalPred = Factory.createPredicate("endActionLearning", "self:agent", "self:agent", "testAction()");
     Goal endLearningGoal = submitGoalAndWait(goalPred);
     em.joinOnGoal(endLearningGoal.getId());
     em.joinOnGoal(learningGoal.getId());
     assertSame(learningGoal.getStatus(), GoalStatus.SUCCEEDED);
+    assertSame(endLearningGoal.getStatus(), GoalStatus.SUCCEEDED);
 
     goalPred = Factory.createPredicate("testAction", "self:agent");
     Goal newActionGoal = submitGoalAndWait(goalPred);

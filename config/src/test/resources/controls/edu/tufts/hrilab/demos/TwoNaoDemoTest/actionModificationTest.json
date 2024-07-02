@@ -11,10 +11,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "updateActionLearning(dempster,doasquat(dempster),start)", "ACT", "SKIPPENDING", "1704824810652" ]
-    }, {
-      "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824810652", "SUCCEEDED" ]
+      "serviceArgs" : [ "learnAction(dempster,doasquat(dempster))", "ACT", "SKIPPENDING", "1704824810652" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -55,10 +52,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "updateActionLearning(dempster,doasquat(dempster),end)", "ACT", "SKIPPENDING", "1704824830664" ]
+      "serviceArgs" : [ "endActionLearning(dempster,doasquat(dempster))", "ACT", "SKIPPENDING", "1704824830664" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824830664", "SUCCEEDED" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "1704824810652", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -105,7 +105,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "modifyAction(dempster,doasquat(dempster),insert(lower(dempster,arms)),after(standUp(dempster)))", "ACT", "NORMAL", "1704824850659" ]
+      "serviceArgs" : [ "modifyAction(dempster,dempster,doasquat(dempster),insert(lower(dempster,arms)),after(standUp(dempster)))", "ACT", "NORMAL", "1704824850659" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824850659", "SUCCEEDED" ]

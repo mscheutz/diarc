@@ -14,7 +14,6 @@ import edu.tufts.hrilab.slug.parsing.cache.CachedParserComponent;
 import edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent;
 import edu.tufts.hrilab.slug.parsing.patternMatching.PatternMatchingParser;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
-import edu.tufts.hrilab.util.resource.Resources;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -282,4 +281,15 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
   }
 
+  @Override
+  protected void shutdownComponent() {
+    super.shutdownComponent();
+    if (useTLDL) {
+      try {
+        ((TLDLParserComponent)tldlParser).deregisterDictionary();
+      } catch (Exception e) {
+        log.error("[TLDLParserComponent] exception deregistering dictionary", e);
+      }
+    }
+  }
 }

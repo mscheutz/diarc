@@ -31,10 +31,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "updateActionLearning(dempster,dance(dempster,shafer),start)", "ACT", "SKIPPENDING", "1704824923038" ]
-    }, {
-      "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824923038", "SUCCEEDED" ]
+      "serviceArgs" : [ "learnAction(dempster,dance(dempster,shafer))", "ACT", "SKIPPENDING", "1704824923038" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -86,10 +83,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "updateActionLearning(dempster,dance(dempster,shafer),end)", "ACT", "SKIPPENDING", "1704824948078" ]
+      "serviceArgs" : [ "endActionLearning(dempster,dance(dempster,shafer))", "ACT", "SKIPPENDING", "1704824948078" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824948078", "SUCCEEDED" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "1704824923038", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {

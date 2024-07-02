@@ -132,8 +132,8 @@ import java.lang.Integer;
 () = defineItem[""](edu.tufts.hrilab.fol.Symbol ?itemName){
     //TODO: implement methods that actually clean up various learning processes correctly
     onInterrupt :{
-        suspend: tsc:updateActionLearning(!scriptID,!pauseSymbol);
-        resume: tsc:updateActionLearning(!scriptID,!resumeSymbol);
+        suspend: tsc:pauseActionLearning(?actor,!scriptID);
+        resume: tsc:resumeActionLearning(?actor,!scriptID);
     }
 
     java.lang.Integer !i =0;
@@ -177,17 +177,20 @@ import java.lang.Integer;
 
     !scriptID =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !signatureName,!signatureArgs);
 
-    act:updateActionLearning(!scriptID,!startSymbol);
+    async {
+        act:learnAction(?actor,!scriptID);
+    }
+    act:waitForActionLearningStart(?actor,!scriptID);
     !bindings = act:askQuestionFromString(?actor,"Okay. How do I prepare a ?itemName ?",!endQuery);
 
     //generate new signature that is unique to model name
     op:log(warn, "[defineItem] ending learning for: !scriptID");
-    act:updateActionLearning(!scriptID,!endSymbol);
+    act:endActionLearning(?actor,!scriptID);
 
     !responsePredicate=op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "isComplete",?itemName);
     !tmpPredicate=op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "generateResponse",?actor,!responsePredicate);
     !tmpPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "insert",!tmpPredicate);
-    act:modifyAction(!scriptID, !tmpPredicate,!location );
+    act:modifyAction(?actor,!scriptID, !tmpPredicate,!location );
 
     act:invalidateReference(!itemRefId);
 
@@ -238,7 +241,7 @@ import java.lang.Integer;
   !modification = op:get(!bindings, !x);
   !location = op:get(!bindings, !y);
   op:log(debug, "modification !modification location !location");
-  act:modifyAction(!likeGoal,!modification,!location);
+  act:modifyAction(?actor,!likeGoal,!modification,!location);
 
   !bindings = act:askQuestionFromString(!speaker,"okay. are there any more differences?", mod(X,Y));
   !modification = op:get(!bindings, !x);
@@ -246,7 +249,7 @@ import java.lang.Integer;
   !modName = op:getName(!modification);
   while(op:!=(!modName,"none")){
     op:log(debug, "modification !modification location !location");
-    act:modifyAction(!newScriptGoal,!modification,!location);
+    act:modifyAction(?actor,!newScriptGoal,!modification,!location);
     !bindings = act:askQuestionFromString(!speaker,"okay. are there any more differences?", mod(X,Y));
     !modification = op:get(!bindings, !x);
     !location = op:get(!bindings, !y);
@@ -262,7 +265,7 @@ import java.lang.Integer;
   //replace(newStep,oldStep)
   !modification =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","replace", !newResponse,!oldResponse);
   !location= op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate", "none()");
-  act:modifyAction(!newScriptGoal,!modification,!location);
+  act:modifyAction(?actor,!newScriptGoal,!modification,!location);
 
   act:generateResponseFromString("okay");
 }

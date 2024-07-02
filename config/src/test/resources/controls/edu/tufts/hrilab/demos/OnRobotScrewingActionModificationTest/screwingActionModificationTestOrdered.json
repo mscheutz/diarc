@@ -6,7 +6,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "init(robotone:agent)", "ACT", "NORMAL", "1706549302308" ]
+      "serviceArgs" : [ "init(robotone:agent)", "ACT", "NORMAL", "3" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "objectDefinition(nf32sv,0.055,0.0)", "null" ]
@@ -56,7 +56,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "defineScrewType(robotone:agent,deepM3)", "ACT", "NORMAL", "1706549327024" ]
+      "serviceArgs" : [ "defineScrewType(robotone:agent,deepM3)", "ACT", "NORMAL", "6" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "what is its screwing length", "true" ]
@@ -85,7 +85,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "defineItem(robotone:agent,nv30fau)", "ACT", "NORMAL", "1706549427070" ]
+      "serviceArgs" : [ "defineItem(robotone:agent,nv30fau)", "ACT", "NORMAL", "15" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "which Cognex job is used to detect it", "true" ]
@@ -101,7 +101,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "startLearningAssembleScript(robotone:agent,robotonephysobj_0:physobj)", "ACT", "NORMAL", "1706549477120" ]
+      "serviceArgs" : [ "startLearningAssembleScript(robotone:agent,robotonephysobj_0:physobj)", "ACT", "NORMAL", "20" ]
     }, {
       "serviceName" : "getDescriptorForID",
       "serviceArgs" : [ "robotonephysobj_0:physobj", "nv30fau" ]
@@ -115,7 +115,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "goToCameraPose(robotone:agent,pose_0:pose)", "ACT", "NORMAL", "1706549502112" ]
+      "serviceArgs" : [ "goToCameraPose(robotone:agent,pose_0:pose)", "ACT", "NORMAL", "25" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -123,7 +123,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "perceiveEntity(robotone:agent,robotonephysobj_0:physobj)", "ACT", "NORMAL", "1706549527120" ]
+      "serviceArgs" : [ "perceiveEntity(robotone:agent,robotonephysobj_0:physobj)", "ACT", "NORMAL", "28" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -131,7 +131,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "getOn(robotone:agent,robotonephysobj_0:physobj,pose_1:pose)", "ACT", "NORMAL", "1706549552144" ]
+      "serviceArgs" : [ "getOn(robotone:agent,robotonephysobj_0:physobj,pose_1:pose)", "ACT", "NORMAL", "31" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -139,7 +139,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "observeDescriptor(robotone:agent,deepM3Hole,2)", "ACT", "NORMAL", "1706549577146" ]
+      "serviceArgs" : [ "observeDescriptor(robotone:agent,deepM3Hole,2)", "ACT", "NORMAL", "34" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -147,7 +147,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "screwIn(robotone:agent,deepM3,robotonephysobj_1:physobj)", "ACT", "NORMAL", "1706549602178" ]
+      "serviceArgs" : [ "screwIn(robotone:agent,deepM3,robotonephysobj_1:physobj)", "ACT", "NORMAL", "37" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -155,7 +155,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "goToCameraPose(robotone:agent,pose_1:pose)", "ACT", "NORMAL", "1706549627195" ]
+      "serviceArgs" : [ "goToCameraPose(robotone:agent,pose_1:pose)", "ACT", "NORMAL", "40" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -163,7 +163,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "screwIn(robotone:agent,deepM3,robotonephysobj_2:physobj)", "ACT", "NORMAL", "1706549652225" ]
+      "serviceArgs" : [ "screwIn(robotone:agent,deepM3,robotonephysobj_2:physobj)", "ACT", "NORMAL", "43" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -171,7 +171,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "getOn(robotone:agent,robotonephysobj_0:physobj,pose_0:pose)", "ACT", "NORMAL", "1706549677025" ]
+      "serviceArgs" : [ "getOn(robotone:agent,robotonephysobj_0:physobj,pose_0:pose)", "ACT", "NORMAL", "46" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -179,7 +179,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "moveConveyorForward(robotone:agent)", "ACT", "NORMAL", "1706549702024" ]
+      "serviceArgs" : [ "moveConveyorForward(robotone:agent)", "ACT", "NORMAL", "49" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -187,7 +187,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "endLearningAssembleScript(robotone:agent,robotonephysobj_0:physobj)", "ACT", "NORMAL", "1706549727042" ]
+      "serviceArgs" : [ "endLearningAssembleScript(robotone:agent,robotonephysobj_0:physobj)", "ACT", "NORMAL", "52" ]
     }, {
       "serviceName" : "getDescriptorForID",
       "serviceArgs" : [ "robotonephysobj_0:physobj", "nv30fau" ]
@@ -198,13 +198,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "assemble(robotone:agent,robotonephysobj_0:physobj)", "ACT", "NORMAL", "1706549752063" ]
+      "serviceArgs" : [ "assemble(robotone:agent,robotonephysobj_0:physobj)", "ACT", "NORMAL", "55" ]
     }, {
       "serviceName" : "getDescriptorForID",
       "serviceArgs" : [ "robotonephysobj_0:physobj", "nv30fau" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "assemblenv30fau(robotone:agent,robotonephysobj_0:physobj)", "ACT", "NORMAL", "1706549752072" ]
+      "serviceArgs" : [ "assemblenv30fau(robotone:agent,robotonephysobj_0:physobj)", "56" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
@@ -347,13 +347,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "assemble(robottwo:agent,robottwophysobj_0:physobj)", "ACT", "NORMAL", "1706549777078" ]
+      "serviceArgs" : [ "assemble(robottwo:agent,robottwophysobj_0:physobj)", "ACT", "NORMAL", "115" ]
     }, {
       "serviceName" : "getDescriptorForID",
       "serviceArgs" : [ "robottwophysobj_0:physobj", "nv30fau" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "assemblenv30fau(robottwo:agent,robottwophysobj_0:physobj)", "ACT", "NORMAL", "1706549777086" ]
+      "serviceArgs" : [ "assemblenv30fau(robottwo:agent,robottwophysobj_0:physobj)", "116" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
@@ -496,7 +496,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "defineScrewType(robottwo:agent,m3)", "ACT", "NORMAL", "1706549802073" ]
+      "serviceArgs" : [ "defineScrewType(robottwo:agent,m3)", "ACT", "NORMAL", "175" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "what is its screwing length", "true" ]
@@ -525,7 +525,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "defineItem(robottwo:agent,nf32sv)", "ACT", "NORMAL", "1706549902131" ]
+      "serviceArgs" : [ "defineItem(robottwo:agent,nf32sv)", "ACT", "NORMAL", "184" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "which Cognex job is used to detect it", "true" ]
@@ -541,7 +541,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "modifyAssemble(robottwo:agent,assemble(robottwo:agent,robottwophysobj_5:physobj),assemble(robottwo:agent,robottwophysobj_6:physobj))", "ACT", "NORMAL", "1706549952180" ]
+      "serviceArgs" : [ "modifyAssemble(robottwo:agent,assemble(robottwo:agent,robottwophysobj_5:physobj),assemble(robottwo:agent,robottwophysobj_6:physobj))", "ACT", "NORMAL", "189" ]
     }, {
       "serviceName" : "getDescriptorForID",
       "serviceArgs" : [ "robottwophysobj_5:physobj", "nf32sv" ]
@@ -578,13 +578,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "assemble(robotone:agent,robotonephysobj_7:physobj)", "ACT", "NORMAL", "1706550077058" ]
+      "serviceArgs" : [ "assemble(robotone:agent,robotonephysobj_7:physobj)", "ACT", "NORMAL", "200" ]
     }, {
       "serviceName" : "getDescriptorForID",
       "serviceArgs" : [ "robotonephysobj_7:physobj", "nf32sv" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "assemblenf32sv(robotone:agent,robotonephysobj_7:physobj)", "ACT", "NORMAL", "1706550077060" ]
+      "serviceArgs" : [ "assemblenf32sv(robotone:agent,robotonephysobj_7:physobj)", "201" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
@@ -727,13 +727,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "assemble(robottwo:agent,robottwophysobj_5:physobj)", "ACT", "NORMAL", "1706550102089" ]
+      "serviceArgs" : [ "assemble(robottwo:agent,robottwophysobj_5:physobj)", "ACT", "NORMAL", "260" ]
     }, {
       "serviceName" : "getDescriptorForID",
       "serviceArgs" : [ "robottwophysobj_5:physobj", "nf32sv" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "assemblenf32sv(robottwo:agent,robottwophysobj_5:physobj)", "ACT", "NORMAL", "1706550102092" ]
+      "serviceArgs" : [ "assemblenf32sv(robottwo:agent,robottwophysobj_5:physobj)", "261" ]
     }, {
       "serviceName" : "goToPose",
       "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.05, x=510.0, y=0.0, z=200.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]

@@ -50,7 +50,7 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     addServiceToObserve("getDescriptorForID", Symbol.class);
     addServiceToObserve("sayText", String.class);
     addServiceToObserve("goToPose", MPose.class);
-    tester.setTimeoutDuration(25, TimeUnit.SECONDS);
+    tester.setTimeoutDuration(5, TimeUnit.SECONDS);
   }
 
   //This wrapper exists so that the generator can appropriately catch input

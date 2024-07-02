@@ -4,8 +4,6 @@
 
 package edu.tufts.hrilab.demos;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.config.YumiFoodOrderingMock;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
@@ -13,7 +11,6 @@ import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -58,6 +55,8 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
       Thread.sleep(2000);
     } catch (InterruptedException ignored) {
     }
+
+    diarcConfig.gm.cancelAllCurrentGoals();
 
     log.debug("[cleanup] started");
     log.debug("[shutdownConfig] tester shutdown");
@@ -247,6 +246,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     evaluateResults();
   }
 
+  //TODO: references not properly cleaned up between tests?
   //Off scripts tests for robustness and/or desired functionality
   //TODO: Need to create methods to do and then actually correctly test that defineItem, defineItemByAnalogy, and defineIngredient
   //  (and all internal methods with side effects - positReference, addDetectionType, defineIngredientHelper, ...) can be

@@ -904,13 +904,13 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("execute while learning",
-                "INSTRUCT(brad,andy,changeLearningExecution(andy,execute),{})",
+                "INSTRUCT(brad,andy,changeLearningExecution(andy,andy,execute),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("when you do a squat make sure you lower your arms after you stand up",
-                "INSTRUCT(brad,andy,modifyAction(andy,doasquat(andy),insert(lower(andy,arms)),after(standUp(andy))),{})",
+                "INSTRUCT(brad,andy,modifyAction(andy,andy,doasquat(andy),insert(lower(andy,arms)),after(standUp(andy))),{})",
                 "brad",
                 "self"
         ));
@@ -923,55 +923,55 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("when you do a squat make sure you nod after you stand up",
-                "INSTRUCT(brad,andy,modifyAction(andy,doasquat(andy),insert(nod(andy)),after(standUp(andy))),{})",
+                "INSTRUCT(brad,andy,modifyAction(andy,andy,doasquat(andy),insert(nod(andy)),after(standUp(andy))),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("when you do a squat make sure you nod after you crouch",
-                "INSTRUCT(brad,andy,modifyAction(andy,doasquat(andy),insert(nod(andy)),after(crouch(andy))),{})",
+                "INSTRUCT(brad,andy,modifyAction(andy,andy,doasquat(andy),insert(nod(andy)),after(crouch(andy))),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("when you walk forward make sure you turn right after turn left",
-                "INSTRUCT(brad,andy,modifyAction(andy,move(andy,forward),insert(turn(andy,right)),after(turn(andy,left))),{})",
+                "INSTRUCT(brad,andy,modifyAction(andy,andy,move(andy,forward),insert(turn(andy,right)),after(turn(andy,left))),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("when you walk forward make sure you turn right after you turn left",
-                "INSTRUCT(brad,andy,modifyAction(andy,move(andy,forward),insert(turn(andy,right)),after(turn(andy,left))),{})",
+                "INSTRUCT(brad,andy,modifyAction(andy,andy,move(andy,forward),insert(turn(andy,right)),after(turn(andy,left))),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("when you nod make sure you nod after you look down",
-                "INSTRUCT(brad,andy,modifyAction(andy,nod(andy),insert(nod(andy)),after(look(andy,down))),{})",
+                "INSTRUCT(brad,andy,modifyAction(andy,andy,nod(andy),insert(nod(andy)),after(look(andy,down))),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("when you walk forward don't turn right after you turn left",
-                "INSTRUCT(brad,andy,modifyAction(andy,move(andy,forward),remove(turn(andy,right)),after(turn(andy,left))),{})",
+                "INSTRUCT(brad,andy,modifyAction(andy,andy,move(andy,forward),remove(turn(andy,right)),after(turn(andy,left))),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("when you nod don't crouch down after you crouch down",
-                "INSTRUCT(brad,andy,modifyAction(andy,nod(andy),remove(crouchDown(andy)),after(crouchDown(andy))),{})",
+                "INSTRUCT(brad,andy,modifyAction(andy,andy,nod(andy),remove(crouchDown(andy)),after(crouchDown(andy))),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("when you nod replace turn right with look down",
-                "INSTRUCT(brad,andy,modifyAction(andy,nod(andy),replace(with(look(andy,down),turn(andy,right))),none()),{})",
+                "INSTRUCT(brad,andy,modifyAction(andy,andy,nod(andy),replace(with(look(andy,down),turn(andy,right))),none()),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("when you nod replace turn right with look down after stand up",
-                "INSTRUCT(brad,andy,modifyAction(andy,nod(andy),replace(with(look(andy,down),turn(andy,right))),after(standUp(andy))),{})",
+                "INSTRUCT(brad,andy,modifyAction(andy,andy,nod(andy),replace(with(look(andy,down),turn(andy,right))),after(standUp(andy))),{})",
                 "brad",
                 "self"
         ));
@@ -2214,7 +2214,7 @@ public class TLDLParserComponentTest {
                 "self"
         ));
         assertTrue(testUtterance("When you pour nuts from the red jar into the purple jar make sure the red jar is open before you get above the purple jar",
-                "INSTRUCT(brad,self,modifyAction(self,pour(self,nuts,VAR0:physobj,VAR1:physobj),insert(isopen(VAR2:physobj)),before(sti(self,above(VAR3:physobj)))),{jar(VAR0:physobj),red(VAR0:physobj),jar(VAR1:physobj),purple(VAR1:physobj),jar(VAR2:physobj),red(VAR2:physobj),jar(VAR3:physobj),purple(VAR3:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj),DEFINITE(VAR2:physobj),DEFINITE(VAR3:physobj)})",
+                "INSTRUCT(brad,self,modifyAction(self,self,pour(self,nuts,VAR0:physobj,VAR1:physobj),insert(isopen(VAR2:physobj)),before(sti(self,above(VAR3:physobj)))),{jar(VAR0:physobj),red(VAR0:physobj),jar(VAR1:physobj),purple(VAR1:physobj),jar(VAR2:physobj),red(VAR2:physobj),jar(VAR3:physobj),purple(VAR3:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj),DEFINITE(VAR2:physobj),DEFINITE(VAR3:physobj)})",
                 "brad",
                 "self"
         ));

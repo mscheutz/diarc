@@ -30,10 +30,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "updateActionLearning(dempster:agent,nod(dempster:agent),start)", "ACT", "SKIPPENDING", "1706196362905" ]
-    }, {
-      "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1706196362905", "SUCCEEDED" ]
+      "serviceArgs" : [ "learnAction(dempster:agent,dempster:agent,nod(dempster:agent))", "ACT", "SKIPPENDING", "1706196362905" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -41,7 +38,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "changeLearningExecution(dempster:agent,execute)", "ACT", "SKIPPENDING", "1706196367905" ]
+      "serviceArgs" : [ "changeLearningExecution(dempster:agent,dempster:agent,execute)", "ACT", "SKIPPENDING", "1706196367905" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196367905", "SUCCEEDED" ]
@@ -53,10 +50,7 @@
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "look(dempster:agent,up)", "ACT", "NORMAL", "1706196372905" ]
-    }, {
-      "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1706196372905", "SUCCEEDED" ]
-    }, {
+    },{
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196372905", "SUCCEEDED" ]
     } ]
@@ -67,9 +61,6 @@
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "look(dempster:agent,down)", "ACT", "NORMAL", "1706196377904" ]
-    }, {
-      "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1706196377904", "SUCCEEDED" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196377904", "SUCCEEDED" ]
@@ -84,9 +75,6 @@
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196382901", "SUCCEEDED" ]
-    }, {
-      "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1706196382901", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -98,9 +86,6 @@
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196387903", "SUCCEEDED" ]
-    }, {
-      "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1706196387903", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -108,10 +93,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "updateActionLearning(dempster:agent,nod(dempster:agent),end)", "ACT", "NORMAL", "1706196392906" ]
+      "serviceArgs" : [ "endActionLearning(dempster:agent,dempster:agent,nod(dempster:agent))", "ACT", "NORMAL", "1706196392906" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196392906", "SUCCEEDED" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "1706196362905", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
