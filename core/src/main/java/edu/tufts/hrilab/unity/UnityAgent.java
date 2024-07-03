@@ -91,8 +91,12 @@ public class UnityAgent extends DiarcComponent {
   protected void listen (Message msg) {
     String text = msg.arguments.get(1);
     Symbol speaker = Factory.createSymbol(msg.arguments.get(0));
-    Utterance utterance = new Utterance(speaker, listener, Arrays.asList(text.split(" ")), null, true);
-    listen(utterance);
+    Utterance.Builder utterance = new Utterance.Builder()
+      .setWords(Arrays.asList(text.split(" ")))
+      .setSpeaker(speaker)
+      .addListener(listener)
+      .setIsInputUtterance(true);
+    listen(utterance.build());
   }
 
   protected void listen (Utterance input) {
