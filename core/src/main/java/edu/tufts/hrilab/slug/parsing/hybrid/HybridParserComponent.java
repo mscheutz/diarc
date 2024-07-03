@@ -7,7 +7,10 @@ package edu.tufts.hrilab.slug.parsing.hybrid;
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
@@ -18,6 +21,7 @@ import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.fol.util.Utilities;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -189,6 +193,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     Utterance pmpOutput = null;
     Utterance tldlOutput = null;
     Utterance llmOutput = null;
+    Symbol semantics = null;
 
     //Check cache first
     if (cachedFuture != null) {
@@ -200,6 +205,12 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
       if (cachedOutput != null && cachedOutput.getSemantics() != null) {
         log.debug("Using cached parser response");
+        if (cachedOutput.getAddressee() == null) {
+          cachedOutput.setListener(Factory.createSymbol("unknown"));
+        }
+        if (addresseeMap.containsKey(incoming.getSpeaker())) {
+          cachedOutput.setListener(addresseeMap.get(incoming.getSpeaker()));
+        }
         return cachedOutput;
       }
     }
@@ -254,6 +265,23 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
           output.setNeedsValidation(true);
         }
       }
+    }
+
+    if (output.getAddressee() == null) {
+      output.setListener(Factory.createSymbol("unknown"));
+    }
+
+    semantics = output.getSemantics();
+
+    if (semantics.isTerm()) {
+      if (semantics.getName().equals("directAddress")) {
+        addresseeMap.put(incoming.getSpeaker(), output.getAddressee());
+      }
+    }
+
+    if (addresseeMap.containsKey(incoming.getSpeaker())) {
+      output.setListener(addresseeMap.get(incoming.getSpeaker()));
+      log.debug("Set speaker " + incoming.getSpeaker().toString() + " to address " + output.getAddressee().toString());
     }
 
     return output;

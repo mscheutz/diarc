@@ -354,6 +354,25 @@ public final class Utterance implements Serializable {
   }
 
   /**
+   * Set a listener of the utterance.
+   *
+   * @param listener
+   */
+  public void setListener (Symbol listener) {
+    listeners.clear();
+    listeners.add(listener);
+  }
+
+  /**
+   * Add a listener to the utterance.
+   *
+   * @param listener
+   */
+  public void addListener(Symbol listener) {
+    listeners.add(listener);
+  }
+
+  /**
    * Get semantic meaning of utterance.
    *
    * @return
