@@ -189,25 +189,12 @@ public class AvailableDetectors {
 
   private void parseDetectorFileJson(String detectorConfigFile, DetectorType detectorType) throws FileNotFoundException {
     Predicate advertisement;
-    String predicateType;
-    int arity;
     String predicateName;
 
     JsonParser parser = new JsonParser();
     JsonObject root = parser.parse(new FileReader(detectorConfigFile)).getAsJsonObject();
-    predicateType = root.getAsJsonObject("processor").get("type").getAsString();
-    arity = root.getAsJsonObject("processor").get("arity").getAsInt();
-
-    if (arity == 1) {
-      advertisement = new Predicate(predicateType, new Variable("X", PredicateHelper.varType));
-    } else if (arity == 2) {
-      advertisement = new Predicate(predicateType, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
-    } else {
-      log.error(String.format("Can't handle Predicates with arity: %d.", arity));
-      return;
-    }
-    //add Detector option (for type of detector, which indicates to search for all detector options)
-    addDetectorOption(advertisement, detectorType, detectorConfigFile);
+    String predicateType = root.getAsJsonObject("processor").get("type").getAsString();
+    int arity = root.getAsJsonObject("processor").get("arity").getAsInt();
 
     Iterator<JsonElement> predicateItr = root.getAsJsonArray("predicates").iterator();
     while (predicateItr.hasNext()) {
@@ -218,6 +205,9 @@ public class AvailableDetectors {
         advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
       } else if (arity == 2) {
         advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
+      } else {
+        log.error("Can't handle Predicates with arity: {}.", arity);
+        return;
       }
 
       //add Detector option
@@ -227,13 +217,11 @@ public class AvailableDetectors {
 
   private void parseDetectorFileXml(String detectorConfigFile, DetectorType detectorType) throws FileNotFoundException {
     Predicate advertisement;
-    String predicateType;
-    int arity;
     String predicateName;
 
     Xml processor = new Xml(detectorConfigFile, "processor");
-    predicateType = processor.string("type");
-    arity = processor.numInt("arity");
+    String predicateType = processor.string("type");
+    int arity = processor.numInt("arity");
 
     for (Xml predicate : processor.children("predicate")) {
 
@@ -244,7 +232,7 @@ public class AvailableDetectors {
         advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
       } else {
         log.error(String.format("Can't handle Predicates with arity: %d.", arity));
-        continue;
+        return;
       }
 
       //add Detector option

@@ -34,7 +34,7 @@ namespace ade {
         switch (camMode) {
           case SIM_PC1: {
             // read
-            std::string dirName = pt.get<std::string>("capture.dirNamCV_e");
+            std::string dirName = pt.get<std::string>("capture.dirName");
 
             disparityDirectory = dirName + "/disparity/";
             colorDirectory = dirName + "/color/";
@@ -152,13 +152,17 @@ namespace ade {
             LOG4CXX_INFO(logger, boost::format("[captureSimPC2] no rgb values in PCD file: %s.") % pcdFilename);
             pcl::PointCloud<pcl::PointXYZ> tmpCloud;
             pcl::fromPCLPointCloud2(*cloud_blob, tmpCloud);
-            tmpColorCloud->resize(tmpCloud.size());
+            tmpColorCloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>(cloud_blob->width, cloud_blob->height));
             for (int i = 0; i < tmpCloud.points.size(); ++i) {
               pcl::PointXYZ p = tmpCloud.points[i];
-              pcl::PointXYZRGB colorPt = tmpColorCloud->points[i];
+              pcl::PointXYZRGB &colorPt = tmpColorCloud->points[i];
               colorPt.x = p.x;
               colorPt.y = p.y;
-              colorPt.z = p.z;
+              if (p.z < 0) {
+                colorPt.z = -p.z;
+              } else {
+                colorPt.z = p.z;
+              }
               colorPt.r = 0;
               colorPt.g = 255;
               colorPt.b = 0;
@@ -210,7 +214,6 @@ namespace ade {
 
         // sleep
         boost::this_thread::sleep(boost::posix_time::milliseconds(5));
-
         return true;
       }
 

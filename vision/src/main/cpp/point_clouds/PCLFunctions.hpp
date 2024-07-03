@@ -193,8 +193,14 @@ void erodeConvexHull(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
   Eigen::Vector3f edge_vector, erosion_dir;
   PointT translated_point;
 
+  // set erosion_distance based on hull size
+  PointT minPt, maxPt;
+  pcl::getMinMax3D(*cloud_hull, minPt, maxPt);
+  float chull_diag_dist = pcl::euclideanDistance(minPt,maxPt);
+  //fprintf(stderr, "hull euclidean distance: %f\n", chull_diag_dist);
+
   // Total erosion distance: distance * iterations (here: 5cm)
-  static const float erosion_distance = 0.01;
+  float erosion_distance = chull_diag_dist/100.0; // 0.01;
   static const int erosion_iterations = 5;
 
   for (int iter = 0; iter < erosion_iterations; iter++) {
@@ -244,8 +250,8 @@ void visualizeResults(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
                       const pcl::PointIndices::ConstPtr& indices_real_objects,
                       const typename pcl::PointCloud<PointT>::ConstPtr& cloud_hull) {
 
-  pcl::ExtractIndices<pcl::PointXYZ> extract;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr objectCloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::ExtractIndices<PointT> extract;
+  typename pcl::PointCloud<PointT>::Ptr objectCloud(new pcl::PointCloud<PointT>);
   extract.setInputCloud(cloud);
   extract.setIndices(indices_real_objects);
   extract.setNegative(false);
@@ -260,7 +266,7 @@ void visualizeResults(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
     viewer->addPointCloud(cloud, "capture");
     //pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> handler_cloud_hull(cloud_hull, 255, 0, 0);
     //viewer->addPointCloud(cloud_hull, handler_cloud_hull, "chull");
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> handler_objects(objectCloud, 0, 255, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<PointT> handler_objects(objectCloud, 0, 255, 0);
     viewer->addPointCloud(objectCloud, handler_objects, "objects");
     for (size_t i = 0; i < cloud_hull->size(); ++i) {
       PointT point = cloud_hull->points[i];
@@ -278,7 +284,7 @@ void visualizeResults(const typename pcl::PointCloud<PointT>::ConstPtr& cloud,
     viewer->updatePointCloud(cloud, "capture");
     //pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> handler_cloud_hull(cloud_hull, 255, 0, 0);
     //viewer->updatePointCloud(cloud_hull, handler_cloud_hull, "chull");
-    pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> handler_objects(objectCloud, 0, 255, 0);
+    pcl::visualization::PointCloudColorHandlerCustom<PointT> handler_objects(objectCloud, 0, 255, 0);
     viewer->updatePointCloud(objectCloud, handler_objects, "objects");
 
     // first remove all previous chull spheres
@@ -405,8 +411,8 @@ bool isValidObjectPoint(const T point,
   // std::uint8_t r = (rgb >> 16) & 0x0000ff;
   // std::uint8_t g = (rgb >> 8)  & 0x0000ff;
   // std::uint8_t b = (rgb)       & 0x0000ff;
-  // printf("pcl point xyz: %f,%f,%f\n", point.x, point.y, point.z);
-  // printf("pcl point rgb: %d,%d,%d\n", point.r, point.g, point.b);
+  // fprintf(stderr, "pcl point xyz: %f,%f,%f\n", point.x, point.y, point.z);
+  // fprintf(stderr, "pcl point rgb: %d,%d,%d\n", point.r, point.g, point.b);
 
   return !(point.r> colorMaskRanges[0] && point.r< colorMaskRanges[3] && point.g> colorMaskRanges[1] && point.g< colorMaskRanges[4] && point.b> colorMaskRanges[2] && point.b< colorMaskRanges[5]);
 }
@@ -452,21 +458,26 @@ bool SegmentPlaneGivenCoeffs(const typename pcl::PointCloud<T>::ConstPtr &cloud,
     }
 
     if (plane_indices->indices.empty()) {
-      fprintf(stderr, "[SegmentPlaneGivenCoeffs] Not enough points in the plane.");
+      fprintf(stderr, "[SegmentPlaneGivenCoeffs] Not enough points in the plane.\n");
       return false;
     }
 
-    //EAK: TODO: if we're clustering here, do we really need to do the expensive
-    //SAC segmentation above ??
     //cluster plane and keep largest cluster as plane. this helps filter out
     //horizontal surfaces not actually part of desired plane
-    typename pcl::search::KdTree<T>::Ptr tree(new pcl::search::KdTree<T>);
     pcl::IndicesPtr tmpPlaneIndices = pcl::IndicesPtr(new std::vector<int>(plane_indices->indices));
+
+    typename pcl::search::Search<T>::Ptr tree;
+    if (cloud->isOrganized()) {
+      tree.reset(new pcl::search::OrganizedNeighbor<T>());
+    } else {
+      tree.reset(new pcl::search::KdTree<T>(false));
+    }
     tree->setInputCloud(cloud, tmpPlaneIndices);
     std::vector<pcl::PointIndices> clusters;
     pcl::extractEuclideanClusters<T>(*cloud, *tmpPlaneIndices, tree, 0.05, clusters);
     int largestClusterSize = 0;
     int largestIndex = -1;
+    // fprintf(stderr, "[SegmentPlaneGivenCoeffs] num plane clusters %lu.\n", clusters.size());
     for (int i = 0; i < clusters.size(); ++i) {
       if (clusters[i].indices.size() > largestClusterSize) {
         largestClusterSize = clusters[i].indices.size();
@@ -476,7 +487,7 @@ bool SegmentPlaneGivenCoeffs(const typename pcl::PointCloud<T>::ConstPtr &cloud,
     plane_indices->indices = clusters[largestIndex].indices;
 
     if (plane_indices->indices.empty()) {
-      fprintf(stderr, "[SegmentPlaneGivenCoeffs] Not enough points in the plane after clustering.");
+      fprintf(stderr, "[SegmentPlaneGivenCoeffs] Not enough points in the plane after clustering.\n");
       return false;
     }
 
@@ -486,7 +497,6 @@ bool SegmentPlaneGivenCoeffs(const typename pcl::PointCloud<T>::ConstPtr &cloud,
       int index = plane_indices->indices.at(i);
       used_indices.at(index) = true;
     }
-
 
     objects_indices->indices.reserve(cloud->size() - plane_indices->indices.size());
     for (int i = 0; i < used_indices.size(); ++i) {
@@ -506,8 +516,7 @@ bool SegmentPlaneGivenCoeffs(const typename pcl::PointCloud<T>::ConstPtr &cloud,
     }
 
     if (!(objects_indices->indices.size())) {
-      fprintf(stderr, "[SegmentPlaneGivenCoeffs] Not enough points outside the plane.");
-      return false;
+      fprintf(stderr, "[SegmentPlaneGivenCoeffs] Not enough points outside the plane.\n");
     }
 
   } catch (...) {
@@ -557,7 +566,7 @@ bool SegmentPlane(const typename pcl::PointCloud<T>::ConstPtr& cloud,
       PCL_ERROR(msg.c_str());
       desired_dist_from_orig = transform_data[11];
     }
-    // fprintf(stderr, "[SegmentPlane] desired_dist_from_orig: %f\n", desired_dist_from_orig);
+//     fprintf(stderr, "[SegmentPlane] desired_dist_from_orig: %f\n", desired_dist_from_orig);
 
     //calc desired plane norm based on transform (4x4)
     // inverse (ie, transpose) rotation matrix from robot base coordinates to the camera coordinates
@@ -570,7 +579,7 @@ bool SegmentPlane(const typename pcl::PointCloud<T>::ConstPtr& cloud,
     Eigen::Vector3f base_up(0, 0, 1);
     Eigen::Vector3f desired_plane_norm = rot * base_up;
     desired_plane_norm.normalize();
-    // fprintf(stderr, "[SegmentPlane] desired_plane_norm: %f %f %f\n", desired_plane_norm[0], desired_plane_norm[1], desired_plane_norm[2]);
+//     fprintf(stderr, "[SegmentPlane] desired_plane_norm: %f %f %f\n", desired_plane_norm[0], desired_plane_norm[1], desired_plane_norm[2]);
 
     //compute normals
     pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>());
@@ -588,7 +597,7 @@ bool SegmentPlane(const typename pcl::PointCloud<T>::ConstPtr& cloud,
       point_norm[2] = normals->points.at(i).normal_z;
       point_norm.normalize();
       angle = std::acos(point_norm.dot(desired_plane_norm));
-      // printf("[SegmentPlane] index: %d angle: %f\n", i, angle);
+//       fprintf(stderr, "[SegmentPlane] index: %d angle: %f\n", i, angle);
       if ((angle < angle_range) || (angle > M_PI - angle_range)) {
         //filter for height
         //        d = -(cloud->points[i].x * point_norm[0] + cloud->points[i].y * point_norm[1] + cloud->points[i].z * point_norm[2]);
@@ -596,10 +605,10 @@ bool SegmentPlane(const typename pcl::PointCloud<T>::ConstPtr& cloud,
 
         dist_from_orig = -(cloud->points[i].x * desired_plane_norm[0] + cloud->points[i].y * desired_plane_norm[1] +
                            cloud->points[i].z * desired_plane_norm[2]);
-        // fprintf(stderr, "[SegmentPlane] dist from origin: %f m\n", dist_from_orig);
+//        fprintf(stderr, "[SegmentPlane] dist from origin: %f m\n", dist_from_orig);
         if (dist_from_orig < desired_dist_from_orig + table_height_epsilon &&
             dist_from_orig > desired_dist_from_orig - table_height_epsilon) {
-          //fprintf(stderr, "[SegmentPlane] point correct distance to origin: %f m\n", dist_from_orig);
+//          fprintf(stderr, "[SegmentPlane] point correct distance to origin: %f m\n", dist_from_orig);
           inliers->indices.push_back(i);
         }
       }
@@ -632,11 +641,11 @@ bool SegmentPlane(const typename pcl::PointCloud<T>::ConstPtr& cloud,
     plane_norm.normalize();
     float cos_ang = plane_norm.dot(desired_plane_norm);
     float ang_btwn = std::acos(cos_ang);
-    //printf("[SegmentPlane] plane norm: %f %f %f angle: %f\n", plane_norm[0], plane_norm[1], plane_norm[2], ang_btwn * (180.0 / M_PI));
+    // fprintf(stderr, "[SegmentPlane] plane norm: %f %f %f angle: %f\n", plane_norm[0], plane_norm[1], plane_norm[2], ang_btwn * (180.0 / M_PI));
 
     //if norm is facing wrong way, flip it
     if (ang_btwn > (M_PI - angle_range)) {
-      //printf("[SegmentPlane] wrong normal direction...flipping.\n\n");
+      //fprintf(stderr, "[SegmentPlane] wrong normal direction...flipping.\n\n");
       coefficients->values[0] = -coefficients->values[0];
       coefficients->values[1] = -coefficients->values[1];
       coefficients->values[2] = -coefficients->values[2];
@@ -835,8 +844,6 @@ bool filterPointsOnPlane(const typename pcl::PointCloud<PointT>::ConstPtr& cloud
     proj.setModelCoefficients(coeffs_plane);
     proj.filter(*plane_projected);
 
-
-    // EW: ^ doesn't seem to do anything - at least in sim demo case
     // std::string msg = boost::str(
     //           boost::format("[filterPointsOnPlane] midoint projected plane indices size: %d.") % plane_projected->size());
     // PCL_ERROR(msg.c_str());
@@ -852,7 +859,6 @@ bool filterPointsOnPlane(const typename pcl::PointCloud<PointT>::ConstPtr& cloud
       return false;
     }
 
-    // EW: Doesn't seem to work for walls behind table, not sure about walls up against table
     // Erosion on convex hull to avoid having walls next to table detected as objects
     erodeConvexHull<PointT>(cloud, indices_plane, coeffs_plane, cloud_hull);
 
@@ -870,7 +876,7 @@ bool filterPointsOnPlane(const typename pcl::PointCloud<PointT>::ConstPtr& cloud
 
     // NOTE: uncomment this to view results -- this does not play nice with other displays as it doesn't
     // run on vision's display thread.
-    // visualizeResults<PointT>(cloud, indices_plane, indices_objects, indices_real_objects, cloud_hull);
+//    visualizeResults<PointT>(cloud, indices_plane, indices_objects, indices_real_objects, cloud_hull);
 
   } catch (...) {
     return (false);
@@ -923,7 +929,7 @@ bool filterPointsOnPlane(const typename pcl::PointCloud<PointT>::ConstPtr& cloud
 //        poly_area += (point_j.x + point_i.x) * (point_j.y - point_i.y);
 //        j = i; //j is previous vertex to i
 //      }
-//      //printf("%d poly area: %f\n", count++, poly_area);
+//      //fprintf(stderr, "%d poly area: %f\n", count++, poly_area);
 //      total_area = std::abs(poly_area);
 //    }
 //    return std::abs(total_area / 2.0);
@@ -986,7 +992,7 @@ bool ComputePolygonMesh(typename pcl::PointCloud<PointT>::ConstPtr cloud, std::v
 
     //attempt to simply mesh by replacing dense planes with convex hull 
     //MeshSimplificationWithPlanes<PointT > (mesh_dense, mesh);
-    //printf("final mesh vertices: %d polygons: %d\n\n\n\n\n\n\n\n\n\n\n", mesh->cloud.data.size() / 16, mesh->polygons.size());
+    //fprintf(stderr, "final mesh vertices: %d polygons: %d\n\n\n\n\n\n\n\n\n\n\n", mesh->cloud.data.size() / 16, mesh->polygons.size());
 
   } catch (...) {
     return (false);
@@ -1008,15 +1014,15 @@ bool MeshSimplificationWithPlanes(pcl::PolygonMesh::Ptr mesh, pcl::PolygonMesh::
 
     // Set mesh indices to include all mesh points if not passed in
     if (pcl::PointIndices::Ptr() == mesh_indices_to_filter) {
-        //printf("mesh_indices_to_filter init\n");
+        //fprintf(stderr, "mesh_indices_to_filter init\n");
         mesh_indices_to_filter = pcl::PointIndices::Ptr(new pcl::PointIndices);
         mesh_indices_to_filter->indices.reserve(mesh_points->points.size());
         for (int i = 0; i < mesh_points->points.size(); ++i) {
             mesh_indices_to_filter->indices.push_back(i);
         }
     }
-    //printf("mesh_points size: %d\n", mesh_points->points.size());
-    //printf("mesh_indices_to_filter size: %d\n", mesh_indices_to_filter->indices.size());
+    //fprintf(stderr, "mesh_points size: %d\n", mesh_points->points.size());
+    //fprintf(stderr, "mesh_indices_to_filter size: %d\n", mesh_indices_to_filter->indices.size());
 
     // Find plane
     // Compute normals
@@ -1112,13 +1118,13 @@ bool MeshSimplificationWithPlanes(pcl::PolygonMesh::Ptr mesh, pcl::PolygonMesh::
     plane_concave_polygons = plane_concave_mesh->polygons;
 
 
-    //    printf("plane_inliers size: %d\n", plane_inliers->indices.size());
-    //    printf("plane_convex_polygons num: %d first size: %d\n", plane_convex_polygons.size(), plane_convex_polygons[0].vertices.size());
-    //    printf("plane_polygon first: \n");
+    //    fprintf(stderr, "plane_inliers size: %d\n", plane_inliers->indices.size());
+    //    fprintf(stderr, "plane_convex_polygons num: %d first size: %d\n", plane_convex_polygons.size(), plane_convex_polygons[0].vertices.size());
+    //    fprintf(stderr, "plane_polygon first: \n");
     //    for (int i = 0; i < plane_convex_polygons[0].vertices.size(); ++i) {
-    //        printf("%d ", plane_convex_polygons[0].vertices[i]);
+    //        fprintf(stderr, "%d ", plane_convex_polygons[0].vertices[i]);
     //    }
-    //    printf("\n");
+    //    fprintf(stderr, "\n");
 
     //if plane doesn't meet fitness criteria, don't prune polygons belonging to this plane
     //TODO: find a general way to find good fitness threshold
@@ -1126,25 +1132,25 @@ bool MeshSimplificationWithPlanes(pcl::PolygonMesh::Ptr mesh, pcl::PolygonMesh::
     double concave_area = polygonArea<pcl::PointXYZ > (plane_concave_points, plane_concave_polygons);
 
     
-//        printf("concave indices: \n");
+//        fprintf(stderr, "concave indices: \n");
 //        std::vector<pcl::Vertices>::iterator poly_itr;
 //        std::vector< uint32_t >::iterator vert_itr;
 //        int count = 0;
 //        for (poly_itr = plane_concave_polygons.begin(); poly_itr != plane_concave_polygons.end(); ++poly_itr) {
-//            printf("poly %d: ", count++);
+//            fprintf(stderr, "poly %d: ", count++);
 //            for (vert_itr = (*poly_itr).vertices.begin(); vert_itr != (*poly_itr).vertices.end(); ++vert_itr) {
-//                printf(" %d", (*vert_itr));
+//                fprintf(stderr, " %d", (*vert_itr));
 //            }
-//            printf("\n");
+//            fprintf(stderr, "\n");
 //        }
-//        printf("convex area: %f num points: %d\n", convex_area, plane_convex_points->points.size());
-//        printf("concave area: %f num points: %d dims: %d\n", concave_area, plane_concave_points->points.size(), concave_hull.getDim());
+//        fprintf(stderr, "convex area: %f num points: %d\n", convex_area, plane_convex_points->points.size());
+//        fprintf(stderr, "concave area: %f num points: %d dims: %d\n", concave_area, plane_concave_points->points.size(), concave_hull.getDim());
      
 
     double plane_fitness = (convex_area - concave_area) / convex_area;
     //double plane_fitness = plane_inliers->indices.size() / convex_area;
     double plane_fitness_thresh = 0.4; //30000.0; //Kinect: 42000.0;//SR: 2000.0;
-    //printf("plane_fitness: %f\n\n", plane_fitness);
+    //fprintf(stderr, "plane_fitness: %f\n\n", plane_fitness);
 
     ////////TEMP DEBUG DISPLAY///////////////////////////////////////
     if (false) {
@@ -1332,7 +1338,7 @@ bool SplitPlanesAndMesh(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, pcl::Pol
         //check fit of hull to points
         double plane_fitness = cloud_plane->points.size() / chull.getTotalArea();
         double plane_fitness_thresh = 35000.0;
-        printf("plane_fitness: %f\n", plane_fitness);
+        fprintf(stderr, "plane_fitness: %f\n", plane_fitness);
         if (plane_fitness < plane_fitness_thresh) {
             //scrap the plane and do a greedy mesh
             pcl::PointCloud<pcl::PointXYZ>::Ptr existing_mesh_points(new pcl::PointCloud<pcl::PointXYZ>);
@@ -1399,13 +1405,13 @@ bool SplitPlanesAndMesh(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud, pcl::Pol
             pcl::fromROSMsg(mesh->cloud, *existing_hull_points);
  *existing_hull_points += *new_mesh_points;
             pcl::toROSMsg(*existing_hull_points, mesh->cloud);
-            printf("hull siz: %d\n", new_mesh_points->points.size());
-            printf("new_hull siz: %d\n", existing_hull_points->points.size());
-            printf("mesh cloud siz: %d\n", mesh->cloud.data.size() / 16);
+            fprintf(stderr, "hull siz: %d\n", new_mesh_points->points.size());
+            fprintf(stderr, "new_hull siz: %d\n", existing_hull_points->points.size());
+            fprintf(stderr, "mesh cloud siz: %d\n", mesh->cloud.data.size() / 16);
         }
 
 
-        printf("[SplitPlanesAndMesh] remaining point count: %d\n", cloud_without_plane->size());
+        fprintf(stderr, "[SplitPlanesAndMesh] remaining point count: %d\n", cloud_without_plane->size());
         if (cloud_without_plane->size() > 400) {
             //recurse on pruned cloud
             SplitPlanesAndMesh<pcl::PointXYZ > (cloud_without_plane, mesh);

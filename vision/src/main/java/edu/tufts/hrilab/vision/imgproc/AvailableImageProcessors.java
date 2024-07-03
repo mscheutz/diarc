@@ -45,33 +45,33 @@ public class AvailableImageProcessors extends AbstractListModel {
   /**
    * Available ImageProcessorTypes ("compile time" info) hashed by type.
    */
-  private final HashMap<ImageProcessorType, ImageProcessorDetail> typesDetail = new HashMap();
+  private final Map<ImageProcessorType, ImageProcessorDetail> typesDetail = new HashMap();
   /**
    * Available ImageProcessorTypes ("compile time" info) for GUI display purposes.
    */
-  private final ArrayList<ImageProcessorDetail> orderedTypesDetail = new ArrayList();
+  private final List<ImageProcessorDetail> orderedTypesDetail = new ArrayList();
   /**
    * Instantiated ImageProcessors hashed by type.
    */
-  private final HashMap<ImageProcessorType, HashSet<ImageProcessor>> instantiatedProcessors = new HashMap();
+  private final Map<ImageProcessorType, Set<ImageProcessor>> instantiatedProcessors = new HashMap();
   /**
    * Instantiated ImageProcessor clients hashed by ImageProcessor.
    */
-  private final HashMap<ImageProcessor, HashSet<Object>> instantiatedProcessorClients = new HashMap();
+  private final Map<ImageProcessor, Set<Object>> instantiatedProcessorClients = new HashMap();
   /**
    * Info needed to instantiate ImageProcessors of a certain "attribute" (runtime info).
    * (e.g., red(x) = name(X), where red is of type color (i.e., red isA color))
    * hashed by name in outermost map, and then predicate type -- if no type is
    * specified, name is used in both hash maps
    */
-  private HashMap<String, HashMap<String, List<InstanceInfo>>> processorOptionInfo = new HashMap();
+  private Map<String, Map<String, List<InstanceInfo>>> processorOptionInfo = new HashMap();
   /**
    * Info needed to instantiate ImageProcessors based on a ImageProcessorType. (runtime info)
    * NOTE: Only need to keep track of a single configFile option for each IPType in this
    * container bc the instance configuration isn't important when requested via IPTYpe. If
    * more detail/control is needed, the instance should be instantiated using its "attribute".
    */
-  private HashMap<ImageProcessorType, String> configFiles = new HashMap();
+  private Map<ImageProcessorType, String> configFiles = new HashMap();
   /**
    * Instantiated ImageProcessors for GUI.
    */
@@ -85,10 +85,6 @@ public class AvailableImageProcessors extends AbstractListModel {
   public AvailableImageProcessors(final int imgWidth, final int imgHeight, final boolean isStereo, final String configFile) {
     //parse config file
     if (configFile != null && !configFile.isEmpty()) {
-      Term advertisement;
-      String predicateType;
-      String predicateName;
-      int arity;
       ImageProcessorType type;
       String[] requirements;
       String[] dependencies;
@@ -202,23 +198,12 @@ public class AvailableImageProcessors extends AbstractListModel {
 
   private void parseConfigFileJSON(String configFile, ImageProcessorType type) throws FileNotFoundException {
     Predicate advertisement;
-    String predicateType;
-    int arity;
     String predicateName;
 
     JsonParser parser = new JsonParser();
     JsonObject root = parser.parse(new FileReader(configFile)).getAsJsonObject();
-    predicateType = root.getAsJsonObject("processor").get("type").getAsString();
-    arity = root.getAsJsonObject("processor").get("arity").getAsInt();
-
-    if (arity == 1) {
-      advertisement = new Predicate(predicateType, new Variable("X", PredicateHelper.varType));
-    } else if (arity == 2) {
-      advertisement = new Predicate(predicateType, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
-    } else {
-      log.error(String.format("Can't handle Predicates with arity: %d.", arity));
-      return;
-    }
+    String predicateType = root.getAsJsonObject("processor").get("type").getAsString();
+    int arity = root.getAsJsonObject("processor").get("arity").getAsInt();
 
     Iterator<JsonElement> predicateItr = root.getAsJsonArray("predicates").iterator();
     while (predicateItr.hasNext()) {
@@ -231,11 +216,11 @@ public class AvailableImageProcessors extends AbstractListModel {
         advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
       } else {
         log.error("Can't handle Predicates with arity: {}}.", arity);
-        continue;
+        return;
       }
 
       //add ImageProcessor option
-      HashMap<String, List<InstanceInfo>> descriptorMatches = processorOptionInfo.get(predicateName);
+      Map<String, List<InstanceInfo>> descriptorMatches = processorOptionInfo.get(predicateName);
       if (descriptorMatches == null) {
         descriptorMatches = new HashMap();
         processorOptionInfo.put(predicateName, descriptorMatches);
@@ -256,13 +241,11 @@ public class AvailableImageProcessors extends AbstractListModel {
 
   private void parseConfigFileXML(String configFile, ImageProcessorType type) throws FileNotFoundException {
     Predicate advertisement;
-    String predicateType;
-    int arity;
     String predicateName;
 
     Xml ipConfig = new Xml(configFile, "processor");
-    predicateType = ipConfig.string("type");
-    arity = ipConfig.numInt("arity");
+    String predicateType = ipConfig.string("type");
+    int arity = ipConfig.numInt("arity");
     for (Xml predicate : ipConfig.children("predicate")) {
 
       predicateName = predicate.string("name");
@@ -272,11 +255,11 @@ public class AvailableImageProcessors extends AbstractListModel {
         advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
       } else {
         log.error("Can't handle Predicates with arity: {}}.", arity);
-        continue;
+        return;
       }
 
       //add ImageProcessor option
-      HashMap<String, List<InstanceInfo>> descriptorMatches = processorOptionInfo.get(predicateName);
+      Map<String, List<InstanceInfo>> descriptorMatches = processorOptionInfo.get(predicateName);
       if (descriptorMatches == null) {
         descriptorMatches = new HashMap();
         processorOptionInfo.put(predicateName, descriptorMatches);
@@ -318,7 +301,7 @@ public class AvailableImageProcessors extends AbstractListModel {
     // add ImageProcessor option
     String predicateName = advertisement.getName();
     String predicateType = advertisement.getName();  // for now just using name as type since type isn't known
-    HashMap<String, List<InstanceInfo>> descriptorMatches = processorOptionInfo.get(predicateName);
+    Map<String, List<InstanceInfo>> descriptorMatches = processorOptionInfo.get(predicateName);
     if (descriptorMatches == null) {
       descriptorMatches = new HashMap();
       processorOptionInfo.put(predicateName, descriptorMatches);
@@ -370,7 +353,7 @@ public class AvailableImageProcessors extends AbstractListModel {
    */
   private InstanceInfo getInstanceInfo(final Term term) {
     //get options based on descriptor name
-    HashMap<String, List<InstanceInfo>> descriptorMatches = processorOptionInfo.get(PredicateHelper.getRepresentativeString(term));
+    Map<String, List<InstanceInfo>> descriptorMatches = processorOptionInfo.get(PredicateHelper.getRepresentativeString(term));
     if (descriptorMatches == null) {
       log.debug(String.format("[getInstanceInfo] No processors match the description: %s.", term.toString()));
       return null;
@@ -499,7 +482,7 @@ public class AvailableImageProcessors extends AbstractListModel {
     }
 
     //get list of image processsors of specified type
-    HashSet<ImageProcessor> processorSet = instantiatedProcessors.get(processorType);
+    Set<ImageProcessor> processorSet = instantiatedProcessors.get(processorType);
     if (processorSet == null) {
       processorSet = new HashSet();
       instantiatedProcessors.put(processorType, processorSet);
@@ -527,7 +510,7 @@ public class AvailableImageProcessors extends AbstractListModel {
 
   //helper function to add getInstance caller to client list
   private void addClient(final Object client, final ImageProcessor processor) {
-    HashSet<Object> clientList = instantiatedProcessorClients.get(processor);
+    Set<Object> clientList = instantiatedProcessorClients.get(processor);
     if (clientList == null) {
       clientList = new HashSet();
       instantiatedProcessorClients.put(processor, clientList);
@@ -549,7 +532,7 @@ public class AvailableImageProcessors extends AbstractListModel {
    * and garbage collected.
    */
   public synchronized void release(final Object client, final ImageProcessor processor) {
-    HashSet<Object> clientList = instantiatedProcessorClients.get(processor);
+    Set<Object> clientList = instantiatedProcessorClients.get(processor);
     if (clientList == null || !clientList.contains(client)) {
       log.warn(String.format("[release] Calling object (%s) is not a client of the ImageProcessor: %s.",
                              client.toString(), processor.toString()));
