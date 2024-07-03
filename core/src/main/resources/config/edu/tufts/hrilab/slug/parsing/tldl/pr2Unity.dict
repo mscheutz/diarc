@@ -16,13 +16,17 @@
 START-TEMPLATES
 
 TUBECMD; {C/SIDE ; #s.?PH(?ADDRESSEE,$s)}, {((C/AREA)/SIDE)/TUBE ; #t#s#a.?PH(?ADDRESSEE,$a,$s)}, {((C/SIDE)/AREA)/TUBE ; #t#a#s.?PH(?ADDRESSEE,$a,$s)}, {(C/SIDE)/AREA ; #a#s.?PH(?ADDRESSEE,$a,$s)}, {(C/AREA)/SIDE ; #s#a.?PH(?ADDRESSEE,$a,$s)}, {(C/SIDE)/TUBE ; #t#s.?PH(?ADDRESSEE,$s)}
-ADDRESSABLE; {C/C, TUBECMD/TUBECMD, TUBECMD\TUBECMD, Q/Q, C\C, Q\Q; #x.directAddress(?PH,$x)}, {AGENT ; ?PH}
+%ADDRESSABLE; {C/C, TUBECMD/TUBECMD, TUBECMD\TUBECMD, Q/Q, C\C, Q\Q; #x.directAddress(?PH,$x)}, {AGENT ; ?PH}
+ADDRESSABLE; {AGENT ; ?PH}, {G/G, S/S, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
 AREACMD; {C/AREA ; #a.goToArea(?ADDRESSEE, $a)}
 
 END-TEMPLATES
 
 robot one; ADDRESSABLE; robot1
 robot two; ADDRESSABLE; robot2
+
+robot1; ADDRESSABLE; robot1
+robot2; ADDRESSABLE; robot2
 
 can; (Q / C) / AGENT ; #x #y.capableOf($x,$y)
 could; (Q / C) / AGENT ; #x #y.capableOf($x,$y)
