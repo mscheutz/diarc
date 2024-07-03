@@ -206,10 +206,11 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       if (cachedOutput != null && cachedOutput.getSemantics() != null) {
         log.debug("Using cached parser response");
         if (cachedOutput.getAddressee() == null) {
-          cachedOutput.setListener(Factory.createSymbol("unknown"));
-        }
-        if (addresseeMap.containsKey(incoming.getSpeaker())) {
-          cachedOutput.setListener(addresseeMap.get(incoming.getSpeaker()));
+          if (addresseeMap.containsKey(incoming.getSpeaker())) {
+            cachedOutput.setListener(addresseeMap.get(incoming.getSpeaker()));
+          } else {
+            cachedOutput.setListener(Factory.createSymbol("unknown"));
+          }
         }
         return cachedOutput;
       }
@@ -267,21 +268,21 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       }
     }
 
-    if (output.getAddressee() == null) {
-      output.setListener(Factory.createSymbol("unknown"));
-    }
-
     semantics = output.getSemantics();
 
-    if (semantics.isTerm()) {
+    if (semantics != null && semantics.isTerm()) {
       if (semantics.getName().equals("directAddress")) {
         addresseeMap.put(incoming.getSpeaker(), output.getAddressee());
       }
     }
 
-    if (addresseeMap.containsKey(incoming.getSpeaker())) {
-      output.setListener(addresseeMap.get(incoming.getSpeaker()));
-      log.debug("Set speaker " + incoming.getSpeaker().toString() + " to address " + output.getAddressee().toString());
+    if (output.getAddressee() == null) {
+      if (addresseeMap.containsKey(incoming.getSpeaker())) {
+        output.setListener(addresseeMap.get(incoming.getSpeaker()));
+        log.debug("Set speaker " + incoming.getSpeaker().toString() + " to address " + output.getAddressee().toString());
+      } else {
+        output.setListener(Factory.createSymbol("unknown"));
+      }
     }
 
     return output;
