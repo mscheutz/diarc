@@ -128,6 +128,73 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=getLearningStatus_symbol" : {
+      "post" : {
+        "summary" : "Operation in ExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getLearningStatus_symbol",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        } ],
+        "tags" : [ "ExecutionManager" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=cancelAllPendingGoals" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "cancelAllPendingGoals",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "GoalManagerImpl" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=closeGripperRapid" : {
       "post" : {
         "summary" : "Operation in RWSRobotComponentInterface",
@@ -181,6 +248,34 @@
         },
         "parameters" : [ ],
         "tags" : [ "PolycraftComponent" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=getNotificationProver" : {
+      "post" : {
+        "summary" : "Operation in BeliefComponent",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getNotificationProver",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "BeliefComponent" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -354,6 +449,34 @@
           }
         } ],
         "tags" : [ "SupermarketComponent" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=getMapHandler" : {
+      "post" : {
+        "summary" : "Operation in MapEndpointComponent",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getMapHandler",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "MapEndpointComponent" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -947,65 +1070,6 @@
           }
         } ],
         "tags" : [ "VoiceProsodyInterface" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=submitGoal_predicate_executiontype_long" : {
-      "post" : {
-        "summary" : "Operation in GoalManagerImpl",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "g" : {
-                    "type" : "predicate"
-                  },
-                  "type" : {
-                    "type" : "executiontype"
-                  },
-                  "priority" : {
-                    "type" : "integer"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "submitGoal_predicate_executiontype_long",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "g",
-          "schema" : {
-            "type" : "predicate"
-          }
-        }, {
-          "required" : false,
-          "in" : "query",
-          "name" : "type",
-          "schema" : {
-            "type" : "executiontype"
-          }
-        }, {
-          "required" : false,
-          "in" : "query",
-          "name" : "priority",
-          "schema" : {
-            "type" : "long"
-          }
-        } ],
-        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -2042,45 +2106,6 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=changeLearningExecution_symbol" : {
-      "post" : {
-        "summary" : "Operation in ActionLearning",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "status" : {
-                    "type" : "name:type"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "changeLearningExecution_symbol",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "status",
-          "schema" : {
-            "type" : "symbol"
-          }
-        } ],
-        "tags" : [ "ActionLearning" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
     "/invoke-service?serviceName=onPendingGoalsUpdated_list_list_list_list_list" : {
       "post" : {
         "summary" : "Operation in UIComponent",
@@ -2443,7 +2468,7 @@
     },
     "/invoke-service?serviceName=getPriorityForGoal_predicate" : {
       "post" : {
-        "summary" : "Operation in ExecutionManager",
+        "summary" : "Operation in GoalManagerImpl",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2476,7 +2501,7 @@
             "type" : "predicate"
           }
         } ],
-        "tags" : [ "ExecutionManager" ],
+        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -2544,6 +2569,34 @@
           }
         } ],
         "tags" : [ "VelocityInterface" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=getBeliefHandler" : {
+      "post" : {
+        "summary" : "Operation in BeliefEndpointComponent",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getBeliefHandler",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "BeliefEndpointComponent" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -2649,6 +2702,34 @@
           }
         } ],
         "tags" : [ "BeliefInterface" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=cancelSystemGoal" : {
+      "post" : {
+        "summary" : "Operation in QueueExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "cancelSystemGoal",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "QueueExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -2822,45 +2903,6 @@
         },
         "parameters" : [ ],
         "tags" : [ "NaoInterface" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=setText_string" : {
-      "post" : {
-        "summary" : "Operation in SimSpeechRecognitionComponent",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "in" : {
-                    "type" : "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "setText_string",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "in",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "tags" : [ "SimSpeechRecognitionComponent" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -3602,6 +3644,65 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=submitGoal_predicate_executiontype_symbol" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "priorityTier" : {
+                    "type" : "name:type"
+                  },
+                  "g" : {
+                    "type" : "predicate"
+                  },
+                  "type" : {
+                    "type" : "executiontype"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "submitGoal_predicate_executiontype_symbol",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "g",
+          "schema" : {
+            "type" : "predicate"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "type",
+          "schema" : {
+            "type" : "executiontype"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "priorityTier",
+          "schema" : {
+            "type" : "symbol"
+          }
+        } ],
+        "tags" : [ "GoalManagerImpl" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=getGripperPosition_string" : {
       "post" : {
         "summary" : "Operation in ArmInterface",
@@ -3719,6 +3820,45 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=suspendSystemGoal_symbol" : {
+      "post" : {
+        "summary" : "Operation in QueueExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "suspendSystemGoal_symbol",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        } ],
+        "tags" : [ "QueueExecutionManager" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=goToCameraPose_symbol" : {
       "post" : {
         "summary" : "Operation in RWSRobotComponentInterface",
@@ -3804,6 +3944,34 @@
           }
         } ],
         "tags" : [ "VisionInterface" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=getPendingGoals" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getPendingGoals",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -4005,6 +4173,34 @@
         },
         "parameters" : [ ],
         "tags" : [ "VisionInterface" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=cancelAllCurrentGoals" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "cancelAllCurrentGoals",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -5846,6 +6042,45 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=getPastGoal_long" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "gid" : {
+                    "type" : "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getPastGoal_long",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "gid",
+          "schema" : {
+            "type" : "long"
+          }
+        } ],
+        "tags" : [ "GoalManagerImpl" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=removeEntry_string_string_string_string" : {
       "post" : {
         "summary" : "Operation in Dictionary",
@@ -6329,6 +6564,45 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=resumeSystemGoal_symbol" : {
+      "post" : {
+        "summary" : "Operation in QueueExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "resumeSystemGoal_symbol",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        } ],
+        "tags" : [ "QueueExecutionManager" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=restoreLocations_symbol" : {
       "post" : {
         "summary" : "Operation in TemiV3Interface",
@@ -6523,6 +6797,34 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=resumeSystemGoal" : {
+      "post" : {
+        "summary" : "Operation in QueueExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "resumeSystemGoal",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "QueueExecutionManager" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=setDisplayAppointmentsUntil_symbol" : {
       "post" : {
         "summary" : "Operation in TemiV3Interface",
@@ -6682,6 +6984,55 @@
         },
         "parameters" : [ ],
         "tags" : [ "TemiV3Interface" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=convertSemanticsToText_utterance_boolean" : {
+      "post" : {
+        "summary" : "Operation in PickAndPlaceLLM",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "u" : {
+                    "type" : "utterance"
+                  },
+                  "hasWords" : {
+                    "type" : "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "convertSemanticsToText_utterance_boolean",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "u",
+          "schema" : {
+            "type" : "utterance"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "hasWords",
+          "schema" : {
+            "type" : "boolean"
+          }
+        } ],
+        "tags" : [ "PickAndPlaceLLM" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -6917,75 +7268,6 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=submitGoal_predicate_executiontype_long_prioritytier" : {
-      "post" : {
-        "summary" : "Operation in GoalManagerImpl",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "priorityTier" : {
-                    "type" : "prioritytier"
-                  },
-                  "g" : {
-                    "type" : "predicate"
-                  },
-                  "type" : {
-                    "type" : "executiontype"
-                  },
-                  "priority" : {
-                    "type" : "integer"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "submitGoal_predicate_executiontype_long_prioritytier",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "g",
-          "schema" : {
-            "type" : "predicate"
-          }
-        }, {
-          "required" : false,
-          "in" : "query",
-          "name" : "type",
-          "schema" : {
-            "type" : "executiontype"
-          }
-        }, {
-          "required" : false,
-          "in" : "query",
-          "name" : "priority",
-          "schema" : {
-            "type" : "long"
-          }
-        }, {
-          "required" : false,
-          "in" : "query",
-          "name" : "priorityTier",
-          "schema" : {
-            "type" : "prioritytier"
-          }
-        } ],
-        "tags" : [ "GoalManagerImpl" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
     "/invoke-service?serviceName=beforeServiceWrapper_object[]" : {
       "post" : {
         "summary" : "Operation in TradeServiceTracker",
@@ -7188,45 +7470,6 @@
           }
         } ],
         "tags" : [ "Dictionary" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=setSpeaker_symbol" : {
-      "post" : {
-        "summary" : "Operation in SimSpeechRecognitionComponent",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "speaker" : {
-                    "type" : "name:type"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "setSpeaker_symbol",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "speaker",
-          "schema" : {
-            "type" : "symbol"
-          }
-        } ],
-        "tags" : [ "SimSpeechRecognitionComponent" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -7497,6 +7740,45 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=cancelPendingGoalByIndex_int" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "index" : {
+                    "type" : "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "cancelPendingGoalByIndex_int",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "index",
+          "schema" : {
+            "type" : "int"
+          }
+        } ],
+        "tags" : [ "GoalManagerImpl" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=querySupportWithExplanation_term" : {
       "post" : {
         "summary" : "Operation in BeliefInterface",
@@ -7624,34 +7906,6 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=getNextGoalPredicate" : {
-      "post" : {
-        "summary" : "Operation in QueueExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : { }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "getNextGoalPredicate",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ ],
-        "tags" : [ "QueueExecutionManager" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
     "/invoke-service?serviceName=getPose_string" : {
       "post" : {
         "summary" : "Operation in ArmInterface",
@@ -7688,6 +7942,34 @@
           }
         } ],
         "tags" : [ "ArmInterface" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=getNextGoalPredicate" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getNextGoalPredicate",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -7972,45 +8254,6 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=suspendSystemGoal_symbol" : {
-      "post" : {
-        "summary" : "Operation in QueueExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "agent" : {
-                    "type" : "name:type"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "suspendSystemGoal_symbol",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "agent",
-          "schema" : {
-            "type" : "symbol"
-          }
-        } ],
-        "tags" : [ "QueueExecutionManager" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
     "/invoke-service?serviceName=goToStartPose_boolean" : {
       "post" : {
         "summary" : "Operation in ArmInterface",
@@ -8119,6 +8362,65 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=submitGoal_predicate_executiontype_prioritytier" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "priorityTier" : {
+                    "type" : "prioritytier"
+                  },
+                  "g" : {
+                    "type" : "predicate"
+                  },
+                  "type" : {
+                    "type" : "executiontype"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "submitGoal_predicate_executiontype_prioritytier",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "g",
+          "schema" : {
+            "type" : "predicate"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "type",
+          "schema" : {
+            "type" : "executiontype"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "priorityTier",
+          "schema" : {
+            "type" : "prioritytier"
+          }
+        } ],
+        "tags" : [ "GoalManagerImpl" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=getTokens_long_double" : {
       "post" : {
         "summary" : "Operation in VisionInterface",
@@ -8214,6 +8516,55 @@
           }
         } ],
         "tags" : [ "PolycraftComponent" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=pauseActionLearning_symbol_predicate" : {
+      "post" : {
+        "summary" : "Operation in ExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  },
+                  "newAction" : {
+                    "type" : "predicate"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "pauseActionLearning_symbol_predicate",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "newAction",
+          "schema" : {
+            "type" : "predicate"
+          }
+        } ],
+        "tags" : [ "ExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -8351,45 +8702,6 @@
           }
         } ],
         "tags" : [ "PolycraftComponent" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=submitGoal_goal" : {
-      "post" : {
-        "summary" : "Operation in ExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "g" : {
-                    "type" : "goal"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "submitGoal_goal",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "g",
-          "schema" : {
-            "type" : "goal"
-          }
-        } ],
-        "tags" : [ "ExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -9239,45 +9551,6 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=cancelSystemGoal_symbol" : {
-      "post" : {
-        "summary" : "Operation in QueueExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "agent" : {
-                    "type" : "name:type"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "cancelSystemGoal_symbol",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "agent",
-          "schema" : {
-            "type" : "symbol"
-          }
-        } ],
-        "tags" : [ "QueueExecutionManager" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
     "/invoke-service?serviceName=initializeBeliefs" : {
       "post" : {
         "summary" : "Operation in PolycraftComponent",
@@ -9857,34 +10130,6 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=resumeSystemGoal" : {
-      "post" : {
-        "summary" : "Operation in QueueExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : { }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "resumeSystemGoal",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ ],
-        "tags" : [ "QueueExecutionManager" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
     "/invoke-service?serviceName=endFreeze" : {
       "post" : {
         "summary" : "Operation in ExecutionManager",
@@ -10246,45 +10491,6 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=getActiveGoalsPredicates_symbol" : {
-      "post" : {
-        "summary" : "Operation in QueueExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "actor" : {
-                    "type" : "name:type"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "getActiveGoalsPredicates_symbol",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "actor",
-          "schema" : {
-            "type" : "symbol"
-          }
-        } ],
-        "tags" : [ "QueueExecutionManager" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
     "/invoke-service?serviceName=notifyActiveGoalUpdated_goal_updatetype_goalstatus" : {
       "post" : {
         "summary" : "Operation in UIComponent",
@@ -10344,7 +10550,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=cancelPendingGoalByIndex_int" : {
+    "/invoke-service?serviceName=changeLearningExecution_symbol_symbol" : {
       "post" : {
         "summary" : "Operation in ExecutionManager",
         "requestBody" : {
@@ -10353,8 +10559,11 @@
               "schema" : {
                 "type" : "object",
                 "properties" : {
-                  "index" : {
-                    "type" : "integer"
+                  "agent" : {
+                    "type" : "name:type"
+                  },
+                  "status" : {
+                    "type" : "name:type"
                   }
                 }
               }
@@ -10362,7 +10571,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "cancelPendingGoalByIndex_int",
+        "operationId" : "changeLearningExecution_symbol_symbol",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -10374,9 +10583,16 @@
         "parameters" : [ {
           "required" : false,
           "in" : "query",
-          "name" : "index",
+          "name" : "agent",
           "schema" : {
-            "type" : "int"
+            "type" : "symbol"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "status",
+          "schema" : {
+            "type" : "symbol"
           }
         } ],
         "tags" : [ "ExecutionManager" ],
@@ -10944,6 +11160,45 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=pickAndPlaceLLMParser_string" : {
+      "post" : {
+        "summary" : "Operation in PickAndPlaceLLM",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "utterance" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "pickAndPlaceLLMParser_string",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "utterance",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "tags" : [ "PickAndPlaceLLM" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=getPath_matrix4d_symbol_double_boolean" : {
       "post" : {
         "summary" : "Operation in MapComponent",
@@ -11258,6 +11513,45 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=cancelSystemGoal_symbol" : {
+      "post" : {
+        "summary" : "Operation in QueueExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "cancelSystemGoal_symbol",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        } ],
+        "tags" : [ "QueueExecutionManager" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=getTokens_double" : {
       "post" : {
         "summary" : "Operation in VisionInterface",
@@ -11294,6 +11588,75 @@
           }
         } ],
         "tags" : [ "VisionInterface" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=modifyAction_symbol_predicate_predicate_predicate" : {
+      "post" : {
+        "summary" : "Operation in ExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  },
+                  "action" : {
+                    "type" : "predicate"
+                  },
+                  "location" : {
+                    "type" : "predicate"
+                  },
+                  "modification" : {
+                    "type" : "predicate"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "modifyAction_symbol_predicate_predicate_predicate",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "action",
+          "schema" : {
+            "type" : "predicate"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "modification",
+          "schema" : {
+            "type" : "predicate"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "location",
+          "schema" : {
+            "type" : "predicate"
+          }
+        } ],
+        "tags" : [ "ExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -11615,65 +11978,6 @@
           }
         } ],
         "tags" : [ "ActionDatabase" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=modifyAction_predicate_predicate_predicate" : {
-      "post" : {
-        "summary" : "Operation in ActionLearning",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "action" : {
-                    "type" : "predicate"
-                  },
-                  "location" : {
-                    "type" : "predicate"
-                  },
-                  "modification" : {
-                    "type" : "predicate"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "modifyAction_predicate_predicate_predicate",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "action",
-          "schema" : {
-            "type" : "predicate"
-          }
-        }, {
-          "required" : false,
-          "in" : "query",
-          "name" : "modification",
-          "schema" : {
-            "type" : "predicate"
-          }
-        }, {
-          "required" : false,
-          "in" : "query",
-          "name" : "location",
-          "schema" : {
-            "type" : "predicate"
-          }
-        } ],
-        "tags" : [ "ActionLearning" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -12648,34 +12952,6 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=getActivatedEntities" : {
-      "post" : {
-        "summary" : "Operation in ConsultantInterface",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : { }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "getActivatedEntities",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ ],
-        "tags" : [ "ConsultantInterface" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
     "/invoke-service?serviceName=cancelGoal_long" : {
       "post" : {
         "summary" : "Operation in GoalManagerImpl",
@@ -12715,6 +12991,34 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=getActivatedEntities" : {
+      "post" : {
+        "summary" : "Operation in ConsultantInterface",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getActivatedEntities",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "ConsultantInterface" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=getRules" : {
       "post" : {
         "summary" : "Operation in BeliefInterface",
@@ -12740,55 +13044,6 @@
         },
         "parameters" : [ ],
         "tags" : [ "BeliefInterface" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=submitGoal_predicate_symbol" : {
-      "post" : {
-        "summary" : "Operation in ExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "priorityTierSymbol" : {
-                    "type" : "name:type"
-                  },
-                  "g" : {
-                    "type" : "predicate"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "submitGoal_predicate_symbol",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "g",
-          "schema" : {
-            "type" : "predicate"
-          }
-        }, {
-          "required" : false,
-          "in" : "query",
-          "name" : "priorityTierSymbol",
-          "schema" : {
-            "type" : "symbol"
-          }
-        } ],
-        "tags" : [ "ExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -15026,6 +15281,55 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=learnAction_symbol_predicate" : {
+      "post" : {
+        "summary" : "Operation in ExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  },
+                  "newAction" : {
+                    "type" : "predicate"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "learnAction_symbol_predicate",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "newAction",
+          "schema" : {
+            "type" : "predicate"
+          }
+        } ],
+        "tags" : [ "ExecutionManager" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=lastCart" : {
       "post" : {
         "summary" : "Operation in SupermarketInterface",
@@ -15232,7 +15536,7 @@
     },
     "/invoke-service?serviceName=injectDictionaryEntry_string_string_string_string" : {
       "post" : {
-        "summary" : "Operation in TLDLParserComponent",
+        "summary" : "Operation in PickAndPlaceLLM",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -15295,7 +15599,7 @@
             "type" : "string"
           }
         } ],
-        "tags" : [ "TLDLParserComponent" ],
+        "tags" : [ "PickAndPlaceLLM" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -15451,55 +15755,6 @@
         },
         "parameters" : [ ],
         "tags" : [ "Planner" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=updateActionLearning_predicate_symbol" : {
-      "post" : {
-        "summary" : "Operation in ActionLearning",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "newAction" : {
-                    "type" : "predicate"
-                  },
-                  "status" : {
-                    "type" : "name:type"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "updateActionLearning_predicate_symbol",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "newAction",
-          "schema" : {
-            "type" : "predicate"
-          }
-        }, {
-          "required" : false,
-          "in" : "query",
-          "name" : "status",
-          "schema" : {
-            "type" : "symbol"
-          }
-        } ],
-        "tags" : [ "ActionLearning" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -16059,6 +16314,45 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=getNextGoalPredicate_symbol" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getNextGoalPredicate_symbol",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        } ],
+        "tags" : [ "GoalManagerImpl" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=checkIgnoreTentativeAccept_predicate" : {
       "post" : {
         "summary" : "Operation in ExecutionManager",
@@ -16095,45 +16389,6 @@
           }
         } ],
         "tags" : [ "ExecutionManager" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=getNextGoalPredicate_symbol" : {
-      "post" : {
-        "summary" : "Operation in QueueExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "agent" : {
-                    "type" : "name:type"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "getNextGoalPredicate_symbol",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "agent",
-          "schema" : {
-            "type" : "symbol"
-          }
-        } ],
-        "tags" : [ "QueueExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -16556,7 +16811,7 @@
     },
     "/invoke-service?serviceName=cancelAllActiveGoals" : {
       "post" : {
-        "summary" : "Operation in QueueExecutionManager",
+        "summary" : "Operation in GoalManagerImpl",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -16578,35 +16833,7 @@
           }
         },
         "parameters" : [ ],
-        "tags" : [ "QueueExecutionManager" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=getLearningStatus" : {
-      "post" : {
-        "summary" : "Operation in ActionLearning",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : { }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "getLearningStatus",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ ],
-        "tags" : [ "ActionLearning" ],
+        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -17130,6 +17357,34 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=cancelAllSystemGoals" : {
+      "post" : {
+        "summary" : "Operation in QueueExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "cancelAllSystemGoals",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "QueueExecutionManager" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=getBirthdayMessage" : {
       "post" : {
         "summary" : "Operation in TemiV3Interface",
@@ -17199,7 +17454,7 @@
     },
     "/invoke-service?serviceName=getActiveGoals" : {
       "post" : {
-        "summary" : "Operation in ExecutionManager",
+        "summary" : "Operation in GoalManagerImpl",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -17221,7 +17476,7 @@
           }
         },
         "parameters" : [ ],
-        "tags" : [ "ExecutionManager" ],
+        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -17892,45 +18147,6 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=resumeSystemGoal_symbol" : {
-      "post" : {
-        "summary" : "Operation in QueueExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : {
-                  "agent" : {
-                    "type" : "name:type"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "resumeSystemGoal_symbol",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ {
-          "required" : false,
-          "in" : "query",
-          "name" : "agent",
-          "schema" : {
-            "type" : "symbol"
-          }
-        } ],
-        "tags" : [ "QueueExecutionManager" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
     "/invoke-service?serviceName=createWeightGoal_symbol" : {
       "post" : {
         "summary" : "Operation in Forklift",
@@ -18511,6 +18727,75 @@
           }
         } ],
         "tags" : [ "TemiV3Interface" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=submitGoal_predicate_executiontype_prioritytier_long" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "priorityTier" : {
+                    "type" : "prioritytier"
+                  },
+                  "g" : {
+                    "type" : "predicate"
+                  },
+                  "type" : {
+                    "type" : "executiontype"
+                  },
+                  "priority" : {
+                    "type" : "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "submitGoal_predicate_executiontype_prioritytier_long",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "g",
+          "schema" : {
+            "type" : "predicate"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "type",
+          "schema" : {
+            "type" : "executiontype"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "priorityTier",
+          "schema" : {
+            "type" : "prioritytier"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "priority",
+          "schema" : {
+            "type" : "long"
+          }
+        } ],
+        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -19137,7 +19422,7 @@
     },
     "/invoke-service?serviceName=getCurrentGoals_goal" : {
       "post" : {
-        "summary" : "Operation in ExecutionManager",
+        "summary" : "Operation in GoalManagerImpl",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -19170,7 +19455,7 @@
             "type" : "goal"
           }
         } ],
-        "tags" : [ "ExecutionManager" ],
+        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -19509,6 +19794,55 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=cancelActionLearning_symbol_predicate" : {
+      "post" : {
+        "summary" : "Operation in ExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  },
+                  "newAction" : {
+                    "type" : "predicate"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "cancelActionLearning_symbol_predicate",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "newAction",
+          "schema" : {
+            "type" : "predicate"
+          }
+        } ],
+        "tags" : [ "ExecutionManager" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=collect" : {
       "post" : {
         "summary" : "Operation in PolycraftComponent",
@@ -19721,6 +20055,34 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=getActiveGoalsPredicates" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getActiveGoalsPredicates",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "GoalManagerImpl" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=ledOn_string" : {
       "post" : {
         "summary" : "Operation in NaoInterface",
@@ -19919,7 +20281,7 @@
     },
     "/invoke-service?serviceName=getPriorityTierForGoal_predicate" : {
       "post" : {
-        "summary" : "Operation in ExecutionManager",
+        "summary" : "Operation in GoalManagerImpl",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -19952,7 +20314,7 @@
             "type" : "predicate"
           }
         } ],
-        "tags" : [ "ExecutionManager" ],
+        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -20128,34 +20490,6 @@
           }
         } ],
         "tags" : [ "TLDLParserComponent" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=suspendSystemGoal" : {
-      "post" : {
-        "summary" : "Operation in QueueExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : { }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "suspendSystemGoal",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ ],
-        "tags" : [ "QueueExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -21220,6 +21554,34 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=getPastGoals" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getPastGoals",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "GoalManagerImpl" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=getBirthdayMessageRange" : {
       "post" : {
         "summary" : "Operation in TemiV3Interface",
@@ -21245,34 +21607,6 @@
         },
         "parameters" : [ ],
         "tags" : [ "TemiV3Interface" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=getPastGoals" : {
-      "post" : {
-        "summary" : "Operation in ExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : { }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "getPastGoals",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ ],
-        "tags" : [ "ExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -21423,7 +21757,7 @@
     },
     "/invoke-service?serviceName=getPendingGoalsPredicates" : {
       "post" : {
-        "summary" : "Operation in QueueExecutionManager",
+        "summary" : "Operation in GoalManagerImpl",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -21445,7 +21779,7 @@
           }
         },
         "parameters" : [ ],
-        "tags" : [ "QueueExecutionManager" ],
+        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -21513,6 +21847,55 @@
           }
         } ],
         "tags" : [ "UnitySpaceStation" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=resumeActionLearning_symbol_predicate" : {
+      "post" : {
+        "summary" : "Operation in ExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  },
+                  "newAction" : {
+                    "type" : "predicate"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "resumeActionLearning_symbol_predicate",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "newAction",
+          "schema" : {
+            "type" : "predicate"
+          }
+        } ],
+        "tags" : [ "ExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -21946,6 +22329,45 @@
           }
         } ],
         "tags" : [ "MoveBaseInterface" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=getActiveGoalsPredicates_symbol" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "actor" : {
+                    "type" : "name:type"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getActiveGoalsPredicates_symbol",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "actor",
+          "schema" : {
+            "type" : "symbol"
+          }
+        } ],
+        "tags" : [ "GoalManagerImpl" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -23326,6 +23748,55 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=endActionLearning_symbol_predicate" : {
+      "post" : {
+        "summary" : "Operation in ExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  },
+                  "newAction" : {
+                    "type" : "predicate"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "endActionLearning_symbol_predicate",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "newAction",
+          "schema" : {
+            "type" : "predicate"
+          }
+        } ],
+        "tags" : [ "ExecutionManager" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=interruptSaveLocation" : {
       "post" : {
         "summary" : "Operation in TemiV3Interface",
@@ -24188,6 +24659,34 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=getCurrentGoals" : {
+      "post" : {
+        "summary" : "Operation in GoalManagerImpl",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "getCurrentGoals",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "GoalManagerImpl" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=getCurrentContextCount" : {
       "post" : {
         "summary" : "Operation in GoalManagerImpl",
@@ -24371,6 +24870,34 @@
         "consumes" : [ "application/json" ]
       }
     },
+    "/invoke-service?serviceName=suspendSystemGoal" : {
+      "post" : {
+        "summary" : "Operation in QueueExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "suspendSystemGoal",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ ],
+        "tags" : [ "QueueExecutionManager" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
     "/invoke-service?serviceName=getSpaceStationTubeDamaged_symbol" : {
       "post" : {
         "summary" : "Operation in UnitySpaceStation",
@@ -24513,6 +25040,55 @@
           }
         } ],
         "tags" : [ "ArmInterface" ],
+        "consumes" : [ "application/json" ]
+      }
+    },
+    "/invoke-service?serviceName=waitForActionLearningStart_symbol_predicate" : {
+      "post" : {
+        "summary" : "Operation in ExecutionManager",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "agent" : {
+                    "type" : "name:type"
+                  },
+                  "newAction" : {
+                    "type" : "predicate"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "operationId" : "waitForActionLearningStart_symbol_predicate",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation"
+          },
+          "default" : {
+            "description" : "Unexpected error"
+          }
+        },
+        "parameters" : [ {
+          "required" : false,
+          "in" : "query",
+          "name" : "agent",
+          "schema" : {
+            "type" : "symbol"
+          }
+        }, {
+          "required" : false,
+          "in" : "query",
+          "name" : "newAction",
+          "schema" : {
+            "type" : "predicate"
+          }
+        } ],
+        "tags" : [ "ExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
@@ -24668,34 +25244,6 @@
           }
         } ],
         "tags" : [ "VisionInterface" ],
-        "consumes" : [ "application/json" ]
-      }
-    },
-    "/invoke-service?serviceName=cancelSystemGoal" : {
-      "post" : {
-        "summary" : "Operation in QueueExecutionManager",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "object",
-                "properties" : { }
-              }
-            }
-          }
-        },
-        "produces" : [ "application/json" ],
-        "operationId" : "cancelSystemGoal",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation"
-          },
-          "default" : {
-            "description" : "Unexpected error"
-          }
-        },
-        "parameters" : [ ],
-        "tags" : [ "QueueExecutionManager" ],
         "consumes" : [ "application/json" ]
       }
     },
