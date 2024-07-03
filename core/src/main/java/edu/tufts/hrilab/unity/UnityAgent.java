@@ -56,7 +56,7 @@ public class UnityAgent extends DiarcComponent {
     	log.error("Agent name is required to route messages from Unity");
     }
     if (cmdLine.hasOption("nullListener")) {
-      listener = Factory.createSymbol("null");
+      listener = null; //Factory.createSymbol("null");
       log.debug("Agent " + agent + " is using a default null listener");
     } else {
       listener = Factory.createSymbol(this.agent);

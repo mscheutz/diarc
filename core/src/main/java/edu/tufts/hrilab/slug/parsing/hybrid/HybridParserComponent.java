@@ -7,6 +7,7 @@ package edu.tufts.hrilab.slug.parsing.hybrid;
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
@@ -14,6 +15,7 @@ import edu.tufts.hrilab.slug.parsing.cache.CachedParserComponent;
 import edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent;
 import edu.tufts.hrilab.slug.parsing.patternMatching.PatternMatchingParser;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
+import edu.tufts.hrilab.fol.util.Utilities;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -24,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.HashMap;
 
 public class HybridParserComponent extends DiarcComponent implements NLUInterface {
 
@@ -38,6 +41,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
   private String endpoint = "http://localhost:8000/parse/";
   private List<String> tldlDictionaries = new ArrayList<>();
+  private  HashMap<Symbol, Symbol> addresseeMap = new HashMap<>();
   private boolean tldlUpdateAddressee = true;
   private String cacheName = null;
   private String[] cacheLoads = null;
