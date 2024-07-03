@@ -278,7 +278,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       }
     }
 
-    if (Utilities.equalsIgnoreType(cachedOutput.getAddressee(), unknownListener)) {
+    if (Utilities.equalsIgnoreType(output.getAddressee(), unknownListener)) {
       if (addresseeMap.containsKey(incoming.getSpeaker())) {
         output.setListener(addresseeMap.get(incoming.getSpeaker()));
         log.debug("Set speaker " + incoming.getSpeaker().toString() + " to address " + output.getAddressee().toString());
