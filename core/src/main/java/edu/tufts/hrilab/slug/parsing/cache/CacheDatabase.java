@@ -318,9 +318,7 @@ public class CacheDatabase {
     if (cachedUtterance != null) {
       incoming.setType(cachedUtterance.getType());
       semantics = cachedUtterance.getSemantics();
-      if (incoming.getAddressee() != null) {
-        semantics.set(0, incoming.getAddressee());
-      }
+      semantics.set(0, incoming.getAddressee());
       incoming.setSemantics(semantics);
       incoming.setIndirectSemantics(cachedUtterance.getIndirectSemantics());
       incoming.setBindings(cachedUtterance.getBindings());

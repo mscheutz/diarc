@@ -52,6 +52,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private String cachePersist = null;
   private String llm = null;
   private String prompt = null;
+  private Symbol unknownListener = null;
 
   private boolean confirmation = true;
 
@@ -156,6 +157,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       }
       cacheParser = createInstance(CachedParserComponent.class, cacheArgs, false);
     }
+    unknownListener = Factory.createSymbol("unknown");
   }
 
   /**
@@ -205,7 +207,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
       if (cachedOutput != null && cachedOutput.getSemantics() != null) {
         log.debug("Using cached parser response");
-        if (cachedOutput.getAddressee() == null) {
+        if (Utilities.equalsIgnoreType(cachedOutput.getAddressee(), unknownListener)) {
           if (addresseeMap.containsKey(incoming.getSpeaker())) {
             cachedOutput.setListener(addresseeMap.get(incoming.getSpeaker()));
           } else {
@@ -276,7 +278,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       }
     }
 
-    if (output.getAddressee() == null) {
+    if (Utilities.equalsIgnoreType(cachedOutput.getAddressee(), unknownListener)) {
       if (addresseeMap.containsKey(incoming.getSpeaker())) {
         output.setListener(addresseeMap.get(incoming.getSpeaker()));
         log.debug("Set speaker " + incoming.getSpeaker().toString() + " to address " + output.getAddressee().toString());
