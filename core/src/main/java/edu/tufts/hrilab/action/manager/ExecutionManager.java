@@ -338,9 +338,9 @@ public class ExecutionManager implements ActionListener {
    */
   protected void activateValidPendingGoals() {
     log.trace("[activateNextPendingGoals] in method");
-    Goal assignedGoal = activateNextValidPendingGoal();
-    while (assignedGoal != null) {
-      assignedGoal = activateNextValidPendingGoal();
+    int goalIndex = activateNextValidPendingGoal(0);
+    while (goalIndex != -1) {
+      goalIndex = activateNextValidPendingGoal(goalIndex);
     }
   }
 
@@ -350,7 +350,7 @@ public class ExecutionManager implements ActionListener {
    * @return the goal which was transferred to active for execution. If no such
    * valid goal existed, returns null.
    */
-  protected Goal activateNextValidPendingGoal() {
+  protected int activateNextValidPendingGoal(int startSearchIndex) {
     log.trace("[activateNextPendingGoal] in method");
     synchronized (pendingGoalsLock) {
       log.trace("[activateNextPendingGoal] have pendingGoals lock");
@@ -358,21 +358,25 @@ public class ExecutionManager implements ActionListener {
         log.trace("[activateNextPendingGoal] have resourceLock");
         //iterate through pending goals in order of priority
         Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.descendingIterator();
+        int goalIndex = 0;
         while (pendingGoalsIterator.hasNext()) {
-          PendingGoal pg = pendingGoalsIterator.next();
-          //Collect all resources which need to be available in order to execute this goal
-          Set<Resource> necessaryResources = getRequiredResourcesForGoal(pg.getGoal());
-          //If all resources are available, submit goal
-          if (necessaryResources.stream().allMatch(Resource::isAvailable)) {
-            log.debug("[activateNextPendingGoal] found valid goal {}, locking resources {}", pg.getGoal(), necessaryResources);
-            lockResources(pg.getGoal());
-            transferGoalToActive(pg.getGoal());
-            return pg.getGoal();
+          if (goalIndex >= startSearchIndex) {
+            PendingGoal pg = pendingGoalsIterator.next();
+            //Collect all resources which need to be available in order to execute this goal
+            Set<Resource> necessaryResources = getRequiredResourcesForGoal(pg.getGoal());
+            //If all resources are available, submit goal
+            if (necessaryResources.stream().allMatch(Resource::isAvailable)) {
+              log.debug("[activateNextPendingGoal] found valid goal {}, locking resources {}", pg.getGoal(), necessaryResources);
+              lockResources(pg.getGoal());
+              transferGoalToActive(pg.getGoal());
+              return goalIndex;
+            }
           }
+          goalIndex++;
         }
         //No valid goals found
         log.trace("[activateNextPendingGoal] no valid goal found");
-        return null;
+        return -1;
       }
     }
   }
@@ -1187,7 +1191,6 @@ public class ExecutionManager implements ActionListener {
     }
     pg.notifyOfNoLongerPending();
 
-    //TODO: this call can be replaced with something more efficient to only check lower priority goals
     //If going by the logic that there can be resource conflicts between
     // pending goals, then we need to check if any lower priority pending goals
     // can now be executed immediately due to this goal being canceled.
@@ -1444,16 +1447,16 @@ public class ExecutionManager implements ActionListener {
     return goalPreds;
   }
 
-  public List<Predicate> getActiveGoalsPredicates() {
-    return getActiveGoalsPredicates(rootAgent);
+  public List<Predicate> getSystemGoalsPredicates() {
+    return getSystemGoalsPredicates(rootAgent);
   }
 
-  public List<Predicate> getActiveGoalsPredicates(Symbol actor) {
-    log.trace("[getActiveGoalsPredicates] {}", actor);
-    return getActiveGoalsPredicatesHelper(getUntypedSymbol(actor), new ArrayList<>());
+  public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
+    log.trace("[getSystemGoalsPredicates] {}", actor);
+    return getSystemGoalsPredicatesHelper(getUntypedSymbol(actor), new ArrayList<>());
   }
 
-  private List<Predicate> getActiveGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
+  private List<Predicate> getSystemGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
     AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
       return goalPreds;
@@ -1464,7 +1467,7 @@ public class ExecutionManager implements ActionListener {
     }
 
     for (Symbol member: agentTeam.getMemberNames()) {
-      goalPreds.addAll(getActiveGoalsPredicates(member));
+      goalPreds.addAll(getSystemGoalsPredicates(member));
     }
 
     return goalPreds;

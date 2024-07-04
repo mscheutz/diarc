@@ -629,8 +629,8 @@ public class GoalManagerImpl extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public List<Predicate> getActiveGoalsPredicates() {
-    return em.getActiveGoalsPredicates();
+  public List<Predicate> getSystemGoalsPredicates() {
+    return em.getSystemGoalsPredicates();
   }
 
   /**
@@ -638,8 +638,8 @@ public class GoalManagerImpl extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public List<Predicate> getActiveGoalsPredicates(Symbol actor) {
-    return em.getActiveGoalsPredicates(actor);
+  public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
+    return em.getSystemGoalsPredicates(actor);
   }
 
   /**

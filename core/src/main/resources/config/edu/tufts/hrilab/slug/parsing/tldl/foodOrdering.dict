@@ -420,8 +420,8 @@ wait for acknowledgement ; C ; waitForAck(?ADDRESSEE)
 %remove current task; VERBI; cancelTemiGoal
 %end current task; VERBI; cancelTemiGoal
 
-pause; C ; suspendSystemGoal(?ADDRESSEE)
-wait; C ; cancelSystemGoal(?ADDRESSEE)
+pause; C ; suspendSystemGoals(?ADDRESSEE)
+wait; C ; cancelSystemGoals(?ADDRESSEE)
 wait; (C/FIRST)/C, (C/FIRST)/S; #g#m.urgentPriority(?ADDRESSEE, $g)
 first; FIRST; first
 
@@ -536,11 +536,11 @@ seconds; VAL\NUM ; #x.val($x,seconds)
 %order meal; (C/WITH)/NUM; #x#y.orderMeal(?ADDRESSEE,$x,$y)
 
 
-suspend current task; VERBI ; suspendSystemGoal
-resume previous task; VERBI ; resumeSystemGoal
-resume task; VERBI ; resumeSystemGoal
-resume; VERBI ; resumeSystemGoal
-cancel current task; VERBI ; cancelSystemGoal
+suspend current task; VERBI ; suspendSystemGoals
+resume previous task; VERBI ; resumeSystemGoals
+resume task; VERBI ; resumeSystemGoals
+resume; VERBI ; resumeSystemGoals
+cancel current task; VERBI ; cancelSystemGoals
 remove task from queue at position; C/LIT* ; #x.cancelPendingGoalByIndex(?ADDRESSEE,$x)
 now; C/C; #x.urgentPriority(?ADDRESSEE,$x)
 right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)

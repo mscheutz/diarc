@@ -277,7 +277,7 @@ import java.lang.Integer;
     java.lang.String !status;
     Predicate !goalPred;
 
-    !goalPreds = act:getActiveGoalsPredicates();
+    !goalPreds = act:getSystemGoalsPredicates();
     !resultsSize = op:size(!goalPreds);
     if(op:gt(!resultsSize,0)){
         foreach(!goalPred: !goalPreds){

@@ -91,12 +91,12 @@ public class ActionLearning {
     ignoreActionSet.add(Factory.createPredicate("freeze(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("endFreeze(?actor)"));
 
-    ignoreActionSet.add(Factory.createPredicate("cancelSystemGoal(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("suspendSystemGoal(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("resumeSystemGoal(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("cancelSystemGoal(?actor,?agent)"));
-    ignoreActionSet.add(Factory.createPredicate("suspendSystemGoal(?actor,?agent)"));
-    ignoreActionSet.add(Factory.createPredicate("resumeSystemGoal(?actor,?agent)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelSystemGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("suspendSystemGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeSystemGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelSystemGoals(?actor,?agent)"));
+    ignoreActionSet.add(Factory.createPredicate("suspendSystemGoals(?actor,?agent)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeSystemGoals(?actor,?agent)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllCurrentGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllPendingGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllActiveGoals(?actor)"));

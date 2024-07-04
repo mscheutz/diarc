@@ -8396,7 +8396,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=resumeSystemGoal" : {
+    "/invoke-service?serviceName=resumeSystemGoals" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -8416,7 +8416,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "resumeSystemGoal",
+        "operationId" : "resumeSystemGoals",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -15890,7 +15890,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=suspendSystemGoal" : {
+    "/invoke-service?serviceName=suspendSystemGoals" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -15904,7 +15904,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "suspendSystemGoal",
+        "operationId" : "suspendSystemGoals",
         "responses" : {
           "200" : {
             "description" : "Successful operation"
@@ -19481,7 +19481,7 @@
         "consumes" : [ "application/json" ]
       }
     },
-    "/invoke-service?serviceName=cancelSystemGoal" : {
+    "/invoke-service?serviceName=cancelSystemGoals" : {
       "post" : {
         "summary" : "Operation in QueueExecutionManager",
         "requestBody" : {
@@ -19501,7 +19501,7 @@
           }
         },
         "produces" : [ "application/json" ],
-        "operationId" : "cancelSystemGoal",
+        "operationId" : "cancelSystemGoals",
         "responses" : {
           "200" : {
             "description" : "Successful operation"

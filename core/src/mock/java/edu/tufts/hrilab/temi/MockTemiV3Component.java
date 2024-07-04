@@ -1043,7 +1043,6 @@ public class MockTemiV3Component extends DiarcComponent implements TemiV3Interfa
                 case "sendPositionUpdate":
                 case "stopListening":
                 case "endFreezeTemi":
-                case "cancelGoalInQueue":
                 case "enableKioskMode":
                 case "disableKioskMode":
                 case "setKioskTimeout":
@@ -1072,8 +1071,7 @@ public class MockTemiV3Component extends DiarcComponent implements TemiV3Interfa
     @TRADEService
     public boolean skipsQueue(String funcName) {
         switch (funcName) {
-            case "cancelSystemGoal":
-            case "cancelGoalInQueue":
+            case "cancelSystemGoals":
             case "cancelPendingGoalByIndex":
             case "acknowledge":
             case "freeze":

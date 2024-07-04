@@ -212,11 +212,11 @@ public class ExecutionManagerTest {
       priorityTier = PriorityTier.SKIPPENDING;
     } else if (goalPred.getName().equals("updateSettings")) {
       priorityTier = PriorityTier.SKIPPENDING;
-    } else if (goalPred.getName().equals("cancelSystemGoal")) {
+    } else if (goalPred.getName().equals("cancelSystemGoals")) {
       priorityTier = PriorityTier.SKIPPENDING;
-    } else if (goalPred.getName().equals("suspendSystemGoal")) {
+    } else if (goalPred.getName().equals("suspendSystemGoals")) {
       priorityTier = PriorityTier.SKIPPENDING;
-    } else if (goalPred.getName().equals("resumeSystemGoal")) {
+    } else if (goalPred.getName().equals("resumeSystemGoals")) {
       priorityTier = PriorityTier.SKIPPENDING;
     } else if (goalPred.getName().equals("cancelAllPendingGoals")) {
       priorityTier = PriorityTier.SKIPPENDING;

@@ -132,7 +132,6 @@ public class QueueExecutionManager extends ExecutionManager {
     }
   }
 
-  //TODO: replace all usages of all below methods (from current to system)
   @TRADEService
   @Action
   public void cancelAllSystemGoals() {
@@ -158,83 +157,89 @@ public class QueueExecutionManager extends ExecutionManager {
   //      N active goals, do we pick the oldest, most recent, one at random?
   @Action
   @TRADEService
-  public long cancelSystemGoal() {
-    return cancelSystemGoal(rootAgent);
+  public List<Long> cancelSystemGoals() {
+    return cancelSystemGoals(rootAgent);
   }
 
-  //TODO: return value doesn't make sense anymore if acting on all children
   @Action
   @TRADEService
-  public long cancelSystemGoal(Symbol agent) {
-    log.debug("[cancelSystemGoal] in method");
+  public List<Long> cancelSystemGoals(Symbol agent) {
+    log.debug("[cancelSystemGoals] in method");
+    List<Long> canceledIds = new ArrayList<>();
     agent = getUntypedSymbol(agent);
     long goalId = getSystemGid(agent);
     if (goalId != -1) {
-      cancelGoal(goalId);
+      if (cancelGoal(goalId)) {
+        canceledIds.add(goalId);
+      }
     }
 
     AgentTeam agentTeam = agentTeams.get(agent);
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
-        cancelSystemGoal(member);
+        canceledIds.addAll(cancelSystemGoals(member));
       }
     }
 
-    return -1;
+    return canceledIds;
   }
 
   @Action
   @TRADEService
-  public long suspendSystemGoal() {
-    return suspendSystemGoal(rootAgent);
+  public List<Long> suspendSystemGoals() {
+    return suspendSystemGoals(rootAgent);
   }
 
-  //TODO: return value doesn't make sense anymore if acting on all children
   @Action
   @TRADEService
-  public long suspendSystemGoal(Symbol agent) {
-    log.debug("[suspendSystemGoal] in method");
+  public List<Long> suspendSystemGoals(Symbol agent) {
+    log.debug("[suspendSystemGoals] in method");
+    List<Long> suspendedIds = new ArrayList<>();
     agent = getUntypedSymbol(agent);
     long goalId = getSystemGid(agent);
     if (goalId != -1) {
-      suspendGoal(goalId);
+      if (suspendGoal(goalId)) {
+        suspendedIds.add(goalId);
+      }
     }
 
     AgentTeam agentTeam = agentTeams.get(agent);
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
-        suspendSystemGoal(member);
+        suspendedIds.addAll(suspendSystemGoals(member));
       }
     }
 
-    return -1;
+    return suspendedIds;
   }
 
   @Action
   @TRADEService
-  public long resumeSystemGoal() {
-    return resumeSystemGoal(rootAgent);
+  public List<Long> resumeSystemGoals() {
+    return resumeSystemGoals(rootAgent);
   }
 
-  //TODO: return value doesn't make sense anymore if acting on all children
   @Action
   @TRADEService
-  public long resumeSystemGoal(Symbol agent) {
-    log.debug("[resumeSystemGoal] in method");
+  public List<Long> resumeSystemGoals(Symbol agent) {
+    log.debug("[resumeSystemGoals] in method");
+    List<Long> resumedIds = new ArrayList<>();
     agent = getUntypedSymbol(agent);
     long goalId = getSystemGid(agent);
     if (goalId != -1) {
-      resumeGoal(goalId);
+      if (resumeGoal(goalId)) {
+        resumedIds.add(goalId);
+      }
     }
 
     AgentTeam agentTeam = agentTeams.get(agent);
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
-        resumeSystemGoal(member);
+        resumedIds.addAll(resumeSystemGoals(member));
       }
     }
 
-    return -1;
+    return resumedIds;
   }
 
   private Long getSystemGid(Symbol actor) {
@@ -246,12 +251,12 @@ public class QueueExecutionManager extends ExecutionManager {
   }
 
   @Override
-  public List<Predicate> getActiveGoalsPredicates(Symbol actor) {
-    log.trace("[getActiveGoalsPredicates] {}", actor);
-    return getActiveGoalsPredicatesHelper(getUntypedSymbol(actor), new ArrayList<>());
+  public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
+    log.trace("[getSystemGoalsPredicates] {}", actor);
+    return getSystemGoalsPredicatesHelper(getUntypedSymbol(actor), new ArrayList<>());
   }
 
-  private List<Predicate> getActiveGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
+  private List<Predicate> getSystemGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
     Goal g = agentGoals.get(actor);
     if (g != null && !g.getStatus().isTerminated()) {
       goalPreds.add(Factory.createPredicate(g.getStatus().toString(), g.getPredicate()));
@@ -260,7 +265,7 @@ public class QueueExecutionManager extends ExecutionManager {
     AgentTeam agentTeam  = agentTeams.get(actor);
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
-        goalPreds.addAll(getActiveGoalsPredicates(member));
+        goalPreds.addAll(getSystemGoalsPredicates(member));
       }
     }
 

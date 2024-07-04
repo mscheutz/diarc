@@ -493,9 +493,9 @@ give a tour; VERBI ; tour
 remove goal from queue at position; C/LIT* ; #x.cancelPendingGoalByIndex(?ADDRESSEE,$x)
 remove goal from queue ; C/LIT* ; #x.cancelGoal(?ADDRESSEE,$x)
 
-cancel current task; VERBI; cancelSystemGoal
-remove current task; VERBI; cancelSystemGoal
-end current task; VERBI; cancelSystemGoal
+cancel current task; VERBI; cancelSystemGoals
+remove current task; VERBI; cancelSystemGoals
+end current task; VERBI; cancelSystemGoals
 
 cancel task with gid ; C/LIT* ; #x.cancelGoal(?ADDRESSEE,$x)
 
