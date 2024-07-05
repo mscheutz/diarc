@@ -354,6 +354,25 @@ public final class Utterance implements Serializable {
   }
 
   /**
+   * Set a listener of the utterance.
+   *
+   * @param listener
+   */
+  public void setListener (Symbol listener) {
+    listeners.clear();
+    listeners.add(listener);
+  }
+
+  /**
+   * Add a listener to the utterance.
+   *
+   * @param listener
+   */
+  public void addListener(Symbol listener) {
+    listeners.add(listener);
+  }
+
+  /**
    * Get semantic meaning of utterance.
    *
    * @return
@@ -635,7 +654,11 @@ public final class Utterance implements Serializable {
     sb.append(speaker != null ? speaker.toString() : "_").append(",");
 
     // add listener info
-    sb.append(listeners != null && !listeners.isEmpty() ? listeners.get(0).toString() : "_").append(",");
+    if (listeners != null && !listeners.isEmpty() && listeners.get(0) != null) {
+      sb.append(listeners.get(0).toString()).append(",");
+    } else {
+      sb.append("_").append(",");
+    }
 
     // add semantics (or words if semantics is null or "null")
     if (semantics == null) {
