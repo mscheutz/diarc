@@ -30,7 +30,7 @@ public class LlamaSpaceStationResponse {
     public String number;
 
     private List<String> agents = Arrays.asList(new String[]{"unknown", "robot1", "robot2"});
-    private List<String> actions = Arrays.asList(new String[]{ "stop", "dontKnow", "repair", "monitor" });
+    private List<String> actions = Arrays.asList(new String[]{ "stop", "dontKnow", "repair", "check" });
     private List<String> locationActions = Arrays.asList(new String[]{ "goto", "repair" });
     private List<String> areas = Arrays.asList(new String[]{ "alpha", "beta", "gamma" });
     private List<String> sides = Arrays.asList(new String[]{ "left", "right" });
@@ -57,7 +57,7 @@ public class LlamaSpaceStationResponse {
             parserRes = actionResponse(2);
             parserRes.intention.proposition.arguments[0] = side;
             parserRes.intention.proposition.arguments[1] = number;
-        } else if (valid(area, areas) && (action.equals("goto") || action.equals("monitor")) ) {
+        } else if (valid(area, areas) && (action.equals("goto") || action.equals("check")) ) {
             parserRes = actionResponse(1);
             parserRes.intention.proposition.arguments[0] = area;
         } else if (action.equals("repair") || action.equals("dontKnow")) {
@@ -102,7 +102,6 @@ public class LlamaSpaceStationResponse {
         return intention;
     }
 
-
     /**
      * Takes the object and produces a predicate string containing a dialog action goal predicate.
      *
@@ -117,7 +116,7 @@ public class LlamaSpaceStationResponse {
             str = action + "(" + actor + "," + side + "," + number + ")";
         } else if (valid(area, areas) && action.equals("goto")) {
             str = action + "(" + actor + "," + area + ")";
-        } else if (valid(area, areas) && action.equals("monitor")) {
+        } else if (valid(area, areas) && action.equals("check")) {
             str = action + "(" + actor + "," + area + ")";
         } else if (action.equals("repair") || action.equals("dontKnow")) {
             str = action + "(" + actor + ")";
