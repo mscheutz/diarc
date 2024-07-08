@@ -137,6 +137,7 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
       List<Symbol> args = new ArrayList<>();
       if (addressee != null) {
         args.add(addressee);
+        output.setListener(addressee);
       } else {
         args.add(input.getAddressee());
       }
