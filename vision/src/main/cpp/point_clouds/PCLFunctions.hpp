@@ -39,6 +39,8 @@
 #include <pcl/segmentation/extract_clusters.h>
 //#include <pcl/filters/crop_hull.h>
 
+#include <pcl/common/distances.h>
+#include <pcl/common/common.h>
 #include <pcl/kdtree/kdtree_flann.h>
 //#include <pcl/kdtree/kdtree_ann.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
