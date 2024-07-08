@@ -10,6 +10,8 @@ import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
 import geometry_msgs.PoseWithCovariance;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.address.InetAddressFactory;
 import org.ros.message.Time;
 import org.ros.namespace.GraphName;
@@ -20,9 +22,9 @@ import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMain;
 import org.ros.node.NodeMainExecutor;
 import org.ros.node.service.ServiceResponseBuilder;
-import org.ros.node.service.ServiceServer;
-import std_msgs.Bool;
-import std_msgs.Int64;
+import sensor_msgs.PointCloud2;
+import sensor_msgs.PointField;
+import vision_msgs.ObjectHypothesisWithPose;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -45,6 +47,8 @@ public class RosVisionComponent extends DiarcComponent {
   public void init() {
     initializeRosNode(rc);
   }
+
+  // TODO: add services to turn on/off publishing visualization data
 
   public void initializeRosNode(RosConfiguration rc) {
     nodeMain = new AbstractNodeMain() {
@@ -227,12 +231,42 @@ public class RosVisionComponent extends DiarcComponent {
 
       // set object hypotheses
       // TODO: for now object hypothesis uses the same pose as the bbox and does not set the covariance matrix
-      vision_msgs.ObjectHypothesisWithPose hypothesis = node.getTopicMessageFactory().newFromType("vision_msgs/ObjectHypothesisWithPose");
+      vision_msgs.ObjectHypothesisWithPose hypothesis = node.getTopicMessageFactory().newFromType(ObjectHypothesisWithPose._TYPE);
       detection3D.getResults().add(hypothesis);
       hypothesis.setId(mo.getTokenId());
       hypothesis.setScore(mo.getDetectionConfidence());
       PoseWithCovariance poseWithCovar = hypothesis.getPose();
       poseWithCovar.setPose(detection3D.getBbox().getCenter());
+
+      // set point cloud of object
+      double[][] cloud = mo.getPointCloud();
+      int numPoints = cloud.length;
+      List<PointField> fields = new ArrayList<>(numPoints);
+
+      PointField pointFieldX = node.getTopicMessageFactory().newFromType(PointField._TYPE);
+      pointFieldX.setName("x"); pointFieldX.setOffset(0); pointFieldX.setDatatype(PointField.FLOAT32); pointFieldX.setCount(1);
+      PointField pointFieldY = node.getTopicMessageFactory().newFromType(PointField._TYPE);
+      pointFieldX.setName("y"); pointFieldX.setOffset(4); pointFieldX.setDatatype(PointField.FLOAT32); pointFieldX.setCount(1);
+      PointField pointFieldZ = node.getTopicMessageFactory().newFromType(PointField._TYPE);
+      pointFieldX.setName("z"); pointFieldX.setOffset(8); pointFieldX.setDatatype(PointField.FLOAT32); pointFieldX.setCount(1);
+      fields.add(pointFieldX);
+      fields.add(pointFieldY);
+      fields.add(pointFieldZ);
+      ChannelBuffer data = ChannelBuffers.buffer(numPoints*Float.BYTES*3);
+      for (int n = 0; n < numPoints; ++n) {
+        for (int dim = 0; dim < 3; ++dim) {
+          data.setFloat(dim + n*3, (float)cloud[n][dim]);
+        }
+      }
+      PointCloud2 cloud2 = detection3D.getSourceCloud();
+      cloud2.setData(data);
+      cloud2.setFields(fields);
+      cloud2.setIsDense(false);
+      cloud2.setHeight(1);
+      cloud2.setWidth(numPoints);
+      cloud2.setIsBigendian(false);
+      cloud2.setPointStep(Float.BYTES*3);
+      cloud2.setRowStep(numPoints*Float.BYTES*3);
 
       // add detection to list
       detections.getDetections().add(detection3D);
