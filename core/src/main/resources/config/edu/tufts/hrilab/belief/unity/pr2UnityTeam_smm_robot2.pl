@@ -2,7 +2,6 @@
 %dspred(true(truth),1.0,1.0).
 
 /* agents the system should know about */
-name(robot1,robot1). /* we might want this to be dynamic too */
 name(robot2,robot2).
 
 actor(brad).
