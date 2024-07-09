@@ -454,6 +454,8 @@ import edu.tufts.hrilab.action.justification.Justification;
   }
 
   String !failureMessageString = "There are no damaged tubes in ?area";
+  String !successSingleMessageString = "There is one damaged tube in ?area";
+  String !successMessageString = "There are damaged tubes in ?area";
   Symbol !tubeToRepair;
   List !damagedTubes;
   int !damagedTubesSize;
@@ -463,11 +465,9 @@ import edu.tufts.hrilab.action.justification.Justification;
   if (~op:isEmpty(!damagedTubes)) {
     !damagedTubesSize = op:invokeMethod(!damagedTubes, "size");
     if (op:==(!damagedTubesSize, 1)) {
-      String !successSingleMessageString = "There is one damaged tube in ?area";
       act:sayText(!successSingleMessageString);
       op:log("info", "!successSingleMessageString");
     } else {
-      String !successMessageString = "There are !damagedTubesSize damaged tubes in ?area";
       act:sayText(!successMessageString);
       op:log("info", "!successMessageString");
     }
