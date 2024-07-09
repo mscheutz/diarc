@@ -454,12 +454,13 @@ import edu.tufts.hrilab.action.justification.Justification;
   op:log("debug", "notInTransit");
 }
 
-//["This will check an area for broken tubes"]
+//["This will check an area for damaged tubes"]
 () = check (Symbol ?area) {
   conditions : {
     pre infer: not(repairing(?actor,X,Y,Z));
     pre infer: amIn(?actor,?area);
   }
+  op:log("info", "Checking ?area for damaged tubes");
 
   String !failureMessageString = "There are no damaged tubes in ?area";
   String !successSingleMessageString = "There is one damaged tube in ?area";
