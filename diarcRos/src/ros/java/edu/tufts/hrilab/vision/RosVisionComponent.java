@@ -9,7 +9,13 @@ import edu.tufts.hrilab.diarcros.common.RosConfiguration;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
+import geometry_msgs.Point;
+import geometry_msgs.Pose;
 import geometry_msgs.PoseWithCovariance;
+import geometry_msgs.Quaternion;
+import geometry_msgs.Vector3;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.ros.address.InetAddressFactory;
@@ -22,14 +28,24 @@ import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMain;
 import org.ros.node.NodeMainExecutor;
 import org.ros.node.service.ServiceResponseBuilder;
+import org.ros.node.topic.Publisher;
+import sensor_msgs.JointState;
 import sensor_msgs.PointCloud2;
 import sensor_msgs.PointField;
+import std_msgs.ColorRGBA;
+import vision_msgs.Detection3D;
+import vision_msgs.Detection3DArray;
 import vision_msgs.ObjectHypothesisWithPose;
+import visualization_msgs.Marker;
+import visualization_msgs.MarkerArray;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class RosVisionComponent extends DiarcComponent {
   private RosConfiguration rc = new RosConfiguration();
@@ -40,15 +56,33 @@ public class RosVisionComponent extends DiarcComponent {
   private NodeMain nodeMain;
   private NodeMainExecutor nodeMainExecutor;
 
-  public RosVisionComponent() {
-  }
+  // TODO: add services to turn on/off publishing visualization data
+  private boolean publishVisData = false;
+
+  private Publisher<MarkerArray> visualizationPub;
+  private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
   @Override
   public void init() {
     initializeRosNode(rc);
+    if (publishVisData) {
+      executor.scheduleAtFixedRate(this::publishVisualizationMarkers, 0, 3, TimeUnit.SECONDS);
+    }
   }
 
-  // TODO: add services to turn on/off publishing visualization data
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("pub_vis").desc("publish visualization data").build());
+    return options;
+  }
+
+  @Override
+  protected void parseArgs(CommandLine cmdLine) {
+    if (cmdLine.hasOption("pub_vis")) {
+      publishVisData = true;
+    }
+  }
 
   public void initializeRosNode(RosConfiguration rc) {
     nodeMain = new AbstractNodeMain() {
@@ -103,6 +137,8 @@ public class RosVisionComponent extends DiarcComponent {
                   List<String> descriptors = getVisualSearchDescriptors(request.getSearchId());
                   response.setDescriptors(descriptors);
                 });
+
+        visualizationPub = connectedNode.newPublisher("detection_visualization_markers", MarkerArray._TYPE);
       }
     };
 
@@ -115,6 +151,50 @@ public class RosVisionComponent extends DiarcComponent {
     } catch (URISyntaxException e) {
       System.err.println("Error trying to create URI: " + e);
     }
+  }
+
+  private int visPubId = 0;
+  private void publishVisualizationMarkers() {
+
+    List<MemoryObject> mos;
+    try {
+      mos = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTokens").argTypes()).call(List.class);
+    } catch (TRADEException e) {
+      log.error("Error calling getTokens service.", e);
+      return;
+    }
+
+    MarkerArray markerArray = node.getTopicMessageFactory().newFromType(MarkerArray._TYPE);
+    List<Marker> markers = new ArrayList<>();
+    for (MemoryObject mo : mos) {
+      Marker marker = node.getTopicMessageFactory().newFromType(Marker._TYPE);
+      marker.setType(Marker.CUBE);
+      marker.setAction(Marker.ADD);
+      marker.setId(visPubId++);
+      Pose pose = marker.getPose();
+      Point point = pose.getPosition();
+      point.setX(mo.getLocation().x);
+      point.setY(mo.getLocation().y);
+      point.setZ(mo.getLocation().z);
+      Quaternion orient = pose.getOrientation();
+      orient.setX(mo.getOrientation().x);
+      orient.setY(mo.getOrientation().y);
+      orient.setZ(mo.getOrientation().z);
+      orient.setW(mo.getOrientation().w);
+      ColorRGBA color = marker.getColor();
+      color.setR(1f);
+      color.setG(0f);
+      color.setB(0f);
+      color.setA(1f);
+      Vector3 scale = marker.getScale(); // size
+      scale.setX(0.5);
+      scale.setY(0.5);
+      scale.setZ(0.5);
+
+      markers.add(marker);
+    }
+    markerArray.setMarkers(markers);
+    visualizationPub.publish(markerArray);
   }
 
   /**
@@ -202,7 +282,7 @@ public class RosVisionComponent extends DiarcComponent {
   }
 
   private vision_msgs.Detection3DArray convertToRosMsg(List<MemoryObject> mos) {
-    vision_msgs.Detection3DArray detections = node.getTopicMessageFactory().newFromType("vision_msgs/Detection3DArray");
+    vision_msgs.Detection3DArray detections = node.getTopicMessageFactory().newFromType(Detection3DArray._TYPE);
     detections.getHeader().setFrameId("base_link");
     detections.getHeader().setStamp(Time.fromMillis(System.currentTimeMillis()));
 
@@ -210,7 +290,7 @@ public class RosVisionComponent extends DiarcComponent {
       // transform detection into the base_link frame
       mo.transformToBase();
 
-      vision_msgs.Detection3D detection3D = node.getTopicMessageFactory().newFromType("vision_msgs/Detection3D");
+      vision_msgs.Detection3D detection3D = node.getTopicMessageFactory().newFromType(Detection3D._TYPE);
 
       // set bbox
       geometry_msgs.Point position = detection3D.getBbox().getCenter().getPosition();
