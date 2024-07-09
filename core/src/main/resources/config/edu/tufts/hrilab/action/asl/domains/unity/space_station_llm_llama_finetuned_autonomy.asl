@@ -136,15 +136,6 @@
   act:monitorArea(!nextArea);
 }
 
-() = notInTransit () {
-  effects : {
-    success infer: not(amIn(?actor,prep(transit,to(X))));
-    success infer: not(amAt(?actor,prep(transit,to(X,Y))));
-  }
-  op:log("debug", "notInTransit");
-}
-
-
 //["This will monitor an area and move to all tubes to "]
 () = monitor (Symbol ?area) {
   Symbol !tubeToRepair;

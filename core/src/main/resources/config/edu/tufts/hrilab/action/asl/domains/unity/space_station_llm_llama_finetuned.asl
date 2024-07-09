@@ -446,6 +446,14 @@ import edu.tufts.hrilab.action.justification.Justification;
   op:log("info", "State reset for ?actor");
 }
 
+() = notInTransit () {
+  effects : {
+    success infer: not(amIn(?actor,prep(transit,to(X))));
+    success infer: not(amAt(?actor,prep(transit,to(X,Y))));
+  }
+  op:log("debug", "notInTransit");
+}
+
 //["This will check an area for broken tubes"]
 () = check (Symbol ?area) {
   conditions : {
