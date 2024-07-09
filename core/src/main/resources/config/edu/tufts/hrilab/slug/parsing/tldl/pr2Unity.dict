@@ -92,7 +92,7 @@ tube; N, N/SIDE; tube
 %stop; C ; stopRobot(?ADDRESSEE)
 stop; C ; stop(?ADDRESSEE)
 
-autonomy ; C ; autonomy()
+autonomy ; C ; autonomy(?ADDRESSEE)
 
 what; Q/QUERYABLE; #x.$x
 which; Q/QUERYABLE; #x.$x
@@ -107,9 +107,6 @@ located; Q\Q; #x.$x
 
 you; AGENT; ?ACTOR
 
-%what is the radiation level; Q; radiationLevel(WHAT)
-%report the radiation level; Q; radiationLevel(WHAT)
-%check the radiation level; Q; radiationLevel(WHAT)
 what is the situation; Q; tubesDamaged(WHICH)
 which tubes are off; Q ;tubesOff(WHICH)
 where are you; Q ;whereAre(?ACTOR)
@@ -118,6 +115,8 @@ what are you doing; Q ;whatAre(?ACTOR,doing)
 monitor; C/AREA ; #x.monitorArea($x)
 monitor tubes ; C ; monitorArea()
 monitor tubes in; C/AREA ; #x.monitorArea($x)
+
+check; C/AREA; #x.check(?ADDRESSEE, $x)
 
 %r2 is monitoring area alpha
 is monitoring ; (C/AREA)\AGENT ; #x#a.changeBelief(monitoring($x,$a))
