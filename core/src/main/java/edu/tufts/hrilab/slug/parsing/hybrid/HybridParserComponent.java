@@ -50,6 +50,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private String cacheName = null;
   private String[] cacheLoads = null;
   private String cachePersist = null;
+  private boolean cacheTldl = false;
   private String llm = null;
   private String prompt = null;
   private Symbol unknownListener = null;
@@ -68,6 +69,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     options.add(Option.builder("cacheLoad").hasArgs().argName("file").desc("Load cached database from file, can have multiple").build());
     options.add(Option.builder("cacheName").hasArg().argName("string").desc("Name of cache").build());
     options.add(Option.builder("cachePersist").hasArg().argName("file").desc("Persist cache in on users computer").build());
+    options.add(Option.builder("cacheTldl").desc("Cache TLDL parses").build());
     options.add(Option.builder("noConfirmation").argName("boolean").desc("Ask human to confirm LLM parser response for cache").build());
     options.add(Option.builder("patternMatching").desc("use pattern matching parser").build());
     options.add(Option.builder("tldlNoUpdateAddressee").desc("TLDL: do not update addressee after direct address").build());
@@ -104,6 +106,9 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
     if (cmdLine.hasOption("cachePersist")) {
       cachePersist = cmdLine.getOptionValue("cachePersist");
+    }
+    if (cmdLine.hasOption("cacheTldl")) {
+      cacheTldl = true;
     }
     if (cmdLine.hasOption("noConfirmation")) {
       confirmation = false;
@@ -243,7 +248,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
       if (tldlOutput != null && tldlOutput.getSemantics() != null && tldlOutput.getType() != UtteranceType.UNKNOWN) {
         log.debug("Using tldl parser response");
-        if (useCache) {
+        if (useCache && cacheTldl) {
           cacheParse(tldlOutput);
         }
         return tldlOutput;
