@@ -273,8 +273,9 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     semantics = output.getSemantics();
 
     if (semantics != null && semantics.isTerm()) {
-      if (semantics.getName().equals("directAddress")) {
+      if (semantics.getName().equals("directAddress") && !Utilities.equalsIgnoreType(output.getAddressee(), unknownListener)) {
         addresseeMap.put(incoming.getSpeaker(), output.getAddressee());
+        log.debug("Assigning INSTRUCTIONS from " + incoming.getSpeaker().toString() + " -> " + output.getAddressee());
       }
     }
 
