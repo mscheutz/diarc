@@ -228,14 +228,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
       if (cachedOutput != null && cachedOutput.getSemantics() != null) {
         log.debug("[parseUtterance] Using cached parser response");
-        if (Utilities.equalsIgnoreType(cachedOutput.getAddressee(), unknownListener)) {
-          if (addresseeMap.containsKey(incoming.getSpeaker())) {
-            cachedOutput.setListener(addresseeMap.get(incoming.getSpeaker()));
-          } else {
-            cachedOutput.setListener(Factory.createSymbol("unknown"));
-          }
-        }
-        return cachedOutput;
+        return applyAddressee(incoming, cachedOutput);
       }
     }
 
