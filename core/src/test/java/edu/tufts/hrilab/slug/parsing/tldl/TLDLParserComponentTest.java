@@ -59,6 +59,111 @@ public class TLDLParserComponentTest {
         return outcome.equals(desired);
     }
 
+    @Test
+    public void spaceStationTest() {
+        log.info("spaceStationTest");
+        component.addDictionary("pr2Unity.dict");
+        component.setUpdateAddressHistory(false);
+
+        assertTrue(testUtterance(
+                "go to beta",
+                "INSTRUCT(server,unknown,goToArea(unknown,beta),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot1 go to beta",
+                "INSTRUCT(server,unknown,goToArea(robot1,beta),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot1 go to beta left four",
+                "INSTRUCT(server,unknown,goToTube(robot1,beta,leftFour),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot one go to beta left four",
+                "INSTRUCT(server,unknown,goToTube(robot1,beta,leftFour),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "repair",
+                "INSTRUCT(server,unknown,repairTube(unknown),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot two repair",
+                "INSTRUCT(server,unknown,repairTube(robot2),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "repair alpha left one",
+                "INSTRUCT(server,unknown,repairTube(unknown,alpha,leftOne),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot two repair beta left four",
+                "INSTRUCT(server,unknown,repairTube(robot2,beta,leftFour),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "fix it",
+                "INSTRUCT(server,unknown,repairTube(unknown),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot two fix",
+                "INSTRUCT(server,unknown,repairTube(robot2),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "fix alpha right three",
+                "INSTRUCT(server,unknown,repairTube(unknown,alpha,rightThree),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot one fix alpha right two",
+                "INSTRUCT(server,unknown,repairTube(robot1,alpha,rightTwo),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "check alpha",
+                "INSTRUCT(server,unknown,check(unknown,alpha),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot 1 check beta",
+                "INSTRUCT(server,unknown,check(robot1,beta),{})",
+                "server",
+                "unknown"
+        ));
+    }
+
     //TODO:brad: see the comments in the body of this regarding refactoring the action learning/nl pipeline
     @Test
     public void twoNaosTest() {

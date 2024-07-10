@@ -15,10 +15,11 @@
 
 START-TEMPLATES
 
-TUBECMD; {C/SIDE ; #s.?PH(?ADDRESSEE,$s)}, {((C/AREA)/SIDE)/TUBE ; #t#s#a.?PH(?ADDRESSEE,$a,$s)}, {((C/SIDE)/AREA)/TUBE ; #t#a#s.?PH(?ADDRESSEE,$a,$s)}, {(C/SIDE)/AREA ; #a#s.?PH(?ADDRESSEE,$a,$s)}, {(C/AREA)/SIDE ; #s#a.?PH(?ADDRESSEE,$a,$s)}, {(C/SIDE)/TUBE ; #t#s.?PH(?ADDRESSEE,$s)}
-ADDRESSABLE; {C/C, TUBECMD/TUBECMD, TUBECMD\TUBECMD, Q/Q, C\C, Q\Q; #x.directAddress(?PH,$x)}, {AGENT ; ?PH}
-%ADDRESSABLE; {AGENT ; ?PH}, {G/G, S/S, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
-AREACMD; {C/AREA ; #a.goToArea(?ADDRESSEE, $a)}
+AREACMD; {(C/AREA)\AGENT ; #d#a.goToArea($d, $a)}, {C/AREA ; #a.goToArea(?ADDRESSEE, $a)}
+
+TUBECMD; {C/SIDE ; #s.?PH(?ADDRESSEE,$s)},  {(C/SIDE)\AGENT ; #d#s.?PH($d,$s)}, {((C/AREA)/SIDE)/TUBE ; #t#s#a.?PH(?ADDRESSEE,$a,$s)}, {(((C/AREA)/SIDE)/TUBE)\AGENT ; #d#t#s#a.?PH($d,$a,$s)}, {((C/SIDE)/AREA)/TUBE ; #t#a#s.?PH(?ADDRESSEE,$a,$s)}, {(((C/SIDE)/AREA)/TUBE)\AGENT ; #d#t#a#s.?PH($d,$a,$s)}, {(C/SIDE)/AREA ; #a#s.?PH(?ADDRESSEE,$a,$s)}, {((C/SIDE)/AREA)\AGENT ; #d#a#s.?PH($d,$a,$s)},[ {(C/AREA)/SIDE ; #s#a.?PH(?ADDRESSEE,$a,$s)}, {((C/AREA)/SIDE)\AGENT ; #d#s#a.?PH($d,$a,$s)}, {(C/SIDE)/TUBE ; #t#s.?PH(?ADDRESSEE,$s)}, {((C/SIDE)/TUBE)\AGENT ; #d#t#s.?PH($d,$s)}
+
+ADDRESSABLE; {AGENT ; ?PH}, {G/G, S/S, C/C, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
 
 END-TEMPLATES
 
@@ -84,10 +85,17 @@ come to; TUBECMD; goToTube
 come to; AREACMD; goToArea
 
 fix; TUBECMD; repairTube
-repair; TUBECMD; repairTube
-
 fix; C/N, C/SIDE ; #x.repairTube(?ADDRESSEE)
+fix; (C/N)\AGENT, (C/SIDE)\AGENT ; #d.#x.repairTube($d)
+fix; C ; repairTube(?ADDRESSEE)
+fix; C\AGENT ; #d.repairTube($d)
+
+repair; TUBECMD; repairTube
 repair; C/N, C/SIDE ; #x.repairTube(?ADDRESSEE)
+repair; (C/N)\AGENT, (C/SIDE)\AGENT ; #d.#x.repairTube($d)
+repair; C ; repairTube(?ADDRESSEE)
+repair; C\AGENT ; #d.repairTube($d)
+
 it; N ; it
 the tube; N ; theTube
 tube; N, N/SIDE; tube
@@ -120,6 +128,7 @@ monitor tubes ; C ; monitorArea()
 monitor tubes in; C/AREA ; #x.monitorArea($x)
 
 check; C/AREA; #x.check(?ADDRESSEE, $x)
+check; (C/AREA)\AGENT; #d#x.check($d, $x)
 
 %r2 is monitoring area alpha
 is monitoring ; (C/AREA)\AGENT ; #x#a.changeBelief(monitoring($x,$a))
