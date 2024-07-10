@@ -4,6 +4,7 @@ import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.*;
 import edu.tufts.hrilab.action.db.ActionDBEntry.Builder;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,20 +31,25 @@ public class RLActionManager extends DiarcComponent {
   }
 
   @TRADEService
-  public int createAction(String name, String rawArgs) {
+  public int createAction(String name, List<String> args, List<String> preconds, List<String> effects, String executor) {
     log.info("Creating action");
-    List<String> args = List.of(rawArgs.split(","));
     Builder action = new Builder(name);
 
     for (String arg : args) {
       ActionBinding.Builder binding = new ActionBinding.Builder("?" + arg, String.class);
       action.addRole(binding.build());
     }
-
+    for (String precond : preconds) {
+      action.addCondition(new Condition(Factory.createPredicate(precond), ConditionType.PRE, Observable.FALSE));
+    }
+    for (String effect : effects) {
+      action.addEffect(new Effect(Factory.createPredicate(effect), EffectType.SUCCESS, Observable.FALSE));
+    }
     EventSpec.Builder espec = new EventSpec.Builder(EventSpec.EventType.ACTION);
+
     espec.setCommand("callPolicy");
     int policyId = nextPolicyId();
-    espec.addInputArg(String.valueOf(policyId)); //todo: Generate random
+    espec.addInputArg(String.valueOf(executor)); //todo: Generate random
 
     action.addEventSpec(espec.build());
     action.build(true);
