@@ -59,7 +59,7 @@ public class UnityDIARCSpaceStationHybrid {
       goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -goal startAutonomy(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
     }
 
-    DiarcComponent.createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl pr2Unity.dict  -tldlNoUpdateAddressee"); //-llm -llmService spaceStationLLMParser -cacheName unity_space_station -cachePersist false -noConfirmation
+    DiarcComponent.createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl pr2Unity.dict  -tldlNoUpdateAddressee -llm -llmService spaceStationLLMParser -noConfirmation -cache -cacheName unity_space_station"); //
 
     DiarcComponent.createInstance(edu.tufts.hrilab.map.MapComponent.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
     DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:" + agentName + " -point_dist_thresh 0.5");

@@ -49,7 +49,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private boolean tldlUpdateAddressee = true;
   private String cacheName = null;
   private String[] cacheLoads = null;
-  private String cachePersist = null;
+  private boolean cachePersist = false;
   private boolean cacheTldl = false;
   private String llm = null;
   private String prompt = null;
@@ -67,9 +67,10 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     options.add(Option.builder("llmService").hasArg().argName("string").desc("Name of TRADE Service to call in LLMParserComponent.parseUtterance()").build());
     options.add(Option.builder("llmPrompt").hasArg().argName("string").desc("Prompt to use with LLM parser").build());
     options.add(Option.builder("llmEndpoint").hasArg().argName("string").desc("Endpoint for LLMParserComponent").build());
+    options.add(Option.builder("cache").argName("boolean").desc("Use the cache").build());
     options.add(Option.builder("cacheLoad").hasArgs().argName("file").desc("Load cached database from file, can have multiple").build());
     options.add(Option.builder("cacheName").hasArg().argName("string").desc("Name of cache").build());
-    options.add(Option.builder("cachePersist").hasArg().argName("file").desc("Persist cache in on users computer").build());
+    options.add(Option.builder("cachePersist").argName("file").desc("Persist cache in on users computer").build());
     options.add(Option.builder("cacheTldl").desc("Cache TLDL parses").build());
     options.add(Option.builder("noConfirmation").argName("boolean").desc("Ask human to confirm LLM parser response for cache").build());
     options.add(Option.builder("patternMatching").desc("use pattern matching parser").build());
@@ -104,20 +105,23 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       endpoint = cmdLine.getOptionValue("llmEndpoint");
       log.debug("Using LLM parser at endpoint " + endpoint);
     }
-    if (cmdLine.hasOption("cacheName")) {
+    if (cmdLine.hasOption("cache")) {
       useCache = true;
-      cacheName = cmdLine.getOptionValue("cacheName");
-      log.debug("Using cache, name " + cacheName);
+      log.debug("Using cache");
     }
-    if (cmdLine.hasOption("cacheLoad")) {
+    if (useCache && cmdLine.hasOption("cacheName")) {
+      cacheName = cmdLine.getOptionValue("cacheName");
+      log.debug("Naming cache " + cacheName);
+    }
+    if (useCache && cmdLine.hasOption("cacheLoad")) {
       cacheLoads = cmdLine.getOptionValues("cacheLoad");
       log.debug("Loading pre-existing cache" + ( cacheLoads.length == 1 ? "" : "s" ) + ": " + String.join(", ", cacheLoads) );
     }
-    if (cmdLine.hasOption("cachePersist")) {
-      cachePersist = cmdLine.getOptionValue("cachePersist");
-      log.debug("Persist cache as a local file in the user $HOME/.diarc/ directory");
+    if (useCache && cmdLine.hasOption("cachePersist")) {
+      cachePersist = true;
+      log.debug("Persist cache as a local file $HOME/.diarc/" + (cacheName != null ? cacheName : "diarc-parser-cache") + ".sqlite");
     }
-    if (cmdLine.hasOption("cacheTldl")) {
+    if (useCache && cmdLine.hasOption("cacheTldl")) {
       cacheTldl = true;
       log.debug("Cache TLDL parses");
     }
@@ -170,8 +174,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
           cacheArgs += " -load " + cacheLoad;
         }
       }
-      if (cachePersist != null) {
-        cacheArgs += " -persist " + cachePersist;
+      if (cachePersist) {
+        cacheArgs += " -persist";
       }
       cacheParser = createInstance(CachedParserComponent.class, cacheArgs, false);
     }
