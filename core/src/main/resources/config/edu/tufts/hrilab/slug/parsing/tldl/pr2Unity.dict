@@ -28,6 +28,9 @@ robot two; ADDRESSABLE; robot2
 robot1; ADDRESSABLE; robot1
 robot2; ADDRESSABLE; robot2
 
+robot 1; ADDRESSABLE; robot1
+robot 2; ADDRESSABLE; robot2
+
 can; (Q / C) / AGENT ; #x #y.capableOf($x,$y)
 could; (Q / C) / AGENT ; #x #y.capableOf($x,$y)
 please; C / C, C \ C, Pron \ Pron, S \ S ; #x. $x

@@ -326,11 +326,11 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     Symbol addressee = Factory.createSymbol("unknown");
     if (addresseeMap.containsKey(parsedUtterance.getSpeaker())) {
       addressee = addresseeMap.get(parsedUtterance.getSpeaker());
-      log.debug("[applyAddressee] Updated utterance from speaker " + parsedUtterance.getSpeaker().toString() + " to address " + parsedUtterance.getAddressee().toString());
+      log.debug("[applyAddressee] Updated utterance from speaker " + parsedUtterance.getSpeaker().toString() + " to address " + addressee.toString());
     }
     parsedUtterance.setListener(addressee);
     Symbol semantics = parsedUtterance.getSemantics();
-    if (semantics.isTerm()) {
+    if (semantics != null && semantics.isTerm()) {
       List<Symbol> args = ((Term) semantics).getArgs();
       args.set(0, addressee);
       parsedUtterance.setSemantics(Factory.createPredicate(semantics.getName(), args));
