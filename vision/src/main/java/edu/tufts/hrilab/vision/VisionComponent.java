@@ -644,17 +644,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
       }
 
       //wait till at least one detection and one tracking iteration has finished
-      //TODO: change this to use wait/notify instead of sleep
-      log.debug(String.format("getTokenIds (by typeId). waiting for results. isRunning: %b. id: %d", isRunning, typeId));
-      while (!searchType.hasIterationCompleted()) {
-        isRunning = searchType.isRunning();
-        log.trace(String.format("getTokenIds (by typeId). waiting for results. isRunning: %b. id: %d", isRunning, typeId));
-        try {
-          Thread.sleep(5);
-        } catch (InterruptedException e) {
-        }
-
-      }
+      searchType.waitForIterationToComplete();
       log.debug(String.format("getTokenIds (by typeId). Done waiting for results! isRunning: %b. id: %d", isRunning, typeId));
 
       //finally, get results
@@ -676,6 +666,14 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   @Override
   public List<MemoryObject> getTokens(final double conf) {
     log.trace("[getTokens] called.");
+
+    // wait for all current searches to finish at least one iteration
+    for (Long typeId : getAvailableTypeIds()) {
+      log.info("[getTokens] waiting for search to complete itereation. typeId: {}", typeId);
+      SearchManager searchType = Vision.availableSearchTypes.getInstance(this, typeId);
+      searchType.waitForIterationToComplete();
+    }
+
     return ShortTermMemoryInterface.getTokens(conf);
   }
 
@@ -691,18 +689,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
       }
 
       //wait till at least one tracking iteration has finished
-      //TODO: change this to use wait/notify instead of sleep
-      boolean isRunning = searchType.isRunning();
-      log.debug(String.format("getTokens (by typeId). waiting for results. isRunning: %b. id: %d", isRunning, typeId));
-      while (!searchType.hasIterationCompleted()) {
-        isRunning = searchType.isRunning();
-        log.trace(String.format("getTokens (by typeId). waiting for results. isRunning: %b. id: %d", isRunning, typeId));
-        try {
-          Thread.sleep(5);
-        } catch (InterruptedException e) {
-        }
-      }
-      log.debug(String.format("getTokens (by typeId). Done waiting for results! isRunning: %b. id: %d", isRunning, typeId));
+      searchType.waitForIterationToComplete();
 
       //finally, get results
       log.debug("getTokensByTypeId fetching results: " + typeId);
