@@ -200,7 +200,6 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     Utterance pmpOutput = null;
     Utterance tldlOutput = null;
     Utterance llmOutput = null;
-    Symbol semantics = null;
 
     //Check cache first
     if (cachedFuture != null) {
@@ -236,8 +235,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
         return pmpOutput;
       }
     }
-
-
+    
     //Try TLDLParser, return if not null or UNKNOWN
     if (tldlFuture != null) {
       try {
@@ -246,15 +244,18 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
         log.error("Error getting tldl parser results.", e);
       }
 
-      if (tldlOutput != null && tldlOutput.getSemantics() != null && tldlOutput.getType() != UtteranceType.UNKNOWN) {
-        log.debug("Using tldl parser response");
-        if (useCache && cacheTldl) {
-          cacheParse(tldlOutput);
+      if (tldlOutput != null && tldlOutput.getSemantics() != null) {
+        preserveAddressee(tldlOutput);
+        if (tldlOutput.getType() != UtteranceType.UNKNOWN) {
+          log.debug("Using tldl parser response");
+          if (useCache && cacheTldl) {
+            cacheParse(tldlOutput);
+          }
+          return applyAddressee(incoming, tldlOutput);
+        } else {
+          //Use TLDL UNKNOWN parse in case LLM parse fails
+          output = tldlOutput;
         }
-        return tldlOutput;
-      } else if (tldlOutput != null && tldlOutput.getSemantics() != null && tldlOutput.getType() == UtteranceType.UNKNOWN) {
-        //Use TLDL UNKNOWN parse in case LLM parse fails
-        output = tldlOutput;
       }
     }
 
@@ -266,8 +267,9 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
         log.error("Error getting llm parser results.", e);
       }
 
-      if (llmOutput != null) {
+      if (llmOutput != null && llmOutput.getSemantics() != null) {
         log.debug("Using llm parser response");
+        preserveAddressee(llmOutput);
         output = llmOutput;
         if (confirmation) {
           output.setNeedsValidation(true);
@@ -275,25 +277,30 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       }
     }
 
-    semantics = output.getSemantics();
+    return applyAddressee(incoming, output);
+  }
+
+  private void preserveAddressee (Utterance parsedUtterance) {
+    Symbol semantics = parsedUtterance.getSemantics();
 
     if (semantics != null && semantics.isTerm()) {
-      if (semantics.getName().equals("directAddress") && !Utilities.equalsIgnoreType(output.getAddressee(), unknownListener)) {
-        addresseeMap.put(incoming.getSpeaker(), output.getAddressee());
-        log.debug("Assigning INSTRUCTIONS from " + incoming.getSpeaker().toString() + " -> " + output.getAddressee());
+      if (semantics.getName().equals("directAddress") && !Utilities.equalsIgnoreType(parsedUtterance.getAddressee(), unknownListener)) {
+        addresseeMap.put(parsedUtterance.getSpeaker(), parsedUtterance.getAddressee());
+        log.debug("Mapping unknown utterances from speaker " + parsedUtterance.getSpeaker().toString() + " to listener " + parsedUtterance.getAddressee().toString());
       }
     }
+  }
 
-    if (Utilities.equalsIgnoreType(output.getAddressee(), unknownListener)) {
-      if (addresseeMap.containsKey(incoming.getSpeaker())) {
-        output.setListener(addresseeMap.get(incoming.getSpeaker()));
-        log.debug("Set speaker " + incoming.getSpeaker().toString() + " to address " + output.getAddressee().toString());
+  private Utterance applyAddressee (Utterance incomingUtterance, Utterance parsedUtterance) {
+    if (Utilities.equalsIgnoreType(incomingUtterance.getAddressee(), unknownListener)) {
+      if (addresseeMap.containsKey(parsedUtterance.getSpeaker())) {
+        parsedUtterance.setListener(addresseeMap.get(parsedUtterance.getSpeaker()));
+        log.debug("Updated utterance from speaker " + parsedUtterance.getSpeaker().toString() + " to address " + parsedUtterance.getAddressee().toString());
       } else {
-        output.setListener(Factory.createSymbol("unknown"));
+        parsedUtterance.setListener(Factory.createSymbol("unknown"));
       }
     }
-
-    return output;
+    return parsedUtterance;
   }
 
   @TRADEService
