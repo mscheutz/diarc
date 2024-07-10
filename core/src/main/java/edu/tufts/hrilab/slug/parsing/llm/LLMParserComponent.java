@@ -140,6 +140,7 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
         output.setListener(addressee);
       } else {
         args.add(input.getAddressee());
+        output.setListener(input.getAddressee());
       }
       Arrays.stream(prop.arguments).forEach(arg -> args.add(Factory.createFOL(arg)));
       semantics = Factory.createPredicate(prop.text, args);
