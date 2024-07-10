@@ -63,9 +63,10 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("tldl").hasArgs().required().argName("file").desc("load tldl dictionary from file(s)").build());
-    options.add(Option.builder("llm").hasArg().argName("string").desc("Name of TRADE Service to call in LLMParserComponent.parseUtterance()").build());
-    options.add(Option.builder("prompt").hasArg().argName("string").desc("Prompt to use with LLM parser").build());
-    options.add(Option.builder("endpoint").hasArg().argName("string").desc("Endpoint for LLMParserComponent").build());
+    options.add(Option.builder("llm").argName("boolean").desc("Use the LLM parser").build());
+    options.add(Option.builder("llmService").hasArg().argName("string").desc("Name of TRADE Service to call in LLMParserComponent.parseUtterance()").build());
+    options.add(Option.builder("llmPrompt").hasArg().argName("string").desc("Prompt to use with LLM parser").build());
+    options.add(Option.builder("llmEndpoint").hasArg().argName("string").desc("Endpoint for LLMParserComponent").build());
     options.add(Option.builder("cacheLoad").hasArgs().argName("file").desc("Load cached database from file, can have multiple").build());
     options.add(Option.builder("cacheName").hasArg().argName("string").desc("Name of cache").build());
     options.add(Option.builder("cachePersist").hasArg().argName("file").desc("Persist cache in on users computer").build());
@@ -89,13 +90,19 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
     if (cmdLine.hasOption("llm")) {
       useLLM = true;
-      llm = cmdLine.getOptionValue("llm");
+      log.debug("Using LLM parser");
     }
-    if (cmdLine.hasOption("prompt")) {
-      prompt = cmdLine.getOptionValue("prompt");
+    if (cmdLine.hasOption("llmService")) {
+      llm = cmdLine.getOptionValue("llmService");
+      log.debug("Using LLM parser via TRADE Service " + llm);
     }
-    if (cmdLine.hasOption("endpoint")) {
-      endpoint = cmdLine.getOptionValue("endpoint");
+    if (cmdLine.hasOption("llmPrompt")) {
+      prompt = cmdLine.getOptionValue("llmPrompt");
+      log.debug("Using LLM parser with prompt " + prompt);
+    }
+    if (cmdLine.hasOption("llmEndpoint")) {
+      endpoint = cmdLine.getOptionValue("llmEndpoint");
+      log.debug("Using LLM parser at endpoint " + endpoint);
     }
     if (cmdLine.hasOption("cacheName")) {
       useCache = true;
@@ -235,7 +242,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
         return pmpOutput;
       }
     }
-    
+
     //Try TLDLParser, return if not null or UNKNOWN
     if (tldlFuture != null) {
       try {
@@ -280,17 +287,32 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     return applyAddressee(incoming, output);
   }
 
+  /**
+   * On parsed utterances with directly-addressed listeners, store a map of the speaker->listener
+   * so that parsed utterances with "unknown" listeners can be inferred from the map.
+   *
+   * @param parsedUtterance
+   */
   private void preserveAddressee (Utterance parsedUtterance) {
     Symbol semantics = parsedUtterance.getSemantics();
 
     if (semantics != null && semantics.isTerm()) {
-      if (semantics.getName().equals("directAddress") && !Utilities.equalsIgnoreType(parsedUtterance.getAddressee(), unknownListener)) {
+      if (!Utilities.equalsIgnoreType(parsedUtterance.getAddressee(), unknownListener)) {
         addresseeMap.put(parsedUtterance.getSpeaker(), parsedUtterance.getAddressee());
         log.debug("Mapping unknown utterances from speaker " + parsedUtterance.getSpeaker().toString() + " to listener " + parsedUtterance.getAddressee().toString());
       }
     }
   }
 
+  /**
+   * In the case that an incoming utterance has an "unknown" listener and there is an existing
+   * key in the speaker->listener addresseeMap, apply the inferred listener to the parsed
+   * utterance.
+   *
+   * @param incomingUtterance
+   * @param parsedUtterance
+   * @return
+   */
   private Utterance applyAddressee (Utterance incomingUtterance, Utterance parsedUtterance) {
     if (Utilities.equalsIgnoreType(incomingUtterance.getAddressee(), unknownListener)) {
       if (addresseeMap.containsKey(parsedUtterance.getSpeaker())) {
