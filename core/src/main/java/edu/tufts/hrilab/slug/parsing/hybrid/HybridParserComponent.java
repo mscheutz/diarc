@@ -320,13 +320,20 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
    * @return
    */
   private Utterance applyAddressee (Utterance incomingUtterance, Utterance parsedUtterance) {
-    if (Utilities.equalsIgnoreType(incomingUtterance.getAddressee(), unknownListener)) {
-      if (addresseeMap.containsKey(parsedUtterance.getSpeaker())) {
-        parsedUtterance.setListener(addresseeMap.get(parsedUtterance.getSpeaker()));
-        log.debug("Updated utterance from speaker " + parsedUtterance.getSpeaker().toString() + " to address " + parsedUtterance.getAddressee().toString());
-      } else {
-        parsedUtterance.setListener(Factory.createSymbol("unknown"));
-      }
+    if (!Utilities.equalsIgnoreType(incomingUtterance.getAddressee(), unknownListener)) {
+      return parsedUtterance;
+    }
+    Symbol addressee = Factory.createSymbol("unknown");
+    if (addresseeMap.containsKey(parsedUtterance.getSpeaker())) {
+      addressee = addresseeMap.get(parsedUtterance.getSpeaker());
+      log.debug("[applyAddressee] Updated utterance from speaker " + parsedUtterance.getSpeaker().toString() + " to address " + parsedUtterance.getAddressee().toString());
+    }
+    parsedUtterance.setListener(addressee);
+    Symbol semantics = parsedUtterance.getSemantics();
+    if (semantics.isTerm()) {
+      List<Symbol> args = ((Term) semantics).getArgs();
+      args.set(0, addressee);
+      parsedUtterance.setSemantics(Factory.createPredicate(semantics.getName(), args));
     }
     return parsedUtterance;
   }
