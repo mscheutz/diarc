@@ -308,8 +308,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       addressee = ((Term) semantics).getArgs().get(0);
       log.debug("[preserveAddressee] semantics first arg " + addressee.toString());
       if (!Utilities.equalsIgnoreType(addressee, unknownListener)) {
-        addresseeMap.put(parsedUtterance.getSpeaker(), parsedUtterance.getAddressee());
-        log.debug("[preserveAddressee] Mapping unknown utterances from speaker " + parsedUtterance.getSpeaker().toString() + " to listener " + parsedUtterance.getAddressee().toString());
+        addresseeMap.put(parsedUtterance.getSpeaker(), addressee);
+        log.debug("[preserveAddressee] Mapping unknown utterances from speaker " + parsedUtterance.getSpeaker().toString() + " to listener " + addressee.toString());
       }
     }
   }
