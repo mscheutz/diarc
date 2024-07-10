@@ -290,6 +290,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
         output = llmOutput;
         if (confirmation) {
           output.setNeedsValidation(true);
+        } else if (useCache) {
+          cacheParse(output);
         }
       }
     }
@@ -345,6 +347,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   @TRADEService
   @Action
   public void cacheParse(Utterance utterance) {
+    log.debug("[cacheParse] Caching parsed utterance");
     cacheParser.addEntryToCache(utterance);
   }
 
