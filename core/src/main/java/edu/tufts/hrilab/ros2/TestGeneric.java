@@ -48,6 +48,7 @@ public class TestGeneric extends DiarcComponent {
         , new StringMessage().withData("Hello World!"));
     pubNode.addAndStartPublisher(pub);
 
+
     // Start a new subscriber on chatter.
     Ros2Subscriber<StringMessage> sub = Ros2Factory.getDefaultSubscriber(StringMessage.class,
         "/chatter", stringMessage -> log.info(stringMessage.data));

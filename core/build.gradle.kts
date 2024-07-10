@@ -246,10 +246,10 @@ dependencies {
   implementation("com.aldebaran:qimessaging:2.1.0.19-linux64")
 
   //ros2
-  api("io.github.pinorobotics:jros2services:3.0");
-  api("io.github.lambdaprime:jros2client:6.0")
-  api("io.github.pinorobotics:jros2actionlib:2.0");
-  api("io.github.pinorobotics:jros2tf2:1.0")
+  api("io.github.pinorobotics:jros2services:6.0");
+  api("io.github.lambdaprime:jros2client:9.0")
+  api("io.github.pinorobotics:jros2actionlib:4.0");
+  api("io.github.pinorobotics:jros2tf2:3.0")
 
 }
 
