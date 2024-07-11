@@ -86,15 +86,11 @@ come to; AREACMD; goToArea
 
 fix; TUBECMD; repairTube
 fix; C/N, C/SIDE ; #x.repairTube(?ADDRESSEE)
-fix; (C/N)\AGENT, (C/SIDE)\AGENT ; #d.#x.repairTube($d)
 fix; C ; repairTube(?ADDRESSEE)
-fix; C\AGENT ; #d.repairTube($d)
 
 repair; TUBECMD; repairTube
 repair; C/N, C/SIDE ; #x.repairTube(?ADDRESSEE)
-repair; (C/N)\AGENT, (C/SIDE)\AGENT ; #d.#x.repairTube($d)
 repair; C ; repairTube(?ADDRESSEE)
-repair; C\AGENT ; #d.repairTube($d)
 
 it; N ; it
 the tube; N ; theTube
@@ -128,7 +124,6 @@ monitor tubes ; C ; monitorArea()
 monitor tubes in; C/AREA ; #x.monitorArea($x)
 
 check; C/AREA; #x.check(?ADDRESSEE, $x)
-check; (C/AREA)\AGENT; #d#x.check($d, $x)
 
 %r2 is monitoring area alpha
 is monitoring ; (C/AREA)\AGENT ; #x#a.changeBelief(monitoring($x,$a))

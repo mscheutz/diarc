@@ -151,7 +151,6 @@ public final class Utterance implements Serializable {
     private String language;
     private Map<String,String> translations;
 
-    //TODO:brad:why do we need this constructor, couldn't it all be inlined above?
     public Builder() {
       type = UtteranceType.UNKNOWN;
       isInputUtterance = true;
