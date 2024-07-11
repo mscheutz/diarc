@@ -26,7 +26,7 @@ public class Dictionary {
   private Map<String, List<Entry>> entries = Collections.synchronizedMap(new LinkedHashMap<>());
   private Map<String, List<TemplateEntry>> templateTypes = new LinkedHashMap<>();
 
-  boolean acceptAll= false;
+  boolean acceptAll = false;
 
   //List of groupos of homophones that can be used interchangably
   private static List<List<String>> homophoneGroups;
@@ -35,17 +35,14 @@ public class Dictionary {
     String syntax;
     String semantics;
     String cogstatus;
-
-    TemplateEntry(){
-    }
   }
 
   public Dictionary() {
     populateHomophoneGroups();
   }
 
-  public void setAcceptAll(boolean tv){
-    acceptAll =tv;
+  public void setAcceptAll(boolean tv) {
+    acceptAll = tv;
   }
 
   //TODO:brad: do we want these to be two methods?
@@ -79,7 +76,7 @@ public class Dictionary {
         }
       }
     } catch (Exception e) {
-      log.error("exception loading dictionary file: "+filename,e);
+      log.error("exception loading dictionary file: " + filename, e);
     }
 
     log.debug("loaded: " + filename);
@@ -89,48 +86,47 @@ public class Dictionary {
   /**
    * Adds line from .dict file to Dictonary instance. line format:
    * name ; syntax ; semantics ; cognitiveStatus
+   *
    * @param line line of Dictionary file to read
    */
-  private void readDefinition(String line){
-          String[] splitLine = line.split(";");
-          for(int i=0; i<splitLine.length; i++){
-            if(i==0){
-              splitLine[i]=splitLine[i].trim();
-            }
-            else if(i==1){
-              splitLine[i]=splitLine[i].replaceAll(" ", "");
-            }
-          }
+  private void readDefinition(String line) {
+    String[] splitLine = line.split(";");
+    for (int i = 0; i < splitLine.length; i++) {
+      if (i == 0) {
+        splitLine[i] = splitLine[i].trim();
+      } else if (i == 1) {
+        splitLine[i] = splitLine[i].replaceAll(" ", "");
+      }
+    }
 
     //template
-          if (templateTypes.containsKey(splitLine[1].trim())) {
-            insertEntries(splitLine[0].trim(), entriesFromTemplate(splitLine));
-          } else if (splitLine.length == 3 || splitLine.length == 4) { //definition
-            String[] syntaxes = splitLine[1].trim().split(",");
-            String morpheme = splitLine[0].trim();
-            String cogStat = "";
-            if (splitLine.length == 4) {
-              cogStat = splitLine[3].trim();
-            }
-            for (String s : syntaxes) {
+    if (templateTypes.containsKey(splitLine[1].trim())) {
+      insertEntries(splitLine[0].trim(), entriesFromTemplate(splitLine));
+    } else if (splitLine.length == 3 || splitLine.length == 4) { //definition
+      String[] syntaxes = splitLine[1].trim().split(",");
+      String morpheme = splitLine[0].trim();
+      String cogStat = "";
+      if (splitLine.length == 4) {
+        cogStat = splitLine[3].trim();
+      }
+      for (String s : syntaxes) {
 
-               //Better way to handle dict entries with hardcoded args?
-               //This technically works but isn't the clearest or best way to do this. generateHardcodedSemanticRule simply
-               //   sets argsSet to false after calling the default string constructor. This causes any hardcoded semantic rule
-               //   to be passed into Factory.createPredicate so that it is correctly understood as a predicate rather than
-               //   an arbitrary string.
-               //Any semantic rule with arguments will already have argsSet as false, so this is safe as things stand
-               if (splitLine[2].contains("(") || splitLine[2].contains(")")) {
-                 insertEntry(morpheme, new Entry(splitLine[0].trim(), new SyntacticRule(s.trim()), SemanticRule.generateHardcodedSemanticRule(splitLine[2].trim()), cogStat));
-               } else {
-                 insertEntry(morpheme, new Entry(splitLine[0].trim(), new SyntacticRule(s.trim()), new SemanticRule(splitLine[2].trim()), cogStat));
-               }
-            }
-          }
-          else {
-            log.trace("split line len " + splitLine.length);
-            log.error("Invalid dictionary line: " + line + " Not added.");
-          }
+        //Better way to handle dict entries with hardcoded args?
+        //This technically works but isn't the clearest or best way to do this. generateHardcodedSemanticRule simply
+        //   sets argsSet to false after calling the default string constructor. This causes any hardcoded semantic rule
+        //   to be passed into Factory.createPredicate so that it is correctly understood as a predicate rather than
+        //   an arbitrary string.
+        //Any semantic rule with arguments will already have argsSet as false, so this is safe as things stand
+        if (splitLine[2].contains("(") || splitLine[2].contains(")")) {
+          insertEntry(morpheme, new Entry(splitLine[0].trim(), new SyntacticRule(s.trim()), SemanticRule.generateHardcodedSemanticRule(splitLine[2].trim()), cogStat));
+        } else {
+          insertEntry(morpheme, new Entry(splitLine[0].trim(), new SyntacticRule(s.trim()), new SemanticRule(splitLine[2].trim()), cogStat));
+        }
+      }
+    } else {
+      log.trace("split line len " + splitLine.length);
+      log.error("Invalid dictionary line: " + line + " Not added.");
+    }
 
   }
 
@@ -167,7 +163,7 @@ public class Dictionary {
         line = br.readLine();
       }
     } catch (Exception e) {
-      log.error("error reading template: "+e);
+      log.error("error reading template: " + e);
     }
   }
 
@@ -195,9 +191,9 @@ public class Dictionary {
         for (TemplateEntry t : temp) {
           String cogStat = (t.cogstatus != null) ? t.cogstatus : "";
           matchingEntries.add(new Entry(n.trim(),
-              new SyntacticRule(t.syntax.trim()),
-              new SemanticRule(t.semantics.replace("?PH", semfuncname)),
-              cogStat));
+                  new SyntacticRule(t.syntax.trim()),
+                  new SemanticRule(t.semantics.replace("?PH", semfuncname)),
+                  cogStat));
         }
       }
     }
@@ -212,9 +208,9 @@ public class Dictionary {
         String morpheme = splitLine[0].trim();
         String cogStat = (t.cogstatus != null) ? t.cogstatus : "";
         matchingEntries.add(new Entry(morpheme,
-            new SyntacticRule(t.syntax.trim()),
-            new SemanticRule(t.semantics.replace("?PH", semfuncname)),
-            cogStat));
+                new SyntacticRule(t.syntax.trim()),
+                new SemanticRule(t.semantics.replace("?PH", semfuncname)),
+                cogStat));
       }
     }
     return matchingEntries;
@@ -264,14 +260,14 @@ public class Dictionary {
   List<Entry> lookUpEntries(String ID) {
 
     //IF we do this first that lets us use numbers in morphemes if we want. e.g "m2 screw"
-    if(entries.containsKey(ID)){
+    if (entries.containsKey(ID)) {
       return entries.get(ID);
     }
-    if(ID.matches(".*\\d.*")){
-      log.debug("found number: "+ID);
+    if (ID.matches(".*\\d.*")) {
+      log.debug("found number: " + ID);
       //TODO: Brad: I think this means we can only handle whole numbers rn, no floating point, we should maybe we able to work around that with units?
-      Entry number= new Entry(ID,new SyntacticRule("NUM"),new SemanticRule(ID),"");
-      List<Entry> results= new ArrayList<>();
+      Entry number = new Entry(ID, new SyntacticRule("NUM"), new SemanticRule(ID), "");
+      List<Entry> results = new ArrayList<>();
       results.add(number);
       return results;
     }
@@ -304,11 +300,11 @@ public class Dictionary {
   }
 
   //looks up words in dictionary, and combines them in the case of multi-word dictionary entries, also does wildcard stuff for wildcard entries
-  public List<Pair<String,List<Entry>>> tokenize(List<String> words) {
+  public List<Pair<String, List<Entry>>> tokenize(List<String> words) {
 
     List<String> lowercase = new ArrayList<>();
     for (String word : words) {
-      if(!word.isEmpty()) {
+      if (!word.isEmpty()) {
         //if(word.matches(".*\\d.*")){
         //only convert sub 10 digit numbers, because that's all convert works for and also, we need to be able to support goal IDs
 //        if (word.matches("^\\d{0,9}$")) {
@@ -319,11 +315,11 @@ public class Dictionary {
       }
     }
 
-    List<Pair<String,List<Entry>>>  tokenBindings = new ArrayList<>();
+    List<Pair<String, List<Entry>>> tokenBindings = new ArrayList<>();
 
     for (ListIterator<String> iterator = lowercase.listIterator(); iterator.hasNext(); ) {
       String word = iterator.next();
-      List<Map.Entry<String,Boolean>> prefixes = new ArrayList<>();
+      List<Map.Entry<String, Boolean>> prefixes = new ArrayList<>();
       synchronized (entries) {
         for (String k : entries.keySet()) {
           if (k.startsWith(word + " ")) {
@@ -336,17 +332,16 @@ public class Dictionary {
         }
       }
       if (prefixes.isEmpty()) {
-        List<Entry> matchingEntries= lookUpEntries(word);
-        if(matchingEntries != null) {
-          tokenBindings.add(Pair.of(word,matchingEntries));
-          log.trace("added tokenBinding no prefix "+word);
+        List<Entry> matchingEntries = lookUpEntries(word);
+        if (matchingEntries != null) {
+          tokenBindings.add(Pair.of(word, matchingEntries));
+          log.trace("added tokenBinding no prefix " + word);
           log.trace("tokenBindings: " + tokenBindings);
-        }else{
+        } else {
           tokenBindings.add(Pair.of(word, new ArrayList<>()));
-          log.trace("added tokenBinding no prefix, no dictionary entry "+word);
+          log.trace("added tokenBinding no prefix, no dictionary entry " + word);
         }
-      }
-      else {
+      } else {
         boolean added = false;
         //check if any of the prefixes match the next n elements of words
         //TODO:brad: it seems like there should be a way to do this with actual regexs, but I haven't been able to figure it out...
@@ -365,29 +360,29 @@ public class Dictionary {
               boolean needsEscaping = false;
 
               //prefix
-                String combined;
-                String combinedPrefix;
+              String combined;
+              String combinedPrefix;
               if (prefixWords.length <= lowercase.size() - iterator.previousIndex()) {
                 List<String> prefixSequence = lowercase.subList(iterator.previousIndex(), iterator.previousIndex() + prefixWords.length);
-                  combined = StringUtils.join(prefixSequence, " ");
-                  combinedPrefix = StringUtils.join(prefixWords, " ");
+                combined = StringUtils.join(prefixSequence, " ");
+                combinedPrefix = StringUtils.join(prefixWords, " ");
                 if (combined.equals(combinedPrefix)) {
                   token.append(combined).append(" ");
                 } else {
                   log.trace("prefix didn't match");
                   continue;
                 }
-                } else {
-                  log.trace("potential prefix longer than supplied utterance");
-                  continue;
+              } else {
+                log.trace("potential prefix longer than supplied utterance");
+                continue;
               }
 
               //iterate over the sublist
               boolean ended = false;
-              int wildcardLength=0;
+              int wildcardLength = 0;
               //TODO:brad: are these off by 1?
-              if(iterator.previousIndex()+prefixWords.length<lowercase.size()-iterator.previousIndex()) {
-                for (String nextWord : lowercase.subList(iterator.previousIndex() + prefixWords.length,lowercase.size() - iterator.previousIndex())) {
+              if (iterator.previousIndex() + prefixWords.length < lowercase.size() - iterator.previousIndex()) {
+                for (String nextWord : lowercase.subList(iterator.previousIndex() + prefixWords.length, lowercase.size() - iterator.previousIndex())) {
                   if (nextWord.equals(postfixWords[0])) {
                     ended = true;
                     break;
@@ -401,7 +396,7 @@ public class Dictionary {
                   log.trace("wild card didn't match");
                   continue;
                 }
-              }else{
+              } else {
                 log.trace("wildcard pattern longer than utterance");
                 continue;
               }
@@ -416,12 +411,12 @@ public class Dictionary {
 //              }
               token.append(wildCardBody);
               //post fix
-              List<String> postfixSequence = lowercase.subList(iterator.previousIndex()+prefixWords.length+wildcardLength, iterator.previousIndex()+prefixWords.length+wildcardLength + postfixWords.length);
+              List<String> postfixSequence = lowercase.subList(iterator.previousIndex() + prefixWords.length + wildcardLength, iterator.previousIndex() + prefixWords.length + wildcardLength + postfixWords.length);
               combined = StringUtils.join(postfixSequence, " ");
               String combinedPostfix = StringUtils.join(postfixWords, " ");
               if (combined.equals(combinedPostfix)) {
                 token.append(combined);
-              }else{
+              } else {
                 log.trace("postfix didn't match");
                 continue;
               }
@@ -432,10 +427,10 @@ public class Dictionary {
                 bound.add(e.generateBoundWildcard(wildCardBody.toString().trim()));
               }
               tokenBindings.add(Pair.of(token.toString(), bound));
-              log.trace("added tokenBinding wildcard prefix"+word);
+              log.trace("added tokenBinding wildcard prefix" + word);
               added = true;
               //update iterator in utterance
-              for (int i = 0; i < prefixWords.length+wildcardLength+ postfixWords.length - 1; i++) {
+              for (int i = 0; i < prefixWords.length + wildcardLength + postfixWords.length - 1; i++) {
                 iterator.next();
               }
             } else {
@@ -449,7 +444,7 @@ public class Dictionary {
               String combined = StringUtils.join(relevantSequence, " ");
               if (combined.equals(prefixString)) {
                 tokenBindings.add(Pair.of(combined, entries.get(combined)));
-                log.trace("added tokenBinding prefix: "+word);
+                log.trace("added tokenBinding prefix: " + word);
                 added = true;
                 for (int i = 0; i < prefixWords.length - 1; i++) {
                   iterator.next();
@@ -461,13 +456,13 @@ public class Dictionary {
         }
 
         //TODO:brad is this what we want?
-        if (!added){
-          List<Entry> dictionaryEntries= new ArrayList<>();
-          if(entries.containsKey(word)){
+        if (!added) {
+          List<Entry> dictionaryEntries = new ArrayList<>();
+          if (entries.containsKey(word)) {
             dictionaryEntries.addAll(entries.get(word));
           }
-          tokenBindings.add(Pair.of(word,dictionaryEntries));
-          log.trace("added tokenBinding catchall case: "+word);
+          tokenBindings.add(Pair.of(word, dictionaryEntries));
+          log.trace("added tokenBinding catchall case: " + word);
         }
       }
     }
@@ -572,25 +567,28 @@ public class Dictionary {
   private static String convertLessThanOneThousand(int number) {
     String soFar;
 
-    if (number % 100 < 20){
+    if (number % 100 < 20) {
       soFar = numNames[number % 100];
       number /= 100;
-    }
-    else {
+    } else {
       soFar = numNames[number % 10];
       number /= 10;
 
       soFar = tensNames[number % 10] + soFar;
       number /= 10;
     }
-    if (number == 0) return soFar;
+    if (number == 0) {
+      return soFar;
+    }
     return numNames[number] + " hundred" + soFar;
   }
 
 
   public static String convert(long number) {
     // 0 to 999 999 999 999
-    if (number == 0) { return "zero"; }
+    if (number == 0) {
+      return "zero";
+    }
 
     String snumber = Long.toString(number);
 
@@ -600,61 +598,61 @@ public class Dictionary {
     snumber = df.format(number);
 
     // XXXnnnnnnnnn
-    int billions = Integer.parseInt(snumber.substring(0,3));
+    int billions = Integer.parseInt(snumber.substring(0, 3));
     // nnnXXXnnnnnn
-    int millions  = Integer.parseInt(snumber.substring(3,6));
+    int millions = Integer.parseInt(snumber.substring(3, 6));
     // nnnnnnXXXnnn
-    int hundredThousands = Integer.parseInt(snumber.substring(6,9));
+    int hundredThousands = Integer.parseInt(snumber.substring(6, 9));
     // nnnnnnnnnXXX
-    int thousands = Integer.parseInt(snumber.substring(9,12));
+    int thousands = Integer.parseInt(snumber.substring(9, 12));
 
     String tradBillions;
     switch (billions) {
       case 0:
         tradBillions = "";
         break;
-      case 1 :
+      case 1:
         tradBillions = convertLessThanOneThousand(billions)
                 + " billion ";
         break;
-      default :
+      default:
         tradBillions = convertLessThanOneThousand(billions)
                 + " billion ";
     }
-    String result =  tradBillions;
+    String result = tradBillions;
 
     String tradMillions;
     switch (millions) {
       case 0:
         tradMillions = "";
         break;
-      case 1 :
+      case 1:
         tradMillions = convertLessThanOneThousand(millions)
                 + " million ";
         break;
-      default :
+      default:
         tradMillions = convertLessThanOneThousand(millions)
                 + " million ";
     }
-    result =  result + tradMillions;
+    result = result + tradMillions;
 
     String tradHundredThousands;
     switch (hundredThousands) {
       case 0:
         tradHundredThousands = "";
         break;
-      case 1 :
+      case 1:
         tradHundredThousands = "one thousand ";
         break;
-      default :
+      default:
         tradHundredThousands = convertLessThanOneThousand(hundredThousands)
                 + " thousand ";
     }
-    result =  result + tradHundredThousands;
+    result = result + tradHundredThousands;
 
     String tradThousand;
     tradThousand = convertLessThanOneThousand(thousands);
-    result =  result + tradThousand;
+    result = result + tradThousand;
 
     // remove extra spaces!
     return result.replaceAll("^\\s+", "").replaceAll("\\b\\s{2,}\\b", " ");
@@ -766,7 +764,7 @@ public class Dictionary {
 
       finalResult += result;
     }
-    e.add(new Entry(Long.toString(finalResult),"NUM",Long.toString(finalResult),""));
+    e.add(new Entry(Long.toString(finalResult), "NUM", Long.toString(finalResult), ""));
     return e;
   }
 
@@ -783,36 +781,36 @@ public class Dictionary {
   private void populateHomophoneGroups() {
     //TODO:brad: put this somewhere better
     homophoneGroups = new ArrayList<>();
-    List<String> oneGroup= new ArrayList<>();
+    List<String> oneGroup = new ArrayList<>();
     oneGroup.add("one");
     oneGroup.add("1");
     homophoneGroups.add(oneGroup);
-    List<String> twoGroup= new ArrayList<>();
+    List<String> twoGroup = new ArrayList<>();
     twoGroup.add("to");
     twoGroup.add("too");
     twoGroup.add("two");
     twoGroup.add("ii");
     twoGroup.add("2");
     homophoneGroups.add(twoGroup);
-    List<String> threeGroup= new ArrayList<>();
+    List<String> threeGroup = new ArrayList<>();
     threeGroup.add("three");
     threeGroup.add("3");
     homophoneGroups.add(threeGroup);
-    List<String> fourGroup= new ArrayList<>();
+    List<String> fourGroup = new ArrayList<>();
     fourGroup.add("for");
     fourGroup.add("four");
     fourGroup.add("iv");
     fourGroup.add("4");
     homophoneGroups.add(fourGroup);
-    List<String> fiveGroup= new ArrayList<>();
+    List<String> fiveGroup = new ArrayList<>();
     fiveGroup.add("five");
     fiveGroup.add("5");
     homophoneGroups.add(fiveGroup);
-    List<String> sixGroup= new ArrayList<>();
+    List<String> sixGroup = new ArrayList<>();
     sixGroup.add("six");
     sixGroup.add("6");
     homophoneGroups.add(sixGroup);
-    List<String> sevenGroup= new ArrayList<>();
+    List<String> sevenGroup = new ArrayList<>();
     sevenGroup.add("seven");
     sevenGroup.add("7");
     homophoneGroups.add(sevenGroup);
@@ -831,9 +829,9 @@ public class Dictionary {
   }
 
   //TODO:brad: this only works for a single instance of a given homophone, if we want to do more this will get super complicated.
-  private List<String> genPermutations(String full, List<String> homophones){
-    List<String> permutations= new ArrayList<>();
-    for(String homophone: homophones) {
+  private List<String> genPermutations(String full, List<String> homophones) {
+    List<String> permutations = new ArrayList<>();
+    for (String homophone : homophones) {
       if (full.contains(homophone)) {
         for (String hprime : homophones) {
           permutations.add(full.replaceAll(homophone, hprime));
@@ -864,7 +862,7 @@ public class Dictionary {
   @TRADEService
   @Action
   public void removeEntry(String name, String grammar, String meaning, String cognitiveStatus) {
-    log.info("removing wild entry for: "+name+" type: "+grammar+" semantics: "+meaning+" cs: "+cognitiveStatus);
+    log.info("removing wild entry for: " + name + " type: " + grammar + " semantics: " + meaning + " cs: " + cognitiveStatus);
     if (entries.containsKey(name)) {
       List<Entry> updatedEntries = new ArrayList<>();
       for (Entry e : entries.get(name)) {
@@ -883,27 +881,28 @@ public class Dictionary {
   /**
    * Add entries for all homophone variations of new location, overwriting any potentially lingering old entries
    * e.g. changing from chair 2 to chair two would originally still have homophone entries referencing chair 2
+   *
    * @param base
    */
   @TRADEService
-  public void generateLocationRules(String base, String semanticType, boolean delete){
+  public void generateLocationRules(String base, String semanticType, boolean delete) {
 
     if (base.startsWith("\"") && base.endsWith("\"")) {
-      base = base.substring(1,base.length()-1);
+      base = base.substring(1, base.length() - 1);
     }
 
-    List<String> variations= new ArrayList<>();
+    List<String> variations = new ArrayList<>();
     variations.add(base);
 
-    for(List<String> h: homophoneGroups){
-      variations.addAll(genPermutations(base,h));
+    for (List<String> h : homophoneGroups) {
+      variations.addAll(genPermutations(base, h));
     }
 
-    for(String v: variations) {
+    for (String v : variations) {
       removeLocEntries(v);
       if (!delete) {
         //TODO:brad: pass in semantic type
-        addEntry(new Entry(v, new SyntacticRule("LOC"), SemanticRule.generateLiteralSemanticRule(base,semanticType), "DEFINITE"));
+        addEntry(new Entry(v, new SyntacticRule("LOC"), SemanticRule.generateLiteralSemanticRule(base, semanticType), "DEFINITE"));
       }
     }
   }
@@ -922,8 +921,7 @@ public class Dictionary {
       //existing location
       if (e.syntax.type.equals("LOC")) {
         return e.getSemantics().getSemantics();
-      }
-      else {
+      } else {
         //other meaning
         return "";
       }
