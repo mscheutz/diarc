@@ -51,9 +51,7 @@ public class StepExecution {
       }
     }
 
-    // if in RECOVERY, return same step to be executed again
-    //TODO: if we don't want suspend to work this way as well, get rid of this. For now suspend/resume will cause
-    //      an interrupted action to be resubmitted
+    // if in RECOVERY or interrupted step due to SUSPEND, return same step to be executed again
     if (step.getStatus() == ActionStatus.RECOVERY || step.getStatus() == ActionStatus.SUSPEND) {
       return step;
     }
@@ -253,6 +251,9 @@ public class StepExecution {
         case CANCEL:
           context.caller.setStatus(context.getStatus(), context.getJustification());
           context.performAdditionalStatusUpdates();
+          return context.getJustification();
+        case PARENT_CANCELED:
+          context.caller.setStatus(ActionStatus.CANCEL);
           return context.getJustification();
         default: // No state change for other cases.
           log.error("[finishStep] current status in action \"" + context.getCommand() + "\" not handled: " + context.getStatus());

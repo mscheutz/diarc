@@ -311,6 +311,35 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     evaluateResults();
   }
 
+  @Test
+  public void planInterruptionTest() {
+
+    setSingleTestTimeout(10, TimeUnit.SECONDS);
+    addUserInput("init");
+    evaluateResults();
+    //Give time for all item definitions to properly be learned before submitting command with bell pepper
+    try {
+      Thread.sleep(2000);
+    } catch (InterruptedException ignored){}
+
+    addUserInput("get a bell pepper to the cook top");
+    evaluateResults();
+    setSingleTestTimeout(1, TimeUnit.SECONDS);
+    addUserInput("here it is");
+    evaluateResults();
+    setSingleTestTimeout(5, TimeUnit.SECONDS);
+    addUserInput("suspend current task");
+    evaluateResults();
+    addUserInput("get the bell pepper to the hot plate right now");
+    evaluateResults();
+    addUserInput("resume previous task");
+    evaluateResults();
+
+    //addUserInput("yes");
+    //addUserInput("no");
+    //evaluateResults();
+  }
+
   //TODO: Other tests that would be required if the underlying functionality was actually implemented (which would be
   // required if this domain is to be safely used for off script interactions or further dev on these fronts)
   //Interruption of all the other teaching scripts and during different points within these script

@@ -686,6 +686,7 @@ public class GoalManagerImpl extends DiarcComponent {
    * @return
    */
   @TRADEService
+  @Action
   public Long getGoalId(Predicate goal) {
     List<Long> goalIds = getGoalIds(goal);
     if (goalIds == null || goalIds.size() == 0) {
@@ -702,6 +703,7 @@ public class GoalManagerImpl extends DiarcComponent {
    * @return
    */
   @TRADEService
+  @Action
   public List<Long> getGoalIds(Predicate goal) {
     Goal queryGoal = new Goal(goal);
     List<Goal> goals = em.getAllGoals(queryGoal);
@@ -716,6 +718,7 @@ public class GoalManagerImpl extends DiarcComponent {
    * @return the Goal corresponding to the ID.
    */
   @TRADEService
+  @Action
   public Goal getGoal(long gid) {
     return em.getGoal(gid);
   }

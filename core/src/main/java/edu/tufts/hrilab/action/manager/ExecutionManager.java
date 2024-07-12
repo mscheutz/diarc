@@ -1925,7 +1925,7 @@ public class ExecutionManager implements ActionListener {
     AgentTeam agentTeam = originalAgentTeam;
     while (agentTeam != null) {
       if (agentTeam.getLearningStatus() == ActionLearningStatus.ACTIVE) {
-        log.debug("[submitGoal] handing {} off to action learning", g);
+        log.debug("[handOffToLearning] handing {} off to action learning", g);
         agentTeam.addLearningGoal(g);
         if (!agentTeam.shouldExecute()) {
           pastGoals.add(g);

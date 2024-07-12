@@ -580,3 +580,6 @@ add new admin; (S/LIT*)\AGENT; #a#s.admin_of(#a,#s)
 
 it is safe to proceed; VAL; safeToProceed(true)
 it is not safe to proceed; VAL; safeToProceed(false)
+
+yes; VAL; val(yes)
+no; VAL; val(no)
