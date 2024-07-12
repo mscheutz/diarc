@@ -458,7 +458,6 @@ import edu.tufts.hrilab.action.justification.Justification;
 () = check (Symbol ?area) {
   conditions : {
     pre infer: not(repairing(?actor,X,Y,Z));
-    pre infer: amIn(?actor,?area);
   }
   op:log("info", "Checking ?area for damaged tubes");
 
@@ -468,6 +467,18 @@ import edu.tufts.hrilab.action.justification.Justification;
   Symbol !tubeToRepair;
   List !damagedTubes;
   int !damagedTubesSize;
+  Predicate !currentAreaBeliefPredicate;
+  List !currentAreaBeliefs;
+
+  !currentAreaBeliefPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "amIn(?actor,?area)");
+  !currentAreaBeliefs = act:queryBelief(!currentAreaBeliefPredicate);
+
+  if (~op:isEmpty(!currentAreaBeliefs)) {
+    op:log("info", "Already in area ?area");
+  } else {
+    op:log("info", "Not in area ?area, going there");
+    act:goToAreaSilent(?area);
+  }
 
   !damagedTubes = act:getSpaceStationTubesDamaged(?area);
 
