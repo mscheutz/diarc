@@ -253,7 +253,7 @@ public class GoalManagerImpl extends DiarcComponent {
    * Display a GUI for this goal manager
    */
   public void showEditor(String path) {
-    gui = new GoalManagerGUI(this, path, new HashMap<>(), new HashSet<>());
+    gui = new GoalManagerGUI(this, path);
   }
 
   /**
@@ -581,6 +581,28 @@ public class GoalManagerImpl extends DiarcComponent {
   @TRADEService
   public List<Goal> getCurrentGoals(Goal queryGoal) {
     return em.getCurrentGoals();
+  }
+
+  /**
+   * Get a copied list of the previously executed goals
+   *
+   * @return list of Goals
+   */
+  @TRADEService
+  @Action
+  public List<Goal> getPastGoals() {
+    return em.getPastGoals();
+  }
+
+  /**
+   * Get a copied list of the goals currently undergoing execution.
+   *
+   * @return list of Goals
+   */
+  @TRADEService
+  @Action
+  public List<Goal> getActiveGoals() {
+    return em.getActiveGoals();
   }
 
   /**
@@ -1142,6 +1164,11 @@ public class GoalManagerImpl extends DiarcComponent {
     }
     em.shutdown();
     Database.destroyInstance();
+  }
+
+  //Don't think this should exist
+  public ExecutionManager getExecutionManager() {
+    return this.em;
   }
 
 }

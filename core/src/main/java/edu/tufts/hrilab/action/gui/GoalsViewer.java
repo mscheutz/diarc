@@ -56,12 +56,12 @@ public class GoalsViewer extends JPanel {
 
     public void updateGoals() {
         activeGoalsModel.clear();
-        for (Goal goal : executionManager.getActiveGoals()) {
+        for (Goal goal : goalManager.getActiveGoals()) {
             activeGoalsModel.addElement(goal);
         }
         activeGoalsList.setVisible(true);
         pastGoalsModel.clear();
-        for (Goal goal : executionManager.getPastGoals()) {
+        for (Goal goal : goalManager.getPastGoals()) {
             pastGoalsModel.addElement(goal);
         }
         pastGoalsList.setVisible(true);
