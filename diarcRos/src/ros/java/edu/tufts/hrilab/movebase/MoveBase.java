@@ -27,6 +27,7 @@ import edu.tufts.hrilab.diarcros.common.RosConfiguration;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -44,7 +45,7 @@ import ai.thinkingrobots.trade.TRADEException;
 public class MoveBase {
   private MoveBaseNode base;
 
-  private String mapFrame, baseFrame;
+  private String mapFrame, baseFrame, myGroups;
 
   private final Lock moveLock = new ReentrantLock();
 
@@ -57,11 +58,12 @@ public class MoveBase {
    * @param mapFrame
    * @param baseFrame
    */
-  public MoveBase(RosConfiguration rc, String mapFrame, String baseFrame) {
+  public MoveBase(RosConfiguration rc, String mapFrame, String baseFrame, List<String> myGroups) {
     base = new MoveBaseNode(rc);
     base.waitForNode();
     this.mapFrame = mapFrame;
     this.baseFrame = baseFrame;
+    this.myGroups = String.join(" ", myGroups);
   }
 
   /**
@@ -71,7 +73,7 @@ public class MoveBase {
    */
   public Pose getPose() {
     try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTransform").argTypes(String.class, String.class));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTransform").argTypes(String.class, String.class).inGroups(myGroups));
       Matrix4d matTf = tsi.call(Matrix4d.class, mapFrame, baseFrame);
       Vector3d vec = new Vector3d();
       Quat4d quat = new Quat4d();
@@ -193,5 +195,4 @@ public class MoveBase {
     }
     return new ConditionJustification(movingHolds);
   }
-
 }

@@ -80,10 +80,10 @@ public class GoalManagerGUI {
     //FIXME: better way to handle agents for submitting goals, right now hardcoded to andy for fetch stuff
     private Symbol agent;
 
-    public GoalManagerGUI(GoalManagerImpl gm, String path, Map<Goal, Future> goals, Set<Goal> pastGoals) {
+    public GoalManagerGUI(GoalManagerImpl gm, String path) {
         goalManager = gm;
         dir = path;
-        goalsViewer = new GoalsViewer(gm, goals, pastGoals);
+        goalsViewer = new GoalsViewer(gm);
         dbViewer = new DatabaseViewer(gm, path);
         gmGUI = new JFrame("Goal Manager GUI");
         gmGUI.setContentPane(gmPanel);

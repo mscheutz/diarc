@@ -20,7 +20,7 @@
         </constraints>
         <properties>
           <dividerLocation value="184"/>
-          <lastDividerLocation value="162"/>
+          <lastDividerLocation value="184"/>
           <minimumSize width="800" height="500"/>
           <preferredSize width="800" height="500"/>
         </properties>
@@ -39,11 +39,11 @@
               <splitpane position="left"/>
             </constraints>
             <properties>
-              <dividerLocation value="250"/>
+              <dividerLocation value="185"/>
               <doubleBuffered value="false"/>
-              <lastDividerLocation value="250"/>
+              <lastDividerLocation value="195"/>
               <minimumSize width="160" height="76"/>
-              <name value="CurrentGoals"/>
+              <name value="ActiveGoals"/>
               <orientation value="0"/>
               <resizeWeight value="0.5"/>
             </properties>
@@ -66,7 +66,7 @@
                     <properties>
                       <horizontalAlignment value="0"/>
                       <horizontalTextPosition value="0"/>
-                      <text value="Current Goals"/>
+                      <text value="Active Goals"/>
                     </properties>
                   </component>
                   <scrollpane id="83675">
@@ -76,7 +76,7 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="7f910" class="javax.swing.JList" binding="currentGoalsList">
+                      <component id="7f910" class="javax.swing.JList" binding="activeGoalsList">
                         <constraints/>
                         <properties/>
                       </component>

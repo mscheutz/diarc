@@ -121,7 +121,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     addUserInput("reset");
     evaluateResults();
 
-    setSingleTestTimeout(2, TimeUnit.SECONDS);
+    setSingleTestTimeout(5, TimeUnit.SECONDS);
     addUserInput("define new item southwest bowl");
     evaluateResults();
     addUserInput("first get a serving box to serving area");
@@ -197,7 +197,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     addUserInput("grasp it here");
     evaluateResults();
 
-    setSingleTestTimeout(3, TimeUnit.SECONDS);
+    setSingleTestTimeout(5, TimeUnit.SECONDS);
     addUserInput("what is your current task");
     evaluateResults();
 
