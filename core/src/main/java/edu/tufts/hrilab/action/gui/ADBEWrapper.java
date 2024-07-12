@@ -64,30 +64,4 @@ public class ADBEWrapper {
     if(!first) name.append(")");
     return name.toString();
   }
-
-  /**
-   * Returns the action's signature. Similar to <code>toString()</code> but
-   * does not include return-type roles.
-   * @return action signature
-   */
-  public String getActionSignature() {
-    StringBuilder name = new StringBuilder(this.name);
-    boolean first = true;
-
-    for(int i=0; i< action.getNumRoles(); i++) {
-      if(!action.getRoleLocal(i)) { // Get the public roles only
-        String roleName = action.getRoleName(i);
-        if(!action.getRole(roleName).isReturn) { // Don't want return roles
-          if (first) {
-            name.append("(");
-            first = false;
-          } else name.append(", ");
-          name.append(roleName);
-        }
-      }
-    }
-
-    if(!first) name.append(")");
-    return name.toString();
-  }
 }

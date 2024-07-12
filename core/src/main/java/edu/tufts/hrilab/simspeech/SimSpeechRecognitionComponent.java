@@ -23,14 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import ai.thinkingrobots.trade.*;
-import org.springframework.stereotype.Component;
 
 /**
  * <code>SimSpeechRecognitionComponent</code> provides a keyboard interface
  * to replace a speech recognition component. Takes utterances directly from a
  * text file and sends them to an NLP component.
  */
-@Component
 public class SimSpeechRecognitionComponent extends DiarcComponent {
 
   protected BufferedReader sbr;
@@ -126,12 +124,12 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
 
   public void setSpeaker(Symbol speaker) {
     this.speaker = speaker;
-      log.info("speaker set to: {}", this.speaker);
+    log.info("speaker set to: " + this.speaker);
   }
 
   public void setListener(Symbol listener) {
     this.listener = listener;
-      log.info("listener set to: {}", this.listener);
+    log.info("listener set to: " + this.listener);
   }
 
   // ********************************************************************
@@ -190,7 +188,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
           }
         }
         if (in != null) {
-            log.debug("Adding utterance: {}", in);
+          log.debug("Adding utterance: " + in);
           Utterance.Builder utterance = new Utterance.Builder()
                   .setWords(Arrays.asList(in.split(" ")))
                   .setSpeaker(speaker)

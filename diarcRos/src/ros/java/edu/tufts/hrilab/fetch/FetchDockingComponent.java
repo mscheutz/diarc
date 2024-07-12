@@ -95,7 +95,7 @@ public class FetchDockingComponent extends DiarcComponent implements DockingInte
         // call movebase trade service to go to dock
         Justification result;
         try {
-            TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation").argTypes(Double.class,Double.class,Double.class,Double.class,Double.class,Double.class,Boolean.class));
+            TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("goToLocation"));
             result = tsi.call(Justification.class, dock_coordinates.x, dock_coordinates.y, dock_orientation.x, dock_orientation.y, dock_orientation.z, dock_orientation.w, true);
         } catch (TRADEException e) {
             return false;

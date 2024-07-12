@@ -20,7 +20,6 @@ import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.dialogue.gui.DialogueGui;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +29,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@Component
 public class DialogueComponent extends DiarcComponent {
 
   /**
