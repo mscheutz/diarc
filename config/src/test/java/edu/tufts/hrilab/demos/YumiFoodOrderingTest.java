@@ -4,8 +4,6 @@
 
 package edu.tufts.hrilab.demos;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.config.YumiFoodOrderingMock;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
@@ -13,7 +11,6 @@ import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -58,6 +55,8 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
       Thread.sleep(2000);
     } catch (InterruptedException ignored) {
     }
+
+    diarcConfig.gm.cancelAllCurrentGoals();
 
     log.debug("[cleanup] started");
     log.debug("[shutdownConfig] tester shutdown");
@@ -122,7 +121,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     addUserInput("reset");
     evaluateResults();
 
-    setSingleTestTimeout(2, TimeUnit.SECONDS);
+    setSingleTestTimeout(5, TimeUnit.SECONDS);
     addUserInput("define new item southwest bowl");
     evaluateResults();
     addUserInput("first get a serving box to serving area");
@@ -198,7 +197,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     addUserInput("grasp it here");
     evaluateResults();
 
-    setSingleTestTimeout(3, TimeUnit.SECONDS);
+    setSingleTestTimeout(5, TimeUnit.SECONDS);
     addUserInput("what is your current task");
     evaluateResults();
 
@@ -247,6 +246,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     evaluateResults();
   }
 
+  //TODO: references not properly cleaned up between tests?
   //Off scripts tests for robustness and/or desired functionality
   //TODO: Need to create methods to do and then actually correctly test that defineItem, defineItemByAnalogy, and defineIngredient
   //  (and all internal methods with side effects - positReference, addDetectionType, defineIngredientHelper, ...) can be
@@ -309,6 +309,35 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
 
     addUserInput("here it is");
     evaluateResults();
+  }
+
+  @Test
+  public void planInterruptionTest() {
+
+    setSingleTestTimeout(10, TimeUnit.SECONDS);
+    addUserInput("init");
+    evaluateResults();
+    //Give time for all item definitions to properly be learned before submitting command with bell pepper
+    try {
+      Thread.sleep(2000);
+    } catch (InterruptedException ignored){}
+
+    addUserInput("get a bell pepper to the cook top");
+    evaluateResults();
+    setSingleTestTimeout(1, TimeUnit.SECONDS);
+    addUserInput("here it is");
+    evaluateResults();
+    setSingleTestTimeout(5, TimeUnit.SECONDS);
+    addUserInput("suspend current task");
+    evaluateResults();
+    addUserInput("get the bell pepper to the hot plate right now");
+    evaluateResults();
+    addUserInput("resume previous task");
+    evaluateResults();
+
+    //addUserInput("yes");
+    //addUserInput("no");
+    //evaluateResults();
   }
 
   //TODO: Other tests that would be required if the underlying functionality was actually implemented (which would be

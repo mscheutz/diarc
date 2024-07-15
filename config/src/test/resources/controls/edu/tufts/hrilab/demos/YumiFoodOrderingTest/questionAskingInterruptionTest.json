@@ -60,25 +60,25 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_20:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
@@ -88,30 +88,30 @@
     } ]
   }, {
     "serviceCalls" : [ {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
-    }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
     }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_21:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+    }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "okay", "true" ]
     } ]
@@ -127,30 +127,30 @@
     } ]
   }, {
     "serviceCalls" : [ {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
-    }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
     }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_22:physobj}", "1.0", "[corn(VAR0:physobj)]", "false" ]
+    }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "okay", "true" ]
     } ]
@@ -166,30 +166,30 @@
     } ]
   }, {
     "serviceCalls" : [ {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
-    }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
     }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_23:physobj}", "1.0", "[carrot(VAR0:physobj)]", "false" ]
+    }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "okay", "true" ]
     } ]
@@ -205,26 +205,26 @@
     } ]
   }, {
     "serviceCalls" : [ {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
-    }, {
-      "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
-    }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "true" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+    }, {
+      "serviceName" : "assertProperties",
+      "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_24:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]

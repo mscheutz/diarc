@@ -491,11 +491,21 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         // cancel logic
         if (shouldCancel.get()) {
           if (currentStep == null) {
-            log.warn("AI for goal has already terminated: " + goal);
+            log.warn("[shouldCancel] AI for goal has already terminated: " + goal);
           } else if (currentStep.isTerminated()) {
-            log.error("[cancel] Can't find non-terminated context to cancel.");
+            log.error("[shouldCancel] Can't find non-terminated context to cancel.");
           } else {
-            currentStep.setStatus(ActionStatus.CANCEL);
+            //Don't think this practically matters and ideally shouldn't reach this case (only possible if there is an
+            //  onSuspend behavior defined but no onCancel), but in this case the current step has partially undergone
+            //  execution. Appropriately set status to CANCEL.
+            if (currentStep.getStatus() == ActionStatus.SUSPEND) {
+              currentStep.setStatus(ActionStatus.CANCEL);
+            }
+            //Otherwise this context hadn't started any execution, don't want to potentially call any associated onCancel
+            // behaviors in this case. Using PARENT_CANCELED status to propagate CANCEL up the tree w/o calling onCancel
+            else {
+              currentStep.setStatus(ActionStatus.PARENT_CANCELED);
+            }
             shouldCancel.set(false);
           }
           canceledStepSignal.release(1); //Indicate we are done waiting on the previous step to terminate and have now canceled the AI
@@ -593,46 +603,12 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     try {
       if (suspend) {
         suspend = false;
-        //TODO: Implement better way to decide what exactly we end up doing when resuming execution of a plan or action
-        //        with assumptions about the state of the world which may have been violated while execution was suspended.
-        //       Believe we want this to be handled in a sort of recovery policy. Until that, I'm not sure if we even
-        //        want to make this assumption or just blindly resume. Feel free to comment out this block
-        //Quick abbFoodOrdering change: If we had suspended during execution of a plan, resubmit the youngest parent plan.
-        //Get the youngest parent plan
-        GoalContext goalContext = null;
-        Context parentContext = currentStep.getParentContext();
-        while (parentContext != rootStep) {
-          if (parentContext instanceof ActionContext && parentContext.getCommand().equals("planned")) {
-            Context grandparentContext = parentContext.getParentContext();
-            if (grandparentContext instanceof GoalContext) {
-              GoalContext grandparentGoalContext = (GoalContext) grandparentContext;
-              goalContext = new GoalContext(grandparentGoalContext.getParentContext(), grandparentGoalContext.getStateMachine(), grandparentGoalContext.getGoal(), grandparentGoalContext.getExecType());
-              //grandparentContext.setStatus(ActionStatus.CANCEL);
-              //grandparentContext.addEvent(grandparentGoalContext.getGoal(), grandparentGoalContext.getStateMachine(), grandparentGoalContext.getExecType());
-            }
-            break;
-          }
-          parentContext = parentContext.getParentContext();
-        }
 
-        //Current step
-        //TODO: Abandoning previous plan execution completely and resubmitting the goal will definitely require
-        //              cleanup in some cases. Even if nothing else, there should be a mechanism to clean up anything
-        //              caused by onSuspend services which are waiting for onResume calls.
-        //Child of a plan, set the current step as the goal originally prompting planning
-        if (goalContext != null) {
-          //goalContext.getParentContext().getChildContexts().add(goalContext); //shallow copy
-          //goalContext.getParentContext().getChildContexts().getNextAndIncrement();
-          currentStep = goalContext;
-        }
-        //Default case: call any onResume behaviors for the suspended step if present (if it was interrupted)
-        else {
-          if (stepInterrupted) {
-            if (currentStep instanceof ActionContext) {
-              ((ActionContext) currentStep).handleInterrupt(ActionStatus.RESUME);
-            }
-            currentStep.setStatus(ActionStatus.INITIALIZED);
+        if (stepInterrupted) {
+          if (currentStep instanceof ActionContext) {
+            ((ActionContext) currentStep).handleInterrupt(ActionStatus.RESUME);
           }
+          currentStep.setStatus(ActionStatus.INITIALIZED);
         }
 
         //Propagate status up the tree to be handled per context
@@ -672,7 +648,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       shouldCancel.set(true);
       //Wait for the current step to terminate before returning - do we always want this?
       try {
-        log.debug("[suspend] waiting for current step to terminate and AI to fully be suspended");
+        log.debug("[cancel] waiting for current step to terminate and AI to fully be suspended");
         canceledStepSignal.acquire();
       } catch (InterruptedException e) {
       }

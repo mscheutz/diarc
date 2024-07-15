@@ -334,6 +334,7 @@ import java.lang.Integer;
     edu.tufts.hrilab.action.justification.Justification !failureConditions;
     Predicate !becausePredicate;
     java.lang.Boolean !madeTentativeAccept = false;
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
 
     conditions : {
       or : {
@@ -362,7 +363,8 @@ import java.lang.Integer;
     }
     !madeTentativeAccept = op:newObject("java.lang.Boolean", "true");
 
-    !goalID = act:submitGoal(?state,?priority);
+
+    !goalID = act:submitGoal(?state,!execType,?priority);
     !goalStatus = act:joinOnGoal(!goalID, 1000);
 //    if (~op:invokeMethod(!goalStatus, "isTerminated")) {
 //      op:log("debug", "tentative accept for ?state with status !goalStatus");

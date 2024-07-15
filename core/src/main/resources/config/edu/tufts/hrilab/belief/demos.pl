@@ -29,10 +29,19 @@ role(Y,novice) :- diarcAgent(X),bel(X,novice(Y)).
 explanationType(A, incomplete) :- not(role(A,novice)).
 
 %% rules about admin goals, which only adminstrators can give
-isAdminGoal(updateActionLearning(D,X,S)).
-isAdminGoal(modifyAction(D,X,S,A)).
-isAdminGoal(Y) :- (want(B,D,Y),Y=updateActionLearning(D,X,S),diarcAgent(D)).
-isAdminGoal(Y) :- (want(B,D,Y),Y=modifyAction(D,X,S,A),diarcAgent(D)).
+%% do we need rule with D,D,X as well?
+isAdminGoal(learnAction(D,A,X)).
+isAdminGoal(endActionLearning(D,A,X)).
+isAdminGoal(pauseActionLearning(D,A,X)).
+isAdminGoal(resumeActionLearning(D,A,X)).
+isAdminGoal(cancelActionLearning(D,A,X)).
+isAdminGoal(modifyAction(D,C,X,S,A)).
+isAdminGoal(Y) :- (want(B,D,Y),Y=learnAction(D,A,X),diarcAgent(D)).
+isAdminGoal(Y) :- (want(B,D,Y),Y=endActionLearning(D,A,X),diarcAgent(D)).
+isAdminGoal(Y) :- (want(B,D,Y),Y=pauseActionLearning(D,A,X),diarcAgent(D)).
+isAdminGoal(Y) :- (want(B,D,Y),Y=resumeActionLearning(D,A,X),diarcAgent(D)).
+isAdminGoal(Y) :- (want(B,D,Y),Y=cancelActionLearning(D,A,X),diarcAgent(D)).
+isAdminGoal(Y) :- (want(B,D,Y),Y=modifyAction(D,C,X,S,A),diarcAgent(D)).
 
 %% failure reason explination
 %brad: at some point we might want a rule this so that we can do stuff based on the actor in the goal:

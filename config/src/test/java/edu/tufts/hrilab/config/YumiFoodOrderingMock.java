@@ -37,6 +37,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
   private ABBLocationConsultant locationConsultant;
   private boolean firebase;
   private boolean test;
+  public GoalManagerImpl gm;
 
   public YumiFoodOrderingMock(boolean test) {
     this.test = test;
@@ -115,7 +116,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
                     + "-goal listen(self:agent)";
 //                        + "-goal init(self:agent)";
 
-    createInstance(GoalManagerImpl.class, gmArgs);
+    gm = createInstance(GoalManagerImpl.class, gmArgs);
 
     if (test) {
       untrustedSimSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech -nogui");
@@ -124,13 +125,10 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
       createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech");
       createInstance(SimSpeechRecognitionComponent.class, "-speaker brad -config yumiFoodOrdering.simspeech");
     }
-
-
   }
 
   @Override
   public void shutdownConfiguration() {
-    super.shutdownConfiguration();
     try {
       TRADE.deregister(areaConsultant);
       TRADE.deregister(itemConsultant);
@@ -139,11 +137,13 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
     } catch (TRADEException e) {
       log.error("[shutdownConfiguration] Error deregistering consultants", e);
     }
+    super.shutdownConfiguration();
   }
 
   public static void main(String[] args) {
     boolean test = false;
     YumiFoodOrderingMock demoConfig = new YumiFoodOrderingMock(test);
     demoConfig.runConfiguration();
+    //SpringApplication.run(GuiManager.class, args);
   }
 }

@@ -7,6 +7,7 @@ package edu.tufts.hrilab.demos;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.action.db.performanceMeasures.PerformanceMeasures;
+import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.config.MultiRobotCaddyDemoMock;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -39,7 +40,7 @@ public class MultiRobotCaddyDemoTest extends GenerativeDiarcIntegrationTest {
         PerformanceMeasures.setSeed(randomNumberSeed);
         addServiceToObserve("reportRecognizedSpeech", Utterance.class);
         addServiceToObserve("submitGoal", Predicate.class);
-        addServiceToObserve("submitGoal", Predicate.class, Symbol.class);
+        addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, Symbol.class);
         //TODO:brad: is this signature used in this test?
         addServiceToObserve("sayText", String.class);
         addServiceToObserve("assertBelief", Term.class);

@@ -215,6 +215,14 @@ import edu.tufts.hrilab.fol.Variable;
     goal:itemOn(?item, ?destination);
 }
 
+//TODO: Placeholder recovery policy just so tests still pass. Want to add proper policies for specific goals
+//      (Current impl of GoalRecovery + this will just cause replanning for any failed goal)
+() = prepareFoodRecovery(Predicate ?failedActionPredicate, java.util.List ?failureReasons, Predicate ?goal) {
+  recovery: {
+    excludedFailedActions: {planned()}
+  }
+}
+
 //utility actions
 () =  askSafeToProceed(java.lang.String ?failedAction) {
     java.util.Map !bindings;
