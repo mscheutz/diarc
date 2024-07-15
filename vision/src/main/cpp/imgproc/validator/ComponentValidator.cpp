@@ -19,6 +19,12 @@
 #include "capture/util/CaptureUtilities.hpp"
 #include "common/notification/CaptureNotification.hpp"
 #include "stm/util/StmUtilities.hpp"
+#include "point_clouds/PointCloudUtilities.hpp"
+
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/filters/filter.h>
 
 
 using namespace ade::stm;
@@ -46,6 +52,7 @@ ComponentValidator::~ComponentValidator() {
 }
 
 
+/*
 void ComponentValidator::loadConfig(const std::string& config) {
   LOG4CXX_TRACE(logger, "[loadConfig] method entered.");
 
@@ -77,7 +84,6 @@ void ComponentValidator::loadConfig(const std::string& config) {
                 ComponentValidator::initModel(model_file);
                 loadedModels.insert(model_file); // Mark this model as loaded
                 LOG4CXX_DEBUG(logger, boost::format("[loadConfig] Loaded model: %s.") % model_file);
-                std::cout << "Model loaded from: " << model_file << std::endl;
             } else {
                 LOG4CXX_DEBUG(logger, "[loadConfig] Model already loaded, skipping.");
                 //std::cout << "Model loading skipped for: " << model_file << std::endl;
@@ -94,17 +100,21 @@ void ComponentValidator::loadConfig(const std::string& config) {
     }
   }
 }
+*/
 
 
-/*
 void ComponentValidator::loadConfig(const std::string &configFile) {
+  LOG4CXX_TRACE(logger, "[loadConfig] method entered.");
   //get directory
   unsigned found = configFile.find_last_of("/\\"); // check if config file is filename or path
   std::string dir = configFile.substr(0, found + 1);
   std::string model_file;
-  std::string backEnd;
   std::string type;
- 
+  std::string descriptorName;
+  int shape;
+  int axis;
+  int index;
+
   Json::CharReaderBuilder builder;
   Json::Value root;
   JSONCPP_STRING errs;
@@ -118,129 +128,164 @@ void ComponentValidator::loadConfig(const std::string &configFile) {
   parentType = root["processor"]["type"].asString();
   int arity = root["processor"]["arity"].asInt();
   for (auto predicateValue: root["predicates"]) {
-    std::string name = predicateValue["name"].asString();
-    int classID = predicateValue["classID"].asInt();
-    classToId.insert({name, classID});
-    idToClass.insert({classID, name});
+
+    std::string descriptorName = predicateValue["name"].asString();
+    // Retrieve integer values if present or default to -1 if not present
+    shape = predicateValue.isMember("shape") ? predicateValue["shape"].asInt() : -1;
+    axis = predicateValue.isMember("axis") ? predicateValue["axis"].asInt() : -1;
+    index = predicateValue.isMember("index") ? predicateValue["index"].asInt() : -1;
+    semanticProperties.push_back({descriptorName, shape, axis, index});
+    
   }
 
   Json::Value config = root["config"];
   model_file = dir + config["model"].asString();
   ComponentValidator::initModel(model_file);
 }
-*/
 
 
 void ComponentValidator::initModel(const std::string &model_path) {
-  fs::path onnx_model_abs = fs::canonical(model_path + ".onnx");
-  net = cv::dnn::readNetFromONNX(onnx_model_abs.string());
+  //fs::path onnx_model_abs = fs::canonical(model_path + ".onnx");
+  //LOG4CXX_TRACE(logger, boost::format("Loading ONNX model: %s") % onnx_model_abs.string());
+  //net = cv::dnn::readNetFromONNX(onnx_model_abs.string());
+  net = cv::dnn::readNetFromONNX(model_path + ".onnx");
 }
 
 
 void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification) {
+
   LOG4CXX_TRACE(logger, "[ComponentValidation] method entered.");
-  
-  // get current descriptors to process
-  TypesByDescriptorConstPtr descriptors = getDescriptors();
-  TypesByDescriptor::const_iterator descriptor_iter;
-  std::tr1::unordered_set<long long>::const_iterator typeIds_itr;
-  
+
   MemoryObject::Ptr object = notification->object;
-  
-  // get captured frames info
-  const cv::Mat currFrame = object->getCaptureData()->frame;
+  pcl::PointCloud<pcl::PointXYZ>::ConstPtr sceneCloud = object->getDetectionMask()->getCaptureData()->cloud;
 
-  // Pre-processing values for the input image
-  double scalefactor = 1.0;
-  cv::Scalar noMean(0.0, 0.0, 0.0);  // we do not want any mean subtraction
-  int width = 256;
-  int height = 192;
-  cv::Size size(width, height);
-
-  // convert image to grayscale and floats
-  cv::Mat grayscaleFrame;
-  cv::cvtColor(currFrame, grayscaleFrame, cv::COLOR_BGR2GRAY);
-  
-  // convert image to Semantic Encoder dimensions  
-  cv::Mat blob;
-  cv::dnn::blobFromImage(grayscaleFrame, blob, scalefactor, size, noMean, false); 
-  // Extract Semantic Descriptions 
-  net.setInput(blob);
-  cv::Mat semMatrix = net.forward();
-  // Apply sigmoid to the matrix
-  cv::Mat semMatrixSig = applySigmoidToMatrix(semMatrix);
-
-  // Check if the output matrix is valid before using it
-  if (semMatrixSig.empty()) {
-        std::cerr << "Failed to apply Sigmoid to matrix." << std::endl;
-  }
-
-  float confidence = 1.0f; //TODO: How could I set this in a good way?
-  int predShape;
-  int predAxis;
-  int predIdx;
-  bool predFound;
-
-  PredicateHelper::Set::const_iterator descriptors_itr;
+  // check if this typeId should currently be processed
   DescriptorsByTypeConstPtr types = getTypes();
   DescriptorsByType::const_iterator types_itr = types->find(object->getTypeId());
+  if (types_itr != types->end()) {
   
-  for (descriptors_itr = types_itr->second.begin(); descriptors_itr != types_itr->second.end(); ++descriptors_itr) {
+    // get current descriptors to process
+    TypesByDescriptorConstPtr descriptors = getDescriptors();
+    TypesByDescriptor::const_iterator descriptor_iter;
+    std::tr1::unordered_set<long long>::const_iterator typeIds_itr;
+
+    // get MemoryObject cloud and remove NaNs
+    std::shared_ptr<const pcl::PointCloud<pcl::PointXYZ>> objectCloud = object->getDetectionMask()->getObjectPointCloud();
+    cv::Mat objectDepthImage(objectCloud->height, objectCloud->width, CV_32FC1);
+    ade::pc::util::pointCloudToDepth(objectDepthImage, objectCloud);
+
+    // save organized point cloud to pcd file TODO remove this later
+    //std::string pcd_file = "/home/schneiders/Desktop/object_point_cloud.pcd";
+    //if (pcl::io::savePCDFile<pcl::PointXYZ>(pcd_file, *objectCloud) == -1) {
+    //      PCL_ERROR("Couldn't save PCD file");
+    //}
+
+    cv::Mat mask = cv::Mat(objectDepthImage.rows, objectDepthImage.cols, CV_8U);
+
+    // Create mask where NaN values are set to 0, others to 1
+    cv::compare(objectDepthImage, objectDepthImage, mask, cv::CMP_EQ);
+    // Find the minimum and maximum depth values
+    double min_depth, max_depth;
+
+    // Use the mask to find min and max depths
+    cv::minMaxIdx(objectDepthImage, &min_depth, &max_depth, nullptr, nullptr, mask);
+
+    // Normalize depth values to the range [0, 255]
+    cv::Mat objectDepthImageNorm;
+    objectDepthImage.convertTo(objectDepthImageNorm, CV_8UC1, 255.0 / (max_depth - min_depth), -min_depth * 255.0 / (max_depth - min_depth));
+
+    // Optionally, save the image
+    //cv::imwrite("/home/schneiders/Desktop/normalized_depth_image.png", objectDepthImageNorm);
+
+    // Pre-processing values for the input image
+    double scalefactor = 1.0;
+    cv::Scalar noMean(0.0, 0.0, 0.0);  // we do not want any mean subtraction
+    int width = 256;
+    int height = 192;
+    cv::Size size(width, height);
+
+    // convert image to Semantic Encoder dimensions and format 
+    cv::Mat blob;
+    cv::dnn::blobFromImage(objectDepthImageNorm, blob, scalefactor, size, noMean, false); 
+    net.setInput(blob);
     
-    std::string keyToFind = descriptors_itr->getName();
-    
-    if (keyToFind == "any")
-    {
-      // Access all elements except the last one
-      for (auto sp = semanticProperties.begin(); sp != semanticProperties.end() - 1; ++sp) {
-        predShape = sp->predicateShape;
-        predAxis = sp->predicateAxis;
-        predIdx = sp->predicateIndex;
-        predFound = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
+    cv::Mat semMatrix = net.forward();
+    LOG4CXX_TRACE(logger, "[ComponentDetector] Model applied to input image.");
+    // Apply sigmoid to the matrix
+    semMatrix.at<float>(0, 0) = 1;  // this is just to test things, TODO remove it
+    cv::Mat semMatrixSig = applySigmoidToMatrix(semMatrix);
 
-        if (predFound) {
-          object->addValidationResult(confidence, PredicateHelper(*descriptors_itr));
-          object->addValidationResult(confidence, PredicateHelper(sp->predicateKey + 
-                                  "(" + descriptors_itr->getArg(0) + ")"));
-        }
-        std::cout << "Predicate " << sp->predicateKey + 
-                                  "(" + descriptors_itr->getArg(0) + ")" << " found? " << predFound << std::endl;
-      }
-    } else {
-    
-      auto it = std::find_if(semanticProperties.begin(), semanticProperties.end(),
-        [&keyToFind](const predicateFeatures& pf) {
-          return pf.predicateKey == keyToFind;
-      });
+    // Check if the output matrix is valid before using it
+    if (semMatrixSig.empty()) {
+      LOG4CXX_DEBUG(logger, boost::format("Semantic Matrix not valid"));
+    }
 
-      // Check if the element was found
-      if (it == semanticProperties.end()) {
-        continue;
-      } 
+    float confidence = 0.99; //TODO: How could I set this in a good way?
+    int predShape;
+    int predAxis;
+    int predIdx;
+    bool predFound;
 
-      predShape = it->predicateShape;
-      predAxis = it->predicateAxis;
-      predIdx = it->predicateIndex;
+    PredicateHelper::Set::const_iterator descriptors_itr;
+    for (descriptors_itr = types_itr->second.begin(); descriptors_itr != types_itr->second.end(); ++descriptors_itr) {
 
-      predFound = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
-      std::cout << "Predicate " << it->predicateKey + 
-                                  "(" + descriptors_itr->getArg(0) + ")" << " found? " << predFound << std::endl;
+      std::string keyToFind = descriptors_itr->getName();
       
-      if (!predFound) {
-        LOG4CXX_DEBUG(logger, boost::format("Semantic Property not found"));
-        continue;
+      if (keyToFind == "any")
+      {
+        
+        // Access all elements except the last one
+        
+        for (auto sp = semanticProperties.begin(); sp != semanticProperties.end() - 1; ++sp) {
+          predShape = sp->predicateShape;
+          predAxis = sp->predicateAxis;
+          predIdx = sp->predicateIndex;
+          //std::cout << "predIdx " << predIdx << std::endl;
+          predFound = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
+          
+          if (predFound) {
+              
+            object->addValidationResult(confidence, PredicateHelper(*descriptors_itr));
+            object->addValidationResult(confidence, PredicateHelper(
+                        sp->predicateKey + "(" + descriptors_itr->getArg(0) + ")"));
+            sendValidationNotifications(object);
+
+            // Logging the message with concatenated details
+            LOG4CXX_TRACE(logger, "Detection notification sent. Predicate details: " 
+              << sp->predicateKey << "(" 
+              << descriptors_itr->getArg(0) << ")");
+
+          }
+        }
+      } else {
+      
+        auto it = std::find_if(semanticProperties.begin(), semanticProperties.end(),
+          [&keyToFind](const predicateFeatures& pf) {
+            return pf.predicateKey == keyToFind;
+        });
+
+        // Check if the element was found
+        if (it == semanticProperties.end()) {
+          continue;
+        } 
+
+        predShape = it->predicateShape;
+        predAxis = it->predicateAxis;
+        predIdx = it->predicateIndex;
+
+        predFound = true; //calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
+        
+        if (!predFound) {
+          LOG4CXX_DEBUG(logger, boost::format("Semantic Property not found"));
+          continue;
+
+        } else {
+          object->addValidationResult(confidence, *descriptors_itr);
+          sendValidationNotifications(object);
+        }
       }
-
-      //object->addValidationResult(confidence, *descriptors_itr);
-      object->addValidationResult(confidence, PredicateHelper(*descriptors_itr));
-      object->addValidationResult(confidence, PredicateHelper(it->predicateKey + 
-                                  "(" + descriptors_itr->getArg(0) + ")"));
     } 
-   
   }
-  
-  sendValidationNotifications(object);
-
 }
 
 
@@ -448,7 +493,6 @@ cv::Mat ComponentValidator::applySigmoidToMatrix(const cv::Mat& matrix) {
     // Apply the sigmoid function to each element in the matrix
     for (int i = 0; i < matrix.cols; ++i) {
       matrixSig.at<float>(0, i) = sigmoid(matrix.at<float>(0, i));
-      //std::cout << "Element " << i << " is " << matrixSig.at<float>(0, i) << std::endl;
     }
   } else {
     std::cerr << "Invalid matrix dimensions!" << std::endl;

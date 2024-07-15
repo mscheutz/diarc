@@ -15,6 +15,7 @@
 #include "ObjectValidator.hpp"
 
 class ComponentValidator : public ObjectValidator {
+  
 public:
   typedef boost::shared_ptr<ComponentValidator> Ptr;
   typedef boost::shared_ptr<const ComponentValidator> ConstPtr;
