@@ -41,8 +41,9 @@ double denormalize(float norm_value, float min_value, float max_value) {
 }
 
 
-ComponentValidator::ComponentValidator(const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight)
-: ObjectValidator(processorId, imgWidth, imgHeight, false) {
+ComponentValidator::ComponentValidator(const long long& processorId, const unsigned int imgWidth, 
+  const unsigned int imgHeight, const bool isStereo)
+: ObjectValidator(processorId, imgWidth, imgHeight, isStereo) {
   visionProcessName = "ComponentValidator";
   logger = log4cxx::Logger::getLogger("ade.imgproc.validator.ComponentValidator");
 }

@@ -20,7 +20,8 @@ public:
   typedef boost::shared_ptr<ComponentValidator> Ptr;
   typedef boost::shared_ptr<const ComponentValidator> ConstPtr;
 
-  ComponentValidator(const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight);
+  ComponentValidator(const long long& processorId, const unsigned int imgWidth, 
+    const unsigned int imgHeight, const bool isStereo);
   virtual ~ComponentValidator();
   virtual void loadConfig(const std::string& configFile);
 

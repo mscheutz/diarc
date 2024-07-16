@@ -126,7 +126,7 @@ ImageProcessor::Ptr ImageProcessor::get(const ImageProcessorType type, const lon
       return SizeValidator::Ptr(new SizeValidator(processorId, imgWidth, imgHeight, isStereo));
     case COMPONENTVALIDATOR:
 #if defined(OPENCV_DNN)
-      return ComponentValidator::Ptr(new ComponentValidator(processorId, imgWidth, imgHeight));
+      return ComponentValidator::Ptr(new ComponentValidator(processorId, imgWidth, imgHeight, isStereo));
 #else
       LOG4CXX_ERROR(factoryLogger, "ComponentValidator not available. This require OpenCV DNN module 4.5+.");
       break;
