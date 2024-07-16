@@ -139,6 +139,11 @@ namespace ade {
       }
 
       bool captureSimPC2() {
+        // This is necessary to load the pcd file properly (on non-US machines) 
+        // due to inconsistencies in decimal separators
+        std::locale::global(std::locale("en_US.UTF-8"));
+        std::cout.imbue(std::locale());
+
         //no need to load the same file over and over
         if (tmpColorCloud->empty()) {
           if (pcl::io::loadPCDFile(pcdFilename, *cloud_blob) == -1) {
