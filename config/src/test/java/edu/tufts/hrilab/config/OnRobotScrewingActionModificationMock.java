@@ -32,7 +32,7 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
     public void runConfiguration() {
 
         assista = DiarcComponent.createInstance(ai.thinkingrobots.mtracs.mock.MockCR800Component.class, "-config ai/thinkingrobots/mtracs/config/robotone.json -groups agent:robotone:agent");
-        rv4fr = DiarcComponent.createInstance(ai.thinkingrobots.mtracs.mock.MockCR800Component.class, "-config at i/thinkingrobots/mtracs/config/robottwo.json -groups agent:robottwo:agent");
+        rv4fr = DiarcComponent.createInstance(ai.thinkingrobots.mtracs.mock.MockCR800Component.class, "-config ai/thinkingrobots/mtracs/config/robottwo.json -groups agent:robottwo:agent");
         DiarcComponent.createInstance(ai.thinkingrobots.mtracs.mock.MockOnRobotScrewingComponent.class, "-groups agent:robotone:agent");
         DiarcComponent.createInstance(ai.thinkingrobots.mtracs.mock.MockOnRobotScrewingComponent.class, "-groups agent:robottwo:agent");
         plc = DiarcComponent.createInstance(ai.thinkingrobots.mtracs.mock.MockPLCComponent.class, "-groups agent:robotone:agent agent:robottwo:agent");

@@ -1,4 +1,3 @@
-//TODO:brad: move this to some sort of assista cognex actionscript?
 //======================bind descriptor to a cognex job ============
 () = defineItem["defines new item, and asks for relevant parameters"](edu.tufts.hrilab.fol.Symbol ?item){
   edu.tufts.hrilab.fol.Symbol !jobID;
@@ -147,26 +146,12 @@
         (!result) = op:invokeMethod(?cameraResults, "remove", !first);
         (!size) = op:size(?cameraResults);
         op:log("info","[bindResultsRecursive] !size results left!");
-//        if (op:==(?i, 0)) {
-//            !leftPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "top(X:physobj)");
-//            op:add(!additionalProps, !leftPred);
-//            op:log("info","[bindResultsRecursive] bound top hole");
-//        }
-//        if (op:==(?i, 1)) {
-//            !rightPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bottom(X:physobj)");
-//            op:add(!additionalProps, !rightPred);
-//            op:log("info","[bindResultsRecursive] bound bottom hole");
-//        }
         //create reference and add any additional props
         (!ref) = tsc:createCogRefWithProps(?job, !additionalProps);
         //bind reference to the result that it matches
         (!iCopy) = op:newObject("java.lang.Integer", ?i);
         tsc:bindCognexResult(!ref, !result, !iCopy);
         (?i) = op:++(?i);
-        if (op:isEmpty(?cameraResults)) {
-            //redundant check to avoid empty context entering translation
-            return;
-        }
         act:bindResultsRecursive(?job, ?cameraResults, ?i);
     }
 }
