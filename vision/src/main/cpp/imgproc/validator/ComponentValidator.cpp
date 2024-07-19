@@ -30,6 +30,7 @@
 using namespace ade::stm;
 namespace fs = std::experimental::filesystem;
 
+
 float sigmoid(float x) {
     return 1.0 / (1.0 + std::exp(-x));
 }
@@ -51,57 +52,6 @@ ComponentValidator::ComponentValidator(const long long& processorId, const unsig
 
 ComponentValidator::~ComponentValidator() {
 }
-
-
-/*
-void ComponentValidator::loadConfig(const std::string& config) {
-  LOG4CXX_TRACE(logger, "[loadConfig] method entered.");
-
-  //get directory
-  unsigned found = config.find_last_of("/\\");
-  std::string dir = config.substr(0, found + 1);
-  std::string model_file;
-
-  // populate tree structure pt
-  using boost::property_tree::ptree;
-  ptree pt;
-  read_xml(config, pt);
-  int predicateCounter = 0;
-
-  // Set to track loaded models
-  std::set<std::string> loadedModels;
-
-  // parse xml file
-  BOOST_FOREACH(ptree::value_type const& predicateNode, pt.get_child("processor")) {
-    if (predicateNode.first.compare("predicate") == 0) {
-      std::string descriptorName = predicateNode.second.get<std::string> ("<xmlattr>.name", "unknown");
-      LOG4CXX_DEBUG(logger, boost::format("[loadConfig] descriptorName: %s.") % descriptorName);
-      
-
-      model_file = dir + predicateNode.second.get_child("model").get<std::string> ("<xmlattr>.filename", "unknown");
-      
-      if (loadedModels.find(model_file) == loadedModels.end()) {
-                // Load the model if it hasn't been loaded yet
-                ComponentValidator::initModel(model_file);
-                loadedModels.insert(model_file); // Mark this model as loaded
-                LOG4CXX_DEBUG(logger, boost::format("[loadConfig] Loaded model: %s.") % model_file);
-            } else {
-                LOG4CXX_DEBUG(logger, "[loadConfig] Model already loaded, skipping.");
-                //std::cout << "Model loading skipped for: " << model_file << std::endl;
-            }
-
-      // -1 if we do not ask for the component's shape
-      // shape value 0 -> cube, 1 -> sphere, 2 -> cone, 3 -> cylinder
-      int shape = predicateNode.second.get("shape", -1);
-      int axis = predicateNode.second.get("axis", -1);
-      int index = predicateNode.second.get("index", -1);
-
-      semanticProperties.push_back({descriptorName, shape, axis, index});
-      predicateCounter = predicateCounter + 1;
-    }
-  }
-}
-*/
 
 
 void ComponentValidator::loadConfig(const std::string &configFile) {
@@ -146,9 +96,6 @@ void ComponentValidator::loadConfig(const std::string &configFile) {
 
 
 void ComponentValidator::initModel(const std::string &model_path) {
-  //fs::path onnx_model_abs = fs::canonical(model_path + ".onnx");
-  //LOG4CXX_TRACE(logger, boost::format("Loading ONNX model: %s") % onnx_model_abs.string());
-  //net = cv::dnn::readNetFromONNX(onnx_model_abs.string());
   net = cv::dnn::readNetFromONNX(model_path + ".onnx");
 }
 
@@ -172,50 +119,36 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
     // get MemoryObject cloud and remove NaNs
     std::shared_ptr<const pcl::PointCloud<pcl::PointXYZ>> objectCloud = object->getDetectionMask()->getObjectPointCloud();
+
     cv::Mat objectDepthImage(objectCloud->height, objectCloud->width, CV_32FC1);
     ade::pc::util::pointCloudToDepth(objectDepthImage, objectCloud);
 
-    // save organized point cloud to pcd file TODO remove this later
-    //std::string pcd_file = "/home/schneiders/Desktop/object_point_cloud.pcd";
-    //if (pcl::io::savePCDFile<pcl::PointXYZ>(pcd_file, *objectCloud) == -1) {
-    //      PCL_ERROR("Couldn't save PCD file");
-    //}
-
     cv::Mat mask = cv::Mat(objectDepthImage.rows, objectDepthImage.cols, CV_8U);
-
     // Create mask where NaN values are set to 0, others to 1
     cv::compare(objectDepthImage, objectDepthImage, mask, cv::CMP_EQ);
-    // Find the minimum and maximum depth values
-    double min_depth, max_depth;
-
-    // Use the mask to find min and max depths
-    cv::minMaxIdx(objectDepthImage, &min_depth, &max_depth, nullptr, nullptr, mask);
-
+    
     // Normalize depth values to the range [0, 255]
-    cv::Mat objectDepthImageNorm;
-    objectDepthImage.convertTo(objectDepthImageNorm, CV_8UC1, 255.0 / (max_depth - min_depth), -min_depth * 255.0 / (max_depth - min_depth));
+    cv::Mat objectDepthImageNorm = objectDepthImage.clone();
+    normalizeDepthImage(objectDepthImage, mask, objectDepthImageNorm);
 
-    // Optionally, save the image
-    //cv::imwrite("/home/schneiders/Desktop/normalized_depth_image.png", objectDepthImageNorm);
+    centerObject(objectDepthImageNorm, mask);
 
     // Pre-processing values for the input image
     double scalefactor = 1.0;
     cv::Scalar noMean(0.0, 0.0, 0.0);  // we do not want any mean subtraction
-    int width = 256;
-    int height = 192;
-    cv::Size size(width, height);
-
+    cv::Size depthImageSize(depthImageWidth, depthImageHeight);
+    
     // convert image to Semantic Encoder dimensions and format 
     cv::Mat blob;
-    cv::dnn::blobFromImage(objectDepthImageNorm, blob, scalefactor, size, noMean, false); 
+    cv::dnn::blobFromImage(objectDepthImageNorm, blob, scalefactor, depthImageSize, noMean, true, CV_32F); 
     net.setInput(blob);
     
     cv::Mat semMatrix = net.forward();
     LOG4CXX_TRACE(logger, "[ComponentDetector] Model applied to input image.");
-    // Apply sigmoid to the matrix
-    semMatrix.at<float>(0, 0) = 1;  // this is just to test things, TODO remove it
-    cv::Mat semMatrixSig = applySigmoidToMatrix(semMatrix);
 
+    // Apply sigmoid to the matrix
+    cv::Mat semMatrixSig = applySigmoidToMatrix(semMatrix);
+    
     // Check if the output matrix is valid before using it
     if (semMatrixSig.empty()) {
       LOG4CXX_DEBUG(logger, boost::format("Semantic Matrix not valid"));
@@ -236,12 +169,10 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
       {
         
         // Access all elements except the last one
-        
         for (auto sp = semanticProperties.begin(); sp != semanticProperties.end() - 1; ++sp) {
           predShape = sp->predicateShape;
           predAxis = sp->predicateAxis;
           predIdx = sp->predicateIndex;
-          //std::cout << "predIdx " << predIdx << std::endl;
           predFound = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
           
           if (predFound) {
@@ -249,15 +180,16 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
             object->addValidationResult(confidence, PredicateHelper(*descriptors_itr));
             object->addValidationResult(confidence, PredicateHelper(
                         sp->predicateKey + "(" + descriptors_itr->getArg(0) + ")"));
-            sendValidationNotifications(object);
-
+            
+            
             // Logging the message with concatenated details
             LOG4CXX_TRACE(logger, "Detection notification sent. Predicate details: " 
               << sp->predicateKey << "(" 
               << descriptors_itr->getArg(0) << ")");
-
           }
         }
+        sendValidationNotifications(object);
+        
       } else {
       
         auto it = std::find_if(semanticProperties.begin(), semanticProperties.end(),
@@ -274,7 +206,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
         predAxis = it->predicateAxis;
         predIdx = it->predicateIndex;
 
-        predFound = true; //calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
+        predFound = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
         
         if (!predFound) {
           LOG4CXX_DEBUG(logger, boost::format("Semantic Property not found"));
@@ -285,8 +217,46 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
           sendValidationNotifications(object);
         }
       }
+      
     } 
   }
+  
+}
+
+void ComponentValidator::centerObject(cv::Mat& objectDepthImageNorm, const cv::Mat& mask) {
+
+  std::vector<std::vector<cv::Point>> contours;
+  cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+  if (!contours.empty()) {
+    cv::Moments M = cv::moments(contours[0]);
+    cv::Point centroid(M.m10 / M.m00, M.m01 / M.m00);
+
+    int imgWidth = objectDepthImageNorm.cols;
+    int imgHeight = objectDepthImageNorm.rows;
+    int offsetX = imgWidth / 2 - centroid.x;
+    int offsetY = imgHeight / 2 - centroid.y;
+
+    cv::Mat translationMatrix = (cv::Mat_<double>(2, 3) << 1, 0, offsetX, 0, 1, offsetY);
+
+    cv::warpAffine(objectDepthImageNorm, objectDepthImageNorm, translationMatrix, objectDepthImageNorm.size(),
+          cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(maxNormValue + 1));
+  } else {
+    LOG4CXX_DEBUG(logger, "[ComponentValidation] no contour found in depth image.");          
+  }
+}
+
+
+void ComponentValidator::normalizeDepthImage(const cv::Mat& objectDepthImage, const cv::Mat& mask, cv::Mat& objectDepthImageNorm) {
+  cv::Mat inputROI;
+  double minVal, maxVal;
+  cv::minMaxLoc(objectDepthImage, &minVal, &maxVal, nullptr, nullptr, mask);
+
+  double scale = (double)(maxNormValue - minNormValue) / (maxVal - minVal);
+  double shift = -minVal * scale + minNormValue;
+
+  objectDepthImage.convertTo(objectDepthImageNorm, CV_32FC1, scale, shift);
+  objectDepthImageNorm.setTo(cv::Scalar(maxNormValue + 1), ~mask);
 }
 
 
@@ -500,6 +470,7 @@ cv::Mat ComponentValidator::applySigmoidToMatrix(const cv::Mat& matrix) {
     return cv::Mat(); // Return an empty matrix to indicate an error
   }
 
+  
   return matrixSig; // Return the modified matrix
 
 }

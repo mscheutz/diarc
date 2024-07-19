@@ -50,12 +50,19 @@ private:
     int predicateIndex;
   } predicateFeatures;
 
+  const float minNormValue = 20;
+  const float maxNormValue = 54;
+  const int depthImageHeight = 192;
+  const int depthImageWidth = 256;
+ 
   std::vector<predicateFeatures> semanticProperties;
   bool calculateSemProperty(const cv::Mat& semMat, const int semPredShape, const int semPredAxis, const int semPredIdx);
   bool processShape(const int compIndex, const cv::Mat& semMat, const int semPredShape);
   bool processPosition(const int compIndex, const cv::Mat& semMat, const int semPredAxis);
   bool processSize(const int compIndex, const cv::Mat& semMat, const int semPredIdx);                                   
   cv::Mat applySigmoidToMatrix(const cv::Mat& semMatrix);
+  void centerObject(cv::Mat& objectDepthImageNorm, const cv::Mat& mask);
+  void normalizeDepthImage(const cv::Mat& objectDepthImage, const cv::Mat& mask, cv::Mat& objectDepthImageNorm);
 
 };
 
