@@ -130,7 +130,7 @@ public class Http {
         con.setDoOutput(true);
 
         // Convert request body to JSON string
-        Gson gson = new GsonBuilder().serializeNulls().create();
+        Gson gson = new GsonBuilder().create();
         String requestBodyJson = gson.toJson(requestBody);
         log.debug("Request: " + requestBodyJson);
         // Send request body

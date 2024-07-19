@@ -55,6 +55,7 @@ public class VisionMessage {
             BufferedImage bufferedImage = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_3BYTE_BGR);
             ByteArrayOutputStream baos = null;
             byte[] ba = null;
+
             log.debug("Image byte array: " + image.length);
             try {
                 raw = CompressionUtil.decompress(image);
