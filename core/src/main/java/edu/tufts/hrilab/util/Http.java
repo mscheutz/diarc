@@ -97,14 +97,14 @@ public class Http {
         URL url;
         HttpURLConnection con;
         int responseCode;
-
+        log.debug("POST to " + endpointUrl);
         try {
             url = new URL(endpointUrl);
             con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("POST");
             con.setRequestProperty("Content-Type", "application/json");
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
+            log.error("[sendPostRequest] Error opening connection to " + endpointUrl, e);
             return null;
         }
 
@@ -129,14 +129,14 @@ public class Http {
             wr.flush();
             wr.close();
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
+            log.error("[sendPostRequest] Error writing output stream", e);
             return null;
         }
 
         try {
             responseCode = con.getResponseCode();
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
+            log.error("[sendPostRequest] Error getting response code", e);
             return null;
         }
 
@@ -145,7 +145,7 @@ public class Http {
         try {
             in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
+            log.error("[sendPostRequest] Error reading response", e);
             return null;
         }
 
@@ -158,7 +158,7 @@ public class Http {
             }
             in.close();
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
+            log.error("[sendPostRequest] Error reading response to StringBuffer", e);
             return null;
         }
 
