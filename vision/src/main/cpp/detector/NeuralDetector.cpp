@@ -84,7 +84,7 @@ void NeuralDetector::initModel(const std::string &model_path, const std::string 
     fs::path dn_config = dn_config_dir / dn_config_fn;
     fs::path dn_config_abs = fs::canonical(dn_config);
 
-    LOG4CXX_INFO(logger, boost::format("Using darknet config: %s") % dn_config_abs.string())
+    LOG4CXX_INFO(logger, boost::format("Using darknet config: %s") % dn_config_abs.string());
     LOG4CXX_INFO(logger, boost::format("Loading darknet model: %s") % dn_model_abs.string());
     net = cv::dnn::readNetFromDarknet(dn_config_abs.string(), dn_model_abs.string());
 #else
