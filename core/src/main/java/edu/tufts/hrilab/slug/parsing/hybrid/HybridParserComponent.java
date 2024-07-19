@@ -7,6 +7,10 @@ package edu.tufts.hrilab.slug.parsing.hybrid;
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
@@ -14,8 +18,10 @@ import edu.tufts.hrilab.slug.parsing.cache.CachedParserComponent;
 import edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent;
 import edu.tufts.hrilab.slug.parsing.patternMatching.PatternMatchingParser;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
+import edu.tufts.hrilab.fol.util.Utilities;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.HashMap;
 
 public class HybridParserComponent extends DiarcComponent implements NLUInterface {
 
@@ -38,12 +45,14 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
   private String endpoint = "http://localhost:8000/parse/";
   private List<String> tldlDictionaries = new ArrayList<>();
+  private  HashMap<Symbol, Symbol> addresseeMap = new HashMap<>();
   private boolean tldlUpdateAddressee = true;
   private String cacheName = null;
   private String[] cacheLoads = null;
   private String cachePersist = null;
   private String llm = null;
   private String prompt = null;
+  private Symbol unknownListener = null;
 
   private boolean confirmation = true;
 
@@ -148,6 +157,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       }
       cacheParser = createInstance(CachedParserComponent.class, cacheArgs, false);
     }
+    unknownListener = Factory.createSymbol("unknown");
   }
 
   /**
@@ -185,6 +195,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     Utterance pmpOutput = null;
     Utterance tldlOutput = null;
     Utterance llmOutput = null;
+    Symbol semantics = null;
 
     //Check cache first
     if (cachedFuture != null) {
@@ -196,6 +207,13 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
       if (cachedOutput != null && cachedOutput.getSemantics() != null) {
         log.debug("Using cached parser response");
+        if (Utilities.equalsIgnoreType(cachedOutput.getAddressee(), unknownListener)) {
+          if (addresseeMap.containsKey(incoming.getSpeaker())) {
+            cachedOutput.setListener(addresseeMap.get(incoming.getSpeaker()));
+          } else {
+            cachedOutput.setListener(Factory.createSymbol("unknown"));
+          }
+        }
         return cachedOutput;
       }
     }
@@ -249,6 +267,23 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
         if (confirmation) {
           output.setNeedsValidation(true);
         }
+      }
+    }
+
+    semantics = output.getSemantics();
+
+    if (semantics != null && semantics.isTerm()) {
+      if (semantics.getName().equals("directAddress")) {
+        addresseeMap.put(incoming.getSpeaker(), output.getAddressee());
+      }
+    }
+
+    if (Utilities.equalsIgnoreType(output.getAddressee(), unknownListener)) {
+      if (addresseeMap.containsKey(incoming.getSpeaker())) {
+        output.setListener(addresseeMap.get(incoming.getSpeaker()));
+        log.debug("Set speaker " + incoming.getSpeaker().toString() + " to address " + output.getAddressee().toString());
+      } else {
+        output.setListener(Factory.createSymbol("unknown"));
       }
     }
 

@@ -23,7 +23,7 @@ public class Dictionary {
 
   //these are linked hashmaps to preserve the insertion order of rules aka the order of the rules in teh .dict file
   //this is not ideal, but it is necessary for the wildcard morpheme stuff to work
-  private Map<String, List<Entry>> entries = new LinkedHashMap<>();
+  private Map<String, List<Entry>> entries = Collections.synchronizedMap(new LinkedHashMap<>());
   private Map<String, List<TemplateEntry>> templateTypes = new LinkedHashMap<>();
 
   boolean acceptAll= false;
@@ -264,7 +264,7 @@ public class Dictionary {
   List<Entry> lookUpEntries(String ID) {
 
     //IF we do this first that lets us use numbers in morphemes if we want. e.g "m2 screw"
-    if(entries.get(ID) !=null){
+    if(entries.containsKey(ID)){
       return entries.get(ID);
     }
     if(ID.matches(".*\\d.*")){
@@ -282,12 +282,14 @@ public class Dictionary {
     List<String> refWords = new ArrayList<>();
     List<String> nonRefWords = new ArrayList<>();
 
-    for (List<Entry> el : entries.values()) {
-      for (Entry e : el) {
-        if (e.getCognitiveStatus().equals("VAR")) {
-          refWords.add(e.morpheme);
-        } else {
-          nonRefWords.add(e.morpheme);
+    synchronized (entries) {
+      for (List<Entry> el : entries.values()) {
+        for (Entry e : el) {
+          if (e.getCognitiveStatus().equals("VAR")) {
+            refWords.add(e.morpheme);
+          } else {
+            nonRefWords.add(e.morpheme);
+          }
         }
       }
     }
@@ -322,12 +324,14 @@ public class Dictionary {
     for (ListIterator<String> iterator = lowercase.listIterator(); iterator.hasNext(); ) {
       String word = iterator.next();
       List<Map.Entry<String,Boolean>> prefixes = new ArrayList<>();
-      for(String k: entries.keySet()){
-        if(k.startsWith(word + " ")){
-          if(k.contains("*")){
-            prefixes.add(new AbstractMap.SimpleEntry<>(k,true));
-          }else {
-            prefixes.add(new AbstractMap.SimpleEntry<>(k,false));
+      synchronized (entries) {
+        for (String k : entries.keySet()) {
+          if (k.startsWith(word + " ")) {
+            if (k.contains("*")) {
+              prefixes.add(new AbstractMap.SimpleEntry<>(k, true));
+            } else {
+              prefixes.add(new AbstractMap.SimpleEntry<>(k, false));
+            }
           }
         }
       }
@@ -769,7 +773,7 @@ public class Dictionary {
   //EW: Webapp Firebase specific
   //Function to get all dictionary entry morphemes for use in external homophone definition injection
   public Set<String> getKeySet() {
-    return entries.keySet();
+    return new HashSet<>(entries.keySet());
   }
 
   ///////////////////////////////////////////////////////////////////////////////
