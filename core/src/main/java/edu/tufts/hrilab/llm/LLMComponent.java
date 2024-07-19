@@ -9,14 +9,13 @@ import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.util.Http;
 
+import java.awt.*;
 import java.beans.Transient;
 import java.io.InputStreamReader;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map; 
-import java.util.HashMap;
+
 import static java.util.Map.entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -351,9 +350,9 @@ public class LLMComponent extends DiarcComponent {
 
   @TRADEService
   @Action
-  public Completion visionCompletion (Prompt prompt, byte[] image) {
+  public Completion visionCompletion (Prompt prompt, byte[] image, Dimension imageSize) {
     List<VisionMessage> vmessages = new ArrayList<VisionMessage>();
-    vmessages.add(new VisionMessage("user", prompt.toString(), image));
+    vmessages.add(new VisionMessage("user", prompt.toString(), image, imageSize));
     return visionCompletion(vmessages);
   }
 
@@ -378,13 +377,20 @@ public class LLMComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Completion visionCompletion (Prompt prompt) {
+    Dimension imageSize = null;
     byte[] image = null;
+    try {
+      imageSize = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageSize").argTypes()).call(Dimension.class);
+    } catch (TRADEException ex) {
+      log.error("Error getting image size from vision component");
+      return null;
+    }
     try {
       image = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFrame")).call(byte[].class);
     } catch (TRADEException ex) {
       log.error("Cannot get frame for vision inference");
       return null;
     }
-    return visionCompletion(prompt, image);
+    return visionCompletion(prompt, image, imageSize);
   }
 }
