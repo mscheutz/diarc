@@ -14,7 +14,7 @@ public class OpenaiChatCompletionResponse {
 
   public String toString () {
     if (choices.length > 0) {
-      return choices[0].message.content;
+      return choices[0].message.content.toString();
     } else {
       return null;
     }

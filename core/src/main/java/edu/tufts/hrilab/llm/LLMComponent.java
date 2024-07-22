@@ -4,14 +4,18 @@
 
 package edu.tufts.hrilab.llm;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.util.Http;
+
+import java.awt.*;
+import java.beans.Transient;
 import java.io.InputStreamReader;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map; 
-import java.util.HashMap;
+
 import static java.util.Map.entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +38,7 @@ public class LLMComponent extends DiarcComponent {
   static private Logger log = LoggerFactory.getLogger(LLMComponent.class);
 
   public String service = "openai";
-  public String model = "gpt-3.5-turbo";
+  public String model = "gpt-4o";
   public float temperature = 0.5f;
 
   private Tokenizer tokenizer = new Tokenizer();
@@ -342,5 +346,51 @@ public class LLMComponent extends DiarcComponent {
         log.error("Service " + service + " not implemented");
         return null;
     }
+  }
+
+  @TRADEService
+  @Action
+  public Completion visionCompletion (Prompt prompt, byte[] image, Dimension imageSize) {
+    List<VisionMessage> vmessages = new ArrayList<VisionMessage>();
+    vmessages.add(new VisionMessage("user", prompt.toString(), image, imageSize));
+    return visionCompletion(vmessages);
+  }
+
+  /**
+   * Generates a chat completion using a vision model
+   * method based on the currently set service.
+   * @param vmessages The vision messages to use
+   * @return a Completion object containing the chat completion response
+   **/
+  @TRADEService
+  @Action
+  public Completion visionCompletion (List <VisionMessage> vmessages) {
+    switch (service) {
+      case "openai" :
+        return new Completion(openai.visionCompletion(vmessages));
+      default :
+        log.error("Service " + service + " not implemented");
+        return null;
+    }
+  }
+
+  @TRADEService
+  @Action
+  public Completion visionCompletion (Prompt prompt) {
+    Dimension imageSize = null;
+    byte[] image = null;
+    try {
+      imageSize = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageSize").argTypes()).call(Dimension.class);
+    } catch (TRADEException ex) {
+      log.error("Error getting image size from vision component");
+      return null;
+    }
+    try {
+      image = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFrame")).call(byte[].class);
+    } catch (TRADEException ex) {
+      log.error("Cannot get frame for vision inference");
+      return null;
+    }
+    return visionCompletion(prompt, image, imageSize);
   }
 }
