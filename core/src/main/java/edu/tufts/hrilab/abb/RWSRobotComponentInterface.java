@@ -5,7 +5,7 @@
 package edu.tufts.hrilab.abb;
 
 import ai.thinkingrobots.trade.TRADEService;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexConsultant;
+import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
 import edu.tufts.hrilab.action.EffectType;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.Effect;

@@ -9,7 +9,7 @@ import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.abb.RequestFromHumanComponent;
 import edu.tufts.hrilab.abb.MockYumiComponent;
 import edu.tufts.hrilab.abb.consultant.area.ABBAreaConsultant;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexConsultant;
+import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
 import edu.tufts.hrilab.abb.consultant.item.ItemConsultant;
 import edu.tufts.hrilab.abb.consultant.location.ABBLocationConsultant;
 import edu.tufts.hrilab.action.GoalManagerImpl;

@@ -6,10 +6,9 @@ package edu.tufts.hrilab.abb;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexConsultant;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexJob;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexReference;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexResult;
+import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
+import edu.tufts.hrilab.cognex.consultant.CognexJob;
+import edu.tufts.hrilab.cognex.consultant.CognexReference;
 import edu.tufts.hrilab.abb.consultant.pose.RWSPoseConsultant;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
@@ -26,6 +25,8 @@ import java.util.Map;
 public class MockYumiComponent extends DiarcComponent implements RWSRobotComponentInterface {
   protected RWSPoseConsultant rwsPoseConsultant;
   protected CognexConsultant cognexConsultant;
+
+  protected Map<CognexJob, String> graspPointForJob = new HashMap<>(); //todo: move this. also don't just encode the grasp point as a string.
 
   long sleepTime = 500;
   private boolean errorState = false;
@@ -168,14 +169,14 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
   @Override
   public void setGraspPoint(Symbol itemType, String targetString) {
     log.info("[setGraspPoint] defining grasp point for " + itemType + " to be " + targetString);
-    cognexConsultant.setGraspPointForJob(cognexConsultant.getJobForDescriptor(itemType.getName()), targetString);
+    graspPointForJob.put(cognexConsultant.getJobForDescriptor(itemType.getName()), targetString);
   }
 
   @Override
   public void moveToObject(Symbol refId) {
     CognexReference cogRef = cognexConsultant.getCognexReferenceForID(refId);
     CognexJob job = cognexConsultant.getCognexJobForCognexReference(cogRef);
-    String graspPoint = cognexConsultant.getGraspPoseForJob(job);
+    String graspPoint = graspPointForJob.get(job);
     String wobjString = String.valueOf(cogRef.result);
     log.info("moveToObject moving to object" + refId);
   }
