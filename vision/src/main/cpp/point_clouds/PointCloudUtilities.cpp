@@ -429,6 +429,9 @@ namespace ade {
         const int imgWidth = cloud->width;
         const int imgHeight = cloud->height;
 
+        pcl::PointXYZ minPt, maxPt;
+        pcl::getMinMax3D(*cloud, minPt, maxPt);
+
         //TODO: use CameraParameters
         //        const float fx = 580.0 * (imgWidth / 640.0);
         //        const float fy = 580.0 * (imgHeight / 480.0);
@@ -451,7 +454,9 @@ namespace ade {
               
             } else {
               //assumes an organized point cloud
-              depthData[xx + imgWidth * yy] = z_ir;
+              //the minus is needed if the input point cloud has negative z-values
+              //--> we need to "flip" things back 
+              depthData[xx + imgWidth * yy] = - z_ir;  
               
             }
           }

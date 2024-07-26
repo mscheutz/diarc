@@ -5,6 +5,7 @@
 #include "ComponentValidator.hpp"
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/ximgproc.hpp>
 #include <jsoncpp/json/reader.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -106,6 +107,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
   MemoryObject::Ptr object = notification->object;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr sceneCloud = object->getDetectionMask()->getCaptureData()->cloud;
+  pcl::io::savePCDFile<pcl::PointXYZ>("/home/schneiders/Desktop/sceneCloudObj1.pcd", *sceneCloud);
 
   // check if this typeId should currently be processed
   DescriptorsByTypeConstPtr types = getTypes();
@@ -119,29 +121,29 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
     // get MemoryObject cloud and remove NaNs
     std::shared_ptr<const pcl::PointCloud<pcl::PointXYZ>> objectCloud = object->getDetectionMask()->getObjectPointCloud();
-
+    //pcl::io::savePCDFile<pcl::PointXYZ>("/home/schneiders/Desktop/objectCloudObj1.pcd", *objectCloud);
+    
     cv::Mat objectDepthImage(objectCloud->height, objectCloud->width, CV_32FC1);
     ade::pc::util::pointCloudToDepth(objectDepthImage, objectCloud);
 
-    cv::Mat mask = cv::Mat(objectDepthImage.rows, objectDepthImage.cols, CV_8U);
-    // Create mask where NaN values are set to 0, others to 1
-    cv::compare(objectDepthImage, objectDepthImage, mask, cv::CMP_EQ);
-    
-    // Normalize depth values to the range [0, 255]
+    // Normalize depth values to specific range and set background to maxvalue + 1
     cv::Mat objectDepthImageNorm = objectDepthImage.clone();
-    normalizeDepthImage(objectDepthImage, mask, objectDepthImageNorm);
-
-    centerObject(objectDepthImageNorm, mask);
-
+    
+    // Remove nans from background / object foreground and blur depth image 
+    removeNansAndNoise(objectDepthImage, objectDepthImageNorm);
     // Pre-processing values for the input image
     double scalefactor = 1.0;
     cv::Scalar noMean(0.0, 0.0, 0.0);  // we do not want any mean subtraction
     cv::Size depthImageSize(depthImageWidth, depthImageHeight);
-    
-    // convert image to Semantic Encoder dimensions and format 
+
     cv::Mat blob;
     cv::dnn::blobFromImage(objectDepthImageNorm, blob, scalefactor, depthImageSize, noMean, true, CV_32F); 
     net.setInput(blob);
+
+    cv::Mat blobSingle = blob.reshape(1, 192); // reshape to [192, 256]
+    cv::normalize(blobSingle, blobSingle, 0, 255, cv::NORM_MINMAX);
+    // Save the image
+    cv::imwrite("/home/schneiders/Desktop/blobimage.png", blobSingle);
     
     cv::Mat semMatrix = net.forward();
     LOG4CXX_TRACE(logger, "[ComponentDetector] Model applied to input image.");
@@ -161,12 +163,16 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
     bool predFound;
 
     PredicateHelper::Set::const_iterator descriptors_itr;
-    for (descriptors_itr = types_itr->second.begin(); descriptors_itr != types_itr->second.end(); ++descriptors_itr) {
+    for (descriptors_itr = types_itr->second.begin(); descriptors_itr != types_itr->second.end(); 
+      ++descriptors_itr) {
 
       std::string keyToFind = descriptors_itr->getName();
-      
+
       if (keyToFind == "any")
       {
+
+        bool sideComp1IsPresent = false;
+        bool sideComp2IsPresent = false;
         
         // Access all elements except the last one
         for (auto sp = semanticProperties.begin(); sp != semanticProperties.end() - 1; ++sp) {
@@ -174,7 +180,23 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
           predAxis = sp->predicateAxis;
           predIdx = sp->predicateIndex;
           predFound = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
-          
+
+          // check if any shape predicate of side component 1 is true
+          if (predFound && (predIdx == 4 || predIdx == 5 || predIdx == 6 || predIdx == 7)) {
+            sideComp1IsPresent = true;
+          }
+
+          // check if any shape predicate of side component 2 is true
+          if (predFound && (predIdx == 16 || predIdx == 17 || predIdx == 18 || predIdx == 19)) {
+            sideComp2IsPresent = true;
+          }
+
+          // If no shape predicate of side component 1 / 2 was found, the side component 
+          // is not present and we do not need to go further
+          if (((sideComp1IsPresent == false) && predIdx >= 8) || ((sideComp2IsPresent == false) && predIdx >= 20)) {
+            break;
+          }
+
           if (predFound) {
               
             object->addValidationResult(confidence, PredicateHelper(*descriptors_itr));
@@ -186,6 +208,9 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
             LOG4CXX_TRACE(logger, "Detection notification sent. Predicate details: " 
               << sp->predicateKey << "(" 
               << descriptors_itr->getArg(0) << ")");
+
+            std::cout << "Predicate " << sp->predicateKey << "(" 
+              << descriptors_itr->getArg(0) << ")" << " found" << std::endl;
           }
         }
         sendValidationNotifications(object);
@@ -217,11 +242,58 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
           sendValidationNotifications(object);
         }
       }
-      
     } 
   }
+}
+
+
+void ComponentValidator::createNaNMasks(const cv::Mat& objectDepthImage, cv::Mat& nanMask, cv::Mat& nanBackgroundMask, 
+  cv::Mat& nanInsideMask) {
+
+  // Initialize masks
+  nanMask = cv::Mat(objectDepthImage.rows, objectDepthImage.cols, CV_8U);
+  nanBackgroundMask = cv::Mat(objectDepthImage.rows, objectDepthImage.cols, CV_8U);
+  nanInsideMask = cv::Mat(objectDepthImage.rows, objectDepthImage.cols, CV_8U);
+
+  // Create mask where non-NaN values are segmented
+  cv::compare(objectDepthImage, objectDepthImage, nanMask, cv::CMP_EQ);
+
+  // Close nan values inside the object
+  cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
+  cv::morphologyEx(nanMask, nanBackgroundMask, cv::MORPH_CLOSE, element);
+
+  // Segment nan values inside the object
+  cv::compare(nanMask, nanBackgroundMask, nanInsideMask, cv::CMP_NE);
+
+}
+
+
+void ComponentValidator::removeNansAndNoise(const cv::Mat& objectDepthImage, cv::Mat& objectDepthImageNorm) {
+
+  // Variables to store the min and max values and their locations
+  double minVal, maxVal;
+  cv::Point minLoc, maxLoc;
+
+  // masks to indicate nan positions for noise removal and background processing
+  cv::Mat nanMask, nanBackgroundMask, nanInsideMask;
+  createNaNMasks(objectDepthImage, nanMask, nanBackgroundMask, nanInsideMask);
+  
+  // Normalize depth values to specific range and set background to maxvalue + 1
+  normalizeDepthImage(objectDepthImage, nanBackgroundMask, objectDepthImageNorm);
+  centerObject(objectDepthImageNorm, nanBackgroundMask);
+
+  // Impaint nan values inside object 
+  int impaintingRadius = 30;
+  cv::inpaint(objectDepthImageNorm, nanInsideMask, objectDepthImageNorm, impaintingRadius, cv::INPAINT_TELEA);
+
+  // Apply Non-Local Means Denoising to remove noisy pixels inside object
+  int kernelSize = 9;
+  objectDepthImageNorm.convertTo(objectDepthImageNorm, CV_8U);
+  cv::medianBlur(objectDepthImageNorm, objectDepthImageNorm, kernelSize);
+  cv::normalize(objectDepthImageNorm, objectDepthImageNorm, minNormValue, maxNormValue + 1, cv::NORM_MINMAX);
   
 }
+
 
 void ComponentValidator::centerObject(cv::Mat& objectDepthImageNorm, const cv::Mat& mask) {
 
@@ -270,7 +342,7 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
   bool shapePredicate = false;
   bool positionPredicate = false;
   bool sizePredicate = false;
-
+  
   switch (semPredIdx) {
     //we look for base component shape predicates
     case 0: case 1: case 2: case 3:
@@ -464,6 +536,7 @@ cv::Mat ComponentValidator::applySigmoidToMatrix(const cv::Mat& matrix) {
     // Apply the sigmoid function to each element in the matrix
     for (int i = 0; i < matrix.cols; ++i) {
       matrixSig.at<float>(0, i) = sigmoid(matrix.at<float>(0, i));
+      std::cout << "Element " << i << " is " << matrixSig.at<float>(0, i) << std::endl;
     }
   } else {
     std::cerr << "Invalid matrix dimensions!" << std::endl;
