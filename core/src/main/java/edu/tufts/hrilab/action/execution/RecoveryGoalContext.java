@@ -7,14 +7,14 @@ package edu.tufts.hrilab.action.execution;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.ParameterizedAction;
+import edu.tufts.hrilab.action.recovery.Recovery;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.justification.Justification;
-import edu.tufts.hrilab.action.recovery.GoalRecovery;
 
 public class RecoveryGoalContext extends GoalContext {
   private ParameterizedAction recoveryAction;
 
-  public RecoveryGoalContext(Context caller, StateMachine sm, ParameterizedAction recoveryAction, ExecutionType executionType, GoalRecovery recovery) {
+  public RecoveryGoalContext(Context caller, StateMachine sm, ParameterizedAction recoveryAction, ExecutionType executionType, Recovery recovery) {
     super(caller, sm, new Goal(recoveryAction.getBoundActionSignature()), executionType, recovery);
     this.recoveryAction = recoveryAction;
   }
@@ -45,7 +45,11 @@ public class RecoveryGoalContext extends GoalContext {
   @Override
   public synchronized void setStatus(ActionStatus eStatus, Justification justification) {
 
-    if (eStatus == ActionStatus.INITIALIZED) {
+    if (eStatus.isFailure() && eStatus != ActionStatus.EXIT_RECOVERY) {
+      //Catch any failure status and overwrite with FAIL_RECOVERY to propagate up the rest of the tree
+      log.debug("[setStatus] changing failure status to FAIL_RECOVERY from: " + eStatus);
+      super.setStatus(ActionStatus.FAIL_RECOVERY, justification);
+    } else if (eStatus == ActionStatus.INITIALIZED) {
       // allow context to be (re)set to INITIALIZED, which is required for a context to be reset for re-use
       super.setStatus(eStatus, justification);
     } else if (this.isTerminated()) {
@@ -54,16 +58,17 @@ public class RecoveryGoalContext extends GoalContext {
     } else if (!eStatus.isTerminated() || eStatus == ActionStatus.CANCEL || eStatus == ActionStatus.SUCCESS) {
       log.debug("Can't recover from action status: " + eStatus);
       super.setStatus(eStatus, justification);
-    } else if (goalRecovery.shouldAttemptRecovery(eStatus, justification, this)) {
+    } else if (recovery.shouldAttemptRecovery(eStatus, justification, this)) {
       log.debug("[setStatus] not propagating failure: " + eStatus);
       super.setStatus(ActionStatus.RECOVERY, justification);
-    } else if (eStatus.isFailure()) {
-      log.debug("[setStatus] changing failure status to FAIL_RECOVERY from: " + eStatus);
-      super.setStatus(ActionStatus.FAIL_RECOVERY, justification);
     } else {
       log.debug("[setStatus] passing exit handling to super class: " + eStatus);
       super.setStatus(eStatus, justification);
     }
+  }
+
+  public ParameterizedAction getRecoveryAction() {
+    return recoveryAction;
   }
 
   /**
@@ -75,7 +80,7 @@ public class RecoveryGoalContext extends GoalContext {
   @Override
   public RecoveryGoalContext copy(Context newParent) {
     // TODO: probably change the following so that it has the proper execution type
-    RecoveryGoalContext newGoalContext = new RecoveryGoalContext(newParent, newParent.stateMachine, recoveryAction, newParent.getExecType(), goalRecovery);
+    RecoveryGoalContext newGoalContext = new RecoveryGoalContext(newParent, newParent.stateMachine, recoveryAction, newParent.getExecType(), recovery);
     copyInternal(newGoalContext);
     return newGoalContext;
   }

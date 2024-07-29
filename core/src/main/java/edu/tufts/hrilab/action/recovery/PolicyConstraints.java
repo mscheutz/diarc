@@ -14,6 +14,12 @@ import java.util.Set;
  * Constraints that define when a RecoveryPolicy is applicable.
  */
 public class PolicyConstraints {
+  public RecoveryType recoveryType = RecoveryType.GOAL;
+
+  public PostRecoveryExecutionType postRecoveryExecutionType = PostRecoveryExecutionType.RETRY;
+
+  public Predicate catchingAction = null;
+
   /**
    * The corresponding recovery policy is applicable to these goals.
    * Can be empty (i.e., applies to all goals).

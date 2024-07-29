@@ -451,7 +451,7 @@ import java.util.List;
     act:getTokenIds(?refID);
 }
 
-() = executeGraspFailurePolicy(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
+() = executeGraspFailurePolicy(List ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
 
   recovery: {
     failureReasons: {grasping(X,Y,Z)}

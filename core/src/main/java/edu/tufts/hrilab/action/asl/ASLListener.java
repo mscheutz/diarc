@@ -2,7 +2,7 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-// Generated from /home/evan/code/diarc/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
+// Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -501,6 +501,46 @@ public interface ASLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitRecovery(ASLParser.RecoveryContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ASLParser#actionRecoveryDetails}.
+	 * @param ctx the parse tree
+	 */
+	void enterActionRecoveryDetails(ASLParser.ActionRecoveryDetailsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#actionRecoveryDetails}.
+	 * @param ctx the parse tree
+	 */
+	void exitActionRecoveryDetails(ASLParser.ActionRecoveryDetailsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ASLParser#actionRecoveryName}.
+	 * @param ctx the parse tree
+	 */
+	void enterActionRecoveryName(ASLParser.ActionRecoveryNameContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#actionRecoveryName}.
+	 * @param ctx the parse tree
+	 */
+	void exitActionRecoveryName(ASLParser.ActionRecoveryNameContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ASLParser#postActionRecoveryBehavior}.
+	 * @param ctx the parse tree
+	 */
+	void enterPostActionRecoveryBehavior(ASLParser.PostActionRecoveryBehaviorContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#postActionRecoveryBehavior}.
+	 * @param ctx the parse tree
+	 */
+	void exitPostActionRecoveryBehavior(ASLParser.PostActionRecoveryBehaviorContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ASLParser#postActionRecoveryType}.
+	 * @param ctx the parse tree
+	 */
+	void enterPostActionRecoveryType(ASLParser.PostActionRecoveryTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#postActionRecoveryType}.
+	 * @param ctx the parse tree
+	 */
+	void exitPostActionRecoveryType(ASLParser.PostActionRecoveryTypeContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ASLParser#recoveryGoals}.
 	 * @param ctx the parse tree

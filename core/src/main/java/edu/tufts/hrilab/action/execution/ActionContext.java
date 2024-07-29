@@ -6,11 +6,13 @@ package edu.tufts.hrilab.action.execution;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.*;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.lock.ResourceUnavailableException;
+import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
+import edu.tufts.hrilab.action.recovery.Recovery;
+import edu.tufts.hrilab.action.recovery.RecoveryStatus;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.db.performanceMeasures.PerformanceMeasures;
 import edu.tufts.hrilab.action.description.ActionContextDescription;
@@ -34,8 +36,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
@@ -44,6 +44,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   private double negAff = 0.0;
 
   private ScriptParser parser;
+  protected Recovery recovery = new Recovery();
 
   /**
    * Map of observations for Effects. These need to be kept track of separately from children for normal execution.
@@ -523,6 +524,47 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
 
   @Override
   protected void setupNextStep() {
+    if (this.getStatus() == ActionStatus.RECOVERY) {
+      log.debug("In RECOVERY mode " + recovery.getStatus() + " for action: " + cmd);
+      // update recovery status with info about what has happened since the last recovery check-in
+      // e.g., it's unlikely that more explorations should be done if an exploration was successful
+      recovery.updateRecoveryStatus(this);
+
+      if (recovery.getStatus() == RecoveryStatus.SUCCESS) {
+        //Recovery is complete, reset recovery state and make sure next step is setup correctly
+        PostRecoveryExecutionType execType = recovery.getPostRecoveryExecutionType();
+        recovery.resetState();
+        // TODO: handle this differently, place addition of childcontext(s) all in one place if possible.
+        //       Desired behavior may change depending on Recovery Implementation/subclass
+        // For post recovery type SUCCESS or PARENT_RETRY, still need to check parser and add step if present
+        // Otherwise, child context was added in recovery class itself. Just return;
+        if (execType == PostRecoveryExecutionType.RETRY || execType == PostRecoveryExecutionType.PARENT_SUCCESS) {
+          return;
+        }
+      } else if (recovery.getStatus() == RecoveryStatus.RECOVER) {
+        // Previous attempt/child failed -- attempt to execute recovery policy
+        ParameterizedAction recoveryPolicy = recovery.selectRecoveryPolicy(this);
+
+        if (recoveryPolicy != null) {
+          // Add recovery policy as child rather than null or next parser step
+          RecoveryGoalContext recoveryContext = new RecoveryGoalContext(this, this.stateMachine, recoveryPolicy, ExecutionType.ACT, new Recovery());
+          childContexts.add(recoveryContext);
+          return;
+        } else {
+          // ActionStatus should only be RECOVER if shouldAttemptRecovery just returned true
+          // ShouldAttemptRecovery should only return true after finding a recovery policy and setting recovery status to RECOVER.
+          // ActionStatus should then be cleaned up after recovery execution.
+          // If we are in this block, something went wrong.
+          log.error("[setupNextStep] context has RECOVERY status but recovery returned null recovery policy, shouldn't be possible");
+          setStatus(ActionStatus.EXIT_RECOVERY);
+        }
+      } else if (recovery.getStatus() == RecoveryStatus.EXIT || recovery.getStatus() == RecoveryStatus.PLAN) {
+        // Same reasoning as above, shouldn't be possible
+        log.error("[setupNextStep] context has RECOVERY status but recovery has {} status, shouldn't be possible", recovery.getStatus());
+        setStatus(ActionStatus.EXIT_RECOVERY);
+      }
+    }
+
     if (parser != null && !parser.isEmpty()) {
       setupNextStep(parser);
       parser = parser.getRest();
@@ -935,6 +977,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     ActionContext newActContext = new ActionContext(newParent, newParent.stateMachine, getDBE(), this.arguments);
 
     copyInternal(newActContext);
+    newActContext.recovery = this.recovery;
     newActContext.parser = this.parser;
     newActContext.posAff = this.posAff;
     newActContext.negAff = this.negAff;
@@ -998,8 +1041,20 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    */
   @Override
   public synchronized void setStatus(ActionStatus eStatus, Justification justification) {
-    super.setStatus(eStatus, justification);
-    handleInterrupt(eStatus);
+    if (eStatus.isFailure() && recovery.shouldAttemptRecovery(eStatus, justification, this)) {
+      log.debug("[setStatus] not propagating failure: " + eStatus);
+      super.setStatus(ActionStatus.RECOVERY, justification);
+    } else if (getStatus() == ActionStatus.RECOVERY && (eStatus == ActionStatus.FAIL_RECOVERY || eStatus == ActionStatus.EXIT_RECOVERY)) {
+      //If this context is undergoing recovery and gets a recovery failure status propagated up to it, catch it and
+      // start propagating the original failure reasons up the tree instead
+      ActionStatus originalFailureStatus = recovery.getOriginalFailureStatus();
+      Justification originalFailureJustification = recovery.getOriginalFailureJustification();
+      super.setStatus(originalFailureStatus, originalFailureJustification);
+    } else {
+      //Is this the correct order?
+      super.setStatus(eStatus, justification);
+      handleInterrupt(eStatus);
+    }
   }
 
   public TranslationInfo getTranslation() {
@@ -1010,4 +1065,26 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     return null;
   }
 
+  /**
+   * Get the Recovery instance corresponding to this context
+   */
+  public Recovery getRecovery() {
+    return recovery;
+  }
+
+  //TODO: are such methods okay to have public?
+  /**
+   * Append a child context to this one
+   */
+  public void addChildContext(Context child) {
+    if (child != null) {
+      if (log.isDebugEnabled()) {
+        log.debug("Adding child context: {}", child.getSignatureInPredicateForm());
+      }
+      childContexts.add(child);
+    }
+  }
+  public void resetParser() {
+    parser = new ScriptParser(getDBE().getEventSpecs());
+  }
 }

@@ -9,6 +9,7 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.action.recovery.FailureInformation;
 import edu.tufts.hrilab.action.recovery.PolicyConstraints;
+import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import org.slf4j.Logger;
@@ -42,34 +43,41 @@ public class RecoveryPolicyDatabase {
    * @param action the recovery policy
    */
   protected synchronized void addRecoveryPolicyToDB(ActionDBEntry action) {
-    if (!action.getPolicyConstraints().isEmpty()) {
+    if (action.isRecoveryPolicy()) {
       List<Class<?>> argTypes = action.getRequiredInputRolesTypes();
       List<Class<?>> returnTypes = action.getReturnRolesTypes();
       // recoverySignature(Predicate failedActionPredicate, List<Predicate> failureReasons, Predicate failedGoal)
       if (argTypes.size() == 3 && returnTypes.size() == 0
-              && Predicate.class.isAssignableFrom(argTypes.get(0))
+              && List.class.isAssignableFrom(argTypes.get(0))
               && List.class.isAssignableFrom(argTypes.get(1))
               && Predicate.class.isAssignableFrom(argTypes.get(2))) {
-        for (PolicyConstraints constraints : action.getPolicyConstraints()) {
-          log.debug("Adding recovery policy to DB: " + action);
+        PolicyConstraints constraints = action.getPolicyConstraints();
 
-          List<ActionDBEntry> policies = recoveryPolicyDB.get(constraints);
+        if ((constraints.postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_RETRY ||
+             constraints.postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_SUCCESS)
+            && constraints.catchingAction == null) {
+          log.warn("[addRecoveryPolicyToDB] cannot define action recovery policy with a PARENT postRecoveryExecutionType" +
+                  " and no defined catchingAction. Not adding {} as a recovery policy", action.getName());
+          return;
+        }
+        log.debug("Adding recovery policy to DB: " + action);
 
-          if (policies == null) {
-            // this policy hasn't been seen before, add it so this action can be looked up
-            policies = new ArrayList<>();
+        List<ActionDBEntry> policies = recoveryPolicyDB.get(constraints);
+
+        if (policies == null) {
+          // this policy hasn't been seen before, add it so this action can be looked up
+          policies = new ArrayList<>();
+          policies.add(action);
+          recoveryPolicyDB.put(constraints, policies);
+        } else {
+          // this observation has been seen before, add DBEntry to the list if it is not already present
+          if (!policies.contains(action)) {
             policies.add(action);
-            recoveryPolicyDB.put(constraints, policies);
-          } else {
-            // this observation has been seen before, add DBEntry to the list if it is not already present
-            if (!policies.contains(action)) {
-              policies.add(action);
-            }
           }
         }
       } else {
         log.warn("The action '" + action.getName() + "' cannot be a recovery policy as it is not of the form: "
-                + "() = " + action.getName() + "(Predicate failedActionPredicate, List failureReasons, Predicate failedGoal)."
+                + "() = " + action.getName() + "(List failedActionPredicates, List failureReasons, Predicate failedGoal)."
                 + " The action will not be available as a recovery policy.");
       }
     }
@@ -82,13 +90,16 @@ public class RecoveryPolicyDatabase {
    * @param entry the action for which the observations should be removed
    */
   protected synchronized void removeRecoveryPolicyFromDB(ActionDBEntry entry) {
-    for (PolicyConstraints constraints : entry.getPolicyConstraints()) {
-      log.debug("Removing recovery policy from DB: " + entry);
+    log.debug("Removing recovery policy from DB: " + entry);
 
-      List<ActionDBEntry> policies = recoveryPolicyDB.get(constraints);
-      if (policies != null && !policies.isEmpty()) {
-        policies.remove(entry);
-      }
+    if (!entry.isRecoveryPolicy()) {
+      log.warn("[removeRecoveryPolicyFromDB] supplied entry {} is not a recovery policy, not removing", entry);
+      return;
+    }
+
+    List<ActionDBEntry> policies = recoveryPolicyDB.get(entry.getPolicyConstraints());
+    if (policies != null && !policies.isEmpty()) {
+      policies.remove(entry);
     }
   }
 

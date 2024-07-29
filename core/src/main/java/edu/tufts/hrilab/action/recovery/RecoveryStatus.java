@@ -7,5 +7,6 @@ package edu.tufts.hrilab.action.recovery;
 public enum RecoveryStatus {
   PLAN,
   RECOVER,
-  EXIT
+  EXIT,
+  SUCCESS
 }

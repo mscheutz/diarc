@@ -1163,6 +1163,7 @@ public class GoalManagerImpl extends DiarcComponent {
       log.error("[shutdown]", e);
     }
     em.shutdown();
+    ActionSelector.destroyInstance();
     Database.destroyInstance();
   }
 

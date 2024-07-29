@@ -196,7 +196,15 @@ interruptSpec : interruptSpecType ':' function ';';
 
 interruptSpecType : TSC | ACTION | GOAL | name '.' TSC | name '.' ACTION  | name '.' GOAL;
 
-recovery : RECOVERY ':' '{' (recoveryGoals | recoveryExcludedGoals)? (recoveryFailedActions | recoveryExcludedFailedActions)? (recoveryFailureReasons | recoveryExcludedFailureReasons)? recoveryActionStatuses? '}';
+recovery : RECOVERY ':' '{' actionRecoveryDetails? (recoveryGoals | recoveryExcludedGoals)? (recoveryFailedActions | recoveryExcludedFailedActions)? (recoveryFailureReasons | recoveryExcludedFailureReasons)? recoveryActionStatuses? '}';
+
+actionRecoveryDetails : 'actionRecovery' ':' '{' actionRecoveryName? postActionRecoveryBehavior '}';
+
+actionRecoveryName : 'catchingAction' ':' predicate;
+
+postActionRecoveryBehavior : 'postRecovery' ':' postActionRecoveryType;
+
+postActionRecoveryType : 'postrecovery_parent_retry' | 'postrecovery_retry' | 'postrecovery_success' | 'postrecovery_parent_success';
 
 recoveryGoals : 'goals' ':' predicateList;
 

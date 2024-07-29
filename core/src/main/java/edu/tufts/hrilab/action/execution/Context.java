@@ -919,6 +919,7 @@ public abstract class Context {
           if (this.hasNormCheckingAncestor()) {
             c = new NormCheckingActionContext(this, this.stateMachine, action, inputArgs, actor);
           } else {
+            //TODO: pass on recovery type
             c = new ActionContext(this, this.stateMachine, action, inputArgs, eSpec.getReturnArgs(), actor);
           }
         } else {

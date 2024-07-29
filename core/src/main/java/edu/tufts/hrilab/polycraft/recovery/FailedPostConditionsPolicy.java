@@ -54,17 +54,19 @@ public class FailedPostConditionsPolicy {
    * Explore an action that has failed with FAIL_POSTCONDITONS.
    *
    * @param actor
-   * @param brokenActionSignature
+   * @param brokenActionSignatures
    * @param failureReasons
    * @param goal
    * @return
    */
   @TRADEService
   @Action
-  public Justification executeFailedPostConditionsPolicy(Symbol actor, Predicate brokenActionSignature, List<Predicate> failureReasons, Predicate goal) {
-    if (brokenActionSignature == null) {
+  public Justification executeFailedPostConditionsPolicy(Symbol actor, List<Predicate> brokenActionSignatures, List<Predicate> failureReasons, Predicate goal) {
+    if (brokenActionSignatures == null || brokenActionSignatures.isEmpty()) {
       return new ConditionJustification(false);
     }
+
+    Predicate brokenActionSignature = brokenActionSignatures.get(0);
 
     ActionDBEntry brokenAction = edu.tufts.hrilab.action.recovery.Utilities.getActionBySignature(brokenActionSignature);
 

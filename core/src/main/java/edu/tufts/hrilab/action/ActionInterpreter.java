@@ -533,6 +533,8 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       return rootStep.getStatus();
     } catch (Exception e) {
       log.error("Exception caught during ActionInterpreter execution.", e);
+      suspendedStepSignal.release();
+      canceledStepSignal.release();
       return ActionStatus.FAIL;
     }
   }

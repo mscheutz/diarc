@@ -13,6 +13,8 @@ import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.ActionDBEntry.Builder;
 import edu.tufts.hrilab.action.recovery.PolicyConstraints;
+import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
+import edu.tufts.hrilab.action.recovery.RecoveryType;
 import edu.tufts.hrilab.action.util.Utilities;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
@@ -396,6 +398,13 @@ public class ActionScriptLanguageParser {
     @Override
     public void enterRecovery(ASLParser.RecoveryContext ctx) {
       PolicyConstraints policyConstraints = new PolicyConstraints();
+      if (ctx.actionRecoveryDetails() != null) {
+        policyConstraints.recoveryType = RecoveryType.ACTION;
+        if (ctx.actionRecoveryDetails().actionRecoveryName() != null) {
+          policyConstraints.catchingAction = Factory.createPredicate(ctx.actionRecoveryDetails().actionRecoveryName().predicate().getText());
+        }
+        policyConstraints.postRecoveryExecutionType = PostRecoveryExecutionType.fromString(ctx.actionRecoveryDetails().postActionRecoveryBehavior().postActionRecoveryType().getText());
+      }
       if (ctx.recoveryGoals() != null) {
         ctx.recoveryGoals().predicateList().predicate().forEach(pred -> policyConstraints.goals.add(Factory.createPredicate(pred.getText())));
       }
@@ -418,7 +427,7 @@ public class ActionScriptLanguageParser {
         ctx.recoveryActionStatuses().NAME().forEach(status -> policyConstraints.actionStatuses.add(ActionStatus.fromString(status.getText())));
       }
 
-      curr_dbe_builder.addRecoveryPolicyConstraint(policyConstraints);
+      curr_dbe_builder.setRecoveryPolicyConstraint(policyConstraints);
     }
 
     @Override

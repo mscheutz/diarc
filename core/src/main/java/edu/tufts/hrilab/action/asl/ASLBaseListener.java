@@ -2,7 +2,7 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-// Generated from /home/evan/code/diarc/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
+// Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
 package edu.tufts.hrilab.action.asl;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -604,6 +604,54 @@ public class ASLBaseListener implements ASLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitRecovery(ASLParser.RecoveryContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterActionRecoveryDetails(ASLParser.ActionRecoveryDetailsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitActionRecoveryDetails(ASLParser.ActionRecoveryDetailsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterActionRecoveryName(ASLParser.ActionRecoveryNameContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitActionRecoveryName(ASLParser.ActionRecoveryNameContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterPostActionRecoveryBehavior(ASLParser.PostActionRecoveryBehaviorContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitPostActionRecoveryBehavior(ASLParser.PostActionRecoveryBehaviorContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterPostActionRecoveryType(ASLParser.PostActionRecoveryTypeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitPostActionRecoveryType(ASLParser.PostActionRecoveryTypeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
