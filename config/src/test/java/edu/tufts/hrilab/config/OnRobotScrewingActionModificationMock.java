@@ -63,6 +63,7 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
                 "-asl config/edu/tufts/hrilab/action/asl/dialogue/handleSemantics.asl " +
                 "-asl config/edu/tufts/hrilab/action/asl/dialogue/nlu.asl " +
                 "-asl config/edu/tufts/hrilab/action/asl/dialogue/nlg.asl " +
+                "-asl config/edu/tufts/hrilab/action/asl/cognex.asl " +
 
                 "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/assemble.asl " +
 

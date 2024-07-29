@@ -1,7 +1,7 @@
 //====================== Setup action scripts ======================
 () = init["workaround for not being able to retract facts from belief init files"](){
 
-    java.lang.Boolean !twoRobots = false;
+    java.lang.Boolean !twoRobots = true;
     edu.tufts.hrilab.fol.Term !toAssert;
     edu.tufts.hrilab.fol.Symbol !robotone="robotone:agent";
     edu.tufts.hrilab.fol.Symbol !robottwo="robottwo:agent";

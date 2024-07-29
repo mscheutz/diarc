@@ -8,6 +8,7 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import edu.tufts.hrilab.abb.AbbCognexResult;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.consultant.Consultant;
 import edu.tufts.hrilab.fol.Factory;
@@ -302,7 +303,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
   @TRADEService
   @Action
-  public void bindCognexResult(CognexReference ref, CognexResult result, int indexIntoCognexResult) {
+  public void bindCognexResult(CognexReference ref, AbbCognexResult result, int indexIntoCognexResult) {
     log.debug("Binding: " + ref.refId + " to cognex result index: " + indexIntoCognexResult);
     ref.setResult(result);
     try {
@@ -343,7 +344,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
   @TRADEService
   @Action
-  public CognexResult getMatchingResult(CognexReference toReBind, List<CognexResult> results) {
+  public AbbCognexResult getMatchingResult(CognexReference toReBind, List<AbbCognexResult> results) {
     return results.get(0);
   }
 }

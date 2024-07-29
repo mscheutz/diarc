@@ -1,8 +1,8 @@
 import java.util.List;
 import java.lang.String;
-import ai.thinkingrobots.mtracs.util.CognexJob;
-import ai.thinkingrobots.mtracs.util.CognexResult;
-import ai.thinkingrobots.mtracs.consultant.vision.CognexReference;
+import edu.tufts.hrilab.cognex.consultant.CognexJob;
+import edu.tufts.hrilab.cognex.consultant.CognexResult;
+import edu.tufts.hrilab.cognex.consultant.CognexReference;
 
 () = perceiveEntityFromSymbol["runs a job for a given pre-existing ?refId and binds the relevant result to that reference"](edu.tufts.hrilab.fol.Symbol ?refId) {
     List !cameraResults;

@@ -6,21 +6,10 @@ package edu.tufts.hrilab.cognex;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
-import edu.tufts.hrilab.cognex.consultant.CognexJob;
-import edu.tufts.hrilab.cognex.consultant.CognexReference;
-import edu.tufts.hrilab.cognex.consultant.CognexResult;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Term;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class CognexComponent extends DiarcComponent {
 

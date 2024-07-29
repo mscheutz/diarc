@@ -7,9 +7,9 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.fol.Predicate;
 import java.util.Map;
 import java.util.HashMap;
-import ai.thinkingrobots.mtracs.util.CognexJob;
-import ai.thinkingrobots.mtracs.util.CognexResult;
-import ai.thinkingrobots.mtracs.consultant.vision.CognexReference;
+import edu.tufts.hrilab.cognex.consultant.CognexJob;
+import edu.tufts.hrilab.cognex.consultant.CognexResult;
+import edu.tufts.hrilab.cognex.consultant.CognexReference;
 //======================bind descriptor to a cognex job ============
 () = defineItem["defines new item, and asks for relevant parameters"](edu.tufts.hrilab.fol.Symbol ?item){
   Symbol !jobID;
@@ -92,7 +92,7 @@ import ai.thinkingrobots.mtracs.consultant.vision.CognexReference;
     Integer !i = 0;
     List !cameraResults;
     String !jobName;
-    ai.thinkingrobots.mtracs.util.CognexJob !job;
+    edu.tufts.hrilab.cognex.consultant.CognexJob !job;
 
     edu.tufts.hrilab.fol.Predicate !queryPred;
     java.util.List !bindings;
