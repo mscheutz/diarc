@@ -188,54 +188,25 @@ public class Recovery {
         return new ParameterizedAction(selectedRecoveryAction, arguments);
     }
 
-    //TODO: have way to override postRecoveryBehavior form within execution of the recovery policy
+    //TODO: have way to override postRecoveryBehavior from within execution of the recovery policy
     public void updateRecoveryStatus(Context context) {
         if (recoveryStatus == RecoveryStatus.RECOVER && context.getChildContexts().getCurrent().isSuccess()) {
             if (failureInfo.contextType == RecoveryType.GOAL) {
                 // (GoalRecovery) if in RECOVER mode, and last goal (i.e., recover goal) succeeded, go back to PLAN mode
                 recoveryStatus = RecoveryStatus.PLAN;
             } else {
-                // (ActionRecovery) Manipulate the context tree and set status based on the enacted policy's postRecoveryExecutionType
-                ActionContext actionContext = (ActionContext) context;
-                // TODO: fix mismatched behavior that PARENT_RETRY and SUCCESS rely on caller of this method to still
-                //  select and add a next step, while the other two cases do it manually in here.
-                switch (postRecoveryExecutionType) {
-                    case PARENT_RETRY:
-                        // TODO: Is this how we want to handle this case? (from the perspective of the context tree)
-                        // Reset parser such that subsequent execution is from beginning of the script (while maintaining history)
-                        // Branch will be execution trace up until failure -> recovery context -> new execution trace
-                        actionContext.setStatus(ActionStatus.PROGRESS);
-                        actionContext.resetParser();
-                        retryingContextExecution = true;
-
-                        // TODO: is there an issue with local variables here?
-                        //// Tree would be execution trace up until failure -> recovery context -> copy of self (whose children is new execution trace)
-                        //// Think this is worse ^
-                        //actionContext.setStatus(ActionStatus.PROGRESS);
-                        //actionContext.clearParser();
-                        ////Make new context rather than copy and reset existing?
-                        //ActionContext copiedContext = actionContext.copy(context.getParentContext());
-                        //copiedContext.clearChildren();
-                        //copiedContext.resetContext();
-                        //actionContext.addChildContext(copiedContext);
-                        break;
-                    case RETRY:
-                        actionContext.setStatus(ActionStatus.PROGRESS);
-                        ActionContext copiedChildContext = failedChildContext.copy(actionContext);
-                        copiedChildContext.resetContext();
-                        actionContext.addChildContext(copiedChildContext);
-                        retryingContextExecution = true;
-                        break;
-                    case SUCCESS:
-                        actionContext.setStatus(ActionStatus.PROGRESS);
-                        break;
-                    case PARENT_SUCCESS:
-                        actionContext.setStatus(ActionStatus.SUCCESS);
-                        break;
+                // (ActionRecovery) if in RECOVER mode, and last goal (i.e., recover goal) succeeded, set status to
+                //  SUCCESS and allow ActionContext to handle post recovery execution based on postRecoveryExecutionType
+                if (postRecoveryExecutionType == PostRecoveryExecutionType.RETRY || postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_RETRY) {
+                    retryingContextExecution = true;
                 }
                 recoveryStatus = RecoveryStatus.SUCCESS;
             }
         }
+    }
+
+    public ActionContext getContextToRetry() {
+        return failedChildContext;
     }
 
     /**

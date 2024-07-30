@@ -533,14 +533,9 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       if (recovery.getStatus() == RecoveryStatus.SUCCESS) {
         //Recovery is complete, reset recovery state and make sure next step is setup correctly
         PostRecoveryExecutionType execType = recovery.getPostRecoveryExecutionType();
+        handleRecoverySuccess(execType);
         recovery.resetState();
-        // TODO: handle this differently, place addition of childcontext(s) all in one place if possible.
-        //       Desired behavior may change depending on Recovery Implementation/subclass
-        // For post recovery type SUCCESS or PARENT_RETRY, still need to check parser and add step if present
-        // Otherwise, child context was added in recovery class itself. Just return;
-        if (execType == PostRecoveryExecutionType.RETRY || execType == PostRecoveryExecutionType.PARENT_SUCCESS) {
-          return;
-        }
+        return;
       } else if (recovery.getStatus() == RecoveryStatus.RECOVER) {
         // Previous attempt/child failed -- attempt to execute recovery policy
         ParameterizedAction recoveryPolicy = recovery.selectRecoveryPolicy(this);
@@ -565,9 +560,57 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       }
     }
 
+    setupStepFromParser();
+  }
+
+  private void setupStepFromParser() {
     if (parser != null && !parser.isEmpty()) {
       setupNextStep(parser);
       parser = parser.getRest();
+    }
+  }
+
+  /**
+   * Helper method which should be called after successful action recovery execution. Set status of this context and
+   * setup children based on the PostRecoveryExecutionType associated with the executed recovery policy.
+   */
+  private void handleRecoverySuccess(PostRecoveryExecutionType executionType) {
+    switch (executionType) {
+      case PARENT_RETRY:
+        // TODO: Is this how we want to handle this case? (from the perspective of the context tree)
+        // Reset parser such that subsequent execution is from beginning of the script (while maintaining history)
+        // Branch will be execution trace up until failure -> recovery context -> new execution trace
+        setStatus(ActionStatus.PROGRESS);
+        parser = new ScriptParser(getDBE().getEventSpecs());
+        setupStepFromParser();
+
+        // TODO: is there an issue with local variables here?
+        //// Tree would be execution trace up until failure -> recovery context -> copy of self (whose children is new execution trace)
+        //// Think this is worse ^
+        //actionContext.setStatus(ActionStatus.PROGRESS);
+        //actionContext.clearParser();
+        ////Make new context rather than copy and reset existing?
+        //ActionContext copiedContext = actionContext.copy(context.getParentContext());
+        //copiedContext.clearChildren();
+        //copiedContext.resetContext();
+        //actionContext.addChildContext(copiedContext);
+        break;
+      case RETRY:
+        //Get the failed action which caused recovery and add a reinitialized copy as the next child
+        setStatus(ActionStatus.PROGRESS);
+        ActionContext copiedChildContext = recovery.getContextToRetry().copy(this);
+        copiedChildContext.resetContext();
+        childContexts.add(copiedChildContext);
+        break;
+      case SUCCESS:
+        //Proceed with execution as previously planned
+        setStatus(ActionStatus.PROGRESS);
+        setupStepFromParser();
+        break;
+      case PARENT_SUCCESS:
+        //Set status to success so execution terminates and finishStep is called
+        setStatus(ActionStatus.SUCCESS);
+        break;
     }
   }
 
@@ -1070,21 +1113,5 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    */
   public Recovery getRecovery() {
     return recovery;
-  }
-
-  //TODO: are such methods okay to have public?
-  /**
-   * Append a child context to this one
-   */
-  public void addChildContext(Context child) {
-    if (child != null) {
-      if (log.isDebugEnabled()) {
-        log.debug("Adding child context: {}", child.getSignatureInPredicateForm());
-      }
-      childContexts.add(child);
-    }
-  }
-  public void resetParser() {
-    parser = new ScriptParser(getDBE().getEventSpecs());
   }
 }
