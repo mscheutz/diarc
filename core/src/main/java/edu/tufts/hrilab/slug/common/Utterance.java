@@ -40,8 +40,11 @@ public final class Utterance implements Serializable {
    */
   private Symbol speaker;
   /**
-   * Listeners of the utterance. For now, it is assumed that the first listener is
-   * the addressee.
+   * Intended addressee of utterance. It is usually the case the that addressee is also one of the listeners.
+   */
+  private Symbol addressee;
+  /**
+   * Listeners of the utterance. It is usually the case the that addressee is also one of the listeners.
    */
   private List<Symbol> listeners = new ArrayList<>();
   /**
@@ -77,13 +80,14 @@ public final class Utterance implements Serializable {
   /**
    * Convenience method for instantiating Utterance from ASL.
    * @param speaker
-   * @param listener
+   * @param addressee
    * @return
    */
-  static public Utterance createOutputUtterance(Symbol speaker, Symbol listener) {
+  static public Utterance createOutputUtterance(Symbol speaker, Symbol addressee) {
     Utterance newUtterance = new Builder()
             .setSpeaker(speaker)
-            .addListener(listener)
+            .setAddressee(addressee)
+            .addListener(addressee)
             .setUtteranceType(UtteranceType.UNKNOWN)
             .setIsInputUtterance(false).build();
     return newUtterance;
@@ -114,7 +118,7 @@ public final class Utterance implements Serializable {
    * @param type
    * @param isInput
    */
-  private Utterance(Symbol speaker, List<Symbol> listeners, List<String> words,
+  private Utterance(Symbol speaker, Symbol addressee, List<Symbol> listeners, List<String> words,
                    Symbol semantics, List<Term> indirectSemantics, List<Term> supSementics,
                    List<Map<Variable, Symbol>> bindings, Map<Variable, Symbol> tierAssignments,
                    UtteranceType type, boolean isInput, boolean needsValidation,
@@ -124,6 +128,7 @@ public final class Utterance implements Serializable {
     this.isInputUtterance = isInput;
     this.needsValidation = needsValidation;
     this.speaker = speaker;
+    this.addressee = addressee;
     this.listeners = listeners;
     this.words = words;
     this.semantics = semantics;
@@ -141,6 +146,7 @@ public final class Utterance implements Serializable {
     private boolean isInputUtterance;
     private boolean needsValidation;
     private Symbol speaker;
+    private Symbol addressee;
     private List<Symbol> listeners;
     private List<String> words;
     private Symbol semantics;
@@ -156,6 +162,7 @@ public final class Utterance implements Serializable {
       isInputUtterance = true;
       needsValidation = false;
       speaker = null;
+      addressee = null;
       listeners = new ArrayList<>();
       words = new ArrayList<>();
       semantics = null;
@@ -172,6 +179,7 @@ public final class Utterance implements Serializable {
       this.isInputUtterance = source.isInputUtterance;
       this.needsValidation = source.needsValidation;
       this.speaker = source.speaker;
+      this.addressee = source.addressee;
       this.listeners = new ArrayList<>(source.listeners);
       this.words = new ArrayList<>(source.words);
       this.semantics = source.semantics;
@@ -184,7 +192,7 @@ public final class Utterance implements Serializable {
     }
 
     public Utterance build() {
-      return new Utterance(speaker, listeners, words, semantics, indirectSemantics, supplementalSemantics, bindings, tierAssignments, type, isInputUtterance, needsValidation, language, translations);
+      return new Utterance(speaker, addressee, listeners, words, semantics, indirectSemantics, supplementalSemantics, bindings, tierAssignments, type, isInputUtterance, needsValidation, language, translations);
     }
 
     public Builder setSpeaker(Symbol speaker) {
@@ -192,8 +200,16 @@ public final class Utterance implements Serializable {
       return this;
     }
 
+    public Builder setAddressee(Symbol addressee) {
+      this.addressee = addressee;
+      addListener(addressee);
+      return this;
+    }
+
     public Builder addListener(Symbol listener) {
-      this.listeners.add(listener);
+      if (!listeners.contains(listener)) {
+        this.listeners.add(listener);
+      }
       return this;
     }
 
@@ -335,12 +351,22 @@ public final class Utterance implements Serializable {
   }
 
   /**
-   * Get actor being addressed. For now, assumed to be the first listener.
+   * Get actor being addressed.
    *
    * @return
    */
   public Symbol getAddressee() {
-    return listeners.get(0);
+    return addressee;
+  }
+
+  /**
+   * Set addressee of the utterance. Also adds addressee as a listener.
+   *
+   * @param addressee
+   */
+  public void setAddressee(Symbol addressee) {
+    this.addressee = addressee;
+    addListener(addressee);
   }
 
   /**
@@ -353,11 +379,21 @@ public final class Utterance implements Serializable {
   }
 
   /**
-   * Set a listener of the utterance.
+   * Sets listeners of the utterance. This removes any existing listeners.
+   *
+   * @param listeners
+   */
+  public void setListeners(Collection<Symbol> listeners) {
+    listeners.clear();
+    listeners.addAll(listeners);
+  }
+
+  /**
+   * Set a listener of the utterance. This removes any existing listeners.
    *
    * @param listener
    */
-  public void setListener (Symbol listener) {
+  public void setListener(Symbol listener) {
     listeners.clear();
     listeners.add(listener);
   }
@@ -368,7 +404,9 @@ public final class Utterance implements Serializable {
    * @param listener
    */
   public void addListener(Symbol listener) {
-    listeners.add(listener);
+    if (!listeners.contains(listener)) {
+      listeners.add(listener);
+    }
   }
 
   /**

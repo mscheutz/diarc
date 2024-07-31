@@ -67,7 +67,7 @@ public class TowerConfig extends DiarcConfiguration {
 
       if (useGUI) {
         createInstance(com.simspeech.SimSpeechRecognitionComponent.class,
-                "-config demodialogues/fetchconfig.simspeech -speaker brad -listener self");
+                "-config demodialogues/fetchconfig.simspeech -speaker brad -addressee self");
       }
       createInstance(TLDLParserComponent.class, "-dict templatedict.dict");
 

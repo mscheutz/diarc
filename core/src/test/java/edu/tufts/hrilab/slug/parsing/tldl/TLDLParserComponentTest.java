@@ -40,13 +40,14 @@ public class TLDLParserComponentTest {
     }
 
     //brad this is like this so I don't have to change a bunch of old tests, it should probably be updated at some point
-    private boolean testUtterance(String utterance, String desired, String speaker, String listener) {
-        // component.addWords(complete);
-        Utterance parseResult = component.parseUtterance(new Utterance(Factory.createSymbol(speaker),
-                Factory.createSymbol(listener),
-                Arrays.asList(utterance.split(" ")),
-                UtteranceType.UNKNOWN,
-                true));
+    private boolean testUtterance(String utterance, String desired, String speaker, String addressee) {
+        Utterance.Builder inputUtterance = new Utterance.Builder()
+                .setSpeaker(Factory.createSymbol(speaker))
+                .setAddressee(Factory.createSymbol(addressee))
+                .setWords(Arrays.asList(utterance.split(" ")));
+
+
+        Utterance parseResult = component.parseUtterance(inputUtterance.build());
 
         String outcome = parseResult.toString();
         if (outcome.equals(desired)) {

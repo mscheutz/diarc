@@ -117,7 +117,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
     log.info("Resolving references in " + utterance);
 //    resolver.registerWithTRADE(); // registering here causes deadlock in some trade configurations (e.g., 3 containers across 2 machines)
     //TODO:brad: I don't think we always want to do this, but we need to for the multi robot case
-    resolver.updateConsultCache(utterance.getListeners().get(0).toString());
+    resolver.updateConsultCache(utterance.getAddressee().toString());
     Growler growler = new Growler(resolver, gh, JavaConverters.mapAsScalaMap(relevanceMap));
 
     //this check is here so that only free vars that actually exist in the semantics are resolved,

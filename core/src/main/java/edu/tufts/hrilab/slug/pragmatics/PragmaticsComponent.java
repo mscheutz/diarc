@@ -372,7 +372,7 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
               semantics = boundSemantics.get(0);
             }
             bindingsOption.put((Variable) prLHS, semantics);
-            bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getListeners().get(0), utt.getListeners().get(0));
+            bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getAddressee(), utt.getAddressee());
             bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getSpeaker(), utt.getSpeaker());
             PragRuleProver boundpr = pr.getBoundVersion(bindingsOption);
             Set<Term> directMeaning = boundpr.getSemantics();
@@ -396,7 +396,7 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
               }
             } else if (utt.getSemantics().equals(prLHS)) {
               Map<Variable, Symbol> bindingsOption = new HashMap<>();
-              bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getListeners().get(0), utt.getListeners().get(0));
+              bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getAddressee(), utt.getAddressee());
               if (bindingsOption == null) {
                 // does not match the current prag rule
                 continue;
@@ -454,7 +454,7 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
               if (!(bindings.isEmpty())) {
                 //TODO: fix bindings issue such that we get accurate bindings regardless of prag rule ordering
                 Map<Variable, Symbol> bindingsOption = bindings.get(0);
-                bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getListeners().get(0), utt.getListeners().get(0));
+                bindingsOption = PragUtil.getBindingsSymHelper(bindingsOption, pr.getAddressee(), utt.getAddressee());
                 if (bindingsOption == null) {
                   // does not match the current prag rule
                   continue;
@@ -565,6 +565,7 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
 
           Utterance uArg = new Utterance.Builder()
                   .setSpeaker(u.getSpeaker())
+                  .setAddressee(u.getAddressee())
                   .addListeners(u.getListeners())
                   .setSemantics(s)
                   .setUtteranceType(u.getType())
@@ -584,6 +585,7 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
 
       utt = new Utterance.Builder()
               .setSpeaker(u.getSpeaker())
+              .setAddressee(u.getAddressee())
               .addListeners(u.getListeners())
               .setSemantics(recursedTerm)
               .setBindings(u.getBindings())
