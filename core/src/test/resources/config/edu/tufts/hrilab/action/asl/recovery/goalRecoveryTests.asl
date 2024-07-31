@@ -59,3 +59,11 @@ import java.util.List;
     op:log("info", "[pickupFailRecovery]");
     exit(EXIT_RECOVERY);
 }
+
+() = pickupIneffectiveRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        goals : {pickUp(X,ineffective)}
+    }
+
+    op:log("info", "[pickupIneffectiveRecovery]");
+}

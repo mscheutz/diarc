@@ -874,5 +874,44 @@ public class RecoveryTest {
         //Fail rather than enter duplicate recovery
     }
 
-    //TODO: faulty goal recovery test?
+    /**
+     * Tests that when goal recovery 'successfully' completes but doesn't actually solve the issue, the system
+     * prevents recovery from occurring on the same goal due to the same failure.
+     */
+    @Test
+    public void ineffectiveGoalRecoveryTest() {
+        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        String filename = aslPath + "goalRecoveryTests.asl";
+        Database.getInstance().loadDatabaseFromFile(filename);
+        Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
+
+
+        log.info("\n\n\n[ineffectiveGoalRecoveryTest]");
+        //Submit goal for pickUp - recovery should cause goal to succeed
+        Predicate goalPredicate = Factory.createPredicate("pickUp(self:agent,ineffective)");
+        executeAndCheckGoal(goalPredicate, GoalStatus.FAILED);
+        Long goalId = component.getGoalId(goalPredicate);
+        Goal goal = component.getGoal(goalId);
+
+        //PickUp context - 3 children
+        Context pickUpContext = goal.getRootContext();
+        Assert.assertEquals(pickUpContext.getChildContexts().size(), 3);
+
+        //First child: First execution attempt - should fail due to gripperOpen precondition not being satisfied
+        Context pickupContext = pickUpContext.getChildContexts().get(0);
+        Assert.assertEquals(pickupContext.getCommand(), "pickUp");
+        Assert.assertEquals(pickupContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        //Second child: Recovery context (doesn't practically do anything)
+        Context recoveryGoalContext = pickUpContext.getChildContexts().get(1);
+        Assert.assertEquals(recoveryGoalContext.getCommand(), "goal(pickupIneffectiveRecovery(self:agent,[pickup(self:agent), pickUp(self:agent,ineffective),[gripperOpen(self:agent),pickUp(self:agent,ineffective)))");
+        Assert.assertEquals(recoveryGoalContext.getStatus(), ActionStatus.SUCCESS);
+
+        //Third child: Second execution attempt - should fail in the same way as the first
+        pickupContext = pickUpContext.getChildContexts().get(2);
+        Assert.assertEquals(pickupContext.getCommand(), "pickUp");
+        Assert.assertEquals(pickupContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        //No more execution should occur
+    }
 }

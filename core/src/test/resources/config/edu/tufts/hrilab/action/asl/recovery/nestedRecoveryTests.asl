@@ -80,7 +80,7 @@ import java.util.List;
             catchingAction : pickUpV2(X,Y)
             postRecovery : postrecovery_retry
         }
-        goals : pickUpV2(?actor,child)
+        goals : {pickUpV2(?actor,child)}
         failedActions : {pickupv2(X)}
     }
 
@@ -93,7 +93,7 @@ import java.util.List;
             catchingAction : pickUpV2(X,Y)
             postRecovery : postrecovery_parent_retry
         }
-        goals : pickUpV2(?actor,parent)
+        goals : {pickUpV2(?actor,parent)}
         failedActions : {pickupv2(X)}
     }
 
