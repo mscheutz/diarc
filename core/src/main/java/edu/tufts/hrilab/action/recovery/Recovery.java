@@ -194,6 +194,11 @@ public class Recovery {
             if (failureInfo.contextType == RecoveryType.GOAL) {
                 // (GoalRecovery) if in RECOVER mode, and last goal (i.e., recover goal) succeeded, go back to PLAN mode
                 recoveryStatus = RecoveryStatus.PLAN;
+                // Similarly want to prevent infinite recovery loops if recovery policy didn't actually fix anything and
+                //  execution ends up failing in the same exact way.
+                // Same logic used for checking in the action recovery case works. Can separate this reasoning if we
+                //  want different behavior
+                retryingContextExecution = true;
             } else {
                 // (ActionRecovery) if in RECOVER mode, and last goal (i.e., recover goal) succeeded, set status to
                 //  SUCCESS and allow ActionContext to handle post recovery execution based on postRecoveryExecutionType
@@ -237,6 +242,11 @@ public class Recovery {
         failureInfo = new FailureInformation();
         if (context instanceof GoalContext) {
             goalContext = (GoalContext)context;
+            // TODO: Is this desired?
+            //// Don't allow goal recovery for a goal which is simply an action, should use action recovery which would have been applied on the child already
+            //if (goalContext.getGoal().isAction()) {
+            //    return null;
+            //}
             failureInfo.contextType = RecoveryType.GOAL;
             failureInfo.actor = goalContext.getGoal().getActor();
         } else if (context instanceof ActionContext) {
