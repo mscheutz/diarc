@@ -33,7 +33,7 @@ public class PickAndPlaceLLMDemo extends DiarcConfiguration {
     private ABBAreaConsultant areaConsultant;
     private ABBLocationConsultant locationConsultant;
     String service = "llamahf";
-    String model = "Meta-Llama-3-70B-Instruct";
+    String model = "Meta-Llama-3.1-70B-Instruct";
 
     @Override
     public void runConfiguration() {
@@ -102,8 +102,8 @@ public class PickAndPlaceLLMDemo extends DiarcConfiguration {
                         + "-asl demos/foodOrdering/humanActions.asl "
                         + "-asl demos/foodOrdering/ordering.asl "
                         + "-asl demos/foodOrdering/yumiInitPickAndPlace.asl "
-                        + "-goal listen(self:agent) "
-                        + "-goal init(self:agent) ";
+                        + "-goal listen(self:agent) ";
+                        //+ "-goal init(self:agent) ";
 
         createInstance(GoalManagerImpl.class, gmArgs);
 

@@ -31,7 +31,7 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
     public MockYumiComponent leftArm;
     public MockYumiComponent rightArm;
     String service = "llamahf";
-    String model = "Meta-Llama-3-70B-Instruct";
+    String model = "Meta-Llama-3.1-70B-Instruct";
 
     @Override
     public void runConfiguration() {

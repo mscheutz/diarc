@@ -20,28 +20,28 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_30:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_30:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_30:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_30:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_30:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_30:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_30:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_30:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "okay", "true" ]
@@ -58,13 +58,13 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "perceiveEntityFromSymbol",
-      "serviceArgs" : [ "physobj_30:physobj", "true" ]
+      "serviceArgs" : [ "physobj_0:physobj", "true" ]
     }, {
       "serviceName" : "checkError",
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "pickupItem",
-      "serviceArgs" : [ "physobj_30:physobj", "null" ]
+      "serviceArgs" : [ "physobj_0:physobj", "null" ]
     }, {
       "serviceName" : "checkError",
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
@@ -98,7 +98,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "putDownItem",
-      "serviceArgs" : [ "physobj_30:physobj", "rightArmpose_8:rightArmpose", "null" ]
+      "serviceArgs" : [ "physobj_0:physobj", "rightArmpose_8:rightArmpose", "null" ]
     }, {
       "serviceName" : "checkError",
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
@@ -121,13 +121,13 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "perceiveEntityFromSymbol",
-      "serviceArgs" : [ "physobj_30:physobj", "true" ]
+      "serviceArgs" : [ "physobj_0:physobj", "true" ]
     }, {
       "serviceName" : "checkError",
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "pickupItem",
-      "serviceArgs" : [ "physobj_30:physobj", "null" ]
+      "serviceArgs" : [ "physobj_0:physobj", "null" ]
     }, {
       "serviceName" : "checkError",
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
@@ -145,7 +145,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "putDownItem",
-      "serviceArgs" : [ "physobj_30:physobj", "rightArmpose_7:rightArmpose", "null" ]
+      "serviceArgs" : [ "physobj_0:physobj", "rightArmpose_7:rightArmpose", "null" ]
     }, {
       "serviceName" : "checkError",
       "serviceArgs" : [ "noRapidError()", "[{}]" ]

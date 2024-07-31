@@ -1404,10 +1404,10 @@ public class ExecutionManager implements ActionListener {
 
   public void cancelAllCurrentGoals() {
     log.info("[cancelAllCurrentGoals] in method");
+    synchronized (pendingGoalsLock) {
+      log.trace("[cancelAllCurrentGoals] have pendingGoalsLock");
     synchronized (goalsLock) {
-      log.trace("[cancelAllCurrentGoals] have goalsLock");
-      synchronized (pendingGoalsLock) {
-        log.trace("[cancelAllCurrentGoals] have pendingGoalsLock");
+        log.trace("[cancelAllCurrentGoals] have goalsLock");
         cancelAllPendingGoals();
         cancelAllActiveGoals();
       }

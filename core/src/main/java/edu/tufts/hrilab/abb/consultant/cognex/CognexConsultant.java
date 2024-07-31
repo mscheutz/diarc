@@ -29,8 +29,6 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
   protected Set<Symbol> lessSalientRefIds = new HashSet<>();
 
-  protected static int refNumber = 0;
-
   public CognexConsultant() {
     super(CognexReference.class, "physobj");
     //Jobs
