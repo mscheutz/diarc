@@ -8,4 +8,8 @@ public interface PythonRLInterface {
     @TRADEService
     @Action
     public boolean callPolicy(int policyNumber);
+
+    @TRADEService
+    @Action
+    public boolean learnPolicy(String failedOperator);
 }

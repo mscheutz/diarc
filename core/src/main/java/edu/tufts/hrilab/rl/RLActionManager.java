@@ -2,7 +2,10 @@ package edu.tufts.hrilab.rl;
 
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.*;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.db.ActionDBEntry.Builder;
+import edu.tufts.hrilab.action.justification.ConditionJustification;
+import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
@@ -108,5 +111,18 @@ public class RLActionManager extends DiarcComponent {
       state = newState;
     }
     return state.hashCode();
+  }
+
+  @Action
+  @TRADEService
+  public Justification failureTest() {
+    return new ConditionJustification(false);
+  }
+
+  @Action
+  @TRADEService
+  public Justification update_rl() {
+    log.info("Recovering");
+    return new ConditionJustification(true);
   }
 }
