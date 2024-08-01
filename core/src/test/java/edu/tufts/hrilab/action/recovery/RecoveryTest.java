@@ -124,7 +124,7 @@ public class RecoveryTest {
 
         //excludedFailedActions match and actionStatuses match -> don't recover
         log.info("\n\n\n[shouldAttemptRecoveryTest] Test case: Failed goal matches recovery policy actionStatuses and excludedFailedActions");
-        goalPredicate = Factory.createPredicate("actionSeven(self:agent)");
+        goalPredicate = Factory.createPredicate("goal(self:agent,stateSeven(self:agent))");
         executeAndCheckGoal(goalPredicate, GoalStatus.FAILED);
 
         //ActionRecovery

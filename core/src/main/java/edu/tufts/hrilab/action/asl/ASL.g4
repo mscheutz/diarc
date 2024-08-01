@@ -196,7 +196,7 @@ interruptSpec : interruptSpecType ':' function ';';
 
 interruptSpecType : TSC | ACTION | GOAL | name '.' TSC | name '.' ACTION  | name '.' GOAL;
 
-recovery : RECOVERY ':' '{' actionRecoveryDetails? (recoveryGoals | recoveryExcludedGoals)? (recoveryFailedActions | recoveryExcludedFailedActions)? (recoveryFailureReasons | recoveryExcludedFailureReasons)? recoveryActionStatuses? '}';
+recovery : RECOVERY ':' '{' (actionRecoveryDetails | recoveryGoals | recoveryExcludedGoals | recoveryFailedActions | recoveryExcludedFailedActions | recoveryFailureReasons | recoveryExcludedFailureReasons | recoveryActionStatuses)* '}';
 
 actionRecoveryDetails : 'actionRecovery' ':' '{' actionRecoveryName? postActionRecoveryBehavior '}';
 
