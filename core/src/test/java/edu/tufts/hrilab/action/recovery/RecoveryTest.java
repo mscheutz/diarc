@@ -434,7 +434,7 @@ public class RecoveryTest {
         Context pickupFailContext = rootContext.getChildContexts().get(0);
         Assert.assertEquals(pickupFailContext.getStatus(), ActionStatus.SUCCESS);
         Assert.assertEquals(pickupFailContext.getCommand(), "pickUpFail");
-        Assert.assertEquals(pickupFailContext.getChildContexts().size(), 4);
+        Assert.assertEquals(pickupFailContext.getChildContexts().size(), 5);
 
         //First child: closegripper
 
@@ -452,6 +452,8 @@ public class RecoveryTest {
         Context pickupRetryContext = pickupFailContext.getChildContexts().get(3);
         Assert.assertEquals(pickupRetryContext.getStatus(), ActionStatus.SUCCESS);
         Assert.assertEquals(pickupRetryContext.getCommand(), "pickup");
+
+        //Fifth child: continue execution of original script, log statement
     }
 
     /**

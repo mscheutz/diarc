@@ -567,6 +567,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     if (parser != null && !parser.isEmpty()) {
       setupNextStep(parser);
       parser = parser.getRest();
+      recovery.signalStep();
     }
   }
 
@@ -577,23 +578,11 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   private void handleRecoverySuccess(PostRecoveryExecutionType executionType) {
     switch (executionType) {
       case PARENT_RETRY:
-        // TODO: Is this how we want to handle this case? (from the perspective of the context tree)
         // Reset parser such that subsequent execution is from beginning of the script (while maintaining history)
         // Branch will be execution trace up until failure -> recovery context -> new execution trace
         setStatus(ActionStatus.PROGRESS);
         parser = new ScriptParser(getDBE().getEventSpecs());
         setupStepFromParser();
-
-        // TODO: is there an issue with local variables here?
-        //// Tree would be execution trace up until failure -> recovery context -> copy of self (whose children is new execution trace)
-        //// Think this is worse ^
-        //actionContext.setStatus(ActionStatus.PROGRESS);
-        //actionContext.clearParser();
-        ////Make new context rather than copy and reset existing?
-        //ActionContext copiedContext = actionContext.copy(context.getParentContext());
-        //copiedContext.clearChildren();
-        //copiedContext.resetContext();
-        //actionContext.addChildContext(copiedContext);
         break;
       case RETRY:
         //Get the failed action which caused recovery and add a reinitialized copy as the next child

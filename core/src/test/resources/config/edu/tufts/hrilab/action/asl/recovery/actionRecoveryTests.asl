@@ -1,5 +1,7 @@
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
 import java.util.List;
+import java.lang.String;
 
 () = pickUp() {
     act:opengripper();
@@ -9,6 +11,7 @@ import java.util.List;
 () = pickUpFail() {
     act:closegripper();
     act:pickup();
+    op:log("info","[pickUpFail] complete");
 }
 
 () = openGripperActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {

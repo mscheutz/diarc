@@ -49,14 +49,14 @@ public class Recovery {
      */
     private Justification originalFailureJustification = null;
     /**
-     * (ActionRecovery) The direct child context whose failure triggered recovery (whether it was this context directly
-     *  or a descendent of this context). Stored for RETRY post recovery execution.
+     * (ActionRecovery) The direct child context whose failure triggered recovery (whether it was initially this context
+     * directly or a descendant of this context). Stored for RETRY post recovery execution.
      */
     private ActionContext failedChildContext = null;
     /**
      * (ActionRecovery) Indication of whether the leaf action which failed is a direct child of this catching context or not.
-     *  Used in action recovery where a specific catchingContext signature is not defined, to prevent every subsequent
-     *  node from entering recovery.
+     *  Used in action recovery where a specific catchingContext signature is not defined, to ensure only the parent
+     *  attempts recovery and to prevent every subsequent ancestor from entering recovery in case of failure.
      */
     private boolean failedActionIsChild = false;
 
@@ -72,7 +72,17 @@ public class Recovery {
      */
     private PostRecoveryExecutionType postRecoveryExecutionType = null;
 
-    private boolean retryingContextExecution = false;
+    /**
+     * An indication of whether this Recovery instance's associated context is currently undergoing execution which is
+     * part of a 'repeated attempt' after a recovery policy has been successfully executed. This is possible any time in
+     * goal recovery when replanning, and in action recovery when postRecoveryExecutionType is RETRY or PARENT_RETRY.
+     * In these situations we want to perform extra checks to prevent easy-to-detect cases of a recovery policy not
+     * sufficiently affecting the world and causing infinitely looping recovery.
+     * 0 == Goal Recovery (Never gets reset because the goal either succeeds or recovery is re-entered)
+     * 1 == RETRY (Must be reset after the reattempted child context is complete)
+     * 2 == PARENT_RETRY (Never gets reset because the context either completes or recovery is re-entered)
+     */
+    private int retryingContextExecution = -1;
 
     public Recovery() {
         super();
@@ -125,11 +135,23 @@ public class Recovery {
         postRecoveryExecutionType = null;
     }
 
+    // TODO: feel like relationship between recovery and context can change to prevent this
+    /**
+     * Called when this Recovery's corresponding ActionContext calls setupNextStep from its parser
+     */
+    public void signalStep() {
+        // TODO: make test for this
+        // If execution continues from the parser, means that the re-executed context has terminated successfully.
+        if (retryingContextExecution == 1) {
+            retryingContextExecution = -1;
+        }
+    }
+
     public boolean shouldAttemptRecovery(ActionStatus actionStatus, Justification justification, Context context) {
         lastFailureJustification = justification;
         lastFailureStatus = actionStatus;
 
-        //Can't recover from leaf context itself. Need to at least be one step up in order to be in the correct place to
+        // Can't recover from leaf context itself. Need to at least be one step up in order to be in the correct place to
         //  handle the tree/execution after recovery completes.
         if (context.getChildContexts().isEmpty()) {
             return false;
@@ -188,24 +210,26 @@ public class Recovery {
         return new ParameterizedAction(selectedRecoveryAction, arguments);
     }
 
-    //TODO: have way to override postRecoveryBehavior from within execution of the recovery policy
+    //TODO: have way to override postRecoveryBehavior from within execution of the recovery policy (potential solution in doc)
     public void updateRecoveryStatus(Context context) {
         if (recoveryStatus == RecoveryStatus.RECOVER && context.getChildContexts().getCurrent().isSuccess()) {
             if (failureInfo.contextType == RecoveryType.GOAL) {
                 // (GoalRecovery) if in RECOVER mode, and last goal (i.e., recover goal) succeeded, go back to PLAN mode
                 recoveryStatus = RecoveryStatus.PLAN;
-                // Similarly want to prevent infinite recovery loops if recovery policy didn't actually fix anything and
-                //  execution ends up failing in the same exact way.
-                // Same logic used for checking in the action recovery case works. Can separate this reasoning if we
-                //  want different behavior
-                retryingContextExecution = true;
+                // Set flag to check for infinite recovery loops if recovery policy didn't actually fix anything and
+                //  replanning ends up failing in the same exact way.
+                retryingContextExecution = 0;
             } else {
-                // (ActionRecovery) if in RECOVER mode, and last goal (i.e., recover goal) succeeded, set status to
-                //  SUCCESS and allow ActionContext to handle post recovery execution based on postRecoveryExecutionType
-                if (postRecoveryExecutionType == PostRecoveryExecutionType.RETRY || postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_RETRY) {
-                    retryingContextExecution = true;
-                }
+                // (ActionRecovery) if in RECOVER mode, and last goal (i.e., recover goal) succeeded, set status to SUCCESS.
+                //  ActionContext will set up next child(ren) based on postRecoveryExecutionType.
                 recoveryStatus = RecoveryStatus.SUCCESS;
+                // Set flag to check for infinite recovery loops if recovery policy didn't actually fix anything and
+                //  retrying contexts ends up failing in the same exact way.
+                if (postRecoveryExecutionType == PostRecoveryExecutionType.RETRY) {
+                    retryingContextExecution = 1;
+                } else if (postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_RETRY) {
+                    retryingContextExecution = 2;
+                }
             }
         }
     }
@@ -242,7 +266,7 @@ public class Recovery {
         failureInfo = new FailureInformation();
         if (context instanceof GoalContext) {
             goalContext = (GoalContext)context;
-            // TODO: Is this desired?
+            // TODO Q: Is this desired or should be left up to the developer?
             //// Don't allow goal recovery for a goal which is simply an action, should use action recovery which would have been applied on the child already
             //if (goalContext.getGoal().isAction()) {
             //    return null;
@@ -275,8 +299,8 @@ public class Recovery {
         ActionDBEntry recoveryPolicy = recoveryPolicies.get(0);
 
         postRecoveryExecutionType = recoveryPolicy.getPolicyConstraints().postRecoveryExecutionType;
-        originalFailureStatus = lastFailureStatus;
-        originalFailureJustification = lastFailureJustification;
+        originalFailureStatus = originalFailureStatus == null ? lastFailureStatus : originalFailureStatus;
+        originalFailureJustification = originalFailureJustification == null ? lastFailureJustification : originalFailureJustification;
 
         return recoveryPolicy;
     }
@@ -331,8 +355,6 @@ public class Recovery {
                ((ActionContext) context.getChildContexts().get(0)).getDBE() == selectedRecoveryAction;
     }
 
-    //TODO: In general, I'm sure other scenarios exist where this can occur. How much of this is developer
-    // misuse/bad policy implementation vs unsafe recovery implementation? 
     /**
      * Helper method to determine whether the supplied context is entering a repeated recovery loop
      */
@@ -341,25 +363,25 @@ public class Recovery {
             return false;
         }
 
-        //Case 1: Prevent infinite recovery when using a poorly defined policy alongside 'postrecovery_retry' or 'postrecovery_parent_retry' execution
-        //TODO: when to reset retryingContextExecution?
-        if (retryingContextExecution) {
-            //If we are currently undergoing re-execution of a context after recovery, make sure identical recovery isn't
-            //  triggered during that re-execution. The selected policy will be cached by the time this method is hit.
-            PostRecoveryExecutionType retryType = selectedRecoveryAction.getPolicyConstraints().postRecoveryExecutionType;
-
+        //Overall Q is how much responsibility for this should be put solely on the developer vs aided here in this way?
+        //TODO: Is the below trying to do too much while not achieving enough? This checks a level deeper than otherwise,
+        //  but to match properly in the presence of conditional branches or repeated actions, one would need to literally
+        //  match entire branches context by context. Worth leaving this much here?
+        //  Could add in ExplorationGoalRecovery behavior here, where the same failure is allowed N times before returning true
+        //Case 1: Prevent infinite recovery when using a poorly defined/acting policy (don't allow the same recovery
+        //  policy to be applied when re-executing context(s) after said policy was just applied)
+        if (retryingContextExecution > -1 && lastFailureStatus.compareTo(originalFailureStatus) == 0 &&
+                lastFailureJustification.equals(originalFailureJustification)) {
             int count = 1;
             int childrenSize = context.getChildContexts().size();
             //Search children backwards for the same recovery policy as the one currently selected (while counting)
             while (count < childrenSize) {
                 Context childContext = context.getChildContexts().get(childrenSize - count);
                 if (isSelectedRecovery(childContext)) {
-                    if (retryType == PostRecoveryExecutionType.RETRY) {
-                        //If RETRY, just need to check if the previous child is the same recovery policy
+                    if (retryingContextExecution == 0 || retryingContextExecution == 1) {
+                        //Check if the previous child is the same recovery policy
                         return count == 2;
-                    } else if (retryType == PostRecoveryExecutionType.PARENT_RETRY) {
-                        //TODO: this isn't necessarily true with conditional branches - to do this 100% safely would
-                        //      essentially need to check if all steps are the same
+                    } else if (retryingContextExecution == 2) {
                         //If PARENT_RETRY, check if the previous execution trace was the same length as the current one
                         if (childrenSize == count * 2 - 1) {
                             //Single previous trace
@@ -389,7 +411,9 @@ public class Recovery {
                 continue;
             }
             if (recovery.getStatus() == RecoveryStatus.RECOVER) {
-                return lastFailureStatus.compareTo(recovery.originalFailureStatus) == 0 && lastFailureJustification.equals(recovery.originalFailureJustification);
+                return lastFailureStatus.compareTo(recovery.originalFailureStatus) == 0 &&
+                        lastFailureJustification.equals(recovery.originalFailureJustification) &&
+                        selectedRecoveryAction.equals(recovery.selectedRecoveryAction);
             }
             context = context.getParentContext();
         }
