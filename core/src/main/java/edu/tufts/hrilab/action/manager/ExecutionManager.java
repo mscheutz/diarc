@@ -1993,7 +1993,7 @@ public class ExecutionManager implements ActionListener {
    * Display a GUI for this goal manager
    */
   public void showEditor(String path) {
-    gui = new GoalManagerGUI(this, path, new HashMap<>(), new HashSet<>());
+    gui = new GoalManagerGUI(this, path);
   }
 
   public StateMachine getStateMachine() {

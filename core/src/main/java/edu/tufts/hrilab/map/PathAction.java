@@ -12,7 +12,9 @@ import edu.tufts.hrilab.fol.Symbol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PathAction {
+import java.io.Serializable;
+
+public class PathAction implements Serializable {
 
   public enum Type {
     ACTION_GOTO,

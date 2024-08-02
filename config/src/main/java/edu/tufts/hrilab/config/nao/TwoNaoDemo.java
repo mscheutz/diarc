@@ -36,9 +36,9 @@ public class TwoNaoDemo extends DiarcConfiguration {
 
     if (simSpeech) {
       createInstance(SimSpeechRecognitionComponent.class,
-              "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster");
+              "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -addressee dempster");
       createInstance(SimSpeechRecognitionComponent.class,
-              "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -listener dempster");
+              "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -addressee dempster");
     }
 
     if (useSphinx) {

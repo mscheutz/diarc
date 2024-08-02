@@ -3,7 +3,6 @@
 
 /* agents the system should know about */
 name(robot1,robot1). /* we might want this to be dynamic too */
-name(robot2,robot2).
 
 actor(brad).
 actor(tyler).
@@ -15,22 +14,18 @@ actor(player2).
 
 diarcAgent(self).
 diarcAgent(robot1).
-diarcAgent(robot2).
 diarcAgent(dempster).
 diarcAgent(shafer).
 diarcAgent(andy).
 
 memberOf(X,X).
 memberOf(robot1, self).
-memberOf(robot2, self).
 object(robot1, agent).
-object(robot2, agent).
 
 object(self, agent).
 team(self).
 
 amIn(robot1,alpha).
-amIn(robot2,beta).
 workload(1).
 distraction(1).
 propertyOf(betarighttwo,damaged(100)).

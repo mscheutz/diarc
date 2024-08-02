@@ -10,6 +10,7 @@ import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Completion;
 import edu.tufts.hrilab.llm.Message;
+import edu.tufts.hrilab.llm.VisionMessage;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.util.Http;
 
@@ -35,15 +36,17 @@ public class OpenaiClient {
   private String chatCompletionEndpoint = "https://api.openai.com/v1/chat/completions";
 
   //if alternate is true, use OpenAI API without API Key and limitations on /v1/completions
-  private boolean canonical = false;
+  private boolean canonical = true;
 
   private String apiKey = null;
   private int maxTokens;
-  private String model = "gpt-3.5-turbo";
+  private String model = "gpt-4o";
 
   // https://platform.openai.com/docs/models
   // 2024-02-09
   public static Map<String, Integer> chatCompletionModels = Map.ofEntries(
+    entry("gpt-4o", 128000),
+    entry("gpt-4o-2024-05-13", 128000),
     entry("gpt-3.5-turbo", 4096),
     entry("gpt-3.5-turbo-0125", 16385),
     entry("gpt-3.5-turbo-0301", 4096),
@@ -226,6 +229,16 @@ public class OpenaiClient {
   }
 
   /**
+   * Performs an OpenAI chat completion using VisionMessage
+   * @param messages a list of messages to be sent for chat completion
+   * @return an OpenaiChatCompletionResponse object representing the response from OpenAI
+   **/
+  public OpenaiChatCompletionResponse visionCompletion (List<VisionMessage> vmessages) {
+    OpenaiVisionRequestBody requestBody = new OpenaiVisionRequestBody(model, vmessages);
+    return chatCompletion(requestBody);
+  }
+
+  /**
    * Completes a chat prompt using the OpenAI API.
    * https://platform.openai.com/docs/api-reference/chat
    * @param requestBody an OpenaiChatRequestBody object containing the chat model and messages
@@ -254,6 +267,31 @@ public class OpenaiClient {
       headers.put("Authorization", "Bearer " + apiKey);
     }
     Gson gson = new Gson();
+    String response = Http.sendPostRequest(chatCompletionEndpoint, requestBody, headers);
+    log.debug("Response: " + response);
+    return gson.fromJson(response, OpenaiChatCompletionResponse.class);
+  }
+  /**
+   * Completes a chat prompt using the OpenAI API.
+   * https://platform.openai.com/docs/api-reference/chat
+   * @param requestBody an OpenaiChatRequestBody object containing the chat model and messages
+   * @return an OpenaiChatCompletionResponse object representing the response from OpenAI
+   **/
+  private OpenaiChatCompletionResponse chatCompletion (OpenaiVisionRequestBody requestBody) {
+    if (canonical && apiKey == null) {
+      log.error("Cannot complete request without an API key for OpenAI.");
+      return null;
+    }
+    if (canonical && !chatCompletionModels.containsKey(requestBody.model)) {
+      log.error("Model " + model + " cannot be used with the OpenAI chat completion endpoint.");
+      return null;
+    }
+    Map<String, String> headers = new HashMap<>();
+    if (canonical) {
+      headers.put("Authorization", "Bearer " + apiKey);
+    }
+    Gson gson = new Gson();
+    log.debug(gson.toJson(requestBody));
     String response = Http.sendPostRequest(chatCompletionEndpoint, requestBody, headers);
     log.debug("Response: " + response);
     return gson.fromJson(response, OpenaiChatCompletionResponse.class);

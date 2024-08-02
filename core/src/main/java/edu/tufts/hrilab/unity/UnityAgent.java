@@ -34,6 +34,8 @@ public class UnityAgent extends DiarcComponent {
 	public String agent = ""; //name of agent, must match Unity
   public boolean isConnected = false;
 
+  private Symbol addressee;
+
 	public UnityAgent() {
     super();
   }
@@ -42,6 +44,7 @@ public class UnityAgent extends DiarcComponent {
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("agent").hasArg().argName("agent").desc("Set the agent name.").build());
+    options.add(Option.builder("nullAddressee").argName("bool").desc("Use a null addressee.").build());
     return options;
   }
 
@@ -51,6 +54,12 @@ public class UnityAgent extends DiarcComponent {
       agent = cmdLine.getOptionValue("agent");
     } else {
     	log.error("Agent name is required to route messages from Unity");
+    }
+    if (cmdLine.hasOption("nullAddressee")) {
+      addressee = Factory.createSymbol("unknown");
+      log.debug("Agent " + agent + " is using a default null addressee");
+    } else {
+      addressee = Factory.createSymbol(this.agent);
     }
   }
 
@@ -81,11 +90,13 @@ public class UnityAgent extends DiarcComponent {
    */
   protected void listen (Message msg) {
     String text = msg.arguments.get(1);
-
-    Symbol speaker = Factory.createSymbol("commX");
-    Symbol listener = Factory.createSymbol(this.agent);
-    Utterance utterance = new Utterance(speaker, listener, Arrays.asList(text.split(" ")), null, true);
-    listen(utterance);
+    Symbol speaker = Factory.createSymbol(msg.arguments.get(0));
+    Utterance.Builder utterance = new Utterance.Builder()
+      .setWords(Arrays.asList(text.split(" ")))
+      .setSpeaker(speaker)
+      .setAddressee(addressee)
+      .setIsInputUtterance(true);
+    listen(utterance.build());
   }
 
   protected void listen (Utterance input) {

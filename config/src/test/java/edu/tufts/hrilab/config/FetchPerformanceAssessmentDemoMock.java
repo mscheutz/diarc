@@ -30,7 +30,7 @@ public class FetchPerformanceAssessmentDemoMock extends DiarcConfiguration {
   // start the configuration
   @Override
   public void runConfiguration() {
-    String simRecArgs = "-config performanceAssessment.simspeech -speaker tyler -listener andy:agent ";
+    String simRecArgs = "-config performanceAssessment.simspeech -speaker tyler -addressee andy:agent ";
     if (!showGUI) {
       simRecArgs += "-nogui";
     }
