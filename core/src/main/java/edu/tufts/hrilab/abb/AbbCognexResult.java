@@ -2,17 +2,18 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-package edu.tufts.hrilab.abb.consultant.cognex;
+package edu.tufts.hrilab.abb;
 
 
 import edu.tufts.hrilab.abb.consultant.pose.WobjData;
+import edu.tufts.hrilab.cognex.consultant.CognexResult;
 
-public class CognexResult {
+public class AbbCognexResult implements CognexResult {
   //Members
 
   WobjData wobj;
 
-  public CognexResult(WobjData data) {
+  public AbbCognexResult(WobjData data) {
     wobj = data;
   }
 

@@ -2,7 +2,7 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-package edu.tufts.hrilab.abb.consultant.cognex;
+package edu.tufts.hrilab.cognex.consultant;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
@@ -22,32 +22,26 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
 
   //TODO:brad: combine this with jobIndices
-  protected Set<CognexJob> availableJobs;
-  protected Map<String, CognexJob> boundJobs;
-  //todo: the pose shouldn't be stored as a String.
-  protected Map<CognexJob, String> graspPoses;
-
+  protected Set<CognexJob> availableJobs = new HashSet<>();
+  protected Map<String, CognexJob> boundJobs = new HashMap<>();
   protected Set<Symbol> lessSalientRefIds = new HashSet<>();
 
-  protected static int refNumber = 0;
+  /**
+   * Group identifier to be prepended to reference names
+   */
+  protected String groupNames;
 
   public CognexConsultant() {
     super(CognexReference.class, "physobj");
-    //Jobs
-    availableJobs = new HashSet<>();
-    CognexJob tray = new CognexJob("tray", "detector");
-    availableJobs.add(tray);
-    CognexJob milk = new CognexJob("detMilk", "detector");
-    availableJobs.add(milk);
+  }
 
-    boundJobs = new HashMap<>();
-    boundJobs.put("tray", tray);
-
-    graspPoses = new HashMap<>();
-
-    //todo: remove. this should be taught
-    graspPoses.put(milk,
-            "[[15.01,-6.92,-356.49],[0.0209832,0.999589,-0.0176748,0.00825884],[0,-1,-1,4],[153.745,9E+09,9E+09,9E+09,9E+09,9E+09]]");
+  public CognexConsultant(List<String> groups) {
+    super(CognexReference.class, "physobj");
+    StringBuilder sb = new StringBuilder();
+    for (String group : groups) {
+      sb.append(group.split(":")[1]);//todo: this wants the second portion of agent:robotone, and nothing else? hacky.
+    }
+    groupNames = sb.toString();
   }
 
   @Override
@@ -174,6 +168,16 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
     return Factory.createSymbol(descriptorName);
   }
 
+  @TRADEService
+  @Action
+  public CognexReference createCogRefWithProps(CognexJob j, List<Term> additionalProperties) {
+    CognexReference ref = createCognexRef(j, additionalProperties);
+    if (!additionalProperties.isEmpty()) {
+      //TODO:brad:what happens if these are duplicate?
+      assertProperties(ref.refId, additionalProperties);
+    }
+    return ref;
+  }
 
   public CognexReference createCognexRef(CognexJob job, List<Term> additionalProps) {
 
@@ -239,129 +243,16 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   }
 
 
-  //todo: does not handle general race conditions on ref management across consultants.
-  //todo: duplicates code in the diarc PoseConsultant. We didn't want to implement a non-general
-  //  version of reference sharing in the base Consultant class, but this is needed since
-  //  the reference counter is no longer static in the base class.
-
   /**
-   * Generates the new refId based on the refNumber counter, and increments. Informs all other
-   * consultants with the same kbName of the current ref being allocated to attempt to maintain sync
-   * and avoid duplicating refs.
+   * Helper method to generate next unique reference ID. Prepends group names to references to avoid conflicts
+   * across duplicate consultants sharing kbNames.
    *
    * @return
    */
   @Override
   protected Symbol getNextReferenceId() {
-    Symbol newReferenceId = Factory.createSymbol(kbName + "_" + refNumber++ + ":" + kbName);
-    return newReferenceId;
+    return Factory.createSymbol(groupNames + kbName + "_" + refNumber++ + ":" + kbName);
   }
-
-
-  @TRADEService
-  @Action
-  public CognexJob getCognexJobForDescriptor(Symbol descriptor) {
-    return getJobForDescriptor(descriptor.getName());
-  }
-
-  @TRADEService
-  @Action
-  public CognexReference createCogRefWithProps(CognexJob j, List<Term> additionalProperties) {
-    CognexReference ref = createCognexRef(j, additionalProperties);
-    if (!additionalProperties.isEmpty()) {
-      //TODO:brad:what happens if these are duplicate?
-      assertProperties(ref.refId, additionalProperties);
-    }
-    return ref;
-  }
-
-  @TRADEService
-  @Action
-  public void bindCognexResult(CognexReference ref, CognexResult result, int indexIntoCognexResult) {
-    log.debug("Binding: " + ref.refId + " to cognex result index: " + indexIntoCognexResult);
-    ref.setResult(result);
-    try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("updateFOC")).call(void.class, ref.refId);
-    } catch (TRADEException e) {
-      log.error("[bindCognexResult] Exception calling updateFOC: ", e);
-    }
-  }
-
-  @TRADEService
-  @Action
-  public List<Term> getEmptyProps() {
-    return new ArrayList<>();
-  }
-
-
-  // set of actions which otherwise might be on a component above the consultant. unclear how this is organized for real robots
-
-  /**
-   * Returns the CognexJob able to detect the given reference, if it exists.
-   *
-   * @param ref The CognexReference to fetch the matching CognexJob of.
-   * @return The CognexJob associated with this reference.
-   */
-  @TRADEService
-  @Action
-  public CognexJob getCognexJobForCognexReference(CognexReference ref) {
-    return ref.cognexJob;
-  }
-
-  @TRADEService
-  @Action
-  public CognexReference getCognexReferenceForID(Symbol refId) {
-    Symbol s = refId;
-    CognexReference ret = getReference(s);
-    if (ret == null) {
-      log.warn("[getCognexReferenceForID] null reference found for id: " + s);
-    }
-    return ret;
-  }
-
-  //todo: this should have some data structure other than a string.
-
-  public void setGraspPointForJob(CognexJob job, String graspPoint) {
-    graspPoses.put(job, graspPoint);
-  }
-
-  //todo: string isn't really good enough.
-  public String getGraspPoseForJob(CognexJob job) {
-    return graspPoses.get(job);
-  }
-
-  @TRADEService
-  @Action
-  public CognexResult getMatchingResult(CognexReference toReBind, List<CognexResult> results) {
-    return results.get(0);
-  }
-
-  //todo: naming? this is basically duplicating other functionality, but it's nice to have it all wrapped up in a single TRADE service.
-  @TRADEService
-  @Action
-  public Symbol createCogRefWithProperty(Symbol jobDescriptor, Term property) {
-    CognexReference ref = createCogRefWithProps(getCognexJobForDescriptor(jobDescriptor), new ArrayList<>(Arrays.asList(property)));
-    //todo: shouldn't have to do this lookup this way. should have the refId already.
-    for (Map.Entry<Symbol, CognexReference> e : references.entrySet()) {
-      if (e.getValue().equals(ref)) {
-        return e.getKey();
-      }
-    }
-    return null;
-  }
-
-
-//    /**
-//     * runs a job for the given ?descriptor and saves the results in the cognex consultant
-//     * @param descriptor human understandable binding to cognex job
-//     */
-//    @TRADEService
-//    @Action
-//    public void observeDescriptor(Symbol descriptor){
-//        CognexJob job=getCognexJobForDescriptor(descriptor);
-//        List<CognexResult> cameraResults= getCameraData(job.getName());
-//        bindResultsRecursive(job,cameraResults,0);
-//    }
 
   @Override
   public void addReference(CognexReference newRef) {
@@ -386,4 +277,56 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
     }
     return toReturn;
   }
+
+  //todo: naming? this is basically duplicating other functionality, but it's nice to have it all wrapped up in a single TRADE service.
+  @TRADEService
+  @Action
+  public Symbol createCogRefWithProperty(Symbol jobDescriptor, Term property) {
+    CognexReference ref = createCogRefWithProps(getCognexJobForDescriptor(jobDescriptor), new ArrayList<>(Arrays.asList(property)));
+    //todo: shouldn't have to do this lookup this way. should have the refId already.
+    return ref.refId;
+  }
+
+  @TRADEService
+  @Action
+  public CognexJob getCognexJobForDescriptor(Symbol descriptor) {
+    return getJobForDescriptor(descriptor.getName());
+  }
+
+
+  @TRADEService
+  @Action
+  public void bindCognexResult(CognexReference ref, CognexResult result, int indexIntoCognexResult) {
+    log.debug("Binding: " + ref.refId + " to cognex result index: " + indexIntoCognexResult);
+    ref.setResult(result);
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("updateFOC")).call(void.class, ref.refId);
+    } catch (TRADEException e) {
+      log.error("[bindCognexResult] Exception calling updateFOC: ", e);
+    }
+  }
+
+  /**
+   * Returns the CognexJob able to detect the given reference, if it exists.
+   *
+   * @param ref The CognexReference to fetch the matching CognexJob of.
+   * @return The CognexJob associated with this reference.
+   */
+  @TRADEService
+  @Action
+  public CognexJob getCognexJobForCognexReference(CognexReference ref) {
+    return ref.cognexJob;
+  }
+
+  @TRADEService
+  @Action
+  public CognexReference getCognexReferenceForID(Symbol refId) {
+    Symbol s = refId;
+    CognexReference ret = getReference(s);
+    if (ret == null) {
+      log.warn("[getCognexReferenceForID] null reference found for id: " + s);
+    }
+    return ret;
+  }
+
 }

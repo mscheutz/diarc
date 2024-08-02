@@ -5,7 +5,7 @@ plugins {
 }
 
 repositories {
-//  mavenLocal()
+  mavenLocal()
   mavenCentral() // main maven archive
     maven { // hrilab archive
     name = "HRILabArchiva"

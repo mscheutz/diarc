@@ -2,8 +2,9 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-package edu.tufts.hrilab.abb.consultant.cognex;
+package edu.tufts.hrilab.cognex.consultant;
 
+import edu.tufts.hrilab.abb.AbbCognexResult;
 import edu.tufts.hrilab.consultant.Reference;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Variable;

@@ -85,7 +85,7 @@ public class MultiRobotCaddyDemoMock extends DiarcConfiguration {
                 goalManagerArgs
         );
 
-        createInstance(MockFirebaseConnectionComponent.class, "-dialogue -emulator -firebaseGroup TuftsDemo -action -dbaction planned -dbfile /config/edu/tufts/hrilab/action/asl/demos/multiRobotCaddy.asl -dbfile /config/edu/tufts/hrilab/action/asl/domains/multiRobotCaddy.asl");
+//        createInstance(MockFirebaseConnectionComponent.class, "-dialogue -emulator -firebaseGroup TuftsDemo -action -dbaction planned -dbfile /config/edu/tufts/hrilab/action/asl/demos/multiRobotCaddy.asl -dbfile /config/edu/tufts/hrilab/action/asl/domains/multiRobotCaddy.asl");
 
         //brad: this is last so the GUI window is on top
         simSpeechRec = createInstance(SimSpeechRecognitionComponent.class,
