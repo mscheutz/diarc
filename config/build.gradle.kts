@@ -218,7 +218,11 @@ repositories {
   maven {
     url = uri("https://plugins.gradle.org/m2/")
   }
-  mavenLocal() // local maven archive
+//  mavenLocal() // local maven archive
+  maven {
+    name = "Thinking Robots mtracs mock"
+    url = uri("https://gitlab.com/api/v4/projects/34394212/packages/maven/")
+  }
   maven { // hrilab archive
     name = "HRILabArchiva"
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
