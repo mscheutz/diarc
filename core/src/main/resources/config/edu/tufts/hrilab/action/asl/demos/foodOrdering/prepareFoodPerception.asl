@@ -67,28 +67,6 @@ import java.util.List;
     }
 }
 
-() = perceiveEntityFromSymbol["runs a job for a given pre-existing ?refId and binds the relevant result to that reference"](edu.tufts.hrilab.fol.Symbol ?refId:physobj) {
-    java.util.List !cameraResults;
-    java.lang.String !jobName;
-    edu.tufts.hrilab.abb.consultant.cognex.CognexJob !job;
-    edu.tufts.hrilab.abb.consultant.cognex.CognexResult !result;
-    edu.tufts.hrilab.abb.consultant.cognex.CognexReference !ref;
-
-    (!ref) = act:getCognexReferenceForID(?refId);
-
-    (!job) = act:getCognexJobForCognexReference(!ref);
-    (!jobName) = op:invokeMethod(!job, "getName");
-    (!cameraResults) = act:getCameraData(!jobName);
-    if (op:isEmpty(!cameraResults)) {
-        op:log("warn","[perceiveEntityFromSymbol] failed to get cognex results");
-    } else {
-        (!result) = act:getMatchingResult(!ref,!cameraResults);
-//        bind reference to the result that it matches
-        act:bindCognexResult(!ref, !result, 0);
-        op:log("info","[perceiveEntityFromSymbol] Bound !result to !ref");
-    }
-}
-
 () = invalidateReference["todo: (pete) document"](Symbol ?refId:physobj){
     Predicate !toRetract;
     act:removeReference(?refId);
