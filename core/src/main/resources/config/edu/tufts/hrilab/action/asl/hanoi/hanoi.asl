@@ -13,7 +13,7 @@ import java.util.List;
         success : not(over(?actor, ?from));
     }
     op:log(info,"reach_pick");
-    act:callPolicy(1);
+    act:callPolicy("reach_pick(?from,?to)");
 }
 
 () = reach_drop(Symbol ?disc:disc, Symbol ?from:stackable, Symbol ?to:stackable) {
@@ -26,7 +26,7 @@ import java.util.List;
         success : over(?actor, ?to);
         success : not(over(?actor, ?from));
     }
-    act:callPolicy(2);
+    act:callPolicy("reach_drop(?disc,?from,?to)");
 
     op:log(info,"reach_drop");
 }
@@ -47,7 +47,7 @@ import java.util.List;
         success : over(?actor, ?from);
         success : clear(?from);
     }
-    act:callPolicy(3);
+    act:callPolicy("pick(?disc,?from)");
 
     op:log(info,"pick");
 }
@@ -67,7 +67,7 @@ import java.util.List;
         success : on(?disc, ?to);
         success : free(?actor);
     }
-    act:callPolicy(4);
+    act:callPolicy("drop(?disc,?to)");
 
     op:log(info,"drop");
     //act:failureTest();

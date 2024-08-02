@@ -7,7 +7,7 @@ public interface PythonRLInterface {
 
     @TRADEService
     @Action
-    public boolean callPolicy(int policyNumber);
+    public boolean callPolicy(String action);
 
     @TRADEService
     @Action
