@@ -1045,7 +1045,7 @@ define new item; C/DESC; #x.defineItem(?ADDRESSEE,$x)
 
 generate robot code for; C/C; #x.translateGoal(?ADDRESSEE,$x)
 
-verify that you can see; C/REF; #r.verifyYouCanSee(?ADDRESSEE,$r)
+verify that you can see; C/REF; #r.perceiveEntity(?ADDRESSEE,$r)
 
 on; (C/REF)\REF; #x#y.getOn(?ADDRESSEE,$x,$y)
 in; (C/REF)\REF; #x#y.getOn(?ADDRESSEE,$x,$y)

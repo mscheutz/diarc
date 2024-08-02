@@ -8,7 +8,6 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import edu.tufts.hrilab.abb.AbbCognexResult;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.consultant.Consultant;
 import edu.tufts.hrilab.fol.Factory;
@@ -23,23 +22,26 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
 
   //TODO:brad: combine this with jobIndices
-  protected Set<CognexJob> availableJobs;
-  protected Map<String, CognexJob> boundJobs;
+  protected Set<CognexJob> availableJobs = new HashSet<>();
+  protected Map<String, CognexJob> boundJobs = new HashMap<>();
   protected Set<Symbol> lessSalientRefIds = new HashSet<>();
 
-  protected static int refNumber = 0;
+  /**
+   * Group identifier to be prepended to reference names
+   */
+  protected String groupNames;
 
   public CognexConsultant() {
     super(CognexReference.class, "physobj");
-    //Jobs
-    availableJobs = new HashSet<>();
-    CognexJob tray = new CognexJob("tray", "detector");
-    availableJobs.add(tray);
-    CognexJob milk = new CognexJob("detMilk", "detector");
-    availableJobs.add(milk);
+  }
 
-    boundJobs = new HashMap<>();
-    boundJobs.put("tray", tray);
+  public CognexConsultant(List<String> groups) {
+    super(CognexReference.class, "physobj");
+    StringBuilder sb = new StringBuilder();
+    for (String group : groups) {
+      sb.append(group.split(":")[1]);//todo: this wants the second portion of agent:robotone, and nothing else? hacky.
+    }
+    groupNames = sb.toString();
   }
 
   @Override
@@ -241,25 +243,16 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   }
 
 
-  //todo: does not handle general race conditions on ref management across consultants.
-  //todo: duplicates code in the diarc PoseConsultant. We didn't want to implement a non-general
-  //  version of reference sharing in the base Consultant class, but this is needed since
-  //  the reference counter is no longer static in the base class.
-
   /**
-   * Generates the new refId based on the refNumber counter, and increments. Informs all other
-   * consultants with the same kbName of the current ref being allocated to attempt to maintain sync
-   * and avoid duplicating refs.
+   * Helper method to generate next unique reference ID. Prepends group names to references to avoid conflicts
+   * across duplicate consultants sharing kbNames.
    *
    * @return
    */
   @Override
   protected Symbol getNextReferenceId() {
-    Symbol newReferenceId = Factory.createSymbol(kbName + "_" + refNumber++ + ":" + kbName);
-    return newReferenceId;
+    return Factory.createSymbol(groupNames + kbName + "_" + refNumber++ + ":" + kbName);
   }
-
-
 
   @Override
   public void addReference(CognexReference newRef) {
@@ -303,7 +296,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
   @TRADEService
   @Action
-  public void bindCognexResult(CognexReference ref, AbbCognexResult result, int indexIntoCognexResult) {
+  public void bindCognexResult(CognexReference ref, CognexResult result, int indexIntoCognexResult) {
     log.debug("Binding: " + ref.refId + " to cognex result index: " + indexIntoCognexResult);
     ref.setResult(result);
     try {
@@ -311,12 +304,6 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
     } catch (TRADEException e) {
       log.error("[bindCognexResult] Exception calling updateFOC: ", e);
     }
-  }
-
-  @TRADEService
-  @Action
-  public List<Term> getEmptyProps() {
-    return new ArrayList<>();
   }
 
   /**
@@ -342,9 +329,4 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
     return ret;
   }
 
-  @TRADEService
-  @Action
-  public AbbCognexResult getMatchingResult(CognexReference toReBind, List<AbbCognexResult> results) {
-    return results.get(0);
-  }
 }

@@ -11,14 +11,18 @@
     edu.tufts.hrilab.fol.Symbol !jobNameM3="holeM3";
     edu.tufts.hrilab.fol.Symbol !descriptorM3D="deepM3Hole";
     edu.tufts.hrilab.fol.Symbol !jobNameM3D="holeDeep";
+    edu.tufts.hrilab.fol.Symbol !screwHead="screwHead";
+    edu.tufts.hrilab.fol.Symbol !mountJob="feedrDet";
 //
     //add descriptor -> Cognex job mappings
     //This is mainly left as example code, this is handled within CognexConsultant now
     !robotone.tsc:addDetectionType(!descriptorM3,!jobNameM3);
     !robotone.tsc:addDetectionType(!descriptorM3D,!jobNameM3D);
+    !robotone.tsc:addDetectionType(!screwHead,!mountJob);
     if (op:equals(!twoRobots, true)) {
         !robottwo.tsc:addDetectionType(!descriptorM3,!jobNameM3);
         !robottwo.tsc:addDetectionType(!descriptorM3D,!jobNameM3D);
+        !robottwo.tsc:addDetectionType(!screwHead,!mountJob);
     }
 
     //specify height of object to be used in calculations to determine z height

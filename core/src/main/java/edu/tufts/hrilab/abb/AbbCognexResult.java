@@ -6,8 +6,9 @@ package edu.tufts.hrilab.abb;
 
 
 import edu.tufts.hrilab.abb.consultant.pose.WobjData;
+import edu.tufts.hrilab.cognex.consultant.CognexResult;
 
-public class AbbCognexResult extends CognexResult {
+public class AbbCognexResult implements CognexResult {
   //Members
 
   WobjData wobj;

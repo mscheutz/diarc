@@ -17,15 +17,20 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
   Map !bindings;
   //TODO:brad: how do we determine the addressee here?
   Symbol !addressee="james";
+  Symbol !robotone = "robotone:agent";
+  Symbol !robottwo = "robottwo:agent";
 
   (!bindings) = act:askQuestionFromString(!addressee,"which Cognex job is used to detect it", job(X));
   (!jobID) = op:get(!bindings, !x);
-  tsc:addDetectionType(?item,!jobID);
+
+  //todo: this whole thing should be addressed to the team, rather than just to one robot.
+  !robotone.tsc:addDetectionType(?item,!jobID);
+  !robottwo.tsc:addDetectionType(?item,!jobID);
 
   act:generateResponseFromString("okay");
 }
 
-() = verifyYouCanSee["Looks for an entity at the current location"](edu.tufts.hrilab.fol.Symbol ?refID) {
+() = perceiveEntity["Looks for an entity at the current location"](edu.tufts.hrilab.fol.Symbol ?refID) {
     Symbol !currPose = "current";
 
     effects : {
@@ -150,10 +155,11 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     CognexResult !result;
     CognexReference !ref;
 
+    !additionalProps = op:newArrayList("edu.tufts.hrilab.fol.Term");
+
     if (op:isEmpty(?cameraResults)) {
         return;
     } else {
-        (!additionalProps) = tsc:getEmptyProps();
         (!result) = op:invokeMethod(?cameraResults, "remove", !first);
         (!size) = op:size(?cameraResults);
         op:log("info","[bindResultsRecursive] !size results left!");
@@ -175,6 +181,9 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     CognexReference !ref;
     List !additionalProps;
 
+    !additionalProps = op:newArrayList("edu.tufts.hrilab.fol.Term");
+
+    op:log(debug, "[getRefForJob] for ?descriptor");
     (!job) = tsc:getCognexJobForDescriptor(?descriptor);
     (!jobName) = op:invokeMethod(!job, "getName");
     op:log(debug, "Job for ?descriptor: !jobName");
@@ -184,7 +193,6 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     } else {
         (!result) = op:get(!cameraResults, 0);
         //create reference and add any additional props
-        (!additionalProps) = tsc:getEmptyProps();
         (!ref) = tsc:createCogRefWithProps(!job, !additionalProps);
         //bind reference to the result that it matches
         tsc:bindCognexResult(!ref, !result, 0);

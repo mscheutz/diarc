@@ -10,7 +10,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Variable;
 
 public class CognexReference extends Reference {
-  public AbbCognexResult result = null; //token
+  public CognexResult result = null; //token
   public CognexJob cognexJob; //type
 
   @Override
@@ -30,7 +30,7 @@ public class CognexReference extends Reference {
     this.cognexJob = cognexJob;
   }
 
-  public CognexReference(Symbol objectRef, Variable variable, AbbCognexResult result, CognexJob cognexJob) {
+  public CognexReference(Symbol objectRef, Variable variable, CognexResult result, CognexJob cognexJob) {
     super(objectRef, variable);
     this.result = result;
     this.cognexJob = cognexJob;
@@ -40,7 +40,7 @@ public class CognexReference extends Reference {
     this.cognexJob = cognexJob;
   }
 
-  public void setResult(AbbCognexResult result) {
+  public void setResult(CognexResult result) {
     this.result = result;
   }
 

@@ -4,5 +4,8 @@
 
 package edu.tufts.hrilab.cognex.consultant;
 
-public class CognexResult {
+public interface CognexResult {
+
+    public String toString();
+
 }

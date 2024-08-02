@@ -11,6 +11,7 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     CognexResult !result;
     CognexReference !ref;
 
+    op:log("debug", "[perceiveEntityFromSymbol] for ?refId");
     (!ref) = tsc:getCognexReferenceForID(?refId);
 
     (!job) = tsc:getCognexJobForCognexReference(!ref);

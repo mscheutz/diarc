@@ -6,12 +6,15 @@ package edu.tufts.hrilab.abb;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
 import edu.tufts.hrilab.cognex.consultant.CognexJob;
 import edu.tufts.hrilab.cognex.consultant.CognexReference;
 import edu.tufts.hrilab.abb.consultant.pose.RWSPoseConsultant;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.cognex.consultant.CognexResult;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
@@ -41,6 +44,11 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
       Thread.sleep(ms);
     } catch (InterruptedException e) {
     }
+  }
+
+  @Override
+  public CognexResult getMatchingResult(CognexReference toReBind, List<CognexResult> results) {
+    return results.get(0);
   }
 
   @Override
