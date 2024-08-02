@@ -88,7 +88,9 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
   @Override
   public Utterance parseUtterance(Utterance input) {
     String inputString = input.getWordsAsString();
+    AlternateResponse altResponse;
     ParserResponse response = null;
+    Symbol addressee = null;
 
     log.info("parseUtterance: " + inputString);
 
@@ -100,7 +102,12 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
       }
     } else {
       try {
-        response = TRADE.getAvailableService(new TRADEServiceConstraints().name(service).argTypes(String.class)).call(ParserResponse.class, inputString);
+        altResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name(service).argTypes(String.class)).call(AlternateResponse.class, inputString);
+        response = altResponse.response;
+        if (altResponse.addressee != null) {
+          addressee = altResponse.addressee;
+          log.debug("Got addressee from alternate LLM service: " + addressee.toString());
+        }
       } catch (TRADEException ex) {
         log.error("Error calling " + service + ".", ex);
       }
@@ -128,7 +135,13 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
     Predicate semantics;
     if (UtteranceType.valueOf(response.intention.intent.toUpperCase()) == UtteranceType.INSTRUCT) {
       List<Symbol> args = new ArrayList<>();
-      args.add(input.getAddressee());
+      if (addressee != null) {
+        args.add(addressee);
+        output.setListener(addressee);
+      } else {
+        args.add(input.getAddressee());
+        output.setListener(input.getAddressee());
+      }
       Arrays.stream(prop.arguments).forEach(arg -> args.add(Factory.createFOL(arg)));
       semantics = Factory.createPredicate(prop.text, args);
     } else {

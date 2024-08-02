@@ -30,14 +30,21 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   final protected Logger log = LoggerFactory.getLogger(this.getClass());
 
   /**
-   *  (speaker->most recent addressee) . this is protected so it can be used by the component test.
+   * (speaker->most recent addressee)
    */
-  private Map<Pair<Symbol, Symbol>, Symbol> addressHistory;
+  private Map<Symbol, Symbol> addressHistory;
   /**
-   * TODO:temporary: whenever an utterance switch addressee, subsequent utterances are directed at that addressee until it is switched.
+   * The addressee for the utterance being parsed. This is cleared and updated for every utterance.
    */
-  boolean updateAddressHistory = true;
-  //(speaker -> current parse if it exists), only exists in cases of incremental input
+  private Symbol currentAddressee;
+  /**
+   * If true, use the addressHistory to keep track of most recent (speaker,addressee) pairs, in order to
+   * track addressee across utterances that don't contain explicit direct address. This is true by default.
+   */
+  private boolean useAddressHistory = true;
+  /**
+   * (speaker -> current parse if it exists), only exists in cases of incremental input
+   */
   private Map<Symbol, Parse> parses;
 
   static Dictionary dictionary;
@@ -122,7 +129,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
               .forEach(dict -> addDictionary(dict));
     }
     if (cmdLine.hasOption("noUpdateAddressee")) {
-      updateAddressHistory = false;
+      useAddressHistory = false;
     }
     if (cmdLine.hasOption("homophone")) {
       String[] cliHomophones = cmdLine.getOptionValues("homophone");
@@ -165,26 +172,43 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   }
 
   /**
-   * removes direct address wrappers from generated semantics, and updates, parser's current addressee field
+   * Updates currentAddressee and addressee history (if enabled) based on utterance semantics.
+   * Also removes direct address wrappers from generated semantics.
+   *
+   * @param semantics current utterance semantics
+   * @param speaker utterance speaker
+   * @param addressee utterance addressee
+   * @param type utterance type
+   * @return updated semantics with direct address wrapper removed
    */
-  private Symbol updateDirectAddress(Symbol semantics, Symbol interactor, Symbol listner, UtteranceType t) {
+  private Symbol updateDirectAddress(Symbol semantics, Symbol speaker, Symbol addressee, UtteranceType type) {
+    Symbol returnSemantics = semantics;
 
+    // try to extract direct address from semantics
     if (semantics.isTerm()) {
       if (semantics.getName().equals("directAddress")) {
-        addressHistory.put(Pair.of(interactor, listner), ((Term) semantics).getArgs().get(0));
-        return ((Term) semantics).get(1);
-      }
-      if (t.equals(UtteranceType.INSTRUCT)
+        currentAddressee = ((Term) semantics).getArgs().get(0);
+        returnSemantics = ((Term) semantics).get(1);
+      } else if (type.equals(UtteranceType.INSTRUCT)
               && !((Term) semantics).getArgs().isEmpty()
-              && !((Term) semantics).getArgs().get(0).getName().equals("?ADDRESSEE")
-              && !((Term) semantics).getArgs().get(0).equals(addressHistory.get(Pair.of(interactor, listner)))
-      ) {
-        if(updateAddressHistory) {
-          addressHistory.put(Pair.of(interactor, listner), ((Term) semantics).getArgs().get(0));
-        }
+              && !((Term) semantics).getArgs().get(0).getName().equals("?ADDRESSEE")) {
+        currentAddressee = ((Term) semantics).getArgs().get(0);
       }
     }
-    return semantics;
+
+    // if no direct address found in semantics, first try to use the addressee history, otherwise finally use the addressee from incoming Utterance
+    if (currentAddressee == null) {
+      if (useAddressHistory && addressHistory.containsKey(speaker)) {
+        currentAddressee = addressHistory.get(speaker);
+      } else {
+        currentAddressee = addressee;
+      }
+    } else {
+      if (useAddressHistory) {
+        addressHistory.put(speaker, currentAddressee);
+      }
+    }
+    return returnSemantics;
   }
 
   /**
@@ -211,19 +235,17 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     }
   }
 
-  private Symbol updateSpeakerNames(Symbol semantics, Symbol addressee, Symbol interactor) {
+  private Symbol updateSpeakerNames(Symbol semantics, Symbol addressee, Symbol speaker) {
     Symbol groundedSemantics = updateSpeakerNamesHelper(semantics, new Variable("?ADDRESSEE"), addressee);
-    return updateSpeakerNamesHelper(groundedSemantics, new Variable("?INTERACTOR"), interactor);
+    return updateSpeakerNamesHelper(groundedSemantics, new Variable("?INTERACTOR"), speaker);
   }
 
   @Override
   public Utterance parseUtterance(Utterance input) {
     Utterance output = parseUtteranceHelper(input);
-    if (output.getSemantics() == null) {
-      // need this case to correctly set the addressee so it doesn't use default "self"
-      Symbol addressee = addressHistory.get(Pair.of(input.getSpeaker(),input.getAddressee()));
-      addressee = addressee == null ? input.getAddressee() : addressee;
-      output = new Utterance.Builder(output).setListener(addressee).build();
+    // use addressee history when there's no parse so the correct address generates the failure explanation
+    if (output.getSemantics() == null && useAddressHistory && addressHistory.containsKey(input.getSpeaker())) {
+      output = new Utterance.Builder(output).setAddressee(addressHistory.get(input.getSpeaker())).build();
     }
     log.info("[parseUtterance] Words: {} Result: {}", input.getWordsAsString(), output);
     return output;
@@ -233,27 +255,27 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
    * First step of Utterance Processing, updates address history and passes utterance to
    * addWords. This allows for parallelization across incoming utterances, while still preserving
    * incremental processing to some degree.
-   *
+   * <p>
    * Tokenizes the text of the utterance and updates the parse with each token in order.
    *
    * @param input utterance to be parsed
    * @return parsed Utterance (or Utterance with failure semantics)
    */
   private Utterance parseUtteranceHelper(Utterance input) {
-    //TODO:not sure if we need to pass listeners on here...
-    addressHistory.computeIfAbsent(Pair.of(input.getSpeaker(), input.getListeners().get(0)), k -> input.getListeners().get(0));
-    //TODO:brad: what are the side effects of turning this off?
-//    if (!addressHistory.containsKey(incoming.getUtterance().getSpeaker())) {
-//      addressHistory.put(incoming.getUtterance().getSpeaker(), incoming.getUtterance().getListeners().get(0));
-//    }
+    // clear addressee from previous utterance
+    currentAddressee = null;
+
+    Symbol speaker = input.getSpeaker();
+    Symbol addressee = input.getAddressee();
+    if (addressee == null) {
+      log.warn("addressee not set in incoming utterance. Setting to \"unknown\" unless direct address overrides this value.");
+    }
 
     //Make sure there is a Parse object for the speaker of the current Utterance
-    Symbol currentInteractor = input.getSpeaker();
-    Symbol currentListener = input.getListeners().get(0);
-    if (!parses.containsKey(currentInteractor)) {
-      parses.put(currentInteractor, new Parse(terminalCategories.keySet()));
+    if (!parses.containsKey(speaker)) {
+      parses.put(speaker, new Parse(terminalCategories.keySet()));
     }
-    Parse currentParse = parses.get(currentInteractor);
+    Parse currentParse = parses.get(speaker);
 
     List<Pair<String, List<Entry>>> tokens = dictionary.tokenize(input.getWords());
 
@@ -261,20 +283,21 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     for (ListIterator<Pair<String, List<Entry>>> tokensIterator = tokens.listIterator(); tokensIterator.hasNext(); ) {
       Pair<String, List<Entry>> nextToken = tokensIterator.next();
       String token = nextToken.getLeft();
-      List<Entry> entries= nextToken.getRight();
-      if (entries.isEmpty()){
-        log.warn("[parseUtterance] unknown token: "+token);
-        log.debug("current interactor: " + currentInteractor);
-        parses.put(currentInteractor, new Parse(terminalCategories.keySet()));
+      List<Entry> entries = nextToken.getRight();
+      if (entries.isEmpty()) {
+        log.warn("[parseUtterance] unknown token: " + token);
+        log.debug("current interactor: " + speaker);
+        parses.put(speaker, new Parse(terminalCategories.keySet()));
         // TODO: this should be handled in the NLU scripts
-        output = generateErrorSemantics(currentInteractor, currentListener, token);
+
+        output = generateErrorSemantics(speaker, addressee, token);
         output.setWords(input.getWords());
         return output;
       }
-      currentParse = addEntriesForToken(entries,currentInteractor);
+      currentParse = addEntriesForToken(entries, speaker);
       //this occurs if we're in not in learning mode and we get a morpheme that's not in the dict
       if (currentParse == null) {
-        parses.put(currentInteractor, new Parse(terminalCategories.keySet()));
+        parses.put(speaker, new Parse(terminalCategories.keySet()));
         log.debug("parse tree reset");
         return input;
       }
@@ -289,7 +312,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         if (!newToken.toString().isEmpty()) {
           Entry e = currentParse.generateLiteralEntry(newToken.toString());
           //add the new entry to the parse
-          addWord(e, currentInteractor);
+          addWord(e, speaker);
           //we're done and the utterance is complete
           break;
         } else {
@@ -319,15 +342,13 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     if (currentParse.checkTerminal()) {
       //currentParse.pruneNonTerminal();
       log.debug("terminal condition found");
-      output = createParsedUtterance(currentParse.getCurrentParse(), currentInteractor, currentListener);
+      output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
 
       //reset parse tree once utterance has been sent
       //TODO: in the future we might want to keep track of the set of all previous parses somewhere
       parses.put(input.getSpeaker(), new Parse(terminalCategories.keySet()));
-
-    }
-    //otherwise check to see if we can make it a terminal case...
-    else {
+    } else {
+      //otherwise check to see if we can make it a terminal case...
       log.debug("no valid parse and no more input in time.");
       log.debug("current parse: " + currentParse);
       //if we don't have parse rules for a word try to figure them out
@@ -336,7 +357,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         log.debug("inferring new definitions ");
         dictionary.addEntries(currentParse.inferUnknowns());
         log.debug("sending inferred parse");
-        output = createParsedUtterance(currentParse.getCurrentParse(), currentInteractor, currentListener);
+        output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
       } else if (currentParse.checkComplete()) {
         //try to rebuild the tree because the current parsing algorithm is too greedy and might be wrong
         log.debug("parse might be fixable");
@@ -344,7 +365,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         //now check if it's complete
         if (currentParse.checkTerminal()) {
           log.debug("sending revised parse");
-          output = createParsedUtterance(currentParse.getCurrentParse(), currentInteractor, currentListener);
+          output = createParsedUtterance(currentParse.getCurrentParse(), speaker, addressee);
         } else {
           log.debug("it wasn't...");
           return input;
@@ -353,8 +374,9 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         //otherwise let the system no that we couldn't find a parse
         return input;
       }
-      log.debug("currentInteractor " + currentInteractor);
-      parses.put(currentInteractor, new Parse(terminalCategories.keySet()));
+
+      log.debug("currentInteractor " + speaker);
+      parses.put(speaker, new Parse(terminalCategories.keySet()));
       log.debug("parse tree reset");
     }
 
@@ -392,29 +414,31 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   }
 
   //sends error message which indicates that the utterance wasn't parsed
-  private Utterance generateErrorSemantics(Symbol interactor, Symbol listener, String reason) {
+  private Utterance generateErrorSemantics(Symbol speaker, Symbol addressee, String reason) {
     log.debug("sending error message");
-   //TODO:brad:update this to use the utterance builder
-    Utterance utterance = new Utterance(
-            interactor,
-      addressHistory.get(Pair.of(interactor,listener)),
-      new ArrayList<>(),
-      UtteranceType.UNKNOWN,
-            false
-    );
-    Predicate failureSemantics = Factory.createPredicate("not(understand("+listener+",that))");
-    if (!reason.isEmpty()){
-      failureSemantics = Factory.createPredicate("error("+listener+",doNotKnowWhat("+listener+","+reason+",means))");
+
+    Utterance.Builder utterance = new Utterance.Builder();
+    utterance.setSpeaker(speaker);
+    if (useAddressHistory && addressHistory.containsKey(speaker)) {
+      utterance.setAddressee(addressHistory.get(speaker));
+    } else {
+      utterance.setAddressee(addressee);
     }
-    utterance.setSemantics( failureSemantics);
-    utterance.setIndirectSemantics(new ArrayList<>());
+
+    Predicate failureSemantics;
+    if (reason.isEmpty()) {
+      failureSemantics = Factory.createPredicate("not(understand(" + addressee + ",that))");
+    } else {
+      failureSemantics = Factory.createPredicate("error(" + addressee + ",doNotKnowWhat(" + addressee + "," + reason + ",means))");
+    }
+    utterance.setSemantics(failureSemantics);
+
     log.debug("utterance generated: " + utterance);
-    log.debug("utterance words: " + utterance.getWords());
-     return utterance;
+    return utterance.build();
   }
 
   //Pass along new utterance with updated semantics to another NLPComponent
-  private Utterance createParsedUtterance(Node possibleSemantics, Symbol interactor, Symbol listener) {
+  private Utterance createParsedUtterance(Node possibleSemantics, Symbol speaker, Symbol addressee) {
     log.debug("sending semantics");
     log.trace("number of parses found: " + possibleSemantics.rules.size());
 
@@ -434,23 +458,23 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
         // set utterance semantics
         Symbol mainSemantics = fullSemantics.remove(0);
-        mainSemantics = updateDirectAddress(mainSemantics, interactor, listener, type);
-        mainSemantics = updateSpeakerNames(mainSemantics, addressHistory.get(Pair.of(interactor, listener)), interactor);
+        mainSemantics = updateDirectAddress(mainSemantics, speaker, addressee, type);
+        mainSemantics = updateSpeakerNames(mainSemantics, currentAddressee, speaker);
         builder.setSemantics(mainSemantics);
 
         // set utterance supplemental semantics
         for (Symbol sem : fullSemantics) {
           if (sem.isTerm()) {
             //TODO:brad: will we ever have ?ADDRESSEE or ?INTERACTOR in supplemental semantics?
-            builder.addSupplementalSemantics((Term) updateSpeakerNames(sem, addressHistory.get(Pair.of(interactor, listener)), interactor));
+            builder.addSupplementalSemantics((Term) updateSpeakerNames(sem, currentAddressee, speaker));
           } else {
             log.error("Badly formatted supplemental semantics: " + sem);
           }
         }
         // set remaining utterance info
         log.debug("Bindings: " + DIARCSemantics);
-        builder.setSpeaker(interactor);
-        builder.addListener(addressHistory.get(Pair.of(interactor, listener)));
+        builder.setSpeaker(speaker);
+        builder.setAddressee(currentAddressee);
         builder.setTierAssignments(DIARCSemantics.getRight());
         builder.setIsInputUtterance(true);
         builder.setWords(Arrays.asList(rule.morpheme.split(" ")));
@@ -471,10 +495,11 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
   /**
    * Used in parser test to toggle updateAddressHistory
+   *
    * @param val new value
    */
-  protected void setUpdateAddressHistory(boolean val) {
-    updateAddressHistory = val;
+  protected void setUseAddressHistory(boolean val) {
+    useAddressHistory = val;
   }
 
   /**
@@ -498,7 +523,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 //        log.error("[injectDictionaryEntry] unable to write dictionary keys to firebase", e);
 //      }
 //    }
-    morpheme= morpheme.toLowerCase();
+    morpheme = morpheme.toLowerCase();
     log.debug("[injectDictionaryEntry] injecting entry for: " + morpheme + " type: " + type + " semantics: " + semantics + " cs: " + cognitiveStatus);
     Entry e = new Entry(morpheme, new SyntacticRule(type), new SemanticRule(semantics), cognitiveStatus);
     log.debug("[injectDictionaryEntry] entry: " + e);
@@ -519,6 +544,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     //TODO:brad:make this toggleable form the commandline
     addHomophone(base, homophone, false);
   }
+
   //Given a base morpheme and homophone, create and add all duplicate entries with homophone as new morpheme
   @TRADEService
   public void addHomophone(String base, String homophone, boolean writeToFile) {

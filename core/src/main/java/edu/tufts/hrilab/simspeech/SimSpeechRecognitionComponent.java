@@ -47,7 +47,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
   private int repetitions = 1;  //# times to repeat each utterance during read-from-file mode
   private SimSpeechRecognitionComponentVis gui;
   private Symbol speaker = Factory.createSymbol("brad:agent");
-  private Symbol listener = Factory.createSymbol("self:agent");
+  private Symbol addressee = Factory.createSymbol("self:agent");
   private boolean terminalInput;
 
   final protected Logger log = LoggerFactory.getLogger(this.getClass());
@@ -127,9 +127,9 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
     log.info("speaker set to: " + this.speaker);
   }
 
-  public void setListener(Symbol listener) {
-    this.listener = listener;
-    log.info("listener set to: " + this.listener);
+  public void setAddressee(Symbol addressee) {
+    this.addressee = addressee;
+    log.info("addressee set to: " + this.addressee);
   }
 
   // ********************************************************************
@@ -192,11 +192,12 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
           Utterance.Builder utterance = new Utterance.Builder()
                   .setWords(Arrays.asList(in.split(" ")))
                   .setSpeaker(speaker)
-                  .addListener(listener)
+                  .setAddressee(addressee)
                   .setIsInputUtterance(true);
 
           try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class,utterance.build());
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class))
+                    .call(void.class,utterance.build());
           } catch (TRADEException e) {
             log.error("reportRecognizedSpeech failed.", e);
           }
@@ -225,7 +226,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
     options.add(Option.builder("auto").longOpt("autoInput").desc("automatically run utterances from file").build());
     options.add(Option.builder("reps").longOpt("repetitions").hasArg().argName("#").desc("# of times to repeat each utterance").build());
     options.add(Option.builder("speaker").hasArg().argName("name").desc("set speaker name").build());
-    options.add(Option.builder("listener").hasArg().argName("name").desc("set listener name").build());
+    options.add(Option.builder("addressee").hasArg().argName("name").desc("set default addressee name").build());
     options.add(Option.builder("terminal").desc("get input from terminal").build());
     options.add(Option.builder("nogui").desc("run the simspeech component without a gui").build());
     return options;
@@ -260,8 +261,8 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
     if (cmdLine.hasOption("speaker")) {
       speaker = Factory.createSymbol(cmdLine.getOptionValue("speaker"));
     }
-    if (cmdLine.hasOption("listener")) {
-      listener = Factory.createSymbol(cmdLine.getOptionValue("listener"));
+    if (cmdLine.hasOption("addressee")) {
+      addressee = Factory.createSymbol(cmdLine.getOptionValue("addressee"));
     }
     if (cmdLine.hasOption("terminal")) {
       terminalInput = true;

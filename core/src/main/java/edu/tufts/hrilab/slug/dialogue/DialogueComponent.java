@@ -128,7 +128,7 @@ public class DialogueComponent extends DiarcComponent {
 
   @TRADEService
   @Action
-  public boolean isRepeatedPredicate(Predicate word, Symbol listener, Predicate state, int recency) {
+  public boolean isRepeatedPredicate(Predicate word, Symbol addressee, Predicate state, int recency) {
     List<Utterance> history = diaLog.getDialogueHistory();
     if (recency == -1) {
       recency = history.size();
@@ -136,7 +136,7 @@ public class DialogueComponent extends DiarcComponent {
     for (int i = 0; i < recency; i++) {
       List<Symbol> listeners = history.get(i).getListeners();
       for (int j = 0; j < listeners.size(); j++) {
-        if (listeners.get(j).equals(listener)) {
+        if (listeners.get(j).equals(addressee)) {
           log.debug("Listener Matched: " + listeners.get(j).getName());
           String semanticString = history.get(i).getSemantics().toString();
           String predicateWord = word.toString();

@@ -37,17 +37,35 @@ class Resolver(groups: java.util.List[String]) {
   updateConsultCache(null);
 
   //brad: for every new Resolver get list of consultants(as TSI+ kbName) and property cache (call get properties handled on everything)
-  def updateConsultCache(actor: String) {
-    //todo: (pete, brad) this feels kind of hacky. specifically distinguishing between the "self wants everything" vs "!self only wants its own agent group" fixable with better groups implementations?
-    if (actor != null && !actor.contains("self")) {
-      //TODO:brad:make agent lookup more general
-      consultants = TRADE.getAvailableServices(new TRADEServiceConstraints().name("getKBName").argTypes().inGroups("agent:" + actor)).asScala.map(
-        c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)): _*))
-      )
-    } else {
+  def updateConsultCache(actor: Symbol) {
+    if (actor == null) {
+      // use all available consultants
       consultants = TRADE.getAvailableServices(additionalConstraints.name("getKBName").argTypes()).asScala.map(
         c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)): _*))
       )
+    } else {
+      // filter available consultants based on group information
+
+      // get relevant diarc agents
+      val agents = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllDiarcAgentsForActor").argTypes(classOf[Symbol],classOf[java.lang.Boolean]))
+        .call(classOf[java.util.Set[String]], actor, false.asInstanceOf[java.lang.Boolean])
+
+      // populate typed and untyped versions of relevant diarc agents
+      val untypedActors:util.Set[String] = new util.HashSet[String]()
+      val typedActors:util.Set[String] = new util.HashSet[String]()
+      agents.forEach(a => {
+        val agent = Factory.createSymbol(a)
+        untypedActors.add("agent:" + agent.getName)
+        typedActors.add("agent:" + (if (agent.hasType) agent else Factory.createSymbol(agent.getName, "agent")))
+      })
+
+      // filter consultants based on groups: keep if consultant has no groups or no "agent:" groups or if consultant is in one of the agent(s) group
+      consultants = TRADE.getAvailableServices(additionalConstraints.name("getKBName").argTypes()).asScala
+        .filter(c => c.getGroups.isEmpty || c.getGroups.stream().noneMatch(g => g.startsWith("agent:"))
+          || c.getGroups.stream().anyMatch(g => untypedActors.contains(g) || typedActors.contains(g)))
+        .map(
+          c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)): _*))
+        )
     }
     updatePropertyCache();
   }
@@ -101,7 +119,7 @@ class Resolver(groups: java.util.List[String]) {
   }
 
   def positReference(properties: java.util.List[Term], actor: Symbol): Symbol = {
-    updateConsultCache(if (actor != null) actor.toString else null)
+    updateConsultCache(actor)
     val allProperties = consultants.map(
       c => (c, TRADE.getAvailableService(c.tsc.name("getPropertiesHandled").argTypes())
         .call(classOf[java.util.List[Term]]))

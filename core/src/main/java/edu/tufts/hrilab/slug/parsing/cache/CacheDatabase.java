@@ -97,9 +97,9 @@ public class CacheDatabase {
       SQLiteConfig config = new SQLiteConfig();
       if (file != null) {
         config.setOpenMode(SQLiteOpenMode.FULLMUTEX);
-        log.info("Initializing parser cache database with file: " + file);
+        log.info("[initializeDatabase] Initializing parser cache database with file: " + file);
       } else {
-        log.info("Initializing parser cache database in memory");
+        log.info("[initializeDatabase] Initializing parser cache database in memory");
       }
       connection = DriverManager.getConnection(connectionString, config.toProperties());
       statement = connection.createStatement();
@@ -120,13 +120,13 @@ public class CacheDatabase {
     URL u = CacheDatabase.class.getResource(cachePath);
     URI uri = null;
     if (u == null) {
-      log.warn("No pre-existing " + cachePath + " exists, skipping...");
+      log.warn("[getDatabasePath] No pre-existing " + cachePath + " exists, skipping...");
       return null;
     }
     try {
       uri = u.toURI();
     } catch (URISyntaxException ex) {
-      log.error("Error converting URL to URI for " + cachePath, ex);
+      log.error("[getDatabasePath] Error converting URL to URI for " + cachePath, ex);
       return null;
     }
     Path path = Paths.get(uri);
@@ -147,21 +147,21 @@ public class CacheDatabase {
     try {
       success = statement.execute(tableQuery);
     } catch (SQLException ex) {
-      log.error("Couldn't create table", ex);
+      log.error("[initializeTable] Couldn't create table", ex);
     } catch (Exception ex) {
-      log.error("Error creating table", ex);
+      log.error("[initializeTable] Error creating table", ex);
     }
 
     try {
       indexSuccess = statement.execute(indexQuery);
     } catch (SQLException ex) {
-      log.error("Couldn't create index on table", ex);
+      log.error("[initializeTable] Couldn't create index on table", ex);
     } catch (Exception ex) {
-      log.error("Error creating index on table", ex);
+      log.error("[initializeTable] Error creating index on table", ex);
     }
 
     if (success && indexSuccess) {
-      log.debug("Created " + tableName + "  table and index");
+      log.debug("[initializeTable] Created " + tableName + "  table and index");
     }
   }
 
@@ -176,12 +176,12 @@ public class CacheDatabase {
     try {
       getStatement = connection.prepareStatement(getQuery);
     } catch (SQLException ex) {
-      log.error("Couldn't create PreparedStatement for get query", ex);
+      log.error("[initializeStatements] Couldn't create PreparedStatement for get query", ex);
     }
     try {
       insertStatement = connection.prepareStatement(insertQuery);
     } catch (SQLException ex) {
-      log.error("Couldn't create PreparedStatement for insert query", ex);
+      log.error("[initializeStatements] Couldn't create PreparedStatement for insert query", ex);
     }
   }
 
@@ -202,12 +202,12 @@ public class CacheDatabase {
     try {
       eraseSuccess = statement.execute(eraseQuery);
     } catch (SQLException ex) {
-      log.error("Couldn't delete all rows in table", ex);
+      log.error("[loadCache] Couldn't delete all rows in table", ex);
     } catch (Exception ex) {
-      log.error("Error deleting all rows in table", ex);
+      log.error("[loadCache] Error deleting all rows in table", ex);
     }
     if (eraseSuccess) {
-      log.warn("Deleted all rows in cache file " + file);
+      log.warn("[loadCache] Deleted all rows in cache file " + file);
     }
     for (String loadPath : loadPaths) {
       dbPath = CacheDatabase.getDatabasePath(loadPath);
@@ -219,11 +219,11 @@ public class CacheDatabase {
       try {
         SQLiteConfig config = new SQLiteConfig();
         config.setOpenMode(SQLiteOpenMode.FULLMUTEX);
-        log.debug("Loading cache database with file: " + dbPath);
+        log.debug("[loadCache] Loading cache database with file: " + dbPath);
         Connection loadConnection = DriverManager.getConnection(connectionString, config.toProperties());
         loadStatement = loadConnection.createStatement();
       } catch (SQLException ex) {
-        log.error("Couldn't connect to database.", ex);
+        log.error("[loadCache] Couldn't connect to database.", ex);
         continue;
       }
       ResultSet results = null;
@@ -231,7 +231,7 @@ public class CacheDatabase {
       try {
         results = loadStatement.executeQuery(selectQuery);
       } catch (SQLException ex) {
-        log.error("Couldn't execute SELECT query while loading from database.", ex);
+        log.error("[loadCache] Couldn't execute SELECT query while loading from database.", ex);
         continue;
       }
       try {
@@ -245,14 +245,14 @@ public class CacheDatabase {
           insertStatement.setLong(3, created);
           success = insertStatement.execute();
           if (success) {
-            log.debug("Added cache entry for [" + words + "] = " + utterance);
+            log.debug("[loadCache] Added cache entry for [" + words + "] = " + utterance);
           }
           count++;
         }
       } catch (SQLException ex) {
-        log.error("Couldn't add utterance entry to database", ex);
+        log.error("[loadCache] Couldn't add utterance entry to database", ex);
       }
-      log.debug("Loaded " + count + " cache " + (count == 1 ? "entry" : "entries") + " from " + dbPath);
+      log.debug("[loadCache] Loaded " + count + " cache " + (count == 1 ? "entry" : "entries") + " from " + dbPath);
     }
   }
 
@@ -262,7 +262,7 @@ public class CacheDatabase {
    * @param entry The Utterance object to add to the cache.
    */
   public void add (Utterance entry) {
-    boolean success = false;
+    int rows = -1;
     String words = entry.getWordsAsString();
     List<String> wordsList = entry.getWords();
     UtteranceType type = entry.getType();
@@ -275,12 +275,14 @@ public class CacheDatabase {
       insertStatement.setString(1, words);
       insertStatement.setString(2, cached.toJSON());
       insertStatement.setLong(3, System.currentTimeMillis());
-      success = insertStatement.execute();
+      rows = insertStatement.executeUpdate();
     } catch (SQLException ex) {
-      log.error("Couldn't add utterance entry to database", ex);
+      log.error("[add] Couldn't add utterance entry to database", ex);
     }
-    if (success) {
-      log.debug("Entry added to cache for [" + words + "] = " + cached.toJSON());
+    if (rows == 1) {
+      log.debug("[add] Entry added to cache for [" + words + "] = " + cached.toJSON());
+    } else {
+      log.debug("[add] Failed adding row to cache for [" + words + "]");
     }
   }
 
@@ -302,17 +304,17 @@ public class CacheDatabase {
       getStatement.setString(1, words);
       results = getStatement.executeQuery();
     } catch (SQLException ex) {
-      log.error("Couldn't execute SELECT query on cache database.", ex);
+      log.error("[get] Couldn't execute SELECT query on cache database.", ex);
     }
 
     try {
       if (results.next()) {
         json = results.getString("utterance");
         cachedUtterance = CachedUtterance.fromJSON(json);
-        log.debug("Cache hit for [" + words + "] = " + json);
+        log.debug("[get] Cache hit for [" + words + "] = " + json);
       }
     } catch (SQLException ex) {
-      log.error("Couldn't get utterance from ResultSet", ex);
+      log.error("[get] Couldn't get utterance from ResultSet", ex);
     }
 
     if (cachedUtterance != null) {

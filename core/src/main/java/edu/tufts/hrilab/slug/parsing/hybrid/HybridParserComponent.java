@@ -49,7 +49,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private boolean tldlUpdateAddressee = true;
   private String cacheName = null;
   private String[] cacheLoads = null;
-  private String cachePersist = null;
+  private boolean cachePersist = false;
+  private boolean cacheTldl = false;
   private String llm = null;
   private String prompt = null;
   private Symbol unknownListener = null;
@@ -62,12 +63,15 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("tldl").hasArgs().required().argName("file").desc("load tldl dictionary from file(s)").build());
-    options.add(Option.builder("llm").hasArg().argName("string").desc("Name of TRADE Service to call in LLMParserComponent.parseUtterance()").build());
-    options.add(Option.builder("prompt").hasArg().argName("string").desc("Prompt to use with LLM parser").build());
-    options.add(Option.builder("endpoint").hasArg().argName("string").desc("Endpoint for LLMParserComponent").build());
+    options.add(Option.builder("llm").argName("boolean").desc("Use the LLM parser").build());
+    options.add(Option.builder("llmService").hasArg().argName("string").desc("Name of TRADE Service to call in LLMParserComponent.parseUtterance()").build());
+    options.add(Option.builder("llmPrompt").hasArg().argName("string").desc("Prompt to use with LLM parser").build());
+    options.add(Option.builder("llmEndpoint").hasArg().argName("string").desc("Endpoint for LLMParserComponent").build());
+    options.add(Option.builder("cache").argName("boolean").desc("Use the cache").build());
     options.add(Option.builder("cacheLoad").hasArgs().argName("file").desc("Load cached database from file, can have multiple").build());
     options.add(Option.builder("cacheName").hasArg().argName("string").desc("Name of cache").build());
-    options.add(Option.builder("cachePersist").hasArg().argName("file").desc("Persist cache in on users computer").build());
+    options.add(Option.builder("cachePersist").argName("file").desc("Persist cache in on users computer").build());
+    options.add(Option.builder("cacheTldl").desc("Cache TLDL parses").build());
     options.add(Option.builder("noConfirmation").argName("boolean").desc("Ask human to confirm LLM parser response for cache").build());
     options.add(Option.builder("patternMatching").desc("use pattern matching parser").build());
     options.add(Option.builder("tldlNoUpdateAddressee").desc("TLDL: do not update addressee after direct address").build());
@@ -87,29 +91,47 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
     if (cmdLine.hasOption("llm")) {
       useLLM = true;
-      llm = cmdLine.getOptionValue("llm");
+      log.debug("Using LLM parser");
     }
-    if (cmdLine.hasOption("prompt")) {
-      prompt = cmdLine.getOptionValue("prompt");
+    if (cmdLine.hasOption("llmService")) {
+      llm = cmdLine.getOptionValue("llmService");
+      log.debug("Using LLM parser via TRADE Service " + llm);
     }
-    if (cmdLine.hasOption("endpoint")) {
-      endpoint = cmdLine.getOptionValue("endpoint");
+    if (cmdLine.hasOption("llmPrompt")) {
+      prompt = cmdLine.getOptionValue("llmPrompt");
+      log.debug("Using LLM parser with prompt " + prompt);
     }
-    if (cmdLine.hasOption("cacheName")) {
+    if (cmdLine.hasOption("llmEndpoint")) {
+      endpoint = cmdLine.getOptionValue("llmEndpoint");
+      log.debug("Using LLM parser at endpoint " + endpoint);
+    }
+    if (cmdLine.hasOption("cache")) {
       useCache = true;
+      log.debug("Using cache");
+    }
+    if (useCache && cmdLine.hasOption("cacheName")) {
       cacheName = cmdLine.getOptionValue("cacheName");
+      log.debug("Naming cache " + cacheName);
     }
-    if (cmdLine.hasOption("cacheLoad")) {
+    if (useCache && cmdLine.hasOption("cacheLoad")) {
       cacheLoads = cmdLine.getOptionValues("cacheLoad");
+      log.debug("Loading pre-existing cache" + ( cacheLoads.length == 1 ? "" : "s" ) + ": " + String.join(", ", cacheLoads) );
     }
-    if (cmdLine.hasOption("cachePersist")) {
-      cachePersist = cmdLine.getOptionValue("cachePersist");
+    if (useCache && cmdLine.hasOption("cachePersist")) {
+      cachePersist = true;
+      log.debug("Persist cache as a local file $HOME/.diarc/" + (cacheName != null ? cacheName : "diarc-parser-cache") + ".sqlite");
+    }
+    if (useCache && cmdLine.hasOption("cacheTldl")) {
+      cacheTldl = true;
+      log.debug("Cache TLDL parses");
     }
     if (cmdLine.hasOption("noConfirmation")) {
       confirmation = false;
+      log.debug("Do not require confirmation from LLM parser before storing in cache");
     }
     if (cmdLine.hasOption("patternMatching")) {
       usePMP = true;
+      log.debug("Using the pattern matching parser");
     }
   }
 
@@ -152,8 +174,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
           cacheArgs += " -load " + cacheLoad;
         }
       }
-      if (cachePersist != null) {
-        cacheArgs += " -persist " + cachePersist;
+      if (cachePersist) {
+        cacheArgs += " -persist";
       }
       cacheParser = createInstance(CachedParserComponent.class, cacheArgs, false);
     }
@@ -195,26 +217,18 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     Utterance pmpOutput = null;
     Utterance tldlOutput = null;
     Utterance llmOutput = null;
-    Symbol semantics = null;
 
     //Check cache first
     if (cachedFuture != null) {
       try {
         cachedOutput = cachedFuture.get();
       } catch (InterruptedException | ExecutionException e) {
-        log.error("Error getting cached parser results.", e);
+        log.error("[parseUtterance] Error getting cached parser results.", e);
       }
 
       if (cachedOutput != null && cachedOutput.getSemantics() != null) {
-        log.debug("Using cached parser response");
-        if (Utilities.equalsIgnoreType(cachedOutput.getAddressee(), unknownListener)) {
-          if (addresseeMap.containsKey(incoming.getSpeaker())) {
-            cachedOutput.setListener(addresseeMap.get(incoming.getSpeaker()));
-          } else {
-            cachedOutput.setListener(Factory.createSymbol("unknown"));
-          }
-        }
-        return cachedOutput;
+        log.debug("[parseUtterance] Using cached parser response");
+        return applyAddressee(incoming, cachedOutput);
       }
     }
 
@@ -223,7 +237,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       try {
         pmpOutput = pmpFuture.get();
       } catch (InterruptedException | ExecutionException e) {
-        log.error("Error getting pattern matching parser results.", e);
+        log.error("[parseUtterance] Error getting pattern matching parser results.", e);
       }
 
       //TODO:brad: what should this return in the no match case?
@@ -232,24 +246,26 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       }
     }
 
-
     //Try TLDLParser, return if not null or UNKNOWN
     if (tldlFuture != null) {
       try {
         tldlOutput = tldlFuture.get();
       } catch (InterruptedException | ExecutionException e) {
-        log.error("Error getting tldl parser results.", e);
+        log.error("[parseUtterance] Error getting tldl parser results.", e);
       }
 
-      if (tldlOutput != null && tldlOutput.getSemantics() != null && tldlOutput.getType() != UtteranceType.UNKNOWN) {
-        log.debug("Using tldl parser response");
-        if (useCache) {
-          cacheParse(tldlOutput);
+      if (tldlOutput != null && tldlOutput.getSemantics() != null) {
+        preserveAddressee(tldlOutput);
+        if (tldlOutput.getType() != UtteranceType.UNKNOWN) {
+          log.debug("[parseUtterance] Using tldl parser response");
+          if (useCache && cacheTldl) {
+            cacheParse(tldlOutput);
+          }
+          return applyAddressee(incoming, tldlOutput);
+        } else {
+          //Use TLDL UNKNOWN parse in case LLM parse fails
+          output = tldlOutput;
         }
-        return tldlOutput;
-      } else if (tldlOutput != null && tldlOutput.getSemantics() != null && tldlOutput.getType() == UtteranceType.UNKNOWN) {
-        //Use TLDL UNKNOWN parse in case LLM parse fails
-        output = tldlOutput;
       }
     }
 
@@ -258,41 +274,78 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       try {
         llmOutput = llmFuture.get();
       } catch (InterruptedException | ExecutionException e) {
-        log.error("Error getting llm parser results.", e);
+        log.error("[parseUtterance] Error getting llm parser results.", e);
       }
 
-      if (llmOutput != null) {
-        log.debug("Using llm parser response");
+      if (llmOutput != null && llmOutput.getSemantics() != null) {
+        log.debug("[parseUtterance] Using llm parser response");
+        preserveAddressee(llmOutput);
         output = llmOutput;
         if (confirmation) {
           output.setNeedsValidation(true);
+        } else if (useCache) {
+          cacheParse(output);
         }
       }
     }
 
-    semantics = output.getSemantics();
+    return applyAddressee(incoming, output);
+  }
 
+  /**
+   * On parsed utterances with directly-addressed listeners, store a map of the speaker->listener
+   * so that parsed utterances with "unknown" listeners can be inferred from the map.
+   *
+   * @param parsedUtterance
+   */
+  private void preserveAddressee (Utterance parsedUtterance) {
+    Symbol semantics = parsedUtterance.getSemantics();
+    Symbol addressee = null;
     if (semantics != null && semantics.isTerm()) {
-      if (semantics.getName().equals("directAddress")) {
-        addresseeMap.put(incoming.getSpeaker(), output.getAddressee());
+      log.debug("[preserveAddressee] addressee = " + parsedUtterance.getAddressee().toString());
+      //addressee = parsedUtterance.getAddressee();
+      //until TLDLParserComponent consistently sets listener check first argument in semantics
+      addressee = ((Term) semantics).getArgs().get(0);
+      log.debug("[preserveAddressee] semantics first arg " + addressee.toString());
+      if (!Utilities.equalsIgnoreType(addressee, unknownListener)) {
+        addresseeMap.put(parsedUtterance.getSpeaker(), addressee);
+        log.debug("[preserveAddressee] Mapping unknown utterances from speaker " + parsedUtterance.getSpeaker().toString() + " to listener " + addressee.toString());
       }
     }
+  }
 
-    if (Utilities.equalsIgnoreType(output.getAddressee(), unknownListener)) {
-      if (addresseeMap.containsKey(incoming.getSpeaker())) {
-        output.setListener(addresseeMap.get(incoming.getSpeaker()));
-        log.debug("Set speaker " + incoming.getSpeaker().toString() + " to address " + output.getAddressee().toString());
-      } else {
-        output.setListener(Factory.createSymbol("unknown"));
-      }
+  /**
+   * In the case that an incoming utterance has an "unknown" listener and there is an existing
+   * key in the speaker->listener addresseeMap, apply the inferred listener to the parsed
+   * utterance.
+   *
+   * @param incomingUtterance
+   * @param parsedUtterance
+   * @return
+   */
+  private Utterance applyAddressee (Utterance incomingUtterance, Utterance parsedUtterance) {
+    if (!Utilities.equalsIgnoreType(incomingUtterance.getAddressee(), unknownListener)) {
+      return parsedUtterance;
     }
-
-    return output;
+    Symbol addressee = Factory.createSymbol("unknown");
+    if (addresseeMap.containsKey(parsedUtterance.getSpeaker())) {
+      addressee = addresseeMap.get(parsedUtterance.getSpeaker());
+      log.debug("[applyAddressee] Updated utterance from speaker " + parsedUtterance.getSpeaker().toString() + " to address " + addressee.toString());
+    }
+    parsedUtterance.setAddressee(addressee);
+    Symbol semantics = parsedUtterance.getSemantics();
+    if (semantics != null && semantics.isTerm()) {
+      List<Symbol> args = ((Term) semantics).getArgs();
+      args.set(0, addressee);
+      parsedUtterance.setSemantics(Factory.createPredicate(semantics.getName(), args));
+    }
+    return parsedUtterance;
   }
 
   @TRADEService
   @Action
   public void cacheParse(Utterance utterance) {
+    log.debug("[cacheParse] Caching parsed utterance");
     cacheParser.addEntryToCache(utterance);
   }
 

@@ -24,7 +24,7 @@ VERBTD; {((C\AGENT)/VAL)/DIR; #x#y#a.?PH($a,$x,$y)}, {(C/VAL)/DIR ; #x#y.?PH(?AD
 %ditransitive verb
 VERBDT; {((C/REF)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/REF)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}
 
-ADDRESSABLE; {AGENT ; ?PH}, {G/G, S/S, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
+ADDRESSABLE; {AGENT ; ?PH}, {G/G, S/S,  C/C, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
 
 %EFFECTTEMPLATE; {(EFFECT/REF)\AGENT; #x#y.?PH($x,$y)}, {EFFECT/REF; #x.?PH($x)}, {EFFECT; ?PH}
 CONDTEMPLATE; {COND/RN; #x.?PH($x)}, {COND; ?PH}

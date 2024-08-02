@@ -87,9 +87,9 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
         createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, goalManagerArgs);
 
         if(test){
-            simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker james -listener robotone:agent -config onRobotScrewing.simspeech -nogui");
+            simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker james -addressee robotone:agent -config onRobotScrewing.simspeech -nogui");
         } else {
-            simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker james  -listener robotone:agent -config onRobotScrewing.simspeech");
+            simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker james  -addressee robotone:agent -config onRobotScrewing.simspeech");
         }
 
     }
