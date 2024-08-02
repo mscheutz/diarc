@@ -26,7 +26,7 @@ public class UnityDIARCSpaceStationHybrid {
     String llmEndpoint = "http://127.0.0.1:8080";
     String unityPort = "1755";
     String agentName = "robot1";
-    String nullListener = "";
+    String nullAddressee = "";
 
     if (largs.contains("-unity")) {
       unityIP = largs.get(largs.indexOf("-unity") + 1);
@@ -50,8 +50,8 @@ public class UnityDIARCSpaceStationHybrid {
       agentName = largs.get(largs.indexOf("-agent") + 1);
     }
 
-    if (largs.contains("-nullListener")) {
-      nullListener = " -nullListener";
+    if (largs.contains("-nullAddressee")) {
+      nullAddressee = " -nullAddressee";
     }
 
     String goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm_" + agentName + ".pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
@@ -77,7 +77,7 @@ public class UnityDIARCSpaceStationHybrid {
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.space_station.UnitySpaceStation.class, "-agent spacestation -groups agent:"  + agentName);
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityAgent.class, "-agent rover -groups agent:" + agentName);
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityPR2.class, "-agent " + agentName + " -groups agent:"  + agentName + nullListener );
+    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityPR2.class, "-agent " + agentName + " -groups agent:"  + agentName + nullAddressee );
 
     DiarcComponent.createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, goalManagerArgs);
   }
