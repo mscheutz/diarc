@@ -29,7 +29,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   /**
    * Group identifier to be prepended to reference names
    */
-  protected String groupNames;
+  protected String groupNames = "";
 
   public CognexConsultant() {
     super(CognexReference.class, "physobj");
