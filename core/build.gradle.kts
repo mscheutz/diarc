@@ -22,7 +22,11 @@ tasks.named("compileJava").get().dependsOn("copyGitHooks")
 // the repositories used to search for dependencies
 repositories {
   mavenCentral()
-  mavenLocal()
+//  mavenLocal()
+  maven {
+    name = "Thinking Robots TRADE mvn host"
+    url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
+  }
   maven {
     name = "HRILabArchiva"
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
@@ -174,7 +178,7 @@ dependencies {
   api("com.google.code.gson:gson:2.6.2")
   api("com.google.guava:guava:33.0.0-jre")
   //trade
-  api("ai.thinkingrobots:trade:1.0.0")
+  api("ai.thinkingrobots:trade:1.1.0")
 
   //junit
   testImplementation("junit:junit:4.13.1")
