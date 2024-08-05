@@ -111,19 +111,11 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
   @Override
   public void shutdownDiarc() {
-    log.debug("[cleanup] started");
+    log.debug("[shutdownDiarc] started");
     tester.shutdown();
     tester = null;
-    log.debug("[shutdownConfig] tester shutdown");
     config.shutdownConfiguration();
-    log.debug("[shutdownConfig] completed");
-
-    try {
-      TRADE.reset("");
-    } catch (TRADEException e) {
-      log.error("[shutdownConfig]", e);
-    }
-    log.info("[cleanup] ended");
+    log.debug("[shutdownDiarc] completed");
   }
 
   private Long getGoalId(String goal) {

@@ -44,18 +44,9 @@ public class FetchPerformanceAssessmentDemoTest extends GenerativeDiarcIntegrati
 
   @After
   public void shutdownDiarc() {
-    log.debug("[cleanup] started");
-    log.debug("[shutdownConfig] tester shutdown");
+    log.debug("[shutdownDiarc] started");
     diarcConfig.shutdownConfiguration();
-    log.debug("[shutdownConfig] completed");
-
-    try {
-      // TODO: EAK: what does this do?
-      TRADE.reset("");
-    } catch (TRADEException e) {
-      log.error("[shutdownConfig]", e);
-    }
-    log.info("[cleanup] ended");
+    log.debug("[shutdownDiarc] completed");
   }
 
   public void sendUserInput(String input) {

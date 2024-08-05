@@ -51,17 +51,9 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
 
   @After
   public void shutdownDiarc() {
-    log.debug("[cleanup] started");
-    log.debug("[shutdownConfig] tester shutdown");
+    log.debug("[shutdownDiarc] started");
     diarcConfig.shutdownConfiguration();
-    log.debug("[shutdownConfig] completed");
-
-    try {
-      TRADE.reset("");
-    } catch (TRADEException e) {
-      log.error("[shutdownConfig]", e);
-    }
-    log.info("[cleanup] ended");
+    log.debug("[shutdownDiarc] completed");
   }
 
   public void sendUserInput(String input) {
