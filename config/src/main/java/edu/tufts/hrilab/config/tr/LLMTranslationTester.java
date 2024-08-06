@@ -31,7 +31,7 @@ public class LLMTranslationTester {
     String inputDirectory = "/config/edu/tufts/hrilab/llm/inputs/";
     String inputFile = "pickAndPlaceAssistaJapanese";
     String outputFile = "/home/eric/code/diarc/core/src/main/resources/config/edu/tufts/hrilab/llm/outputs/%s/%s/%s_prompt_%s.txt";
-    List<String> promptFiles = Arrays.asList("pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationAssista");
+    List<String> promptFiles = Arrays.asList("pickandplace/nlu/pickAndPlaceActionSemanticTranslationAssista");
     List<String> systemPromptFiles = Arrays.asList("");
 
     public LLMComponent llmComponent;
