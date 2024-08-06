@@ -469,7 +469,7 @@ public class Utilities {
       return Factory.createSymbol(val.toString());
     } else if (String.class.isAssignableFrom(val.getClass())) {
       // Strings
-      return Factory.createSymbol(val.toString());
+      return Factory.createFOL(val.toString());
     } else {
       // some non-fol object -- for now all we can do is put its string value in a symbol
       return Factory.createSymbol("\""+val.toString()+"\"");

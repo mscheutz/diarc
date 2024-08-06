@@ -1,6 +1,7 @@
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
 import java.util.List;
+import java.lang.String;
 
 () = reach_pick(Symbol ?from:stackable, Symbol ?to:stackable) {
     conditions : {
@@ -12,7 +13,7 @@ import java.util.List;
         success : over(?actor, ?to);
         success : not(over(?actor, ?from));
     }
-    op:log(info,"reach_pick");
+    op:log(debug,"reach_pick");
     act:callPolicy("reach_pick(?from,?to)");
 }
 
@@ -26,9 +27,8 @@ import java.util.List;
         success : over(?actor, ?to);
         success : not(over(?actor, ?from));
     }
+    op:log(debug,"reach_drop");
     act:callPolicy("reach_drop(?disc,?from,?to)");
-
-    op:log(info,"reach_drop");
 }
 
 () = pick(Symbol ?disc:disc, Symbol ?from:stackable) {
@@ -47,9 +47,8 @@ import java.util.List;
         success : over(?actor, ?from);
         success : clear(?from);
     }
+    op:log(debug,"pick");
     act:callPolicy("pick(?disc,?from)");
-
-    op:log(info,"pick");
 }
 
 
@@ -67,18 +66,15 @@ import java.util.List;
         success : on(?disc, ?to);
         success : free(?actor);
     }
+    op:log(debug,"drop");
     act:callPolicy("drop(?disc,?to)");
-
-    op:log(info,"drop");
-    //act:failureTest();
 }
 
-() = RLPolicyFailedPolicy(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
+() = rlPolicyFailedPolicy(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
   recovery: {
     failureReasons : {failedPolicy(?action)}
   }
 
   op:log("debug", "executing RLPolicyFailedPolicy");
-
-  act:update_rl();
+  act:learnPolicy("?failedActionPredicate");
 }
