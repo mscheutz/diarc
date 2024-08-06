@@ -74,9 +74,8 @@ import java.util.List;
 }
 
 () = RLPolicyFailedPolicy(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
-
   recovery: {
-    failedActions : {drop(self:agent, ?disc:disc, ?to:stackable)}
+    failureReasons : {failedPolicy(?action)}
   }
 
   op:log("debug", "executing RLPolicyFailedPolicy");
