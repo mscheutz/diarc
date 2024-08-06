@@ -43,29 +43,29 @@ public class TestGeneric extends DiarcComponent {
     pubmsg.data = "Hello 2";
 
     // You can also start a publisher with an already populated message
-    Ros2Publisher<StringMessage> pub = Ros2Factory.getDefaultPublisher(StringMessage.class,
-        "/chatter2"
-        , new StringMessage().withData("Hello World!"));
-    pubNode.addAndStartPublisher(pub);
-
-
-    // Start a new subscriber on chatter.
-    Ros2Subscriber<StringMessage> sub = Ros2Factory.getDefaultSubscriber(StringMessage.class,
-        "/chatter", stringMessage -> log.info(stringMessage.data));
-    subNode.addAndStartSubscriber(sub);
-
-    // Just to demonstrate you can add make the callback object independently
-    SubscriberCallback<StringMessage> callback = o -> log.info(o.data);
-    Ros2Subscriber<StringMessage> sub2 = Ros2Factory.getDefaultSubscriber(StringMessage.class,
-        "/chatter2", callback);
-    subNode.addAndStartSubscriber(sub2);
+//    Ros2Publisher<StringMessage> pub = Ros2Factory.getDefaultPublisher(StringMessage.class,
+//        "/chatter2"
+//        , new StringMessage().withData("Hello World!"));
+//    pubNode.addAndStartPublisher(pub);
+//
+//
+//    // Start a new subscriber on chatter.
+//    Ros2Subscriber<StringMessage> sub = Ros2Factory.getDefaultSubscriber(StringMessage.class,
+//        "/chatter", stringMessage -> log.info(stringMessage.data));
+//    subNode.addAndStartSubscriber(sub);
+//
+//    // Just to demonstrate you can add make the callback object independently
+//    SubscriberCallback<StringMessage> callback = o -> log.info(o.data);
+//    Ros2Subscriber<StringMessage> sub2 = Ros2Factory.getDefaultSubscriber(StringMessage.class,
+//        "/chatter2", callback);
+//    subNode.addAndStartSubscriber(sub2);
 
 //    Service definition - still a work in progress to make generic! But technically works. Need
 //     to figure out if we can RECEIVE service requests, and not just send them.
-//    pubNode.addService(new AddTwoIntsServiceDefinition(), "add_two_ints");
-//    AddTwoIntsRequestMessage testMsg = new AddTwoIntsRequestMessage(2, 3);
-//    AddTwoIntsResponseMessage testResp = pubNode.callService("add_two_ints", testMsg);
-//    log.info("Received " + testResp.sum);
+    pubNode.addService(new AddTwoIntsServiceDefinition(), "add_two_ints");
+    AddTwoIntsRequestMessage testMsg = new AddTwoIntsRequestMessage().withA(3).withB(2);
+    AddTwoIntsResponseMessage testResp = pubNode.callService("add_two_ints", testMsg);
+    log.info("Received " + testResp.sum);
 
     // FIXME: Whenever this gets updated
 //    node.addAction(new FibonacciActionDefinition(),"fibonacci");

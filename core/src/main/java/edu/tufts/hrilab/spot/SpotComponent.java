@@ -8,12 +8,17 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.interfaces.ArmInterface;
 import edu.tufts.hrilab.interfaces.MoveBaseInterface;
+import edu.tufts.hrilab.ros2.ros2jrosclient.generated.AddTwoIntsRequestMessage;
+import edu.tufts.hrilab.ros2.ros2jrosclient.generated.AddTwoIntsResponseMessage;
+import edu.tufts.hrilab.ros2.ros2jrosclient.generated.AddTwoIntsServiceDefinition;
 import edu.tufts.hrilab.spot.msgs.*;
 import id.jros2client.JRos2Client;
 import id.jros2client.JRos2ClientConfiguration;
 import id.jros2client.JRos2ClientFactory;
 import id.jros2messages.geometry_msgs.TwistWithCovarianceStampedMessage;
 import id.jrosclient.TopicSubscriber;
+import id.jrosmessages.geometry_msgs.TwistMessage;
+import id.jrosmessages.geometry_msgs.Vector3Message;
 import id.jrosmessages.std_msgs.StringMessage;
 import id.jrosmessages.std_msgs.UInt16Message;
 import org.apache.commons.cli.CommandLine;
@@ -38,12 +43,16 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   private String map_path;
   private JRos2Client client;
-  private JRos2ActionClient<NavigateToGoalMessage, NavigateToResultMessage> navigateAction;
-  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> standAction;
-  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> sitAction;
-  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> openGripperAction;
-  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> closeGripperAction;
-  private JRos2ServiceClient<DockRequestMessage, DockResponseMessage> dockAction;
+  //  private JRos2ActionClient<NavigateToGoalMessage, NavigateToResultMessage> navigateAction;
+  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> standService;
+  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> sitService;
+  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> openGripperService;
+  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> closeGripperService;
+  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> claimService;
+  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> powerOnService;
+  private JRos2ServiceClient<DockRequestMessage, DockResponseMessage> dockService;
+  private JRos2ServiceClient<SetVelocityRequestMessage, SetVelocityResponseMessage> setVelocityService;
+  JRos2ServiceClient<AddTwoIntsRequestMessage, AddTwoIntsResponseMessage> addtwo;
 
   public SpotComponent() {
     super();
@@ -53,27 +62,32 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @Override
   protected void init() {
     super.init();
-    JRos2ClientConfiguration.Builder configBuilder = new JRos2ClientConfiguration.Builder();
-    RtpsTalkConfiguration.Builder rtpsConfigBuilder = new RtpsTalkConfiguration.Builder();
-    configBuilder.rtpsTalkConfiguration(rtpsConfigBuilder.build());
-    client = new JRos2ClientFactory().createClient(configBuilder.build());
-    navigateAction = new JRos2ActionClientFactory().createClient(client, new NavigateToActionDefinition(), "navigate_to");
-    standAction = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/stand");
-    dockAction = new JRos2ServiceClientFactory().createClient(client, new DockServiceDefinition(), "/dock");
-    sitAction = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/sit");
-    TopicSubscriber<TwistWithCovarianceStampedMessage> subscriber = new TopicSubscriber<TwistWithCovarianceStampedMessage>(TwistWithCovarianceStampedMessage.class, "/odometry/twist") {
-      @Override
-      public void onNext(TwistWithCovarianceStampedMessage t) {
-        log.info(t.toString());
-        getSubscription().get().request(1);
-      }
+//    JRos2ClientConfiguration.Builder configBuilder = new JRos2ClientConfiguration.Builder();
+//    RtpsTalkConfiguration.Builder rtpsConfigBuilder = new RtpsTalkConfiguration.Builder();
+//    configBuilder.rtpsTalkConfiguration(rtpsConfigBuilder.networkInterface("lo").build());
+    client = new JRos2ClientFactory().createClient();
+//    navigateAction = new JRos2ActionClientFactory().createClient(client, new NavigateToActionDefinition(), "navigate_to");
+    standService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/stand");
+    dockService = new JRos2ServiceClientFactory().createClient(client, new DockServiceDefinition(), "/dock");
+    sitService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/sit");
+    claimService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/claim");
+    powerOnService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/power_on");
+    openGripperService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/open_gripper");
+    closeGripperService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/close_gripper");
+    addtwo = new JRos2ServiceClientFactory().createClient(client, new AddTwoIntsServiceDefinition(), "/add_two_ints");
+    setVelocityService = new JRos2ServiceClientFactory().createClient(client, new SetVelocityServiceDefinition(), "/max_velocity");
 
-      @Override
-      public void onError(Throwable throwable) {
-        log.error("Error in subscriber", throwable);
-      }
-    };
-//    client.subscribe(subscriber);
+
+    try {
+      SetVelocityResponseMessage res = setVelocityService.sendRequestAsync(new SetVelocityRequestMessage().withVelocityLimit(new TwistMessage().withAngular(new Vector3Message(1, 1, 2)).withLinear(new Vector3Message(3, 1, 3)))).get();
+      log.info(res.toString());
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+//    claimService.sendRequestAsync(new TriggerRequestMessage());
+//    powerOnService.sendRequestAsync(new TriggerRequestMessage());
+//    stand();
+
     log.info("Completed init");
   }
 
@@ -90,18 +104,39 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       map_path = cmdLine.getOptionValue("path");
     }
   }
+
+  @Action
+  @TRADEService
+  public Justification claim() {
+    claimService.sendRequestAsync(new TriggerRequestMessage());
+    return new ConditionJustification(true);
+  }
+
+  @Action
+  @TRADEService
+  public Justification testRos(int a, int b) {
+    try {
+      AddTwoIntsResponseMessage res = addtwo.sendRequestAsync(new AddTwoIntsRequestMessage().withA(a).withB(b)).get();
+      log.info(String.valueOf(res.sum));
+      return new ConditionJustification(true);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error with test service", e);
+    }
+    return new ConditionJustification(false);
+  }
+
   @Action
   @TRADEService
   public Justification dock(int id) {
     DockResponseMessage res;
-    DockRequestMessage req = new DockRequestMessage();
-    req.dock_id = new UInt16Message().withData((short) id);
+    DockRequestMessage req = new DockRequestMessage().withDockId(new Int16Message().withData((short) id));
     try {
-      res = dockAction.sendRequestAsync(req).get();
+      res = dockService.sendRequestAsync(req).get();
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
     return new ConditionJustification(res.success);
+//    return new ConditionJustification(true);
   }
 
 
@@ -110,7 +145,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   public Justification stand() {
     TriggerResponseMessage res;
     try {
-      res = standAction.sendRequestAsync(new TriggerRequestMessage()).get();
+      res = standService.sendRequestAsync(new TriggerRequestMessage()).get();
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
@@ -122,7 +157,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   public Justification sit() {
     TriggerResponseMessage res;
     try {
-      res = sitAction.sendRequestAsync(new TriggerRequestMessage()).get();
+      res = sitService.sendRequestAsync(new TriggerRequestMessage()).get();
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
@@ -141,21 +176,22 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   @Override
   public Justification moveTo(String groupName, Symbol refId) {
-    NavigateToGoalMessage goal = new NavigateToGoalMessage();
-    goal.initial_localization_fiducial = false;
-    goal.upload_path = new StringMessage("/home/mfawn/code/graph");
-    goal.navigate_to = new StringMessage("waypoint_45");
-    NavigateToResultMessage result;
-    try {
-      result = navigateAction.sendGoalAsync(goal).get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-
-    if (!result.success) {
-      log.error(result.message);
-    }
-    return new ConditionJustification(result.success);
+//    NavigateToGoalMessage goal = new NavigateToGoalMessage();
+//    goal.initial_localization_fiducial = false;
+//    goal.upload_path = new StringMessage("/home/mfawn/code/graph");
+//    goal.navigate_to = new StringMessage("waypoint_45");
+//    NavigateToResultMessage result;
+//    try {
+//      result = navigateAction.sendGoalAsync(goal).get();
+//    } catch (InterruptedException | ExecutionException e) {
+//      throw new RuntimeException(e);
+//    }
+//
+//    if (!result.success) {
+//      log.error(result.message);
+//    }
+//    return new ConditionJustification(result.success);
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -262,21 +298,23 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   public Justification closeGripper(String groupName) {
     TriggerResponseMessage res;
     try {
-      res = closeGripperAction.sendRequestAsync(new TriggerRequestMessage()).get();
+      res = closeGripperService.sendRequestAsync(new TriggerRequestMessage()).get();
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
-    return new ConditionJustification(res.success);  }
+    return new ConditionJustification(res.success);
+  }
 
   @Override
   public Justification openGripper(String groupName) {
     TriggerResponseMessage res;
     try {
-      res = openGripperAction.sendRequestAsync(new TriggerRequestMessage()).get();
+      res = openGripperService.sendRequestAsync(new TriggerRequestMessage()).get();
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
-    return new ConditionJustification(res.success);  }
+    return new ConditionJustification(res.success);
+  }
 
   @Override
   public boolean moveGripper(String groupName, float meters) {
