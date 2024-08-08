@@ -43,50 +43,21 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   private String map_path;
   private JRos2Client client;
-  //  private JRos2ActionClient<NavigateToGoalMessage, NavigateToResultMessage> navigateAction;
-  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> standService;
-  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> sitService;
-  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> openGripperService;
-  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> closeGripperService;
-  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> claimService;
-  private JRos2ServiceClient<TriggerRequestMessage, TriggerResponseMessage> powerOnService;
-  private JRos2ServiceClient<DockRequestMessage, DockResponseMessage> dockService;
-  private JRos2ServiceClient<SetVelocityRequestMessage, SetVelocityResponseMessage> setVelocityService;
-  JRos2ServiceClient<AddTwoIntsRequestMessage, AddTwoIntsResponseMessage> addtwo;
+  private JRos2ServiceClient<DiarcCommandRequestMessage, DiarcCommandResponseMessage> commandService;
 
   public SpotComponent() {
     super();
   }
 
-
   @Override
   protected void init() {
     super.init();
-//    JRos2ClientConfiguration.Builder configBuilder = new JRos2ClientConfiguration.Builder();
-//    RtpsTalkConfiguration.Builder rtpsConfigBuilder = new RtpsTalkConfiguration.Builder();
-//    configBuilder.rtpsTalkConfiguration(rtpsConfigBuilder.networkInterface("lo").build());
     client = new JRos2ClientFactory().createClient();
-//    navigateAction = new JRos2ActionClientFactory().createClient(client, new NavigateToActionDefinition(), "navigate_to");
-    standService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/stand");
-    dockService = new JRos2ServiceClientFactory().createClient(client, new DockServiceDefinition(), "/dock");
-    sitService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/sit");
-    claimService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/claim");
-    powerOnService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/power_on");
-    openGripperService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/open_gripper");
-    closeGripperService = new JRos2ServiceClientFactory().createClient(client, new TriggerServiceDefinition(), "/close_gripper");
-    addtwo = new JRos2ServiceClientFactory().createClient(client, new AddTwoIntsServiceDefinition(), "/add_two_ints");
-    setVelocityService = new JRos2ServiceClientFactory().createClient(client, new SetVelocityServiceDefinition(), "/max_velocity");
+    commandService = new JRos2ServiceClientFactory().createClient(client, new DiarcCommandServiceDefinition(), "/diarc_command");
 
-
-    try {
-      SetVelocityResponseMessage res = setVelocityService.sendRequestAsync(new SetVelocityRequestMessage().withVelocityLimit(new TwistMessage().withAngular(new Vector3Message(1, 1, 2)).withLinear(new Vector3Message(3, 1, 3)))).get();
-      log.info(res.toString());
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-//    claimService.sendRequestAsync(new TriggerRequestMessage());
-//    powerOnService.sendRequestAsync(new TriggerRequestMessage());
-//    stand();
+    claim();
+    powerOn();
+    stand();
 
     log.info("Completed init");
   }
@@ -108,60 +79,91 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @Action
   @TRADEService
   public Justification claim() {
-    claimService.sendRequestAsync(new TriggerRequestMessage());
-    return new ConditionJustification(true);
-  }
-
-  @Action
-  @TRADEService
-  public Justification testRos(int a, int b) {
     try {
-      AddTwoIntsResponseMessage res = addtwo.sendRequestAsync(new AddTwoIntsRequestMessage().withA(a).withB(b)).get();
-      log.info(String.valueOf(res.sum));
-      return new ConditionJustification(true);
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.CLAIM)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
-      log.error("Error with test service", e);
+      log.error("Error claiming", e);
+      return new ConditionJustification(false);
     }
-    return new ConditionJustification(false);
   }
 
   @Action
   @TRADEService
   public Justification dock(int id) {
-    DockResponseMessage res;
-    DockRequestMessage req = new DockRequestMessage().withDockId(new Int16Message().withData((short) id));
+//    DockResponseMessage res;
+//    DockRequestMessage req = new DockRequestMessage().withDockId(new Int16Message().withData((short) id));
+//    try {
+//      res = dockService.sendRequestAsync(req).get();
+//    } catch (InterruptedException | ExecutionException e) {
+//      throw new RuntimeException(e);
+//    }
+//    return new ConditionJustification(res.success);
+    return new ConditionJustification(true);
+  }
+
+  @Action
+  @TRADEService
+  public Justification powerOn() {
     try {
-      res = dockService.sendRequestAsync(req).get();
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.POWER_ON)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+      log.error("Error claiming", e);
+      return new ConditionJustification(false);
     }
-    return new ConditionJustification(res.success);
-//    return new ConditionJustification(true);
+  }
+
+  @Action
+  @TRADEService
+  public Justification powerOff() {
+    try {
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.POWER_OFF)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error claiming", e);
+      return new ConditionJustification(false);
+    }
   }
 
 
   @Action
   @TRADEService
   public Justification stand() {
-    TriggerResponseMessage res;
     try {
-      res = standService.sendRequestAsync(new TriggerRequestMessage()).get();
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.STAND)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+      log.error("Error claiming", e);
+      return new ConditionJustification(false);
     }
-    return new ConditionJustification(res.success);
   }
 
   @Action
   @TRADEService
   public Justification sit() {
-    TriggerResponseMessage res;
     try {
-      res = sitService.sendRequestAsync(new TriggerRequestMessage()).get();
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.SIT)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+      log.error("Error claiming", e);
+      return new ConditionJustification(false);
     }
-    return new ConditionJustification(res.success);
   }
 
   @Override
@@ -296,24 +298,30 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   @Override
   public Justification closeGripper(String groupName) {
-    TriggerResponseMessage res;
     try {
-      res = closeGripperService.sendRequestAsync(new TriggerRequestMessage()).get();
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.STAND)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+      log.error("Error claiming", e);
+      return new ConditionJustification(false);
     }
-    return new ConditionJustification(res.success);
   }
 
   @Override
   public Justification openGripper(String groupName) {
-    TriggerResponseMessage res;
     try {
-      res = openGripperService.sendRequestAsync(new TriggerRequestMessage()).get();
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.STAND)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+      log.error("Error claiming", e);
+      return new ConditionJustification(false);
     }
-    return new ConditionJustification(res.success);
   }
 
   @Override
