@@ -1,0 +1,30 @@
+#bring the corn to the hot plate
+トウモロコシをホットプレートに持ってきます
+#bring the chicken to the cooktop
+チキンをクックトップに持っていきます
+#I will tell you about a new ingredient called chicken
+チキンと言う新しい食材について教えます
+#pantry
+パントリー
+#job chicken
+ジョブチキン
+#preparation area
+準備エリア
+#bring the chicken to the cooktop
+ニワトリをクックトップに持ってきます
+#I brought chicken for you
+あなたのために鶏肉を持ってきました
+#Transport the chicken to the preparation area
+チキンを準備エリアに運びます
+#Assista, go to the hot plate
+Assista、ホットプレートに行く
+#Assista, pick up corn
+Assista、トウモロコシを拾う
+#Assista, go to preparation area
+Assista, 準備エリアに行く
+#Assista, please put down the corn
+Assista、トウモロコシを下ろしてください
+#place the corn in the serving box
+トウモロコシをサービングボックスに入れる
+#place the chicken in the serving box
+鶏肉をサービングボックスに入れます

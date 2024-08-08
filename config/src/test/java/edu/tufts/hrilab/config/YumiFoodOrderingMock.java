@@ -9,7 +9,7 @@ import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.abb.RequestFromHumanComponent;
 import edu.tufts.hrilab.abb.MockYumiComponent;
 import edu.tufts.hrilab.abb.consultant.area.ABBAreaConsultant;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexConsultant;
+import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
 import edu.tufts.hrilab.abb.consultant.item.ItemConsultant;
 import edu.tufts.hrilab.abb.consultant.location.ABBLocationConsultant;
 import edu.tufts.hrilab.action.GoalManagerImpl;
@@ -28,11 +28,16 @@ import java.util.Arrays;
 public class YumiFoodOrderingMock extends DiarcConfiguration {
   protected static Logger log = LoggerFactory.getLogger(YumiFoodOrderingMock.class);
   static public SimSpeechRecognitionComponent simSpeechRec;
+  static public SimSpeechRecognitionComponent untrustedSimSpeechRec;
   public MockYumiComponent leftArm;
   public MockYumiComponent rightArm;
-
+  private CognexConsultant cognexConsultant;
+  private ItemConsultant itemConsultant;
+  private ABBAreaConsultant areaConsultant;
+  private ABBLocationConsultant locationConsultant;
   private boolean firebase;
   private boolean test;
+  public GoalManagerImpl gm;
 
   public YumiFoodOrderingMock(boolean test) {
     this.test = test;
@@ -45,7 +50,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
     leftArm = createInstance(MockYumiComponent.class, "-groups agent:leftArm:yumi");
     rightArm = createInstance(MockYumiComponent.class, "-groups agent:rightArm:yumi");
 
-    CognexConsultant cognexConsultant = new CognexConsultant();
+    cognexConsultant = new CognexConsultant();
     try {
       TRADE.registerAllServices(cognexConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "agent:human:mobileManipulator", "physobj")));
     } catch (TRADEException e) {
@@ -56,21 +61,21 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
 
     createInstance(RequestFromHumanComponent.class, "-groups agent:human:mobileManipulator");
 
-    ItemConsultant itemConsultant = new ItemConsultant();
+    itemConsultant = new ItemConsultant();
     try {
       TRADE.registerAllServices(itemConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "item")));
     } catch (TRADEException e) {
       log.error("error registering item consultant in DIARC config", e);
     }
 
-    ABBAreaConsultant areaConsultant = new ABBAreaConsultant();
+    areaConsultant = new ABBAreaConsultant();
     try {
       TRADE.registerAllServices(areaConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "area")));
     } catch (TRADEException e) {
       log.error("error registering area consultant in DIARC config", e);
     }
 
-    ABBLocationConsultant locationConsultant = new ABBLocationConsultant();
+    locationConsultant = new ABBLocationConsultant();
     try {
       TRADE.registerAllServices(locationConsultant, new ArrayList<>(Arrays.asList("agent:leftArm:yumi", "agent:rightArm:yumi", "agent:self:agent", "agent:human:mobileManipulator", "location")));
     } catch (TRADEException e) {
@@ -111,22 +116,34 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
                     + "-goal listen(self:agent)";
 //                        + "-goal init(self:agent)";
 
-    createInstance(GoalManagerImpl.class, gmArgs);
+    gm = createInstance(GoalManagerImpl.class, gmArgs);
 
     if (test) {
-      createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech -nogui");
+      untrustedSimSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech -nogui");
       simSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker brad -config yumiFoodOrdering.simspeech -nogui");
     } else {
       createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech");
       createInstance(SimSpeechRecognitionComponent.class, "-speaker brad -config yumiFoodOrdering.simspeech");
     }
+  }
 
-
+  @Override
+  public void shutdownConfiguration() {
+    try {
+      TRADE.deregister(areaConsultant);
+      TRADE.deregister(itemConsultant);
+      TRADE.deregister(cognexConsultant);
+      TRADE.deregister(locationConsultant);
+    } catch (TRADEException e) {
+      log.error("[shutdownConfiguration] Error deregistering consultants", e);
+    }
+    super.shutdownConfiguration();
   }
 
   public static void main(String[] args) {
     boolean test = false;
     YumiFoodOrderingMock demoConfig = new YumiFoodOrderingMock(test);
     demoConfig.runConfiguration();
+    //SpringApplication.run(GuiManager.class, args);
   }
 }

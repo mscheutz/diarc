@@ -16,13 +16,13 @@
     !bindings = act:askQuestionFromString(?actor,"what are the differences", mod(X));
     !modification = op:get(!bindings, !x);
     op:log(debug, "modification !modification");
-    act:modifyAction(!likeGoal,!modification,!location);
+    act:modifyAction(?actor,!likeGoal,!modification,!location);
 
     !bindings = act:askQuestionFromString(?actor,"okay are there any more differences", mod(X));
     !modification = op:get(!bindings, !x);
     !modName = op:getName(!modification);
     while(op:!=(!modName,"none")){
-        act:modifyAction(?newScriptName,!modification,!location);
+        act:modifyAction(?actor,?newScriptName,!modification,!location);
         !bindings = act:askQuestionFromString(?actor,"okay are there any more differences", mod(X));
         !modification = op:get(!bindings, !x);
         !modName = op:getName(!modification);

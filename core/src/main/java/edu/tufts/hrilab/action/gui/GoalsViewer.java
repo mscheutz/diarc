@@ -4,7 +4,7 @@
 
 package edu.tufts.hrilab.action.gui;
 
-import edu.tufts.hrilab.action.manager.ExecutionManager;
+import edu.tufts.hrilab.action.GoalManagerImpl;
 import edu.tufts.hrilab.action.goal.Goal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,13 +27,13 @@ public class GoalsViewer extends JPanel {
     private JList pastGoalsList;
     private JSplitPane goalsSplitPane;
     private JSplitPane goalsViewSplit;
-    private ExecutionManager executionManager;
+    private GoalManagerImpl goalManager;
     private DefaultListModel activeGoalsModel;
     private DefaultListModel pastGoalsModel;
     private final ScheduledExecutorService guiUpdateExecutor = Executors.newScheduledThreadPool(1);
 
-    GoalsViewer(ExecutionManager em) {
-        executionManager = em;
+    GoalsViewer(GoalManagerImpl gm) {
+        goalManager = gm;
         activeGoalsModel = new DefaultListModel<>();
         activeGoalsList.setModel(activeGoalsModel);
         pastGoalsModel = new DefaultListModel<>();
@@ -56,12 +56,12 @@ public class GoalsViewer extends JPanel {
 
     public void updateGoals() {
         activeGoalsModel.clear();
-        for (Goal goal : executionManager.getActiveGoals()) {
+        for (Goal goal : goalManager.getActiveGoals()) {
             activeGoalsModel.addElement(goal);
         }
         activeGoalsList.setVisible(true);
         pastGoalsModel.clear();
-        for (Goal goal : executionManager.getPastGoals()) {
+        for (Goal goal : goalManager.getPastGoals()) {
             pastGoalsModel.addElement(goal);
         }
         pastGoalsList.setVisible(true);

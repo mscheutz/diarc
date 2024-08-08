@@ -22,7 +22,7 @@ tasks.named("compileJava").get().dependsOn("copyGitHooks")
 // the repositories used to search for dependencies
 repositories {
   mavenCentral()
-//  mavenLocal()
+  mavenLocal()
   maven {
     name = "HRILabArchiva"
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
@@ -250,7 +250,6 @@ dependencies {
   api("io.github.lambdaprime:jros2client:6.0")
   api("io.github.pinorobotics:jros2actionlib:2.0");
   api("io.github.pinorobotics:jros2tf2:1.0")
-
 }
 
 //TODO:brad: this is potentially no longer needed for mtracs, tbd if it is necessary for the Temi. Those were the two main use cases,

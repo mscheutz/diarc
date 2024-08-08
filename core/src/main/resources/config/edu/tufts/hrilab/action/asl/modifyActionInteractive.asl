@@ -11,13 +11,13 @@
     !bindings = act:askQuestionFromString(?actor,"what will change", mod(X,Y));
     !modification = op:get(!bindings, !x);
     op:log(debug, "modification !modification");
-    act:modifyAction(?actionName,!modification,!location);
+    act:modifyAction(?actor,?actionName,!modification,!location);
 
     !bindings = act:askQuestionFromString(?actor,"okay are there any other changes", mod(X,Y));
     !modification = op:get(!bindings, !x);
     !modName = op:getName(!modification);
     while(op:!=(!modName,"none")){
-        act:modifyAction(?actionName,!modification,!location);
+        act:modifyAction(?actor,?actionName,!modification,!location);
         !bindings = act:askQuestionFromString(?actor,"okay are there any other changes", mod(X,Y));
         !modification = op:get(!bindings, !x);
         !modName = op:getName(!modification);

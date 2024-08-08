@@ -41,12 +41,12 @@ above; ABOVE ;above
 
 actor; AGENT ; ?ADDRESSEE
 
-add; ((C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,insert($x),$t)
-add; ((C/PP)/C)\ADV; #w#x#y.modifyAction($w,insert($x),$y)
+add; ((C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,insert($x),$t)
+add; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,insert($x),$y)
 
 after; PP/C; #x.after($x)
 
-after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction($a,insert($e),$t)
+after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,insert($e),$t)
 
 ahead; Adj; ahead
 
@@ -146,7 +146,7 @@ do; Q/ C; #x.$x
 do a; C/N ; #x.doa$x()
 do a; (C\AGENT)/N ; #y#z.doa$y()
 
-don't; ((C/PP)/C)\ADV; #w#x#y.modifyAction($w,remove($x),$y)
+don't; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,remove($x),$y)
 
 % " does dempster trust me"
 does; Q/C ; #x.$x
@@ -184,7 +184,7 @@ evening; G[good] ; evening
 
 evan; AGENT ; evan
 
-execute while learning; C ; changeLearningExecution(execute)
+execute while learning; C ; changeLearningExecution(?ADDRESSEE,execute)
 
 %%%%%%%%%%%  F  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -309,7 +309,7 @@ lower; (C\AGENT)/ NP[your]; #x#y. lower($x)
 %%%%%%%%%%%  M  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %makesure; (C/(C\C))/INF; #x#y.modifyAction(insert($x),$y@$x)
-make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction($w,insert($x),$y)
+make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,insert($x),$y)
 
 me; AGENT ; ?INTERACTOR
 
@@ -430,16 +430,16 @@ release; VERBT; release
 relax ; VERBI; rest
 
 %remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction($a,remove($x),$t)
-remove;(C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,remove($x),$t)
-remove ; (C/C)\ADV; #w#x.modifyAction($w,remove($x),none())
-remove ; ((C/PP)/C)\ADV; #w#x#l.modifyAction($w,remove($x),$l)
+remove;(C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,remove($x),$t)
+remove ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,remove($x),none())
+remove ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,remove($x),$l)
 
 
 
-replace; (C/WITH)\ADV; #a#w.modifyAction($a,replace($w),none())
-replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction($a,replace($w),$l)
-replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction($a,replace($w),$l)
-replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,replace($x),$t)
+replace; (C/WITH)\ADV; #a#w.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($w),none())
+replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($w),$l)
+replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($w),$l)
+replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($x),$t)
 
 %todo:brad: wh is this reversed?
 replace; ((MODIFICATION/C)/WITH)/C; #x#w#y.replace($y,$x)
@@ -590,8 +590,8 @@ I'll; ((S/REF)/(C/REF)), ((S/AGENT)/(C/AGENT)), (((S/INF)/HOW)/AGENT)/(((S/INF)/
 % dance with shafer
 with; AGENT/AGENT ; #x.$x
 
-without ; (C/C)\ADV; #w#x.modifyAction($w,remove($x),none())
-without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction($w,remove($x),$l)
+without ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,remove($x),none())
+without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,remove($x),$l)
 
 %%%%%%%%%%%  X  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%  Y  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

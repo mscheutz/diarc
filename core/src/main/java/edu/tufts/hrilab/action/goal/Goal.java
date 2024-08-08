@@ -8,6 +8,7 @@ import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.description.ContextDescription;
 import edu.tufts.hrilab.action.execution.ArgumentBasedContext;
+import edu.tufts.hrilab.action.manager.Resource;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.util.IdGenerator;
@@ -19,6 +20,7 @@ import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.justification.Justification;
 
 import java.io.Serializable;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -56,6 +58,9 @@ public class Goal implements Serializable {
   private boolean isAction = false;
   private static final IdGenerator idGenerator = new IdGenerator();
   private Predicate metric;
+  private Set<Resource> requiredResources = null;
+  private Set<Resource> heldResources = null;
+  private boolean isLearningGoal = false;
 
   /**
    * The ActionInterpreter currently executing this Goal. Can be null if this Goal isn't currently being executed.
@@ -284,6 +289,57 @@ public class Goal implements Serializable {
 
   public PriorityTier getPriorityTier() {
     return priorityTier;
+  }
+
+  /**
+   * Get the set of resources necessary to be available in order to execute this goal.
+   * Note: This set is specific to the subclass of ExecutionManager being used in the system and requires
+   *       setRequiredResources to be called first (by the ExecutionManager). Will return null if the set
+   *       of resources has not yet been computed by an ExecutionManager.
+   */
+  public Set<Resource> getRequiredResources() {
+    return requiredResources;
+  }
+
+  /**
+   * Set the set of resources which must be available for this goal during execution. This method should only
+   * be called by the Execution Manager on submission.
+   */
+  public void setRequiredResources(Set<Resource> requiredResources) {
+    this.requiredResources = requiredResources;
+  }
+
+  /**
+   * Get the set of resources that will be held by this goal during execution.
+   * Note: This set is specific to the subclass of ExecutionManager being used in the system and requires
+   *       setRequiredResources to be called first (by the ExecutionManager). Will return null if the set
+   *       of resources has not yet been computed by an ExecutionManager.
+   */
+  public Set<Resource> getHeldResources() {
+    return heldResources;
+  }
+
+  /**
+   * Set the set of resources which will be held by this goal during execution. This method should only
+   * be called by the Execution Manager on submission.
+   */
+  public void setHeldResources(Set<Resource> heldResources) {
+    this.heldResources = heldResources;
+  }
+
+  /**
+   * Set indication whether this goal is being used as a part of action learning. This is important for reasoning in the
+   * ExecutionManager about whether the goal conflicts with active learning.
+   */
+  public void setIsLearningGoal(boolean isLearningGoal) {
+    this.isLearningGoal = isLearningGoal;
+  }
+
+  /**
+   * Returns true if this goal was submitted as part of an action learning process
+   */
+  public boolean isLearningGoal() {
+    return isLearningGoal;
   }
 
   /**

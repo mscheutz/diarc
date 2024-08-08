@@ -984,13 +984,10 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     Predicate interruptGoalPredicate = Factory.createPredicate("interrupt", Factory.createFOL(interruptEvent.getActor()), interruptEvent.getPredicateForm());
     Goal interruptGoal = new Goal(interruptGoalPredicate);
     ActionInterpreter ai = ActionInterpreter.createInterpreterFromEventSpec(interruptGoal, this, interruptEvent);
-    //TODO: revisit
-    //The above line was previously adding interruption contexts as a child of the current context, which is called and executed below,
-    // but is not executed as a part of this context's AI. So this context's ChildrenContext counter will never be incremented.
-    // This causes getNextStep() for this context to return the already completed interruption context, which we don't want
+    //Increment child context counter so getNextStep doesn't return the terminated context added by the above line and
+    //  executed separately in the line below.
     childContexts.getNextAndIncrement();
-    //Call interrupt event
-    ai.call();
+    ai.call(); //Call interruption event
   }
 
   /**

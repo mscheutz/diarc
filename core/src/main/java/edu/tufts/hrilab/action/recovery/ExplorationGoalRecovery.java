@@ -140,6 +140,9 @@ public class ExplorationGoalRecovery extends GoalRecovery {
       // NOTE: ActionStatus.FAIL happens during the cancelGoal goal when no matching goal is found, and we don't want to recover in that case
 
       switch (actionStatus) {
+        case EXIT_RECOVERY:
+          recoveryStatus = RecoveryStatus.EXIT;
+          return false;
         case FAIL_RECOVERY:
           // if failure recovery fails, just try to re-plan until termination criteria kicks in
           recoveryStatus = RecoveryStatus.PLAN;

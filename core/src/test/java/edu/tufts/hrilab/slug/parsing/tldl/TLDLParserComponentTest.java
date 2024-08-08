@@ -3935,7 +3935,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("resume previous task",
-                "INSTRUCT(brad,self,resumeCurrentGoal(self),{})",
+                "INSTRUCT(brad,self,resumeSystemGoals(self),{})",
                 "brad",
                 "self"
         ));

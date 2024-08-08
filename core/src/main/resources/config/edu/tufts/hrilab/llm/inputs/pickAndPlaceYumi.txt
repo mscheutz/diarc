@@ -1,0 +1,29 @@
+#init state:
+#   2 ingredients: chicken, corn
+#   4 areas: cooktop, hotplate, prepArea, servingArea
+#   corn is at the prep area, chicken is out of scene(in the pantry), serving box is at the servingArea
+#1. Goal based pick and place instruction (succeeds)
+Get the corn to the hotplate
+#2. Goal based pick and place instruction (fails, doesn't know ingredient)
+Get a chicken to the cooktop
+#3. Ingredient teaching (chicken)
+I will teach you a new ingredient named chicken
+the pantry
+the chicken job
+the prep area
+hold it here
+#4. Goal based pick and place #2 (succeeds)
+get a chicken to the cooktop
+#Change how we phrase this? e.g. "I put the chicken at the preparation area"?
+I got the chicken for you
+#5. Goal based pick and place to get the chicken back to prep area
+Get the chicken to the preparation area
+#6. Instruction based pick and place (ends with failure because area is occupied)
+Right arm go to the hotplate
+Right arm pick up the corn
+Right arm go to the preparation area
+Right arm put down the corn
+#Response: I cannot put down the corn because the prep area is occupied
+#7/8: Get in the serving box x2 (succeeds)
+Get the corn in the serving box
+Get the chicken in the serving box

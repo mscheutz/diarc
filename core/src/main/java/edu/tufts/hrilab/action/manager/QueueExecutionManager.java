@@ -9,15 +9,11 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.execution.RootContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
-import edu.tufts.hrilab.action.goal.PendingGoal;
 import edu.tufts.hrilab.action.goal.PriorityTier;
-import edu.tufts.hrilab.action.justification.ConditionJustification;
-import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,8 +31,8 @@ public class QueueExecutionManager extends ExecutionManager {
     super();
   }
 
-  protected void init(StateMachine sm, RootContext rootContext, String priorityFile, Collection<String> groups) {
-    super.init(sm, rootContext, priorityFile,groups);
+  protected void init(StateMachine sm, RootContext rootContext, Collection<String> groups) {
+    super.init(sm, rootContext,groups);
     agentGoals = new HashMap<>();
     for (Symbol agent : agentTeams.keySet()) {
       agentGoals.put(agent, null);
@@ -72,59 +68,88 @@ public class QueueExecutionManager extends ExecutionManager {
   }
 
   @Override
-  protected void handleConflictingLowerPriorityGoal(Goal g, Set<Resource> necessaryResources) {
+  protected void handleConflictingLowerPriorityGoal(Goal g) {
     //QueueEM: Simply leave in the pending queue rather than rejecting
   }
 
   //TODO: extend definition of resources past just whole agents/teams
   @Override
   protected Set<Resource> getRequiredResourcesForGoal(Goal goal) {
-    Set<Resource> resourceSet = new HashSet<>();
+    if (goal.getRequiredResources() != null) {
+      return goal.getRequiredResources();
+    } else {
+      Set<Resource> resourceSet = new HashSet<>();
 
-    //Iterate over all gathered agents and pool agent wide resources
-    for (Symbol agent : getDescendants(goal.getActor())) {
-      //Until we have a better definition of resources per agentTeam, currently
-      // assuming any goal locks the whole agentTeam.
-      //If the goal skips the queue, it has no resource dependencies.
-      // Otherwise, takes the agent-wide lock.
-      if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
-        //resourceSet.add(agentTeams.get(agent).getResource(agent));
-        resourceSet.addAll(agentTeams.get(agent).getResources());
+      //Iterate over all gathered agents and pool agent wide resources
+      for (Symbol agent : getDescendants(goal.getActor())) {
+        //If the goal skips the queue, it has no resource dependencies.
+        if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
+          //If it is a learning goal, only requires the agent-wide lock to be available.
+          if (goal.isLearningGoal()) {
+            resourceSet.add(agentTeams.get(agent).getResource(agent));
+          }
+          //Otherwise it requires both the learning and agent-wide lock to be available
+          else {
+            resourceSet.addAll(agentTeams.get(agent).getResources());
+          }
+        }
       }
-    }
+      //Store required resources in goal to prevent constantly recomputing set
+      goal.setRequiredResources(resourceSet);
 
-    return resourceSet;
+      return resourceSet;
+    }
+  }
+  @Override
+  protected Set<Resource> getHeldResourcesForGoal(Goal goal) {
+    if (goal.getHeldResources() != null) {
+      return goal.getHeldResources();
+    } else {
+      Set<Resource> resourceSet = new HashSet<>();
+
+      //Iterate over all gathered agents and pool agent wide resources
+      for (Symbol agent : getDescendants(goal.getActor())) {
+        //If the goal skips the queue, it holds no resources
+        if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
+          //Exception to the rule - action learning itself takes only the learning lock
+          if (goal.getPredicate().getName().equals("learnAction")) {
+            resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
+          }
+          //If it is a learning goal, takes just the agent-wide lock.
+          if (goal.isLearningGoal()) {
+            resourceSet.add(agentTeams.get(agent).getResource(agent));
+          }
+          //Otherwise it takes both the learning and agent-wide lock
+          else {
+            resourceSet.addAll(agentTeams.get(agent).getResources());
+          }
+        }
+      }
+      //Store required resources in goal to prevent constantly recomputing set
+      goal.setHeldResources(resourceSet);
+
+      return resourceSet;
+    }
   }
 
-
-  //TODO: the below method can definitely be implemented generally and moved to the EM/GMImpl, it will just take some
-  //  time to track down all usages and update them accordingly.
-  //Necessary subclass specific services?
-  /**
-   * Remove a pending goal from the queue based on index before it is transferred to active
-   */
-  @Action
   @TRADEService
-  public boolean cancelGoalInQueueIndex(int index) {
-    synchronized (pendingGoalsLock) {
-      log.info("[cancelGoalInQueueIndex] removing goal in queue with index: " + index);
-      log.debug("[cancelGoalInQueue] goalQueue pre: " + pendingGoals);
-      if (index < pendingGoals.size()) {
-        Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.iterator();
-        int i = 0;
-        while (i < index) {
-          pendingGoalsIterator.next();
-          i++;
+  @Action
+  public void cancelAllSystemGoals() {
+    log.info("[cancelAllSystemGoals] in method");
+    synchronized (goalsLock) {
+      Set<Goal> goalsToCancel = new HashSet<>();
+      log.trace("[cancelAllSystemGoals] have goalsLock");
+      for (Symbol agent: agentGoals.keySet()) {
+        Goal g = agentGoals.get(agent);
+        if (g != null && !g.getStatus().isTerminated()) {
+          goalsToCancel.add(g);
         }
-        PendingGoal entry = pendingGoalsIterator.next();
-        cancelGoal(entry.getGoal().getId());
-        //Removing the goal itself and clearing any associated data is handled in goalCanceled
-        return true;
       }
-      log.warn("[cancelGoalInQueueIndex] Queue is of length: " + pendingGoals.size() + ", cannot remove goal with index: " + index);
+      for (Goal g: goalsToCancel) {
+        cancelGoal(g.getId());
+      }
     }
-
-    return false;
+    log.trace("[cancelAllSystemGoals] released goalsLock");
   }
 
   //TODO: Can we move these methods to the base EM or use those which exist in core.asl?
@@ -132,83 +157,89 @@ public class QueueExecutionManager extends ExecutionManager {
   //      N active goals, do we pick the oldest, most recent, one at random?
   @Action
   @TRADEService
-  public long cancelCurrentGoal() {
-    return cancelCurrentGoal(rootAgent);
+  public List<Long> cancelSystemGoals() {
+    return cancelSystemGoals(rootAgent);
   }
 
-  //TODO: return value doesn't make sense anymore if acting on all children
   @Action
   @TRADEService
-  public long cancelCurrentGoal(Symbol agent) {
-    log.debug("[cancelCurrentGoal] in method");
+  public List<Long> cancelSystemGoals(Symbol agent) {
+    log.debug("[cancelSystemGoals] in method");
+    List<Long> canceledIds = new ArrayList<>();
     agent = getUntypedSymbol(agent);
     long goalId = getSystemGid(agent);
     if (goalId != -1) {
-      cancelGoal(goalId);
+      if (cancelGoal(goalId)) {
+        canceledIds.add(goalId);
+      }
     }
 
     AgentTeam agentTeam = agentTeams.get(agent);
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
-        cancelCurrentGoal(member);
+        canceledIds.addAll(cancelSystemGoals(member));
       }
     }
 
-    return -1;
+    return canceledIds;
   }
 
   @Action
   @TRADEService
-  public long suspendCurrentGoal() {
-    return suspendCurrentGoal(rootAgent);
+  public List<Long> suspendSystemGoals() {
+    return suspendSystemGoals(rootAgent);
   }
 
-  //TODO: return value doesn't make sense anymore if acting on all children
   @Action
   @TRADEService
-  public long suspendCurrentGoal(Symbol agent) {
-    log.debug("[suspendCurrentGoal] in method");
+  public List<Long> suspendSystemGoals(Symbol agent) {
+    log.debug("[suspendSystemGoals] in method");
+    List<Long> suspendedIds = new ArrayList<>();
     agent = getUntypedSymbol(agent);
     long goalId = getSystemGid(agent);
     if (goalId != -1) {
-      suspendGoal(goalId);
+      if (suspendGoal(goalId)) {
+        suspendedIds.add(goalId);
+      }
     }
 
     AgentTeam agentTeam = agentTeams.get(agent);
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
-        suspendCurrentGoal(member);
+        suspendedIds.addAll(suspendSystemGoals(member));
       }
     }
 
-    return -1;
+    return suspendedIds;
   }
 
   @Action
   @TRADEService
-  public long resumeCurrentGoal() {
-    return resumeCurrentGoal(rootAgent);
+  public List<Long> resumeSystemGoals() {
+    return resumeSystemGoals(rootAgent);
   }
 
-  //TODO: return value doesn't make sense anymore if acting on all children
   @Action
   @TRADEService
-  public long resumeCurrentGoal(Symbol agent) {
-    log.debug("[resumeCurrentGoal] in method");
+  public List<Long> resumeSystemGoals(Symbol agent) {
+    log.debug("[resumeSystemGoals] in method");
+    List<Long> resumedIds = new ArrayList<>();
     agent = getUntypedSymbol(agent);
     long goalId = getSystemGid(agent);
     if (goalId != -1) {
-      resumeGoal(goalId);
+      if (resumeGoal(goalId)) {
+        resumedIds.add(goalId);
+      }
     }
 
     AgentTeam agentTeam = agentTeams.get(agent);
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
-        resumeCurrentGoal(member);
+        resumedIds.addAll(resumeSystemGoals(member));
       }
     }
 
-    return -1;
+    return resumedIds;
   }
 
   private Long getSystemGid(Symbol actor) {
@@ -219,65 +250,13 @@ public class QueueExecutionManager extends ExecutionManager {
     }
   }
 
-  //////////////////////////////////
-  //FoodOrdering QA methods - move//
-  //////////////////////////////////
-  @TRADEService
-  @Action
-  public void cancelAllActiveGoals() {
-    synchronized (goalsLock) {
-      for (Symbol agent: agentGoals.keySet()) {
-        Goal g = agentGoals.get(agent);
-        if (g != null && !g.getStatus().isTerminated()) {
-          agentGoals.get(agent).cancel();
-        }
-      }
-    }
+  @Override
+  public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
+    log.trace("[getSystemGoalsPredicates] {}", actor);
+    return getSystemGoalsPredicatesHelper(getUntypedSymbol(actor), new ArrayList<>());
   }
 
-  //Doesn't work
-  //@TRADEService
-  //@Action
-  //public void cancelAllPendingGoals() {
-  //  synchronized (pendingGoalsLock) {
-  //    while (!pendingGoals.isEmpty()) {
-  //      cancelGoalInQueueIndex(0);
-  //    }
-  //  }
-  //}
-
-  //@TRADEService
-  //@Action
-  //public void cancelAllCurrentGoals() {
-  //  synchronized (goalsLock) {
-  //    synchronized (pendingGoalsLock) {
-  //      cancelAllPendingGoals();
-  //      cancelAllActiveGoals();
-  //    }
-  //  }
-  //}
-
-  @TRADEService
-  @Action
-  public List<Predicate> getPendingGoalsPredicates() {
-    List<Predicate> goalPreds = new ArrayList<>();
-    synchronized (pendingGoalsLock) {
-      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
-      while (pendingGoalIterator.hasNext()) {
-        PendingGoal pendingGoal = pendingGoalIterator.next();
-        goalPreds.add(pendingGoal.getGoal().getPredicate());
-      }
-    }
-    return goalPreds;
-  }
-
-  @TRADEService
-  @Action
-  public List<Predicate> getSystemGoalPredicates(Symbol actor) {
-    return getSystemGoalPredicatesHelper(getUntypedSymbol(actor), new ArrayList<>());
-  }
-
-  private List<Predicate> getSystemGoalPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
+  private List<Predicate> getSystemGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
     Goal g = agentGoals.get(actor);
     if (g != null && !g.getStatus().isTerminated()) {
       goalPreds.add(Factory.createPredicate(g.getStatus().toString(), g.getPredicate()));
@@ -286,43 +265,13 @@ public class QueueExecutionManager extends ExecutionManager {
     AgentTeam agentTeam  = agentTeams.get(actor);
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
-        goalPreds.addAll(getSystemGoalPredicates(member));
+        goalPreds.addAll(getSystemGoalsPredicates(member));
       }
     }
 
     return goalPreds;
   }
 
-  @TRADEService
-  @Action
-  public Predicate getNextGoalPredicate() {
-    synchronized (pendingGoalsLock) {
-      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
-      if (pendingGoalIterator.hasNext()) {
-        return pendingGoalIterator.next().getGoal().getPredicate();
-      } else {
-        //TODO: what to return here?
-        return Factory.createPredicate("none()");
-      }
-    }
-  }
-
-  @TRADEService
-  @Action
-  public Predicate getNextGoalPredicate(Symbol agent) {
-    agent = getUntypedSymbol(agent);
-    synchronized (pendingGoalsLock) {
-      Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
-      while (pendingGoalIterator.hasNext()) {
-        PendingGoal pg = pendingGoalIterator.next();
-        if (agent == getUntypedSymbol(pg.getGoal().getActor())) {
-          return pg.getGoal().getPredicate();
-        }
-      }
-    }
-    //TODO: what to return here?
-    return Factory.createPredicate("none()");
-  }
 
   //Issue is this would include all dialogue goals and other goals which skipped the queue
   //Would need to track separately if we just wanted top level 'system' goals. They are technically still tracked here

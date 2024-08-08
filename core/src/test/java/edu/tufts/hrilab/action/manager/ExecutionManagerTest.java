@@ -4,19 +4,15 @@
 
 package edu.tufts.hrilab.action.manager;
 
-import edu.tufts.hrilab.action.ActionBinding;
-import edu.tufts.hrilab.action.ActionConstraints;
-import edu.tufts.hrilab.action.ActionStatus;
-import edu.tufts.hrilab.action.Effect;
-import edu.tufts.hrilab.action.EffectType;
+import edu.tufts.hrilab.action.*;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.execution.RootContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
-import edu.tufts.hrilab.action.goal.PendingGoal;
 import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.action.state.StateMachine;
+import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Predicate;
 
 import edu.tufts.hrilab.fol.Factory;
@@ -65,7 +61,7 @@ public class ExecutionManagerTest {
     initFacts.add(Factory.createPredicate("memberOf(agent2,team1)"));
     StateMachine sm = StateMachine.createTestStateMachine(initFacts);
     RootContext rootContext = new RootContext(new ActionConstraints(), sm);
-    em = ExecutionManager.createInstance(ExecutionManager.class, sm, rootContext, "default.json",new ArrayList<>());
+    em = ExecutionManager.createInstance(ExecutionManager.class, sm, rootContext, new ArrayList<>());
 
 //    ActionResourceLock.motionLock = new ActionResourceLockLinear("motionLock");
 
@@ -122,14 +118,14 @@ public class ExecutionManagerTest {
   @Test
   public void testSubmitActionGoal() {
     Predicate goalPred = Factory.createPredicate("lookfor(self:agent,kitchen,ball)");
-    Goal goal = em.submitGoal(goalPred);
+    Goal goal = em.submitGoal(new Goal(goalPred), ExecutionType.ACT);
     assertNotNull(goal);
   }
 
   @Test
   public void testSubmitStateGoal() {
     Predicate goalPred = Factory.createPredicate("goal(self:agent,located(ball))");
-    Goal goal = em.submitGoal(goalPred);
+    Goal goal = em.submitGoal(new Goal(goalPred), ExecutionType.ACT);
     assertNotNull(goal);
   }
 
@@ -140,7 +136,7 @@ public class ExecutionManagerTest {
   public void testSubmitGoalNoActionFound() {
     log.warn("[testSubmitGoalNoActionFound] start");
     Predicate goalPred = Factory.createPredicate("goal(self:agent,locatd(ball))"); // intentionally misspelled
-    Goal goal = em.submitGoal(goalPred);
+    Goal goal = em.submitGoal(new Goal(goalPred), ExecutionType.ACT);
     em.joinOnGoal(goal.getId());
     assertTrue(goal.getStatus() == GoalStatus.FAILED);
     assertTrue(em.getActionStatus(goal.getId()) == ActionStatus.FAIL_NOTFOUND);
@@ -151,7 +147,7 @@ public class ExecutionManagerTest {
   public void testSubmitDone() {
     log.warn("[testSubmitDone] start");
     Predicate goalPred = Factory.createPredicate("goal(self:agent,done(ball, ball))");
-    Goal goal =  em.submitGoal(goalPred);
+    Goal goal = em.submitGoal(new Goal(goalPred), ExecutionType.ACT);
     em.joinOnGoal(goal.getId());
     long gid = goal.getId();
     assertTrue(gid >= 0);
@@ -164,7 +160,7 @@ public class ExecutionManagerTest {
   //  BasicGoalManager gm = new BasicGoalManager("self", new ActionConstraints(), new MockActionImplementer());
   //  Database.loadDatabaseFromFile("com/action/asl/manipulation.asl");
   //  Predicate goalPred = Factory.createPredicate("did(graspObject(self, ball))");
-  //  Goal goal_sim = gm.submitGoal(goalPred, ExecutionType.SIMULATE_ACT);
+  //  Goal goal_sim = em.submitGoal(goalPred, ExecutionType.SIMULATE_ACT);
   //  assertTrue(true);
   //  //assertNotNull(goal_sim);
   //}
@@ -181,14 +177,14 @@ public class ExecutionManagerTest {
   //  vals.put(new Variable("actor"), new Symbol("self"));
   //  vals.put(new Variable("newAction"), new Symbol("newAction(bindings)"));
   //  bindings.add(vals);
-  //  gm.evaluatePredicate(inPredicate,bindings);
+  //  em.evaluatePredicate(inPredicate,bindings);
 
   //  Predicate goalPred = Factory.createPredicate("located(ball)");
-  //  Goal goal = gm.submitGoal(goalPred);
+  //  Goal goal = em.submitGoal(goalPred);
   //  assertNotNull(goal);
-  //  Goal goal_sim = gm.submitGoal(goalPred, ExecutionType.SIMULATE);
+  //  Goal goal_sim = em.submitGoal(goalPred, ExecutionType.SIMULATE);
   //  assertNotNull(goal_sim);
-  //  Goal goal_sim_act = gm.submitGoal(goalPred, ExecutionType.SIMULATE_ACT);
+  //  Goal goal_sim_act = em.submitGoal(goalPred, ExecutionType.SIMULATE_ACT);
   //  assertNotNull(goal_sim_act);
   //}
   
@@ -207,7 +203,35 @@ public class ExecutionManagerTest {
   }
 
   private Goal submitGoalAndWait(Predicate goalPred) {
-    Goal g = em.submitGoal(goalPred);
+    PriorityTier priorityTier = PriorityTier.NORMAL;
+    long priority = 1;
+    if (goalPred.getName().equals("freeze")) {
+      priorityTier = PriorityTier.URGENT;
+      priority = 9999;
+    } else if (goalPred.getName().equals("endFreeze")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("updateSettings")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("cancelSystemGoals")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("suspendSystemGoals")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("resumeSystemGoals")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("cancelAllPendingGoals")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("cancelAllActiveGoals")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("cancelAllCurrentGoals")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    } else if (goalPred.getName().equals("endActionLearning")) {
+      priorityTier = PriorityTier.SKIPPENDING;
+    }
+    Goal g = new Goal(goalPred);
+    g.setPriorityTier(priorityTier);
+    g.setPriority(priority);
+
+    em.submitGoal(g, ExecutionType.ACT);
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
@@ -217,7 +241,10 @@ public class ExecutionManagerTest {
   }
 
   private Goal submitGoalAndWait(Predicate goalPred, ExecutionType executionType, long priority, PriorityTier priorityTier) {
-    Goal g = em.submitGoal(goalPred, executionType, priority, priorityTier);
+    Goal g = new Goal(goalPred);
+    g.setPriority(priority);
+    g.setPriorityTier(priorityTier);
+    em.submitGoal(g, executionType);
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
@@ -227,8 +254,8 @@ public class ExecutionManagerTest {
   }
 
   private void cancelAllGoals() {
-    for (PendingGoal pg: em.getPendingGoals()) {
-      em.cancelGoal(pg.getGoal().getId());
+    for (Goal g: em.getPendingGoals()) {
+      em.cancelGoal(g.getId());
     }
     for (Goal g: em.getActiveGoals()) {
       em.cancelGoal(g.getId());
@@ -382,9 +409,9 @@ public class ExecutionManagerTest {
    */
   @Test
   public void testActionLearning() {
-    Predicate goalPred = Factory.createPredicate("updateActionLearning", "self:agent", "testAction()", "start");
+    Predicate goalPred = Factory.createPredicate("learnAction", "self:agent", "self:agent", "testAction()");
     Goal learningGoal = submitGoalAndWait(goalPred);
-    assertSame(learningGoal.getStatus(), GoalStatus.SUCCEEDED);
+    assertSame(learningGoal.getStatus(), GoalStatus.ACTIVE);
 
     goalPred = Factory.createPredicate("drive", "self:agent");
     Goal driveGoal = submitGoalAndWait(goalPred);
@@ -395,11 +422,12 @@ public class ExecutionManagerTest {
     em.joinOnGoal(lookGoal.getId());
     assertSame(lookGoal.getStatus(), GoalStatus.SUCCEEDED);
 
-    goalPred = Factory.createPredicate("updateActionLearning", "self:agent", "testAction()", "end");
+    goalPred = Factory.createPredicate("endActionLearning", "self:agent", "self:agent", "testAction()");
     Goal endLearningGoal = submitGoalAndWait(goalPred);
     em.joinOnGoal(endLearningGoal.getId());
     em.joinOnGoal(learningGoal.getId());
     assertSame(learningGoal.getStatus(), GoalStatus.SUCCEEDED);
+    assertSame(endLearningGoal.getStatus(), GoalStatus.SUCCEEDED);
 
     goalPred = Factory.createPredicate("testAction", "self:agent");
     Goal newActionGoal = submitGoalAndWait(goalPred);

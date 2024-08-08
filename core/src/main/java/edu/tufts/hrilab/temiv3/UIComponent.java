@@ -552,10 +552,13 @@ public abstract class UIComponent extends DiarcComponent implements ActionListen
     relevantActions.add("orderMeal");
     relevantActions.add("prepareMeal");
     relevantActions.add("defineMeal");
-    relevantActions.add("defineItem");
     relevantActions.add("defineTypeOfOrderItem");
     relevantActions.add("defineIngredient");
-    relevantActions.add("updateActionLearning");
+    relevantActions.add("learnAction");
+    relevantActions.add("endActionLearning");
+    relevantActions.add("pauseActionLearning");
+    relevantActions.add("resumeActionLearning");
+    relevantActions.add("cancelActionLearning");
     relevantActions.add("askQuestion");
     relevantActions.add("waitForResponse");
     relevantActions.add("goToLocation");

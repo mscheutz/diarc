@@ -50,7 +50,7 @@ durch; WITH/CONDITION; #x.$x
 
 %modifyinteractivetmpinput; C; modifyInteractive(?ADDRESSEE,sort(?ADDRESSEE))
 %replacementtmpinput; C; replace(itemWeightGreaterThan(100),itemWeightGreaterThan(150))
-replacementtmpinput; C; modifyAction(?ADDRESSEE,sort(?ADDRESSEE),replace(itemWeightGreaterThan(?ADDRESSEE,150),itemWeightGreaterThan(?ADDRESSEE,100)),none())
+replacementtmpinput; C; modifyAction(?ADDRESSEE,?ADDRESSEE,sort(?ADDRESSEE),replace(itemWeightGreaterThan(?ADDRESSEE,150),itemWeightGreaterThan(?ADDRESSEE,100)),none())
 box be; REF; box b:pose; DEFINITE
 
 %%for foodOrdering dev

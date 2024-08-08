@@ -72,11 +72,11 @@ explanationType(A, incomplete) :- not(role(A,novice)).
 rules about admin goals, which only adminstrators can give
 these actions no longer exist, saving as arefrence for how to do this in the future if we ever want to */
 isAdminGoal(did(D,modifyActionLearning(X,S))).
-isAdminGoal(did(D,modifyAction(X,S,A))).
+isAdminGoal(did(D,modifyAction(X,C,S,A))).
 isAdminGoal(self,disableObstacleChecks(self)).
 isAdminGoal(self,disableSupportChecks(self)).
 isAdminGoal(D,Y) :- (want(B,Y),Y=did(D,modifyActionLearning(X,S))),diarcAgent(D).
-isAdminGoal(D,Y) :- (want(B,Y),Y=did(D,modifyAction(X,S,A))),diarcAgent(D).
+isAdminGoal(D,Y) :- (want(B,Y),Y=did(D,modifyAction(X,C,S,A))),diarcAgent(D).
 /*
 admin goal stuf not currently being used, keeping it like this in case we want to do something with an obligation hirearchy in the future.
 */
