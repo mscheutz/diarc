@@ -130,3 +130,78 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
     op:log("info","[overridePostRecoveryPolicy]");
     ?postRecoveryType = op:invokeStaticMethod("edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType", "fromString", "SUCCESS");
 }
+
+() = multipleAttemptsRecoveryPolicy(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            catchingAction : pickUpV2(X)
+            postRecovery : postrecovery_retry
+        }
+        goals : {pickUpFailV2(X,multiple)}
+        maximumAttempts : 3
+    }
+    op:log("info","[multipleAttemptsRecoveryPolicy]");
+}
+
+() = cyclicalActionRecoveryTestAction() {
+    conditions : {
+        pre : gripperOpen(?actor);
+        pre : fillerPredicate(?actor);
+    }
+    effects : {
+        success : not(gripperOpen(?actor));
+    }
+    op:log("info","[cyclicalActionRecoveryTestAction] in");
+    op:log("info","[cyclicalActionRecoveryTestAction] out");
+}
+
+() = cyclicalActionRecoveryTestActionRecoveryPolicy(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            postRecovery : postrecovery_retry
+        }
+        goals : {cyclicalActionRecoveryTestAction(X),executeCyclicalTestActionTwice(X)}
+        failureReasons : {gripperOpen(X)}
+    }
+    effects : {
+        success: gripperOpen(?actor);
+        success: not(fillerPredicate(?actor));
+    }
+    op:log("info","[cyclicalActionRecoveryTestActionRecoveryPolicy]");
+}
+
+() = cyclicalActionRecoveryTestActionRecoveryPolicyTwo(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            postRecovery : postrecovery_retry
+        }
+        goals : {cyclicalActionRecoveryTestAction(X)}
+        failureReasons : {fillerPredicate(X)}
+    }
+    effects : {
+        success: not(gripperOpen(?actor));
+        success: fillerPredicate(?actor);
+    }
+    op:log("info","[cyclicalActionRecoveryTestActionRecoveryPolicyTwo]");
+}
+
+() = executeCyclicalTestActionTwice() {
+    op:log("info","[executeCyclicalTestActionTwice] entering first instance");
+    act:cyclicalActionRecoveryTestAction();
+    op:log("info","[executeCyclicalTestActionTwice] entering second instance");
+    act:cyclicalActionRecoveryTestAction();
+}
+
+() = cyclicalActionRecoveryTestActionRecoveryPolicyTwoSucceed(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            postRecovery : postrecovery_retry
+        }
+        goals : {executeCyclicalTestActionTwice(X)}
+        failureReasons : {fillerPredicate(X)}
+    }
+    effects : {
+        success: fillerPredicate(?actor);
+    }
+    op:log("info","[cyclicalActionRecoveryTestActionRecoveryPolicyTwoSucceed]");
+}

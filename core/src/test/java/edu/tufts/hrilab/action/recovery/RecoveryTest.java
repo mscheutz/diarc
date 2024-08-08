@@ -1087,7 +1087,7 @@ public class RecoveryTest {
 
         log.info("\n\n\n[sameFailureDifferentStepParentRetryTest]");
         //Submit closeGripperTwice goal, should succeed due to recovery
-        Predicate goalPredicate = Factory.createPredicate("testActionSequence(self:agent)");
+        Predicate goalPredicate = Factory.createPredicate("testActionSequence(self:agent,once)");
         executeAndCheckGoal(goalPredicate, GoalStatus.FAILED);
         Long goalId = component.getGoalId(goalPredicate);
         Goal goal = component.getGoal(goalId);
@@ -1111,7 +1111,7 @@ public class RecoveryTest {
 
         //Recovery
         Context recoveryContext = testActionSequenceContext.getChildContexts().get(3);
-        Assert.assertEquals(recoveryContext.getCommand(), "goal(testActionSequenceActionRecovery(self:agent,[closeGripper(self:agent),[gripperOpen(self:agent),testActionSequence(self:agent)))");
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(testActionSequenceActionRecovery(self:agent,[closeGripper(self:agent),[gripperOpen(self:agent),testActionSequence(self:agent,once)))");
 
         //Second attempt trace, fail on second closeGripper
         logContext = testActionSequenceContext.getChildContexts().get(4);
@@ -1132,7 +1132,7 @@ public class RecoveryTest {
         Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
 
         recoveryContext = testActionSequenceContext.getChildContexts().get(9);
-        Assert.assertEquals(recoveryContext.getCommand(), "goal(testActionSequenceActionRecovery(self:agent,[closeGripper(self:agent),[gripperOpen(self:agent),testActionSequence(self:agent)))");
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(testActionSequenceActionRecovery(self:agent,[closeGripper(self:agent),[gripperOpen(self:agent),testActionSequence(self:agent,once)))");
 
         //Third attempt trace: fail on second closeGripper again
         logContext = testActionSequenceContext.getChildContexts().get(10);
@@ -1155,7 +1155,30 @@ public class RecoveryTest {
         //Duplicate failure, exit recovery and fail top level goal
     }
 
-    //TODO: equivalent test as the above but for goal recovery (and need to implement equivalent behavior)
+    /**
+     * Same test as above, but with maximumAttempts = 2. Should allow one more sequence of parent_retry attempts
+     */
+    @Test
+    public void sameFailureDifferentStepParentRetryTwoAttemptsTest() {
+        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        String filename = aslPath + "multipleActionRecoveryTest.asl";
+        Database.getInstance().loadDatabaseFromFile(filename);
+        Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
+
+        log.info("\n\n\n[sameFailureDifferentStepParentRetryTwoAttemptsTest]");
+        //Submit closeGripperTwice goal, should succeed due to recovery
+        Predicate goalPredicate = Factory.createPredicate("testActionSequence(self:agent,twice)");
+        executeAndCheckGoal(goalPredicate, GoalStatus.FAILED);
+        Long goalId = component.getGoalId(goalPredicate);
+        Goal goal = component.getGoal(goalId);
+        Context rootContext = goal.getRootContext();
+        Assert.assertEquals(rootContext.getChildContexts().size(), 1);
+
+        //Not writing out entire tree, should be same as the test above but with an extra attempt failing after 6 more steps
+        Context testActionSequenceContext = rootContext.getChildContexts().get(0);
+        Assert.assertEquals(testActionSequenceContext.getChildContexts().size(), 21);
+        Assert.assertEquals(testActionSequenceContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+    }
 
     @Test
     public void overridePostRecoveryExecutionTypeTest() {
@@ -1165,9 +1188,172 @@ public class RecoveryTest {
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
 
         log.info("\n\n\n[overridePostRecoveryExecutionTypeTest]");
-        Predicate goalPredicate = Factory.createPredicate("pickUpFailV2(self:agent, override)");
+        Predicate goalPredicate = Factory.createPredicate("pickUpFailV2(self:agent,override)");
         executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
     }
 
-    //TODO: test for policies with >1 'maximumAttempts' defined
+    /**
+     * Tests definition and application of 'maximumAttempts' for the action recovery retry case
+     */
+    @Test
+    public void multipleRecoveryAttemptsTest() {
+        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        String filename = aslPath + "actionRecoveryTests.asl";
+        Database.getInstance().loadDatabaseFromFile(filename);
+        Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
+
+        log.info("\n\n\n[multipleRecoveryAttemptsTest]");
+        Predicate goalPredicate = Factory.createPredicate("pickUpFailV2(self:agent,multiple)");
+        executeAndCheckGoal(goalPredicate, GoalStatus.FAILED);
+        Long goalId = component.getGoalId(goalPredicate);
+        Goal goal = component.getGoal(goalId);
+        Context rootContext = goal.getRootContext();
+        Assert.assertEquals(rootContext.getChildContexts().size(), 1);
+
+        //Recovery policy is defined with maximumAttempts of 3, should be applied 3 and result in a total of 4 action failures
+        Context pickUpFailV2Context = rootContext.getChildContexts().get(0);
+        Context pickUpV2Context = pickUpFailV2Context.getChildContexts().get(1);
+        Assert.assertEquals(pickUpV2Context.getChildContexts().size(), 8);
+        Assert.assertEquals(pickUpV2Context.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        Context logContext = pickUpV2Context.getChildContexts().get(0);
+        Assert.assertEquals(logContext.getCommand(), "log");
+
+        // First attempt failure/recovery
+        Context openGripperContext = pickUpV2Context.getChildContexts().get(1);
+        Assert.assertEquals(openGripperContext.getCommand(), "openGripperV2");
+        Assert.assertEquals(openGripperContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+        Context recoveryContext = pickUpV2Context.getChildContexts().get(2);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(multipleAttemptsRecoveryPolicy(self:agent,[openGripperV2(self:agent),[not(holdingV2(self:agent)),pickUpFailV2(self:agent,multiple)))");
+
+        // Second attempt failure/recovery
+        openGripperContext = pickUpV2Context.getChildContexts().get(3);
+        Assert.assertEquals(openGripperContext.getCommand(), "openGripperV2");
+        Assert.assertEquals(openGripperContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+        recoveryContext = pickUpV2Context.getChildContexts().get(4);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(multipleAttemptsRecoveryPolicy(self:agent,[openGripperV2(self:agent),[not(holdingV2(self:agent)),pickUpFailV2(self:agent,multiple)))");
+
+        // Third attempt failure/recovery
+        openGripperContext = pickUpV2Context.getChildContexts().get(5);
+        Assert.assertEquals(openGripperContext.getCommand(), "openGripperV2");
+        Assert.assertEquals(openGripperContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+        recoveryContext = pickUpV2Context.getChildContexts().get(6);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(multipleAttemptsRecoveryPolicy(self:agent,[openGripperV2(self:agent),[not(holdingV2(self:agent)),pickUpFailV2(self:agent,multiple)))");
+
+        //Fourth failure, no more recovery
+        openGripperContext = pickUpV2Context.getChildContexts().get(7);
+        Assert.assertEquals(openGripperContext.getCommand(), "openGripperV2");
+        Assert.assertEquals(openGripperContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+    }
+
+    /**
+     * Tests that action recovery RETRY behavior correctly handles cyclical failures.
+     * Recovery should fail appropriately rather than loop infinitely.
+     */
+    @Test
+    public void cyclicalActionRecoveryRetryTest() {
+        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        String filename = aslPath + "actionRecoveryTests.asl";
+        Database.getInstance().loadDatabaseFromFile(filename);
+        Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
+
+        log.info("\n\n\n[cyclicalActionRecoveryRetryTest]");
+        Predicate goalPredicate = Factory.createPredicate("cyclicalActionRecoveryTestAction(self:agent)");
+        executeAndCheckGoal(goalPredicate, GoalStatus.FAILED);
+        Long goalId = component.getGoalId(goalPredicate);
+        Goal goal = component.getGoal(goalId);
+        Context rootContext = goal.getRootContext();
+        Assert.assertEquals(rootContext.getChildContexts().size(), 5);
+
+        //First attempt: failed due to precondition 1
+        Context actionContext = rootContext.getChildContexts().get(0);
+        Assert.assertEquals(actionContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+        Assert.assertEquals(actionContext.getJustification().getFailureReason().get(0), Factory.createPredicate("not(gripperOpen(self:agent))"));
+
+        //Recovery policy 1: set precondition 1
+        Context recoveryContext = rootContext.getChildContexts().get(1);
+        Assert.assertEquals(recoveryContext.getStatus(), ActionStatus.SUCCESS);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(cyclicalActionRecoveryTestActionRecoveryPolicy(self:agent,[cyclicalActionRecoveryTestAction(self:agent),[gripperOpen(self:agent),cyclicalActionRecoveryTestAction(self:agent)))");
+
+        //Second attempt: failed due to precondition 2
+        actionContext = rootContext.getChildContexts().get(2);
+        Assert.assertEquals(actionContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+        Assert.assertEquals(actionContext.getJustification().getFailureReason().get(0), Factory.createPredicate("not(fillerPredicate(self:agent))"));
+
+        //Recovery policy 2: set precondition 2, unset precondition 1
+        recoveryContext = rootContext.getChildContexts().get(3);
+        Assert.assertEquals(recoveryContext.getStatus(), ActionStatus.SUCCESS);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(cyclicalActionRecoveryTestActionRecoveryPolicyTwo(self:agent,[cyclicalActionRecoveryTestAction(self:agent),[fillerPredicate(self:agent),cyclicalActionRecoveryTestAction(self:agent)))");
+
+        //Third attempt: failed due to precondition 1 -> reach max_attempts for policy and exit recovery
+        actionContext = rootContext.getChildContexts().get(4);
+        Assert.assertEquals(actionContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+        Assert.assertEquals(actionContext.getJustification().getFailureReason().get(0), Factory.createPredicate("not(gripperOpen(self:agent))"));
+    }
+
+    /**
+     * Tests that action recovery RETRY behavior correctly handles cyclical failures.
+     * Recovery attempts should properly be cleaned up and not persist to later steps
+     */
+    @Test
+    public void cyclicalActionRecoveryRetryTestV2() {
+        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        String filename = aslPath + "actionRecoveryTests.asl";
+        Database.getInstance().loadDatabaseFromFile(filename);
+        Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
+
+        log.info("\n\n\n[cyclicalActionRecoveryRetryTestV2]");
+        Predicate goalPredicate = Factory.createPredicate("executeCyclicalTestActionTwice(self:agent)");
+        executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+        Long goalId = component.getGoalId(goalPredicate);
+        Goal goal = component.getGoal(goalId);
+        Context rootContext = goal.getRootContext();
+        Assert.assertEquals(rootContext.getChildContexts().size(), 1);
+
+        Context executeActionTwiceContext = rootContext.getChildContexts().get(0);
+        Assert.assertEquals(executeActionTwiceContext.getChildContexts().size(), 12);
+
+        Context logContext = executeActionTwiceContext.getChildContexts().get(0);
+        Assert.assertEquals(logContext.getStatus(), ActionStatus.SUCCESS);
+        Assert.assertEquals(logContext.getCommand(), "log");
+
+        //Same sequence as test above, except second recovery policy doesn't unset precondition 1
+        Context actionContext = executeActionTwiceContext.getChildContexts().get(1);
+        Assert.assertEquals(actionContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+        Assert.assertEquals(actionContext.getCommand(), "cyclicalActionRecoveryTestAction");
+        Context recoveryContext = executeActionTwiceContext.getChildContexts().get(2);
+        Assert.assertEquals(recoveryContext.getStatus(), ActionStatus.SUCCESS);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(cyclicalActionRecoveryTestActionRecoveryPolicy(self:agent,[cyclicalActionRecoveryTestAction(self:agent),[gripperOpen(self:agent),executeCyclicalTestActionTwice(self:agent)))");
+        actionContext = executeActionTwiceContext.getChildContexts().get(3);
+        Assert.assertEquals(actionContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+        Assert.assertEquals(actionContext.getCommand(), "cyclicalActionRecoveryTestAction");
+        recoveryContext = executeActionTwiceContext.getChildContexts().get(4);
+        Assert.assertEquals(recoveryContext.getStatus(), ActionStatus.SUCCESS);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(cyclicalActionRecoveryTestActionRecoveryPolicyTwoSucceed(self:agent,[cyclicalActionRecoveryTestAction(self:agent),[fillerPredicate(self:agent),executeCyclicalTestActionTwice(self:agent)))");
+        actionContext = executeActionTwiceContext.getChildContexts().get(5);
+        Assert.assertEquals(actionContext.getStatus(), ActionStatus.SUCCESS);
+        Assert.assertEquals(actionContext.getCommand(), "cyclicalActionRecoveryTestAction");
+
+        logContext = executeActionTwiceContext.getChildContexts().get(6);
+        Assert.assertEquals(logContext.getStatus(), ActionStatus.SUCCESS);
+        Assert.assertEquals(logContext.getCommand(), "log");
+
+        //Same sequence for second instance of same action. Policy application count should properly be cleared such
+        //  that this is allowed to successfully recovery rather than exit due to max_attempts
+        actionContext = executeActionTwiceContext.getChildContexts().get(7);
+        Assert.assertEquals(actionContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+        Assert.assertEquals(actionContext.getCommand(), "cyclicalActionRecoveryTestAction");
+        recoveryContext = executeActionTwiceContext.getChildContexts().get(8);
+        Assert.assertEquals(recoveryContext.getStatus(), ActionStatus.SUCCESS);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(cyclicalActionRecoveryTestActionRecoveryPolicy(self:agent,[cyclicalActionRecoveryTestAction(self:agent),[gripperOpen(self:agent),executeCyclicalTestActionTwice(self:agent)))");
+        actionContext = executeActionTwiceContext.getChildContexts().get(9);
+        Assert.assertEquals(actionContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+        Assert.assertEquals(actionContext.getCommand(), "cyclicalActionRecoveryTestAction");
+        recoveryContext = executeActionTwiceContext.getChildContexts().get(10);
+        Assert.assertEquals(recoveryContext.getStatus(), ActionStatus.SUCCESS);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(cyclicalActionRecoveryTestActionRecoveryPolicyTwoSucceed(self:agent,[cyclicalActionRecoveryTestAction(self:agent),[fillerPredicate(self:agent),executeCyclicalTestActionTwice(self:agent)))");
+        actionContext = executeActionTwiceContext.getChildContexts().get(11);
+        Assert.assertEquals(actionContext.getStatus(), ActionStatus.SUCCESS);
+        Assert.assertEquals(actionContext.getCommand(), "cyclicalActionRecoveryTestAction");
+    }
 }

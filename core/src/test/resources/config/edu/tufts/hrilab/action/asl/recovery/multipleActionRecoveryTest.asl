@@ -85,7 +85,7 @@ import java.util.List;
     op:log("info", "[closeGripperActionRecovery] asserting gripperOpen(?actor)");
 }
 
-() = testActionSequence() {
+() = testActionSequence(Symbol ?ignored) {
     op:log("info","[testActionSequence] filler log 1");
     op:log("info","[testActionSequence] filler log 2");
     act:closeGripper();
@@ -96,9 +96,24 @@ import java.util.List;
 () = testActionSequenceActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : testActionSequence(X)
+            catchingAction : testActionSequence(X,once)
             postRecovery : postrecovery_parent_retry
         }
+    }
+    effects : {
+        success : gripperOpen(?actor);
+    }
+
+    op:log("info", "[testActionSequenceActionRecovery] asserting gripperOpen(?actor)");
+}
+
+() = testActionSequenceTwoAttemptsActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            catchingAction : testActionSequence(X,twice)
+            postRecovery : postrecovery_parent_retry
+        }
+        maximumAttempts: 2
     }
     effects : {
         success : gripperOpen(?actor);
