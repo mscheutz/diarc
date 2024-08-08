@@ -90,14 +90,17 @@ tasks.named<Test>("test") {
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
 
   // to run tests with logging printed to console
-  if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {
+  if (project.hasProperty("diarc.test.enableLogging") && project.property("diarc.test.enableLogging").toString().toBoolean()) {
     testLogging.showStandardStreams = true
   }
 
   // to run integration test(s) in generative  mode
-  if (project.hasProperty("diarc.generativeMode") && project.property("diarc.generativeMode").toString().toBoolean()) {
+  if (project.hasProperty("diarc.test.generativeMode") && project.property("diarc.test.generativeMode").toString().toBoolean()) {
     systemProperty("generativeMode", "true")
   }
+
+  systemProperty("trade.properties.path", properties.getOrDefault("diarc.test.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
+  systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.test.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
 
   //TODO:brad: is this the best way to include these resources?
   classpath += files("src/test/resources") +
