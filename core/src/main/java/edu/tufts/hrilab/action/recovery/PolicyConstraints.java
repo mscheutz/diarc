@@ -14,11 +14,13 @@ import java.util.Set;
  * Constraints that define when a RecoveryPolicy is applicable.
  */
 public class PolicyConstraints {
+
+  /**
+   * Type of recovery policy - one of Action or Goal.
+   * The corresponding recovery policy can be caught in and applied under contexts of this type.
+   * Single exception is root goals which are direct action instructions.
+   */
   public RecoveryType recoveryType = RecoveryType.GOAL;
-
-  public PostRecoveryExecutionType postRecoveryExecutionType = PostRecoveryExecutionType.RETRY;
-
-  public Predicate catchingAction = null;
 
   /**
    * The corresponding recovery policy is applicable to these goals.
@@ -62,4 +64,28 @@ public class PolicyConstraints {
    * Can be empty (i.e., applies to all action statuses).
    */
   public Set<ActionStatus> actionStatuses = new HashSet<>();
+
+  /**
+   * (Action Recovery Only)
+   * Indication of how to continue with execution after a recovery policy
+   * has successfully completed. See PostRecoveryExecutionType for details.
+   */
+  public PostRecoveryExecutionType postRecoveryExecutionType = null;
+
+  /**
+   * (Action Recovery Only)
+   * The corresponding recovery policy will defer matching to failure reasons
+   * until/unless the failure propagates to an action context whose signature
+   * matches this field.
+   * Can be empty (i.e. applies to the direct parent of the failed context regardless of signature)
+   */
+  public Predicate catchingAction = null;
+
+  /**
+   * Maximum number of times this recovery policy can be executed for the same failure reasons under the same context
+   * ActionRecovery RETRY: Attempt count resets when the reattempted action succeeds
+   * ActionRecovery PARENT_RETRY: Attempt count only increments when no progress is made on a reattempt
+   * GaolRecovery: Attempt count always increments and never resets. TODO if also want to check for progress (see notes in Recovery.java)
+   */
+  public int maximumAttempts = 1;
 }

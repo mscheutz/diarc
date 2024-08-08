@@ -463,8 +463,25 @@ public class ActionScriptLanguageParser {
         }
         ctx.recoveryActionStatuses(0).NAME().forEach(status -> policyConstraints.actionStatuses.add(ActionStatus.fromString(status.getText())));
       }
+      if (!ctx.recoveryMaximumAttempts().isEmpty()) {
+        if (ctx.recoveryMaximumAttempts().size() > 1) {
+          log.warn("[enterRecovery] Multiple maximumAttempts fields detected, only using first");
+        }
+        String numberText = ctx.recoveryMaximumAttempts(0).NUMBER().getText();
+        int number = -1;
+        try {
+          number = Integer.parseInt(numberText);
+        } catch (NumberFormatException e) {
+          log.error("[enterRecovery] maximumAttempts field must be a positive integer", e);
+        }
+        if (number < 1) {
+          log.warn("[enterRecovery] invalid maximumAttempts value encountered {}, not using field", number);
+        } else {
+          policyConstraints.maximumAttempts = number;
+        }
+      }
 
-      curr_dbe_builder.setRecoveryPolicyConstraint(policyConstraints);
+      curr_dbe_builder.addRecoveryPolicyConstraint(policyConstraints);
     }
 
     @Override

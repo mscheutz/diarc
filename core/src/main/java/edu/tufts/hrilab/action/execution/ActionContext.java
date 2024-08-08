@@ -869,6 +869,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     log.debug("resetting local arguments for context: " + this.cmd);
     List<ActionBinding> localRoles = this.getDBE().getRoles().stream().filter(role -> role.isLocal).collect(Collectors.toList());
     localRoles.forEach(role -> setArgument(role.name, role.defaultValue));
+    recovery.resetConcreteState();
   }
 
   /**

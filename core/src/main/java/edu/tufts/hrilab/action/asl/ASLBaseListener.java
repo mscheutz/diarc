@@ -1,7 +1,3 @@
-/*
- * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
- */
-
 // Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
 package edu.tufts.hrilab.action.asl;
 
@@ -736,6 +732,18 @@ public class ASLBaseListener implements ASLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitRecoveryActionStatuses(ASLParser.RecoveryActionStatusesContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

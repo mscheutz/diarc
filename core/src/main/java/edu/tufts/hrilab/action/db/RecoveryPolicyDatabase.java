@@ -47,32 +47,40 @@ public class RecoveryPolicyDatabase {
       List<Class<?>> argTypes = action.getRequiredInputRolesTypes();
       List<Class<?>> returnTypes = action.getReturnRolesTypes();
       // recoverySignature(Predicate failedActionPredicate, List<Predicate> failureReasons, Predicate failedGoal)
-      if (argTypes.size() == 3 && returnTypes.size() == 0
+      if (argTypes.size() == 3 && (returnTypes.size() == 1 || returnTypes.isEmpty())
               && List.class.isAssignableFrom(argTypes.get(0))
               && List.class.isAssignableFrom(argTypes.get(1))
               && Predicate.class.isAssignableFrom(argTypes.get(2))) {
-        PolicyConstraints constraints = action.getPolicyConstraints();
 
-        if ((constraints.postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_RETRY ||
-             constraints.postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_SUCCESS)
-            && constraints.catchingAction == null) {
-          log.warn("[addRecoveryPolicyToDB] cannot define action recovery policy with a PARENT postRecoveryExecutionType" +
-                  " and no defined catchingAction. Not adding {} as a recovery policy", action.getName());
+        // optional return value of PostRecoveryExecutionType
+        if (returnTypes.size() == 1 && !PostRecoveryExecutionType.class.isAssignableFrom(returnTypes.get(0))) {
+          log.warn("The action '" + action.getName() + "' cannot be a recovery policy as the return value is not a PostRecoveryExecutionType. "
+                  + " The action will not be available as a recovery policy.");
           return;
         }
-        log.debug("Adding recovery policy to DB: " + action);
 
-        List<ActionDBEntry> policies = recoveryPolicyDB.get(constraints);
+        for (PolicyConstraints constraints : action.getPolicyConstraints()) {
+          if ((constraints.postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_RETRY ||
+                  constraints.postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_SUCCESS)
+                  && constraints.catchingAction == null) {
+            log.warn("[addRecoveryPolicyToDB] cannot define action recovery policy with a PARENT postRecoveryExecutionType" +
+                    " and no defined catchingAction. Not adding {} as a recovery policy", action.getName());
+            return;
+          }
+          log.debug("Adding recovery policy to DB: " + action);
 
-        if (policies == null) {
-          // this policy hasn't been seen before, add it so this action can be looked up
-          policies = new ArrayList<>();
-          policies.add(action);
-          recoveryPolicyDB.put(constraints, policies);
-        } else {
-          // this observation has been seen before, add DBEntry to the list if it is not already present
-          if (!policies.contains(action)) {
+          List<ActionDBEntry> policies = recoveryPolicyDB.get(constraints);
+
+          if (policies == null) {
+            // this policy hasn't been seen before, add it so this action can be looked up
+            policies = new ArrayList<>();
             policies.add(action);
+            recoveryPolicyDB.put(constraints, policies);
+          } else {
+            // this observation has been seen before, add DBEntry to the list if it is not already present
+            if (!policies.contains(action)) {
+              policies.add(action);
+            }
           }
         }
       } else {
@@ -90,16 +98,18 @@ public class RecoveryPolicyDatabase {
    * @param entry the action for which the observations should be removed
    */
   protected synchronized void removeRecoveryPolicyFromDB(ActionDBEntry entry) {
-    log.debug("Removing recovery policy from DB: " + entry);
+    for (PolicyConstraints constraints : entry.getPolicyConstraints()) {
+      log.debug("Removing recovery policy from DB: " + entry);
 
-    if (!entry.isRecoveryPolicy()) {
-      log.warn("[removeRecoveryPolicyFromDB] supplied entry {} is not a recovery policy, not removing", entry);
-      return;
-    }
+      if (!entry.isRecoveryPolicy()) {
+        log.warn("[removeRecoveryPolicyFromDB] supplied entry {} is not a recovery policy, not removing", entry);
+        return;
+      }
 
-    List<ActionDBEntry> policies = recoveryPolicyDB.get(entry.getPolicyConstraints());
-    if (policies != null && !policies.isEmpty()) {
-      policies.remove(entry);
+      List<ActionDBEntry> policies = recoveryPolicyDB.get(constraints);
+      if (policies != null && !policies.isEmpty()) {
+        policies.remove(entry);
+      }
     }
   }
 
@@ -111,23 +121,32 @@ public class RecoveryPolicyDatabase {
    * @return
    */
   public final synchronized List<ActionDBEntry> getRecoveryPolicies(FailureInformation failureInformation) {
-    Map<ActionDBEntry,Integer> applicablePoliciesScores = new HashMap<>();
+    return getRecoveryPolicies(getMatchingPolicyConstraints(failureInformation));
+  }
+  public final synchronized List<ActionDBEntry> getRecoveryPolicies(List<PolicyConstraints> orderedConstraintsList) {
+    List<ActionDBEntry> applicablePolicies = new ArrayList<>();
+    orderedConstraintsList.forEach(constraints -> applicablePolicies.addAll(recoveryPolicyDB.get(constraints)));
+    return applicablePolicies;
+  }
+  public final synchronized List<PolicyConstraints> getMatchingPolicyConstraints(FailureInformation failureInformation) {
+    Map<PolicyConstraints,Integer> applicableConstraintsScores = new HashMap<>();
 
     recoveryPolicyDB.forEach((constraints, policies) -> {
       if (failureInformation.isApplicable(constraints)) {
         Integer score = failureInformation.getNumberOfConstraintMatches(constraints);
-        policies.forEach(policy -> applicablePoliciesScores.put(policy, score));
+        applicableConstraintsScores.put(constraints, score);
       }
     });
 
     // sort applicable policies by score (i.e., number of matching constraints)
-    Stream<Map.Entry<ActionDBEntry,Integer>> sorted =
-            applicablePoliciesScores.entrySet().stream()
+    Stream<Map.Entry<PolicyConstraints,Integer>> sorted =
+            applicableConstraintsScores.entrySet().stream()
                     .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
 
-    List<ActionDBEntry> applicablePolicies = new ArrayList<>();
-    sorted.forEach(entry -> applicablePolicies.add(entry.getKey()));
-    return applicablePolicies;
+    List<PolicyConstraints> applicableConstraints = new ArrayList<>();
+    sorted.forEach(entry -> applicableConstraints.add(entry.getKey()));
+
+    return applicableConstraints;
   }
 
 }

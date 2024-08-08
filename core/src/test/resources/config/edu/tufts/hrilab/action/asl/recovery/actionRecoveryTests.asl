@@ -2,6 +2,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
 import java.util.List;
 import java.lang.String;
+import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 
 () = pickUp() {
     act:opengripper();
@@ -116,4 +117,16 @@ import java.lang.String;
         success : holdingV2(X);
     }
     op:log("info","[pickupParentSuccessActionRecovery]");
+}
+
+(PostRecoveryExecutionType ?postRecoveryType) = overridePostRecoveryPolicy(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            catchingAction : pickUpV2(X)
+            postRecovery : postrecovery_retry
+        }
+        goals : {pickUpFailV2(X,override)}
+    }
+    op:log("info","[overridePostRecoveryPolicy]");
+    ?postRecoveryType = op:invokeStaticMethod("edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType", "fromString", "SUCCESS");
 }

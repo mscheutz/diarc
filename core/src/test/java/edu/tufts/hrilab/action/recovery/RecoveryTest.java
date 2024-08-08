@@ -33,6 +33,11 @@ public class RecoveryTest {
     @After
     public void shutdown(){
         component.shutdownComponent();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -160,6 +165,16 @@ public class RecoveryTest {
         log.info("\n\n\n[shouldAttemptRecoveryTest] Test case: ActionRecovery no catchingAction defined, no other matches");
         goalPredicate = Factory.createPredicate("goal(self:agent,stateThirteen(self:agent))");
         executeAndCheckGoal(goalPredicate, GoalStatus.FAILED);
+
+        //Unachievable goal state, can't plan
+        log.info("\n\n\n[shouldAttemptRecoveryTest] Test case: GoalRecovery cannot plan to goal state");
+        goalPredicate = Factory.createPredicate("goal(self:agent,stateFourteen(self:agent))");
+        executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+
+        //Goal is direct action instruction, recovery policy defined to apply to top level action context
+        log.info("\n\n\n[shouldAttemptRecoveryTest] Test case: ActionRecovery top level action");
+        goalPredicate = Factory.createPredicate("testActionSuccess(self:agent)");
+        executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
     }
 
     /**
@@ -916,4 +931,243 @@ public class RecoveryTest {
 
         //No more execution should occur
     }
+
+    /**
+     * Tests action recovery where there is no parent action context to catch the failure. This is a special case
+     *  where the failure needs to be caught in the root goal context and apply action recovery
+     */
+    @Test
+    public void actionRecoveryRetryFromRootGoalTest() {
+        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        String filename = aslPath + "shouldAttemptRecoveryTest.asl";
+        Database.getInstance().loadDatabaseFromFile(filename);
+        Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
+
+        log.info("\n\n\n[actionRecoveryRetryFromRootGoalTest]");
+        //Submit pickUpFail goal, should succeed due to recovery
+        Predicate goalPredicate = Factory.createPredicate("testActionRetry(self:agent)");
+        executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+        Long goalId = component.getGoalId(goalPredicate);
+        Goal goal = component.getGoal(goalId);
+        Context rootContext = goal.getRootContext();
+        Assert.assertEquals(rootContext.getChildContexts().size(), 3);
+
+        //First attempt: fail
+        Context testActionContext = rootContext.getChildContexts().get(0);
+        Assert.assertEquals(testActionContext.getCommand(),"testActionRetry");
+        Assert.assertEquals(testActionContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        //Action recovery applied under goal context
+        Context recoveryContext = rootContext.getChildContexts().get(1);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(testActionRetryRecovery(self:agent,[testActionRetry(self:agent),[testActionPre(self:agent),testActionRetry(self:agent)))");
+        Assert.assertEquals(recoveryContext.getStatus(), ActionStatus.SUCCESS);
+
+        //Retry attempt: success
+        testActionContext = rootContext.getChildContexts().get(2);
+        Assert.assertEquals(testActionContext.getCommand(),"testActionRetry");
+        Assert.assertEquals(testActionContext.getStatus(), ActionStatus.SUCCESS);
+    }
+
+    /**
+     * Tests action recovery where there is no parent action context to catch the failure. This is a special case
+     *  where the failure needs to be caught in the root goal context and apply action recovery
+     */
+    @Test
+    public void actionRecoverySuccessFromRootGoalTest() {
+        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        String filename = aslPath + "shouldAttemptRecoveryTest.asl";
+        Database.getInstance().loadDatabaseFromFile(filename);
+        Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
+
+        log.info("\n\n\n[actionRecoverySuccessFromRootGoalTest]");
+        //Submit pickUpFail goal, should succeed due to recovery
+        Predicate goalPredicate = Factory.createPredicate("testActionSuccess(self:agent)");
+        executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+        Long goalId = component.getGoalId(goalPredicate);
+        Goal goal = component.getGoal(goalId);
+        Context rootContext = goal.getRootContext();
+        Assert.assertEquals(rootContext.getChildContexts().size(), 2);
+
+        //First attempt: fail
+        Context testActionContext = rootContext.getChildContexts().get(0);
+        Assert.assertEquals(testActionContext.getCommand(),"testActionSuccess");
+        Assert.assertEquals(testActionContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        //Action recovery applied under goal context
+        Context recoveryContext = rootContext.getChildContexts().get(1);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(testActionSuccessRecovery(self:agent,[testActionSuccess(self:agent),[testActionPre(self:agent),testActionSuccess(self:agent)))");
+        Assert.assertEquals(recoveryContext.getStatus(), ActionStatus.SUCCESS);
+
+        //postrecovery_success -> no more execution
+    }
+
+    /**
+     * Tests that recovery does not abort execution when encountering the same failure on different steps of an action
+     * (i.e. does not detect separate first attempt action failures as duplicate failures/failed recovery)
+     */
+    @Test
+    public void sameFailureDifferentStepTest() {
+        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        String filename = aslPath + "multipleActionRecoveryTest.asl";
+        Database.getInstance().loadDatabaseFromFile(filename);
+        Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
+
+        log.info("\n\n\n[sameFailureDifferentStepTest]");
+        //Submit closeGripperTwice goal, should succeed due to recovery
+        Predicate goalPredicate = Factory.createPredicate("closeGripperThrice(self:agent)");
+        executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+        Long goalId = component.getGoalId(goalPredicate);
+        Goal goal = component.getGoal(goalId);
+        Context rootContext = goal.getRootContext();
+        Assert.assertEquals(rootContext.getChildContexts().size(), 1);
+
+        Context closeGripperThriceContext = rootContext.getChildContexts().get(0);
+        Assert.assertEquals(closeGripperThriceContext.getChildContexts().size(), 9);
+        Assert.assertEquals(closeGripperThriceContext.getStatus(), ActionStatus.SUCCESS);
+
+        //First attempt: failure because gripper is not open
+        Context closeGripperContext = closeGripperThriceContext.getChildContexts().get(0);
+        Assert.assertEquals(closeGripperContext.getCommand(), "closeGripper");
+        Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        //First attempt recovery: sets precondition
+        Context recoveryContext = closeGripperThriceContext.getChildContexts().get(1);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(closeGripperActionRecovery(self:agent,[closeGripper(self:agent),[gripperOpen(self:agent),closeGripperThrice(self:agent)))");
+        Assert.assertEquals(recoveryContext.getStatus(), ActionStatus.SUCCESS);
+
+        //Second attempt: success
+        closeGripperContext = closeGripperThriceContext.getChildContexts().get(2);
+        Assert.assertEquals(closeGripperContext.getCommand(), "closeGripper");
+        Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.SUCCESS);
+
+        //Same sequence for second closeGripper
+        //First attempt: failure because gripper is not open
+        closeGripperContext = closeGripperThriceContext.getChildContexts().get(3);
+        Assert.assertEquals(closeGripperContext.getCommand(), "closeGripper");
+        Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        //First attempt recovery: sets precondition
+        recoveryContext = closeGripperThriceContext.getChildContexts().get(4);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(closeGripperActionRecovery(self:agent,[closeGripper(self:agent),[gripperOpen(self:agent),closeGripperThrice(self:agent)))");
+        Assert.assertEquals(recoveryContext.getStatus(), ActionStatus.SUCCESS);
+
+        //Second attempt: success
+        closeGripperContext = closeGripperThriceContext.getChildContexts().get(5);
+        Assert.assertEquals(closeGripperContext.getCommand(), "closeGripper");
+        Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.SUCCESS);
+
+        //Same sequence for third closeGripper
+        //First attempt: failure because gripper is not open
+        closeGripperContext = closeGripperThriceContext.getChildContexts().get(6);
+        Assert.assertEquals(closeGripperContext.getCommand(), "closeGripper");
+        Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        //First attempt recovery: sets precondition
+        recoveryContext = closeGripperThriceContext.getChildContexts().get(7);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(closeGripperActionRecovery(self:agent,[closeGripper(self:agent),[gripperOpen(self:agent),closeGripperThrice(self:agent)))");
+        Assert.assertEquals(recoveryContext.getStatus(), ActionStatus.SUCCESS);
+
+        //Second attempt: success
+        closeGripperContext = closeGripperThriceContext.getChildContexts().get(8);
+        Assert.assertEquals(closeGripperContext.getCommand(), "closeGripper");
+        Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.SUCCESS);
+    }
+
+    /**
+     * Tests that recovery does not abort execution when encountering the same failure on different steps of an action
+     * (i.e. does not detect separate first attempt action failures as duplicate failures/failed recovery)
+     * This tests this case when under the context of execution from parent_retry postrecovery
+     */
+    @Test
+    public void sameFailureDifferentStepParentRetryTest() {
+        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        String filename = aslPath + "multipleActionRecoveryTest.asl";
+        Database.getInstance().loadDatabaseFromFile(filename);
+        Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
+
+        log.info("\n\n\n[sameFailureDifferentStepParentRetryTest]");
+        //Submit closeGripperTwice goal, should succeed due to recovery
+        Predicate goalPredicate = Factory.createPredicate("testActionSequence(self:agent)");
+        executeAndCheckGoal(goalPredicate, GoalStatus.FAILED);
+        Long goalId = component.getGoalId(goalPredicate);
+        Goal goal = component.getGoal(goalId);
+        Context rootContext = goal.getRootContext();
+        Assert.assertEquals(rootContext.getChildContexts().size(), 1);
+
+        Context testActionSequenceContext = rootContext.getChildContexts().get(0);
+        Assert.assertEquals(testActionSequenceContext.getChildContexts().size(), 15);
+        Assert.assertEquals(testActionSequenceContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        //First attempt trace, fail on first closeGripper
+        Context logContext = testActionSequenceContext.getChildContexts().get(0);
+        Assert.assertEquals(logContext.getCommand(), "log");
+
+        logContext = testActionSequenceContext.getChildContexts().get(1);
+        Assert.assertEquals(logContext.getCommand(), "log");
+
+        Context closeGripperContext = testActionSequenceContext.getChildContexts().get(2);
+        Assert.assertEquals(closeGripperContext.getCommand(), "closeGripper");
+        Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        //Recovery
+        Context recoveryContext = testActionSequenceContext.getChildContexts().get(3);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(testActionSequenceActionRecovery(self:agent,[closeGripper(self:agent),[gripperOpen(self:agent),testActionSequence(self:agent)))");
+
+        //Second attempt trace, fail on second closeGripper
+        logContext = testActionSequenceContext.getChildContexts().get(4);
+        Assert.assertEquals(logContext.getCommand(), "log");
+
+        logContext = testActionSequenceContext.getChildContexts().get(5);
+        Assert.assertEquals(logContext.getCommand(), "log");
+
+        closeGripperContext = testActionSequenceContext.getChildContexts().get(6);
+        Assert.assertEquals(closeGripperContext.getCommand(), "closeGripper");
+        Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.SUCCESS);
+
+        logContext = testActionSequenceContext.getChildContexts().get(7);
+        Assert.assertEquals(logContext.getCommand(), "log");
+
+        closeGripperContext = testActionSequenceContext.getChildContexts().get(8);
+        Assert.assertEquals(closeGripperContext.getCommand(), "closeGripper");
+        Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        recoveryContext = testActionSequenceContext.getChildContexts().get(9);
+        Assert.assertEquals(recoveryContext.getCommand(), "goal(testActionSequenceActionRecovery(self:agent,[closeGripper(self:agent),[gripperOpen(self:agent),testActionSequence(self:agent)))");
+
+        //Third attempt trace: fail on second closeGripper again
+        logContext = testActionSequenceContext.getChildContexts().get(10);
+        Assert.assertEquals(logContext.getCommand(), "log");
+
+        logContext = testActionSequenceContext.getChildContexts().get(11);
+        Assert.assertEquals(logContext.getCommand(), "log");
+
+        closeGripperContext = testActionSequenceContext.getChildContexts().get(12);
+        Assert.assertEquals(closeGripperContext.getCommand(), "closeGripper");
+        Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.SUCCESS);
+
+        logContext = testActionSequenceContext.getChildContexts().get(13);
+        Assert.assertEquals(logContext.getCommand(), "log");
+
+        closeGripperContext = testActionSequenceContext.getChildContexts().get(14);
+        Assert.assertEquals(closeGripperContext.getCommand(), "closeGripper");
+        Assert.assertEquals(closeGripperContext.getStatus(), ActionStatus.FAIL_PRECONDITIONS);
+
+        //Duplicate failure, exit recovery and fail top level goal
+    }
+
+    //TODO: equivalent test as the above but for goal recovery (and need to implement equivalent behavior)
+
+    @Test
+    public void overridePostRecoveryExecutionTypeTest() {
+        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        String filename = aslPath + "actionRecoveryTests.asl";
+        Database.getInstance().loadDatabaseFromFile(filename);
+        Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
+
+        log.info("\n\n\n[overridePostRecoveryExecutionTypeTest]");
+        Predicate goalPredicate = Factory.createPredicate("pickUpFailV2(self:agent, override)");
+        executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+    }
+
+    //TODO: test for policies with >1 'maximumAttempts' defined
 }

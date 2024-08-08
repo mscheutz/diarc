@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 
 public class FailureInformation {
   private static Logger log = LoggerFactory.getLogger(FailureInformation.class);
@@ -58,7 +59,7 @@ public class FailureInformation {
     if (constraints.recoveryType == RecoveryType.ACTION) {
       //If an explicit catching action signature is defined, this context must match it
       if (constraints.catchingAction != null) {
-        if (catchingContext.instanceOf(constraints.catchingAction)) {
+        if (catchingContext != null && catchingContext.instanceOf(constraints.catchingAction)) {
           ++matches;
         } else {
           return 0;
@@ -127,5 +128,33 @@ public class FailureInformation {
     }
 
     return matches;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    FailureInformation failureInformation = (FailureInformation) o;
+    return Objects.equals(actor, failureInformation.actor) &&
+           Objects.equals(contextType, failureInformation.contextType) &&
+           Objects.equals(catchingContext,failureInformation.catchingContext) &&
+           isCatchingContextParent == failureInformation.isCatchingContextParent &&
+           Objects.equals(goal, failureInformation.goal) &&
+           Objects.equals(failedActions, failureInformation.failedActions) &&
+           Objects.equals(failureReasons, failureInformation.failureReasons) &&
+           Objects.equals(actionStatus, failureInformation.actionStatus);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 1;
+    result = 31 * result + Objects.hashCode(actor);
+    result = 31 * result + Objects.hashCode(contextType);
+    result = 31 * result + Objects.hashCode(catchingContext);
+    result = 31 * result + Objects.hashCode(goal);
+    result = 31 * result + Objects.hashCode(failedActions);
+    result = 31 * result + Objects.hashCode(failureReasons);
+    result = 31 * result + Objects.hashCode(actionStatus);
+    return 31 * result + (isCatchingContextParent ? 1 : 0);
   }
 }

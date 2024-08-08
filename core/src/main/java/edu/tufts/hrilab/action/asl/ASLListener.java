@@ -1,7 +1,3 @@
-/*
- * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
- */
-
 // Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
@@ -611,6 +607,16 @@ public interface ASLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitRecoveryActionStatuses(ASLParser.RecoveryActionStatusesContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ASLParser#recoveryMaximumAttempts}.
+	 * @param ctx the parse tree
+	 */
+	void enterRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#recoveryMaximumAttempts}.
+	 * @param ctx the parse tree
+	 */
+	void exitRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ASLParser#locks}.
 	 * @param ctx the parse tree

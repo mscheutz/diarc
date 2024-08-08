@@ -85,7 +85,7 @@ public class ActionDBEntry extends DBEntry {
    * Policy constraints in the case that this action is a Recovery Policy.
    * TODO: move to new RecoveryPolicy subclass
    */
-  private PolicyConstraints policyConstraints;
+  private List<PolicyConstraints> policyConstraints;
 
   /**
    * Agents that can perform this action.
@@ -136,7 +136,7 @@ public class ActionDBEntry extends DBEntry {
     private List<Effect> effects = new ArrayList<>();
     private List<Effect> defaultPostConditions = new ArrayList<>();
     private List<Predicate> observations = new ArrayList<>();
-    private PolicyConstraints policyConstraints = null;
+    private List<PolicyConstraints> policyConstraints = new ArrayList<>();
     private List<Symbol> agents = new ArrayList<>();
     private List<ActionBinding> roles = new ArrayList<>();
     private EventSpec onCancelEvent = null;
@@ -174,7 +174,7 @@ public class ActionDBEntry extends DBEntry {
       this.conditions = new ArrayList<>(entryToCopy.conditions);
       this.effects = new ArrayList<>(entryToCopy.effects);
       this.observations = new ArrayList<>(entryToCopy.observations);
-      this.policyConstraints = entryToCopy.policyConstraints;
+      this.policyConstraints = new ArrayList<>(entryToCopy.policyConstraints);
       this.agents = new ArrayList<>(entryToCopy.agents);
       this.roles = new ArrayList<>(entryToCopy.roles);
       this.isVarArgs = entryToCopy.isVarArgs;
@@ -407,11 +407,11 @@ public class ActionDBEntry extends DBEntry {
     /**
      * Adds a recovery policy constraint.
      *
-     * @param policyConstraints policy constraints
+     * @param constraint policy constraint
      * @return this Builder instance
      */
-    public Builder setRecoveryPolicyConstraint(PolicyConstraints policyConstraints) {
-      this.policyConstraints = policyConstraints;
+    public Builder addRecoveryPolicyConstraint(PolicyConstraints constraint) {
+      policyConstraints.add(constraint);
       return this;
     }
 
@@ -843,7 +843,7 @@ public class ActionDBEntry extends DBEntry {
    * @return
    */
   public boolean isRecoveryPolicy() {
-    return policyConstraints != null;
+    return !policyConstraints.isEmpty();
   }
 
   /**
@@ -852,8 +852,8 @@ public class ActionDBEntry extends DBEntry {
    *
    * @return shallow copy of the policy constraints
    */
-  public PolicyConstraints getPolicyConstraints() {
-    return policyConstraints;
+  public List<PolicyConstraints> getPolicyConstraints() {
+    return Collections.unmodifiableList(policyConstraints);
   }
 
   /**

@@ -317,3 +317,62 @@ import java.lang.Integer;
 
     op:log("info", "[actionThirteenRecovery] ?failedActionPredicates, ?failureReasons, ?failedGoal");
 }
+
+() = stateFourteenRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        goals : {stateFourteen(X)}
+    }
+    effects : {
+        success : stateFourteen(?actor);
+    }
+
+    op:log("info", "[stateFourteenRecovery] ?failedActionPredicates, ?failureReasons, ?failedGoal");
+}
+
+() = testActionRetry() {
+    conditions : {
+        pre : testActionPre(?actor);
+    }
+    effects : {
+        success : testActionPost(?actor);
+    }
+    op:log("info","[testActionRetry] in");
+    op:log("info","[testActionRetry] out");
+}
+
+() = testActionSuccess() {
+    conditions : {
+        pre : testActionPre(?actor);
+    }
+    effects : {
+        success : testActionPost(?actor);
+    }
+    op:log("info","[testActionSuccess] in");
+    op:log("info","[testActionSuccess] out");
+}
+
+() = testActionRetryRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            postRecovery : postrecovery_retry
+        }
+        failedActions : {testActionRetry(X)}
+    }
+    effects : {
+        success : testActionPre(?actor);
+    }
+    op:log("info","[testActionRetryRecovery]");
+}
+
+() = testActionSuccessRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            postRecovery : postrecovery_success
+        }
+        failedActions : {testActionSuccess(X)}
+    }
+    effects : {
+        success : testActionPost(?actor);
+    }
+    op:log("info","[testActionSuccessRecovery]");
+}

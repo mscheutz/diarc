@@ -63,10 +63,8 @@ public class GoalContext extends ArgumentBasedContext {
       recovery.updateRecoveryStatus(this);
 
       if (recovery.getStatus() == RecoveryStatus.SUCCESS) {
-        // Goal recovery should always set status to PLAN when complete, not SUCCESS. If in this block, something went wrong
-        log.error("[setupNextStep] goal recovery shouldn't have SUCCESS status, should be PLAN if complete");
-        selectAction();
-        setStatus(ActionStatus.PROGRESS);
+        //Special case: action recovery with postrecovery_success executed on root goal context
+        setStatus(ActionStatus.SUCCESS);
         recovery.resetState();
       } else if (recovery.getStatus() == RecoveryStatus.PLAN) {
         // make plan to achieve goal state

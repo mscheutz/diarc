@@ -1,7 +1,3 @@
-/*
- * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
- */
-
 // Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
@@ -374,6 +370,12 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitRecoveryActionStatuses(ASLParser.RecoveryActionStatusesContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#recoveryMaximumAttempts}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ASLParser#locks}.
 	 * @param ctx the parse tree

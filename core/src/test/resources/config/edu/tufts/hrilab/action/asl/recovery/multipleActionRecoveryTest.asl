@@ -54,3 +54,55 @@ import java.util.List;
 
     op:log("info", "[openGripperActionRecovery] asserting gripperOpen(?actor)");
 }
+
+() = closeGripperThrice() {
+    act:closeGripper();
+    act:closeGripper();
+    act:closeGripper();
+}
+
+() = closeGripper() {
+    conditions : {
+        pre : gripperOpen(?actor);
+    }
+    effects : {
+        success : not(gripperOpen(?actor));
+    }
+    op:log("info","[closeGripper]");
+}
+
+() = closeGripperActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            catchingAction : closeGripperThrice(X)
+            postRecovery : postrecovery_retry
+        }
+    }
+    effects : {
+        success : gripperOpen(?actor);
+    }
+
+    op:log("info", "[closeGripperActionRecovery] asserting gripperOpen(?actor)");
+}
+
+() = testActionSequence() {
+    op:log("info","[testActionSequence] filler log 1");
+    op:log("info","[testActionSequence] filler log 2");
+    act:closeGripper();
+    op:log("info","[testActionSequence] filler log 3");
+    act:closeGripper();
+}
+
+() = testActionSequenceActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            catchingAction : testActionSequence(X)
+            postRecovery : postrecovery_parent_retry
+        }
+    }
+    effects : {
+        success : gripperOpen(?actor);
+    }
+
+    op:log("info", "[testActionSequenceActionRecovery] asserting gripperOpen(?actor)");
+}
