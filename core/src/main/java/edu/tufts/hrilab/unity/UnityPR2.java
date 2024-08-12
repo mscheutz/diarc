@@ -38,6 +38,8 @@ public class UnityPR2 extends UnityAgent {
     switch (msg.action) {
       case "reset": reset(msg);
         break;
+      case "end" : end(msg);
+        break;
     }
   }
 
@@ -104,6 +106,20 @@ public class UnityPR2 extends UnityAgent {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class)).call(Long.class, goal);
     } catch (TRADEException e) {
       log.error("Error resetting trial", e);
+    }
+  }
+
+  /**
+   * Issue endTrial() action to cancel all active goals and stop the robot.
+   */
+  private void end (Message msg) {
+    String robotName = msg.agent;
+    String predicateStr = "endTrial(" + robotName + ")";
+    Predicate goal = Factory.createPredicate(predicateStr);
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class)).call(Long.class, goal);
+    } catch (TRADEException e) {
+      log.error("Error ending trial", e);
     }
   }
 }

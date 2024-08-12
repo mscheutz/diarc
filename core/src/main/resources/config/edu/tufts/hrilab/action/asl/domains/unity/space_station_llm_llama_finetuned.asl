@@ -446,6 +446,22 @@ import edu.tufts.hrilab.action.justification.Justification;
   op:log("info", "State reset for ?actor");
 }
 
+() = endTrial () {
+  List !currentGoals;
+  long !goalID;
+  !currentGoals = tsc:getCurrentGoals();
+  if (op:isEmpty(!currentGoals)) {
+    op:log("debug", "No goals to cancel for ?actor");
+  } else {
+    foreach (!currGoal : !currentGoals) {
+      !goalID = tsc:getGoalId(!currGoal);
+      op:log("debug", "Cancelling goal: !goalID");
+      tsc:cancelGoal(!goalID);
+    }
+  }
+  op:log("info", "Trial ended for ?actor");
+}
+
 () = notInTransit () {
   effects : {
     success infer: not(amIn(?actor,prep(transit,to(X))));
