@@ -1,6 +1,7 @@
 import java.lang.String;
 import java.lang.Boolean;
 import java.lang.Integer;
+import java.lang.Long;
 import java.util.Array;
 import java.util.ArrayList;
 import java.util.List;
@@ -448,15 +449,30 @@ import edu.tufts.hrilab.action.justification.Justification;
 
 () = endTrial () {
   List !currentGoals;
-  long !goalID;
-  !currentGoals = tsc:getCurrentGoals();
+  Long !goalID;
+  String !goalStr;
+  Predicate !goalPred;
+  java.lang.Boolean !containsSelfGoal;
+
+  op:log("info", "endTrial(?actor)");
+
+  !currentGoals = tsc:getCurrentGoals(?actor);
+
   if (op:isEmpty(!currentGoals)) {
-    op:log("debug", "No goals to cancel for ?actor");
+    op:log("info", "No goals to cancel for ?actor");
   } else {
     foreach (!currGoal : !currentGoals) {
-      !goalID = tsc:getGoalId(!currGoal);
-      op:log("debug", "Cancelling goal: !goalID");
-      tsc:cancelGoal(!goalID);
+      !goalStr = op:invokeMethod(!currGoal, "toString");
+      !containsSelfGoal = op:invokeMethod(!goalStr, "contains", "endTrial(");
+      if (op:==(!containsSelfGoal, true)) {
+        op:log("debug", "Skipping goal: !goalStr");
+      } else {
+        !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !goalStr);
+        op:log("info", "Cancelling goal: !goalStr");
+        !goalID = tsc:getGoalId(!goalPred);
+        op:log("debug", "Cancelling goal: !goalID");
+        tsc:cancelGoal(!goalID);
+      }
     }
   }
   op:log("info", "Trial ended for ?actor");
