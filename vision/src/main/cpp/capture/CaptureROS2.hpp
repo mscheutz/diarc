@@ -2,8 +2,8 @@
  Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-#ifndef CAPTUREROS_HPP
-#define CAPTUREROS_HPP
+#ifndef CAPTUREROS2_HPP
+#define CAPTUREROS2_HPP
 
 #include "Capture.hpp"
 
@@ -16,15 +16,14 @@
 #include <string>
 
 #include <rclcpp/rclcpp.hpp>
-#include <image_transport/image_transport.h>
-#include <image_transport/subscriber_filter.h>
 #include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
+#include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/PointCloud.h>
-#include <sensor_msgs/PointCloud2.h>
-
+#include <sensor_msgs/msg/image.h>
+#include <sensor_msgs/msg/point_cloud.h>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <image_transport/image_transport.hpp>
+#include <image_transport/subscriber_filter.hpp>
 
 namespace ade {
   namespace capture {
@@ -40,15 +39,15 @@ namespace ade {
       bool captureCurrentCameraFrame();
 
       //======== DO NOT CALL - only for ROS callbacks =================
-      void captureCallback_MONO(const sensor_msgs::Image::ConstPtr &msg);
+      void captureCallback_MONO(const sensor_msgs::msg::Image::ConstSharedPtr &msg);
 
       void
-      captureCallback_STEREO(const sensor_msgs::ImageConstPtr &image_msg, const sensor_msgs::ImageConstPtr &image2_msg);
+      captureCallback_STEREO(const sensor_msgs::msg::Image::ConstSharedPtr &image_msg, const sensor_msgs::msg::Image::ConstSharedPtr &image2_msg);
 
-      void captureCallback_RGB_AND_DEPTH(const sensor_msgs::ImageConstPtr &rgb_msg,
-                                         const sensor_msgs::ImageConstPtr &depth_msg);
+      void captureCallback_RGB_AND_DEPTH(const sensor_msgs::msg::Image::ConstSharedPtr &rgb_msg,
+                                         const sensor_msgs::msg::Image::ConstSharedPtr &depth_msg);
 
-      void captureCallback_POINT_CLOUD(const sensor_msgs::PointCloud2::ConstPtr &msg);
+      void captureCallback_POINT_CLOUD(const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msg);
       //===============================================================
 
     private:
@@ -68,6 +67,8 @@ namespace ade {
 
       bool capture_RGB_AND_DEPTH();
 
+      void spin();
+      std::thread spin_thread_;
       //data
       mutable boost::mutex data_mutex_;
       boost::condition_variable condition_;
@@ -78,20 +79,19 @@ namespace ade {
       bool performDepthRegistration_;
       std::string rosNamespace_;
 
-      sensor_msgs::Image::ConstPtr image_msg_;
-      sensor_msgs::Image::ConstPtr image2_msg_;
-      sensor_msgs::Image::ConstPtr depth_msg_;
-      sensor_msgs::PointCloud2::ConstPtr point_cloud_msg_;
+      sensor_msgs::msg::Image::ConstSharedPtr image_msg_;
+      sensor_msgs::msg::Image::ConstSharedPtr image2_msg_;
+      sensor_msgs::msg::Image::ConstSharedPtr depth_msg_;
+      sensor_msgs::msg::PointCloud2::ConstSharedPtr point_cloud_msg_;
 
-      rclcpp::Node *n_;
+      rclcpp::Node::SharedPtr n_;
       image_transport::ImageTransport *it_;
       image_transport::Subscriber single_image_sub_;  // only for single image case
-      image_transport::SubscriberFilter *image_sub_;
-      image_transport::SubscriberFilter *image2_sub_;
-      image_transport::SubscriberFilter *depth_sub_;
+      image_transport::SubscriberFilter image_sub_;
+      image_transport::SubscriberFilter image2_sub_;
+      image_transport::SubscriberFilter depth_sub_;
 
-      typedef message_filters::sync_policies::ApproximateTime <sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
-      message_filters::TimeSynchronizer <MySyncPolicy> *sync_;
+      std::shared_ptr<message_filters::TimeSynchronizer <sensor_msgs::msg::Image, sensor_msgs::msg::Image>> sync_;
 
       pcl::PointCloud<pcl::PointXYZ>::ConstPtr const getPointCloud(const unsigned long int frameNum) const;
     };
@@ -101,4 +101,4 @@ namespace ade {
 } //namespace ade  
 
 
-#endif  //CAPTUREROS_HPP
+#endif  //CAPTUREROS2_HPP

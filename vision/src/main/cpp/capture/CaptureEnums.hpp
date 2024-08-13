@@ -34,6 +34,7 @@ namespace ade {
       KINECT_PLUS, //kinect plus another rgb camera (mainly for calibration of robot system with multiple sensors)
       DRONE, //ar drone
       ROS,
+      ROS2,
       NAO,
       GSTREAMER, // H264-encoded stream via GStreamer
       MULTISENSE,

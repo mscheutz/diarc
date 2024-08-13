@@ -8,15 +8,16 @@
 
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <cv_bridge/cv_bridge.h>
 #include <opencv2/rgbd.hpp>
-#include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_types.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/conversions.h>
 #include <pcl/common/transforms.h>
-#include <sensor_msgs/image_encodings.h>
 #include <utility>      //std::pair
+
+#include <cv_bridge/cv_bridge.h>
+#include <pcl_conversions/pcl_conversions.h>
+//#include <sensor_msgs/image_encodings.hpp>
 
 namespace ade {
   namespace capture {
@@ -45,17 +46,18 @@ namespace ade {
       rosNamespace_ = pt.get<std::string>("capture.namespace", "diarc_vision_capture");
 
       //initialize ROS
-      LOG4CXX_INFO(logger, "Initializing ROS.");
-      std::vector<std::pair<std::string, std::string> > remapping;
-      rclcpp::init(remapping, rosNamespace_);
+      LOG4CXX_INFO(logger, "Initializing ROS2.");
+      int argCount = 0;
+      char **argv;
+      rclcpp::init(argCount, argv);
 
       //create node handle
-      LOG4CXX_INFO(logger, "Initializing ROS node.");
-      n_ = new rclcpp::Node();
+      LOG4CXX_INFO(logger, "Initializing ROS2 node.");
+      n_ = rclcpp::Node::make_shared("diarc_vision_capture");
 
       //create image transport
       LOG4CXX_INFO(logger, "Initializing image transport.");
-      it_ = new image_transport::ImageTransport(*n_);
+      it_ = new image_transport::ImageTransport(n_);
 
       if (image2_topic_.empty() && depth_topic_.empty()) {
         // single RGB case
@@ -64,21 +66,23 @@ namespace ade {
       } else if (depth_topic_.empty()) {
         // stereo RGB case
         mode_ = STEREO;
-        image_sub_ = new image_transport::SubscriberFilter(*it_, image_topic_, 1);
-        image2_sub_ = new image_transport::SubscriberFilter(*it_, image2_topic_, 1);
-        sync_ = new message_filters::TimeSynchronizer<MySyncPolicy>(MySyncPolicy(10), *image_sub_, *image2_sub_);
-        sync_->registerCallback(boost::bind(&CaptureROS2::captureCallback_RGB_AND_DEPTH, this, _1, _2));
+        // image_sub_ = new image_transport::SubscriberFilter(*n_, image_topic_, 1);
+        // image2_sub_ = new image_transport::SubscriberFilter(*n_, image2_topic_, 1);
+        // //sync_ = new message_filters::TimeSynchronizer<MySyncPolicy>(MySyncPolicy(10), *image_sub_, *image2_sub_);
+        // sync_ = std::make_shared<message_filters::TimeSynchronizer<sensor_msgs::msg::Image, sensor_msgs::msg::Image>>(*image_sub_, *image2_sub_, 10);
+        // sync_->registerCallback(boost::bind(&CaptureROS2::captureCallback_RGB_AND_DEPTH, this, _1, _2));
       } else {
         // singe RGB and single depth case
         mode_ = RGB_AND_DEPTH;
-        image_sub_ = new image_transport::SubscriberFilter(*it_, image_topic_, 1);
-        depth_sub_ = new image_transport::SubscriberFilter(*it_, depth_topic_, 1);
-        sync_ = new message_filters::Synchronizer<MySyncPolicy>(MySyncPolicy(10), *image_sub_, *depth_sub_);
-        sync_->registerCallback(boost::bind(&CaptureROS2::captureCallback_RGB_AND_DEPTH, this, _1, _2));
+        // image_sub_ = new image_transport::SubscriberFilter(*n_, image_topic_, 1);
+        // depth_sub_ = new image_transport::SubscriberFilter(*n_, depth_topic_, 1);
+        // //sync_ = new message_filters::Synchronizer<MySyncPolicy>(MySyncPolicy(10), *image_sub_, *depth_sub_);
+        // sync_ = std::make_shared<message_filters::TimeSynchronizer<sensor_msgs::msg::Image, sensor_msgs::msg::Image>>(*image_sub_, *depth_sub_, 10);
+        // sync_->registerCallback(boost::bind(&CaptureROS2::captureCallback_RGB_AND_DEPTH, this, _1, _2));
       }
 
       LOG4CXX_INFO(logger, "starting spinner...");
-      rclcpp::spin();
+      spin_thread_ = std::thread(&CaptureROS2::spin, this);
       LOG4CXX_INFO(logger, "spinner started.");
 
       ///////////////HACK FOR DEMO - THESE ARE KINECT PARAMS///////////////////////////////////
@@ -149,27 +153,28 @@ namespace ade {
       LOG4CXX_INFO(logger, "Finished constructing.");
     }
 
+    void CaptureROS2::spin() {
+      rclcpp::spin(n_);
+    }
+
     CaptureROS2::~CaptureROS2() {
       LOG4CXX_INFO(logger, "destructor.");
-
       rclcpp::shutdown();
+      spin_thread_.join();
 
       switch (mode_) {
         case STEREO:
-          delete image_sub_;
-          delete image2_sub_;
-          delete sync_;
+          // delete image_sub_;
+          // delete image2_sub_;
           break;
         case RGB_AND_DEPTH:
-          delete image_sub_;
-          delete depth_sub_;
-          delete sync_;
+          // delete image_sub_;
+          // delete depth_sub_;
           break;
       }
 
       delete it_;
-      delete spinner_;
-      delete n_;
+      // delete spinner_;
     }
 
     void CaptureROS2::interruptWait() {
@@ -209,7 +214,10 @@ namespace ade {
           //cv_bridge::CvImageConstPtr cv_rgb_ptr = cv_bridge::toCvShare(image_msg_, sensor_msgs::image_encodings::TYPE_8UC3);
           cv_bridge::CvImagePtr cv_rgb_ptr = cv_bridge::toCvCopy(image_msg_, sensor_msgs::image_encodings::TYPE_8UC3);
           cv::resize(cv_rgb_ptr->image, frame, frame.size(), 0, 0, CV_INTER_NN);
-          //          cv::cvtColor(colorImg, frame, CV_BGR2RGB);
+
+          if (convertToRGB_) {
+            cv::cvtColor(frame, frame, CV_BGR2RGB);
+          }
         } catch (cv_bridge::Exception &e) {
           LOG4CXX_ERROR(logger, boost::format("cv_bridge exception: %s") % e.what());
           data_received_ = false;
@@ -238,6 +246,10 @@ namespace ade {
         memcpy(frame.data, &image_msg_->data[0], image_msg_->data.size());
         memcpy(frame2.data, &image2_msg_->data[0], image2_msg_->data.size());
 
+        if (convertToRGB_) {
+          cv::cvtColor(frame, frame, CV_BGR2RGB);
+          cv::cvtColor(frame2, frame2, CV_BGR2RGB);
+        }
         data_received_ = false;
         return true;
       } else {
@@ -312,12 +324,12 @@ namespace ade {
       }
     }
 
-    void CaptureROS2::captureCallback_MONO(const sensor_msgs::Image::ConstPtr &msg) {
+    void CaptureROS2::captureCallback_MONO(const sensor_msgs::msg::Image::ConstSharedPtr &msg) {
       LOG4CXX_DEBUG(logger,
                     boost::format(
                         "captureCallback_MONO - I got an image with size: [%dx%d], encoding[%s], timestamp: [%d-%d], frame id: [%s]") %
                         msg->width %
-                        msg->height % msg->encoding.c_str() % msg->header.stamp.sec % msg->header.stamp.nsec %
+                        msg->height % msg->encoding.c_str() % msg->header.stamp.sec % msg->header.stamp.nanosec %
                         msg->header.frame_id.c_str());
 
       boost::mutex::scoped_lock lock(data_mutex_);
@@ -326,13 +338,13 @@ namespace ade {
       condition_.notify_one();
     }
 
-    void CaptureROS2::captureCallback_STEREO(const sensor_msgs::Image::ConstPtr &msg,
-                                            const sensor_msgs::Image::ConstPtr &msg2) {
+    void CaptureROS2::captureCallback_STEREO(const sensor_msgs::msg::Image::ConstSharedPtr &msg,
+                                            const sensor_msgs::msg::Image::ConstSharedPtr &msg2) {
       LOG4CXX_DEBUG(logger,
                     boost::format(
                         "captureCallback_STEREO - I got an image with size: [%dx%d], encoding[%s], timestamp: [%d-%d], frame id: [%s]") %
                         msg->width %
-                        msg->height % msg->encoding.c_str() % msg->header.stamp.sec % msg->header.stamp.nsec %
+                        msg->height % msg->encoding.c_str() % msg->header.stamp.sec % msg->header.stamp.nanosec %
                         msg->header.frame_id.c_str());
 
       boost::mutex::scoped_lock lock(data_mutex_);
@@ -342,8 +354,8 @@ namespace ade {
       condition_.notify_one();
     }
 
-    void CaptureROS2::captureCallback_RGB_AND_DEPTH(const sensor_msgs::ImageConstPtr &rgb_msg,
-                                                   const sensor_msgs::ImageConstPtr &depth_msg) {
+    void CaptureROS2::captureCallback_RGB_AND_DEPTH(const sensor_msgs::msg::Image::ConstSharedPtr &rgb_msg,
+                                                   const sensor_msgs::msg::Image::ConstSharedPtr &depth_msg) {
       LOG4CXX_DEBUG(logger, "captureCallback_RGB_AND_DEPTH");
 
       boost::mutex::scoped_lock lock(data_mutex_);
@@ -353,11 +365,11 @@ namespace ade {
       condition_.notify_one();
     }
 
-    void CaptureROS2::captureCallback_POINT_CLOUD(const sensor_msgs::PointCloud2::ConstPtr &msg) {
+    void CaptureROS2::captureCallback_POINT_CLOUD(const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msg) {
       LOG4CXX_DEBUG(logger,
                     boost::format(
                         "captureCallback_POINT_CLOUD - I got a point cloud with timestamp: [%d-%d], frame id: [%s] with size: (%d x %d)") %
-                        msg->header.stamp.sec % msg->header.stamp.nsec % msg->header.frame_id.c_str() % msg->width %
+                        msg->header.stamp.sec % msg->header.stamp.nanosec % msg->header.frame_id.c_str() % msg->width %
                         msg->height);
 
       boost::mutex::scoped_lock lock(data_mutex_);

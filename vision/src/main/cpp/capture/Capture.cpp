@@ -48,6 +48,10 @@
 #include "CaptureMultisense.hpp"
 #endif
 
+#ifdef USE_ROS2_VISION
+#include "CaptureROS2.hpp"
+#endif
+
 #ifdef USE_NAO
 #include "CaptureNao.hpp"
 #endif
@@ -139,6 +143,13 @@ namespace ade {
         LOG4CXX_ERROR(logger, "ROS is not available.");
 #endif
           break;
+        case ROS2:
+#ifdef USE_ROS2_VISION
+          captureDevice = Capture::Ptr(new CaptureROS2(configFile));
+#else
+            LOG4CXX_ERROR(logger, "ROS2 is not available.");
+#endif
+        break;
           //====================== End PR2 Options ===========================
 
         case MULTISENSE:
