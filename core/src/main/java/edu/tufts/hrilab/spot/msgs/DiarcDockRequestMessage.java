@@ -24,28 +24,31 @@
 
 package edu.tufts.hrilab.spot.msgs;
 
-
 import java.util.Objects;
 
 import id.jrosmessages.Message;
 import id.jrosmessages.MessageMetadata;
 import id.jrosmessages.Array;
+import id.jrosmessages.RosInterfaceType;
 import id.xfunction.XJson;
 import id.xfunction.Preconditions;
+
+import id.jrosmessages.std_msgs.StringMessage;
 
 /**
  * Definition for spot_diarc_msgs/DiarcDockRequest
  */
 @MessageMetadata(
-    name = DiarcDockRequestMessage.NAME
+    name = DiarcDockRequestMessage.NAME,
+        interfaceType = RosInterfaceType.SERVICE
 )
 public class DiarcDockRequestMessage implements Message {
    
-   static final String NAME = "spot_diarc_msgs/DiarcDockRequest";
+   static final String NAME = "spot_diarc_msgs/DiarcDockServiceRequest";
 
-   public int dockid;
+   public StringMessage dockid = new StringMessage();
    
-   public DiarcDockRequestMessage withDockid(int dockid) {
+   public DiarcDockRequestMessage withDockid(StringMessage dockid) {
        this.dockid = dockid;
        return this;
    }
@@ -61,7 +64,7 @@ public class DiarcDockRequestMessage implements Message {
    public boolean equals(Object obj) {
        if (obj instanceof DiarcDockRequestMessage other)
            return
-               dockid == other.dockid
+               Objects.equals(dockid, other.dockid)
            ;
        return false;
    }

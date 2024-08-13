@@ -29,6 +29,7 @@ import java.util.Objects;
 import id.jrosmessages.Message;
 import id.jrosmessages.MessageMetadata;
 import id.jrosmessages.Array;
+import id.jrosmessages.RosInterfaceType;
 import id.xfunction.XJson;
 import id.xfunction.Preconditions;
 
@@ -39,11 +40,12 @@ import id.jrosmessages.std_msgs.StringMessage;
  */
 @MessageMetadata(
     name = DiarcDockResponseMessage.NAME,
+        interfaceType = RosInterfaceType.SERVICE,
     fields = { "success", "message" }
 )
 public class DiarcDockResponseMessage implements Message {
    
-   static final String NAME = "spot_diarc_msgs/DiarcDockResponse";
+   static final String NAME = "spot_diarc_msgs/DiarcDockServiceResponse";
 
    public boolean success;
    

@@ -56,7 +56,8 @@ public class DiarcCommandRequestMessage implements Message {
     SIT,
     STAND,
     POWER_ON,
-    POWER_OFF
+    POWER_OFF,
+    UNDOCK
   }
 
   public DiarcCommandRequestMessage(Command command) {

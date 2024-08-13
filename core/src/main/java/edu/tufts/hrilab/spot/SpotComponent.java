@@ -44,6 +44,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   private String map_path;
   private JRos2Client client;
   private JRos2ServiceClient<DiarcCommandRequestMessage, DiarcCommandResponseMessage> commandService;
+  private JRos2ServiceClient<DiarcDockRequestMessage, DiarcDockResponseMessage> dockService;
 
   public SpotComponent() {
     super();
@@ -54,10 +55,11 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     super.init();
     client = new JRos2ClientFactory().createClient();
     commandService = new JRos2ServiceClientFactory().createClient(client, new DiarcCommandServiceDefinition(), "/diarc_command");
+    dockService = new JRos2ServiceClientFactory().createClient(client, new DiarcDockServiceDefinition(), "/diarc_dock");
 
     claim();
-    powerOn();
-    stand();
+//    powerOn();
+//    stand();
 
     log.info("Completed init");
   }
@@ -93,16 +95,47 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   @Action
   @TRADEService
+  public Justification release() {
+    try {
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.RELEASE)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error releasing", e);
+      return new ConditionJustification(false);
+    }
+  }
+
+  @Action
+  @TRADEService
   public Justification dock(int id) {
-//    DockResponseMessage res;
-//    DockRequestMessage req = new DockRequestMessage().withDockId(new Int16Message().withData((short) id));
-//    try {
-//      res = dockService.sendRequestAsync(req).get();
-//    } catch (InterruptedException | ExecutionException e) {
-//      throw new RuntimeException(e);
-//    }
-//    return new ConditionJustification(res.success);
-    return new ConditionJustification(true);
+    try {
+      DiarcDockResponseMessage res = dockService.sendRequestAsync(new DiarcDockRequestMessage().withDockid(new StringMessage().withData(String.valueOf(id)))).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error docking to dock id " + id, e);
+      return new ConditionJustification(false);
+    }
+  }
+
+  @Action
+  @TRADEService
+  public Justification undock() {
+    try {
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.UNDOCK)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error undocking", e);
+      return new ConditionJustification(false);
+    }
   }
 
   @Action
@@ -115,7 +148,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       }
       return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
-      log.error("Error claiming", e);
+      log.error("Error powering on", e);
       return new ConditionJustification(false);
     }
   }
@@ -130,7 +163,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       }
       return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
-      log.error("Error claiming", e);
+      log.error("Error powering off", e);
       return new ConditionJustification(false);
     }
   }
@@ -146,7 +179,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       }
       return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
-      log.error("Error claiming", e);
+      log.error("Error standing", e);
       return new ConditionJustification(false);
     }
   }
@@ -161,7 +194,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       }
       return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
-      log.error("Error claiming", e);
+      log.error("Error sitting", e);
       return new ConditionJustification(false);
     }
   }

@@ -13,7 +13,11 @@ public class SpotConfig extends DiarcConfiguration {
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-    createInstance(GoalManagerImpl.class, "-beliefinitfile agents/agents.pl -editor");
+    createInstance(GoalManagerImpl.class,
+            "-beliefinitfile agents/agents.pl "
+            + "-editor "
+            + "-asl demos/spotDemo.asl "
+    );
   }
 
   public static void main(String[] args) {
