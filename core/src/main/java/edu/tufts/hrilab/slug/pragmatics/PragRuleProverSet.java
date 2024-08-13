@@ -108,7 +108,8 @@ public class PragRuleProverSet extends HashSet<PragRuleProver> {
               }
               if (reference.getName().contains("_")) {
                 //is there a reference?
-                List<Map<Variable, Symbol>> contextBindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("observeProperties").argTypes(Symbol.class,Term.class)).call(List.class, utt.getListeners().get(0), context);
+                List<Map<Variable, Symbol>> contextBindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("observeProperties").argTypes(Symbol.class,Term.class))
+                        .call(List.class, utt.getAddressee(), context);
                 if (!contextBindings.isEmpty()) {
                   for (Map<Variable, Symbol> contextBinding : contextBindings) {
                     contextBinding.putAll(binding);
@@ -141,7 +142,8 @@ public class PragRuleProverSet extends HashSet<PragRuleProver> {
 
             utt = new Utterance.Builder()
                     .setSpeaker(utt.getSpeaker())
-                    .addListener(utt.getListeners().get(0))
+                    .setAddressee(utt.getAddressee())
+                    .addListeners(utt.getListeners())
                     .setSemantics(supplementalsemantics.get(0))
                     .setSupplementalSemantics(supplementalsemantics)
                     .setTierAssignments(ghtierMap)

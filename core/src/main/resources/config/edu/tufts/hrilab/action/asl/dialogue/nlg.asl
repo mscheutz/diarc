@@ -57,8 +57,8 @@ import java.util.Map;
 () = generateResponse(Predicate ?semantics) {
     op:log("debug", "[generateResponse] semantics: ?semantics");
 
-    Symbol !listener = person; // TODO: how to set this in general?
-    Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !listener);
+    Symbol !addressee = person; // TODO: how to set this in general?
+    Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !addressee);
     UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
     op:invokeMethod(!utterance, "setType", !type);
     op:invokeMethod(!utterance, "setSemantics", ?semantics);
@@ -69,13 +69,13 @@ import java.util.Map;
  * Given a predicate, calls NLG pipeline to get its text from and then submits a say text goal with it.
  * Called from semantics without bindings, makes empty bindings and calls same method, but with bindings
  */
-() = generateResponse(Symbol ?listener, Predicate ?semantics, Symbol ?semanticType) {
+() = generateResponse(Symbol ?addressee, Predicate ?semantics, Symbol ?semanticType) {
     op:log("debug", "[generateResponse] semantics: ?semantics");
 
     Utterance !utterance;
     UtteranceType !type;
     if (op:equalsValue(?semanticType, direct)) {
-      !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?listener);
+      !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
       !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
       op:invokeMethod(!utterance, "setType", !type);
       op:invokeMethod(!utterance, "setSemantics", ?semantics);
@@ -87,13 +87,13 @@ import java.util.Map;
  * Given a predicate, calls NLG pipeline to get its text from and then calls sayText action.
  * Called from semantics and from generateResponse with empty bindings. Submits to NLG and sayText
  */
-() = generateResponse(Symbol ?listener, Predicate ?semantics, List ?bindings, Symbol ?semanticType) {
+() = generateResponse(Symbol ?addressee, Predicate ?semantics, List ?bindings, Symbol ?semanticType) {
     op:log("debug", "[generateResponse] semantics: ?semantics");
 
     Utterance !utterance;
     UtteranceType !type;
     if (op:equalsValue(?semanticType, direct)) {
-      !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?listener);
+      !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
       !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
       op:invokeMethod(!utterance, "setType", !type);
       op:invokeMethod(!utterance, "setSemantics", ?semantics);
@@ -181,7 +181,7 @@ import java.util.Map;
 /**
   * Generate a "because" predicate based on the provided Justification.
   */
-(Predicate ?becausePredicate) = createBecausePredicate(Predicate ?state, Symbol ?listener, edu.tufts.hrilab.action.justification.Justification ?justification) {
+(Predicate ?becausePredicate) = createBecausePredicate(Predicate ?state, Symbol ?addressee, edu.tufts.hrilab.action.justification.Justification ?justification) {
     Predicate !tmp;
     Integer !failureConditionsSize;
     List !failureList;
@@ -217,10 +217,10 @@ import java.util.Map;
         !failureCondition = op:invokeMethod(!failureCondition, "copyWithNewBindings", !bindings);
       }
 
-      !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bel",?listener, !failureCondition);
+      !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bel",?addressee, !failureCondition);
       if (~act:querySupport(!query)) {
 
-        !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "explanationType",?listener,!incomplete);
+        !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "explanationType",?addressee,!incomplete);
         if (~act:querySupport(!query)) {
 
           !supportExplanation = act:querySupportWithExplanation(!failureCondition);
@@ -233,7 +233,7 @@ import java.util.Map;
             }
 
             //check if failure reason is already known by listener
-            !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bel",?listener, !tmp);
+            !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bel",?addressee, !tmp);
             if (~act:querySupport(!query)) {
               op:invokeMethod(!array, "add", !tmp);
             }
@@ -249,7 +249,7 @@ import java.util.Map;
     !failureConditionsSize = op:invokeMethod(!array, "size");
     op:log("debug", "got size !failureConditionsSize");
 
-    !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "explanationType",?listener,incomplete);
+    !query = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "explanationType",?addressee,incomplete);
     //add action step that failed if novice listener
     if (~act:querySupport(!query)) {
       !query = op:invokeMethod(?justification, "getStep");
@@ -265,7 +265,7 @@ import java.util.Map;
         !tmp = op:newObject("edu.tufts.hrilab.fol.Predicate", "and", !array);
         !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and",!intraExplanation,!tmp);
         ?becausePredicate = op:newObject("edu.tufts.hrilab.fol.Predicate", "because", !tmp);
-        if (act:isRepeatedPredicate(?becausePredicate, ?listener, ?state, 1)) {
+        if (act:isRepeatedPredicate(?becausePredicate, ?addressee, ?state, 1)) {
            !failureCondition = op:invokeMethod(!array, "get", 0);
            !tmp = op:newObject("edu.tufts.hrilab.fol.Predicate", !failureCondition);
            ?becausePredicate = op:newObject("edu.tufts.hrilab.fol.Predicate", "because", !tmp);
@@ -280,7 +280,7 @@ import java.util.Map;
           !tmp = op:newObject("edu.tufts.hrilab.fol.Predicate", "and", !array);
           ?becausePredicate = op:newObject("edu.tufts.hrilab.fol.Predicate", "because", !tmp);
           
-          if (act:isRepeatedPredicate(?becausePredicate, ?listener, ?state, 1)) {
+          if (act:isRepeatedPredicate(?becausePredicate, ?addressee, ?state, 1)) {
             !failureCondition = op:invokeMethod(!array, "get", 0);
             !tmp = op:newObject("edu.tufts.hrilab.fol.Predicate", !failureCondition);
             ?becausePredicate = op:newObject("edu.tufts.hrilab.fol.Predicate", "because", !tmp);

@@ -221,10 +221,14 @@ public abstract class FirebaseConnectionComponent extends UIComponent {
             log.info("utterance words from userInput listener: " + utteranceWords);
             //Utterance utterance = new Utterance(new Symbol(speakerName), new Symbol(docListener), utteranceWords, UtteranceType.UNKNOWN, language, translations);
             //TODO:brad: add back translation info?
-            Utterance utterance = new Utterance(new Symbol(speakerName), new Symbol(docListener), utteranceWords, UtteranceType.UNKNOWN, true);
+            Utterance.Builder utterance = new Utterance.Builder()
+                    .setSpeaker(new Symbol(speakerName))
+                    .setAddressee(new Symbol(docListener))
+                    .setWords(utteranceWords).setUtteranceType(UtteranceType.UNKNOWN)
+                    .setIsInputUtterance(true);
             deleteDocument(collectionPath + "/" + documentData.get("docId"));
             try {
-              TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance.build());
             } catch (TRADEException err) {
               log.error("reportRecognizedSpeech failed.", err);
             }
@@ -643,7 +647,7 @@ public abstract class FirebaseConnectionComponent extends UIComponent {
     log.debug("[updateFirebaseDialogueHistory] got utterance: " + u);
     HashMap<String, Object> newDialogue = new HashMap<>();
     newDialogue.put("speaker", u.getSpeaker().getName());
-    newDialogue.put("listener", u.getListeners().get(0).getName());
+    newDialogue.put("listener", u.getAddressee());
     newDialogue.put("time", System.currentTimeMillis());
     newDialogue.put("text", u.getWordsAsString());
     newDialogue.put("language", u.getLanguage());

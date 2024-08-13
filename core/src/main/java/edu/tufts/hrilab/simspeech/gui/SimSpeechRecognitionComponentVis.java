@@ -29,7 +29,7 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
   private JPanel SCommandPanel;
   private JButton SCommandButton;
   private JButton setSpeakerButton;
-  private JButton setListenerButton;
+  private JButton setAddresseeButton;
   private JTextField SCommandText;
   private JButton SUnkButton;
   private long prevClick = 0;
@@ -75,12 +75,12 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
       SCommandButton.setForeground(textColor);
       SCommandButton.addActionListener(new InputListener());
       SCommandButton.addMouseListener(new MouseInputListener());
-      setListenerButton = new JButton("setListener");
-      setListenerButton.setMaximumSize(new Dimension(1000, 30));
-      setListenerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-      setListenerButton.setForeground(textColor);
-      setListenerButton.addActionListener(new InputListener());
-      setListenerButton.addMouseListener(new MouseInputListener());
+      setAddresseeButton = new JButton("setAddressee");
+      setAddresseeButton.setMaximumSize(new Dimension(1000, 30));
+      setAddresseeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+      setAddresseeButton.setForeground(textColor);
+      setAddresseeButton.addActionListener(new InputListener());
+      setAddresseeButton.addMouseListener(new MouseInputListener());
       setSpeakerButton = new JButton("setSpeaker");
       setSpeakerButton.setMaximumSize(new Dimension(1000, 30));
       setSpeakerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -170,10 +170,10 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
         Command = SCommandText.getText();
         SCommandText.setText("");
         log.debug("Text " + Command);
-      } else if (event.getActionCommand().equals("setListener")) {
+      } else if (event.getActionCommand().equals("setAddressee")) {
         String listenerName = SCommandText.getText();
         SCommandText.setText("");
-        component.setListener(Factory.createSymbol(listenerName));
+        component.setAddressee(Factory.createSymbol(listenerName));
         return;
       } else if (event.getActionCommand().equals("setSpeaker")) {
         String speakerName = SCommandText.getText();
