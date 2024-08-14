@@ -42,7 +42,7 @@ public class Completion {
 
   public Completion (OpenaiChatCompletionResponse response) {
     if (response.choices.length>0) {
-      text = response.choices[0].message.content;
+      text = response.choices[0].message.content.toString();
     } else {
       text = "none";
     }
@@ -57,7 +57,7 @@ public class Completion {
 
   public Completion (LlamaCompletionResponse response) {
     UUID uuid = UUID.randomUUID();
-    text = response.content;
+    text = response.content.toString();
     id = uuid.toString();
     created = System.currentTimeMillis() / 1000;
     service = "llama";

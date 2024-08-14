@@ -216,12 +216,12 @@ public class Chat {
     tokenCounts = new ArrayList<Integer>();
     Message systemMessage = toSystemMessage();
     if (systemMessage != null) {
-      count = tokenizer.count(systemMessage.content);
+      count = tokenizer.count(systemMessage.content.toString());
       tokens += count;
       log.debug(systemMessage.role + " tokens: " + count);
     }
     for (Message message : messages) {
-      count = tokenizer.count(message.content);
+      count = tokenizer.count(message.content.toString());
       tokenCounts.add(count);
       tokens += count;
       log.debug(message.role + " tokens: " + count);

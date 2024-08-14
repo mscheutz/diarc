@@ -149,6 +149,8 @@ tasks.register<JavaExec>("launch") {
   classpath = sourceSets.main.get().runtimeClasspath
   mainClass = project.findProperty("main").toString()
 
+  classpath += files(System.getProperty("user.home") + "/.diarc")
+
   // planner executable path
   systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
 

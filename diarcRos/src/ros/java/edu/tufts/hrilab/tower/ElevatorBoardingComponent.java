@@ -51,7 +51,7 @@ public class ElevatorBoardingComponent extends DiarcComponent {
   @Override
   public void init() {
     if (useRL) {
-      base = new MoveBase(rc, mapFrame, baseFrame);
+      base = new MoveBase(rc, mapFrame, baseFrame, this.getMyGroups());
     } else {
       waypointFollower = new TowerWaypointFollower();
       // tempTest = false;
