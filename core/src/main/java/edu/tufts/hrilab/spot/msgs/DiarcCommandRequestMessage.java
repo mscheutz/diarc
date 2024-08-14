@@ -56,11 +56,19 @@ public class DiarcCommandRequestMessage implements Message {
     SIT,
     STAND,
     POWER_ON,
-    POWER_OFF
+    POWER_OFF,
+    ARM_STOW,
+    ARM_CARRY,
+    ARM_UNSTOW,
+    CLOSE_GRIPPER,
+    OPEN_GRIPPER,
   }
 
   public DiarcCommandRequestMessage(Command command) {
     this.command = new StringMessage().withData(command.name().toLowerCase());
+  }
+  public DiarcCommandRequestMessage(String command) {
+    this.command = new StringMessage().withData(command);
   }
 
   public DiarcCommandRequestMessage withCommand(Command command) {

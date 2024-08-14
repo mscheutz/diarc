@@ -8,11 +8,6 @@ public class SpotConfig extends DiarcConfiguration {
   @Override
   public void runConfiguration() {
     createInstance(SpotComponent.class, "-map /home/code/graph");
-    try {
-      Thread.sleep(8000);
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
     createInstance(GoalManagerImpl.class, "-beliefinitfile agents/agents.pl -editor");
   }
 

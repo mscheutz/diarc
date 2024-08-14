@@ -44,6 +44,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   private String map_path;
   private JRos2Client client;
   private JRos2ServiceClient<DiarcCommandRequestMessage, DiarcCommandResponseMessage> commandService;
+  private JRos2ServiceClient<DiarcPickupRequestMessage, DiarcPickupResponseMessage> pickupService;
 
   public SpotComponent() {
     super();
@@ -54,10 +55,11 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     super.init();
     client = new JRos2ClientFactory().createClient();
     commandService = new JRos2ServiceClientFactory().createClient(client, new DiarcCommandServiceDefinition(), "/diarc_command");
+    pickupService = new JRos2ServiceClientFactory().createClient(client, new DiarcPickupServiceDefinition(), "/diarc_pickup");
 
-    claim();
-    powerOn();
-    stand();
+//    claim();
+//    powerOn();
+//    stand();
 
     log.info("Completed init");
   }
@@ -73,6 +75,22 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   protected void parseArgs(CommandLine cmdLine) {
     if (cmdLine.hasOption("map")) {
       map_path = cmdLine.getOptionValue("path");
+    }
+  }
+
+  // Mostly just for testing! You should make a new action for the command you want
+  @Action
+  @TRADEService
+  public Justification command(String input) {
+    try {
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(input)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error calling command", e);
+      return new ConditionJustification(false);
     }
   }
 
@@ -156,6 +174,25 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   public Justification sit() {
     try {
       DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.SIT)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error claiming", e);
+      return new ConditionJustification(false);
+    }
+  }
+
+  @Action
+  @TRADEService
+  public Justification pickUpObject(Symbol obj) {
+    // todo get memory object from obj ref
+
+    try {
+      DiarcPickupRequestMessage msg = new DiarcPickupRequestMessage();
+      //todo: populate msg with info from memory object
+      DiarcPickupResponseMessage res = pickupService.sendRequestAsync(msg).get();
       if (!res.success) {
         log.warn(res.message.toString());
       }
@@ -299,7 +336,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @Override
   public Justification closeGripper(String groupName) {
     try {
-      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.STAND)).get();
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.CLOSE_GRIPPER)).get();
       if (!res.success) {
         log.warn(res.message.toString());
       }
@@ -313,7 +350,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @Override
   public Justification openGripper(String groupName) {
     try {
-      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.STAND)).get();
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.OPEN_GRIPPER)).get();
       if (!res.success) {
         log.warn(res.message.toString());
       }
