@@ -18,7 +18,6 @@ public class SpotNavGraphLocationReferenceJson {
   public SpotNavGraphLocationReferenceJson(SpotNavGraphLocationReference reference) {
     this.variable = reference.variable.toString();
     this.properties = reference.properties.stream().map(Term::toString).collect(Collectors.toList());
-    this.nodeName = reference.getNodeName().toString();
     this.graphId = reference.getGraphId();
   }
 

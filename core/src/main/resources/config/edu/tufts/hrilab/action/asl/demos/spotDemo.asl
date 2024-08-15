@@ -2,6 +2,7 @@
     act:claim();
     act:powerOn();
     act:stand();
+    act:setInitialLocation("location_0:location");
 }
 
 () = shutDown() {

@@ -65,7 +65,7 @@ public class SpotNavGraphComponent extends DiarcComponent implements SpotNavigat
     protected void init() {
         navGraph = new SpotNavGraph();
 
-        consultant = new SpotNavGraphLocationConsultant(SpotNavGraphLocationReference.class, mapDescriptor);
+        consultant = new SpotNavGraphLocationConsultant(mapDescriptor);
         try {
             TRADE.registerAllServices(consultant,this.getMyGroups());
         } catch (TRADEException e) {

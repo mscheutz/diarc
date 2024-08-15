@@ -7,7 +7,7 @@ import edu.tufts.hrilab.spot.SpotComponent;
 public class SpotConfig extends DiarcConfiguration {
   @Override
   public void runConfiguration() {
-    createInstance(SpotComponent.class, "-map /home/code/graph");
+    createInstance(SpotComponent.class, "-map /home/dev/spot_maps/lab.walk -locationRefs spotLocationRefs.json");
     try {
       Thread.sleep(8000);
     } catch (InterruptedException e) {

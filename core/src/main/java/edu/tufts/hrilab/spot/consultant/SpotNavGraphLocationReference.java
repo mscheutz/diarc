@@ -13,24 +13,15 @@ import java.util.List;
 
 public class SpotNavGraphLocationReference extends Reference {
 
-    protected String nodeName;
     protected String graphId;
 
     public SpotNavGraphLocationReference(Symbol ref, Variable variable) {
         super(ref, variable);
     }
 
-    public SpotNavGraphLocationReference(Symbol ref, Variable variable, List<Term> properties, String nodeName, String graphId) {
+    public SpotNavGraphLocationReference(Symbol ref, Variable variable, List<Term> properties, String graphId) {
         super(ref,variable,properties);
-        this.nodeName = nodeName;
         this.graphId = graphId;
-    }
-
-
-    //todo: need a distinction between the node name needed for the API on the spot and the name given
-    //  to and used for that node by humans, etc.
-    public String getNodeName() {
-        return nodeName;
     }
 
 

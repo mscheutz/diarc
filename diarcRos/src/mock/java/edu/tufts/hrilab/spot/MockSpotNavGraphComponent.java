@@ -55,7 +55,7 @@ public class MockSpotNavGraphComponent extends DiarcComponent implements SpotNav
 
     @Override
     protected void init() {
-        consultant = new SpotNavGraphLocationConsultant(SpotNavGraphLocationReference.class, mapDescriptor);
+        consultant = new SpotNavGraphLocationConsultant(mapDescriptor);
         try {
             Collection<String> consultantGroups = this.getMyGroups();
             consultantGroups.add(consultant.getKBName());

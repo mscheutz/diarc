@@ -22,8 +22,8 @@ public class SpotNavGraphLocationConsultant extends Consultant<SpotNavGraphLocat
 
     private static Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().serializeSpecialFloatingPointValues().create();
 
-    public SpotNavGraphLocationConsultant(Class<SpotNavGraphLocationReference> refClass, String kbName) {
-        super(refClass, kbName);
+    public SpotNavGraphLocationConsultant(String kbName) {
+        super(SpotNavGraphLocationReference.class, kbName);
     }
 
     public SpotNavGraphLocationConsultant(Class<SpotNavGraphLocationReference> refClass, String kbName, List<String> properties) {
@@ -71,7 +71,6 @@ public class SpotNavGraphLocationConsultant extends Consultant<SpotNavGraphLocat
                                 getNextReferenceId(),
                                 Factory.createVariable(ref.getVariable()),
                                 ref.getProperties().stream().map(Factory::createPredicate).collect(Collectors.toList()),
-                                ref.getNodeName(),
                                 ref.getGraphId())
                 );
             }

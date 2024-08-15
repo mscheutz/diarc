@@ -8,19 +8,12 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.interfaces.ArmInterface;
 import edu.tufts.hrilab.interfaces.MoveBaseInterface;
-import edu.tufts.hrilab.ros2.ros2jrosclient.generated.AddTwoIntsRequestMessage;
-import edu.tufts.hrilab.ros2.ros2jrosclient.generated.AddTwoIntsResponseMessage;
-import edu.tufts.hrilab.ros2.ros2jrosclient.generated.AddTwoIntsServiceDefinition;
+import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationConsultant;
+import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationReference;
 import edu.tufts.hrilab.spot.msgs.*;
 import id.jros2client.JRos2Client;
-import id.jros2client.JRos2ClientConfiguration;
 import id.jros2client.JRos2ClientFactory;
-import id.jros2messages.geometry_msgs.TwistWithCovarianceStampedMessage;
-import id.jrosclient.TopicSubscriber;
-import id.jrosmessages.geometry_msgs.TwistMessage;
-import id.jrosmessages.geometry_msgs.Vector3Message;
 import id.jrosmessages.std_msgs.StringMessage;
-import id.jrosmessages.std_msgs.UInt16Message;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.Pair;
@@ -28,7 +21,6 @@ import pinorobotics.jros2actionlib.JRos2ActionClient;
 import pinorobotics.jros2actionlib.JRos2ActionClientFactory;
 import pinorobotics.jros2services.JRos2ServiceClient;
 import pinorobotics.jros2services.JRos2ServiceClientFactory;
-import pinorobotics.rtpstalk.RtpsTalkConfiguration;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
@@ -36,8 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class SpotComponent extends DiarcComponent implements ArmInterface, MoveBaseInterface {
 
@@ -45,6 +35,11 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   private JRos2Client client;
   private JRos2ServiceClient<DiarcCommandRequestMessage, DiarcCommandResponseMessage> commandService;
   private JRos2ServiceClient<DiarcDockRequestMessage, DiarcDockResponseMessage> dockService;
+  private JRos2ActionClient<NavigateToGoalMessage, NavigateToResultMessage> navigateAction;
+  private SpotNavGraphLocationConsultant locationConsultant;
+  private Symbol currentLocationId;
+  private String refsConfigFile;
+  private String refsConfigDir = "config/edu/tufts/hrilab/spot";
 
   public SpotComponent() {
     super();
@@ -56,6 +51,9 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     client = new JRos2ClientFactory().createClient();
     commandService = new JRos2ServiceClientFactory().createClient(client, new DiarcCommandServiceDefinition(), "/diarc_command");
     dockService = new JRos2ServiceClientFactory().createClient(client, new DiarcDockServiceDefinition(), "/diarc_dock");
+    navigateAction = new JRos2ActionClientFactory().createClient(client, new NavigateToActionDefinition(), "/navigate_to");
+    locationConsultant = new SpotNavGraphLocationConsultant("location");
+    locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigDir);
 
     claim();
 //    powerOn();
@@ -67,15 +65,29 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("map").hasArg().argName("path").desc("Path to nav graph").build());
+    options.add(Option.builder("map").hasArg().argName("map").desc("Path to nav graph").build());
+    options.add(Option.builder("locationRefs").hasArg().argName("locationRefs").desc("Location ref json filename").build());
     return options;
   }
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
     if (cmdLine.hasOption("map")) {
-      map_path = cmdLine.getOptionValue("path");
+      map_path = cmdLine.getOptionValue("map");
     }
+    if (cmdLine.hasOption("locationRefs")) {
+      refsConfigFile = cmdLine.getOptionValue("locationRefs");
+    }
+  }
+
+  @Action
+  @TRADEService
+  public void setInitialLocation(Symbol refId) {
+    SpotNavGraphLocationReference ref = locationConsultant.getRefWithId(refId);
+    if (ref != null) {
+      log.error("[setInitialLocation] current location id does not match a known location");
+    }
+    currentLocationId = refId;
   }
 
   @Action
@@ -211,22 +223,24 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   @Override
   public Justification moveTo(String groupName, Symbol refId) {
-//    NavigateToGoalMessage goal = new NavigateToGoalMessage();
-//    goal.initial_localization_fiducial = false;
-//    goal.upload_path = new StringMessage("/home/mfawn/code/graph");
-//    goal.navigate_to = new StringMessage("waypoint_45");
-//    NavigateToResultMessage result;
-//    try {
-//      result = navigateAction.sendGoalAsync(goal).get();
-//    } catch (InterruptedException | ExecutionException e) {
-//      throw new RuntimeException(e);
-//    }
-//
-//    if (!result.success) {
-//      log.error(result.message);
-//    }
-//    return new ConditionJustification(result.success);
-    return new ConditionJustification(true);
+    String destination = locationConsultant.getRefWithId(refId).getGraphId();
+    NavigateToGoalMessage goal = new NavigateToGoalMessage();
+    goal.initial_localization_fiducial = false;
+    goal.initial_localization_waypoint = new StringMessage(locationConsultant.getRefWithId(currentLocationId).getGraphId());
+    goal.upload_path = new StringMessage(map_path);
+    goal.navigate_to = new StringMessage(destination);
+    NavigateToResultMessage result;
+    try {
+      result = navigateAction.sendGoalAsync(goal).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+
+    if (!result.success) {
+      log.error(result.message.toString());
+    }
+    currentLocationId = refId;
+    return new ConditionJustification(result.success);
   }
 
   @Override
