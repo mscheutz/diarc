@@ -1,6 +1,9 @@
 package edu.tufts.hrilab.spot;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
@@ -22,9 +25,11 @@ import pinorobotics.jros2actionlib.JRos2ActionClientFactory;
 import pinorobotics.jros2services.JRos2ServiceClient;
 import pinorobotics.jros2services.JRos2ServiceClientFactory;
 
+import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -40,6 +45,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   private Symbol currentLocationId;
   private String refsConfigFile;
   private String refsConfigDir = "config/edu/tufts/hrilab/spot";
+  private JRos2ServiceClient<GraphNavGetLocalizationPoseUnstampedRequestMessage, GraphNavGetLocalizationPoseUnstampedResponseMessage> localizationService;
 
   public SpotComponent() {
     super();
@@ -51,9 +57,17 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     client = new JRos2ClientFactory().createClient();
     commandService = new JRos2ServiceClientFactory().createClient(client, new DiarcCommandServiceDefinition(), "/diarc_command");
     dockService = new JRos2ServiceClientFactory().createClient(client, new DiarcDockServiceDefinition(), "/diarc_dock");
+    localizationService = new JRos2ServiceClientFactory().createClient(client, new GraphNavGetLocalizationPoseUnstampedServiceDefinition(), "/graph_nav_get_localization_pose_unstamped");
     navigateAction = new JRos2ActionClientFactory().createClient(client, new NavigateToActionDefinition(), "/navigate_to");
     locationConsultant = new SpotNavGraphLocationConsultant("location");
-    locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigDir);
+    List<String> groups = this.getMyGroups();
+    groups.add("location");
+    try {
+      TRADE.registerAllServices(locationConsultant, groups);
+    } catch (TRADEException e) {
+      log.error("[init] error registering location consultant with TRADE", e);
+    }
+    locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
 
     claim();
 //    powerOn();
@@ -84,7 +98,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @TRADEService
   public void setInitialLocation(Symbol refId) {
     SpotNavGraphLocationReference ref = locationConsultant.getRefWithId(refId);
-    if (ref != null) {
+    if (ref == null) {
       log.error("[setInitialLocation] current location id does not match a known location");
     }
     currentLocationId = refId;
@@ -133,6 +147,28 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       log.error("Error docking to dock id " + id, e);
       return new ConditionJustification(false);
     }
+  }
+
+  private Point2d getLocalizationInformation() {
+    try {
+      GraphNavGetLocalizationPoseUnstampedResponseMessage res = localizationService.sendRequestAsync(new GraphNavGetLocalizationPoseUnstampedRequestMessage().withTrash(new StringMessage("empty"))).get();
+      if (!res.success) {
+        log.warn(res.pose.toString());
+      } else {
+        return new Point2d(res.pose.position.x, res.pose.position.y);
+      }
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("[getLocalizationInformation] Error getting localization information");
+    }
+    return null;
+  }
+
+  @Action
+  @TRADEService
+  public void bindLocationToCurrentPose(Symbol refId) {
+    SpotNavGraphLocationReference ref = locationConsultant.getRefWithId(refId);
+    Point2d location = getLocalizationInformation();
+    ref.setLocation(location);
   }
 
   @Action
@@ -223,24 +259,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   @Override
   public Justification moveTo(String groupName, Symbol refId) {
-    String destination = locationConsultant.getRefWithId(refId).getGraphId();
-    NavigateToGoalMessage goal = new NavigateToGoalMessage();
-    goal.initial_localization_fiducial = false;
-    goal.initial_localization_waypoint = new StringMessage(locationConsultant.getRefWithId(currentLocationId).getGraphId());
-    goal.upload_path = new StringMessage(map_path);
-    goal.navigate_to = new StringMessage(destination);
-    NavigateToResultMessage result;
-    try {
-      result = navigateAction.sendGoalAsync(goal).get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-
-    if (!result.success) {
-      log.error(result.message.toString());
-    }
-    currentLocationId = refId;
-    return new ConditionJustification(result.success);
+    return null;
   }
 
   @Override
@@ -408,7 +427,41 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   @Override
   public Justification goToLocation(Symbol location) {
-    return null;
+    log.debug("[goToLocation] going to location with refId: " + location);
+    String destination = locationConsultant.getRefWithId(location).getGraphId();
+    if (destination == null) {
+      log.error("[goToLocation] refId " + location + " does not correspond to a reference in the location consultant");
+    }
+    NavigateToGoalMessage goal = new NavigateToGoalMessage();
+    goal.initial_localization_fiducial = false;
+    goal.initial_localization_waypoint = new StringMessage(locationConsultant.getRefWithId(currentLocationId).getGraphId());
+    goal.upload_path = new StringMessage(map_path);
+    goal.navigate_to = new StringMessage(destination);
+    NavigateToResultMessage result;
+    try {
+      result = navigateAction.sendGoalAsync(goal).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+
+    if (!result.success) {
+      log.error(result.message.toString());
+    }
+    currentLocationId = location;
+    return new ConditionJustification(result.success);
+  }
+
+  @TRADEService
+  @Action
+  public Justification goToLocationUnsafe(Symbol location) {
+    return goToLocation(location);
+  }
+
+  @TRADEService
+  @Action
+  public void localize() {
+    this.currentLocationId = locationConsultant.getClosestLocationToPoint(getLocalizationInformation());
+    log.info("[localize] robot is localized to " + currentLocationId);
   }
 
   @Override
@@ -443,6 +496,21 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   @Override
   public List<Map<Variable, Symbol>> checkAt(Term locationTerm) {
-    return List.of();
+    List<Map<Variable, Symbol>> toReturn = new ArrayList<>();
+    Symbol closestLocation = locationConsultant.getClosestLocationToPoint(getLocalizationInformation());
+    Symbol locationSymbol = locationTerm.get(1);
+    log.debug("[checkAt] checking if at " + locationTerm);
+    log.debug("[checkAt] closest location to current position is " + closestLocation);
+    if (locationSymbol.equals(closestLocation)) {
+      toReturn.add(new HashMap<>());
+    }
+    return toReturn;
   }
+
+  @TRADEService
+  public int getNumberOfKnownLocations() {
+    return (int) locationConsultant.getActivatedEntities().entrySet().stream().filter(
+            e -> e.getValue() > 0.0).count();
+  }
+
 }

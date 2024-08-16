@@ -12,6 +12,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import edu.tufts.hrilab.util.resource.Resources;
 
+import javax.vecmath.Point2d;
 import java.io.*;
 import java.util.List;
 import java.util.Objects;
@@ -42,6 +43,24 @@ public class SpotNavGraphLocationConsultant extends Consultant<SpotNavGraphLocat
 
     public SpotNavGraphLocationReference getRefWithId(Symbol refId) {
         return references.get(refId);
+    }
+
+    public Symbol getClosestLocationToPoint(Point2d location) {
+        double min = Double.MAX_VALUE;
+        Symbol toReturn = null;
+        for (Symbol refId : references.keySet()) {
+            SpotNavGraphLocationReference ref = references.get(refId);
+            if (ref.location == null) {
+                log.warn("[getClosestLocationToPoint] skipping reference with refId " + refId + " since its x,y location has not been initialized");
+            } else {
+                double distance = ref.location.distanceSquared(location);
+                if (distance < min) {
+                    min = distance;
+                    toReturn = refId;
+                }
+            }
+        }
+        return toReturn;
     }
 
     //todo: consolidate json and reference-loading with functionality in PoseConsultant?

@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 public class SpotNavGraphLocationReferenceJson {
   protected List<String> properties;
-  protected String nodeName;
   protected String variable;
   protected String graphId;
 
@@ -19,10 +18,6 @@ public class SpotNavGraphLocationReferenceJson {
     this.variable = reference.variable.toString();
     this.properties = reference.properties.stream().map(Term::toString).collect(Collectors.toList());
     this.graphId = reference.getGraphId();
-  }
-
-  public String getNodeName() {
-    return nodeName;
   }
 
   public String getVariable() {
