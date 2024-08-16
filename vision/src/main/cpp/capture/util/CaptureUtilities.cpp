@@ -33,6 +33,7 @@ namespace ade {
         else if (str == "KINECT_PLUS") return KINECT_PLUS;
         else if (str == "DRONE") return DRONE;
         else if (str == "ROS") return ROS;
+        else if (str == "ROS2") return ROS2;
         else if (str == "NAO") return NAO;
         else if (str == "GSTREAMER") return GSTREAMER;
         else if (str == "MULTISENSE") return MULTISENSE;

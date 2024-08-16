@@ -1,576 +1,264 @@
 {
   "references": [
     {
-      "properties": [],
+      "graphId": "treed-fox-XsSGxJkb+4U5MfDB0CM4qg==",
       "variable": "X:movebaselocation",
-      "graphId": "swish-dog-Wy5hfINRWF2iZtWmEtM+zg\u003d\u003d",
-      "x": 7.311233882966218,
-      "y": 1.947733240736161,
-      "orientX": 8.303318928607608E-4,
-      "orientY": -0.0013585042193285115,
-      "orientZ": 0.9877871932817467,
-      "orientW": 0.15580091721104616
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "causal-mule-ly+DujcB98Vvkw+gjEPngg==",
       "variable": "X:movebaselocation",
-      "graphId": "votive-cougar-QecK7gsZgvNWQy2zUeirpg\u003d\u003d",
-      "x": 6.397752823595761,
-      "y": 0.2815326548716549,
-      "orientX": 0.006340057809400266,
-      "orientY": -0.0018555050418709482,
-      "orientZ": 0.9184349596151173,
-      "orientW": 0.39551685896405364
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "kept-ram-3kOcw56L05w4IW+thLjN6A==",
       "variable": "X:movebaselocation",
-      "graphId": "cracked-weasel-0fn91WwziPq14GwXwbUKZw\u003d\u003d",
-      "x": 5.369818998274549,
-      "y": -1.9601456149349243,
-      "orientX": -0.006455961392576482,
-      "orientY": -0.004616322015112994,
-      "orientZ": 0.6452801381121925,
-      "orientW": 0.7639048065639202
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "soaked-howler-5rAsQtyTneRe8akIThDYHw==",
       "variable": "X:movebaselocation",
-      "graphId": "radial-larva-4nPRfA0RuwqY4rJ4y8hF.A\u003d\u003d",
-      "x": 2.1775229801812364,
-      "y": 2.0791895780465772,
-      "orientX": -0.0026827428795374356,
-      "orientY": -0.0030203578774686698,
-      "orientZ": -0.662803673406038,
-      "orientW": 0.7487823254113284
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "briny-cows-j1PeGPwc87KrL2C7nL4LUA==",
       "variable": "X:movebaselocation",
-      "graphId": "ruled-marmot-psNeM0HWbgq81epjzAvQFg\u003d\u003d",
-      "x": 1.7732120802978533,
-      "y": 2.2334119858804597,
-      "orientX": 0.002185501402964833,
-      "orientY": 0.0013187478386769479,
-      "orientZ": 0.8705612072265505,
-      "orientW": -0.49205352245462786
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "votive-cougar-QecK7gsZgvNWQy2zUeirpg==",
       "variable": "X:movebaselocation",
-      "graphId": "fused-porgy-EPr92abLAhqOjMc8bkLR+Q\u003d\u003d",
-      "x": 1.9605814732175708,
-      "y": -0.08109484382589152,
-      "orientX": -0.004684355155415568,
-      "orientY": -0.007202954746753177,
-      "orientZ": 0.004846235058680322,
-      "orientW": 0.9999513429489709
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "awny-koodoo-WBvZfRgseOkQvTvbSiGSCQ==",
       "variable": "X:movebaselocation",
-      "graphId": "causal-mule-ly+DujcB98Vvkw+gjEPngg\u003d\u003d",
-      "x": 2.704175267024868,
-      "y": -0.2830428589557206,
-      "orientX": -0.0023066805751386314,
-      "orientY": -0.0018951779088239823,
-      "orientZ": 0.11766726984758347,
-      "orientW": 0.9930485895121317
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "waxen-mule-7FoIrDCnzuH2hNKi2s2nrg==",
       "variable": "X:movebaselocation",
-      "graphId": "swampy-whale-wTJJ8Ang8+BCMpxeUGbGlw\u003d\u003d",
-      "x": 5.015050951232644,
-      "y": -1.4044538334750902,
-      "orientX": -0.0016977583675257272,
-      "orientY": -0.0010400358959717774,
-      "orientZ": -0.6721946038016725,
-      "orientW": 0.7403718326366646
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "riled-wrasse-ujJSI+c6.p3pLbkArwt0TA==",
       "variable": "X:movebaselocation",
-      "graphId": "any-rabbit-zlfdShvF7Tu34u2IZ.ro6g\u003d\u003d",
-      "x": 2.89642979652116,
-      "y": 4.570699120705104,
-      "orientX": -7.374366742063111E-4,
-      "orientY": -0.0031406009946908526,
-      "orientZ": 0.8349116998344734,
-      "orientW": 0.5503744600651944
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "beefy-bowfin-UWjg0M9KnGtHZ434nbWfvw==",
       "variable": "X:movebaselocation",
-      "graphId": "lentic-liger-bdmg8c280RGFYaImERLDUg\u003d\u003d",
-      "x": 1.8677506742808667,
-      "y": 0.7486552408499805,
-      "orientX": 2.5247990468470416E-4,
-      "orientY": -0.004196714859955145,
-      "orientZ": 0.9525679769457717,
-      "orientW": -0.3042968503545872
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "agamic-grouse-fJD9Q06gMeJbj7l+2Bd4SQ==",
       "variable": "X:movebaselocation",
-      "graphId": "beefy-bowfin-UWjg0M9KnGtHZ434nbWfvw\u003d\u003d",
-      "x": 2.7264313044498514,
-      "y": 1.330647220921407,
-      "orientX": 0.0014187967745482053,
-      "orientY": 7.014791248370185E-4,
-      "orientZ": 0.831306946408454,
-      "orientW": 0.5558113491066926
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "any-rabbit-zlfdShvF7Tu34u2IZ.ro6g==",
       "variable": "X:movebaselocation",
-      "graphId": "seemly-grouse-4PITx4yulKiqVW7RnlyL1A\u003d\u003d",
-      "x": 4.940547873126256,
-      "y": 0.12388144882102012,
-      "orientX": 6.3735310632586E-4,
-      "orientY": -0.0016801014586755338,
-      "orientZ": 0.6820891484594374,
-      "orientW": 0.7312668217511211
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "unsaid-dog-hwN.W.lAGta0i.HhCOVlzA==",
       "variable": "X:movebaselocation",
-      "graphId": "alpine-simian-JqOY3Fu7l7Be1K21GJkeyw\u003d\u003d",
-      "x": 3.904607071097937,
-      "y": 0.7564253448490328,
-      "orientX": 2.912080467877859E-4,
-      "orientY": -0.0018934233388449248,
-      "orientZ": 0.12762325107481223,
-      "orientW": 0.9918208688725143
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "porose-hybrid-+3+B2T26ZdePZGTNm+lKhg==",
       "variable": "X:movebaselocation",
-      "graphId": "frowsy-toucan-ppt3dGwWKrURNhPSSnBhqg\u003d\u003d",
-      "x": 2.2922847202453034,
-      "y": 1.4004822310961913,
-      "orientX": -0.002953677533516919,
-      "orientY": -0.003062050110687329,
-      "orientZ": 0.44619994331534424,
-      "orientW": 0.8949231867727708
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "ultimate-falcon-zMj4uPpX9s5U+CyKf6Dc7w==",
       "variable": "X:movebaselocation",
-      "graphId": "cowled-trout-0cZBsV0kdzEmrL51.esMIw\u003d\u003d",
-      "x": 5.41599249752401,
-      "y": 0.10892528947705987,
-      "orientX": 0.0033716111160143896,
-      "orientY": -0.002508589240671671,
-      "orientZ": 0.8640478481847471,
-      "orientW": 0.5033921485937303
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "ruled-marmot-psNeM0HWbgq81epjzAvQFg==",
       "variable": "X:movebaselocation",
-      "graphId": "treed-fox-XsSGxJkb+4U5MfDB0CM4qg\u003d\u003d",
-      "x": 1.7019790467013538,
-      "y": -0.10318617924335412,
-      "orientX": -0.0032133076275501996,
-      "orientY": -0.0075735797680783435,
-      "orientZ": -0.029906190095953994,
-      "orientW": 0.9995188519170273
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "curled-bowfin-3yyrolm0KEm5EF4YkuuQGg==",
       "variable": "X:movebaselocation",
-      "graphId": "mythic-vole-ti5tDRmo+eeI5.u56dIHAw\u003d\u003d",
-      "x": 2.3632795424410307,
-      "y": 1.3580177316128583,
-      "orientX": -0.004033198699410112,
-      "orientY": -0.0016076015645871177,
-      "orientZ": -0.4454221918058657,
-      "orientW": 0.8953101250250213
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "axial-colt-lJ.KKS58rQTTMlifBZzeoA==",
       "variable": "X:movebaselocation",
-      "graphId": "unsaid-dog-hwN.W.lAGta0i.HhCOVlzA\u003d\u003d",
-      "x": 4.015592354124919,
-      "y": 0.15823423671472156,
-      "orientX": -0.0014939761987714864,
-      "orientY": -0.0034492110135877787,
-      "orientZ": 0.1032142688112687,
-      "orientW": 0.9946520425215326
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "voiced-mammut-AFtOMpBmm0RiB.dM2sYrVA==",
       "variable": "X:movebaselocation",
-      "graphId": "spiky-bat-m2cCQn9yD1gRv9KX+oGUvA\u003d\u003d",
-      "x": 7.8291992410686415,
-      "y": -1.4773285749977696,
-      "orientX": 0.002693982644241987,
-      "orientY": -4.343333284467086E-5,
-      "orientZ": 0.7686369811054927,
-      "orientW": 0.6396795540331836
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "frowsy-toucan-ppt3dGwWKrURNhPSSnBhqg==",
       "variable": "X:movebaselocation",
-      "graphId": "riled-wrasse-ujJSI+c6.p3pLbkArwt0TA\u003d\u003d",
-      "x": 3.0839018683812767,
-      "y": 0.8352111069381942,
-      "orientX": 0.002704800187022361,
-      "orientY": 2.371945979251502E-4,
-      "orientZ": 0.9570142762053041,
-      "orientW": 0.2900281071446507
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "fazed-moray-UWruYsXtvzO29.xnyFN.EQ==",
       "variable": "X:movebaselocation",
-      "graphId": "upwind-iguana-quSuuLZsSAee3MVNmCHltw\u003d\u003d",
-      "x": 5.318713257500324,
-      "y": -1.6788012112249484,
-      "orientX": 0.0019327244119239952,
-      "orientY": -0.0019940966487305323,
-      "orientZ": 0.9129229343086795,
-      "orientW": 0.4081225357268743
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "vested-eel-Ecg5AJUYoT+BKpZ4rTn8Sw==",
       "variable": "X:movebaselocation",
-      "graphId": "fazed-moray-UWruYsXtvzO29.xnyFN.EQ\u003d\u003d",
-      "x": 2.3043426124214963,
-      "y": 1.411798450137384,
-      "orientX": -4.469453952468327E-4,
-      "orientY": -0.0037744680773013407,
-      "orientZ": 0.5033367033446814,
-      "orientW": 0.86408200808526
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "epic-coati-gMdggVqXfwPJmCpZBo6rZA==",
       "variable": "X:movebaselocation",
-      "graphId": "atrip-boxer-e9QCUHBngd2acm6k7dyBlA\u003d\u003d",
-      "x": 7.815436899189165,
-      "y": -1.7823751260531142,
-      "orientX": -0.002661051983733205,
-      "orientY": -8.761105230010464E-4,
-      "orientZ": 0.09784251455554499,
-      "orientW": 0.9951979670287412
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "radial-larva-4nPRfA0RuwqY4rJ4y8hF.A==",
       "variable": "X:movebaselocation",
-      "graphId": "briny-cows-j1PeGPwc87KrL2C7nL4LUA\u003d\u003d",
-      "x": 6.381075909926691,
-      "y": 0.035684277064918085,
-      "orientX": 0.0024834187078905945,
-      "orientY": 3.189334060676208E-4,
-      "orientZ": 0.9126684090564658,
-      "orientW": -0.4086931685547775
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "mythic-vole-ti5tDRmo+eeI5.u56dIHAw==",
       "variable": "X:movebaselocation",
-      "graphId": "yankee-carp-.6b8QFKFSR54SzwOFss5eA\u003d\u003d",
-      "x": 4.781629058098407,
-      "y": -1.4981154240464503,
-      "orientX": -0.004230727578113091,
-      "orientY": 0.003117822469042642,
-      "orientZ": -0.6791824897182445,
-      "orientW": 0.7339506289849056
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "bratty-monkey-KQWkpNZDu3EFDexR4KU0gg==",
       "variable": "X:movebaselocation",
-      "graphId": "ahorse-doe-0gX3GjJ2JajjabpwmxELsg\u003d\u003d",
-      "x": 4.268460312331748,
-      "y": 0.8740987285346127,
-      "orientX": 8.136223292149546E-4,
-      "orientY": -0.003744527757578904,
-      "orientZ": 0.010938360865837545,
-      "orientW": 0.9999328321403128
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "pyknic-leech-tep5POgApboFWTPcXhci2g==",
       "variable": "X:movebaselocation",
-      "graphId": "curled-bowfin-3yyrolm0KEm5EF4YkuuQGg\u003d\u003d",
-      "x": 1.3995638137181758,
-      "y": 1.5598667543474871,
-      "orientX": -0.0022238444236427107,
-      "orientY": 9.691434549741638E-5,
-      "orientZ": -0.702323523060172,
-      "orientW": 0.711854419161627
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "alpine-simian-JqOY3Fu7l7Be1K21GJkeyw==",
       "variable": "X:movebaselocation",
-      "graphId": "porose-hybrid-+3+B2T26ZdePZGTNm+lKhg\u003d\u003d",
-      "x": 2.7100646022569435,
-      "y": 4.357606726455797,
-      "orientX": -9.647500571185126E-4,
-      "orientY": 1.6300607304885138E-4,
-      "orientZ": 0.9996605707471573,
-      "orientW": 0.026034323110369614
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "ahorse-doe-0gX3GjJ2JajjabpwmxELsg==",
       "variable": "X:movebaselocation",
-      "graphId": "waking-tsetse-go7IrYQHWSsqFXz4stLYQA\u003d\u003d",
-      "x": 1.8158186111779107,
-      "y": 0.4619688896030955,
-      "orientX": -0.008674263218940789,
-      "orientY": 0.002806048009041685,
-      "orientZ": -0.6037157211518612,
-      "orientW": 0.7971475467479454
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "tragic-locust-6R6dB0Q+dAMT3AqTxKbLPw==",
       "variable": "X:movebaselocation",
-      "graphId": "waxen-mule-7FoIrDCnzuH2hNKi2s2nrg\u003d\u003d",
-      "x": 3.8878645672460896,
-      "y": 0.763693927757239,
-      "orientX": 0.0010836416283602315,
-      "orientY": -5.046482125075299E-4,
-      "orientZ": 0.9994531565354978,
-      "orientW": 0.03304480204559724
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "crazed-shrimp-r9KdX5QX+rDARR4N8UxIHg==",
       "variable": "X:movebaselocation",
-      "graphId": "sedgy-sponge-9xHIy4V19xSYz+cjhfeqlw\u003d\u003d",
-      "x": 5.101093143360804,
-      "y": -1.477665202486013,
-      "orientX": 0.0021624136721083076,
-      "orientY": -0.0013695350669113977,
-      "orientZ": 0.749299743082492,
-      "orientW": 0.662226051554394
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "swampy-whale-wTJJ8Ang8+BCMpxeUGbGlw==",
       "variable": "X:movebaselocation",
-      "graphId": "bratty-monkey-KQWkpNZDu3EFDexR4KU0gg\u003d\u003d",
-      "x": 2.829075060858472,
-      "y": 0.7246390156148459,
-      "orientX": -0.0021869322131331044,
-      "orientY": -0.002778606869244199,
-      "orientZ": -0.17841546324493976,
-      "orientW": 0.983948890515384
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "yankee-carp-.6b8QFKFSR54SzwOFss5eA==",
       "variable": "X:movebaselocation",
-      "graphId": "tilted-sawfly-f+3OzjHjnt6XhjJ+OBmHXQ\u003d\u003d",
-      "x": 5.68702386580805,
-      "y": 0.36612231357289116,
-      "orientX": 0.002398027919845157,
-      "orientY": -0.0027717020122182186,
-      "orientZ": 0.9855923159085771,
-      "orientW": 0.16909865153814427
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "fueled-minnow-6tuiTJmDLu9HWaQ2lgZirA==",
       "variable": "X:movebaselocation",
-      "graphId": "soaked-howler-5rAsQtyTneRe8akIThDYHw\u003d\u003d",
-      "x": 6.9053847838215505,
-      "y": 1.5706029497936576,
-      "orientX": -0.004219671796039914,
-      "orientY": -0.005446468262712354,
-      "orientZ": -0.7577204048381561,
-      "orientW": 0.6525429629114836
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "petite-drone-ai4DoPr33f4L.8iNMd26PQ==",
       "variable": "X:movebaselocation",
-      "graphId": "fueled-minnow-6tuiTJmDLu9HWaQ2lgZirA\u003d\u003d",
-      "x": 6.770383179915361,
-      "y": -0.8400870875947313,
-      "orientX": 0.0010980154567226106,
-      "orientY": 0.0022645972522762833,
-      "orientZ": -0.19631984862663454,
-      "orientW": 0.9805366811071156
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "cracked-weasel-0fn91WwziPq14GwXwbUKZw==",
       "variable": "X:movebaselocation",
-      "graphId": "vested-eel-Ecg5AJUYoT+BKpZ4rTn8Sw\u003d\u003d",
-      "x": 2.385546908446423,
-      "y": 2.8227976827626926,
-      "orientX": -6.761947111645321E-4,
-      "orientY": -7.338840209028137E-4,
-      "orientZ": -0.8499582189158437,
-      "orientW": 0.5268491532425229
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "upwind-iguana-quSuuLZsSAee3MVNmCHltw==",
       "variable": "X:movebaselocation",
-      "graphId": "axial-colt-lJ.KKS58rQTTMlifBZzeoA\u003d\u003d",
-      "x": 1.6255032839166044,
-      "y": 1.3921305652226394,
-      "orientX": -0.0010027542082871254,
-      "orientY": -0.002405106982689361,
-      "orientZ": -0.1228066312506131,
-      "orientW": 0.9924271969596942
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "sedgy-sponge-9xHIy4V19xSYz+cjhfeqlw==",
       "variable": "X:movebaselocation",
-      "graphId": "azonic-ram-YDYrTRgc9TTh6QyXxwSMZA\u003d\u003d",
-      "x": 7.512505264479355,
-      "y": 0.48517457099845096,
-      "orientX": -0.001105458289383587,
-      "orientY": -0.002665676433468799,
-      "orientZ": 0.7375230433315733,
-      "orientW": 0.6753158021889143
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "jawed-bass-sAHYV5QQBPc8np8XYuVPAA==",
       "variable": "X:movebaselocation",
-      "graphId": "tragic-locust-6R6dB0Q+dAMT3AqTxKbLPw\u003d\u003d",
-      "x": 4.774651750577132,
-      "y": 0.6996772624150827,
-      "orientX": -1.2863811876463686E-4,
-      "orientY": -0.0031383881184129108,
-      "orientZ": -0.2783828325468448,
-      "orientW": 0.9604650605386164
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "seemly-grouse-4PITx4yulKiqVW7RnlyL1A==",
       "variable": "X:movebaselocation",
-      "graphId": "awing-ocelot-MzVAJ.Rf16RDIKLUCNBiGg\u003d\u003d",
-      "x": 7.606302544429974,
-      "y": 1.5089424350207497,
-      "orientX": -0.0015992500080689977,
-      "orientY": -0.0010329131469652823,
-      "orientZ": 0.902019213514862,
-      "orientW": 0.43169168852303913
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "cowled-trout-0cZBsV0kdzEmrL51.esMIw==",
       "variable": "X:movebaselocation",
-      "graphId": "jammed-skate-fh+NaCWa2fS4v.AqNW8E4g\u003d\u003d",
-      "x": 1.9754063992071094,
-      "y": -0.04725841050956646,
-      "orientX": -0.007376085145126552,
-      "orientY": -0.004802836747191883,
-      "orientZ": -0.3536337960191852,
-      "orientW": 0.9353425385601647
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "tilted-sawfly-f+3OzjHjnt6XhjJ+OBmHXQ==",
       "variable": "X:movebaselocation",
-      "graphId": "awny-koodoo-WBvZfRgseOkQvTvbSiGSCQ\u003d\u003d",
-      "x": 5.918208550467644,
-      "y": 0.7022698702662304,
-      "orientX": 0.0029803522363327046,
-      "orientY": -0.0018932552198584463,
-      "orientZ": 0.993409947630806,
-      "orientW": 0.11456094026054141
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "gelid-baboon-zIWqnHk9kLQAfzhvHrSnqg==",
       "variable": "X:movebaselocation",
-      "graphId": "petite-drone-ai4DoPr33f4L.8iNMd26PQ\u003d\u003d",
-      "x": 5.130296839871892,
-      "y": -1.978160229111634,
-      "orientX": 0.0020950234723884097,
-      "orientY": -0.0023666054049090108,
-      "orientZ": -0.4300996213116446,
-      "orientW": 0.9027759001009539
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "lentic-liger-bdmg8c280RGFYaImERLDUg==",
       "variable": "X:movebaselocation",
-      "graphId": "pyknic-leech-tep5POgApboFWTPcXhci2g\u003d\u003d",
-      "x": 3.5774280954006312,
-      "y": 0.6316422545683229,
-      "orientX": -4.783732334192959E-4,
-      "orientY": -0.0010395019863113364,
-      "orientZ": 0.10104175395703395,
-      "orientW": 0.9948815278976468
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "atrip-boxer-e9QCUHBngd2acm6k7dyBlA==",
       "variable": "X:movebaselocation",
-      "graphId": "ultimate-falcon-zMj4uPpX9s5U+CyKf6Dc7w\u003d\u003d",
-      "x": 2.518437815210843,
-      "y": 4.113630324378441,
-      "orientX": -0.001786452141726657,
-      "orientY": 0.004383147624474166,
-      "orientZ": -0.8130214515667002,
-      "orientW": 0.5822144930333006
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "waking-tsetse-go7IrYQHWSsqFXz4stLYQA==",
       "variable": "X:movebaselocation",
-      "graphId": "gelid-baboon-zIWqnHk9kLQAfzhvHrSnqg\u003d\u003d",
-      "x": 3.673889262764313,
-      "y": 0.6446422370498023,
-      "orientX": 0.0012971257117149512,
-      "orientY": -0.002241379143321914,
-      "orientZ": 0.9998459373119415,
-      "orientW": 0.017360740918214507
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "jammed-skate-fh+NaCWa2fS4v.AqNW8E4g==",
       "variable": "X:movebaselocation",
-      "graphId": "kept-ram-3kOcw56L05w4IW+thLjN6A\u003d\u003d",
-      "x": 6.96736252922081,
-      "y": 1.8906981554189848,
-      "orientX": 0.002063044145116643,
-      "orientY": 0.0022039034870390798,
-      "orientZ": 0.9405732121072412,
-      "orientW": -0.3395775601015795
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "fused-porgy-EPr92abLAhqOjMc8bkLR+Q==",
       "variable": "X:movebaselocation",
-      "graphId": "crazed-shrimp-r9KdX5QX+rDARR4N8UxIHg\u003d\u003d",
-      "x": 4.819601723063725,
-      "y": 0.3726583385476131,
-      "orientX": -0.0012142766682903196,
-      "orientY": -0.0019407745326274393,
-      "orientZ": -0.6423583963079985,
-      "orientW": 0.7664009718280652
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "spiky-bat-m2cCQn9yD1gRv9KX+oGUvA==",
       "variable": "X:movebaselocation",
-      "graphId": "epic-coati-gMdggVqXfwPJmCpZBo6rZA\u003d\u003d",
-      "x": 4.9932265003697465,
-      "y": 0.1025446010132321,
-      "orientX": -4.313465432000417E-4,
-      "orientY": -8.407127032879912E-5,
-      "orientZ": -0.1900413375630766,
-      "orientW": 0.9817759911962699
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "azonic-ram-YDYrTRgc9TTh6QyXxwSMZA==",
       "variable": "X:movebaselocation",
-      "graphId": "agamic-grouse-fJD9Q06gMeJbj7l+2Bd4SQ\u003d\u003d",
-      "x": 2.591984796750389,
-      "y": 2.958853978295766,
-      "orientX": 0.003580083412808797,
-      "orientY": -3.0071253749516894E-4,
-      "orientZ": 0.662817611663126,
-      "orientW": 0.7487722659419997
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "awing-ocelot-MzVAJ.Rf16RDIKLUCNBiGg==",
       "variable": "X:movebaselocation",
-      "graphId": "jawed-bass-sAHYV5QQBPc8np8XYuVPAA\u003d\u003d",
-      "x": 4.751500148029515,
-      "y": -0.39045490806353467,
-      "orientX": -0.0012045561444243716,
-      "orientY": -0.001195145587784885,
-      "orientZ": 0.7607038121759004,
-      "orientW": 0.6490969348352921
+      "properties": []
     },
     {
-      "properties": [],
+      "graphId": "swish-dog-Wy5hfINRWF2iZtWmEtM+zg==",
       "variable": "X:movebaselocation",
-      "graphId": "voiced-mammut-AFtOMpBmm0RiB.dM2sYrVA\u003d\u003d",
-      "x": 1.9663590225614909,
-      "y": 1.2816506260991924,
-      "orientX": -0.0034285748804009472,
-      "orientY": -0.0035391267886846064,
-      "orientZ": 0.15932471953920482,
-      "orientW": 0.987213934869042
+      "properties": []
     }
   ]
 }

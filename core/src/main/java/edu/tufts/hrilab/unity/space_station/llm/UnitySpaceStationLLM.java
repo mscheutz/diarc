@@ -45,6 +45,7 @@ import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.slug.parsing.llm.ParserResponse;
+import edu.tufts.hrilab.slug.parsing.llm.AlternateResponse;
 import edu.tufts.hrilab.util.resource.Resources;
 
 public class UnitySpaceStationLLM extends DiarcComponent {
@@ -158,10 +159,9 @@ public class UnitySpaceStationLLM extends DiarcComponent {
   }
 
   @TRADEService
-  public ParserResponse spaceStationLLMParser (String utterance) {
+  public AlternateResponse spaceStationLLMParser (String utterance) {
     Prompt prompt = Prompts.getPrompt("spaceStationFinetunedLlama");
     Chat chat = new Chat(prompt);
-    String actor = getAgent();
     Completion oResponse = null;
     String jsonString = "";
     LlamaSpaceStationResponse lssRes = null;
@@ -187,7 +187,7 @@ public class UnitySpaceStationLLM extends DiarcComponent {
       log.error("Error parsing response: ", e);
     }
 
-    return lssRes.toParserResponse();
+    return new AlternateResponse(lssRes.toParserResponse(), lssRes.toAddressee());
   }
 
   private String getAgent () {

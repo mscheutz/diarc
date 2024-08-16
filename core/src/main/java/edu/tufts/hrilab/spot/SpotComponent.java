@@ -47,7 +47,9 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   private Symbol currentLocationId;
   private String refsConfigFile;
   private String refsConfigDir = "config/edu/tufts/hrilab/spot";
+
   private JRos2ServiceClient<GraphNavGetLocalizationPoseUnstampedRequestMessage, GraphNavGetLocalizationPoseUnstampedResponseMessage> localizationService;
+  private JRos2ServiceClient<DiarcPickupRequestMessage, DiarcPickupResponseMessage> pickupService;
 
   public SpotComponent() {
     super();
@@ -70,8 +72,9 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       log.error("[init] error registering location consultant with TRADE", e);
     }
     locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
+    pickupService = new JRos2ServiceClientFactory().createClient(client, new DiarcPickupServiceDefinition(), "/diarc_pickup");
 
-    claim();
+//    claim();
 //    powerOn();
 //    stand();
 
@@ -104,6 +107,22 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       log.error("[setInitialLocation] current location id does not match a known location");
     }
     currentLocationId = refId;
+  }
+
+  // Mostly just for testing! You should make a new action for the command you want
+  @Action
+  @TRADEService
+  public Justification command(String input) {
+    try {
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(input)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error calling command", e);
+      return new ConditionJustification(false);
+    }
   }
 
   @Action
@@ -251,6 +270,25 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     }
   }
 
+  @Action
+  @TRADEService
+  public Justification pickUpObject(Symbol obj) {
+    // todo get memory object from obj ref
+
+    try {
+      DiarcPickupRequestMessage msg = new DiarcPickupRequestMessage();
+      //todo: populate msg with info from memory object
+      DiarcPickupResponseMessage res = pickupService.sendRequestAsync(msg).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error claiming", e);
+      return new ConditionJustification(false);
+    }
+  }
+
   @Override
   public boolean moveTo(String groupName, Point3d point, Quat4d orientation) {
     return false;
@@ -369,7 +407,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @Override
   public Justification closeGripper(String groupName) {
     try {
-      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.STAND)).get();
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.CLOSE_GRIPPER)).get();
       if (!res.success) {
         log.warn(res.message.toString());
       }
@@ -383,7 +421,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @Override
   public Justification openGripper(String groupName) {
     try {
-      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.STAND)).get();
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.OPEN_GRIPPER)).get();
       if (!res.success) {
         log.warn(res.message.toString());
       }

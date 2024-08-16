@@ -30,9 +30,9 @@ public class MockTwoNaoDemo extends DiarcConfiguration {
   public void runConfiguration() {
 
     trustedSpeechRec = createInstance(SimSpeechRecognitionComponent.class,
-            "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster -nogui");
+            "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -addressee dempster -nogui");
     untrustedSpeechRec = createInstance(SimSpeechRecognitionComponent.class,
-            "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -listener dempster -nogui");
+            "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -addressee dempster -nogui");
 
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
