@@ -3,7 +3,6 @@ package edu.tufts.hrilab.spot;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
@@ -16,9 +15,12 @@ import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationReference;
 import edu.tufts.hrilab.spot.msgs.*;
 import id.jros2client.JRos2Client;
 import id.jros2client.JRos2ClientFactory;
+import id.jrosmessages.geometry_msgs.PointMessage;
+import id.jrosmessages.geometry_msgs.QuaternionMessage;
 import id.jrosmessages.std_msgs.StringMessage;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import pinorobotics.jros2actionlib.JRos2ActionClient;
 import pinorobotics.jros2actionlib.JRos2ActionClientFactory;
@@ -149,13 +151,15 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     }
   }
 
-  private Point2d getLocalizationInformation() {
+  private Pair<Point2d, Quat4d> getLocalizationInformation() {
     try {
       GraphNavGetLocalizationPoseUnstampedResponseMessage res = localizationService.sendRequestAsync(new GraphNavGetLocalizationPoseUnstampedRequestMessage().withTrash(new StringMessage("empty"))).get();
       if (!res.success) {
         log.warn(res.pose.toString());
       } else {
-        return new Point2d(res.pose.position.x, res.pose.position.y);
+        PointMessage position = res.pose.position;
+        QuaternionMessage orientation = res.pose.orientation;
+        return new ImmutablePair<>(new Point2d(position.x, position.y), new Quat4d(orientation.x, orientation.y, orientation.z, orientation.w));
       }
     } catch (InterruptedException | ExecutionException e) {
       log.error("[getLocalizationInformation] Error getting localization information");
@@ -167,8 +171,8 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @TRADEService
   public void bindLocationToCurrentPose(Symbol refId) {
     SpotNavGraphLocationReference ref = locationConsultant.getRefWithId(refId);
-    Point2d location = getLocalizationInformation();
-    ref.setLocation(location);
+    Pair<Point2d, Quat4d> pose = getLocalizationInformation();
+    ref.setPose(pose.getLeft(), pose.getRight());
   }
 
   @Action
@@ -429,6 +433,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   public Justification goToLocation(Symbol location) {
     log.debug("[goToLocation] going to location with refId: " + location);
     String destination = locationConsultant.getRefWithId(location).getGraphId();
+    log.debug("[goToLocation] location has graphId: " + destination);
     if (destination == null) {
       log.error("[goToLocation] refId " + location + " does not correspond to a reference in the location consultant");
     }
@@ -459,9 +464,22 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   @TRADEService
   @Action
-  public void localize() {
-    this.currentLocationId = locationConsultant.getClosestLocationToPoint(getLocalizationInformation());
-    log.info("[localize] robot is localized to " + currentLocationId);
+  public boolean hasBeenLocalized() {
+    return currentLocationId != null;
+  }
+
+  @TRADEService
+  @Action
+  public Justification localize() {
+    Symbol locationId = locationConsultant.getClosestLocationToPoint(getLocalizationInformation());
+    if (locationId != null) {
+      this.currentLocationId = locationId;
+      log.info("[localize] robot is localized to " + currentLocationId);
+      return new ConditionJustification(true);
+    } else {
+      log.warn("[localize] robot could not be localized. Has pose mapping been performed?");
+      return new ConditionJustification(false);
+    }
   }
 
   @Override
@@ -511,6 +529,12 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   public int getNumberOfKnownLocations() {
     return (int) locationConsultant.getActivatedEntities().entrySet().stream().filter(
             e -> e.getValue() > 0.0).count();
+  }
+
+  @TRADEService
+  public Justification writeReferencesToFile(String absolutePath) {
+    boolean succeeded = locationConsultant.writeRefrencesToFile(absolutePath);
+    return new ConditionJustification(succeeded);
   }
 
 }
