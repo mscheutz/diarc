@@ -50,17 +50,17 @@ bel(A,X):-believes(A,X).
 bel(D,X):-believes(A,X),diarcAgent(A),diarcAgent(D).
 
 /*rules about who the agent is obliged to listen to */
-role(brad,supervisor(X)):-diarcAgent(X).
-role(brad,admin(X)):-diarcAgent(X).
-%role(tyler,supervisor(X)):-diarcAgent(X).
-role(ravenna,supervisor(X)):-diarcAgent(X).
-role(commX,supervisor(X)):-diarcAgent(X).
-role(server,supervisor(X)):-diarcAgent(X).
-role(player1,supervisor(X)):-diarcAgent(X).
-role(player2,supervisor(X)):-diarcAgent(X).
+supervisor(brad).
+supervisor(ravenna).
+supervisor(commX).
+supervisor(server).
+supervisor(player1).
+supervisor(player2).
+admin(brad).
 
-is_supervisor(A,B):-role(A,supervisor(B)).
-admin_of(A,B):-role(A,admin(B)).
+is_supervisor(S,D):-supervisor(S),diarcAgent(D).
+admin_of(S,D):-admin(S),diarcAgent(D).
+
 explanationType(A, incomplete) :- not(role(A,novice)).
 
 /*

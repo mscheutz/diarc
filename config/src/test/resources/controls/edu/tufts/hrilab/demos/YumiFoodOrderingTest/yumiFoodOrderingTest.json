@@ -1299,7 +1299,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "right Arm can not go To the \"prep area\" because you are not me supervisor", "true" ]
+      "serviceArgs" : [ "I can not go To the \"prep area\" because you are not me supervisor", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {

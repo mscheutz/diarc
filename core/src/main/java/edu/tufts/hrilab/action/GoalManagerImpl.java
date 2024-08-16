@@ -555,7 +555,9 @@ public class GoalManagerImpl extends DiarcComponent {
   }
 
   /**
-   * Get a list of all pending and active goals
+   * Get a list of all pending and active goals.
+   *
+   * TODO: remove this method, or at least make it not a trade service
    */
   @TRADEService
   @Action
@@ -565,6 +567,8 @@ public class GoalManagerImpl extends DiarcComponent {
 
   /**
    * Get a list of all current pending and/or active goals matching the goalPredicate query.
+   *
+   * TODO: remove this method, or at least make it not a trade service
    *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
@@ -579,8 +583,6 @@ public class GoalManagerImpl extends DiarcComponent {
    *
    * @return list of Goals
    */
-  @TRADEService
-  @Action
   public List<Goal> getPastGoals() {
     return em.getPastGoals();
   }
@@ -590,8 +592,6 @@ public class GoalManagerImpl extends DiarcComponent {
    *
    * @return list of Goals
    */
-  @TRADEService
-  @Action
   public List<Goal> getActiveGoals() {
     return em.getActiveGoals();
   }
@@ -632,20 +632,11 @@ public class GoalManagerImpl extends DiarcComponent {
   }
 
   /**
-   * Get a copied list of the goals currently pending active execution
-   */
-  @TRADEService
-  @Action
-  public List<Goal> getPendingGoals() {
-    return em.getPendingGoals();
-  }
-
-  /**
    * Get a list of predicates of all pending goals
    */
   @TRADEService
   @Action
-  public List<Predicate> getPendingGoalsPredicates() {
+  public List<Predicate> getPendingGoals() {
     return em.getPendingGoalsPredicates();
   }
 
@@ -654,7 +645,7 @@ public class GoalManagerImpl extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public Predicate getNextGoalPredicate() {
+  public Predicate getNextGoal() {
     return em.getNextGoalPredicate();
   }
 
@@ -663,7 +654,7 @@ public class GoalManagerImpl extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public Predicate getNextGoalPredicate(Symbol agent) {
+  public Predicate getNextGoal(Symbol agent) {
     return em.getNextGoalPredicate(agent);
   }
 
@@ -701,6 +692,8 @@ public class GoalManagerImpl extends DiarcComponent {
    * Get the Goal for a particular goal ID. This checks current and past goals.
    * Returns null if no matching goal ID is found.
    *
+   * TODO: remove this method once PA doesn't use GM
+   *
    * @param gid goal id.
    * @return the Goal corresponding to the ID.
    */
@@ -713,19 +706,6 @@ public class GoalManagerImpl extends DiarcComponent {
   @Action
   public Goal getCurrentGoal(Symbol actorToCheck, int index) {
     return em.getCurrentGoal(actorToCheck, index);
-  }
-
-  /**
-   * Get the Goal for a particular goal ID. This checks past goals.
-   * Returns null if no matching goal ID is found.
-   *
-   * @param gid goal id.
-   * @return the Goal corresponding to the ID.
-   */
-  @TRADEService
-  @Action
-  public Goal getPastGoal(long gid) {
-    return em.getPastGoal(gid);
   }
 
   /**

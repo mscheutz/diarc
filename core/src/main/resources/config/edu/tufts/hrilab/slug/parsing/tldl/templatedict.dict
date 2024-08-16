@@ -47,12 +47,12 @@ approach; C/LREF; #x.approach(?ADDRESSEE,$x)
 approach; C/REF; #x.approach(?ADDRESSEE,$x)
 approach; C/DESC; #x.approach(?ADDRESSEE,$x)
 
-add; ((C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,insert($x),$t)
-add; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,insert($x),$y)
+add; ((C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,insert($x),$t)
+add; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
 
 after; PP/C; #x.after($x)
 
-after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,insert($e),$t)
+after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction(?ADDRESSEE,$a,insert($e),$t)
 
 ahead; Adj; ahead
 
@@ -168,7 +168,7 @@ do you see ; Q/REF ; #x.see(?ADDRESSEE,$x)
 
 do that; C; dothat:dialog ; ACTIVATED
 
-don't; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,remove($x),$y)
+don't; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,remove($x),$y)
 
 % " does dempster trust me"
 does; Q/C ; #x.$x
@@ -193,8 +193,8 @@ evening; G[good] ; evening
 
 evan; ADDRESSABLE ; evan
 
-execute while learning; C ; changeLearningExecution(?ADDRESSEE,?ADDRESSEE,execute)
-stop execute while learning; C ; changeLearningExecution(?ADDRESSEE,?ADDRESSEE,stop)
+execute while learning; C ; changeLearningExecution(?ADDRESSEE,execute)
+stop execute while learning; C ; changeLearningExecution(?ADDRESSEE,stop)
 
 exit ; LOC; exit
 
@@ -340,7 +340,7 @@ lower; (C\AGENT)/ NP[your]; #x#y. lower($y,$x)
 magnet; THING
 
 %makesure; (C/(C\C))/INF; #x#y.modifyAction(insert($x),$y@$x)
-make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,insert($x),$y)
+make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
 
 matt; ADDRESSABLE ; matt
 marlow; ADDRESSABLE; marlow
@@ -466,16 +466,16 @@ release; VERBT; releaseObject
 relax ; VERBI; rest
 
 %remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction($a,remove($x),$t)
-remove;(C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,remove($x),$t)
-remove ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,remove($x),none())
-remove ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE$w,remove($x),$l)
+remove;(C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,remove($x),$t)
+remove ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,$w,remove($x),none())
+remove ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,$w,remove($x),$l)
 
 
 
-replace; (C/WITH)\ADV; #a#w.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($w),none())
-replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($w),$l)
-replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($w),$l)
-replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($x),$t)
+replace; (C/WITH)\ADV; #a#w.modifyAction(?ADDRESSEE,$a,replace($w),none())
+replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,replace($x),$t)
 
 resume; VERBI ; resume
 
@@ -658,8 +658,8 @@ will; (S\AGENT)/(S\AGENT), (S\AGENT)/(C\AGENT),((S/REF)\AGENT)/((C/REF)\AGENT) ;
 %with; PP/C; #x.with($x)
 with; (WITH/C)\C; #x#y.with($y,$x)
 
-without ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,remove($x),none())
-without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,remove($x),$l)
+without ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,$w,remove($x),none())
+without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,$w,remove($x),$l)
 
 would have been; (S / PROP) \ REF; # x #z. past(propertyOf($x,$z))
 

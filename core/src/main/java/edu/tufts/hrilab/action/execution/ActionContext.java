@@ -6,7 +6,6 @@ package edu.tufts.hrilab.action.execution;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.*;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.goal.Goal;
@@ -34,8 +33,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
@@ -966,7 +963,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   public synchronized void handleInterrupt(ActionStatus eStatus) {
 
     // Collect correct onInterrupt or onResume service details if relevant, otherwise return immediately
-    EventSpec interruptEvent = null;
+    EventSpec interruptEvent;
     if (eStatus == ActionStatus.CANCEL && getDBE().hasOnCancelEvent()) {
       // OnCancel Interruption behavior
       interruptEvent = getDBE().getOnCancelEvent();

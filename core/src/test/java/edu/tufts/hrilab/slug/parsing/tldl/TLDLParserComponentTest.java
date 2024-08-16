@@ -3782,7 +3782,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("pause",
-                "INSTRUCT(brad,self,suspendCurrentGoal(self),{})",
+                "INSTRUCT(brad,self,suspendSystemGoals(self),{})",
                 "brad",
                 "self"
         ));
@@ -3910,7 +3910,7 @@ public class TLDLParserComponentTest {
 //-
 //suspend current task
         assertTrue(testUtterance("suspend current task",
-                "INSTRUCT(brad,self,suspendCurrentGoal(self),{})",
+                "INSTRUCT(brad,self,suspendSystemGoals(self),{})",
                 "brad",
                 "self"
         ));

@@ -4,8 +4,6 @@
 
 package edu.tufts.hrilab.demos;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.config.MockTwoNaoDemo;
 import edu.tufts.hrilab.fol.Predicate;

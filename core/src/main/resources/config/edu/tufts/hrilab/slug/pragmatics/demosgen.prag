@@ -78,7 +78,7 @@ REPLY(A,B,propertyOf(X,Y),Z) := REPLY(A,B,is(X,Y),Z)
 REPLY(A,B,bel(X,Y),Z) := REPLY(A,B,know(X,Y),Z)
 REPLY(A,B,unknown(X),Z) := REPLY(A,B,is(there,unknown(X)),Z)
 REPLY(A,B,getActDesc(C,Y),Z) := REPLY(A,B,describe(C,how(Y)),Z)
-REPLY(A,B,learnAction(C,C,X),Z) := REPLY(A,B,learn(C,how(X)),Z)
+REPLY(A,B,learnAction(C,X),Z) := REPLY(A,B,learn(C,how(X)),Z)
 REPLY(A,B,learnAction(A,X),Z) := REPLY(A,B,learn(A,how(X)),Z)
 REPLY(A,B,forgetThat(A,C,X),Z) := REPLY(A,B,forgetThat(A,X),Z)
 REPLY(A,B,trusted(X),Z) := REPLY(A,B,is(X,trusted),Z)
@@ -88,7 +88,7 @@ END-SET
 NEW-SET
 RULES
 REPLY(A,B,bel(X,Y),Z) := REPLY(A,B,know(X,that(Y)),Z)
-REPLY(A,B,learnAction(A,A,X),Z) := REPLY(A,B,learn(A,how(X)),Z)
+REPLY(A,B,learnAction(A,X),Z) := REPLY(A,B,learn(A,how(X)),Z)
 REPLY(A,B,behind(X,Y),Z) := REPLY(A,B,has(X,rearSensors),Z)
 REPLY(A,B,admin_of(X,Y),Z) := REPLY(A,B,propertyOf(X,possessive(Y,admin)),Z)
 REPLY(A,B,currentTime(X,Y),Z) := REPLY(A,B,is(it,X,Y),Z)

@@ -567,6 +567,12 @@ public class ExecutionManager implements ActionListener {
         }
       }
       log.trace("[onPendingGoalUpdated] releasing resourceLock");
+    } else if (updateType == UpdateType.REMOVED) {
+      //If going by the logic that there can be resource conflicts between
+      // pending goals, then we need to check if any lower priority pending goals
+      // can now be executed immediately due to this goal being canceled.
+      log.trace("[onPendingGoalUpdated] {} searching for lower priority which may have been unblocked", g);
+      activateValidPendingGoals();
     }
   }
 
@@ -988,7 +994,7 @@ public class ExecutionManager implements ActionListener {
    * Submits the supplied actionInterpreter to this class' ExecutorService while doing associated bookkeeping
    */
   private void startActionInterpreter(ActionInterpreter ai) {
-    log.info("Starting interpreter for goal " + ai.getGoal() + "...");
+    log.debug("Starting interpreter for goal " + ai.getGoal() + "...");
     Future aiFuture = executor.submit(ai);
 
     Goal goal = ai.getGoal();
@@ -1009,7 +1015,7 @@ public class ExecutionManager implements ActionListener {
   @Override
   public void actionComplete(ActionInterpreter ai) {
     Goal goal = ai.getGoal();
-    log.info("[actionComplete] {}", goal);
+    log.debug("[actionComplete] {}", goal);
 
     synchronized (goalsLock) {
       log.trace("[actionComplete] {} have goalsLock", goal);
@@ -1154,7 +1160,7 @@ public class ExecutionManager implements ActionListener {
     // if goal to cancel is pending
     PendingGoal pg = getPendingGoal(gid);
     if (pg != null) {
-      log.info("[cancelGoal] {} canceling pending goal {}", gid, pg.getGoal());
+      log.debug("[cancelGoal] {} canceling pending goal {}", gid, pg.getGoal());
       cancelPendingGoal(pg);
       return true;
     }
@@ -1162,12 +1168,12 @@ public class ExecutionManager implements ActionListener {
     // else if goal to cancel is active
     Goal goal = getActiveGoal(gid);
     if (goal != null) {
-      log.trace("[cancelGoal] {} canceling active goal {}", gid, goal);
+      log.debug("[cancelGoal] {} canceling active goal {}", gid, goal);
       cancelActiveGoal(goal);
       return true;
     }
 
-    log.info("[cancelGoal] cannot find current goal for gid {}", gid);
+    log.warn("[cancelGoal] cannot find current goal for gid {}", gid);
     return false;
   }
 
@@ -1183,26 +1189,18 @@ public class ExecutionManager implements ActionListener {
     if (goal.getActionInterpreter() == null) {
       goal.setStatus(GoalStatus.CANCELED);
       transferGoalToPastGoals(goal);
-    }
-    //If this goal was previously superseded and has an associated AI, it needs to be canceled
-    else {
+    } else {
+      //If this goal was previously superseded and has an associated AI, it needs to be canceled
       log.debug("[cancelPendingGoal] {} canceling superseded goal", goal);
       cancelActiveGoal(goal);
     }
-    pg.notifyOfNoLongerPending();
-
-    //If going by the logic that there can be resource conflicts between
-    // pending goals, then we need to check if any lower priority pending goals
-    // can now be executed immediately due to this goal being canceled.
-    log.trace("[cancelPendingGoal] {} searching for lower priority which may have been unblocked", pg.getGoal());
-    activateValidPendingGoals();
   }
 
   /**
    * Remove a pending goal based on index before it is transferred to active
    */
   public boolean cancelPendingGoalByIndex(int index) {
-    log.info("[cancelPendingGoalByIndex] removing pending goal with index: " + index);
+    log.debug("[cancelPendingGoalByIndex] removing pending goal with index: " + index);
     synchronized (pendingGoalsLock) {
       if (index < pendingGoals.size()) {
         Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.iterator();
@@ -1229,7 +1227,14 @@ public class ExecutionManager implements ActionListener {
   private void cancelActiveGoal(Goal goal) {
     log.debug("[cancelActiveGoal] goal: {}", goal.getPredicate());
     goal.cancel();
-    transferGoalToPastGoals(goal); //This will cause actionComplete's call to this method not find the goal, is that okay?
+
+    // if goal doesn't have an AI, remove it from goals list and add to pastGoals
+    // if goal does have an AI, the actionComplete method will be called to
+    // take care of that
+    boolean hasAI = goal.getActionInterpreter() == null ? false : true;
+    if (!hasAI) {
+      transferGoalToPastGoals(goal);
+    }
   }
 
   /**
@@ -1240,7 +1245,7 @@ public class ExecutionManager implements ActionListener {
    */
   public boolean suspendGoal(long gid) {
     Goal g = getGoal(gid);
-    log.info("[suspendGoal] {} {}", gid, g);
+    log.debug("[suspendGoal] {} {}", gid, g);
 
     if (g == null) {
       log.warn("[suspendGoal] goal is null.");
@@ -1287,7 +1292,7 @@ public class ExecutionManager implements ActionListener {
    */
   public boolean resumeGoal(long gid) {
     Goal g = getGoal(gid);
-    log.info("[resumeGoal] {} {}", gid, g);
+    log.debug("[resumeGoal] {} {}", gid, g);
 
     if (g == null) {
       log.warn("[resumeGoal] goal is null.");
@@ -1387,7 +1392,7 @@ public class ExecutionManager implements ActionListener {
   }
 
   public void cancelAllPendingGoals() {
-    log.info("[cancelAllPendingGoals] in method");
+    log.debug("[cancelAllPendingGoals] in method");
     synchronized (pendingGoalsLock) {
       log.trace("[cancelAllPendingGoals] have pendingGoalsLock");
       while (!pendingGoals.isEmpty()) {
@@ -1403,7 +1408,7 @@ public class ExecutionManager implements ActionListener {
   }
 
   public void cancelAllCurrentGoals() {
-    log.info("[cancelAllCurrentGoals] in method");
+    log.debug("[cancelAllCurrentGoals] in method");
     synchronized (goalsLock) {
       log.trace("[cancelAllCurrentGoals] have goalsLock");
       synchronized (pendingGoalsLock) {
@@ -1620,7 +1625,7 @@ public class ExecutionManager implements ActionListener {
         }
       }
     }
-    log.trace("[getPastGoal] {} released pastGoals lock", gid);
+    log.debug("[getPastGoal] {} no past goal found", gid);
     return null;
   }
 
@@ -1785,35 +1790,35 @@ public class ExecutionManager implements ActionListener {
   ////////// Action Learning //////////
   @Action
   @TRADEService
-  public void waitForActionLearningStart(Symbol agent, Predicate newAction) {
-    AgentTeam agentTeam = getAgentTeam(agent);
+  public void waitForActionLearningStart(Symbol actor, Predicate newAction) {
+    AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.error("[waitForActionLearningStart] unknown agent supplied {}", agent);
+      log.error("[waitForActionLearningStart] unknown agent supplied {}", actor);
     } else {
       agentTeam.waitForActionLearningStart(newAction);
     }
   }
 
   @OnInterrupt(
-          onCancelServiceCall = "cancelActionLearning(?agent, ?newAction)",
-          onSuspendServiceCall = "pauseActionLearning(?agent, ?newAction)",
-          onResumeServiceCall = "resumeActionLearning(?agent, ?newAction)"
+          onCancelServiceCall = "cancelActionLearning(?actor, ?newAction)",
+          onSuspendServiceCall = "pauseActionLearning(?actor, ?newAction)",
+          onResumeServiceCall = "resumeActionLearning(?actor, ?newAction)"
   )
   @Action
   @TRADEService
-  public boolean learnAction(Symbol agent, Predicate newAction) {
-    log.info("[learnAction] {}, {}", agent, newAction);
-    AgentTeam agentTeam = getAgentTeam(agent);
+  public boolean learnAction(Symbol actor, Predicate newAction) {
+    log.debug("[learnAction] {}, {}", actor, newAction);
+    AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.error("[learnAction] unknown agent supplied {}", agent);
+      log.error("[learnAction] unknown actor supplied {}", actor);
       return false;
     }
 
-    Set<Symbol> relevantAgents = getRelevantAgents(agent);
+    Set<Symbol> relevantAgents = getRelevantAgents(actor);
     for (Symbol relevantAgent : relevantAgents) {
       AgentTeam relevantAgentTeam = getAgentTeam(relevantAgent);
       if (relevantAgentTeam.getLearningStatus() == ActionLearningStatus.ACTIVE) {
-        log.error("[learnAction] Trying to start learning for an agent which already has an ancestor or child actively learning. New: {} Current: {}", agent, relevantAgent);
+        log.error("[learnAction] Trying to start learning for an actor which already has an ancestor or child actively learning. New: {} Current: {}", actor, relevantAgent);
         return false;
       }
     }
@@ -1823,19 +1828,19 @@ public class ExecutionManager implements ActionListener {
 
   @Action
   @TRADEService
-  public boolean resumeActionLearning(Symbol agent, Predicate newAction) {
-    log.info("[resumeActionLearning] {}, {}", agent, newAction);
-    AgentTeam agentTeam = getAgentTeam(agent);
+  public boolean resumeActionLearning(Symbol actor, Predicate newAction) {
+    log.debug("[resumeActionLearning] {}, {}", actor, newAction);
+    AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.error("[resumeActionLearning] unknown agent supplied {}", agent);
+      log.error("[resumeActionLearning] unknown actor supplied {}", actor);
       return false;
     }
 
-    Set<Symbol> relevantAgents = getRelevantAgents(agent);
+    Set<Symbol> relevantAgents = getRelevantAgents(actor);
     for (Symbol relevantAgent : relevantAgents) {
       AgentTeam relevantAgentTeam = getAgentTeam(relevantAgent);
       if (relevantAgentTeam.getLearningStatus() == ActionLearningStatus.ACTIVE) {
-        log.error("[resumeActionLearning] Trying to resume learning for an agent which already has an ancestor or child actively learning. New: {} Current: {}", agent, relevantAgent);
+        log.error("[resumeActionLearning] Trying to resume learning for an actor which already has an ancestor or child actively learning. New: {} Current: {}", actor, relevantAgent);
         return false;
       }
     }
@@ -1845,11 +1850,11 @@ public class ExecutionManager implements ActionListener {
 
   @Action
   @TRADEService
-  public boolean endActionLearning(Symbol agent, Predicate newAction) {
-    log.info("[endActionLearning] {}, {}", agent, newAction);
-    AgentTeam agentTeam = getAgentTeam(agent);
+  public boolean endActionLearning(Symbol actor, Predicate newAction) {
+    log.debug("[endActionLearning] {}, {}", actor, newAction);
+    AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.error("[endActionLearning] unknown agent supplied {}", agent);
+      log.error("[endActionLearning] unknown actor supplied {}", actor);
       return false;
     }
     return agentTeam.endActionLearning(newAction);
@@ -1857,11 +1862,11 @@ public class ExecutionManager implements ActionListener {
 
   @Action
   @TRADEService
-  public boolean pauseActionLearning(Symbol agent, Predicate newAction) {
-    log.info("[pauseActionLearning] {}, {}", agent, newAction);
-    AgentTeam agentTeam = getAgentTeam(agent);
+  public boolean pauseActionLearning(Symbol actor, Predicate newAction) {
+    log.debug("[pauseActionLearning] {}, {}", actor, newAction);
+    AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.error("[pauseActionLearning] unknown agent supplied {}", agent);
+      log.error("[pauseActionLearning] unknown actor supplied {}", actor);
       return false;
     }
     return agentTeam.pauseActionLearning(newAction);
@@ -1869,11 +1874,11 @@ public class ExecutionManager implements ActionListener {
 
   @Action
   @TRADEService
-  public boolean cancelActionLearning(Symbol agent, Predicate newAction) {
-    log.info("[cancelActionLearning] {}, {}", agent, newAction);
-    AgentTeam agentTeam = getAgentTeam(agent);
+  public boolean cancelActionLearning(Symbol actor, Predicate newAction) {
+    log.debug("[cancelActionLearning] {}, {}", actor, newAction);
+    AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.error("[cancelActionLearning] unknown agent supplied {}", agent);
+      log.error("[cancelActionLearning] unknown actor supplied {}", actor);
       return false;
     }
     return agentTeam.cancelActionLearning(newAction);
@@ -1881,10 +1886,10 @@ public class ExecutionManager implements ActionListener {
 
   @TRADEService
   @Action
-  public ActionLearningStatus getLearningStatus(Symbol agent) {
-    AgentTeam agentTeam = getAgentTeam(agent);
+  public ActionLearningStatus getLearningStatus(Symbol actor) {
+    AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.error("[getLearningStatus] unknown agent supplied {}", agent);
+      log.error("[getLearningStatus] unknown actor supplied {}", actor);
       return ActionLearningStatus.NONE;
     }
     return agentTeam.getLearningStatus();
@@ -1892,10 +1897,10 @@ public class ExecutionManager implements ActionListener {
 
   @TRADEService
   @Action
-  public void changeLearningExecution(Symbol agent, Symbol status) {
-    AgentTeam agentTeam = getAgentTeam(agent);
+  public void changeLearningExecution(Symbol actor, Symbol status) {
+    AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.error("[changeLearningExecution] unknown agent supplied {}", agent);
+      log.error("[changeLearningExecution] unknown actor supplied {}", actor);
     } else {
       agentTeam.changeLearningExecution(status);
     }
@@ -1903,10 +1908,10 @@ public class ExecutionManager implements ActionListener {
 
   @Action
   @TRADEService
-  public void modifyAction(Symbol agent, Predicate action, Predicate modification, Predicate location) {
-    AgentTeam agentTeam = getAgentTeam(agent);
+  public void modifyAction(Symbol actor, Predicate action, Predicate modification, Predicate location) {
+    AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.error("[modifyAction] unknown agent supplied {}", agent);
+      log.error("[modifyAction] unknown actor supplied {}", actor);
     } else {
       agentTeam.modifyAction(action, modification, location);
     }
@@ -1940,23 +1945,6 @@ public class ExecutionManager implements ActionListener {
 
   ////////// Freeze Functionality  //////////
 
-  //TODO: Reevaluate whether we actually care about such a method at this level
-  //      and what this should really do. Currently is essentially just a
-  //      blocking call which holds whatever resources we define for this method
-  //      (right now hardcoded above to be all resources for an agentTeam).
-  //      This will not work for the base EM until resource definitions are actually
-  //      implemented (because the patching assumption is being made that goals
-  //      do not take up resources unless otherwise defined)
-  /**
-   * Calls {@link #freeze(Symbol)} for the root AgentTeam in the hierarchy
-   */
-  @Action
-  @TRADEService
-  @OnInterrupt(onCancelServiceCall = "endFreeze()", onSuspendServiceCall = "endFreeze()")
-  public void freeze() {
-    freeze(rootAgent);
-  }
-
   /**
    * 'Freezes' a team or agent and blocks until unfrozen. A frozen agent will
    * have all current goals suspended and will not be able to begin execution of
@@ -1964,14 +1952,14 @@ public class ExecutionManager implements ActionListener {
    */
   @Action
   @TRADEService
-  @OnInterrupt(onCancelServiceCall = "endFreeze(?agent)", onSuspendServiceCall = "endFreeze(?agent)")
-  public void freeze(Symbol agent) {
-    log.info("freeze {}", agent);
-    agent = getUntypedSymbol(agent);
+  @OnInterrupt(onCancelServiceCall = "endFreeze(?actor)", onSuspendServiceCall = "endFreeze(?actor)")
+  public void freeze(Symbol actor) {
+    log.debug("[freeze] {}", actor);
+    actor = getUntypedSymbol(actor);
     //Set the AgentTeam and all children as 'frozen'
-    AgentTeam agentTeam = getAgentTeam(agent);
+    AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.warn("[freeze] supplied agent is not found in the hierarchy: {}", agent);
+      log.warn("[freeze] supplied agent is not found in the hierarchy: {}", actor);
       return;
     }
 
@@ -1981,41 +1969,33 @@ public class ExecutionManager implements ActionListener {
     //Block until this AgentTeam is unfrozen
     Lock freezeLock;
     Condition freezeLockCondition;
-    boolean alreadyFrozen = freezeLocks.containsKey(agent);
+    boolean alreadyFrozen = freezeLocks.containsKey(actor);
     if (alreadyFrozen) {
-      log.warn("[freeze] AgentTeam {} is already frozen, joining on existing lock", agent);
-      freezeLock = freezeLocks.get(agent);
-      freezeLockCondition = freezeConditions.get(agent);
+      log.warn("[freeze] AgentTeam {} is already frozen, joining on existing lock", actor);
+      freezeLock = freezeLocks.get(actor);
+      freezeLockCondition = freezeConditions.get(actor);
     } else {
       freezeLock = new ReentrantLock();
       freezeLockCondition = freezeLock.newCondition();
-      freezeLocks.put(agent, freezeLock);
-      freezeConditions.put(agent, freezeLockCondition);
+      freezeLocks.put(actor, freezeLock);
+      freezeConditions.put(actor, freezeLockCondition);
     }
 
     freezeLock.lock();
     try {
+      log.trace("[freeze] {} waiting on condition ...", actor);
       freezeLockCondition.await();
     } catch (InterruptedException e) {
       log.error("[freeze]", e);
     } finally {
       freezeLock.unlock();
     }
+    log.trace("[freeze] {}, done waiting on condition", actor);
 
-    log.debug("[freeze] {}, done waiting on condition", agent);
     if (!alreadyFrozen) {
-      freezeLocks.remove(agent);
-      freezeConditions.remove(agent);
+      freezeLocks.remove(actor);
+      freezeConditions.remove(actor);
     }
-  }
-
-  /**
-   * Calls {@link #endFreeze(Symbol)} for self
-   */
-  @Action
-  @TRADEService
-  public void endFreeze() {
-    endFreeze(rootAgent);
   }
 
   /**
@@ -2023,38 +2003,39 @@ public class ExecutionManager implements ActionListener {
    */
   @Action
   @TRADEService
-  public void endFreeze(Symbol agent) {
-    log.info("endFreeze {}", agent);
-    agent = getUntypedSymbol(agent);
+  public void endFreeze(Symbol actor) {
+    log.debug("[endFreeze] {}", actor);
+    actor = getUntypedSymbol(actor);
     //Unfreeze the AgentTeam and all children
-    AgentTeam agentTeam = getAgentTeam(agent);
+    AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.warn("[freeze] supplied agent is not found in the hierarchy: {}", agent);
+      log.warn("[endFreeze] supplied agent is not found in the hierarchy: {}", actor);
       return;
     }
 
     //Unblock freeze behavior for this AgentTeam
-    Lock freezeLock = freezeLocks.get(agent);
-    Condition freezeCondition = freezeConditions.get(agent);
+    Lock freezeLock = freezeLocks.get(actor);
+    Condition freezeCondition = freezeConditions.get(actor);
     if (freezeCondition == null || freezeLock == null) {
       if (agentTeam.isFrozen()) {
-        log.warn("[endFreeze] Cannot end freeze for a child of a frozen AgentTeam. The original frozen ancestor of {} must be unfrozen", agent);
+        log.warn("[endFreeze] Cannot end freeze for a child of a frozen AgentTeam. The original frozen ancestor of {} must be unfrozen", actor);
       } else {
-        log.warn("[endFreeze] Agent {} is not frozen", agent);
+        log.warn("[endFreeze] Agent {} is not frozen", actor);
       }
       return;
     }
 
     agentTeam.unfreeze();
 
-    log.trace("[unfreeze] {}, signalling condition", agent);
+    log.trace("[endFreeze] {}, getting freeze lock ...", actor);
     freezeLock.lock();
     try {
+      log.trace("[endFreeze] {}, obtained lock, signalling condition", actor);
       freezeCondition.signalAll();
     } finally {
       freezeLock.unlock();
     }
-    log.trace("[unfreeze] {}, signalled condition", agent);
+    log.trace("[endFreeze] {}, signalled condition", actor);
   }
 
   //TODO: implement and make configurable similar to skipsQueue
@@ -2187,7 +2168,7 @@ public class ExecutionManager implements ActionListener {
    * Note: the goals are automagically moved to the pastGoals list by the ActionListener mechanism.
    */
   public void shutdown() {
-    log.info("Shutting down and cancelling all goals... 0");
+    log.info("Shutting down and cancelling all goals...");
 
     synchronized (pendingGoalsLock) {
       log.trace("[shutdown] have pendingGoalsLock]");

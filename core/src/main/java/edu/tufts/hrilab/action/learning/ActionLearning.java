@@ -80,13 +80,13 @@ public class ActionLearning {
     //set which actions/goals to ignore and pass through to be executed during learning
     //ignoreActionSet.add(Factory.createPredicate("sayText(?actor,?text)"));
     ignoreActionSet.add(Factory.createPredicate("handled(?actor,?utterance)"));
-    ignoreActionSet.add(Factory.createPredicate("modifyAction(?actor,?agent,?action,?modification,?location)"));
-    ignoreActionSet.add(Factory.createPredicate("learnAction(?actor,?agent,?action)"));
-    ignoreActionSet.add(Factory.createPredicate("endActionLearning(?actor,?agent,?action)"));
-    ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor,?agent,?action)"));
-    ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor,?agent,?action)"));
-    ignoreActionSet.add(Factory.createPredicate("cancelActionLearning(?actor,?agent,?action)"));
-    ignoreActionSet.add(Factory.createPredicate("changeLearningExecution(?actor,?agent,?status)"));
+    ignoreActionSet.add(Factory.createPredicate("modifyAction(?actor,?action,?modification,?location)"));
+    ignoreActionSet.add(Factory.createPredicate("learnAction(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("endActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("changeLearningExecution(?actor,?status)"));
     ignoreActionSet.add(Factory.createPredicate("endLearningAssembleScript(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("freeze(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("endFreeze(?actor)"));

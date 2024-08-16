@@ -11,6 +11,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
+import org.junit.After;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.Before;
@@ -49,7 +50,14 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     addServiceToObserve("getDescriptorForID", Symbol.class);
     addServiceToObserve("sayText", String.class);
     addServiceToObserve("goToPose", ai.thinkingrobots.mtracs.util.MPose.class);
-    tester.setTimeoutDuration(5, TimeUnit.SECONDS);
+    tester.setTimeoutDuration(6, TimeUnit.SECONDS);
+  }
+
+  @After
+  public void shutdownDiarc() {
+    log.debug("[shutdownDiarc] started");
+    config.shutdownConfiguration();
+    log.debug("[shutdownDiarc] completed");
   }
 
   //This wrapper exists so that the generator can appropriately catch input

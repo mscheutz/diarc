@@ -18,7 +18,6 @@ public enum ActionStatus {
   VERIFYING_RETURNVALUE(false, false),
   VERIFYING_EFFECTS(false, false),
   VERIFYING_NORMS(false, false),
-  ACTIVE_CHILD(false, false),
   SUCCESS(true, false),
   RECOVERY(false, false),
   FAIL(true, true),

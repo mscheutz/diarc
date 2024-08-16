@@ -155,26 +155,21 @@ public class QueueExecutionManager extends ExecutionManager {
   //TODO: Can we move these methods to the base EM or use those which exist in core.asl?
   //      What does the 'current goal' mean in the general sense? If there are
   //      N active goals, do we pick the oldest, most recent, one at random?
-  @Action
-  @TRADEService
-  public List<Long> cancelSystemGoals() {
-    return cancelSystemGoals(rootAgent);
-  }
 
   @Action
   @TRADEService
-  public List<Long> cancelSystemGoals(Symbol agent) {
+  public List<Long> cancelSystemGoals(Symbol actor) {
     log.debug("[cancelSystemGoals] in method");
     List<Long> canceledIds = new ArrayList<>();
-    agent = getUntypedSymbol(agent);
-    long goalId = getSystemGid(agent);
+    actor = getUntypedSymbol(actor);
+    long goalId = getSystemGid(actor);
     if (goalId != -1) {
       if (cancelGoal(goalId)) {
         canceledIds.add(goalId);
       }
     }
 
-    AgentTeam agentTeam = agentTeams.get(agent);
+    AgentTeam agentTeam = agentTeams.get(actor);
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
         canceledIds.addAll(cancelSystemGoals(member));
@@ -186,53 +181,42 @@ public class QueueExecutionManager extends ExecutionManager {
 
   @Action
   @TRADEService
-  public List<Long> suspendSystemGoals() {
-    return suspendSystemGoals(rootAgent);
-  }
-
-  @Action
-  @TRADEService
-  public List<Long> suspendSystemGoals(Symbol agent) {
-    log.debug("[suspendSystemGoals] in method");
+  public List<Long> suspendSystemGoals(Symbol actor) {
+    log.info("[suspendSystemGoals] {}", actor);
     List<Long> suspendedIds = new ArrayList<>();
-    agent = getUntypedSymbol(agent);
-    long goalId = getSystemGid(agent);
+    actor = getUntypedSymbol(actor);
+    long goalId = getSystemGid(actor);
     if (goalId != -1) {
       if (suspendGoal(goalId)) {
         suspendedIds.add(goalId);
       }
     }
 
-    AgentTeam agentTeam = agentTeams.get(agent);
+    AgentTeam agentTeam = agentTeams.get(actor);
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
         suspendedIds.addAll(suspendSystemGoals(member));
       }
     }
 
+    log.info("[suspendSystemGoals] done {}", actor);
     return suspendedIds;
   }
 
   @Action
   @TRADEService
-  public List<Long> resumeSystemGoals() {
-    return resumeSystemGoals(rootAgent);
-  }
-
-  @Action
-  @TRADEService
-  public List<Long> resumeSystemGoals(Symbol agent) {
+  public List<Long> resumeSystemGoals(Symbol actor) {
     log.debug("[resumeSystemGoals] in method");
     List<Long> resumedIds = new ArrayList<>();
-    agent = getUntypedSymbol(agent);
-    long goalId = getSystemGid(agent);
+    actor = getUntypedSymbol(actor);
+    long goalId = getSystemGid(actor);
     if (goalId != -1) {
       if (resumeGoal(goalId)) {
         resumedIds.add(goalId);
       }
     }
 
-    AgentTeam agentTeam = agentTeams.get(agent);
+    AgentTeam agentTeam = agentTeams.get(actor);
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
         resumedIds.addAll(resumeSystemGoals(member));

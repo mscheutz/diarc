@@ -409,7 +409,7 @@ public class ExecutionManagerTest {
    */
   @Test
   public void testActionLearning() {
-    Predicate goalPred = Factory.createPredicate("learnAction", "self:agent", "self:agent", "testAction()");
+    Predicate goalPred = Factory.createPredicate("learnAction", "self:agent", "testAction()");
     Goal learningGoal = submitGoalAndWait(goalPred);
     assertSame(learningGoal.getStatus(), GoalStatus.ACTIVE);
 
@@ -422,7 +422,7 @@ public class ExecutionManagerTest {
     em.joinOnGoal(lookGoal.getId());
     assertSame(lookGoal.getStatus(), GoalStatus.SUCCEEDED);
 
-    goalPred = Factory.createPredicate("endActionLearning", "self:agent", "self:agent", "testAction()");
+    goalPred = Factory.createPredicate("endActionLearning", "self:agent", "testAction()");
     Goal endLearningGoal = submitGoalAndWait(goalPred);
     em.joinOnGoal(endLearningGoal.getId());
     em.joinOnGoal(learningGoal.getId());

@@ -202,9 +202,9 @@ RULES
 #INSTRUCT(A,B,tell(C,X),Z) := wantBel(A,C,X)
 #TODO:brad: this could also happen in the parser if we want
 #I will teach you how to dance
-STATEMENT(A,B,will(teach(A,B,to(X))),Z):= want(A,learnAction(B,B,X))
+STATEMENT(A,B,will(teach(A,B,to(X))),Z):= want(A,learnAction(B,X))
 #That is how you dance
-STATEMENT(A,B,endTeaching(B,X),Z) := want(A,endActionLearning(B,B,X))
+STATEMENT(A,B,endTeaching(B,X),Z) := want(A,endActionLearning(B,X))
 
 #TODO:brad: this could also happen in the parser if we want
 # this cancels/suspends/resumes the most recently started goal, or X, where X is a goal predicate

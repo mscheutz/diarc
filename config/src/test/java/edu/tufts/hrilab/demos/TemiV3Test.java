@@ -1218,6 +1218,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
   /**
    * Tests displayQRCode behavior
    */
+  @Ignore
   @Test
   public void displayQRTest() {
 

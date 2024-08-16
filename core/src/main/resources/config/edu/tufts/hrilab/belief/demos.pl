@@ -19,8 +19,13 @@ bel(D,X):-believes(A,X),diarcAgent(A),diarcAgent(D), not(A=D).
 propertyOf(X,free) :- bel(A, propertyOf(X,free)), diarcAgent(A).
 propertyOf(X,free) :- not(propertyOf(X,blocked)), propertyOf(X,location).
 
-is_supervisor(A,B):-role(A,supervisor(B)).
-admin_of(A,B):-role(A,admin(B)).
+%is_supervisor(X,D):-new_supervisor(X,A),diarcAgent(A),diarcAgent(D), not(A=D).
+%admin_of(X,D):-admin_of(X,A),diarcAgent(A),diarcAgent(D), not(A=D).
+
+is_supervisor(S,D):-supervisor(S),diarcAgent(D).
+admin_of(S,D):-admin(S),diarcAgent(D).
+%is_supervisor(A,B):-role(A,supervisor(B)).
+%admin_of(A,B):-role(A,admin(B)).
 is_supervisor(A,B):-admin_of(A,B).
 
 role(Y,novice) :- diarcAgent(X),bel(X,novice(Y)).
@@ -30,18 +35,18 @@ explanationType(A, incomplete) :- not(role(A,novice)).
 
 %% rules about admin goals, which only adminstrators can give
 %% do we need rule with D,D,X as well?
-isAdminGoal(learnAction(D,A,X)).
-isAdminGoal(endActionLearning(D,A,X)).
-isAdminGoal(pauseActionLearning(D,A,X)).
-isAdminGoal(resumeActionLearning(D,A,X)).
-isAdminGoal(cancelActionLearning(D,A,X)).
-isAdminGoal(modifyAction(D,C,X,S,A)).
-isAdminGoal(Y) :- (want(B,D,Y),Y=learnAction(D,A,X),diarcAgent(D)).
-isAdminGoal(Y) :- (want(B,D,Y),Y=endActionLearning(D,A,X),diarcAgent(D)).
-isAdminGoal(Y) :- (want(B,D,Y),Y=pauseActionLearning(D,A,X),diarcAgent(D)).
-isAdminGoal(Y) :- (want(B,D,Y),Y=resumeActionLearning(D,A,X),diarcAgent(D)).
-isAdminGoal(Y) :- (want(B,D,Y),Y=cancelActionLearning(D,A,X),diarcAgent(D)).
-isAdminGoal(Y) :- (want(B,D,Y),Y=modifyAction(D,C,X,S,A),diarcAgent(D)).
+isAdminGoal(learnAction(D,A)).
+isAdminGoal(endActionLearning(D,A)).
+isAdminGoal(pauseActionLearning(D,A)).
+isAdminGoal(resumeActionLearning(D,A)).
+isAdminGoal(cancelActionLearning(D,A)).
+isAdminGoal(modifyAction(D,A,M,L)).
+%isAdminGoal(G) :- (want(S,G),G=learnAction(D,A),diarcAgent(D)).
+%isAdminGoal(G) :- (want(S,G),G=endActionLearning(D,A),diarcAgent(D)).
+%isAdminGoal(G) :- (want(S,G),G=pauseActionLearning(D,A),diarcAgent(D)).
+%isAdminGoal(G) :- (want(S,G),G=resumeActionLearning(D,A),diarcAgent(D)).
+%isAdminGoal(G) :- (want(S,G),G=cancelActionLearning(D,A),diarcAgent(D)).
+%isAdminGoal(G) :- (want(S,G),G=modifyAction(D,A,M,L),diarcAgent(D)).
 
 %% failure reason explination
 %brad: at some point we might want a rule this so that we can do stuff based on the actor in the goal:

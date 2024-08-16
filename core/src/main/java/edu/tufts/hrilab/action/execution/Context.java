@@ -17,6 +17,7 @@ import edu.tufts.hrilab.action.description.ContextDescription;
 import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.EventSpec;
+import edu.tufts.hrilab.action.execution.control.AsynchronousContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.state.StateMachine;
@@ -249,28 +250,28 @@ public abstract class Context {
         this.justification = justification;
       }
 
-      if (isTerminated()) {
-        // make sure non-async children don't continue to execute (e.g., when a parent fails overall conditions)
-        if (isFailure()) {
-          childContexts.forEach(child -> {
-            if (!child.isAsynchronous() && child.getStatus() != ActionStatus.INITIALIZED && !child.isTerminated()) {
-              child.setStatus(ActionStatus.FAIL_ANCESTOR);
-            }
-          });
-        }
+      if (actionStatus.isTerminated()) {
+        childContexts.forEach(child -> {
+          if (child.getStatus() != ActionStatus.INITIALIZED && !child.isTerminated()) {
+              child.setStatus(ActionStatus.CANCEL);
+          }
+        });
+      } else if (actionStatus == ActionStatus.SUSPEND) {
+        // propagate SUSPEND down the tree to any running children (e.g., async)
+        childContexts.forEach(child -> {
+          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.SUSPEND && !child.isTerminated()) {
+              child.setStatus(ActionStatus.SUSPEND);
+          }
+        });
 
-        // make sure all children have finished execution (in the case of asynchronous children)
-        if (childContexts.anyMatch(child -> child.isAsynchronous() && !child.isTerminated())) {
-          log.debug("[setStatus] not setting status to " + actionStatus + " because there's still an active asynchronous child. Context: " + this);
-          actionStatus = ActionStatus.ACTIVE_CHILD;
-          // don't send terminalCondition signal in this case
-        } else if (caller.getStatus() == ActionStatus.ACTIVE_CHILD) {
-          // if parent is waiting on child(ren), try to propagate status up context tree
-          caller.setStatus(actionStatus);
-          terminalCondition.signalAll();
-        } else {
-          terminalCondition.signalAll();
-        }
+        // propagate SUSPEND up tree to parent
+//        if (caller != null && caller.getStatus() != ActionStatus.SUSPEND) {
+//          caller.setStatus(ActionStatus.SUSPEND);
+//        }
+      }
+
+      if (actionStatus.isTerminated()) {
+        terminalCondition.signalAll();
       }
 
     } finally {

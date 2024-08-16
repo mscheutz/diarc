@@ -38,7 +38,7 @@ public class StepExecution {
    * @return anypoint return next action or null
    */
   public Context execute(Context step) {
-    Context nextStep = null;
+    Context nextStep;
     step.setStartTime();
     log.debug("[execute] step: " + step.getSignatureInPredicateForm() + " start time: " + step.getStartTime() + "(ms)");
     Justification stepJustification = canDoStep(step);
@@ -105,25 +105,25 @@ public class StepExecution {
         //                                           pre-conditions not met)
         justification = context.isApproved();
         if (justification.getValue()) {
-          log.trace("Approved, Context can be executed.");
+          log.trace("Approved, Context can be executed: {}", context.getSignatureInPredicateForm());
           context.setStatus(ActionStatus.APPROVED, justification);
         } else {
-          log.debug("Step " + context + " is not approved for execution");
+          log.debug("Step is not approved for execution: {}", context.getSignatureInPredicateForm());
         }
 
         context.performAdditionalStatusUpdates();
         return justification;
       case PROGRESS:
-        log.warn("PROGRESS in canDoStep. This shouldn't happen.");
+        log.warn("PROGRESS in canDoStep. This shouldn't happen: {}", context.getSignatureInPredicateForm());
         return new ConditionJustification(true);
       case RECOVERY:
         // this is the case when a context is being re-executed (e.g., GoalContext running a second action)
         return new ConditionJustification(true);
       case SUCCESS:
-        log.warn("Step " + context.getSignatureInPredicateForm() + " not being executed because it has already been executed successfully.");
+        log.warn("Step not being executed because it has already been executed successfully: {}", context.getSignatureInPredicateForm());
         return new ConditionJustification(false);
       default: // All other states: do not execute
-        log.debug("Step " + context.cmd + "not executed. Reason:" + actionStatus);
+        log.debug("Step not executed. Context: {} ActionStatus: {}", context.getSignatureInPredicateForm(), actionStatus);
         return new ConditionJustification(false);
     }
   }
@@ -138,9 +138,9 @@ public class StepExecution {
     ActionStatus actionStatus = context.getStatus();
     switch (actionStatus) {
       case APPROVED:
-        log.trace("Execution in progress...");
+        log.trace("Setting PROGRESS {} ...", context.getSignatureInPredicateForm());
         context.setStatus(ActionStatus.PROGRESS, new ConditionJustification(true));
-        log.trace("Starting overall conditions monitor...");
+        log.trace("Starting overall conditions monitor {} ...", context.getSignatureInPredicateForm());
         context.startOverAllMonitor();
         // Do not break, move on to PROGRESS case.
       case PROGRESS:
@@ -148,7 +148,7 @@ public class StepExecution {
         context.doStep();
         break;
       default:
-        log.debug("Step not executed. Reason: " + actionStatus);
+        log.debug("Step not executed. Context: {} ActionStatus: {}", context.getSignatureInPredicateForm(), actionStatus);
     }
   }
 
@@ -202,30 +202,30 @@ public class StepExecution {
           context.setStatus(ActionStatus.VERIFYING_RETURNVALUE);
           break;
         case VERIFYING_RETURNVALUE:
-          log.trace("Verifying return values...");
+          log.trace("Verifying return values {} ...", context.getSignatureInPredicateForm());
           verification = context.verifyReturnValue();
           if (verification.getValue()) {
-            log.trace("Return value verified.");
+            log.trace("Setting VERIFYING_EFFECTS: {}", context.getSignatureInPredicateForm());
             context.setStatus(ActionStatus.VERIFYING_EFFECTS, verification);
           } else {
-            log.debug("Return value verification failed for " + context.getSignatureInPredicateForm() + " FAIL_RETURNVALUE");
+            log.debug("Setting FAIL_RETURNVALUE: {}", context.getSignatureInPredicateForm());
             context.setStatus(ActionStatus.FAIL_RETURNVALUE, verification);
           }
           break;
         case VERIFYING_EFFECTS:
-          log.trace("Verifying effects...");
+          log.trace("Verifying effects {} ...", context.getSignatureInPredicateForm());
           // TODO: this is potentially problematic -- shouldn't all children need to finish before effects are verified
           verification = context.verifyEffects();
           if (verification.getValue()) {
-            log.trace("Effects verified. Success!");
-            try {
-              TRADE.getAvailableService(new TRADEServiceConstraints().name("getViolations"));
+            if (!TRADE.getAvailableServices(new TRADEServiceConstraints().name("getViolations")).isEmpty()) {
+              log.trace("Setting VERIFYING_NORMS: {}", context.getSignatureInPredicateForm());
               context.setStatus(ActionStatus.VERIFYING_NORMS, verification);
-            } catch (TRADEException e) {
-                context.setStatus(ActionStatus.SUCCESS, verification);
+            } else {
+              log.trace("Setting SUCCESS: {}", context.getSignatureInPredicateForm());
+              context.setStatus(ActionStatus.SUCCESS, verification);
             }
           } else if (!context.isFailure()) { // FIXME: this checks if failure because verify effects sets failure during simulation
-            log.debug("Effect verification failed. FAIL_POSTCONDITIONS");
+            log.debug("Setting FAIL_POSTCONDITIONS: {}", context.getSignatureInPredicateForm());
             context.setStatus(ActionStatus.FAIL_POSTCONDITIONS, verification);
           }
           break;
@@ -242,12 +242,7 @@ public class StepExecution {
 //            throw new RuntimeException(e);
 //          }
           break;
-
-        case ACTIVE_CHILD:
-          // TODO: this is potentially problematic -- shouldn't all children need to finish before effects are verified
-          // TODO: this should wait for all children to finish
-          // for now, do nothing, just return as if execution finished successfully
-          return context.getJustification();
+        case SUSPEND:
         case CANCEL:
           context.caller.setStatus(context.getStatus(), context.getJustification());
           context.performAdditionalStatusUpdates();
@@ -256,7 +251,7 @@ public class StepExecution {
           context.caller.setStatus(ActionStatus.CANCEL);
           return context.getJustification();
         default: // No state change for other cases.
-          log.error("[finishStep] current status in action \"" + context.getCommand() + "\" not handled: " + context.getStatus());
+          log.error("[finishStep] current status not handled. Context: {} ActionStatus: {} ", context.getSignatureInPredicateForm(), context.getStatus());
           return new ConditionJustification(false);
       }
     }

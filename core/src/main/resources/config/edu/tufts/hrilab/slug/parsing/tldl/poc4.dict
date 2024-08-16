@@ -186,7 +186,7 @@ evening; G[good] ; evening
 
 evan; AGENT ; evan
 
-execute while learning; C ; changeLearningExecution(?ADDRESSEE,?ADDRESSEE,execute)
+execute while learning; C ; changeLearningExecution(?ADDRESSEE,execute)
 
 %%%%%%%%%%%  F  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -312,8 +312,8 @@ lower; (C\AGENT)/ NP[your]; #x#y. lower($x)
 %%%%%%%%%%%  M  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %makesure; (C/(C\C))/INF; #x#y.modifyAction(insert($x),$y@$x)
-make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,insert($x),$y)
-make sure; ((C/PP)/S)\ADV; #w#x#y.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,insert($x),$y)
+make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
+make sure; ((C/PP)/S)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
 
 me; AGENT ; ?INTERACTOR
 

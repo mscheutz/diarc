@@ -55,28 +55,23 @@ bel(A,X):-believes(A,X).
 bel(D,X):-believes(A,X),diarcAgent(A),diarcAgent(D).
 
 /*rules about who the agent is obliged to listen to */
-role(brad,supervisor(X)):-diarcAgent(X).
-role(brad,admin(X)):-diarcAgent(X).
-%role(tyler,supervisor(X)):-diarcAgent(X).
-role(ravenna,supervisor(X)):-diarcAgent(X).
-role(commX,supervisor(X)):-diarcAgent(X).
-role(server,supervisor(X)):-diarcAgent(X).
-role(player1,supervisor(X)):-diarcAgent(X).
-role(player2,supervisor(X)):-diarcAgent(X).
+supervisor(brad).
+supervisor(ravenna).
+supervisor(commX).
+supervisor(server).
+supervisor(player1).
+supervisor(player2).
+admin(brad).
 
-is_supervisor(A,B):-role(A,supervisor(B)).
-admin_of(A,B):-role(A,admin(B)).
+
+is_supervisor(S,D):-supervisor(S),diarcAgent(D).
+admin_of(S,D):-admin(S),diarcAgent(D).
 explanationType(A, incomplete) :- not(role(A,novice)).
 
 /*
 rules about admin goals, which only adminstrators can give
 these actions no longer exist, saving as arefrence for how to do this in the future if we ever want to */
-isAdminGoal(did(D,modifyActionLearning(X,S))).
-isAdminGoal(did(D,modifyAction(X,C,S,A))).
-isAdminGoal(self,disableObstacleChecks(self)).
-isAdminGoal(self,disableSupportChecks(self)).
-isAdminGoal(D,Y) :- (want(B,Y),Y=did(D,modifyActionLearning(X,S))),diarcAgent(D).
-isAdminGoal(D,Y) :- (want(B,Y),Y=did(D,modifyAction(X,C,S,A))),diarcAgent(D).
+
 /*
 admin goal stuf not currently being used, keeping it like this in case we want to do something with an obligation hirearchy in the future.
 */

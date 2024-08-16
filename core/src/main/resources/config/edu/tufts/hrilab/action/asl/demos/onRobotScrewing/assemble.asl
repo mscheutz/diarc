@@ -41,9 +41,9 @@
     act:assertBelief(!objectPred);
 
     async {
-        act:learnAction(?actor,!scriptID);
+        act:learnAction(!scriptID);
     }
-    act:waitForActionLearningStart(?actor,!scriptID);
+    act:waitForActionLearningStart(!scriptID);
 }
 
 () = endLearningAssembleScript["ends learning of assemble?modelName()"](edu.tufts.hrilab.fol.Symbol ?modelName){
@@ -60,7 +60,7 @@
     //generate new signature that is unique to model name
     (!scriptID) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "assemble!descriptor(?actor,?modelName)");
     op:log(debug, "[endLearningAssembleScript] scriptID: !scriptID");
-    act:endActionLearning(?actor,!scriptID);
+    act:endActionLearning(!scriptID);
 }
 
 () = getOn["gets ?object on to the surface beneath ?destination"](edu.tufts.hrilab.fol.Symbol ?object, edu.tufts.hrilab.fol.Symbol ?destination) {
@@ -124,7 +124,7 @@
   !modName = op:getName(!modification);
   !location = op:get(!bindings, !y);
   op:log(debug, "modification !modification location !location");
-  act:modifyAction(?actor,!likeGoal,!modification,!location);
+  act:modifyAction(!likeGoal,!modification,!location);
 
 //
   !bindings = act:askQuestionFromString(!speaker,"okay are there any more differences", mod(X,Y));
@@ -133,7 +133,7 @@
   !location = op:get(!bindings, !y);
   while(op:!=(!modName,"none")){
     op:log(debug, "modification !modification");
-    act:modifyAction(?actor,!newScriptGoal,!modification,!location);
+    act:modifyAction(!newScriptGoal,!modification,!location);
     !bindings = act:askQuestionFromString(!speaker,"okay are there any more differences", mod(X,Y));
     !modification = op:get(!bindings, !x);
     !location = op:get(!bindings, !y);
@@ -182,12 +182,12 @@
   (!likeGoal) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate", "like", !newScriptGoal,!oldScriptGoal);
   op:log(debug, "lg !likeGoal");
   //submit modify goal
-  act:modifyAction(?actor,!likeGoal,?modification,?location);
+  act:modifyAction(!likeGoal,?modification,?location);
 
   //add effect so it can be accessed later
 //  (!uniqueEffect) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "insert(assembled(?actor,?newScriptID))");
 //  (!modLocation) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "effect(success)");
-//  act:modifyAction(?actor,!newScriptGoal,!uniqueEffect,!modLocation);
+//  act:modifyAction(!newScriptGoal,!uniqueEffect,!modLocation);
   (!objectPred) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "object(!newModelID,physobj)");
   act:assertBelief(!objectPred);
 }
@@ -210,7 +210,7 @@
   op:log(debug, "nsg !scriptGoal");
 
   //submit modify goal
-  act:modifyAction(?actor,!scriptGoal,?modification,?location);
+  act:modifyAction(!scriptGoal,?modification,?location);
 }
 
 //TODO:brad update this to new assemble goal submission format?
