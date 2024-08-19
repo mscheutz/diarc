@@ -500,12 +500,13 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     NavigateToResultMessage result;
     try {
       result = navigateAction.sendGoalAsync(goal).get();
+      log.debug("[goToLocationHelper] response from ros navigation goal: " + result);
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
-
     if (!result.success) {
       log.error(result.message.toString());
+      //todo: give useful failure justification
     }
     currentLocationId = destination;
     return new ConditionJustification(result.success);

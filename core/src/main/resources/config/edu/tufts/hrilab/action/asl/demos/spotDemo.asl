@@ -7,7 +7,7 @@ import java.util.List;
 
 //todo: this doesn't actually work, since it will happily localize to the wrong place? if we sit down etc it assumes we're closest to the dock location where the tour started i think.
 () = failedLocalization(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
-  Symbol !defaultLocation = location_15:location;
+  Symbol !defaultLocation = location_0:location;
 
   recovery: {
     failedActions: {init(self:agent)}
@@ -20,11 +20,12 @@ import java.util.List;
 
 
 () = init[""]() {
-    Symbol !defaultLocation = location_15:location;
+    Symbol !defaultLocation = location_0:location;
     Boolean !result;
 
     act:claim();
     act:powerOn();
+    act:undock();
 
     !result = act:hasBeenLocalized();
 
