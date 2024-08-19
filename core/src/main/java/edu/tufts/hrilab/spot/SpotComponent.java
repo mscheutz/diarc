@@ -9,6 +9,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.interfaces.ArmInterface;
+import edu.tufts.hrilab.interfaces.DockingInterface;
 import edu.tufts.hrilab.interfaces.MoveBaseInterface;
 import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationConsultant;
 import edu.tufts.hrilab.spot.consultant.SpotNavGraphLocationReference;
@@ -36,20 +37,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-public class SpotComponent extends DiarcComponent implements ArmInterface, MoveBaseInterface {
+public class SpotComponent extends DiarcComponent implements ArmInterface, MoveBaseInterface, DockingInterface {
 
   private String map_path;
-  private JRos2Client client;
-  private JRos2ServiceClient<DiarcCommandRequestMessage, DiarcCommandResponseMessage> commandService;
-  private JRos2ServiceClient<DiarcDockRequestMessage, DiarcDockResponseMessage> dockService;
-  private JRos2ActionClient<NavigateToGoalMessage, NavigateToResultMessage> navigateAction;
   private SpotNavGraphLocationConsultant locationConsultant;
   private Symbol currentLocationId;
   private String refsConfigFile;
   private String refsConfigDir = "config/edu/tufts/hrilab/spot";
 
+  // Define ROS Services
+  private JRos2Client client;
+  private JRos2ServiceClient<DiarcCommandRequestMessage, DiarcCommandResponseMessage> commandService;
+  private JRos2ServiceClient<DiarcDockRequestMessage, DiarcDockResponseMessage> dockService;
+  private JRos2ActionClient<NavigateToGoalMessage, NavigateToResultMessage> navigateAction;
   private JRos2ServiceClient<GraphNavGetLocalizationPoseUnstampedRequestMessage, GraphNavGetLocalizationPoseUnstampedResponseMessage> localizationService;
-  private JRos2ServiceClient<DiarcPickupRequestMessage, DiarcPickupResponseMessage> pickupService;
+  private JRos2ServiceClient<DiarcPickUpRequestMessage, DiarcPickUpResponseMessage> pickUpService;
+  private JRos2ServiceClient<DiarcMoveToRequestMessage, DiarcMoveToResponseMessage> ikService;
+
 
   public SpotComponent() {
     super();
@@ -58,12 +62,18 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @Override
   protected void init() {
     super.init();
+
+    // Instantiate ROS2 services and actions
     client = new JRos2ClientFactory().createClient();
     commandService = new JRos2ServiceClientFactory().createClient(client, new DiarcCommandServiceDefinition(), "/diarc_command");
     dockService = new JRos2ServiceClientFactory().createClient(client, new DiarcDockServiceDefinition(), "/diarc_dock");
     localizationService = new JRos2ServiceClientFactory().createClient(client, new GraphNavGetLocalizationPoseUnstampedServiceDefinition(), "/graph_nav_get_localization_pose_unstamped");
     navigateAction = new JRos2ActionClientFactory().createClient(client, new NavigateToActionDefinition(), "/navigate_to");
+    ikService = new JRos2ServiceClientFactory().createClient(client, new DiarcMoveToServiceDefinition(), "/diarc_move_to");
     locationConsultant = new SpotNavGraphLocationConsultant("location");
+    locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
+    pickUpService = new JRos2ServiceClientFactory().createClient(client, new DiarcPickUpServiceDefinition(), "/diarc_pick_up");
+
     List<String> groups = this.getMyGroups();
     groups.add("location");
     try {
@@ -71,8 +81,6 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     } catch (TRADEException e) {
       log.error("[init] error registering location consultant with TRADE", e);
     }
-    locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
-    pickupService = new JRos2ServiceClientFactory().createClient(client, new DiarcPickupServiceDefinition(), "/diarc_pickup");
 
 //    claim();
 //    powerOn();
@@ -155,21 +163,6 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     }
   }
 
-  @Action
-  @TRADEService
-  public Justification dock(int id) {
-    try {
-      DiarcDockResponseMessage res = dockService.sendRequestAsync(new DiarcDockRequestMessage().withDockid(new StringMessage().withData(String.valueOf(id)))).get();
-      if (!res.success) {
-        log.warn(res.message.toString());
-      }
-      return new ConditionJustification(res.success);
-    } catch (InterruptedException | ExecutionException e) {
-      log.error("Error docking to dock id " + id, e);
-      return new ConditionJustification(false);
-    }
-  }
-
   private Pair<Point2d, Quat4d> getLocalizationInformation() {
     try {
       GraphNavGetLocalizationPoseUnstampedResponseMessage res = localizationService.sendRequestAsync(new GraphNavGetLocalizationPoseUnstampedRequestMessage().withTrash(new StringMessage("empty"))).get();
@@ -196,6 +189,34 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   @Action
   @TRADEService
+  public Justification dock(int id) {
+    try {
+      DiarcDockResponseMessage res = dockService.sendRequestAsync(new DiarcDockRequestMessage().withDockid(new StringMessage().withData(String.valueOf(id)))).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error docking to dock id " + id, e);
+      return new ConditionJustification(false);
+    }
+  }
+
+  @Override
+  public Justification dock(Symbol dockId) {
+    try {
+      DiarcDockResponseMessage res = dockService.sendRequestAsync(new DiarcDockRequestMessage().withDockid(new StringMessage().withData(dockId.getName()))).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error docking to dock id " + dockId, e);
+      return new ConditionJustification(false);
+    }
+  }
+
+  @Override
   public Justification undock() {
     try {
       DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.UNDOCK)).get();
@@ -276,9 +297,9 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     // todo get memory object from obj ref
 
     try {
-      DiarcPickupRequestMessage msg = new DiarcPickupRequestMessage();
+      DiarcPickUpRequestMessage msg = new DiarcPickUpRequestMessage();
       //todo: populate msg with info from memory object
-      DiarcPickupResponseMessage res = pickupService.sendRequestAsync(msg).get();
+      DiarcPickUpResponseMessage res = pickUpService.sendRequestAsync(msg).get();
       if (!res.success) {
         log.warn(res.message.toString());
       }
@@ -291,12 +312,22 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   @Override
   public boolean moveTo(String groupName, Point3d point, Quat4d orientation) {
-    return false;
+    try {
+      DiarcMoveToRequestMessage msg = new DiarcMoveToRequestMessage().withX(point.x).withY(point.y).withZ(point.z);
+      DiarcMoveToResponseMessage res = ikService.sendRequestAsync(msg).get();
+      if (!res.success) {
+        log.warn("Failed IK.");
+      }
+      return res.success;
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error claiming", e);
+      return false;
+    }
   }
 
   @Override
   public boolean moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
-    return false;
+    return moveTo(groupName, point_l, orientation_l);
   }
 
   @Override
