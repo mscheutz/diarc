@@ -33,6 +33,16 @@ public class RLActionManager extends DiarcComponent {
     return policyId++;
   }
 
+  /**
+   * Wraps an executor in a DIARC action and adds it to the database. For use with creating new action from an RL system.
+   *
+   * @param name     The name of the ASL action you want to create
+   * @param args     The arguments to that action. Must be typed if you want to plan with it.
+   * @param preconds The symbolic preconditions of that action
+   * @param effects  The symbolic effects of that action
+   * @param executor The executor you want to wrap, e.g. a python method that calls a policy
+   * @return Some unique identifier of the new action. May be deprecated in favor of the name.
+   */
   @TRADEService
   public int createAction(String name, List<String> args, List<String> preconds, List<String> effects, String executor) {
     log.info("Creating action");
@@ -50,7 +60,7 @@ public class RLActionManager extends DiarcComponent {
     }
     EventSpec.Builder espec = new EventSpec.Builder(EventSpec.EventType.ACTION);
 
-    espec.setCommand("callPolicy");
+    espec.setCommand("callPolicy"); // Todo: replace with a function pointer from python, somehow...
     int policyId = nextPolicyId();
     espec.addInputArg(String.valueOf(executor)); //todo: Generate random
 
@@ -59,70 +69,5 @@ public class RLActionManager extends DiarcComponent {
     return policyId;
   }
 
-  /**
-   * Creates an ASL action for the given policy ID and specified preconditions and effects.
-   * Used for dynamically generating planning operators that call an RL policy.
-   *
-   * @param policyId The unique ID of the policy called in the action
-   * @param preconds Symbolic preconditions of the policy
-   * @param effects  Symbolic effects of the policy
-   */
-  @TRADEService
-  public void createPolicyAction(int policyId, Set<Predicate> preconds, Set<Predicate> effects) {
-    log.info("Creating policy action");
-    Builder action = new Builder("policy" + policyId);
-
-    EventSpec.Builder espec = new EventSpec.Builder(EventSpec.EventType.ACTION);
-    espec.setCommand("callPolicy");
-    espec.addInputArg(String.valueOf(policyId));
-    action.addEventSpec(espec.build());
-
-    action.addConditions(preconds.stream().map(p -> new Condition(p, ConditionType.PRE, Observable.FALSE)).toList());
-    action.addEffects(effects.stream().map(e -> new Effect(e, EffectType.SUCCESS, Observable.FALSE)).toList());
-
-    action.build(true);
-  }
-
-  /**
-   * Checks the state of the world based on QSR.
-   * If the state has not been seen before, create a new policy action going from the previous state to the current state.
-   *
-   * @param obs Subsymbolic state to observe
-   * @return Returns the policy ID corresponding to the current state of the world.
-   */
-  @TRADEService
-  public int checkState(Object obs) {
-
-    //todo: Update consultants based on obs
-
-
-    Set<Predicate> newState;
-    try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("observeQSR"));
-      newState = tsi.call(Set.class);
-    } catch (TRADEException e) {
-      throw new RuntimeException(e);
-    }
-
-    if (!seenStates.contains(newState.hashCode())) {
-      //todo: Update belief?
-      log.info("New state entered");
-      createPolicyAction(state.hashCode(), state, newState);
-      state = newState;
-    }
-    return state.hashCode();
-  }
-
-  @Action
-  @TRADEService
-  public Justification failureTest() {
-    return new ConditionJustification(false);
-  }
-
-  @Action
-  @TRADEService
-  public Justification update_rl() {
-    log.info("Recovering");
-    return new ConditionJustification(true);
-  }
+  // Todo: Add observer
 }
