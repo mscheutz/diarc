@@ -80,7 +80,7 @@ import java.util.List;
 }
 ///////// Operators
 
-() = handover(Symbol ?object:physobj, Symbol ?at:location) {
+() = deliver(Symbol ?object:physobj, Symbol ?at:location) {
     conditions : {
         pre : at(?actor, ?at);
         pre : holding(?actor, ?at);
@@ -89,6 +89,7 @@ import java.util.List;
         success : not(at(?object, ?at));
         success : free(?actor);
         success : not(holding(?actor, ?object));
+        success : delivered(?object);
     }
     act:command(arm_carry);
     //todo: Wait for "let go"
@@ -106,7 +107,7 @@ import java.util.List;
         success : at(?actor, ?to);
         success : not(at(?actor, ?from));
     }
-    //todo
+    act:goToLocation(?to);
 }
 
 () = pickup(Symbol ?object:physobj, Symbol ?from:location) {
@@ -120,5 +121,9 @@ import java.util.List;
         success : not(free(?actor));
         success : holding(?actor, ?object);
     }
+    act:command(arm_carry);
+    act:openGripper(none);
+    //todo: Look for object
     act:pickUpObject(?object);
+    act:command(arm_carry);
 }
