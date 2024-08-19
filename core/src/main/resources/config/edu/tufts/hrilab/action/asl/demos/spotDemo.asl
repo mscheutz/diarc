@@ -5,6 +5,13 @@ import java.lang.Integer;
 import java.lang.Boolean;
 import java.util.List;
 
+() = relocalize() {
+  Symbol !defaultLocation = location_0:location;
+
+  act:setLocationWithFiducial(!defaultLocation);
+}
+
+
 //todo: this doesn't actually work, since it will happily localize to the wrong place? if we sit down etc it assumes we're closest to the dock location where the tour started i think.
 () = failedLocalization(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
   Symbol !defaultLocation = location_0:location;
@@ -14,23 +21,26 @@ import java.util.List;
     actionStatuses: {FAIL_RETURNVALUE}
   }
 
-  act:setInitialLocation(!defaultLocation);
+  act:setLocationWithFiducial(!defaultLocation);
   op:log(warn, "[failedLocalization] location initialized to !defaultLocation after failing to localize");
 }
 
 
 () = init[""]() {
+    Symbol !defaultLocation = location_0:location;
     Boolean !result;
 
     act:claim();
     act:powerOn();
+    act:undock();
 
     !result = act:hasBeenLocalized();
 
     if (op:equals(!result, true)) {
         op:log(debug, "[init] no need to localize again");
     } else {
-        act:localize();
+//        act:localize();
+      act:setLocationWithFiducial(!defaultLocation);
     }
     op:log(debug, "[init] set up spot");
 }

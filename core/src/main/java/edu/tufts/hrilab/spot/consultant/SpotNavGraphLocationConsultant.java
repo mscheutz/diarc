@@ -19,10 +19,7 @@ import javax.vecmath.Vector3d;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.abs;
@@ -125,7 +122,7 @@ public class SpotNavGraphLocationConsultant extends Consultant<SpotNavGraphLocat
     public boolean writeRefrencesToFile(String absolutePath) {
         SpotMissionLocationRefJson json = new SpotMissionLocationRefJson();
         List<SpotNavGraphLocationReference> sortedReferences = references.entrySet().stream().sorted(
-                (a, b) -> (a.getKey().getName().compareTo(a.getKey().getName()))
+                Comparator.comparing(a -> a.getKey().getName())
         ).map(Map.Entry::getValue).toList();
         for (SpotNavGraphLocationReference ref : sortedReferences) {
             json.references.add(new SpotNavGraphLocationReferenceJson(ref));
