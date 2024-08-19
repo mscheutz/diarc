@@ -135,17 +135,6 @@
     {
       "properties": [],
       "variable": "X:movebaselocation",
-      "graphId": "kept-ram-3kOcw56L05w4IW+thLjN6A\u003d\u003d",
-      "x": 6.957821065805328,
-      "y": 1.8541475164534973,
-      "orientX": 0.00360011352611055,
-      "orientY": 0.0013185935146385805,
-      "orientZ": 0.9494521630248943,
-      "orientW": -0.3138883410085378
-    },
-    {
-      "properties": [],
-      "variable": "X:movebaselocation",
       "graphId": "fazed-moray-UWruYsXtvzO29.xnyFN.EQ\u003d\u003d",
       "x": 2.3434839882348464,
       "y": 1.430412115804356,

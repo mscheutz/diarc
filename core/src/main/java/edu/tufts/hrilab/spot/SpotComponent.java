@@ -284,6 +284,51 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   @Action
   @TRADEService
+  public Justification stow() {
+    try {
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.ARM_STOW)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error stowing arm", e);
+      return new ConditionJustification(false);
+    }
+  }
+
+  @Action
+  @TRADEService
+  public Justification unstow() {
+    try {
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.ARM_UNSTOW)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error un-stowing arm", e);
+      return new ConditionJustification(false);
+    }
+  }
+
+  @Action
+  @TRADEService
+  public Justification carry() {
+    try {
+      DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.ARM_CARRY)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error setting arm to carry mode", e);
+      return new ConditionJustification(false);
+    }
+  }
+
+  @Action
+  @TRADEService
   public Justification pickUpObject(Symbol obj) {
     // todo get memory object from obj ref
 
@@ -416,6 +461,12 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   }
 
+  @TRADEService
+  @Action
+  public Justification closeGripper() {
+    return closeGripper("");
+  }
+
   @Override
   public Justification closeGripper(String groupName) {
     try {
@@ -428,6 +479,12 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       log.error("Error claiming", e);
       return new ConditionJustification(false);
     }
+  }
+
+  @TRADEService
+  @Action
+  public Justification openGripper() {
+    return openGripper("");
   }
 
   @Override
