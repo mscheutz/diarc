@@ -109,6 +109,17 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     currentLocationId = refId;
   }
 
+  @Action
+  @TRADEService
+  public Justification setLocationWithFiducial(Symbol refId) {
+    SpotNavGraphLocationReference ref = locationConsultant.getRefWithId(refId);
+    if (ref == null) {
+      log.error("[setInitialLocation] current location id does not match a known location");
+    }
+    currentLocationId = refId;
+    return goToLocationHelper(refId, refId, true);
+  }
+
   // Mostly just for testing! You should make a new action for the command you want
   @Action
   @TRADEService
@@ -174,6 +185,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     try {
       GraphNavGetLocalizationPoseUnstampedResponseMessage res = localizationService.sendRequestAsync(new GraphNavGetLocalizationPoseUnstampedRequestMessage().withTrash(new StringMessage("empty"))).get();
       if (!res.success) {
+        log.error("[getLocalizationInformation] failed to localize");
         log.warn(res.pose.toString());
       } else {
         PointMessage position = res.pose.position;
@@ -467,19 +479,24 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     return null;
   }
 
+
   @Override
   public Justification goToLocation(Symbol location) {
-    log.debug("[goToLocation] going to location with refId: " + location);
-    String destination = locationConsultant.getRefWithId(location).getGraphId();
-    log.debug("[goToLocation] location has graphId: " + destination);
-    if (destination == null) {
-      log.error("[goToLocation] refId " + location + " does not correspond to a reference in the location consultant");
+    return goToLocationHelper(currentLocationId, location, false);
+  }
+
+  public Justification goToLocationHelper(Symbol current, Symbol destination, boolean localizeWithFiducial) {
+    log.debug("[goToLocationHelper] going to location with refId: " + destination);
+    String destinationId = locationConsultant.getRefWithId(destination).getGraphId();
+    log.debug("[goToLocationHelper] location has graphId: " + destinationId);
+    if (destinationId == null) {
+      log.error("[goToLocationHelper] refId " + destinationId + " does not correspond to a reference in the location consultant");
     }
     NavigateToGoalMessage goal = new NavigateToGoalMessage();
-    goal.initial_localization_fiducial = false;
+    goal.initial_localization_fiducial = localizeWithFiducial;
     goal.initial_localization_waypoint = new StringMessage(locationConsultant.getRefWithId(currentLocationId).getGraphId());
     goal.upload_path = new StringMessage(map_path);
-    goal.navigate_to = new StringMessage(destination);
+    goal.navigate_to = new StringMessage(destinationId);
     NavigateToResultMessage result;
     try {
       result = navigateAction.sendGoalAsync(goal).get();
@@ -490,7 +507,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     if (!result.success) {
       log.error(result.message.toString());
     }
-    currentLocationId = location;
+    currentLocationId = destination;
     return new ConditionJustification(result.success);
   }
 
@@ -509,14 +526,19 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @TRADEService
   @Action
   public Justification localize() {
-    Symbol locationId = locationConsultant.getClosestLocationToPoint(getLocalizationInformation());
-    if (locationId != null) {
-      this.currentLocationId = locationId;
-      log.info("[localize] robot is localized to " + currentLocationId);
-      return new ConditionJustification(true);
-    } else {
-      log.warn("[localize] robot could not be localized. Has pose mapping been performed?");
+    Pair<Point2d, Quat4d> pose = getLocalizationInformation();
+    if (pose == null) {
       return new ConditionJustification(false);
+    } else {
+      Symbol locationId = locationConsultant.getClosestLocationToPoint(pose);
+      if (locationId != null) {
+        this.currentLocationId = locationId;
+        log.info("[localize] robot is localized to " + currentLocationId);
+        return new ConditionJustification(true);
+      } else {
+        log.warn("[localize] robot could not be localized. Has pose mapping been performed?");
+        return new ConditionJustification(false);
+      }
     }
   }
 

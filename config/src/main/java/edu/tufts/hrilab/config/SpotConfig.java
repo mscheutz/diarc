@@ -9,6 +9,12 @@ public class SpotConfig extends DiarcConfiguration {
   public void runConfiguration() {
     createInstance(SpotComponent.class, "-map /home/pete/dev/spot_maps/lab81524.walk -locationRefs spotLocationRefs.json");
 
+    try {
+      Thread.sleep(5000);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+
     createInstance(GoalManagerImpl.class,
             "-beliefinitfile agents/agents.pl "
             + "-editor "
