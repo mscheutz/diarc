@@ -16,12 +16,6 @@ import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.interfaces.MoveBaseInterface;
-import edu.tufts.hrilab.ros2.Ros2Factory;
-import edu.tufts.hrilab.ros2.Ros2Node;
-import edu.tufts.hrilab.ros2.Ros2Subscriber;
-import edu.tufts.hrilab.ros2.SubscriberCallback;
-import edu.tufts.hrilab.ros2.ros2jrosclient.generated.ControllerCommandRequestMessage;
-import edu.tufts.hrilab.ros2.ros2jrosclient.generated.ControllerCommandResponseMessage;
 import id.jros2messages.vision_msgs.Detection3DArrayMessage;
 import id.jros2messages.vision_msgs.Detection3DMessage;
 import edu.tufts.hrilab.util.RotationHelpers;
@@ -37,8 +31,6 @@ import java.util.*;
 //todo: instead, extend Ros2MoveBaseComponent?
 public class Forklift extends DiarcComponent implements MoveBaseInterface {
 
-  private Ros2Node node;
-  private Ros2Node subNode;
   private PoseConsultant consultant;
   private AITVisionConsultant visConsultant;
   private String map_frame;
@@ -69,8 +61,6 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
       log.error("Error registering pose consultant.", e);
     }
 
-    subNode = Ros2Factory.getDefaultNode();
-    subNode.spin(100);
   }
 
 
@@ -80,11 +70,8 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
 
   @Override
   public double[] getPoseGlobalQuat() {
-    Matrix4d transform = node.lookupTransform(map_frame, base_frame);
     Quat4d quat = new Quat4d();
-    transform.get(quat);
     Vector3d trans = new Vector3d();
-    transform.get(trans);
     return new double[]{trans.x, trans.y, quat.x, quat.y, quat.z, quat.w};
   }
 
@@ -106,11 +93,8 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
   }
 
   protected Pair<Point3d, Quat4d> getPose() {
-    Matrix4d transform = node.lookupTransform(map_frame, base_frame);
     Quat4d quat = new Quat4d();
-    transform.get(quat);
     Vector3d trans = new Vector3d();
-    transform.get(trans);
     Point3d point = new Point3d(trans.x, trans.y, trans.z);
     return new MutablePair<>(point, quat);
   }
@@ -135,19 +119,7 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
   @Override
   public Justification goToLocation(double xdest, double ydest, double quat_x, double quat_y,
                                     double quat_z, double quat_w, boolean wait) {
-    ControllerCommandRequestMessage msg = new ControllerCommandRequestMessage();
-    //{end_x: 2.0, end_y: 11.0, end_yaw: 1.5, driving_direction: 0, command: 0}"
-    msg.end_x = xdest;
-    msg.end_y = ydest;
-    msg.end_yaw = RotationHelpers.quatToXYZRotations(new Quat4d(quat_x, quat_y, quat_z, quat_w)).z;
-    msg.driving_direction = false; //todo: Check this based on if carrying something or not
-    msg.command = 0;
-    ControllerCommandResponseMessage resp = node.callService("controller_service", msg);
-    if (resp.success) {
-      return new ConditionJustification(true);
-    } else {
       return new ConditionJustification(false);
-    }
   }
 
   private Justification goToLocation(Point3d point, Quat4d quat) {
@@ -177,14 +149,7 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
 
   @Override
   public Justification stop() {
-    ControllerCommandRequestMessage msg = new ControllerCommandRequestMessage();
-    msg.command = 3;
-    ControllerCommandResponseMessage resp = node.callService("controller_service", msg);
-    if (resp.success) {
       return new ConditionJustification(true);
-    } else {
-      return new ConditionJustification(false);
-    }
   }
 
   //todo
@@ -237,46 +202,24 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
   }
 
   public void updateRefs(String topic, String descriptor) {
-    SubscriberCallback<Detection3DArrayMessage> callback = arrayMessage -> {
       log.info("Received.");
       topicMap.put(topic, true);
       if (!topicMap.containsValue(true)) {
         ready = true;
-        subNode.end();
       }
       if (descriptor.equals(visDescriptor)) {
 //        for (Detection3DMessage obj : arrayMessage.detections) {
 //          createObjRef(obj);
 //        }
       } else if (descriptor.equals(mapDescriptor)) {
-        for (Detection3DMessage pose : arrayMessage.detections) {
-//          createPoseRef(pose, new ArrayList<>());
-        }
       }
-    };
 
-    Ros2Subscriber<Detection3DArrayMessage> sub = Ros2Factory.getDefaultSubscriber(Detection3DArrayMessage.class,
-            topic, callback);
-    subNode.addAndStartSubscriber(sub);
   }
 
   // Populates belief with the distances between zones, e.g. fluent_equals(dist(zone1, zone2), 5)
   private void calculateDistances() {
     List<Term> properties = new ArrayList<>();
     Set<Term> beliefs = new HashSet<>();
-    properties.add(Factory.createPredicate("loadingzone", Factory.createVariable("VAR0", mapDescriptor)));
-    properties.add(Factory.createPredicate("truck", Factory.createVariable("VAR0", mapDescriptor)));
-    properties.add(Factory.createPredicate("location", Factory.createVariable("VAR0", mapDescriptor)));
-    List<Symbol> refs = consultant.getReferencesWithAnyProperties(properties);
-    for (Symbol ref1 : refs) {
-      for (Symbol ref2 : refs) {
-        if (ref1 != ref2) {
-          long dist = consultant.calculateDistance(ref1, ref2);
-          Predicate dist_pred = Factory.createPredicate("distance", ref1, ref2);
-          beliefs.add(Factory.createPredicate("fluent_equals", dist_pred, Factory.createSymbol(String.valueOf(dist))));
-        }
-      }
-    }
 
     while (TRADE.getAvailableServices(new TRADEServiceConstraints().name("assertBeliefs")).isEmpty()) {
       try {

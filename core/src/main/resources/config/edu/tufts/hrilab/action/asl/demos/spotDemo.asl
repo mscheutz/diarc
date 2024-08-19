@@ -78,3 +78,47 @@ import java.util.List;
     act:map();
     act:wander();
 }
+///////// Operators
+
+() = handover(Symbol ?object:physobj, Symbol ?at:location) {
+    conditions : {
+        pre : at(?actor, ?at);
+        pre : holding(?actor, ?at);
+    }
+    effects : {
+        success : not(at(?object, ?at));
+        success : free(?actor);
+        success : not(holding(?actor, ?object));
+    }
+    act:command(arm_carry);
+    //todo: Wait for "let go"
+    act:openGripper(none);
+    op:sleep(3000);
+    act:closeGripper(none);
+    act:command(arm_stow);
+}
+
+() = moveto(Symbol ?from:location, Symbol ?to:location) {
+    conditions : {
+        pre : at(?actor, ?from);
+    }
+    effects : {
+        success : at(?actor, ?to);
+        success : not(at(?actor, ?from));
+    }
+    //todo
+}
+
+() = pickup(Symbol ?object:physobj, Symbol ?from:location) {
+    conditions : {
+        pre : at(?actor, ?from);
+        pre : at(?object, ?from);
+        pre : free(?actor);
+    }
+    effects : {
+        success : not(at(?object, ?from));
+        success : not(free(?actor));
+        success : holding(?actor, ?object);
+    }
+    act:pickUpObject(?object);
+}

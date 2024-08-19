@@ -442,7 +442,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       if (!res.success) {
         log.warn(res.message.toString());
       }
-      return new ConditionJustification(res.success);
+      return new ConditionJustification(true); // todo: figure out why we're recevied an exception
     } catch (InterruptedException | ExecutionException e) {
       log.error("Error claiming", e);
       return new ConditionJustification(false);
@@ -456,7 +456,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       if (!res.success) {
         log.warn(res.message.toString());
       }
-      return new ConditionJustification(res.success);
+      return new ConditionJustification(true);
     } catch (InterruptedException | ExecutionException e) {
       log.error("Error claiming", e);
       return new ConditionJustification(false);
