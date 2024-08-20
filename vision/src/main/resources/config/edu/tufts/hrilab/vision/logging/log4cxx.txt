@@ -16,6 +16,7 @@ log4j.appender.file1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
 # Detectors
 #log4j.logger.ade.detector.BarCodeDetector=DEBUG, file1
 #log4j.logger.ade.detector.BlobDetector=INFO, file1
+#log4j.logger.ade.detector.ButtonDetector=DEBUG
 #log4j.logger.ade.detector.ColorBasedDetector=DEBUG, file1
 #log4j.logger.ade.detector.ClusterDetectorAdvanced=DEBUG, file1
 #log4j.logger.ade.detector.ClusterDetector2D=DEBUG, file1
@@ -25,9 +26,11 @@ log4j.appender.file1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
 #log4j.logger.ade.detector.GraspDetector=DEBUG
 #log4j.logger.ade.detector.HoughDetector=TRACE, file1
 #log4j.logger.ade.detector.hough.GHT=DEBUG, file1
-#log4j.logger.ade.detector.SpatialRelationDetector=DEBUG, file1
+#log4j.logger.ade.detector.NeuralDetector=DEBUG
 #log4j.logger.ade.detector.OpPoseDetector=DEBUG, file1
 #log4j.logger.ade.detector.people_openni.PeopleDetector=TRACE, file1
+#log4j.logger.ade.detector.PersonDetector=DEBUG
+#log4j.logger.ade.detector.SpatialRelationDetector=DEBUG, file1
 #log4j.logger.ade.detector.SiftDetector=DEBUG, file1
 #log4j.logger.ade.detector.V4RDetector=TRACE, file1
 

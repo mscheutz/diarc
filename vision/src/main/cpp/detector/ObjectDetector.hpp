@@ -19,7 +19,6 @@ public:
     BLOB, //color blobs
     COLORBASED, // another color based detector (generates more granular masks instead of BBs)
     HAAR,
-    YOLO,
     HOUGH,
     CLUSTER,
     CLUSTER2D,
@@ -32,6 +31,7 @@ public:
     BARCODE,
     HSVFOODDETECT,
     MOTION,
+    DNN,
     BUTTONDETECTOR,
     ELEVATORDOORDETECTOR,
     PERSONDETECTOR

@@ -6,13 +6,11 @@
 
 #include <jsoncpp/json/reader.h>
 
-#include "capture/util/CaptureUtilities.hpp"
 #include "common/notification/CaptureNotification.hpp"
 #include "display/Display.hpp"
 #include "stm/util/StmUtilities.hpp"
 #include <experimental/filesystem>
 #include <fstream>
-#include <iostream>
 
 namespace fs = std::experimental::filesystem;
 using namespace ade::stm;
@@ -142,16 +140,11 @@ void NeuralDetector::setBackendAndTarget () {
 // get detections from current frame and return as a vector of detectedObjects
 std::vector<NeuralDetector::DetectedObject> NeuralDetector::getDetections(CaptureNotification::ConstPtr notification) {
   LOG4CXX_DEBUG(logger, "called getDetections");
-  std::vector<DetectedObject> objects;
   const cv::Mat &img = notification->captureData->frame;
-  int origRows = img.rows;
-  int origCols = img.cols;
   std::vector<int> class_ids;
   std::vector<float> confidences;
   std::vector<cv::Rect> boxes;
   cv::Mat blob;
-  float x_factor = origCols / inputSize;
-  float y_factor = origRows / inputSize;
 
   //necessary?
   cv::Mat currFrame = prepFrame(img);
@@ -210,11 +203,9 @@ std::vector<NeuralDetector::DetectedObject> NeuralDetector::getDetections(Captur
         }
         cv::Rect rect(left, top, width, height);
 
-        DetectedObject currObj;
-        currObj.rect = rect;
-        currObj.confidence = confidence;
-        currObj.name = class_id;
-        objects.push_back(currObj);
+        boxes.push_back(rect);
+        confidences.push_back(confidence);
+        class_ids.push_back(classIdx);
       }
 
       LOG4CXX_INFO(logger, boost::format("Found: %d / %d") % found % total);
@@ -242,23 +233,19 @@ std::vector<NeuralDetector::DetectedObject> NeuralDetector::getDetections(Captur
           std::string class_id = idToClass[classIdPoint.x];
           cv::Rect rect(left, top, width, height);
           LOG4CXX_DEBUG(logger, boost::format("Box num: %d. Confidence: %f. ClassId: %s.") % j % confidence % class_id);
-          DetectedObject currObj;
-          currObj.rect = rect;
-          currObj.confidence = confidence;
-          currObj.name = class_id;
-          objects.push_back(currObj);
+          boxes.push_back(rect);
+          confidences.push_back(confidence);
+          class_ids.push_back(classIdPoint.x);
         }
       }
     }
-  } else if (outLayerType == "Identity") {
+  } else if (outLayerType == "Identity" || outLayerType == "Concat") {
     int net_height = detections[0].size[1];
     int net_width = classNames.size() + 5;
     int net_out_width = detections[0].size[2];
-    float score_thresh = 0.2;
     float *data = (float *) detections[0].data;
     float x_factor = img.cols / 640.0;
     float y_factor = img.rows / 640.0;
-    int num_classes = classNames.size() + 5;
     LOG4CXX_DEBUG(logger, boost::format("Net width: %d. Net output width: %d.") % net_width % net_out_width);
     for (int i = 0; i < net_height; ++i) {
       float confidence = data[4];
@@ -281,17 +268,30 @@ std::vector<NeuralDetector::DetectedObject> NeuralDetector::getDetections(Captur
           cv::Rect rect(left, top, width, height);
 
           LOG4CXX_DEBUG(logger, boost::format("Box num: %d. Confidence: %f. ClassId: %d.") % i % confidence % classIdPoint.x);
-          DetectedObject currObj;
-          currObj.rect = rect;
-          currObj.confidence = confidence;
-          currObj.name = class_id;
-          objects.push_back(currObj);
+
+          boxes.push_back(rect);
+          confidences.push_back(confidence);
+          class_ids.push_back(classIdPoint.x);
         }
       }
       data += net_width;
     }
   }
 
+
+  // // Non-maximum suppression
+  std::vector<int> indices;
+  cv::dnn::NMSBoxes(boxes, confidences, 0.0, nms_thresh, indices);
+  LOG4CXX_DEBUG(logger, boost::format("Num boxes after non-max suppression: %d") % indices.size());
+
+  std::vector<DetectedObject> objects;
+  for (int idx: indices) {
+    DetectedObject currObj;
+    currObj.rect = boxes[idx];
+    currObj.confidence = confidences[idx];
+    currObj.name = idToClass[class_ids[idx]];
+    objects.push_back(currObj);
+  }
   return objects;
 }
 
@@ -344,62 +344,24 @@ void NeuralDetector::removeDuplicates(std::vector<DetectedObject> &objects, floa
 }
 
 void NeuralDetector::handleCaptureNotification(CaptureNotification::ConstPtr notification) {
-  //get captured frames info
-  const cv::Mat &inputFrame = notification->captureData->frame;
-  long min_size = std::min(inputFrame.cols, inputFrame.rows);
-  cv::Mat currFrame;
-  cv::resize(inputFrame, currFrame, cv::Size((long) (inputFrame.cols * inputSize / min_size) + 1,
-                                             (long) (inputFrame.rows * inputSize / min_size) + 1));
-  // frame: 320 by 240
-  cv::Mat blob;
-  cv::dnn::blobFromImage(currFrame, blob, 0.00392, cv::Size(inputSize, inputSize), cv::Scalar(), true, false, CV_32F);
+  std::vector<DetectedObject> detections = getDetections(notification);
 
-  //Perform Yolo Detection
-  net.setInput(blob);
-  std::vector<cv::Mat> detections;
-  net.forward(detections, out_layer_names);
-
-  std::vector<cv::Rect> boxes;
-  std::vector<float> confidences;
-  std::vector<int> class_ids;
-  for (auto &output: detections) {
-    // each row contains results for a single bounding box [x,y,w,h,conf,<score for each class>]
-    for (int i = 0; i < output.rows; i++) {
-      auto confidence = output.at<float>(i, 4);
-      if (confidence < confidence_thresh) {
-        continue;
+  // display all class detections
+  if (getDisplayFlag()) {
+    const cv::Mat &inputFrame = notification->captureData->frame;
+    inputFrame.copyTo(displayFrame);
+    for (const auto &detected_object : detections) {
+        const cv::Rect &rect = detected_object.rect;
+        std::string label = detected_object.name + " " + std::to_string(detected_object.confidence);
+        cv::rectangle(displayFrame, cv::Point(rect.x, rect.y),
+                      cv::Point(rect.x + rect.width, rect.y + rect.height),
+                      CV_RGB(255, 0, 0), 2, 8, 0);
+        cv::putText(displayFrame, label, cv::Point(rect.x, rect.y+rect.height), cv::FONT_HERSHEY_SIMPLEX,
+                    0.8, CV_RGB(255, 255, 0), 1);
       }
 
-      // find class with max score (for this row)
-      // Create a 1xN(num classes) Mat and store class scores of classes.
-      cv::Mat class_scores(1, output.cols - 5, CV_32FC1, output.ptr<float>(i, 5));
-      // Perform minMaxLoc and acquire the index of best class  score.
-      cv::Point class_id;
-      double max_class_score;
-      cv::minMaxLoc(class_scores, 0, &max_class_score, 0, &class_id);
-      if (max_class_score < score_thresh) {
-        continue;
-      }
-
-      LOG4CXX_DEBUG(logger,
-                   boost::format("Box num: %d. Confidence: %f. Class score: %f. ClassId: %d.") % i % confidence %
-                   max_class_score % class_id.x);
-
-      float x = output.at<float>(i, 0) * inputFrame.cols;
-      float y = output.at<float>(i, 1) * inputFrame.rows;
-      float width = output.at<float>(i, 2) * inputFrame.cols;
-      float height = output.at<float>(i, 3) * inputFrame.rows;
-      cv::Rect rect(x - width / 2, y - height / 2, width, height);
-      boxes.push_back(rect);
-      confidences.push_back(confidence);
-      class_ids.push_back(class_id.x);
-    }
+    ade::Display::displayFrame(displayFrame, getDisplayName());
   }
-
-  // Non-maximum suppression
-  std::vector<int> indices;
-  cv::dnn::NMSBoxes(boxes, confidences, 0.0, nms_thresh, indices);
-  LOG4CXX_DEBUG(logger, boost::format("Num boxes after non-max suppression: %d") % indices.size());
 
   // get current descriptors to process
   TypesByDescriptorConstPtr descriptors = getDescriptors();
@@ -411,20 +373,20 @@ void NeuralDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
     bool useAllResults = (descriptor_iter->first.getName() == parentType);
     int target_class_id = classToId[descriptor_iter->first.getName()];
 
-    for (int idx: indices) {
-      if (class_ids[idx] == target_class_id || useAllResults) {
-        std::string class_label = idToClass[class_ids[idx]];
+    for (const auto &detected_object: detections) {
+      int class_id = classToId[detected_object.name];
+      if (class_id == target_class_id || useAllResults) {
 
         // create MemoryObject for each relevant typeId
         for (typeIds_itr = descriptor_iter->second.begin(); typeIds_itr != descriptor_iter->second.end(); ++typeIds_itr) {
           MemoryObject::Ptr newObj(
                   new MemoryObject(*typeIds_itr, descriptor_iter->first.getArg(0), notification->captureData,
-                                   boxes[idx]));
-          newObj->addValidationResult(confidences[idx], descriptor_iter->first);
+                                   detected_object.rect));
+          newObj->addValidationResult(detected_object.confidence, descriptor_iter->first);
           if (useAllResults) {
             // also add "class_label(VAR)"
-            newObj->addValidationResult(confidences[idx], PredicateHelper(
-                    class_label + "(" + descriptor_iter->first.getArg(0) + ")"));
+            newObj->addValidationResult(detected_object.confidence, PredicateHelper(
+                    detected_object.name + "(" + descriptor_iter->first.getArg(0) + ")"));
           }
           newObjs->push_back(newObj);
 
@@ -435,26 +397,24 @@ void NeuralDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
 
   sendDetectionNotifications(newObjs);
 
-  // draw face bounding boxes
+  // draw detection bounding boxes
   if (getDisplayFlag()) {
-    inputFrame.copyTo(displayFrame);
-    MemoryObject::Vec::const_iterator newObjItr;
+    // inputFrame.copyTo(displayFrame);
     for (auto newObjIter = newObjs->begin(); newObjIter != newObjs->end(); ++newObjIter) {
       const cv::Rect &objRect = (*newObjIter)->getDetectionMask()->getBoundingBox();
       std::string label = (*newObjIter)->getValidationResults().getDescriptorsString();
-      cv::rectangle(displayFrame, cv::Point(objRect.x, objRect.y),
-                    cv::Point(objRect.x + objRect.width, objRect.y + objRect.height),
-                    CV_RGB(255, 0, 0), 2, 8, 0);
-      cv::putText(displayFrame, label, cv::Point(objRect.x, objRect.y), cv::FONT_HERSHEY_SIMPLEX,
-                  0.8, CV_RGB(0, 255, 0), 1);
+      int lineThickness = 2;
+      cv::rectangle(displayFrame, cv::Point(objRect.x+lineThickness, objRect.y+lineThickness),
+                    cv::Point(objRect.x + objRect.width - lineThickness, objRect.y + objRect.height - lineThickness),
+                    CV_RGB(0, 0, 255), lineThickness, 8, 0);
     }
 
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+  ade::Display::displayFrame(displayFrame, getDisplayName());
   }
 }
 
 // alters current frame so that it can be processed by the model
-cv::Mat NeuralDetector::prepFrame(cv::Mat img) {
+cv::Mat NeuralDetector::prepFrame(const cv::Mat& img) {
   cv::Mat currFrame;
   cv::resize(img, currFrame, cv::Size(640, 640));
   cv::cvtColor(currFrame, currFrame, cv::COLOR_BGR2RGB);
@@ -463,7 +423,7 @@ cv::Mat NeuralDetector::prepFrame(cv::Mat img) {
 }
 
 size_t NeuralDetector::vectorProduct(std::vector<int64_t> vector) {
-  if (vector.size() == 0) {
+  if (vector.empty()) {
     return 0;
   }
 
@@ -496,12 +456,12 @@ std::vector<cv::Point> NeuralDetector::getTLandBR(std::vector<float>::iterator i
 
 void NeuralDetector::displayDetectedObjects(cv::Mat& imgToDraw, const std::vector<NeuralDetector::DetectedObject>& detectedObjects, const std::string& displayName) {
   // display detections
-  for (auto itr = detectedObjects.begin(); itr != detectedObjects.end(); ++itr) {
-    const cv::Rect &objRect = (*itr).rect;
+  for (const auto & detectedObject : detectedObjects) {
+    const cv::Rect &objRect = detectedObject.rect;
     cv::rectangle(imgToDraw, cv::Point(objRect.x, objRect.y),
     cv::Point(objRect.x + objRect.width, objRect.y + objRect.height),
     CV_RGB(255, 0, 0), 2, 8, 0);
-    cv::putText(imgToDraw, (*itr).name, cv::Point(objRect.x + objRect.width, objRect.y + objRect.height),
+    cv::putText(imgToDraw, detectedObject.name, cv::Point(objRect.x + objRect.width, objRect.y + objRect.height),
     cv::FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(255, 0, 0));
   }
   ade::Display::createWindowIfDoesNotExist(displayName);
@@ -515,7 +475,7 @@ void NeuralDetector::fillClassNames(int totalClasses) {
     classNames.push_back("invalid");
   }
 
-  for (auto idThenClass : idToClass) {
+  for (const auto& idThenClass : idToClass) {
     classNames[idThenClass.first] = idThenClass.second;
   }
 }
