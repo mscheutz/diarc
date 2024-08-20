@@ -80,7 +80,6 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     } catch (TRADEException e) {
       log.error("[init] error registering location consultant with TRADE", e);
     }
-    locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
 
 //    claim();
 //    powerOn();

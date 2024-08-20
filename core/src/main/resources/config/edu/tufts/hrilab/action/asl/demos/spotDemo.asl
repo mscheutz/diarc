@@ -21,9 +21,11 @@ import java.util.List;
     actionStatuses: {FAIL_RETURNVALUE}
   }
 
-  act:setLocationWithFiducial(!defaultLocation);
+    act:setInitialLocation(!defaultLocation);
+//  act:setLocationWithFiducial(!defaultLocation);
   op:log(warn, "[failedLocalization] location initialized to !defaultLocation after failing to localize");
 }
+
 
 
 () = init[""]() {
@@ -32,7 +34,8 @@ import java.util.List;
 
     act:claim();
     act:powerOn();
-    act:undock();
+//    act:stand();
+//    act:undock();
 
     !result = act:hasBeenLocalized();
 
@@ -49,13 +52,14 @@ import java.util.List;
     Symbol !location;
     Integer !numLocations;
     !numLocations = tsc:getNumberOfKnownLocations();
+    op:log(debug, "[map] number of known locations is !numLocations");
     for (!i=0; !i lt !numLocations; !i ++) {
         !location = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "location_!i:location");
         act:goToLocationUnsafe(!location);
         act:bindLocationToCurrentPose(!location);
         op:log(debug, "[map] mapped !location");
     }
-    tsc:writeReferencesToFile("/home/pete/dev/diarc/core/src/main/resources/config/edu/tufts/hrilab/spot/spotLocationRefs.json");
+    tsc:writeReferencesToFile("/home/pete/dev/diarc/core/src/main/resources/config/edu/tufts/hrilab/spot/phiLocationRefs.json");
     act:localize();
 }
 
@@ -88,6 +92,22 @@ import java.util.List;
     act:map();
     act:wander();
 }
+
+() = verifyYouCanSee(Symbol ?object:physobj) {
+    op:log(debug, "[verifyYouCanSee] running visual search and looking for ?object");
+    act:startVisualSearch(?object);
+    act:findObject(?object);
+    act:stopVisualSearch(?object);
+}
+
+() = pickUp(Symbol ?object:physobj) {
+    act:command(arm_carry);
+    act:openGripper(none);
+    //todo: Look for object
+    act:pickUpObject(?object);
+    act:command(arm_carry);
+}
+
 ///////// Operators
 
 () = deliver(Symbol ?object:physobj, Symbol ?at:location) {
@@ -131,9 +151,21 @@ import java.util.List;
         success : not(free(?actor));
         success : holding(?actor, ?object);
     }
-    act:command(arm_carry);
-    act:openGripper(none);
-    //todo: Look for object
-    act:pickUpObject(?object);
-    act:command(arm_carry);
+    act:pickUp(?object);
+}
+
+() = perceiveentity(Symbol ?object:physobj, Symbol ?type:property, Symbol ?location:location) {
+    conditions : {
+        pre : at(?actor, ?location);
+        pre : observableat(?type, ?location);
+        pre : not(observed(?object, ?location));
+        pre : property_of(?object, ?type);
+    }
+    effects : {
+        success : at(?object, ?location);
+        success : observed(?object, ?location);
+    }
+
+    op:log(debug, "[perceiveentity] looking for object ?object of type ?type at location ?location");
+    act:verifyYouCanSee(?object);
 }

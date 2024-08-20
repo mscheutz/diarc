@@ -1,0 +1,2 @@
+verify that you can see; C/REF; #r.perceiveEntity(?ADDRESSEE,$r)
+pick up; C/REF; #r.pickUp(?ADDRESSEE,$r)

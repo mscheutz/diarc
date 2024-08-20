@@ -1,0 +1,26 @@
+{
+  "references": [
+    {
+      "properties": [],
+      "variable": "X:movebaselocation",
+      "graphId": "blonde-cocoon-axUQPDxahCqsz1Z6WgtIPg\u003d\u003d",
+      "x": 1.7707251970146434,
+      "y": 0.035331679409450825,
+      "orientX": -0.006631110409257956,
+      "orientY": -0.005948184497570349,
+      "orientZ": 0.05060668768719822,
+      "orientW": 0.9986789327092334
+    },
+    {
+      "properties": [],
+      "variable": "X:movebaselocation",
+      "graphId": "lateen-shrimp-1pMAjYQfoyoslUtSAjOJyA\u003d\u003d",
+      "x": 6.803179876480155,
+      "y": 2.6964851915517056,
+      "orientX": -0.0026941075443203,
+      "orientY": 0.002171394764524958,
+      "orientZ": 0.7186916626794155,
+      "orientW": 0.6953203008861553
+    }
+  ]
+}

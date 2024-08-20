@@ -123,7 +123,7 @@ can; ((MODAL/REF)\AGENT) / ((C/REF)\AGENT) ; #x.$x
 can; (((MODAL/REF)/REF)\AGENT) / (((C/REF)/REF)\AGENT) ; #x.$x
 can; Q / C ; #x.can($x)
 
-catch; (C\AGENT)/AGENT ; #x#a.catch($a,$x)
+catch; (C\AGENT)/AGENT ; #x#a.catch($a,$xspotdemo.asl)
 %%TODO:brad: to we care about the imperative "Depmster catch Shafer"
 catch; C/AGENT ; #x.catch(?ADDRESSEE,$x)
 
