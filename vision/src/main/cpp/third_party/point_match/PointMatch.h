@@ -30,8 +30,8 @@ please contact zhengyf@cfar.umd.edu
 #if !defined __POINT_MATCH_H__
 #define __POINT_MATCH_H__
 
-#ifndef BOOL
-#define BOOL bool
+#ifndef BBOOL
+#define BBOOL bool
 #endif
 
 //Parameters that may affect the performance
@@ -82,7 +82,7 @@ int		CalRefAngle( MYPOINT *Pnt, int nPnt );
 int		CalPointDist(MYPOINT *Pnt, int nPnt, double **r_array, double &mean_dist);
 //Calculate the shape context for all points
 int		CalShapeContext(MYPOINT *Pnt, int nPnt, int nbins_theta, int nbins_r, 
-			   double *r_bin_edges, double **SC, double **r_array, double mean_dist, BOOL bRotateInvariant);
+			   double *r_bin_edges, double **SC, double **r_array, double mean_dist, BBOOL bRotateInvariant);
 //Calculate the shape context distance matrix
 int		HistCost( double **SC1, int nPnt1, double **SC2, int nPnt2, int nbins, double **costmat);
 
