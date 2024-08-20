@@ -14,10 +14,7 @@ import edu.tufts.hrilab.vision.stm.SearchManager;
 import edu.tufts.hrilab.vision.tracker.swig.NativeTracker.TrackerType;
 
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Term;
@@ -27,8 +24,6 @@ import edu.tufts.hrilab.vision.util.NonEDTListModel;
 
 import java.awt.EventQueue;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 import javax.swing.DefaultComboBoxModel;
 
 import edu.tufts.hrilab.vision.visionproc.Requirement;
@@ -53,7 +48,7 @@ public class AvailableDetectors {
   //instantiated Detectors
   //private HashMap<DetectorType, HashSet<Detector>> instantiatedDetectors = new HashMap();
   private Map<DetectorType, DefaultComboBoxModel> instantiatedDetectors = new HashMap();
-  private final Map<Detector, HashSet<Object>> instantiatedDetectorClients = new HashMap();
+  private final Map<Detector, Set<Object>> instantiatedDetectorClients = new HashMap();
   //info needed to instantiate detectors of a certain Predicate
   //(e.g., face(X) = functorname(X,descriptor))
   //hashed by descriptor in outermost map, and then functorname
@@ -435,7 +430,7 @@ public class AvailableDetectors {
 
   //helper function to add getInstance caller to client list
   private void addClient(final Object client, final Detector detector) {
-    HashSet<Object> clientList = instantiatedDetectorClients.get(detector);
+    Set<Object> clientList = instantiatedDetectorClients.get(detector);
     if (clientList == null) {
       clientList = new HashSet();
       instantiatedDetectorClients.put(detector, clientList);
@@ -456,7 +451,7 @@ public class AvailableDetectors {
    * instance, so that Detectors can be properly managed and garbage collected.
    */
   public synchronized void release(final Object client, final Detector detector) {
-    HashSet<Object> clientList = instantiatedDetectorClients.get(detector);
+    Set<Object> clientList = instantiatedDetectorClients.get(detector);
     if (clientList == null || !clientList.contains(client)) {
       log.warn(String.format("[release] Calling object (%s) is not a client of the Detector: %s.",
               client.toString(), detector.toString()));
