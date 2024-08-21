@@ -239,12 +239,12 @@ public abstract class Context {
           log.warn("Can not set context " + cmd + " to status " + status + ". Already has terminal status: " + actionStatus);
         }
         return;
-      } else if (status == ActionStatus.SUCCESS || status == ActionStatus.APPROVED || status == ActionStatus.CANCEL || status.isFailure()) {
-        actionStatus = status;
-        this.justification = justification;
-      } else if (status == ActionStatus.RESUME) {
-        actionStatus = ActionStatus.PROGRESS;
-        this.justification = justification;
+//      } else if (status == ActionStatus.SUCCESS || status == ActionStatus.APPROVED || status == ActionStatus.CANCEL || status.isFailure()) {
+//        actionStatus = status;
+//        this.justification = justification;
+//      } else if (status == ActionStatus.RESUME) {
+//        actionStatus = ActionStatus.RESUME;
+//        this.justification = justification;
       } else {
         actionStatus = status;
         this.justification = justification;
@@ -398,7 +398,20 @@ public abstract class Context {
    */
   public final Context getNextStep() {
     Context next = null;
-    if (getStatus() == ActionStatus.PROGRESS || getStatus() == ActionStatus.RECOVERY) {
+    if (getStatus() == ActionStatus.RESUME) {
+      // check if any child context(s) are suspended (and need to be resumed)
+      int suspendedChildIdx = childContexts.findFirstIndexOf(child -> child.getStatus() == ActionStatus.SUSPEND);
+      if (suspendedChildIdx >= 0) {
+        // suspended child found -- set as next child, and set status to RESUME
+        childContexts.get(suspendedChildIdx).setStatus(ActionStatus.RESUME);
+        childContexts.setNextIndex(suspendedChildIdx);
+      } else {
+        // no suspended children, continue normal execution
+        setupNextStep();
+      }
+
+      next = getNextStepForType();
+    } else if (getStatus() == ActionStatus.PROGRESS || getStatus() == ActionStatus.RECOVERY) {
       setupNextStep();
       next = getNextStepForType();
     }

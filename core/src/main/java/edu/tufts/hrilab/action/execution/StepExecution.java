@@ -189,6 +189,7 @@ public class StepExecution {
         case SUCCESS:
           context.performAdditionalStatusUpdates();
           return context.getJustification();
+        case RESUME:
         case PROGRESS:
           // set next step to verify return value
           context.setStatus(ActionStatus.VERIFYING_RETURNVALUE, new ConditionJustification(true));

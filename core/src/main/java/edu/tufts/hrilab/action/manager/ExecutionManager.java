@@ -102,9 +102,9 @@ public class ExecutionManager implements ActionListener {
 
   /**
    * Tree of AgentTeam Objects - contains all active goals spread throughout the
-   *  hierarchy
+   * hierarchy
    */
-  protected final Map<Symbol,AgentTeam> agentTeams = new HashMap<>();
+  protected final Map<Symbol, AgentTeam> agentTeams = new HashMap<>();
 
   protected final Object resourceLock = new Object();
 
@@ -181,12 +181,12 @@ public class ExecutionManager implements ActionListener {
       //Strip type information in order to more easily match
       // against actors in below functions
       Map<Symbol, Set<Symbol>> untypedAgentHierarchy = new HashMap<>();
-      for (Map.Entry<Symbol,Set<Symbol>> agentTeam: agentHierarchy.entrySet()) {
+      for (Map.Entry<Symbol, Set<Symbol>> agentTeam : agentHierarchy.entrySet()) {
         Symbol teamName = agentTeam.getKey();
         teamName = Factory.createSymbol(teamName.toUntypedString());
         Set<Symbol> teamMembers = agentTeam.getValue();
         Set<Symbol> untypedTeamMembers = new HashSet<>();
-        for (Symbol teamMember: teamMembers) {
+        for (Symbol teamMember : teamMembers) {
           untypedTeamMembers.add(Factory.createSymbol(teamMember.toUntypedString()));
         }
         untypedAgentHierarchy.put(teamName, untypedTeamMembers);
@@ -197,7 +197,7 @@ public class ExecutionManager implements ActionListener {
       // level teams and agents in the hierarchy
       //The aim of this logic is to set only the direct links between teams and
       //  agents, rather than have it be transitive like how it is represented in belief
-      for (Symbol teamName: agentHierarchy.keySet()) {
+      for (Symbol teamName : agentHierarchy.keySet()) {
         //Get AgentTeam for team name or create it if null
         AgentTeam team = agentTeams.get(teamName);
         if (team == null) {
@@ -241,7 +241,7 @@ public class ExecutionManager implements ActionListener {
    * @param instanceType ExecutionManager class or subclass to be used
    * @param sm           state machine for root context
    * @param rootContext  base context at the root of all execution
-   * @param groups DIARC group constraints used to register this EM and its class instances that are registered with TRADE (e.g., ActionLearning)
+   * @param groups       DIARC group constraints used to register this EM and its class instances that are registered with TRADE (e.g., ActionLearning)
    * @return ExecutionManager instance
    */
   static public ExecutionManager createInstance(Class<ExecutionManager> instanceType, StateMachine sm, RootContext rootContext, Collection<String> groups) {
@@ -251,7 +251,8 @@ public class ExecutionManager implements ActionListener {
       Constructor<? extends ExecutionManager> c = instanceType.getDeclaredConstructor(cArgs);
       instance = c.newInstance();
       instance.init(sm, rootContext, groups);
-    } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
+    } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
+             InvocationTargetException exception) {
       log.error("couldn't instantiate execution manager " + instanceType, exception);
     }
 
@@ -346,7 +347,8 @@ public class ExecutionManager implements ActionListener {
 
   /**
    * Transfers the highest priority goal from the pending collection which has
-   *  all required resources available to active
+   * all required resources available to active
+   *
    * @return the goal which was transferred to active for execution. If no such
    * valid goal existed, returns null.
    */
@@ -382,6 +384,7 @@ public class ExecutionManager implements ActionListener {
   }
 
   //This method doesn't need to exist anymore
+
   /**
    * Indicates whether the supplied goal consumed any resources during execution. Used on goal completion to determine
    * whether a check should be made for new goals to be submitted as a result of completion
@@ -402,7 +405,7 @@ public class ExecutionManager implements ActionListener {
     Set<Goal> conflictingGoals = new HashSet<>();
 
     //for all required resources, if res is unavailable then add holder to set
-    for (Resource res: requiredResources) {
+    for (Resource res : requiredResources) {
       if (!res.isAvailable()) {
         //TODO: handle if we allow other mechanisms to lock resources
         conflictingGoals.add(res.getHolder());
@@ -418,7 +421,7 @@ public class ExecutionManager implements ActionListener {
    */
   protected List<Symbol> getLockedResourceNames(Set<Resource> requiredResources) {//, Set<Resource> heldResources) {
     List<Symbol> lockedResourceNames = new ArrayList<>();
-    for (Resource res: requiredResources) {
+    for (Resource res : requiredResources) {
       if (!res.isAvailable()) {
         lockedResourceNames.add(res.getName());
       }
@@ -438,6 +441,7 @@ public class ExecutionManager implements ActionListener {
   //EW: This method has since been updated to consider each AgentTeam's learning resource, but still not the agent-wide
   //    resource. This has been done after moving ActionLearning from a system-wide context to an AgentTeam specific
   //    context in order to avoid independent goals from stepping on learning.
+
   /**
    * Returns the set of all Resources required to be available during execution of the supplied goal.
    */
@@ -459,6 +463,7 @@ public class ExecutionManager implements ActionListener {
       return resourceSet;
     }
   }
+
   /**
    * Returns the set of all Resources that will be held by the supplied goal during its execution.
    */
@@ -483,6 +488,7 @@ public class ExecutionManager implements ActionListener {
 
   //This was only necessary due to the structure of the initial implementation of update notifications. May be obsolete if
   //  if hooks are changed.
+
   /**
    * Enum used alongside goal notification updates to indicate whether the goal was added, removed, or already present
    * in the relevant collection
@@ -546,7 +552,7 @@ public class ExecutionManager implements ActionListener {
         if (conflictingGoals.isEmpty()) {
           log.trace("[onPendingGoalUpdated] no conflicting active goals");
           //2. Does not share relevant resources with any higher priority goal currently in the queue
-          if (!resourceConflictInPending(g,index)) {
+          if (!resourceConflictInPending(g, index)) {
             log.debug("[onPendingGoalUpdated] no conflicting goals, transferring to active");
             lockResources(g);
             transferGoalToActive(g);
@@ -579,6 +585,7 @@ public class ExecutionManager implements ActionListener {
   /**
    * Determines what is done to an added pending goal when resources are not
    * available to execute the action.
+   *
    * @param g the goal that was added
    */
   protected void handleConflictingLowerPriorityGoal(Goal g) {
@@ -605,7 +612,7 @@ public class ExecutionManager implements ActionListener {
     //TODO: make sure this is sensible and add pragrule
     Justification justification = new ConditionJustification(false, Factory.createPredicate("availableResources", lockedResources));
     g.setFailConditions(justification);
-    g.setAsTerminated(GoalStatus.FAILED);
+    g.setStatus(GoalStatus.FAILED);
     transferGoalToPastGoals(g);
   }
 
@@ -630,7 +637,7 @@ public class ExecutionManager implements ActionListener {
       log.error("[submitGoal] actor {} for goal {} not found in the agent hierarchy. Not executing. ", untypedActor, g);
       Justification justification = new ConditionJustification(false, Factory.createPredicate("actorInHierarchy", untypedActor));
       g.setFailConditions(justification);
-      g.setAsTerminated(GoalStatus.FAILED);
+      g.setStatus(GoalStatus.FAILED);
       pastGoals.add(g);
       return g;
     }
@@ -855,8 +862,7 @@ public class ExecutionManager implements ActionListener {
         if (goal.getStatus() != GoalStatus.SUSPENDED) {
           log.warn("[transferGoalToActive] encountered goal with a non-null ActionInterpreter and is not suspended");
           onActiveGoalUpdated(goal, goal.getStatus(), UpdateType.ADDED);
-        }
-        else {
+        } else {
           if (pg.getPreviousStatus() == GoalStatus.ACTIVE) {
             log.debug("[transferGoalToActive] Resuming goal with previous AI");
             goal.resume();
@@ -877,7 +883,8 @@ public class ExecutionManager implements ActionListener {
 
   /**
    * Add an active goal to the corresponding AgentTeam
-   * @param g The active goal
+   *
+   * @param g      The active goal
    * @param future The active goal's associated ActionInterpreter future
    */
   private void addActiveGoal(Goal g, Future future) {
@@ -898,12 +905,12 @@ public class ExecutionManager implements ActionListener {
     log.debug("[lockResources] {}, {}", g, resources);
     synchronized (resourceLock) {
       log.trace("[lockResources] have resourceLock");
-        for (Resource res : resources) {
-          if (!res.isAvailable()) {
-            log.warn("[lockResources] attempting to lock resource which is not available: {}", res.getName());
-            return false;
-          }
+      for (Resource res : resources) {
+        if (!res.isAvailable()) {
+          log.warn("[lockResources] attempting to lock resource which is not available: {}", res.getName());
+          return false;
         }
+      }
 
       log.trace("[lockResources] locking resources {}", resources);
       for (Resource res : resources) {
@@ -916,6 +923,7 @@ public class ExecutionManager implements ActionListener {
 
   /**
    * Remove an active goal from the corresponding AgentTeam
+   *
    * @param g The goal to be removed
    * @return The goal's associated ActionInterpreter future
    */
@@ -982,7 +990,7 @@ public class ExecutionManager implements ActionListener {
     } else {
       log.info("[executeGoal] Goal " + goal + " is not permissible.");
       goal.setFailConditions(constraintCheck);
-      goal.setAsTerminated(GoalStatus.FAILED);
+      goal.setStatus(GoalStatus.FAILED);
     }
 
     log.info("[executeGoal] Failed to add goal! {}", goal);
@@ -1368,7 +1376,7 @@ public class ExecutionManager implements ActionListener {
   private void getActiveGoalsHelper(Symbol agent, Set<Goal> goals) {
     AgentTeam agentTeam = getAgentTeam(agent);
     goals.addAll(agentTeam.getActiveGoals());
-    for (Symbol member: agentTeam.getMemberNames()) {
+    for (Symbol member : agentTeam.getMemberNames()) {
       getActiveGoalsHelper(member, goals);
     }
   }
@@ -1397,7 +1405,7 @@ public class ExecutionManager implements ActionListener {
       log.trace("[cancelAllPendingGoals] have pendingGoalsLock");
       while (!pendingGoals.isEmpty()) {
         int size = pendingGoals.size();
-        cancelPendingGoalByIndex(size-1);
+        cancelPendingGoalByIndex(size - 1);
         if (pendingGoals.size() == size) {
           log.error("[cancelPendingGoals] canceled goal which was not removed from the collection, exiting loop");
           return;
@@ -1425,13 +1433,13 @@ public class ExecutionManager implements ActionListener {
     synchronized (goalsLock) {
       Set<Goal> goalsToCancel = new HashSet<>();
       for (Symbol agentTeam : agentTeams.keySet()) {
-        for (Goal g: agentTeams.get(agentTeam).getActiveGoals()) {
+        for (Goal g : agentTeams.get(agentTeam).getActiveGoals()) {
           if (!g.getPredicate().getName().equals("listen")) {
             goalsToCancel.add(g);
           }
         }
       }
-      for (Goal g: goalsToCancel) {
+      for (Goal g : goalsToCancel) {
         cancelActiveGoal(g);
       }
     }
@@ -1467,11 +1475,11 @@ public class ExecutionManager implements ActionListener {
       return goalPreds;
     }
 
-    for (Goal g: agentTeam.getActiveGoals()) {
+    for (Goal g : agentTeam.getActiveGoals()) {
       goalPreds.add(Factory.createPredicate(g.getStatus().toString(), g.getPredicate()));
     }
 
-    for (Symbol member: agentTeam.getMemberNames()) {
+    for (Symbol member : agentTeam.getMemberNames()) {
       goalPreds.addAll(getSystemGoalsPredicates(member));
     }
 
@@ -2047,11 +2055,11 @@ public class ExecutionManager implements ActionListener {
   @TRADEService
   @Action
   public boolean checkIgnoreTentativeAccept(Predicate goalPred) {
-    Collection<TRADEServiceInfo> tsis=TRADE.getAvailableServices(new TRADEServiceConstraints().name("ignoreTentativeAccept").argTypes(Predicate.class));
+    Collection<TRADEServiceInfo> tsis = TRADE.getAvailableServices(new TRADEServiceConstraints().name("ignoreTentativeAccept").argTypes(Predicate.class));
 
-    for(TRADEServiceInfo tsi: tsis){
+    for (TRADEServiceInfo tsi : tsis) {
       try {
-        if(tsi.call(Boolean.class, goalPred)) return true;
+        if (tsi.call(Boolean.class, goalPred)) return true;
       } catch (TRADEException e) {
         log.error("[checkIgnoreTentativeAccept] error calling ignoreTentativeAccept", e);
       }
@@ -2065,17 +2073,17 @@ public class ExecutionManager implements ActionListener {
   //  until other GUI work is more concrete
   protected void notifyUIActiveGoalUpdated(Goal g, GoalStatus status, UpdateType updateType) {
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("notifyActiveGoalUpdated").argTypes(Goal.class,UpdateType.class,GoalStatus.class)).call(void.class, g, updateType,  status);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("notifyActiveGoalUpdated").argTypes(Goal.class, UpdateType.class, GoalStatus.class)).call(void.class, g, updateType, status);
     } catch (TRADEException e) {
-      log.debug("[notifyUIActiveGoalUpdated]",e);
+      log.debug("[notifyUIActiveGoalUpdated]", e);
     }
   }
 
   protected void notifyUIPendingGoalUpdated(Goal g, int index, UpdateType updateType) {
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("notifyPendingGoalUpdated").argTypes(Goal.class,Integer.class,UpdateType.class)).call(void.class, g, index, updateType);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("notifyPendingGoalUpdated").argTypes(Goal.class, Integer.class, UpdateType.class)).call(void.class, g, index, updateType);
     } catch (TRADEException e) {
-      log.debug("[notifyUIPendingGoalUpdated]",e);
+      log.debug("[notifyUIPendingGoalUpdated]", e);
     }
   }
 

@@ -29,7 +29,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * <code>ActionInterpreter</code> is the primary step execution module for the
- robot.
+ * robot.
  */
 public class ActionInterpreter implements Callable<ActionStatus> {
 
@@ -67,10 +67,9 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   /**
    * To suspend execution of an ActionInterpreter.
    */
-  private volatile boolean suspend = false;
   private Lock suspendLock = new ReentrantLock();
   private Condition suspendCondition = suspendLock.newCondition();
-  private AtomicBoolean shouldSuspend = new AtomicBoolean(false);
+  private AtomicBoolean suspended = new AtomicBoolean(false);
 
   /**
    * Flag for canceling this ActionInterpreter.
@@ -97,11 +96,13 @@ public class ActionInterpreter implements Callable<ActionStatus> {
    */
   private final ExecutorService asyncExecutor = Executors.newCachedThreadPool();
   private final Map<Long, Future<ActionStatus>> asyncFutures = new HashMap<>();
+  private final Map<Long, ActionInterpreter> asyncAIs = new HashMap<>();
 
   /**
    * Create a new ActionInterpreter instance to execute a goal.
-   * @param goal Goal
-   * @param caller Caller context (e.g. root context)
+   *
+   * @param goal         Goal
+   * @param caller       Caller context (e.g. root context)
    * @param stateMachine state machine to use for execution
    */
   public static ActionInterpreter createInterpreterFromGoal(Goal goal, Context caller, StateMachine stateMachine) {
@@ -110,9 +111,10 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
   /**
    * Create a new ActionInterpreter instance to execute a goal (with specified executionType).
-   * @param goal Goal
-   * @param caller Caller context (e.g. root context)
-   * @param stateMachine state machine to use for execution
+   *
+   * @param goal          Goal
+   * @param caller        Caller context (e.g. root context)
+   * @param stateMachine  state machine to use for execution
    * @param executionType action execution type
    * @return
    */
@@ -122,8 +124,9 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
   /**
    * Create new ActionInterpreter instance from an event spec.
-   * @param goal Goal
-   * @param caller Caller context (e.g. root context)
+   *
+   * @param goal      Goal
+   * @param caller    Caller context (e.g. root context)
    * @param eventSpec The EventSpec describing the initial action
    */
 
@@ -138,6 +141,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
   /**
    * Create new ActionInterpreter instance from an action context.
+   *
    * @param step context to be executed (e.g. root context)
    */
   public static ActionInterpreter createInterpreterFromContext(Goal goal, Context step) {
@@ -147,7 +151,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   /**
    * Create a new ActionInterpreter instance from a context that may have been partially executed
    *
-   * @param goal the goal which the context tree is working toward
+   * @param goal     the goal which the context tree is working toward
    * @param goalRoot the root context for the goal
    * @return the action new interpreter
    */
@@ -162,6 +166,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   /**
    * Only ActionInterpreter constructor. All AIs should be constructed through
    * a factory method (e.g., createInterpreterFrom___(...)).
+   *
    * @param goal
    * @param rootContext
    */
@@ -192,7 +197,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       }
       stepExecution = new StepExecution(rootStep, callStack);
     } else {
-      goal.setAsTerminated(GoalStatus.FAILED);
+      goal.setStatus(GoalStatus.FAILED);
       goal.setFailConditions(rootStep.getJustification());
       log.info("Action for goal {} failed with GoalStatus: {}", goal.getPredicate(), goal.getStatus());
     }
@@ -289,13 +294,19 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
     callStack.before(step);
 
-    // TODO: it's a bit awkward to create a Goal here, but AIs currently need a goal instance.
-    //  Consider getting rid of this requirement?
-    Symbol actor = (Symbol) currentStep.getArgumentValue("?actor");
-    Goal goal = new Goal(actor, currentStep.getSignatureInPredicateForm());
-    ActionInterpreter ai = ActionInterpreter.createInterpreterFromContext(goal, currentStep);
-    Future<ActionStatus> asyncFuture = asyncExecutor.submit(ai);
-    asyncFutures.put(currentStep.getId(), asyncFuture);
+    if (step.getStatus() == ActionStatus.RESUME) {
+      // call resume on the existing asyncAI
+      asyncAIs.get(step.getId()).resume();
+    } else {
+      // TODO: it's a bit awkward to create a Goal here, but AIs currently need a goal instance.
+      //  Consider getting rid of this requirement?
+      Symbol actor = (Symbol) currentStep.getArgumentValue("?actor");
+      Goal goal = new Goal(actor, currentStep.getSignatureInPredicateForm());
+      ActionInterpreter ai = ActionInterpreter.createInterpreterFromContext(goal, currentStep);
+      Future<ActionStatus> asyncFuture = asyncExecutor.submit(ai);
+      asyncFutures.put(currentStep.getId(), asyncFuture);
+      asyncAIs.put(currentStep.getId(), ai);
+    }
 
     Context nextStep = callStack.next();
     while (nextStep != null) {
@@ -319,6 +330,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
   /**
    * Get the root context executed by this ActionIntepreter.
+   *
    * @return root context/step
    */
   public Context getRoot() {
@@ -414,6 +426,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   /**
    * Whether this ActionInterpreter instance is valid (i.e. can run) or not.
    * It all comes down the the status of the current step.
+   *
    * @return true if ActionInterpreter is valid and can execute the action.
    */
   // TODO: should this be the root step, if the action is over, current step will
@@ -462,64 +475,27 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       }
       // done ensuring single thread is executing an AI at a time
 
+      // send notifications
       notifyStart();
-      while (shouldUpdate.get()) {
 
-        //suspend logic
-        suspendLock.lock();
-        try {
-          while (suspend) {
-            if (shouldSuspend.get()) {
-              suspendSteps();
-            }
-            try {
-              suspendCondition.await();
-            } catch (InterruptedException e) {
-              log.warn("Interrupted while waiting for suspend condition.", e);
-            }
+      // main execution loop (wrapped in suspend/resume logic)
+      while (!this.goal.getStatus().isTerminated()) {
+        if (suspended.get()) {
+          // suspend logic
+          suspendLock.lock();
+          try {
+            suspendCondition.await();
+          } catch (InterruptedException e) {
+            log.warn("Interrupted while waiting for suspend condition.", e);
+          } finally {
+            suspendLock.unlock();
           }
-        } finally {
-          suspendLock.unlock();
-        }
-
-        // cancel logic
-        if (shouldCancel.get()) {
-          if (currentStep == null) {
-            log.warn("[shouldCancel] AI for goal has already terminated: {}", goal.getPredicate());
-          } else if (currentStep.isTerminated()) {
-            log.error("[shouldCancel] Can't find non-terminated context to cancel: {}", goal.getPredicate());
-          } else {
-            //Don't think this practically matters and ideally shouldn't reach this case (only possible if there is an
-            //  onSuspend behavior defined but no onCancel), but in this case the current step has partially undergone
-            //  execution. Appropriately set status to CANCEL.
-            if (currentStep.getStatus() == ActionStatus.SUSPEND) {
-              currentStep.setStatus(ActionStatus.CANCEL);
-            } else {
-              // TODO: is PARENT_CANCELLED necessary?
-              //Otherwise this context hadn't started any execution, don't want to potentially call any associated onCancel
-              // behaviors in this case. Using PARENT_CANCELED status to propagate CANCEL up the tree w/o calling onCancel
-              currentStep.setStatus(ActionStatus.PARENT_CANCELED);
-            }
-            shouldCancel.set(false);
-          }
-        }
-
-        goal.setCurrentContext(currentStep);
-        if (currentStep.isAsynchronous() && currentStep != rootStep) {
-          log.trace("about to call runAsyncCycle: {} ...", currentStep.getSignatureInPredicateForm());
-          Context nextStep = runAsyncCycle(currentStep);
-          setCurrentStep(nextStep);
-          log.trace("done with runAsyncCycle.");
         } else {
-          log.trace("about to call runCycle: {} ...", currentStep.getSignatureInPredicateForm());
-          Context nextStep = runCycle(currentStep);
-          setCurrentStep(nextStep);
-          log.trace("done with runCycle.");
+          mainExecutionLoop();
         }
-
-        // give other threads a chance to execute
-        Thread.yield();
       }
+
+      // goal termination
       ActionResourceLock.deepReleaseAll(this);
       notifyCompletion();
       isRunning = false;
@@ -527,6 +503,28 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     } catch (Exception e) {
       log.error("Exception caught during ActionInterpreter execution.", e);
       return ActionStatus.FAIL;
+    }
+  }
+
+  private void mainExecutionLoop() {
+    log.debug("Entering main execution loop.");
+
+    while (shouldUpdate.get()) {
+      goal.setCurrentContext(currentStep);
+      if (currentStep.isAsynchronous() && currentStep != rootStep) {
+        log.trace("about to call runAsyncCycle: {} ...", currentStep.getSignatureInPredicateForm());
+        Context nextStep = runAsyncCycle(currentStep);
+        setCurrentStep(nextStep);
+        log.trace("done with runAsyncCycle.");
+      } else {
+        log.trace("about to call runCycle: {} ...", currentStep.getSignatureInPredicateForm());
+        Context nextStep = runCycle(currentStep);
+        setCurrentStep(nextStep);
+        log.trace("done with runCycle.");
+      }
+
+      // give other threads a chance to execute
+      Thread.yield();
     }
   }
 
@@ -543,67 +541,34 @@ public class ActionInterpreter implements Callable<ActionStatus> {
    * Suspend the Action Interpreter's script.
    */
   public void suspend() {
-    suspendLock.lock();
-    try {
-      suspend = true;
+    // lock on the currentStep so cancelling doesn't accidentally cancel an old step
+    currentStepLock.readLock().lock();
 
-      if (currentStep instanceof ActionContext && ((ActionContext) currentStep).getDBE().hasOnSuspendEvent()) {
-        log.debug("[suspend] interrupting execution of current step: {}", currentStep.getSignatureInPredicateForm());
-        stepInterrupted = true;
-        suspendSteps();
+    try {
+      if (currentStep == null) {
+        log.warn("[suspend] AI for goal has already terminated: {}", goal.getPredicate());
+      } else if (currentStep.isTerminated()) {
+        log.warn("[suspend] Current step already terminated, not setting suspend status: {}", goal.getPredicate());
+      } else if (currentStep.getStatus() == ActionStatus.INITIALIZED) {
+        log.debug("[suspend] current step is INITIALIZED, not setting suspend status: {}", goal.getPredicate());
       } else {
-        log.debug("[suspend] Current step not interruptable, setting shouldSuspend to true to cancel before next step. " +
-                "Current step: : {}", currentStep.getSignatureInPredicateForm());
-        shouldSuspend.set(true);
+        suspended.set(true);
+        currentStep.setStatus(ActionStatus.SUSPEND);
       }
     } finally {
-      suspendLock.unlock();
+      currentStepLock.readLock().unlock();
     }
   }
-
-  private void suspendSteps() {
-    if (currentStep == null) {
-      log.warn("[suspendSteps] AI for goal has already terminated: {}", goal.getPredicate());
-      return;
-    } else if (currentStep.isTerminated()) {
-      log.warn("[suspendSteps] Current step already terminated, not setting suspend status: {}", goal.getPredicate());
-    } else if (currentStep.getStatus() == ActionStatus.INITIALIZED) {
-      log.debug("[suspendSteps] current step is INITIALIZED, not setting suspend status: {}", goal.getPredicate());
-    } else {
-      currentStep.setStatus(ActionStatus.SUSPEND);
-    }
-
-    shouldSuspend.set(false);
-  }
-
-  // TODO: REDO how CANCEL/SUSPEND/RESUME work !!!
 
   /**
    * Resume the Action Interpreter's script after suspending.
-   *
-   * TODO: to resume, the currentStep probably needs to be set to the rootContext so all parent nodes
-   *       have a chance to perform onResume actions from the top down
    */
   public void resume() {
     suspendLock.lock();
     try {
-      if (suspend) {
-        suspend = false;
-
-        if (stepInterrupted) {
-          if (currentStep instanceof ActionContext) {
-            ((ActionContext) currentStep).handleInterrupt(ActionStatus.RESUME);
-          }
-          currentStep.setStatus(ActionStatus.INITIALIZED);
-        }
-
-        //Propagate status up the tree to be handled per context
-        Context caller = currentStep.getParentContext();
-        while (caller != null) {
-          caller.setStatus(ActionStatus.RESUME);
-          caller = caller.getParentContext();
-        }
-
+      if (suspended.getAndSet(false)) {
+        rootStep.setStatus(ActionStatus.RESUME);
+        setCurrentStep(rootStep);
         suspendCondition.signal();
       } else {
         log.warn("[resume] trying to resume an ActionInterpreter that wasn't paused.");
@@ -622,28 +587,31 @@ public class ActionInterpreter implements Callable<ActionStatus> {
    * only option for external classes.
    */
   public void cancel() {
-    //setStatus is only called after the current step completes, so cancelling on a blocking step won't actually
-    //  cancel the action until that blocking action terminates unless we interrupt it here
-    if (currentStep instanceof ActionContext && ((ActionContext) currentStep).getDBE().hasOnCancelEvent()) {
-      log.debug("[cancel] interrupting execution of current step and setting currentStep status to CANCEL. Goal: {} Current step: {}",
-              goal.getPredicate(), currentStep.getSignatureInPredicateForm());
-      //Setting action status to CANCEL will cause execution to be interrupted automatically
-      stepInterrupted = true;
-      currentStep.setStatus(ActionStatus.CANCEL);
-    } else {
-      log.debug("[cancel] Current step not interruptable, setting shouldCancel to true to cancel before next step. Goal: {}", goal.getPredicate());
-      shouldCancel.set(true);
-    }
+    // lock on the currentStep so cancelling doesn't accidentally cancel an old step
+    currentStepLock.readLock().lock();
 
-    //If canceling from a suspended state, we need to unblock the suspend
-    suspendLock.lock();
     try {
-      if (suspend) {
-        suspend = false;
-        suspendCondition.signal();
+      // cancel logic
+      if (currentStep == null) {
+        log.warn("[shouldCancel] AI for goal has already terminated: {}", goal.getPredicate());
+      } else if (currentStep.isTerminated()) {
+        log.error("[shouldCancel] Can't find non-terminated context to cancel: {}", goal.getPredicate());
+      } else {
+        currentStep.setStatus(ActionStatus.CANCEL);
+//        stepInterrupted = true; // TODO: when to set this?
       }
     } finally {
-      suspendLock.unlock();
+      currentStepLock.readLock().unlock();
+    }
+
+    // if canceling from a suspended state, we need to unblock the suspend
+    if (suspended.get()) {
+      suspendLock.lock();
+      try {
+        suspendCondition.signal();
+      } finally {
+        suspendLock.unlock();
+      }
     }
   }
 
@@ -661,15 +629,18 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     shouldUpdate.set(false);
 
     // wait for sub-AIs to finish
-    for (Long contextId : asyncFutures.keySet()) {
-      Future<ActionStatus> currFuture = asyncFutures.get(contextId);
-      if (!currFuture.isDone()) {
-        log.warn("[halt] waiting for asynchronous context to finish. Goal: {} Context id: {}", goal.getPredicate(), contextId);
-        try {
-          currFuture.get();
-          log.warn("[halt] asynchronous context finished. Goal: {} Context id: {}", goal.getPredicate(), contextId);
-        } catch (InterruptedException | ExecutionException e) {
-          log.error("[halt] exception waiting for asynchronous context to finish. Goal: {} Context id: {}", goal.getPredicate(), contextId);
+    // sub-AIs stay alive during suspend, so they can be resumed
+    if (rootStep.getStatus() != ActionStatus.SUSPEND) {
+      for (Long contextId : asyncFutures.keySet()) {
+        Future<ActionStatus> currFuture = asyncFutures.get(contextId);
+        if (!currFuture.isDone()) {
+          log.warn("[halt] waiting for asynchronous context to finish. Goal: {} Context id: {}", goal.getPredicate(), contextId);
+          try {
+            currFuture.get();
+            log.warn("[halt] asynchronous context finished. Goal: {} Context id: {}", goal.getPredicate(), contextId);
+          } catch (InterruptedException | ExecutionException e) {
+            log.error("[halt] exception waiting for asynchronous context to finish. Goal: {} Context id: {}", goal.getPredicate(), contextId);
+          }
         }
       }
     }
@@ -677,13 +648,13 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     // Update goal end status
     ActionStatus rootActionStatus = rootStep.getStatus();
     if (rootActionStatus == ActionStatus.SUCCESS) {
-      goal.setAsTerminated(GoalStatus.SUCCEEDED);
+      goal.setStatus(GoalStatus.SUCCEEDED);
     } else if (rootActionStatus == ActionStatus.CANCEL) {
-      goal.setAsTerminated(GoalStatus.CANCELED);
+      goal.setStatus(GoalStatus.CANCELED);
     } else if (rootActionStatus == ActionStatus.SUSPEND) {
-      goal.setAsTerminated(GoalStatus.SUSPENDED);
+      goal.setStatus(GoalStatus.SUSPENDED);
     } else if (rootActionStatus.isFailure()) {
-      goal.setAsTerminated(GoalStatus.FAILED);
+      goal.setStatus(GoalStatus.FAILED);
       goal.setFailConditions(rootStep.getJustification());
     } else {
       log.error("[halt] Could not convert ActionStatus to GoalStatus: {} for action: {}", rootActionStatus, goal.toString());
@@ -691,10 +662,10 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
     if (goal.getStatus().isFailure()) {
       log.info("[halt] goal terminated: {} GoalStatus: {} {}: {}."
-              ,goal.getPredicate(), goal.getStatus(), goal.getId(), goal.getFailConditions());
+              , goal.getPredicate(), goal.getStatus(), goal.getId(), goal.getFailConditions());
     } else if (log.isDebugEnabled()) {
       log.debug("[halt] goal terminated: {} GoalStatus: {} {}: {}."
-              ,goal.getPredicate(), goal.getStatus(), goal.getId(), goal.getFailConditions());
+              , goal.getPredicate(), goal.getStatus(), goal.getId(), goal.getFailConditions());
     }
   }
 
