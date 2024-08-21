@@ -27,26 +27,26 @@ public class UnitySpaceStationNLGComponent extends DiarcComponent {
 
     //I can not repair Tube alpha left One because alpha is not left one nothing damages
     if (utt.startsWith("I can not repair") && utt.contains("nothing damages")) {
-      parts = utt.split(" ");
+      parts = utt.toLowerCase().split(" ");
       utt = String.format("I can not repair tube %s %s %s because it is not damaged", parts[5], parts[6], parts[7]);
       modified = true;
     }
 
     //I can not repair because I am In transit to nothing
     if (utt.startsWith("I can not repair") && utt.contains("In transit to nothing")) {
-      utt = utt.replace("In transit to nothing", "not at a tube");
+      utt = "I can not repair because I am not at a tube";
       modified = true;
     }
 
     //I can not repair because I am not In nothing
-    if (utt.startsWith("I can not repair") && utt.contains("In nothing")) {
-      utt = utt.replace("In nothing", "at a tube");
+    if (utt.startsWith("I can not repair") && utt.contains("not In nothing")) {
+      utt = "I can not repair because I am not at a tube";
       modified = true;
     }
 
     //I can not repair alpha left four because preempted goals
     if (utt.startsWith("I can not repair") && utt.contains("preempted goals")) {
-      utt = utt.replace("preempted goals", "I am doing something else");
+      utt = utt.replace("preempted goals", "something went wrong");
       modified = true;
     }
 
