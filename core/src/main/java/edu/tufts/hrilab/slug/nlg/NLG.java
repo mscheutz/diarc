@@ -44,11 +44,17 @@ public class NLG {
   private List<Map<Variable, Symbol>> bindings = new ArrayList<>();
   private List<Term> supplements = new ArrayList<>();
   private Map<Variable, Symbol> tierAssignments = new HashMap<>();
+  private String modifierService = null;
 
-  public NLG() {
+  public NLG(String modifierService) {
+    if (modifierService != null) {
+      this.modifierService = modifierService;
+      log.debug("Using modifier service: " + modifierService);
+    }
   }
 
   public synchronized String translate(Utterance utterance) {
+    String realized;
     log.debug("Translating: " + utterance);
     listeners = new ArrayList<>();
     for (Symbol listener : utterance.getListeners()) {
@@ -110,7 +116,7 @@ public class NLG {
                 .setUtteranceType(UtteranceType.QUESTION)
                 .setIsInputUtterance(utterance.isInputUtterance()).build();
 
-        return translate(u0) + " or " + translate(u1);
+        return modifyOutput(translate(u0) + " or " + translate(u1));
       } else {
 
         NLGElement phrase = buildPhrase((Term) semantics);
@@ -134,7 +140,7 @@ public class NLG {
         } catch (Exception e) {
           log.error("exception realizing output", e);
         }
-        return output;
+        return modifyOutput(output);
       }
     } else {
       List<Symbol> args = new ArrayList<>();
@@ -142,8 +148,29 @@ public class NLG {
       SPhraseSpec clause = nlgFactory.createClause();
       NLGElement phrase = generateNP(getObject(args));
       clause.setSubject(phrase);
-      return realiser.realise(clause).getRealisation();
+      realized = realiser.realise(clause).getRealisation();
+      return modifyOutput(realized);
     }
+  }
+
+  /**
+   * If there is a modifierService defined, make a TRADE call to that TRADEService.
+   * This is a way to do string-based matching and replacement on outputs without impacting
+   * existing code.
+   * @param output String containing the output utterance
+   * @return String of modified utterance
+   */
+  private String modifyOutput (String output) {
+    log.debug("modifyOutput() called");
+    if (modifierService != null) {
+      try {
+        output = (String) TRADE.getAvailableService(new TRADEServiceConstraints().name(modifierService).argTypes(String.class)).call(String.class, output);
+        log.debug("modifier service " + modifierService + " returned");
+      } catch (TRADEException ex) {
+        log.error("Error calling modifier service", ex);
+      }
+    }
+    return output;
   }
 
   private NLGElement generateNP(Symbol s) {
