@@ -351,19 +351,12 @@ import edu.tufts.hrilab.action.justification.Justification;
 
 //["This instructs the robot to go to a tube and to repair it if damaged. Usage: repairTube(robot1, area, side, number) -llm"]
 () = repair (Symbol ?area, Symbol ?side, Symbol ?number) {
-  String !repairingMessageString = "Repairing tube ?area ?side ?number";
   String !repairedMessageString = "Repaired tube ?area ?side ?number";
-  Symbol !repairingMessage;
-  Symbol !repairedMessage;
 
   op:log("info", "Repair ?area ?side ?number");
-
   act:goToTubeSilent(?area, ?side, ?number);
-  !repairingMessage = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !repairingMessageString);
-  !repairedMessage = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !repairedMessageString);
-  act:generateResponseFromString(!repairingMessage);
-  act:repairTubeSilent(?area, ?side, ?number);
-  act:generateResponseFromString(!repairedMessage);
+  act:repairTubeAction(?area, ?side, ?number);
+  act:generateResponseFromString(!repairedMessageString);
 }
 
 () = repair () {
@@ -381,13 +374,14 @@ import edu.tufts.hrilab.action.justification.Justification;
   act:repair(!area, !side, !number);
 }
 
-() = repairTubeSilent(Symbol ?area, Symbol ?side, Symbol ?number) {
+() = repairTubeAction(Symbol ?area, Symbol ?side, Symbol ?number) {
   Symbol !fullTube;
   Integer !waitTime = 100;
   Boolean !done = false;
   Boolean !isTubeDamaged = true;
   Predicate !repairBeliefPredicate;
   Symbol !damageAmount;
+  String !repairingMessageString = "Repairing tube ?area ?side ?number";
 
   conditions : {
     pre infer: not(repairing(?actor,X,Y,Z));
@@ -400,6 +394,8 @@ import edu.tufts.hrilab.action.justification.Justification;
   effects : {
     success infer : not(propertyOf(?area,?side,?number,damaged(X)));
   }
+
+  act:generateResponseFromString(!repairingMessageString);
 
   !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "toFullTube", ?area, ?side, ?number);
   !repairBeliefPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "repairing(?actor,?area,?side,?number)");
