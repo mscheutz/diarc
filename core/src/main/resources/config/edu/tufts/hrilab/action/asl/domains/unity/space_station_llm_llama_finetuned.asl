@@ -72,16 +72,16 @@ import edu.tufts.hrilab.action.justification.Justification;
 
   !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !messageString);
 
-  act:sayText(!message);
+  act:generateResponseFromString(!message);
   op:log("info", "goto: ?area ?side ?number");
 
   if (act:goToTubeSilent(?area, ?side, ?number)) {
     !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !successMessageString);
-    act:sayText(!message);
+    act:generateResponseFromString(!message);
     op:log("info", "?actor: Made it to target destination: ?area ?side ?number");
   } else {
     !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !failureMessageString);
-    act:sayText(!message);
+    act:generateResponseFromString(!message);
     op:log("info", "?actor: Didn't make it to target destination: ?area ?side ?number");
   }
 }
@@ -115,11 +115,11 @@ import edu.tufts.hrilab.action.justification.Justification;
 
   if (act:goToTubeSilent(!area, ?side, ?number)) {
     !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !successMessageString);
-    act:sayText(!message);
+    act:generateResponseFromString(!message);
     op:log("info", "?actor: Made it to target destination: !area");
   } else {
     !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !failureMessageString);
-    act:sayText(!message);
+    act:generateResponseFromString(!message);
     op:log("info", "?actor: Didn't make it to target destination: ?area");
   }
 }
@@ -146,16 +146,16 @@ import edu.tufts.hrilab.action.justification.Justification;
       !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !transitMessageString);
    }
 
-  act:sayText(!message);
+  act:generateResponseFromString(!message);
   op:log("info", "goto: ?area");
 
   if (act:goToAreaSilent(?area)) {
     !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !successMessageString);
-    act:sayText(!message);
+    act:generateResponseFromString(!message);
     op:log("info", "?actor: Made it to target destination: ?area");
   } else {
     !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !failureMessageString);
-    act:sayText(!message);
+    act:generateResponseFromString(!message);
     op:log("info", "?actor: Didn't make it to target destination: ?area");
   }
 }
@@ -361,9 +361,9 @@ import edu.tufts.hrilab.action.justification.Justification;
   act:goToTubeSilent(?area, ?side, ?number);
   !repairingMessage = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !repairingMessageString);
   !repairedMessage = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !repairedMessageString);
-  act:sayText(!repairingMessage);
+  act:generateResponseFromString(!repairingMessage);
   act:repairTubeSilent(?area, ?side, ?number);
-  act:sayText(!repairedMessage);
+  act:generateResponseFromString(!repairedMessage);
 }
 
 () = repair () {
@@ -431,7 +431,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
   !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !messageString);
   op:log("info", "dontKnow: !messageString");
-  act:sayText(!message);
+  act:generateResponseFromString(!message);
 }
 
 () = initializeTrial () {
@@ -517,14 +517,14 @@ import edu.tufts.hrilab.action.justification.Justification;
   if (~op:isEmpty(!damagedTubes)) {
     !damagedTubesSize = op:invokeMethod(!damagedTubes, "size");
     if (op:==(!damagedTubesSize, 1)) {
-      act:sayText(!successSingleMessageString);
+      act:generateResponseFromString(!successSingleMessageString);
       op:log("info", "!successSingleMessageString");
     } else {
-      act:sayText(!successMessageString);
+      act:generateResponseFromString(!successMessageString);
       op:log("info", "!successMessageString");
     }
   } else {
     op:log("info", "!failureMessageString");
-    act:sayText(!failureMessageString);
+    act:generateResponseFromString(!failureMessageString);
   }
 }
