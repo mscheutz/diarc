@@ -10,6 +10,19 @@ import edu.tufts.hrilab.movebase.MoveBaseComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
+import edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent;
+import edu.tufts.hrilab.map.MapComponent;
+import edu.tufts.hrilab.tf.TFComponent;
+import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
+import edu.tufts.hrilab.slug.listen.ListenerComponent;
+import edu.tufts.hrilab.llm.LLMComponent;
+import edu.tufts.hrilab.unity.UnityComponent;
+import edu.tufts.hrilab.unity.space_station.UnitySpaceStation;
+import edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM;
+import edu.tufts.hrilab.unity.space_station.nlg.UnitySpaceStationNLGComponent;
+import edu.tufts.hrilab.unity.UnityAgent;
+import edu.tufts.hrilab.unity.UnityPR2;
+import edu.tufts.hrilab.action.GoalManagerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Arrays;
@@ -59,26 +72,27 @@ public class UnityDIARCSpaceStationHybrid {
       goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -goal startAutonomy(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
     }
 
-    DiarcComponent.createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl pr2Unity.dict  -tldlNoUpdateAddressee -llm -llmService spaceStationLLMParser -noConfirmation -cache -cacheName unity_space_station"); //
+    DiarcComponent.createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict  -tldlNoUpdateAddressee -llm -llmService spaceStationLLMParser -noConfirmation -cache -cacheName unity_space_station"); //
 
-    DiarcComponent.createInstance(edu.tufts.hrilab.map.MapComponent.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
+    DiarcComponent.createInstance(MapComponent.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
     DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:" + agentName + " -point_dist_thresh 0.5");
-    DiarcComponent.createInstance(edu.tufts.hrilab.tf.TFComponent.class, " -groups agent:"  + agentName);
+    DiarcComponent.createInstance(TFComponent.class, " -groups agent:"  + agentName);
 
     DiarcComponent.createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     DiarcComponent.createInstance(ReferenceResolutionComponent.class, "");
-    DiarcComponent.createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class, "");
-    DiarcComponent.createInstance(SimpleNLGComponent.class, "");
-    DiarcComponent.createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class, "");
+    DiarcComponent.createInstance(DialogueComponent.class, "");
+    DiarcComponent.createInstance(SimpleNLGComponent.class, "-modifierService spaceStationModifyNLG");
+    DiarcComponent.createInstance(UnitySpaceStationNLGComponent.class, "");
+    DiarcComponent.createInstance(ListenerComponent.class, "");
 
-    DiarcComponent.createInstance(edu.tufts.hrilab.llm.LLMComponent.class, "-groups agent:" + agentName + " -service llama -model 7B -endpoint " + llmEndpoint + " -stopwords }");
+    DiarcComponent.createInstance(LLMComponent.class, "-groups agent:" + agentName + " -service llama -model 7B -endpoint " + llmEndpoint + " -stopwords }");
 
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityComponent.class, "-unityip " + unityIP  + " -unityport " + unityPort + " -groups agent:"  + agentName);
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.space_station.UnitySpaceStation.class, "-agent spacestation -groups agent:"  + agentName);
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityAgent.class, "-agent rover -groups agent:" + agentName);
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityPR2.class, "-agent " + agentName + " -groups agent:"  + agentName + nullAddressee );
+    DiarcComponent.createInstance(UnityComponent.class, "-unityip " + unityIP  + " -unityport " + unityPort + " -groups agent:"  + agentName);
+    DiarcComponent.createInstance(UnitySpaceStation.class, "-agent spacestation -groups agent:"  + agentName);
+    DiarcComponent.createInstance(UnitySpaceStationLLM.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
+    DiarcComponent.createInstance(UnityAgent.class, "-agent rover -groups agent:" + agentName);
+    DiarcComponent.createInstance(UnityPR2.class, "-agent " + agentName + " -groups agent:"  + agentName + nullAddressee );
 
-    DiarcComponent.createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, goalManagerArgs);
+    DiarcComponent.createInstance(GoalManagerImpl.class, goalManagerArgs);
   }
 }

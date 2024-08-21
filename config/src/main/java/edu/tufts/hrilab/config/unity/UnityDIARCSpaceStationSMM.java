@@ -18,6 +18,7 @@ import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.unity.UnityComponent;
 import edu.tufts.hrilab.unity.space_station.UnitySpaceStation;
 import edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM;
+import edu.tufts.hrilab.unity.space_station.nlg.UnitySpaceStationNLGComponent;
 import edu.tufts.hrilab.unity.UnityAgent;
 import edu.tufts.hrilab.unity.UnityPR2;
 import edu.tufts.hrilab.action.GoalManagerImpl;
@@ -67,7 +68,8 @@ public class UnityDIARCSpaceStationSMM {
     DiarcComponent.createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     DiarcComponent.createInstance(ReferenceResolutionComponent.class, "");
     DiarcComponent.createInstance(DialogueComponent.class, "");
-    DiarcComponent.createInstance(SimpleNLGComponent.class, "");
+    DiarcComponent.createInstance(SimpleNLGComponent.class, "-modifierService spaceStationModifyNLG");
+    DiarcComponent.createInstance(UnitySpaceStationNLGComponent.class, "");
     DiarcComponent.createInstance(ListenerComponent.class, "");
 
     DiarcComponent.createInstance(UnityComponent.class, "-unityip " + unityIP + " -unityport " + unityPort + " -groups agent:robot1 agent:robot2");
