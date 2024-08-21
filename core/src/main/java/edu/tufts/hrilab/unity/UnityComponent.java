@@ -218,6 +218,7 @@ public class UnityComponent extends DiarcComponent {
   @TRADEService
   @Action
   public synchronized boolean sayText (Symbol actor, String text) {
+    log.debug("Unity sayText: \"" + text + "\"");
     Message msg = new Message(actor.toString(), "speak", text.toString());
     sendMessage(msg);
     return true;
