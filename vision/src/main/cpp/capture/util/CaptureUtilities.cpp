@@ -242,10 +242,11 @@ namespace ade {
 
       cv::Vec3d calcDirection(const int camIndex, const int x, const int y) {
         CameraParameters::ConstPtr camParams = Cameras::getInstance()->getCameraParameters(camIndex);
-        float f_x = camParams->M.at<float>(0,0); //f_x
-        float c_x = camParams->M.at<float>(0,2); //c_x
-        float c_y = camParams->M.at<float>(1,2); //c_y
-        cv::Vec3d direction(x - c_x, y - c_y, f_x);
+        float f_x = camParams->M.at<float>(0,0);
+        float f_y = camParams->M.at<float>(1,1);
+        float c_x = camParams->M.at<float>(0,2);
+        float c_y = camParams->M.at<float>(1,2);
+        cv::Vec3d direction((x - c_x)/f_x, (y - c_y)/f_y, 1.0);
 
         // make unit vector
         double normValue = 1.0 / cv::norm(direction);
