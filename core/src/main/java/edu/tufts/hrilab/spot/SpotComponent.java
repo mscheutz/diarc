@@ -17,6 +17,8 @@ import id.jros2client.JRos2Client;
 import id.jros2client.JRos2ClientFactory;
 import id.jrosmessages.geometry_msgs.PointMessage;
 import id.jrosmessages.geometry_msgs.QuaternionMessage;
+import id.jrosmessages.geometry_msgs.TransformMessage;
+import id.jrosmessages.geometry_msgs.Vector3Message;
 import id.jrosmessages.std_msgs.StringMessage;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -26,10 +28,12 @@ import pinorobotics.jros2actionlib.JRos2ActionClient;
 import pinorobotics.jros2actionlib.JRos2ActionClientFactory;
 import pinorobotics.jros2services.JRos2ServiceClient;
 import pinorobotics.jros2services.JRos2ServiceClientFactory;
+import pinorobotics.jros2tf2.JRos2Tf2;
+import pinorobotics.jros2tf2.JRos2Tf2Factory;
+import pinorobotics.jros2tf2.tf2_msgs.LookupTransformResultMessage;
+import pinorobotics.jrostf2.exceptions.JRosTf2Exception;
 
-import javax.vecmath.Point2d;
-import javax.vecmath.Point3d;
-import javax.vecmath.Quat4d;
+import javax.vecmath.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +57,8 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   private JRos2ServiceClient<DiarcPickUpRequestMessage, DiarcPickUpResponseMessage> pickUpService;
   private JRos2ServiceClient<DiarcMoveToRequestMessage, DiarcMoveToResponseMessage> ikService;
 
+  private JRos2Tf2 tf2;
+
 
   public SpotComponent() {
     super();
@@ -72,6 +78,8 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     locationConsultant = new SpotNavGraphLocationConsultant("location");
     locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
     pickUpService = new JRos2ServiceClientFactory().createClient(client, new DiarcPickUpServiceDefinition(), "/diarc_pick_up");
+
+    tf2 = new JRos2Tf2Factory().createTf2Client(client);
 
     List<String> groups = this.getMyGroups();
     groups.add("location");
@@ -302,8 +310,8 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     }
   }
 
-  @Action
   @TRADEService
+  @Action
   public Justification stow() {
     try {
       DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.ARM_STOW)).get();
@@ -317,8 +325,8 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     }
   }
 
-  @Action
   @TRADEService
+  @Action
   public Justification unstow() {
     try {
       DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.ARM_UNSTOW)).get();
@@ -355,7 +363,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class));
       mo = tsi.call(MemoryObject.class, refId, MemoryObject.class);
     } catch (TRADEException e) {
-      log.error("Could not get MemoryObject for reference {}", refId);
+      log.error("Could not get MemoryObject for reference {}", refId, e);
     }
 
     try {
@@ -364,10 +372,10 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       msg.sx = 0;
       msg.sy = 0;
       msg.sz = 0;
-      msg.ex = mo.getDirection().x;
-      msg.ey = mo.getDirection().y;
-      msg.ez = mo.getDirection().z;
-      msg.frame_name = new StringMessage("base_link");
+      msg.ex = mo.getDirection().x * 4;
+      msg.ey = mo.getDirection().y * 4;
+      msg.ez = mo.getDirection().z * 4;
+      msg.frame_name = new StringMessage("body");
       DiarcPickUpResponseMessage res = pickUpService.sendRequestAsync(msg).get();
       if (!res.success) {
         log.warn(res.message.toString());
@@ -673,6 +681,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     if (locationSymbol.equals(closestLocation)) {
       toReturn.add(new HashMap<>());
     }
+
     return toReturn;
   }
 
@@ -686,6 +695,28 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   public Justification writeReferencesToFile(String absolutePath) {
     boolean succeeded = locationConsultant.writeRefrencesToFile(absolutePath);
     return new ConditionJustification(succeeded);
+  }
+
+  @TRADEService
+  public Matrix4d getTransform(String dstFrame) {
+    return getTransform("base_link", dstFrame);
+  }
+
+  @TRADEService
+  public Matrix4d getTransform(String srcFrame, String dstFrame) {
+    try {
+      LookupTransformResultMessage t = tf2.lookupTransform(srcFrame, dstFrame);
+      Matrix4d tmp = new Matrix4d();
+      tmp.setIdentity();
+      QuaternionMessage r = t.transform.transform.rotation;
+      tmp.setRotation(new Quat4d(r.x, r.y, r.z, r.w));
+      Vector3Message s = t.transform.transform.translation;
+      tmp.setTranslation(new Vector3d(s.x, s.y, s.z));
+      return tmp;
+    } catch (JRosTf2Exception e) {
+      log.error("[getTransform] failed to get transform between " + srcFrame + " and " + dstFrame, e);
+    }
+    return null;
   }
 
 }

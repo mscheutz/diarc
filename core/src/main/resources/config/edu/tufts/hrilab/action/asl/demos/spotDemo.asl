@@ -75,17 +75,10 @@ import java.util.List;
     op:log(info, "[wander] done with tour. at location !location");
 }
 
-() = shutDown() {
+() = dockTmp() {
     java.lang.Integer !dockId = 521;
 
     act:dock(!dockId);
-    act:powerOff();
-}
-
-() = reset() {
-    act:goToLocationUnsafe(location_1:location);
-    act:shutDown();
-    act:undock();
 }
 
 () = test() {
@@ -93,7 +86,7 @@ import java.util.List;
     act:wander();
 }
 
-() = verifyYouCanSee(Symbol ?object:physobj) {
+() = perceiveEntity(Symbol ?object:physobj) {
     op:log(debug, "[verifyYouCanSee] running visual search and looking for ?object");
     act:startVisualSearch(?object);
     act:findObject(?object);
@@ -101,10 +94,12 @@ import java.util.List;
 }
 
 () = pickUp(Symbol ?object:physobj) {
-    act:command(arm_carry);
+//    act:command(arm_carry);
     act:openGripper(none);
-    //todo: Look for object
+    act:startVisualSearch(?object);
+    act:findObject(?object);
     act:pickUpObject(?object);
+    act:stopVisualSearch(?object);
     act:command(arm_carry);
 }
 

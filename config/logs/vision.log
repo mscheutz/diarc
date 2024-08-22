@@ -1,0 +1,468 @@
+34486 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+34486 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] have lock, trying to start tracking.
+34486 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] starting tracking. typeId: 0. tokenId: 0.
+34635 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+34737 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+34831 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+34918 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+35020 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+35109 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+35210 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+35299 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+35386 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+35479 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+35575 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+35692 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+35800 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+35882 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+35980 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+36074 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+36167 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+36257 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+36356 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+36448 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+36545 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+36646 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+36743 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+36837 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+36937 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+37024 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+37112 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+37203 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+37294 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+37392 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+37490 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+37583 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+37672 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+37766 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+37858 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+37943 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+38045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+38139 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+38232 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+38325 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+38417 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+38505 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+38600 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+38687 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+38773 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+38858 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+38949 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+39036 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+39142 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+39237 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+39336 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+39433 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+39531 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+39619 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+39713 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+39809 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+39907 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+40003 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+40103 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+40195 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+40293 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+40388 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+40484 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+40570 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+40669 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+40765 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+40857 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+40959 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+41050 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+41143 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+41233 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+41326 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+41426 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+41524 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+41620 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+41720 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+41818 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+41917 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+42017 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+42112 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+42210 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+42313 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+42403 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+42506 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+42603 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+42700 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+42795 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+42884 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+42977 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+43064 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+43158 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+43259 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+43352 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+43463 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+43546 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+43639 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+43728 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+43812 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+43911 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+44007 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+44101 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+44197 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+44298 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+44389 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+44492 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+44586 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+44677 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+44777 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+44867 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+44955 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+45051 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+45138 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+45233 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+45321 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+45414 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+45520 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+45617 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+45712 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+45814 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+45915 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+46004 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+46099 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+46191 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+46305 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+46382 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+46490 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+46576 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+46661 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+46757 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+46853 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+46951 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+47049 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+47148 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+47248 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+47361 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+47459 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+47556 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+47658 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+47760 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+47863 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+47965 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+48070 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+48176 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+48278 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+48381 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+48472 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+48565 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+48655 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+48750 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+48841 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+48929 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+49028 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+49123 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+49223 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+49331 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+49431 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+49529 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+49634 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+49732 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+49827 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+49921 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+50019 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+50117 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+50220 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+50330 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+50425 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+50524 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+50623 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+50727 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+50825 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+50927 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+51040 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+51135 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+51232 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+51322 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+51418 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+51512 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+51606 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+51705 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+51802 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+51909 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+52005 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+52104 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+52201 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+52301 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+52401 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+52496 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+52588 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+52686 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+52784 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+52878 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+52982 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+53082 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+53184 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+53308 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+53411 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+53499 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+53597 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+53694 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+53798 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+53896 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+54029 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+54129 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+54237 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+54342 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+54437 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+54537 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+54633 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+54721 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+54819 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+54920 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55028 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55029 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55029 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 39. frame num diff: 174
+55029 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 0. otherId: -1. overlap: 0.000000. sizeSim: 0.218504. conf: 0.000000. match: false.
+55029 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] have lock, trying to start tracking.
+55029 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] starting tracking. typeId: 0. tokenId: 1.
+55040 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55040 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 39. frame num diff: 174
+55040 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 0. otherId: -1. overlap: 0.000000. sizeSim: 0.162634. conf: 0.000000. match: false.
+55040 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 0. frame num diff: 0
+55040 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 1. otherId: -1. overlap: 0.000000. sizeSim: 0.113700. conf: 0.000000. match: false.
+55040 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] have lock, trying to start tracking.
+55040 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] starting tracking. typeId: 0. tokenId: 2.
+55044 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55044 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 39. frame num diff: 174
+55044 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 0. otherId: -1. overlap: 0.000000. sizeSim: 0.150591. conf: 0.000000. match: false.
+55044 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 0. frame num diff: 0
+55044 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 1. otherId: -1. overlap: 0.000000. sizeSim: 0.689189. conf: 0.000000. match: false.
+55044 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 0. frame num diff: 0
+55044 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 2. otherId: -1. overlap: 0.000000. sizeSim: 0.078361. conf: 0.000000. match: false.
+55044 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] have lock, trying to start tracking.
+55044 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] starting tracking. typeId: 0. tokenId: 3.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 39. frame num diff: 174
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 0. otherId: -1. overlap: 1.000000. sizeSim: 0.442421. conf: 0.442421. match: true.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [update] updating scene graph relations.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [update] updating scene graph children.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [update] done updating scene graph.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 39. frame num diff: 174
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 0. otherId: -1. overlap: 0.381264. sizeSim: 0.098425. conf: 0.037526. match: true.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [update] updating scene graph relations.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [update] updating scene graph children.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [update] done updating scene graph.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 39. frame num diff: 174
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 0. otherId: -1. overlap: 0.000000. sizeSim: 0.217979. conf: 0.000000. match: false.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 0. frame num diff: 0
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 1. otherId: -1. overlap: 0.000000. sizeSim: 0.047629. conf: 0.000000. match: false.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 0. frame num diff: 0
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 2. otherId: -1. overlap: 0.000000. sizeSim: 0.418902. conf: 0.000000. match: false.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 0. frame num diff: 0
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 3. otherId: -1. overlap: 0.000000. sizeSim: 0.032826. conf: 0.000000. match: false.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] have lock, trying to start tracking.
+55045 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] starting tracking. typeId: 0. tokenId: 4.
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 39. frame num diff: 174
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 0. otherId: -1. overlap: 0.000000. sizeSim: 0.161640. conf: 0.000000. match: false.
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 0. frame num diff: 0
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 1. otherId: -1. overlap: 0.000000. sizeSim: 0.123196. conf: 0.000000. match: false.
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 0. frame num diff: 0
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 2. otherId: -1. overlap: 0.000000. sizeSim: 0.922919. conf: 0.000000. match: false.
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 0. frame num diff: 0
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 3. otherId: -1. overlap: 0.000000. sizeSim: 0.084906. conf: 0.000000. match: false.
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] best index: 0. frame num diff: 0
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [compare] thisId: 4. otherId: -1. overlap: 0.000000. sizeSim: 0.386612. conf: 0.000000. match: false.
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] have lock, trying to start tracking.
+55047 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [startTracking] starting tracking. typeId: 0. tokenId: 5.
+55099 [0x784f08acc640] DEBUG ade.stm.MemoryObject null - [~MemoryObject] method entered for thisId: -1. with validation: coffee(X):
+1
+.
+55099 [0x784f08acc640] DEBUG ade.stm.MemoryObject null - [~MemoryObject] clearing all relations and children...
+55099 [0x784f08acc640] DEBUG ade.stm.MemoryObject null - [~MemoryObject] done removing all relations and children.
+55099 [0x784f08acc640] DEBUG ade.stm.MemoryObject null - [~MemoryObject] method entered for thisId: -1. with validation: coffee(X):
+1
+.
+55099 [0x784f08acc640] DEBUG ade.stm.MemoryObject null - [~MemoryObject] clearing all relations and children...
+55099 [0x784f08acc640] DEBUG ade.stm.MemoryObject null - [~MemoryObject] done removing all relations and children.
+55440 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55440 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55440 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55440 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55440 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55440 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55844 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55844 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55844 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55844 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55844 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+55844 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56229 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56230 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56230 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56230 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56230 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56230 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56625 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56625 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56625 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56625 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56625 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+56625 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57042 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57042 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57042 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57042 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57042 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57042 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57458 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57458 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57458 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57458 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57458 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57458 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57855 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57855 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57855 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57855 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57855 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+57855 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58250 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58250 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58250 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58250 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58250 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58250 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58655 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58655 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58655 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58655 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58655 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+58655 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59080 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59081 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59081 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59081 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59081 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59081 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59490 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59490 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59490 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59490 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59490 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59490 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59874 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59874 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59874 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59874 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59874 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+59874 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60265 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60265 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60265 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60265 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60265 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60265 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60668 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60668 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60668 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60668 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60668 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+60668 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61072 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61072 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61072 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61072 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61072 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61072 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61471 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61471 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61471 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61471 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61471 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61471 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61931 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61931 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61931 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61931 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61931 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+61931 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62327 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62327 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62327 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62327 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62327 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62327 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62730 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62730 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62730 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62730 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62730 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+62730 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63139 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63139 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63140 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63140 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63140 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63140 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63533 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63533 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63533 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63533 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63533 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63533 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63938 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63938 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63938 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63938 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63938 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+63938 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64349 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64349 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64349 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64349 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64349 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64349 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64743 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64743 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64743 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64743 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64743 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+64743 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65142 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65142 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65142 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65142 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65142 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65142 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65527 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65527 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65527 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65527 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65527 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65527 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65958 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65958 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65958 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65958 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65958 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+65958 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66342 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66342 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66342 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66342 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66342 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66342 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66731 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66731 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66731 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66731 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66731 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+66731 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67134 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67134 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67134 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67134 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67134 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67134 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67521 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67521 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67521 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67521 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67521 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
+67521 [0x784faddfe640] DEBUG ade.stm.MemoryObject null - [getDetectionConfidence] method entered.
