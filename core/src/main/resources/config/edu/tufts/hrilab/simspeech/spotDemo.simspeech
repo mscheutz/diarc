@@ -4,5 +4,11 @@ go to dock
 look for a bottle
 pick up the bottle
 ----
+unstow arm
 stow arm
+carry mode
+----
+close gripper
+open gripper
+----
 shut down

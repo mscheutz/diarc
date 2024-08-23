@@ -369,13 +369,16 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     try {
       DiarcPickUpRequestMessage msg = new DiarcPickUpRequestMessage();
       mo.transformToBase();
-      msg.sx = 0;
-      msg.sy = 0;
-      msg.sz = 0;
+      Point3d start = new Point3d(0,0,0);
+      getTransform( "hand_color_image_sensor").transform(start);
+      msg.sx = start.x;
+      msg.sy = start.y;
+      msg.sz = start.z;
       msg.ex = mo.getDirection().x * 4;
       msg.ey = mo.getDirection().y * 4;
       msg.ez = mo.getDirection().z * 4;
       msg.frame_name = new StringMessage("body");
+      log.info("[pickUpObject] ray to object is from " + msg.sx + "," + msg.sy + "," + msg.sz + " to " + msg.ex + "," +msg.ey + "," + msg.ez);
       DiarcPickUpResponseMessage res = pickUpService.sendRequestAsync(msg).get();
       if (!res.success) {
         log.warn(res.message.toString());

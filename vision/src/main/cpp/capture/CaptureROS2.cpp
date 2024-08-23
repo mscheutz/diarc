@@ -48,7 +48,7 @@ namespace ade {
       //initialize ROS
       LOG4CXX_INFO(logger, "Initializing ROS2.");
       int argCount = 0;
-      char **argv;
+      char **argv = NULL;
       rclcpp::init(argCount, argv);
 
       //create node handle

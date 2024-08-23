@@ -26,14 +26,14 @@ import java.util.List;
   op:log(warn, "[failedLocalization] location initialized to !defaultLocation after failing to localize");
 }
 
-
-
 () = init[""]() {
     Symbol !defaultLocation = location_0:location;
     Boolean !result;
 
     act:claim();
     act:powerOn();
+    act:closeGripper();
+    act:stow();
 //    act:stand();
 //    act:undock();
 
@@ -75,9 +75,11 @@ import java.util.List;
     op:log(info, "[wander] done with tour. at location !location");
 }
 
-() = dockTmp() {
+() = shutDown() {
     java.lang.Integer !dockId = 521;
 
+    act:closeGripper();
+    act:stow();
     act:dock(!dockId);
 }
 

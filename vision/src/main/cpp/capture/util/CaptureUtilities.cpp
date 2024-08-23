@@ -246,7 +246,7 @@ namespace ade {
         float f_y = camParams->M.at<float>(1,1);
         float c_x = camParams->M.at<float>(0,2);
         float c_y = camParams->M.at<float>(1,2);
-        cv::Vec3d direction((x - c_x)/f_x, (y - c_y)/f_y, 1.0);
+        cv::Vec3d direction((x - c_x)/f_x, (y - c_y)/f_y, 1);
 
         // make unit vector
         double normValue = 1.0 / cv::norm(direction);

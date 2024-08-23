@@ -19,7 +19,7 @@ Optional:
     <imageHeight>240</imageHeight>
     <hasStereo>false</hasStereo>
     <hasDepth>false</hasDepth>
-    <imageTopic>/camera/camera/color/image_raw</imageTopic>
+    <imageTopic>/camera/hand/image</imageTopic>
 <!--    <depthTopic>/head_camera/depth_registered/image_raw</depthTopic>-->
     <convertToRGB>true</convertToRGB>
     <convertToMeters>false</convertToMeters>
