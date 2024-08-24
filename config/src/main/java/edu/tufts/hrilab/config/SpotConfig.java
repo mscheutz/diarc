@@ -11,7 +11,7 @@ import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.spot.SpotComponent;
-import edu.tufts.hrilab.vision.VisionComponent;
+//import edu.tufts.hrilab.vision.VisionComponent;
 
 public class SpotConfig extends DiarcConfiguration {
   @Override
@@ -25,18 +25,20 @@ public class SpotConfig extends DiarcConfiguration {
     createInstance(SimpleNLGComponent.class, "");
     createInstance(SimSpeechProductionComponent.class, "");
 
-    createInstance(SpotComponent.class, "-groups agent:self:agent -map /home/pete/dev/spot_maps/short.walk -locationRefs phiLocationRefs.json");
-    try {
-      Thread.sleep(10000);
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-    createInstance(VisionComponent.class, "-groups agent:self:agent -belief -capture spot.xml -cameraFrame hand_color_image_sensor");
+//    createInstance(SpotComponent.class, "-groups agent:self:agent -map /home/pete/dev/spot_maps/short.walk -locationRefs phiLocationRefs.json");
+//    try {
+//      Thread.sleep(10000);
+//    } catch (InterruptedException e) {
+//      throw new RuntimeException(e);
+//    }
+//    createInstance(VisionComponent.class, "-groups agent:self:agent -belief -capture spot.xml -cameraFrame hand_color_image_sensor");
 
 
     createInstance(GoalManagerImpl.class,
+            "-beliefg " +
             "-beliefinitfile agents/agents.pl "
             + "-beliefinitfile demos.pl "
+            + "-beliefinitfile demos/spotVA.pl "
             + "-editor "
             + "-asl core.asl "
             + "-asl dialogue/nlg.asl "
@@ -45,7 +47,10 @@ public class SpotConfig extends DiarcConfiguration {
             + "-asl vision.asl "
             + "-asl demos/spotDemo.asl "
             + "-goal listen(self:agent) "
-            + "-goal init(self:agent) "
+//            + "-goal init(self:agent) "
+            + "-goal test_deliver(self:agent) "
+            + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
+
     );
 
     createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -config spotDemo.simspeech");

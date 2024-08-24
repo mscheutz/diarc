@@ -26,6 +26,14 @@ import java.util.List;
   op:log(warn, "[failedLocalization] location initialized to !defaultLocation after failing to localize");
 }
 
+() = test_deliver() {
+    act:fetch(bottle:property);
+    act:fetch(bottle:property);
+    act:fetch(apple:property);
+    act:fetch(apple:property);
+    act:fetch(bottle:property);
+}
+
 () = init[""]() {
     Symbol !defaultLocation = location_0:location;
     Boolean !result;
@@ -107,23 +115,30 @@ import java.util.List;
 
 ///////// Operators
 
-() = deliver(Symbol ?object:physobj, Symbol ?at:location) {
+() = deliver(Symbol ?object:physobj, Symbol ?at:location, Symbol ?type:property) {
     conditions : {
         pre : at(?actor, ?at);
-        pre : holding(?actor, ?at);
+        pre : holding(?actor, ?object);
+        pre infer : property_of(?object, ?type); //todo: remove infer
     }
     effects : {
         success : not(at(?object, ?at));
         success : free(?actor);
         success : not(holding(?actor, ?object));
-        success : delivered(?object);
+        success : delivered(?type);
+        success : not(available(?object));
     }
-    act:command(arm_carry);
-    //todo: Wait for "let go"
-    act:openGripper(none);
-    op:sleep(3000);
-    act:closeGripper(none);
-    act:command(arm_stow);
+
+
+    op:log(info, "delivering ?type ?object");
+
+    //act:command(arm_carry);
+    //act:askQuestionFromString(brad, "Let me know when you're holding the ?type.", response(X)); //todo: fill out the response
+    op:log(info, "Finishing handoff");
+//    act:openGripper(none);
+//    op:sleep(3000);
+//    act:closeGripper(none);
+//    act:command(arm_stow);
 }
 
 () = moveto(Symbol ?from:location, Symbol ?to:location) {
@@ -134,7 +149,8 @@ import java.util.List;
         success : at(?actor, ?to);
         success : not(at(?actor, ?from));
     }
-    act:goToLocation(?to);
+    op:log(info, "moving to ?to");
+    //act:goToLocation(?to);
 }
 
 () = pickup(Symbol ?object:physobj, Symbol ?from:location) {
@@ -148,21 +164,43 @@ import java.util.List;
         success : not(free(?actor));
         success : holding(?actor, ?object);
     }
-    act:pickUp(?object);
+    op:log(info, "picking up ?object");
+    //act:pickUp(?object);
 }
 
 () = perceiveentity(Symbol ?object:physobj, Symbol ?type:property, Symbol ?location:location) {
     conditions : {
         pre : at(?actor, ?location);
         pre : observableat(?type, ?location);
-        pre : not(observed(?object, ?location));
-        pre : property_of(?object, ?type);
+        pre infer : property_of(?object, ?type); //todo: remove infer
+        pre : available(?object);
     }
     effects : {
         success : at(?object, ?location);
-        success : observed(?object, ?location);
     }
-
+    op:log(info, "perceiving ?object");
     op:log(debug, "[perceiveentity] looking for object ?object of type ?type at location ?location");
-    act:verifyYouCanSee(?object);
+//    act:verifyYouCanSee(?object);
+}
+
+////// Fetch action
+
+() = fetch(Symbol ?type) {
+    effects : {
+        success : not(delivered(?type));
+    }
+    goal:delivered(?type);
+}
+
+() = fetch_from(Symbol ?type, Symbol ?location) {
+    //todo: This precondition doesn't actually do anything other than ensure that the object is there.
+    //In order to fix this, we would need to either get the object and have our goal be (at(!obj,?location)
+    //Or change delivered to accept a location as well.
+    pre : {
+        observableat(?type,?location);
+    }
+    effects : {
+        success : not(delivered(?type));
+    }
+    goal:delivered(?type);
 }
