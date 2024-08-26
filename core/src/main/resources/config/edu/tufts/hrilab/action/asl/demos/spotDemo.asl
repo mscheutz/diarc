@@ -27,11 +27,10 @@ import java.util.List;
 }
 
 () = test_deliver() {
-    act:fetch(bottle:property);
-    act:fetch(bottle:property);
-    act:fetch(apple:property);
-    act:fetch(apple:property);
-    act:fetch(bottle:property);
+    act:deliver_to(physobj_0:physobj, location_0:location);
+    act:deliver_to(physobj_1:physobj, location_0:location);
+    act:deliver_to(physobj_2:physobj, location_0:location);
+    act:deliver_to(physobj_3:physobj, location_0:location);
 }
 
 () = init[""]() {
@@ -125,12 +124,12 @@ import java.util.List;
         success : not(at(?object, ?at));
         success : free(?actor);
         success : not(holding(?actor, ?object));
-        success : delivered(?type);
+        success : delivered(?object, ?at);
         success : not(available(?object));
     }
 
 
-    op:log(info, "delivering ?type ?object");
+    op:log(info, "Delivering ?type ?object to ?at.");
 
     //act:command(arm_carry);
     //act:askQuestionFromString(brad, "Let me know when you're holding the ?type.", response(X)); //todo: fill out the response
@@ -149,7 +148,7 @@ import java.util.List;
         success : at(?actor, ?to);
         success : not(at(?actor, ?from));
     }
-    op:log(info, "moving to ?to");
+    op:log(info, "Moving from ?from to ?to.");
     //act:goToLocation(?to);
 }
 
@@ -164,43 +163,36 @@ import java.util.List;
         success : not(free(?actor));
         success : holding(?actor, ?object);
     }
-    op:log(info, "picking up ?object");
+    op:log(info, "Picking up ?object from ?from.");
     //act:pickUp(?object);
 }
+
+() = putdown(Symbol ?object:physobj, Symbol ?to:location) {
+    conditions : {
+        pre : at(?actor, ?to);
+        pre : holding(?actor, ?object);
+    }
+    effects : {
+        success : free(?actor);
+        success : at(?object, ?to);
+        success : not(holding(?actor, ?object));
+    }
+    op:log(info, "Putting down ?object at ?to.");
+    //act:pickUp(?object);
+}
+
 
 () = perceiveentity(Symbol ?object:physobj, Symbol ?type:property, Symbol ?location:location) {
     conditions : {
         pre : at(?actor, ?location);
         pre : observableat(?type, ?location);
         pre infer : property_of(?object, ?type); //todo: remove infer
-        pre : available(?object);
     }
     effects : {
+        success : available(?object);
         success : at(?object, ?location);
     }
-    op:log(info, "perceiving ?object");
-    op:log(debug, "[perceiveentity] looking for object ?object of type ?type at location ?location");
+    op:log(info, "Perceiving ?type ?object at ?location");
 //    act:verifyYouCanSee(?object);
 }
 
-////// Fetch action
-
-() = fetch(Symbol ?type) {
-    effects : {
-        success : not(delivered(?type));
-    }
-    goal:delivered(?type);
-}
-
-() = fetch_from(Symbol ?type, Symbol ?location) {
-    //todo: This precondition doesn't actually do anything other than ensure that the object is there.
-    //In order to fix this, we would need to either get the object and have our goal be (at(!obj,?location)
-    //Or change delivered to accept a location as well.
-    pre : {
-        observableat(?type,?location);
-    }
-    effects : {
-        success : not(delivered(?type));
-    }
-    goal:delivered(?type);
-}

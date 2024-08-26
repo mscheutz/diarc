@@ -45,10 +45,11 @@ public class SpotConfig extends DiarcConfiguration {
             + "-asl dialogue/nlu.asl "
             + "-asl dialogue/handleSemantics.asl "
             + "-asl vision.asl "
-            + "-asl demos/spotDemo.asl "
+                    + "-asl demos/spotDemo.asl "
+                    + "-asl spot/spotActions.asl "
             + "-goal listen(self:agent) "
 //            + "-goal init(self:agent) "
-            + "-goal test_deliver(self:agent) "
+//            + "-goal test_deliver(self:agent) "
             + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
 
     );
