@@ -171,4 +171,9 @@ public class MockRos2SpotComponent extends DiarcComponent implements DockingInte
   public Justification localize() {
     return new ConditionJustification(true);
   }
+
+  @Override
+  public Justification detectionPose() {
+    return new ConditionJustification(true);
+  }
 }
