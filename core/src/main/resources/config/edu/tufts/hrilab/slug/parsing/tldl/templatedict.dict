@@ -102,6 +102,7 @@ before; PP/C; #x.before($x)
 blue; RN/RN; #x.blue($x) ; MOD
 
 bottle; THING
+apple; THING
 
 box; THING
 
