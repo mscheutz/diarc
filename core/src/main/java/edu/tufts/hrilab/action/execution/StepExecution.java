@@ -51,8 +51,8 @@ public class StepExecution {
       }
     }
 
-    // if in RECOVERY or interrupted step due to SUSPEND, return same step to be executed again
-    if (step.getStatus() == ActionStatus.RECOVERY || step.getStatus() == ActionStatus.SUSPEND) {
+    // if in RECOVERY, return same step to be executed again
+    if (step.getStatus() == ActionStatus.RECOVERY) {
       return step;
     }
 
@@ -116,6 +116,9 @@ public class StepExecution {
       case PROGRESS:
         log.warn("PROGRESS in canDoStep. This shouldn't happen: {}", context.getSignatureInPredicateForm());
         return new ConditionJustification(true);
+      case RESUME:
+        // this is the case when a context is being resumed after suspend
+        return new ConditionJustification(true);
       case RECOVERY:
         // this is the case when a context is being re-executed (e.g., GoalContext running a second action)
         return new ConditionJustification(true);
@@ -144,6 +147,7 @@ public class StepExecution {
         context.startOverAllMonitor();
         // Do not break, move on to PROGRESS case.
       case PROGRESS:
+      case RESUME:
       case RECOVERY:
         context.doStep();
         break;

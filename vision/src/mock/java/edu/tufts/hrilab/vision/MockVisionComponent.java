@@ -140,10 +140,12 @@ public class MockVisionComponent extends DiarcComponent implements MockVisionInt
 
   @Override
   public void shutdownComponent(){
-    try {
-      TRADE.deregister(visionConsultant);
-    } catch (TRADEException e) {
-      log.error("[shutdownComponent] ",e);
+    if (visionConsultant != null) {
+      try {
+        TRADE.deregister(visionConsultant);
+      } catch (TRADEException e) {
+        log.error("[shutdownComponent] ", e);
+      }
     }
   }
 

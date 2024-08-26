@@ -49,7 +49,6 @@ public class ActionInterpreter implements Callable<ActionStatus> {
    * Context that is currently being executed by this ActionInterpreter.
    */
   protected Context currentStep;
-  private boolean stepInterrupted = false;
 
   /**
    * Goal that is executed by this ActionInterpreter
@@ -266,14 +265,9 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     log.trace("[runCycle] current step: {}", step.getSignatureInPredicateForm());
     Context nextStep;
 
-    //If we interrupted execution of a primitive on a cancel or suspend call, we don't want to push the same step back
-    //  onto the actionStack twice here.
-    if (stepInterrupted) {
-      stepInterrupted = false;
-    } else {
-      //  push context step onto action stack
-      callStack.before(step);                 // Prepare step execution
-    }
+    //  push context step onto action stack
+    callStack.before(step);                 // Prepare step execution
+
     notifyStepExecution(step);
     nextStep = stepExecution.execute(step);
     notifyStepComplete(step);
@@ -507,7 +501,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   }
 
   private void mainExecutionLoop() {
-    log.debug("Entering main execution loop.");
+    log.debug("Entering main execution loop. Goal: {} Context: {}", goal, ((currentStep == null) ? "null" : currentStep));
 
     while (shouldUpdate.get()) {
       goal.setCurrentContext(currentStep);
@@ -543,20 +537,20 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   public void suspend() {
     // lock on the currentStep so cancelling doesn't accidentally cancel an old step
     currentStepLock.readLock().lock();
+    suspendLock.lock();
 
     try {
       if (currentStep == null) {
         log.warn("[suspend] AI for goal has already terminated: {}", goal.getPredicate());
       } else if (currentStep.isTerminated()) {
         log.warn("[suspend] Current step already terminated, not setting suspend status: {}", goal.getPredicate());
-      } else if (currentStep.getStatus() == ActionStatus.INITIALIZED) {
-        log.debug("[suspend] current step is INITIALIZED, not setting suspend status: {}", goal.getPredicate());
       } else {
         suspended.set(true);
         currentStep.setStatus(ActionStatus.SUSPEND);
       }
     } finally {
       currentStepLock.readLock().unlock();
+      suspendLock.unlock();
     }
   }
 
@@ -564,16 +558,27 @@ public class ActionInterpreter implements Callable<ActionStatus> {
    * Resume the Action Interpreter's script after suspending.
    */
   public void resume() {
+    // lock on the currentStep in case suspend has not fully completed
+    currentStepLock.readLock().lock();
     suspendLock.lock();
+
     try {
       if (suspended.getAndSet(false)) {
-        rootStep.setStatus(ActionStatus.RESUME);
-        setCurrentStep(rootStep);
-        suspendCondition.signal();
+        if (currentStep == null) {
+          // goal has been fully suspended
+          rootStep.setStatus(ActionStatus.RESUME);
+          setCurrentStep(rootStep);
+          shouldUpdate.set(true); // re-enable mainExecutionLoop
+        } else {
+          // goal not full suspended -- resume from current step
+          log.debug("Resuming from partially suspended goal: {}", goal);
+          currentStep.setStatus(ActionStatus.RESUME);
+        }
       } else {
         log.warn("[resume] trying to resume an ActionInterpreter that wasn't paused.");
       }
     } finally {
+      currentStepLock.readLock().unlock();
       suspendLock.unlock();
     }
   }
@@ -592,13 +597,11 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
     try {
       // cancel logic
-      if (currentStep == null) {
-        log.warn("[shouldCancel] AI for goal has already terminated: {}", goal.getPredicate());
-      } else if (currentStep.isTerminated()) {
-        log.error("[shouldCancel] Can't find non-terminated context to cancel: {}", goal.getPredicate());
-      } else {
+      if (currentStep != null) {
+        // in normal operation
         currentStep.setStatus(ActionStatus.CANCEL);
-//        stepInterrupted = true; // TODO: when to set this?
+      } else {
+        log.debug("[cancel] Goal already terminated or suspended: {}", goal);
       }
     } finally {
       currentStepLock.readLock().unlock();
@@ -625,7 +628,12 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       return;
     }
 
-    // Stop execution of script (see the while loop inside run()).
+    // TODO: can suspended be replaced with (rootStep.getStatus() == ActionStatus.SUSPEND)
+    if (rootStep.getStatus() == ActionStatus.SUSPEND) {
+      suspended.set(true);
+    }
+
+    // Stop execution mainExecutionLoop()
     shouldUpdate.set(false);
 
     // wait for sub-AIs to finish

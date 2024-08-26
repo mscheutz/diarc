@@ -220,6 +220,7 @@ public class ActionLearning {
   //Cleanly finish learning, if parent learning state then resume learning
   public boolean endActionLearning(Predicate newAction) {
     log.debug("[endActionLearning] " + newAction);
+
     boolean currentState;
     LearningState learningState;
     // check to see if the predicate action is same as action being learned
@@ -265,9 +266,16 @@ public class ActionLearning {
     return true;
   }
 
-  public boolean cancelActionLearning(Predicate newAction) {
-    log.debug("[cancelActionLearning] " + newAction);
-    if (newAction.getName().equalsIgnoreCase(currentLearningState.getName())) {
+  /**
+   * Cancel action learning.
+   *
+   * @param action action being learned that should be cancelled
+   * @return
+   */
+  public boolean cancelActionLearning(Predicate action) {
+    log.debug("[cancelActionLearning] " + action);
+
+    if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
       setLearningStatus(ActionLearningStatus.CANCEL);
       currentLearningState = null;
       setLearningStatus(ActionLearningStatus.NONE);
@@ -275,20 +283,28 @@ public class ActionLearning {
         learningGui.clear();
       }
     } else {
-      LearningState learningState = pausedLearningStates.remove(newAction.getName());
+      LearningState learningState = pausedLearningStates.remove(action.getName());
       if (learningState == null) {
-        log.error("[cancelActionLearning] called for action with no learning state: {}", newAction);
+        log.error("[cancelActionLearning] called for action with no learning state: {}", action);
         return false;
       }
     }
     return true;
   }
 
-  //Pauses learning of action -> stores in paused map -> restored in future
-  public boolean pauseActionLearning(Predicate newAction) {
-    log.debug("[pauseActionLearning] " + newAction);
-    if (newAction.getName().equalsIgnoreCase(currentLearningState.getName())) {
-      pausedLearningStates.put(newAction.getName(), currentLearningState);
+  /**
+   * Pauses learning of action -> stores in paused map -> restored in future.
+   *
+   * @param action action being learned
+   * @return
+   */
+  public boolean pauseActionLearning(Predicate action) {
+    log.debug("[pauseActionLearning] " + action);
+
+    if (currentLearningState == null) {
+      log.warn("[pauseActionLearning] Can't pause. Current learning state is null.");
+    } else if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
+      pausedLearningStates.put(action.getName(), currentLearningState);
       currentLearningState = null;
       setLearningStatus(ActionLearningStatus.NONE);
     } else {
@@ -298,23 +314,28 @@ public class ActionLearning {
     return true;
   }
 
-  //Resume the paused action, pop from map
-  public boolean resumeActionLearning(Predicate newAction) {
-    log.debug("[resumeActionLearning] " + newAction);
-    LearningState resumedLearningState = pausedLearningStates.get(newAction.getName());
+  /**
+   * Resume the paused action, pop from map.
+   *
+   * @param action action being learned that should resume
+   * @return
+   */
+  public boolean resumeActionLearning(Predicate action) {
+    log.debug("[resumeActionLearning] " + action);
+    LearningState resumedLearningState = pausedLearningStates.get(action.getName());
     if (resumedLearningState != null) {
       if (currentLearningState != null) {
         pausedLearningStates.put(currentLearningState.getName(), currentLearningState);
       }
       currentLearningState = resumedLearningState;
-      pausedLearningStates.remove(newAction.getName());
+      pausedLearningStates.remove(action.getName());
       setLearningStatus(ActionLearningStatus.ACTIVE);
       startQueuingGoals();
       // TODO: restart / create observers
     } else {
       //tmf: agent should convey that it hasn't started learning something.
       // TODO: create interpreter to run say text to respond accordingly
-      log.error("cannot resume " + newAction.getName() + " because haven't started learning before");
+      log.error("cannot resume " + action.getName() + " because haven't started learning before");
       setLearningStatus(ActionLearningStatus.NONE);
     }
     return true;

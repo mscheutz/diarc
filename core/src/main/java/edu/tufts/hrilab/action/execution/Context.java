@@ -239,12 +239,13 @@ public abstract class Context {
           log.warn("Can not set context " + cmd + " to status " + status + ". Already has terminal status: " + actionStatus);
         }
         return;
-//      } else if (status == ActionStatus.SUCCESS || status == ActionStatus.APPROVED || status == ActionStatus.CANCEL || status.isFailure()) {
-//        actionStatus = status;
-//        this.justification = justification;
-//      } else if (status == ActionStatus.RESUME) {
-//        actionStatus = ActionStatus.RESUME;
-//        this.justification = justification;
+      } else if (actionStatus == ActionStatus.SUSPEND) {
+        if (status == ActionStatus.RESUME || status == ActionStatus.CANCEL) {
+          actionStatus = status;
+          this.justification = justification;
+        } else {
+          log.debug("Can not set context {} to status {} while it has SUSPEND status.", cmd, status);
+        }
       } else {
         actionStatus = status;
         this.justification = justification;
@@ -505,8 +506,7 @@ public abstract class Context {
       contextDescription = currentChild.getContextDescription();
     } else {
       log.warn("[getContextDescription] no context description available." +
-              "this: " + this.toString() +
-              "numChildren: " + childContexts.size());
+              "this: " + this + "numChildren: " + childContexts.size());
     }
     return contextDescription;
   }

@@ -289,23 +289,23 @@ public class QueueExecutionManagerTest {
   public void testSupersedeGoal() {
     Predicate goalPred = Factory.createPredicate("freeze", "team1:agent");
     Goal freeze1Goal = submitGoalAndWait(goalPred, ExecutionType.ACT, 1L, PriorityTier.LOW);
-    assertSame(freeze1Goal.getStatus(), GoalStatus.ACTIVE);
+    assertSame(GoalStatus.ACTIVE, freeze1Goal.getStatus());
 
     goalPred = Factory.createPredicate("freeze", "self:agent");
     Goal freeze2Goal = submitGoalAndWait(goalPred);
-    assertSame(freeze2Goal.getStatus(), GoalStatus.ACTIVE);
-    assertSame(freeze1Goal.getStatus(), GoalStatus.SUSPENDED);
+    assertSame(GoalStatus.ACTIVE, freeze2Goal.getStatus());
+    assertSame(GoalStatus.SUSPENDED, freeze1Goal.getStatus());
 
     Goal endFreezeGoal = submitGoalAndWait(Factory.createPredicate("endFreeze", "self:agent"));
     em.joinOnGoal(endFreezeGoal.getId());
     em.joinOnGoal(freeze2Goal.getId());
-    assertSame(freeze2Goal.getStatus(), GoalStatus.SUCCEEDED);
-    assertSame(freeze1Goal.getStatus(), GoalStatus.ACTIVE);
+    assertSame(GoalStatus.SUCCEEDED, freeze2Goal.getStatus());
+    assertSame(GoalStatus.ACTIVE, freeze1Goal.getStatus());
 
     endFreezeGoal = submitGoalAndWait(Factory.createPredicate("endFreeze", "team1:agent"));
     em.joinOnGoal(endFreezeGoal.getId());
     em.joinOnGoal(freeze1Goal.getId());
-    assertSame(freeze1Goal.getStatus(), GoalStatus.SUCCEEDED);
+    assertSame(GoalStatus.SUCCEEDED, freeze1Goal.getStatus());
 
     cancelAllGoals();
   }

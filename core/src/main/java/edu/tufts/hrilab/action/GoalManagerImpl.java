@@ -185,9 +185,9 @@ public class GoalManagerImpl extends DiarcComponent {
     //TODO:brad: do we need type in the KB name?
     contextConsultant = new ContextConsultant(em.getRootContext(), "context");
     try {
-      List<String> consultantGroups= this.getMyGroups();
+      List<String> consultantGroups = this.getMyGroups();
       consultantGroups.add(contextConsultant.getKBName());
-      TRADE.registerAllServices(contextConsultant,consultantGroups);
+      TRADE.registerAllServices(contextConsultant, consultantGroups);
     } catch (TRADEException e) {
       log.error("exception registering Context Consultant ", e);
     }
@@ -208,7 +208,7 @@ public class GoalManagerImpl extends DiarcComponent {
     }
     StateMachine sm = new StateMachine(beliefArgs.toArray(new String[0]));
     RootContext rootContext = new RootContext(initialConstraints, sm);
-    em = ExecutionManager.createInstance(executionManagerType, sm, rootContext,myGroups);
+    em = ExecutionManager.createInstance(executionManagerType, sm, rootContext, myGroups);
     em.configPruningMechanism(useMemoryManager, historyLength);
   }
 
@@ -226,7 +226,7 @@ public class GoalManagerImpl extends DiarcComponent {
 
     // Add PDDL model to action db and belief
     if (pddlFiles != null) {
-      loadPDDLFiles(Resources.createFilepath(pddlFireDir,pddlFiles.getLeft()), Resources.createFilepath(pddlFireDir,pddlFiles.getRight()));
+      loadPDDLFiles(Resources.createFilepath(pddlFireDir, pddlFiles.getLeft()), Resources.createFilepath(pddlFireDir, pddlFiles.getRight()));
     }
 
     // Add performance models
@@ -386,7 +386,7 @@ public class GoalManagerImpl extends DiarcComponent {
   /**
    * Submit a goal to be achieved.
    *
-   * @param g the goal in goal(actor,state) or action(actor,args) form
+   * @param g    the goal in goal(actor,state) or action(actor,args) form
    * @param type action execution type
    * @return the goal ID (for checking status)
    */
@@ -401,8 +401,8 @@ public class GoalManagerImpl extends DiarcComponent {
   /**
    * Submit a goal to be achieved.
    *
-   * @param g the goal in goal(actor,state) or action(actor,args) form
-   * @param type action execution type
+   * @param g            the goal in goal(actor,state) or action(actor,args) form
+   * @param type         action execution type
    * @param priorityTier priority tier for the submitted goal (overrides default value)
    * @return the goal ID (for checking status)
    */
@@ -417,6 +417,7 @@ public class GoalManagerImpl extends DiarcComponent {
     }
     return submitGoal(g, type, priorityTier, priority);
   }
+
   @TRADEService
   @Action
   public long submitGoal(Predicate g, ExecutionType type, Symbol priorityTier) {
@@ -427,10 +428,10 @@ public class GoalManagerImpl extends DiarcComponent {
   /**
    * Submit a goal to be achieved.
    *
-   * @param g the goal in goal(actor,state) or action(actor,args) form
-   * @param type action execution type
+   * @param g            the goal in goal(actor,state) or action(actor,args) form
+   * @param type         action execution type
    * @param priorityTier priority tier for the submitted goal (overrides default value)
-   * @param priority priority value for the submitted goal (overrides default value)
+   * @param priority     priority value for the submitted goal (overrides default value)
    * @return the goal ID (for checking status)
    */
   @TRADEService
@@ -538,7 +539,7 @@ public class GoalManagerImpl extends DiarcComponent {
   /**
    * Get the goals that are currently being pursued by the Execution Manager for a particular actor.
    * This includes both goals which are actively undergoing execution (have a corresponding Action Interpreter)
-   *   and goals which are being considered by the Execution Manager but may not have been passed on to execution yet
+   * and goals which are being considered by the Execution Manager but may not have been passed on to execution yet
    *
    * @return a list of predicates representing the goal
    */
@@ -662,6 +663,7 @@ public class GoalManagerImpl extends DiarcComponent {
    * Get the goal ID for a goal predicate. Checks current and
    * past goals. If no goal is found, -1 is returned.
    * NOTE: Depending on the ExecutionManager subclass, more than one match may exist and one will be returned at random.
+   *
    * @param goal
    * @return
    */
@@ -678,6 +680,7 @@ public class GoalManagerImpl extends DiarcComponent {
   /**
    * Get the goal ID for all goals matching the supplied predicate. Checks current and
    * past goals.
+   *
    * @param goal
    * @return
    */
@@ -722,6 +725,7 @@ public class GoalManagerImpl extends DiarcComponent {
 
   /**
    * Wait on the goal to have terminal goal status.
+   *
    * @param gid the goal
    * @return the GoalStatus of the goal
    */
@@ -733,7 +737,8 @@ public class GoalManagerImpl extends DiarcComponent {
 
   /**
    * Wait at most millis milliseconds for the goal to have terminal goal status.
-   * @param gid the goal
+   *
+   * @param gid    the goal
    * @param millis milliseconds to wait
    * @return the GoalStatus of the goal
    */
@@ -745,6 +750,7 @@ public class GoalManagerImpl extends DiarcComponent {
 
   /**
    * Get the ActionStatus for the action that is/was executed in pursuit of the specified goal.
+   *
    * @param gid
    * @return
    */
@@ -807,7 +813,7 @@ public class GoalManagerImpl extends DiarcComponent {
     if (cmdLine.hasOption("executionManagerType")) {
       try {
         executionManagerType = (Class<ExecutionManager>) Class.forName(cmdLine.getOptionValue("executionManagerType"));
-      } catch (ClassNotFoundException | SecurityException | IllegalArgumentException  | ClassCastException e) {
+      } catch (ClassNotFoundException | SecurityException | IllegalArgumentException | ClassCastException e) {
         log.error("Exception in setting ExecutionManager type: " + cmdLine.getOptionValue("executionManagerType") +
                 ". Using default type instead.", e);
       }
@@ -890,7 +896,7 @@ public class GoalManagerImpl extends DiarcComponent {
     }
     if (cmdLine.hasOption("beliefgroups")) {
       beliefArgs.add("-groups");
-      for (String s : cmdLine.getOptionValues("beliefgroups")){
+      for (String s : cmdLine.getOptionValues("beliefgroups")) {
         beliefArgs.add(s);
       }
     }
@@ -898,6 +904,7 @@ public class GoalManagerImpl extends DiarcComponent {
 
   /**
    * Register to be notified of ActionInterpreter and inner StepExecution events (start/completion)
+   *
    * @param al
    */
   @TRADEService
@@ -907,6 +914,7 @@ public class GoalManagerImpl extends DiarcComponent {
 
   /**
    * Register to be notified of all new actions and removed actions.
+   *
    * @param callback
    */
   @TRADEService
@@ -916,6 +924,7 @@ public class GoalManagerImpl extends DiarcComponent {
 
   /**
    * Unregister to be notified of all new actions and removed actions.
+   *
    * @param callback
    */
   @TRADEService
@@ -981,10 +990,10 @@ public class GoalManagerImpl extends DiarcComponent {
 
   @TRADEService
   @Action
-  public int getCurrentContextCount(){
-    Context root=em.getRootContext();
+  public int getCurrentContextCount() {
+    Context root = em.getRootContext();
     ChildContexts children = root.getChildContexts();
-    log.debug("child context count: "+children.size());
+    log.debug("child context count: " + children.size());
     return children.size();
   }
 
@@ -999,7 +1008,7 @@ public class GoalManagerImpl extends DiarcComponent {
     try {
       if (generatorClass != null) {
         Constructor generatorConstructor = generatorClass.getConstructor();
-        generator = (TranslationGenerator)(generatorConstructor.newInstance());
+        generator = (TranslationGenerator) (generatorConstructor.newInstance());
       }
     } catch (Exception e) {
       log.error("Exception creating translation generator: ", e);
@@ -1118,19 +1127,21 @@ public class GoalManagerImpl extends DiarcComponent {
 
   @Override
   public void shutdownComponent() {
-    // cancel all pending and active goals and wait for them to terminate
-    em.getPendingGoals().forEach(goal -> em.cancelGoal(goal.getId()));
-    List<Goal> activeGoals = em.getActiveGoals();
-    activeGoals.forEach(goal -> em.cancelGoal(goal.getId()));
-    activeGoals.forEach(goal -> em.joinOnGoal(goal.getId()));
+    if (this.em != null) {
+      // cancel all pending and active goals and wait for them to terminate
+      em.getPendingGoals().forEach(goal -> em.cancelGoal(goal.getId()));
+      List<Goal> activeGoals = em.getActiveGoals();
+      activeGoals.forEach(goal -> em.cancelGoal(goal.getId()));
+      activeGoals.forEach(goal -> em.joinOnGoal(goal.getId()));
 
-    try {
-      TRADE.deregister(contextConsultant);
-      TRADE.deregister(em);
-    } catch (Exception e) {
-      log.error("[shutdown]", e);
+      try {
+        TRADE.deregister(contextConsultant);
+        TRADE.deregister(em);
+      } catch (Exception e) {
+        log.error("[shutdown]", e);
+      }
+      em.shutdown();
     }
-    em.shutdown();
     Database.destroyInstance();
   }
 
