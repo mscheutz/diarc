@@ -66,7 +66,7 @@ abstract public class DiarcComponent {
 
   protected DiarcComponent() {
     log = LoggerFactory.getLogger(this.getClass());
-//    Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
   }
 
   /**

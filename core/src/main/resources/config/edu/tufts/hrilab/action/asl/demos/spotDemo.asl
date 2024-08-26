@@ -1,5 +1,6 @@
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Term;
 import java.lang.String;
 import java.lang.Integer;
 import java.lang.Boolean;
@@ -27,6 +28,13 @@ import java.util.List;
 }
 
 () = init[""]() {
+    effects : {
+        success : free(?actor);
+        success : observableat(bottle:property, location_1:location); //todo: Remove if we want to demonstrate instruction
+        success : observableat(apple:property, location_1:location);
+        success : at(?actor, !defaultLocation);
+    }
+
     Symbol !defaultLocation = location_0:location;
     Boolean !result;
 
@@ -46,7 +54,25 @@ import java.util.List;
 //        act:localize();
       act:setLocationWithFiducial(!defaultLocation);
     }
+
+    Term !props;
+    Symbol !refId;
+    for (!i=0; !i lt 5; !i ++) {
+        !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(apple(X:physobj))");
+        act:create_deliverable(!props);
+    }
+    for (!i=0; !i lt 5; !i ++) {
+        !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(bottle(X:physobj))");
+        act:create_deliverable(!props);
+    }
     op:log(debug, "[init] set up spot");
+}
+
+() = create_deliverable(Term ?props) {
+    effects : {
+        success : available(!refId);
+    }
+    Symbol !refId = act:positReference(?props);
 }
 
 () = map() {
@@ -111,19 +137,26 @@ import java.util.List;
 
 ///////// Operators
 
-() = deliver(Symbol ?object:physobj, Symbol ?at:location) {
+() = deliver(Symbol ?object:physobj, Symbol ?at:location, Symbol ?type:property) {
     conditions : {
         pre : at(?actor, ?at);
-        pre : holding(?actor, ?at);
+        pre : holding(?actor, ?object);
+        pre : property_of(?object, ?type);
     }
     effects : {
         success : not(at(?object, ?at));
         success : free(?actor);
         success : not(holding(?actor, ?object));
-        success : delivered(?object);
+        success : delivered(?object, ?at);
+        success : not(available(?object));
     }
+
+
+    op:log(info, "Delivering ?type ?object to ?at.");
+
     act:command(arm_carry);
-    //todo: Wait for "let go"
+    //act:askQuestionFromString(brad, "Let me know when you're holding the ?type.", response(X)); //todo: fill out the response
+    op:log(info, "Finishing handoff");
     act:openGripper(none);
     op:sleep(3000);
     act:closeGripper(none);
@@ -138,6 +171,7 @@ import java.util.List;
         success : at(?actor, ?to);
         success : not(at(?actor, ?from));
     }
+    op:log(info, "Moving from ?from to ?to.");
     act:goToLocation(?to);
 }
 
@@ -152,21 +186,35 @@ import java.util.List;
         success : not(free(?actor));
         success : holding(?actor, ?object);
     }
+    op:log(info, "Picking up ?object from ?from.");
     act:pickUp(?object);
 }
+
+() = putdown(Symbol ?object:physobj, Symbol ?to:location) {
+    conditions : {
+        pre : at(?actor, ?to);
+        pre : holding(?actor, ?object);
+    }
+    effects : {
+        success : free(?actor);
+        success : at(?object, ?to);
+        success : not(holding(?actor, ?object));
+    }
+    op:log(info, "Putting down ?object at ?to.");
+    //act:pickUp(?object);
+}
+
 
 () = perceiveentity(Symbol ?object:physobj, Symbol ?type:property, Symbol ?location:location) {
     conditions : {
         pre : at(?actor, ?location);
         pre : observableat(?type, ?location);
-        pre : not(observed(?object, ?location));
         pre : property_of(?object, ?type);
     }
     effects : {
         success : at(?object, ?location);
-        success : observed(?object, ?location);
     }
-
-    op:log(debug, "[perceiveentity] looking for object ?object of type ?type at location ?location");
-    act:verifyYouCanSee(?object);
+    op:log(info, "Perceiving ?type ?object at ?location");
+    act:perceiveEntity(?object);
 }
+

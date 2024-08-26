@@ -75,7 +75,7 @@ public class PddlGenerator {
    */
   private void generateGoal(Goal goal) {
     Set<Predicate> goalPreds = Utils.expand(goal.getPredicate());
-    if (goal.getMetric() != null ) {
+    if (goal.getMetric() != null) {
       builder.addMetric(goal.getMetric());
     }
     for (Predicate goalPred : goalPreds) {
@@ -180,7 +180,7 @@ public class PddlGenerator {
    *
    * @param facts set of facts
    */
-    private void scrapeBelief(List<? extends Term> facts, Symbol actor) {
+  private void scrapeBelief(List<? extends Term> facts, Symbol actor) {
 
     for (Term term : facts) {
       String name = term.getName();
@@ -244,6 +244,8 @@ public class PddlGenerator {
    * Check all consultants and add relevant knowledge to the PDDL builder.
    */
   private void scrapeConsultants(Symbol actor) {
+
+
     //brad: for every new Resolver get list of consultants(as TSI+ kbName) and property cache (call get properties handled on everything)
 
     //If an agent is busy, remove it from available agents
@@ -251,7 +253,7 @@ public class PddlGenerator {
 
     for (TRADEServiceInfo agentService : agentServices) {
       try {
-        if ( agentService.call(Boolean.class)) {
+        if (agentService.call(Boolean.class)) {
           for (String group : agentService.getGroups()) {
             log.debug(group + " is busy");
             ignoredAgents.add(Factory.createSymbol(group.split(":")[1]));
@@ -265,7 +267,7 @@ public class PddlGenerator {
     Set<TRADEServiceInfo> relevantInitialDomainServices = new HashSet<>();
     //logic for determining which consultants (from members of the team) should be included in PDDL problem generation
     try {
-      Set<String> possibleGroups = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllDiarcAgentsForActor").argTypes(Symbol.class,Boolean.class)).call(Set.class, actor, true);
+      Set<String> possibleGroups = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllDiarcAgentsForActor").argTypes(Symbol.class, Boolean.class)).call(Set.class, actor, true);
 
       //Iterates through all consultants (vision, location, etc) to generate observable objects
       Collection<TRADEServiceInfo> initialDomainServices = TRADE.getAvailableServices(new TRADEServiceConstraints().name("getInitialDomain"));
@@ -284,17 +286,18 @@ public class PddlGenerator {
     for (TRADEServiceInfo consultantService : relevantInitialDomainServices) {
       try {
         List<Symbol> refIds = consultantService.call(List.class, new ArrayList<>());
-        Collection<String> relevantGroups=consultantService.getGroups();
+        Collection<String> relevantGroups = consultantService.getGroups();
 
         String kbname = TRADE.getAvailableService(new TRADEServiceConstraints().name("getKBName").inGroups(relevantGroups.toArray(new String[0]))).call(String.class);
 
         for (Symbol refId : refIds) {
-          List<Term> properties = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAssertedProperties").inGroups(relevantGroups.toArray(new String[0]))).call(List.class,refId);
+          List<Term> properties = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAssertedProperties").inGroups(relevantGroups.toArray(new String[0]))).call(List.class, refId);
 
           if (typeNames.contains(kbname)) {
+            builder.addPredicate(Factory.createPredicate("property_of(?object:" + kbname + ", ?type:property)"));
             builder.addObject(refId.getName(), kbname);
             for (Term property : properties) {
-              Predicate propertyPred = Factory.createPredicate(property.getName(),property.getArgs());
+              Predicate propertyPred = Factory.createPredicate(property.getName(), property.getArgs());
               if (propertyPred.size() > 1) {
                 if (Utilities.isFullyTyped(propertyPred)) {
                   builder.addPredicate(propertyPred);
@@ -431,6 +434,7 @@ public class PddlGenerator {
 
   /**
    * Utility method to get the set of agents known to the system which are not the actor (or in the team "actor").
+   *
    * @param actor
    * @return the set of agents which are not valid members of "actor"
    */
@@ -439,7 +443,7 @@ public class PddlGenerator {
     Set<Symbol> validAgents = new HashSet<>();
     try {
       //todo: this should be accessible as symbols as well. should separate instances where we need strings into different functionality. is it just TRADE groups?
-      Set<String> actorsStrings = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllDiarcAgentsForActor").argTypes(Symbol.class,Boolean.class)).call(Set.class, actor, false);
+      Set<String> actorsStrings = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllDiarcAgentsForActor").argTypes(Symbol.class, Boolean.class)).call(Set.class, actor, false);
       actorsStrings.forEach(s -> validAgents.add(Factory.createSymbol(s)));
     } catch (TRADEException e) {
       log.error("[generateInit] error making TRADE call to getAllDiarcAgentsForActor", e);
