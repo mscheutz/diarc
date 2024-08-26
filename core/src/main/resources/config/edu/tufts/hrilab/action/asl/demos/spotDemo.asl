@@ -27,14 +27,14 @@ import java.util.List;
   op:log(warn, "[failedLocalization] location initialized to !defaultLocation after failing to localize");
 }
 
-() = test_deliver() {
-    act:deliver_to(physobj_0:physobj, location_0:location);
-    act:deliver_to(physobj_1:physobj, location_0:location);
-    act:deliver_to(physobj_2:physobj, location_0:location);
-    act:deliver_to(physobj_3:physobj, location_0:location);
-}
-
 () = init[""]() {
+    effects : {
+        success : free(?actor);
+        success : observableat(bottle:property, location_1:location); //todo: Remove if we want to demonstrate instruction
+        success : observableat(apple:property, location_1:location);
+        success : at(?actor, !defaultLocation);
+    }
+
     Symbol !defaultLocation = location_0:location;
     Boolean !result;
 
@@ -139,7 +139,7 @@ import java.util.List;
     conditions : {
         pre : at(?actor, ?at);
         pre : holding(?actor, ?object);
-        pre infer : property_of(?object, ?type); //todo: remove infer
+        pre : property_of(?object, ?type);
     }
     effects : {
         success : not(at(?object, ?at));
@@ -170,7 +170,7 @@ import java.util.List;
         success : not(at(?actor, ?from));
     }
     op:log(info, "Moving from ?from to ?to.");
-    //act:goToLocation(?to);
+    act:goToLocation(?to);
 }
 
 () = pickup(Symbol ?object:physobj, Symbol ?from:location) {
@@ -207,7 +207,7 @@ import java.util.List;
     conditions : {
         pre : at(?actor, ?location);
         pre : observableat(?type, ?location);
-        pre infer : property_of(?object, ?type); //todo: remove infer
+        pre : property_of(?object, ?type);
     }
     effects : {
         success : at(?object, ?location);
