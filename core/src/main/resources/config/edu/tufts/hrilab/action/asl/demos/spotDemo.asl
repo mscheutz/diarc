@@ -32,6 +32,7 @@ import java.util.List;
 
     act:claim();
     act:powerOn();
+    act:openGripper();
     act:closeGripper();
     act:stow();
 //    act:stand();
@@ -78,8 +79,9 @@ import java.util.List;
 () = shutDown() {
     java.lang.Integer !dockId = 521;
 
-    act:closeGripper();
+    act:openGripper();
     act:stow();
+    act:closeGripper();
     act:dock(!dockId);
 }
 
@@ -102,7 +104,7 @@ import java.util.List;
     act:findObject(?object);
     act:pickUpObject(?object);
     act:stopVisualSearch(?object);
-    act:command(arm_carry);
+//    act:command(arm_carry);
 }
 
 ///////// Operators

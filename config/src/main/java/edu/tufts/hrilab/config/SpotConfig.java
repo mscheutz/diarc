@@ -35,6 +35,7 @@ public class SpotConfig extends DiarcConfiguration {
 
 
     createInstance(GoalManagerImpl.class,
+            "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
             "-beliefinitfile agents/agents.pl "
             + "-beliefinitfile demos.pl "
             + "-editor "
