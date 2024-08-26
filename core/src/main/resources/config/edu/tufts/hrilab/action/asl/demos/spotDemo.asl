@@ -118,6 +118,8 @@ import java.util.List;
 
 () = perceiveEntity(Symbol ?object:physobj) {
     op:log(debug, "[verifyYouCanSee] running visual search and looking for ?object");
+    act:stow();
+    act:detectionPose();
     act:startVisualSearch(?object);
     act:findObject(?object);
     act:stopVisualSearch(?object);
