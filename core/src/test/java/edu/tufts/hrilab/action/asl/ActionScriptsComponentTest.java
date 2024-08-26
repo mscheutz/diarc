@@ -6,7 +6,7 @@ package edu.tufts.hrilab.action.asl;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.diarc.DiarcComponent;
@@ -22,13 +22,13 @@ import org.junit.Test;
 import java.util.ArrayList;
 
 public class ActionScriptsComponentTest {
-  private static GoalManagerImpl component;
+  private static GoalManagerComponent component;
   private static Logger log = LoggerFactory.getLogger(ActionScriptsComponentTest.class);
   private String aslPath = "/config/edu/tufts/hrilab/action/asl/";
 
   @BeforeClass
   public static void init() {
-    component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl");
+    component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl");
   }
 
   @AfterClass

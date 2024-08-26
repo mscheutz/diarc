@@ -9,7 +9,7 @@ import edu.tufts.hrilab.abb.consultant.area.ABBAreaConsultant;
 import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
 import edu.tufts.hrilab.abb.consultant.item.ItemConsultant;
 import edu.tufts.hrilab.abb.consultant.location.ABBLocationConsultant;
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
@@ -104,7 +104,7 @@ public class PickAndPlaceLLMDemo extends DiarcConfiguration {
                         + "-goal listen(self:agent) "
                         + "-goal init(self:agent) ";
 
-        createInstance(GoalManagerImpl.class, gmArgs);
+        createInstance(GoalManagerComponent.class, gmArgs);
 
         simSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker eric -config yumiPickAndPlace.simspeech -nogui");
     }

@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.tr;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fetch.MockFetchItComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
@@ -126,7 +127,7 @@ public class MultiRobotCadddyDemo extends DiarcConfiguration {
             goalManagerArgs += "-beliefinitfile demos/multiRobotCaddy/spotFacts.pl ";
         }
 
-        createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
+        createInstance(GoalManagerComponent.class,
                 goalManagerArgs
         );
 

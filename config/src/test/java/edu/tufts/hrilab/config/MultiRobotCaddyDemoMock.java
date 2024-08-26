@@ -4,9 +4,9 @@
 
 package edu.tufts.hrilab.config;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fetch.MockFetchItComponent;
-import edu.tufts.hrilab.firebase.MockFirebaseConnectionComponent;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
@@ -81,7 +81,7 @@ public class MultiRobotCaddyDemoMock extends DiarcConfiguration {
 //            gmArgs += "-editor ";
 //        }
 
-        createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
+        createInstance(GoalManagerComponent.class,
                 goalManagerArgs
         );
 

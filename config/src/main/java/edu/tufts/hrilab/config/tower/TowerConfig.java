@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.tower;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fetch.FetchComponent;
 import edu.tufts.hrilab.fetch.MockFetchComponent;
@@ -107,7 +108,7 @@ public class TowerConfig extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-cameraFrame head_camera_rgb_optical_frame -capture fetch.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls") );
     }
 
-    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
+    createInstance(GoalManagerComponent.class,
             "-beliefinitfile demos.pl agents/agents.pl tower/tower.pl "
                     + "-dbfile core.asl vision.asl manipulation.asl dialogue/nlg.asl dialogue/handleSemantics.asl "
                     + "-dbfile tower/pressingButtons.asl tower/boardElevator.asl "

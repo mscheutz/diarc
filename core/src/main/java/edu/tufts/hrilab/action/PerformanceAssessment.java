@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 
 public class PerformanceAssessment {
   private static long lastQueryTime = 0;
-  private static GoalManagerImpl goalManager;
+  private static GoalManagerComponent goalManager;
   private static StateMachine stateMachine;
   private static Lock lock = new ReentrantLock();
   private static boolean runParallel = true;
@@ -52,7 +52,7 @@ public class PerformanceAssessment {
 
  private static final Logger log = LoggerFactory.getLogger(PerformanceAssessment.class);
 
-  public static void setGoalManager(GoalManagerImpl gm, boolean shouldRunParallel) {
+  public static void setGoalManager(GoalManagerComponent gm, boolean shouldRunParallel) {
     goalManager = gm;
     runParallel = shouldRunParallel;
   }

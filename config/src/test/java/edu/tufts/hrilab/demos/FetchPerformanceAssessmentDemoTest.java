@@ -4,9 +4,7 @@
 
 package edu.tufts.hrilab.demos;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.action.db.performanceMeasures.PerformanceMeasures;
 import edu.tufts.hrilab.config.FetchPerformanceAssessmentDemoMock;
 import edu.tufts.hrilab.fol.Factory;
@@ -26,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class FetchPerformanceAssessmentDemoTest extends GenerativeDiarcIntegrationTest {
   private FetchPerformanceAssessmentDemoMock diarcConfig;
   private SimSpeechRecognitionComponent simSpeechRec;
-  private GoalManagerImpl gm;
+  private GoalManagerComponent gm;
   private final static int randomNumberSeed = 10;
   private Symbol agent = Factory.createSymbol("andy", "agent");
 

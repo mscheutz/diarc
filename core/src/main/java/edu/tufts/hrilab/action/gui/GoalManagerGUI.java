@@ -4,7 +4,7 @@
 
 package edu.tufts.hrilab.action.gui;
 
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.fol.Factory;
@@ -17,7 +17,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Future;
 
 public class GoalManagerGUI {
@@ -71,7 +70,7 @@ public class GoalManagerGUI {
     private JTextField submitActionField;
     private JButton submitActionButton;
     private JLabel submitActionLabel;
-    private static GoalManagerImpl goalManager;
+    private static GoalManagerComponent goalManager;
     private String dir;
     private DatabaseViewer dbViewer;
     private GoalsViewer goalsViewer;
@@ -80,7 +79,7 @@ public class GoalManagerGUI {
     //FIXME: better way to handle agents for submitting goals, right now hardcoded to andy for fetch stuff
     private Symbol agent;
 
-    public GoalManagerGUI(GoalManagerImpl gm, String path) {
+    public GoalManagerGUI(GoalManagerComponent gm, String path) {
         goalManager = gm;
         dir = path;
         goalsViewer = new GoalsViewer(gm);

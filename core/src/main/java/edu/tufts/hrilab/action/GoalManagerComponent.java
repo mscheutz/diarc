@@ -14,7 +14,6 @@ import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
-import edu.tufts.hrilab.action.goal.PendingGoal;
 import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.action.gui.GoalManagerGUI;
 import edu.tufts.hrilab.action.justification.Justification;
@@ -35,14 +34,11 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.util.Util;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
-import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,7 +58,7 @@ import org.apache.commons.lang3.tuple.Pair;
  * conditions for their execution are met. When interfaced with a Planner
  * the Goal Manager can plan as well as avoid and resolve conflicting actions.
  */
-public class GoalManagerImpl extends DiarcComponent {
+public class GoalManagerComponent extends DiarcComponent {
   /**
    * Optional GUI.
    */
@@ -157,9 +153,9 @@ public class GoalManagerImpl extends DiarcComponent {
   private ContextConsultant contextConsultant;
 
   /**
-   * Constructs the GoalManagerImpl.
+   * Constructs the GoalManagerComponent.
    */
-  public GoalManagerImpl() {
+  public GoalManagerComponent() {
     super();
   }
 
@@ -1002,7 +998,7 @@ public class GoalManagerImpl extends DiarcComponent {
     try {
       generatorClass = Class.forName(translationGeneratorType);
     } catch (ClassNotFoundException ex) {
-      log.error("[GoalManagerImpl] Class not found: " + translationGeneratorType);
+      log.error("Class not found: " + translationGeneratorType);
     }
     TranslationGenerator generator = null;
     try {

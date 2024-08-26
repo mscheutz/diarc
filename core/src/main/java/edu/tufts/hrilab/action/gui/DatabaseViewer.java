@@ -7,7 +7,7 @@
  */
 package edu.tufts.hrilab.action.gui;
 
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageParser;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.Database;
@@ -56,9 +56,9 @@ public class DatabaseViewer extends JPanel implements DatabaseListener {
 
     private static String scriptsPath;
 
-    private final GoalManagerImpl goalManager;
+    private final GoalManagerComponent goalManager;
 
-    public DatabaseViewer(GoalManagerImpl gm, String path) {
+    public DatabaseViewer(GoalManagerComponent gm, String path) {
         scriptsPath = path;
         // Keep reference back to GoalManager
         goalManager = gm;
