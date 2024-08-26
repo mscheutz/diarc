@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class SpotComponent extends DiarcComponent implements ArmInterface, MoveBaseInterface, DockingInterface {
@@ -58,6 +59,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   private JRos2ServiceClient<DiarcMoveToRequestMessage, DiarcMoveToResponseMessage> ikService;
 
   private JRos2Tf2 tf2;
+  private JRos2ServiceClient<GazeRequestMessage, GazeResponseMessage> gazeService;
 
 
   public SpotComponent() {
@@ -78,6 +80,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     locationConsultant = new SpotNavGraphLocationConsultant("location");
     locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
     pickUpService = new JRos2ServiceClientFactory().createClient(client, new DiarcPickUpServiceDefinition(), "/diarc_pick_up");
+    gazeService = new JRos2ServiceClientFactory().createClient(client, new GazeServiceDefinition(), "/gaze");
 
     tf2 = new JRos2Tf2Factory().createTf2Client(client);
 
@@ -540,7 +543,22 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       }
       return new ConditionJustification(true);
     } catch (InterruptedException | ExecutionException e) {
-      log.error("Error claiming", e);
+      log.error("Error opening gripper", e);
+      return new ConditionJustification(false);
+    }
+  }
+
+  @TRADEService
+  @Action
+  public Justification detectionPose() {
+    try {
+      GazeResponseMessage res = gazeService.sendRequestAsync(new GazeRequestMessage(5, 0, 1.25f, "body", -0.75f, 0.6f, 0, -0.15f)).get();
+      if (!res.success) {
+        log.warn(res.message.toString());
+      }
+      return new ConditionJustification(true);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("Error moving to detection pose", e);
       return new ConditionJustification(false);
     }
   }
