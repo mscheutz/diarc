@@ -22,9 +22,6 @@ import java.util.List;
 }
 
 () = deliver_to(Symbol ?object, Symbol ?location) {
-//    conditions : {
-//        pre : observableat(?type,?location);
-//    }
     effects : {
         success : not(delivered(?object,?location));
     }

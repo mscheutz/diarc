@@ -1,5 +1,6 @@
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Term;
 import java.lang.String;
 import java.lang.Integer;
 import java.lang.Boolean;
@@ -53,7 +54,25 @@ import java.util.List;
 //        act:localize();
       act:setLocationWithFiducial(!defaultLocation);
     }
+
+    Term !props;
+    Symbol !refId;
+    for (!i=0; !i lt 5; !i ++) {
+        !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(apple(X:physobj))");
+        act:create_deliverable(!props);
+    }
+    for (!i=0; !i lt 5; !i ++) {
+        !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(bottle(X:physobj))");
+        act:create_deliverable(!props);
+    }
     op:log(debug, "[init] set up spot");
+}
+
+() = create_deliverable(Term ?props) {
+    effects : {
+        success : available(!refId);
+    }
+    Symbol !refId = act:positReference(?props);
 }
 
 () = map() {
@@ -191,10 +210,9 @@ import java.util.List;
         pre infer : property_of(?object, ?type); //todo: remove infer
     }
     effects : {
-        success : available(?object);
         success : at(?object, ?location);
     }
     op:log(info, "Perceiving ?type ?object at ?location");
-//    act:verifyYouCanSee(?object);
+    act:perceiveEntity(?object);
 }
 

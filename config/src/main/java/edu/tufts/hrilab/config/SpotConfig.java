@@ -1,7 +1,9 @@
 package edu.tufts.hrilab.config;
 
 import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.arm.MockArmComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
@@ -10,10 +12,16 @@ import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
+import edu.tufts.hrilab.spot.MockRos2SpotComponent;
 import edu.tufts.hrilab.spot.SpotComponent;
+import edu.tufts.hrilab.vision.MockVisionComponent;
 //import edu.tufts.hrilab.vision.VisionComponent;
 
 public class SpotConfig extends DiarcConfiguration {
+
+  boolean useMockVision = true;
+  boolean useMockSpot = true;
+
   @Override
   public void runConfiguration() {
 
@@ -25,32 +33,38 @@ public class SpotConfig extends DiarcConfiguration {
     createInstance(SimpleNLGComponent.class, "");
     createInstance(SimSpeechProductionComponent.class, "");
 
-//    createInstance(SpotComponent.class, "-groups agent:self:agent -map /home/pete/dev/spot_maps/short.walk -locationRefs phiLocationRefs.json");
-//    try {
-//      Thread.sleep(10000);
-//    } catch (InterruptedException e) {
-//      throw new RuntimeException(e);
-//    }
-//    createInstance(VisionComponent.class, "-groups agent:self:agent -belief -capture spot.xml -cameraFrame hand_color_image_sensor");
+    if (useMockSpot) {
+      createInstance(MockArmComponent.class, "-groups agent:self:agent");
+      createInstance(MockMoveBaseComponent.class, "-groups agent:self:agent");
+      createInstance(MockRos2SpotComponent.class, "-groups agent:self:agent -locationRefs phiLocationRefs.json");
+    } else {
+      createInstance(SpotComponent.class, "-groups agent:self:agent -map /home/pete/dev/spot_maps/short.walk -locationRefs phiLocationRefs.json");
+    }
 
+    if (useMockVision) {
+      createInstance(MockVisionComponent.class, "-groups agent:self:agent -belief -sceneClass edu.tufts.hrilab.vision.scene.config.SpotSceneGenerator");
+    } else {
+//      createInstance(VisionComponent.class, "-groups agent:self:agent -belief -capture spot.xml -cameraFrame hand_color_image_sensor");
+    }
 
     createInstance(GoalManagerImpl.class,
             "-beliefg " +
-            "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
-            "-beliefinitfile agents/agents.pl "
-            + "-beliefinitfile demos.pl "
-            + "-beliefinitfile demos/spotVA.pl "
-            + "-editor "
-            + "-asl core.asl "
-            + "-asl dialogue/nlg.asl "
-            + "-asl dialogue/nlu.asl "
-            + "-asl dialogue/handleSemantics.asl "
-            + "-asl vision.asl "
-            + "-asl demos/spotDemo.asl "
-            + "-asl spot/spotActions.asl "
-            + "-goal listen(self:agent) "
-            + "-goal init(self:agent) "
-            + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
+                    "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
+                    "-beliefinitfile agents/agents.pl "
+                    + "-beliefinitfile demos.pl "
+                    + "-beliefinitfile demos/spotVA.pl "
+                    + "-editor "
+                    + "-asl core.asl "
+                    + "-asl dialogue/nlg.asl "
+                    + "-asl dialogue/nlu.asl "
+                    + "-asl dialogue/handleSemantics.asl "
+                    + "-asl vision.asl "
+                    + "-asl demos/spotDemo.asl "
+                    + "-asl spot/spotActions.asl "
+                    + "-goal listen(self:agent) "
+                    + "-goal init(self:agent) "
+//                    + "-goal deliver_to(self:agent,physobj_2:physobj,location_1:location) "
+                    + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
 
     );
 
