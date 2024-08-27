@@ -17,7 +17,15 @@ import java.util.List;
     goal:free(?actor);
 }
 
+() = putdown(Symbol ?object) {
+    goal:free(?actor);
+}
+
 () = putdownat(Symbol ?object, Symbol ?location) {
+    goal:at(?object,?location);
+}
+
+() = getTo(Symbol ?object, Symbol ?location) {
     goal:at(?object,?location);
 }
 

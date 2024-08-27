@@ -129,6 +129,7 @@ import java.util.List;
     act:goToPutDownPose();
     act:openGripper();
     act:command(arm_carry);
+    act:closeGripper();
     act:stow();
 }
 
@@ -157,7 +158,7 @@ import java.util.List;
 }
 
 
-() = deliver(Symbol ?object:physobj, Symbol ?at:location, Symbol ?type:property) {
+() = deliveritem(Symbol ?object:physobj, Symbol ?at:location, Symbol ?type:property) {
     conditions : {
         pre : at(?actor, ?at);
         pre : holding(?actor, ?object);
@@ -176,11 +177,11 @@ import java.util.List;
     op:log(info, "Delivering ?type ?object to ?at.");
 
     act:command(arm_carry);
-    act:askQuestionFromString(brad, "Let me know when you're holding the ?type.", response(X));
+    act:askQuestionFromString(brad, "Let me know when you're holding the ?type.", val(X));
     op:log(info, "Finishing handoff");
-    act:openGripper(none);
-    op:sleep(3000);
-    act:closeGripper(none);
+    act:openGripper();
+    op:sleep(1000);
+    act:closeGripper();
     act:command(arm_stow);
 }
 
@@ -247,7 +248,7 @@ import java.util.List;
 }
 
 () = runDemo() {
-    act:deliver_to(physobj_1:physobj,location_1:location);
+    act:deliver(physobj_1:physobj,location_1:location);
 }
 
 () = goToPutDownPose() {

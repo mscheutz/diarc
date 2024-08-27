@@ -6,6 +6,8 @@ VERBI; {C\AGENT ; #x.?PH($x)}, {C ; ?PH(?ADDRESSEE)}
 VERBT; {(C/REF)\AGENT ; #x#y.?PH($x,$y)}, {C/REF ; #x.?PH(?ADDRESSEE, $x)}
 VERBTT; {(C/REF)/REF; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/REF)/REF)\AGENT; #a#x#y.?PH($a,$x,$y)}
 
+THING;{RN; ?PH:physobj ; VAR}, {DN; ?PH:property}
+
 %% object as property, location as reference:
 %VERBT; {(C/DESC)\AGENT ; #x#y.?PH($x,$y)}, {C/DESC ; #x.?PH(?ADDRESSEE, $x)}
 %VERBTR; {(C/REF)\AGENT ; #x#y.?PH($x,$y)}, {C/REF ; #x.?PH(?ADDRESSEE, $x)}
@@ -50,7 +52,7 @@ to; INF/C; #x.to($x)
 %%%%%%%%%% Actions %%%%%%%%%%%%%
 init; C; init(?ADDRESSEE)
 
-get; VERBTT ; deliver
+get; VERBTT ; getTo
 %get me; VERBTT ; deliver
 deliver; VERBTT ; deliver
 bring; VERBTT ; deliver
@@ -166,3 +168,6 @@ holding; VAL; val(holding)
 have it; VAL; val(holding)
 got it; VAL; val(holding)
 %now; VAL; val(holding)
+
+bottle; THING
+apple; THING

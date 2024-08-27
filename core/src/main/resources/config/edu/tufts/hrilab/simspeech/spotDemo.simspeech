@@ -1,26 +1,25 @@
-get a bottle to the dropoff
-get a bottle to the table
--------
-tmptest
--------
-ready
--------
-go to table
-go to dock
-go to dropoff
-go to person
+deliver a bottle to the person
+get the bottle to the dropoff
+get the bottle to the table
 ----
-look for a bottle
+i am holding it
+----
 pick up the bottle
+put down the bottle
 ----
-look for an apple
-pick up the apple
+go to the dock
+go to the table
+go to the dropoff
+go to the person
 ----
-unstow arm
 stow arm
+unstow arm
 carry mode
-----
-close gripper
 open gripper
+close gripper
+stand
+sit
+dock
+undock
 ----
 shut down
