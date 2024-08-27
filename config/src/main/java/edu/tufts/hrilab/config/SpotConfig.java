@@ -3,6 +3,7 @@ package edu.tufts.hrilab.config;
 import edu.tufts.hrilab.action.GoalManagerImpl;
 import edu.tufts.hrilab.arm.MockArmComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
@@ -20,6 +21,9 @@ public class SpotConfig extends DiarcConfiguration {
 
   boolean useMockVision = true;
   boolean useMockSpot = true;
+  String service = "llamahf";
+  String model = "Meta-Llama-3.1-70B-Instruct";
+  boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
 
   public SpotConfig(boolean mock) {
     useMockVision = mock;
@@ -30,12 +34,21 @@ public class SpotConfig extends DiarcConfiguration {
   public void runConfiguration() {
 
     createInstance(ListenerComponent.class);
-    createInstance(TLDLParserComponent.class, "-dict templatedict.dict -dict spot.dict");
+    //createInstance(TLDLParserComponent.class, "-dict templatedict.dict -dict spot.dict");
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(ReferenceResolutionComponent.class);
     createInstance(DialogueComponent.class, "");
-    createInstance(SimpleNLGComponent.class, "");
+    //createInstance(SimpleNLGComponent.class, "");
     createInstance(SimSpeechProductionComponent.class, "");
+
+    String hybridParserArgs = "-tldl spot.dict -cache -cacheName spotPickAndPlace -cachePersist true";
+    if (useLLM) {
+      createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.6", service, model));
+      hybridParserArgs += " -llm -llmService spotPickAndPlace";
+    } else {
+      createInstance(SimpleNLGComponent.class, "");
+    }
+    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class,hybridParserArgs);
 
     if (useMockSpot) {
       createInstance(MockArmComponent.class, "-groups agent:self:agent");
@@ -67,7 +80,7 @@ public class SpotConfig extends DiarcConfiguration {
                     + "-asl spot/spotActions.asl "
                     + "-goal listen(self:agent) "
                     + "-goal init(self:agent) "
-//                    + "-goal deliver_to(self:agent,physobj_2:physobj,location_1:location) "
+                    + "-goal deliver(self:agent,physobj_2:physobj,location_1:location) "
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
 
     );
@@ -76,7 +89,7 @@ public class SpotConfig extends DiarcConfiguration {
   }
 
   public static void main(String[] args) {
-    SpotConfig config = new SpotConfig(false);
+    SpotConfig config = new SpotConfig(true);
     config.runConfiguration();
   }
 }

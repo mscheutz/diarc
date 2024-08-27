@@ -12,6 +12,7 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.interfaces.NLUInterface;
+import edu.tufts.hrilab.llm.hf.SpotPickAndPlaceLLMServiceProvider;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.slug.parsing.cache.CachedParserComponent;
@@ -146,7 +147,15 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       if (prompt != null) {
         llmArgs += " -prompt " + prompt;
       }
-      llmParser = createInstance(LLMParserComponent.class, llmArgs, false);
+
+      //TODO: SpotPickAndPlace temp: using separate class to enable some new functionality with dialogue history
+      //        and using LLM for both NLU and NLG
+      //      Need to reorganize package structure or reimplement service provider to fit alongside current system
+      if (llm != null && llm.equals("spotPickAndPlace")) {
+        llmParser = createInstance(SpotPickAndPlaceLLMServiceProvider.class, "");
+      } else {
+        llmParser = createInstance(LLMParserComponent.class, llmArgs, false);
+      }
     }
 
     // init TLDLParserComponent
@@ -369,4 +378,15 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
   }
 
+  @Override
+  protected void shutdownComponent() {
+    super.shutdownComponent();
+    if (useTLDL) {
+      try {
+        ((TLDLParserComponent)tldlParser).deregisterDictionary();
+      } catch (Exception e) {
+        log.error("[TLDLParserComponent] exception deregistering dictionary", e);
+      }
+    }
+  }
 }

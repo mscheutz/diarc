@@ -2,13 +2,8 @@ package edu.tufts.hrilab.spot;
 
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
-import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.spot.msgs.GazeRequestMessage;
-import edu.tufts.hrilab.spot.msgs.GazeResponseMessage;
-
-import java.util.concurrent.ExecutionException;
 
 public interface MockSpotInterface {
   @Action
@@ -96,5 +91,4 @@ public interface MockSpotInterface {
   @TRADEService
   @Action
   public Justification detectionPose();
-
 }

@@ -88,12 +88,16 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
   @Override
   protected void shutdownComponent() {
+    deregisterDictionary();
+    parses.clear();
+  }
+
+  public void deregisterDictionary() {
     try {
       TRADE.deregister(dictionary);
     } catch (TRADEException e) {
       log.error("[TLDLParserComponent] exception deregistering dictionary", e);
     }
-    parses.clear();
   }
 
   @Override
