@@ -4,7 +4,7 @@ get; C/C; #x.$x
 to; (C/REF)\REF; #x#y.putdownat_wrapper(?ADDRESSEE,$x,$y)
 look for; C/REF; #r.perceiveEntity(?ADDRESSEE,$r)
 pick up; C/REF; #r.pickup_wrapper(?ADDRESSEE,$r)
-put down; C/REF; #r.putdown_wrapper(?ADDRESSEE,$r)
+put down; C; putdown_wrapper(?ADDRESSEE)
 shut down; C; shutDown(?ADDRESSEE)
 stow arm; C; stow(?ADDRESSEE)
 unstow arm; C; unstow(?ADDRESSEE)

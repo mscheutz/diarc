@@ -76,7 +76,7 @@ public class SpotConfig extends DiarcConfiguration {
   }
 
   public static void main(String[] args) {
-    SpotConfig config = new SpotConfig(true);
+    SpotConfig config = new SpotConfig(false);
     config.runConfiguration();
   }
 }

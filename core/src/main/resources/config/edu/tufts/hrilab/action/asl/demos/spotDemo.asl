@@ -27,11 +27,13 @@ import java.util.List;
   op:log(warn, "[failedLocalization] location initialized to !defaultLocation after failing to localize");
 }
 
-() = init[""]() {
+() = init[""](String ?ignore = "none()") {
     effects : {
         success : free(?actor);
         success : observableat(bottle:property, location_3:location); //todo: Remove if we want to demonstrate instruction
+        success : observable(bottle:property); //todo: Remove if we want to demonstrate instruction
         success : observableat(apple:property, location_3:location);
+        success : observable(apple:property); //todo: Remove if we want to demonstrate instruction
         success : at(?actor, !defaultLocation);
     }
 
@@ -57,22 +59,12 @@ import java.util.List;
 
     Term !props;
     Symbol !refId;
-    for (!i=0; !i lt 5; !i ++) {
-        !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(apple(X:physobj))");
-        act:create_deliverable(!props);
-    }
-    for (!i=0; !i lt 5; !i ++) {
-        !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(bottle(X:physobj))");
-        act:create_deliverable(!props);
-    }
-    op:log(debug, "[init] set up spot");
-}
 
-() = create_deliverable(Term ?props) {
-    effects : {
-        success : available(!refId);
-    }
-    Symbol !refId = act:positReference(?props);
+    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(apple(X:physobj))");
+    act:positReference(!props);
+    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(bottle(X:physobj))");
+    act:positReference(!props);
+    op:log(debug, "[init] set up spot");
 }
 
 () = map() {
@@ -118,7 +110,6 @@ import java.util.List;
 
 () = perceiveEntity(Symbol ?object:physobj) {
     op:log(debug, "[verifyYouCanSee] running visual search and looking for ?object");
-    act:detectionPose();
     act:startVisualSearch(?object);
     act:findObject(?object);
     act:stopVisualSearch(?object);
@@ -143,6 +134,29 @@ import java.util.List;
 
 ///////// Operators
 
+() = gotoperceptionpose(Symbol ?actor:agent) {
+    conditions : {
+        pre : not(perceptionpose(?actor));
+    }
+    effects : {
+        success : perceptionpose(?actor);
+    }
+
+    act:detectionPose();
+}
+
+() = resetarm(Symbol ?actor:agent) {
+    conditions : {
+        pre : free(?actor);
+    }
+    effects : {
+        success : not(perceptionpose(?actor));
+    }
+
+    act:stow();
+}
+
+
 () = deliver(Symbol ?object:physobj, Symbol ?at:location, Symbol ?type:property) {
     conditions : {
         pre : at(?actor, ?at);
@@ -155,6 +169,7 @@ import java.util.List;
         success : not(holding(?actor, ?object));
         success : delivered(?object, ?at);
         success : not(available(?object));
+        success : observable(?type);
     }
 
 
@@ -186,11 +201,13 @@ import java.util.List;
         pre : at(?actor, ?from);
         pre : at(?object, ?from);
         pre : free(?actor);
+        pre : perceptionpose(?actor);
     }
     effects : {
         success : not(at(?object, ?from));
         success : not(free(?actor));
         success : holding(?actor, ?object);
+        success : not(perceptionpose(?actor));
     }
     op:log(info, "Picking up ?object from ?from.");
     act:pickUp(?object);
@@ -203,6 +220,7 @@ import java.util.List;
     }
     effects : {
         success : free(?actor);
+        success : not(holding(?actor, ?object));
         success : at(?object, ?to);
         success : not(holding(?actor, ?object));
     }
@@ -215,17 +233,21 @@ import java.util.List;
     conditions : {
         pre : at(?actor, ?location);
         pre : observableat(?type, ?location);
+        pre : observable(?type);
         pre : property_of(?object, ?type);
+        pre : perceptionpose(?actor);
     }
     effects : {
         success : at(?object, ?location);
+        success : available(?object);
+        success : not(observable(?type));
     }
     op:log(info, "Perceiving ?type ?object at ?location");
     act:perceiveEntity(?object);
 }
 
 () = runDemo() {
-    act:deliver_to(physobj_9:physobj,location_1:location);
+    act:deliver_to(physobj_1:physobj,location_1:location);
 }
 
 () = goToPutDownPose() {
