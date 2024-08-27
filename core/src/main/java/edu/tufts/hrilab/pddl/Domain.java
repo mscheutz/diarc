@@ -24,7 +24,7 @@ public class Domain {
   private final Map<String, Symbol> constants = new HashMap<>();
   private final Map<String, Predicate> functions = new HashMap<>();
   private final List<Derived> derived = new ArrayList<>();
-  private final List<String> supportedRequirements = Arrays.asList("strips", "fluents", "typing", "negative-preconditions", "equality", "derived-predicates");
+  private final List<String> supportedRequirements = Arrays.asList("strips", "fluents", "typing", "negative-preconditions", "equality");
 
   /**
    * Generate a PDDL formatted string for this Domain.
