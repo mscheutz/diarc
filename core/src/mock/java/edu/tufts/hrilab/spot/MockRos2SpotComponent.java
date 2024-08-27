@@ -2,6 +2,8 @@ package edu.tufts.hrilab.spot;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
@@ -170,5 +172,10 @@ public class MockRos2SpotComponent extends DiarcComponent implements DockingInte
   @Override
   public Justification localize() {
     return new ConditionJustification(true);
+  }
+
+  @Override
+  public Justification detectionPose() {
+      return new ConditionJustification(true);
   }
 }

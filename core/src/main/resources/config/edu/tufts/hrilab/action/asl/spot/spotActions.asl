@@ -5,23 +5,23 @@ import java.lang.Integer;
 import java.lang.Boolean;
 import java.util.List;
 
-() = goto_wrapper(Symbol ?location) {
+() = goto(Symbol ?location) {
     goal:at(?actor,?location);
 }
 
-() = pickup_wrapper(Symbol ?object) {
+() = pickup(Symbol ?object) {
     goal:holding(?actor,?object);
 }
 
-() = putdown_wrapper() {
+() = putdown() {
     goal:free(?actor);
 }
 
-() = putdownat_wrapper(Symbol ?object, Symbol ?location) {
+() = putdownat(Symbol ?object, Symbol ?location) {
     goal:at(?object,?location);
 }
 
-() = deliver_to(Symbol ?object, Symbol ?location) {
+() = deliver(Symbol ?object, Symbol ?location) {
     effects : {
         success : not(delivered(?object,?location));
     }

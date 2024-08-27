@@ -152,7 +152,7 @@ import java.lang.Integer;
         if (op:invokeMethod(!queryVariables, "isEmpty")) {
           !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(no)");
         } else {
-          !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
+          !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(?query)");
         }
 
         act:generateResponse(?speaker, !defaultResponse, direct);

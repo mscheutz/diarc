@@ -1,9 +1,168 @@
-go to; C/REF; #r.goToLocation(?ADDRESSEE,$r)
-look for; C/REF; #r.perceiveEntity(?ADDRESSEE,$r)
-pick up; C/REF; #r.pickUp(?ADDRESSEE,$r)
-shut down; C; shutDown(?ADDRESSEE)
-stow arm; C; stow(?ADDRESSEE)
-unstow arm; C; unstow(?ADDRESSEE)
-carry mode; C; carry(?ADDRESSEE)
-close gripper; C; closeGripper(?ADDRESSEE)
-open gripper; C; openGripper(?ADDRESSEE)
+START-TEMPLATES
+
+VERBI; {C\AGENT ; #x.?PH($x)}, {C ; ?PH(?ADDRESSEE)}
+
+%% object and location both as references:
+VERBT; {(C/REF)\AGENT ; #x#y.?PH($x,$y)}, {C/REF ; #x.?PH(?ADDRESSEE, $x)}
+VERBTT; {(C/REF)/REF; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/REF)/REF)\AGENT; #a#x#y.?PH($a,$x,$y)}
+
+%% object as property, location as reference:
+%VERBT; {(C/DESC)\AGENT ; #x#y.?PH($x,$y)}, {C/DESC ; #x.?PH(?ADDRESSEE, $x)}
+%VERBTR; {(C/REF)\AGENT ; #x#y.?PH($x,$y)}, {C/REF ; #x.?PH(?ADDRESSEE, $x)}
+%VERBTT; {(C/REF)/DESC; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/REF)/DESC)\AGENT; #a#x#y.?PH($a,$x,$y)}
+
+END-TEMPLATES
+
+%%%%%%%%%% Misc %%%%%%%%%%%%%
+a; REF/RN ; #x.$x ; INDEFINITE
+a; LREF/LN ; #x.$x ;INDEFINITE
+a; DESC/DN ; #x.$x
+an; REF/RN ; #x.$x ; INDEFINITE
+an; LREF/LN ; #x.$x ; INDEFINITE
+an; DESC/DN ; #x.$x
+
+a; DESC/DESC ; #x.$x
+an; DESC/DESC ; #x.$x
+
+can; (AGENT/C) \ AGENT ; #x.$x
+could; (AGENT/C) \ AGENT ; #x.$x
+would; (AGENT/C) \ AGENT ; #x.$x
+
+%please; C/C, C\C, S\S, (C\AGENT)/(C\AGENT), (C\AGENT)\(C\AGENT) ; #x. $x
+please; (AGENT/C) \ AGENT, C\C ; #x. $x
+
+the; REF/RN ; #x.$x ; DEFINITE
+the; LREF/LN ; #x.$x ; DEFINITE
+the; DESC/DN ; #x.$x
+
+the; DESC/DESC ; #x.$x
+
+%TODO: this,that,etc. if desired
+
+%%%%%%%%%% Introspection %%%%%%%%%%%%%
+do; Q/ C; #x.$x
+%see; (Q/REF)\AGENT; #x#y.see($x,$y)
+see; (Q/DESC)\AGENT; #x#y.see($x,$y)
+
+know how; (C/INF)\AGENT ; #a#i.knowHow($a,$i)
+to; INF/C; #x.to($x)
+
+%%%%%%%%%% Actions %%%%%%%%%%%%%
+init; C; init(?ADDRESSEE)
+
+get; VERBTT ; deliver
+%get me; VERBTT ; deliver
+deliver; VERBTT ; deliver
+bring; VERBTT ; deliver
+
+%go to; VERBTR; goto
+go to; VERBT; goto
+pick up; VERBT; pickup
+%TODO: needs to parse as if accepting args but not use
+put down; VERBI; putdown
+put down; {(C/REF)\AGENT; #x.#y.putdown($x)
+put down; C/REF; #x.putdown(?ADDRESSEE)
+put down; VERBTT; putdownat
+
+%sit; VERBI; sit
+%stand; VERBI; stand
+%self right; VERBI; selfright
+%roll over; VERBI; rollover
+
+from; REF/REF; #x.$x
+in; REF/REF; #x.$x
+to; REF/REF; #x.$x
+on; REF/REF; #x.$x
+
+from; DESC/DESC; #x.$x
+in; DESC/DESC; #x.$x
+
+shut down; VERBI; shutDown
+stow arm; VERBI; stow
+unstow arm; VERBI; unstow
+carry mode; VERBI; carry
+close gripper; VERBI; closeGripper
+open gripper; VERBI; openGripper
+look for; VERBT; perceiveEntity
+
+%%%%%%%%%% Things %%%%%%%%%%%%%
+you; AGENT; ?ADDRESSEE
+me; AGENT; ?INTERACTOR
+i; AGENT; ?INTERACTOR
+%spot; AGENT; spot:agent
+spot; AGENT; ?ADDRESSEE
+
+%available; RN/RN; #x.available($x) ; MOD
+%available; REF/REF; #x.available($x) ; MOD
+%another; RN/RN; #x.available($x) ; MOD
+%another; REF/REF; #x.available($x) ; MOD
+%different; RN/RN; #x.available($x) ; MOD
+%different; REF/REF; #x.available($x) ; MOD
+%new; RN/RN; #x.available($x) ; MOD
+%new; REF/REF; #x.available($x) ; MOD
+
+yes; VAL; val(yes)
+no; VAL; val(no)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Additional entries for flexibility %%
+
+one; DESC/DESC ; #x.$X
+
+%fetch; VERBTT ; deliver
+%fetch me; VERBTT ; deliver
+%deliver; VERBTT ; deliver
+%deliver me; VERBTT ; deliver
+%retrieve; VERBTT ; deliver
+%obtain; VERBTT ; deliver
+%collect; VERBTT ; deliver
+
+%get up; VERBI; stand
+%stand up; VERBI; stand
+%stand up straight; VERBI; stand
+%down; VERBI; sit
+%sit down; VERBI; sit
+%right yourself; VERBI; selfright
+%steady yourself; VERBI; selfright
+
+grab; VERBT; pickup
+pickup; VERBT; pickup
+
+for me; C\C; #x. $x
+
+quickly; (AGENT/C) \ AGENT, C\C ; #x. $x
+
+that is in; REF/REF; #x.$x
+that's in; REF/REF; #x.$x
+located in; REF/REF; #x.$x
+found in; REF/REF; #x.$x
+
+hi; G ; hi
+hi there; G ; hi_there
+hello; G ; hello
+
+turn off; VERBI; shutDown
+stow your arm; VERBI; stow
+stow the arm; VERBI; stow
+unstow your arm; VERBI; unstow
+unstow the arm; VERBI; unstow
+enter carry mode; VERBI; carry
+close your gripper; VERBI; closeGripper
+close the gripper; VERBI; closeGripper
+open your gripper; VERBI; openGripper
+open the gripper; VERBI; openGripper
+search for; VERBT; perceiveEntity
+find; VERBT; perceiveEntity
+
+%Versions which allow ref specified?
+am holding it; VAL; val(holding)
+im holding it; VAL; val(holding)
+i'm holding it; VAL; val(holding)
+am holding; VAL; val(holding)
+im holding; VAL; val(holding)
+i'm holding; VAL; val(holding)
+holding it; VAL; val(holding)
+holding; VAL; val(holding)
+have it; VAL; val(holding)
+got it; VAL; val(holding)
+%now; VAL; val(holding)

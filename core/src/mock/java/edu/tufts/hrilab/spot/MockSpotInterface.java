@@ -87,4 +87,8 @@ public interface MockSpotInterface {
   @TRADEService
   @Action
   public Justification localize();
+
+  @TRADEService
+  @Action
+  public Justification detectionPose();
 }
