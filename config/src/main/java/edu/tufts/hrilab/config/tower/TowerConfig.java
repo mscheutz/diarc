@@ -39,7 +39,6 @@ public class TowerConfig extends DiarcConfiguration {
   public void runConfiguration() {
     boolean mock = false;
     boolean useNLP = true;
-    boolean useFirebase = false;
     boolean useGUI = true;
 
     String map_folder = "jcc_building_maps";
@@ -49,10 +48,6 @@ public class TowerConfig extends DiarcConfiguration {
       log.info("Starting inside lab...");
       map_folder = "elevator_lab_test";
       floor = 1;
-    }
-    if (args.contains("-firebase")) {
-      log.info("Starting with firebase...");
-      useFirebase = true;
     }
     if (args.contains("-headless")) {
       log.info("Starting headless...");
@@ -81,10 +76,6 @@ public class TowerConfig extends DiarcConfiguration {
       createInstance(SimpleNLGComponent.class);
 
       createInstance(SimSpeechProductionComponent.class);
-
-      if (useFirebase) {
-        createInstance(edu.tufts.hrilab.firebase.DesktopFirebaseConnectionComponent.class, "-dialogue -emulator -firebaseGroup TuftsDemo");
-      }
 
     } else {
       createInstance(ReferenceResolutionComponent.class);

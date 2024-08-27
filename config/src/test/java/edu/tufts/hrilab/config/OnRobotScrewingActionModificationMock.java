@@ -22,10 +22,8 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
     public ai.thinkingrobots.mtracs.interfaces.CR800ComponentInterface assista;
     public ai.thinkingrobots.mtracs.interfaces.CR800ComponentInterface rv4fr;
     public ai.thinkingrobots.mtracs.interfaces.PLCComponentInterface plc;
-    private  boolean firebase;
     private  boolean test;
-    public OnRobotScrewingActionModificationMock(boolean firebase, boolean test) {
-        this.firebase=firebase;
+    public OnRobotScrewingActionModificationMock(boolean test) {
         this.test=test;
     }
 
@@ -44,16 +42,7 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
         createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
         createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class, "");
         createInstance(SimpleNLGComponent.class, "");
-
-        if (firebase) {
-            createInstance(edu.tufts.hrilab.firebase.DesktopFirebaseConnectionComponent.class, "-nlp -firebaseGroup tr_emulated -dialogue -emulator -writeASL " +
-                    "-dbfile /config/edu/tufts/hrilab/action/asl/demos/assemble.asl " +
-                    "-dbfile /config/edu/tufts/hrilab/action/asl/mtracs/conveyor.asl " +
-                    "-dbfile /config/edu/tufts/hrilab/action/asl/demos/screwIn.asl " +
-                    "-dbfile /config/edu/tufts/hrilab/action/asl/mtracs/cr800Base.asl");
-        } else {
-            createInstance(SimSpeechProductionComponent.class, "");
-        }
+        createInstance(SimSpeechProductionComponent.class, "");
 
         String goalManagerArgs=
                 "-beliefinitfile demos.pl agents/onRobotScrewingAgents.pl demos/onRobotScrewing.pl " +
@@ -95,9 +84,8 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
     }
 
     public static void main(String[] args) {
-        boolean firebase = false;
         boolean test = false;
-        OnRobotScrewingActionModificationMock config= new OnRobotScrewingActionModificationMock(firebase, test);
+        OnRobotScrewingActionModificationMock config= new OnRobotScrewingActionModificationMock(test);
         config.runConfiguration();
     }
 }

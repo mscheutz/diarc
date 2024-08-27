@@ -516,8 +516,6 @@ public class ExecutionManager implements ActionListener {
    */
   protected void onActiveGoalUpdated(Goal g, GoalStatus status, UpdateType updateType) {
     log.trace("[onActiveGoalUpdated] {}, {}, {}", g, status, updateType.name());
-    //Update UI
-    notifyUIActiveGoalUpdated(g, status, updateType);
 
     //Assign as many pending goals as possible (in order of priority) with resources freed up by this active goal
     // completing
@@ -536,8 +534,6 @@ public class ExecutionManager implements ActionListener {
    */
   protected void onPendingGoalUpdated(Goal g, int index, UpdateType updateType) {
     log.trace("[onPendingGoalUpdated] {} at index {}", g, index);
-    //Update UI
-    notifyUIPendingGoalUpdated(g, index, updateType);
 
     //If a pending goal was newly added, check if it should be forwarded straight to execution or left in the queue
     if (updateType == UpdateType.ADDED) {
@@ -2066,26 +2062,6 @@ public class ExecutionManager implements ActionListener {
       }
     }
     return false;
-  }
-
-  //GUI
-  //TODO: Probably want this to exist as a listener/notification system similar to those in other components
-  //  and have any UI components which care about these updates to subscribe as listeners. Going to hold off
-  //  until other GUI work is more concrete
-  protected void notifyUIActiveGoalUpdated(Goal g, GoalStatus status, UpdateType updateType) {
-    try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("notifyActiveGoalUpdated").argTypes(Goal.class, UpdateType.class, GoalStatus.class)).call(void.class, g, updateType, status);
-    } catch (TRADEException e) {
-      log.debug("[notifyUIActiveGoalUpdated]", e);
-    }
-  }
-
-  protected void notifyUIPendingGoalUpdated(Goal g, int index, UpdateType updateType) {
-    try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("notifyPendingGoalUpdated").argTypes(Goal.class, Integer.class, UpdateType.class)).call(void.class, g, index, updateType);
-    } catch (TRADEException e) {
-      log.debug("[notifyUIPendingGoalUpdated]", e);
-    }
   }
 
   /**

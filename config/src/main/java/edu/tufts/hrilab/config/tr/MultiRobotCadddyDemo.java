@@ -33,7 +33,6 @@ public class MultiRobotCadddyDemo extends DiarcConfiguration {
         boolean useMockMovebase = true;
         boolean useMockManipulation = true;
         boolean useSphinx = false;
-        boolean useFirebase = true;
         boolean useSpot = true;
 
         createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
@@ -51,11 +50,6 @@ public class MultiRobotCadddyDemo extends DiarcConfiguration {
         if (useSphinx) {
             createInstance(Sphinx4Component.class, "-grammar heterogeneousAgents -nlp -speaker tyler -listener");
             //createInstance(edu.tufts.hrilab.sphinx4.Sphinx4Component.class, "-grammar learnAssemble -nlp -speaker tyler -listener andy");
-        }
-
-        if (useFirebase) {
-            //createInstance(edu.tufts.hrilab.firebase.DesktopFirebaseConnectionComponent.class, "-dialogue -emulator -firebaseGroup tr_emulated");
-            createInstance(edu.tufts.hrilab.firebase.DesktopFirebaseConnectionComponent.class, "-dialogue -emulator -firebaseGroup TuftsDemo -action -dbaction planned -dbfile /config/edu/tufts/hrilab/action/asl/demos/multiRobotCaddy.asl -dbfile /config/edu/tufts/hrilab/action/asl/domains/multiRobotCaddy.asl");
         }
 
         if (useMockVision) {

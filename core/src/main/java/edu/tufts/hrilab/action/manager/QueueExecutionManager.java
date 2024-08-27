@@ -57,9 +57,6 @@ public class QueueExecutionManager extends ExecutionManager {
       }
     }
 
-    //Notify UI of new goal
-    notifyUIActiveGoalUpdated(g, status, updateType);
-
     //Assign as many pending goals as possible (in order of priority) with resources freed up by this active goal
     // completing
     if (status.isTerminated() && !pendingGoals.isEmpty() && consumedResources(g)) {
