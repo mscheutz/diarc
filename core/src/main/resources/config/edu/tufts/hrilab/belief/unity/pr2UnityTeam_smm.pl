@@ -64,7 +64,7 @@ supervisor(player2).
 admin(brad).
 
 
-is_supervisor(S,D):-supervisor(S),diarcAgent(D).
+supervisor_of(S,D):-supervisor(S),diarcAgent(D).
 admin_of(S,D):-admin(S),diarcAgent(D).
 explanationType(A, incomplete) :- not(role(A,novice)).
 
@@ -76,7 +76,7 @@ these actions no longer exist, saving as arefrence for how to do this in the fut
 admin goal stuf not currently being used, keeping it like this in case we want to do something with an obligation hirearchy in the future.
 */
 /* obligation rules */
-oblSub1(A,B,X):-(want(B,X),is_supervisor(B,A),not(isAdminGoal(A,X))).
+oblSub1(A,B,X):-(want(B,X),supervisor_of(B,A),not(isAdminGoal(A,X))).
 %oblSub1(A,B,X):-(want(B,X),X=did(A,Y),is_superior(B,A),not(isAdminGoal(A,X))).
 %oblSub1(A,B,X):-(want(B,X),X=obs(A,Y),is_superior(B,A),not(isAdminGoal(A,X))).
 oblSub2(A,B,X):-(want(B,X),X=did(A,Y),admin_of(B,A),isAdminGoal(A,X)).

@@ -19,14 +19,14 @@ bel(D,X):-believes(A,X),diarcAgent(A),diarcAgent(D), not(A=D).
 propertyOf(X,free) :- bel(A, propertyOf(X,free)), diarcAgent(A).
 propertyOf(X,free) :- not(propertyOf(X,blocked)), propertyOf(X,location).
 
-%is_supervisor(X,D):-new_supervisor(X,A),diarcAgent(A),diarcAgent(D), not(A=D).
+%supervisor_of(X,D):-new_supervisor(X,A),diarcAgent(A),diarcAgent(D), not(A=D).
 %admin_of(X,D):-admin_of(X,A),diarcAgent(A),diarcAgent(D), not(A=D).
 
-is_supervisor(S,D):-supervisor(S),diarcAgent(D).
+supervisor_of(S,D):-supervisor(S),diarcAgent(D).
 admin_of(S,D):-admin(S),diarcAgent(D).
-%is_supervisor(A,B):-role(A,supervisor(B)).
+%supervisor_of(A,B):-role(A,supervisor(B)).
 %admin_of(A,B):-role(A,admin(B)).
-is_supervisor(A,B):-admin_of(A,B).
+supervisor_of(A,B):-admin_of(A,B).
 
 role(Y,novice) :- diarcAgent(X),bel(X,novice(Y)).
 

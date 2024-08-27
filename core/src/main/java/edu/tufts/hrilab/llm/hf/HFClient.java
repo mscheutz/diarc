@@ -102,7 +102,7 @@ public class HFClient{
     /**
      * Sets the temperature of the model.
      *
-     * @param {number} temperatureFloat - The temperature value to set
+     * @param temperatureFloat - The temperature value to set
      */
     public void setTemperature (float temperatureFloat) {
         temperature = temperatureFloat;
@@ -111,7 +111,7 @@ public class HFClient{
     /**
      * Sets the max number of tokens included in the response (Not including the provided prompt)
      *
-     * @param {number} maxNewTokens - The number of tokens to set
+     * @param maxNewTokens - The number of tokens to set
      */
     public void setMaxNewTokens(int maxNewTokens) {
         maxNewTokens = this.maxNewTokens;

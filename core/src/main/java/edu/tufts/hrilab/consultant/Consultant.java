@@ -349,8 +349,8 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   /**
    * Remove known reference from the consultant.
    *
-   * @param refId
-   * @return removed Reference or null if doesn't exist
+   * @param refId unique reference ID
+   * @return removed Reference or null if it doesn't exist
    */
   public T removeReference(Symbol refId) {
     if (refId.hasType()) {
@@ -374,7 +374,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
    * Get string description of all known references.
    * NOTE: to change output of this method, override Reference subclass toString method.
    *
-   * @return
+   * @return summary of current references
    */
   public final String getReferenceSummaries() {
     StringBuilder sb = new StringBuilder();
@@ -387,8 +387,8 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   /**
    * Get Reference based on reference ID. The reference ID can be typed or un-typed.
    *
-   * @param refId
-   * @return
+   * @param refId unique reference ID
+   * @return Reference of type T
    */
   @TRADEService
   public final T getReference(Symbol refId) {
@@ -401,7 +401,8 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
 
   /**
    * Get all References. This is the values of the internal references map.
-   * @return
+   *
+   * @return all references
    */
   public final Collection<T> getAllReferences() {
     return references.values();
