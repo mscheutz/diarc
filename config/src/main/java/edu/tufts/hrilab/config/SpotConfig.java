@@ -67,7 +67,7 @@ public class SpotConfig extends DiarcConfiguration {
                     + "-asl spot/spotActions.asl "
                     + "-goal listen(self:agent) "
                     + "-goal init(self:agent) "
-                    + "-goal deliver_to(self:agent,physobj_2:physobj,location_1:location) "
+//                    + "-goal deliver_to(self:agent,physobj_2:physobj,location_1:location) "
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
 
     );
@@ -76,7 +76,7 @@ public class SpotConfig extends DiarcConfiguration {
   }
 
   public static void main(String[] args) {
-    SpotConfig config = new SpotConfig(true);
+    SpotConfig config = new SpotConfig(false);
     config.runConfiguration();
   }
 }

@@ -30,8 +30,8 @@ import java.util.List;
 () = init[""]() {
     effects : {
         success : free(?actor);
-        success : observableat(bottle:property, location_1:location); //todo: Remove if we want to demonstrate instruction
-        success : observableat(apple:property, location_1:location);
+        success : observableat(bottle:property, location_0:location); //todo: Remove if we want to demonstrate instruction
+        success : observableat(apple:property, location_0:location);
         success : at(?actor, !defaultLocation);
     }
 
@@ -132,7 +132,7 @@ import java.util.List;
     act:findObject(?object);
     act:pickUpObject(?object);
     act:stopVisualSearch(?object);
-//    act:command(arm_carry);
+    act:command(arm_carry);
 }
 
 ///////// Operators
@@ -216,5 +216,9 @@ import java.util.List;
     }
     op:log(info, "Perceiving ?type ?object at ?location");
     act:perceiveEntity(?object);
+}
+
+() = runDemo() {
+    act:deliver_to(physobj_9:physobj,location_1:location)
 }
 

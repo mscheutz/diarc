@@ -1,3 +1,4 @@
+tmptest; C; runDemo(?ADDRESSEE)
 go to; C/REF; #r.goToLocation(?ADDRESSEE,$r)
 look for; C/REF; #r.perceiveEntity(?ADDRESSEE,$r)
 pick up; C/REF; #r.pickUp(?ADDRESSEE,$r)
