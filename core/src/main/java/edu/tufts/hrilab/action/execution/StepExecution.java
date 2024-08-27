@@ -252,9 +252,6 @@ public class StepExecution {
           context.caller.setStatus(context.getStatus(), context.getJustification());
           context.performAdditionalStatusUpdates();
           return context.getJustification();
-        case PARENT_CANCELED:
-          context.caller.setStatus(ActionStatus.CANCEL);
-          return context.getJustification();
         default: // No state change for other cases.
           log.error("[finishStep] current status not handled. Context: {} ActionStatus: {} ", context.getSignatureInPredicateForm(), context.getStatus());
           return new ConditionJustification(false);

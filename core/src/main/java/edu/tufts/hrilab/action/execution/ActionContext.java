@@ -27,12 +27,14 @@ import edu.tufts.hrilab.action.justification.AndJustification;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.action.lock.ActionResourceLock;
+import edu.tufts.hrilab.util.Util;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -1025,14 +1027,18 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       // if primitive action, call onInterrupt until it's no longer blocking
       // TODO: should onInterrupt also be called if it's not blocking, like in the script case?
 
-      while (!doStepLock.tryLock()) {
-        // lock NOT acquired (doStep is executing)
-        // attempt to interrupt until lock can be acquired
-        handleInterrupt(eStatus);
-      }
-
       try {
+        long timeout = 0;
+        while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
+          // lock NOT acquired (doStep is executing)
+          // attempt to interrupt until lock can be acquired
+          handleInterrupt(eStatus);
+          timeout = 3;
+        }
+
         super.setStatus(eStatus, justification);
+      } catch (InterruptedException e) {
+        log.error("Exception trying to get doStepLock.", e);
       } finally {
         doStepLock.unlock();
       }

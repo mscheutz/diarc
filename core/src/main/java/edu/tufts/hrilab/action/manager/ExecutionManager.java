@@ -559,9 +559,8 @@ public class ExecutionManager implements ActionListener {
           } else {
             log.debug("[onPendingGoalUpdated] conflicting higher priority pending goal exists, leaving in pending");
           }
-        }
-        //If there is a conflict with an active goal(s), check if the new one should supersede execution
-        else {
+        } else {
+          //If there is a conflict with an active goal(s), check if the new one should supersede execution
           log.trace("[onPendingGoalUpdated] conflicting active goals exist");
           if (shouldSupersede(g, conflictingGoals)) {
             log.debug("[onPendingGoalUpdated] superseding conflicting active goals");
@@ -856,8 +855,10 @@ public class ExecutionManager implements ActionListener {
       //  we want to resume execution instead of creating a new AI
       if (goal.getActionInterpreter() != null) {
         log.debug("[transferGoalToActive] transferring pending goal which already has a partially executed AI present. Not creating a new one");
-        //Place the goal back into the active collection
+        //Place the goal back into the active collection and send no-longer-pending notification
         addActiveGoal(goal, pg.getPreviousAIFuture());
+        pg.notifyOfNoLongerPending();
+
         //Automatically resume the goal which was suspended when superseded
         if (goal.getStatus() != GoalStatus.SUSPENDED) {
           log.warn("[transferGoalToActive] encountered goal with a non-null ActionInterpreter and is not suspended");

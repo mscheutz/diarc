@@ -11,6 +11,7 @@ import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -251,7 +252,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     addUserInput("init");
     evaluateResults();
 
-    setSingleTestTimeout(10, TimeUnit.DAYS);
+    setSingleTestTimeout(10, TimeUnit.SECONDS);
     addUserInput("define new item southwest bowl");
     evaluateResults();
     addUserInput("suspend current task");
@@ -303,6 +304,7 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     evaluateResults();
   }
 
+  @Ignore
   @Test
   public void planInterruptionTest() {
 

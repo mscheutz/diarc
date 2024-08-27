@@ -38,7 +38,6 @@ public enum ActionStatus {
   FAIL_NORMS(true, true),
   SATISFYING_PRECONDITIONS(false, false),
   SATISFYING_OBLIGATIONS(false,false),
-  PARENT_CANCELED(true,false),
   CANCEL(true, false),
   EXIT_RECOVERY(true,true),
   SUSPEND(false, false),

@@ -624,8 +624,8 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
     runUserGeneratedTest("cancel task with gid " + followGid, new Object[][]{
             {"sayText", "okay", null},
-            {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-            {"interruptFollowBlocking", null},
+//            {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},  // no longer happens -- followMeBlocking already suspended
+//            {"interruptFollowBlocking", null},                                                // no longer happens -- followMeBlocking already suspended
             {"joinOnGoal", followGid, GoalStatus.CANCELED},
             {"joinOnGoal", Factory.createPredicate("cancelGoal(self:agent," + followGid + ")"), GoalStatus.SUCCEEDED},
     });
@@ -1218,7 +1218,6 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
   /**
    * Tests displayQRCode behavior
    */
-  @Ignore
   @Test
   public void displayQRTest() {
 

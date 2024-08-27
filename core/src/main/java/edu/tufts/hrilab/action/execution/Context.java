@@ -233,11 +233,7 @@ public abstract class Context {
         actionStatus = status;
         this.justification = justification;
       } else if (actionStatus != null && actionStatus.isTerminated()) {
-        // duplicate setting of FAIL_ANCESTOR can happen when failure initially propagates down context tree
-        // (e.g., overall condition failure), and then propagates back up context tree (normal failure propagation)
-        if (status != ActionStatus.FAIL_ANCESTOR) {
-          log.warn("Can not set context " + cmd + " to status " + status + ". Already has terminal status: " + actionStatus);
-        }
+        log.warn("Can not set context " + cmd + " to status " + status + ". Already has terminal status: " + actionStatus);
         return;
       } else if (actionStatus == ActionStatus.SUSPEND) {
         if (status == ActionStatus.RESUME || status == ActionStatus.CANCEL) {
@@ -251,7 +247,10 @@ public abstract class Context {
         this.justification = justification;
       }
 
-      if (actionStatus.isTerminated()) {
+      // make sure child contexts are notified of certain ActionStatuses
+      // (1) failure, cancel, suspend of async contexts
+      // (2) when overall conditions fail
+      if (actionStatus.isFailure() || actionStatus == ActionStatus.CANCEL) {
         childContexts.forEach(child -> {
           if (child.getStatus() != ActionStatus.INITIALIZED && !child.isTerminated()) {
               child.setStatus(ActionStatus.CANCEL);
@@ -264,11 +263,6 @@ public abstract class Context {
               child.setStatus(ActionStatus.SUSPEND);
           }
         });
-
-        // propagate SUSPEND up tree to parent
-//        if (caller != null && caller.getStatus() != ActionStatus.SUSPEND) {
-//          caller.setStatus(ActionStatus.SUSPEND);
-//        }
       }
 
       if (actionStatus.isTerminated()) {
