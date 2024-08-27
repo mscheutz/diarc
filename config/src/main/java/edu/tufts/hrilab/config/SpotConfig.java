@@ -16,7 +16,6 @@ import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.spot.MockRos2SpotComponent;
 import edu.tufts.hrilab.spot.SpotComponent;
 import edu.tufts.hrilab.vision.MockVisionComponent;
-//import edu.tufts.hrilab.vision.VisionComponent;
 
 public class SpotConfig extends DiarcConfiguration {
 
@@ -25,6 +24,11 @@ public class SpotConfig extends DiarcConfiguration {
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
   boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
+
+  public SpotConfig(boolean mock) {
+    useMockVision = mock;
+    useMockSpot = mock;
+  }
 
   @Override
   public void runConfiguration() {
@@ -57,7 +61,7 @@ public class SpotConfig extends DiarcConfiguration {
     if (useMockVision) {
       createInstance(MockVisionComponent.class, "-groups agent:self:agent -belief -sceneClass edu.tufts.hrilab.vision.scene.config.SpotSceneGenerator");
     } else {
-//      createInstance(VisionComponent.class, "-groups agent:self:agent -belief -capture spot.xml -cameraFrame hand_color_image_sensor");
+      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-groups agent:self:agent -belief -capture spot.xml -cameraFrame hand_color_image_sensor");
     }
 
     createInstance(GoalManagerImpl.class,
@@ -85,6 +89,7 @@ public class SpotConfig extends DiarcConfiguration {
   }
 
   public static void main(String[] args) {
-    new SpotConfig().runConfiguration();
+    SpotConfig config = new SpotConfig(true);
+    config.runConfiguration();
   }
 }
