@@ -1,10 +1,14 @@
 tmptest; C; runDemo(?ADDRESSEE)
-go to; C/REF; #r.goToLocation(?ADDRESSEE,$r)
+go to; C/REF; #r.goto_wrapper(?ADDRESSEE,$r)
+get; C/C; #x.$x
+to; (C/REF)\REF; #x#y.putdownat_wrapper(?ADDRESSEE,$x,$y)
 look for; C/REF; #r.perceiveEntity(?ADDRESSEE,$r)
-pick up; C/REF; #r.pickUp(?ADDRESSEE,$r)
+pick up; C/REF; #r.pickup_wrapper(?ADDRESSEE,$r)
+put down; C/REF; #r.putdown_wrapper(?ADDRESSEE,$r)
 shut down; C; shutDown(?ADDRESSEE)
 stow arm; C; stow(?ADDRESSEE)
 unstow arm; C; unstow(?ADDRESSEE)
 carry mode; C; carry(?ADDRESSEE)
 close gripper; C; closeGripper(?ADDRESSEE)
 open gripper; C; openGripper(?ADDRESSEE)
+ready; VAL; response(done);

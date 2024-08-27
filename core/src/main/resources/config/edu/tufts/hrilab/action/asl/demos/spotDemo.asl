@@ -30,8 +30,8 @@ import java.util.List;
 () = init[""]() {
     effects : {
         success : free(?actor);
-        success : observableat(bottle:property, location_0:location); //todo: Remove if we want to demonstrate instruction
-        success : observableat(apple:property, location_0:location);
+        success : observableat(bottle:property, location_3:location); //todo: Remove if we want to demonstrate instruction
+        success : observableat(apple:property, location_3:location);
         success : at(?actor, !defaultLocation);
     }
 
@@ -86,7 +86,7 @@ import java.util.List;
         act:bindLocationToCurrentPose(!location);
         op:log(debug, "[map] mapped !location");
     }
-    tsc:writeReferencesToFile("/home/pete/dev/diarc/core/src/main/resources/config/edu/tufts/hrilab/spot/phiLocationRefs.json");
+    tsc:writeLocationReferencesToFile("/home/pete/dev/diarc/core/src/main/resources/config/edu/tufts/hrilab/spot/vaLocationRefs.json");
     act:localize();
 }
 
@@ -118,7 +118,6 @@ import java.util.List;
 
 () = perceiveEntity(Symbol ?object:physobj) {
     op:log(debug, "[verifyYouCanSee] running visual search and looking for ?object");
-    act:stow();
     act:detectionPose();
     act:startVisualSearch(?object);
     act:findObject(?object);
@@ -133,6 +132,13 @@ import java.util.List;
     act:pickUpObject(?object);
     act:stopVisualSearch(?object);
     act:command(arm_carry);
+}
+
+() = putDown() {
+    act:goToPutDownPose();
+    act:openGripper();
+    act:command(arm_carry);
+    act:stow();
 }
 
 ///////// Operators
@@ -155,7 +161,7 @@ import java.util.List;
     op:log(info, "Delivering ?type ?object to ?at.");
 
     act:command(arm_carry);
-    //act:askQuestionFromString(brad, "Let me know when you're holding the ?type.", response(X)); //todo: fill out the response
+    act:askQuestionFromString(brad, "Let me know when you're holding the ?type.", response(X));
     op:log(info, "Finishing handoff");
     act:openGripper(none);
     op:sleep(3000);
@@ -169,7 +175,7 @@ import java.util.List;
     }
     effects : {
         success : at(?actor, ?to);
-        success : not(at(?actor, ?from));
+        success infer: not(at(?actor, ?from));
     }
     op:log(info, "Moving from ?from to ?to.");
     act:goToLocation(?to);
@@ -201,7 +207,7 @@ import java.util.List;
         success : not(holding(?actor, ?object));
     }
     op:log(info, "Putting down ?object at ?to.");
-    //act:pickUp(?object);
+    act:putDown();
 }
 
 
@@ -219,6 +225,11 @@ import java.util.List;
 }
 
 () = runDemo() {
-    act:deliver_to(physobj_9:physobj,location_1:location)
+    act:deliver_to(physobj_9:physobj,location_1:location);
 }
 
+() = goToPutDownPose() {
+//    String !pose = "1.1 0 0.35 -0.7071 0 0 0.7071";
+    String !pose = "1.1 0 0.4 -0.7071 0 0 0.7071";
+    act:goToArmPose(!pose, "body");
+}

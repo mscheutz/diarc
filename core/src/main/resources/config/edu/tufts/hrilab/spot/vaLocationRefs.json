@@ -1,0 +1,48 @@
+{
+  "references": [
+    {
+      "properties": ["dock(X:location)"],
+      "variable": "X:location",
+      "graphId": "waxing-chimp-btGuGdl4m.jXV4lHRcM4Ug\u003d\u003d",
+      "x": 1.5396648692815067,
+      "y": -0.11161604988403398,
+      "orientX": 6.250727002329742E-4,
+      "orientY": -0.00558539750020923,
+      "orientZ": -0.031036318052005706,
+      "orientW": 0.9995024560153211
+    },
+    {
+      "properties": ["person(X:location)"],
+      "variable": "X:location",
+      "graphId": "quits-craw-skLqm44n8TrvbOd8WPqS.w\u003d\u003d",
+      "x": 2.2687279906182773,
+      "y": 1.4883025082277677,
+      "orientX": -4.118184311391154E-4,
+      "orientY": -0.0019954926732685275,
+      "orientZ": 0.5342800096298497,
+      "orientW": 0.8453051045181845
+    },
+    {
+      "properties": ["dropoff(X:location)"],
+      "variable": "X:location",
+      "graphId": "bulky-diatom-sLE+THl0.9PJDq91oSp3Xg\u003d\u003d",
+      "x": 6.573534617257538,
+      "y": 2.835909839577458,
+      "orientX": -3.126788929126049E-4,
+      "orientY": 9.496311405988669E-4,
+      "orientZ": 0.7140037688996733,
+      "orientW": 0.7001411417919022
+    },
+    {
+      "properties": ["table(X:location)"],
+      "variable": "X:location",
+      "graphId": "enatic-spider-iVA0MqQVI1IBybc4EC37cg\u003d\u003d",
+      "x": 3.902088861062811,
+      "y": 0.5538336513502102,
+      "orientX": -0.0014475599475171025,
+      "orientY": -4.436616488556101E-4,
+      "orientZ": 0.9985688315624197,
+      "orientW": -0.05346023163627001
+    }
+  ]
+}

@@ -17,7 +17,6 @@ import id.jros2client.JRos2Client;
 import id.jros2client.JRos2ClientFactory;
 import id.jrosmessages.geometry_msgs.PointMessage;
 import id.jrosmessages.geometry_msgs.QuaternionMessage;
-import id.jrosmessages.geometry_msgs.TransformMessage;
 import id.jrosmessages.geometry_msgs.Vector3Message;
 import id.jrosmessages.std_msgs.StringMessage;
 import org.apache.commons.cli.CommandLine;
@@ -38,7 +37,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class SpotComponent extends DiarcComponent implements ArmInterface, MoveBaseInterface, DockingInterface {
@@ -60,6 +58,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
 
   private JRos2Tf2 tf2;
   private JRos2ServiceClient<GazeRequestMessage, GazeResponseMessage> gazeService;
+  private JRos2ServiceClient<ArmCommandRequestMessage, ArmCommandResponseMessage> armService;
 
 
   public SpotComponent() {
@@ -81,6 +80,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
     pickUpService = new JRos2ServiceClientFactory().createClient(client, new DiarcPickUpServiceDefinition(), "/diarc_pick_up");
     gazeService = new JRos2ServiceClientFactory().createClient(client, new GazeServiceDefinition(), "/gaze");
+    armService = new JRos2ServiceClientFactory().createClient(client, new ArmCommandServiceDefinition(), "/arm_command");
 
     tf2 = new JRos2Tf2Factory().createTf2Client(client);
 
@@ -556,9 +556,32 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       if (!res.success) {
         log.warn(res.message.toString());
       }
-      return new ConditionJustification(true);
+      return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
       log.error("Error moving to detection pose", e);
+      return new ConditionJustification(false);
+    }
+  }
+
+  @TRADEService
+  @Action
+  public Justification goToArmPose(String poseString, String frame) {
+    List<String> poseArgs = List.of(poseString.split("\\s+"));
+    float x = Float.parseFloat(poseArgs.get(0));
+    float y = Float.parseFloat(poseArgs.get(1));
+    float z = Float.parseFloat(poseArgs.get(2));
+    float rx = Float.parseFloat(poseArgs.get(3));
+    float ry = Float.parseFloat(poseArgs.get(4));
+    float rz = Float.parseFloat(poseArgs.get(5));
+    float rw = Float.parseFloat(poseArgs.get(6));
+    try {
+      ArmCommandResponseMessage res = armService.sendRequestAsync(new ArmCommandRequestMessage(frame, x, y, z, rx, ry, rz, rw)).get();
+      if (!res.success) {
+        log.error("[goToArmPose] failed: " + res.message);
+      }
+      return new ConditionJustification(res.success);
+    } catch (InterruptedException | ExecutionException e) {
+      log.error("[goToArmPose] error moving arm to pose: " + poseString + " in frame: " + frame);
       return new ConditionJustification(false);
     }
   }
@@ -605,9 +628,9 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   }
 
   public Justification goToLocationHelper(Symbol current, Symbol destination, boolean localizeWithFiducial) {
-    log.debug("[goToLocationHelper] going to location with refId: " + destination);
+    log.info("[goToLocationHelper] going to location with refId: " + destination);
     String destinationId = locationConsultant.getRefWithId(destination).getGraphId();
-    log.debug("[goToLocationHelper] location has graphId: " + destinationId);
+    log.info("[goToLocationHelper] location has graphId: " + destinationId);
     if (destinationId == null) {
       log.error("[goToLocationHelper] refId " + destinationId + " does not correspond to a reference in the location consultant");
     }
@@ -701,6 +724,10 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     log.debug("[checkAt] closest location to current position is " + closestLocation);
     if (locationSymbol.equals(closestLocation)) {
       toReturn.add(new HashMap<>());
+    } else {
+      String locationId = locationConsultant.getRefWithId(locationSymbol).getGraphId();
+      String closestId = locationConsultant.getRefWithId(closestLocation).getGraphId();
+      log.error("[checkAt] failed to verify location. intended location is " + locationSymbol + " with code " + locationId + " but closest location is " + closestLocation + " with code " + closestId);
     }
 
     return toReturn;
@@ -713,7 +740,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   }
 
   @TRADEService
-  public Justification writeReferencesToFile(String absolutePath) {
+  public Justification writeLocationReferencesToFile(String absolutePath) {
     boolean succeeded = locationConsultant.writeRefrencesToFile(absolutePath);
     return new ConditionJustification(succeeded);
   }

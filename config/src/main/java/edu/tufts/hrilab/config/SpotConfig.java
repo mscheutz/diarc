@@ -40,9 +40,9 @@ public class SpotConfig extends DiarcConfiguration {
     if (useMockSpot) {
       createInstance(MockArmComponent.class, "-groups agent:self:agent");
       createInstance(MockMoveBaseComponent.class, "-groups agent:self:agent");
-      createInstance(MockRos2SpotComponent.class, "-groups agent:self:agent -locationRefs phiLocationRefs.json");
+      createInstance(MockRos2SpotComponent.class, "-groups agent:self:agent -locationRefs vaLocationRefs.json");
     } else {
-      createInstance(SpotComponent.class, "-groups agent:self:agent -map /home/pete/dev/spot_maps/short.walk -locationRefs phiLocationRefs.json");
+      createInstance(SpotComponent.class, "-groups agent:self:agent -map /home/pete/dev/spot_maps/va.walk -locationRefs vaLocationRefs.json");
     }
 
     if (useMockVision) {
@@ -76,7 +76,7 @@ public class SpotConfig extends DiarcConfiguration {
   }
 
   public static void main(String[] args) {
-    SpotConfig config = new SpotConfig(false);
+    SpotConfig config = new SpotConfig(true);
     config.runConfiguration();
   }
 }
