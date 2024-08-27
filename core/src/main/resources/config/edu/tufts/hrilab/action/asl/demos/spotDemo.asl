@@ -154,13 +154,13 @@ import java.util.List;
 
     op:log(info, "Delivering ?type ?object to ?at.");
 
-    //act:command(arm_carry);
+    act:command(arm_carry);
     //act:askQuestionFromString(brad, "Let me know when you're holding the ?type.", response(X)); //todo: fill out the response
     op:log(info, "Finishing handoff");
-//    act:openGripper(none);
-//    op:sleep(3000);
-//    act:closeGripper(none);
-//    act:command(arm_stow);
+    act:openGripper(none);
+    op:sleep(3000);
+    act:closeGripper(none);
+    act:command(arm_stow);
 }
 
 () = moveto(Symbol ?from:location, Symbol ?to:location) {
@@ -187,7 +187,7 @@ import java.util.List;
         success : holding(?actor, ?object);
     }
     op:log(info, "Picking up ?object from ?from.");
-    //act:pickUp(?object);
+    act:pickUp(?object);
 }
 
 () = putdown(Symbol ?object:physobj, Symbol ?to:location) {
