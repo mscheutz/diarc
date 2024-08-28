@@ -287,12 +287,12 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
         int chatIndex = getConversationHistoryIndex(members);
 
         if (chatIndex == -1) {
-            return null;
+            return new ArrayList<>();
         }
 
         if (currentConversations.get(chatIndex) == null) {
             log.error("[getMatchingChat] chatMappings and currentChats have different notions of existing conversations");
-            return null;
+            return new ArrayList<>();
         }
         return new ArrayList<>(currentConversations.get(chatIndex));
     }

@@ -45,3 +45,7 @@ Description: The ?actor will close the gripper on the end of its mounted arm.
 openGripper(?actor)
 Description: The ?actor will open the gripper on the end of its mounted arm.
 ##
+
+Previous interactions between the system and users may have already occurred. These interactions may be relevant to your task by providing context which can inform your translations. The recent conversation history between the user and the system leading up to this point is as follows:
+\n
+%conversationHistory

@@ -150,17 +150,20 @@ public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
         //Intercept Validation Question and use specific validation prompt
         String userMessage;
         Predicate semantics = (Predicate) utterance.getSemantics();
-        if (semantics.getName().equals("doYouMean")) {
-            StringBuilder builder = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
+        if (conversationHistory.isEmpty()) {
+            builder.append("<there is no conversation history>");
+        } else {
             for (Utterance pastUtterance : conversationHistory) {
                 builder.append(pastUtterance.getSpeaker()).append(": ").append(pastUtterance.getWordsAsString()).append("\n");
             }
-            Map<String,String> promptVars = new HashMap<>();
-            promptVars.put("%conversationHistory", builder.toString());
-            promptVars.put("%utterance", utterance.toString());
+        }
+        Map<String,String> promptVars = new HashMap<>();
+        promptVars.put("%utterance", utterance.toString());
+        if (semantics.getName().equals("doYouMean")) {
             userMessage = validationPrompt.apply(promptVars);
         } else {
-            userMessage = nlgUserPrompt.getText() + utterance.toString();
+            userMessage = nlgUserPrompt.apply(promptVars);
         }
 
         //TODO (same as NLU)
@@ -171,7 +174,9 @@ public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
         ////nlgUserPromptParameters.put("%utteranceSemantics%",utterance.getWordsAsString());
         //chat.addUserMessage(nlgUserPrompt.apply(nlgUserPromptParameters));
 
-        chat.setSystem(nlgSystemPrompt.getText());
+        promptVars = new HashMap<>();
+        promptVars.put("%conversationHistory", builder.toString());
+        chat.setSystem(nlgSystemPrompt.apply(promptVars));
         chat.addUserMessage(userMessage);
 
         log.info("generateNLGChat called for: {}", utterance.toString());
@@ -194,8 +199,18 @@ public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
         //Map<String,String> nluUserPromptParameters = new HashMap<>();
         ////nluUserPromptParameters.put("%utteranceSemantics%",utterance.getWordsAsString());
         //currentChat.addUserMessage(nluUserPrompt.apply(nluUserPromptParameters));
+        StringBuilder builder = new StringBuilder();
+        if (conversationHistory.isEmpty()) {
+            builder.append("<there is no conversation history>");
+        } else {
+            for (Utterance pastUtterance : conversationHistory) {
+                builder.append(pastUtterance.getSpeaker()).append(": ").append(pastUtterance.getWordsAsString()).append("\n");
+            }
+        }
+        Map<String,String> promptVars = new HashMap<>();
+        promptVars.put("%conversationHistory", builder.toString());
 
-        currentChat.setSystem(nluSystemPrompt.getText());
+        currentChat.setSystem(nluSystemPrompt.apply(promptVars));
         currentChat.addUserMessage(nluUserPrompt.getText() + utterance.getWordsAsString());
 
         return currentChat;
