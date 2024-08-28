@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.unity;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 
 import edu.tufts.hrilab.movebase.MoveBaseComponent;
@@ -79,6 +80,6 @@ public class UnityDIARCSpaceStationHybrid {
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityAgent.class, "-agent rover -groups agent:" + agentName);
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityPR2.class, "-agent " + agentName + " -groups agent:"  + agentName + nullAddressee );
 
-    DiarcComponent.createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, goalManagerArgs);
+    DiarcComponent.createInstance(GoalManagerComponent.class, goalManagerArgs);
   }
 }

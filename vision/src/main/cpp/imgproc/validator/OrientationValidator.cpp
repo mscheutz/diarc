@@ -14,12 +14,12 @@
 #include "capture/calibration/Cameras.hpp"
 #include "display/Display.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 OrientationValidator::OrientationValidator(const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight, const bool isStereo)
 : ObjectValidator(processorId, imgWidth, imgHeight, isStereo) {
   visionProcessName = "OrientationValidator";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.validator.OrientationValidator");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.validator.OrientationValidator");
 }
 
 OrientationValidator::~OrientationValidator() {

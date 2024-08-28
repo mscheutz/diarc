@@ -9,7 +9,7 @@ diarcAgent(andy).
 
 /*rules about who the agent is obliged to listen to */
 %% supervisors
-role(tyler,supervisor(X)):-diarcAgent(X).
+supervisor(tyler).
 
 %% admin
-role(tyler,admin(X)):-diarcAgent(X).
+admin(tyler).

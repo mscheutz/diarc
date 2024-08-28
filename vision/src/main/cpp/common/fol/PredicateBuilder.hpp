@@ -20,14 +20,14 @@
 #include <boost/shared_ptr.hpp>
 #include <log4cxx/logger.h>
 
-namespace ade {
+namespace diarc {
   namespace common {
     namespace fol {
 
       class PredicateBuilder {
       public:
         PredicateBuilder()
-        : logger_(log4cxx::Logger::getLogger("ade.common.fol.PredicateBuilder")) {
+        : logger_(log4cxx::Logger::getLogger("diarc.common.fol.PredicateBuilder")) {
         }
 
         void setName(const std::string& name) {
@@ -35,13 +35,13 @@ namespace ade {
         }
 
         void addArgument(const Symbol& arg) {
-          const ade::common::fol::Variable* var = dynamic_cast<const ade::common::fol::Variable*> (&arg);
+          const diarc::common::fol::Variable* var = dynamic_cast<const diarc::common::fol::Variable*> (&arg);
           if (var != NULL) {
             LOG4CXX_DEBUG(logger_, "Adding variable argument: " + arg.toString());
-            args_.push_back(boost::make_shared<ade::common::fol::Variable>(*var));
+            args_.push_back(boost::make_shared<diarc::common::fol::Variable>(*var));
           } else {
             LOG4CXX_DEBUG(logger_, "Adding symbol argument: " + arg.toString());
-            args_.push_back(boost::make_shared<ade::common::fol::Symbol>(arg));
+            args_.push_back(boost::make_shared<diarc::common::fol::Symbol>(arg));
           }
         }
 
@@ -57,7 +57,7 @@ namespace ade {
 
     } //namespace fol
   } //namespace common
-} //namespace ade
+} //namespace diarc
 
 #endif	/* PREDICATEBUILDER_HPP */
 

@@ -15,7 +15,7 @@ LocationSaliencyProcessor::LocationSaliencyProcessor(const long long& processorI
   locationSaliencyMap.setWidth(imgWidth);
   locationSaliencyMap.setHeight(imgHeight);
   visionProcessName = "LocationSaliencyProcessor";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.saliency.LocationSaliencyProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.saliency.LocationSaliencyProcessor");
 }
 
 // EAK: FIXME: this method doesn't look like it uses the captured frames to process,
@@ -68,7 +68,7 @@ void LocationSaliencyProcessor::handleCaptureNotification(CaptureNotification::C
   sendNotifications(n);
 
   if (getDisplayFlag()) {
-    ade::Display::displayFrame(resultImage, getDisplayName());
+    diarc::Display::displayFrame(resultImage, getDisplayName());
   }
 }
 

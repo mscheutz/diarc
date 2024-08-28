@@ -155,7 +155,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     act:retractBelief(!oldDescription);
 
     // get StateMachine for use in action selection
-    !sm = act:getStateMachine();
+    !sm = tsc:getStateMachine();
 
     // pick action, and get event specs from selected action
     !goal = op:newObject("edu.tufts.hrilab.action.goal.Goal", ?goalPred);
@@ -396,14 +396,6 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
       }
 }
 
-(Goal ?goal) = getMostRecentGoal() {
-    java.util.List !goals;
-    Goal !goal;
-
-    !goals = act:getGoal();
-    ?goal = op:get(!goals,0);
-}
-
 (java.util.List ?goals) = getGoal(Predicate ?goalPredicate = goal(mostRecent)) {
     Predicate !mostRecentGoalPred;
     Goal !queryGoal;
@@ -434,157 +426,6 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     }
 
     op:log("debug", "[getGoal] have goals: ?goals.");
-}
-
-//TODO:brad: this only works for a very specific syntax for new goal. Ideally we should update th prag pipeline to handle all types of goals here.
-() = supersedeCurrentGoal["stops current goal, executes ?newGoal, replans to rexecute the goal that was stopped"](Predicate ?newGoal){
-
-    Predicate !getGoalPred;
-    Predicate !newGoalPred;
-    Goal !currentGoal;
-    java.lang.Long !currentGid;
-
-    //get most recently submitted goal after this one, that isn't a handled goal,
-    !currentGoal = act:getMostRecentGoal();
-    !currentGid =  op:invokeMethod(!currentGoal, "getId");
-    op:log("warn","goal to be canceled !currentGoal");
-
-    //cancel current goal
-    act:cancelGoal(!currentGid);
-
-    //get goal pred from ?new goal
-    //TODO:brad:make this more general, ideally by using the pragmatics/belief goal submission pipeline
-
-//    (!newGoalPred) = op:invokeMethod(?newGoal, get, 1);
-    !newGoalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "did(?actor,?newGoal)");
-    op:log("warn","new goal pred ?newGoal");
-
-    //submit new goal state
-    goal:!newGoalPred;
-
-    //resubmit goal that got canceled
-
-
-    !getGoalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "did(?actor,?newGoal)");
-    op:log("warn","resubmitting original goal: ?newGoal");
-    goal:!getGoalPred;
-}
-
-() = supersedeAndUndo["stops current goal, executes ?newGoal, executes plan to 'undo' the goal that was stopped"](Predicate ?newGoal){
-
-    Predicate !getGoalPred;
-    Predicate !newGoalPred;
-    Goal !currentGoal;
-    java.lang.Long !currentGid;
-
-    java.util.List !canceledGoalPreconditions;
-    java.util.Set !currentState;
-
-    //get most recently submitted goal after this one, that isn't a handled goal,
-    !currentGoal = act:getMostRecentGoal();
-    !currentGid =  op:invokeMethod(!currentGoal, "getId");
-    op:log("warn","goal to be canceled !currentGoal");
-
-    //get preconditions of current goal
-    !canceledGoalPreconditions = act:getPreconditionsOfGoal(!currentGoal);
-    op:log("warn","canceled goal preconditions: !canceledGoalPreconditions");
-    //cancel current goal
-    act:cancelGoal(!currentGid);
-
-    //get state after goal position
-    !currentState = act:getCurrentWorldState();
-    op:log("warn","world state after cancellation: !currentState");
-
-    //get state pred from ?new goal
-    //TODO:brad:make this more general, ideally by using the pragmatics/belief goal submission pipeline
-    !newGoalPred = op:invokeMethod(?newGoal, get, 1);
-    op:log("warn","new goal pred !newGoalPred");
-
-    //submit new goal state
-    goal:!newGoalPred;
-
-    //undo the goal that got interrupted
-    //brad:this is lazy reuse of this predicate but I don't think it affects anything
-    !getGoalPred = op:invokeMethod(!currentGoal, getPredicate);
-    !getGoalPred = act:generateUndoGoalState(!canceledGoalPreconditions,!currentState);
-    op:log("warn","resubmitting submitting undo goal: !getGoalPred");
-    goal:!getGoalPred;
-
-}
-
-() = undoThenDo["stops current goal, executes ?newGoal, executes plan to 'undo' the goal that was stopped"](Predicate ?newGoal){
-
-    Predicate !getGoalPred;
-    Predicate !newGoalPred;
-    Goal !currentGoal;
-    java.lang.Long !currentGid;
-
-    java.util.List !canceledGoalPreconditions;
-    java.util.Set !currentState;
-
-    //get most recently submitted goal after this one, that isn't a handled goal,
-    !currentGoal = act:getMostRecentGoal();
-    !currentGid =  op:invokeMethod(!currentGoal, "getId");
-    op:log("warn","goal to be canceled !currentGoal");
-
-    //get preconditions of current goal
-    !canceledGoalPreconditions = act:getPreconditionsOfGoal(!currentGoal);
-    op:log("warn","canceled goal preconditions: !canceledGoalPreconditions");
-    //cancel current goal
-    act:cancelGoal(!currentGid);
-
-    //get state after goal position
-    !currentState = act:getCurrentWorldState();
-    op:log("warn","world state after cancellation: !currentState");
-
-    //undo the goal that got interrupted
-    //brad:this is lazy reuse of this predicate but I don't think it affects anything
-    !getGoalPred = op:invokeMethod(!currentGoal, getPredicate);
-    !getGoalPred = act:generateUndoGoalState(!canceledGoalPreconditions,!currentState);
-    op:log("warn","resubmitting submitting undo goal: !getGoalPred");
-    goal:!getGoalPred;
-
-//    //get most recently submitted goal after this one, that isn't a handled goal,
-//    (!getGoalPred) = op:invokeStaticMethod(edu.tufts.hrilab.util.Util, createPredicate, "goal(mostRecent)");
-//    act:getGoal(!getGoalPred,!currentGoal);
-//    op:log("warn","goal to be canceled !currentGoal");
-//    act:cancelGoal(!currentGoal);
-//
-//    //undo the goal that got canceled
-//    //brad:this is lazy reuse of this predicate but I don't think it affects anything
-//    (!getGoalPred) = op:invokeStaticMethod(edu.tufts.hrilab.util.Util, createPredicate, "not(!currentGoal)");
-//    op:log("warn","submitting undo goal: !getGoalPred");
-//    goal:!getGoalPred;
-
-    //get state pred from ?new goal
-    //TODO:brad:make this more general, ideally by using the pragmatics/belief goal submission pipeline
-    //(!newGoalPred) = op:invokeMethod(?newGoal, get, 1);
-    (!newGoalPred) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "did(?newGoal)");
-    op:log("warn","new goal pred !newGoalPred");
-
-    //submit new goal state
-    goal:!newGoalPred;
-}
-
-//====================== Translation Generation =======================
-
-() = translateGoal(edu.tufts.hrilab.fol.Predicate ?goal){
-   java.lang.Integer !contextID;
-
-   (!contextID)= act:getContextForGoal(?goal);
-   act:translate(!contextID);
-}
-
-() = translateLastGoal(){
-  java.lang.Integer !contextCount;
-
-  //get size of Context tree
-  (!contextCount) = act:getCurrentContextCount();
-
-  //remove index of this goal
-  (!contextCount) = op:-(!contextCount,4);
-
-  act:translate(!contextCount);
 }
 
 () = estimatePerformanceMeasures(edu.tufts.hrilab.fol.Predicate ?goalPred, edu.tufts.hrilab.fol.Symbol ?temporal, edu.tufts.hrilab.fol.Predicate ?assessmentModification = "if(none())") {

@@ -17,7 +17,6 @@ import edu.tufts.hrilab.action.recovery.PolicyConstraints;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.action.lock.ActionResourceLock;
-import edu.tufts.hrilab.action.translation.TranslationInfo;
 import edu.tufts.hrilab.fol.Constant;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
@@ -119,10 +118,8 @@ public class ActionDBEntry extends DBEntry {
   private final String dbfile;
 
   /**
-   * goal to be submitted when action ac paused or canceled to prematurely end execution
+   * Event to be executed when action is canceled/suspended/resumed.
    */
-  //TODO: implement, add to constructors and add annotation
-  private TranslationInfo translationInfo;
   private EventSpec onCancelEvent;
   private EventSpec onSuspendEvent;
   private EventSpec onResumeEvent;
@@ -142,7 +139,6 @@ public class ActionDBEntry extends DBEntry {
     private EventSpec onCancelEvent = null;
     private EventSpec onSuspendEvent = null;
     private EventSpec onResumeEvent = null;
-    private TranslationInfo translationInfo = null;
     private boolean isVarArgs = false;
     private List<ActionResourceLock> resourceLocks = new ArrayList<>();
     private double posAff = 0.0;
@@ -462,6 +458,7 @@ public class ActionDBEntry extends DBEntry {
     public boolean hasOnSuspendEvent() {
       return onSuspendEvent != null;
     }
+
     /**
      * Checks if OnResume Event has been added to the Builder.
      * @return
@@ -469,18 +466,6 @@ public class ActionDBEntry extends DBEntry {
     public boolean hasOnResumeEvent() {
       return onResumeEvent != null;
     }
-
-    /**
-     * Adds info to translate a context of this dbEntry into another representation
-     *
-     * @param t the TranslationInfo for the action being built
-     * @return this Builder instance
-     */
-    public Builder addTranslationInfo(TranslationInfo t) {
-      translationInfo = t;
-      return this;
-    }
-
 
     /**
      * Adds an agent on which this action will have an effect.
@@ -718,7 +703,6 @@ public class ActionDBEntry extends DBEntry {
     onSuspendEvent = builder.onSuspendEvent;
     onResumeEvent = builder.onResumeEvent;
     policyConstraints = builder.policyConstraints;
-    translationInfo = builder.translationInfo;
     agents = builder.agents;
     resourceLocks = builder.resourceLocks;
     posAff = builder.posAff;
@@ -1377,15 +1361,6 @@ public class ActionDBEntry extends DBEntry {
 
   public EventSpec getOnResumeEvent() {
     return onResumeEvent;
-  }
-
-  /**
-   * TODO: Add docs
-   *
-   * @return
-   */
-  public TranslationInfo getTranslationInfo() {
-    return translationInfo;
   }
 
   /**

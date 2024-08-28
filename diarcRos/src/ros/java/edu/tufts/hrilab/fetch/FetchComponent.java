@@ -11,6 +11,7 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
@@ -111,7 +112,7 @@ public class FetchComponent extends MoveItComponent implements FetchInterface {
   }
 
   @Override
-  public boolean pointHeadTo(MemoryObject target_object) {
+  public Justification pointHeadTo(MemoryObject target_object) {
     //log.debug("[pointHeadTo] object method entered.");
 
     // transform to base_link coordinate frame
@@ -122,7 +123,7 @@ public class FetchComponent extends MoveItComponent implements FetchInterface {
   }
 
   @Override
-  public boolean pointHeadTo(Symbol objectRef) {
+  public Justification pointHeadTo(Symbol objectRef) {
     // get Point3d from object ref
     Point3d location = null;
     try {
@@ -135,12 +136,12 @@ public class FetchComponent extends MoveItComponent implements FetchInterface {
     if (location != null) {
       return pointHeadTo(location);
     }
-    return false;
+    return new ConditionJustification(false, Factory.createPredicate("known(object,location)"));
   }
 
   @Override
-  public boolean pointHeadTo(Point3d targetPosition) {
-    return pointHeadTo(targetPosition, 0.25);
+  public Justification pointHeadTo(Point3d targetPosition) {
+    return new ConditionJustification(pointHeadTo(targetPosition, 0.25));
   }
 
   private boolean pointHeadTo(Point3d targetPosition, double velocity) {
@@ -190,7 +191,7 @@ public class FetchComponent extends MoveItComponent implements FetchInterface {
   }
 
   @Override
-  public boolean setTorsoPosition(double position) {
+  public Justification setTorsoPosition(double position) {
     List<JointTrajectoryPoint> trajPoints = new ArrayList<>();
     trajPoints.add(new JointTrajectoryPoint(new double[]{position}, new double[]{0}, new double[]{0}, new double[]{1}, new Duration(5)));
     JointTrajectory traj = new JointTrajectory();
@@ -205,7 +206,7 @@ public class FetchComponent extends MoveItComponent implements FetchInterface {
       log.error("Error setting torso position.", e);
     }
     SimpleClientGoalState state = torso.getTorsoControlMsgsFollowJointTrajectoryState();
-    return (state.getState() == SimpleClientGoalState.StateEnum.SUCCEEDED);
+    return new ConditionJustification(state.getState() == SimpleClientGoalState.StateEnum.SUCCEEDED);
   }
 
   @Override
@@ -252,27 +253,6 @@ public class FetchComponent extends MoveItComponent implements FetchInterface {
   }
 
   @Override
-  public Justification moveObject(Symbol objectRef, String arm, String direction) {
-    log.debug("Starting moveObject " + direction);
-    Point3d relPoint = new Point3d(0, 0, 0);
-    switch (direction) {
-      case "up":
-        relPoint = new Point3d(0.0, 0.0, 0.15);
-        break;
-      case "down":
-        relPoint = new Point3d(0.0, 0.0, -0.10);
-        break;
-      case "forward":
-        relPoint = new Point3d(0.30, 0.0, 0.0);
-        break;
-      case "right":
-        relPoint = new Point3d(0.0, -0.30, 0.0);
-        break;
-    }
-    return moveToRelative(arm, relPoint, new Quat4d(0, 0, 0, 1));
-  }
-
-  @Override
   public Justification look(String direction) {
     Point3d point;
     switch (direction) {
@@ -294,7 +274,7 @@ public class FetchComponent extends MoveItComponent implements FetchInterface {
       default:
         point = new Point3d(0.5, 0, 0.5);
     }
-    return new ConditionJustification(pointHeadTo(point));
+    return pointHeadTo(point);
   }
 
   public float getChargeLevel() {

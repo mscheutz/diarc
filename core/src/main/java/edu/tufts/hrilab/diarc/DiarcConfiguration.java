@@ -4,7 +4,7 @@
 
 package edu.tufts.hrilab.diarc;
 
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +26,7 @@ abstract public class DiarcConfiguration {
     log.info("Shutting down...");
 
     // find and shutdown GoalManagers first so that goals can be cleanly cancelled while other components are still up
-    List<DiarcComponent> gms = diarcComponents.stream().filter(comp -> comp instanceof GoalManagerImpl).toList();
+    List<DiarcComponent> gms = diarcComponents.stream().filter(comp -> comp instanceof GoalManagerComponent).toList();
     gms.forEach(gm -> gm.shutdown());
     diarcComponents.removeAll(gms);
 

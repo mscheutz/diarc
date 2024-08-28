@@ -11,13 +11,13 @@
 #include "display/Display.hpp"
 #include "capture/util/CaptureUtilities.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 HoughDetector::HoughDetector(const long long& processorId, const int imgWidth, const int imgHeight)
 : ObjectDetector(processorId, imgWidth, imgHeight),
 genHoughTrnfMap() {
   visionProcessName = "HoughDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.HoughDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.HoughDetector");
 }
 
 HoughDetector::~HoughDetector() {
@@ -100,7 +100,7 @@ void HoughDetector::handleCaptureNotification(CaptureNotification::ConstPtr noti
                   CV_RGB(255, 0, 0), 2, 8, 0);
         }
 
-        ade::Display::displayFrame(displayFrame, getDisplayName());
+        diarc::Display::displayFrame(displayFrame, getDisplayName());
       }
     }
   }

@@ -18,7 +18,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <utility>      //std::pair
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     CaptureROS::CaptureROS(const std::string &configFile)
@@ -30,7 +30,7 @@ namespace ade {
               convertToMeters_(false),
               convertToRGB_(false),
               performDepthRegistration_(false),
-              rosNamespace_("ade_vision_cap") {
+              rosNamespace_("diarc_vision_cap") {
 
       // parse xml for configuration params
       using boost::property_tree::ptree;
@@ -42,7 +42,7 @@ namespace ade {
       convertToMeters_ = pt.get<bool>("capture.convertToMeters", false);
       convertToRGB_ = pt.get<bool>("capture.convertToRGB", false);
       performDepthRegistration_ = pt.get<bool>("capture.depthRegistration", false);
-      rosNamespace_ = pt.get<std::string>("capture.namespace", "ade_vision_cap");
+      rosNamespace_ = pt.get<std::string>("capture.namespace", "diarc_vision_cap");
 
       //initialize ROS
       LOG4CXX_INFO(logger, "Initializing ROS.");
@@ -157,17 +157,16 @@ namespace ade {
 
       switch (mode_) {
         case STEREO:
+          delete sync_;
           delete image_sub_;
           delete image2_sub_;
-          delete sync_;
           break;
         case RGB_AND_DEPTH:
+          delete sync_;
           delete image_sub_;
           delete depth_sub_;
-          delete sync_;
           break;
       }
-
       delete it_;
       delete spinner_;
       delete n_;
@@ -298,7 +297,7 @@ namespace ade {
           }
 
           // create point cloud from color and depth frames
-          ade::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud);
+          diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud);
 
         } catch (cv_bridge::Exception &e) {
           LOG4CXX_ERROR(logger, boost::format("cv_bridge exception: %s") % e.what());
@@ -387,4 +386,4 @@ namespace ade {
 
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc

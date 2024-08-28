@@ -78,14 +78,6 @@ if (OpenCV_dnn_FOUND)
 
 endif(OpenCV_dnn_FOUND)
 
-if (AGILEGRASP_FOUND)
-	SET(SOURCES ${SOURCES}
-		GraspDetector.cpp
-		grasp/SmallObjectGrasp.cpp
-		grasp/AgileGrasp.cpp
-	)
-endif(AGILEGRASP_FOUND)
-
 #if (PCL_GPU_PEOPLE_FOUND)
 if (USE_PCL_PEOPLE AND PCL_GPU_PEOPLE_FOUND)
 	message(PCL_GPU_PEOPLE_FOUND)
@@ -132,9 +124,6 @@ ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
 # link libraries
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} common stm visionproc display capture imgproc shape_match stdc++fs)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${PCL_LIBRARIES} ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES} ${JSONCPP_LIBRARY})
-if (AGILEGRASP_FOUND)
-    TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${AGILEGRASP_LIBRARIES})
-endif (AGILEGRASP_FOUND)
 if (V4R_V0_FOUND)
   TARGET_LINK_LIBRARIES(${PROJECT_NAME} v4rSurfaceSegmenter)
 endif (V4R_V0_FOUND)

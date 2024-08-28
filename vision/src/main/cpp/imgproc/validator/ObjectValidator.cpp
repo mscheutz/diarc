@@ -12,13 +12,13 @@
 #include "common/notification/FrameCompletionNotification.hpp"
 #include "display/Display.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 ObjectValidator::ObjectValidator(const long long& processorId, const unsigned int imgWidth,
         const unsigned int imgHeight, const bool isStereo)
 : ImageProcessor(processorId, imgWidth, imgHeight, isStereo) {
   visionProcessName = "ObjectValidator";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.validator.ObjectValidator");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.validator.ObjectValidator");
 }
 
 ObjectValidator::~ObjectValidator() {

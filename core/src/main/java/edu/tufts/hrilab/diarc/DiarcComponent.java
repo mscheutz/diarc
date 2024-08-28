@@ -66,7 +66,7 @@ abstract public class DiarcComponent {
 
   protected DiarcComponent() {
     log = LoggerFactory.getLogger(this.getClass());
-//    Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
   }
 
   /**
@@ -152,6 +152,7 @@ abstract public class DiarcComponent {
   void collectAdditionalUsageInfo() {
     cliOptions = new Options();
     cliOptions.addOption(Option.builder("groups").longOpt("groups").hasArgs().desc("TRADE groups for this DIARC component").build());
+    cliOptions.addOption(Option.builder("help").longOpt("help").desc("Print command line options").build());
     additionalUsageInfo().stream().forEach(option -> cliOptions.addOption(option));
   }
 
@@ -176,6 +177,11 @@ abstract public class DiarcComponent {
 
     if (cmd.hasOption("groups")) {
       groups.addAll(Arrays.asList(cmd.getOptionValues("groups")));
+    }
+    if (cmd.hasOption("help")) {
+      HelpFormatter formatter = new HelpFormatter();
+      formatter.printHelp(this.getClass().toString(), cliOptions);
+      System.exit(0);
     }
 
     // parse sub-class(es)

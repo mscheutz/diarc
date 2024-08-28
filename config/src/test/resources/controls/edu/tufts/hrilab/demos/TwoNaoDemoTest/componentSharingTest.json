@@ -6,10 +6,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "tell(shafer,stand(dempster))", "NORMAL", "1704827087239" ]
+      "serviceArgs" : [ "tell(shafer,stand(dempster))", "ACT", "NORMAL", "1704827087239" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "NORMAL", "1704827087241" ]
+      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1704827087241" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704827087239", "SUCCEEDED" ]
@@ -25,10 +25,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "tell(shafer,move(dempster,forward))", "NORMAL", "1704827097071" ]
+      "serviceArgs" : [ "tell(shafer,move(dempster,forward))", "ACT", "NORMAL", "1704827097071" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "NORMAL", "1704827097072" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704827097072" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704827097071", "FAILED" ]
@@ -50,7 +50,7 @@
       "serviceArgs" : [ "yes", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "look(dempster,up)", "NORMAL", "1704827107095" ]
+      "serviceArgs" : [ "look(dempster,up)", "ACT", "NORMAL", "1704827107095" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704827107095", "SUCCEEDED" ]

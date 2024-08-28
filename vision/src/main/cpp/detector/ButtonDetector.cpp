@@ -13,7 +13,7 @@ ButtonDetector::ButtonDetector(const long long &processorId, const int imgWidth,
         : NeuralDetector(processorId, imgWidth, imgHeight)
 {
   visionProcessName = "ButtonDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.ButtonDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.ButtonDetector");
 }
 
 ButtonDetector::~ButtonDetector() {}
@@ -83,7 +83,7 @@ void ButtonDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
     // populate memory objects
     TypesByDescriptor::const_iterator descriptor_iter;
     std::tr1::unordered_set<long long>::const_iterator typeIds_itr;
-    ade::stm::MemoryObject::VecPtr newObjects(new ade::stm::MemoryObject::Vec());
+    diarc::stm::MemoryObject::VecPtr newObjects(new diarc::stm::MemoryObject::Vec());
 
     for (descriptor_iter = descriptors->begin(); descriptor_iter != descriptors->end(); ++descriptor_iter) {
         std::string currTypeName = descriptor_iter->first.getName();
@@ -92,8 +92,8 @@ void ButtonDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
             if (currObj.name == currTypeName) {
                 for (typeIds_itr = descriptor_iter->second.begin();
                     typeIds_itr != descriptor_iter->second.end(); ++typeIds_itr) {
-                    ade::stm::MemoryObject::Ptr newObject(
-                    new ade::stm::MemoryObject(*typeIds_itr, descriptor_iter->first.getArg(0), notification->captureData, currObj.rect));
+                    diarc::stm::MemoryObject::Ptr newObject(
+                    new diarc::stm::MemoryObject(*typeIds_itr, descriptor_iter->first.getArg(0), notification->captureData, currObj.rect));
                     newObject->addValidationResult(currObj.confidence, descriptor_iter->first);
                     newObjects->push_back(newObject);
                 }
@@ -107,7 +107,7 @@ void ButtonDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
     if (getDisplayFlag()) {
         img.copyTo(displayFrame);
 
-        ade::stm::MemoryObject::Vec::const_iterator newObjItr;
+        diarc::stm::MemoryObject::Vec::const_iterator newObjItr;
         for (newObjItr = newObjects->begin(); newObjItr != newObjects->end(); ++newObjItr) {
             const cv::Rect &objRect = (*newObjItr)->getDetectionMask()->getBoundingBox();
             cv::rectangle(displayFrame, cv::Point(objRect.x, objRect.y),
@@ -115,7 +115,7 @@ void ButtonDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
                             CV_RGB(255, 0, 0), 2, 8, 0);
         }
 
-        ade::Display::displayFrame(displayFrame, getDisplayName());
+        diarc::Display::displayFrame(displayFrame, getDisplayName());
     }
 }
 
@@ -212,9 +212,9 @@ void ButtonDetector::reclassifyUpDownButtons(std::vector<DetectedObject> &object
                 // current vertical alignment threshold = one button width
                 if (abs((double)(centers[i].point.x - centers[j].point.x) / cols) <= objects[centers[i].index].rect.width) {
                     if (objects[centers[i].index].rect.y < objects[centers[j].index].rect.y
-                        && ade::stm::util::calculateBoundBoxOverlap(objects[centers[i].index].rect, objects[centers[j].index].rect) == 0) {
+                        && diarc::stm::util::calculateBoundBoxOverlap(objects[centers[i].index].rect, objects[centers[j].index].rect) == 0) {
                         objects[centers[i].index].name = "button_up";
-                    } else if (ade::stm::util::calculateBoundBoxOverlap(objects[centers[i].index].rect, objects[centers[j].index].rect) == 0) {
+                    } else if (diarc::stm::util::calculateBoundBoxOverlap(objects[centers[i].index].rect, objects[centers[j].index].rect) == 0) {
                         objects[centers[i].index].name = "button_down";
                     }
                 }

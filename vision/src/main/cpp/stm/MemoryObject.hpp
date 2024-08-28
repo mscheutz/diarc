@@ -48,7 +48,7 @@
 #include <v4r/SurfaceUtils/SurfaceModel.hpp>
 #endif //USE_V4R_V0
 
-namespace ade {
+namespace diarc {
   namespace stm {
 
     //TODO: should there be separate 2D and 3D MemoryObject base classes?
@@ -189,7 +189,7 @@ namespace ade {
       * @param relatedObject
       */
       void decayRelationConfidence(const std::string &relationName,
-                                   const ade::stm::MemoryObject::Ptr &relatedObject = ade::stm::MemoryObject::Ptr());
+                                   const diarc::stm::MemoryObject::Ptr &relatedObject = diarc::stm::MemoryObject::Ptr());
 
       /**
       * Remove all relations. If relatedObject is NOT specified, all
@@ -198,7 +198,7 @@ namespace ade {
       * one-way relation will be removed and the symmetric relation will not be removed (recurse == false).
       * @param relatedObject
       */
-      void removeRelations(const ade::stm::MemoryObject::Ptr &relatedObject = ade::stm::MemoryObject::Ptr());
+      void removeRelations(const diarc::stm::MemoryObject::Ptr &relatedObject = diarc::stm::MemoryObject::Ptr());
 
       /**
       * Remove all relations of relationName below given threshold. If relatedObject is NOT specified, all
@@ -211,7 +211,7 @@ namespace ade {
       * @param relatedObject
       */
       void removeRelations(const std::string &relationName, const float &confidenceThresh,
-                           const ade::stm::MemoryObject::Ptr &relatedObject = ade::stm::MemoryObject::Ptr());
+                           const diarc::stm::MemoryObject::Ptr &relatedObject = diarc::stm::MemoryObject::Ptr());
 
       /**
       * Remove all relations of relationName. If relatedObject is not specified, all
@@ -223,7 +223,7 @@ namespace ade {
       * @param relatedObject
       */
       void removeRelations(const std::string &relationName,
-                           const ade::stm::MemoryObject::Ptr &relatedObject = ade::stm::MemoryObject::Ptr());
+                           const diarc::stm::MemoryObject::Ptr &relatedObject = diarc::stm::MemoryObject::Ptr());
 
       /**
        * Set the detection/validation confidence from a particular detector/validator.
@@ -445,6 +445,6 @@ namespace ade {
 #endif //USE_V4R_V0
 
   } //namespace stm
-} //namespace ade
+} //namespace diarc
 
 #endif  //MEMORYOBJECT_HPP

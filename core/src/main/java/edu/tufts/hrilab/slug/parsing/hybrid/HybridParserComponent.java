@@ -369,4 +369,15 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
   }
 
+  @Override
+  protected void shutdownComponent() {
+    super.shutdownComponent();
+    if (useTLDL) {
+      try {
+        ((TLDLParserComponent)tldlParser).deregisterDictionary();
+      } catch (Exception e) {
+        log.error("[TLDLParserComponent] exception deregistering dictionary", e);
+      }
+    }
+  }
 }

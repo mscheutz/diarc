@@ -21,7 +21,7 @@
 
 #include <pcl/visualization/pcl_visualizer.h>
 
-namespace ade {
+namespace diarc {
 
   class DisplayWindow2D; //forward declaration
   class DisplayWindow3D; //forward declaration
@@ -129,6 +129,6 @@ namespace ade {
     std::vector<std::string> planes_remove;
   };
 
-} //namespace ade
+} //namespace diarc
 
 #endif  //DISPLAY_HPP

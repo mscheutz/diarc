@@ -25,9 +25,9 @@ namespace std {
   namespace tr1 {
 
     template<>
-    struct hash<ade::stm::MemoryObject::Ptr> : public unary_function<ade::stm::MemoryObject::Ptr, size_t> {
+    struct hash<diarc::stm::MemoryObject::Ptr> : public unary_function<diarc::stm::MemoryObject::Ptr, size_t> {
 
-      size_t operator()(const ade::stm::MemoryObject::Ptr& mo) const {
+      size_t operator()(const diarc::stm::MemoryObject::Ptr& mo) const {
         return static_cast<size_t> (mo->getId());
       }
     };
@@ -37,7 +37,7 @@ namespace std {
 // forward declare friend class from another namespce
 class RelationTracker;
 
-namespace ade {
+namespace diarc {
   namespace stm {
 
     struct memobj_equal_to : std::binary_function<MemoryObject::Ptr, MemoryObject::Ptr, bool> {
@@ -68,13 +68,13 @@ namespace ade {
       int getSizeTypeId(const long long& typeId) const;
 
       //native -> java methods
-      void getMemoryObjects(ArrayListInterface& toSend, const double& conf, JNIEnv* env) const;
-      void getMemoryObjectsByTypeId(ArrayListInterface& toSend, const long long& typeId, const double& conf, JNIEnv* env) const;
-      void getMemoryObjectsByTokenId(ArrayListInterface& toSend, const long long& tokenId, const double& conf, JNIEnv* env) const;
-      void getMemoryObjectTypeIds(jlongArray& toSend, const double& conf, JNIEnv* env) const;
-      void getMemoryObjectIds(jlongArray& toSend, const double& conf, JNIEnv* env) const;
-      void getMemoryObjectIds(jlongArray& toSend, const long long& typeId, const double& conf, JNIEnv* env) const;
-      void getMemoryObject(MemoryObjectInterface& toSend, const long long& tokenId, const double& conf, JNIEnv* env) const;
+      void getMemoryObjects(ArrayListInterface& toSend, JNIEnv* env) const;
+      void getMemoryObjectsByTypeId(ArrayListInterface& toSend, const long long& typeId, JNIEnv* env) const;
+      void getMemoryObjectsByTokenId(ArrayListInterface& toSend, const long long& tokenId, JNIEnv* env) const;
+      void getMemoryObjectTypeIds(jlongArray& toSend, JNIEnv* env) const;
+      void getMemoryObjectIds(jlongArray& toSend, JNIEnv* env) const;
+      void getMemoryObjectIds(jlongArray& toSend, const long long& typeId, JNIEnv* env) const;
+      void getMemoryObject(MemoryObjectInterface& toSend, const long long& tokenId, JNIEnv* env) const;
       bool confirmMemoryObject(const long long& tokenId) const;
       void getRemovedMemoryObjects(ArrayListInterface& toSend, JNIEnv* env);
       //end native -> java methods
@@ -138,6 +138,6 @@ namespace ade {
     };
 
   } //namespace stm
-} //namespace ade
+} //namespace diarc
 
 #endif //TRACKEDOBJECTS_HPP

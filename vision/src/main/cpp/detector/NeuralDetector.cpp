@@ -15,7 +15,7 @@
 #include <iostream>
 
 namespace fs = std::experimental::filesystem;
-using namespace ade::stm;
+using namespace diarc::stm;
 
 void NeuralDetector::loadConfig(const std::string &configFile) {
   //get directory
@@ -68,7 +68,7 @@ void NeuralDetector::loadConfig(const std::string &configFile) {
 NeuralDetector::NeuralDetector(const long long &processorId, const int imgWidth, const int imgHeight)
         : ObjectDetector(processorId, imgWidth, imgHeight) {
   visionProcessName = "NeuralDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.NeuralDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.NeuralDetector");
 }
 
 NeuralDetector::~NeuralDetector() {}
@@ -304,7 +304,7 @@ void NeuralDetector::removeDuplicates(std::vector<DetectedObject> &objects, floa
   if (objects.size() == 2) {
     cv::Rect rectA = objects[0].rect;
     cv::Rect rectB = objects[1].rect;
-    if (ade::stm::util::calculateBoundBoxOverlap(rectA, rectB) >= threshold) {
+    if (diarc::stm::util::calculateBoundBoxOverlap(rectA, rectB) >= threshold) {
       if (objects[0].confidence > objects[1].confidence) {
         objects.erase(objects.begin()+1);
       } else {
@@ -321,7 +321,7 @@ void NeuralDetector::removeDuplicates(std::vector<DetectedObject> &objects, floa
       for (int j = 0; j < objects.size(); j++) {
         if (i == j) continue;
         cv::Rect rectB = objects[j].rect;
-        if (ade::stm::util::calculateBoundBoxOverlap(rectA, rectB) >= threshold) {
+        if (diarc::stm::util::calculateBoundBoxOverlap(rectA, rectB) >= threshold) {
           if (objects[i].confidence > objects[j].confidence) {
             objects.erase(objects.begin()+j);
           } else {
@@ -449,7 +449,7 @@ void NeuralDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
                   0.8, CV_RGB(0, 255, 0), 1);
     }
 
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 }
 
@@ -504,8 +504,8 @@ void NeuralDetector::displayDetectedObjects(cv::Mat& imgToDraw, const std::vecto
     cv::putText(imgToDraw, (*itr).name, cv::Point(objRect.x + objRect.width, objRect.y + objRect.height),
     cv::FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(255, 0, 0));
   }
-  ade::Display::createWindowIfDoesNotExist(displayName);
-  ade::Display::displayFrame(imgToDraw, displayName);
+  diarc::Display::createWindowIfDoesNotExist(displayName);
+  diarc::Display::displayFrame(imgToDraw, displayName);
 }
 
 // fills classNames vector first with placeholder names

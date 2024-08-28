@@ -230,7 +230,7 @@ public class OpenaiClient {
 
   /**
    * Performs an OpenAI chat completion using VisionMessage
-   * @param messages a list of messages to be sent for chat completion
+   * @param vmessages a list of messages to be sent for chat completion
    * @return an OpenaiChatCompletionResponse object representing the response from OpenAI
    **/
   public OpenaiChatCompletionResponse visionCompletion (List<VisionMessage> vmessages) {

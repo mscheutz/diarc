@@ -27,5 +27,8 @@ subtype(place, location).
 subtype(pose, location).
 
 actor(james).
-role(james,supervisor(X)):-diarcAgent(X).
-role(james,admin(X)):-diarcAgent(X).
+supervisor(james).
+admin(james).
+
+%todo: we shouldn't have to assert this.
+predicate(property_of,var,property).

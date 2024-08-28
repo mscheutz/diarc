@@ -4,9 +4,8 @@
 
 package edu.tufts.hrilab.demos;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.action.db.performanceMeasures.PerformanceMeasures;
+import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.config.MultiRobotCaddyDemoMock;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -19,6 +18,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.vecmath.Point3d;
+import javax.vecmath.Quat4d;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -39,22 +40,23 @@ public class MultiRobotCaddyDemoTest extends GenerativeDiarcIntegrationTest {
         PerformanceMeasures.setSeed(randomNumberSeed);
         addServiceToObserve("reportRecognizedSpeech", Utterance.class);
         addServiceToObserve("submitGoal", Predicate.class);
-        addServiceToObserve("submitGoal", Predicate.class, Symbol.class);
+        addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, Symbol.class);
         //TODO:brad: is this signature used in this test?
         addServiceToObserve("sayText", String.class);
         addServiceToObserve("assertBelief", Term.class);
         addServiceToObserve("retractBelief", Term.class);
         addServiceToObserve("assertProperties", Map.class, Double.class, List.class);
         addServiceToObserve("assertProperties", Symbol.class, List.class);
-        addServiceToObserve("openGripper",new Class<?>[0]);
+        addServiceToObserve("openGripper");
         addServiceToObserve("openGripper", String.class);
-        addServiceToObserve("closeGripper",new Class<?>[0]);
+        addServiceToObserve("closeGripper");
         addServiceToObserve("closeGripper", String.class);
         addServiceToObserve("approachLocation", Symbol.class);
         addServiceToObserve("approachLocation", Symbol.class, Symbol.class);
         addServiceToObserve("moveTo", String.class, Symbol.class);
-        addServiceToObserve("moveObject", Symbol.class, String.class, String.class);
+        addServiceToObserve("moveToRelative", String.class, Point3d.class, Quat4d.class);
         addServiceToObserve("moveObjectAbove", Symbol.class, Symbol.class, String.class);
+        addServiceToObserve("moveObjectFetchItPrimitive", Symbol.class, String.class, String.class);
         addServiceToObserve("getTypeId", List.class);
         addServiceToObserve("graspObject", String.class, Symbol.class, Float.class);
         addServiceToObserve("goToPose", String.class, Symbol.class);
@@ -62,19 +64,19 @@ public class MultiRobotCaddyDemoTest extends GenerativeDiarcIntegrationTest {
         addServiceToObserve("releaseObject", String.class, Symbol.class, Float.class);
         addServiceToObserve("waitForResponse", Predicate.class);
         addServiceToObserve("waitForResponse", Predicate.class, Long.class);
-        addServiceToObserve("moveArmToCarryPosition",new Class<?>[0]);
-        addServiceToObserve("moveArmOverBody",new Class<?>[0]);
-        addServiceToObserve("moveArmOverTable",new Class<?>[0]);
+        addServiceToObserve("moveArmToCarryPosition");
+        addServiceToObserve("moveArmOverBody");
+        addServiceToObserve("moveArmOverTable");
         addServiceToObserve("goToLocation", Symbol.class);
         addServiceToObserve("goToLoc", Symbol.class, Boolean.class);
-        addServiceToObserve("stowArm",new Class<?>[0]);
-        addServiceToObserve("unStowArm",new Class<?>[0]);
+        addServiceToObserve("stowArm");
+        addServiceToObserve("unStowArm");
         addServiceToObserve("moveTo", String.class, Symbol.class);
         addServiceToObserve("moveObject", Symbol.class, String.class, String.class);
         addServiceToObserve("getTypeId", Symbol.class);
         addServiceToObserve("getTokenIds", Symbol.class);
         addServiceToObserve("releaseObject", String.class, Symbol.class, Float.class);
-        addServiceToObserve("detectAndOpenDoor",new Class<?>[0]);
+        addServiceToObserve("detectAndOpenDoor");
         addServiceToObserve("initLocation", Symbol.class);
 
         PerformanceMeasures.setSeed(randomNumberSeed);
@@ -82,18 +84,9 @@ public class MultiRobotCaddyDemoTest extends GenerativeDiarcIntegrationTest {
 
     @After
     public void shutdownDiarc() {
-        log.debug("[cleanup] started");
-        log.debug("[shutdownConfig] tester shutdown");
+        log.debug("[shutdownDiarc] started");
         diarcConfig.shutdownConfiguration();
-        log.debug("[shutdownConfig] completed");
-
-        try {
-            // TODO: EAK: what does this do?
-            TRADE.reset("");
-        } catch (TRADEException e) {
-            log.error("[shutdownConfig]", e);
-        }
-        log.info("[cleanup] ended");
+        log.debug("[shutdownDiarc] completed");
     }
 
     public void sendUserInput(String input) {

@@ -66,7 +66,7 @@ public class TF {
     nodeMain = new AbstractNodeMain() {
       @Override
       public GraphName getDefaultNodeName() {
-        return GraphName.of(rc.namespace +"/ade/tf_handler_"+ rc.uniqueID);
+        return GraphName.of(rc.namespace +"/diarc/tf_handler_"+ rc.uniqueID);
       }
 
       @Override

@@ -24,7 +24,7 @@
 #include <boost/foreach.hpp>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 using namespace std;
 using namespace cv;
 
@@ -34,7 +34,7 @@ SurfaceMarkingValidator::SurfaceMarkingValidator(const long long& processorId, c
         const unsigned int imgHeight, const bool isStereo)
 : ObjectValidator(processorId, imgWidth, imgHeight, isStereo) {
   visionProcessName = "SurfaceMarkingValidator";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.validator.SurfaceMarkingValidator");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.validator.SurfaceMarkingValidator");
 }
 
 void SurfaceMarkingValidator::loadConfig(const std::string& config) {
@@ -180,14 +180,14 @@ bool SurfaceMarkingValidator::detect(ShapeModel &model, const Mat &img, float &c
   ShapeContext sc;
   Mat crop, gray, edge;
   calculateShapeContextBGR(img, sc, crop, gray, edge);
-  //  ade::Display::createWindowIfDoesNotExist("img");
-  //  ade::Display::displayFrame(img, "img");
-  //  ade::Display::createWindowIfDoesNotExist("crop");
-  //  ade::Display::displayFrame(crop, "crop");
-  //  ade::Display::createWindowIfDoesNotExist("gray");
-  //  ade::Display::displayFrame(gray, "gray");
-  //  ade::Display::createWindowIfDoesNotExist("edge");
-  //  ade::Display::displayFrame(edge, "edge");
+  //  diarc::Display::createWindowIfDoesNotExist("img");
+  //  diarc::Display::displayFrame(img, "img");
+  //  diarc::Display::createWindowIfDoesNotExist("crop");
+  //  diarc::Display::displayFrame(crop, "crop");
+  //  diarc::Display::createWindowIfDoesNotExist("gray");
+  //  diarc::Display::displayFrame(gray, "gray");
+  //  diarc::Display::createWindowIfDoesNotExist("edge");
+  //  diarc::Display::displayFrame(edge, "edge");
   //  sleep(2);
   //calculateShapeContextBGR(img, sc);
   float score = 0.0;

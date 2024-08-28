@@ -15,11 +15,11 @@
 #include <opencv2/opencv.hpp>
 #include <log4cxx/logger.h>
 
-namespace ade {
+namespace diarc {
   namespace stm {
     namespace util {
       
-      static log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("ade.stm.util.Utilities");
+      static log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("diarc.stm.util.Utilities");
 
       float calculateBoundBoxOverlap(const cv::Rect& bb1, const cv::Rect& bb2);
       float calculateBoundBoxSizeSimilarity(const cv::Rect& bb1, const cv::Rect& bb2);

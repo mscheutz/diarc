@@ -11,7 +11,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "NORMAL", "1704824680579" ]
+      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1704824680579" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824680579", "SUCCEEDED" ]
@@ -22,7 +22,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,back)", "NORMAL", "1704824685579" ]
+      "serviceArgs" : [ "move(dempster,back)", "ACT", "NORMAL", "1704824685579" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824685579", "FAILED" ]
@@ -63,7 +63,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,back)", "NORMAL", "1704824705602" ]
+      "serviceArgs" : [ "move(dempster,back)", "ACT", "NORMAL", "1704824705602" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -71,7 +71,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "cancelGoal(dempster)", "SKIPPENDING", "1704824710648" ]
+      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "SKIPPENDING", "1704824710648" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824710648", "SUCCEEDED" ]
@@ -85,7 +85,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,ravenna,propertyOf(behind(area,agent),safe))", "NORMAL", "1704824715621" ]
+      "serviceArgs" : [ "forgetThat(dempster,ravenna,propertyOf(behind(area,agent),safe))", "ACT", "NORMAL", "1704824715621" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,propertyOf(behind(area,dempster),safe))", "null" ]
@@ -105,7 +105,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,ravenna,trusted(evan))", "NORMAL", "1704824720655" ]
+      "serviceArgs" : [ "forgetThat(dempster,ravenna,trusted(evan))", "ACT", "NORMAL", "1704824720655" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,trusted(evan))", "null" ]
@@ -128,7 +128,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,evan,trusted(ravenna))", "NORMAL", "1704824725632" ]
+      "serviceArgs" : [ "forgetThat(dempster,evan,trusted(ravenna))", "ACT", "NORMAL", "1704824725632" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,trusted(ravenna))", "null" ]
@@ -148,7 +148,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,back)", "NORMAL", "1704824730627" ]
+      "serviceArgs" : [ "move(dempster,back)", "ACT", "NORMAL", "1704824730627" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824730627", "FAILED" ]

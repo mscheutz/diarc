@@ -27,7 +27,7 @@
 #include "display/Display.hpp"
 #include "imgproc/saliency/SaliencyProcessor.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 using namespace std;
 
 static double timespec_diff(struct timespec *x, struct timespec *y) /// TODO Remove later
@@ -52,7 +52,7 @@ segmenter(NULL),
 saliencyReceived(false) {
   salmap = cv::Mat_<float>::ones(imgHeight, imgWidth);
   visionProcessName = "ClusterDetectorAdvanced";
-  logger = log4cxx::Logger::getLogger("ade.detector.ClusterDetectorAdvanced");
+  logger = log4cxx::Logger::getLogger("diarc.detector.ClusterDetectorAdvanced");
 }
 
 ClusterDetectorAdvanced::~ClusterDetectorAdvanced() {
@@ -231,7 +231,7 @@ void ClusterDetectorAdvanced::display(MemoryObject::VecPtr newObjects) {
   }
 
   //draw on cluster boxes
-  ade::Display::displayFrame(displayFrame, getDisplayName());
+  diarc::Display::displayFrame(displayFrame, getDisplayName());
 
   //3D visualization
   // create a point cloud with each object different random color
@@ -260,7 +260,7 @@ void ClusterDetectorAdvanced::display(MemoryObject::VecPtr newObjects) {
       displayCloud->points.push_back(tmpPoint);
     }
   }
-  ade::Display::displayPointCloud(displayCloud, "clusters", getDisplayName());
+  diarc::Display::displayPointCloud(displayCloud, "clusters", getDisplayName());
 }
 
 void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event, void* cloud_void) {
