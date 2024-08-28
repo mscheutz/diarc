@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 // Temp: To use alongside the HybridParseComponent, pass in "-llm spotPickAndPlace"
 //TODO: rework existing dialogue llm structure/LLMParserComponent/this to coexist or have single version of things
 //TODO: commandLine arg for performNLG
-public abstract class LLMServiceProvider extends DiarcComponent implements NLGInterface, NLUInterface {
+public abstract class LLMServiceProvider extends DiarcComponent implements NLGInterface{
     boolean performNLG = true;
     SimpleNLGComponent nlg;
 
@@ -156,7 +156,6 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
         }
     }
 
-    @Override
     public Utterance parseUtterance(Utterance utterance) {
         return llmChatCompletionHelper(utterance, true);
     }
