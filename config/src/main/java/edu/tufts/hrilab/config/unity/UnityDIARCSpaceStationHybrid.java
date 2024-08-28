@@ -22,7 +22,7 @@ import edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM;
 import edu.tufts.hrilab.unity.space_station.nlg.UnitySpaceStationNLGComponent;
 import edu.tufts.hrilab.unity.UnityAgent;
 import edu.tufts.hrilab.unity.UnityPR2;
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Arrays;
@@ -93,6 +93,6 @@ public class UnityDIARCSpaceStationHybrid {
     DiarcComponent.createInstance(UnityAgent.class, "-agent rover -groups agent:" + agentName);
     DiarcComponent.createInstance(UnityPR2.class, "-agent " + agentName + " -groups agent:"  + agentName + nullAddressee );
 
-    DiarcComponent.createInstance(GoalManagerImpl.class, goalManagerArgs);
+    DiarcComponent.createInstance(GoalManagerComponent.class, goalManagerArgs);
   }
 }
