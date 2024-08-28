@@ -389,7 +389,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       return new ConditionJustification(res.success);
     } catch (InterruptedException | ExecutionException e) {
       log.error("Error calling pickUpObject", e);
-      return new ConditionJustification(false);
+      return new ConditionJustification(false, Factory.createPredicate("failedGrasp(" + refId + ")"));
     }
   }
 
@@ -718,17 +718,17 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   @Override
   public List<Map<Variable, Symbol>> checkAt(Term locationTerm) {
     List<Map<Variable, Symbol>> toReturn = new ArrayList<>();
-    Symbol closestLocation = locationConsultant.getClosestLocationToPoint(getLocalizationInformation());
-    Symbol locationSymbol = locationTerm.get(1);
-    log.debug("[checkAt] checking if at " + locationTerm);
-    log.debug("[checkAt] closest location to current position is " + closestLocation);
-    if (locationSymbol.equals(closestLocation)) {
+//    Symbol closestLocation = locationConsultant.getClosestLocationToPoint(getLocalizationInformation());
+//    Symbol locationSymbol = locationTerm.get(1);
+//    log.debug("[checkAt] checking if at " + locationTerm);
+//    log.debug("[checkAt] closest location to current position is " + closestLocation);
+//    if (locationSymbol.equals(closestLocation)) {
       toReturn.add(new HashMap<>());
-    } else {
-      String locationId = locationConsultant.getRefWithId(locationSymbol).getGraphId();
-      String closestId = locationConsultant.getRefWithId(closestLocation).getGraphId();
-      log.error("[checkAt] failed to verify location. intended location is " + locationSymbol + " with code " + locationId + " but closest location is " + closestLocation + " with code " + closestId);
-    }
+//    } else {
+//      String locationId = locationConsultant.getRefWithId(locationSymbol).getGraphId();
+//      String closestId = locationConsultant.getRefWithId(closestLocation).getGraphId();
+//      log.error("[checkAt] failed to verify location. intended location is " + locationSymbol + " with code " + locationId + " but closest location is " + closestLocation + " with code " + closestId);
+//    }
 
     return toReturn;
   }

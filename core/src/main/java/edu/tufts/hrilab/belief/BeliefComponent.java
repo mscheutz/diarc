@@ -1105,7 +1105,7 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface {
     Predicate teamPredicate = Factory.createPredicate("team", queryVar);
     queryResult = queryBelief(teamPredicate);
     Set<Symbol> teamNames = new HashSet<>();
-    queryResult.forEach(m -> teamNames.add(m.get(queryVar)));
+    queryResult.forEach(m -> teamNames.add(Factory.createSymbol(m.get(queryVar).getName())));
     Map<Symbol, Set<Symbol>> teams = new HashMap<>();
     for (Symbol teamName : teamNames) {
       Predicate queryPred = Factory.createPredicate("memberOf", queryVar, teamName);

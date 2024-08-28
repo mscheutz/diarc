@@ -16,6 +16,7 @@ name(rightArm,rightArm).
 name(human,human).
 
 actor(brad).
+actor(pete).
 actor(eric).
 actor(medic).
 actor(searcher).
@@ -68,6 +69,7 @@ team(self).
 /*rules about who the agent is obliged to listen to */
 %% supervisors
 role(brad,supervisor(X)):-diarcAgent(X).
+role(pete,supervisor(X)):-diarcAgent(X).
 role(eric,supervisor(X)):-diarcAgent(X).
 role(medic,supervisor(X)):-diarcAgent(X).
 role(searcher,supervisor(X)):-diarcAgent(X).
@@ -81,6 +83,7 @@ role(manager,supervisor(X)):-diarcAgent(X).
 
 %% admin
 role(brad,admin(X)):-diarcAgent(X).
+role(pete,admin(X)):-diarcAgent(X).
 role(manager,admin(X)):-diarcAgent(X).
 %role(eric,admin(X)):-diarcAgent(X).
 %role(medic,admin(X)):-diarcAgent(X).

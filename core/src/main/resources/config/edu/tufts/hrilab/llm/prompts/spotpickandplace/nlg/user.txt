@@ -21,6 +21,9 @@ Output: Are there any more differences?
 Input: REPLY(self:agent,user,is(behind(self:agent,ledge)))
 Output: There is a ledge behind me.
 #
+Input: REPLY(self:agent,user,ACK(okay)))
+Output: Okay.
+#
 Input: DESC(DEFINITE,table,and(color(brown),shape(square),cover(none)))
 Output: The table is brown, bare, and the top is shaped like a square.
 #

@@ -6,13 +6,8 @@ import java.lang.Integer;
 import java.lang.Boolean;
 import java.util.List;
 
-() = relocalize() {
-  Symbol !defaultLocation = location_0:location;
 
-  act:setLocationWithFiducial(!defaultLocation);
-}
-
-
+/////////// Recovery Policies /////////
 //todo: this doesn't actually work, since it will happily localize to the wrong place? if we sit down etc it assumes we're closest to the dock location where the tour started i think.
 () = failedLocalization(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
   Symbol !defaultLocation = location_0:location;
@@ -23,9 +18,26 @@ import java.util.List;
   }
 
     act:setInitialLocation(!defaultLocation);
-//  act:setLocationWithFiducial(!defaultLocation);
+//  act:setLocationWithFiducial(!defaultLocation;
   op:log(warn, "[failedLocalization] location initialized to !defaultLocation after failing to localize");
 }
+
+() = failedGrasp(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
+  Symbol !defaultLocation = location_0:location;
+
+  recovery: {
+//    failedActions: {pickUpObject(self:agent, X:physobj)}
+    failureReasons: {failedGrasp(X)}
+//    actionStatuses: {FAIL}
+  }
+
+//    act:setInitialLocation(!defaultLocation);
+//  act:setLocationWithFiducial(!defaultLocation);
+  op:log(warn, "[failedGrasp] trying grasp again");
+}
+
+
+//////// Core behaviors //////////
 
 () = init[""](String ?ignore = "none()") {
     effects : {
@@ -67,6 +79,13 @@ import java.util.List;
     op:log(debug, "[init] set up spot");
 }
 
+() = relocalize() {
+  Symbol !defaultLocation = location_0:location;
+
+  act:setLocationWithFiducial(!defaultLocation);
+}
+
+
 () = map() {
     Symbol !location;
     Integer !numLocations;
@@ -78,7 +97,7 @@ import java.util.List;
         act:bindLocationToCurrentPose(!location);
         op:log(debug, "[map] mapped !location");
     }
-    tsc:writeLocationReferencesToFile("/home/pete/dev/diarc/core/src/main/resources/config/edu/tufts/hrilab/spot/vaLocationRefs.json");
+    tsc:writeLocationReferencesToFile("/home/pete/dev/diarc/core/src/main/resources/config/edu/tufts/hrilab/spot/upd8.json");
     act:localize();
 }
 
@@ -159,6 +178,7 @@ import java.util.List;
 
 
 () = deliveritem(Symbol ?object:physobj, Symbol ?at:location, Symbol ?type:property) {
+    String !typeString;
     conditions : {
         pre : at(?actor, ?at);
         pre : holding(?actor, ?object);
@@ -175,9 +195,9 @@ import java.util.List;
 
 
     op:log(info, "Delivering ?type ?object to ?at.");
-
+    !typeString = op:getName(?type);
     act:command(arm_carry);
-    act:askQuestionFromString(brad, "Let me know when you're holding the ?type.", val(X));
+    act:askQuestionFromString(brad, "Let me know when you're holding the !typeString.", val(X));
     op:log(info, "Finishing handoff");
     act:openGripper();
     op:sleep(1000);

@@ -86,6 +86,10 @@ carry mode; VERBI; carry
 close gripper; VERBI; closeGripper
 open gripper; VERBI; openGripper
 look for; VERBT; perceiveEntity
+stand; VERBI; stand
+sit; VERBI; sit
+undock; VERBI; undock
+dock; VERBI; dock
 
 %%%%%%%%%% Things %%%%%%%%%%%%%
 you; AGENT; ?ADDRESSEE

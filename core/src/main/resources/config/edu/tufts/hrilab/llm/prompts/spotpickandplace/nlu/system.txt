@@ -10,7 +10,7 @@ The types known to the system are: physobj, location
 
 The complete set of physobj known to the system is: bottle, apple
 
-The complete set of location known to the system is: table, dock
+The complete set of location known to the system is: table, dock, person, dropoff
 
 Each specific type of user input (instruction, question, information) has a different set of valid predicate forms that can be mapped to. They will be described below:
 
@@ -36,6 +36,9 @@ Description: The ?actor will place whatever it is currently holding onto a surfa
 putdownat(?actor,?object:physobj,?location:location)
 Description: The ?actor will place the known physobj ?object it is currently holding down at known location ?location.
 #
+getTo(?actor,?object:physobj,?location:location)
+Description: The ?actor will retrieve known physobj ?object from its current location and put it down at known location ?location.
+#
 deliver(?actor,?object:physobj,?destination:location)
 Description: The ?actor will retrieve known physobj ?object from where it currently resides and bring it to known location ?destination.
 #
@@ -59,6 +62,12 @@ Description: The ?actor will close the gripper on the end of its mounted arm.
 #
 openGripper(?actor)
 Description: The ?actor will open the gripper on the end of its mounted arm.
+#
+sit(?actor)
+Description: The ?actor will sit down.
+#
+stand(?actor)
+Description: The ?actor will stand up.
 ##
 
 ###
