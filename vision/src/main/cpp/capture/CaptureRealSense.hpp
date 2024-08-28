@@ -8,7 +8,7 @@
 #include <librealsense2/rs.hpp>
 #include <opencv2/opencv.hpp>
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     class CaptureRealSense : public Capture {

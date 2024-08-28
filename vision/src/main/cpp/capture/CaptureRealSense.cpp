@@ -16,7 +16,7 @@
 #include <point_clouds/PointCloudUtilities.hpp>
 #include <pcl/filters/voxel_grid.h>
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     CaptureRealSense::CaptureRealSense(const std::string &configFile)

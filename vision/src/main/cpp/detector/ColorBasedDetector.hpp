@@ -23,9 +23,9 @@ class ColorBasedDetector : public ObjectDetector {
   virtual void handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification);
 
  private:
-  ade::stm::MemoryObject::VecPtr detectObjects(const cv::Mat &currFrame, CaptureData::ConstPtr capture);
+  diarc::stm::MemoryObject::VecPtr detectObjects(const cv::Mat &currFrame, CaptureData::ConstPtr capture);
 
-  std::vector<ade::stm::MemoryObject::Ptr> getMemoryObjects(const cv::Mat &currFrame,
+  std::vector<diarc::stm::MemoryObject::Ptr> getMemoryObjects(const cv::Mat &currFrame,
                                                        CaptureData::ConstPtr capture,
                                                        const PredicateHelper &descriptor,
                                                        const std::tr1::unordered_set<long long> &typeIds,

@@ -26,12 +26,12 @@ public:
   MemoryObjectsNotification(const VisionProcessConstPtr& notifier_,
                             const long long& typeId_,
                             const unsigned long long& frameNumber_,
-                            ade::stm::MemoryObject::VecPtr objects_)
+                            diarc::stm::MemoryObject::VecPtr objects_)
   : VisionNotification(notifier_, MEMORY_OBJECT, typeId_, frameNumber_),
     objects(objects_) {
   }
 
-  ade::stm::MemoryObject::VecPtr objects;
+  diarc::stm::MemoryObject::VecPtr objects;
 };
 
 #endif	/* MEMORYOBJECTSNOTIFICATION_HPP */

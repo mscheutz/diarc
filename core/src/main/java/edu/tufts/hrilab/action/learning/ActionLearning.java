@@ -4,20 +4,15 @@
 
 package edu.tufts.hrilab.action.learning;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.Effect;
 import edu.tufts.hrilab.action.ConditionType;
 import edu.tufts.hrilab.action.EffectType;
+import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.goal.GoalStatus;
-import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.Database;
-import edu.tufts.hrilab.action.execution.RootContext;
 import edu.tufts.hrilab.action.goal.Goal;
-import edu.tufts.hrilab.action.state.StateMachine;
+import edu.tufts.hrilab.action.manager.ExecutionManager;
 import edu.tufts.hrilab.action.util.Utilities;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
@@ -26,7 +21,6 @@ import edu.tufts.hrilab.fol.Symbol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,8 +39,9 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ActionLearning {
   private static final Logger log = LoggerFactory.getLogger(ActionLearning.class);
-  private Set<Predicate> ignoreActionSet = new HashSet<>();
+  private ExecutionManager executionManager;
   private boolean executeAction = false;
+  private Set<Predicate> ignoreActionSet = new HashSet<>();
   private Queue<Goal> goalQueue = new LinkedBlockingQueue<>();
   private Lock goalQueueEmptyLock = new ReentrantLock();
   private Condition goalQueueNotEmpty = goalQueueEmptyLock.newCondition();
@@ -70,44 +65,39 @@ public class ActionLearning {
   private Condition statusCondition = statusLock.newCondition();
 
   /**
-   * @param stateMachine state machine used to store world information
-   * @param rootContext  root context which will be used to instantiate observers and simulation capability
+   * @param em Execution Manager instance to run executeWhileLearning and simulation goals
    */
-  public ActionLearning(StateMachine stateMachine, RootContext rootContext, boolean useGui) {
-    if (useGui) {
+  public ActionLearning(ExecutionManager em, boolean displayGui) {
+    executionManager = em;
+
+    if (displayGui) {
       log.debug("creating gui for action learning");
       learningGui = new ActionLearningGui();
     }
 
-    // set which actions/goals to ignore and pass through to be executed during learning
-    ignoreActionSet.add(Factory.createPredicate("sayText(?actor,?text)"));
-    ignoreActionSet.add(Factory.createPredicate("modifyAction(?actor,?action,?modification,?location)"));
-    ignoreActionSet.add(Factory.createPredicate("updateActionLearning(?actor,?action,?status)"));
+    //TODO:EW: I don't like this mechanism to determine what is a taught step vs a current command.
+    //  No flexibility, hard to maintain
+    //set which actions/goals to ignore and pass through to be executed during learning
+    //ignoreActionSet.add(Factory.createPredicate("sayText(?actor,?text)"));
     ignoreActionSet.add(Factory.createPredicate("handled(?actor,?utterance)"));
-    //TODO:brad:test this at some point?
+    ignoreActionSet.add(Factory.createPredicate("modifyAction(?actor,?action,?modification,?location)"));
+    ignoreActionSet.add(Factory.createPredicate("learnAction(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("endActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelActionLearning(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("changeLearningExecution(?actor,?status)"));
-
-    //TODO:brad: generalize this case?
     ignoreActionSet.add(Factory.createPredicate("endLearningAssembleScript(?actor,?action)"));
-    ignoreActionSet.add(Factory.createPredicate("cancelCurrentGoal(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("freeze(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("endFreeze(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("cancelGoalInQueueIndex(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("cancelDefineItem(?actor,?itemRefId,?trayRefId,?scriptID)"));
-    ignoreActionSet.add(Factory.createPredicate("suspendDefineItem(?actor,?scriptID)"));
-    ignoreActionSet.add(Factory.createPredicate("cancelCurrentGoal(?actor)"));
-    ignoreActionSet.add(Factory.createPredicate("suspendCurrentGoal(?actor)"));
-  }
 
-  /**
-   * Register this class with TRADE to make its services available.
-   */
-  public void registerWithTRADE(Collection<String> groups) {
-    try {
-      TRADE.registerAllServices(this, groups);
-    } catch (TRADEException e) {
-      log.error("Error registering ActionLearning with TRADE.", e);
-    }
+    ignoreActionSet.add(Factory.createPredicate("cancelSystemGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("suspendSystemGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeSystemGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelAllCurrentGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelAllPendingGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelAllActiveGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelPendingGoalByIndex(?actor)"));
   }
 
   public void startQueuingGoals() {
@@ -116,21 +106,11 @@ public class ActionLearning {
         if (!goalQueue.isEmpty()) {
           Goal g = goalQueue.remove();
           if (shouldExecute()) {
+            //Temporarily add to ignore set so it is executed and we don't get stuck in a loop here
             ignoreActionSet.add(g.getPredicate());
-            //execute it and if it succeeds add it if not don't add it
-            try {
-              TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Goal.class)).call(Long.class, g);
-            } catch (TRADEException e) {
-              log.error("exception executing goal while learning [submitGoalDirectly]", e);
-            }
-
-            GoalStatus goalStatus = GoalStatus.FAILED;
-
-            try {
-              goalStatus = TRADE.getAvailableService(new TRADEServiceConstraints().name("joinOnGoal").argTypes(Long.class)).call(GoalStatus.class, g.getId());
-            } catch (TRADEException e) {
-              log.error("exception executing goal while learning [joinOnGoal]", e);
-            }
+            g.setIsLearningGoal(true);
+            g = executionManager.submitGoal(g, ExecutionType.ACT);
+            GoalStatus goalStatus = executionManager.joinOnGoal(g.getId());
             ignoreActionSet.remove(g.getPredicate());
 
             if (goalStatus == GoalStatus.SUCCEEDED) {
@@ -176,137 +156,184 @@ public class ActionLearning {
     }
   }
 
-  @Action
-  @TRADEService
-  public boolean updateActionLearning(Predicate newAction, Symbol status) {
-    log.debug("[updateActionLearning] updating learning status");
-    // get new action predicate || post condition
-    ActionLearningStatus updatedLearningStatus = ActionLearningStatus.getEnumVal(status.toString());
-
-    log.info("learning status: " + updatedLearningStatus);
-    // checks the new learning status submitted
-    switch (updatedLearningStatus) {
-      case START: // start learning new action,
-        String actName = newAction.getName();
-
-        // check to see if we are currently learning something
-        if (learningStatus == ActionLearningStatus.ACTIVE) {
-          try {
-            if (!(currentLearningState.getName().equalsIgnoreCase(actName))) {
-              currentLearningState = new LearningState(newAction, currentLearningState);
-            } else {
-              log.debug("Already learning new action: " + newAction);
-            }
-          } catch (NullPointerException e) {
-            log.debug("[updateActionLearning] supposedly already learning but LS is null... something is wrong");
-          }
-        } else {
-          currentLearningState = new LearningState(newAction);
+  public void waitForActionLearningStart(Predicate newAction) {
+    try {
+      statusLock.lock();
+      while (learningStatus != ActionLearningStatus.ACTIVE && currentLearningState != null && !newAction.getName().equalsIgnoreCase(currentLearningState.getName())) {
+        try {
+          statusCondition.await();
+        } catch (InterruptedException e) {
+          log.warn("[waitForActionLearningStart] Interrupted while waiting for learning to start.", e);
         }
-        // TODO: spawn observers based on situation and task relevant info
+      }
+    } finally {
+      statusLock.unlock();
+    }
+  }
+
+  //Start learning new action
+  public boolean learnAction(Predicate newAction) {
+    log.debug("[learnAction] " + newAction);
+    String actName = newAction.getName();
+
+    // check to see if we are currently learning something
+    if (learningStatus == ActionLearningStatus.ACTIVE) {
+      try {
+        if (!(currentLearningState.getName().equalsIgnoreCase(actName))) {
+          currentLearningState = new LearningState(newAction, currentLearningState);
+        } else {
+          log.debug("Already learning new action: " + newAction);
+        }
+      } catch (NullPointerException e) {
+        log.debug("[learnAction] supposedly already learning but LS is null... something is wrong");
+      }
+    } else {
+      currentLearningState = new LearningState(newAction);
+    }
+    // TODO: spawn observers based on situation and task relevant info
+    if (learningGui != null) {
+      learningGui.setLearningState(currentLearningState);
+    }
+    setLearningStatus(ActionLearningStatus.ACTIVE);
+    startQueuingGoals();
+
+     //to keep the learning goal active while learning, wait here until status is no longer active
+      try {
+        statusLock.lock();
+        while (learningStatus == ActionLearningStatus.ACTIVE) {
+          try {
+            statusCondition.await();
+          } catch (InterruptedException e) {
+            log.warn("Interrupted while waiting for learning to finish.", e);
+          }
+        }
+      } finally {
+        statusLock.unlock();
+      }
+
+    return true;
+  }
+
+  //Cleanly finish learning, if parent learning state then resume learning
+  public boolean endActionLearning(Predicate newAction) {
+    log.debug("[endActionLearning] " + newAction);
+
+    boolean currentState;
+    LearningState learningState;
+    // check to see if the predicate action is same as action being learned
+    if (newAction.getName().equalsIgnoreCase(currentLearningState.getName())) {
+      learningState = currentLearningState;
+      currentState = true;
+    } else {
+      learningState = pausedLearningStates.get(newAction.getName());
+      currentState = false;
+      if (learningState == null) {
+        log.error("[endActionLearning] called for action with no learning state: {}", newAction);
+        return false;
+      }
+    }
+
+    log.debug("Generating new ActionDBEntry");
+    learningState.generateActionDBEntry();
+    LearningState previousLearningState = learningState.getPreviousLearningState();
+    if (previousLearningState != null) {
+      log.debug("restoring previous action: " + learningState.getPreviousLearningState().getName());
+      if (currentState) {
+        currentLearningState = previousLearningState;
+        startQueuingGoals();
         if (learningGui != null) {
           learningGui.setLearningState(currentLearningState);
         }
-        setLearningStatus(ActionLearningStatus.ACTIVE);
-        startQueuingGoals();
-
-        // to keep the learning goal active while learning, wait here until status is no longer active
-//        try {
-//          statusLock.lock();
-//          while (learningStatus == ActionLearningStatus.ACTIVE) {
-//            try {
-//              statusCondition.await();
-//            } catch (InterruptedException e) {
-//              log.warn("Interrupted while waiting for learning to finish.", e);
-//            }
-//          }
-//        } finally {
-//          statusLock.unlock();
-//        }
-        break;
-      case END: // cleanly finish learning, if parent learning state then resume learning
-        // check to see if the predicate action is same as action being learned
-        if (newAction.getName().equalsIgnoreCase(currentLearningState.getName())) {
-          log.debug("Generating new ActionDBEntry");
-//          taskFormer.pauseTF();
-          currentLearningState.generateActionDBEntry();
-          LearningState previousLearningState = currentLearningState.getPreviousLearningState();
-          if (previousLearningState != null) {
-            log.debug("restoring previous action: " + currentLearningState.getPreviousLearningState().getName());
-            currentLearningState = previousLearningState;
-
-            //ActionContext generatedActionContext = new ActionContext(null, generatedAction);
-            //State generatedActionState = new com.action.State(null);
-//          //  generatedActionState = generatedActionState.update(generatedActionContext, ActionStatus.SUCCESS, null);
-            //generatedActionContext.setStatus(ActionStatus.SUCCESS);
-            //generatedActionState = generatedActionState.update(generatedActionContext, null);
-
-            //currentLearningState.addLearnedAction(generatedActionContext, generatedActionState);
-            startQueuingGoals();
-//            taskFormer.resumeTF();
-            if (learningGui != null) {
-              learningGui.setLearningState(currentLearningState);
-            }
-          } else {
-            log.debug("ending learning");
-            setLearningStatus(updatedLearningStatus);
-//            taskFormer.stopTF();
-            currentLearningState = null;
-            executeAction = false;
-            if (learningGui != null) {
-              learningGui.clear();
-            }
-            // TODO: terminate observers
-          }
-        } else {
-          log.debug("[Evaluate Predicate] cannot learn action because haven't started learning " + newAction.getName());
-        }
-        break;
-      case CANCEL:
-        log.debug("cancelling learning");
-        setLearningStatus(updatedLearningStatus);
+      } else {
+        pausedLearningStates.put(newAction.getName(), previousLearningState);
+      }
+    } else {
+      log.debug("ending learning for action {}", newAction);
+      if (currentState) {
+        setLearningStatus(ActionLearningStatus.END);
         currentLearningState = null;
-        setLearningStatus(ActionLearningStatus.NONE);
-//        taskFormer.stopTF();
+        executeAction = false;
         if (learningGui != null) {
           learningGui.clear();
         }
-        break;
-      case PAUSE: // pauses learning of action -> stores in paused map -> restored in future
-        log.debug("pausing learning");
-        pausedLearningStates.put(newAction.getName(), currentLearningState);
-        currentLearningState = null;
-        setLearningStatus(ActionLearningStatus.NONE);
-//        try {
-//          taskFormer.stopTF();
-//          // TODO: pause / terminate observers
-//        }catch (Exception e) {
-//          log.debug(e);
-//        }
-        break;
-      case RESUME: // resume the paused action, pop from map
-        log.debug("trying to resume learning of " + newAction);
-        LearningState resumedLearningState = pausedLearningStates.get(newAction.getName());
-        if (resumedLearningState != null) {
-          if (currentLearningState != null) {
-            pausedLearningStates.put(currentLearningState.getName(), currentLearningState);
-          }
-          currentLearningState = resumedLearningState;
-          pausedLearningStates.remove(newAction.getName());
-          setLearningStatus(ActionLearningStatus.ACTIVE);
-          startQueuingGoals();
-          // TODO: restart / create observers
-        } else {
-          //tmf: agent should convey that it hasn't started learning something.
-          // TODO: create interpreter to run say text to respond accordingly
-          log.error("cannot resume " + newAction.getName() + " because haven't started learning before");
-          setLearningStatus(ActionLearningStatus.NONE);
-        }
-        break;
-      default:
-        // TODO: create interpreter to run say text to respond accordingly
-        log.debug("actionName does not correspond to learning");
+      } else {
+        pausedLearningStates.remove(newAction.getName());
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Cancel action learning.
+   *
+   * @param action action being learned that should be cancelled
+   * @return
+   */
+  public boolean cancelActionLearning(Predicate action) {
+    log.debug("[cancelActionLearning] " + action);
+
+    if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
+      setLearningStatus(ActionLearningStatus.CANCEL);
+      currentLearningState = null;
+      setLearningStatus(ActionLearningStatus.NONE);
+      if (learningGui != null) {
+        learningGui.clear();
+      }
+    } else {
+      LearningState learningState = pausedLearningStates.remove(action.getName());
+      if (learningState == null) {
+        log.error("[cancelActionLearning] called for action with no learning state: {}", action);
         return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Pauses learning of action -> stores in paused map -> restored in future.
+   *
+   * @param action action being learned
+   * @return
+   */
+  public boolean pauseActionLearning(Predicate action) {
+    log.debug("[pauseActionLearning] " + action);
+
+    if (currentLearningState == null) {
+      log.warn("[pauseActionLearning] Can't pause. Current learning state is null.");
+    } else if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
+      pausedLearningStates.put(action.getName(), currentLearningState);
+      currentLearningState = null;
+      setLearningStatus(ActionLearningStatus.NONE);
+    } else {
+      log.error("[pauseActionLearning] provided action is not equal to action currently being learned");
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Resume the paused action, pop from map.
+   *
+   * @param action action being learned that should resume
+   * @return
+   */
+  public boolean resumeActionLearning(Predicate action) {
+    log.debug("[resumeActionLearning] " + action);
+    LearningState resumedLearningState = pausedLearningStates.get(action.getName());
+    if (resumedLearningState != null) {
+      if (currentLearningState != null) {
+        pausedLearningStates.put(currentLearningState.getName(), currentLearningState);
+      }
+      currentLearningState = resumedLearningState;
+      pausedLearningStates.remove(action.getName());
+      setLearningStatus(ActionLearningStatus.ACTIVE);
+      startQueuingGoals();
+      // TODO: restart / create observers
+    } else {
+      //tmf: agent should convey that it hasn't started learning something.
+      // TODO: create interpreter to run say text to respond accordingly
+      log.error("cannot resume " + action.getName() + " because haven't started learning before");
+      setLearningStatus(ActionLearningStatus.NONE);
     }
     return true;
   }
@@ -334,14 +361,10 @@ public class ActionLearning {
     }
   }
 
-  @TRADEService
-  @Action
   public ActionLearningStatus getLearningStatus() {
     return learningStatus;
   }
 
-  @TRADEService
-  @Action
   public void changeLearningExecution(Symbol status) {
     executeAction = status.getName().equals("execute");
   }
@@ -350,6 +373,8 @@ public class ActionLearning {
     return executeAction;
   }
 
+  //TODO: cancelTeachingByModification
+  //  Remove new entry that was formed but canceled halfway through teaching template
 //Brad: moved from ActionModification.java which no longer exists.
 
   /**
@@ -379,8 +404,6 @@ public class ActionLearning {
    : argument()
    */
 
-  @Action
-  @TRADEService
   public void modifyAction(Predicate action, Predicate modification, Predicate location) {
     /*
       check the name of the action predicate, if it is some value then, the inner

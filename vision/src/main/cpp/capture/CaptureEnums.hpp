@@ -12,7 +12,7 @@
 #ifndef CAPTUREENUMS_HPP
 #define	CAPTUREENUMS_HPP
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     // IMPORTANT: any additions to this enum list must be accompanied by additions to the stringToCAM_MODE method
@@ -50,7 +50,7 @@ namespace ade {
     };
 
   } //namespace capture
-} //namespace ade
+} //namespace diarc
 
 #endif	/* CAPTUREENUMS_HPP */
 

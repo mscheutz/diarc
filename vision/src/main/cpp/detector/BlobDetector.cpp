@@ -12,7 +12,7 @@
 #include "capture/util/CaptureUtilities.hpp"
 #include "display/Display.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 BlobDetector::BlobDetector(const long long &processorId, const int imgWidth, const int imgHeight)
         : ObjectDetector(processorId, imgWidth, imgHeight),
@@ -21,7 +21,7 @@ BlobDetector::BlobDetector(const long long &processorId, const int imgWidth, con
           USE_FAST_BLOB_DETECTION_BLUR_AMOUNT(0) {
   colorDetector->initBlobDetection(img_width, img_height);
   visionProcessName = "BlobDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.BlobDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.BlobDetector");
 }
 
 BlobDetector::~BlobDetector() {
@@ -190,7 +190,7 @@ MemoryObject::VecPtr BlobDetector::detectBlobs(const cv::Mat &currFrame, Capture
                   lineThickness, 8, 0);
     }
 
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 
   return newBlobs;

@@ -21,54 +21,32 @@ import org.slf4j.LoggerFactory;
  */
 public class Grasp implements Serializable {
 
-  public enum Type {
-    PINCH_TOGETHER, PINCH_APART, PUSH, TWO_ARM, UNKNOWN
-  };
-
   private static Logger log = LoggerFactory.getLogger(Grasp.class);
-
-  private Type type = Type.UNKNOWN;
-  
-  /**
-   * Cached enum values for converting int to enum from native code.
-   */
-  private final Type[] type_values = Type.values();
 
   /**
    * Points to place fingertips. 1 element for PINCH_TOGETHER or PUSH, 2
-   * elements for PINCH_APART or TWO_ARM.
+   * elements for PINCH_APART.
    */
   private List<Vector3d> points = new ArrayList<>();
 
   /**
-   * Orientation for each gripper. 1 element for PINCH_TOGETHER, PINCH_APART, or
-   * PUSH; 2 elements for TWO_ARM.
+   * Orientation of the gripper pose.
    */
-  private List<Quat4d> orients = new ArrayList<>();
+  private Quat4d orientation = null;
 
   public Grasp() {
   }
 
-  public Grasp(Point3d point, Quat4d orient) {
-    this.type = Type.PINCH_TOGETHER;
-    points.add(new Vector3d(point));
-    orients.add(orient);
+  public Grasp(Point3d point, Quat4d orientation) {
+    this.points.add(new Vector3d(point));
+    this.orientation = orientation;
   }
 
-  public Grasp(Type type, List<Vector3d> points, List<Quat4d> orients) {
-    this.type = type;
+  public Grasp(List<Vector3d> points, Quat4d orientation) {
     this.points = points;
-    this.orients = orients;
+    this.orientation = orientation;
   }
   
-  public void setType(Type grasp_type) {
-    type = grasp_type;
-  }
-  
-  public void setType(int grasp_ordinal) {
-    type = type_values[grasp_ordinal];
-  }
-
   public void setPoint(int index, double x, double y, double z) {
     if (index < 0 || index > 1) {
       log.error("[setPoint] Trying to set point with index out of range: " + index);
@@ -86,26 +64,13 @@ public class Grasp implements Serializable {
     }
   }
 
-  public void setOrientation(int index, double x, double y, double z, double w) {
-    if (index < 0 || index > 1) {
-      log.error("[setOrientation] Trying to set orientation with index out of range.");
-      return;
-    }
-
+  public void setOrientation(double x, double y, double z, double w) {
     Quat4d orient = new Quat4d(x, y, z, w);
-    setOrientation(index, orient);
+    setOrientation(orient);
   }
 
-  public void setOrientation(int index, Quat4d orient) {
-    if (orients.size() > index) {
-      this.orients.set(index, orient);
-    } else {
-      this.orients.add(index, orient);
-    }
-  }
-
-  public Type getType() {
-    return type;
+  public void setOrientation(Quat4d orientation) {
+    this.orientation = orientation;
   }
 
   public int getNumPoints() {
@@ -121,17 +86,8 @@ public class Grasp implements Serializable {
     return points.get(index);
   }
 
-  public int getNumOrientations() {
-    return orients.size();
-  }
-
-  public Quat4d getOrientation(int index) {
-    if (index < 0 || index >= orients.size()) {
-      log.error("[getOrientation] Trying to get orientation with index out of range.");
-      return null;
-    }
-
-    return orients.get(index);
+  public Quat4d getOrientation() {
+    return orientation;
   }
   
 }

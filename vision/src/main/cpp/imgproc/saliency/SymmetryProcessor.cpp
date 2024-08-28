@@ -14,7 +14,7 @@
 SymmetryProcessor::SymmetryProcessor(const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight, const bool isStereo)
 : SaliencyProcessor(processorId, imgWidth, imgHeight, isStereo) {
   visionProcessName = "SymmetryProcessor";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.saliency.SymmetryProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.saliency.SymmetryProcessor");
 }
 
 SymmetryProcessor::~SymmetryProcessor() {
@@ -48,7 +48,7 @@ void SymmetryProcessor::handleCaptureNotification(CaptureNotification::ConstPtr 
 
 
   if (getDisplayFlag()) {
-    ade::Display::displayFrame(resultImage, getDisplayName());
+    diarc::Display::displayFrame(resultImage, getDisplayName());
   }
 
   Notification::Ptr n(new SaliencyNotification(shared_from_this(), notification->captureData->frameNumber, notification->captureData, resultImage));

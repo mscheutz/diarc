@@ -29,11 +29,11 @@
 
 #include <boost/unordered/unordered_set.hpp>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
-// NOTE: not named "ade.tracker.ObjectTracker" because there could be non-static
-// loggers named "ade.tracker.ObjectTracker"
-log4cxx::LoggerPtr ObjectTracker::factoryLogger = log4cxx::Logger::getLogger("ade.tracker.ObjectTracker.Factory");
+// NOTE: not named "diarc.tracker.ObjectTracker" because there could be non-static
+// loggers named "diarc.tracker.ObjectTracker"
+log4cxx::LoggerPtr ObjectTracker::factoryLogger = log4cxx::Logger::getLogger("diarc.tracker.ObjectTracker.Factory");
 
 ObjectTracker::Ptr
 ObjectTracker::get(const TrackerType type, const long long &processorId, const int imgWidth, const int imgHeight) {
@@ -71,7 +71,7 @@ ObjectTracker::ObjectTracker(const long long &processorId, const int imgWidth, c
       publishToROS(true) {
   trackedObjects = TrackedObjects::getInstance();
   visionProcessName = "ObjectTracker";
-  logger = log4cxx::Logger::getLogger("ade.tracker.ObjectTracker");
+  logger = log4cxx::Logger::getLogger("diarc.tracker.ObjectTracker");
 }
 
 ObjectTracker::~ObjectTracker() {
@@ -80,17 +80,17 @@ ObjectTracker::~ObjectTracker() {
 void ObjectTracker::init() {
   lastFrameCompletedByType.clear();
   numFramesCompletedByType.clear();
-  ade::capture::Capture::registerForNotification(shared_from_this());
+  diarc::capture::Capture::registerForNotification(shared_from_this());
 
   // LOG4CXX_DEBUG(logger, "In objectTracker init - starting ROS.");
   // std::vector<std::pair<std::string, std::string> > remapping;
-  // ros::init(remapping, "ade_vision_cap");
+  // ros::init(remapping, "diarc_vision_cap");
   // n_ = new ros::NodeHandle();
-  // pub = n_->advertise<c_her::TrackedObjects>("/ade_tracked_objects", 1);
+  // pub = n_->advertise<c_her::TrackedObjects>("/diarc_tracked_objects", 1);
 }
 
 void ObjectTracker::cleanup() {
-  ade::capture::Capture::unregisterForNotification(shared_from_this());
+  diarc::capture::Capture::unregisterForNotification(shared_from_this());
 }
 
 //TODO: what to do with this??
@@ -296,8 +296,8 @@ void ObjectTracker::haveNewMemoryObject(MemoryObject::Ptr newObject) {
 
   //  SurfaceObject::Ptr surfaceObject = boost::dynamic_pointer_cast<SurfaceObject>(newObject);
   //  if (surfaceObject) {
-  //    ade::Display::createWindowIfDoesNotExist("potential tracked object");
-  //    ade::Display::displayFrame(surfaceObject->getObjectImage(), "potential tracked object");
+  //    diarc::Display::createWindowIfDoesNotExist("potential tracked object");
+  //    diarc::Display::displayFrame(surfaceObject->getObjectImage(), "potential tracked object");
   //  }
 
   int localAddedObjects = mergeObject(newObject);
@@ -309,8 +309,8 @@ void ObjectTracker::haveNewMemoryObject(MemoryObject::Ptr newObject) {
   //  }
   //
   //  if (surfaceObject && localAddedObjects >= 1) {
-  //    ade::Display::createWindowIfDoesNotExist("new tracked object");
-  //    ade::Display::displayFrame(surfaceObject->getObjectImage(), "new tracked object");
+  //    diarc::Display::createWindowIfDoesNotExist("new tracked object");
+  //    diarc::Display::displayFrame(surfaceObject->getObjectImage(), "new tracked object");
   //    sleep(1);
   //  }
 
@@ -578,13 +578,13 @@ void ObjectTracker::displayResults(CaptureData::ConstPtr capture) {
   }
 
   //if (capture->hasCloudRGBData()) {
-  //  ade::Display::displayPointCloud(capture->cloudRGB, "scene_cloud", getDisplayName());
+  //  diarc::Display::displayPointCloud(capture->cloudRGB, "scene_cloud", getDisplayName());
   //  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>::Ptr model_color_handler(
   //          new pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>(displayCloud, 0, 255, 0));
-  //  ade::Display::displayPointCloud(displayCloud, model_color_handler, "model_cloud", getDisplayName());
+  //  diarc::Display::displayPointCloud(displayCloud, model_color_handler, "model_cloud", getDisplayName());
   //}
 
-  ade::Display::displayFrame(displayFrame, getDisplayName());
+  diarc::Display::displayFrame(displayFrame, getDisplayName());
 }
 
 std::string ObjectTracker::getTrackingSummary() {

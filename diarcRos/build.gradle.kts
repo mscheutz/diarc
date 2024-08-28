@@ -180,6 +180,10 @@ addRosSource("tower", listOf(
     "edu/tufts/hrilab/diarcros/tower/*",
 ), listOf("movebase"))
 
+addRosSource("vision", listOf(
+        "edu/tufts/hrilab/vision/*",
+))
+
 fun addRosSource(packageName: String, sources: List<String>, depends: List<String> = emptyList()) {
 
   sourceSets {

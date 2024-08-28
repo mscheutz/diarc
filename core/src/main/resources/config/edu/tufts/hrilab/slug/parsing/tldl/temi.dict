@@ -48,12 +48,12 @@ GREET; {C/LOC ; #x.greet(?ADDRESSEE,$x)}
 END-TEMPLATES
 %%%%%%%%%%%  A  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-add; ((C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,insert($x),$t)
-add; ((C/PP)/C)\ADV; #w#x#y.modifyAction($w,insert($x),$y)
+add; ((C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,insert($x),$t)
+add; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
 
 after; PP/C; #x.after($x)
 
-after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction($a,insert($e),$t)
+after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction(?ADDRESSEE,$a,insert($e),$t)
 
 an; REF/RN ; #x.$x ; INDEFINITE
 an; DESC/DN ; #x.$x
@@ -111,7 +111,7 @@ do; Q/ C; #x.$x
 %do the dolphin demo; (C\AGENT)/LOC ; #l#z.doTheDolphinDemo(#z,$l)
 
 
-don't; ((C/PP)/C)\ADV; #w#x#y.modifyAction($w,remove($x),$y)
+don't; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,remove($x),$y)
 
 
 %%%%%%%%%%%  E  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -120,7 +120,7 @@ effect ; EFFECTTYPE\EFFECTTYPEPREFIX ; #x.effect($x)
 
 evening; G[good] ; evening
 
-execute while learning; C ; changeLearningExecution(execute)
+execute while learning; C ; changeLearningExecution(?ADDRESSEE,execute)
 
 %%%%%%%%%%%  F  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -197,7 +197,7 @@ left; DIR; left
 left; N/N ; #x.left$x
 
 %%%%%%%%%%%  M  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction($w,insert($x),$y)
+make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
 
 me; AGENT ; ?INTERACTOR
 
@@ -234,15 +234,15 @@ pre; CONDITIONTYPEPREFIX; pre
 %%%%%%%%%%%  Q  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%  R  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction($a,remove($x),$t)
-remove;(C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,remove($x),$t)
-remove ; (C/C)\ADV; #w#x.modifyAction($w,remove($x),none())
-remove ; ((C/PP)/C)\ADV; #w#x#l.modifyAction($w,remove($x),$l)
+%remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction(?ADDRESSEE,$a,remove($x),$t)
+remove;(C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,remove($x),$t)
+remove ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,$w,remove($x),none())
+remove ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,$w,remove($x),$l)
 
-replace; (C/WITH)\ADV; #a#w.modifyAction($a,replace($w),none())
-replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction($a,replace($w),$l)
-replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction($a,replace($w),$l)
-replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,replace($x),$t)
+replace; (C/WITH)\ADV; #a#w.modifyAction(?ADDRESSEE,$a,replace($w),none())
+replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,replace($x),$t)
 
 resume ; C; endFreezeTemi(?ADDRESSEE)
 
@@ -326,8 +326,8 @@ with; (WITH/C)\C; #x#y.with($y,$x)
 % dance with shafer
 with; AGENT/AGENT ; #x.$x
 
-without ; (C/C)\ADV; #w#x.modifyAction($w,remove($x),none())
-without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction($w,remove($x),$l)
+without ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,$w,remove($x),none())
+without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,$w,remove($x),$l)
 
 %%%%%%%%%%%  X  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%  Y  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -490,12 +490,12 @@ give a tour; VERBI ; tour
 %turn; VERBI; turnAround
 
 %remove goals from queue
-remove goal from queue at position; C/LIT* ; #x.cancelGoalInQueueIndex(?ADDRESSEE,$x)
+remove goal from queue at position; C/LIT* ; #x.cancelPendingGoalByIndex(?ADDRESSEE,$x)
 remove goal from queue ; C/LIT* ; #x.cancelGoal(?ADDRESSEE,$x)
 
-cancel current task; VERBI; cancelCurrentGoal
-remove current task; VERBI; cancelCurrentGoal
-end current task; VERBI; cancelCurrentGoal
+cancel current task; VERBI; cancelSystemGoals
+remove current task; VERBI; cancelSystemGoals
+end current task; VERBI; cancelSystemGoals
 
 cancel task with gid ; C/LIT* ; #x.cancelGoal(?ADDRESSEE,$x)
 

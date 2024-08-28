@@ -33,10 +33,6 @@
 #include "YoloDetector.hpp"
 #endif //OPENCV_DNN
 
-#ifdef USE_AGILEGRASP
-#include "GraspDetector.hpp"
-#endif
-
 #ifdef USE_V4R_V0
 #include "ClusterDetectorAdvanced.hpp"
 #endif //USE_V4R_V0
@@ -59,15 +55,14 @@
 #include "BarCodeDetector.hpp"
 #endif //USE_ZBAR
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
-// NOTE: not named "ade.detector.ObjectDetector" because there could be non-static
-// loggers named "ade.detector.ObjectDetector"
-log4cxx::LoggerPtr ObjectDetector::factoryLogger = log4cxx::Logger::getLogger("ade.detector.ObjectDetector.Factory");
+// NOTE: not named "diarc.detector.ObjectDetector" because there could be non-static
+// loggers named "diarc.detector.ObjectDetector"
+log4cxx::LoggerPtr ObjectDetector::factoryLogger = log4cxx::Logger::getLogger("diarc.detector.ObjectDetector.Factory");
 
 //Factory method
-ObjectDetector::Ptr
-ObjectDetector::get(const DetectorType type, const long long &processorId, const int imgWidth, const int imgHeight) {
+ObjectDetector::Ptr ObjectDetector::get(const DetectorType type, const long long &processorId, const int imgWidth, const int imgHeight) {
   switch (type) {
     case ARUCO:
       return ArucoDetector::Ptr(new ArucoDetector(processorId, imgWidth, imgHeight));
@@ -99,12 +94,6 @@ ObjectDetector::get(const DetectorType type, const long long &processorId, const
       break;
     case CLUSTER2D:
       return ClusterDetector2D::Ptr(new ClusterDetector2D(processorId, imgWidth, imgHeight));
-    case GRASP:
-#ifdef USE_AGILEGRASP
-      return GraspDetector::Ptr(new GraspDetector(processorId, imgWidth, imgHeight));
-#else
-      LOG4CXX_ERROR(factoryLogger, "GraspDetector not available. Did you compile vision with AGILE_GRASP?");
-#endif
     case SURFACEMARKING:
       return SurfaceMarkingDetector::Ptr(new SurfaceMarkingDetector(processorId, imgWidth, imgHeight));
     case SPATIALRELATION:
@@ -166,13 +155,13 @@ ObjectDetector::ObjectDetector(const long long &processorId, const int imgWidth,
           dataProcessed_(false),
           numObjectsDetected_(0),
           objectDetected_(false) {
-  logger = log4cxx::Logger::getLogger("ade.detector.ObjectDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.ObjectDetector");
 }
 
 ObjectDetector::~ObjectDetector() {
 }
 
-void ObjectDetector::sendDetectionNotifications(ade::stm::MemoryObject::VecPtr newDetectedObjects) {
+void ObjectDetector::sendDetectionNotifications(diarc::stm::MemoryObject::VecPtr newDetectedObjects) {
   LOG4CXX_TRACE(logger,
                 boost::format("[sendDetectionNotifications] num detected objects: %d.") % newDetectedObjects->size());
 

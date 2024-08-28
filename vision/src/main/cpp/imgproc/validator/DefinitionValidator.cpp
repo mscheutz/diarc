@@ -8,7 +8,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/foreach.hpp>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 DefinitionValidator::DefinitionValidator(const long long& processorId, const unsigned int imgWidth,
         const unsigned int imgHeight)

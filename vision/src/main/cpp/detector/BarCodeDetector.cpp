@@ -8,12 +8,12 @@
 #include "BarCodeDetector.hpp"
 #include "display/Display.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 BarCodeDetector::BarCodeDetector(const long long &processorId, const int imgWidth, const int imgHeight)
 : ObjectDetector(processorId, imgWidth, imgHeight) {
   visionProcessName = "BarCodeDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.BarCodeDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.BarCodeDetector");
 
   // Configure scanner
   scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
@@ -133,6 +133,6 @@ void BarCodeDetector::display(const cv::Mat &im, const std::vector<DecodedObject
   }
 
   // Display results
-  ade::Display::displayFrame(displayFrame, getDisplayName());
+  diarc::Display::displayFrame(displayFrame, getDisplayName());
 
 }

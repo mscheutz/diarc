@@ -211,7 +211,6 @@ import java.util.List;
 
 () = handover["?actor hands over an object to ?receiver from adjacent location ?source to ?destination"](Symbol ?actor:fetch, Symbol ?receiver:temi, Symbol ?source:location, Symbol ?destination:location, Symbol ?item:physobj) {
 
-    edu.tufts.hrilab.fol.Symbol !down = "down";
     java.lang.String !descriptorName;
     edu.tufts.hrilab.fol.Symbol !receiverRef;
 
@@ -246,8 +245,8 @@ import java.util.List;
     act:startVisualSearch(!receiverRef);
     act:getTokenIds(!receiverRef);
 
-    act:moveObjectAbove(?item,!receiverRef, "arm");
-    act:moveObject(?item, "arm", !down);
+    act:moveObjectAbove(?item, !receiverRef, "arm");
+    act:moveObjectInDirection(?item, down);
     act:releaseObject(?item);
 
 }

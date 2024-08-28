@@ -4,7 +4,6 @@
 
 #include "MemoryObjectInterface.hpp"
 #include "visionproc/VisionProcess.hpp"
-#include "GraspValidationResult.hpp"
 #include <stdio.h>
 //NOTE: To get the signatures for the Java functions, use this on the Class:
 // javap -p -s java/util/Vector
@@ -23,9 +22,9 @@
 //  jmethodID MemoryObjectInterface::memoryObject_getframenum;
 //  jmethodID MemoryObjectInterface::memoryObject_getconfidence;
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
-log4cxx::LoggerPtr MemoryObjectInterface::logger = log4cxx::Logger::getLogger("ade.stm.MemoryObjectInterface");
+log4cxx::LoggerPtr MemoryObjectInterface::logger = log4cxx::Logger::getLogger("diarc.stm.MemoryObjectInterface");
 
 MemoryObjectInterface::MemoryObjectInterface() {
 }
@@ -127,10 +126,6 @@ void MemoryObjectInterface::initialize(JNIEnv* newEnv) {
   if (memoryObject_addFace == NULL)
     printf("[MemoryObjectInterface::initialize]: Error! addFace\n");
 
-  memoryObject_setNumOrientations = env->GetMethodID(memoryObjectClass, "setNumOrientations", "(I)V");
-  if (memoryObject_setNumOrientations == NULL)
-    printf("[MemoryObjectInterface::initialize]: Error! setNumOrientations\n");
-
   memoryObject_setNumMaskIndices = env->GetMethodID(memoryObjectClass, "setNumMaskIndices", "(I)V");
   if (memoryObject_setNumMaskIndices == NULL)
     printf("[MemoryObjectInterface::initialize]: Error! setNumMaskIndices\n");
@@ -139,9 +134,13 @@ void MemoryObjectInterface::initialize(JNIEnv* newEnv) {
   if (memoryObject_addMaskIndex == NULL)
     printf("[MemoryObjectInterface::initialize]: Error! addMaskIndex\n");
 
-  memoryObject_addOrientation = env->GetMethodID(memoryObjectClass, "addOrientation", "(IDDDD)V");
-  if (memoryObject_addOrientation == NULL)
-    printf("[MemoryObjectInterface::initialize]: Error! addOrientation\n");
+  memoryObject_setOrientation = env->GetMethodID(memoryObjectClass, "setOrientation", "(DDDD)V");
+  if (memoryObject_setOrientation == NULL)
+    printf("[MemoryObjectInterface::initialize]: Error! setOrientation\n");
+
+  memoryObject_setImageSize = env->GetMethodID(memoryObjectClass, "setImageSize", "(II)V");
+  if (memoryObject_setImageSize == NULL)
+    printf("[MemoryObjectInterface::initialize]: Error! setImageSize\n");
 
   memoryObject_setbasetransform = env->GetMethodID(memoryObjectClass, "setBaseTransform", "([D)V");
   if (memoryObject_setbasetransform == NULL)
@@ -188,6 +187,14 @@ void MemoryObjectInterface::initialize(JNIEnv* newEnv) {
   if (memoryObject_gettrackingconfidence == NULL)
     printf("[MemoryObjectInterface::initialize]: Error! getTrackingConfidence\n");
   //}
+
+  memoryObject_getPointCloud = env->GetMethodID(memoryObjectClass, "getPointCloud", "()[[D");
+  if (memoryObject_getPointCloud == NULL)
+    printf("[MemoryObjectInterface::initialize]: Error! getPointCloud\n");
+
+  memoryObject_getBaseTransformArray = env->GetMethodID(memoryObjectClass, "getBaseTransformArray", "()[D");
+  if (memoryObject_getBaseTransformArray == NULL)
+    printf("[MemoryObjectInterface::initialize]: Error! getBaseTransformArray\n");
 }
 
 jobject MemoryObjectInterface::getJavaObject() const {
@@ -223,6 +230,7 @@ void MemoryObjectInterface::fillJavaMemoryObject(const MemoryObject::ConstPtr& c
   const cv::Point3d& dimensions = current->getTrackingMask()->getDimensions();
   setDimensions(dimensions.x, dimensions.y, dimensions.z);
   setBaseTransform(current->getTrackingMask()->getTransform());
+  setImageSize(current->getCaptureData()->frame.cols, current->getCaptureData()->frame.rows);
 
   // add mask
   setImageMask(current->getDetectionMask()->getIndicesMask());
@@ -240,16 +248,7 @@ void MemoryObjectInterface::fillJavaMemoryObject(const MemoryObject::ConstPtr& c
     }
   } else if (current->getCaptureData()->hasCloudData()) {
     // just pass point cloud
-    setPointCloud(current->getTrackingMask()->getUnorganizedObjectPointCloud());
-  }
-
-  // if MO is a grasp, add orientation -- this is kind of hacky but don't
-  // have a more general way of dealing with this yet
-  GraspValidationResult::ConstPtr graspMask = boost::dynamic_pointer_cast<const GraspValidationResult>(current->getTrackingMask());
-  if (graspMask) {
-    const Eigen::Quaternionf& orient = graspMask->getOrientation();
-    setNumOrientations(1);
-    setOrientation(0, orient.x(), orient.y(), orient.z(), orient.w());
+    setPointCloud(current->getDetectionMask()->getObjectPointCloud());
   }
 
 
@@ -386,13 +385,13 @@ void MemoryObjectInterface::setMesh(pcl::PointCloud<pcl::PointXYZ>::ConstPtr poi
   }
 }
 
-void MemoryObjectInterface::setNumOrientations(const int size) {
-  env->CallVoidMethod(memoryObject, memoryObject_setNumOrientations, (jint) size);
+void MemoryObjectInterface::setOrientation(const double& x, const double& y, const double& z, const double& w) {
+  LOG4CXX_DEBUG(logger, boost::format("[setOrientation] orientation: (%f,%f,%f,%f).") % x % y % z % w);
+  env->CallVoidMethod(memoryObject, memoryObject_setOrientation, (jdouble) x, (jdouble) y, (jdouble) z, (jdouble) w);
 }
 
-void MemoryObjectInterface::setOrientation(const int index, const double& x, const double& y, const double& z, const double& w) {
-  LOG4CXX_DEBUG(logger, boost::format("[setOrientation] index: %d. orientation: (%f,%f,%f,%f).") % index % x % y % z % w);
-  env->CallVoidMethod(memoryObject, memoryObject_addOrientation, (jint) index, (jdouble) x, (jdouble) y, (jdouble) z, (jdouble) w);
+void MemoryObjectInterface::setImageSize(const int& width, const int& height) {
+  env->CallVoidMethod(memoryObject, memoryObject_setImageSize, (jint) width, (jint) height);
 }
 
 void MemoryObjectInterface::setBaseTransform(const cv::Mat& transform) {
@@ -452,4 +451,28 @@ double MemoryObjectInterface::getDetectionConfidence() {
 
 double MemoryObjectInterface::getTrackingConfidence() {
   return env->CallDoubleMethod(memoryObject, memoryObject_gettrackingconfidence);
+}
+
+//pcl::PointCloud<pcl::PointXYZ>::ConstPtr MemoryObjectInterface::getPointCloud() {
+//}
+
+cv::Mat MemoryObjectInterface::getBaseTransform() {
+  jobject mvdata = env->CallObjectMethod(memoryObject, memoryObject_getBaseTransformArray);
+
+  // Cast it to a jdoublearray
+  jdoubleArray arr = static_cast<jdoubleArray>(mvdata);
+
+  // Get the elements (you probably have to fetch the length of the array as well
+  double * data = env->GetDoubleArrayElements(arr, 0);
+
+  // fill matrix
+  cv::Mat matrix = cv::Mat_<double>(4,4);
+  for (int i=0; i < 16; ++i) {
+    matrix.at<double>(i/4,i%4) = data[i];
+  }
+
+  // Don't forget to release it
+  env->ReleaseDoubleArrayElements(arr, data, 0);
+
+  return matrix;
 }

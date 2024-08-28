@@ -26,13 +26,13 @@ public:
   MemoryObjectNotification(const VisionProcessConstPtr& notifier_,
                            const long long& typeId_,
                            const unsigned long long& frameNumber_,
-                           ade::stm::MemoryObject::Ptr& object_)
+                           diarc::stm::MemoryObject::Ptr& object_)
   : VisionNotification(notifier_, MEMORY_OBJECT, typeId_, frameNumber_),
   object(object_) {
   }
 
   //! detected object - intentionally non-const - can be modified concurrently
-  ade::stm::MemoryObject::Ptr object;
+  diarc::stm::MemoryObject::Ptr object;
 };
 
 #endif	/* MEMORYOBJECTNOTIFICATION_HPP */

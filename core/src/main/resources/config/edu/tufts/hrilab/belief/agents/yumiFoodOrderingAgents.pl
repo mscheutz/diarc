@@ -27,13 +27,13 @@ team(self).
 
 /*rules about who the agent is obliged to listen to */
 %% supervisors
-role(brad,supervisor(X)):-diarcAgent(X).
-role(eric,supervisor(X)):-diarcAgent(X).
-role(pete,supervisor(X)):-diarcAgent(X).
-role(matthias,supervisor(X)):-diarcAgent(X).
+supervisor(brad).
+supervisor(eric).
+supervisor(pete).
+supervisor(matthias).
 
 %% admin
-role(brad,admin(X)):-diarcAgent(X).
-role(eric,admin(X)):-diarcAgent(X).
-role(pete,admin(X)):-diarcAgent(X).
-role(matthias,admin(X)):-diarcAgent(X).
+admin(brad).
+admin(eric).
+admin(pete).
+admin(matthias).

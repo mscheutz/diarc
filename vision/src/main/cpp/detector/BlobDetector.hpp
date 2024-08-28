@@ -32,7 +32,7 @@ protected:
   virtual void handleCaptureNotification(CaptureNotification::ConstPtr notification);
   virtual void handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification);
 
-  ade::stm::MemoryObject::VecPtr detectBlobs(const cv::Mat& currFrame, CaptureData::ConstPtr capture);
+  diarc::stm::MemoryObject::VecPtr detectBlobs(const cv::Mat& currFrame, CaptureData::ConstPtr capture);
 
 private:
   void performFastBlobDetectionImagePreProcessing(cv::Mat theFrame);

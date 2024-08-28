@@ -3,6 +3,14 @@
     "priority": 1,
     "priorityTier": "NORMAL"
   },
+  "freeze": {
+    "priority": 9999,
+    "priorityTier": "URGENT"
+  },
+  "endFreeze": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
 
   "describeCurrentGoal": {
     "priority": 1,
@@ -12,23 +20,6 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "endFreeze": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
-  "freeze": {
-    "priority": 9999,
-    "priorityTier": "URGENT"
-  },
-  "endFreezeTemi": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
-  "freezeTemi": {
-    "priority": 9999,
-    "priorityTier": "URGENT"
-  },
-
   "handled": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -37,15 +28,19 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "cancelGoalInQueue": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
   "cancelAllActiveGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "cancelGoalInQueueIndex": {
+  "cancelAllPendingGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllCurrentGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelPendingGoalByIndex": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -61,15 +56,15 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "cancelCurrentGoal": {
+  "cancelSystemGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "suspendCurrentGoal": {
+  "suspendSystemGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "resumeCurrentGoal": {
+  "resumeSystemGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -81,15 +76,19 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "updateActionLearning": {
+  "endActionLearning": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "suspendDefineItem": {
+  "pauseActionLearning": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "resumeDefineItem": {
+  "resumeActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelActionLearning": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -97,9 +96,19 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+
   "orderMeal": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+
+  "endFreezeTemi": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "freezeTemi": {
+    "priority": 9999,
+    "priorityTier": "URGENT"
   },
   "acknowledge": {
     "priority": 1,

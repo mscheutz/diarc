@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.tower;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fetch.FetchComponent;
 import edu.tufts.hrilab.fetch.MockFetchComponent;
@@ -38,7 +39,6 @@ public class TowerConfig extends DiarcConfiguration {
   public void runConfiguration() {
     boolean mock = false;
     boolean useNLP = true;
-    boolean useFirebase = false;
     boolean useGUI = true;
 
     String map_folder = "jcc_building_maps";
@@ -48,10 +48,6 @@ public class TowerConfig extends DiarcConfiguration {
       log.info("Starting inside lab...");
       map_folder = "elevator_lab_test";
       floor = 1;
-    }
-    if (args.contains("-firebase")) {
-      log.info("Starting with firebase...");
-      useFirebase = true;
     }
     if (args.contains("-headless")) {
       log.info("Starting headless...");
@@ -81,10 +77,6 @@ public class TowerConfig extends DiarcConfiguration {
 
       createInstance(SimSpeechProductionComponent.class);
 
-      if (useFirebase) {
-        createInstance(edu.tufts.hrilab.firebase.DesktopFirebaseConnectionComponent.class, "-dialogue -emulator -firebaseGroup TuftsDemo");
-      }
-
     } else {
       createInstance(ReferenceResolutionComponent.class);
     }
@@ -107,7 +99,7 @@ public class TowerConfig extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-cameraFrame head_camera_rgb_optical_frame -capture fetch.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls") );
     }
 
-    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
+    createInstance(GoalManagerComponent.class,
             "-beliefinitfile demos.pl agents/agents.pl tower/tower.pl "
                     + "-dbfile core.asl vision.asl manipulation.asl dialogue/nlg.asl dialogue/handleSemantics.asl "
                     + "-dbfile tower/pressingButtons.asl tower/boardElevator.asl "

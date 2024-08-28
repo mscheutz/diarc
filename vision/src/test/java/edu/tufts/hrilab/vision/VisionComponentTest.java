@@ -134,7 +134,7 @@ public class VisionComponentTest {
 
     // get search results
     List<MemoryObject> memoryObjects = null;
-    memoryObjects = component.getTokens(typeId, 0.5);
+    memoryObjects = component.getTokens(typeId);
     assertNotNull("Search results null.", memoryObjects);
     assertTrue(new StringBuilder("Incorrect number of search results found. Expected ").
                     append(numExpectedResults).append(" but found ").
@@ -186,8 +186,7 @@ public class VisionComponentTest {
     }
 
     MemoryObject token = null;
-    double conf = 0.5;
-    List<Long> tokenIds = component.getTokenIds(typeId, conf);
+    List<Long> tokenIds = component.getTokenIds(typeId);
 //    if (tokenIds != null && !tokenIds.isEmpty()) {
 //      Long tokenId = tokenIds.get(0);
 //      token = getToken(tokenId, conf);
@@ -264,11 +263,10 @@ public class VisionComponentTest {
     Long typeId = component.getTypeId(descriptors);
 
     MemoryObject token = null;
-    double conf = 0.5;
-    List<Long> tokenIds = component.getTokenIds(typeId, conf);
+    List<Long> tokenIds = component.getTokenIds(typeId);
     if (tokenIds != null && !tokenIds.isEmpty()) {
       Long tokenId = tokenIds.get(0);
-      token = component.getToken(tokenId, conf);
+      token = component.getToken(tokenId);
       token.printSceneGraph();
     }
 

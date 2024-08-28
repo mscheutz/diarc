@@ -20,11 +20,11 @@ object(self, agent).
 
 /*rules about who the agent is obliged to listen to */
 %% supervisors
-role(matt,supervisor(X)):-diarcAgent(X).
-role(evan,supervisor(X)):-diarcAgent(X).
-role(ravenna,supervisor(X)):-diarcAgent(X).
-role(tyler,supervisor(X)):-diarcAgent(X).
-role(marlow,supervisor(X)):-diarcAgent(X).
+supervisor(matt).
+supervisor(evan).
+supervisor(ravenna).
+supervisor(tyler).
+supervisor(marlow).
 
 %% admin
-role(evan,admin(X)):-diarcAgent(X).
+admin(evan).

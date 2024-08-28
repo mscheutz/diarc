@@ -4,12 +4,12 @@
 
 #include "SegmentedObjectLearner.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 SegmentedObjectLearner::SegmentedObjectLearner(const long long& processorId, const int imgWidth, const int imgHeight)
 : Learner(processorId, imgWidth, imgHeight) {
   visionProcessName = "SegmentedObjectLearner";
-  logger = log4cxx::Logger::getLogger("ade.learn.SegmentedObjectLearner");
+  logger = log4cxx::Logger::getLogger("diarc.learn.SegmentedObjectLearner");
 }
 
 SegmentedObjectLearner::~SegmentedObjectLearner() {

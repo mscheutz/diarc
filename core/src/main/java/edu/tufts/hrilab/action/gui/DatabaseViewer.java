@@ -7,7 +7,7 @@
  */
 package edu.tufts.hrilab.action.gui;
 
-import edu.tufts.hrilab.action.manager.ExecutionManager;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageParser;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.db.Database;
@@ -56,12 +56,12 @@ public class DatabaseViewer extends JPanel implements DatabaseListener {
 
     private static String scriptsPath;
 
-    private final ExecutionManager executionManager;
+    private final GoalManagerComponent goalManager;
 
-    public DatabaseViewer(ExecutionManager gm, String path) {
+    public DatabaseViewer(GoalManagerComponent gm, String path) {
         scriptsPath = path;
         // Keep reference back to GoalManager
-        executionManager = gm;
+        goalManager = gm;
 
         // Setting up ActionDBEntry browser
         actionBrowserRoot = new DefaultMutableTreeNode("Actions");
@@ -524,7 +524,7 @@ public class DatabaseViewer extends JPanel implements DatabaseListener {
                         wrapper.getEntry().getSignature(true));
                     if (predStr != null && predStr.length() > 0) {
                         Predicate goalPred = Factory.createPredicate(predStr);
-                        executionManager.submitGoal(goalPred);
+                        goalManager.submitGoal(goalPred);
                     }
                 });
                 run.add(runOnce);
@@ -536,7 +536,7 @@ public class DatabaseViewer extends JPanel implements DatabaseListener {
                         "persistent(" + wrapper.getEntry().getSignature(true) + ")");
                     if (predStr != null && predStr.length() > 0) {
                         Predicate goalPred = Factory.createPredicate(predStr);
-                        executionManager.submitGoal(goalPred);
+                        goalManager.submitGoal(goalPred);
                     }
                 });
                 run.add(runPersistent);

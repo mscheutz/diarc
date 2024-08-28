@@ -111,19 +111,12 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
   @Override
   public void shutdownDiarc() {
-    log.debug("[cleanup] started");
+    log.debug("[shutdownDiarc] started");
     tester.shutdown();
     tester = null;
     log.debug("[shutdownConfig] tester shutdown");
     config.shutdownConfiguration();
-    log.debug("[shutdownConfig] completed");
-
-    try {
-      TRADE.reset("");
-    } catch (TRADEException e) {
-      log.error("[shutdownConfig]", e);
-    }
-    log.info("[cleanup] ended");
+    log.debug("[shutdownDiarc] completed");
   }
 
   private Long getGoalId(String goal) {
@@ -532,7 +525,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
             {"interruptFollowBlocking", null},
             {"joinOnGoal", Factory.createPredicate("followMeBlocking(self:agent)"), GoalStatus.CANCELED},
-            {"joinOnGoal", Factory.createPredicate("cancelCurrentGoal(self:agent)"), GoalStatus.SUCCEEDED}
+            {"joinOnGoal", Factory.createPredicate("cancelSystemGoals(self:agent)"), GoalStatus.SUCCEEDED}
     });
 
   }
@@ -631,8 +624,8 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
     runUserGeneratedTest("cancel task with gid " + followGid, new Object[][]{
             {"sayText", "okay", null},
-            {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-            {"interruptFollowBlocking", null},
+//            {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},  // no longer happens -- followMeBlocking already suspended
+//            {"interruptFollowBlocking", null},                                                // no longer happens -- followMeBlocking already suspended
             {"joinOnGoal", followGid, GoalStatus.CANCELED},
             {"joinOnGoal", Factory.createPredicate("cancelGoal(self:agent," + followGid + ")"), GoalStatus.SUCCEEDED},
     });
@@ -642,7 +635,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             {"endFreezeTemi", null},
             {"sayText", "okay", null},
             {"joinOnGoal", freezeGid, GoalStatus.CANCELED},
-            {"joinOnGoal", Factory.createPredicate("cancelCurrentGoal(self:agent)"), GoalStatus.SUCCEEDED},
+            {"joinOnGoal", Factory.createPredicate("cancelSystemGoals(self:agent)"), GoalStatus.SUCCEEDED},
     });
 
     runUserGeneratedTest("follow me", new Object[][]{
@@ -708,7 +701,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
                     {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
                     {"joinOnGoal", followGid, GoalStatus.CANCELED},
-                    {"joinOnGoal", Factory.createPredicate("cancelCurrentGoal(self:agent)"), GoalStatus.SUCCEEDED}
+                    {"joinOnGoal", Factory.createPredicate("cancelSystemGoals(self:agent)"), GoalStatus.SUCCEEDED}
             }
     );
 
@@ -764,7 +757,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 //                    {"stopMoving", null},
                     {"interruptGoToLocation", null},
                     {"joinOnGoal", goToGid, GoalStatus.CANCELED},
-                    {"joinOnGoal", Factory.createPredicate("cancelCurrentGoal(self:agent)"), GoalStatus.SUCCEEDED}
+                    {"joinOnGoal", Factory.createPredicate("cancelSystemGoals(self:agent)"), GoalStatus.SUCCEEDED}
             }
     );
 
@@ -829,7 +822,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 //                    {"stopMoving", null},
                     {"interruptGoToLocation", null},
                     {"joinOnGoal", goToGid, GoalStatus.CANCELED},
-                    {"joinOnGoal", Factory.createPredicate("cancelCurrentGoal(self:agent)"), GoalStatus.SUCCEEDED}
+                    {"joinOnGoal", Factory.createPredicate("cancelSystemGoals(self:agent)"), GoalStatus.SUCCEEDED}
             }
     );
 
@@ -930,7 +923,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"interruptGoToLocation", null},
                     {"joinOnGoal", goToGid, GoalStatus.CANCELED},
 //                    {"sayTextDialogueHistory", Factory.createSymbol("Canceled current goal"), null},
-                    {"joinOnGoal", Factory.createPredicate("cancelCurrentGoal(self:agent)"), GoalStatus.SUCCEEDED}
+                    {"joinOnGoal", Factory.createPredicate("cancelSystemGoals(self:agent)"), GoalStatus.SUCCEEDED}
             }
     );
 
@@ -1178,7 +1171,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"endAcknowledgeDisplay", null},
                     {"joinOnGoal", escortGid, GoalStatus.CANCELED},
 //                    {"sayTextDialogueHistory", Factory.createSymbol("Canceled current goal"), null},
-                    {"joinOnGoal", Factory.createPredicate("cancelCurrentGoal(self:agent)"), GoalStatus.SUCCEEDED}
+                    {"joinOnGoal", Factory.createPredicate("cancelSystemGoals(self:agent)"), GoalStatus.SUCCEEDED}
             }
     );
 

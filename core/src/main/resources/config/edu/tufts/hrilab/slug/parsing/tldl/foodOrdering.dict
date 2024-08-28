@@ -50,7 +50,7 @@ add; VAL/C; #x.mod(insert($x),none())
 
 after; PP/C; #x.after($x)
 
-%after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction($a,insert($e),$t)
+%after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction(?ADDRESSEE,$a,insert($e),$t)
 
 ahead; Adj; ahead
 
@@ -203,7 +203,7 @@ know; (C/KNOWABLE)\AGENT ; #a#k.know($a,$k)
 
 %%%%%%%%%%%  M  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%makesure; (C/(C\C))/INF; #x#y.modifyAction(insert($x),$y@$x)
+%makesure; (C/(C\C))/INF; #x#y.modifyAction(?ADDRESSEE,insert($x),$y@$x)
 make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
 make sure; ((C/PP)/S)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
 
@@ -265,7 +265,7 @@ go to area; VERBT; goTo
 go to; VERBT; goTo
 do you see; VERBT; doYouSee
 
-%remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction($a,remove($x),$t)
+%remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction(?ADDRESSEE,$a,remove($x),$t)
 remove;(VAL/COND)/CONDITIONTYPE , (VAL/EFFECT)/EFFECTTYPE ; #t#x.mod(remove($x),$t)
 remove ; VAL/C; #x.mod(remove($x),none())
 remove ; (VAL/PP)/C; #x#l.mod(remove($x),$l)
@@ -273,10 +273,10 @@ remove ; (VAL/PP)/C; #x#l.mod(remove($x),$l)
 
 replace; (VAL/WITH)/C; #x#y.mod(replace($y,$x),none());
 
-%replace; (C/WITH)\ADV; #a#w.modifyAction($a,replace($w),none())
-%replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction($a,replace($w),$l)
-%replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction($a,replace($w),$l)
-%replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,replace($x),$t)
+%replace; (C/WITH)\ADV; #a#w.modifyAction(?ADDRESSEE,$a,replace($w),none())
+%replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+%replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+%replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,replace($x),$t)
 
 %right; DIR; right
 %right ninety degrees; DEG; right,ninety
@@ -372,8 +372,8 @@ will; (S\AGENT)/(S\AGENT), (S\AGENT)/(C\AGENT); #x.will($x)
 with; WITH/C; #x.$x
 
 
-%without ; (C/C)\ADV; #w#x.modifyAction($w,remove($x),none())
-%without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction($w,remove($x),$l)
+%without ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,$w,remove($x),none())
+%without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,$w,remove($x),$l)
 
 %%%%%%%%%%%  X  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%  Y  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -420,8 +420,8 @@ wait for acknowledgement ; C ; waitForAck(?ADDRESSEE)
 %remove current task; VERBI; cancelTemiGoal
 %end current task; VERBI; cancelTemiGoal
 
-pause; C ; suspendCurrentGoal(?ADDRESSEE)
-wait; C ; cancelCurrentGoal(?ADDRESSEE)
+pause; C ; suspendSystemGoals(?ADDRESSEE)
+wait; C ; cancelSystemGoals(?ADDRESSEE)
 wait; (C/FIRST)/C, (C/FIRST)/S; #g#m.urgentPriority(?ADDRESSEE, $g)
 first; FIRST; first
 
@@ -444,6 +444,7 @@ send message; C/LIT* ; #x.sendMessage(?ADDRESSEE,$x)
 job; VAL/JOB; #j.job($j)
 location; VAL/REF; #l.location($l);
 area; VAL/REF; #a.area($a);
+pose; VAL/REF; #a.pose($a);
 
 the; DESC/DESC ; #x.$x
 
@@ -535,18 +536,20 @@ seconds; VAL\NUM ; #x.val($x,seconds)
 %order meal; (C/WITH)/NUM; #x#y.orderMeal(?ADDRESSEE,$x,$y)
 
 
-suspend current task; VERBI ; suspendCurrentGoal
-resume previous task; VERBI ; resumeCurrentGoal
-resume task; VERBI ; resumeCurrentGoal
-resume; VERBI ; resumeCurrentGoal
-cancel current task; VERBI ; cancelCurrentGoal
-remove task from queue at position; C/LIT* ; #x.cancelGoalInQueueIndex(?ADDRESSEE,$x)
+suspend current task; VERBI ; suspendSystemGoals
+resume previous task; VERBI ; resumeSystemGoals
+resume task; VERBI ; resumeSystemGoals
+resume; VERBI ; resumeSystemGoals
+cancel current task; VERBI ; cancelSystemGoals
+remove task from queue at position; C/LIT* ; #x.cancelPendingGoalByIndex(?ADDRESSEE,$x)
 now; C/C; #x.urgentPriority(?ADDRESSEE,$x)
 right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
 
 what is your current task; VERBI; describeCurrentGoal
 what are your pending tasks; VERBI; describePendingGoals
 cancel pending tasks; VERBI; cancelAllPendingGoals
+cancel all active tasks; VERBI; cancelAllActiveGoals
+cancel all tasks; VERBI; cancelAllCurrentGoals
 
 
 reset; VERBI; resetDomain
@@ -567,11 +570,16 @@ stop following; VAL; val(none)
 set default delivery area to; C/REF; #p.setDeliveryPose(?ADDRESSEE, $p)
 
 here it is; VAL; got(ingredient)
-grasp it here; VAL; grasp(here)
+grasp it here; VAL; hold(here)
 
 %define new speaker; S/LIT*; #s.name($s,$s)
-add new supervisor; C/LIT*; #s.defineNewSupervisor(?ADDRESSEE, $s)
-is an admin; S\AGENT ; #a.admin($a)
+add new supervisor; S/LIT*; #s.supervisor($s)
+add new supervisor; (S/LIT*)\AGENT; #a#s.supervisor($a,$s)
+add new admin; S/LIT* ; #a.admin($a)
+add new admin; (S/LIT*)\AGENT; #a#s.admin(#a,#s)
 
 it is safe to proceed; VAL; safeToProceed(true)
 it is not safe to proceed; VAL; safeToProceed(false)
+
+yes; VAL; val(yes)
+no; VAL; val(no)

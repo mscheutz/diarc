@@ -78,7 +78,7 @@ public class MoveBaseNode {
     nodeMain = new AbstractNodeMain() {
       @Override
       public GraphName getDefaultNodeName() {
-        return GraphName.of(rc.namespace +"/ade/move_base_node_"+ rc.uniqueID);
+        return GraphName.of(rc.namespace +"/diarc/move_base_node_"+ rc.uniqueID);
       }
 
       @Override

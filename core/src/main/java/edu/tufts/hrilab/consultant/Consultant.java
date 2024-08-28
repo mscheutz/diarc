@@ -43,7 +43,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   /**
    * All References hashed refId.
    */
-  protected Map<Symbol, T> references;
+  private Map<Symbol, T> references;
   /**
    * Knowledge base name.
    */
@@ -118,15 +118,19 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
         String propName = property.getName();
         String strippedName = stripQuotesFromMorpheme(propName);
 
+        // TODO: this should only occur if TLDL is present in the system (i.e. don't attempt this block if using just an llm)
         // TODO: this imposes an ordering constraint on diarc components (i.e., RR needs to be up first)
-        try {
-          TRADEServiceInfo injectTSI = TRADE.getAvailableService(new TRADEServiceConstraints().name("injectDictionaryEntry"));
-          injectTSI.call(void.class, strippedName, "RN", propName + ":" + kbName, "VAR");
-          injectTSI.call(void.class, strippedName, "REF", propName + ":" + kbName, "DEFINITE");
-          injectTSI.call(void.class, strippedName, "DESC", propName + ":property", "");
-          injectTSI.call(void.class, strippedName, "DN", propName + ":property", "");
-        } catch (TRADEException e) {
-          log.error("[addPropertiesHandled] unable to add dictionary entry for " + propName, e);
+        List<TRADEServiceInfo> injectTSIs = new ArrayList<>(TRADE.getAvailableServices(new TRADEServiceConstraints().name("injectDictionaryEntry")));
+        if (!injectTSIs.isEmpty()) {
+          try {
+            TRADEServiceInfo injectTSI = injectTSIs.get(0);
+            injectTSI.call(void.class, strippedName, "RN", propName + ":" + kbName, "VAR");
+            injectTSI.call(void.class, strippedName, "REF", propName + ":" + kbName, "DEFINITE");
+            injectTSI.call(void.class, strippedName, "DESC", propName + ":property", "");
+            injectTSI.call(void.class, strippedName, "DN", propName + ":property", "");
+          } catch (TRADEException e) {
+            log.error("[addPropertiesHandled] unable to add dictionary entry for " + propName, e);
+          }
         }
 
       }
@@ -137,18 +141,8 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
     return propertiesAdded;
   }
 
-  /**
-   * Add new reference from some source (file or learning) to the consultant
-   *
-   * @param ref new reference to add
-   */
-  public void addReference(T ref) {
-    references.put(ref.refId, ref);
-    addPropertiesHandled(ref.properties);
-  }
-
   public boolean retractProperties(Symbol refId, List<Term> properties) {
-    Reference ref = references.get(refId);
+    Reference ref = getReference(refId);
     if (ref == null) {
       log.error("[retractProperties] couldn't find ref: " + refId);
       return false;
@@ -337,6 +331,36 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   }
 
   /**
+   * Add new reference from some source (file or learning) to the consultant
+   *
+   * @param ref new reference to add
+   */
+  public void addReference(T ref) {
+    if (!ref.refId.hasType()) {
+      // TODO: it's possible the ref.refId field will be different than it's key in the references map
+      Symbol typedRefId = Factory.createSymbol(ref.refId.getName(), this.kbName);
+      references.put(typedRefId, ref);
+    } else {
+      references.put(ref.refId, ref);
+    }
+    addPropertiesHandled(ref.properties);
+  }
+
+  /**
+   * Remove known reference from the consultant.
+   *
+   * @param refId unique reference ID
+   * @return removed Reference or null if it doesn't exist
+   */
+  public T removeReference(Symbol refId) {
+    if (refId.hasType()) {
+      return references.remove(refId);
+    } else {
+      return references.remove(Factory.createSymbol(refId.getName(), this.kbName));
+    }
+  }
+
+  /**
    * Helper method to generate next unique reference ID (e.g., object_3).
    *
    * @return unique reference ID
@@ -346,22 +370,46 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
     return Factory.createSymbol(kbName + "_" + refNumber++, kbName);
   }
 
-  public String getReferenceSummaries() {
+  /**
+   * Get string description of all known references.
+   * NOTE: to change output of this method, override Reference subclass toString method.
+   *
+   * @return summary of current references
+   */
+  public final String getReferenceSummaries() {
     StringBuilder sb = new StringBuilder();
-    for (Symbol refId : references.keySet()) {
-      sb.append(refId).append(" = ").append(references.get(refId).properties).append("\n");
+    for (T ref : references.values()) {
+      sb.append(ref.refId).append(" = ").append(ref).append("\n");
     }
     return sb.toString();
   }
 
+  /**
+   * Get Reference based on reference ID. The reference ID can be typed or un-typed.
+   *
+   * @param refId unique reference ID
+   * @return Reference of type T
+   */
   @TRADEService
-  //todo: this was previously `final`. removed to implement reference sharing on specific consultants. should that be generalized.
-  public T getReference(Symbol refId) {
-    return references.get(refId);
+  public final T getReference(Symbol refId) {
+    if (refId.hasType()) {
+      return references.get(refId);
+    } else {
+      return references.get(Factory.createSymbol(refId.getName(), this.kbName));
+    }
   }
 
   /**
-   * Get all references that have all of the given properties
+   * Get all References. This is the values of the internal references map.
+   *
+   * @return all references
+   */
+  public final Collection<T> getAllReferences() {
+    return references.values();
+  }
+
+  /**
+   * Get all references that have all the given properties
    *
    * @param properties property to search for
    * @return list of references
@@ -462,7 +510,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
 
   /**
    * Remove quotes from input String.
-   *
+   * <p>
    * TODO: move this method to utility class
    *
    * @param input String with quotes

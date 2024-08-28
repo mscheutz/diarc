@@ -12,7 +12,7 @@
 #include <fstream>
 #include <opencv2/imgproc/imgproc.hpp>
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     class CaptureFile : public Capture {
@@ -269,4 +269,4 @@ namespace ade {
     };
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc

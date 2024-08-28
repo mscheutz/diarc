@@ -15,7 +15,7 @@
 #include "Capture.hpp"
 #include <alproxies/alvideodeviceproxy.h>
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     class CaptureNao : public Capture {
@@ -34,7 +34,7 @@ namespace ade {
     };
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc
 
 #endif  /* CAPTURENAO_HPP */
 

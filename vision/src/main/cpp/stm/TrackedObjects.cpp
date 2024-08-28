@@ -8,7 +8,7 @@
 #include <tr1/unordered_map>
 #include <opencv2/core/core.hpp>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 TrackedObjects* TrackedObjects::instance = NULL;
 boost::mutex TrackedObjects::instance_mutex;
@@ -36,7 +36,7 @@ TrackedObjects::TrackedObjects()
 : mo_tokenId(),
 mo_typeId(),
 removedMOBuffer() {
-  logger = log4cxx::Logger::getLogger("ade.stm.TrackedObjects");
+  logger = log4cxx::Logger::getLogger("diarc.stm.TrackedObjects");
 }
 
 TrackedObjects::~TrackedObjects() {
@@ -183,11 +183,9 @@ int TrackedObjects::getSizeTypeId(const long long& typeId) const {
   return 0;
 }
 
-//get all memoryObjects above given confidence threshold
-
-void TrackedObjects::getMemoryObjects(ArrayListInterface& toSend, const double& conf,
-        JNIEnv* env) const {
-  LOG4CXX_TRACE(logger, boost::format("[getMemoryObjects] method entered. conf thresh: %f") % conf);
+//get all memoryObjects
+void TrackedObjects::getMemoryObjects(ArrayListInterface& toSend, JNIEnv* env) const {
+  LOG4CXX_TRACE(logger, "[getMemoryObjects] method entered.");
   //TODO: can we do a more fine-grained lock?
   boost::lock_guard<boost::mutex> lock(trackedObjectsMutex);
 
@@ -198,19 +196,15 @@ void TrackedObjects::getMemoryObjects(ArrayListInterface& toSend, const double& 
             % currMO->getId() % currMO->getTrackingConfidence()
             % currMO->getDetectionConfidence());
 
-    if ((currMO->getTrackingConfidence() >= conf) && (currMO->getDetectionConfidence() >= conf)) {
-      MemoryObjectInterface moToAdd;
-      moToAdd.initialize(env);
-      moToAdd.fillJavaMemoryObject(currMO);
-      toSend.add(moToAdd.getJavaObject());
-    }
+    MemoryObjectInterface moToAdd;
+    moToAdd.initialize(env);
+    moToAdd.fillJavaMemoryObject(currMO);
+    toSend.add(moToAdd.getJavaObject());
   }
 }
 
-//get all memoryObjects above given confidence threshold
-
-void TrackedObjects::getMemoryObjectsByTypeId(ArrayListInterface& toSend, const long long& typeId,
-        const double& conf, JNIEnv* env) const {
+//get all memoryObjects of typeId
+void TrackedObjects::getMemoryObjectsByTypeId(ArrayListInterface& toSend, const long long& typeId, JNIEnv* env) const {
   //TODO: can we do a more fine-grained lock?
   boost::lock_guard<boost::mutex> lock(trackedObjectsMutex);
 
@@ -222,41 +216,32 @@ void TrackedObjects::getMemoryObjectsByTypeId(ArrayListInterface& toSend, const 
     return;
   } else {
     for (moIter = (*typeItr).second.begin(); moIter != (*typeItr).second.end(); ++moIter) {
-      if (((*moIter)->getTrackingConfidence() >= conf) &&
-              ((*moIter)->getDetectionConfidence() >= conf)) {
-        MemoryObjectInterface moToAdd;
-        moToAdd.initialize(env);
-        moToAdd.fillJavaMemoryObject((*moIter));
-        toSend.add(moToAdd.getJavaObject());
-      }
+      MemoryObjectInterface moToAdd;
+      moToAdd.initialize(env);
+      moToAdd.fillJavaMemoryObject((*moIter));
+      toSend.add(moToAdd.getJavaObject());
     }
   }
 }
 
 //get all memoryObjects with specified tokenid (more than one if a single 
 //MemoryObject meets constraints of more than one visual search)
-
-void TrackedObjects::getMemoryObjectsByTokenId(ArrayListInterface& toSend, const long long& tokenId,
-        const double& conf, JNIEnv* env) const {
+void TrackedObjects::getMemoryObjectsByTokenId(ArrayListInterface& toSend, const long long& tokenId, JNIEnv* env) const {
   //TODO: can we do a more fine-grained lock?  
   boost::lock_guard<boost::mutex> lock(trackedObjectsMutex);
 
   MemoryObjects_HashedById_Map::const_iterator mo_id_iter = mo_tokenId.find(tokenId);
   if (mo_id_iter != mo_tokenId.end()) {
     const MemoryObject::Ptr& currMO = mo_id_iter->second;
-    if (currMO->getTrackingConfidence() >= conf && currMO->getDetectionConfidence() >= conf) {
-      MemoryObjectInterface moToAdd;
-      moToAdd.initialize(env);
-      moToAdd.fillJavaMemoryObject(currMO);
-      toSend.add(moToAdd.getJavaObject());
-    }
+    MemoryObjectInterface moToAdd;
+    moToAdd.initialize(env);
+    moToAdd.fillJavaMemoryObject(currMO);
+    toSend.add(moToAdd.getJavaObject());
   }
 }
 
-//get all types with at least one tracked object above confidence threshold
-
-void TrackedObjects::getMemoryObjectTypeIds(jlongArray& toSend, const double& conf,
-        JNIEnv* env) const {
+//get all types with at least one tracked object
+void TrackedObjects::getMemoryObjectTypeIds(jlongArray& toSend, JNIEnv* env) const {
   //TODO: can we do a more fine-grained lock?
   boost::lock_guard<boost::mutex> lock(trackedObjectsMutex);
 
@@ -266,11 +251,9 @@ void TrackedObjects::getMemoryObjectTypeIds(jlongArray& toSend, const double& co
   for (typeItr = mo_typeId.begin(); typeItr != mo_typeId.end(); ++typeItr) {
     MemoryObjects_HashedById_Set::const_iterator moIter;
     for (moIter = typeItr->second.begin(); moIter != typeItr->second.end(); ++moIter) {
-      if (((*moIter)->getTrackingConfidence() >= conf) && ((*moIter)->getDetectionConfidence() >= conf)) {
-        idBuffer[count++] = (jlong) typeItr->first;
-        //only need one of this type above conf thresh
-        break;
-      }
+      idBuffer[count++] = (jlong) typeItr->first;
+      //only need one of this type
+      break;
     }
   }
 
@@ -278,10 +261,8 @@ void TrackedObjects::getMemoryObjectTypeIds(jlongArray& toSend, const double& co
   env->SetLongArrayRegion(toSend, 0, count, idBuffer);
 }
 
-//get all memoryObject ids with confidence above threshold
-
-void TrackedObjects::getMemoryObjectIds(jlongArray& toSend, const double& conf,
-        JNIEnv* env) const {
+//get all memoryObject ids
+void TrackedObjects::getMemoryObjectIds(jlongArray& toSend, JNIEnv* env) const {
   //TODO: can we do a more fine-grained lock?
   boost::lock_guard<boost::mutex> lock(trackedObjectsMutex);
 
@@ -290,19 +271,15 @@ void TrackedObjects::getMemoryObjectIds(jlongArray& toSend, const double& conf,
   int count = 0;
   for (mo_id_iter = mo_tokenId.begin(); mo_id_iter != mo_tokenId.end(); ++mo_id_iter) {
     const MemoryObject::Ptr& currMO = (*mo_id_iter).second;
-    if (currMO->getTrackingConfidence() >= conf && currMO->getDetectionConfidence() >= conf) {
-      idBuffer[count++] = (jlong) mo_id_iter->first;
-    }
+    idBuffer[count++] = (jlong) mo_id_iter->first;
   }
 
   toSend = env->NewLongArray((jsize) count);
   env->SetLongArrayRegion(toSend, 0, count, idBuffer);
 }
 
-//get all memoryObject ids of specified type with confidence above threshold
-
-void TrackedObjects::getMemoryObjectIds(jlongArray& toSend, const long long& typeId,
-        const double& conf, JNIEnv* env) const {
+//get all memoryObject ids of specified type
+void TrackedObjects::getMemoryObjectIds(jlongArray& toSend, const long long& typeId, JNIEnv* env) const {
   //TODO: can we do a more fine-grained lock?
   boost::lock_guard<boost::mutex> lock(trackedObjectsMutex);
 
@@ -318,9 +295,7 @@ void TrackedObjects::getMemoryObjectIds(jlongArray& toSend, const long long& typ
     int count = 0;
 
     for (moIter = typeItr->second.begin(); moIter != typeItr->second.end(); ++moIter) {
-      if (((*moIter)->getTrackingConfidence() >= conf) && ((*moIter)->getDetectionConfidence() >= conf)) {
-        idBuffer[count++] = (jlong) (*moIter)->getId();
-      }
+      idBuffer[count++] = (jlong) (*moIter)->getId();
     }
 
     //init java array
@@ -330,18 +305,16 @@ void TrackedObjects::getMemoryObjectIds(jlongArray& toSend, const long long& typ
   }
 }
 
-//get memoryObject with specified tokenid if confidence above threshold
+//get memoryObject with specified tokenid
 void TrackedObjects::getMemoryObject(MemoryObjectInterface& toSend,
-        const long long& tokenId, const double& conf, JNIEnv* env) const {
+        const long long& tokenId, JNIEnv* env) const {
   //TODO: can we do a more fine-grained lock?  
   boost::lock_guard<boost::mutex> lock(trackedObjectsMutex);
 
   MemoryObjects_HashedById_Map::const_iterator mo_id_iter = mo_tokenId.find(tokenId);
   if (mo_id_iter != mo_tokenId.end()) {
     const MemoryObject::Ptr& currMO = mo_id_iter->second;
-    if (currMO->getTrackingConfidence() >= conf && currMO->getDetectionConfidence() >= conf) {
-      toSend.fillJavaMemoryObject(currMO);
-    }
+    toSend.fillJavaMemoryObject(currMO);
   }
 }
 

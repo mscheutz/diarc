@@ -10,7 +10,7 @@ public class PriorityInfo {
     private long priority;
     private PriorityTier priorityTier;
 
-    PriorityInfo(long priority, PriorityTier priorityTier) {
+    public PriorityInfo(long priority, PriorityTier priorityTier) {
         this.priority = priority;
         this.priorityTier = priorityTier;
     }

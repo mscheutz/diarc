@@ -1,0 +1,5 @@
+QUESTION(where(is(there,num(1,container))))
+REPLY(repairTube(loadingDock, 12))
+FAILURE(cannot(did(displayQRCode("www.google")),because(and(cannot(parseTheURL("www.google"))))))
+REPLY(know(system,how(chop(onions))))
+FAILURE(cannot(did(putDown(corn,prepArea)),because(and(occupied(prepArea)))))

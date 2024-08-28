@@ -31,7 +31,7 @@ public:
   ClusterDetectorAdvanced(const long long& processorId, const int imgWidth, const int imgHeight);
   ~ClusterDetectorAdvanced();
 
-  void display(ade::stm::MemoryObject::VecPtr newObjects);
+  void display(diarc::stm::MemoryObject::VecPtr newObjects);
 
   virtual void init();
   virtual void cleanup();
@@ -53,13 +53,13 @@ private:
 
   virtual void loadConfig(const std::string& config);
 
-  ade::stm::MemoryObject::VecPtr detectClustersNonincremental(CaptureNotification::ConstPtr capture);
-  ade::stm::MemoryObject::VecPtr createMemoryObjects(const std::vector<surface::SurfaceModel::Ptr>& surfs, CaptureNotification::ConstPtr capture);
+  diarc::stm::MemoryObject::VecPtr detectClustersNonincremental(CaptureNotification::ConstPtr capture);
+  diarc::stm::MemoryObject::VecPtr createMemoryObjects(const std::vector<surface::SurfaceModel::Ptr>& surfs, CaptureNotification::ConstPtr capture);
 
   //debug only
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
   pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr displayCloud;
-  void localIterativeDisplay(ade::stm::MemoryObject::VecPtr newObjects);
+  void localIterativeDisplay(diarc::stm::MemoryObject::VecPtr newObjects);
 };
 
 #endif  //CLUSTERDETECTORADVANCED_HPP

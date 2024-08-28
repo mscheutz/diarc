@@ -4,7 +4,7 @@
 
 package edu.tufts.hrilab.config;
 
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fetch.MockFetchItComponent;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
@@ -24,7 +24,7 @@ public class FetchPerformanceAssessmentDemoMock extends DiarcConfiguration {
   protected static Logger log = LoggerFactory.getLogger(FetchPerformanceAssessmentDemoMock.class);
 
   static public SimSpeechRecognitionComponent simSpeechRec;
-  static public GoalManagerImpl gm;
+  static public GoalManagerComponent gm;
   static boolean showGUI = false;
 
   // start the configuration
@@ -72,7 +72,7 @@ public class FetchPerformanceAssessmentDemoMock extends DiarcConfiguration {
     if (showGUI) {
       gmArgs += "-editor ";
     }
-    gm = createInstance(GoalManagerImpl.class, gmArgs);
+    gm = createInstance(GoalManagerComponent.class, gmArgs);
   }
 
   public static void main(String[] args) {

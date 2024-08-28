@@ -1,5 +1,3 @@
-setup poses
--
 Define new screw type deep M3
 4 mm
 150 millinewton meters
@@ -66,3 +64,9 @@ job testnv
 verify that you can see the NV30FAU
 get the NV30FAU on the work area
 get the NV30FAU on the conveyor
+
+-
+-
+-
+verify that you can see a chicken
+get the chicken on the conveyor

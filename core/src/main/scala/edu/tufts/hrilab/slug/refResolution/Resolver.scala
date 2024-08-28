@@ -64,8 +64,8 @@ class Resolver(groups: java.util.List[String]) {
         .filter(c => c.getGroups.isEmpty || c.getGroups.stream().noneMatch(g => g.startsWith("agent:"))
           || c.getGroups.stream().anyMatch(g => untypedActors.contains(g) || typedActors.contains(g)))
         .map(
-          c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)): _*))
-        )
+        c => new ConsultantInfo(c.call(classOf[String]), c, new TRADEServiceConstraints().inGroups(c.getGroups.toArray(new Array[String](0)): _*))
+      )
     }
     updatePropertyCache();
   }
@@ -86,18 +86,6 @@ class Resolver(groups: java.util.List[String]) {
     //call convertToType va tsi, return results
     TRADE.getAvailableService(c.head.tsc.name("convertToType").argTypes(classOf[Symbol], classOf[Class[E]]))
       .call(entityJavaType, ref, entityJavaType)
-  }
-
-  def getEntityForReference[E](ref: edu.tufts.hrilab.fol.Symbol, entityJavaType: Class[E], constraints: java.util.List[Term]): E = {
-    val c = consultants.filter(c => ref.getName.contains(c.kbName))
-
-    if (c.size != 1) {
-      log.warn("[getEntityForReference] Multiple consultants with the same kbName, using the first one " + c)
-    }
-
-    //call convertToType va tsi, return results
-    TRADE.getAvailableService(c.head.tsc.name("convertToType").argTypes(classOf[Symbol], classOf[Class[E]], classOf[java.util.List[Term]]))
-      .call(entityJavaType, ref, entityJavaType, constraints)
   }
 
   def assertProperties(ref: edu.tufts.hrilab.fol.Symbol, properties: java.util.List[Term]): Boolean = {

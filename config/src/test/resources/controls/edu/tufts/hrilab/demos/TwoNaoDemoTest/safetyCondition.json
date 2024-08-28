@@ -11,7 +11,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "NORMAL", "1704824638065" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704824638065" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824638065", "FAILED" ]
@@ -25,7 +25,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "NORMAL", "1704824643041" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704824643041" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824643041", "FAILED" ]
@@ -50,7 +50,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "NORMAL", "1704824653026" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704824653026" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -58,7 +58,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "cancelGoal(dempster)", "NORMAL", "1704824658043" ]
+      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "NORMAL", "1704824658043" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824658043", "SUCCEEDED" ]
@@ -72,7 +72,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,evan,will(catch(evan,dempster)))", "NORMAL", "1704824663009" ]
+      "serviceArgs" : [ "forgetThat(dempster,evan,will(catch(evan,dempster)))", "ACT", "NORMAL", "1704824663009" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,will(catch(evan,dempster)))", "null" ]
@@ -92,7 +92,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "NORMAL", "1704824668007" ]
+      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704824668007" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824668007", "FAILED" ]

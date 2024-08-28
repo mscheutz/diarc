@@ -116,7 +116,7 @@ private:
   std::vector<v4r::ObjectHypothesesGroup > recognize(const typename pcl::PointCloud<PointT>::ConstPtr &cloud);
 
 
-  void displayResults(const ade::stm::MemoryObject::VecPtr &mos);
+  void displayResults(const diarc::stm::MemoryObject::VecPtr &mos);
 
 };
 

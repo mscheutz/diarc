@@ -107,29 +107,3 @@ import edu.tufts.hrilab.fol.Predicate;
       ?tokenId = op:get(?tokenIds, 0);
     }
 }
-
-// ?actor looks for on(grasp_points, ?descriptors) in current FOV.
-// This is exactly like findObject, except the ?descriptors are wrapped
-// in an on(grasp_points, ?descriptors) predicate so vision will look for
-// grasp points on the object.
-(java.util.List ?tokenIds, java.lang.Long ?tokenId) = findGraspableObject(Symbol ?objectRef) {
-    Predicate !desc;
-    Predicate !property;
-    java.util.List !properties;
-
-
-    effects : {
-      failure infer : not(see(?actor,?objectRef));
-      success infer : see(?actor,?objectRef);
-    }
-
-    // first add "on(grasp_point,?objectRef)" property to objectRef
-    (!property) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "on(grasp_point(ACTION_VAR0),?objectRef)");
-    (!properties) = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-    op:add(!properties, !property);
-    act:assertProperties(?objectRef, !properties);
-    op:log("debug", "Done asserting !properties properties.");
-
-    // then call normal findObject
-    (?tokenIds, ?tokenId) = act:findObject(?objectRef);
-}

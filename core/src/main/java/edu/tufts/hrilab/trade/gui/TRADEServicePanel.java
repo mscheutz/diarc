@@ -385,7 +385,7 @@ public class TRADEServicePanel extends JPanel {
         Object result = null;
 
         try {
-          TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().inGroups(componentGroups.toArray(new String[0])).name(method.getName()));
+          TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().inGroups(componentGroups.toArray(new String[0])).name(method.getName()).argTypes(method.getParameterTypes()));
           result = tsi.call(Object.class, args);
         } catch (TRADEException e) {
           log.error("Could not call method: " + method.getName(), e);

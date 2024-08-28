@@ -19,7 +19,7 @@
 #include <stereo_msgs/DisparityImage.h>
 #include <pcl/point_cloud.h>
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
 	class CaptureMultisense : public Capture {
@@ -68,7 +68,7 @@ namespace ade {
 
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc
 
 
 #endif  //CAPTUREMULTISENSE_HPP

@@ -14,7 +14,7 @@
 
 /* to enable boost shared_ptr */
 %include <boost_shared_ptr.i>
-%shared_ptr(ade::capture::Capture)
+%shared_ptr(diarc::capture::Capture)
 
 // don't generate Java versions of these methods
 %ignore getLastCaptureNotification;

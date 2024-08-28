@@ -22,13 +22,13 @@ protected:
 
   virtual void removeLowConfidenceObjects();
 
-  virtual int mergeObject(ade::stm::MemoryObject::Ptr newObject);
+  virtual int mergeObject(diarc::stm::MemoryObject::Ptr newObject);
 
 private:
 
-  bool compare(const ade::stm::MemoryObject::Ptr &mo1, const ade::stm::MemoryObject::Ptr &mo2);
+  bool compare(const diarc::stm::MemoryObject::Ptr &mo1, const diarc::stm::MemoryObject::Ptr &mo2);
 
-  bool shouldBeTracked(const ade::stm::MemoryObject::Ptr &mo);
+  bool shouldBeTracked(const diarc::stm::MemoryObject::Ptr &mo);
 };
 
 #endif  //GENERICTRACKER_HPP

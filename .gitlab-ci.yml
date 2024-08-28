@@ -4,8 +4,8 @@ stages:
   
 java-only-build:
   stage: build
-  tags:
-    - java-only
+  # tags:
+  #   - java-only
   script:
     - ./gradlew clean assemble
   only:
@@ -15,8 +15,10 @@ java-only-build:
 
 java-only-tests:
   stage: test
-  tags:
-    - java-only
+  dependencies:
+    - java-only-build
+  # tags:
+  #   - java-only
   script:
     - ./gradlew build -Pdiarc.testLogging=true
   only:

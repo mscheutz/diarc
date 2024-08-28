@@ -74,8 +74,8 @@ protected:
   /** @brief - method to merge currently tracked object(s) with newly detected object(s).
    * calls addTrackedObject
    * @return - number of objects added to tracker */
-  virtual int mergeObjects(ade::stm::MemoryObject::VecPtr newlyDetectedObjects);
-  virtual int mergeObject(ade::stm::MemoryObject::Ptr newlyDetectedObject);
+  virtual int mergeObjects(diarc::stm::MemoryObject::VecPtr newlyDetectedObjects);
+  virtual int mergeObject(diarc::stm::MemoryObject::Ptr newlyDetectedObject);
 
   /** @brief - remove tracked objects with confidence below a certain threshold */
   virtual void removeLowConfidenceObjects();
@@ -98,7 +98,7 @@ protected:
    * @param newMemObj
    * @return if MemoryObject can be tracked
    */
-  virtual bool canTrack(const ade::stm::MemoryObject::Ptr& newMemObj);
+  virtual bool canTrack(const diarc::stm::MemoryObject::Ptr& newMemObj);
   /**
    * @brief - Start tracking MemoryObject. This adds the MemoryObject to 
    * the necessary TrackedObjects containers.
@@ -106,7 +106,7 @@ protected:
    * be added to "sub-tracker" (e.g., cmt, tld) from base class.
    * @param newMemObj - New object to start tracking.
    */
-  virtual void startTracking(const ade::stm::MemoryObject::Ptr& newMemObj);
+  virtual void startTracking(const diarc::stm::MemoryObject::Ptr& newMemObj);
   /**
    * @brief Stop tracking the MemoryObject. This removes the MemoryObject from
    * the necessary TrackedObjects containers.
@@ -115,7 +115,7 @@ protected:
    * base class method at the *beginning* of the method.
    * @param existingMemObj MemoryObject to remove
    */
-  virtual void stopTracking(const ade::stm::MemoryObject::Ptr& existingMemObj);
+  virtual void stopTracking(const diarc::stm::MemoryObject::Ptr& existingMemObj);
   /** 
    * @brief Stop tracking all MemoryObjects of specified typeId. This removes the 
    * MemoryObjects from the necessary TrackedObjects containers.
@@ -130,7 +130,7 @@ protected:
    * to the tracker.
    * @param newObject
    */
-  virtual void haveNewMemoryObject(ade::stm::MemoryObject::Ptr newObject);
+  virtual void haveNewMemoryObject(diarc::stm::MemoryObject::Ptr newObject);
   /**
    * This is called if the MemoryObject is already being tracked.
    * The MemoryObject's typeIds are updated to reflect it's most recent validation
@@ -138,7 +138,7 @@ protected:
    * Note, that it's possible for a MemoryObject to be tracked by more than one
    * Tracker at the same time.
    */
-  virtual void haveTrackedMemoryObject(ade::stm::MemoryObject::Ptr trackedObject);
+  virtual void haveTrackedMemoryObject(diarc::stm::MemoryObject::Ptr trackedObject);
   /**
    * @brief Main entry point to tracking routine. This method MUST update Memory Object
    * confidence (usually by calling MemoryObject->update()).
@@ -147,8 +147,8 @@ protected:
   virtual void haveNewImage(CaptureNotification::ConstPtr notification) = 0;
 
   void sendTrackingNotificationsForAllTrackedObjects();
-  void sendTrackingNotifications(ade::stm::MemoryObject::VecPtr newTrackedObjects);
-  void sendTrackingNotifications(ade::stm::MemoryObject::Ptr newTrackedObjects);
+  void sendTrackingNotifications(diarc::stm::MemoryObject::VecPtr newTrackedObjects);
+  void sendTrackingNotifications(diarc::stm::MemoryObject::Ptr newTrackedObjects);
 
   virtual void displayResults(CaptureData::ConstPtr capture);
   std::string getTrackingSummary();
@@ -168,7 +168,7 @@ protected:
   boost::unordered_map<long long, long> numFramesCompletedByType;
 
   //currently tracked objects
-  ade::stm::TrackedObjects* trackedObjects;
+  diarc::stm::TrackedObjects* trackedObjects;
 
   // void publishTrackingResultsToROS();
 
@@ -183,7 +183,6 @@ private:
   // // geometry_msgs::TrackedObjects::Ptr tracked_objects_msg_;
   // // geometry_msgs::TrackedObject::Ptr tracked_object_msg_;
   // // geometry_msgs::Point::Ptr obj_location_msg_;
-  // // geometry_msgs::Pose::Ptr grasp_point_msg_;
 
   // ros::NodeHandle *n_;
   // // ros::AsyncSpinner *spinner_;

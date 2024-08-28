@@ -25,11 +25,7 @@
     "priority": 9999,
     "priorityTier": "URGENT"
   },
-  "cancelGoalInQueue": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
-  "cancelGoalInQueueIndex": {
+  "cancelPendingGoalByIndex": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -45,15 +41,15 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "cancelCurrentGoal": {
+  "cancelSystemGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "suspendCurrentGoal": {
+  "suspendSystemGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "resumeCurrentGoal": {
+  "resumeSystemGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -61,7 +57,39 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "updateActionLearning": {
+  "endActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "pauseActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeCurrentGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describePendingGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllActiveGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllPendingGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelAllCurrentGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   }

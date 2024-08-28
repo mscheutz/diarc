@@ -10,7 +10,7 @@
 #include "capture/calibration/Cameras.hpp"
 #include "capture/CaptureEnums.hpp"
 
-namespace ade {
+namespace diarc {
   namespace capture {
     namespace util {
 
@@ -60,5 +60,5 @@ namespace ade {
 
     } //namespace util
   } //namespace capture
-} //namespace ade
+} //namespace diarc
 #endif

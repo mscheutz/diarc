@@ -1,0 +1,18 @@
+Okay
+Where is it located?
+Okay, what vision job is used to detect it?
+At which area should I look for a chicken?
+Okay, I know what chicken is
+I cannot put down the corn because the prep area is occupied
+I do not know what chicken means
+############
+#Test lines#
+############
+I cannot go to location test because I do not go test
+I cannot escort pete reception because not know where I am
+I cannot fetch braces office because I not reposition
+no current task
+Active tasks: followMe, trackUser
+Pending tasks: get lemon to cooktop, reset arms
+I cannot handle semantics want eric goTo because eric not me superior
+I cannot freeze because is admin goal

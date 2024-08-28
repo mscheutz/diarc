@@ -1,0 +1,96 @@
+#right arm go to prep area
+Rechter Arm, geh zu dem Vorbereitungsbereich
+#right arm do you see a bell pepper
+Rechter Arm, siehst du eine Paprika
+#left arm go to box area
+Linker Arm, geh zu dem Kastenbereich
+#left arm do you see a serving box
+Linker Arm, siehst du eine ServierKarton
+#right arm pick up the bell pepper
+Rechter Arm, hebe den Paprika auf
+#pause
+Pause
+#What is your current task
+Was ist deine aktuelle Aufgabe
+#then right arm go to cooktop
+Dann Rechter Arm, geh zu dem Kochfeld
+#then right arm put down the bell pepper
+Dann Rechter Arm, stell den Paprika ab
+#What are your pending tasks
+Was sind ihre offenen Aufgaben
+#resume
+Fortsetzen
+#get the bell pepper to the prep area
+Bring den Paprika zum Vorbereitungsbereich
+#right arm go to prep area
+Rechter Arm, geh zu dem Vorbereitungsbereich
+#now right arm go to prep area
+Jetzt Rechter Arm, geh zu dem Vorbereitungsbereich
+#it is safe to proceed
+Es ist sicher um fortzufahren
+#reset
+Zuruecksetzen
+#define new item southwest bowl
+Definiere Neues Item Suedwest-Schuessel
+#first get a serving box to serving area
+Hol zuerst einen Servierkarton zum Servierbereich
+#then get a bell pepper to the hot plate
+Dann hol einen Paprika zum HeissTeller
+#then right arm saute the bell pepper for 2 seconds
+Dann rechter Arm, brate den Paprika fuer 2 Sekunden an
+#then get the bell pepper in the serving box
+Dann hol die Paprika in den Servierkasten
+#then get a corn to the cooktop
+Dann hol ein Mais zum Kochtopf
+#then right arm cook the corn for 5 seconds
+Dann Rechter Arm koch das Mais fuer 5 Sekunden
+#then get the corn in the serving box
+Dann hol das Mais in die Servierkasten
+#then get a carrot to the hot plate
+Dann hol ein Karotten zum heissen Brett
+#then right arm saute the carrot for 3 seconds
+Dann Rechter Arm sautee den Karotten fuer 3 Sekunden
+#then get the carrot in the serving box
+Dann hole das Karotten in den Servierkasten
+#then left arm drizzle on chipotle sauce
+Dann Linker Arm traeufel Chipotle-Sosse auf
+#that is how you prepare a southwest bowl
+So zubereitest du ein Suedwest-Schuessel
+#prepare a southwest bowl
+Bereite ein Suedwest-Schuessel
+#here it is
+Hier ist es
+#define new item by analogy puerto rican bowl
+Definiere ein neues Element durch Analogie Puerto-RicanischeSchuessel
+#southwest bowl
+Suedwest-Schuessel
+#replace right arm saute the carrot for 3 seconds with right arm saute the chicken for 4 seconds
+Wechsel Rechter Arm sautee das Karotten fuer 3 Sekunden mit Rechter Arm sautee das Huhn fuer 4 Sekunden
+#remove the bell pepper
+Entferne die Paprika
+#add get a plantain in the serving box after get the chicken in the serving box
+Fuege hole eine Kochbanane zu der Servierkasten hinzu danach hole ein Huhn zu der Servierkasten
+#suspend current task
+setze aktuelle Aufgabe aus
+#now define new ingredient plantain
+Jetzt definiere neue Zutat Kochbanane
+#pantry
+Speisekammer
+#detect plantain
+Erkenne Kochbanane
+#prep area
+Vorbereitungsbereich
+#grasp it here
+greif es hier
+#what is your current task
+Was ist deine aktuelle Aufgabe
+#resume previous task
+Fortsetze vorherige Aufgabe
+#add get a plantain in the serving box after get the chicken in the serving box
+Fuege hole eine Kochbanane zu der Servierkasten hinzu danach hole ein Huhn zu der Servierkasten
+#no more differences
+Keine mehr Unterschiede
+#prepare a puerto rican bowl
+Bereite ein Puerto-RicanischeSchuessel
+#here it is
+Hier ist es

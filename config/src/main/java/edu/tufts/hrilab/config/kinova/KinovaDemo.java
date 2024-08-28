@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.kinova;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.moveit.MoveItComponent;
 import org.slf4j.Logger;
@@ -24,7 +25,7 @@ public class KinovaDemo extends DiarcConfiguration {
     // createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-cameraFrame camera_color_frame -capture kinova.xml -refs refs/visionRefs.json");
 
     createInstance(MoveItComponent.class, "-config kortex.json");
-    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
+    createInstance(GoalManagerComponent.class,
                "-goal startKinova(self) " +
                     "-beliefinitfile agents/agents.pl " +
                     "-asl kinova/kinova_examples.asl ");

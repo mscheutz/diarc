@@ -9,7 +9,7 @@
 #include "display/Display.hpp"
 #include "capture/util/CaptureUtilities.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 CMTTracker::CMTTracker(const long long &processorId, const int imgWidth, const int imgHeight)
         : ObjectTracker(processorId, imgWidth, imgHeight),
@@ -17,7 +17,7 @@ CMTTracker::CMTTracker(const long long &processorId, const int imgWidth, const i
           lastFrameGray() {
   trackingConfidenceThreshold = 0.2;
   visionProcessName = "CMTTracker";
-  logger = log4cxx::Logger::getLogger("ade.tracker.CMTTracker");
+  logger = log4cxx::Logger::getLogger("diarc.tracker.CMTTracker");
 }
 
 CMTTracker::~CMTTracker() {
@@ -166,7 +166,7 @@ void CMTTracker::displayResults(CaptureData::ConstPtr capture) {
       drawCMTStatus(displayFrame, *(cmts_itr->second));
     }
 
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   } else {
     ObjectTracker::displayResults(capture);
   }

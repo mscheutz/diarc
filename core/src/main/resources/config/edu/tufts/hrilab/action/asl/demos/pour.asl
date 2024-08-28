@@ -50,10 +50,10 @@
 
     op:log("info", "pickup");
     //act:openGripper("arm");
-    //act:findGraspableObject(?physobj);
+    //act:findObject(?physobj);
     //act:moveTo("arm", ?physobj);
     //act:closeGripper("arm");
-    //act:findGraspableObject(?physobj);
+    //act:findObject(?physobj);
     //TODO:brad/will: this change is so it can put thinks back where it picked them up from, we maybe want a more general solution moving on.
     //act:pauseCapture();
 //    act:grab(?physobj);
@@ -62,7 +62,7 @@
     edu.tufts.hrilab.fol.Predicate !failCond;
 
     // TODO: this probably shouldn't be an explicit step here, maybe pre-condition?
-    //act:findGraspableObject(?objectRef);
+    //act:findObject(?objectRef);
     act:openGripper(!arm);
 
     op:log("debug", "Trying to grasp ?objectRef with !arm.");

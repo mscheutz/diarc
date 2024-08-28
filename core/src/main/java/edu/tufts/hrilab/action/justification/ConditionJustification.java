@@ -137,9 +137,9 @@ public class ConditionJustification extends Justification {
   @Override
   public String toString() {
     if (condition != null) {
-      return Factory.createPredicate("justifications", condition).toString();
+      return "justification(" + condition + "," + getValue() + ")";
     } else {
-      return Factory.createPredicate("justifications()").toString();
+      return "justification(" + getValue() + ")";
     }
   }
 

@@ -14,7 +14,7 @@ NasaButtonDetector::NasaButtonDetector(const long long& processorId, const int i
 : ObjectDetector(processorId, imgWidth, imgHeight),
 buttonDetectionReported(false) {
   visionProcessName = "NasaButtonDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.NasaButtonDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.NasaButtonDetector");
 
   displayFrame = cv::Mat(imgHeight, imgWidth, CV_8UC3);
 
@@ -22,7 +22,7 @@ buttonDetectionReported(false) {
   //initialize ROS
   LOG4CXX_INFO(logger, "Initializing ROS.");
   std::vector<std::pair<std::string, std::string> > remapping;
-  ros::init(remapping, "ade_nasa_button_results");
+  ros::init(remapping, "diarc_nasa_button_results");
 
   //create node handle
   LOG4CXX_INFO(logger, "Initializing ROS node.");
@@ -186,6 +186,6 @@ void NasaButtonDetector::handleCaptureNotification(CaptureNotification::ConstPtr
   }
 
   if (getDisplayFlag()) {
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 }

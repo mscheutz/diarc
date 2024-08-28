@@ -59,4 +59,9 @@ public class Resource {
     public Set<Goal> getUsers() {
         return users;
     }
+
+    @Override
+    public String toString() {
+        return name.toString();
+    }
 }

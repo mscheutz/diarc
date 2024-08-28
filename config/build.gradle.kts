@@ -58,6 +58,10 @@ dependencies {
 //    implementation(project(":vision"))
 //  }
 
+  testImplementation("ai.thinkingrobots:mtracs-mock:1.12.1") {
+    exclude(group = "edu.tufts.hrilab", module = "diarc-core") //avoid a transitive dependency with the diarc-core inclusion for the external project.
+  }
+
   testImplementation("junit:junit:4.13.1") //TODO:figure out how to inherit this from the rootProject
   testImplementation("com.fasterxml.jackson.core:jackson-core:2.7.4")
   testImplementation("com.fasterxml.jackson.core:jackson-annotations:2.7.4")
@@ -90,14 +94,17 @@ tasks.named<Test>("test") {
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
 
   // to run tests with logging printed to console
-  if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {
+  if (project.hasProperty("diarc.test.enableLogging") && project.property("diarc.test.enableLogging").toString().toBoolean()) {
     testLogging.showStandardStreams = true
   }
 
   // to run integration test(s) in generative  mode
-  if (project.hasProperty("generativeMode") && project.property("generativeMode").toString().toBoolean()) {
+  if (project.hasProperty("diarc.test.generativeMode") && project.property("diarc.test.generativeMode").toString().toBoolean()) {
     systemProperty("generativeMode", "true")
   }
+
+  systemProperty("trade.properties.path", properties.getOrDefault("diarc.test.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
+  systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.test.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
 
   //TODO:brad: is this the best way to include these resources?
   classpath += files("src/test/resources") +
@@ -217,6 +224,10 @@ repositories {
     url = uri("https://plugins.gradle.org/m2/")
   }
   mavenLocal() // local maven archive
+  maven {
+    name = "Thinking Robots mtracs mock"
+    url = uri("https://gitlab.com/api/v4/projects/34394212/packages/maven/")
+  }
   maven { // hrilab archive
     name = "HRILabArchiva"
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")

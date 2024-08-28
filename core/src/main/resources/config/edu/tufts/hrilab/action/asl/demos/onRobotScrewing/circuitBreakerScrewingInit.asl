@@ -1,5 +1,7 @@
 //====================== Setup action scripts ======================
 () = init["workaround for not being able to retract facts from belief init files"](){
+
+    java.lang.Boolean !twoRobots = true;
     edu.tufts.hrilab.fol.Term !toAssert;
     edu.tufts.hrilab.fol.Symbol !robotone="robotone:agent";
     edu.tufts.hrilab.fol.Symbol !robottwo="robottwo:agent";
@@ -9,13 +11,19 @@
     edu.tufts.hrilab.fol.Symbol !jobNameM3="holeM3";
     edu.tufts.hrilab.fol.Symbol !descriptorM3D="deepM3Hole";
     edu.tufts.hrilab.fol.Symbol !jobNameM3D="holeDeep";
+    edu.tufts.hrilab.fol.Symbol !screwHead="screwHead";
+    edu.tufts.hrilab.fol.Symbol !mountJob="feedrDet";
 //
     //add descriptor -> Cognex job mappings
     //This is mainly left as example code, this is handled within CognexConsultant now
     !robotone.tsc:addDetectionType(!descriptorM3,!jobNameM3);
     !robotone.tsc:addDetectionType(!descriptorM3D,!jobNameM3D);
-    !robottwo.tsc:addDetectionType(!descriptorM3,!jobNameM3);
-    !robottwo.tsc:addDetectionType(!descriptorM3D,!jobNameM3D);
+    !robotone.tsc:addDetectionType(!screwHead,!mountJob);
+    if (op:equals(!twoRobots, true)) {
+        !robottwo.tsc:addDetectionType(!descriptorM3,!jobNameM3);
+        !robottwo.tsc:addDetectionType(!descriptorM3D,!jobNameM3D);
+        !robottwo.tsc:addDetectionType(!screwHead,!mountJob);
+    }
 
     //specify height of object to be used in calculations to determine z height
     //for running Cognex Jobs
@@ -40,7 +48,9 @@
     act:assertBelief(!toAssert);
 
    !robotone.act:setupPoses();
-   !robottwo.act:setupPoses();
+   if (op:equals(!twoRobots, true)) {
+       !robottwo.act:setupPoses();
+   }
 
 }
 
@@ -54,7 +64,7 @@
     edu.tufts.hrilab.fol.Symbol !screwHeight = "86";
     edu.tufts.hrilab.fol.Symbol !default = "default";
 
-    edu.tufts.hrilab.mtracs.util.MPose !pose;
+    ai.thinkingrobots.mtracs.util.MPose !pose;
 
 //TODO:brad: what is this for? how should we handle it?
     edu.tufts.hrilab.fol.Predicate !fact;
@@ -65,15 +75,15 @@
     !cameraHeight = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cameraHeight(?actor,338)");
     act:assertBelief(!cameraHeight);
 
-    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", 510.00f, 0.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 510.00f, 0.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
     tsc:recordPose(!conveyor, !pose, !conveyorHeight);
     op:log(info, "Setup !conveyor for ?actor");
 
-    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", -10.00f, -400.00f, 200.00f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", -10.00f, -400.00f, 200.00f, 3.14159f, 0.0f, 3.14159f);
     tsc:recordPose(!workArea, !pose, !workHeight);
     op:log(info, "Setup !workArea for ?actor");
 
-    (!pose)= op:newObject("edu.tufts.hrilab.mtracs.util.MPose", -217.00f, -450.56f, 200.0f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", -217.00f, -450.56f, 200.0f, 3.14159f, 0.0f, 3.14159f);
     tsc:recordPose(!screwFeeder, !pose, !screwHeight);
     op:log(info, "Setup !screwFeeder for ?actor");
 

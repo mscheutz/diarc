@@ -4,8 +4,7 @@
 
 package edu.tufts.hrilab.demos;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
+import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.config.MockTwoNaoDemo;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -38,7 +37,7 @@ public class TwoNaoDemoTest extends GenerativeDiarcIntegrationTest {
     addServiceToObserve("assertBelief", Term.class);
     addServiceToObserve("retractBelief", Term.class);
     addServiceToObserve("submitGoal", Predicate.class);
-    addServiceToObserve("submitGoal", Predicate.class, Symbol.class);
+    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, Symbol.class);
     addServiceToObserve("joinOnGoal", Long.class);
     addServiceToObserve("sayText", String.class);
 
@@ -47,18 +46,9 @@ public class TwoNaoDemoTest extends GenerativeDiarcIntegrationTest {
 
   @After
   public void shutdownDiarc() {
-    log.debug("[cleanup] started");
-    log.debug("[shutdownConfig] tester shutdown");
+    log.debug("[shutdownDiarc] started");
     diarcConfig.shutdownConfiguration();
-    log.debug("[shutdownConfig] completed");
-
-    try {
-      // TODO: EAK: what does this do?
-      TRADE.reset("");
-    } catch (TRADEException e) {
-      log.error("[shutdownConfig]", e);
-    }
-    log.info("[cleanup] ended");
+    log.debug("[shutdownDiarc] completed");
   }
 
   //This wrapper exists so that the generator can appropriately catch input

@@ -24,7 +24,7 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
-namespace ade {
+namespace diarc {
   namespace stm {
 
     class ValidationResult : public MemoryObjectMask {
@@ -58,7 +58,7 @@ namespace ade {
     };
 
   } //namespace stm
-} //namespace ade
+} //namespace diarc
 
 #endif	/* VALIDATIONRESULT_HPP */
 
