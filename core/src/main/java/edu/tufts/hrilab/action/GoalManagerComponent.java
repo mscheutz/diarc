@@ -115,7 +115,7 @@ public class GoalManagerComponent extends DiarcComponent {
   /**
    * Action learning gui flag.
    */
-  private boolean actionLearningGui = false;
+  private boolean displayActionLearningGui = false;
   /**
    * BeliefComponent args to pass along during instantiation.
    */
@@ -146,6 +146,132 @@ public class GoalManagerComponent extends DiarcComponent {
    */
   public GoalManagerComponent() {
     super();
+  }
+
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("asl").longOpt("dbfile").hasArgs().argName("agent1,agentN:file").desc("parse ASL file for (optional) agent(s) agent1,agentN").build());
+    options.add(Option.builder("pddl").numberOfArgs(2).argName("domainFile problemFile").desc("parse PDDL domain and problem file").build());
+    options.add(Option.builder("dbfileDir").hasArg().argName("dir").desc("set default db file directory so filenames (without path) can be passed with -dbfile").build());
+    options.add(Option.builder("performancefile").hasArgs().argName("file").desc("parse performance models file").build());
+    options.add(Option.builder("performancefileDir").hasArg().argName("dir").desc("set default action performance directory so filenames (without path) can be passed with -performancefile").build());
+    options.add(Option.builder("selector").hasArg().argName("classpath").desc("set action selector type (must be full classpath)").build());
+    options.add(Option.builder("editor").desc("display main goal manager gui").build());
+    options.add(Option.builder("learningGui").desc("display learning gui").build());
+    options.add(Option.builder("goal").hasArgs().argName("goal-pred").desc("start goal with specified goal predicate. \"goal(actor,state)\" or \"action(actor,args)\"").build());
+    options.add(Option.builder("badaction").numberOfArgs(1).desc("add bad action").build());
+    options.add(Option.builder("badstate").numberOfArgs(1).desc("add bad state").build());
+    options.add(Option.builder("executionManagerType").hasArgs().desc("fully qualified type for execution manager").build());
+    options.add(Option.builder("priorityFile").hasArgs().desc("goal priority information file").build());
+    options.add(Option.builder("nomemorymanager").desc("Do not utilize the memory manager in the goal manager to prune old goals").build());
+    options.add(Option.builder("historylength").hasArg().argName("time").desc("How long to keep past goals").build());
+
+    // local belief component options
+    options.add(Option.builder("beliefinitfile").hasArgs().argName("file").desc("load initialization file").build());
+    options.add(Option.builder("beliefworking").hasArgs().argName("file").desc("load working file").build());
+    options.add(Option.builder("beliefepisodic").hasArgs().argName("file").desc("load episodic file").build());
+    options.add(Option.builder("beliefuniversal").hasArgs().argName("file").desc("load universal file").build());
+    options.add(Option.builder("beliefprover").hasArg().argName("enum").desc("set prover type").build());
+    options.add(Option.builder("beliefdisk").hasArg().argName("databasepath").desc("use existing sql disk located at path").build());
+    options.add(Option.builder("beliefg").desc("show belief gui").build());
+    options.add(Option.builder("beliefgroups").hasArgs().desc("TRADE groups for belief component").build());
+
+    return options;
+  }
+
+  @Override
+  protected void parseArgs(CommandLine cmdLine) {
+    if (cmdLine.hasOption("executionManagerType")) {
+      try {
+        executionManagerType = (Class<ExecutionManager>) Class.forName(cmdLine.getOptionValue("executionManagerType"));
+      } catch (ClassNotFoundException | SecurityException | IllegalArgumentException | ClassCastException e) {
+        log.error("Exception in setting ExecutionManager type: " + cmdLine.getOptionValue("executionManagerType") +
+                ". Using default type instead.", e);
+      }
+    }
+    if (cmdLine.hasOption("priorityFile")) {
+      priorityFile = cmdLine.getOptionValue("priorityFile");
+    }
+    if (cmdLine.hasOption("badaction")) {
+      initialConstraints.addForbiddenAction(cmdLine.getOptionValue("badaction"));
+    }
+    if (cmdLine.hasOption("badstate")) {
+      Predicate bad = Factory.createPredicate(cmdLine.getOptionValue("badaction"));
+      initialConstraints.addForbiddenState(bad);
+    }
+    if (cmdLine.hasOption("selector")) {
+      ActionSelector.setActionSelectorType(cmdLine.getOptionValue("selector"));
+    }
+    if (cmdLine.hasOption("goal")) {
+      Arrays.asList(cmdLine.getOptionValues("goal")).forEach(goal -> addInitGoal(goal));
+    }
+    if (cmdLine.hasOption("asl")) {
+      dbFiles.addAll(Arrays.asList(cmdLine.getOptionValues("asl")));
+    }
+    if (cmdLine.hasOption("dbfileDir")) {
+      dbFileDir = cmdLine.getOptionValue("dbfileDir");
+    }
+    if (cmdLine.hasOption("pddl")) {
+      String[] files = cmdLine.getOptionValues("pddl");
+      pddlFiles = new ImmutablePair<>(files[0], files[1]);
+    }
+    if (cmdLine.hasOption("performancefile")) {
+      performanceFiles.addAll(Arrays.asList(cmdLine.getOptionValues("performancefile")));
+    }
+    if (cmdLine.hasOption("performancefiledir")) {
+      performanceFileDir = cmdLine.getOptionValue("performancefileDir");
+    }
+    if (cmdLine.hasOption("editor")) {
+      showEditor = true;
+    }
+    if (cmdLine.hasOption("learningGui")) {
+      displayActionLearningGui = true;
+    }
+    if (cmdLine.hasOption("nomemorymanager")) {
+      useMemoryManager = false;
+    }
+    if (cmdLine.hasOption("historylength")) {
+      historyLength = Long.parseLong(cmdLine.getOptionValue("historylength"));
+    }
+
+    /////////////////////////////////
+    // local belief component options
+    /////////////////////////////////
+
+    if (cmdLine.hasOption("beliefinitfile")) {
+      beliefArgs.add("-initfile");
+      beliefArgs.addAll(Arrays.asList(cmdLine.getOptionValues("beliefinitfile")));
+    }
+    if (cmdLine.hasOption("beliefworking")) {
+      beliefArgs.add("-workingfile");
+      beliefArgs.addAll(Arrays.asList(cmdLine.getOptionValues("beliefworking")));
+    }
+    if (cmdLine.hasOption("beliefepisodic")) {
+      beliefArgs.add("-episodicfile");
+      beliefArgs.addAll(Arrays.asList(cmdLine.getOptionValues("beliefepisodic")));
+    }
+    if (cmdLine.hasOption("beliefuniversal")) {
+      beliefArgs.add("-universalfile");
+      beliefArgs.addAll(Arrays.asList(cmdLine.getOptionValues("beliefuniversal")));
+    }
+    if (cmdLine.hasOption("beliefprover")) {
+      beliefArgs.add("-prover");
+      beliefArgs.add(cmdLine.getOptionValue("beliefprover"));
+    }
+    if (cmdLine.hasOption("beliefdisk")) {
+      beliefArgs.add("-disk");
+      beliefArgs.add(cmdLine.getOptionValue("beliefdisk"));
+    }
+    if (cmdLine.hasOption("beliefg")) {
+      beliefArgs.add("-g");
+    }
+    if (cmdLine.hasOption("beliefgroups")) {
+      beliefArgs.add("-groups");
+      for (String s : cmdLine.getOptionValues("beliefgroups")) {
+        beliefArgs.add(s);
+      }
+    }
   }
 
   @Override
@@ -195,6 +321,7 @@ public class GoalManagerComponent extends DiarcComponent {
     RootContext rootContext = new RootContext(initialConstraints, sm);
     em = ExecutionManager.createInstance(executionManagerType, sm, rootContext, myGroups);
     em.configPruningMechanism(useMemoryManager, historyLength);
+    em.setActionLearningGuiFlag(displayActionLearningGui);
   }
 
   private void initializeDB() {
@@ -755,142 +882,6 @@ public class GoalManagerComponent extends DiarcComponent {
   @Action
   public Justification getGoalFailConditions(long gid) {
     return em.getGoalFailConditions(gid);
-  }
-
-  @Override
-  protected List<Option> additionalUsageInfo() {
-    List<Option> options = new ArrayList<>();
-    options.add(Option.builder("asl").longOpt("dbfile").hasArgs().argName("agent1,agentN:file").desc("parse ASL file for (optional) agent(s) agent1,agentN").build());
-    options.add(Option.builder("pddl").numberOfArgs(2).argName("domainFile problemFile").desc("parse PDDL domain and problem file").build());
-    options.add(Option.builder("dbfileDir").hasArg().argName("dir").desc("set default db file directory so filenames (without path) can be passed with -dbfile").build());
-    options.add(Option.builder("performancefile").hasArgs().argName("file").desc("parse performance models file").build());
-    options.add(Option.builder("performancefileDir").hasArg().argName("dir").desc("set default action performance directory so filenames (without path) can be passed with -performancefile").build());
-    options.add(Option.builder("selector").hasArg().argName("classpath").desc("set action selector type (must be full classpath)").build());
-    options.add(Option.builder("editor").desc("display main goal manager gui").build());
-    options.add(Option.builder("learningGui").desc("display learning gui").build());
-    options.add(Option.builder("goal").hasArgs().argName("goal-pred").desc("start goal with specified goal predicate. \"goal(actor,state)\" or \"action(actor,args)\"").build());
-    options.add(Option.builder("badaction").numberOfArgs(1).desc("add bad action").build());
-    options.add(Option.builder("badstate").numberOfArgs(1).desc("add bad state").build());
-    options.add(Option.builder("executionManagerType").hasArgs().desc("fully qualified type for execution manager").build());
-    options.add(Option.builder("priorityFile").hasArgs().desc("goal priority information file").build());
-    options.add(Option.builder("nomemorymanager").desc("Do not utilize the memory manager in the goal manager to prune old goals").build());
-    options.add(Option.builder("historylength").hasArg().argName("time").desc("How long to keep past goals").build());
-
-    // local belief component options
-    options.add(Option.builder("beliefinitfile").hasArgs().argName("file").desc("load initialization file").build());
-    options.add(Option.builder("beliefworking").hasArgs().argName("file").desc("load working file").build());
-    options.add(Option.builder("beliefepisodic").hasArgs().argName("file").desc("load episodic file").build());
-    options.add(Option.builder("beliefuniversal").hasArgs().argName("file").desc("load universal file").build());
-    options.add(Option.builder("beliefprover").hasArg().argName("enum").desc("set prover type").build());
-    options.add(Option.builder("beliefdisk").hasArg().argName("databasepath").desc("use existing sql disk located at path").build());
-    options.add(Option.builder("beliefg").desc("show belief gui").build());
-    options.add(Option.builder("beliefgroups").hasArgs().desc("TRADE groups for belief component").build());
-
-    return options;
-  }
-
-  @Override
-  protected void parseArgs(CommandLine cmdLine) {
-    if (cmdLine.hasOption("executionManagerType")) {
-      try {
-        executionManagerType = (Class<ExecutionManager>) Class.forName(cmdLine.getOptionValue("executionManagerType"));
-      } catch (ClassNotFoundException | SecurityException | IllegalArgumentException | ClassCastException e) {
-        log.error("Exception in setting ExecutionManager type: " + cmdLine.getOptionValue("executionManagerType") +
-                ". Using default type instead.", e);
-      }
-    }
-    if (cmdLine.hasOption("priorityFile")) {
-      priorityFile = cmdLine.getOptionValue("priorityFile");
-    }
-    if (cmdLine.hasOption("badaction")) {
-      initialConstraints.addForbiddenAction(cmdLine.getOptionValue("badaction"));
-    }
-    if (cmdLine.hasOption("badstate")) {
-      Predicate bad = Factory.createPredicate(cmdLine.getOptionValue("badaction"));
-      initialConstraints.addForbiddenState(bad);
-    }
-    if (cmdLine.hasOption("selector")) {
-      ActionSelector.setActionSelectorType(cmdLine.getOptionValue("selector"));
-    }
-    if (cmdLine.hasOption("goal")) {
-      Arrays.asList(cmdLine.getOptionValues("goal")).forEach(goal -> addInitGoal(goal));
-    }
-    if (cmdLine.hasOption("asl")) {
-      dbFiles.addAll(Arrays.asList(cmdLine.getOptionValues("asl")));
-    }
-    if (cmdLine.hasOption("dbfileDir")) {
-      dbFileDir = cmdLine.getOptionValue("dbfileDir");
-    }
-    if (cmdLine.hasOption("pddl")) {
-      String[] files = cmdLine.getOptionValues("pddl");
-      pddlFiles = new ImmutablePair<>(files[0], files[1]);
-    }
-    if (cmdLine.hasOption("performancefile")) {
-      performanceFiles.addAll(Arrays.asList(cmdLine.getOptionValues("performancefile")));
-    }
-    if (cmdLine.hasOption("performancefiledir")) {
-      performanceFileDir = cmdLine.getOptionValue("performancefileDir");
-    }
-    if (cmdLine.hasOption("editor")) {
-      showEditor = true;
-    }
-    if (cmdLine.hasOption("learningGui")) {
-      actionLearningGui = true;
-    }
-    if (cmdLine.hasOption("nomemorymanager")) {
-      useMemoryManager = false;
-    }
-    if (cmdLine.hasOption("historylength")) {
-      historyLength = Long.parseLong(cmdLine.getOptionValue("historylength"));
-    }
-
-    /////////////////////////////////
-    // local belief component options
-    /////////////////////////////////
-
-    if (cmdLine.hasOption("beliefinitfile")) {
-      beliefArgs.add("-initfile");
-      beliefArgs.addAll(Arrays.asList(cmdLine.getOptionValues("beliefinitfile")));
-    }
-    if (cmdLine.hasOption("beliefworking")) {
-      beliefArgs.add("-workingfile");
-      beliefArgs.addAll(Arrays.asList(cmdLine.getOptionValues("beliefworking")));
-    }
-    if (cmdLine.hasOption("beliefepisodic")) {
-      beliefArgs.add("-episodicfile");
-      beliefArgs.addAll(Arrays.asList(cmdLine.getOptionValues("beliefepisodic")));
-    }
-    if (cmdLine.hasOption("beliefuniversal")) {
-      beliefArgs.add("-universalfile");
-      beliefArgs.addAll(Arrays.asList(cmdLine.getOptionValues("beliefuniversal")));
-    }
-    if (cmdLine.hasOption("beliefprover")) {
-      beliefArgs.add("-prover");
-      beliefArgs.add(cmdLine.getOptionValue("beliefprover"));
-    }
-    if (cmdLine.hasOption("beliefdisk")) {
-      beliefArgs.add("-disk");
-      beliefArgs.add(cmdLine.getOptionValue("beliefdisk"));
-    }
-    if (cmdLine.hasOption("beliefg")) {
-      beliefArgs.add("-g");
-    }
-    if (cmdLine.hasOption("beliefgroups")) {
-      beliefArgs.add("-groups");
-      for (String s : cmdLine.getOptionValues("beliefgroups")) {
-        beliefArgs.add(s);
-      }
-    }
-  }
-
-  /**
-   * Register to be notified of ActionInterpreter and inner StepExecution events (start/completion)
-   *
-   * @param al
-   */
-  @TRADEService
-  public void registerAIListener(ActionListener al) {
-    em.addAIListener(al);
   }
 
   /**

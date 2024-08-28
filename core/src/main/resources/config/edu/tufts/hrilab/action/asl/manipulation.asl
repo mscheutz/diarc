@@ -71,7 +71,7 @@ import edu.tufts.hrilab.fol.Predicate;
     org.apache.commons.lang3.tuple.Pair !armPose =  act:getEEPose(?arm);
 
     // get location of ?ref_2
-    java.lang.Class !point3dClass = op:invokeStaticMethod("java.lang.Class", "forName", "javax.vecmath.Point3d")
+    java.lang.Class !point3dClass = op:invokeStaticMethod("java.lang.Class", "forName", "javax.vecmath.Point3d");
     javax.vecmath.Point3d !ref2Loc = tsc:getEntityForReference(?ref_2, !point3dClass);
 
     if (op:equalsValue(?relation, toward)) {

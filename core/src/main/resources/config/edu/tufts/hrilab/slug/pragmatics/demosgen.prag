@@ -91,6 +91,7 @@ REPLY(A,B,bel(X,Y),Z) := REPLY(A,B,know(X,that(Y)),Z)
 REPLY(A,B,learnAction(A,X),Z) := REPLY(A,B,learn(A,how(X)),Z)
 REPLY(A,B,behind(X,Y),Z) := REPLY(A,B,has(X,rearSensors),Z)
 REPLY(A,B,admin_of(X,Y),Z) := REPLY(A,B,propertyOf(X,possessive(Y,admin)),Z)
+REPLY(A,B,supervisor_of(X,Y),Z) := REPLY(A,B,is_supervisor(X,Y),Z)
 REPLY(A,B,currentTime(X,Y),Z) := REPLY(A,B,is(it,X,Y),Z)
 REPLY(A,B,capableOf(Y),Z) := REPLY(A,B,isCapableOf(B,Y),Z)
 END-SET

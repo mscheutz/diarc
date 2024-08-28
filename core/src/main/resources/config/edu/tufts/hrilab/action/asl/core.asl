@@ -155,7 +155,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     act:retractBelief(!oldDescription);
 
     // get StateMachine for use in action selection
-    !sm = act:getStateMachine();
+    !sm = tsc:getStateMachine();
 
     // pick action, and get event specs from selected action
     !goal = op:newObject("edu.tufts.hrilab.action.goal.Goal", ?goalPred);

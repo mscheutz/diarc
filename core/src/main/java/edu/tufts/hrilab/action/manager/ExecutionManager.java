@@ -145,19 +145,12 @@ public class ExecutionManager implements ActionListener {
    */
   private StateMachine sm;
 
-  ////Not currently used anywhere, was used in a subclass of ActionResourceLocks. Implementation may be useful as
-  ////  reference for lower level resource constraints
-  ///**
-  // * Priorities is the object that handles calculating the priority for each action
-  // * that are being managed.
-  // * Priorities is null by default, meaning priorities are not ever updated.
-  // */
-  //private PriorityCalculator priorities;
-
   /**
    * External components to be notified of action and associated step progress
    */
   private List<ActionListener> aiListeners;
+
+  private boolean displayActionLearningGui = false;
 
   public ExecutionManager() {
   }
@@ -2140,12 +2133,27 @@ public class ExecutionManager implements ActionListener {
     log.info("...done pruning.");
   }
 
+  /**
+   * Get main state machine.
+   * NOTE: the @TRADEService should be removed once there's a cleaner way to get a plan for a goal
+   *       without submitting a goal for execution. This is used in asl in a few places.
+   *
+   * @return
+   */
+  @TRADEService
   public StateMachine getStateMachine() {
     return sm;
   }
 
   public RootContext getRootContext() {
     return rootContext;
+  }
+
+  public void setActionLearningGuiFlag(boolean flag) {
+    displayActionLearningGui = flag;
+  }
+  public boolean getActionLearningGuiFlag() {
+    return displayActionLearningGui;
   }
 
   /**

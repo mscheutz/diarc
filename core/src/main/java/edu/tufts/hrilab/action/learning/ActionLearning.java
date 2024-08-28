@@ -67,10 +67,10 @@ public class ActionLearning {
   /**
    * @param em Execution Manager instance to run executeWhileLearning and simulation goals
    */
-  public ActionLearning(ExecutionManager em, boolean useGui) {
+  public ActionLearning(ExecutionManager em, boolean displayGui) {
     executionManager = em;
 
-    if (useGui) {
+    if (displayGui) {
       log.debug("creating gui for action learning");
       learningGui = new ActionLearningGui();
     }

@@ -43,7 +43,7 @@ public class AgentTeam {
         resources.put(name, new Resource(this, name));
         Symbol learningResource = Factory.createSymbol("learning");
         resources.put(learningResource, new Resource(this,learningResource));
-        actionLearning = new ActionLearning(em, false);
+        actionLearning = new ActionLearning(em, em.getActionLearningGuiFlag());
     }
 
     public Symbol getName() {
