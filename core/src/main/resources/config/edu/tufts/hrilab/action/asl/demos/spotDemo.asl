@@ -197,7 +197,7 @@ import java.util.List;
     op:log(info, "Delivering ?type ?object to ?at.");
     !typeString = op:getName(?type);
     act:command(arm_carry);
-    act:askQuestionFromString(brad, "Let me know when you're holding the !typeString.", val(X));
+    act:askQuestionFromString(brad, "Let me know when you're holding the !typeString.", holding(X));
     op:log(info, "Finishing handoff");
     act:openGripper();
     op:sleep(1000);

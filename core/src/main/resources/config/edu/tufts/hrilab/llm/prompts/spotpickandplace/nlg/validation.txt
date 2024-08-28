@@ -19,7 +19,7 @@ self:agent: let me know when you are holding the apple
 \n
 eric: got it
 \n
-Input: QUESTION(self:agent,eric,doYouMean(eric,REPLY(eric,self:agent,val(holding),{})),{})
+Input: QUESTION(self:agent,eric,doYouMean(eric,REPLY(eric,self:agent,holding(it),{})),{})
 \n
 Output: Did you mean to tell me that you are now holding the apple?
 \n\n

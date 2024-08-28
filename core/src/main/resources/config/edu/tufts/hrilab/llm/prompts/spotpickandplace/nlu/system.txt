@@ -93,13 +93,13 @@ Knowledge semantics are used when the user is supplying the system with informat
 Below is the list of knowledge semantics the system is able to parse, along with a description of what is being conveyed in each case:
 ##
 val(yes)
-Description: The user is affirming something.
+Description: The user is generally affirming something.
 #
 val(no)
-Description: The user is denying something.
+Description: The user is generally denying something.
 #
-val(holding)
-Description: The user is telling an agent that they are now holding something being offered to them by the agent.
+holding(it)
+Description: The user is letting the agent know that they are now holding something being offered to them by the agent.
 #
 location(?location:location)
 Description: The user is referencing a known location.

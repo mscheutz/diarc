@@ -161,17 +161,17 @@ search for; VERBT; perceiveEntity
 find; VERBT; perceiveEntity
 
 %Versions which allow ref specified?
-am holding it; VAL; val(holding)
-im holding it; VAL; val(holding)
-i'm holding it; VAL; val(holding)
-am holding; VAL; val(holding)
-im holding; VAL; val(holding)
-i'm holding; VAL; val(holding)
-holding it; VAL; val(holding)
-holding; VAL; val(holding)
-have it; VAL; val(holding)
-got it; VAL; val(holding)
-%now; VAL; val(holding)
+am holding it; VAL; holding(it)
+im holding it; VAL; holding(it)
+i'm holding it; VAL; holding(it)
+am holding; VAL; holding(it)
+im holding; VAL; holding(it)
+i'm holding; VAL; holding(it)
+holding it; VAL; holding(it)
+holding; VAL; holding(it)
+have it; VAL; holding(it)
+got it; VAL; holding(it)
+%now; VAL; holding(it)
 
 bottle; THING
 apple; THING

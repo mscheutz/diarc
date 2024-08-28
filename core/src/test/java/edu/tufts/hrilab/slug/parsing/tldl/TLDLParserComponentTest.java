@@ -4152,7 +4152,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("i am holding it",
-                "REPLY(eric,self,val(holding),{})",
+                "REPLY(eric,self,holding(it),{})",
                 "eric",
                 "self"
         ));
