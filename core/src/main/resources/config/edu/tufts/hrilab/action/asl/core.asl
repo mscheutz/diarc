@@ -428,27 +428,6 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     op:log("debug", "[getGoal] have goals: ?goals.");
 }
 
-//====================== Translation Generation =======================
-
-() = translateGoal(edu.tufts.hrilab.fol.Predicate ?goal){
-   java.lang.Integer !contextID;
-
-   (!contextID)= act:getContextForGoal(?goal);
-   act:translate(!contextID);
-}
-
-() = translateLastGoal(){
-  java.lang.Integer !contextCount;
-
-  //get size of Context tree
-  (!contextCount) = act:getCurrentContextCount();
-
-  //remove index of this goal
-  (!contextCount) = op:-(!contextCount,4);
-
-  act:translate(!contextCount);
-}
-
 () = estimatePerformanceMeasures(edu.tufts.hrilab.fol.Predicate ?goalPred, edu.tufts.hrilab.fol.Symbol ?temporal, edu.tufts.hrilab.fol.Predicate ?assessmentModification = "if(none())") {
 //() = estimatePerformanceMeasures(edu.tufts.hrilab.fol.Predicate ?goalPred, edu.tufts.hrilab.fol.Symbol ?temporal, edu.tufts.hrilab.fol.Predicate ?assessmentModification,  java.lang.Integer ?numSamples) {
   edu.tufts.hrilab.fol.Symbol !prob;

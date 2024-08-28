@@ -14,7 +14,6 @@ import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.db.performanceMeasures.PerformanceMeasures;
 import edu.tufts.hrilab.action.description.ActionContextDescription;
 import edu.tufts.hrilab.action.description.ContextDescription;
-import edu.tufts.hrilab.action.translation.TranslationInfo;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -27,7 +26,6 @@ import edu.tufts.hrilab.action.justification.AndJustification;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.action.lock.ActionResourceLock;
-import edu.tufts.hrilab.util.Util;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -1044,14 +1042,6 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       }
     }
 
-  }
-
-  public TranslationInfo getTranslation() {
-    TranslationInfo temp = getDBE().getTranslationInfo();
-    if (temp != null) {
-      return temp.generateTranslationTemplate();
-    }
-    return null;
   }
 
 }

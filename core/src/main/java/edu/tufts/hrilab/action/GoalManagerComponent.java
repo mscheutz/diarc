@@ -9,7 +9,6 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import edu.tufts.hrilab.action.annotations.Action;
-import edu.tufts.hrilab.action.description.ActionContextDescription;
 import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.goal.Goal;
@@ -27,8 +26,6 @@ import edu.tufts.hrilab.action.db.DatabaseListener;
 import edu.tufts.hrilab.action.lock.ActionResourceLockLinear;
 
 import edu.tufts.hrilab.action.state.StateMachine;
-import edu.tufts.hrilab.action.translation.TranslationGenerator;
-import edu.tufts.hrilab.action.translation.TranslationInfo;
 import edu.tufts.hrilab.belief.common.MemoryLevel;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
@@ -38,7 +35,6 @@ import edu.tufts.hrilab.util.Util;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -128,14 +124,7 @@ public class GoalManagerComponent extends DiarcComponent {
    * Notifier for addition/removal of actions.
    */
   private GoalManagerNotifier notifier;
-  /**
-   * Translator for generating offline representations of actions.
-   */
-  static TranslationGenerator translator;
-  /**
-   * Used for instantiating translator at runtime.
-   */
-  private String translatorType;
+
   /**
    * Command line arg to utilize pruning of memory in goal manager
    */
@@ -782,7 +771,6 @@ public class GoalManagerComponent extends DiarcComponent {
     options.add(Option.builder("goal").hasArgs().argName("goal-pred").desc("start goal with specified goal predicate. \"goal(actor,state)\" or \"action(actor,args)\"").build());
     options.add(Option.builder("badaction").numberOfArgs(1).desc("add bad action").build());
     options.add(Option.builder("badstate").numberOfArgs(1).desc("add bad state").build());
-    options.add(Option.builder("translatorType").hasArgs().desc("fully qualified type for offline translator").build());
     options.add(Option.builder("executionManagerType").hasArgs().desc("fully qualified type for execution manager").build());
     options.add(Option.builder("priorityFile").hasArgs().desc("goal priority information file").build());
     options.add(Option.builder("nomemorymanager").desc("Do not utilize the memory manager in the goal manager to prune old goals").build());
@@ -803,9 +791,6 @@ public class GoalManagerComponent extends DiarcComponent {
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
-    if (cmdLine.hasOption("translatorType")) {
-      TranslationGenerator.setTranslationGeneratorType(cmdLine.getOptionValue("translatorType"));
-    }
     if (cmdLine.hasOption("executionManagerType")) {
       try {
         executionManagerType = (Class<ExecutionManager>) Class.forName(cmdLine.getOptionValue("executionManagerType"));
@@ -984,99 +969,12 @@ public class GoalManagerComponent extends DiarcComponent {
     }
   }
 
-  @TRADEService
-  @Action
-  public int getCurrentContextCount() {
-    Context root = em.getRootContext();
-    ChildContexts children = root.getChildContexts();
-    log.debug("child context count: " + children.size());
-    return children.size();
-  }
-
-  private void createTranslator(String translationGeneratorType) {
-    Class<?> generatorClass = null;
-    try {
-      generatorClass = Class.forName(translationGeneratorType);
-    } catch (ClassNotFoundException ex) {
-      log.error("Class not found: " + translationGeneratorType);
-    }
-    TranslationGenerator generator = null;
-    try {
-      if (generatorClass != null) {
-        Constructor generatorConstructor = generatorClass.getConstructor();
-        generator = (TranslationGenerator) (generatorConstructor.newInstance());
-      }
-    } catch (Exception e) {
-      log.error("Exception creating translation generator: ", e);
-    }
-    translator = generator;
-  }
-
-  @TRADEService
-  @Action
+  /**
+   * Utility method mainly used for testing.
+   * @param predicate
+   */
   public void setState(Predicate predicate) {
     em.getStateMachine().assertBelief(predicate, MemoryLevel.EPISODIC, Factory.createPredicate("setState(gui)"));
-  }
-
-  @TRADEService
-  @Action
-  public void translate(int contextID) {
-    TranslationGenerator t = TranslationGenerator.getInstance();
-    if (t != null) {
-      translate(contextID, t);
-    } else {
-      log.error("Unable to translate action due to translation generator being unavailable!");
-    }
-  }
-
-  public void translate(int contextID, TranslationGenerator generator) {
-    List<TranslationInfo> steps = translateHelper(em.getRootContext().getChildContexts().getChildrenContexts().get(contextID), new ArrayList<>());
-    generator.generateTranslation(steps);
-  }
-
-  private List<TranslationInfo> translateHelper(Context c, List<TranslationInfo> steps) {
-    List<Context> children = c.getChildContexts().getChildrenContexts();
-    if (c instanceof ActionContext) {
-      ActionContext actionContext = (ActionContext) c;
-      log.info("Context: {}", c);
-      log.info("Translation: {}", actionContext.getTranslation());
-      if (actionContext.getTranslation() != null) {
-        TranslationInfo info = actionContext.getTranslation();
-        for (ActionBinding arg : actionContext.getArguments()) {
-          //remove the ? from arg name //there is seemingly an issue with ret where it doesn have an ! or ? at the beginning
-          String paramName = arg.getName();
-          Object paramValue = arg.getBindingDeep();
-          info.addParamToValueBinding(paramName.substring(1), paramValue);
-        }
-        steps.add(info);
-      }
-    }
-    if (!children.isEmpty()) {
-      for (Context child : children) {
-        translateHelper(child, steps);
-      }
-    }
-    return steps;
-  }
-
-  @TRADEService
-  @Action
-  public int getContextForGoal(Predicate g) {
-    //wrap to mach goal syntax
-    g = new Predicate("goal", new Predicate("did", g));
-    Context root = em.getRootContext();
-    ChildContexts children = root.getChildContexts();
-    int i = 0;
-    for (Context child : children.getChildrenContexts()) {
-      if (child.getCommand().equals(g.toString())) {
-        break;
-      }
-      i++;
-    }
-    if (i == children.getChildrenContexts().size()) {
-      return -1;
-    }
-    return i;
   }
 
   @Override

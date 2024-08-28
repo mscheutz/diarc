@@ -5,7 +5,6 @@
 package edu.tufts.hrilab.action.gui;
 
 import edu.tufts.hrilab.action.GoalManagerComponent;
-import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
@@ -27,7 +26,6 @@ public class GoalManagerGUI {
     private JPanel contentPanel;
     private JPanel submitPanel;
     private JPanel gmPanel;
-    private JButton fetch_lgButton;
     private JButton ap_caddy;
     private JButton goToPoseButton;
     private JButton assembleButton;
@@ -63,7 +61,6 @@ public class GoalManagerGUI {
     private JTextField suspendGoalField;
     private JTextField resumeGoalField;
     private JTextField setAgentTxtField;
-    private JButton setAgentButton;
     private JLabel setAgentLabel;
     private JTextField perfFileNameTxtField;
     private JPanel submitActionPanel;
@@ -290,8 +287,7 @@ public class GoalManagerGUI {
                 super.mouseClicked(mouseEvent);
                 if (!setStateTextField.getText().isEmpty()) {
                     getAgent();
-                    goalManager.submitGoal(
-                            Factory.createPredicate("setState", agent.toString(), setStateTextField.getText()));
+                    goalManager.setState(Factory.createPredicate(setStateTextField.getText()));
                 }
             }
         });

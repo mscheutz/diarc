@@ -124,11 +124,6 @@ public class FetchPerformanceAssessmentDemoTest extends GenerativeDiarcIntegrati
   }
 
   private void setState() {
-    // TODO: the submitGoal version causes a race condition -- figure out why
-//    Predicate goal = Factory.createPredicate("setState", agent, Factory.createPredicate("at(andy:agent,location_0:location)"));
-//    long goalId = gm.submitGoal(goal);
-//    gm.joinOnGoal(goalId);
-
     gm.setState(Factory.createPredicate("at(andy:agent,location_0:location)"));
   }
 }
