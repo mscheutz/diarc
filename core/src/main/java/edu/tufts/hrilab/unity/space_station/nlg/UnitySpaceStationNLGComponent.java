@@ -50,6 +50,12 @@ public class UnitySpaceStationNLGComponent extends DiarcComponent {
       modified = true;
     }
 
+    //sorry, unknown does Not Know What hm means
+    if (utt.startsWith("sorry, unknown does")) {
+      utt = utt.replace("sorry, unknown does", "sorry, I do");
+      modified = true;
+    }
+
     if (modified) {
       log.debug("spaceStationModifyNLG modified: \"" + utt + "\"");
     }
