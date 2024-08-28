@@ -51,6 +51,9 @@ public class TradeServiceContext extends ArgumentBasedContext {
     if (!returnArgs.isEmpty()) {
       Class cls = getArgumentType((String) returnArgs.get(0));
       addArgument("ret", cls, returnArgs.get(0), false, true);
+    } else {
+      //
+      addArgument("ret", Object.class, null, false, true);
     }
 
   }
@@ -62,9 +65,9 @@ public class TradeServiceContext extends ArgumentBasedContext {
       Symbol actor = (Symbol) getArgument("?actor").getBinding();
       Justification just = new ConditionJustification(false, Factory.createPredicate("found", actor, getSignatureInPredicateForm()));
       setStatus(ActionStatus.FAIL_NOTFOUND, just);
-      return;
     } else {
       callTSI(tsi, getArguments());
+      redistributeArguments();
     }
 
   }

@@ -5,6 +5,7 @@
 package edu.tufts.hrilab.action.asl;
 
 import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.fol.Factory;
@@ -16,8 +17,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Helper class to expose various TRADEServices for testing ASL tsc calls.
  */
-public class TSCTestHelper {
-  private static Logger log = LoggerFactory.getLogger(TSCTestHelper.class);
+public class TestHelper {
+  private static Logger log = LoggerFactory.getLogger(TestHelper.class);
 
   /**
    * Because this helper class lives in the action test package, it automatically
@@ -48,5 +49,57 @@ public class TSCTestHelper {
   public Justification tsc4() {
     log.info("tsc4");
     return new ConditionJustification(true, Factory.createPredicate("succeeded(tsc4)"));
+  }
+
+  @TRADEService
+  public boolean tsc_bool_true() {
+    log.info("tsc_bool_true");
+    return true;
+  }
+
+  @TRADEService
+  public boolean tsc_bool_false() {
+    log.info("tsc_bool_true");
+    return false;
+  }
+
+  @TRADEService
+  public Justification tsc_justification_true() {
+    log.info("tsc_justification_true");
+    return new ConditionJustification(true);
+  }
+
+  @TRADEService
+  public Justification tsc_justification_false() {
+    log.info("tsc_justification_false");
+    return new ConditionJustification(false);
+  }
+
+  @Action
+  @TRADEService
+  public boolean act_bool_true() {
+    log.info("act_bool_true");
+    return true;
+  }
+
+  @Action
+  @TRADEService
+  public boolean act_bool_false() {
+    log.info("act_bool_false");
+    return false;
+  }
+
+  @Action
+  @TRADEService
+  public Justification act_justification_true() {
+    log.info("act_justification_true");
+    return new ConditionJustification(true);
+  }
+
+  @Action
+  @TRADEService
+  public Justification act_justification_false() {
+    log.info("act_justification_false");
+    return new ConditionJustification(false);
   }
 }
