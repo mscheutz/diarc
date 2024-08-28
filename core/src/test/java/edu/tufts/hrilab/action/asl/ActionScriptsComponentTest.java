@@ -175,6 +175,24 @@ public class ActionScriptsComponentTest {
     // create goal and execute
     goalPredicate = Factory.createPredicate("test2(self:agent)");
     executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+
+    // instantiate test TRADE services
+    TestHelper helper = new TestHelper();
+    try {
+      TRADE.registerAllServices(helper,new ArrayList<>());
+    } catch (TRADEException e) {
+      log.error("Could not register TSCTestHelper.", e);
+    }
+
+    // create goal and execute
+    goalPredicate = Factory.createPredicate("test4(self:agent)");
+    executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+
+    try {
+      TRADE.deregister(helper);
+    } catch (TRADEException e) {
+      log.error("Could not de-register TSCTestHelper.", e);
+    }
   }
 
   @Test
@@ -224,7 +242,7 @@ public class ActionScriptsComponentTest {
     Database.getInstance().loadDatabaseFromFile(filename);
 
     // instantiate test TRADE services
-    TSCTestHelper helper = new TSCTestHelper();
+    TestHelper helper = new TestHelper();
     try {
       TRADE.registerAllServices(helper,new ArrayList<>());
     } catch (TRADEException e) {
@@ -237,6 +255,8 @@ public class ActionScriptsComponentTest {
     executeAndCheckGoal(Factory.createPredicate("runFailTest1(self:agent)"), GoalStatus.FAILED);
 
     executeAndCheckGoal(Factory.createPredicate("runFailTest2(self:agent)"), GoalStatus.FAILED);
+
+    executeAndCheckGoal(Factory.createPredicate("runBooleanTest(self:agent)"), GoalStatus.SUCCEEDED);
 
     try {
       TRADE.deregister(helper);
