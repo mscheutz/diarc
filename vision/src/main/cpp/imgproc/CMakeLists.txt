@@ -20,7 +20,7 @@ SET(SOURCES
 	validator/SizeValidator.cpp
 	)
 
-SET(CONFIG_DIR "../vision/build/resources/main/config/edu/tufts/hrilab/vision/imageProcs")
+SET(CONFIG_DIR "../vision/build/resources/main/config/edu/tufts/hrilab/vision/imgProcs")
 
 # optional sources
 if (OpenCV_dnn_FOUND)
