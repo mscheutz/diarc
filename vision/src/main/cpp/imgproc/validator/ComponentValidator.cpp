@@ -14,7 +14,7 @@
 #include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
-
+ 
 #include "capture/calibration/Cameras.hpp"
 #include "display/Display.hpp"
 #include "capture/util/CaptureUtilities.hpp"
@@ -26,6 +26,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/filters/filter.h>
+#include <pcl/common/common.h>
 
 
 using namespace ade::stm;
@@ -107,13 +108,13 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
   MemoryObject::Ptr object = notification->object;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr sceneCloud = object->getDetectionMask()->getCaptureData()->cloud;
-  pcl::io::savePCDFile<pcl::PointXYZ>("/home/schneiders/Desktop/sceneCloudObj1.pcd", *sceneCloud);
-
+  
   // check if this typeId should currently be processed
   DescriptorsByTypeConstPtr types = getTypes();
   DescriptorsByType::const_iterator types_itr = types->find(object->getTypeId());
+
   if (types_itr != types->end()) {
-  
+
     // get current descriptors to process
     TypesByDescriptorConstPtr descriptors = getDescriptors();
     TypesByDescriptor::const_iterator descriptor_iter;
@@ -121,9 +122,9 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
     // get MemoryObject cloud and remove NaNs
     std::shared_ptr<const pcl::PointCloud<pcl::PointXYZ>> objectCloud = object->getDetectionMask()->getObjectPointCloud();
-    //pcl::io::savePCDFile<pcl::PointXYZ>("/home/schneiders/Desktop/objectCloudObj1.pcd", *objectCloud);
     
     cv::Mat objectDepthImage(objectCloud->height, objectCloud->width, CV_32FC1);
+
     ade::pc::util::pointCloudToDepth(objectDepthImage, objectCloud);
 
     // Normalize depth values to specific range and set background to maxvalue + 1
@@ -140,17 +141,13 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
     cv::dnn::blobFromImage(objectDepthImageNorm, blob, scalefactor, depthImageSize, noMean, true, CV_32F); 
     net.setInput(blob);
 
-    cv::Mat blobSingle = blob.reshape(1, 192); // reshape to [192, 256]
-    cv::normalize(blobSingle, blobSingle, 0, 255, cv::NORM_MINMAX);
-    // Save the image
-    cv::imwrite("/home/schneiders/Desktop/blobimage.png", blobSingle);
     
     cv::Mat semMatrix = net.forward();
     LOG4CXX_TRACE(logger, "[ComponentDetector] Model applied to input image.");
 
     // Apply sigmoid to the matrix
     cv::Mat semMatrixSig = applySigmoidToMatrix(semMatrix);
-    
+
     // Check if the output matrix is valid before using it
     if (semMatrixSig.empty()) {
       LOG4CXX_DEBUG(logger, boost::format("Semantic Matrix not valid"));
@@ -161,7 +158,55 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
     int predAxis;
     int predIdx;
     bool predFound;
+    std::vector<bool> foundPredicatesVector(semanticProperties.size(), false);
 
+    bool sideComp1IsPresent = isSideComponentPresent(1, semMatrixSig);
+    bool sideComp2IsPresent = isSideComponentPresent(2, semMatrixSig);
+
+    // Determine if semantic predicates are present for object and save results in vector of booleans
+    for (auto sp = semanticProperties.begin(); sp != semanticProperties.end() - 1; ++sp) {
+      predShape = sp->predicateShape;
+      predAxis = sp->predicateAxis;
+      predIdx = sp->predicateIndex;
+
+      foundPredicatesVector[predIdx] = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
+
+      // If side component 1 is not found, we do not need to go further
+      if (sideComp1IsPresent == false && predIdx >= 6){
+        foundPredicatesVector[0] = true;
+        break;
+      }
+      
+      // If side component 2 is not found, we do not need to go further
+      if (sideComp2IsPresent == false && predIdx >= 18) {
+        foundPredicatesVector[1] = true;
+        break;
+      }
+
+      if (predIdx == 5) {
+        if (foundPredicatesVector[3] == false && foundPredicatesVector[4] == false)
+        {
+          foundPredicatesVector[5] = true;
+        }
+      }
+      if (sideComp1IsPresent == true && predIdx == 8) {
+        if (foundPredicatesVector[6] == false && foundPredicatesVector[7] == false)
+        {
+          foundPredicatesVector[8] = true;
+        }
+      }
+      if (sideComp2IsPresent == true && predIdx == 20) {
+        if (foundPredicatesVector[18] == false && foundPredicatesVector[19] == false)
+        {
+          foundPredicatesVector[20] = true;
+        }
+      }
+    }
+
+    if (sideComp1IsPresent == true && sideComp2IsPresent == true) {
+      foundPredicatesVector[2] = true;
+    }
+    
     PredicateHelper::Set::const_iterator descriptors_itr;
     for (descriptors_itr = types_itr->second.begin(); descriptors_itr != types_itr->second.end(); 
       ++descriptors_itr) {
@@ -170,32 +215,12 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
       if (keyToFind == "any")
       {
-
-        bool sideComp1IsPresent = false;
-        bool sideComp2IsPresent = false;
-        
         // Access all elements except the last one
         for (auto sp = semanticProperties.begin(); sp != semanticProperties.end() - 1; ++sp) {
-          predShape = sp->predicateShape;
-          predAxis = sp->predicateAxis;
-          predIdx = sp->predicateIndex;
-          predFound = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
-
-          // check if any shape predicate of side component 1 is true
-          if (predFound && (predIdx == 4 || predIdx == 5 || predIdx == 6 || predIdx == 7)) {
-            sideComp1IsPresent = true;
-          }
-
-          // check if any shape predicate of side component 2 is true
-          if (predFound && (predIdx == 16 || predIdx == 17 || predIdx == 18 || predIdx == 19)) {
-            sideComp2IsPresent = true;
-          }
-
-          // If no shape predicate of side component 1 / 2 was found, the side component 
-          // is not present and we do not need to go further
-          if (((sideComp1IsPresent == false) && predIdx >= 8) || ((sideComp2IsPresent == false) && predIdx >= 20)) {
-            break;
-          }
+          
+          // Set the corresponding index in foundPredicatesVector to predFound
+          size_t index = std::distance(semanticProperties.begin(), sp);
+          bool predFound = foundPredicatesVector[index];
 
           if (predFound) {
               
@@ -203,16 +228,14 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
             object->addValidationResult(confidence, PredicateHelper(
                         sp->predicateKey + "(" + descriptors_itr->getArg(0) + ")"));
             
-            
             // Logging the message with concatenated details
             LOG4CXX_TRACE(logger, "Detection notification sent. Predicate details: " 
               << sp->predicateKey << "(" 
               << descriptors_itr->getArg(0) << ")");
 
-            std::cout << "Predicate " << sp->predicateKey << "(" 
-              << descriptors_itr->getArg(0) << ")" << " found" << std::endl;
           }
         }
+        
         sendValidationNotifications(object);
         
       } else {
@@ -227,11 +250,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
           continue;
         } 
 
-        predShape = it->predicateShape;
-        predAxis = it->predicateAxis;
-        predIdx = it->predicateIndex;
-
-        predFound = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
+        predFound = foundPredicatesVector[it->predicateIndex];
         
         if (!predFound) {
           LOG4CXX_DEBUG(logger, boost::format("Semantic Property not found"));
@@ -280,18 +299,28 @@ void ComponentValidator::removeNansAndNoise(const cv::Mat& objectDepthImage, cv:
   
   // Normalize depth values to specific range and set background to maxvalue + 1
   normalizeDepthImage(objectDepthImage, nanBackgroundMask, objectDepthImageNorm);
-  centerObject(objectDepthImageNorm, nanBackgroundMask);
 
   // Impaint nan values inside object 
   int impaintingRadius = 30;
   cv::inpaint(objectDepthImageNorm, nanInsideMask, objectDepthImageNorm, impaintingRadius, cv::INPAINT_TELEA);
+  centerObject(objectDepthImageNorm, nanBackgroundMask);
 
-  // Apply Non-Local Means Denoising to remove noisy pixels inside object
-  int kernelSize = 9;
   objectDepthImageNorm.convertTo(objectDepthImageNorm, CV_8U);
-  cv::medianBlur(objectDepthImageNorm, objectDepthImageNorm, kernelSize);
-  cv::normalize(objectDepthImageNorm, objectDepthImageNorm, minNormValue, maxNormValue + 1, cv::NORM_MINMAX);
-  
+  cv::Mat blurredImage = objectDepthImageNorm.clone(); // Clone to hold the blurred result
+  // Apply median blur to the entire image
+  int kernelSize = 5; // Example kernel size
+  cv::medianBlur(objectDepthImageNorm, blurredImage, kernelSize);
+  // Copy the blurred ROI back to the original image
+  blurredImage.copyTo(objectDepthImageNorm, nanBackgroundMask);
+
+  // Calculate new dimensions
+  int newWidth = static_cast<int>(objectDepthImageNorm.cols * widthCompressionFactor);
+  int newHeight = static_cast<int>(objectDepthImageNorm.rows * heightCompressionFactor);
+  objectDepthImageNorm.convertTo(objectDepthImageNorm, CV_32F);
+
+  // Resize the image
+  cv::resize(objectDepthImageNorm, objectDepthImageNorm, cv::Size(newWidth, newHeight));
+  cv::normalize(objectDepthImageNorm, objectDepthImageNorm, 0.85, 1.0, cv::NORM_MINMAX);
 }
 
 
@@ -315,6 +344,28 @@ void ComponentValidator::centerObject(cv::Mat& objectDepthImageNorm, const cv::M
           cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(maxNormValue + 1));
   } else {
     LOG4CXX_DEBUG(logger, "[ComponentValidation] no contour found in depth image.");          
+  }
+}
+
+
+bool ComponentValidator::isSideComponentPresent(const int compIndex, const cv::Mat& semMat) {
+
+  float dx = semMat.at<float>(0, sideCompIdcs[compIndex - 1][0]); 
+  float dy = semMat.at<float>(0, sideCompIdcs[compIndex - 1][1]); 
+  float dz = semMat.at<float>(0, sideCompIdcs[compIndex - 1][2]); 
+  float n1 = semMat.at<float>(0, sideCompIdcs[compIndex - 1][3]); 
+  float n2 = semMat.at<float>(0, sideCompIdcs[compIndex - 1][4]); 
+  float ax = semMat.at<float>(0, sideCompIdcs[compIndex - 1][5]); 
+  float ay = semMat.at<float>(0, sideCompIdcs[compIndex - 1][6]); 
+  float az = semMat.at<float>(0, sideCompIdcs[compIndex - 1][7]); 
+  
+  float sum = dx + dy + dz + n1 + n2 + ax + ay + az;
+
+  if (sum > existenceThreshold)
+  {
+    return true;
+  } else {
+    return false;
   }
 }
 
@@ -345,42 +396,45 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
   
   switch (semPredIdx) {
     //we look for base component shape predicates
-    case 0: case 1: case 2: case 3:
+    case 0: case 1: case 2:
+      break;
+    //we look for base component shape predicates
+    case 3: case 4: case 5:
       compIndex = 0;
       shapePredicate = true;
       break;
     //we look for side component 1 shape predicates
-    case 4: case 5: case 6: case 7:
+    case 6: case 7: case 8: 
       compIndex = 1;
       shapePredicate = true;
       break;
     //we look for side component 2 shape predicates
-    case 16: case 17: case 18: case 19:
+    case 18: case 19: case 20: 
       compIndex = 2;
       shapePredicate = true;
       break;
     //we look for side component 1 position predicates
-    case 8: case 9: case 10: case 11: case 12: case 13:
+    case 9: case 10: case 11: case 12: case 13: case 14:
       compIndex = 1;
       positionPredicate = true;
       break;
       //we look for side component 2 position predicates
-    case 20: case 21: case 22: case 23: case 24: case 25:
+    case 21: case 22: case 23: case 24: case 25: case 26:
       compIndex = 2;
       positionPredicate = true;
       break;
     //we look for side component 1 size predicates
-    case 14: case 15:
+    case 15: case 16: case 17:
       compIndex = 1;
       sizePredicate = true;
       break;
     //we look for side component 2 size predicates
-    case 26: case 27:
+    case 27: case 28: case 29:
       compIndex = 2;
       sizePredicate = true;
       break;
     default:
-      std::cerr << "semPredIdx not defined " << semPredIdx << std::endl;
+      LOG4CXX_DEBUG(logger, "[ComponentValidation] semPredIdx value not defined ");  
       return semMatch;
   }
 
@@ -403,17 +457,6 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
 
 bool ComponentValidator::processShape(const int compIndex, const cv::Mat& semMat, const int semPredShape) {
   
-  ComponentValidator::shapeIdcs = {
-    {0, 1, 2, 3},  //shape indices of base component 
-    {8, 9, 10, 11},  //shape indices of side component 1
-    {16, 17, 18, 19}  //shape indices of side component 2
-  };
-  
-  // Initialize semMatch to false
-  bool semShapeMatch = false;
-  double maxValue;
-  cv::Point maxLoc;
-
   const auto& idcs = shapeIdcs[compIndex];
   // Extract the specified semantic matrix column for the current component
   cv::Mat shapeParams = semMat.col(idcs[0]);
@@ -421,72 +464,81 @@ bool ComponentValidator::processShape(const int compIndex, const cv::Mat& semMat
     cv::hconcat(shapeParams, semMat.col(idcs[i]), shapeParams);
   }
 
-  // Find the maximum value among the values of side component 2
-  cv::minMaxLoc(shapeParams, nullptr, &maxValue, nullptr, &maxLoc);
-  int maxIndex = maxLoc.x;
+  const float n1 = shapeParams.at<float>(0, 0);
+  const float n2 = shapeParams.at<float>(0, 1);
+  const float ax = shapeParams.at<float>(0, 2);
+  const float ay = shapeParams.at<float>(0, 3);
 
-  // Determine shape only if side component is present
-  if (compIndex != 0 && maxValue > 0.5) {
-    int chosenIndex = maxLoc.x;
-    // If the shape is the same as the shape we are looking for
-    if (maxIndex == semPredShape) {
-      semShapeMatch = true;
-    }
-  } else if (compIndex == 0) {
-    // The base component will always exist
-    if (maxIndex == semPredShape) {
-      semShapeMatch = true;
-    }
+  // Determine if the shape matches the predicate we are looking for
+  switch (semPredShape) {
+    case 0: 
+      return isCylinder(n1, n2, ax, ay);
+    case 1: 
+      return isCuboid(n1, n2, ax, ay);
+    case 2: 
+      return isEllipsoid(n1, n2, ax, ay);
+    default:
+      return false;
   }
-
-  // Return the result
-  return semShapeMatch;
-
 }
 
 
+bool ComponentValidator::isCylinder(const float n1, const float n2, const float ax, const float ay) {
+    
+    bool isN1Small = n1 < lowerEdginessThreshold;
+    bool isN2Large = n2 > upperEdginessThreshold;
+    bool areAxAndAySimilar = std::abs(ax - ay) < similarityTolerance;
+
+    // All conditions must be true
+    return isN1Small && isN2Large && areAxAndAySimilar;
+}
+
+
+bool ComponentValidator::isEllipsoid(const float n1, const float n2, const float ax, const float ay) {
+     
+    bool isN1Large = n1 > upperEdginessThreshold;
+    bool isN2Large = n2 > upperEdginessThreshold;
+    bool areAxAndAySimilar = std::abs(ax - ay) < similarityTolerance;
+
+    // All conditions must be true
+    return isN1Large && isN2Large && areAxAndAySimilar;
+}
+
+
+bool ComponentValidator::isCuboid(const float n1, const float n2, const float ax, const float ay) {
+    
+    bool isN1Small = n1 < lowerEdginessThreshold;
+    bool isN2Small = n2 < lowerEdginessThreshold;
+    bool areAxAndAySimilar = std::abs(ax - ay) < similarityTolerance;
+ 
+    // All conditions must be true
+    return isN1Small && isN2Small && areAxAndAySimilar;
+}
+
+
+// Check discrete position 
 bool ComponentValidator::processPosition(const int compIndex, const cv::Mat& semMat, const int semPredAxis) {
 
-  ComponentValidator::positionIdcs = {
-    {4, 5, 6},  // spatial indices (x,y,z) of base component
-    {12, 13, 14},  // spatial indices (x,y,z) of side component 1
-    {20, 21, 22}  // spatial indices (x,y,z) of side component 2
-  };
-
-  float maxLength = 10;
-  float maxShift = 3.5;
-  
   // Initialize semMatch to false
   bool semPositionMatch = false;
-
-  float baseLocation; 
-  float sideLocation;
   float distance;
   
-  if (semPredAxis == 0 || semPredAxis == 1 ) {  // x-axis distance
-    baseLocation = semMat.at<float>(0, positionIdcs[0][0]);
-    sideLocation = semMat.at<float>(0, positionIdcs[compIndex][0]);
-  } else if (semPredAxis == 2 || semPredAxis == 3) {  // y-axis distance
-    baseLocation = semMat.at<float>(0, positionIdcs[0][1]);  
-    sideLocation = semMat.at<float>(0, positionIdcs[compIndex][1]);
-  } else if (semPredAxis == 4 || semPredAxis == 5) {  // z-axis distance
-    baseLocation = semMat.at<float>(0, positionIdcs[0][2]); 
-    sideLocation = semMat.at<float>(0, positionIdcs[compIndex][2]);   
+  if (semPredAxis == 2 || semPredAxis == 3 ) {  // x-axis distance
+    distance = semMat.at<float>(0, positionIdcs[compIndex][0]);
+  } else if (semPredAxis == 4 || semPredAxis == 5) {  // y-axis distance
+    distance = semMat.at<float>(0, positionIdcs[compIndex][1]);
+  } else if (semPredAxis == 0 || semPredAxis == 1) {  // z-axis distance
+    distance = semMat.at<float>(0, positionIdcs[compIndex][2]);   
   } else {
-    std::cerr << "Axis " << semPredAxis << " is not part of the defined groups." << std::endl;
+    LOG4CXX_DEBUG(logger, "[ComponentValidation] semPredAxis value not defined ");  
   }
 
-  float baseLocationDeNorm = denormalize(baseLocation, -maxShift, maxShift);
-  float sideLocationDeNorm = denormalize(sideLocation, -maxShift - maxLength, maxShift + maxLength);
-
-  distance =  sideLocationDeNorm - baseLocationDeNorm;
-
-  if ((semPredAxis == 0 || semPredAxis == 2 || semPredAxis == 4) && distance > 0) {
-    // to the right (x-axis), on top (y-axis), in front (z-axis)
+  if ((semPredAxis == 0 || semPredAxis == 2 || semPredAxis == 4) && (distance > (1 - positionTolerance))) {
+    // in front (z-axis), to the right (x-axis), on top (y-axis)
     semPositionMatch = true;  
    
-  } else if ((semPredAxis == 1 || semPredAxis == 3 || semPredAxis == 5) && distance < 0) {
-    // to the left (x-axis), at bottom (y-axis), behind (z-axis)
+  } else if ((semPredAxis == 1 || semPredAxis == 3 || semPredAxis == 5) && (distance < (0 + positionTolerance))) {
+    // behind (z-axis), to the left (x-axis), at bottom (y-axis), 
     semPositionMatch = true;
 
   } 
@@ -499,24 +551,26 @@ bool ComponentValidator::processPosition(const int compIndex, const cv::Mat& sem
 
 bool ComponentValidator::processSize(const int compIndex, const cv::Mat& semMat, const int semPredIdx) {
 
-  ComponentValidator::sizeIdcs = {
-    {7},  // size indices of base component
-    {15},  // size indices of side component 1
-    {23}  // size indices of side component 2
-  };
-  
   // Initialize semMatch to false
   bool semSizeMatch = false;
 
-  float baseSize = semMat.at<float>(0, sizeIdcs[0][0]); 
-  float sideSize = semMat.at<float>(0, sizeIdcs[compIndex][0]); 
-  float difference = sideSize - baseSize;
+  float axb = semMat.at<float>(0, sizeIdcs[0][0]); 
+  float ayb = semMat.at<float>(0, sizeIdcs[0][1]); 
+  float azb = semMat.at<float>(0, sizeIdcs[0][2]); 
+  float axs = semMat.at<float>(0, sizeIdcs[compIndex][0]); 
+  float ays = semMat.at<float>(0, sizeIdcs[compIndex][1]); 
+  float azs = semMat.at<float>(0, sizeIdcs[compIndex][2]); 
+  float volumeBase = axb * ayb;
+  float volumeSide = axs * ays;
 
-  if ((semPredIdx == 14 || semPredIdx == 26) && difference >= 0) {
+  float volumeDifference = volumeSide - volumeBase;
+
+  if ((semPredIdx == 15 || semPredIdx == 27) && (volumeDifference > (0 + volumeThreshold))) {
     semSizeMatch = true;
-  }
-  
-  if ((semPredIdx == 15 || semPredIdx == 27) && difference < 0) {
+  } else if ((semPredIdx == 16 || semPredIdx == 28) && (volumeDifference < (0 - volumeThreshold))) {
+    semSizeMatch = true;
+  } else if ((semPredIdx == 17 || semPredIdx == 29) && (volumeDifference > (0 - volumeThreshold)) && 
+    (volumeDifference < (0 + volumeThreshold))) {
     semSizeMatch = true;
   }
   
@@ -536,14 +590,12 @@ cv::Mat ComponentValidator::applySigmoidToMatrix(const cv::Mat& matrix) {
     // Apply the sigmoid function to each element in the matrix
     for (int i = 0; i < matrix.cols; ++i) {
       matrixSig.at<float>(0, i) = sigmoid(matrix.at<float>(0, i));
-      std::cout << "Element " << i << " is " << matrixSig.at<float>(0, i) << std::endl;
     }
   } else {
-    std::cerr << "Invalid matrix dimensions!" << std::endl;
+    LOG4CXX_DEBUG(logger, "[ComponentValidation] Invalid semantic matrix dimensions ");  
     return cv::Mat(); // Return an empty matrix to indicate an error
   }
 
-  
   return matrixSig; // Return the modified matrix
 
 }

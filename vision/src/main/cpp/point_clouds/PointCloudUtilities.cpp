@@ -454,9 +454,7 @@ namespace ade {
               
             } else {
               //assumes an organized point cloud
-              //the minus is needed if the input point cloud has negative z-values
-              //--> we need to "flip" things back 
-              depthData[xx + imgWidth * yy] = - z_ir;  
+              depthData[xx + imgWidth * yy] = z_ir;  
               
             }
           }

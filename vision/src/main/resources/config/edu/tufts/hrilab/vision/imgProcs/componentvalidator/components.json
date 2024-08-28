@@ -4,149 +4,154 @@
     "arity": 1
   },
   "config": {
-    "model": "semanticEncoder",
+    "model": "SemanticEncoderVersionOGmore2comp600epochs",
     "type" : "onnx"
   },
   "predicates": [
     {
-    "name": "cubebasecomponent",
-    "shape": 0,
-    "index": 0
+      "name": "objectconsistsofonecomponent",
+      "index": 0
     },
     {
-      "name": "spherebasecomponent",
-      "shape": 1,
+      "name": "objectconsistsoftwocomponents",
       "index": 1
     },
     {
-      "name": "conebasecomponent",
-      "shape": 2,
+      "name": "objectconsistsofthreecomponents",
       "index": 2
     },
     {
       "name": "cylinderbasecomponent",
-      "shape": 3,
+      "shape": 0,
       "index": 3
     },
     {
-      "name": "cubesidecomponent1",
-      "shape": 0,
+      "name": "cuboidbasecomponent",
+      "shape": 1,
       "index": 4
     },
     {
-      "name": "spheresidecomponent1",
-      "shape": 1,
+      "name": "ellipsoidbasecomponent",
+      "shape": 2,
       "index": 5
     },
     {
-      "name": "conesidecomponent1",
-      "shape": 2,
+      "name": "cylindersidecomponent1",
+      "shape": 0,
       "index": 6
     },
     {
-      "name": "cylindersidecomponent1",
-      "shape": 3,
+      "name": "cuboidsidecomponent1",
+      "shape": 1,
       "index": 7
     },
     {
-      "name": "sidecomponent1istotheright",
-      "axis": 0,
+      "name": "ellipsoidsidecomponent1",
+      "shape": 2,
       "index": 8
     },
     {
-      "name": "sidecomponent1istotheleft",
-      "axis": 1,
+      "name": "sidecomponent1isinfront",
+      "axis": 0,
       "index": 9
     },
     {
-      "name": "sidecomponent1isontop",
-      "axis": 2,
+      "name": "sidecomponent1isbehind",
+      "axis": 1,
       "index": 10
     },
     {
-      "name": "sidecomponent1isatthebottom",
-      "axis": 3,
+      "name": "sidecomponent1istotheright",
+      "axis": 2,
       "index": 11
     },
     {
-      "name": "sidecomponent1isinfront",
-      "axis": 4,
+      "name": "sidecomponent1istotheleft",
+      "axis": 3,
       "index": 12
     },
     {
-      "name": "sidecomponent1isbehind",
-      "axis": 5,
+      "name": "sidecomponent1isontop",
+      "axis": 4,
       "index": 13
     },
     {
-      "name": "sidecomponent1islarger",
+      "name": "sidecomponent1isatbottom",
+      "axis": 5,
       "index": 14
     },
     {
-      "name": "sidecomponent1issmaller",
+      "name": "sidecomponent1islarger",
       "index": 15
     },
     {
-      "name": "cubesidecomponent2",
-      "shape": 0,
+      "name": "sidecomponent1issmaller",
       "index": 16
     },
     {
-      "name": "spheresidecomponent2",
-      "shape": 1,
+      "name": "sidecomponent1isofsimilarsize",
       "index": 17
     },
     {
-      "name": "conesidecomponent2",
-      "shape": 2,
+      "name": "cylindersidecomponent2",
+      "shape": 0,
       "index": 18
     },
     {
-      "name": "cylindersidecomponent2",
-      "shape": 3,
+      "name": "cuboidsidecomponent2",
+      "shape": 1,
       "index": 19
     },
     {
-      "name": "sidecomponent2istotheright",
-      "axis": 0,
+      "name": "ellipsoidsidecomponent2",
+      "shape": 2,
       "index": 20
     },
     {
-      "name": "sidecomponent2istotheleft",
-      "axis": 1,
+      "name": "sidecomponent2isinfront",
+      "axis": 0,
       "index": 21
     },
     {
-      "name": "sidecomponent2isontop",
-      "axis": 2,
+      "name": "sidecomponent2isbehind",
+      "axis": 1,
       "index": 22
     },
     {
-      "name": "sidecomponent2isatthebottom",
-      "axis": 3,
+      "name": "sidecomponent2istotheright",
+      "axis": 2,
       "index": 23
     },
     {
-      "name": "sidecomponent2isinfront",
-      "axis": 4,
+      "name": "sidecomponent2istotheleft",
+      "axis": 3,
       "index": 24
     },
     {
-      "name": "sidecomponent2isbehind",
-      "axis": 5,
+      "name": "sidecomponent2isontop",
+      "axis": 4,
       "index": 25
     },
     {
-      "name": "sidecomponent2islarger",
+      "name": "sidecomponent2isatbottom",
+      "axis": 5,
       "index": 26
     },
     {
-      "name": "sidecomponent2issmaller",
+      "name": "sidecomponent2islarger",
       "index": 27
     },
     {
-      "name": "any",
+      "name": "sidecomponent2issmaller",
       "index": 28
+    },
+    {
+      "name": "sidecomponent2isofsimilarsize",
+      "index": 29
+    },
+    {
+      "name": "any",
+      "index": 30
     }
   ]
 }
