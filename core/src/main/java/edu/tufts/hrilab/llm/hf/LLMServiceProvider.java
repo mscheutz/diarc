@@ -89,9 +89,11 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     protected void init() {
         super.init();
         shouldRunExecutionLoop = true;
-        if (!performNLG) {
-            nlg = new SimpleNLGComponent();
-        }
+        //if (!performNLG) {
+        //    nlg = new SimpleNLGComponent();
+        //}
+        //Always instantiating as a fallback in case LLM gets overloaded or completion request throws any other exception
+        nlg = new SimpleNLGComponent();
     }
 
     //@Override
@@ -123,6 +125,22 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
             try {
                 agentHierarchy = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllAgentTeams")).call(Map.class);
                 addedAgents = true;
+                if (agentHierarchy != null) {
+                    //Strip type information in order to more easily match
+                    // against actors in below functions
+                    Map<Symbol, Set<Symbol>> untypedAgentHierarchy = new HashMap<>();
+                    for (Map.Entry<Symbol, Set<Symbol>> agentTeam : agentHierarchy.entrySet()) {
+                        Symbol teamName = agentTeam.getKey();
+                        teamName = Factory.createSymbol(teamName.toUntypedString());
+                        Set<Symbol> teamMembers = agentTeam.getValue();
+                        Set<Symbol> untypedTeamMembers = new HashSet<>();
+                        for (Symbol teamMember : teamMembers) {
+                            untypedTeamMembers.add(Factory.createSymbol(teamMember.toUntypedString()));
+                        }
+                        untypedAgentHierarchy.put(teamName, untypedTeamMembers);
+                    }
+                    agentHierarchy = untypedAgentHierarchy;
+                }
             } catch (TRADEException e) {
                 log.debug("[init] error making TRADE call to getAllAgentTeams", e);
             }
@@ -182,8 +200,12 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
             response = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
         } catch (TRADEException e) {
             log.error("[llmParserService] Error performing chat completion", e);
-            return utterance;
-            //return null;
+            if (!parsing) {
+                log.debug("[llmParserService] Error during chat completion during NLG, using SimpleNLG as a fallback");
+                return nlg.convertSemanticsToText(utterance);
+            } else {
+                return utterance;
+            }
         }
 
         //Add LLM's response to the chat //TODO: do we actually generally want this present in the chat in this way?
@@ -214,13 +236,21 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
             return;
         }
 
-        List<Utterance> history = getConversationHistory(user, agentTeam);
-        if (history == null) {
+        List<Utterance> history;
+        int chatIndex = getConversationHistoryIndex(user, agentTeam);
+        if (chatIndex == -1) {
             history = startLLMConversation(user,agentTeam);
+        } else {
+            history = currentConversations.get(chatIndex);
         }
 
-        //TODO: prune when history gets too long
-        history.add(utterance);
+        if (history != null) {
+            //TODO: Should prune based on token count, not number of messages
+            if (history.size() > 10) {
+                history.remove(0);
+            }
+            history.add(utterance);
+        }
     }
 
     private Set<Integer> getSharedConversations(Set<Symbol> members) {
@@ -255,6 +285,26 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     }
 
     private List<Utterance> getConversationHistory(Set<Symbol> members) {
+        int chatIndex = getConversationHistoryIndex(members);
+
+        if (chatIndex == -1) {
+            return null;
+        }
+
+        if (currentConversations.get(chatIndex) == null) {
+            log.error("[getMatchingChat] chatMappings and currentChats have different notions of existing conversations");
+            return null;
+        }
+        return new ArrayList<>(currentConversations.get(chatIndex));
+    }
+
+    private int getConversationHistoryIndex(Symbol user, Symbol agentTeam) {
+        Set<Symbol> members = getDescendants(agentTeam);
+        members.add(user);
+        return getConversationHistoryIndex(members);
+    }
+
+    private int getConversationHistoryIndex(Set<Symbol> members) {
         Set<Integer> sharedChats = getSharedConversations(members);
 
         // Multiple chats found, not enough members were provided to distinguish between all currently ongoing conversations
@@ -262,16 +312,9 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
             log.warn("[getMatchingChat] supplied entities are subsets of multiple conversation groups. Returning most recently updated conversation");
             //TODO: return most recently updated chat
         } else if (sharedChats.isEmpty()) {
-            return null;
+            return -1;
         }
-
-        // Return matching chat
-        Integer chatIndex = sharedChats.iterator().next();
-        if (currentConversations.get(chatIndex) == null) {
-            log.error("[getMatchingChat] chatMappings and currentChats have different notions of existing conversations");
-            return null;
-        }
-        return currentConversations.get(chatIndex);
+        return sharedChats.iterator().next();
     }
 
     //For conversation history context purposes, not currently properly supported
@@ -372,14 +415,6 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     public void endLLMChatContext(Pair<Symbol,Symbol> members) {
         members = Pair.of(getUntypedSymbol(members.getLeft()),getUntypedSymbol(members.getRight()));
         currentChats.remove(members);
-    }
-
-    private void getDiarcAgents() {
-        try {
-            agentHierarchy = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllAgentTeams")).call(Map.class);
-        } catch (TRADEException e) {
-            log.error("[init] error making TRADE call to getAllAgentTeams", e);
-        }
     }
 
     protected Set<Symbol> getDescendants(Symbol agentTeam) {

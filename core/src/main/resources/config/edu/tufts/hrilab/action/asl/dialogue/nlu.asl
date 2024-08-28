@@ -58,7 +58,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
 
     // for LLM parses -- get human validation
     Predicate !querySemantics;
-    Predicate !supplementalSemantics;
+    java.lang.String !utteranceString;
     Predicate !response;
     java.util.Map !bindings;
     edu.tufts.hrilab.fol.Variable !x = "X";
@@ -68,8 +68,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
       !addressee = op:invokeMethod(?utterance, "getAddressee");
       !speaker = op:invokeMethod(?utterance, "getSpeaker");
       //EW SpotPickAndPlace: changed predicate format to pass to LLM to perform NLG
-      !supplementalSemantics = op:invokeMethod(?utterance, "getBoundSupplementalSemanticsPredicate");
-      !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "doYouMean(!speaker, !semantics, !supplementalSemantics)");
+      !utteranceString = op:invokeMethod(?utterance,"toString");
+      !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "doYouMean(!speaker, !utteranceString)");
       //EW SpotPickAndPlace: Validation questions, responses, and any other interaction will be in the dialogue history
       //    before the actual utterance causing that to trigger would be. This is bad from two perspectives: 1.
       //    dialogue history is temporally incorrect (obvious to a user reading the history) 2. We almost certainly

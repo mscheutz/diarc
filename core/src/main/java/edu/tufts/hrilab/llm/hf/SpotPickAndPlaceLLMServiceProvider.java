@@ -28,6 +28,8 @@ public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
     Prompt nluUserPrompt = Prompts.getPrompt("spotpickandplace/nlu/user");
     Prompt nlgSystemPrompt = Prompts.getPrompt("spotpickandplace/nlg/system");
     Prompt nlgUserPrompt = Prompts.getPrompt("spotpickandplace/nlg/user");
+    Prompt validationPrompt = Prompts.getPrompt("spotpickandplace/nlg/validation");
+
 
     @Override
     public Utterance parseNLUCompletionResponse(Utterance incomingUtterance, Completion llmResponse) {
@@ -50,6 +52,14 @@ public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
         } else {
             argsStrings = argString.split(",");
         }
+
+        Pattern argumentTypesPattern = Pattern.compile(".*Argument Types: (.*)Input Type:.*", Pattern.DOTALL);
+        m = argumentTypesPattern.matcher(responseString);
+        if (!m.matches()) {
+            log.error("[spotPickAndPlaceLLMParser] cannot find Argument Types result in LLM response");
+            return incomingUtterance;
+        }
+        List<String> argumentTypes = Arrays.stream(m.group(m.groupCount()).split(",")).toList();
 
         Pattern typePattern = Pattern.compile(".*Input Type: (.*)Confidence:.*", Pattern.DOTALL);
         m = typePattern.matcher(responseString);
@@ -84,25 +94,39 @@ public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
 
         int varIndex = 0;
         List<Symbol> args = new ArrayList<>();
-        Map<Variable,String> vars = new HashMap<>();
+        List<Variable> vars = new ArrayList<>();
+        List<String> descriptors = new ArrayList<>();
         for (String arg : argsStrings) {
             Symbol argSymbol = Factory.createFOL(arg);
             //TODO: should generally be any reference, just know in this case all references will be locations
-            if (argSymbol.getType().equals("location")) {
+            if (argSymbol.getType().equals("location") || argSymbol.getType().equals("physobj")) {
                 Variable var = Factory.createVariable("VAR"+varIndex+++":"+argSymbol.getType());
-                vars.put(var,argSymbol.getName());
+                vars.add(var);
+                descriptors.add(argSymbol.getName());
                 args.add(var);
             } else {
                 args.add(Factory.createFOL(arg));
             }
         }
 
+        //Only allowing this to be incorrect because I haven't had much time to test this and am not confident there won't be malformed results
+        boolean checkType = true;
+        if (!vars.isEmpty() && argumentTypes.size() != vars.size()) {
+            log.warn("[spotPickAndPlaceLLMServiceProvider] mismatch between argument type length and vars length, malformed response. Assuming all refs are DEFINITE");
+            checkType = false;
+        }
         output.setSemantics(Factory.createPredicate(name,args));
-        for (Map.Entry<Variable,String> entry: vars.entrySet()) {
-            output.addSupplementalSemantics(Factory.createPredicate(entry.getValue(), entry.getKey()));
+        for (int i=0; i<vars.size(); i++) {
+            output.addSupplementalSemantics(Factory.createPredicate(descriptors.get(i), vars.get(i)));
 
-            //TODO: don't always assume DEFINITE
-            output.addTierAssignment(entry.getKey(), Factory.createSymbol("DEFINITE"));
+            Symbol tier = Factory.createSymbol("DEFINITE");
+            if (checkType) {
+                String argTypeString = argumentTypes.get(i);
+                if (!argTypeString.trim().equals("DEFINITE")) {
+                    tier = Factory.createSymbol("INDEFINITE");
+                }
+            }
+            output.addTierAssignment(vars.get(i), tier);
         }
 
         output.setNeedsValidation(true);
@@ -123,27 +147,21 @@ public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
     protected Chat generateNLGChat(Utterance utterance, List<Utterance> conversationHistory) {
         Chat chat = new Chat();
 
-        //TODO: create standalone validation prompt
-        //Hack, intercept doYouMean semantics and replace vars with descriptor
-        String output = utterance.toString();
-        //Predicate semantics = (Predicate) utterance.getSemantics();
-        //if (semantics.getName().equals("doYouMean")) {
-        //    Predicate supplementalSemantics = (Predicate)semantics.getArgs().get(2);
-        //    String semanticString = semantics.get(1).toString();
-        //    for (Symbol suppSemSymbol: supplementalSemantics.getArgs()) {
-        //        Predicate suppSemPredicate = (Predicate) suppSemSymbol;
-        //        suppSemPredicate = (Predicate) suppSemPredicate.get(0);
-        //        String descriptor = suppSemPredicate.getName();
-        //        String var = suppSemPredicate.get(0).toString();
-        //        semanticString = semanticString.replaceAll(var, descriptor);
-        //    }
-        //    semantics = Factory.createPredicate(semantics.getName(), semanticString);
-        //    log.info(semantics.toString());
-        //    output = semantics.toString();
-        //} else {
-        //    output = utterance.toString();
-        //}
-
+        //Intercept Validation Question and use specific validation prompt
+        String userMessage;
+        Predicate semantics = (Predicate) utterance.getSemantics();
+        if (semantics.getName().equals("doYouMean")) {
+            StringBuilder builder = new StringBuilder();
+            for (Utterance pastUtterance : conversationHistory) {
+                builder.append(pastUtterance.getSpeaker()).append(": ").append(pastUtterance.getWordsAsString()).append("\n");
+            }
+            Map<String,String> promptVars = new HashMap<>();
+            promptVars.put("%conversationHistory", builder.toString());
+            promptVars.put("%utterance", utterance.toString());
+            userMessage = validationPrompt.apply(promptVars);
+        } else {
+            userMessage = nlgUserPrompt.getText() + utterance.toString();
+        }
 
         //TODO (same as NLU)
         //Map<String,String> nlgSystemPromptParameters = new HashMap<>();
@@ -154,9 +172,9 @@ public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
         //chat.addUserMessage(nlgUserPrompt.apply(nlgUserPromptParameters));
 
         chat.setSystem(nlgSystemPrompt.getText());
-        chat.addUserMessage(nlgUserPrompt.getText() + output);
+        chat.addUserMessage(userMessage);
 
-        log.info("generateNLGChat called with: {}", output);
+        log.info("generateNLGChat called for: {}", utterance.toString());
 
         return chat;
     }

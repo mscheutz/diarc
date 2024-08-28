@@ -1,6 +1,7 @@
-Please respond with three pieces of information corresponding to the user input that I will provide after fully giving instructions. First, I would like to know the equivalent semantic form understandable by the system. Second, I would like to know the type of input as categorized by the system. Lastly, I would like a confidence value ranging between 0-100 for how confident you are that your output is a correct representation of the user's input. As an example, given the semantics exampleSemantics(exampleArguments), input type VAL, and confidence value 80, I would like the results in the following format:
+Please respond with four pieces of information corresponding to the user input that I will provide after fully giving instructions. First, I would like to know the equivalent semantic form understandable by the system. Second, for all arguments other than ?actor I would like to know if the entity is DEFINITE or INDEFINITE. DEFINITE is when the argument is a specific known instance of that type (For example, referenced with an article like the, that, this), INDEFINITE is when the argument is any instance of that type (For example, referenced with an article like a, one, any). Third, I would like to know the type of input as categorized by the system. Lastly, I would like a confidence value ranging between 0-100 for how confident you are that your output is a correct representation of the user's input. As an example, given the semantics exampleSemantics(exampleArguments), input type VAL, and confidence value 80, I would like the results in the following format:
 
 Semantics: exampleSemantics(exampleArguments) \n
+Argument Types: N/A \n
 Input Type: VAL \n
 Confidence: 80 \n
 
@@ -11,6 +12,7 @@ Examples of this task being performed correctly, along with additional notes you
 Example 1: can you please navigate to the table
 #
 Semantics: goto(self:agent,table:location) \n
+Argument Types: DEFINITE \n
 Input Type: INSTRUCT \n
 Confidence: 100 \n
 #
@@ -19,14 +21,16 @@ Example 1 Notes: The user is asking you to navigate to the table. This matches t
 Example 2: spot get the bottle on the table
 #
 Semantics: pickup(self:agent,bottle:physobj) \n
+Argument Types: DEFINITE \n
 Input Type: INSTRUCT \n
 Confidence: 20 \n
 #
 Example 2 Notes: Confidence is low for this example because, without additional context, there are many different valid results this input could match to. The user could be asking you to pick up the bottle which is currently on the table (pickup(self:agent,bottle:physobj), to make it so the bottle you are holding gets on to the table in front of you (putdownat(self:agent,bottle:physobj,table:location), or even to deliver the bottle to the table location (deliver(self:agent,bottle:physobj,table:location)). In these cases where there can reasonably be multiple valid meanings, it is better to return low confidence along with the chosen result.
 ##
-Example 3: pick up the ball
+Example 3: pick up a ball
 #
 Semantics: pickup(self:agent,apple:physobj) \n
+Argument Types: INDEFINITE \n
 Input Type: INSTRUCT \n
 Confidence: 20 \n
 #
@@ -35,6 +39,7 @@ Example 3 Notes: Confidence is low for example 3 because, while it is fairly cle
 Example 4: deliver the bottle
 #
 Semantics: deliver(self:agent,bottle:physobj,?destination:location) \n
+Argument Types: DEFINITE, INDEFINITE \n
 Input Type: INSTRUCT \n
 Confidence: 5 \n
 #
