@@ -159,8 +159,8 @@ public class GoalManagerGUI {
                 super.mouseClicked(mouseEvent);
                 if (!submitGoalField.getText().isEmpty()) {
                     getAgent();
-                    goalManager.getExecutionManager().submitGoal(new Goal(agent,
-                            Factory.createPredicate(submitGoalField.getText())), ExecutionType.ACT);
+                    goalManager.submitGoal(
+                            Factory.createPredicate("goal", agent, Factory.createFOL(submitGoalField.getText())));
                 }
             }
         });
@@ -169,8 +169,8 @@ public class GoalManagerGUI {
             public void actionPerformed(ActionEvent actionEvent) {
                 if (!submitGoalField.getText().isEmpty()) {
                     getAgent();
-                    goalManager.getExecutionManager().submitGoal(new Goal(agent,
-                            Factory.createPredicate(submitGoalField.getText())), ExecutionType.ACT);
+                    goalManager.submitGoal(
+                            Factory.createPredicate("goal", agent, Factory.createFOL(submitGoalField.getText())));
                 }
             }
         });

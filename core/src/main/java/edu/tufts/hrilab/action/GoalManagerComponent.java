@@ -176,7 +176,7 @@ public class GoalManagerComponent extends DiarcComponent {
       goalPriorities.put("default", new PriorityInfo(1L, PriorityTier.NORMAL));
     }
 
-    PerformanceAssessment.setGoalManager(this, false);
+    PerformanceAssessment.setExecutionManager(em, false);
 
     //TODO:brad: do we need type in the KB name?
     contextConsultant = new ContextConsultant(em.getRootContext(), "context");
@@ -1012,53 +1012,11 @@ public class GoalManagerComponent extends DiarcComponent {
     translator = generator;
   }
 
-  //Following 7 methods moved from BGM
-  //TODO:brad: just making a note of the fact that this addition was pretty rushed, and should maybe be revisited
-  @Action
-  public List<Symbol> getPreconditionsOfGoal(Goal g) {
-    List<Symbol> conds = new ArrayList<>();
-    Context rootContext = g.getRootContext();
-    if (rootContext instanceof GoalContext && !rootContext.getChildContexts().isEmpty()) {
-      Context childAction = rootContext.getChildContexts().get(0);
-      if (childAction instanceof ActionContext) {
-        Predicate p = ((ActionContextDescription) childAction.getContextDescription()).getPreConditionsInPredicateForm();
-        conds = p.getArgs();
-      }
-    }
-    return conds;
-  }
-
-  @Action
-  public Predicate generateUndoGoalState(Collection<Predicate> startState, Collection<Predicate> endState) {
-
-    List<Predicate> states = new ArrayList<>();
-    //make anything in the start state that isn't in the send state true
-    for (Predicate p : startState) {
-      if (!endState.contains(p)) {
-        states.add(p);
-      }
-    }
-    //make anything in the end state that isn't in the start state false.
-    for (Predicate p : endState) {
-      if (!startState.contains(p)) {
-        states.add(new Predicate("not", p));
-      }
-    }
-    return new Predicate("and", states);
-  }
-
   @TRADEService
   @Action
   public void setState(Predicate predicate) {
     em.getStateMachine().assertBelief(predicate, MemoryLevel.EPISODIC, Factory.createPredicate("setState(gui)"));
   }
-
-  @TRADEService
-  @Action
-  public StateMachine getStateMachine() {
-    return em.getStateMachine();
-  }
-
 
   @TRADEService
   @Action
@@ -1139,11 +1097,6 @@ public class GoalManagerComponent extends DiarcComponent {
       em.shutdown();
     }
     Database.destroyInstance();
-  }
-
-  //Don't think this should exist
-  public ExecutionManager getExecutionManager() {
-    return this.em;
   }
 
 }
