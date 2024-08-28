@@ -23,7 +23,7 @@ public class SpotConfig extends DiarcConfiguration {
   boolean useMockSpot = true;
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
-  boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
+  boolean useLLM = true; //Ask Eric for HF key if you want to run with the LLM
 
   public SpotConfig(boolean mock) {
     useMockVision = mock;
@@ -80,7 +80,7 @@ public class SpotConfig extends DiarcConfiguration {
                     + "-asl spot/spotActions.asl "
                     + "-goal listen(self:agent) "
                     + "-goal init(self:agent) "
-                    + "-goal deliver(self:agent,physobj_2:physobj,location_1:location) "
+//                    + "-goal deliver(self:agent,physobj_2:physobj,location_1:location) "
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
 
     );
