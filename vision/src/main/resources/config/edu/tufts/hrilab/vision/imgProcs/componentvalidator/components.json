@@ -9,144 +9,144 @@
   },
   "predicates": [
     {
-      "name": "objectconsistsofonecomponent",
+      "name": "object_consists_of_one_component",
       "index": 0
     },
     {
-      "name": "objectconsistsoftwocomponents",
+      "name": "object_consists_of_two_components",
       "index": 1
     },
     {
-      "name": "objectconsistsofthreecomponents",
+      "name": "object_consists_of_three_components",
       "index": 2
     },
     {
-      "name": "cylinderbasecomponent",
+      "name": "central_component_is_shaped_like_a_cylinder",
       "shape": 0,
       "index": 3
     },
     {
-      "name": "cuboidbasecomponent",
+      "name": "central_component_is_shaped_like_a_cuboid",
       "shape": 1,
       "index": 4
     },
     {
-      "name": "ellipsoidbasecomponent",
+      "name": "central_component_is_shaped_like_an_ellipsoid",
       "shape": 2,
       "index": 5
     },
     {
-      "name": "cylindersidecomponent1",
+      "name": "second_component_is_shaped_like_a_cylinder",
       "shape": 0,
       "index": 6
     },
     {
-      "name": "cuboidsidecomponent1",
+      "name": "second_component_is_shaped_like_a_cuboid",
       "shape": 1,
       "index": 7
     },
     {
-      "name": "ellipsoidsidecomponent1",
+      "name": "second_component_is_shaped_like_an_ellipsoid",
       "shape": 2,
       "index": 8
     },
     {
-      "name": "sidecomponent1isinfront",
+      "name": "second_component_is_positioned_in_front",
       "axis": 0,
       "index": 9
     },
     {
-      "name": "sidecomponent1isbehind",
+      "name": "second_component_is_positioned_behind",
       "axis": 1,
       "index": 10
     },
     {
-      "name": "sidecomponent1istotheright",
+      "name": "second_component_is_positioned_to_the_right",
       "axis": 2,
       "index": 11
     },
     {
-      "name": "sidecomponent1istotheleft",
+      "name": "second_component_is_positioned_to_the_left",
       "axis": 3,
       "index": 12
     },
     {
-      "name": "sidecomponent1isontop",
+      "name": "second_component_is_positioned_on_top",
       "axis": 4,
       "index": 13
     },
     {
-      "name": "sidecomponent1isatbottom",
+      "name": "second_component_is_positioned_at_the_bottom",
       "axis": 5,
       "index": 14
     },
     {
-      "name": "sidecomponent1islarger",
+      "name": "second_component_is_larger",
       "index": 15
     },
     {
-      "name": "sidecomponent1issmaller",
+      "name": "second_component_is_smaller",
       "index": 16
     },
     {
-      "name": "sidecomponent1isofsimilarsize",
+      "name": "second_component_is_of_similar_size",
       "index": 17
     },
     {
-      "name": "cylindersidecomponent2",
+      "name": "third_component_is_shaped_like_a_cylinder",
       "shape": 0,
       "index": 18
     },
     {
-      "name": "cuboidsidecomponent2",
+      "name": "third_component_is_shaped_like_a_cuboid",
       "shape": 1,
       "index": 19
     },
     {
-      "name": "ellipsoidsidecomponent2",
+      "name": "third_component_is_shaped_like_an_ellipsoid",
       "shape": 2,
       "index": 20
     },
     {
-      "name": "sidecomponent2isinfront",
+      "name": "third_component_is_positioned_in_front",
       "axis": 0,
       "index": 21
     },
     {
-      "name": "sidecomponent2isbehind",
+      "name": "third_component_is_positioned_behind",
       "axis": 1,
       "index": 22
     },
     {
-      "name": "sidecomponent2istotheright",
+      "name": "third_component_is_positioned_to_the_right",
       "axis": 2,
       "index": 23
     },
     {
-      "name": "sidecomponent2istotheleft",
+      "name": "third_component_is_positioned_to_the_left",
       "axis": 3,
       "index": 24
     },
     {
-      "name": "sidecomponent2isontop",
+      "name": "third_component_is_positioned_on_top",
       "axis": 4,
       "index": 25
     },
     {
-      "name": "sidecomponent2isatbottom",
+      "name": "third_component_is_positioned_at_the_bottom",
       "axis": 5,
       "index": 26
     },
     {
-      "name": "sidecomponent2islarger",
+      "name": "third_component_is_larger",
       "index": 27
     },
     {
-      "name": "sidecomponent2issmaller",
+      "name": "third_component_is_smaller",
       "index": 28
     },
     {
-      "name": "sidecomponent2isofsimilarsize",
+      "name": "third_component_is_of_similar_size",
       "index": 29
     },
     {

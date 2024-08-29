@@ -72,11 +72,15 @@ public class SimSpeechProductionComponent extends DiarcComponent implements Spee
    */
   @Override
   public boolean sayText(String in, boolean wait) {
-    log.info("Saying Text: " + in);
+
+    // Replace underscores with spaces
+    String inWithoutUnderScore = in.replace("_", " ");
+
+    log.info("Saying Text: " + inWithoutUnderScore);
 
     // update gui
     if (displayGui) {
-      gui.showText(in);
+      gui.showText(inWithoutUnderScore);
     }
 
     isSpeaking = true;
@@ -90,7 +94,7 @@ public class SimSpeechProductionComponent extends DiarcComponent implements Spee
     final long time = tmptime;
     synchronized (syncObj) {
       textTs = System.currentTimeMillis();
-      text = in;
+      text = inWithoutUnderScore;
     }
 
     // simulate speaking time
@@ -176,3 +180,4 @@ public class SimSpeechProductionComponent extends DiarcComponent implements Spee
   }
 
 }
+
