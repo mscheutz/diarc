@@ -332,10 +332,30 @@ public class Utilities {
               clazz = Double.class;
             }
 
-            // Make sure to remove decimals from value before creating new Integer instance.
+            // TODO: handle non-integer string-based construction. String based constructors have been deprecated since
+            //       Java 9, and marked for removal, so allowing non-integer numerics to fall through to the
+            //       string based construction via constructor.newInstance below will stop working.
+            // Make sure to remove decimals/trailing characters (l,L,f,F,d,D) from value before creating target numeric type
             if (clazz == Short.class || clazz == Integer.class || clazz == Long.class) {
-              if (isNumeric(value)) {
-                value = Double.valueOf(value.toString()).longValue();
+              if (isLong(value)) {
+                // first remove the "l" or "L" from the value, as Long.valueOf can't handle it
+                String longValue = value.toString();
+                longValue = value.toString().substring(0, longValue.length() - 1);
+                if (clazz.equals(Short.class)) {
+                  value = Short.valueOf(longValue);
+                } else if (clazz.equals(Integer.class)) {
+                  value = Integer.valueOf(longValue);
+                } else {
+                  value = Long.valueOf(longValue);
+                }
+              } else if (isNumeric(value)) {
+                if (clazz.equals(Short.class)) {
+                  value = Double.valueOf(value.toString()).shortValue();
+                } else if (clazz.equals(Integer.class)) {
+                  value = Double.valueOf(value.toString()).intValue();
+                } else {
+                  value = Double.valueOf(value.toString()).longValue();
+                }
               }
             }
 
@@ -356,12 +376,10 @@ public class Utilities {
             }
 
           } catch (NoSuchMethodException e) {
-            log.error("No string based constructor for type: " + clazz.getName()
-                    + ". value: " + value.toString(), e);
+            log.error("No string based constructor for type: {}. value: {}", clazz.getName(), value, e);
             return null;
           } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            log.error("Problem instantiating new object of type: " + clazz.getName() + " from "
-                    + value.getClass() + " " + value + ". Returning null.", e);
+            log.error("Problem instantiating new object of type: {} from {} {}. Returning null.", clazz.getName(), value.getClass(), value, e);
             return null;
           }
         }
