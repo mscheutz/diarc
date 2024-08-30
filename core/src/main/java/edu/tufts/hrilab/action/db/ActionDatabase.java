@@ -5,10 +5,8 @@
 package edu.tufts.hrilab.action.db;
 
 import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.ActionBinding;
 import edu.tufts.hrilab.action.Effect;
-import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.db.util.Utilities;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -115,7 +113,6 @@ public class ActionDatabase {
    * @param type the type of the action to look up
    * @return the requested action (last added), if found, null otherwise
    */
-  @TRADEService
   public final ActionDBEntry getAction(String type) {
     ActionDBEntry adb = Utilities.getEntry(actionDB, type);
     if (adb == null) {
@@ -124,16 +121,16 @@ public class ActionDatabase {
     return adb;
   }
 
-  //TODO:brad: this is only used in tests, are those tests valid? should we get rid of this?
 
   /**
    * Lookup action by type and roles.
+   *
+   * TODO:brad: this is only used in tests, are those tests valid? should we get rid of this?
    *
    * @param type  the type of the action to look up
    * @param roles the roles of the action to look up
    * @return the requested action, if found, null otherwise
    */
-  @TRADEService
   public final ActionDBEntry getAction(String type, List<Class<?>> roles) {
     ActionDBEntry adb = Utilities.getEntry(actionDB, type, roles);
     if (adb == null) {
@@ -150,7 +147,6 @@ public class ActionDatabase {
    * @param inputRoleTypes the java types of the input roles of the action to look up
    * @return the requested action, if found, null otherwise
    */
-  @TRADEService
   public final ActionDBEntry getAction(String type, Symbol actor, List<Class<?>> inputRoleTypes) {
     ActionDBEntry adb = Utilities.getEntry(actionDB, type, actor, inputRoleTypes);
     if (adb == null) {
@@ -271,7 +267,6 @@ public class ActionDatabase {
    * @return true if action is in database
    */
   @TRADEService
-  @Action
   public Boolean actionExists(Predicate goal) {
     List<ActionDBEntry> actionsWithPostcond;
     if (goal.getName().equals("goal") && goal.size() == 2) {
@@ -290,8 +285,6 @@ public class ActionDatabase {
    * @param effect the postcondition of the entity to look up
    * @return the requested entry, if found, null otherwise
    */
-  @TRADEService
-  @Action
   public synchronized List<ActionDBEntry> getActionsByEffect(Symbol actor, Predicate effect) {
     log.debug("looking up postcondition");
     String pname = effect.getName();
@@ -311,7 +304,6 @@ public class ActionDatabase {
    * @return
    */
   @TRADEService
-  @Action
   public synchronized List<ActionDBEntry> getActionsBySignature(Predicate actionSignature) {
     log.debug("looking up action by signature");
     String actionName = actionSignature.getName();
@@ -336,7 +328,6 @@ public class ActionDatabase {
    * @return
    */
   @TRADEService
-  @Action
   public final synchronized Set<ActionDBEntry> getAllActions() {
     Set<ActionDBEntry> allActions = new HashSet<>();
 
@@ -377,7 +368,6 @@ public class ActionDatabase {
    * @param actionSignature action signature to remove.
    */
   @TRADEService
-  @Action
   protected final void removeActionsWithSignature(Predicate actionSignature) {
     List<ActionDBEntry> actions = getActionsBySignature(actionSignature);
     for (ActionDBEntry action : actions) {
@@ -391,20 +381,6 @@ public class ActionDatabase {
   protected synchronized void removeScripts() {
     List<ActionDBEntry> tmp = new ArrayList<>(scripts); // tmp copy bc actions are removed from scripts during iteration
     tmp.forEach(this::removeAction);
-  }
-
-  //TODO:brad:temporarily adding this to restore "food ordering" demo functionality, should be removedm when type checking can occur in action selection
-  @TRADEService
-  @Action
-  public synchronized List<Predicate> getActionSignaturesForName(Symbol actionName) {
-    List<Predicate> toReturn = new ArrayList<>();
-    List<ActionDBEntry> entries = actionDB.get(actionName.getName());
-    if (entries != null) {
-      for (ActionDBEntry e : actionDB.get(actionName.getName())) {
-        toReturn.add(e.getSignature(true));
-      }
-    }
-    return toReturn;
   }
 
 }
