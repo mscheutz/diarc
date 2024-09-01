@@ -4024,6 +4024,12 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
+        assertTrue(testUtterance("can you bring me a bottle from the table",
+                "INSTRUCT(eric,self,deliver(self,VAR1:physobj,VAR0:location),{me(VAR0:location),bottle(VAR1:physobj),table(VAR2:location),DEFINITE(VAR0:location),INDEFINITE(VAR1:physobj),DEFINITE(VAR2:location)})",
+                "eric",
+                "self"
+        ));
+
         assertTrue(testUtterance("get a bottle to the table",
                 "INSTRUCT(eric,self,getTo(self,VAR0:physobj,VAR1:location),{bottle(VAR0:physobj),table(VAR1:location),INDEFINITE(VAR0:physobj),DEFINITE(VAR1:location)})",
                 "eric",

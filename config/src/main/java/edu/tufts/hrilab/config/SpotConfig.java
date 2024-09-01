@@ -53,9 +53,9 @@ public class SpotConfig extends DiarcConfiguration {
     if (useMockSpot) {
       createInstance(MockArmComponent.class, "-groups agent:self:agent");
       createInstance(MockMoveBaseComponent.class, "-groups agent:self:agent");
-      createInstance(MockRos2SpotComponent.class, "-groups agent:self:agent -locationRefs vaLocationRefs.json");
+      createInstance(MockRos2SpotComponent.class, "-groups agent:self:agent -locationRefs room.json");
     } else {
-      createInstance(SpotComponent.class, "-groups agent:self:agent -map /home/pete/dev/spot_maps/va.walk -locationRefs vaLocationRefs.json");
+      createInstance(SpotComponent.class, "-groups agent:self:agent -map /home/pete/dev/spot_maps/room2.walk -locationRefs room.json -loadRefs");
     }
 
     if (useMockVision) {
@@ -80,16 +80,15 @@ public class SpotConfig extends DiarcConfiguration {
                     + "-asl spot/spotActions.asl "
                     + "-goal listen(self:agent) "
                     + "-goal init(self:agent) "
-//                    + "-goal deliver(self:agent,physobj_2:physobj,location_1:location) "
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
 
     );
 
-    createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -config spotDemo.simspeech");
+    createInstance(SimSpeechRecognitionComponent.class, "-speaker pete -config spotDemo.simspeech");
   }
 
   public static void main(String[] args) {
-    SpotConfig config = new SpotConfig(true);
+    SpotConfig config = new SpotConfig(false);
     config.runConfiguration();
   }
 }

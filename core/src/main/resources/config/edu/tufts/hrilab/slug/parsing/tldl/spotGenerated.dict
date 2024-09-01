@@ -17,3 +17,8 @@ table;REF; table:location;DEFINITE
 table;RN; table:location;VAR
 table;DESC; table:property
 table;DN; table:property
+
+me;REF; me:location;DEFINITE
+me;RN; me:location;VAR
+me;DESC; me:property
+me;DN; me:property

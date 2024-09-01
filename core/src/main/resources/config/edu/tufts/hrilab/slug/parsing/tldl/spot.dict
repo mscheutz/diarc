@@ -5,6 +5,7 @@ VERBI; {C\AGENT ; #x.?PH($x)}, {C ; ?PH(?ADDRESSEE)}
 %% object and location both as references:
 VERBT; {(C/REF)\AGENT ; #x#y.?PH($x,$y)}, {C/REF ; #x.?PH(?ADDRESSEE, $x)}
 VERBTT; {(C/REF)/REF; #x#y.?PH(?ADDRESSEE,$x,$y)}, {((C/REF)/REF)\AGENT; #a#x#y.?PH($a,$x,$y)}
+VERBTTT; {((C/REF)/REF)/REF; #x#y#z.?PH(?ADDRESSEE,$y,$x)}, {(((C/REF)/REF)/REF)\AGENT; #a#x#y#z.?PH($a,$y,$x)}
 
 THING;{RN; ?PH:physobj ; VAR}, {DN; ?PH:property}
 
@@ -15,6 +16,7 @@ THING;{RN; ?PH:physobj ; VAR}, {DN; ?PH:property}
 
 END-TEMPLATES
 
+you bring ; VERBTTT; deliver
 %%%%%%%%%% Misc %%%%%%%%%%%%%
 a; REF/RN ; #x.$x ; INDEFINITE
 a; LREF/LN ; #x.$x ;INDEFINITE
@@ -51,6 +53,7 @@ to; INF/C; #x.to($x)
 
 %%%%%%%%%% Actions %%%%%%%%%%%%%
 init; C; init(?ADDRESSEE)
+map; C; map(?ADDRESSEE)
 
 get; VERBTT ; getTo
 %get me; VERBTT ; deliver
@@ -59,6 +62,7 @@ bring; VERBTT ; deliver
 
 %go to; VERBTR; goto
 go to; VERBT; goto
+come to; VERBT; goto
 pick up; VERBT; pickup
 %TODO: needs to parse as if accepting args but not use
 put down; VERBI; putdown

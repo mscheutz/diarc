@@ -59,6 +59,8 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   private JRos2Tf2 tf2;
   private JRos2ServiceClient<GazeRequestMessage, GazeResponseMessage> gazeService;
   private JRos2ServiceClient<ArmCommandRequestMessage, ArmCommandResponseMessage> armService;
+  private JRos2ServiceClient<ListGraphRequestMessage, ListGraphResponseMessage> graphService;
+  private boolean loadRefs = false;
 
 
   public SpotComponent() {
@@ -77,10 +79,13 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     navigateAction = new JRos2ActionClientFactory().createClient(client, new NavigateToActionDefinition(), "/navigate_to");
     ikService = new JRos2ServiceClientFactory().createClient(client, new DiarcMoveToServiceDefinition(), "/diarc_move_to");
     locationConsultant = new SpotNavGraphLocationConsultant("location");
-    locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
+    if (loadRefs) {
+      locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile);
+    }
     pickUpService = new JRos2ServiceClientFactory().createClient(client, new DiarcPickUpServiceDefinition(), "/diarc_pick_up");
     gazeService = new JRos2ServiceClientFactory().createClient(client, new GazeServiceDefinition(), "/gaze");
     armService = new JRos2ServiceClientFactory().createClient(client, new ArmCommandServiceDefinition(), "/arm_command");
+    graphService = new JRos2ServiceClientFactory().createClient(client, new ListGraphServiceDefinition(), "/list_graph");
 
     tf2 = new JRos2Tf2Factory().createTf2Client(client);
 
@@ -104,6 +109,7 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("map").hasArg().argName("map").desc("Path to nav graph").build());
     options.add(Option.builder("locationRefs").hasArg().argName("locationRefs").desc("Location ref json filename").build());
+    options.add(Option.builder("loadRefs").desc("Whether to load refs from json file").build());
     return options;
   }
 
@@ -114,6 +120,9 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     }
     if (cmdLine.hasOption("locationRefs")) {
       refsConfigFile = cmdLine.getOptionValue("locationRefs");
+    }
+    if (cmdLine.hasOption("loadRefs")) {
+      loadRefs = true;
     }
   }
 
@@ -135,7 +144,9 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       log.error("[setInitialLocation] current location id does not match a known location");
     }
     currentLocationId = refId;
+    //todo: this needs to be updated to only set the location with the fiducial, not actually go there potentially? small room behaviors are weird.
     return goToLocationHelper(refId, refId, true);
+//    return new ConditionJustification(true);
   }
 
   // Mostly just for testing! You should make a new action for the command you want
@@ -314,7 +325,6 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   }
 
   @TRADEService
-  @Action
   public Justification stow() {
     try {
       DiarcCommandResponseMessage res = commandService.sendRequestAsync(new DiarcCommandRequestMessage(DiarcCommandRequestMessage.Command.ARM_STOW)).get();
@@ -356,6 +366,21 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
       log.error("Error setting arm to carry mode", e);
       return new ConditionJustification(false);
     }
+  }
+
+  @Action
+  @TRADEService
+  public Justification getNavGraphPointsAndPopulateConsultant() {
+    try {
+      ListGraphResponseMessage res = graphService.sendRequestAsync(new ListGraphRequestMessage().withUploadFilepath(new StringMessage(this.map_path))).get();
+      for (StringMessage sm : res.waypoint_ids) {
+        locationConsultant.createNewRefWithGraphId(sm.data);
+      }
+    } catch (ExecutionException | InterruptedException e) {
+      log.error("Error getting nav graph points for map at: " + this.map_path);
+      return new ConditionJustification(false);
+    }
+    return new ConditionJustification(true);
   }
 
   @Action

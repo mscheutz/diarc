@@ -8,7 +8,7 @@ import java.util.List;
 
 
 /////////// Recovery Policies /////////
-//todo: this doesn't actually work, since it will happily localize to the wrong place? if we sit down etc it assumes we're closest to the dock location where the tour started i think.
+////todo: this doesn't actually work, since it will happily localize to the wrong place? if we sit down etc it assumes we're closest to the dock location where the tour started i think.
 () = failedLocalization(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
   Symbol !defaultLocation = location_0:location;
 
@@ -42,9 +42,9 @@ import java.util.List;
 () = init[""](String ?ignore = "none()") {
     effects : {
         success : free(?actor);
-        success : observableat(bottle:property, location_3:location); //todo: Remove if we want to demonstrate instruction
+        success : observableat(bottle:property, location_23:location); //todo: Remove if we want to demonstrate instruction
         success : observable(bottle:property); //todo: Remove if we want to demonstrate instruction
-        success : observableat(apple:property, location_3:location);
+        success : observableat(apple:property, location_23:location);
         success : observable(apple:property); //todo: Remove if we want to demonstrate instruction
         success : at(?actor, !defaultLocation);
     }
@@ -56,7 +56,7 @@ import java.util.List;
     act:powerOn();
     act:openGripper();
     act:closeGripper();
-    act:stow();
+    tsc:stow();
 //    act:stand();
 //    act:undock();
 
@@ -89,15 +89,20 @@ import java.util.List;
 () = map() {
     Symbol !location;
     Integer !numLocations;
+//    java.util.Map !bindings;
+
+    act:getNavGraphPointsAndPopulateConsultant();
     !numLocations = tsc:getNumberOfKnownLocations();
     op:log(debug, "[map] number of known locations is !numLocations");
+
+
     for (!i=0; !i lt !numLocations; !i ++) {
         !location = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "location_!i:location");
         act:goToLocationUnsafe(!location);
         act:bindLocationToCurrentPose(!location);
         op:log(debug, "[map] mapped !location");
     }
-    tsc:writeLocationReferencesToFile("/home/pete/dev/diarc/core/src/main/resources/config/edu/tufts/hrilab/spot/upd8.json");
+    tsc:writeLocationReferencesToFile("/home/pete/dev/diarc/core/src/main/resources/config/edu/tufts/hrilab/spot/room.json");
     act:localize();
 }
 
@@ -120,6 +125,17 @@ import java.util.List;
     act:stow();
     act:closeGripper();
     act:dock(!dockId);
+}
+
+() = stow() {
+    conditions : {
+        pre : free(?actor);
+    }
+    effects : {
+        success : not(perceptionpose(?actor));
+    }
+
+    tsc:stow();
 }
 
 () = test() {
@@ -165,18 +181,6 @@ import java.util.List;
     act:detectionPose();
 }
 
-() = resetarm(Symbol ?actor:agent) {
-    conditions : {
-        pre : free(?actor);
-    }
-    effects : {
-        success : not(perceptionpose(?actor));
-    }
-
-    act:stow();
-}
-
-
 () = deliveritem(Symbol ?object:physobj, Symbol ?at:location, Symbol ?type:property) {
     String !typeString;
     conditions : {
@@ -197,10 +201,11 @@ import java.util.List;
     op:log(info, "Delivering ?type ?object to ?at.");
     !typeString = op:getName(?type);
     act:command(arm_carry);
-    act:askQuestionFromString(brad, "Let me know when you're holding the !typeString.", holding(X));
+//    act:goToPutDownPose();
+    act:askQuestionFromString(pete, "Let me know when you're holding the !typeString.", holding(X));
     op:log(info, "Finishing handoff");
     act:openGripper();
-    op:sleep(1000);
+    op:sleep(500);
     act:closeGripper();
     act:command(arm_stow);
 }
@@ -208,6 +213,7 @@ import java.util.List;
 () = moveto(Symbol ?from:location, Symbol ?to:location) {
     conditions : {
         pre : at(?actor, ?from);
+        pre : not(perceptionpose(?actor));
     }
     effects : {
         success : at(?actor, ?to);

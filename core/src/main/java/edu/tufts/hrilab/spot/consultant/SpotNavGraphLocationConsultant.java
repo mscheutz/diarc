@@ -137,4 +137,10 @@ public class SpotNavGraphLocationConsultant extends Consultant<SpotNavGraphLocat
         }
         return true;
     }
+
+    public void createNewRefWithGraphId(String s) {
+        addReference(new SpotNavGraphLocationReference(getNextReferenceId(),
+                Factory.createVariable("X:location"),
+                new ArrayList<>(), s, null, null));
+    }
 }
