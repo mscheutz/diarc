@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-public class SpotComponent extends DiarcComponent implements ArmInterface, MoveBaseInterface, DockingInterface {
+public class SpotComponent extends DiarcComponent implements ArmInterface, DockingInterface {
 
   private String map_path;
   private SpotNavGraphLocationConsultant locationConsultant;
@@ -554,7 +554,6 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
   }
 
   @TRADEService
-  @Action
   public Justification openGripper() {
     return openGripper("");
   }
@@ -631,23 +630,9 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
     return null;
   }
 
-  @Override
-  public double[] getPoseGlobalQuat() {
-    return new double[0];
-  }
 
-  @Override
-  public void setPoseGlobal(double x, double y, double theta) {
-
-  }
-
-  @Override
-  public Justification goToLocation(Symbol location, boolean wait) {
-    return null;
-  }
-
-
-  @Override
+  @TRADEService
+  @Action
   public Justification goToLocation(Symbol location) {
     return goToLocationHelper(currentLocationId, location, false);
   }
@@ -708,54 +693,6 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, MoveB
         return new ConditionJustification(false);
       }
     }
-  }
-
-  @Override
-  public Justification goToLocation(Symbol desiredLocation, Symbol initialLocation) {
-    return null;
-  }
-
-  @Override
-  public Justification goToLocation(double xdest, double ydest, double quat_x, double quat_y, double quat_z, double quat_w, boolean wait) {
-    return null;
-  }
-
-  @Override
-  public Justification approachLocation(Symbol location) {
-    return null;
-  }
-
-  @Override
-  public Justification approachLocation(Symbol desiredLocation, Symbol initialLocation) {
-    return null;
-  }
-
-  @Override
-  public Justification stop() {
-    return null;
-  }
-
-  @Override
-  public Justification isMoving() {
-    return null;
-  }
-
-  @Override
-  public List<Map<Variable, Symbol>> checkAt(Term locationTerm) {
-    List<Map<Variable, Symbol>> toReturn = new ArrayList<>();
-//    Symbol closestLocation = locationConsultant.getClosestLocationToPoint(getLocalizationInformation());
-//    Symbol locationSymbol = locationTerm.get(1);
-//    log.debug("[checkAt] checking if at " + locationTerm);
-//    log.debug("[checkAt] closest location to current position is " + closestLocation);
-//    if (locationSymbol.equals(closestLocation)) {
-      toReturn.add(new HashMap<>());
-//    } else {
-//      String locationId = locationConsultant.getRefWithId(locationSymbol).getGraphId();
-//      String closestId = locationConsultant.getRefWithId(closestLocation).getGraphId();
-//      log.error("[checkAt] failed to verify location. intended location is " + locationSymbol + " with code " + locationId + " but closest location is " + closestLocation + " with code " + closestId);
-//    }
-
-    return toReturn;
   }
 
   @TRADEService

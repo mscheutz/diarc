@@ -12,7 +12,7 @@
       "orientW": 0.9997543476425454
     },
     {
-      "properties": ["person(X:location)"],
+      "properties": ["bed(X:location)"],
       "variable": "X:location",
       "graphId": "arched-gnu-.JxciXDfs50+DokvlV.eKQ\u003d\u003d",
       "x": 6.033361313840437,
@@ -353,7 +353,7 @@
       "orientW": 0.8982852005584736
     },
     {
-      "properties": ["dropoff(X:location)"],
+      "properties": ["desk(X:location)"],
       "variable": "X:location",
       "graphId": "couth-boxer-vH.oCYo8Bbaw3HMYQEhXZw\u003d\u003d",
       "x": 3.383085129126244,

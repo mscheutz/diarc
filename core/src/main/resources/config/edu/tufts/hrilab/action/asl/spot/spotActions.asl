@@ -1,12 +1,17 @@
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Variable;
 import java.lang.String;
 import java.lang.Integer;
 import java.lang.Boolean;
 import java.util.List;
 
 () = goto(Symbol ?location) {
-    goal:at(?actor,?location);
+    Symbol !from;
+    conditions : {
+        pre : at(?actor, !from);
+    }
+    act:moveto(!from, ?location);
 }
 
 () = pickup(Symbol ?object) {
@@ -14,11 +19,30 @@ import java.util.List;
 }
 
 () = putdown() {
-    goal:free(?actor);
+    Symbol !object;
+    Predicate !queryPred;
+    Predicate !failCond;
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor, X)");
+    !object = act:getBinding(!queryPred);
+    if (op:equalsValue(!object, none)) {
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor, X");
+        exit(FAIL, !failCond);
+    }
+    act:putdown(!object);
 }
 
 () = putdown(Symbol ?object) {
-    goal:free(?actor);
+
+    Predicate !queryPred;
+    Symbol !location;
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, X)");
+    !location = act:getBinding(!queryPred);
+
+    //todo: check to see if there's a table binding and fail if there isn't?
+
+    goal:at(?object, !location);
 }
 
 () = putdownat(Symbol ?object, Symbol ?location) {
@@ -58,3 +82,20 @@ import java.util.List;
 //    }
 //    goal:delivered(?type, ?location);
 //}
+
+(Symbol ?result) = getBinding(Predicate ?queryPred) {
+    Variable !queryKey = X;
+    java.util.List !bindings;
+    java.util.Map !binding;
+
+    ?result = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
+
+    !bindings = act:queryBelief(?queryPred);
+    if (op:isEmpty(!bindings)) {
+        op:log("debug", "[getBinding] query ?queryPred returned no results");
+    } else {
+        !binding = op:get(!bindings, 0);
+        ?result= op:get(!binding, !queryKey);
+        op:log("debug", "[getBinding] query ?queryPred result: ?result");
+    }
+}

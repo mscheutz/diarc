@@ -10,7 +10,7 @@ The types known to the system are: physobj, location
 
 The complete set of physobj known to the system is: bottle, apple
 
-The complete set of location known to the system is: table, start, person, dropoff
+The complete set of location known to the system is: table, start, bed, desk
 
 Each specific type of user input (instruction, question, information) has a different set of valid predicate forms that can be mapped to. They will be described below:
 

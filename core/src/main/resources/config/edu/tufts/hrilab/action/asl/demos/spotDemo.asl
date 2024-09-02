@@ -40,6 +40,8 @@ import java.util.List;
 //////// Core behaviors //////////
 
 () = init[""](String ?ignore = "none()") {
+    Symbol !defaultLocation = location_0:location;
+
     effects : {
         success : free(?actor);
         success : observableat(bottle:property, location_23:location); //todo: Remove if we want to demonstrate instruction
@@ -49,7 +51,6 @@ import java.util.List;
         success : at(?actor, !defaultLocation);
     }
 
-    Symbol !defaultLocation = location_0:location;
     Boolean !result;
 
     act:claim();
@@ -128,14 +129,29 @@ import java.util.List;
 }
 
 () = stow() {
-    conditions : {
-        pre : free(?actor);
-    }
     effects : {
         success : not(perceptionpose(?actor));
     }
 
     tsc:stow();
+}
+
+() = openGripper() {
+//    Predicate !queryPred;
+//    Symbol !object;
+//    Predicate !toRetract;
+//    Predicate !free = free(?actor);
+//
+//    //todo: this shouldn't need to be done this way. should be handled in effects, etc
+//    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor, X)");
+//    !object = act:getBinding(!queryPred);
+//    if (~op:equalsValue(!object, none)) {
+//        !toRetract = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor, !object");
+//        op:log(debug, "[openGripper] found that holding(?actor, !object), retracting since we're opening gripper");
+//        act:retractBelief(!toRetract);
+//        act:assertBelief(!free);
+//    }
+    tsc:openGripper();
 }
 
 () = test() {
@@ -152,7 +168,7 @@ import java.util.List;
 
 () = pickUp(Symbol ?object:physobj) {
 //    act:command(arm_carry);
-    act:openGripper(none);
+    tsc:openGripper();
     act:startVisualSearch(?object);
     act:findObject(?object);
     act:pickUpObject(?object);
@@ -162,7 +178,7 @@ import java.util.List;
 
 () = putDown() {
     act:goToPutDownPose();
-    act:openGripper();
+    tsc:openGripper();
     act:command(arm_carry);
     act:closeGripper();
     act:stow();
@@ -216,8 +232,8 @@ import java.util.List;
         pre : not(perceptionpose(?actor));
     }
     effects : {
+        success : not(at(?actor, ?from));
         success : at(?actor, ?to);
-        success infer: not(at(?actor, ?from));
     }
     op:log(info, "Moving from ?from to ?to.");
     act:goToLocation(?to);
@@ -238,6 +254,7 @@ import java.util.List;
     }
     op:log(info, "Picking up ?object from ?from.");
     act:pickUp(?object);
+//    act:goto(?from);
 }
 
 () = putdown(Symbol ?object:physobj, Symbol ?to:location) {
@@ -253,6 +270,7 @@ import java.util.List;
     }
     op:log(info, "Putting down ?object at ?to.");
     act:putDown();
+//    act:goto(?from);
 }
 
 

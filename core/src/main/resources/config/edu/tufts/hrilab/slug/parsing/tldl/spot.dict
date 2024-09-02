@@ -30,7 +30,8 @@ an; DESC/DESC ; #x.$x
 
 can; (AGENT/C) \ AGENT ; #x.$x
 could; (AGENT/C) \ AGENT ; #x.$x
-would; (AGENT/C) \ AGENT ; #x.$x
+would; (AGENT/C) \ AGENT ; #x.$
+might; (AGENT/C) \ AGENT ; #x.$x
 
 %please; C/C, C\C, S\S, (C\AGENT)/(C\AGENT), (C\AGENT)\(C\AGENT) ; #x. $x
 please; (AGENT/C) \ AGENT, C\C ; #x. $x
@@ -55,23 +56,123 @@ to; INF/C; #x.to($x)
 init; C; init(?ADDRESSEE)
 map; C; map(?ADDRESSEE)
 
+
+% IS THIS USED ANYWHERE???
 get; VERBTT ; getTo
-%get me; VERBTT ; deliver
+
+% deliver(?ADDRESSEE, REF:physobj, REF:location)
+get me; VERBTT ; deliver
 deliver; VERBTT ; deliver
 bring; VERBTT ; deliver
+fetch; VERBTT ; deliver
+fetch me; VERBTT ; deliver
+deliver; VERBTT ; deliver
+deliver me; VERBTT ; deliver
+retrieve; VERBTT ; deliver
+obtain; VERBTT ; deliver
+collect; VERBTT ; deliver
 
-%go to; VERBTR; goto
+% goto(?ADDRESSEE, REF:location)
 go to; VERBT; goto
+go towards; VERBT; goto
+go over to; VERBT; goto
 come to; VERBT; goto
-pick up; VERBT; pickup
-%TODO: needs to parse as if accepting args but not use
-put down; VERBI; putdown
-put down; {(C/REF)\AGENT; #x.#y.putdown($x)
-put down; C/REF; #x.putdown(?ADDRESSEE)
-put down; VERBTT; putdownat
+move to; VERBT; goto
+walk to; VERBT; goto
+proceed to; VERBT; goto
+travel to; VERBT; goto
+head to; VERBT; goto
+advance to; VERBT; goto
 
-%sit; VERBI; sit
-%stand; VERBI; stand
+% pickup(?ADDRESSEE, REF:physobj)
+pick up; VERBT; pickup
+grab; VERBT; pickup
+pickup; VERBT; pickup
+lift up; VERBT; pickup
+lift; VERBT; pickup
+raise; VERBT; pickup
+
+
+% DO WE HAVE A PICKUP FROM?  pickup(?ADDRESSEE, REF:physobj; REF:location)
+
+%TODO: needs to parse as if accepting args but not use???
+% putdown(?ADDRESEEE, REF:physobj)
+put down; VERBI; putdown
+put down; VERBT; putdown
+put down; C/REF; #x.putdown(?ADDRESSEE)
+drop; VERBT; putdown
+lay down; VERBT; putdown
+let go of; VERBT; putdown
+set down; VERBT; putdown
+release; VERBT; putdown
+
+% putdownat(?ADDRESSEE, REF:physobj, REF:location)
+put down; VERBTT; putdownat
+leave; VERBTT; putdownat
+place; VERBTT; putdownat
+drop; VERBTT; putdownat
+lay down; VERBTT; putdownat
+leave; VERBTT; putdownat
+set; VERBTT; putdownat
+
+% openGripper(?ADDRESSEE)
+open gripper; VERBI; openGripper
+open your gripper; VERBI; openGripper
+open the gripper; VERBI; openGripper
+open the clamp; VERBI; openGripper
+open up the gripper; VERBI; openGripper
+open your hand; VERBI; openGripper
+release the gripper; VERBI; openGripper
+release your grip; VERBI; openGripper
+
+
+
+% closeGripper(?ADDRESSEE)
+close gripper; VERBI; closeGripper
+close your gripper; VERBI; closeGripper
+close the gripper; VERBI; closeGripper
+clamp your gripper; VERBI; closeGripper
+clench the gripper; VERBI; closeGripper
+close up the gripper; VERBI; closeGripper
+close your hand; VERBI; closeGripper
+lock the gripper; VERBI; closeGripper
+shut the gripper; VERBI; closeGripper
+tighten the gripper; VERBI; closeGripper
+tTighten your grip; VERBI; closeGripper
+
+
+
+% sit(?ADDRESEE)
+sit; VERBI; sit
+down; VERBI; sit
+sit down; VERBI; sit
+lower yourself; VERBI; sit
+rest; VERBI; sit
+rest down; VERBI; sit
+sit down here; VERBI; sit
+sit here; VERBI; sit
+sit now; VERBI; sit
+wait; VERBI; sit
+
+
+%right yourself; VERBI; selfright
+%steady yourself; VERBI; selfright
+
+
+% stand(?ADDRESEE)
+stand; VERBI; stand
+get up; VERBI; stand
+stand up; VERBI; stand
+stand up straight; VERBI; stand
+come to your feet; VERBI; stand
+get on your feet; VERBI; stand
+move to a standing position; VERBI; stand
+rise; VERBI; stand
+stand on your feet; VERBI; stand
+stand up; VERBI; stand
+stand yourself up; VERBI; stand
+
+
 %self right; VERBI; selfright
 %roll over; VERBI; rollover
 
@@ -79,6 +180,7 @@ from; REF/REF; #x.$x
 in; REF/REF; #x.$x
 to; REF/REF; #x.$x
 on; REF/REF; #x.$x
+at; REF/REF; #x.$x
 
 from; DESC/DESC; #x.$x
 in; DESC/DESC; #x.$x
@@ -87,11 +189,8 @@ shut down; VERBI; shutDown
 stow arm; VERBI; stow
 unstow arm; VERBI; unstow
 carry mode; VERBI; carry
-close gripper; VERBI; closeGripper
-open gripper; VERBI; openGripper
+
 look for; VERBT; perceiveEntity
-stand; VERBI; stand
-sit; VERBI; sit
 undock; VERBI; undock
 dock; VERBI; dock
 
@@ -119,25 +218,6 @@ no; VAL; val(no)
 
 one; DESC/DESC ; #x.$X
 
-%fetch; VERBTT ; deliver
-%fetch me; VERBTT ; deliver
-%deliver; VERBTT ; deliver
-%deliver me; VERBTT ; deliver
-%retrieve; VERBTT ; deliver
-%obtain; VERBTT ; deliver
-%collect; VERBTT ; deliver
-
-%get up; VERBI; stand
-%stand up; VERBI; stand
-%stand up straight; VERBI; stand
-%down; VERBI; sit
-%sit down; VERBI; sit
-%right yourself; VERBI; selfright
-%steady yourself; VERBI; selfright
-
-grab; VERBT; pickup
-pickup; VERBT; pickup
-
 for me; C\C; #x. $x
 
 quickly; (AGENT/C) \ AGENT, C\C ; #x. $x
@@ -157,10 +237,6 @@ stow the arm; VERBI; stow
 unstow your arm; VERBI; unstow
 unstow the arm; VERBI; unstow
 enter carry mode; VERBI; carry
-close your gripper; VERBI; closeGripper
-close the gripper; VERBI; closeGripper
-open your gripper; VERBI; openGripper
-open the gripper; VERBI; openGripper
 search for; VERBT; perceiveEntity
 find; VERBT; perceiveEntity
 
@@ -179,3 +255,8 @@ got it; VAL; holding(it)
 
 bottle; THING
 apple; THING
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Execution manager %%
+cancel current task; VERBI ; cancelCurrentGoal

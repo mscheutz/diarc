@@ -2,6 +2,8 @@ package edu.tufts.hrilab.spot;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
@@ -48,6 +50,12 @@ public class MockRos2SpotComponent extends DiarcComponent implements DockingInte
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("locationRefs").hasArg().argName("locationRefs").desc("Location ref json filename").build());
     return options;
+  }
+
+  @TRADEService
+  @Action
+  public Justification goToArmPose(String poseString, String frame) {
+    return new ConditionJustification(true);
   }
 
   @Override

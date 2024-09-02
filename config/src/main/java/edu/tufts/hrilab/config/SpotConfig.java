@@ -23,7 +23,7 @@ public class SpotConfig extends DiarcConfiguration {
   boolean useMockSpot = true;
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
-  boolean useLLM = true; //Ask Eric for HF key if you want to run with the LLM
+  boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
 
   public SpotConfig(boolean mock) {
     useMockVision = mock;
