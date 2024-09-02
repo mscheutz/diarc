@@ -34,13 +34,14 @@ would; (AGENT/C) \ AGENT ; #x.$
 might; (AGENT/C) \ AGENT ; #x.$x
 
 %please; C/C, C\C, S\S, (C\AGENT)/(C\AGENT), (C\AGENT)\(C\AGENT) ; #x. $x
-please; (AGENT/C) \ AGENT, C\C ; #x. $x
+please; (AGENT/C) \ AGENT, C\C ; AGENT\AGENT, #x. $x
 
 the; REF/RN ; #x.$x ; DEFINITE
 the; LREF/LN ; #x.$x ; DEFINITE
 the; DESC/DN ; #x.$x
 
 the; DESC/DESC ; #x.$x
+there is; VERBTT ; addfact
 
 %TODO: this,that,etc. if desired
 
@@ -260,3 +261,11 @@ apple; THING
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Execution manager %%
 cancel current task; VERBI ; cancelCurrentGoal
+
+%% LLM control %%
+clear conversation history; VERBI; clearConversationHistory
+toggle nlg; VERBI; toggleLLMNLG
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% information about the state of the world %%
+%are not holding; VERBT;

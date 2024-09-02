@@ -173,13 +173,13 @@ import java.util.List;
     act:findObject(?object);
     act:pickUpObject(?object);
     act:stopVisualSearch(?object);
-    act:command(arm_carry);
+    act:gotocarrypose();
 }
 
 () = putDown() {
     act:goToPutDownPose();
     tsc:openGripper();
-    act:command(arm_carry);
+    act:gotocarrypose();
     act:closeGripper();
     act:stow();
 }
@@ -195,6 +195,13 @@ import java.util.List;
     }
 
     act:detectionPose();
+}
+
+() = gotocarrypose() {
+    effects : {
+        success : not(perceptionpose(?actor));
+    }
+    act:command(arm_carry);
 }
 
 () = deliveritem(Symbol ?object:physobj, Symbol ?at:location, Symbol ?type:property) {
@@ -216,7 +223,7 @@ import java.util.List;
 
     op:log(info, "Delivering ?type ?object to ?at.");
     !typeString = op:getName(?type);
-    act:command(arm_carry);
+    act:gotocarrypose();
 //    act:goToPutDownPose();
     act:askQuestionFromString(pete, "Let me know when you're holding the !typeString.", holding(X));
     op:log(info, "Finishing handoff");
@@ -254,7 +261,7 @@ import java.util.List;
     }
     op:log(info, "Picking up ?object from ?from.");
     act:pickUp(?object);
-//    act:goto(?from);
+    act:goto(?from);
 }
 
 () = putdown(Symbol ?object:physobj, Symbol ?to:location) {
@@ -270,7 +277,7 @@ import java.util.List;
     }
     op:log(info, "Putting down ?object at ?to.");
     act:putDown();
-//    act:goto(?from);
+    act:goto(?to);
 }
 
 

@@ -1,11 +1,29 @@
-Please respond with four pieces of information corresponding to the user input that I will provide after fully giving instructions. First, I would like to know the equivalent semantic form understandable by the system. Second, for all arguments other than ?actor I would like to know if the entity is DEFINITE or INDEFINITE. DEFINITE is when the argument is a specific known instance of that type (For example, referenced with an article like the, that, this), INDEFINITE is when the argument is any instance of that type (For example, referenced with an article like a, one, any). Third, I would like to know the type of input as categorized by the system. Lastly, I would like a confidence value ranging between 0-100 for how confident you are that your output is a correct representation of the user's input. As an example, given the semantics exampleSemantics(exampleArguments), input type VAL, and confidence value 80, I would like the results in the following format:
+Please respond with four pieces of information corresponding to the
+user input that I will provide after fully giving instructions. First,
+I would like to know the equivalent semantic form understandable by
+the system. Second, for all arguments other than ?actor I would like
+to know if the entity is DEFINITE or INDEFINITE. DEFINITE is when the
+argument is a specific known instance of that type (For example,
+referenced with an article like "the", "that", "this"), INDEFINITE is
+when the argument is any instance of that type (For example,
+referenced with an article like "a", "one", "any"). Third, I would like to
+know the type of input as categorized by the system. Lastly, I would
+like a confidence value ranging between 0-100 for how confident you
+are that your output is a correct representation of the user's
+input. As an example, given the semantics
+exampleSemantics(exampleArguments), input type VAL, and confidence
+value 80, I would like the results in the following format:
 
 Semantics: exampleSemantics(exampleArguments) \n
 Argument Types: N/A \n
 Input Type: VAL \n
 Confidence: 80 \n
 
-A confidence value below 50 will indicate to the user that you do not believe there is a matching valid parse of the user's input, or that the input is ambiguous enough that it could possibly mean multiple different things. A value increasing above 50 shows that you are confident in your result and don't believe there is any ambiguity.
+A confidence value below 50 will indicate to the user that you do not
+believe there is a matching valid parse of the user's input, or that
+the input is ambiguous enough that it could possibly mean multiple
+different things. A value increasing above 50 shows that you are
+confident in your result and don't believe there is any ambiguity.
 
 Examples of this task being performed correctly, along with additional notes you do not have to produce, are as follows:
 ###

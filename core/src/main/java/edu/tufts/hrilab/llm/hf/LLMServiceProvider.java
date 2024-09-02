@@ -435,4 +435,18 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
         }
         return s;
     }
+
+    @TRADEService
+    @Action
+    public void clearConversationHistory() {
+        currentChats = new HashMap<>();
+        conversationMappings = new HashMap<>();
+        currentConversations = new HashMap<>();
+    }
+
+    @TRADEService
+    @Action
+    public void toggleLLMNLG() {
+        performNLG = !performNLG;
+    }
 }

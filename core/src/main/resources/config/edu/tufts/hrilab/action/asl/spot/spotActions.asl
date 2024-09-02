@@ -8,10 +8,20 @@ import java.util.List;
 
 () = goto(Symbol ?location) {
     Symbol !from;
-    conditions : {
-        pre : at(?actor, !from);
+    Predicate !queryPred;
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, X)");
+    !from = act:getBinding(!queryPred);
+    if (op:equalsValue(!from, none)) {
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, X");
+        exit(FAIL, !failCond);
     }
-    act:moveto(!from, ?location);
+    //only trigger moveto if we want the conditions and effects
+    if (op:equalsValue(!from, ?location)) {
+        act:goToLocation(?location);
+    } else {
+        act:moveto(!from, ?location);
+    }
 }
 
 () = pickup(Symbol ?object) {
@@ -58,6 +68,24 @@ import java.util.List;
         success : not(delivered(?object,?location));
     }
     goal:delivered(?object, ?location);
+}
+
+//todo: make sure this behaves well.
+() = addfact(Symbol ?object, Symbol ?location) {
+
+    Symbol !property;
+
+    conditions : {
+        pre : property_of(?object, !property);
+//        pre : observable(!property);
+    }
+    effects : {
+        success : at(?object, ?location);
+        success : not(observable(!property));
+    }
+
+    op:log(info, "[addfact] asserting that ?object is at ?location and toggling off observability of other objects of type !property");
+
 }
 
 //() = fetch(Symbol ?type) {

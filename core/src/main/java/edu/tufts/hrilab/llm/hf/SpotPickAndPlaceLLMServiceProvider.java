@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.llm.hf;
 
+import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
