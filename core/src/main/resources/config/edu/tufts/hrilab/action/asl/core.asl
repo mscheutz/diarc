@@ -13,7 +13,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
       success : knows(?actor,capableOf(?goal));
     }
 
-    if (act:actionExists(?goal)) {
+    if (tsc:actionExists(?goal)) {
       !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "capableOf(?goal)");
       act:assertBelief(!toAssert);
     } else {
@@ -315,7 +315,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     }
 
     op:log("debug", "forgetting ?effect");
-    act:removeActionsWithSignature(?actionSignature);
+    tsc:removeActionsWithSignature(?actionSignature);
 }
 
 () = tell(Predicate ?goal) {

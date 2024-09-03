@@ -175,6 +175,24 @@ public class ActionScriptsComponentTest {
     // create goal and execute
     goalPredicate = Factory.createPredicate("test2(self:agent)");
     executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+
+    // instantiate test TRADE services
+    TestHelper helper = new TestHelper();
+    try {
+      TRADE.registerAllServices(helper,new ArrayList<>());
+    } catch (TRADEException e) {
+      log.error("Could not register TestHelper.", e);
+    }
+
+    // create goal and execute
+    goalPredicate = Factory.createPredicate("test4(self:agent)");
+    executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+
+    try {
+      TRADE.deregister(helper);
+    } catch (TRADEException e) {
+      log.error("Could not de-register TestHelper.", e);
+    }
   }
 
   @Test
@@ -224,11 +242,11 @@ public class ActionScriptsComponentTest {
     Database.getInstance().loadDatabaseFromFile(filename);
 
     // instantiate test TRADE services
-    TSCTestHelper helper = new TSCTestHelper();
+    TestHelper helper = new TestHelper();
     try {
       TRADE.registerAllServices(helper,new ArrayList<>());
     } catch (TRADEException e) {
-      log.error("Could not register TSCTestHelper.", e);
+      log.error("Could not register TestHelper.", e);
     }
 
     // create goal and execute
@@ -238,17 +256,19 @@ public class ActionScriptsComponentTest {
 
     executeAndCheckGoal(Factory.createPredicate("runFailTest2(self:agent)"), GoalStatus.FAILED);
 
+    executeAndCheckGoal(Factory.createPredicate("runBooleanTest(self:agent)"), GoalStatus.SUCCEEDED);
+
     try {
       TRADE.deregister(helper);
     } catch (TRADEException e) {
-      log.error("Could not de-register TSCTestHelper.", e);
+      log.error("Could not de-register TestHelper.", e);
     }
 
-    // re-register TSCTestHelper in agent group
+    // re-register TestHelper in agent group
     try {
       TRADE.registerAllServices(helper, "agent:hugo:agent");
     } catch (TRADEException e) {
-      log.error("Could not register TSCTestHelper.", e);
+      log.error("Could not register TestHelper.", e);
     }
 
     executeAndCheckGoal(Factory.createPredicate("runFailTest3(self:agent)"), GoalStatus.FAILED);
@@ -258,7 +278,31 @@ public class ActionScriptsComponentTest {
     try {
       TRADE.deregister(helper);
     } catch (TRADEException e) {
-      log.error("Could not de-register TSCTestHelper.", e);
+      log.error("Could not de-register TestHelper.", e);
+    }
+  }
+
+  @Test
+  public void testASLSignatures() {
+
+    String filename = aslPath + "asl_signature_tests.asl";
+    Database.getInstance().loadDatabaseFromFile(filename);
+
+    // instantiate test TRADE services
+    TestHelper helper = new TestHelper();
+    try {
+      TRADE.registerAllServices(helper,new ArrayList<>());
+    } catch (TRADEException e) {
+      log.error("Could not register TestHelper.", e);
+    }
+
+    // create goal and execute
+    executeAndCheckGoal(Factory.createPredicate("successTests(self:agent)"), GoalStatus.SUCCEEDED);
+
+    try {
+      TRADE.deregister(helper);
+    } catch (TRADEException e) {
+      log.error("Could not de-register TestHelper.", e);
     }
   }
 

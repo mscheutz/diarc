@@ -58,3 +58,28 @@
   }
 }
 
+() = test4() {
+
+  if (act:act_bool_true()) {
+    // this should execute
+  } else {
+    exit(FAIL);
+  }
+
+  if (~act:act_bool_true()) {
+    exit(FAIL);
+  }
+
+  if (act:act_bool_false()) {
+    exit(FAIL);
+  }
+
+  if (~act:act_justification_true()) {
+    exit(FAIL);
+  }
+
+  if (act:act_justification_false()) {
+    exit(FAIL);
+  }
+}
+
