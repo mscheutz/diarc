@@ -16,16 +16,13 @@
 #include <utility>      //std::pair
 
 #include <cv_bridge/cv_bridge.h>
-#include <pcl_conversions/pcl_conversions.h>
-//#include <sensor_msgs/image_encodings.hpp>
+#include <pcl_conversions/pcl_conversions/pcl_conversions.h>
 
 namespace ade {
   namespace capture {
 
     CaptureROS2::CaptureROS2(const std::string &configFile)
             : Capture(configFile),
-              data_mutex_(),
-              condition_(),
               data_received_(false),
               interrupt_flag_(false),
               convertToMeters_(false),
@@ -48,7 +45,7 @@ namespace ade {
       //initialize ROS
       LOG4CXX_INFO(logger, "Initializing ROS2.");
       int argCount = 0;
-      char **argv;
+      char **argv = NULL;
       rclcpp::init(argCount, argv);
 
       //create node handle
@@ -66,19 +63,19 @@ namespace ade {
       } else if (depth_topic_.empty()) {
         // stereo RGB case
         mode_ = STEREO;
-        // image_sub_ = new image_transport::SubscriberFilter(*n_, image_topic_, 1);
-        // image2_sub_ = new image_transport::SubscriberFilter(*n_, image2_topic_, 1);
-        // //sync_ = new message_filters::TimeSynchronizer<MySyncPolicy>(MySyncPolicy(10), *image_sub_, *image2_sub_);
-        // sync_ = std::make_shared<message_filters::TimeSynchronizer<sensor_msgs::msg::Image, sensor_msgs::msg::Image>>(*image_sub_, *image2_sub_, 10);
-        // sync_->registerCallback(boost::bind(&CaptureROS2::captureCallback_RGB_AND_DEPTH, this, _1, _2));
+
+        image_sub_.subscribe(n_.get(), image_topic_, image_transport::TransportHints(n_.get()).getTransport());
+        image2_sub_.subscribe(n_.get(), image2_topic_, image_transport::TransportHints(n_.get()).getTransport());
+        sync_ = std::make_shared<message_filters::Synchronizer<approximate_policy>>(approximate_policy(10), image_sub_, image2_sub_);
+        sync_->registerCallback(std::bind(&CaptureROS2::captureCallback_STEREO, this, std::placeholders::_1, std::placeholders::_2));
       } else {
         // singe RGB and single depth case
         mode_ = RGB_AND_DEPTH;
-        // image_sub_ = new image_transport::SubscriberFilter(*n_, image_topic_, 1);
-        // depth_sub_ = new image_transport::SubscriberFilter(*n_, depth_topic_, 1);
-        // //sync_ = new message_filters::Synchronizer<MySyncPolicy>(MySyncPolicy(10), *image_sub_, *depth_sub_);
-        // sync_ = std::make_shared<message_filters::TimeSynchronizer<sensor_msgs::msg::Image, sensor_msgs::msg::Image>>(*image_sub_, *depth_sub_, 10);
-        // sync_->registerCallback(boost::bind(&CaptureROS2::captureCallback_RGB_AND_DEPTH, this, _1, _2));
+
+        image_sub_.subscribe(n_.get(), image_topic_, image_transport::TransportHints(n_.get()).getTransport());
+        depth_sub_.subscribe(n_.get(), depth_topic_, image_transport::TransportHints(n_.get()).getTransport());
+        sync_ = std::make_shared<message_filters::Synchronizer<approximate_policy>>(approximate_policy(10), image_sub_, depth_sub_);
+        sync_->registerCallback(std::bind(&CaptureROS2::captureCallback_RGB_AND_DEPTH, this, std::placeholders::_1, std::placeholders::_2));
       }
 
       LOG4CXX_INFO(logger, "starting spinner...");
@@ -162,19 +159,7 @@ namespace ade {
       rclcpp::shutdown();
       spin_thread_.join();
 
-      switch (mode_) {
-        case STEREO:
-          // delete image_sub_;
-          // delete image2_sub_;
-          break;
-        case RGB_AND_DEPTH:
-          // delete image_sub_;
-          // delete depth_sub_;
-          break;
-      }
-
       delete it_;
-      // delete spinner_;
     }
 
     void CaptureROS2::interruptWait() {
@@ -211,7 +196,6 @@ namespace ade {
       if (data_received_) {
         LOG4CXX_DEBUG(logger, "[capture_MONO] data received");
         try {
-          //cv_bridge::CvImageConstPtr cv_rgb_ptr = cv_bridge::toCvShare(image_msg_, sensor_msgs::image_encodings::TYPE_8UC3);
           cv_bridge::CvImagePtr cv_rgb_ptr = cv_bridge::toCvCopy(image_msg_, sensor_msgs::image_encodings::TYPE_8UC3);
           cv::resize(cv_rgb_ptr->image, frame, frame.size(), 0, 0, CV_INTER_NN);
 
@@ -377,25 +361,6 @@ namespace ade {
       data_received_ = true;
       condition_.notify_one();
     }
-
-    //int main(int argc, char **argv) {
-    //    int width = 640;
-    //    int height = 480;
-    //    IplImage* rgbImg = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
-    //    cvNamedWindow("rgb", CV_WINDOW_AUTOSIZE);
-    //
-    //    ros::init(argc, argv, "Vision Capture Listener");
-    //
-    //    ros::NodeHandle n_;
-    //
-    //    ros::Subscriber sub = n_->subscribe("/camera/image_raw", 1000, chatterCallback);
-    //
-    //    ros::spin();
-    //
-    //    cvReleaseImage(&rgbImg);
-    //    return 0;
-    //}
-
 
   } //namespace capture
 } //namespace ade  

@@ -91,7 +91,8 @@ namespace ade {
       image_transport::SubscriberFilter image2_sub_;
       image_transport::SubscriberFilter depth_sub_;
 
-      std::shared_ptr<message_filters::TimeSynchronizer <sensor_msgs::msg::Image, sensor_msgs::msg::Image>> sync_;
+      typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image> approximate_policy;
+      std::shared_ptr<message_filters::Synchronizer<approximate_policy>>  sync_;
 
       pcl::PointCloud<pcl::PointXYZ>::ConstPtr const getPointCloud(const unsigned long int frameNum) const;
     };
