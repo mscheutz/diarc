@@ -38,7 +38,6 @@ if(OPENNI_FOUND)
 	SET(SOURCES ${SOURCES}
 		openni/OpenniDevice.cpp
 		CaptureOpenni.cpp
-		CaptureOpenniPlus.cpp
 	)
 endif(OPENNI_FOUND)
 if(OPENNI2_FOUND)

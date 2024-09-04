@@ -9,14 +9,11 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <opencv2/rgbd.hpp>
-#include <pcl/point_types.h>
-#include <pcl/PCLPointCloud2.h>
-#include <pcl/conversions.h>
 #include <pcl/common/transforms.h>
 #include <utility>      //std::pair
 
 #include <cv_bridge/cv_bridge.h>
-#include <pcl_conversions/pcl_conversions/pcl_conversions.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 namespace ade {
   namespace capture {

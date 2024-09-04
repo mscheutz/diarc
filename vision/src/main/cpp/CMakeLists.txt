@@ -229,11 +229,6 @@ IF(USE_ROS2)
 	ENDIF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf2_FOUND AND pcl_conversions_FOUND)
 ENDIF(USE_ROS2)
 
-# TODO: FREENECT
-if(FREENECT_FOUND)
-ADD_DEFINITIONS(-DUSE_KINECT)
-endif(FREENECT_FOUND)
-
 # V4R (OLD version)
 #FIND_PACKAGE(v4r) #TODO: write proper FindV4R cmake module
 #FIND_LIBRARY(V4R_LIBRARIES NAMES v4rEPUtils v4rAttentionModule v4rSurfaceSegmenter)

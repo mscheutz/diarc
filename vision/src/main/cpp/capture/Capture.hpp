@@ -7,26 +7,16 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "common/VisionConstants.hpp"
 #include "calibration/Cameras.hpp"
 #include "CaptureEnums.hpp"
-#include "capture/firewire/FireWireHelper.hpp"      //for CAM_TYPE - is this necessary?
 #include "visionproc/VisionProcess.hpp"
 #include "common/notification/CaptureNotification.hpp"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <fstream>
 #include <string>
-#include <assert.h>
-#include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/PointIndices.h>
 
 #ifdef USE_ROS_VISION
 #include <ros/ros.h>

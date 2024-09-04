@@ -38,7 +38,7 @@ namespace ade {
             float y_wc = xyzData[(xx + imgWidth * yy)*3 + 1];
             float z_wc = xyzData[(xx + imgWidth * yy)*3 + 2];
             //if (x_wc > 0 || y_wc > 0 || z_wc > 0)
-#if defined FREENECT || defined USE_OPENNI
+#if defined USE_OPENNI
             if (z_wc >= 0.4)
 #else
             if (z_wc > 0)
@@ -90,7 +90,7 @@ namespace ade {
           for (int yy = 0; yy < imgHeight; yy++) {
             float z_ir = depthData[xx + imgWidth * yy];
             float x_ir, y_ir;
-#if defined FREENECT || defined USE_OPENNI
+#if defined USE_OPENNI
             if (z_ir >= 0.4)
 #else
             if (z_ir > 0)
@@ -189,7 +189,7 @@ namespace ade {
           float y_wc = xyzData[i * 3 + 1];
           float z_wc = xyzData[i * 3 + 2];
           //if (x_wc > 0 || y_wc > 0 || z_wc > 0)
-#if defined FREENECT || defined USE_OPENNI
+#if defined USE_OPENNI
           if (z_wc >= 0.4)
 #else
           if (z_wc > 0)
@@ -282,12 +282,7 @@ namespace ade {
           for (int yy = 0; yy < imgHeight; yy++) {
             float z_ir = depthData[xx + imgWidth * yy];
             float x_ir, y_ir;
-#ifdef FREENECT
-            if (z_ir >= 0.4)
-#else
-            if (z_ir > 0)
-#endif
-            {
+            if (z_ir > 0) {
               x_ir = ((xx - cx) / fx) * z_ir;
               y_ir = ((yy - cy) / fy) * z_ir;
             } else {
