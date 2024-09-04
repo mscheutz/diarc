@@ -12,6 +12,10 @@ Required:
 
 Optional:
 	any additional fields the particular camera mode might need
+
+NOTE: use this config with:
+
+	 ros2 launch realsense2_camera rs_align_depth_launch.py"
 -->
 
 <capture>
@@ -21,7 +25,9 @@ Optional:
     <hasStereo>false</hasStereo>
     <hasDepth>true</hasDepth>
     <imageTopic>/camera/camera/color/image_raw</imageTopic>
-    <depthTopic>/camera/camera/depth/image_rect_raw</depthTopic>
+    <depthTopic>/camera/camera/aligned_depth_to_color/image_raw</depthTopic>
+    <cameraInfoTopic>/camera/camera/color/camera_info</cameraInfoTopic>
+    <depthInfoTopic>/camera/camera/aligned_depth_to_color/camera_info</depthInfoTopic>
     <convertToRGB>true</convertToRGB>
     <convertToMeters>false</convertToMeters>
     <publishCloudToRos>false</publishCloudToRos>

@@ -39,10 +39,14 @@ namespace ade {
       bool captureCurrentCameraFrame();
 
       //======== DO NOT CALL - only for ROS callbacks =================
+      void cameraInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr &msg);
+
+      void depthInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr &msg);
+
       void captureCallback_MONO(const sensor_msgs::msg::Image::ConstSharedPtr &msg);
 
-      void
-      captureCallback_STEREO(const sensor_msgs::msg::Image::ConstSharedPtr &image_msg, const sensor_msgs::msg::Image::ConstSharedPtr &image2_msg);
+      void captureCallback_STEREO(const sensor_msgs::msg::Image::ConstSharedPtr &image_msg,
+                                  const sensor_msgs::msg::Image::ConstSharedPtr &image2_msg);
 
       void captureCallback_RGB_AND_DEPTH(const sensor_msgs::msg::Image::ConstSharedPtr &rgb_msg,
                                          const sensor_msgs::msg::Image::ConstSharedPtr &depth_msg);
@@ -90,6 +94,8 @@ namespace ade {
       image_transport::SubscriberFilter image_sub_;
       image_transport::SubscriberFilter image2_sub_;
       image_transport::SubscriberFilter depth_sub_;
+      rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
+      rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr depth_info_sub_;
 
       typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image> approximate_policy;
       std::shared_ptr<message_filters::Synchronizer<approximate_policy>>  sync_;
