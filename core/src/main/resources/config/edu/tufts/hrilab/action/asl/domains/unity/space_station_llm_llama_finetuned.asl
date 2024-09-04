@@ -64,24 +64,19 @@ import edu.tufts.hrilab.action.justification.Justification;
 
 //["This instructs the robot to go to a tube location. Usage: goto(robot1, area, side, number) -llm"]
 () = goto(Symbol ?area, Symbol ?side, Symbol ?number) {
-  Symbol !message;
 
-  String !messageString = "I am going to ?area ?side ?number";
-  String !successMessageString = "Made it to ?area ?side ?number";
-  String !failureMessageString = "Did not make it to ?area ?side ?number";
+  String !messageString = op:bind("I am going to ?area ?side ?number");
+  String !successMessageString = op:bind("Made it to ?area ?side ?number");
+  String !failureMessageString = op:bind("Did not make it to ?area ?side ?number");
 
-  !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !messageString);
-
-  act:generateResponseFromString(!message);
+  act:generateResponseFromString(!messageString);
   op:log("info", "goto: ?area ?side ?number");
 
   if (act:goToTubeSilent(?area, ?side, ?number)) {
-    !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !successMessageString);
-    act:generateResponseFromString(!message);
+    act:generateResponseFromString(!successMessageString);
     op:log("info", "?actor: Made it to target destination: ?area ?side ?number");
   } else {
-    !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !failureMessageString);
-    act:generateResponseFromString(!message);
+    act:generateResponseFromString(!failureMessageString);
     op:log("info", "?actor: Didn't make it to target destination: ?area ?side ?number");
   }
 }
@@ -89,12 +84,11 @@ import edu.tufts.hrilab.action.justification.Justification;
 //["This instructs the robot to go to a tube if within a location. Usage: goto(robot1, side, number) -llm"]
 () = goto(Symbol ?side, Symbol ?number) {
   Symbol !area;
-  Symbol !message;
 
-  String !messageString = "I am going to ?side ?number";
-  String !transitMessageString = "Now going to ?side ?number";
-  String !successMessageString = "Made it to ?side ?number";
-  String !failureMessageString = "Did not make it to ?side ?number";
+  String !messageString = op:bind("I am going to ?side ?number");
+  String !transitMessageString = op:bind("Now going to ?side ?number");
+  String !successMessageString = op:bind("Made it to ?side ?number");
+  String !failureMessageString = op:bind("Did not make it to ?side ?number");
 
   Predicate !transitBeliefPredicate;
 
@@ -108,30 +102,27 @@ import edu.tufts.hrilab.action.justification.Justification;
   !transitBeliefs = act:queryBelief(!transitBeliefPredicate);
 
    if (~op:isEmpty(!transitBeliefs)) {
-      !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !messageString);
+      act:generateResponseFromString(!messageString);
    } else {
-      !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !transitMessageString);
+      act:generateResponseFromString(!transitMessageString);
    }
 
   if (act:goToTubeSilent(!area, ?side, ?number)) {
-    !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !successMessageString);
-    act:generateResponseFromString(!message);
-    op:log("info", "?actor: Made it to target destination: !area");
+    act:generateResponseFromString(!successMessageString);
+    op:log("info", "?actor: Made it to target destination: !area ?side ?number");
   } else {
-    !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !failureMessageString);
-    act:generateResponseFromString(!message);
-    op:log("info", "?actor: Didn't make it to target destination: ?area");
+    act:generateResponseFromString(!failureMessageString);
+    op:log("info", "?actor: Didn't make it to target destination: !area ?side ?number");
   }
 }
 
 //["This instructs the robot to go to an area location. Usage: goto(robot1, area) -llm"]
 () = goto(Symbol ?area) {
-  Symbol !message;
 
-  String !messageString = "I am going to ?area";
-  String !transitMessageString = "Now going to ?area";
-  String !successMessageString = "Made it to ?area";
-  String !failureMessageString = "Did not make it to ?area";
+  String !messageString = op:bind("I am going to ?area");
+  String !transitMessageString = op:bind("Now going to ?area");
+  String !successMessageString = op:bind("Made it to ?area");
+  String !failureMessageString = op:bind("Did not make it to ?area");
 
   Predicate !transitBeliefPredicate;
 
@@ -141,21 +132,18 @@ import edu.tufts.hrilab.action.justification.Justification;
   !transitBeliefs = act:queryBelief(!transitBeliefPredicate);
 
    if (~op:isEmpty(!transitBeliefs)) {
-      !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !messageString);
+      act:generateResponseFromString(!messageString);
    } else {
-      !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !transitMessageString);
+      act:generateResponseFromString(!transitMessageString);
    }
 
-  act:generateResponseFromString(!message);
   op:log("info", "goto: ?area");
 
   if (act:goToAreaSilent(?area)) {
-    !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !successMessageString);
-    act:generateResponseFromString(!message);
+    act:generateResponseFromString(!successMessageString);
     op:log("info", "?actor: Made it to target destination: ?area");
   } else {
-    !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !failureMessageString);
-    act:generateResponseFromString(!message);
+    act:generateResponseFromString(!failureMessageString);
     op:log("info", "?actor: Didn't make it to target destination: ?area");
   }
 }
@@ -351,7 +339,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
 //["This instructs the robot to go to a tube and to repair it if damaged. Usage: repairTube(robot1, area, side, number) -llm"]
 () = repair (Symbol ?area, Symbol ?side, Symbol ?number) {
-  String !repairedMessageString = "Repaired tube ?area ?side ?number";
+  String !repairedMessageString = op:bind("Repaired tube ?area ?side ?number");
 
   op:log("info", "Repair ?area ?side ?number");
   act:goToTubeSilent(?area, ?side, ?number);
@@ -381,7 +369,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   Boolean !isTubeDamaged = true;
   Predicate !repairBeliefPredicate;
   Symbol !damageAmount;
-  String !repairingMessageString = "Repairing tube ?area ?side ?number";
+  String !repairingMessageString = op:bind("Repairing tube ?area ?side ?number");
 
   conditions : {
     pre infer: not(repairing(?actor,X,Y,Z));
@@ -423,11 +411,9 @@ import edu.tufts.hrilab.action.justification.Justification;
 //["This is the action to choose if you cannot determine whether to use one of the others. Usage: dontKnow(robot1) -llm"]
 () = dontKnow () {
   String !messageString = "I do not understand";
-  Symbol !message;
 
-  !message = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !messageString);
   op:log("info", "dontKnow: !messageString");
-  act:generateResponseFromString(!message);
+  act:generateResponseFromString(!messageString);
 }
 
 () = initializeTrial () {
@@ -489,9 +475,9 @@ import edu.tufts.hrilab.action.justification.Justification;
   }
   op:log("info", "Checking ?area for damaged tubes");
 
-  String !failureMessageString = "There are no damaged tubes in ?area";
-  String !successSingleMessageString = "There is one damaged tube in ?area";
-  String !successMessageString = "There are damaged tubes in ?area";
+  String !failureMessageString = op:bind("There are no damaged tubes in ?area");
+  String !successSingleMessageString = op:bind("There is one damaged tube in ?area");
+  String !successMessageString = op:bind("There are damaged tubes in ?area");
   Symbol !tubeToRepair;
   List !damagedTubes;
   int !damagedTubesSize;
