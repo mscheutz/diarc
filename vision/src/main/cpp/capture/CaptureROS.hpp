@@ -33,10 +33,14 @@ namespace diarc {
       bool captureCurrentCameraFrame();
 
       //======== DO NOT CALL - only for ROS callbacks =================
+      void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr &msg);
+
+      void depthInfoCallback(const sensor_msgs::CameraInfo::ConstPtr &msg);
+
       void captureCallback_MONO(const sensor_msgs::Image::ConstPtr &msg);
 
-      void
-      captureCallback_STEREO(const sensor_msgs::ImageConstPtr &image_msg, const sensor_msgs::ImageConstPtr &image2_msg);
+      void captureCallback_STEREO(const sensor_msgs::ImageConstPtr &image_msg,
+                                  const sensor_msgs::ImageConstPtr &image2_msg);
 
       void captureCallback_RGB_AND_DEPTH(const sensor_msgs::ImageConstPtr &rgb_msg,
                                          const sensor_msgs::ImageConstPtr &depth_msg);
@@ -82,6 +86,10 @@ namespace diarc {
       image_transport::SubscriberFilter *image_sub_;
       image_transport::SubscriberFilter *image2_sub_;
       image_transport::SubscriberFilter *depth_sub_;
+
+      ros::Subscriber camera_info_sub_;
+      ros::Subscriber depth_info_sub_;
+
 
       typedef message_filters::sync_policies::ApproximateTime <sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
       message_filters::Synchronizer <MySyncPolicy> *sync_;

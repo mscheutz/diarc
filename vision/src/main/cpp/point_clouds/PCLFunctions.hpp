@@ -412,6 +412,49 @@ bool isValidObjectPoint(const T point,
 }
 
 /**
+* Segment cloud region containing target index using euclidean clustering.
+* If no cluster is found containing the target index, false is returned.
+*
+* @tparam T pointT type
+* @param cloud Input point cloud of type T
+* @param in_indices Input indices into input cloud
+* @param index Target index (must be included in in_indices)
+* @param out_indices Cluster indices containing target index
+* @return Returns true if cluster containing index was found, false otherwise
+*/
+template<class T>
+bool SegmentRegionFromPoint(const typename pcl::PointCloud<T>::ConstPtr &cloud,
+                            const pcl::PointIndices::ConstPtr& in_indices,
+                            int index,
+                            pcl::PointIndices::Ptr &out_indices) {
+
+  // Creating the KdTree object for the search method of the extraction
+  typename pcl::search::KdTree<T>::Ptr tree (new pcl::search::KdTree<T>);
+  tree->setInputCloud (cloud);
+
+  std::vector<pcl::PointIndices> all_cluster_indices;
+  pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+  ec.setClusterTolerance (0.02); // 2cm
+  ec.setMinClusterSize (10);
+  ec.setMaxClusterSize (25000);
+  ec.setSearchMethod (tree);
+  ec.setInputCloud (cloud);
+  ec.setIndices(in_indices);
+  ec.extract (all_cluster_indices);
+
+  // find cluster containing "index"
+  for (auto cluster : all_cluster_indices) {
+    if(std::find(cluster.indices.begin(), cluster.indices.end(), index) != cluster.indices.end()) {
+      // cluster contains target index
+      out_indices = boost::make_shared<pcl::PointIndices>(cluster);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * @brief Segment plane in the point cloud given existing plane coefficients
  * @param cloud Point cloud in PCL format.
  * @param plane_indices Indices of the plane in the point cloud (modified).
