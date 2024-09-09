@@ -4,12 +4,12 @@
 
 #include "TLDTracker.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 TLDTracker::TLDTracker(const long long &processorId, const int imgWidth, const int imgHeight)
         : OpenCVTracker("TLD", processorId, imgWidth, imgHeight) {
   visionProcessName = "TLDTracker";
-  logger = log4cxx::Logger::getLogger("ade.tracker.TLDTracker");
+  logger = log4cxx::Logger::getLogger("diarc.tracker.TLDTracker");
 }
 
 TLDTracker::~TLDTracker() {

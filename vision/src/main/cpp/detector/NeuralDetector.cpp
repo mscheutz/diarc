@@ -15,7 +15,7 @@
 #include <iostream>
 
 namespace fs = std::experimental::filesystem;
-using namespace ade::stm;
+using namespace diarc::stm;
 
 void NeuralDetector::loadConfig(const std::string &configFile) {
   //get directory
@@ -62,22 +62,29 @@ void NeuralDetector::loadConfig(const std::string &configFile) {
 
   fillClassNames(totalClasses);
 
-  NeuralDetector::initModel(model_path.string(), backEnd, type);
+  NeuralDetector::initModel(model_path.string(), backEnd, type, configFile);
 }
 
 NeuralDetector::NeuralDetector(const long long &processorId, const int imgWidth, const int imgHeight)
         : ObjectDetector(processorId, imgWidth, imgHeight) {
   visionProcessName = "NeuralDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.NeuralDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.NeuralDetector");
 }
 
 NeuralDetector::~NeuralDetector() {}
 
-void NeuralDetector::initModel(const std::string &model_path, const std::string &backEnd, const std::string &type) {
+void NeuralDetector::initModel(const std::string &model_path, const std::string &backEnd, const std::string &type, const std::string &configFile ) {
   if (type == "darknet") {
 #if defined(OPENCV_DNN) || defined(OPENCV3_DNN)
-    fs::path dn_config_abs = fs::canonical(model_path + ".cfg");
     fs::path dn_model_abs = fs::canonical(model_path + ".weights");
+
+    fs::path dn_config_file(configFile);
+    fs::path dn_config_fn(dn_model_abs.filename().stem().string() + ".cfg");
+    fs::path dn_config_dir(dn_config_file.parent_path().string());
+    fs::path dn_config = dn_config_dir / dn_config_fn;
+    fs::path dn_config_abs = fs::canonical(dn_config);
+
+    LOG4CXX_INFO(logger, boost::format("Using darknet config: %s") % dn_config_abs.string());
     LOG4CXX_INFO(logger, boost::format("Loading darknet model: %s") % dn_model_abs.string());
     net = cv::dnn::readNetFromDarknet(dn_config_abs.string(), dn_model_abs.string());
 #else
@@ -297,7 +304,7 @@ void NeuralDetector::removeDuplicates(std::vector<DetectedObject> &objects, floa
   if (objects.size() == 2) {
     cv::Rect rectA = objects[0].rect;
     cv::Rect rectB = objects[1].rect;
-    if (ade::stm::util::calculateBoundBoxOverlap(rectA, rectB) >= threshold) {
+    if (diarc::stm::util::calculateBoundBoxOverlap(rectA, rectB) >= threshold) {
       if (objects[0].confidence > objects[1].confidence) {
         objects.erase(objects.begin()+1);
       } else {
@@ -314,7 +321,7 @@ void NeuralDetector::removeDuplicates(std::vector<DetectedObject> &objects, floa
       for (int j = 0; j < objects.size(); j++) {
         if (i == j) continue;
         cv::Rect rectB = objects[j].rect;
-        if (ade::stm::util::calculateBoundBoxOverlap(rectA, rectB) >= threshold) {
+        if (diarc::stm::util::calculateBoundBoxOverlap(rectA, rectB) >= threshold) {
           if (objects[i].confidence > objects[j].confidence) {
             objects.erase(objects.begin()+j);
           } else {
@@ -442,7 +449,7 @@ void NeuralDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
                   0.8, CV_RGB(0, 255, 0), 1);
     }
 
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 }
 
@@ -497,8 +504,8 @@ void NeuralDetector::displayDetectedObjects(cv::Mat& imgToDraw, const std::vecto
     cv::putText(imgToDraw, (*itr).name, cv::Point(objRect.x + objRect.width, objRect.y + objRect.height),
     cv::FONT_HERSHEY_DUPLEX, 1.0, CV_RGB(255, 0, 0));
   }
-  ade::Display::createWindowIfDoesNotExist(displayName);
-  ade::Display::displayFrame(imgToDraw, displayName);
+  diarc::Display::createWindowIfDoesNotExist(displayName);
+  diarc::Display::displayFrame(imgToDraw, displayName);
 }
 
 // fills classNames vector first with placeholder names

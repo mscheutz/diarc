@@ -280,16 +280,16 @@ which will take 10+ minutes so you should prefer using the _assemble_ gradle tas
 To run a single DIARC Component use the launch task, specifying the full class
 path of the component with the `-Pmain=` argument.
 
-`./gradlew launch -Pmain=edu.tufts.hrilab.action.GoalManagerImpl`
+`./gradlew launch -Pmain=edu.tufts.hrilab.action.GoalManagerComponent`
 
 To pass arguments to the component, use the `--args=` argument.
 
-`./gradlew launch -Pmain=edu.tufts.hrilab.action.GoalManagerImpl --args="-editor"`
+`./gradlew launch -Pmain=edu.tufts.hrilab.action.GoalManagerComponent --args="-editor"`
 
 To run the component in debug mode (where you attach your IDE to the running process)
 use the `--debug-jvm` argument.
 
-`./gradlew launch -Pmain=edu.tufts.hrilab.action.GoalManagerImpl --args="-editor" --debug-jvm`
+`./gradlew launch -Pmain=edu.tufts.hrilab.action.GoalManagerComponent --args="-editor" --debug-jvm`
 
 ## Running a DIARC Configuration 
 

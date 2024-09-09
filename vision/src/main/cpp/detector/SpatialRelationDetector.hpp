@@ -54,16 +54,16 @@ private:
    * @return if relation was found
    */
   bool checkForRelation(const PredicateHelper &relation,
-                        const ade::stm::MemoryObject::Ptr &referent,
-                        const ade::stm::MemoryObject::Ptr &relatum);
+                        const diarc::stm::MemoryObject::Ptr &referent,
+                        const diarc::stm::MemoryObject::Ptr &relatum);
 
   bool checkForTouchingRelation(const PredicateHelper &relation,
-                            const ade::stm::MemoryObject::Ptr &referent,
-                            const ade::stm::MemoryObject::Ptr &relatum);
+                            const diarc::stm::MemoryObject::Ptr &referent,
+                            const diarc::stm::MemoryObject::Ptr &relatum);
 
   bool checkForOnTopRelation(const PredicateHelper &relation,
-                                                      const ade::stm::MemoryObject::Ptr &referent,
-                                                      const ade::stm::MemoryObject::Ptr &relatum);
+                                                      const diarc::stm::MemoryObject::Ptr &referent,
+                                                      const diarc::stm::MemoryObject::Ptr &relatum);
 
   //! last seen MemoryObject tokenIds, hashed by variable name
   boost::unordered_map<std::string, long long> lastSeenTokenIds;
@@ -72,7 +72,7 @@ private:
   boost::unordered_map<long long, unsigned long long> lastFrameCompletedByType;
 
   //! handle to tracked objects db
-  ade::stm::TrackedObjects *trackedObjects;
+  diarc::stm::TrackedObjects *trackedObjects;
 };
 
 

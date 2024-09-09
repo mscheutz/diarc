@@ -77,7 +77,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
   private Condition recognizedQNotEmpty;
 
   private Symbol speaker;
-  private Symbol listener;
+  private Symbol addressee;
 
   private boolean useGui = false;
   private Sphinx4GUIPanel gui;
@@ -104,8 +104,8 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
 
     recognizedQ = new LinkedBlockingQueue<>();
 
-    speaker = new Symbol("CommX");
-    listener = new Symbol("self");
+    speaker = new Symbol("commX");
+    addressee = new Symbol("self");
   }
 
   protected void init() {
@@ -293,7 +293,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
             case ACCEPT:
                 Utterance utterance = new Utterance.Builder()
                         .setSpeaker(speaker)
-                        .addListener(listener)
+                        .setAddressee(addressee)
                         .setWords(Arrays.asList(mostRecentText.split(" ")))
                         .setUtteranceType(UtteranceType.UNKNOWN)
                         .setIsInputUtterance(true)
@@ -382,8 +382,8 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
     if (cmdLine.hasOption("speaker")) {
       speaker = new Symbol(cmdLine.getOptionValue("speaker"));
     }
-    if (cmdLine.hasOption("listener")) {
-      listener = new Symbol(cmdLine.getOptionValue("listener"));
+    if (cmdLine.hasOption("addressee")) {
+      addressee = new Symbol(cmdLine.getOptionValue("addressee"));
     }
     if (cmdLine.hasOption("gui")) {
       useGui = true;
@@ -404,7 +404,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
     options.add(Option.builder("config").hasArg().argName("path").desc("set relative path to Sphinx4 config file (if not specified, will use a default config)").build());
     options.add(Option.builder("control").hasArg().argName("a/c/r").desc("set whether the component accepts, waits for confirmation or rejects").build());
     options.add(Option.builder("speaker").hasArg().argName("name").desc("set speaker name").build());
-    options.add(Option.builder("listener").hasArg().argName("name").desc("set listener name").build());
+    options.add(Option.builder("addressee").hasArg().argName("name").desc("set addressee name").build());
     options.add(Option.builder("mixer").hasArg().argName("id").desc("set mixer id").build());
     options.add(Option.builder("showmixers").desc("Display all mixer options.").build());
     options.add(Option.builder("gui").desc("Display GUI.").build());
@@ -427,7 +427,7 @@ public class Sphinx4Component extends DiarcComponent implements Sphinx4Interface
 
     Utterance utterance = new Utterance.Builder()
             .setSpeaker(speaker)
-            .addListener(listener)
+            .setAddressee(addressee)
             .setWords(Arrays.asList(utt.split(" ")))
             .setUtteranceType(UtteranceType.UNKNOWN)
             .setIsInputUtterance(true)

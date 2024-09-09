@@ -18,7 +18,7 @@
 #include "common/fol/PredicateHelper.hpp"
 #include "ConfidenceLevel.hpp"
 
-namespace ade {
+namespace diarc {
   namespace stm {
     
     // forward declaration
@@ -57,6 +57,6 @@ namespace ade {
     };
 
   } //namespace stm
-} //namespace ade
+} //namespace diarc
 #endif	/* RELATIONVALIDATIONRESULT_HPP */
 

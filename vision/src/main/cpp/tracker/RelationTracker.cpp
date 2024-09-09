@@ -4,12 +4,12 @@
 
 #include "RelationTracker.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 RelationTracker::RelationTracker(const long long &processorId, const int imgWidth,
                                  const int imgHeight)
         : ObjectTracker(processorId, imgWidth, imgHeight) {
-  logger = log4cxx::Logger::getLogger("ade.tracker.RelationTracker");
+  logger = log4cxx::Logger::getLogger("diarc.tracker.RelationTracker");
 }
 
 RelationTracker::~RelationTracker() {
@@ -42,7 +42,7 @@ void RelationTracker::haveNewImage(CaptureNotification::ConstPtr notification) {
   }
 }
 
-void RelationTracker::haveTrackedMemoryObject(ade::stm::MemoryObject::Ptr trackedObject) {
+void RelationTracker::haveTrackedMemoryObject(diarc::stm::MemoryObject::Ptr trackedObject) {
   LOG4CXX_DEBUG(logger, "[haveTrackedMemoryObject] method entered.");
   // relation tracker only gets notified of MemoryObjects that are already being tracked (by a different
   // tracker), so "haveNewMemoryObject" will never be called. this simply forwards the notification to the

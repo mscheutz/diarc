@@ -35,3 +35,21 @@ import edu.tufts.hrilab.action.justification.Justification;
 () = runPassTest2() {
   hugo.tsc:tsc1();
 }
+
+() = runBooleanTest() {
+  if (~tsc:tsc_bool_true()) {
+    exit(FAIL);
+  }
+
+  if (tsc:tsc_bool_false()) {
+    exit(FAIL);
+  }
+
+  if (~tsc:tsc_justification_true()) {
+    exit(FAIL);
+  }
+
+  if (tsc:tsc_justification_false()) {
+    exit(FAIL);
+  }
+}

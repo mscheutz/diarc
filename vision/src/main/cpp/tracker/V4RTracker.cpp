@@ -31,7 +31,7 @@
 
 #endif
 
-using namespace ade::stm;
+using namespace diarc::stm;
 using namespace std;
 
 
@@ -50,7 +50,7 @@ V4RTracker::V4RTracker(const long long &processorId, const int imgWidth, const i
 
   trackingConfidenceThreshold = 0.05f;
   visionProcessName = "V4RTracker";
-  logger = log4cxx::Logger::getLogger("ade.tracker.V4RTracker");
+  logger = log4cxx::Logger::getLogger("diarc.tracker.V4RTracker");
 }
 
 V4RTracker::~V4RTracker() {
@@ -198,7 +198,7 @@ void V4RTracker::startTracking(const MemoryObject::Ptr &newMemObj) {
 
 
   v4r::ArticulatedObject::Ptr model;
-  //ade::V4RTrackingModelIO modelIO;
+  //diarc::V4RTrackingModelIO modelIO;
   //modelIO.readRecognitionStructure();
   if (v4r::io::read(modelDir_ + "/" + v4rModelName + "/" + v4rModelName + ".ao", model)) {
     tracker->setObjectModel(model);

@@ -9,13 +9,13 @@
 #include "stm/util/StmUtilities.hpp"
 #include <pcl/registration/distances.h>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 SpatialRelationDetector::SpatialRelationDetector(const long long &processorId, const int imgWidth, const int imgHeight)
         : ObjectDetector(processorId, imgWidth, imgHeight) {
   trackedObjects = TrackedObjects::getInstance();
   visionProcessName = "SpatialRelationDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.SpatialRelationDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.SpatialRelationDetector");
 }
 
 SpatialRelationDetector::~SpatialRelationDetector() {
@@ -160,8 +160,8 @@ void SpatialRelationDetector::handleMemoryObjectNotification(MemoryObjectNotific
 
 
 bool SpatialRelationDetector::checkForRelation(const PredicateHelper &relation,
-                                               const ade::stm::MemoryObject::Ptr &referent,
-                                               const ade::stm::MemoryObject::Ptr &relatum) {
+                                               const diarc::stm::MemoryObject::Ptr &referent,
+                                               const diarc::stm::MemoryObject::Ptr &relatum) {
   if (relation.getName().compare("touching") == 0 || relation.getName().compare("on") == 0) {
     return checkForTouchingRelation(relation, referent, relatum);
   } else if (relation.getName().compare("onTop") == 0) {
@@ -174,8 +174,8 @@ bool SpatialRelationDetector::checkForRelation(const PredicateHelper &relation,
 }
 
 bool SpatialRelationDetector::checkForTouchingRelation(const PredicateHelper &relation,
-                                                       const ade::stm::MemoryObject::Ptr &referent,
-                                                       const ade::stm::MemoryObject::Ptr &relatum) {
+                                                       const diarc::stm::MemoryObject::Ptr &referent,
+                                                       const diarc::stm::MemoryObject::Ptr &relatum) {
 
   std::vector<int> indices0 = referent->getTrackingMask()->getIndicesMask();
   std::vector<int> indices1 = relatum->getTrackingMask()->getIndicesMask();
@@ -230,7 +230,7 @@ bool SpatialRelationDetector::checkForTouchingRelation(const PredicateHelper &re
 }
 
 bool SpatialRelationDetector::checkForOnTopRelation(const PredicateHelper &relation,
-                                                    const ade::stm::MemoryObject::Ptr &referent,
-                                                    const ade::stm::MemoryObject::Ptr &relatum) {
+                                                    const diarc::stm::MemoryObject::Ptr &referent,
+                                                    const diarc::stm::MemoryObject::Ptr &relatum) {
   return false;
 }

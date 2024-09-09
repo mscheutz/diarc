@@ -38,7 +38,7 @@ public class TemiV3PoseConsultant extends Consultant<TemiV3PoseReference> {
     @Override
     public <U> U localConvertToType(Symbol refId, Class<U> type, List<? extends Term> constraints) {
         // get underlying pose info based on refId
-        TemiV3PoseReference ref = references.get(refId);
+        TemiV3PoseReference ref = getReference(refId);
         List<Float> pose = ref.rawPose;
         Symbol name = ref.getName();
 
@@ -53,15 +53,6 @@ public class TemiV3PoseConsultant extends Consultant<TemiV3PoseReference> {
             log.error("[convertToType] Can not handle conversions to type: " + type);
             return null;
         }
-    }
-
-    @Override
-    public String getReferenceSummaries() {
-        StringBuilder sb = new StringBuilder();
-        for (Symbol refId : references.keySet()) {
-            sb.append(refId).append(" = ").append(references.get(refId).properties).append((references.get(refId).getPose() == null)? " (is null)" : " (not null)").append("\n");
-        }
-        return sb.toString();
     }
 
     @Override
@@ -140,16 +131,17 @@ public class TemiV3PoseConsultant extends Consultant<TemiV3PoseReference> {
         }
     }
 
-    public void removeReference(Symbol refId) {
+    @Override
+    public TemiV3PoseReference removeReference(Symbol refId) {
         activatedEntities.remove(refId);
-        TemiV3PoseReference ref = references.get(refId);
+        TemiV3PoseReference ref = getReference(refId);
         for (Term property : ref.properties) {
             propertiesHandled.removeIf(propHandled -> edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(property, propHandled));
 //            if (propertiesHandled.stream().anyMatch(p -> PredicateHelper.predicatesMatch(p, property))) {
 //            propertiesHandled.remove(property);
 //            }
         }
-        references.remove(refId);
+        return super.removeReference(refId);
     }
 
     public void addActivatedEntity(Symbol refId) {
@@ -159,9 +151,9 @@ public class TemiV3PoseConsultant extends Consultant<TemiV3PoseReference> {
     }
 
     public TemiV3PoseReference getLocationReferenceFromName(String name){
-        for(Map.Entry<Symbol,TemiV3PoseReference> ref: references.entrySet()){
-            if(ref.getValue().getName().getName().equals(name)){
-                return ref.getValue();
+        for(TemiV3PoseReference ref : getAllReferences()){
+            if(ref.getName().getName().equals(name)){
+                return ref;
             }
         }
         return null;

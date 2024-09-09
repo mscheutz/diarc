@@ -4,8 +4,7 @@
 
 package edu.tufts.hrilab.action.gui;
 
-import edu.tufts.hrilab.action.GoalManagerImpl;
-import edu.tufts.hrilab.action.execution.ExecutionType;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
@@ -17,7 +16,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Future;
 
 public class GoalManagerGUI {
@@ -28,7 +26,6 @@ public class GoalManagerGUI {
     private JPanel contentPanel;
     private JPanel submitPanel;
     private JPanel gmPanel;
-    private JButton fetch_lgButton;
     private JButton ap_caddy;
     private JButton goToPoseButton;
     private JButton assembleButton;
@@ -64,14 +61,13 @@ public class GoalManagerGUI {
     private JTextField suspendGoalField;
     private JTextField resumeGoalField;
     private JTextField setAgentTxtField;
-    private JButton setAgentButton;
     private JLabel setAgentLabel;
     private JTextField perfFileNameTxtField;
     private JPanel submitActionPanel;
     private JTextField submitActionField;
     private JButton submitActionButton;
     private JLabel submitActionLabel;
-    private static GoalManagerImpl goalManager;
+    private static GoalManagerComponent goalManager;
     private String dir;
     private DatabaseViewer dbViewer;
     private GoalsViewer goalsViewer;
@@ -80,7 +76,7 @@ public class GoalManagerGUI {
     //FIXME: better way to handle agents for submitting goals, right now hardcoded to andy for fetch stuff
     private Symbol agent;
 
-    public GoalManagerGUI(GoalManagerImpl gm, String path) {
+    public GoalManagerGUI(GoalManagerComponent gm, String path) {
         goalManager = gm;
         dir = path;
         goalsViewer = new GoalsViewer(gm);
@@ -160,8 +156,8 @@ public class GoalManagerGUI {
                 super.mouseClicked(mouseEvent);
                 if (!submitGoalField.getText().isEmpty()) {
                     getAgent();
-                    goalManager.getExecutionManager().submitGoal(new Goal(agent,
-                        Factory.createPredicate(submitGoalField.getText())), ExecutionType.ACT);
+                    goalManager.submitGoal(
+                            Factory.createPredicate("goal", agent, Factory.createFOL(submitGoalField.getText())));
                 }
             }
         });
@@ -170,8 +166,8 @@ public class GoalManagerGUI {
             public void actionPerformed(ActionEvent actionEvent) {
                 if (!submitGoalField.getText().isEmpty()) {
                     getAgent();
-                    goalManager.getExecutionManager().submitGoal(new Goal(agent,
-                        Factory.createPredicate(submitGoalField.getText())), ExecutionType.ACT);
+                    goalManager.submitGoal(
+                            Factory.createPredicate("goal", agent, Factory.createFOL(submitGoalField.getText())));
                 }
             }
         });
@@ -202,7 +198,7 @@ public class GoalManagerGUI {
                     getAgent();
                     String fn = perfFileNameTxtField.getText();
                     goalManager.submitGoal(
-                        Factory.createPredicate("savePerformanceMeasures", agent.toString(), fn));
+                            Factory.createPredicate("savePerformanceMeasures", agent.toString(), fn));
                 }
             }
         });
@@ -253,11 +249,11 @@ public class GoalManagerGUI {
                 }
                 getAgent();
                 goalManager.submitGoal(
-                    Factory.createPredicate("estimatePerformanceMeasures",
-                        agent.toString(),
-                        estGoal.getText(),
-                        phase,
-                        modification)
+                        Factory.createPredicate("estimatePerformanceMeasures",
+                                agent.toString(),
+                                estGoal.getText(),
+                                phase,
+                                modification)
                 );
             }
         });
@@ -269,7 +265,7 @@ public class GoalManagerGUI {
                     getAgent();
                     String goal = suspendGoalField.getText();
                     goalManager.submitGoal(
-                        Factory.createPredicate("suspendGoal", agent.toString(), goal));
+                            Factory.createPredicate("suspendGoal", agent.toString(), goal));
                 }
             }
         });
@@ -281,7 +277,7 @@ public class GoalManagerGUI {
                     getAgent();
                     String goal = suspendGoalField.getText();
                     goalManager.submitGoal(
-                        Factory.createPredicate("resumeGoal", agent.toString(), goal));
+                            Factory.createPredicate("resumeGoal", agent.toString(), goal));
                 }
             }
         });
@@ -291,8 +287,7 @@ public class GoalManagerGUI {
                 super.mouseClicked(mouseEvent);
                 if (!setStateTextField.getText().isEmpty()) {
                     getAgent();
-                    goalManager.submitGoal(
-                        Factory.createPredicate("setState", agent.toString(), setStateTextField.getText()));
+                    goalManager.setState(Factory.createPredicate(setStateTextField.getText()));
                 }
             }
         });
@@ -304,7 +299,7 @@ public class GoalManagerGUI {
                     getAgent();
                     String obj = fetchObjField.getText();
                     goalManager.submitGoal(
-                        Factory.createPredicate("fetch", agent.toString(), "object_" + obj, "location_" + obj));
+                            Factory.createPredicate("fetch", agent.toString(), "object_" + obj, "location_" + obj));
                 }
             }
         });
@@ -315,7 +310,7 @@ public class GoalManagerGUI {
                     getAgent();
                     String obj = fetchObjField.getText();
                     goalManager.submitGoal(
-                        Factory.createPredicate("fetch", agent.toString(), "object_" + obj, "location_" + obj));
+                            Factory.createPredicate("fetch", agent.toString(), "object_" + obj, "location_" + obj));
                 }
             }
         });

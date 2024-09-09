@@ -28,11 +28,11 @@ import java.util.ArrayList;
 public class InterruptTest {
   private static Logger log = LoggerFactory.getLogger(InterruptTest.class);
   private boolean startFlag = false;
-  private static GoalManagerImpl gm;
+  private static GoalManagerComponent gm;
 
   @BeforeClass
   static public void init() {
-    gm = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile agents/agents.pl", true);
+    gm = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile agents/agents.pl", true);
   }
 
   @AfterClass

@@ -17,7 +17,7 @@ BMARKCOLB(0),
 BMARKCOLR(0),
 BMARKCOLG(0),
 MINMBLOBSIZE(40),
-logger(log4cxx::Logger::getLogger("ade.detector.fastblobdetect.FastBlobDetector")) {
+logger(log4cxx::Logger::getLogger("diarc.detector.fastblobdetect.FastBlobDetector")) {
 }
 
 FastBlobDetector::~FastBlobDetector() {

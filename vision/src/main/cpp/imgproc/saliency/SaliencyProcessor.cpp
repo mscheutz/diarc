@@ -15,7 +15,7 @@ SaliencyProcessor::SaliencyProcessor(const long long& processorId, const unsigne
         const unsigned int imgheight, const bool isStereo)
 : ImageProcessor(processorId, imgwidth, imgheight, isStereo) {
 
-  logger = log4cxx::Logger::getLogger("ade.imgproc.saliency.SaliencyProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.saliency.SaliencyProcessor");
 }
 
 SaliencyProcessor::~SaliencyProcessor() {

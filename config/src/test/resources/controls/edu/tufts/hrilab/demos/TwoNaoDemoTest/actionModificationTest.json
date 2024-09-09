@@ -105,7 +105,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "modifyAction(dempster,dempster,doasquat(dempster),insert(lower(dempster,arms)),after(standUp(dempster)))", "ACT", "NORMAL", "1704824850659" ]
+      "serviceArgs" : [ "modifyAction(dempster,doasquat(dempster),insert(lower(dempster,arms)),after(standUp(dempster)))", "ACT", "NORMAL", "1704824850659" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824850659", "SUCCEEDED" ]

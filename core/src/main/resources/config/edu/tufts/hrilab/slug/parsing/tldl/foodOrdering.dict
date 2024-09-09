@@ -50,7 +50,7 @@ add; VAL/C; #x.mod(insert($x),none())
 
 after; PP/C; #x.after($x)
 
-%after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,insert($e),$t)
+%after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction(?ADDRESSEE,$a,insert($e),$t)
 
 ahead; Adj; ahead
 
@@ -203,9 +203,9 @@ know; (C/KNOWABLE)\AGENT ; #a#k.know($a,$k)
 
 %%%%%%%%%%%  M  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%makesure; (C/(C\C))/INF; #x#y.modifyAction(?ADDRESSEE,?ADDRESSEE,insert($x),$y@$x)
-make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,insert($x),$y)
-make sure; ((C/PP)/S)\ADV; #w#x#y.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,insert($x),$y)
+%makesure; (C/(C\C))/INF; #x#y.modifyAction(?ADDRESSEE,insert($x),$y@$x)
+make sure; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
+make sure; ((C/PP)/S)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
 
 me; AGENT ; ?INTERACTOR
 
@@ -265,7 +265,7 @@ go to area; VERBT; goTo
 go to; VERBT; goTo
 do you see; VERBT; doYouSee
 
-%remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,remove($x),$t)
+%remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction(?ADDRESSEE,$a,remove($x),$t)
 remove;(VAL/COND)/CONDITIONTYPE , (VAL/EFFECT)/EFFECTTYPE ; #t#x.mod(remove($x),$t)
 remove ; VAL/C; #x.mod(remove($x),none())
 remove ; (VAL/PP)/C; #x#l.mod(remove($x),$l)
@@ -273,10 +273,10 @@ remove ; (VAL/PP)/C; #x#l.mod(remove($x),$l)
 
 replace; (VAL/WITH)/C; #x#y.mod(replace($y,$x),none());
 
-%replace; (C/WITH)\ADV; #a#w.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($w),none())
-%replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($w),$l)
-%replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($w),$l)
-%replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,?ADDRESSEE,$a,replace($x),$t)
+%replace; (C/WITH)\ADV; #a#w.modifyAction(?ADDRESSEE,$a,replace($w),none())
+%replace; ((C/PP)/WITH)\ADV; #a#w#l.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+%replace; ((C/WITH)\PP)\ADV; #a#l#w.modifyAction(?ADDRESSEE,$a,replace($w),$l)
+%replace; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,replace($x),$t)
 
 %right; DIR; right
 %right ninety degrees; DEG; right,ninety
@@ -372,8 +372,8 @@ will; (S\AGENT)/(S\AGENT), (S\AGENT)/(C\AGENT); #x.will($x)
 with; WITH/C; #x.$x
 
 
-%without ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,remove($x),none())
-%without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,?ADDRESSEE,$w,remove($x),$l)
+%without ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,$w,remove($x),none())
+%without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,$w,remove($x),$l)
 
 %%%%%%%%%%%  X  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%  Y  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -573,10 +573,10 @@ here it is; VAL; got(ingredient)
 grasp it here; VAL; hold(here)
 
 %define new speaker; S/LIT*; #s.name($s,$s)
-add new supervisor; S/LIT*; #s.is_supervisor($s,?ADDRESSEE)
-add new supervisor; (S/LIT*)\AGENT; #a#s.is_supervisor($a,$s)
-add new admin; S/LIT* ; #a.admin_of($a,?ADDRESSEE)
-add new admin; (S/LIT*)\AGENT; #a#s.admin_of(#a,#s)
+add new supervisor; S/LIT*; #s.supervisor($s)
+add new supervisor; (S/LIT*)\AGENT; #a#s.supervisor($a,$s)
+add new admin; S/LIT* ; #a.admin($a)
+add new admin; (S/LIT*)\AGENT; #a#s.admin(#a,#s)
 
 it is safe to proceed; VAL; safeToProceed(true)
 it is not safe to proceed; VAL; safeToProceed(false)

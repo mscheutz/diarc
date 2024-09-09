@@ -49,7 +49,7 @@ public class FailureInformation {
     }
 
     // if there are failedActions or excludedFailedActions constraints, and the failedAction is unknown, the policy can't be used
-    if (failedActions.isEmpty() && ((!constraints.failedActions.isEmpty()) || !constraints.excludedFailedActions.isEmpty())) {
+    if (failedActions.isEmpty() && (!constraints.failedActions.isEmpty() || !constraints.excludedFailedActions.isEmpty())) {
       return 0;
     }
 

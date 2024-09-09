@@ -4,9 +4,7 @@
 
 package edu.tufts.hrilab.demos;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.action.db.performanceMeasures.PerformanceMeasures;
 import edu.tufts.hrilab.config.FetchPerformanceAssessmentDemoMock;
 import edu.tufts.hrilab.fol.Factory;
@@ -26,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class FetchPerformanceAssessmentDemoTest extends GenerativeDiarcIntegrationTest {
   private FetchPerformanceAssessmentDemoMock diarcConfig;
   private SimSpeechRecognitionComponent simSpeechRec;
-  private GoalManagerImpl gm;
+  private GoalManagerComponent gm;
   private final static int randomNumberSeed = 10;
   private Symbol agent = Factory.createSymbol("andy", "agent");
 
@@ -44,16 +42,9 @@ public class FetchPerformanceAssessmentDemoTest extends GenerativeDiarcIntegrati
 
   @After
   public void shutdownDiarc() {
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException ignored) {
-    }
-
-    log.debug("[cleanup] started");
-    log.debug("[shutdownConfig] tester shutdown");
+    log.debug("[shutdownDiarc] started");
     diarcConfig.shutdownConfiguration();
-    log.debug("[shutdownConfig] completed");
-    log.info("[cleanup] ended");
+    log.debug("[shutdownDiarc] completed");
   }
 
   public void sendUserInput(String input) {
@@ -133,11 +124,6 @@ public class FetchPerformanceAssessmentDemoTest extends GenerativeDiarcIntegrati
   }
 
   private void setState() {
-    // TODO: the submitGoal version causes a race condition -- figure out why
-//    Predicate goal = Factory.createPredicate("setState", agent, Factory.createPredicate("at(andy:agent,location_0:location)"));
-//    long goalId = gm.submitGoal(goal);
-//    gm.joinOnGoal(goalId);
-
     gm.setState(Factory.createPredicate("at(andy:agent,location_0:location)"));
   }
 }

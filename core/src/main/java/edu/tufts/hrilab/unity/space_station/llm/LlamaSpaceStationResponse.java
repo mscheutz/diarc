@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Symbol;
 import org.apache.commons.lang3.StringEscapeUtils;
 import com.google.gson.Gson;
 import com.google.gson.annotations.Expose;
@@ -20,12 +23,14 @@ import edu.tufts.hrilab.slug.parsing.llm.Proposition;
 public class LlamaSpaceStationResponse {
     private static Gson gson = new Gson();
 
+    public String agent;
     public String action;
     public String area;
     public String side;
     public String number;
 
-    private List<String> actions = Arrays.asList(new String[]{ "stop", "dontKnow", "repair", "monitor" });
+    private List<String> agents = Arrays.asList(new String[]{"unknown", "robot1", "robot2"});
+    private List<String> actions = Arrays.asList(new String[]{ "stop", "dontKnow", "repair", "check" });
     private List<String> locationActions = Arrays.asList(new String[]{ "goto", "repair" });
     private List<String> areas = Arrays.asList(new String[]{ "alpha", "beta", "gamma" });
     private List<String> sides = Arrays.asList(new String[]{ "left", "right" });
@@ -48,11 +53,11 @@ public class LlamaSpaceStationResponse {
             parserRes.intention.proposition.arguments[0] = area;
             parserRes.intention.proposition.arguments[1] = side;
             parserRes.intention.proposition.arguments[2] = number;
-        }else if (valid(side, sides) && valid(number, numbers) && action.equals("goto")) {
+        } else if (valid(side, sides) && valid(number, numbers) && action.equals("goto")) {
             parserRes = actionResponse(2);
             parserRes.intention.proposition.arguments[0] = side;
             parserRes.intention.proposition.arguments[1] = number;
-        } else if (valid(area, areas) && (action.equals("goto") || action.equals("monitor")) ) {
+        } else if (valid(area, areas) && (action.equals("goto") || action.equals("check")) ) {
             parserRes = actionResponse(1);
             parserRes.intention.proposition.arguments[0] = area;
         } else if (action.equals("repair") || action.equals("dontKnow")) {
@@ -97,7 +102,6 @@ public class LlamaSpaceStationResponse {
         return intention;
     }
 
-
     /**
      * Takes the object and produces a predicate string containing a dialog action goal predicate.
      *
@@ -112,7 +116,7 @@ public class LlamaSpaceStationResponse {
             str = action + "(" + actor + "," + side + "," + number + ")";
         } else if (valid(area, areas) && action.equals("goto")) {
             str = action + "(" + actor + "," + area + ")";
-        } else if (valid(area, areas) && action.equals("monitor")) {
+        } else if (valid(area, areas) && action.equals("check")) {
             str = action + "(" + actor + "," + area + ")";
         } else if (action.equals("repair") || action.equals("dontKnow")) {
             str = action + "(" + actor + ")";
@@ -123,6 +127,14 @@ public class LlamaSpaceStationResponse {
         }
         return str;
     }
+
+    public Symbol toAddressee () {
+        if (valid(agent, agents)) {
+            return Factory.createSymbol(agent);
+        }
+        return null;
+    }
+
     //goal(dempster,handled(dempster,utterance(evan,dempster,and(dempster),semantics(want(evan,stand(dempster))),indirectSemantics(),suppSemantics())))
     public String toDialogGoal (String actor, String predicate) {
         return "goal(" + actor + ",handled(" + actor + ",utterance(brad," + actor + ",and(" + actor + "),semantics(want(brad," + predicate + ")),indirectSemantics(),suppSemantics())))";

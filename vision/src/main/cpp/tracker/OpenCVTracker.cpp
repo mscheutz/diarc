@@ -11,7 +11,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/core/utility.hpp>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 OpenCVTracker::OpenCVTracker(const std::string &trackerType,
                              const long long &processorId,
@@ -19,7 +19,7 @@ OpenCVTracker::OpenCVTracker(const std::string &trackerType,
                              const int imgHeight)
     : ObjectTracker(processorId, imgWidth, imgHeight) {
   visionProcessName = "OpenCVTracker";
-  logger = log4cxx::Logger::getLogger("ade.tracker.OpenCVTracker");
+  logger = log4cxx::Logger::getLogger("diarc.tracker.OpenCVTracker");
   type = trackerType;
 
 //  cv::setBreakOnError(true);

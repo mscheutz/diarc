@@ -12,15 +12,15 @@ SWIG_JAVABODY_METHODS(protected, public, SWIGTYPE)
 
 /* to allow use of boost shared_ptr */
 //%include <boost_shared_ptr.i>
-//%shared_ptr(ade::common::fol::Symbol)
-//%shared_ptr(ade::common::fol::Variable)
-//%shared_ptr(ade::common::fol::Predicate)
+//%shared_ptr(diarc::common::fol::Symbol)
+//%shared_ptr(diarc::common::fol::Variable)
+//%shared_ptr(diarc::common::fol::Predicate)
 //        
 /* to enable use of "Symbol[]" */
 //%include "arrays_java.i";
-////JAVA_ARRAYSOFCLASSES(ade::common::fol::Symbol);
-//JAVA_ARRAYSOFCLASSES(ade::common::fol::Symbol::Ptr);
-//JAVA_ARRAYSOFCLASSES(boost::shared_ptr<ade::common::fol::Symbol>);
+////JAVA_ARRAYSOFCLASSES(diarc::common::fol::Symbol);
+//JAVA_ARRAYSOFCLASSES(diarc::common::fol::Symbol::Ptr);
+//JAVA_ARRAYSOFCLASSES(boost::shared_ptr<diarc::common::fol::Symbol>);
 //JAVA_ARRAYSOFCLASSES(boost::shared_ptr<Symbol>);
 
 %{

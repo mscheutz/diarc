@@ -6,16 +6,15 @@ import edu.tufts.hrilab.abb.MockYumiComponent;
 import edu.tufts.hrilab.abb.PickAndPlaceLLM;
 import edu.tufts.hrilab.abb.RequestFromHumanComponent;
 import edu.tufts.hrilab.abb.consultant.area.ABBAreaConsultant;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexConsultant;
+import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
 import edu.tufts.hrilab.abb.consultant.item.ItemConsultant;
 import edu.tufts.hrilab.abb.consultant.location.ABBLocationConsultant;
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
-import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 //import ai.thinkingrobots.abb.RWSRobotComponent;
@@ -108,7 +107,7 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
                         + "-goal init(self:agent) "
                         + "-editor ";
 
-        createInstance(GoalManagerImpl.class, gmArgs);
+        createInstance(GoalManagerComponent.class, gmArgs);
 
         createInstance(SimSpeechRecognitionComponent.class, "-speaker eric -config yumiPickAndPlace.simspeech");
         createInstance(SimSpeechRecognitionComponent.class, "-speaker eric -config yumiPickAndPlaceJapanese.simspeech");

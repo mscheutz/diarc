@@ -111,19 +111,12 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
   @Override
   public void shutdownDiarc() {
-    //Give last step a chance to properly complete
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException ignored) {
-    }
-
-    log.debug("[cleanup] started");
+    log.debug("[shutdownDiarc] started");
     tester.shutdown();
     tester = null;
     log.debug("[shutdownConfig] tester shutdown");
     config.shutdownConfiguration();
-    log.debug("[shutdownConfig] completed");
-    log.info("[cleanup] ended");
+    log.debug("[shutdownDiarc] completed");
   }
 
   private Long getGoalId(String goal) {
@@ -631,8 +624,8 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
     runUserGeneratedTest("cancel task with gid " + followGid, new Object[][]{
             {"sayText", "okay", null},
-            {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
-            {"interruptFollowBlocking", null},
+//            {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},  // no longer happens -- followMeBlocking already suspended
+//            {"interruptFollowBlocking", null},                                                // no longer happens -- followMeBlocking already suspended
             {"joinOnGoal", followGid, GoalStatus.CANCELED},
             {"joinOnGoal", Factory.createPredicate("cancelGoal(self:agent," + followGid + ")"), GoalStatus.SUCCEEDED},
     });

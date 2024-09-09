@@ -13,10 +13,10 @@
 #include <pcl/features/moment_of_inertia_estimation.h>
 #include <pcl/io/pcd_io.h>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 //static object(s)
-log4cxx::LoggerPtr MemoryObjectMask::logger(log4cxx::Logger::getLogger("ade.stm.MemoryObjectMask"));
+log4cxx::LoggerPtr MemoryObjectMask::logger(log4cxx::Logger::getLogger("edu.tufts.hrilab.stm.MemoryObjectMask"));
 
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const cv::Mat &mask)
         : captureData_(capture),
@@ -128,7 +128,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
     loc.z /= locIndices;
     setLocation(loc); //also sets direction
   } else {
-    direction_ = ade::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
+    direction_ = diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
   }
 
   //set bounding box
@@ -254,7 +254,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
     loc.z /= locIndices;
     setLocation(loc); //also sets direction
   } else {
-    direction_ = ade::capture::util::calcDirection(0, boundingBox_.x + (boundingBox_.width) / 2.0,
+    direction_ = diarc::capture::util::calcDirection(0, boundingBox_.x + (boundingBox_.width) / 2.0,
                                                    boundingBox_.y + (boundingBox_.height) / 2.0);
   }
 
@@ -376,7 +376,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const s
     loc.z /= locIndices;
     setLocation(loc); //also sets direction
   } else {
-    direction_ = ade::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
+    direction_ = diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
   }
 
   //set bounding box
@@ -489,7 +489,6 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     loc.z += point3D.z;
   }
 
-  // WARN: This doesn't work for grasp point memoryObjects
   // TODO: handle better
   if (cloudMask->size() > 1) {
     pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
@@ -518,7 +517,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     loc.z /= indicesMask_.size();
     setLocation(loc); //also sets direction
   } else {
-    direction_ = ade::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
+    direction_ = diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
   }
 
   //set bounding box
@@ -657,7 +656,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     loc.z /= indicesMask_.size();
     setLocation(loc); //also sets direction
   } else {
-    direction_ = ade::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
+    direction_ = diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
   }
 
   //set bounding box

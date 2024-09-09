@@ -40,6 +40,7 @@ public class NLG {
   private static Realiser realiser = new Realiser(lexicon);
   private List<String> listeners;
   private String speaker;
+  private String addressee;
   private List<Map<Variable, Symbol>> bindings = new ArrayList<>();
   private List<Term> supplements = new ArrayList<>();
   private Map<Variable, Symbol> tierAssignments = new HashMap<>();
@@ -54,6 +55,7 @@ public class NLG {
       listeners.add(listener.getName());
     }
     speaker = utterance.getSpeaker().getName();
+    addressee = utterance.getAddressee().getName();
     Symbol semantics = utterance.getSemantics();
     bindings = utterance.getBindings();
     supplements = utterance.getSupplementalSemantics();
@@ -93,14 +95,16 @@ public class NLG {
           (semantics.getName().equals("or") || semantics.getName().equals("wouldLike"))) {
         //log.debug("IN");
         Utterance u0 = new Utterance.Builder()
-                .setSpeaker(new Symbol("self"))
+                .setSpeaker(utterance.getSpeaker())
+                .setAddressee(utterance.getAddressee())
                 .addListeners(utterance.getListeners())
                 .setSemantics(((Term) semantics).get(0))
                 .setUtteranceType(UtteranceType.QUESTION)
                 .setIsInputUtterance(utterance.isInputUtterance()).build();
 
         Utterance u1 = new Utterance.Builder()
-                .setSpeaker(new Symbol("self"))
+                .setSpeaker(utterance.getSpeaker())
+                .setAddressee(utterance.getAddressee())
                 .addListeners(utterance.getListeners())
                 .setSemantics(((Term) semantics).get(1))
                 .setUtteranceType(UtteranceType.QUESTION)
@@ -1166,7 +1170,7 @@ public class NLG {
   private String pronounize(String arg) {
     if (arg.equalsIgnoreCase("self") || speaker.equals(arg)) {
       arg = "I";
-    } else if (arg.equalsIgnoreCase("listener") || listeners.contains(arg)) {
+    } else if (arg.equalsIgnoreCase("listener") || addressee.equals(arg)) {
       arg = "you";
     } else if (arg.contains("cmdr")) {
       //arg = "him";

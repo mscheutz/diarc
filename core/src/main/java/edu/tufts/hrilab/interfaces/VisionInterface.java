@@ -19,11 +19,10 @@ public interface VisionInterface {
 	 * Find all SearchManagers containing at least one token in STM. One each,
 	 * regardless of how many tokens of a particular type are in STM.
 	 *
-	 * @param conf minimum confidence of tokens to be included
 	 * @return SearchManager IDs
 	 */
     @TRADEService
-    List<Long> getTypeIds(final double conf);
+    List<Long> getTypeIds();
 
 	/**
 	 * Get the SearchManager ID (search ID) based on a Predicate description of
@@ -40,7 +39,7 @@ public interface VisionInterface {
 	 */
     @TRADEService
     @Action
-    Long getTypeId(final List<? extends Symbol> descriptors);
+    Long getTypeId(List<? extends Symbol> descriptors);
 
 	/**
 	 * Get the SearchManager ID (search ID) based on a Predicate description of
@@ -57,7 +56,7 @@ public interface VisionInterface {
     @TRADEService
     @Action
 	//TODO: should this exist as an action independent of the identical signature action in VisionConsultantInterface?
-    Long getTypeId(final Symbol descriptor);
+    Long getTypeId(Symbol descriptor);
 
 	/**
 	 * Get the descriptors for a particular SearchManager.
@@ -67,7 +66,7 @@ public interface VisionInterface {
 	 */
     @TRADEService
     @Action
-    List<Term> getDescriptors(final Long typeId);
+    List<Term> getDescriptors(Long typeId);
 
 	/**
 	 * Name the collection of Predicate descriptors referred to by the
@@ -79,98 +78,86 @@ public interface VisionInterface {
 	 * @return true if typeId exists, false otherwise
 	 */
     @TRADEService
-    boolean nameDescriptors(final Long typeId, final Symbol typeName);
+    boolean nameDescriptors(Long typeId, Symbol typeName);
 
 	/**
-	 * Get MemoryObject IDs in STM with a confidence level over the specified
-	 * threshold. Only considers results from SearchManager searches that are
-	 * currently running.
+	 * Get MemoryObject IDs in STM. Only considers results from SearchManager
+	 * searches that are currently running.
 	 *
-	 * @param conf minimum confidence of tokens to include
 	 * @return List of STM MemoryObject IDs
 	 */
     @TRADEService
-    List<Long> getTokenIds(final double conf);
+    List<Long> getTokenIds();
 
 	/**
-	 * Get MemoryObject IDs that have specified SearchManager ID with a
-	 * confidence level above the specified threshold. If the specified
+	 * Get MemoryObject IDs that have specified SearchManager ID. If the specified
 	 * SearchManager exists but is not running, it will be started before
 	 * returning results.
 	 *
 	 * @param typeId SearchManager ID of tracked objects
-	 * @param conf minimum confidence of tokens to include
 	 * @return List of STM MemoryObject IDs
 	 */
     @TRADEService
     @Action
-    List<Long> getTokenIds(final long typeId, final double conf);
+    List<Long> getTokenIds(long typeId);
 
 	/**
-	 * Get MemoryObject IDs for all tokens *exactly* matching descriptors in STM
-	 * with confidence greater than threshold. If a matching type is found, it
-	 * will be started (if not already running). If no match exists, a
-	 * SearchManager will attempt to be built and started before returning.
-	 * This is largely a convenience method and {@code getTypeId} should be used
-	 * whenever possible.
+	 * Get MemoryObject IDs for all tokens *exactly* matching descriptors in STM.
+	 * If a matching type is found, it will be started (if not already running).
+	 * If no match exists, a SearchManager will attempt to be built and started before returning.
+	 * This is largely a convenience method and {@code getTypeId} should be used whenever possible.
 	 *
 	 * @param descriptors list of Symbol descriptors
-	 * @param conf the minimum confidence level
 	 * @return List of STM MemoryObject IDs
 	 */
     @TRADEService
     @Action
-    List<Long> getTokenIds(final List<? extends Symbol> descriptors, final double conf);
+    List<Long> getTokenIds(List<? extends Symbol> descriptors);
 
 	/**
-	 * Get MemoryObjects in STM with a confidence over the specified threshold.
-	 * Only considers results from SearchManager searches that are currently
-	 * running.
+	 * Get MemoryObjects in STM. Only considers results from SearchManager
+	 * searches that are currently running.
 	 *
-	 * @param conf minimum confidence of tokens to include
 	 * @return List of MemoryObjects
 	 */
     @TRADEService
-    List<MemoryObject> getTokens(final double conf);
+    List<MemoryObject> getTokens();
 
 	/**
-	 * Get MemoryObjects of the specified SearchManager ID with confidence
-	 * above specified threshold. If the specified SearchManager exists but is
+	 * Get MemoryObjects of the specified SearchManager ID.
+	 * If the specified SearchManager exists but is
 	 * not running, it will be started before returning results.
 	 *
 	 * @param typeId SearchManager ID of tracked objects
-	 * @param conf minimum confidence of tokens to include
 	 * @return List of MemoryObjects
 	 */
     @TRADEService
     @Action
-    List<MemoryObject> getTokens(final long typeId, final double conf);
+    List<MemoryObject> getTokens(long typeId);
 
 	/**
-	 * Get MemoryObjects *exactly* matching descriptors in STM with confidence
-	 * greater than threshold. If a matching type is found, it will be started (if
+	 * Get MemoryObjects *exactly* matching descriptors in STM.
+	 * If a matching type is found, it will be started (if
 	 * not already running). If no match exists, a SearchManager will attempt
 	 * to be built and started before returning. This is largely a convenience
 	 * method and {@code getTypeId} should be used whenever possible.
 	 *
 	 * @param descriptors list of Symbol descriptors
-	 * @param conf the minimum confidence level
 	 * @return List of STM MemoryObjects
 	 */
     @TRADEService
     @Action
-    List<MemoryObject> getTokens(final List<? extends Symbol> descriptors, final double conf);
+    List<MemoryObject> getTokens(List<? extends Symbol> descriptors);
 
 	/**
 	 * Get the MemoryObject with the specified id.
 	 *
 	 * @param tokenId MemoryObject ID in STM
-	 * @param conf minimum confidence of tokens to include
 	 * @return MemoryObject token (Null if doesn't exist)
 	 */
     @TRADEService
     @Action
-    MemoryObject getToken(final long tokenId, final double conf);
+    MemoryObject getToken(long tokenId);
 
 	/**
 	 * Confirms that the object is still in STM.
@@ -180,7 +167,7 @@ public interface VisionInterface {
 	 */
     @TRADEService
     @Action
-    boolean confirmToken(final long tokenId);
+    boolean confirmToken(long tokenId);
 
 	/**
 	 * Confirms that the object is still in STM.
@@ -189,7 +176,7 @@ public interface VisionInterface {
 	 * @return true if the object is present in STM
 	 */
     @TRADEService
-    boolean confirmToken(final MemoryObject token);
+    boolean confirmToken(MemoryObject token);
 
     // ============== START Incremental Search Methods ====================================
 	/**
@@ -210,7 +197,7 @@ public interface VisionInterface {
 	 * "red", "round")
 	 */
     @TRADEService
-    boolean addDescriptor(final long typeId, final Symbol descriptor);
+    boolean addDescriptor(long typeId, Symbol descriptor);
     
 	/**
 	 * Remove search constraint (i.e., processing descriptor and/or
@@ -221,7 +208,7 @@ public interface VisionInterface {
 	 * @return - if removal was successful
 	 */
     @TRADEService
-    boolean removeDescriptor(final long typeId, final Symbol descriptor);
+    boolean removeDescriptor(long typeId, Symbol descriptor);
 
 	/**
 	 * Signal the end of constraint addition. Descriptors/constraints can no
@@ -232,7 +219,7 @@ public interface VisionInterface {
 	 * @param typeId
 	 */
     @TRADEService
-    void endDescriptorChanges(final long typeId);
+    void endDescriptorChanges(long typeId);
 	// ============== END Incremental Search Methods ====================================
 
 	/**
@@ -242,6 +229,6 @@ public interface VisionInterface {
 	 */
     @TRADEService
     @Action
-    void stopAndRemoveType(final long typeId);
+    void stopAndRemoveType(long typeId);
 
 }

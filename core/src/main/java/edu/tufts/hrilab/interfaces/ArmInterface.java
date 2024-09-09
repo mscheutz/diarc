@@ -30,7 +30,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  boolean moveTo(String groupName, Point3d point, Quat4d orientation);
+  Justification moveTo(String groupName, Point3d point, Quat4d orientation);
 
   /**
    * Move the groupName to specified poses(s). If group name only
@@ -48,7 +48,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  boolean moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r);
+  Justification moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r);
 
   /**
    * Move arms(s) to location of chosen grasp specified in MemoryObject. Uses
@@ -117,7 +117,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  boolean pointTo(String groupName, Symbol objectRef);
+  Justification pointTo(String groupName, Symbol objectRef);
 
   /**
    * Convenience method of getPose that finds the end-effector link based
@@ -147,7 +147,7 @@ public interface ArmInterface {
   @Effect(
             effect={"object(?poseName, pose)"},
             type= EffectType.SUCCESS)
-    boolean recordPose(Symbol poseName);
+    Justification recordPose(Symbol poseName);
 
   /**
    * Write the poses recorded via recordPose to file.
@@ -156,7 +156,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  boolean saveEEPosesToFile(String filename);
+  Justification saveEEPosesToFile(String filename);
 
   /**
    * Load poses previously saved to file and make them accessible via goToPose.
@@ -172,7 +172,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  boolean savePosesToFile(String filename);
+  Justification savePosesToFile(String filename);
 
   /**
    * Load poses previously saved to file and make them accessible via goToPose.
@@ -191,7 +191,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  boolean goToPose(String groupName, Symbol poseName);
+  Justification goToPose(String groupName, Symbol poseName);
 
   /**
    * Move robot to previously recorded robot state/pose.
@@ -202,17 +202,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  boolean goToPose(Symbol poseName);
-
-  //TODO:brad:I think that this should be a call of goToPose("start") instead of it's own method
-  /**
-   * Go to the start pose saved in the JSON file.
-   *
-   * @return success
-   */
-  @TRADEService
-  @Action
-  boolean goToStartPose(boolean safe);
+  Justification goToPose(Symbol poseName);
 
   /**
    * Start recording a trajectory. Trajectory recording can be started here, the robot can be
@@ -239,7 +229,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  boolean executeTrajectory(String trajectoryName);
+  Justification executeTrajectory(String trajectoryName);
 
   /**
    * Take all trajectories saved via startRecordingTrajectory and save them to a file for later.
@@ -248,7 +238,7 @@ public interface ArmInterface {
    * @return true on success, false on failure.
    */
   @TRADEService
-  boolean saveTrajectoriesToFile(String filename);
+  Justification saveTrajectoriesToFile(String filename);
 
   /**
    * Load trajectories from a file that was generated via saveTrajectoriesToFile(). The loaded
@@ -267,7 +257,7 @@ public interface ArmInterface {
 
   @TRADEService
   @Action
-  boolean moveGripper(String groupName, float meters);
+  Justification moveGripper(String groupName, float meters);
 
   @TRADEService
   float getGripperPosition(String groupName);
@@ -283,7 +273,7 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  public Justification pressObject(String group_name, Point3d object_location, Quat4d object_orientation);
+  Justification pressObject(String group_name, Point3d object_location, Quat4d object_orientation);
 
   /**
    * Presses an object based off a given symbol
@@ -294,5 +284,5 @@ public interface ArmInterface {
    */
   @TRADEService
   @Action
-  public Justification pressObject(String group_name, Symbol refID);
+  Justification pressObject(String group_name, Symbol refID);
 }

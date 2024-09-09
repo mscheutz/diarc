@@ -14,4 +14,11 @@ public class MockFetchItComponent extends MockFetchComponent implements FetchItI
     log.info("[moveObjectAbove]");
     return new ConditionJustification(true);
   }
+
+  @Override
+  public Justification moveObjectFetchItPrimitive(Symbol objectRef, String groupName, String direction) {
+    log.info("[moveObject]");
+    simExecTime();
+    return new ConditionJustification(true);
+  }
 }

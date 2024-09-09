@@ -33,7 +33,7 @@ public class UtteranceUtil {
     String args = line.substring(opar + 1, cpar).replaceAll(" ", "");
 
     Symbol speaker;
-    Symbol listener;
+    Symbol addressee;
     Symbol semantics;
     List<Term> modifiers;
 
@@ -46,14 +46,15 @@ public class UtteranceUtil {
 
     //Brad: these are calls to create FoL because they can be Symbols, Variables, or Predicates
     speaker = Factory.createFOL(tokens.get(0));
-    listener = Factory.createFOL(tokens.get(1));
+    addressee = Factory.createFOL(tokens.get(1));
     semantics = Factory.createFOL(tokens.get(2));
     modifiers = parseModifiers(tokens.get(3));
 
     // NOTE: it's not clear from the usage is this Utterance should be an input or output utterance (assuming input)
     Utterance retUtt = new Utterance.Builder()
             .setSpeaker(speaker)
-            .addListener(listener)
+            .setAddressee(addressee)
+            .addListener(addressee)
             .setSemantics(semantics)
             .setSupplementalSemantics(modifiers)
             .setUtteranceType(UtteranceType.valueOf(name))
@@ -66,21 +67,21 @@ public class UtteranceUtil {
   //used by prag during applicability checking
   public static Map<Variable, Symbol> getUtteranceBindings(Map<Variable, Symbol> bindings, Utterance u1, Utterance u2) {
 
-    // 0. check type
+    // check type
     if (u1.getType() != u2.getType()) {
       return null;
     }
 
-    // 1. check speaker
+    // check speaker
     bindings = getBindingsSymHelper(bindings, u1.getSpeaker(), u2.getSpeaker());
 
-    // 2. check listeners - only check first listener for now
-    bindings = getBindingsSymHelper(bindings, u1.getListeners().get(0), u2.getListeners().get(0));
+    // check addressee
+    bindings = getBindingsSymHelper(bindings, u1.getAddressee(), u2.getAddressee());
 
-    // 3. check semantics
+    // check semantics
     bindings = getBindingsSymHelper(bindings, u1.getSemantics(), u2.getSemantics());
 
-    // 4. check modifiers
+    // check modifiers
     if (u1.getSupplementalSemantics() == null) {
       // this is the case if a single variable is used (e.g., "Z", as oppose
       // to "{Z}" which is also valid but means match any single modifier)
@@ -109,6 +110,7 @@ public class UtteranceUtil {
 
     Utterance.Builder retUtt = new Utterance.Builder()
             .setSpeaker(getBoundSymbol(bindings, u.getSpeaker()))
+            .setAddressee(getBoundSymbol(bindings, u.getAddressee()))
             .setSemantics(newSemantics)
             .setUtteranceType(u.getType())
             .setIsInputUtterance(u.isInputUtterance());

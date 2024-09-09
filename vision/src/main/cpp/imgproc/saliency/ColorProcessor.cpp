@@ -18,7 +18,7 @@ ColorProcessor::ColorProcessor(const long long& processorId, const unsigned int 
   colorSaliencyMap.setHeight(imgHeight);
   colorSaliencyMap.setUseLAB(false);
   visionProcessName = "ColorProcessor";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.saliency.ColorProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.saliency.ColorProcessor");
 }
 
 ColorProcessor::~ColorProcessor() {
@@ -76,7 +76,7 @@ void ColorProcessor::handleCaptureNotification(CaptureNotification::ConstPtr not
   sendNotifications(n);
 
   if (getDisplayFlag()) {
-    ade::Display::displayFrame(resultImage, getDisplayName());
+    diarc::Display::displayFrame(resultImage, getDisplayName());
   }
 }
 

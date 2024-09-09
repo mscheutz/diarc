@@ -43,7 +43,7 @@
  * the necessary modifications to Capture.cpp and cmake files.
  */
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     class Capture {
@@ -65,7 +65,7 @@ namespace ade {
 
       bool capture(const double transform[]);
 
-      ade::capture::CAM_MODE getCameraMode() const;
+      diarc::capture::CAM_MODE getCameraMode() const;
       int getImageHeight() const;
       int getImageWidth() const;
       bool hasStereo() const;
@@ -200,7 +200,7 @@ namespace ade {
 #endif //USE_ROS_VISION
     };
 
-  } //namespace ade
+  } //namespace diarc
 } //namespace capture
 
 #endif

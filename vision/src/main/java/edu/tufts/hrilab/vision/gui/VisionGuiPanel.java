@@ -60,7 +60,7 @@ public class VisionGuiPanel extends JPanel {
       double detectionConf = detectionConf_slider.getValue() / (double) detectionConf_slider.getMaximum();
       double trackingConf = trackingConf_slider.getValue() / (double) trackingConf_slider.getMaximum();
       if (shouldUpdate) {
-        stm = component.getTokens(0.0);
+        stm = component.getTokens();
       }
 
       stmToShow.update(stm, detectionConf, trackingConf);

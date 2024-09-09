@@ -15,7 +15,7 @@ Required:
 -->
 <capture>
 	<camMode>MONO_FILE</camMode>
-	<imgFilename>../test/food-1.jpg</imgFilename>
+	<imgFilename>/home/hrilab/Desktop/hospital.jpg</imgFilename>
 	<imageWidth>320</imageWidth>
 	<imageHeight>240</imageHeight>
 	<hasStereo>false</hasStereo>

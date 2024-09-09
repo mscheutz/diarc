@@ -37,9 +37,9 @@
 #include "validator/SurfaceMarkingValidator.hpp"
 #endif //USE_V4R_V0
 
-// NOTE: not named "ade.imgproc.ImageProcessor" because there could be non-static
-// loggers named "ade.imgproc.ImageProcessor"
-log4cxx::LoggerPtr ImageProcessor::factoryLogger = log4cxx::Logger::getLogger("ade.imgproc.ImageProcessor.Factory");
+// NOTE: not named "diarc.imgproc.ImageProcessor" because there could be non-static
+// loggers named "diarc.imgproc.ImageProcessor"
+log4cxx::LoggerPtr ImageProcessor::factoryLogger = log4cxx::Logger::getLogger("diarc.imgproc.ImageProcessor.Factory");
 
 ImageProcessor::Ptr ImageProcessor::get(const ImageProcessorType type, const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight, const bool isStereo) {
   switch (type) {
@@ -146,16 +146,16 @@ ImageProcessor::ImageProcessor(const long long& processorId, const unsigned int 
 is_stereo(isStereo) {
   ignoreOlderNotifications = true;
 
-  logger = log4cxx::Logger::getLogger("ade.imgproc.ImageProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.ImageProcessor");
 }
 
 ImageProcessor::~ImageProcessor() {
 }
 
 void ImageProcessor::init() {
-  ade::capture::Capture::registerForNotification(shared_from_this());
+  diarc::capture::Capture::registerForNotification(shared_from_this());
 }
 
 void ImageProcessor::cleanup() {
-  ade::capture::Capture::unregisterForNotification(shared_from_this());
+  diarc::capture::Capture::unregisterForNotification(shared_from_this());
 }

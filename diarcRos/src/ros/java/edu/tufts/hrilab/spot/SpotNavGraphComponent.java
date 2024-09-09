@@ -90,8 +90,8 @@ public class SpotNavGraphComponent extends DiarcComponent implements SpotNavigat
         if (currentLocation == null) {
             log.error("[goToLocation] location not initialized");
         }
-        SpotNavGraphLocationReference currentLocationRef = consultant.getRefWithId(currentLocation);
-        SpotNavGraphLocationReference destinationLocation = consultant.getRefWithId(location);
+        SpotNavGraphLocationReference currentLocationRef = consultant.getReference(currentLocation);
+        SpotNavGraphLocationReference destinationLocation = consultant.getReference(location);
 
         edu.tufts.hrilab.diarcros.msg.spot_msgs.NavigateToGoal goal = new NavigateToGoal(
                 "/home/evan/ws_spot/hrilabtr5.12.23.walk",

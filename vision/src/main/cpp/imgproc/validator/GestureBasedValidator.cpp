@@ -9,13 +9,13 @@
 #include "stm/util/StmUtilities.hpp"
 #include <pcl/registration/distances.h>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 GestureBasedValidator::GestureBasedValidator(const long long &processorId, const int imgWidth, const int imgHeight)
         : ObjectValidator(processorId, imgWidth, imgHeight) {
   trackedObjects = TrackedObjects::getInstance();
   visionProcessName = "GestureBasedValidator";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.validator.GestureBasedValidator");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.validator.GestureBasedValidator");
 }
 
 GestureBasedValidator::~GestureBasedValidator() {
@@ -145,8 +145,8 @@ void GestureBasedValidator::handleMemoryObjectNotification(MemoryObjectNotificat
 }
 
 bool GestureBasedValidator::findReferencedObject(const PredicateHelper &relation,
-                                                const ade::stm::MemoryObject::Ptr &referent,
-                                                const ade::stm::MemoryObject::Ptr &relatum) {
+                                                const diarc::stm::MemoryObject::Ptr &referent,
+                                                const diarc::stm::MemoryObject::Ptr &relatum) {
 
   LOG4CXX_DEBUG(logger, "[findReferencedObject] method entered.");
 
@@ -410,8 +410,8 @@ bool GestureBasedValidator::calcTargetPoint(const MemoryObject::Ptr &personRoot,
       frame.at<cv::Vec3b>(minJ, minI)[1] = 0;
       frame.at<cv::Vec3b>(minJ, minI)[2] = 255;
 
-      ade::Display::createWindowIfDoesNotExist("Pointing Gesture");
-      ade::Display::displayFrame(frame, "Pointing Gesture");
+      diarc::Display::createWindowIfDoesNotExist("Pointing Gesture");
+      diarc::Display::displayFrame(frame, "Pointing Gesture");
     }
 
     return true;

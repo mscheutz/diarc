@@ -67,27 +67,19 @@ team(self).
 
 /*rules about who the agent is obliged to listen to */
 %% supervisors
-role(brad,supervisor(X)):-diarcAgent(X).
-role(eric,supervisor(X)):-diarcAgent(X).
-role(medic,supervisor(X)):-diarcAgent(X).
-role(searcher,supervisor(X)):-diarcAgent(X).
-role(user,supervisor(X)):-diarcAgent(X).
-role(chris,supervisor(X)):-diarcAgent(X).
-role(evan,supervisor(X)):-diarcAgent(X).
-role(ravenna,supervisor(X)):-diarcAgent(X).
-role(tyler,supervisor(X)):-diarcAgent(X).
-role(marlow,supervisor(X)):-diarcAgent(X).
-role(manager,supervisor(X)):-diarcAgent(X).
+supervisor(brad).
+supervisor(eric).
+supervisor(medic).
+supervisor(searcher).
+supervisor(user).
+supervisor(chris).
+supervisor(evan).
+supervisor(ravenna).
+supervisor(tyler).
+supervisor(marlow).
+supervisor(manager).
 
 %% admin
-role(brad,admin(X)):-diarcAgent(X).
-role(manager,admin(X)):-diarcAgent(X).
-%role(eric,admin(X)):-diarcAgent(X).
-%role(medic,admin(X)):-diarcAgent(X).
-%role(searcher,admin(X)):-diarcAgent(X).
-%role(user,admin(X)):-diarcAgent(X).
-%role(chris,admin(X)):-diarcAgent(X).
-role(evan,admin(X)):-diarcAgent(X).
-%role(ravenna,admin(X)):-diarcAgent(X).
-%role(tyler,admin(X)):-diarcAgent(X).
-%role(marlow,admin(X)):-diarcAgent(X).
+admin(brad).
+admin(manager).
+admin(evan).

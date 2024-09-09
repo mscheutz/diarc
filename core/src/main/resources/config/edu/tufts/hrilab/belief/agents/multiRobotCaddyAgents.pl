@@ -19,12 +19,12 @@ team(self).
 
 /*rules about who the agent is obliged to listen to */
 %% supervisors
-role(evan,supervisor(X)):-diarcAgent(X).
-role(eric,supervisor(X)):-diarcAgent(X).
+supervisor(evan).
+supervisor(eric).
 
 %% admin
-role(evan,admin(X)):-diarcAgent(X).
-role(eric,admin(X)):-diarcAgent(X).
+admin(evan).
+admin(eric).
 
 %memberOf(X,Z):-memberOf(X,Y),memberOf(Y,Z). %todo: this transitivity rule breaks inference.
 memberOf(X,X). %todo: is this safe for tuprolog inference?

@@ -58,4 +58,9 @@ public class PoseReference extends Reference {
   public boolean hasPose() {
     return orientation != null && position != null;
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + " position = " + ((position == null) ? " (is null)" : position);
+  }
 }

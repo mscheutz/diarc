@@ -8,7 +8,7 @@
 #include "capture/util/CaptureUtilities.hpp"
 #include <cfloat>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 bool IndexedValueTypeSortFunction2D(IndexedValueType2D i, IndexedValueType2D j) {
   return (i.value > j.value);
@@ -24,7 +24,7 @@ processed_indices(),
 background_dist(0.1),
 writeFramesToFile(false) {
   visionProcessName = "ClusterDetector2D";
-  logger = log4cxx::Logger::getLogger("ade.detector.ClusterDetector2D");
+  logger = log4cxx::Logger::getLogger("diarc.detector.ClusterDetector2D");
 }
 
 ClusterDetector2D::~ClusterDetector2D() {
@@ -144,7 +144,7 @@ void ClusterDetector2D::handleCaptureNotification(CaptureNotification::ConstPtr 
               CV_RGB(0, 0, 0),
               2, 8, 0);
 
-      ade::Display::displayFrame(displayFrame, getDisplayName());
+      diarc::Display::displayFrame(displayFrame, getDisplayName());
 
       //write image to file
       if (writeFramesToFile) {

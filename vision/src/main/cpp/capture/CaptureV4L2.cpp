@@ -9,7 +9,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     class CaptureV4L2 : public Capture {
@@ -102,4 +102,4 @@ namespace ade {
     };
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc

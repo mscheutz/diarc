@@ -30,7 +30,7 @@ public:
   : predicate_(predicate),
   name_(),
   args_(),
-  logger(log4cxx::Logger::getLogger("ade.common.fol.PredicateHelper")) {
+  logger(log4cxx::Logger::getLogger("diarc.common.fol.PredicateHelper")) {
     size_t opar = predicate_.find_first_of("(");
     size_t cpar = predicate_.find_last_of(")");
     size_t comma;

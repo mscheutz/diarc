@@ -131,7 +131,7 @@ public:
    */
   virtual bool addProcessingDescriptor(const std::string& descriptor, const long long& typeId);
 
-  virtual bool addProcessingDescriptor(const ade::common::fol::Predicate& predicate, const long long& typeId);
+  virtual bool addProcessingDescriptor(const diarc::common::fol::Predicate& predicate, const long long& typeId);
   void printPredicate();
 
   /**
@@ -287,11 +287,11 @@ protected:
    * @param combine - if validations of same type and descriptor should be combined
    * into the same image
    */
-  void displayMemoryObject(ade::stm::MemoryObject::Ptr& mo, const std::string& variableName, bool binaryMask = false, bool combine = true);
+  void displayMemoryObject(diarc::stm::MemoryObject::Ptr& mo, const std::string& variableName, bool binaryMask = false, bool combine = true);
 
-  void displayMemoryObjectValidation(const ade::stm::MemoryObject::ConstPtr& mo, bool combine = true);
+  void displayMemoryObjectValidation(const diarc::stm::MemoryObject::ConstPtr& mo, bool combine = true);
   
-  void displayMemoryObjectRelations(const ade::stm::MemoryObject::ConstPtr& mo);
+  void displayMemoryObjectRelations(const diarc::stm::MemoryObject::ConstPtr& mo);
 
   const long long processorId;
   const int img_width;
@@ -322,7 +322,7 @@ protected:
 
 private:
   //TEST
-  std::vector<ade::common::fol::Predicate::ConstPtr> tmpPredicates;
+  std::vector<diarc::common::fol::Predicate::ConstPtr> tmpPredicates;
 
   //disallow copying and assignment
   VisionProcess(const VisionProcess&);

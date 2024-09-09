@@ -5,7 +5,7 @@
 package edu.tufts.hrilab.action.recovery;
 
 import edu.tufts.hrilab.action.ActionStatus;
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.execution.ActionContext;
 import edu.tufts.hrilab.action.execution.Context;
@@ -21,13 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RecoveryTest {
-    private GoalManagerImpl component;
+    private GoalManagerComponent component;
     private static Logger log = LoggerFactory.getLogger(RecoveryTest.class);
     private String aslPath = "/config/edu/tufts/hrilab/action/asl/recovery/";
 
     //@Before
     //public void init() {
-    //    component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.TypedActionSelector");
+    //    component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.TypedActionSelector");
     //}
 
     @After
@@ -81,7 +81,7 @@ public class RecoveryTest {
      */
     @Test
     public void shouldAttemptRecoveryTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl");
         String filename = aslPath + "shouldAttemptRecoveryTest.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -182,7 +182,7 @@ public class RecoveryTest {
      */
     @Test
     public void goalRecoveryToGoalStateTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "goalRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -216,7 +216,7 @@ public class RecoveryTest {
      */
     @Test
     public void goalRecoveryToPlannableStateTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "goalRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -254,7 +254,7 @@ public class RecoveryTest {
      */
     @Test
     public void goalRecoveryFailsTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "goalRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -294,7 +294,7 @@ public class RecoveryTest {
      */
     @Test
     public void goalRecoveryExitRecoveryTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "goalRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -334,7 +334,7 @@ public class RecoveryTest {
      */
     @Test
     public void actionRecoveryCatchDefinedChildTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "actionRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -389,7 +389,7 @@ public class RecoveryTest {
      */
     @Test
     public void actionRecoveryCatchDefinedGrandchildTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "actionRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -432,7 +432,7 @@ public class RecoveryTest {
      */
     @Test
     public void actionRecoveryCatchUndefinedChildTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl");
         String filename = aslPath + "actionRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -476,7 +476,7 @@ public class RecoveryTest {
      */
     @Test
     public void actionRecoveryParentRetryTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "actionRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -542,7 +542,7 @@ public class RecoveryTest {
      */
     @Test
     public void actionRecoveryParentSuccessTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "actionRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -597,7 +597,7 @@ public class RecoveryTest {
      */
     @Test
     public void cascadingRecoveryTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "cascadingRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -651,7 +651,7 @@ public class RecoveryTest {
      */
     @Test
     public void multipleActionRecoveryTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "multipleActionRecoveryTest.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -688,7 +688,7 @@ public class RecoveryTest {
      */
     @Test
     public void nestedRecoverySuccessTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "nestedRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -747,7 +747,7 @@ public class RecoveryTest {
      */
     @Test
     public void nestedRecoveryFailureTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "nestedRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -800,7 +800,7 @@ public class RecoveryTest {
     //@Ignore
     @Test
     public void faultyRetryRecoveryDefinitionTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "nestedRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -846,7 +846,7 @@ public class RecoveryTest {
     //@Ignore
     @Test
     public void faultyParentRetryRecoveryDefinitionTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "nestedRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -897,7 +897,7 @@ public class RecoveryTest {
      */
     @Test
     public void ineffectiveGoalRecoveryTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "goalRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -938,7 +938,7 @@ public class RecoveryTest {
      */
     @Test
     public void actionRecoveryRetryFromRootGoalTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
         String filename = aslPath + "shouldAttemptRecoveryTest.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -974,7 +974,7 @@ public class RecoveryTest {
      */
     @Test
     public void actionRecoverySuccessFromRootGoalTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
         String filename = aslPath + "shouldAttemptRecoveryTest.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -1007,7 +1007,7 @@ public class RecoveryTest {
      */
     @Test
     public void sameFailureDifferentStepTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "multipleActionRecoveryTest.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -1080,7 +1080,7 @@ public class RecoveryTest {
      */
     @Test
     public void sameFailureDifferentStepParentRetryTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "multipleActionRecoveryTest.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -1160,7 +1160,7 @@ public class RecoveryTest {
      */
     @Test
     public void sameFailureDifferentStepParentRetryTwoAttemptsTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
         String filename = aslPath + "multipleActionRecoveryTest.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -1182,7 +1182,7 @@ public class RecoveryTest {
 
     @Test
     public void overridePostRecoveryExecutionTypeTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
         String filename = aslPath + "actionRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -1197,7 +1197,7 @@ public class RecoveryTest {
      */
     @Test
     public void multipleRecoveryAttemptsTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
         String filename = aslPath + "actionRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -1252,7 +1252,7 @@ public class RecoveryTest {
      */
     @Test
     public void cyclicalActionRecoveryRetryTest() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
         String filename = aslPath + "actionRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");
@@ -1297,7 +1297,7 @@ public class RecoveryTest {
      */
     @Test
     public void cyclicalActionRecoveryRetryTestV2() {
-        component = DiarcComponent.createInstance(GoalManagerImpl.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
+        component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector");
         String filename = aslPath + "actionRecoveryTests.asl";
         Database.getInstance().loadDatabaseFromFile(filename);
         Database.getInstance().loadDatabaseFromFile(aslPath + "recoveryTestsPlanningActions.asl");

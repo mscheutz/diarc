@@ -12,7 +12,7 @@
 #include "capture/util/CaptureUtilities.hpp"
 #include "common/notification/CaptureNotification.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 FaceDetector::FaceDetector(const long long &processorId, const int imgWidth, const int imgHeight)
         : ObjectDetector(processorId, imgWidth, imgHeight),
@@ -21,7 +21,7 @@ FaceDetector::FaceDetector(const long long &processorId, const int imgWidth, con
           frame_scaled(imgWidth / 2, imgHeight / 2, CV_8UC3) // used for haar (face analysis)
 {
   visionProcessName = "FaceDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.FaceDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.FaceDetector");
 }
 
 FaceDetector::~FaceDetector() {
@@ -122,6 +122,6 @@ void FaceDetector::handleCaptureNotification(CaptureNotification::ConstPtr notif
                     CV_RGB(255, 0, 0), 2, 8, 0);
     }
 
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 }

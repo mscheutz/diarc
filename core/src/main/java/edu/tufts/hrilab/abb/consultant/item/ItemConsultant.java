@@ -21,7 +21,7 @@ public class ItemConsultant extends Consultant<ItemReference> {
 
   @Override
   protected <U> U localConvertToType(Symbol refId, Class<U> type) {
-    return type.cast(references.get(refId));
+    return type.cast(getReference(refId));
   }
 
   @Override

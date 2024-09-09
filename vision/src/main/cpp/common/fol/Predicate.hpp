@@ -17,7 +17,7 @@
 #include <boost/make_shared.hpp>
 #include <vector>
 
-namespace ade {
+namespace diarc {
   namespace common {
     namespace fol {
 
@@ -30,7 +30,7 @@ namespace ade {
         : Symbol(name),
         args_(),
         isNegated_(false) {
-          logger_ = log4cxx::Logger::getLogger("ade.common.fol.Predicate");
+          logger_ = log4cxx::Logger::getLogger("diarc.common.fol.Predicate");
           args_.reserve(args.size());
           std::vector<Symbol::ConstPtr>::const_iterator args_itr;
           for (args_itr = args.begin(); args_itr != args.end(); ++args_itr) {
@@ -104,7 +104,7 @@ namespace ade {
 
     } //namespace fol
   } //namespace common
-} //namespace ade
+} //namespace diarc
 
 #endif	/* PREDICATE_HPP */
 

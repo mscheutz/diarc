@@ -4,9 +4,8 @@
 
 package edu.tufts.hrilab.config;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
-import edu.tufts.hrilab.mtracs.CR800ComponentInterface;
-import edu.tufts.hrilab.mtracs.PLCComponentInterface;
 import edu.tufts.hrilab.scale.MockScaleComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
@@ -20,8 +19,8 @@ import org.slf4j.LoggerFactory;
 public class SortingDemoMock extends DiarcConfiguration {
     protected static Logger log = LoggerFactory.getLogger(SortingDemoMock.class);
     public SimSpeechRecognitionComponent simspeech;
-    public CR800ComponentInterface assista;
-    public PLCComponentInterface plc;
+    public ai.thinkingrobots.mtracs.interfaces.CR800ComponentInterface assista;
+    public ai.thinkingrobots.mtracs.interfaces.PLCComponentInterface plc;
 
     public SortingDemoMock() {
 
@@ -29,8 +28,8 @@ public class SortingDemoMock extends DiarcConfiguration {
 
     @Override
     public void runConfiguration(){
-        assista = createInstance(edu.tufts.hrilab.mtracs.MockCR800Component.class, "-config mtracs/assista.json");
-        plc = createInstance(edu.tufts.hrilab.mtracs.MockPLCComponent.class);
+        assista = createInstance(ai.thinkingrobots.mtracs.mock.MockCR800Component.class, "-config mtracs/assista.json");
+        plc = createInstance(ai.thinkingrobots.mtracs.mock.MockPLCComponent.class);
         createInstance(MockScaleComponent.class);
 
         createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
@@ -41,7 +40,7 @@ public class SortingDemoMock extends DiarcConfiguration {
         createInstance(SimpleNLGComponent.class);
         createInstance(SimSpeechProductionComponent.class, "");
 
-        createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
+        createInstance(GoalManagerComponent.class,
 //                        "-editor " +
 //                        "-beliefg " +
                         "-beliefinitfile demos.pl " +

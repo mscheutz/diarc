@@ -255,15 +255,15 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, Docki
 
     // ArmComponent interface implementation
     @Override
-    public boolean moveTo(String groupName, Point3d point, Quat4d orientation) {
+    public Justification moveTo(String groupName, Point3d point, Quat4d orientation) {
         log.error("moveTo not implemented");
-        return false;
+        return new ConditionJustification(false);
     }
 
     @Override
-    public boolean moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
+    public Justification moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
         log.error("moveTo not implemented");
-        return false;
+        return new ConditionJustification(false);
     }
 
     @Override
@@ -297,9 +297,9 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, Docki
     }
 
     @Override
-    public boolean pointTo(String groupName, Symbol objectRef) {
+    public Justification pointTo(String groupName, Symbol objectRef) {
         log.error("pointTo not implemented");
-        return false;
+        return new ConditionJustification(false);
     }
 
     @Override
@@ -315,15 +315,15 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, Docki
     }
 
     @Override
-    public boolean recordPose(Symbol poseName) {
+    public Justification recordPose(Symbol poseName) {
         log.error("recordPoses not implemented");
-        return false;
+        return new ConditionJustification(false);
     }
 
     @Override
-    public boolean savePosesToFile(String filename) {
+    public Justification savePosesToFile(String filename) {
         log.error("savePosesToFile not implemented");
-        return false;
+        return new ConditionJustification(false);
     }
 
     @Override
@@ -332,19 +332,13 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, Docki
     }
 
     @Override
-    public boolean goToPose(String groupName, Symbol poseName) {
-        return false;
+    public Justification goToPose(String groupName, Symbol poseName) {
+        return new ConditionJustification(false);
     }
 
     @Override
-    public boolean goToPose(Symbol poseName) {
-        return false;
-    }
-
-    @Override
-    public boolean goToStartPose(boolean safe) {
-        log.error("goToStartPose not implemented");
-        return false;
+    public Justification goToPose(Symbol poseName) {
+        return new ConditionJustification(false);
     }
 
     @Override
@@ -358,15 +352,15 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, Docki
     }
 
     @Override
-    public boolean executeTrajectory(String trajectoryName) {
+    public Justification executeTrajectory(String trajectoryName) {
         log.error("executeTrajectory not implemented");
-        return false;
+        return new ConditionJustification(false);
     }
 
     @Override
-    public boolean saveTrajectoriesToFile(String filename) {
+    public Justification saveTrajectoriesToFile(String filename) {
         log.error("saveTrajectoriesToFile not implemented");
-        return false;
+        return new ConditionJustification(false);
     }
 
     @Override
@@ -387,9 +381,9 @@ public class SpotComponent extends DiarcComponent implements ArmInterface, Docki
     }
 
     @Override
-    public boolean moveGripper(String groupName, float meters) {
+    public Justification moveGripper(String groupName, float meters) {
         log.error("moveGripper not implemented");
-        return false;
+        return new ConditionJustification(false);
     }
 
     @Override

@@ -43,6 +43,8 @@ public class Reference {
 
   @Override
   public String toString() {
-    return refId.toString();
+    StringBuilder sb = new StringBuilder();
+    sb.append(refId).append(" var = ").append(variable).append(" properties = ").append(properties);
+    return sb.toString();
   }
 }

@@ -9,9 +9,9 @@ import edu.tufts.hrilab.config.OnRobotScrewingActionModificationMock;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.mtracs.util.MPose;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.test.framework.GenerativeDiarcIntegrationTest;
+import org.junit.After;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.Before;
@@ -32,7 +32,7 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
   @Before
   public void initializeConfig() {
     //instantiate DIARCInstance (in mock)
-    config = new OnRobotScrewingActionModificationMock(false, true);
+    config = new OnRobotScrewingActionModificationMock(true);
     config.runConfiguration();
     speechInputBrad = config.simspeech;
 
@@ -49,8 +49,15 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
     addServiceToObserve("moveToCognexTarget", Symbol.class);
     addServiceToObserve("getDescriptorForID", Symbol.class);
     addServiceToObserve("sayText", String.class);
-    addServiceToObserve("goToPose", MPose.class);
-    tester.setTimeoutDuration(5, TimeUnit.SECONDS);
+    addServiceToObserve("goToPose", ai.thinkingrobots.mtracs.util.MPose.class);
+    tester.setTimeoutDuration(6, TimeUnit.SECONDS);
+  }
+
+  @After
+  public void shutdownDiarc() {
+    log.debug("[shutdownDiarc] started");
+    config.shutdownConfiguration();
+    log.debug("[shutdownDiarc] completed");
   }
 
   //This wrapper exists so that the generator can appropriately catch input

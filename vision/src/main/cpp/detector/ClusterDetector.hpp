@@ -57,9 +57,9 @@ private:
   void haveNewTablePlane(PlaneNotification::ConstPtr planeNotification);
   void haveNewSaliencyMap(SaliencyNotification::ConstPtr saliencyNotification);
   void sortPointcloud();
-  ade::stm::MemoryObject::VecPtr createMemoryObjects(const std::vector<pcl::PointIndices>& clusters,
+  diarc::stm::MemoryObject::VecPtr createMemoryObjects(const std::vector<pcl::PointIndices>& clusters,
         CaptureData::ConstPtr captureData);
-  void display(ade::stm::MemoryObject::VecPtr newClusterObjects);
+  void display(diarc::stm::MemoryObject::VecPtr newClusterObjects);
 
   ExtractedPlane::ConstPtr plane;
 

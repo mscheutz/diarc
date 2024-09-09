@@ -338,12 +338,12 @@ import java.lang.Integer;
 
     conditions : {
       or : {
-        pre infer : is_supervisor(?speaker,?actor);
+        pre infer : supervisor_of(?speaker,?actor);
         pre infer : isAdminGoal(?state);
         pre infer : isOpenGoal(?state);
       }
       or : {
-        pre infer : is_supervisor(?speaker,?actor);
+        pre infer : supervisor_of(?speaker,?actor);
         pre infer : admin_of(?speaker,?actor);
         pre infer : isOpenGoal(?state);
       }
