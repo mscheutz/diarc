@@ -12,10 +12,7 @@ namespace ade {
     namespace util {
 
       CAM_MODE stringToCAM_MODE(const std::string& str) {
-        if (str == "MONO_FW") return MONO_FW;
-        else if (str == "STEREO_FW") return STEREO_FW;
-        else if (str == "STEREO_SYNC") return STEREO_SYNC;
-        else if (str == "MONO_V4L2") return MONO_V4L2;
+        if (str == "MONO_V4L2") return MONO_V4L2;
         else if (str == "STEREO_V4L2") return STEREO_V4L2;
         else if (str == "MONO_AVI") return MONO_AVI;
         else if (str == "MONO_FILE") return MONO_FILE;
@@ -30,8 +27,6 @@ namespace ade {
         else if (str == "SIM_PC1") return SIM_PC1;
         else if (str == "SIM_PC2") return SIM_PC2;
         else if (str == "PCD") return SIM_PC2;
-        else if (str == "KINECT_PLUS") return KINECT_PLUS;
-        else if (str == "DRONE") return DRONE;
         else if (str == "ROS") return ROS;
         else if (str == "ROS2") return ROS2;
         else if (str == "NAO") return NAO;
@@ -363,12 +358,8 @@ namespace ade {
           for (int yy = 0; yy < imgHeight; yy++) {
             float z_ir = dataDepth[xx + imgWidth * yy];
             float x_ir, y_ir;
-#ifdef FREENECT
-            if (z_ir >= 0.4)
-#else
-            if (z_ir > 0)
-#endif
-            {
+
+            if (z_ir > 0) {
               x_ir = ((xx - cx) / fx) * z_ir;
               y_ir = ((yy - cy) / fy) * z_ir;
             } else {

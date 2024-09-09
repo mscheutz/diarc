@@ -9,23 +9,17 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <opencv2/rgbd.hpp>
-#include <pcl/point_types.h>
-#include <pcl/PCLPointCloud2.h>
-#include <pcl/conversions.h>
 #include <pcl/common/transforms.h>
 #include <utility>      //std::pair
 
 #include <cv_bridge/cv_bridge.h>
 #include <pcl_conversions/pcl_conversions.h>
-//#include <sensor_msgs/image_encodings.hpp>
 
 namespace ade {
   namespace capture {
 
     CaptureROS2::CaptureROS2(const std::string &configFile)
             : Capture(configFile),
-              data_mutex_(),
-              condition_(),
               data_received_(false),
               interrupt_flag_(false),
               convertToMeters_(false),
@@ -40,117 +34,75 @@ namespace ade {
       std::string image_topic_ = pt.get<std::string>("capture.imageTopic");
       std::string image2_topic_ = pt.get<std::string>("capture.imageTopic2", "");
       std::string depth_topic_ = pt.get<std::string>("capture.depthTopic", "");
+      std::string camera_info_topic = pt.get<std::string>("capture.cameraInfoTopic", "");
+      std::string depth_info_topic = pt.get<std::string>("capture.depthInfoTopic", "");
       convertToMeters_ = pt.get<bool>("capture.convertToMeters", false);
       convertToRGB_ = pt.get<bool>("capture.convertToRGB", false);
       performDepthRegistration_ = pt.get<bool>("capture.depthRegistration", false);
       rosNamespace_ = pt.get<std::string>("capture.namespace", "diarc_vision_capture");
 
       //initialize ROS
-      LOG4CXX_INFO(logger, "Initializing ROS2.");
+      LOG4CXX_DEBUG(logger, "Initializing ROS2.");
       int argCount = 0;
       char **argv = NULL;
       rclcpp::init(argCount, argv);
 
       //create node handle
-      LOG4CXX_INFO(logger, "Initializing ROS2 node.");
+      LOG4CXX_DEBUG(logger, "Initializing ROS2 node.");
       n_ = rclcpp::Node::make_shared("diarc_vision_capture");
 
       //create image transport
-      LOG4CXX_INFO(logger, "Initializing image transport.");
+      LOG4CXX_DEBUG(logger, "Initializing image transport.");
       it_ = new image_transport::ImageTransport(n_);
 
       if (image2_topic_.empty() && depth_topic_.empty()) {
         // single RGB case
         mode_ = MONO;
+
+        if (camera_info_topic.empty()) {
+          LOG4CXX_WARN(logger, "cameraInfoTopic not set. Using default camera parameters.");
+        }
+
         single_image_sub_ = it_->subscribe(image_topic_, 10, &CaptureROS2::captureCallback_MONO, this);
       } else if (depth_topic_.empty()) {
         // stereo RGB case
         mode_ = STEREO;
-        // image_sub_ = new image_transport::SubscriberFilter(*n_, image_topic_, 1);
-        // image2_sub_ = new image_transport::SubscriberFilter(*n_, image2_topic_, 1);
-        // //sync_ = new message_filters::TimeSynchronizer<MySyncPolicy>(MySyncPolicy(10), *image_sub_, *image2_sub_);
-        // sync_ = std::make_shared<message_filters::TimeSynchronizer<sensor_msgs::msg::Image, sensor_msgs::msg::Image>>(*image_sub_, *image2_sub_, 10);
-        // sync_->registerCallback(boost::bind(&CaptureROS2::captureCallback_RGB_AND_DEPTH, this, _1, _2));
+
+        // TODO: get camera paramaters for the stero case
+
+        image_sub_.subscribe(n_.get(), image_topic_, image_transport::TransportHints(n_.get()).getTransport());
+        image2_sub_.subscribe(n_.get(), image2_topic_, image_transport::TransportHints(n_.get()).getTransport());
+        sync_ = std::make_shared<message_filters::Synchronizer<approximate_policy>>(approximate_policy(10), image_sub_, image2_sub_);
+        sync_->registerCallback(std::bind(&CaptureROS2::captureCallback_STEREO, this, std::placeholders::_1, std::placeholders::_2));
       } else {
         // singe RGB and single depth case
         mode_ = RGB_AND_DEPTH;
-        // image_sub_ = new image_transport::SubscriberFilter(*n_, image_topic_, 1);
-        // depth_sub_ = new image_transport::SubscriberFilter(*n_, depth_topic_, 1);
-        // //sync_ = new message_filters::Synchronizer<MySyncPolicy>(MySyncPolicy(10), *image_sub_, *depth_sub_);
-        // sync_ = std::make_shared<message_filters::TimeSynchronizer<sensor_msgs::msg::Image, sensor_msgs::msg::Image>>(*image_sub_, *depth_sub_, 10);
-        // sync_->registerCallback(boost::bind(&CaptureROS2::captureCallback_RGB_AND_DEPTH, this, _1, _2));
+
+        if (camera_info_topic.empty() || depth_info_topic.empty()) {
+          LOG4CXX_WARN(logger, "cameraInfoTopic and depthInfoTopic not set. Using default camera parameters.");
+        }
+
+        image_sub_.subscribe(n_.get(), image_topic_, image_transport::TransportHints(n_.get()).getTransport());
+        depth_sub_.subscribe(n_.get(), depth_topic_, image_transport::TransportHints(n_.get()).getTransport());
+        sync_ = std::make_shared<message_filters::Synchronizer<approximate_policy>>(approximate_policy(10), image_sub_, depth_sub_);
+        sync_->registerCallback(std::bind(&CaptureROS2::captureCallback_RGB_AND_DEPTH, this, std::placeholders::_1, std::placeholders::_2));
       }
 
-      LOG4CXX_INFO(logger, "starting spinner...");
+      if (!camera_info_topic.empty()) {
+        camera_info_sub_ = n_->create_subscription<sensor_msgs::msg::CameraInfo>(camera_info_topic, 10, std::bind(&CaptureROS2::cameraInfoCallback, this, std::placeholders::_1));
+      }
+
+      if (!depth_info_topic.empty()) {
+        depth_info_sub_ = n_->create_subscription<sensor_msgs::msg::CameraInfo>(depth_info_topic, 10, std::bind(&CaptureROS2::depthInfoCallback, this, std::placeholders::_1));
+      }
+
+      LOG4CXX_DEBUG(logger, "starting spinner...");
       spin_thread_ = std::thread(&CaptureROS2::spin, this);
-      LOG4CXX_INFO(logger, "spinner started.");
-
-      ///////////////HACK FOR DEMO - THESE ARE KINECT PARAMS///////////////////////////////////
-      ////set depth image parameters
-      //CameraParameters::Ptr camParams(new CameraParameters(VisionConstants::imgWidth, VisionConstants::imgHeight));
-      //
-      //double depth_fl = 287.907867 * 2.0;
-      //float fx = depth_fl * (imgWidth / 640.0);
-      //cvmSet(camParams->M, 0, 0, fx);
-      //float fy = depth_fl * (imgHeight / 480.0);
-      //cvmSet(camParams->M, 1, 1, fy);
-      //float cx = ((float) imgWidth - 1.f) / 2.f;
-      //cvmSet(camParams->M, 0, 2, cx);
-      //float cy = ((float) imgHeight - 1.f) / 2.f;
-      //cvmSet(camParams->M, 1, 2, cy);
-      //camParams->intrinsicSet = true;
-      //cameras->setCameraParameters(0, camParams);
-      //
-      ////set rgb frame parameters
-      //camParams = CameraParameters::Ptr(new CameraParameters(VisionConstants::imgWidth, VisionConstants::imgHeight));
-      //double image_fl = 262.5 * 2.0;
-      //float fx2 = image_fl * (imgWidth / 640.0);
-      //cvmSet(camParams->M, 0, 0, fx2);
-      //float fy2 = image_fl * (imgHeight / 480.0);
-      //cvmSet(camParams->M, 1, 1, fy2);
-      //float cx2 = ((float) imgWidth - 1.f) / 2.f;
-      //cvmSet(camParams->M, 0, 2, cx2);
-      //float cy2 = ((float) imgHeight - 1.f) / 2.f;
-      //cvmSet(camParams->M, 1, 2, cy2);
-      //camParams->intrinsicSet = true;
-      //cameras->setCameraParameters(1, camParams);
-      ////////////////////////////////////////////////////////////
-
-      ///////////////HACK FOR DEMO - THESE ARE REALSENSE PARAMS///////////////////////////////////
-      ////set depth image parameters
-      //CameraParameters::Ptr camParams(new CameraParameters(VisionConstants::imgWidth, VisionConstants::imgHeight));
-      //
-      //float fx = 360.01333 * (imgWidth / 480.0);
-      //cvmSet(camParams->M, 0, 0, fx);
-      //float fy = 360.013366699 * (imgHeight / 270.0);
-      //cvmSet(camParams->M, 1, 1, fy);
-      //float cx = 243.87228 * (imgWidth / 480.0);
-      //cvmSet(camParams->M, 0, 2, cx);
-      //float cy = 137.9218444 * (imgHeight / 270.0);
-      //cvmSet(camParams->M, 1, 2, cy);
-      //camParams->intrinsicSet = true;
-      //cameras->setCameraParameters(0, camParams);
-      //
-      ////set rgb frame parameters
-      //camParams = CameraParameters::Ptr(new CameraParameters(VisionConstants::imgWidth, VisionConstants::imgHeight));
-      //float fx2 = 1297.672904 * (imgWidth / 1280.0);
-      //cvmSet(camParams->M, 0, 0, fx2);
-      //float fy2 = 1298.631344 * (imgHeight / 720.0);
-      //cvmSet(camParams->M, 1, 1, fy2);
-      //float cx2 = 620.914026 * (imgWidth / 1280.0);
-      //cvmSet(camParams->M, 0, 2, cx2);
-      //float cy2 = 238.280325 * (imgHeight / 720.0);
-      //cvmSet(camParams->M, 1, 2, cy2);
-      //camParams->intrinsicSet = true;
-      //cameras->setCameraParameters(1, camParams);
-      //
-      //StereoCameraParameters::Ptr stereoParams(new StereoCameraParameters(VisionConstants::imgWidth, VisionConstants::imgHeight));
-      //cameras->setStereoParameters(0, stereoParams);
-      ////////////////////////////////////////////////////////////
+      LOG4CXX_DEBUG(logger, "spinner started.");
 
       //init depth frame
       depthFrame.create(imgHeight, imgWidth, CV_32FC1);
-      LOG4CXX_INFO(logger, "Finished constructing.");
+      LOG4CXX_DEBUG(logger, "Finished constructing.");
     }
 
     void CaptureROS2::spin() {
@@ -158,27 +110,15 @@ namespace ade {
     }
 
     CaptureROS2::~CaptureROS2() {
-      LOG4CXX_INFO(logger, "destructor.");
+      LOG4CXX_DEBUG(logger, "destructor.");
       rclcpp::shutdown();
       spin_thread_.join();
 
-      switch (mode_) {
-        case STEREO:
-          // delete image_sub_;
-          // delete image2_sub_;
-          break;
-        case RGB_AND_DEPTH:
-          // delete image_sub_;
-          // delete depth_sub_;
-          break;
-      }
-
       delete it_;
-      // delete spinner_;
     }
 
     void CaptureROS2::interruptWait() {
-      LOG4CXX_INFO(logger, "interruptWait.");
+      LOG4CXX_DEBUG(logger, "interruptWait.");
       boost::mutex::scoped_lock lock(data_mutex_);
       interrupt_flag_ = true;
       condition_.notify_all();
@@ -211,7 +151,6 @@ namespace ade {
       if (data_received_) {
         LOG4CXX_DEBUG(logger, "[capture_MONO] data received");
         try {
-          //cv_bridge::CvImageConstPtr cv_rgb_ptr = cv_bridge::toCvShare(image_msg_, sensor_msgs::image_encodings::TYPE_8UC3);
           cv_bridge::CvImagePtr cv_rgb_ptr = cv_bridge::toCvCopy(image_msg_, sensor_msgs::image_encodings::TYPE_8UC3);
           cv::resize(cv_rgb_ptr->image, frame, frame.size(), 0, 0, CV_INTER_NN);
 
@@ -259,7 +198,7 @@ namespace ade {
     }
 
     bool CaptureROS2::capture_RGB_AND_DEPTH() {
-      LOG4CXX_DEBUG(logger, "capture_RGB_AND_DEPTH");
+      // LOG4CXX_DEBUG(logger, "capture_RGB_AND_DEPTH");
 
       // wait for new data to be captured
       boost::mutex::scoped_lock lock(data_mutex_);
@@ -324,6 +263,55 @@ namespace ade {
       }
     }
 
+    void CaptureROS2::cameraInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr &msg) {
+      LOG4CXX_DEBUG(logger, "cameraInfoCallback called");
+
+      // unsubscribe
+      camera_info_sub_.reset();
+
+      //set rgb frame parameters
+      CameraParameters::Ptr camParams(new CameraParameters(VisionConstants::imgWidth, VisionConstants::imgHeight));
+      camParams->M.at<float>(0, 0) = msg->k.at(0) * (static_cast<float>(imgWidth) / msg->width);   // f_x
+      camParams->M.at<float>(1, 1) = msg->k.at(4) * (static_cast<float>(imgHeight) / msg->height); // f_y
+      camParams->M.at<float>(0, 2) = msg->k.at(2) * (static_cast<float>(imgWidth) / msg->width);   // c_x
+      camParams->M.at<float>(1, 2) = msg->k.at(5) * (static_cast<float>(imgHeight) / msg->height); // c_y
+      camParams->intrinsicSet = true;
+
+      switch (mode_) {
+        case MONO:
+        case STEREO:
+          cameras->setCameraParameters(0, camParams);
+          break;
+        case RGB_AND_DEPTH:
+          cameras->setCameraParameters(1, camParams);
+          break;
+        default:
+          LOG4CXX_WARN(logger, "cameraInfoCallback called for unhandled CAM_MODE.");
+      }
+
+      LOG4CXX_DEBUG(logger, boost::format("cameraInfoCallback - cam_info: [%dx%d], [fx,fy,cx,cy][%d,%d,%d,%d]") %
+                        msg->width % msg->height % msg->k.at(0) % msg->k.at(4) % msg->k.at(2) % msg->k.at(5));
+    }
+
+    void CaptureROS2::depthInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr &msg) {
+      LOG4CXX_DEBUG(logger, "depthInfoCallback called");
+
+      // unsubscribe
+      depth_info_sub_.reset();
+
+      // set depth image parameters
+      CameraParameters::Ptr camParams(new CameraParameters(VisionConstants::imgWidth, VisionConstants::imgHeight));
+      camParams->M.at<float>(0, 0) = msg->k.at(0) * (static_cast<float>(imgWidth) / msg->width);   // f_x
+      camParams->M.at<float>(1, 1) = msg->k.at(4) * (static_cast<float>(imgHeight) / msg->height); // f_y
+      camParams->M.at<float>(0, 2) = msg->k.at(2) * (static_cast<float>(imgWidth) / msg->width);   // c_x
+      camParams->M.at<float>(1, 2) = msg->k.at(5) * (static_cast<float>(imgHeight) / msg->height); // c_y
+      camParams->intrinsicSet = true;
+      cameras->setCameraParameters(0, camParams);
+
+      LOG4CXX_DEBUG(logger, boost::format("depthInfoCallback - cam_info: [%dx%d], [fx,fy,cx,cy][%d,%d,%d,%d]") %
+                        msg->width % msg->height % msg->k.at(0) % msg->k.at(4) % msg->k.at(2) % msg->k.at(5));
+    }
+
     void CaptureROS2::captureCallback_MONO(const sensor_msgs::msg::Image::ConstSharedPtr &msg) {
       LOG4CXX_DEBUG(logger,
                     boost::format(
@@ -356,7 +344,7 @@ namespace ade {
 
     void CaptureROS2::captureCallback_RGB_AND_DEPTH(const sensor_msgs::msg::Image::ConstSharedPtr &rgb_msg,
                                                    const sensor_msgs::msg::Image::ConstSharedPtr &depth_msg) {
-      LOG4CXX_DEBUG(logger, "captureCallback_RGB_AND_DEPTH");
+      //LOG4CXX_DEBUG(logger, "captureCallback_RGB_AND_DEPTH");
 
       boost::mutex::scoped_lock lock(data_mutex_);
       image_msg_ = rgb_msg;
@@ -377,25 +365,6 @@ namespace ade {
       data_received_ = true;
       condition_.notify_one();
     }
-
-    //int main(int argc, char **argv) {
-    //    int width = 640;
-    //    int height = 480;
-    //    IplImage* rgbImg = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
-    //    cvNamedWindow("rgb", CV_WINDOW_AUTOSIZE);
-    //
-    //    ros::init(argc, argv, "Vision Capture Listener");
-    //
-    //    ros::NodeHandle n_;
-    //
-    //    ros::Subscriber sub = n_->subscribe("/camera/image_raw", 1000, chatterCallback);
-    //
-    //    ros::spin();
-    //
-    //    cvReleaseImage(&rgbImg);
-    //    return 0;
-    //}
-
 
   } //namespace capture
 } //namespace ade  

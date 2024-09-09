@@ -69,9 +69,11 @@ log4j.logger.ade.tracker.OpenCVTracker=DEBUG
 #log4j.logger.ade.common.fol.Symbol=DEBUG
 #log4j.logger.ade.common.fol.PredicateHelper=DEBUG
 
-# Other
-#log4j.logger.ade.capture.Capture=DEBUG, file1
+# Capture
+#log4j.logger.ade.capture.Capture=DEBUG
 #log4j.logger.ade.capture.CapturedFrames=TRACE, file1
+
+# Other
 #log4j.logger.ade.detector.grasp.SmallObjectGrasp=DEBUG
 #log4j.logger.ade.display.DisplayUtilities=DEBUG
 #log4j.logger.ade.Display=DEBUG
