@@ -31,9 +31,10 @@ public class Recovery {
      */
     private FailureInformation failureInfo = null;
 
-    //TODO: For Goal recovery, should there be a distinction between consecutively failing in the same
+    //Q: For Goal recovery, should there be a distinction between consecutively failing in the same
     // way vs making some progress/failing differently before failing again in the same way? (similar to action
     // parent_retry) Where would this max count be defined? What is defined as progress?
+    // (Implementation would be in hasExhaustedRecoveryAttempts next to checkForExecutionProgress)
     /**
      * Record of recovery policy application counts distinguished by failure information.
      * Maximum recovery attempts are defined on recovery policies now. Practically this means:
@@ -52,10 +53,9 @@ public class Recovery {
      * and cause recovery to be aborted early.
      */
     private Map<FailureInformation, Integer> currentStepPolicyApplications = new HashMap<>();
-    //TODO: The below is not currently used for anything, could be used in line with above as a different tracker for how
-    //      many times goal recovery failed in the same way in a row vs total in the same way.
-    //      If using this, would potentially want to change reasoning of when to increment/reset this count to include
-    //      some notion of 'progress'
+    //Q: Should there be separate attempt thresholds for failing in the same way consecutively vs failing in the same
+    //      way overall? The below is not used for anything right now, could be used for that. (If so, include notion of
+    //      progress to inform when to increment/reset)
     /**
      * Number of times the associated context has failed in the exact same way consecutively.
      */
@@ -322,7 +322,8 @@ public class Recovery {
         failureInfo = newFailureInfo;
 
         //Cannot have RETRY post recovery if no specific child action at this level failed (possible in the case of FAIL_OVERALLCONDITIONS, FAIL_POSTCONDITIONS)
-        //Is practically also an issue with FAIL_NOTFOUND because there is no current functionality to reattempt to parse the previous eventSpec TODO: should this case be allowed?
+        //Is practically also an issue with FAIL_NOTFOUND because there is no current functionality to reattempt to parse the previous eventSpec.
+        // Q: should this ^ case be allowed? (recovery when an action isn't known/its service isn't available)
         if (newFailureInfo.contextType == RecoveryType.ACTION && newFailureInfo.failedActions.isEmpty()) {
             matchingConstraints.removeIf(e -> e.postRecoveryExecutionType == PostRecoveryExecutionType.RETRY);
         }
@@ -390,7 +391,7 @@ public class Recovery {
                ((ActionContext) context.getChildContexts().get(0)).getDBE() == selectedRecoveryAction;
     }
 
-    // TODO: feel like relationship between recovery and context can change to prevent this
+    //feel like relationship between recovery and context can change to prevent this control flow
     /**
      * Called when this Recovery's corresponding ActionContext calls setupNextStep from its parser
      */

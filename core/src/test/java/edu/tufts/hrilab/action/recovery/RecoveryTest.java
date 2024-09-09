@@ -25,11 +25,6 @@ public class RecoveryTest {
     private static Logger log = LoggerFactory.getLogger(RecoveryTest.class);
     private String aslPath = "/config/edu/tufts/hrilab/action/asl/recovery/";
 
-    //@Before
-    //public void init() {
-    //    component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -selector edu.tufts.hrilab.action.selector.TypedActionSelector");
-    //}
-
     @After
     public void shutdown(){
         component.shutdownComponent();
@@ -51,8 +46,6 @@ public class RecoveryTest {
         Assert.assertEquals(desiredStatus, component.getGoalStatus(goalId));
     }
 
-    //TODO: helper methods to get past goal based on pred and match status
-
     /**
      * Helper method for shouldAttemptRecoverytest to check if the desired recovery policy was in fact executed
      */
@@ -68,14 +61,9 @@ public class RecoveryTest {
         Assert.fail("Recovery policy not executed");
     }
 
-    //Is this what we actually want?
-    //      catchingAction match with no other matches false
-    //      catchingAction match with other match true
-    //      catchingAction with leaf failedAction
-    //      catchingAction with child failedAction
-    //TODO: This test might not be the most helpful past checking whether every case works as a set
-    //          (i.e. not sure if it will pinpoint the specific error because so many cases overlap)
-    //      ASL file for these tests is also pretty confusing, could probably just test the function directly
+    //This test might not be the most helpful past checking whether every case works as a set
+    //  (i.e. not sure if it will pinpoint the specific error because so many cases overlap)
+    //ASL file for these tests is also pretty confusing, could probably just test the function directly
     /**
      * Tests checking whether recovery is properly triggered based on failure information and policy constraints
      */
@@ -790,14 +778,13 @@ public class RecoveryTest {
     }
 
 
-    //TODO: Are incorrect recovery policy definitions something we want to explicitly detect and protect against programatically?
+    //Q: Are incorrect recovery policy definitions something we want to explicitly detect and protect against programatically?
     //  In general, I'm sure other scenarios where this can occur exist. How much of this is developer misuse/bad policy implementation vs unsafe recovery implementation?
     /**
      * Tests that poorly defined recovery policies don't break execution. In this case, if an action recovery policy has
      * 'retry' postrecovery execution defined but doesn't actually do anything to help solve the failure (would normally
      * lead to an infinite recovery loop)
      */
-    //@Ignore
     @Test
     public void faultyRetryRecoveryDefinitionTest() {
         component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
@@ -843,7 +830,6 @@ public class RecoveryTest {
      * 'parent_retry' postrecovery execution defined but doesn't actually do anything to help solve the failure (would
      * normally lead to an infinite recovery loop)
      */
-    //@Ignore
     @Test
     public void faultyParentRetryRecoveryDefinitionTest() {
         component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
