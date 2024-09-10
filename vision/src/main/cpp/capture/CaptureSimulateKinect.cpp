@@ -34,7 +34,7 @@ namespace ade {
         switch (camMode) {
           case SIM_PC1: {
             // read
-            std::string dirName = pt.get<std::string>("capture.dirNamCV_e");
+            std::string dirName = pt.get<std::string>("capture.dirName");
 
             disparityDirectory = dirName + "/disparity/";
             colorDirectory = dirName + "/color/";
@@ -52,6 +52,7 @@ namespace ade {
           }
           case SIM_PC2: {
             tmpColorCloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+            cloud_blob = pcl::PCLPointCloud2::Ptr(new pcl::PCLPointCloud2);
 
             pcdFilename = pt.get<std::string>("capture.pcdFilename");
             rgbFilename = pt.get<std::string>("capture.rgbFilename", "");
@@ -113,6 +114,7 @@ namespace ade {
 
       //SIM_PC2
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpColorCloud;
+      pcl::PCLPointCloud2::Ptr cloud_blob;
       cv::Mat tmpColor, tmpDepth;
       std::string pcdFilename;
       std::string rgbFilename;
@@ -137,11 +139,41 @@ namespace ade {
       }
 
       bool captureSimPC2() {
+        // This is necessary to load the pcd file properly (on non-US machines) 
+        // due to inconsistencies in decimal separators
+        std::locale::global(std::locale("en_US.UTF-8"));
+        std::cout.imbue(std::locale());
+
         //no need to load the same file over and over
         if (tmpColorCloud->empty()) {
-          if (pcl::io::loadPCDFile(pcdFilename, *tmpColorCloud) == -1) {
+          if (pcl::io::loadPCDFile(pcdFilename, *cloud_blob) == -1) {
             LOG4CXX_ERROR(logger, boost::format("[captureSimPC2] Couldn't read file: %s.") % pcdFilename);
             return false;
+          }
+
+          if (cloud_blob->fields.size() == 3) {
+            // x,y,z -- no rgb color info
+            // fill tmpColorCloud with default color value
+            LOG4CXX_INFO(logger, boost::format("[captureSimPC2] no rgb values in PCD file: %s.") % pcdFilename);
+            pcl::PointCloud<pcl::PointXYZ> tmpCloud;
+            pcl::fromPCLPointCloud2(*cloud_blob, tmpCloud);
+            tmpColorCloud = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>(cloud_blob->width, cloud_blob->height));
+            for (int i = 0; i < tmpCloud.points.size(); ++i) {
+              pcl::PointXYZ p = tmpCloud.points[i];
+              pcl::PointXYZRGB &colorPt = tmpColorCloud->points[i];
+              colorPt.x = p.x;
+              colorPt.y = p.y;
+              if (p.z < 0) {
+                colorPt.z = -p.z;
+              } else {
+                colorPt.z = p.z;
+              }
+              colorPt.r = 0;
+              colorPt.g = 255;
+              colorPt.b = 0;
+            }
+          } else {
+            pcl::fromPCLPointCloud2(*cloud_blob, *tmpColorCloud);
           }
         }
 
@@ -166,6 +198,14 @@ namespace ade {
           pcl::copyPointCloud(*cloudRGB, *cloud);
         }
 
+// TODO: remove this -- debugging
+//        for (auto p : cloud->points) {
+//          if (!std::isnan(p.x) && !std::isnan(p.y) && !std::isnan(p.z)) {
+//            LOG4CXX_INFO(logger, boost::format("[captureSimPC2] xyz: %f, %f, %f.") % p.x % p.y % p.z);
+//          }
+//        }
+//        LOG4CXX_INFO(logger, "done printing cloud data.");
+
         // if rgbFilename has been specified, overwrite rgb image with one loaded from file
         // this is inefficient to do it here and reload from file every time, but this class is just for testing so it should be fine
         if (!rgbFilename.empty()) {
@@ -179,7 +219,6 @@ namespace ade {
 
         // sleep
         boost::this_thread::sleep(boost::posix_time::milliseconds(5));
-
         return true;
       }
 

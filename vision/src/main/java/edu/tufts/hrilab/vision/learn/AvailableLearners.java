@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 public class AvailableLearners {
 
-  private HashMap<LearnerType, LearnerDetail> typesDetail = new HashMap<>();
+  private Map<LearnerType, LearnerDetail> typesDetail = new HashMap<>();
   private static final Logger log = LoggerFactory.getLogger(AvailableLearners.class);
 
   public AvailableLearners(final int imgWidth, final int imgHeight, final String configFile) {

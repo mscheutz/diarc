@@ -20,7 +20,23 @@ SET(SOURCES
 	validator/SizeValidator.cpp
 	)
 
+SET(CONFIG_DIR "../vision/build/resources/main/config/edu/tufts/hrilab/vision/imgProcs")
+
 # optional sources
+if (OpenCV_dnn_FOUND)
+	SET(SOURCES ${SOURCES}
+	    validator/ComponentValidator.cpp
+		)
+
+    SET(COMPONENT_MODEL_PATH "${CONFIG_DIR}/componentvalidator/semanticEncoder.onnx")
+    SET(COMPONENT_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/semanticEncoder.onnx")
+
+    if (NOT EXISTS "${COMPONENT_MODEL_PATH}")
+    	message("Downloading semanticEncoder model ${COMPONENT_MODEL_URL}")
+    	file(DOWNLOAD "${COMPONENT_MODEL_URL}" "${COMPONENT_MODEL_PATH}")
+    endif(NOT EXISTS "${COMPONENT_MODEL_PATH}")
+endif(OpenCV_dnn_FOUND)
+
 if (V4R_V0_FOUND)
 	SET(SOURCES ${SOURCES}
 		saliency/ColorProcessor.cpp

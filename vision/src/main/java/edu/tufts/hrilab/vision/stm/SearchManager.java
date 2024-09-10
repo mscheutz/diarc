@@ -422,6 +422,27 @@ public abstract class SearchManager {
   }
 
   /**
+   * Helper method to wait for at least one detection/tracking iteration to complete.
+   * This returns immediately if the SearchManager is not currently running, and will return
+   * if the SearchManager is stopped.
+   *
+   * TODO: change this to use wait/notify instead of sleep
+   */
+  final public void waitForIterationToComplete() {
+    while (!hasIterationCompleted()) {
+      if (!isRunning()) {
+        return;
+      }
+      log.debug("[waitForIterationToComplete] isRunning: {}. id: {}", isRunning(), typeId);
+      try {
+        Thread.sleep(5);
+      } catch (InterruptedException e) {
+        log.error("Exception while waiting for iteration to complete.", e);
+      }
+    }
+  }
+
+  /**
    * Checks if at least one full detection -> tracking iteration has completed.
    * This is required in order to get detection results.
    * @return 
