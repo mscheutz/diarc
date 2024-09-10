@@ -17,15 +17,17 @@ import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.unity.UnityComponent;
-import edu.tufts.hrilab.unity.space_station.UnitySpaceStation;
 import edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM;
 import edu.tufts.hrilab.unity.space_station.nlg.UnitySpaceStationNLGComponent;
+import edu.tufts.hrilab.unity.space_station.UnitySpaceStation;
+import edu.tufts.hrilab.unity.space_station.HumanAgent;
 import edu.tufts.hrilab.unity.UnityAgent;
 import edu.tufts.hrilab.unity.UnityPR2;
 import edu.tufts.hrilab.action.GoalManagerComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Arrays;
+import java.util.Dictionary;
 import java.util.List;
 
 
@@ -40,6 +42,7 @@ public class UnityDIARCSpaceStationHybrid {
     String unityPort = "1755";
     String agentName = "robot1";
     String nullAddressee = "";
+    int players = 1;
 
     if (largs.contains("-unity")) {
       unityIP = largs.get(largs.indexOf("-unity") + 1);
@@ -67,6 +70,10 @@ public class UnityDIARCSpaceStationHybrid {
       nullAddressee = " -nullAddressee";
     }
 
+    if (largs.contains("-players")) {
+      players = Integer.parseInt(largs.get(largs.indexOf("-players") + 1));
+    }
+
     String goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm_" + agentName + ".pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
     if (largs.contains("--autonomy") || largs.contains("-a")) {
       goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -goal startAutonomy(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
@@ -92,6 +99,10 @@ public class UnityDIARCSpaceStationHybrid {
     DiarcComponent.createInstance(UnitySpaceStationLLM.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
     DiarcComponent.createInstance(UnityAgent.class, "-agent rover -groups agent:" + agentName);
     DiarcComponent.createInstance(UnityPR2.class, "-agent " + agentName + " -groups agent:"  + agentName + nullAddressee );
+
+    for (int i = 0; i < players; i++) {
+      DiarcComponent.createInstance(HumanAgent.class, "-agent player" + i);
+    }
 
     DiarcComponent.createInstance(GoalManagerComponent.class, goalManagerArgs);
   }
