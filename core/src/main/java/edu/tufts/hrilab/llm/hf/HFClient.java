@@ -31,13 +31,13 @@ public class HFClient{
     private String t5CompletionEndpoint = "https://api-inference.huggingface.co/models/%s";
 
     //EW: Non-chat models I think are theoretically available to use, but have practically never finished loading for me
-    private List<String> llamaHFCompletionModels = Arrays.asList("Llama-2-7b-hf", "Llama-2-7b-chat-hf", "Llama-2-13b-hf", "Llama-2-13b-chat-hf", "Llama-2-70b-hf", "Llama-2-70b-chat-hf", "Meta-Llama-3-8B", "Meta-Llama-3-8B-Instruct", "Meta-Llama-3-70B", "Meta-Llama-3-70B-Instruct","Meta-Llama-3.1-8B", "Meta-Llama-3.1-8B-Instruct", "Meta-Llama-3.1-70B", "Meta-Llama-3.1-70B-Instruct");
+    private List<String> llamaHFCompletionModels = Arrays.asList("Llama-2-7b-hf", "Llama-2-7b-chat-hf", "Llama-2-13b-hf", "Llama-2-13b-chat-hf", "Llama-2-70b-hf", "Llama-2-70b-chat-hf", "Meta-Llama-3-8B", "Meta-Llama-3-8B-Instruct", "Meta-Llama-3-70B", "Meta-Llama-3-70B-Instruct","Meta-Llama-3.1-8B", "Meta-Llama-3.1-8B-Instruct", "Meta-Llama-3.1-70B", "Meta-Llama-3.1-70B-Instruct","Meta-Llama-3.1-405B", "Meta-Llama-3.1-405B-Instruct");
     private List<String> t5CompletionModels = Arrays.asList("t5-small", "t5-base", "t5-large", "t5-3b", "t5-11b");
 
     private String defaultSystemPrompt = "";
 
     public String service = "llamahf";
-    public String model = "Meta-Llama-3-70B-Instruct";
+    public String model = "Meta-Llama-3.1-70B-Instruct";
 
     private String apiKey = null;
     private int maxNewTokens = 1028;
@@ -102,7 +102,7 @@ public class HFClient{
     /**
      * Sets the temperature of the model.
      *
-     * @param temperatureFloat - The temperature value to set
+     * @param {number} temperatureFloat - The temperature value to set
      */
     public void setTemperature (float temperatureFloat) {
         temperature = temperatureFloat;
@@ -111,7 +111,7 @@ public class HFClient{
     /**
      * Sets the max number of tokens included in the response (Not including the provided prompt)
      *
-     * @param maxNewTokens - The number of tokens to set
+     * @param {number} maxNewTokens - The number of tokens to set
      */
     public void setMaxNewTokens(int maxNewTokens) {
         maxNewTokens = this.maxNewTokens;

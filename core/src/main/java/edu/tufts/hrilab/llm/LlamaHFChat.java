@@ -1,3 +1,7 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
 package edu.tufts.hrilab.llm;
 
 import org.slf4j.Logger;
@@ -10,7 +14,7 @@ public class LlamaHFChat extends Chat {
     static private Logger log = LoggerFactory.getLogger(LlamaHFChat.class);
 
     public String service = "llamahf";
-    public String model = "Meta-Llama-3-70B-Instruct";
+    public String model = "Meta-Llama-3.1-70B-Instruct";
 
     public LlamaHFChat () {
     }
@@ -69,10 +73,8 @@ public class LlamaHFChat extends Chat {
                 sb.append("</s>");
             }
             return sb.toString().trim();
-        }
-
-        //TODO: add system message with 'first'
-        if (model.startsWith("Meta-Llama-3")) {
+        } else if (model.startsWith("Meta-Llama-3")) {
+            //TODO: add system message with 'first'
             if (position == 0 || singleMessage) {
                 sb.append("<|begin_of_text|>");
                 if (systemMessage != null && !systemMessage.isEmpty()) {
