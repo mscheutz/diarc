@@ -4,7 +4,7 @@ import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.Justification;
 
-public interface PythonRLInterface {
+public interface RLInterface {
 
     @TRADEService
     @Action
@@ -12,5 +12,9 @@ public interface PythonRLInterface {
 
     @TRADEService
     @Action
-    public Justification learnPolicy(String failedOperator);
+    public Justification learnPolicy(String action);
+
+    @TRADEService
+    @Action
+    public Justification updatePolicy(String failedOperator);
 }
