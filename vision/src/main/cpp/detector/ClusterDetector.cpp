@@ -219,7 +219,7 @@ void ClusterDetector::display(MemoryObject::VecPtr newClusterObjects) {
     displayCloud->at(index).b = 0;
   }
 
-  // set plane points to blue
+  // set plane points to red
   for (unsigned long i = 0; i < plane->getPlaneIndices()->indices.size(); ++i) {
     int index = plane->getPlaneIndices()->indices.at(i);
     displayCloud->at(index).r = 255;

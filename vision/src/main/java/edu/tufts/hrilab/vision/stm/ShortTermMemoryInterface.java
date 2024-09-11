@@ -125,7 +125,7 @@ public class ShortTermMemoryInterface {
     List<MemoryObject> result = (ArrayList) ShortTermMemoryModule.getMemoryObjects(conf);
     log.trace("[getTokens] got tokens from native side.");
 
-    // apply any relavant definitions to memory object scene graph
+    // apply any relevant definitions to memory object scene graph
     List<NamedDescription> definitions = Vision.availableSearchTypes.getDefinitions();
     for (MemoryObject mo : result) {
       for (NamedDescription definition : definitions) {

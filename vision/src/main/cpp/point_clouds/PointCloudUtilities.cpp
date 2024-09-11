@@ -411,6 +411,53 @@ namespace ade {
       //        }
       //      }
 
+      void pointCloudToDepth(cv::Mat depth, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) {
+
+        //image size check
+        if (depth.cols != cloud->width || depth.rows != cloud->height) {
+          LOG4CXX_WARN(logger, "[pointCloudToDepthAndColor]: inconsistent sizes! Returning.");
+          return;
+        }
+
+        //using "default" kinect params
+        const int imgWidth = cloud->width;
+        const int imgHeight = cloud->height;
+
+        pcl::PointXYZ minPt, maxPt;
+        pcl::getMinMax3D(*cloud, minPt, maxPt);
+
+        //TODO: use CameraParameters
+        //        const float fx = 580.0 * (imgWidth / 640.0);
+        //        const float fy = 580.0 * (imgHeight / 480.0);
+        //        const float cx = imgWidth / 2.0;
+        //        const float cy = imgHeight / 2.0;
+
+        cv::Mat depthImage = cv::Mat(imgHeight, imgWidth, CV_32FC1);
+        float* depthData = (float*) depthImage.data;
+        float x_ir, y_ir, z_ir;
+        
+        for (int xx = 0; xx < imgWidth; xx++) {
+          for (int yy = 0; yy < imgHeight; yy++) {
+
+            x_ir = cloud->points[xx + yy * imgWidth].x;
+            y_ir = cloud->points[xx + yy * imgWidth].y;
+            z_ir = cloud->points[xx + yy * imgWidth].z;
+
+            if (std::isnan(x_ir) || std::isnan(y_ir) || std::isnan(z_ir)) {
+              depthData[xx + imgWidth * yy] = std::numeric_limits<float>::quiet_NaN();
+              
+            } else {
+              //assumes an organized point cloud
+              depthData[xx + imgWidth * yy] = z_ir;  
+              
+            }
+          }
+        }
+
+        cv::resize(depthImage, depth, depth.size(), 0,0,cv::INTER_NEAREST);
+        
+      }
+
       void calculateBoundingBox(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud,
                                 pcl::PointXYZ& min_point,
                                 pcl::PointXYZ& max_point,

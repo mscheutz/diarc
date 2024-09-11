@@ -1,0 +1,157 @@
+{
+  "processor": {
+    "type": "category",
+    "arity": 1
+  },
+  "config": {
+    "model": "SemanticEncoderVersionOGmore2comp600epochs",
+    "type" : "onnx"
+  },
+  "predicates": [
+    {
+      "name": "object_consists_of_one_component",
+      "index": 0
+    },
+    {
+      "name": "object_consists_of_two_components",
+      "index": 1
+    },
+    {
+      "name": "object_consists_of_three_components",
+      "index": 2
+    },
+    {
+      "name": "central_component_is_shaped_like_a_cylinder",
+      "shape": 0,
+      "index": 3
+    },
+    {
+      "name": "central_component_is_shaped_like_a_cuboid",
+      "shape": 1,
+      "index": 4
+    },
+    {
+      "name": "central_component_is_shaped_like_an_ellipsoid",
+      "shape": 2,
+      "index": 5
+    },
+    {
+      "name": "second_component_is_shaped_like_a_cylinder",
+      "shape": 0,
+      "index": 6
+    },
+    {
+      "name": "second_component_is_shaped_like_a_cuboid",
+      "shape": 1,
+      "index": 7
+    },
+    {
+      "name": "second_component_is_shaped_like_an_ellipsoid",
+      "shape": 2,
+      "index": 8
+    },
+    {
+      "name": "second_component_is_positioned_in_front",
+      "axis": 0,
+      "index": 9
+    },
+    {
+      "name": "second_component_is_positioned_behind",
+      "axis": 1,
+      "index": 10
+    },
+    {
+      "name": "second_component_is_positioned_to_the_right",
+      "axis": 2,
+      "index": 11
+    },
+    {
+      "name": "second_component_is_positioned_to_the_left",
+      "axis": 3,
+      "index": 12
+    },
+    {
+      "name": "second_component_is_positioned_on_top",
+      "axis": 4,
+      "index": 13
+    },
+    {
+      "name": "second_component_is_positioned_at_the_bottom",
+      "axis": 5,
+      "index": 14
+    },
+    {
+      "name": "second_component_is_larger",
+      "index": 15
+    },
+    {
+      "name": "second_component_is_smaller",
+      "index": 16
+    },
+    {
+      "name": "second_component_is_of_similar_size",
+      "index": 17
+    },
+    {
+      "name": "third_component_is_shaped_like_a_cylinder",
+      "shape": 0,
+      "index": 18
+    },
+    {
+      "name": "third_component_is_shaped_like_a_cuboid",
+      "shape": 1,
+      "index": 19
+    },
+    {
+      "name": "third_component_is_shaped_like_an_ellipsoid",
+      "shape": 2,
+      "index": 20
+    },
+    {
+      "name": "third_component_is_positioned_in_front",
+      "axis": 0,
+      "index": 21
+    },
+    {
+      "name": "third_component_is_positioned_behind",
+      "axis": 1,
+      "index": 22
+    },
+    {
+      "name": "third_component_is_positioned_to_the_right",
+      "axis": 2,
+      "index": 23
+    },
+    {
+      "name": "third_component_is_positioned_to_the_left",
+      "axis": 3,
+      "index": 24
+    },
+    {
+      "name": "third_component_is_positioned_on_top",
+      "axis": 4,
+      "index": 25
+    },
+    {
+      "name": "third_component_is_positioned_at_the_bottom",
+      "axis": 5,
+      "index": 26
+    },
+    {
+      "name": "third_component_is_larger",
+      "index": 27
+    },
+    {
+      "name": "third_component_is_smaller",
+      "index": 28
+    },
+    {
+      "name": "third_component_is_of_similar_size",
+      "index": 29
+    },
+    {
+      "name": "any",
+      "index": 30
+    }
+  ]
+}

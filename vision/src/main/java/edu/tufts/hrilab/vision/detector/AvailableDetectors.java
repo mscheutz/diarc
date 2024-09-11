@@ -13,6 +13,7 @@ import edu.tufts.hrilab.vision.imgproc.swig.ImageProcessorType;
 import edu.tufts.hrilab.vision.stm.SearchManager;
 import edu.tufts.hrilab.vision.tracker.swig.NativeTracker.TrackerType;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.*;
 
@@ -133,9 +134,6 @@ public class AvailableDetectors {
             continue;
           }
 
-          //get config file secifying supported predicates
-          detectorConfigFile = singleDetectorType.string("config");
-
           //add to available types if doesn't exist
           if (!typesDetail.containsKey(detectorType)) {
             DetectorDetail newDetectorDetail = new DetectorDetail(detectorType, imgWidth, imgHeight);
@@ -151,16 +149,17 @@ public class AvailableDetectors {
                 }
               }
             } catch (Exception e) {
-              log.error(String.format("Problem parsing info for \"%s\" detector type. All such detector types will not be loaded.", detectorType), e);
+              log.error("Problem parsing info for {} detector type. All such detector types will not be loaded.", detectorType, e);
               continue;
             }
             typesDetail.put(detectorType, newDetectorDetail);
           } else {
-            log.warn(String.format("\"%s\" detector type has already been loaded. Ignoring duplicate request.", detectorType));
+            log.warn("{} detector type has already been loaded. Ignoring duplicate request.", detectorType);
             continue;
           }
 
           //parse Detector's config file to get info for each predicate option
+          detectorConfigFile = singleDetectorType.string("config");
           try {
             if (detectorConfigFile != null && !detectorConfigFile.isEmpty()) {
 
@@ -173,7 +172,7 @@ public class AvailableDetectors {
                 log.error("Invalid detector config file format. Must be XML or JSON. File: " + detectorConfigFile);
               }
             }
-          } catch (Exception e) {
+          } catch (FileNotFoundException e) {
             log.error(String.format("Error parsing config file: %s.", detectorConfigFile), e);
           }
         }
@@ -183,76 +182,56 @@ public class AvailableDetectors {
     }
   }
 
-  private void parseDetectorFileJson(String detectorConfigFile, DetectorType detectorType) {
+  private void parseDetectorFileJson(String detectorConfigFile, DetectorType detectorType) throws FileNotFoundException {
     Predicate advertisement;
-    String predicateType;
-    int arity;
     String predicateName;
 
-    try {
-      JsonParser parser = new JsonParser();
-      JsonObject root = parser.parse(new FileReader(detectorConfigFile)).getAsJsonObject();
-      predicateType = root.getAsJsonObject("processor").get("type").getAsString();
-      arity = root.getAsJsonObject("processor").get("arity").getAsInt();
+    JsonParser parser = new JsonParser();
+    JsonObject root = parser.parse(new FileReader(detectorConfigFile)).getAsJsonObject();
+    String predicateType = root.getAsJsonObject("processor").get("type").getAsString();
+    int arity = root.getAsJsonObject("processor").get("arity").getAsInt();
 
+    Iterator<JsonElement> predicateItr = root.getAsJsonArray("predicates").iterator();
+    while (predicateItr.hasNext()) {
+      JsonObject predicateObj = predicateItr.next().getAsJsonObject();
+
+      predicateName = predicateObj.get("name").getAsString();
       if (arity == 1) {
-        advertisement = new Predicate(predicateType, new Variable("X", PredicateHelper.varType));
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
       } else if (arity == 2) {
-        advertisement = new Predicate(predicateType, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
+      } else {
+        log.error("Can't handle Predicates with arity: {}.", arity);
+        return;
+      }
+
+      //add Detector option
+      addDetectorOption(advertisement, detectorType, detectorConfigFile);
+    }
+  }
+
+  private void parseDetectorFileXml(String detectorConfigFile, DetectorType detectorType) throws FileNotFoundException {
+    Predicate advertisement;
+    String predicateName;
+
+    Xml processor = new Xml(detectorConfigFile, "processor");
+    String predicateType = processor.string("type");
+    int arity = processor.numInt("arity");
+
+    for (Xml predicate : processor.children("predicate")) {
+
+      predicateName = predicate.string("name");
+      if (arity == 1) {
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
+      } else if (arity == 2) {
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
       } else {
         log.error(String.format("Can't handle Predicates with arity: %d.", arity));
         return;
       }
-      //add Detector option (for type of detector, which indicates to search for all detector options)
+
+      //add Detector option
       addDetectorOption(advertisement, detectorType, detectorConfigFile);
-
-      Iterator<JsonElement> predicateItr = root.getAsJsonArray("predicates").iterator();
-      while (predicateItr.hasNext()) {
-        JsonObject predicateObj = predicateItr.next().getAsJsonObject();
-
-        predicateName = predicateObj.get("name").getAsString();
-        if (arity == 1) {
-          advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
-        } else if (arity == 2) {
-          advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
-        }
-
-        //add Detector option
-        addDetectorOption(advertisement, detectorType, detectorConfigFile);
-      }
-    } catch (Exception e) {
-      log.error(String.format("Error parsing config file: %s.", detectorConfigFile), e);
-    }
-  }
-
-  private void parseDetectorFileXml(String detectorConfigFile, DetectorType detectorType) {
-    Predicate advertisement;
-    String predicateType;
-    int arity;
-    String predicateName;
-
-    try {
-      Xml processor = new Xml(detectorConfigFile, "processor");
-      predicateType = processor.string("type");
-      arity = processor.numInt("arity");
-
-      for (Xml predicate : processor.children("predicate")) {
-
-        predicateName = predicate.string("name");
-        if (arity == 1) {
-          advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
-        } else if (arity == 2) {
-          advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
-        } else {
-          log.error(String.format("Can't handle Predicates with arity: %d.", arity));
-          continue;
-        }
-
-        //add Detector option
-        addDetectorOption(advertisement, detectorType, detectorConfigFile);
-      }
-    } catch (Exception e) {
-      log.error(String.format("Error parsing config file: %s.", detectorConfigFile), e);
     }
   }
 
