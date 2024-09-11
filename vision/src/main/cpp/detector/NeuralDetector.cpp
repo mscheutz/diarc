@@ -36,7 +36,6 @@ void NeuralDetector::loadConfig(const std::string &configFile) {
   }
 
   // predicate descriptor options
-  parentType = root["processor"]["type"].asString();
   int arity = root["processor"]["arity"].asInt();
   for (auto predicateValue: root["predicates"]) {
     std::string name = predicateValue["name"].asString();
@@ -397,7 +396,7 @@ void NeuralDetector::handleCaptureNotification(CaptureNotification::ConstPtr not
   std::tr1::unordered_set<long long>::const_iterator typeIds_itr;
   MemoryObject::VecPtr newObjs(new MemoryObject::Vec());
   for (descriptor_iter = descriptors->begin(); descriptor_iter != descriptors->end(); ++descriptor_iter) {
-    bool useAllResults = (descriptor_iter->first.getName() == parentType);
+    bool useAllResults = descriptor_iter->first.getName() == "all";
     int target_class_id = classToId[descriptor_iter->first.getName()];
 
     for (int idx: indices) {

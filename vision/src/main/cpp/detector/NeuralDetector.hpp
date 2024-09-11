@@ -34,9 +34,6 @@ protected:
   virtual void initModel(const std::string& model_path, const std::string& backEnd, const std::string &type);
   virtual void setBackendAndTarget();
 
-  // semantic parent type for this detector's descriptors (isA hierarchy)
-  std::string parentType;
-
   cv::dnn::Net net;
   double confidence_thresh=0.1;
   double score_thresh=0.1;
