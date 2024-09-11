@@ -65,7 +65,7 @@ public class FailedReturnValuePolicy {
    */
   @TRADEService
   @Action
-  public Justification executeFailedReturnValuePolicy(Symbol actor, Predicate brokenActionSignature, List<Predicate> failureReasons, Predicate goal) throws TRADEException {
+  public Justification executeFailedReturnValuePolicy(Symbol actor, List<Predicate> brokenActionSignatures, List<Predicate> failureReasons, Predicate goal) throws TRADEException {
     // so we don't try to repair broken actions if we're exploring actions we expect to fail
       if ((boolean )TRADE.getAvailableService(new TRADEServiceConstraints().name("isCurrentlyExploring")).call(Object.class)) {
         return new ConditionJustification(true);
@@ -77,9 +77,11 @@ public class FailedReturnValuePolicy {
 //      return;
 //    }
 
-    if (brokenActionSignature == null) {
+    if (brokenActionSignatures == null || brokenActionSignatures.isEmpty()) {
       return new ConditionJustification(false);
     }
+    Predicate brokenActionSignature = brokenActionSignatures.get(0);
+
     ActionDBEntry brokenAction = Utilities.getActionBySignature(brokenActionSignature);
     if (brokenAction == null) {
       return new ConditionJustification(false);

@@ -8,6 +8,7 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -84,14 +85,14 @@ public final class PR2Component extends MoveItComponent implements PR2Interface 
     if (initStartPose) {
       setTorsoPosition(0.3);
       pointHeadTo(new Point3d(0.35, -0.1, 1.0));
-      goToStartPose();
+      goToPose(Factory.createSymbol("start"));
     }
   }
 
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("startPose").desc("call goToStartPose on startup").build());
+    options.add(Option.builder("startPose").desc("call goToPose(start) on startup").build());
     options.addAll(super.additionalUsageInfo());
     return options;
   }

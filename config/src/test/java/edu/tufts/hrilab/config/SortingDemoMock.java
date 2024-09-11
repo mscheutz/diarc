@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.scale.MockScaleComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
@@ -39,7 +40,7 @@ public class SortingDemoMock extends DiarcConfiguration {
         createInstance(SimpleNLGComponent.class);
         createInstance(SimSpeechProductionComponent.class, "");
 
-        createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
+        createInstance(GoalManagerComponent.class,
 //                        "-editor " +
 //                        "-beliefg " +
                         "-beliefinitfile demos.pl " +

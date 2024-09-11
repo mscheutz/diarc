@@ -111,6 +111,7 @@ tasks.named<Test>("test") {
   forkEvery = 1
   classpath += files("src/test/resources") // this is so the ActionASLTest can read/write into this directory
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
+  systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
 
   // to run tests with logging printed to console
   if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {
@@ -328,11 +329,11 @@ publishing {
       pom {
         name = "diarc core"
         description = "core diarc functionality"
-        url = "https://hrilab.tufts.edu:22280/ade/ade"
+        url = "https://hrilab.tufts.edu:22280/diarc/diarc"
 //                licenses {
 //                    license {
 //                        name = "DIARC License"
-//                        url = "https://hrilab.tufts.edu:22280/ade/ade"
+//                        url = "https://hrilab.tufts.edu:22280/diarc/diarc"
 //                    }
 //                }
       }
@@ -349,7 +350,7 @@ publishing {
       pom {
         name = "diarc control app"
         description = "diarc libs used in control app"
-        url = "https://hrilab.tufts.edu:22280/ade/ade"
+        url = "https://hrilab.tufts.edu:22280/diarc/diarc"
 //                licenses {
 //                    license {
 //                        name = "DIARC License"

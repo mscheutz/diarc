@@ -56,11 +56,11 @@
 #include "CaptureGStreamer.hpp"
 #endif
 
-namespace ade {
+namespace diarc {
   namespace capture {
     ///////////// START: static member initialization ////////////////
 
-    log4cxx::LoggerPtr Capture::logger(log4cxx::Logger::getLogger("ade.capture.Capture"));
+    log4cxx::LoggerPtr Capture::logger(log4cxx::Logger::getLogger("diarc.capture.Capture"));
 
     CaptureNotification::Ptr Capture::captureNotification;
 
@@ -301,7 +301,7 @@ namespace ade {
         // initialize ROS
         LOG4CXX_INFO(logger, "Initializing ROS.");
         std::vector<std::pair<std::string, std::string> > remapping;
-        ros::init(remapping, "ade_vision_cap");
+        ros::init(remapping, "diarc_vision_cap");
 
         // create node handle
         LOG4CXX_INFO(logger, "Initializing ROS node.");
@@ -378,32 +378,32 @@ namespace ade {
     void Capture::displayImages() {
       //display captured frame(s)
       if (!frame.empty()) {
-        ade::Display::displayFrame(frame, "capture 1");
+        diarc::Display::displayFrame(frame, "capture 1");
       }
       if (!frame2.empty()) {
-        ade::Display::displayFrame(frame2, "capture 2");
+        diarc::Display::displayFrame(frame2, "capture 2");
       }
     }
 
     void Capture::displayDepth() {
       if (!depthFrame.empty()) {
-        ade::Display::displayFrame(depthFrame, "depth 1");
+        diarc::Display::displayFrame(depthFrame, "depth 1");
       }
       if (!depthFrame2.empty()) {
-        ade::Display::displayFrame(depthFrame2, "depth 2");
+        diarc::Display::displayFrame(depthFrame2, "depth 2");
       }
       if (!depthFrameIntensity.empty()) {
-        ade::Display::displayFrame(depthFrameIntensity, "depth intensity");
+        diarc::Display::displayFrame(depthFrameIntensity, "depth intensity");
       }
 
       //display point cloud
       std::string windowName = "depth 1";
       if (cloudRGB && !cloudRGB->empty()) {
-        ade::Display::displayPointCloud(cloudRGB, windowName, windowName);
+        diarc::Display::displayPointCloud(cloudRGB, windowName, windowName);
       } else if (!depthFrame.empty() && !frame.empty()) {
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-        ade::pc::util::depthAndColorToPointCloud(depthFrame, frame, tmpCloud);
-        ade::Display::displayPointCloud(tmpCloud, windowName, windowName);
+        diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, tmpCloud);
+        diarc::Display::displayPointCloud(tmpCloud, windowName, windowName);
       }
     }
 
@@ -436,11 +436,11 @@ namespace ade {
       }
 
       if (flag) {
-        ade::Display::createWindowIfDoesNotExist("capture 1");
-        ade::Display::createWindowIfDoesNotExist("capture 2");
+        diarc::Display::createWindowIfDoesNotExist("capture 1");
+        diarc::Display::createWindowIfDoesNotExist("capture 2");
       } else {
-        ade::Display::destroyWindowIfItExists("capture 1");
-        ade::Display::destroyWindowIfItExists("capture 2");
+        diarc::Display::destroyWindowIfItExists("capture 1");
+        diarc::Display::destroyWindowIfItExists("capture 2");
       }
 
       displayImagesFlag = flag;
@@ -454,13 +454,13 @@ namespace ade {
       }
 
       if (flag) {
-        ade::Display::createWindowIfDoesNotExist("depth 1");
-        ade::Display::createWindowIfDoesNotExist("depth 2");
-        ade::Display::createWindowIfDoesNotExist("depth intensity");
+        diarc::Display::createWindowIfDoesNotExist("depth 1");
+        diarc::Display::createWindowIfDoesNotExist("depth 2");
+        diarc::Display::createWindowIfDoesNotExist("depth intensity");
       } else {
-        ade::Display::destroyWindowIfItExists("depth 1");
-        ade::Display::destroyWindowIfItExists("depth 2");
-        ade::Display::destroyWindowIfItExists("depth intensity");
+        diarc::Display::destroyWindowIfItExists("depth 1");
+        diarc::Display::destroyWindowIfItExists("depth 2");
+        diarc::Display::destroyWindowIfItExists("depth intensity");
       }
 
       displayDepthFlag = flag;
@@ -520,7 +520,7 @@ namespace ade {
         pcl::io::savePCDFile(pcdFilename, *cloudRGB);
       } else if (!depthFrame.empty() && !frame.empty()) {
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmpCloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-        ade::pc::util::depthAndColorToPointCloud(depthFrame, frame, tmpCloud);
+        diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, tmpCloud);
         pcl::io::savePCDFile(pcdFilename, *tmpCloud);
       } else {
         LOG4CXX_ERROR(logger, "[writePointCloud] can't write to file, not capturing RGB-D info.");
@@ -596,4 +596,4 @@ namespace ade {
     }
 
   } //namespace capture
-} //namespace ade
+} //namespace diarc

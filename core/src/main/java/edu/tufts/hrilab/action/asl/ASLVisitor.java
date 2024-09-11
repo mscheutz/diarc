@@ -1,8 +1,4 @@
-/*
- * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
- */
-
-// Generated from /home/evan/code/diarc/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
+// Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -309,6 +305,30 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitRecovery(ASLParser.RecoveryContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link ASLParser#actionRecoveryDetails}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitActionRecoveryDetails(ASLParser.ActionRecoveryDetailsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#actionRecoveryName}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitActionRecoveryName(ASLParser.ActionRecoveryNameContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#postActionRecoveryBehavior}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPostActionRecoveryBehavior(ASLParser.PostActionRecoveryBehaviorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#postActionRecoveryType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPostActionRecoveryType(ASLParser.PostActionRecoveryTypeContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link ASLParser#recoveryGoals}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -350,6 +370,12 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitRecoveryActionStatuses(ASLParser.RecoveryActionStatusesContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#recoveryMaximumAttempts}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ASLParser#locks}.
 	 * @param ctx the parse tree

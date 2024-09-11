@@ -21,7 +21,7 @@
 #include <opencv2/opencv.hpp>
 #include <pcl/PointIndices.h>
 
-namespace ade {
+namespace diarc {
   namespace stm {
 
     class ValidationResults {
@@ -97,7 +97,7 @@ namespace ade {
     };
 
   } //namespace stm
-} //namespace ade
+} //namespace diarc
 
 #endif	/* VALIDATIONRESULTS_HPP */
 

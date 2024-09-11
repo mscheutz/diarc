@@ -17,7 +17,7 @@ MasterSaliencyProcessor::MasterSaliencyProcessor(const long long& processorId,
         const unsigned int imgWidth, const unsigned int imgHeight, const bool isStereo)
 : SaliencyProcessor(processorId, imgWidth, imgHeight, isStereo) {
   visionProcessName = "MasterSaliencyProcessor";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.saliency.MasterSaliencyProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.saliency.MasterSaliencyProcessor");
   ignoreOlderNotifications = false;
 }
 
@@ -51,7 +51,7 @@ void MasterSaliencyProcessor::handleSaliencyNotification(SaliencyNotification::C
   Notification::Ptr n(new SaliencyNotification(shared_from_this(), notification->frameNumber, notification->captureData, resultImage));
   sendNotifications(n);
   if (getDisplayFlag()) {
-    ade::Display::displayFrame(resultImage, getDisplayName());
+    diarc::Display::displayFrame(resultImage, getDisplayName());
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -77,7 +77,7 @@ void MasterSaliencyProcessor::handleSaliencyNotification(SaliencyNotification::C
   //    sendNotifications(n);
   //    if (getDisplayFlag()) {
   //      IplImage ipl_img = resultImage;
-  //      ade::Display::displayFrame(&ipl_img, getDisplayName());
+  //      diarc::Display::displayFrame(&ipl_img, getDisplayName());
   //    }
   //  }
 }

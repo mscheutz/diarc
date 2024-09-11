@@ -14,13 +14,6 @@ import java.util.List;
 public class RWSPoseReference extends Reference {
   String pose;
 
-  @Override
-  public String toString() {
-    return "RWSPoseReference{" +
-            "pose=" + pose +
-            '}';
-  }
-
   public RWSPoseReference(Symbol ref, Variable variable) {
     super(ref, variable);
   }
@@ -40,5 +33,10 @@ public class RWSPoseReference extends Reference {
 
   public boolean hasPose() {
     return pose != null;
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + " pose = " + ((pose == null) ? " (is null)" : pose);
   }
 }

@@ -14,7 +14,7 @@
 //TODO: this is kind of a hacky way to allow for a Kinect and separate RGB cam to run together.
 //Capturing should be made more modular to allow for combining existing Capture classes.
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     class CaptureOpenniPlus : public Capture {
@@ -66,4 +66,4 @@ namespace ade {
     };
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc

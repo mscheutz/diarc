@@ -12,7 +12,7 @@
 SiftProcessor::SiftProcessor(const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight, const bool isStereo)
 : ImageProcessor(processorId, imgWidth, imgHeight, isStereo),
 siftHelper(NULL) {
-  logger = log4cxx::Logger::getLogger("ade.imgproc.SiftProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.SiftProcessor");
 }
 
 SiftProcessor::~SiftProcessor() {
@@ -35,7 +35,7 @@ void SiftProcessor::handleCaptureNotification(CaptureNotification::ConstPtr noti
       siftFeatures = siftHelper->calcSiftDescriptors(frameNum, currFrame1, displayFrame);
 
       //display results
-      ade::Display::displayFrame(displayFrame, getDisplayName());
+      diarc::Display::displayFrame(displayFrame, getDisplayName());
     } else {
       siftFeatures = siftHelper->calcSiftDescriptors(frameNum, currFrame1);
     }

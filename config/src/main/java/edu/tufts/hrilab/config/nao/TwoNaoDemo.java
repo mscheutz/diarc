@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.nao;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.nao.MockNaoComponent;
 import edu.tufts.hrilab.nao.NaoComponent;
@@ -36,9 +37,9 @@ public class TwoNaoDemo extends DiarcConfiguration {
 
     if (simSpeech) {
       createInstance(SimSpeechRecognitionComponent.class,
-              "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster");
+              "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -addressee dempster");
       createInstance(SimSpeechRecognitionComponent.class,
-              "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -listener dempster");
+              "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -addressee dempster");
     }
 
     if (useSphinx) {
@@ -70,7 +71,7 @@ public class TwoNaoDemo extends DiarcConfiguration {
             "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
             "-goal listen(self)";
 
-    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
+    createInstance(GoalManagerComponent.class, gmArgs);
   }
 
   public static void main(String[] args) {

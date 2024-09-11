@@ -285,7 +285,7 @@ public class ActionBinding implements Cloneable, Serializable {
    * @return true if default value available
    */
   public boolean hasDefaultValue() {
-    return !(defaultValue == null || defaultValue.toString().isEmpty());
+    return defaultValue != null;
   }
 
   /**

@@ -16,11 +16,9 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.vision.stm.Grasp;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
-import edu.tufts.hrilab.vision.stm.MemoryObjectUtil;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
-import javax.vecmath.Vector3d;
 import java.util.*;
 
 /**
@@ -42,103 +40,23 @@ public class FetchItComponent extends FetchComponent implements FetchItInterface
   public Justification moveTo(String groupName, Symbol refId, List<? extends Term> constraints) {
     log.debug("[moveTo(group,refId,constraints)] method entered with constraints: " + constraints);
 
+    MemoryObject object = getMemoryObject(refId);
+    if (object == null) {
+      return new ConditionJustification(false, Factory.createPredicate("have(memoryObject)"));
+    }
+
     List<Grasp> graspOptions = null;
-    try {
-      //this is pretty messy
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEntityForReference").argTypes(Symbol.class, Class.class, List.class));
-      graspOptions = Arrays.asList(tsi.call(Grasp[].class, refId, Grasp[].class, constraints));
-    } catch (TRADEException e) {
-      log.error("[moveTo] exception getting memory object from reference, returning null", e);
-      return new ConditionJustification(false, Factory.createPredicate("has", refId, Factory.createSymbol("graspOptions")));
+    if (object.getDescriptors().stream().anyMatch(des -> des.getName().equals("caddy") || des.getName().equals("medicalcaddy"))) {
+      Grasp grasp = new Grasp();
+      grasp.setPoint(0, object.getLocation().x, object.getLocation().y, 0.97);
+      grasp.setOrientation(-0.7018492426773312, 0.08819182984701168, 0.7013116255313993, 0.08827143136937808);
+      graspOptions.add(grasp);
+    } else {
+      // call super class method
+      graspOptions = getOrderedGraspOptions(refId, constraints);
     }
 
-    // Prioritize grasp points from a specific angle. Can be set from JSON, defaults to vertical.
-    graspOptions.sort((grasp0, grasp1) -> {
-      double angleA = MemoryObjectUtil.getAngleFromAngle(grasp0, moveItConfig.graspAngle);
-      double angleB = MemoryObjectUtil.getAngleFromAngle(grasp1, moveItConfig.graspAngle);
-      if (angleA == angleB)
-        return 0;
-      else
-        return (angleA < angleB) ? -1 : 1;
-    });
-
-    // turn on (or update if it's already on) collision avoidance
-    enableCollisionAvoidance();
-    // iterate through grasp options until one works, or we're out of options
-    boolean approachSuccess = false;
-    int graspIndex = 0;
-    while (!approachSuccess && (graspIndex < graspOptions.size())) {
-      // pick a grasp option
-      log.debug("Grasp index: " + graspIndex);
-
-      // convert grasp MemoryObject option to Grasp
-      Grasp grasp = graspOptions.get(graspIndex++);
-      MemoryObject object = getMemoryObject(refId);
-      if (object == null) {
-        return new ConditionJustification(false);
-      }
-      if (object.getDescriptors().stream().anyMatch(des -> des.getName().equals("caddy") || des.getName().equals("medicalcaddy"))) {
-        for (int i = 0; i < grasp.getNumPoints(); i++) {
-          Vector3d point = grasp.getPoint(0);
-          point.x = object.getLocation().x;
-          point.y = object.getLocation().y;
-          point.z = 0.97;
-          grasp.setOrientation(i, -0.7018492426773312, 0.08819182984701168, 0.7013116255313993, 0.08827143136937808);
-        }
-      }
-
-      // doing some basic grasp checks
-      if (grasp.getNumPoints() == 0) {
-        log.error("[moveTo(group,object)] failed to find a grasp.");
-        return new ConditionJustification(false);
-      }
-      if (grasp.getType() == null) {
-        log.error("[moveTo(group,object)] grasp type null!");
-        return new ConditionJustification(false);
-      }
-
-      // try moving to the grasp (first stage of approach)
-      // first stage of moveTo: use collision avoidance to get close to object without touching it
-      if (!moveToApproach(groupName, grasp, moveItConfig.graspApproachOffset)) {
-        log.warn("First stage of moveTo failed. GraspIndex: " + graspIndex);
-        continue;
-      }
-
-      // second stage of moveTo: turn off collision avoidance and move into position, either touching
-      // the object or in position to close gripper on the object
-      // This allows us to avoid a situation where the gripper complains about being planned into an object,
-      // and allows us to deal with potential momentum drift.
-      log.debug("Final approach to object");
-
-      // TODO: this is where we should be making the object an allowed collision object using the AllowedCollisionMatrix!
-      // EAK: setObjectCollisions(Long.toString(object.getTokenId() * 2 + 1), true);
-      // setObjectCollisions(Long.toString(object.getTokenId() - 1),false);
-
-      // completely disable all collision avoidance to allow grippers to not complain about being planned into an object
-      if (moveItConfig.allowDisableCollisionAvoidance) {
-        disableCollisionAvoidance();
-      }
-
-      // try moving to the grasp (final approach)
-      if (moveToApproach(groupName, grasp, moveItConfig.graspContactOffset)) {
-        approachSuccess = true;
-      } else {
-        log.warn("Final stage of moveTo failed. GraspIndex: " + graspIndex);
-      }
-
-      // (re)enable collision avoidance
-      if (moveItConfig.allowDisableCollisionAvoidance) {
-        enableCollisionAvoidance();
-      }
-    }
-
-    if (!approachSuccess) {
-      log.debug("[moveTo(group,refId)] failed.");
-      return new ConditionJustification(false);
-    }
-
-    log.debug("[moveTo(group,refId)] success!");
-    return new ConditionJustification(true);
+    return moveToGraspOption(groupName, graspOptions);
   }
 
   @Override
@@ -177,8 +95,37 @@ public class FetchItComponent extends FetchComponent implements FetchItInterface
     }
     Quat4d orientation = new Quat4d(0.7, 0.03, -0.7, 0.03);
     lookAround();
-    boolean moved = moveTo(groupName, point, orientation);
-    return new ConditionJustification(moved);
+    return moveTo(groupName, point, orientation);
+  }
+
+  /**
+   * This primitive action exists purely for the fetchit performance assessment test which needs moveObject to
+   * be a primitive action.
+   *
+   * @param objectRef
+   * @param arm
+   * @param direction
+   * @return
+   */
+  @Override
+  public Justification moveObjectFetchItPrimitive(Symbol objectRef, String arm, String direction) {
+    log.debug("Starting moveObject " + direction);
+    Point3d relPoint = new Point3d(0, 0, 0);
+    switch (direction) {
+      case "up":
+        relPoint = new Point3d(0.0, 0.0, 0.15);
+        break;
+      case "down":
+        relPoint = new Point3d(0.0, 0.0, -0.10);
+        break;
+      case "forward":
+        relPoint = new Point3d(0.30, 0.0, 0.0);
+        break;
+      case "right":
+        relPoint = new Point3d(0.0, -0.30, 0.0);
+        break;
+    }
+    return moveToRelative(arm, relPoint, new Quat4d(0, 0, 0, 1));
   }
 
   private String getDominantProperty(Symbol objectRef, Set<String> knownObjects) {

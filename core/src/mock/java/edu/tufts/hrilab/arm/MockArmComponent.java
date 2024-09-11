@@ -57,14 +57,14 @@ public class MockArmComponent extends DiarcComponent implements MockArmInterface
     }
 
     @Override
-    public boolean moveTo(String groupName, Point3d point, Quat4d orientation) {
+    public Justification moveTo(String groupName, Point3d point, Quat4d orientation) {
         log.info("[moveTo] " + groupName + " " + point + " " + orientation);
-        return true;
+        return new ConditionJustification(true);
     }
 
     @Override
-    public boolean moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
-        return false;
+    public Justification moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
+        return new ConditionJustification(false);
     }
 
     public boolean moveTo(Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
@@ -84,12 +84,11 @@ public class MockArmComponent extends DiarcComponent implements MockArmInterface
     }
 
     @Override
-    public boolean pointTo(String groupName, Symbol objectRef) {
+    public Justification pointTo(String groupName, Symbol objectRef) {
         log.info("[pointTo] " + groupName + " " + objectRef);
         getMemoryObject(objectRef);
         Util.Sleep(sleepDuration);
-
-        return true;
+        return new ConditionJustification(true);
     }
 
     @Override
@@ -122,7 +121,7 @@ public class MockArmComponent extends DiarcComponent implements MockArmInterface
     }
 
     @Override
-    public boolean recordPose(Symbol poseName) {
+    public Justification recordPose(Symbol poseName) {
 
         //"get" current pose
         Pair<Point3d, Quat4d> pose = Pair.of(new Point3d(), new Quat4d());
@@ -156,12 +155,12 @@ public class MockArmComponent extends DiarcComponent implements MockArmInterface
             log.error("unable to add dictionary entry for " + poseName, e);
         }
 
-        return true;
+        return new ConditionJustification(true);
     }
 
     @Override
-    public boolean saveEEPosesToFile(String filename) {
-        return false;
+    public Justification saveEEPosesToFile(String filename) {
+        return new ConditionJustification(false);
     }
 
     @Override
@@ -170,9 +169,9 @@ public class MockArmComponent extends DiarcComponent implements MockArmInterface
     }
 
     @Override
-    public boolean savePosesToFile(String filename) {
+    public Justification savePosesToFile(String filename) {
         log.info("[savePosesToFile] " + filename);
-        return true;
+        return new ConditionJustification(true);
     }
 
     @Override
@@ -181,31 +180,22 @@ public class MockArmComponent extends DiarcComponent implements MockArmInterface
     }
 
     @Override
-    public boolean goToPose(Symbol poseName) {
+    public Justification goToPose(Symbol poseName) {
         if(storedPoses.containsKey(poseName)) {
             log.info("[goToPose] " + poseName);
             Util.Sleep(sleepDuration);
-            return true;
+            return new ConditionJustification(true);
         }else{
             log.error("[goToPose] trying to go to unknown pose: "+poseName);
-            return false;
+            return new ConditionJustification(false);
         }
     }
 
     @Override
-    public boolean goToPose(String poseName, Symbol groupName) {
+    public Justification goToPose(String poseName, Symbol groupName) {
         log.info("[goToPose] " + poseName + " " + groupName);
         Util.Sleep(sleepDuration);
-
-        return true;
-    }
-
-    @Override
-    public boolean goToStartPose(boolean safe) {
-        log.info("[goToStartPose] " + safe);
-        Util.Sleep(sleepDuration);
-
-        return true;
+        return new ConditionJustification(true);
     }
 
     @Override
@@ -219,13 +209,13 @@ public class MockArmComponent extends DiarcComponent implements MockArmInterface
     }
 
     @Override
-    public boolean executeTrajectory(String trajectory_name) {
-        return true;
+    public Justification executeTrajectory(String trajectory_name) {
+        return new ConditionJustification(true);
     }
 
     @Override
-    public boolean saveTrajectoriesToFile(String filename) {
-        return true;
+    public Justification saveTrajectoriesToFile(String filename) {
+        return new ConditionJustification(true);
     }
 
     @Override
@@ -248,9 +238,9 @@ public class MockArmComponent extends DiarcComponent implements MockArmInterface
     }
 
     @Override
-    public boolean moveGripper(String groupName, float position) {
+    public Justification moveGripper(String groupName, float position) {
         Util.Sleep(sleepDuration);
-        return true;
+        return new ConditionJustification(true);
     }
 
     @Override

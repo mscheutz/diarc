@@ -4,7 +4,7 @@
 
 package edu.tufts.hrilab.config;
 
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
@@ -25,7 +25,7 @@ public class TemiV3Mock extends DiarcConfiguration {
   public PragmaticsComponent prag;
   public DialogueComponent dialogue;
   public SimpleNLGComponent nlg;
-  public GoalManagerImpl gm;
+  public GoalManagerComponent gm;
 
   @Override
   public void runConfiguration() {
@@ -39,7 +39,7 @@ public class TemiV3Mock extends DiarcConfiguration {
 
     dialogue = createInstance(DialogueComponent.class);
     nlg = createInstance(SimpleNLGComponent.class);
-    gm = createInstance(GoalManagerImpl.class,
+    gm = createInstance(GoalManagerComponent.class,
 //                "-editor " +
                 "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
                 "-beliefinitfile demos.pl " +

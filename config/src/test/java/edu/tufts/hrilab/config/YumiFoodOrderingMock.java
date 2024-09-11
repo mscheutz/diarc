@@ -9,10 +9,10 @@ import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.abb.RequestFromHumanComponent;
 import edu.tufts.hrilab.abb.MockYumiComponent;
 import edu.tufts.hrilab.abb.consultant.area.ABBAreaConsultant;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
 import edu.tufts.hrilab.abb.consultant.item.ItemConsultant;
 import edu.tufts.hrilab.abb.consultant.location.ABBLocationConsultant;
-import edu.tufts.hrilab.action.GoalManagerImpl;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
@@ -37,7 +37,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
   private ABBLocationConsultant locationConsultant;
   private boolean firebase;
   private boolean test;
-  public GoalManagerImpl gm;
+  public GoalManagerComponent gm;
 
   public YumiFoodOrderingMock(boolean test) {
     this.test = test;
@@ -116,7 +116,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
                     + "-goal listen(self:agent)";
 //                        + "-goal init(self:agent)";
 
-    gm = createInstance(GoalManagerImpl.class, gmArgs);
+    gm = createInstance(GoalManagerComponent.class, gmArgs);
 
     if (test) {
       untrustedSimSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech -nogui");

@@ -39,7 +39,7 @@ public class RWSPoseConsultant extends Consultant<RWSPoseReference> {
   @Override
   public <U> U localConvertToType(Symbol refId, Class<U> type, List<? extends Term> constraints) {
     // get underlying pose info based on refId
-    RWSPoseReference ref = references.get(refId);
+    RWSPoseReference ref = getReference(refId);
     String pose = ref.pose;
 
     if (type.isAssignableFrom(String.class)) {
@@ -49,15 +49,6 @@ public class RWSPoseConsultant extends Consultant<RWSPoseReference> {
       log.error("[convertToType] Can not handle conversions to type: " + type);
       return null;
     }
-  }
-
-  @Override
-  public String getReferenceSummaries() {
-    StringBuilder sb = new StringBuilder();
-    for (Symbol refId : references.keySet()) {
-      sb.append(refId).append(" = ").append(references.get(refId).properties).append((references.get(refId).pose == null) ? " (is null)" : " (not null)").append("\n");
-    }
-    return sb.toString();
   }
 
   @Override
@@ -81,11 +72,10 @@ public class RWSPoseConsultant extends Consultant<RWSPoseReference> {
     List<Term> properties = List.of(new Term[]{property});
     RWSPoseReference ref = new RWSPoseReference(getNextReferenceId(), v, properties, poseValue);
     addReference(ref);
-    for (Symbol refId : references.keySet()) {
-      RWSPoseReference tmpRef = references.get(refId);
+    for (RWSPoseReference tmpRef : getAllReferences()) {
       Term tmpProperty = Factory.createPredicate(cameraPoseName, v);
       if (tmpRef.properties.contains(tmpProperty)) {
-        cameraPoseToDropoffPoseMap.put(refId, ref.getRefId());
+        cameraPoseToDropoffPoseMap.put(tmpRef.refId, ref.getRefId());
       }
     }
     return ref.getRefId();
@@ -111,11 +101,11 @@ public class RWSPoseConsultant extends Consultant<RWSPoseReference> {
   //todo: refactor.
   public List<Symbol> getRefIdsWithPropertyNamed(String property) {
     List<Symbol> toReturn = new ArrayList<>();
-    for (Symbol refId : references.keySet()) {
-      List<Term> properties = references.get(refId).properties;
+    for (RWSPoseReference ref : getAllReferences()) {
+      List<Term> properties = ref.properties;
       for (Term prop : properties) {
         if (prop.getName().equals(property)) {
-          toReturn.add(refId);
+          toReturn.add(ref.refId);
         }
       }
     }

@@ -13,6 +13,7 @@ import edu.tufts.hrilab.fol.Predicate;
         pre : not(beenperceived(?refId));
         pre : free(?actor);
         pre : reachable(?actor, ?putdownArea, ?putdownLocation);
+        pre : not(itemAt(X,?putdownArea));
     }
     effects : {
         success : beenperceived(?refId);

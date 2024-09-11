@@ -4,8 +4,6 @@
 
 package edu.tufts.hrilab.demos;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
 import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.config.MockTwoNaoDemo;
 import edu.tufts.hrilab.fol.Predicate;
@@ -48,16 +46,9 @@ public class TwoNaoDemoTest extends GenerativeDiarcIntegrationTest {
 
   @After
   public void shutdownDiarc() {
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException ignored) {
-    }
-
-    log.debug("[cleanup] started");
-    log.debug("[shutdownConfig] tester shutdown");
+    log.debug("[shutdownDiarc] started");
     diarcConfig.shutdownConfiguration();
-    log.debug("[shutdownConfig] completed");
-    log.info("[cleanup] ended");
+    log.debug("[shutdownDiarc] completed");
   }
 
   //This wrapper exists so that the generator can appropriately catch input

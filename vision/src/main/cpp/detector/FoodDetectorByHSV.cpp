@@ -24,7 +24,7 @@ using std::string;
 using std::vector;
 using cv::Point;
 using cv::Mat;
-using namespace ade::stm;
+using namespace diarc::stm;
 
 // If the area of a bounding rectangle is smaller than this percentage of the frame dimensions,
 // it's too small to be anything we care about and will be ignored
@@ -51,7 +51,7 @@ FoodDetectorByHSV::FoodDetectorByHSV(const long long &processorId, const int img
         : ObjectDetector(processorId, imgWidth, imgHeight) {
 
   visionProcessName = "FoodDetectorByHSV";
-  logger = log4cxx::Logger::getLogger("ade.detector.FoodDetectorByHSV");
+  logger = log4cxx::Logger::getLogger("diarc.detector.FoodDetectorByHSV");
 
   // Some foods to get started
   FoodType foodlist[] = {
@@ -100,8 +100,8 @@ Mat FoodDetectorByHSV::mask_out_background() {
 vector <FoodDetectorByHSV::Food> FoodDetectorByHSV::get_foods_in_view() {
   mask_out_background();
   #ifdef DEBUGMODE_bgshow
-  ade::Display::createWindowIfDoesNotExist("bg");
-  ade::Display::displayFrame(SELFIMG.mask, "bg");
+  diarc::Display::createWindowIfDoesNotExist("bg");
+  diarc::Display::displayFrame(SELFIMG.mask, "bg");
   #endif
   vector <Food> foods = divide_image();
   for (uint n = 0; n < foods.size(); ++n) {
@@ -185,8 +185,8 @@ FoodDetectorByHSV::FoodType FoodDetectorByHSV::get_masked_food(Food f) {
   //printme.append(" (H:").append(std::to_string(returnme.hsv)).append(", C:").append(std::to_string(returnme.confidence)).append(")");
   //cv::putText(SELFIMG.frame, printme, f.centroid, CV_FONT_HERSHEY_PLAIN, 1.0, CV_RGB(200, 200, 200), 2.0);        cv::circle(SELFIMG.frame, f.centroid, 20, CV_RGB(0, 255, 0), -1);
 
-  ade::Display::createWindowIfDoesNotExist("showlabeled");
-  ade::Display::displayFrame(SELFIMG.frame, "showlabeled");
+  diarc::Display::createWindowIfDoesNotExist("showlabeled");
+  diarc::Display::displayFrame(SELFIMG.frame, "showlabeled");
   #endif
   return returnme;
 }
@@ -228,10 +228,10 @@ vector <FoodDetectorByHSV::Food> FoodDetectorByHSV::divide_image() {
     }
   }
   #ifdef DEBUGMODE_showboundingrect
-  ade::Display::createWindowIfDoesNotExist("contours");
-  ade::Display::displayFrame(copy, "contours");
-  ade::Display::createWindowIfDoesNotExist("bounds");
-  ade::Display::displayFrame(bounds, "bounds");
+  diarc::Display::createWindowIfDoesNotExist("contours");
+  diarc::Display::displayFrame(copy, "contours");
+  diarc::Display::createWindowIfDoesNotExist("bounds");
+  diarc::Display::displayFrame(bounds, "bounds");
   #endif
 
 
@@ -243,8 +243,8 @@ vector <FoodDetectorByHSV::Food> FoodDetectorByHSV::divide_image() {
     cv::Rect rect = cv::boundingRect(p);
     cv::rectangle(gbounds, rect.tl(), rect.br(), cv::Scalar(255, 0, 0), 2, cv::LINE_AA);
   }
-  ade::Display::createWindowIfDoesNotExist("gbounds");
-  ade::Display::displayFrame(gbounds, "gbounds");
+  diarc::Display::createWindowIfDoesNotExist("gbounds");
+  diarc::Display::displayFrame(gbounds, "gbounds");
   #endif
 
 
@@ -276,8 +276,8 @@ vector <FoodDetectorByHSV::Food> FoodDetectorByHSV::divide_image() {
     //     }
     //   }
     // }
-    // ade::Display::createWindowIfDoesNotExist("foodmask");
-    // ade::Display::displayFrame(foodmask, "foodmask");
+    // diarc::Display::createWindowIfDoesNotExist("foodmask");
+    // diarc::Display::displayFrame(foodmask, "foodmask");
     cv::drawContours(foodmask, good_contours, n, cv::Scalar(255, 255, 255), -1);
     cv::drawContours(all_masks, good_contours, n, cv::Scalar(255, 255, 255), -1);
     f.maskarea = foodmask;
@@ -286,8 +286,8 @@ vector <FoodDetectorByHSV::Food> FoodDetectorByHSV::divide_image() {
   }
 
   #ifdef DEBUGMODE_showmasks
-    ade::Display::createWindowIfDoesNotExist("showmasks");
-    ade::Display::displayFrame(all_masks, "showmasks");
+    diarc::Display::createWindowIfDoesNotExist("showmasks");
+    diarc::Display::displayFrame(all_masks, "showmasks");
   #endif
 
   SELFIMG.mask = copy;
@@ -317,8 +317,8 @@ void FoodDetectorByHSV::handleCaptureNotification(CaptureNotification::ConstPtr 
                               descriptor_iter->first.toString().c_str());
         //cv::Mat_<float> binaryMask;
         //cv::threshold(foods_itr->maskarea, binaryMask, 0.0f, 1.0f, CV_THRESH_BINARY);
-        //ade::Display::createWindowIfDoesNotExist("binaryMask");
-        //ade::Display::displayFrame(binaryMask, "binaryMask");
+        //diarc::Display::createWindowIfDoesNotExist("binaryMask");
+        //diarc::Display::displayFrame(binaryMask, "binaryMask");
 
         // create MemoryObject for each relevant typeId
         for (typeIds_itr = descriptor_iter->second.begin();
@@ -346,6 +346,6 @@ void FoodDetectorByHSV::handleCaptureNotification(CaptureNotification::ConstPtr 
     for (food_iter = foodMemoryObjects->begin(); food_iter != foodMemoryObjects->end(); ++food_iter) {
       cv::rectangle(displayFrame, (*food_iter)->getDetectionMask()->getBoundingBox(), cv::Scalar(255, 0, 0), 2, cv::LINE_AA);
     }
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 }

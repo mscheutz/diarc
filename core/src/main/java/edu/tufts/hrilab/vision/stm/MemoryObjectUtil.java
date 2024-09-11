@@ -18,14 +18,12 @@ import edu.tufts.hrilab.fol.Variable;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.Function;
 
 import edu.tufts.hrilab.vision.util.PredicateHelper;
 import org.slf4j.Logger;
@@ -43,56 +41,6 @@ public class MemoryObjectUtil {
 
   private static Logger log = LoggerFactory.getLogger(MemoryObjectUtil.class);
 
-  static public Grasp convertMemoryObjectToGrasp(MemoryObject graspMO) {
-    Grasp grasp = new Grasp();
-
-    // set grasp type (always pinch apart when constructed from MemoryObject)
-    grasp.setType(Grasp.Type.PINCH_APART);
-
-    // set 3D points (should only be two in there)
-    double[][] points = graspMO.getPointCloud();
-    for (int i = 0; i < points.length; ++i) {
-      grasp.setPoint(i, points[i][0], points[i][1], points[i][2]);
-    }
-
-    // set orientations (should only be one in there)
-    double[][] orientations = graspMO.getOrientations();
-    for (int i = 0; i < orientations.length; ++i) {
-      grasp.setOrientation(i, orientations[i][0], orientations[i][1], orientations[i][2], orientations[i][3]);
-    }
-
-    return grasp;
-  }
-
-    /**
-   * Helper method to get the angle (in radians) between the mo orientation
-   * and the vertical (0,0,-1) orientation.
-   *
-   * @param mo
-   * @return
-   */
-  static public double getAngleFromVertical(MemoryObject mo) {
-    return getAngleFromAngle(mo, new Vector3d(0,0,-1));
-  }
-
-  /**
-   * Helper method to get the angle (in radians) between the mo orientation
-   * and the passed in vector..
-   *
-   * @param mo
-   * @return
-   */
-  static public double getAngleFromAngle(MemoryObject mo, Vector3d angleVector) {
-    Vector3d xVec = new Vector3d(1, 0, 0);
-    double[][] graspOrientD = mo.getOrientations();
-    Quat4d graspOrient = new Quat4d(graspOrientD[0][0], graspOrientD[0][1], graspOrientD[0][2], graspOrientD[0][3]);
-    Vector3d graspDirVec = new Vector3d();
-    Matrix4d rotMatrix = new Matrix4d(graspOrient, new Vector3d(0, 0, 0), 1.0);
-    rotMatrix.transform(xVec, graspDirVec);
-    double angle = angleVector.angle(graspDirVec);
-    return Math.abs(angle);
-  }
-
   /**
    * Helper method to get the angle (in radians) between the grasp orientation
    * and the passed in vector..
@@ -102,25 +50,11 @@ public class MemoryObjectUtil {
    */
   static public double getAngleFromAngle(Grasp grasp, Vector3d angleVector) {
     Vector3d xVec = new Vector3d(1, 0, 0);
-    Quat4d graspOrient = grasp.getOrientation(0);
+    Quat4d graspOrient = grasp.getOrientation();
     Vector3d graspDirVec = new Vector3d();
     Matrix4d rotMatrix = new Matrix4d(graspOrient, new Vector3d(0, 0, 0), 1.0);
     rotMatrix.transform(xVec, graspDirVec);
     double angle = angleVector.angle(graspDirVec);
-    return Math.abs(angle);
-  }
-
-  //find orientation where the difference in the quats between the wrist and the gp is the least
-  //TODO: why does this exist? It's identical to the functionality of getAngleFromVertical.
-  static public double getAngleFromCurrent(MemoryObject mo) {
-    Vector3d topDownVec = new Vector3d(0, 0, -1);
-    Vector3d xVec = new Vector3d(1, 0, 0);
-    double[][] graspOrientD = mo.getOrientations();
-    Quat4d graspOrient = new Quat4d(graspOrientD[0][0], graspOrientD[0][1], graspOrientD[0][2], graspOrientD[0][3]);
-    Vector3d graspDirVec = new Vector3d();
-    Matrix4d rotMatrix = new Matrix4d(graspOrient, new Vector3d(0, 0, 0), 1.0);
-    rotMatrix.transform(xVec, graspDirVec);
-    double angle = topDownVec.angle(graspDirVec);
     return Math.abs(angle);
   }
 
@@ -497,79 +431,6 @@ public class MemoryObjectUtil {
     }
 
     return sceneGraphDescriptors;
-  }
-
-  public static List<Grasp> getGraspsFor(MemoryObject o, Function<Grasp, Boolean> filter, Comparator<Grasp> comparator) {
-    // before we do anything, make sure the MemoryObject is in base_link frame
-    o.transformToBase();
-    List<? extends Term> graspConstraints = new ArrayList<>(MemoryObjectUtil.getSceneGraphDescriptors(o));
-    // find variable name of "grasp_point" constraint
-    Variable grasp_var = null;
-    for (Term constraint : graspConstraints) {
-      if (constraint.getName().equals("grasp_point") && constraint.getOrderedVars().size() == 1) {
-        grasp_var = constraint.getOrderedVars().get(0);
-        break;
-      }
-    }
-    if (grasp_var == null) {
-      log.error("[getGraspsFor] Memory Object does not contain a \"grasp_point\" constraint.");
-      return null;
-    }
-    // get all the grasp options
-    List<Map<Variable, MemoryObject>> bindings = new ArrayList<>();
-    List<Grasp> graspOptions = new ArrayList<>();
-    if (getMemoryObjectBindings(o, graspConstraints, bindings)) {
-      for (Map<Variable, MemoryObject> bindingsInstance : bindings) {
-        Grasp graspCandidate = MemoryObjectUtil.convertMemoryObjectToGrasp(bindingsInstance.get(grasp_var));
-        //Disqualify any grasp points we don't want or are improperly formed
-        if(filter.apply(graspCandidate) && !(graspCandidate.getNumPoints() == 0) && !(graspCandidate.getType() == null)) {
-          graspOptions.add(graspCandidate);
-        } else {
-          //Todo: Will: Is this important information at all? Trying to lump together the checks of initGrasps and PrepareGrasps
-          log.debug("[getGraspsFor] graspCandidate disqualified by filter or by missing points or a grasp type");
-        }
-      }
-    }
-    //Don't bother sorting if nothing went through
-    if (graspOptions.size() == 0) {
-      log.warn("[getGraspsFor] no grasps passed filter or [getMemoryObjectBindings] failed");
-      return graspOptions;
-    }
-    //Sort grasp options before returning
-    graspOptions.sort(comparator);
-    return graspOptions;
-  }
-
-  public static List<Grasp> getGraspsFor(MemoryObject o, Comparator<Grasp> comparator) {
-    return getGraspsFor(o, (g) -> true, comparator);
-  }
-
-  public static List<Grasp> getGraspsFor(MemoryObject o, Function<Grasp, Boolean> filter) {
-    return getGraspsFor(o, filter, (g0, g1) -> 1);
-  }
-
-  public static List<Grasp> getGraspsFor(MemoryObject o) {
-    return getGraspsFor(o, (g) -> true, (g0, g1) -> 1);
-  }
-
-  public static Grasp getGraspFor(MemoryObject o, Function<Grasp, Boolean> filter, Comparator<Grasp> comparator) {
-    List<Grasp> grasps = getGraspsFor(o, filter, comparator);
-    if (grasps == null) {
-      return null;
-    }
-    return grasps.get(0);
-  }
-
-  public static Grasp getGraspFor(MemoryObject o, Comparator<Grasp> comparator) {
-    return getGraspFor(o, (g) -> true, comparator);
-  }
-
-  public static Grasp getGraspFor(MemoryObject o, Function<Grasp, Boolean> filter) {
-    return getGraspFor(o, filter, (g0, g1) -> 1);
-  }
-
-  public static Grasp getGraspFor(MemoryObject o) {
-    return getGraspFor(o, (g) -> true, (g0, g1) -> 1);
   }
 
 }

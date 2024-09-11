@@ -10,7 +10,7 @@
 
 #include <jsoncpp/json/reader.h>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 // pre-load string to enum map for loading config
 #if (CV_MAJOR_VERSION >= 4 && CV_MINOR_VERSION >= 7)
@@ -33,7 +33,7 @@ std::unordered_map<std::string,cv::aruco::PREDEFINED_DICTIONARY_NAME> const Aruc
 ArucoDetector::ArucoDetector(const long long &processorId, const int imgWidth, const int imgHeight)
     : ObjectDetector(processorId, imgWidth, imgHeight) {
   visionProcessName = "ArucoDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.ArucoDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.ArucoDetector");
 }
 
 ArucoDetector::~ArucoDetector() {
@@ -147,6 +147,6 @@ void ArucoDetector::handleCaptureNotification(CaptureNotification::ConstPtr noti
   if (getDisplayFlag()) {
     currFrame.copyTo(displayFrame);
     cv::aruco::drawDetectedMarkers(displayFrame, markerCorners, markerIds);
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 }

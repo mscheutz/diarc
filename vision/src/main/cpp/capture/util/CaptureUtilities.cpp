@@ -7,7 +7,7 @@
 #include "display/Display.hpp"
 #include <stdio.h>
 
-namespace ade {
+namespace diarc {
   namespace capture {
     namespace util {
 
@@ -114,15 +114,15 @@ namespace ade {
         cv::remap(graySclImages[1], imagesRectified[1], stereoParamsRight->mx, stereoParamsRight->my, cv::INTER_NEAREST);
 
         try {
-          if (!ade::Display::windowExists("Rectified camera 1")) {
-            ade::Display::createWindowIfDoesNotExist("Rectified camera 1");
+          if (!diarc::Display::windowExists("Rectified camera 1")) {
+            diarc::Display::createWindowIfDoesNotExist("Rectified camera 1");
           }
-          ade::Display::displayFrame(imagesRectified[0], "Rectified camera 1");
+          diarc::Display::displayFrame(imagesRectified[0], "Rectified camera 1");
 
-          if (!ade::Display::windowExists("Rectified camera 2")) {
-            ade::Display::createWindowIfDoesNotExist("Rectified camera 2");
+          if (!diarc::Display::windowExists("Rectified camera 2")) {
+            diarc::Display::createWindowIfDoesNotExist("Rectified camera 2");
           }
-          ade::Display::displayFrame(imagesRectified[1], "Rectified camera 2");
+          diarc::Display::displayFrame(imagesRectified[1], "Rectified camera 2");
         } catch (cv::Exception e) {
           printf("[CaptureUtilities::generateDepthMaps] ERROR: OpenCV exception caught. Details: %s\n", e.what());
         }
@@ -436,4 +436,4 @@ namespace ade {
 
     } //namespace util
   } //namespace capture
-} //namespace ade
+} //namespace diarc

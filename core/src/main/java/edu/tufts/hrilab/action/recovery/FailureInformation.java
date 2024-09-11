@@ -11,13 +11,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 
 public class FailureInformation {
   private static Logger log = LoggerFactory.getLogger(FailureInformation.class);
 
   public Symbol actor;
+  public RecoveryType contextType;
+  public Predicate catchingContext;
+  public boolean isCatchingContextParent = false;
   public Predicate goal;
-  public Predicate failedAction;
+  public List<Predicate> failedActions;
   public List<Predicate> failureReasons;
   public ActionStatus actionStatus;
 
@@ -39,9 +43,32 @@ public class FailureInformation {
       return 0;
     }
 
-    // if there are failedActions or excludedFailedActions constraints, and the failedAction is unknown, the policy can't be used
-    if (failedAction == null && ((!constraints.failedActions.isEmpty()) || !constraints.excludedFailedActions.isEmpty())) {
+    //Recovery policy type and catching context type need to match (action vs goal)
+    if (constraints.recoveryType != contextType) {
       return 0;
+    }
+
+    // if there are failedActions or excludedFailedActions constraints, and the failedAction is unknown, the policy can't be used
+    if (failedActions.isEmpty() && (!constraints.failedActions.isEmpty() || !constraints.excludedFailedActions.isEmpty())) {
+      return 0;
+    }
+
+
+
+    //Additional action recovery only checks
+    if (constraints.recoveryType == RecoveryType.ACTION) {
+      //If an explicit catching action signature is defined, this context must match it
+      if (constraints.catchingAction != null) {
+        if (catchingContext != null && catchingContext.instanceOf(constraints.catchingAction)) {
+          ++matches;
+        } else {
+          return 0;
+        }
+      }
+      //Otherwise, this context must be a direct parent of the failed context in order to match
+      else if (!isCatchingContextParent) {
+        return 0;
+      }
     }
 
     if (!constraints.actionStatuses.isEmpty()) {
@@ -69,7 +96,7 @@ public class FailureInformation {
     }
 
     if (!constraints.failedActions.isEmpty()) {
-      if (constraints.failedActions.stream().noneMatch(action -> failedAction.instanceOf(action))) {
+      if (constraints.failedActions.stream().noneMatch(action -> failedActions.stream().anyMatch(action2 -> action2.instanceOf(action)))) {
         return 0;
       } else {
         ++matches;
@@ -77,7 +104,7 @@ public class FailureInformation {
     }
 
     if (!constraints.excludedFailedActions.isEmpty()) {
-      if (constraints.excludedFailedActions.stream().anyMatch(action -> failedAction.instanceOf(action))) {
+      if (constraints.excludedFailedActions.stream().anyMatch(action -> failedActions.stream().anyMatch(action2 -> action2.instanceOf(action)))) {
         return 0;
       } else {
         ++matches;
@@ -101,5 +128,33 @@ public class FailureInformation {
     }
 
     return matches;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    FailureInformation failureInformation = (FailureInformation) o;
+    return Objects.equals(actor, failureInformation.actor) &&
+           Objects.equals(contextType, failureInformation.contextType) &&
+           Objects.equals(catchingContext,failureInformation.catchingContext) &&
+           isCatchingContextParent == failureInformation.isCatchingContextParent &&
+           Objects.equals(goal, failureInformation.goal) &&
+           Objects.equals(failedActions, failureInformation.failedActions) &&
+           Objects.equals(failureReasons, failureInformation.failureReasons) &&
+           Objects.equals(actionStatus, failureInformation.actionStatus);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = 1;
+    result = 31 * result + Objects.hashCode(actor);
+    result = 31 * result + Objects.hashCode(contextType);
+    result = 31 * result + Objects.hashCode(catchingContext);
+    result = 31 * result + Objects.hashCode(goal);
+    result = 31 * result + Objects.hashCode(failedActions);
+    result = 31 * result + Objects.hashCode(failureReasons);
+    result = 31 * result + Objects.hashCode(actionStatus);
+    return 31 * result + (isCatchingContextParent ? 1 : 0);
   }
 }

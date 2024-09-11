@@ -8,6 +8,7 @@ import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.execution.ActionContext;
 import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.execution.GoalContext;
+import edu.tufts.hrilab.action.execution.RootContext;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
@@ -43,6 +44,11 @@ public class ContextUtils {
    * @return
    */
   static public ActionContext getActionContext(Context rootContext, Term stepPredicate, ActionStatus actionStatus) {
+    if (rootContext == null) {
+      log.debug("supplied root context is null. Returning null.");
+      return null;
+    }
+
     if (stepPredicate == null) {
       log.debug("Step predicate is null. Returning null.");
       return null;
@@ -154,6 +160,22 @@ public class ContextUtils {
       }
     }
     return null;
+  }
+
+  /**
+   * Get the closest ancestor context which is a GoalContext
+   * @param context The context to find the nearest goal ancestor of
+   * @return The matching GoalContext, or null if no such ancestor found
+   */
+  static public GoalContext getGoalContext(Context context) {
+    Context parentContext = context.getParentContext();
+    while (!(parentContext instanceof GoalContext)) {
+      if (parentContext instanceof RootContext) {
+        return null;
+      }
+      parentContext = parentContext.getParentContext();
+    }
+    return (GoalContext) parentContext;
   }
 
 }

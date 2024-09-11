@@ -10,8 +10,8 @@
 
 #include <boost/smart_ptr/make_shared.hpp>
 
-using namespace ade::common::fol;
-using namespace ade::stm;
+using namespace diarc::common::fol;
+using namespace diarc::stm;
 
 VisionProcess::VisionProcess(const long long &processor_id, const unsigned int imgWidth, const unsigned int imgHeight)
         : visionProcessName("Not Set"),
@@ -23,7 +23,7 @@ VisionProcess::VisionProcess(const long long &processor_id, const unsigned int i
           registeredProcessors(),
           notifications(),
           display_mutex(),
-          logger(log4cxx::Logger::getLogger("ade.visionproc.VisionProcess")),
+          logger(log4cxx::Logger::getLogger("diarc.visionproc.VisionProcess")),
           isRunning(false),
           descriptorsByType(new DescriptorsByType()),
           typesByDescriptor(new TypesByDescriptor()),
@@ -207,16 +207,16 @@ std::vector<long long> VisionProcess::getRegisteredProcessorIds(const long long 
 
 void VisionProcess::turnDisplayOn(const std::string &windowName) {
   boost::unique_lock<boost::mutex> lock(display_mutex);
-  ade::Display::destroyWindowIfItExists(displayName);
+  diarc::Display::destroyWindowIfItExists(displayName);
   displayFlag = true;
   displayName = windowName;
-  ade::Display::createWindowIfDoesNotExist(displayName);
+  diarc::Display::createWindowIfDoesNotExist(displayName);
 }
 
 void VisionProcess::turnDisplayOff() {
   boost::unique_lock<boost::mutex> lock(display_mutex);
   displayFlag = false;
-  ade::Display::destroyWindowIfItExists(displayName);
+  diarc::Display::destroyWindowIfItExists(displayName);
 }
 
 bool VisionProcess::getDisplayFlag() const {
@@ -441,11 +441,11 @@ void VisionProcess::unregisterForNotification(VisionProcess::Ptr notifyTarget, c
 }
 
 void VisionProcess::registerForCaptureNotification() {
-  ade::capture::Capture::registerForNotification(shared_from_this());
+  diarc::capture::Capture::registerForNotification(shared_from_this());
 }
 
 void VisionProcess::unregisterForCaptureNotification() {
-  ade::capture::Capture::unregisterForNotification(shared_from_this());
+  diarc::capture::Capture::unregisterForNotification(shared_from_this());
 }
 
 void VisionProcess::notifyOfRegistration(VisionProcess::Ptr notifyingSource) {
@@ -604,7 +604,7 @@ bool VisionProcess::addProcessingDescriptor(const std::string &descriptor, const
   return true;
 }
 
-bool VisionProcess::addProcessingDescriptor(const ade::common::fol::Predicate &predicate, const long long &typeId) {
+bool VisionProcess::addProcessingDescriptor(const diarc::common::fol::Predicate &predicate, const long long &typeId) {
   //  LOG4CXX_INFO(logger, predicate.toString());
   //  tmpPredicates.push_back(predicate);
 
@@ -685,7 +685,7 @@ void VisionProcess::resetHasLearned() {
 }
 
 void
-VisionProcess::displayMemoryObject(ade::stm::MemoryObject::Ptr &mo, const std::string &variableName, bool binaryMask,
+VisionProcess::displayMemoryObject(diarc::stm::MemoryObject::Ptr &mo, const std::string &variableName, bool binaryMask,
                                    bool combine) {
   MemoryObject::Vec moVec;
   if (mo->getVariableName().compare(variableName) == 0) {
@@ -730,13 +730,13 @@ VisionProcess::displayMemoryObject(ade::stm::MemoryObject::Ptr &mo, const std::s
 
   LOG4CXX_DEBUG(logger, boost::format("[displayMemoryObject] num display images: %d.") % imagesToDisplay.size());
   if (imagesToDisplay.size() > 0) {
-    cv::Mat displayFrame = ade::display::makeCanvas(imagesToDisplay);
-    ade::Display::displayFrame(displayFrame, getDisplayName());
-    //    ade::Display::displayFrame(imagesToDisplay[0], getDisplayName());
+    cv::Mat displayFrame = diarc::display::makeCanvas(imagesToDisplay);
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
+    //    diarc::Display::displayFrame(imagesToDisplay[0], getDisplayName());
   }
 }
 
-void VisionProcess::displayMemoryObjectValidation(const ade::stm::MemoryObject::ConstPtr &mo, bool combine) {
+void VisionProcess::displayMemoryObjectValidation(const diarc::stm::MemoryObject::ConstPtr &mo, bool combine) {
   // various iterators and such
   DescriptorsByTypeConstPtr descriptorsByType = getTypes();
   DescriptorsByType::const_iterator descriptorsByType_itr;
@@ -789,13 +789,13 @@ void VisionProcess::displayMemoryObjectValidation(const ade::stm::MemoryObject::
 
   LOG4CXX_DEBUG(logger, boost::format("[displayMemoryObject] num display images: %d.") % imagesToDisplay.size());
   if (imagesToDisplay.size() > 0) {
-    cv::Mat displayFrame = ade::display::makeCanvas(imagesToDisplay);
-    ade::Display::displayFrame(displayFrame, getDisplayName());
-    //    ade::Display::displayFrame(imagesToDisplay[0], getDisplayName());
+    cv::Mat displayFrame = diarc::display::makeCanvas(imagesToDisplay);
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
+    //    diarc::Display::displayFrame(imagesToDisplay[0], getDisplayName());
   }
 }
 
-void VisionProcess::displayMemoryObjectRelations(const ade::stm::MemoryObject::ConstPtr &mo) {
+void VisionProcess::displayMemoryObjectRelations(const diarc::stm::MemoryObject::ConstPtr &mo) {
   LOG4CXX_DEBUG(logger, boost::format("[displayMemoryObjectRelations] mo: %s.") % mo->getVariableName());
 
   std::vector<cv::Mat> imagesToDisplay;
@@ -853,7 +853,7 @@ void VisionProcess::displayMemoryObjectRelations(const ade::stm::MemoryObject::C
   LOG4CXX_DEBUG(logger,
                 boost::format("[displayMemoryObjectRelations] num display images: %d.") % imagesToDisplay.size());
   if (imagesToDisplay.size() > 0) {
-    cv::Mat displayFrame = ade::display::makeCanvas(imagesToDisplay);
-    ade::Display::displayFrame(displayFrame, getDisplayName());
+    cv::Mat displayFrame = diarc::display::makeCanvas(imagesToDisplay);
+    diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 }

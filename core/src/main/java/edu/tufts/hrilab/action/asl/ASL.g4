@@ -196,7 +196,15 @@ interruptSpec : interruptSpecType ':' function ';';
 
 interruptSpecType : TSC | ACTION | GOAL | name '.' TSC | name '.' ACTION  | name '.' GOAL;
 
-recovery : RECOVERY ':' '{' (recoveryGoals | recoveryExcludedGoals)? (recoveryFailedActions | recoveryExcludedFailedActions)? (recoveryFailureReasons | recoveryExcludedFailureReasons)? recoveryActionStatuses? '}';
+recovery : RECOVERY ':' '{' (actionRecoveryDetails | recoveryGoals | recoveryExcludedGoals | recoveryFailedActions | recoveryExcludedFailedActions | recoveryFailureReasons | recoveryExcludedFailureReasons | recoveryActionStatuses | recoveryMaximumAttempts)* '}';
+
+actionRecoveryDetails : 'actionRecovery' ':' '{' actionRecoveryName? postActionRecoveryBehavior '}';
+
+actionRecoveryName : 'catchingAction' ':' predicate;
+
+postActionRecoveryBehavior : 'postRecovery' ':' postActionRecoveryType;
+
+postActionRecoveryType : 'postrecovery_parent_retry' | 'postrecovery_retry' | 'postrecovery_success' | 'postrecovery_parent_success';
 
 recoveryGoals : 'goals' ':' predicateList;
 
@@ -212,6 +220,8 @@ recoveryExcludedFailureReasons : 'excludedFailureReasons' ':' predicateList;
 
 // TODO: replace NAME here with allowed ACTION_STATUS values
 recoveryActionStatuses : 'actionStatuses' ':' '{' NAME (',' NAME)* '}';
+
+recoveryMaximumAttempts : 'maximumAttempts' ':' NUMBER;
 
 locks : LOCKS ':' name ';';
 

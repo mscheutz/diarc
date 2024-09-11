@@ -10,13 +10,13 @@
 #include <pcl/common/time.h>
 #include <pcl/registration/distances.h>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 SpatialRelationValidator::SpatialRelationValidator(const long long& processorId, const unsigned int imgWidth,
         const unsigned int imgHeight, const bool isStereo)
 : ObjectValidator(processorId, imgWidth, imgHeight, isStereo) {
   visionProcessName = "SpatialRelationValidator";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.validator.SpatialRelationValidator");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.validator.SpatialRelationValidator");
 }
 
 SpatialRelationValidator::~SpatialRelationValidator() {

@@ -9,7 +9,7 @@ import edu.tufts.hrilab.abb.consultant.area.ABBAreaConsultant;
 import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
 import edu.tufts.hrilab.abb.consultant.item.ItemConsultant;
 import edu.tufts.hrilab.abb.consultant.location.ABBLocationConsultant;
-import edu.tufts.hrilab.action.GoalManagerImpl;
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.llm.LLMComponent;
@@ -30,7 +30,7 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
     public MockYumiComponent leftArm;
     public MockYumiComponent rightArm;
     String service = "llamahf";
-    String model = "Meta-Llama-3-70B-Instruct";
+    String model = "Meta-Llama-3.1-70B-Instruct";
 
     @Override
     public void runConfiguration() {
@@ -74,7 +74,7 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
         }
 
         DiarcComponent.createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.6", service, model));
-        createInstance(PickAndPlaceLLM.class, "-nluPrompt pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationYumi -outputLanguage ja");
+        createInstance(PickAndPlaceLLM.class, "-nluPrompt pickandplace/nlu/pickAndPlaceActionSemanticTranslationYumi -outputLanguage ja");
         createInstance(edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent.class, "-service pickAndPlaceLLMParser");
         //createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl foodOrdering.dict -tldl yumiFoodOrderingHomophones.dict -patternMatching -llm pickAndPlaceLLMParser");
 
@@ -107,7 +107,7 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
                         + "-goal init(self:agent) "
                         + "-editor ";
 
-        createInstance(GoalManagerImpl.class, gmArgs);
+        createInstance(GoalManagerComponent.class, gmArgs);
 
         createInstance(SimSpeechRecognitionComponent.class, "-speaker eric -config yumiPickAndPlace.simspeech");
         createInstance(SimSpeechRecognitionComponent.class, "-speaker eric -config yumiPickAndPlaceJapanese.simspeech");

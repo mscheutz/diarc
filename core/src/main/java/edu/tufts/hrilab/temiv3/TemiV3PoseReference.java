@@ -58,4 +58,9 @@ public class TemiV3PoseReference extends Reference {
     public boolean hasPose() {
         return rawPose != null;
     }
+
+    @Override
+    public String toString() {
+        return super.toString() + " pose = " + ((rawPose == null) ? " (is null)" : rawPose);
+    }
 }

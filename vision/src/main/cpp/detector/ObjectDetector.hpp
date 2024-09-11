@@ -24,7 +24,6 @@ public:
     CLUSTER,
     CLUSTER2D,
     CLUSTER_ADVANCED,
-    GRASP,
     SURFACEMARKING,
     SPATIALRELATION,
     OPENPOSE,
@@ -64,7 +63,7 @@ protected:
    * handleNotification method.
    * @param newDetectedObjects new objects detected during iteration
    */
-  void sendDetectionNotifications(ade::stm::MemoryObject::VecPtr newDetectedObjects);
+  void sendDetectionNotifications(diarc::stm::MemoryObject::VecPtr newDetectedObjects);
 
   /**
    * Send detected objects notifications and update data to be returned to java 
@@ -72,7 +71,7 @@ protected:
    * handleNotification method.
    * @param newDetectedObject new object detected iteration
    */
-  void sendDetectionNotifications(ade::stm::MemoryObject::Ptr newDetectedObject);
+  void sendDetectionNotifications(diarc::stm::MemoryObject::Ptr newDetectedObject);
 
   //! params updated every iteration and passed back to java side
   bool dataProcessed_;

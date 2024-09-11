@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.polycraft;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.polycraft.NovelRunComponent;
 import edu.tufts.hrilab.polycraft.PolycraftComponent;
@@ -85,7 +86,7 @@ public class PolycraftAgent {
     DiarcComponent.createInstance(ExplorationComponent.class, "");
 //    DiarcComponent.createInstance(edu.tufts.hrilab.action.mcts.AgentModel.class, "-agent rival");
 //    DiarcComponent.createInstance(com.action.mcts.AgentModel.class, "-agent rival2");
-    DiarcComponent.createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
+    DiarcComponent.createInstance(GoalManagerComponent.class,
             "-beliefuniversal domains/polycraftuniversal.pl " +
                     "-dbfile core.asl domains/polycraft/polycraft.asl domains/polycraft/polycraft_nav_tp.asl domains/polycraft/polycraft2.asl domains/polycraft/recovery.asl " +
 //                    "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");

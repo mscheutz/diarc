@@ -23,19 +23,19 @@ extern "C" {
 // Native Tracked Objects -> Java STM methods ///////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjects
-(JNIEnv* env, jclass cls, jdouble conf);
+(JNIEnv* env, jclass cls);
 
 JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjectsByTypeId
-(JNIEnv* env, jclass cls, jlong typeId, jdouble conf);
+(JNIEnv* env, jclass cls, jlong typeId);
 
 JNIEXPORT jlongArray JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjectTypeIds
-(JNIEnv* env, jclass cls, jdouble conf);
+(JNIEnv* env, jclass cls);
 
 JNIEXPORT jlongArray JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObjectIds
-(JNIEnv* env, jclass cls, jlong typeId, jdouble conf);
+(JNIEnv* env, jclass cls, jlong typeId);
 
 JNIEXPORT jobject JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_getMemoryObject
-(JNIEnv* env, jclass cls, jlong tokenId, jdouble conf);
+(JNIEnv* env, jclass cls, jlong tokenId);
 
 JNIEXPORT void JNICALL Java_edu_tufts_hrilab_vision_stm_swig_ShortTermMemoryModuleJNI_clearMemory
 (JNIEnv* env, jclass cls);

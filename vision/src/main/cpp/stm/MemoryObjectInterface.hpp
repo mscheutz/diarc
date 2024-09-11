@@ -26,7 +26,7 @@
 
 //NOTE: to generate java method signatures: $ javap -s <class>
 
-namespace ade {
+namespace diarc {
   namespace stm {
 
     class MemoryObjectInterface {
@@ -40,6 +40,8 @@ namespace ade {
       void fillJavaMemoryObject(const MemoryObject::ConstPtr& current);
       void fillJavaMemoryObject(const MemoryObject::ConstPtr& current,
               std::tr1::unordered_map<long long, MemoryObjectInterface>& sceneGraphNodes);
+
+      MemoryObject::Ptr createNativeObject(jobject jMO);
 
     private:
       //set methods
@@ -56,8 +58,8 @@ namespace ade {
       void setImageMask(const std::vector<int>& imageMask);
       void setPointCloud(pcl::PointCloud<pcl::PointXYZ>::ConstPtr points);
       void setMesh(pcl::PointCloud<pcl::PointXYZ>::ConstPtr points, const std::vector<pcl::Vertices>& polygons);
-      void setNumOrientations(const int size);
-      void setOrientation(const int index, const double& x, const double& y, const double& z, const double& w);
+      void setOrientation(const double& x, const double& y, const double& z, const double& w);
+      void setImageSize(const int& width, const int& height);
       void setBaseTransform(const cv::Mat& transform);
       void addDescriptor(const std::string& descriptor, const float& confidence);
       void addChild(const MemoryObject::ConstPtr& mo, std::tr1::unordered_map<long long, MemoryObjectInterface>& sceneGraphNodes);
@@ -70,6 +72,8 @@ namespace ade {
       long long getFrameNum();
       double getDetectionConfidence();
       double getTrackingConfidence();
+//      pcl::PointCloud<pcl::PointXYZ>::ConstPtr getPointCloud();
+      cv::Mat getBaseTransform();
 
       static log4cxx::LoggerPtr logger;
 
@@ -94,8 +98,8 @@ namespace ade {
       jmethodID memoryObject_addPoint;
       jmethodID memoryObject_setNumFaces;
       jmethodID memoryObject_addFace;
-      jmethodID memoryObject_setNumOrientations;
-      jmethodID memoryObject_addOrientation;
+      jmethodID memoryObject_setOrientation;
+      jmethodID memoryObject_setImageSize;
       jmethodID memoryObject_setNumMaskIndices;
       jmethodID memoryObject_addMaskIndex;
       jmethodID memoryObject_addDescriptor;
@@ -107,11 +111,13 @@ namespace ade {
       jmethodID memoryObject_getframenum;
       jmethodID memoryObject_getdetectionconfidence;
       jmethodID memoryObject_gettrackingconfidence;
+      jmethodID memoryObject_getPointCloud;
+      jmethodID memoryObject_getBaseTransformArray;
 
     };
 
   } //namespace stm
-} //namespace ade
+} //namespace diarc
 
 #endif
 

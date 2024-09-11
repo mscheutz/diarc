@@ -53,11 +53,9 @@ public class SupermarketComponent extends DiarcComponent implements SupermarketI
     protected void init() {
         super.init();
         this.game = new GamePlay(this.socketPort);
-        try {
-            this.sm = TRADE.getAvailableService(new TRADEServiceConstraints().name("getStateMachine")).call(StateMachine.class);
-        } catch (TRADEException e) {
-            log.error("[init] ",e);
-        }
+        // TODO: StateMachine is not serializable so this should not be done. Find another way to seed the local SM.
+        log.error("StateMachine initialized is not implemented.");
+        this.sm = new StateMachine(new String[0]);
         Util.Sleep(500);
         nop();
         transmitInitialBeliefs();

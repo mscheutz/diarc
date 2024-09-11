@@ -139,43 +139,43 @@ public class MockSpotComponent extends DiarcComponent implements ArmInterface {
     }
 
     @Override
-    public boolean moveTo(String groupName, Point3d point, Quat4d orientation) {
-        return false;
+    public Justification moveTo(String groupName, Point3d point, Quat4d orientation) {
+        return new ConditionJustification(false);
     }
 
     @Override
-    public boolean moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
-        return false;
+    public Justification moveTo(String groupName, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
+        return new ConditionJustification(false);
     }
 
     @Override
     public Justification moveTo(String groupName, Symbol refId) {
-        return null;
+        return new ConditionJustification(false);
     }
 
     @Override
     public Justification moveTo(String groupName, Symbol refId, List<? extends Term> constraints) {
-        return null;
+        return new ConditionJustification(false);
     }
 
     @Override
     public Justification moveToRelative(String groupName, Point3d point, Quat4d orientation) {
-        return null;
+        return new ConditionJustification(false);
     }
 
     @Override
     public Justification graspObject(String groupName, Symbol refId, float position) {
-        return null;
+        return new ConditionJustification(false);
     }
 
     @Override
     public Justification releaseObject(String groupName, Symbol refId, float position) {
-        return null;
+        return new ConditionJustification(false);
     }
 
     @Override
-    public boolean pointTo(String groupName, Symbol objectRef) {
-        return false;
+    public Justification pointTo(String groupName, Symbol objectRef) {
+        return new ConditionJustification(false);
     }
 
     @Override
@@ -189,23 +189,22 @@ public class MockSpotComponent extends DiarcComponent implements ArmInterface {
     }
 
     @Override
-    public boolean recordPose(Symbol poseName) {
-        return false;
+    public Justification recordPose(Symbol poseName) {
+        return new ConditionJustification(false);
     }
 
     @Override
-    public boolean saveEEPosesToFile(String filename) {
-        return false;
+    public Justification saveEEPosesToFile(String filename) {
+        return new ConditionJustification(false);
     }
 
     @Override
     public void loadEEPosesFromFile(String filename) {
-
     }
 
     @Override
-    public boolean savePosesToFile(String filename) {
-        return false;
+    public Justification savePosesToFile(String filename) {
+        return new ConditionJustification(false);
     }
 
     @Override
@@ -214,58 +213,50 @@ public class MockSpotComponent extends DiarcComponent implements ArmInterface {
     }
 
     @Override
-    public boolean goToPose(String groupName, Symbol poseName) {
-        return false;
+    public Justification goToPose(String groupName, Symbol poseName) {
+        return new ConditionJustification(false);
     }
 
     @Override
-    public boolean goToPose(Symbol poseName) {
-        return false;
-    }
-
-    @Override
-    public boolean goToStartPose(boolean safe) {
-        return false;
+    public Justification goToPose(Symbol poseName) {
+        return new ConditionJustification(false);
     }
 
     @Override
     public void startRecordingTrajectory(String trajectoryName) {
-
     }
 
     @Override
     public void stopRecordingTrajectory() {
-
     }
 
     @Override
-    public boolean executeTrajectory(String trajectoryName) {
-        return false;
+    public Justification executeTrajectory(String trajectoryName) {
+        return new ConditionJustification(false);
     }
 
     @Override
-    public boolean saveTrajectoriesToFile(String filename) {
-        return false;
+    public Justification saveTrajectoriesToFile(String filename) {
+        return new ConditionJustification(false);
     }
 
     @Override
     public void loadTrajectoriesFromFile(String filename) {
-
     }
 
     @Override
     public Justification closeGripper(String groupName) {
-        return null;
+        return new ConditionJustification(false);
     }
 
     @Override
     public Justification openGripper(String groupName) {
-        return null;
+        return new ConditionJustification(false);
     }
 
     @Override
-    public boolean moveGripper(String groupName, float meters) {
-        return false;
+    public Justification moveGripper(String groupName, float meters) {
+        return new ConditionJustification(false);
     }
 
     @Override

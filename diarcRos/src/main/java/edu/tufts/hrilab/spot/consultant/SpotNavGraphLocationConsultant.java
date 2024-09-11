@@ -40,10 +40,6 @@ public class SpotNavGraphLocationConsultant extends Consultant<SpotNavGraphLocat
         return null;
     }
 
-    public SpotNavGraphLocationReference getRefWithId(Symbol refId) {
-        return references.get(refId);
-    }
-
     //todo: consolidate json and reference-loading with functionality in PoseConsultant?
     class SpotMissionLocationRefJson {
         public List<SpotNavGraphLocationReferenceJson>  references;

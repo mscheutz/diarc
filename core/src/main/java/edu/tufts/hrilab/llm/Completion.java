@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import edu.tufts.hrilab.llm.hf.response.*;
+import edu.tufts.hrilab.llm.hf.response.LlamaHFChatCompletionResponse;
+import edu.tufts.hrilab.llm.hf.response.T5BaseCompletionResponse;
+
 import edu.tufts.hrilab.llm.openai.response.*;
 import edu.tufts.hrilab.llm.llama.response.*;
 

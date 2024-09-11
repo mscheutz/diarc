@@ -16,7 +16,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <utility>      //std::pair
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     CaptureMultisense::CaptureMultisense(const std::string &configFile)
@@ -37,7 +37,7 @@ namespace ade {
       // initialize ROS
       LOG4CXX_INFO(logger, "Initializing ROS.");
       std::vector<std::pair<std::string, std::string> > remapping;
-      ros::init(remapping, "ade_vision_cap");
+      ros::init(remapping, "diarc_vision_cap");
 
       // create node handle
       LOG4CXX_INFO(logger, "Initializing ROS node.");
@@ -201,4 +201,4 @@ namespace ade {
 
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc

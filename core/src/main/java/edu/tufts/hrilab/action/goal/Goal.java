@@ -50,7 +50,6 @@ public class Goal implements Serializable {
   private Justification failConditions;
   private long start = -1;
   private long end = -1;
-  private boolean terminated = false;
   private GoalStatus status = GoalStatus.PENDING;
   private Symbol actor;
   private Observable observable = Observable.FALSE;
@@ -237,7 +236,7 @@ public class Goal implements Serializable {
    * @return
    */
   public boolean setAsStarted() {
-    if (!terminated) {
+    if (!status.isTerminated()) {
       start = System.currentTimeMillis();
       status = GoalStatus.ACTIVE;
       return true;
@@ -251,25 +250,14 @@ public class Goal implements Serializable {
    *
    * @param status
    */
-  //TODO:brad: this shouldn't be public, but we need to change it in action learning
   public void setStatus(GoalStatus status) {
-    this.status = status;
-  }
-
-  /**
-   * Set goal status to passed in status, set the end time, and
-   * set the internal terminated flag.
-   * This method does not actually terminate the goal execution.
-   *
-   * @param status
-   */
-  public void setAsTerminated(GoalStatus status) {
-    if (terminated) {
-      log.error("[setAsTerminated] goal already terminated: " + this);
+    if (this.status.isTerminated()) {
+      log.error("Goal already has terminal status. Goal: {} Status: {}", getPredicate(), status);
     } else {
-      terminated = true;
       this.status = status;
-      end = System.currentTimeMillis();
+      if (this.status.isTerminated()) {
+        end = System.currentTimeMillis();
+      }
     }
   }
 

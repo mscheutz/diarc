@@ -21,14 +21,14 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 ShapeValidator::ShapeValidator(const long long& processorId, const unsigned int imgWidth,
         const unsigned int imgHeight, const bool isStereo)
 : ObjectValidator(processorId, imgWidth, imgHeight, isStereo)
 /*,classifier(1980)*/ {
   visionProcessName = "ShapeValidator";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.validator.ShapeValidator");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.validator.ShapeValidator");
 }
 
 ShapeValidator::~ShapeValidator() {
@@ -304,7 +304,7 @@ void ShapeValidator::display(MemoryObject::VecPtr objects) {
     cv::rectangle(displayFrame, cvPoint(pbox.x, pbox.y), cvPoint(pbox.x + pbox.width, pbox.y + pbox.height), cv::Scalar(color, color, color), 3);
   }
 
-  ade::Display::displayFrame(displayFrame, getDisplayName());
+  diarc::Display::displayFrame(displayFrame, getDisplayName());
 
   //3D visualization
   // create a point cloud with each object surface a different random color
@@ -336,7 +336,7 @@ void ShapeValidator::display(MemoryObject::VecPtr objects) {
       }
     }
   }
-  ade::Display::displayPointCloud(displayCloud, "clusters", getDisplayName());
+  diarc::Display::displayPointCloud(displayCloud, "clusters", getDisplayName());
 }
 
 /////////////////// EXPERIMENTAL //////////////////////////////
@@ -527,12 +527,12 @@ void ShapeValidator::display(MemoryObject::VecPtr objects) {
 //  //debugging
 //  if (logger->isDebugEnabled()) {
 //    LOG4CXX_DEBUG(logger, boost::format("[filterPointCloud] size of orig cloud: %d. filtered cloud: %d.") % inputCloud->size() % ouputCloud->size());
-//    ade::Display::createWindowIfDoesNotExist("input");
-//    ade::Display::displayPointCloud(inputCloud, "input", "input");
-//    ade::Display::createWindowIfDoesNotExist("ouput");
-//    ade::Display::displayPointCloud(ouputCloud, "ouput", "ouput");
-//    ade::Display::createWindowIfDoesNotExist("image");
-//    ade::Display::displayFrame(image, "image");
+//    diarc::Display::createWindowIfDoesNotExist("input");
+//    diarc::Display::displayPointCloud(inputCloud, "input", "input");
+//    diarc::Display::createWindowIfDoesNotExist("ouput");
+//    diarc::Display::displayPointCloud(ouputCloud, "ouput", "ouput");
+//    diarc::Display::createWindowIfDoesNotExist("image");
+//    diarc::Display::displayFrame(image, "image");
 //  }
 //}
 //

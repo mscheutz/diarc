@@ -109,7 +109,7 @@ public class HardCodedTestComparator extends DiarcTestComparator {
     try {
       goal = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoal").argTypes(Long.class)).call(Goal.class, goalId);
     } catch (TRADEException e) {
-      log.error("Error trying to get goal from goal ID for goalId: " + goalId);
+      log.error("Error trying to get Goal for goalId: " + goalId, e);
     }
     return goal;
   }

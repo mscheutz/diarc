@@ -5,8 +5,6 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 SET(SOURCES 
 	ArrayListInterface.cpp 
 	ConfidenceLevel.cpp
-	GraspInterface.cpp
-	GraspValidationResult.cpp
 	MemoryObject.cpp
 	MemoryObjectInterface.cpp
 	MemoryObjectMask.cpp

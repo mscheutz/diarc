@@ -24,10 +24,10 @@ import java.util.regex.Pattern;
 public class PickAndPlaceLLM extends DiarcComponent implements NLGInterface {
     static private Logger log = LoggerFactory.getLogger(PickAndPlaceLLM.class);
     NLG nlg = new NLG();
-    Prompt nluPrompt = Prompts.getPrompt("pickAndPlace/nlu/pickAndPlaceActionSemanticTranslationAssista");
+    Prompt nluPrompt = Prompts.getPrompt("pickandplace/nlu/pickAndPlaceActionSemanticTranslationAssista");
     boolean fromSemantics = false;
-    Prompt wordsNLGPrompt = Prompts.getPrompt("pickAndPlace/nlg/pickAndPlaceNLGTranslation");;
-    Prompt semanticsNLGPrompt = Prompts.getPrompt("pickAndPlace/nlg/pickAndPlaceSemanticsNLGTranslation");
+    Prompt wordsNLGPrompt = Prompts.getPrompt("pickandplace/nlg/pickAndPlaceNLGTranslation");;
+    Prompt semanticsNLGPrompt = Prompts.getPrompt("pickandplace/nlg/pickAndPlaceSemanticsNLGTranslation");
     String outputLanguage = "en";
 
     public PickAndPlaceLLM() {

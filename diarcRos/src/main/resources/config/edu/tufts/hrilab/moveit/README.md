@@ -197,7 +197,7 @@ this is a JSON array to allow one or more to be set. At minimum, you should set 
 
 This example is the start pose for the UR5. The 0th index of the jointStates corresponds to the goal 
 joint value for the 0th joint name of the manipulator group, and so on. The start pose should be specified 
-to allow `goToStartPose()` to work, but other poses are optional. They will be available to be called 
+to allow `goToPose(start)` to work, but other poses are optional. They will be available to be called 
 from `goToPose(pose name)`
 
 #### Collisions

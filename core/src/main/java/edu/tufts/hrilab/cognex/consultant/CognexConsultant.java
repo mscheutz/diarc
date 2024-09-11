@@ -58,7 +58,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   @Override
   public boolean assertProperties(Map<Variable, Symbol> bindings, Double prob, List<Term> properties) {
     for (Symbol refId : bindings.values()) {
-      CognexReference ref = references.get(refId);
+      CognexReference ref = getReference(refId);
       if (ref == null) {
         log.warn("[assertProperties] trying to assert properties to a null reference");
         return false;
@@ -71,9 +71,8 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
           break;
         }
       }
-      for (Symbol existingRefId : references.keySet()) {
-        CognexReference existingRef = references.get(existingRefId);
-        if (existingRefId != refId) {
+      for (CognexReference existingRef : getAllReferences()) {
+        if (existingRef.refId != refId) {
           boolean matching = false;
           for (Term property : ref.properties) {
             for (Term eProperty : existingRef.properties) {
@@ -87,7 +86,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
             }
           }
           if (matching) {
-            lessSalientRefIds.add(existingRefId);
+            lessSalientRefIds.add(existingRef.refId);
           }
         }
       }
@@ -97,7 +96,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
   @Override
   public boolean assertProperties(Symbol refId, List<Term> properties) {
-    CognexReference ref = references.get(refId);
+    CognexReference ref = getReference(refId);
     ref.properties.addAll(properties);
     for (Term p : ref.properties) {
       if (boundJobs.containsKey(p.getName())) {
@@ -106,9 +105,8 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
         break;
       }
     }
-    for (Symbol existingRefId : references.keySet()) {
-      CognexReference existingRef = references.get(existingRefId);
-      if (existingRefId != refId) {
+    for (CognexReference existingRef : getAllReferences()) {
+      if (existingRef.refId != refId) {
         boolean matching = false;
         for (Term property : ref.properties) {
           for (Term eProperty : existingRef.properties) {
@@ -122,7 +120,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
           }
         }
         if (matching) {
-          lessSalientRefIds.add(existingRefId);
+          lessSalientRefIds.add(existingRef.refId);
         }
       }
     }
@@ -182,7 +180,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   public CognexReference createCognexRef(CognexJob job, List<Term> additionalProps) {
 
     //if there are any matching hypothetical bind them first
-    for (CognexReference r : references.values()) {
+    for (CognexReference r : getAllReferences()) {
       if (r.cognexJob == job &&
               r.result == null &&
               //if there is a matching property for each additionalProp we're good
@@ -232,20 +230,13 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   @TRADEService
   @Action
   public CognexReference removeReference(Symbol refId) {
-    if (this.references.containsKey(refId)) {
-      return this.references.remove(refId);
-    }
-    return null;
+    return super.removeReference(refId);
   }
-
-  public boolean insertReference(Symbol refId, CognexReference ref) {
-    return (this.references.putIfAbsent(refId, ref) == null);
-  }
-
 
   /**
-   * Helper method to generate next unique reference ID. Prepends group names to references to avoid conflicts
-   * across duplicate consultants sharing kbNames.
+   * Generates the new refId based on the refNumber counter, and increments. Informs all other
+   * consultants with the same kbName of the current ref being allocated to attempt to maintain sync
+   * and avoid duplicating refs.
    *
    * @return
    */
@@ -257,10 +248,9 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   @Override
   public void addReference(CognexReference newRef) {
     super.addReference(newRef);
-    for (Symbol refId : references.keySet()) {
-      CognexReference ref = references.get(refId);
+    for (CognexReference ref : getAllReferences()) {
       if (ref.properties.containsAll(newRef.properties) && newRef.properties.containsAll(ref.properties)) {
-        lessSalientRefIds.add(refId);
+        lessSalientRefIds.add(ref.refId);
       }
     }
   }
@@ -291,7 +281,7 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
   @Action
   public CognexJob getCognexJobForDescriptor(Symbol descriptor) {
     return getJobForDescriptor(descriptor.getName());
-  }
+    }
 
 
   @TRADEService

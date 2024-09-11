@@ -12,13 +12,13 @@
 #include <opencv2/opencv.hpp>
 #include <boost/shared_ptr.hpp>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 ColorValidator::ColorValidator(const long long& processorId, const unsigned int imgWidth,
         const unsigned int imgHeight, const bool isStereo)
 : ObjectValidator(processorId, imgWidth, imgHeight, isStereo) {
   visionProcessName = "ColorValidator";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.validator.ColorValidator");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.validator.ColorValidator");
 }
 
 ColorValidator::~ColorValidator() {

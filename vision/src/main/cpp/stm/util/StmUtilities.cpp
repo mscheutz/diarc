@@ -5,11 +5,11 @@
 #include <boost/format.hpp>
 #include "StmUtilities.hpp"
 
-namespace ade {
+namespace diarc {
   namespace stm {
     namespace util {
 
-      //log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("ade.stm.util.Utilities");
+      //log4cxx::LoggerPtr logger = log4cxx::Logger::getLogger("diarc.stm.util.Utilities");
 
       float calculateBoundBoxOverlap(const cv::Rect &bb1, const cv::Rect &bb2) {
         LOG4CXX_DEBUG(logger, boost::format("[calculateBoundBoxOverlap] b1=(%d,%d,%d,%d) b2=(%d,%d,%d,%d)")

@@ -6,7 +6,7 @@
 #include "MemoryObject.hpp"
 #include <boost/thread/locks.hpp>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 RelationValidationResult::RelationValidationResult(const float &confidence, const PredicateHelper &descriptor,
                                                    MemoryObject::Ptr &relatedObject)
