@@ -121,7 +121,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
     std::tr1::unordered_set<long long>::const_iterator typeIds_itr;
 
     // get MemoryObject cloud and remove NaNs
-    std::shared_ptr<const pcl::PointCloud<pcl::PointXYZ>> objectCloud = object->getDetectionMask()->getObjectPointCloud();
+    pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloud = object->getDetectionMask()->getObjectPointCloud();
     
     cv::Mat objectDepthImage(objectCloud->height, objectCloud->width, CV_32FC1);
 
@@ -213,8 +213,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
       std::string keyToFind = descriptors_itr->getName();
 
-      if (keyToFind == "any")
-      {
+      if (keyToFind == "any" || keyToFind == "unknown") {
         // Access all elements except the last one
         for (auto sp = semanticProperties.begin(); sp != semanticProperties.end() - 1; ++sp) {
           

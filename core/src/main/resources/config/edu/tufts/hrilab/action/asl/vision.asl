@@ -43,7 +43,11 @@ import edu.tufts.hrilab.fol.Predicate;
 
   if (op:isVariable(!x)) {
     // look for "any" objects
-    !anySearch = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "any(X)");
+    !anySearch = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "all(X)");
+    act:startVisualSearch(!anySearch);
+
+    // look for "unknown" objects
+    !anySearch = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "unknown(X)");
     act:startVisualSearch(!anySearch);
 
     // get resulting refs from search(es)
