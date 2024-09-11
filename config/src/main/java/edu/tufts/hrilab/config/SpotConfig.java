@@ -37,18 +37,17 @@ public class SpotConfig extends DiarcConfiguration {
     //createInstance(TLDLParserComponent.class, "-dict templatedict.dict -dict spot.dict");
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(ReferenceResolutionComponent.class);
-    createInstance(DialogueComponent.class, "");
-    //createInstance(SimpleNLGComponent.class, "");
-    createInstance(SimSpeechProductionComponent.class, "");
+    createInstance(DialogueComponent.class);
+    createInstance(SimSpeechProductionComponent.class);
 
     String hybridParserArgs = "-tldl spot.dict -cache -cacheName spotPickAndPlace -cachePersist true";
     if (useLLM) {
       createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.6", service, model));
       hybridParserArgs += " -llm -llmService spotPickAndPlace";
     } else {
-      createInstance(SimpleNLGComponent.class, "");
+      createInstance(SimpleNLGComponent.class);
     }
-    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class,hybridParserArgs);
+    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, hybridParserArgs);
 
     if (useMockSpot) {
       createInstance(MockArmComponent.class, "-groups agent:self:agent");

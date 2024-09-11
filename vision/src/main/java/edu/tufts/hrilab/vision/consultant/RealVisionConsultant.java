@@ -4,6 +4,8 @@
 
 package edu.tufts.hrilab.vision.consultant;
 
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.util.Util;
@@ -41,6 +43,25 @@ public class RealVisionConsultant extends VisionConsultant {
   public Map<Symbol, Double> getActivatedEntities() {
     // get all tokens in STM
     List<MemoryObject> tokens = visionComponent.getTokens(0.0);
+
+    // START -- HACK FOR ONR SPOT DEMO
+    Predicate unknownDesc = Factory.createPredicate("unknown(X)");
+    List<MemoryObject> unknownsToRemove = new ArrayList<>();
+    for (MemoryObject currMO : tokens) {
+      for (MemoryObject otherMO : tokens) {
+        if (currMO == otherMO) {
+          // don't compare with itself
+          continue;
+        }
+
+        // if MO is "unknown" and other MO is "known" and the two MOs overlap--> remove "unknown" MO
+        if (currMO.containsDescriptor(unknownDesc) && !otherMO.containsDescriptor(unknownDesc) && currMO.getBoundingBox().intersects(otherMO.getBoundingBox())) {
+          unknownsToRemove.add(currMO);
+        }
+      }
+    }
+    tokens.removeAll(unknownsToRemove);
+    // END -- HACK FOR ONR SPOT DEMO
 
     // get/generate the objectRefs
     Map<Symbol, Double> activatedEntities = new HashMap<>();
