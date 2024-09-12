@@ -4,7 +4,7 @@
     "arity": 1
   },
   "config": {
-    "model": "SemanticEncoderVersionOGmore2comp600epochs",
+    "model": "modelv2_less2comp_epochs800",
     "type" : "onnx"
   },
   "predicates": [
@@ -36,122 +36,164 @@
       "index": 5
     },
     {
+      "name": "central_component_is_elongated",
+      "index": 6
+    },
+    {
       "name": "second_component_is_shaped_like_a_cylinder",
       "shape": 0,
-      "index": 6
+      "index": 7
     },
     {
       "name": "second_component_is_shaped_like_a_cuboid",
       "shape": 1,
-      "index": 7
+      "index": 8
     },
     {
       "name": "second_component_is_shaped_like_an_ellipsoid",
       "shape": 2,
-      "index": 8
+      "index": 9
     },
     {
       "name": "second_component_is_positioned_in_front",
       "axis": 0,
-      "index": 9
+      "index": 10
     },
     {
       "name": "second_component_is_positioned_behind",
       "axis": 1,
-      "index": 10
+      "index": 11
     },
     {
       "name": "second_component_is_positioned_to_the_right",
       "axis": 2,
-      "index": 11
+      "index": 12
     },
     {
       "name": "second_component_is_positioned_to_the_left",
       "axis": 3,
-      "index": 12
+      "index": 13
     },
     {
       "name": "second_component_is_positioned_on_top",
       "axis": 4,
-      "index": 13
+      "index": 14
     },
     {
       "name": "second_component_is_positioned_at_the_bottom",
       "axis": 5,
-      "index": 14
-    },
-    {
-      "name": "second_component_is_larger",
       "index": 15
     },
     {
-      "name": "second_component_is_smaller",
+      "name": "second_component_is_positioned_centered_along_the_depth_axis",
+      "axis": 6,
       "index": 16
     },
     {
-      "name": "second_component_is_of_similar_size",
+      "name": "second_component_is_positioned_horizontally_centered",
+      "axis": 7,
       "index": 17
+    },
+    {
+      "name": "second_component_is_positioned_vertically_centered",
+      "axis": 8,
+      "index": 18
+    },
+    {
+      "name": "second_component_is_larger",
+      "index": 19
+    },
+    {
+      "name": "second_component_is_smaller",
+      "index": 20
+    },
+    {
+      "name": "second_component_is_of_similar_size",
+      "index": 21
+    },
+    {
+      "name": "second_component_is_elongated",
+      "index": 22
     },
     {
       "name": "third_component_is_shaped_like_a_cylinder",
       "shape": 0,
-      "index": 18
+      "index": 23
     },
     {
       "name": "third_component_is_shaped_like_a_cuboid",
       "shape": 1,
-      "index": 19
+      "index": 24
     },
     {
       "name": "third_component_is_shaped_like_an_ellipsoid",
       "shape": 2,
-      "index": 20
+      "index": 25
     },
     {
       "name": "third_component_is_positioned_in_front",
       "axis": 0,
-      "index": 21
+      "index": 26
     },
     {
       "name": "third_component_is_positioned_behind",
       "axis": 1,
-      "index": 22
+      "index": 27
     },
     {
       "name": "third_component_is_positioned_to_the_right",
       "axis": 2,
-      "index": 23
+      "index": 28
     },
     {
       "name": "third_component_is_positioned_to_the_left",
       "axis": 3,
-      "index": 24
+      "index": 29
     },
     {
       "name": "third_component_is_positioned_on_top",
       "axis": 4,
-      "index": 25
+      "index": 30
     },
     {
       "name": "third_component_is_positioned_at_the_bottom",
       "axis": 5,
-      "index": 26
+      "index": 31
+    },
+    {
+      "name": "third_component_is_positioned_centered_along_the_depth_axis",
+      "axis": 6,
+      "index": 32
+    },
+    {
+      "name": "third_component_is_positioned_horizontally_centered",
+      "axis": 7,
+      "index": 33
+    },
+    {
+      "name": "third_component_is_positioned_vertically_centered",
+      "axis": 8,
+      "index": 34
     },
     {
       "name": "third_component_is_larger",
-      "index": 27
+      "index": 35
     },
     {
       "name": "third_component_is_smaller",
-      "index": 28
+      "index": 36
     },
     {
       "name": "third_component_is_of_similar_size",
-      "index": 29
+      "index": 37
+    },
+    {
+      "name": "third_component_is_elongated",
+      "index": 38
     },
     {
       "name": "unknown",
-      "index": 30
+      "index": 36
     }
   ]
 }

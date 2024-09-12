@@ -72,16 +72,18 @@ private:
   const float maxNormValue = 255;
   const int depthImageHeight = 192;
   const int depthImageWidth = 256;
+  const int padding = 0;
 
   // Thresholds to "discretize" the continuous semantic parameters into
   // semantic predicates
-  const float lowerEdginessThreshold = 0.3;
-  const float upperEdginessThreshold = 0.7;
-  const float similarityTolerance = 0.35;
-  const float positionTolerance = 0.493;
+  const float lowerEdginessThreshold = 0.2;
+  const float upperEdginessThreshold = 0.8;
+  const float similarityTolerance = 0.25;
+  const float positionTolerance = 0.45;
   const float existenceThreshold = 0.8;
-  const float volumeThreshold = 0.01;
-  const double widthCompressionFactor = 0.9;  
+  const float volumeThreshold = 0.02;
+  const double eccentricityTolerance = 0.4;
+  const double widthCompressionFactor = 1.0;  
   const double heightCompressionFactor = 1.0; 
 
   std::vector<predicateFeatures> semanticProperties;
@@ -95,11 +97,12 @@ private:
     const int semPredIdx);
   bool isSideComponentPresent(const int compIndex, const cv::Mat& semMat);
   bool processShape(const int compIndex, const cv::Mat& semMat, const int semPredShape);
-  bool isCylinder(const float n1, const float n2, const float ax, const float ay);
-  bool isEllipsoid(const float n1, const float n2, const float ax, const float ay);
-  bool isCuboid(const float n1, const float n2, const float ax, const float ay);
+  bool isCylinder(const float n1, const float n2);
+  bool isEllipsoid(const float n1, const float n2);
+  bool isCuboid(const float n1, const float n2);
   bool processPosition(const int compIndex, const cv::Mat& semMat, const int semPredAxis);
-  bool processSize(const int compIndex, const cv::Mat& semMat, const int semPredIdx);                                   
+  bool processSize(const int compIndex, const cv::Mat& semMat, const int semPredIdx); 
+  bool processEccentricity(const cv::Mat& semMat, const int semPredIdx);                                  
   cv::Mat applySigmoidToMatrix(const cv::Mat& semMatrix);
   
 };
@@ -107,4 +110,3 @@ private:
 
 
 #endif	/* COMPONENTVALIDATOR_HPP */
-

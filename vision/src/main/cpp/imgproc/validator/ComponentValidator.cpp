@@ -107,7 +107,6 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
   LOG4CXX_TRACE(logger, "[ComponentValidation] method entered.");
 
   MemoryObject::Ptr object = notification->object;
-  pcl::PointCloud<pcl::PointXYZ>::ConstPtr sceneCloud = object->getDetectionMask()->getCaptureData()->cloud;
   
   // check if this typeId should currently be processed
   DescriptorsByTypeConstPtr types = getTypes();
@@ -123,25 +122,21 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
     // get MemoryObject cloud and remove NaNs
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloud = object->getDetectionMask()->getObjectPointCloud();
     
+    // get depth image from object point cloud
     cv::Mat objectDepthImage(objectCloud->height, objectCloud->width, CV_32FC1);
-
     ade::pc::util::pointCloudToDepth(objectDepthImage, objectCloud);
 
-    // Normalize depth values to specific range and set background to maxvalue + 1
+    // Remove nans from background / object foreground 
     cv::Mat objectDepthImageNorm = objectDepthImage.clone();
-    
-    // Remove nans from background / object foreground and blur depth image 
     removeNansAndNoise(objectDepthImage, objectDepthImageNorm);
-    // Pre-processing values for the input image
     double scalefactor = 1.0;
     cv::Scalar noMean(0.0, 0.0, 0.0);  // we do not want any mean subtraction
     cv::Size depthImageSize(depthImageWidth, depthImageHeight);
-
     cv::Mat blob;
     cv::dnn::blobFromImage(objectDepthImageNorm, blob, scalefactor, depthImageSize, noMean, true, CV_32F); 
-    net.setInput(blob);
 
-    
+    // Apply Semantic Encoder model to input depth image
+    net.setInput(blob);
     cv::Mat semMatrix = net.forward();
     LOG4CXX_TRACE(logger, "[ComponentDetector] Model applied to input image.");
 
@@ -172,13 +167,13 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
       foundPredicatesVector[predIdx] = calculateSemProperty(semMatrixSig, predShape, predAxis, predIdx);
 
       // If side component 1 is not found, we do not need to go further
-      if (sideComp1IsPresent == false && predIdx >= 6){
+      if (sideComp1IsPresent == false && predIdx >= 7){
         foundPredicatesVector[0] = true;
         break;
       }
       
       // If side component 2 is not found, we do not need to go further
-      if (sideComp2IsPresent == false && predIdx >= 18) {
+      if (sideComp2IsPresent == false && predIdx >= 23) {
         foundPredicatesVector[1] = true;
         break;
       }
@@ -189,16 +184,16 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
           foundPredicatesVector[5] = true;
         }
       }
-      if (sideComp1IsPresent == true && predIdx == 8) {
-        if (foundPredicatesVector[6] == false && foundPredicatesVector[7] == false)
+      if (sideComp1IsPresent == true && predIdx == 9) {
+        if (foundPredicatesVector[7] == false && foundPredicatesVector[8] == false)
         {
-          foundPredicatesVector[8] = true;
+          foundPredicatesVector[9] = true;
         }
       }
-      if (sideComp2IsPresent == true && predIdx == 20) {
-        if (foundPredicatesVector[18] == false && foundPredicatesVector[19] == false)
+      if (sideComp2IsPresent == true && predIdx == 25) {
+        if (foundPredicatesVector[23] == false && foundPredicatesVector[22] == false)
         {
-          foundPredicatesVector[20] = true;
+          foundPredicatesVector[25] = true;
         }
       }
     }
@@ -305,19 +300,25 @@ void ComponentValidator::removeNansAndNoise(const cv::Mat& objectDepthImage, cv:
   centerObject(objectDepthImageNorm, nanBackgroundMask);
 
   objectDepthImageNorm.convertTo(objectDepthImageNorm, CV_8U);
-  cv::Mat blurredImage = objectDepthImageNorm.clone(); // Clone to hold the blurred result
   // Apply median blur to the entire image
-  int kernelSize = 5; // Example kernel size
-  cv::medianBlur(objectDepthImageNorm, blurredImage, kernelSize);
-  // Copy the blurred ROI back to the original image
-  blurredImage.copyTo(objectDepthImageNorm, nanBackgroundMask);
+  int kernelSize = 9; // Example kernel size
+  cv::medianBlur(objectDepthImageNorm, objectDepthImageNorm, kernelSize);
 
   // Calculate new dimensions
   int newWidth = static_cast<int>(objectDepthImageNorm.cols * widthCompressionFactor);
   int newHeight = static_cast<int>(objectDepthImageNorm.rows * heightCompressionFactor);
   objectDepthImageNorm.convertTo(objectDepthImageNorm, CV_32F);
 
-  // Resize the image
+  // If necessary, pad depth image with more background
+  int top = padding;
+  int bottom = top;
+  int left = top*depthImageWidth/depthImageHeight;
+  int right = top*depthImageWidth/depthImageHeight;
+  int borderType = cv::BORDER_CONSTANT;
+  cv::Scalar borderColor(maxNormValue, maxNormValue, maxNormValue);
+  cv::copyMakeBorder(objectDepthImageNorm, objectDepthImageNorm, top, bottom, left, right, borderType, borderColor);
+
+  // Resize the image to the dimension / depth range the model expects
   cv::resize(objectDepthImageNorm, objectDepthImageNorm, cv::Size(newWidth, newHeight));
   cv::normalize(objectDepthImageNorm, objectDepthImageNorm, 0.85, 1.0, cv::NORM_MINMAX);
 }
@@ -392,6 +393,7 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
   bool shapePredicate = false;
   bool positionPredicate = false;
   bool sizePredicate = false;
+  bool eccentricityPredicate = false;
   
   switch (semPredIdx) {
     //we look for base component shape predicates
@@ -403,34 +405,37 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
       shapePredicate = true;
       break;
     //we look for side component 1 shape predicates
-    case 6: case 7: case 8: 
+    case 7: case 8: case 9: 
       compIndex = 1;
       shapePredicate = true;
       break;
     //we look for side component 2 shape predicates
-    case 18: case 19: case 20: 
+    case 23: case 24: case 25: 
       compIndex = 2;
       shapePredicate = true;
       break;
     //we look for side component 1 position predicates
-    case 9: case 10: case 11: case 12: case 13: case 14:
+    case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18:
       compIndex = 1;
       positionPredicate = true;
       break;
       //we look for side component 2 position predicates
-    case 21: case 22: case 23: case 24: case 25: case 26:
+    case 26: case 27: case 28: case 29: case 30: case 31: case 32: case 33: case 34:
       compIndex = 2;
       positionPredicate = true;
       break;
     //we look for side component 1 size predicates
-    case 15: case 16: case 17:
+    case 19: case 20: case 21:
       compIndex = 1;
       sizePredicate = true;
       break;
     //we look for side component 2 size predicates
-    case 27: case 28: case 29:
+    case 35: case 36: case 37:
       compIndex = 2;
       sizePredicate = true;
+      break;
+    case 6: case 22: case 38:
+      eccentricityPredicate = true;
       break;
     default:
       LOG4CXX_DEBUG(logger, "[ComponentValidation] semPredIdx value not defined ");  
@@ -447,6 +452,10 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
 
   if (sizePredicate) {
     semMatch = processSize(compIndex, semMat, semPredIdx);
+  }
+
+  if (eccentricityPredicate) {
+    semMatch = processEccentricity(semMat, semPredIdx);
   }
 
   return semMatch;
@@ -471,47 +480,47 @@ bool ComponentValidator::processShape(const int compIndex, const cv::Mat& semMat
   // Determine if the shape matches the predicate we are looking for
   switch (semPredShape) {
     case 0: 
-      return isCylinder(n1, n2, ax, ay);
+      return isCylinder(n1, n2);
     case 1: 
-      return isCuboid(n1, n2, ax, ay);
+      return isCuboid(n1, n2);
     case 2: 
-      return isEllipsoid(n1, n2, ax, ay);
+      return isEllipsoid(n1, n2);
     default:
       return false;
   }
 }
 
 
-bool ComponentValidator::isCylinder(const float n1, const float n2, const float ax, const float ay) {
+bool ComponentValidator::isCylinder(const float n1, const float n2) {
     
     bool isN1Small = n1 < lowerEdginessThreshold;
     bool isN2Large = n2 > upperEdginessThreshold;
-    bool areAxAndAySimilar = std::abs(ax - ay) < similarityTolerance;
+    
+    //bool edginessDifferent = std::abs(n2 - n1) > similarityTolerance;
+    bool edginessDifferent = (n2 - n1) > similarityTolerance;
 
     // All conditions must be true
-    return isN1Small && isN2Large && areAxAndAySimilar;
+    return edginessDifferent;
 }
 
 
-bool ComponentValidator::isEllipsoid(const float n1, const float n2, const float ax, const float ay) {
+bool ComponentValidator::isEllipsoid(const float n1, const float n2) {
      
     bool isN1Large = n1 > upperEdginessThreshold;
     bool isN2Large = n2 > upperEdginessThreshold;
-    bool areAxAndAySimilar = std::abs(ax - ay) < similarityTolerance;
-
+    
     // All conditions must be true
-    return isN1Large && isN2Large && areAxAndAySimilar;
+    return isN1Large && isN2Large;
 }
 
 
-bool ComponentValidator::isCuboid(const float n1, const float n2, const float ax, const float ay) {
+bool ComponentValidator::isCuboid(const float n1, const float n2) {
     
     bool isN1Small = n1 < lowerEdginessThreshold;
     bool isN2Small = n2 < lowerEdginessThreshold;
-    bool areAxAndAySimilar = std::abs(ax - ay) < similarityTolerance;
- 
+    
     // All conditions must be true
-    return isN1Small && isN2Small && areAxAndAySimilar;
+    return isN1Small && isN2Small;
 }
 
 
@@ -522,24 +531,28 @@ bool ComponentValidator::processPosition(const int compIndex, const cv::Mat& sem
   bool semPositionMatch = false;
   float distance;
   
-  if (semPredAxis == 2 || semPredAxis == 3 ) {  // x-axis distance
+  if (semPredAxis == 0 || semPredAxis == 1 || semPredAxis == 6) {  // x-axis distance
     distance = semMat.at<float>(0, positionIdcs[compIndex][0]);
-  } else if (semPredAxis == 4 || semPredAxis == 5) {  // y-axis distance
+  } else if (semPredAxis == 2 || semPredAxis == 3 || semPredAxis == 7) {  // y-axis distance
     distance = semMat.at<float>(0, positionIdcs[compIndex][1]);
-  } else if (semPredAxis == 0 || semPredAxis == 1) {  // z-axis distance
+  } else if (semPredAxis == 4 || semPredAxis == 5 || semPredAxis == 8) {  // z-axis distance
     distance = semMat.at<float>(0, positionIdcs[compIndex][2]);   
   } else {
-    LOG4CXX_DEBUG(logger, "[ComponentValidation] semPredAxis value not defined ");  
+    std::cerr << "Axis " << semPredAxis << " is not part of the defined groups." << std::endl;
   }
 
   if ((semPredAxis == 0 || semPredAxis == 2 || semPredAxis == 4) && (distance > (1 - positionTolerance))) {
-    // in front (z-axis), to the right (x-axis), on top (y-axis)
+    // in front (x-axis), to the right (y-axis), on top (z-axis)
     semPositionMatch = true;  
    
   } else if ((semPredAxis == 1 || semPredAxis == 3 || semPredAxis == 5) && (distance < (0 + positionTolerance))) {
-    // behind (z-axis), to the left (x-axis), at bottom (y-axis), 
+    // behind (x-axis), to the left (y-axis), at bottom (z-axis), 
     semPositionMatch = true;
-
+    
+  } else if ((semPredAxis == 6 || semPredAxis == 7 || semPredAxis == 8) && (distance > (0 + positionTolerance)) && (distance < (1 - positionTolerance))) {
+    // centered along depth axis (x-axis), horizontally (y-axis), vertically (z-axis), 
+    semPositionMatch = true;
+    
   } 
 
   // Return the result
@@ -559,22 +572,56 @@ bool ComponentValidator::processSize(const int compIndex, const cv::Mat& semMat,
   float axs = semMat.at<float>(0, sizeIdcs[compIndex][0]); 
   float ays = semMat.at<float>(0, sizeIdcs[compIndex][1]); 
   float azs = semMat.at<float>(0, sizeIdcs[compIndex][2]); 
-  float volumeBase = axb * ayb;
-  float volumeSide = axs * ays;
+  float volumeBase = ayb * azb;
+  float volumeSide = ays * azs;
 
   float volumeDifference = volumeSide - volumeBase;
 
-  if ((semPredIdx == 15 || semPredIdx == 27) && (volumeDifference > (0 + volumeThreshold))) {
-    semSizeMatch = true;
-  } else if ((semPredIdx == 16 || semPredIdx == 28) && (volumeDifference < (0 - volumeThreshold))) {
-    semSizeMatch = true;
-  } else if ((semPredIdx == 17 || semPredIdx == 29) && (volumeDifference > (0 - volumeThreshold)) && 
+  if ((semPredIdx == 19 || semPredIdx == 35) && (volumeDifference > (0 + volumeThreshold))) {
+    semSizeMatch = true;  // component is larger
+  } else if ((semPredIdx == 20 || semPredIdx == 36) && (volumeDifference < (0 - volumeThreshold))) {
+    semSizeMatch = true;  // component is smaller
+  } else if ((semPredIdx == 21 || semPredIdx == 37) && (volumeDifference > (0 - volumeThreshold)) && 
     (volumeDifference < (0 + volumeThreshold))) {
-    semSizeMatch = true;
+    semSizeMatch = true;  // component is of similar size
   }
   
   // Return the result
   return semSizeMatch;
+
+}
+
+
+bool ComponentValidator::processEccentricity(const cv::Mat& semMat, const int semPredIdx) {
+
+  int compIndex;
+
+  switch (semPredIdx) {
+    //we look for base component eccentricity 
+    case 6: 
+      compIndex = 0;
+      break;
+    //we look for side component 1 eccentricity 
+    case 22: 
+      compIndex = 1;
+      break;
+    //we look for side component 2 eccentricity 
+    case 38: 
+      compIndex = 2;
+      break;
+    default:
+      std::cerr << "semPredIdx is not supposed to appear at the Eccentricity check" << semPredIdx << std::endl;
+      return false;
+  }
+
+  float ay = semMat.at<float>(0, sizeIdcs[compIndex][1]); 
+  float az = semMat.at<float>(0, sizeIdcs[compIndex][2]); 
+
+  // If main axes differ "enough", we consider the component as elongated
+  bool semEccentricityMatch = std::abs(ay - az) > eccentricityTolerance;
+  
+  // Return the result
+  return semEccentricityMatch;
 
 }
 
@@ -590,7 +637,7 @@ cv::Mat ComponentValidator::applySigmoidToMatrix(const cv::Mat& matrix) {
     for (int i = 0; i < matrix.cols; ++i) {
       matrixSig.at<float>(0, i) = sigmoid(matrix.at<float>(0, i));
     }
-  } else {
+   } else {
     LOG4CXX_DEBUG(logger, "[ComponentValidation] Invalid semantic matrix dimensions ");  
     return cv::Mat(); // Return an empty matrix to indicate an error
   }
