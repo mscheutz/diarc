@@ -9,6 +9,8 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.interfaces.NLGInterface;
 import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.llm.Chat;
@@ -150,6 +152,22 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     @Override
     public Utterance convertSemanticsToText(Utterance u) {
         if (performNLG) {
+            try {
+                List<Term> supplementalSemantics = new ArrayList<>();
+                for(Map<Variable, Symbol> boundRef : u.getBindings()) {
+                    for(Symbol ref : boundRef.values()){
+                        Map<Variable, Symbol> bindings = new HashMap<>();
+                        List<Term> props = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAssertedProperties").argTypes(Symbol.class).inGroups("physobj")).call(List.class, ref);
+                        bindings.put(props.get(0).getVars().iterator().next(), ref);
+                        for(Term prop : props) {
+                            supplementalSemantics.add(prop.copyWithNewBindings(bindings));
+                        }
+                    }
+                }
+                u.setSupplementalSemantics(supplementalSemantics);
+            } catch (TRADEException e) {
+                log.error("Could not add supplemental semantics to prompt.");
+            }
             return llmGenerationService(u);
         } else {
             return nlg.convertSemanticsToText(u);

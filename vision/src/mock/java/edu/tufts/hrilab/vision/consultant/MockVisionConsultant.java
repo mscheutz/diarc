@@ -68,7 +68,7 @@ public class MockVisionConsultant extends VisionConsultant {
       if (objectRef == null) {
         objectRef = getNextReferenceId();
         List<Long> tokenIds = Arrays.asList(token.getTokenId());
-        VisionReference visionRef = new VisionReference(objectRef, token.getVariable(), token.getTypeId(), tokenIds, new ArrayList<>());
+        VisionReference visionRef = new VisionReference(objectRef, token.getVariable(), token.getTypeId(), tokenIds, token.getDescriptors());
         references.put(objectRef, visionRef);
         if (visionTypes.containsKey(token.getTypeId())) {
           visionTypes.get(token.getTypeId()).add(visionRef);
