@@ -45,7 +45,7 @@ private:
     int predicateIndex;
   } predicateFeatures;
 
-  const std::vector<std::vector<int>> shapeIdcs = {
+  const std::vector<std::vector<int>> superEllipsoidParamsIdcs = {
     {3, 4, 5, 6},  // shape indices of base component 
     {11, 12, 13, 14},  // shape indices of side component 1
     {19, 20, 21, 22}  // shape indices of side component 2  
@@ -68,6 +68,7 @@ private:
     {16, 17, 18, 19, 20, 21, 22, 23}
   };
 
+  const bool identifyShapes = false;
   const float minNormValue = 0;
   const float maxNormValue = 255;
   const int depthImageHeight = 192;

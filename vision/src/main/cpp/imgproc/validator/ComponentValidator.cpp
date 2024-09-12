@@ -14,6 +14,11 @@
 #include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
+
+#include <sstream>
+#include <iomanip>
+#include <ctime>
+#include <thread>  
  
 #include "capture/calibration/Cameras.hpp"
 #include "display/Display.hpp"
@@ -178,24 +183,36 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
         break;
       }
 
-      if (predIdx == 5) {
-        if (foundPredicatesVector[3] == false && foundPredicatesVector[4] == false)
-        {
-          foundPredicatesVector[5] = true;
+      if (identifyShapes) {
+
+        if (predIdx == 5) {
+          if (foundPredicatesVector[3] == false && foundPredicatesVector[4] == false)
+          {
+            foundPredicatesVector[5] = true;
+          }
         }
-      }
-      if (sideComp1IsPresent == true && predIdx == 9) {
-        if (foundPredicatesVector[7] == false && foundPredicatesVector[8] == false)
-        {
-          foundPredicatesVector[9] = true;
+        if (sideComp1IsPresent == true && predIdx == 9) {
+          if (foundPredicatesVector[7] == false && foundPredicatesVector[8] == false)
+          {
+            foundPredicatesVector[9] = true;
+          }
         }
-      }
-      if (sideComp2IsPresent == true && predIdx == 25) {
-        if (foundPredicatesVector[23] == false && foundPredicatesVector[22] == false)
-        {
-          foundPredicatesVector[25] = true;
+        if (sideComp2IsPresent == true && predIdx == 25) {
+          if (foundPredicatesVector[23] == false && foundPredicatesVector[24] == false)
+          {
+            foundPredicatesVector[25] = true;
+          }
         }
+      } else {
+
+        std::vector<int> shapeIndices = {3, 4, 5, 7, 8, 9, 23, 24, 25};
+
+        for (int idx : shapeIndices) {
+            foundPredicatesVector[idx] = false;
+        }
+
       }
+      
     }
 
     if (sideComp1IsPresent == true && sideComp2IsPresent == true) {
@@ -215,7 +232,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
           // Set the corresponding index in foundPredicatesVector to predFound
           size_t index = std::distance(semanticProperties.begin(), sp);
           bool predFound = foundPredicatesVector[index];
-
+          
           if (predFound) {
               
             object->addValidationResult(confidence, PredicateHelper(*descriptors_itr));
@@ -301,7 +318,7 @@ void ComponentValidator::removeNansAndNoise(const cv::Mat& objectDepthImage, cv:
 
   objectDepthImageNorm.convertTo(objectDepthImageNorm, CV_8U);
   // Apply median blur to the entire image
-  int kernelSize = 9; // Example kernel size
+  int kernelSize = 19; // Example kernel size
   cv::medianBlur(objectDepthImageNorm, objectDepthImageNorm, kernelSize);
 
   // Calculate new dimensions
@@ -465,7 +482,7 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat& semMat, const int s
 
 bool ComponentValidator::processShape(const int compIndex, const cv::Mat& semMat, const int semPredShape) {
   
-  const auto& idcs = shapeIdcs[compIndex];
+  const auto& idcs = superEllipsoidParamsIdcs[compIndex];
   // Extract the specified semantic matrix column for the current component
   cv::Mat shapeParams = semMat.col(idcs[0]);
   for (size_t i = 1; i < idcs.size(); ++i) {
