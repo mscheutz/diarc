@@ -4,7 +4,7 @@
     "arity": 1
   },
   "config": {
-    "model": "modelv2_less2comp_epochs800",
+    "model": "modelv2_more2comp_epochs800",
     "type" : "onnx"
   },
   "predicates": [
@@ -55,32 +55,32 @@
       "index": 9
     },
     {
-      "name": "second_component_is_positioned_in_front",
+      "name": "second_component_is_positioned_in_front_of_the_central_component",
       "axis": 0,
       "index": 10
     },
     {
-      "name": "second_component_is_positioned_behind",
+      "name": "second_component_is_positioned_behind_the_central_component",
       "axis": 1,
       "index": 11
     },
     {
-      "name": "second_component_is_positioned_to_the_right",
+      "name": "second_component_is_positioned_to_the_right_of_the_central_component",
       "axis": 2,
       "index": 12
     },
     {
-      "name": "second_component_is_positioned_to_the_left",
+      "name": "second_component_is_positioned_to_the_left_of_the_central_component",
       "axis": 3,
       "index": 13
     },
     {
-      "name": "second_component_is_positioned_on_top",
+      "name": "second_component_is_positioned_on_top_of_the_central_component",
       "axis": 4,
       "index": 14
     },
     {
-      "name": "second_component_is_positioned_at_the_bottom",
+      "name": "second_component_is_positioned_at_the_bottom_of_the_central_component",
       "axis": 5,
       "index": 15
     },
@@ -100,15 +100,15 @@
       "index": 18
     },
     {
-      "name": "second_component_is_larger",
+      "name": "second_component_is_larger_than_the_central_component",
       "index": 19
     },
     {
-      "name": "second_component_is_smaller",
+      "name": "second_component_is_smaller_than_the_central_component",
       "index": 20
     },
     {
-      "name": "second_component_is_of_similar_size",
+      "name": "second_component_is_of_similar_size_than_the_central_component",
       "index": 21
     },
     {
@@ -131,32 +131,32 @@
       "index": 25
     },
     {
-      "name": "third_component_is_positioned_in_front",
+      "name": "third_component_is_positioned_in_front_of_the_central_component",
       "axis": 0,
       "index": 26
     },
     {
-      "name": "third_component_is_positioned_behind",
+      "name": "third_component_is_positioned_behind_the_central_component",
       "axis": 1,
       "index": 27
     },
     {
-      "name": "third_component_is_positioned_to_the_right",
+      "name": "third_component_is_positioned_to_the_right_of_the_central_component",
       "axis": 2,
       "index": 28
     },
     {
-      "name": "third_component_is_positioned_to_the_left",
+      "name": "third_component_is_positioned_to_the_left_of_the_central_component",
       "axis": 3,
       "index": 29
     },
     {
-      "name": "third_component_is_positioned_on_top",
+      "name": "third_component_is_positioned_on_top_of_the_central_component",
       "axis": 4,
       "index": 30
     },
     {
-      "name": "third_component_is_positioned_at_the_bottom",
+      "name": "third_component_is_positioned_at_the_bottom_of_the_central_component",
       "axis": 5,
       "index": 31
     },
@@ -176,15 +176,15 @@
       "index": 34
     },
     {
-      "name": "third_component_is_larger",
+      "name": "third_component_is_larger_than_the_central_component",
       "index": 35
     },
     {
-      "name": "third_component_is_smaller",
+      "name": "third_component_is_smaller_than_the_central_component",
       "index": 36
     },
     {
-      "name": "third_component_is_of_similar_size",
+      "name": "third_component_is_of_similar_size_than_the_central_component",
       "index": 37
     },
     {
