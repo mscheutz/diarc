@@ -25,6 +25,8 @@ public class SpotSceneGenerator extends SceneGenerator {
     Variable x = Factory.createVariable("X", "physobj");
     List<Term> knownProperties = Arrays.asList(
             Factory.createPredicate("any", x),
+            Factory.createPredicate("all", x),
+            Factory.createPredicate("unknown", x),
             Factory.createPredicate("apple", x),
             Factory.createPredicate("bottle", x),
             Factory.createPredicate("unknown", x),

@@ -37,7 +37,7 @@ public class MockVisionConsultant extends VisionConsultant {
     for (MemoryObject token : tokens) {
       for (Long typeId : visionComponent.getTypeIds(0)) {
         List<Term> descriptors = visionComponent.getDescriptors(typeId);
-        if (descriptors.size() == 1 && descriptors.get(0).getName().equals("any")) {
+        if (descriptors.size() == 1 && (descriptors.get(0).getName().equals("any") || descriptors.get(0).getName().equals("all"))) {
           // use all tokens in this case
           token.setTypeId(typeId);
           filteredTokens.add(token);

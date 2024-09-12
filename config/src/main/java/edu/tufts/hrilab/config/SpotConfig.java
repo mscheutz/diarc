@@ -46,9 +46,9 @@ public class SpotConfig extends DiarcConfiguration {
       createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.6", service, model));
       hybridParserArgs += " -llm -llmService spotPickAndPlace";
     } else {
-      createInstance(SimpleNLGComponent.class, "");
+      createInstance(SimpleNLGComponent.class);
     }
-    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class,hybridParserArgs);
+    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, hybridParserArgs);
 
     if (useMockSpot) {
       createInstance(MockArmComponent.class, "-groups agent:self:agent");

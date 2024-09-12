@@ -15,6 +15,10 @@
   },
   "predicates": [
     {
+      "name": "all",
+      "classID": -1
+    },
+    {
       "name": "person",
       "classID": 0
     },
