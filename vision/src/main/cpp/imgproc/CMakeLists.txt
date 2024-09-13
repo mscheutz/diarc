@@ -30,7 +30,7 @@ if (OpenCV_dnn_FOUND)
 
     # Model trained on 500 one, 1000 two, 2000 three component objects.
     SET(COMPONENT_MODEL_PATH_V1 "${CONFIG_DIR}/componentvalidator/modelv2_less2comp_epochs800.onnx")
-    SET(COMPONENT_MODEL_URL_V1 "https://github.com/hrilabtufts/vision_models/raw/main/modelv2_less2comp_epochs800.onnx")
+    SET(COMPONENT_MODEL_URL_V1 "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/modelv2_less2comp_epochs800.onnx")
 
     if (NOT EXISTS "${COMPONENT_MODEL_PATH_V1}")
     	message("Downloading model: ${COMPONENT_MODEL_URL_V1}")
@@ -39,7 +39,7 @@ if (OpenCV_dnn_FOUND)
 
     # Model trained on 500 one, 2000 two, 2000 three component objects.
     SET(COMPONENT_MODEL_PATH_V2 "${CONFIG_DIR}/componentvalidator/modelv2_more2comp_epochs800.onnx")
-    SET(COMPONENT_MODEL_URL_V2 "https://github.com/hrilabtufts/vision_models/raw/main/modelv2_more2comp_epochs800.onnx")
+    SET(COMPONENT_MODEL_URL_V2 "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/modelv2_more2comp_epochs800.onnx")
 
     if (NOT EXISTS "${COMPONENT_MODEL_PATH_V2}")
     	message("Downloading model: ${COMPONENT_MODEL_URL_V2}")

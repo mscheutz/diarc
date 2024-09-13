@@ -99,6 +99,24 @@ void ComponentValidator::loadConfig(const std::string &configFile) {
   Json::Value config = root["config"];
   model_file = dir + config["model"].asString();
   ComponentValidator::initModel(model_file);
+
+  identifyShapes = config["identify_shapes"].asBool();
+  minNormValue = config["min_norm_value"].asInt64();
+  maxNormValue = config["max_norm_value"].asInt64();
+  depthImageHeight = config["depth_image_height"].asInt64();
+  depthImageWidth = config["depth_image_width"].asInt64();
+  padding = config["padding"].asInt64();
+  kernelSize = config["kernel_size"].asInt64();
+  lowerEdginessThreshold = config["lower_edginess_threshold"].asDouble();
+  upperEdginessThreshold = config["upper_edginess_threshold"].asDouble();
+  similarityTolerance = config["similarity_tolerance"].asDouble();
+  positionTolerance = config["position_tolerance"].asDouble();
+  existenceThreshold = config["existence_threshold"].asDouble();
+  volumeThreshold = config["volume_threshold"].asDouble();
+  eccentricityTolerance = config["eccentricity_tolerance"].asDouble();
+  widthCompressionFactor = config["width_compression_factor"].asDouble();
+  heightCompressionFactor = config["height_compression_factor"].asDouble();
+
 }
 
 
@@ -318,7 +336,6 @@ void ComponentValidator::removeNansAndNoise(const cv::Mat& objectDepthImage, cv:
 
   objectDepthImageNorm.convertTo(objectDepthImageNorm, CV_8U);
   // Apply median blur to the entire image
-  int kernelSize = 19; // Example kernel size
   cv::medianBlur(objectDepthImageNorm, objectDepthImageNorm, kernelSize);
 
   // Calculate new dimensions

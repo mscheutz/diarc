@@ -68,24 +68,25 @@ private:
     {16, 17, 18, 19, 20, 21, 22, 23}
   };
 
-  const bool identifyShapes = false;
-  const float minNormValue = 0;
-  const float maxNormValue = 255;
-  const int depthImageHeight = 192;
-  const int depthImageWidth = 256;
-  const int padding = 0;
+  bool identifyShapes = false;
+  int minNormValue = 0;
+  int maxNormValue = 255;
+  int depthImageHeight = 192;
+  int depthImageWidth = 256;
+  int padding = 0;
+  int kernelSize = 19;
 
   // Thresholds to "discretize" the continuous semantic parameters into
   // semantic predicates
-  const float lowerEdginessThreshold = 0.2;
-  const float upperEdginessThreshold = 0.8;
-  const float similarityTolerance = 0.25;
-  const float positionTolerance = 0.45;
-  const float existenceThreshold = 0.8;
-  const float volumeThreshold = 0.02;
-  const double eccentricityTolerance = 0.4;
-  const double widthCompressionFactor = 1.0;  
-  const double heightCompressionFactor = 1.0; 
+  double lowerEdginessThreshold = 0.2;
+  double upperEdginessThreshold = 0.8;
+  double similarityTolerance = 0.25;
+  double positionTolerance = 0.45;
+  double existenceThreshold = 0.8;
+  double volumeThreshold = 0.02;
+  double eccentricityTolerance = 0.4;
+  double widthCompressionFactor = 1.0;  
+  double heightCompressionFactor = 1.0; 
 
   std::vector<predicateFeatures> semanticProperties;
   

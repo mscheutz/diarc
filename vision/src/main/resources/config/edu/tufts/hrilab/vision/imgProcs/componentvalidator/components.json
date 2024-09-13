@@ -4,8 +4,24 @@
     "arity": 1
   },
   "config": {
-    "model": "modelv2_more2comp_epochs800",
-    "type" : "onnx"
+    "model": "modelv2_less2comp_epochs800",
+    "type" : "onnx",
+    "identify_shapes" : false,
+    "min_norm_value" : 0,
+    "max_norm_value" : 255,
+    "depth_image_height" : 192,
+    "depth_image_width" : 256,
+    "padding" : 0,
+    "kernel_size" : 19,
+    "lower_edginess_threshold" : 0.2,
+    "upper_edginess_threshold" : 0.8,
+    "similarity_tolerance" : 0.25,
+    "position_tolerance" : 0.45,
+    "existence_threshold" : 0.8,
+    "volume_threshold" : 0.02,
+    "eccentricity_tolerance" : 0.4,
+    "width_compression_factor" : 1.0,  
+    "height_compression_factor" : 1.0
   },
   "predicates": [
     {
