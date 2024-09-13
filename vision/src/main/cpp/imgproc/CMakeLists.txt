@@ -28,13 +28,23 @@ if (OpenCV_dnn_FOUND)
 	    validator/ComponentValidator.cpp
 		)
 
-    SET(COMPONENT_MODEL_PATH "${CONFIG_DIR}/componentvalidator/semanticEncoder.onnx")
-    SET(COMPONENT_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/semanticEncoder.onnx")
+    # Model trained on 500 one, 1000 two, 2000 three component objects.
+    SET(COMPONENT_MODEL_PATH_V1 "${CONFIG_DIR}/componentvalidator/modelv2_less2comp_epochs800.onnx")
+    SET(COMPONENT_MODEL_URL_V1 "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/modelv2_less2comp_epochs800.onnx")
 
-    if (NOT EXISTS "${COMPONENT_MODEL_PATH}")
-    	message("Downloading semanticEncoder model ${COMPONENT_MODEL_URL}")
-    	file(DOWNLOAD "${COMPONENT_MODEL_URL}" "${COMPONENT_MODEL_PATH}")
-    endif(NOT EXISTS "${COMPONENT_MODEL_PATH}")
+    if (NOT EXISTS "${COMPONENT_MODEL_PATH_V1}")
+    	message("Downloading model: ${COMPONENT_MODEL_URL_V1}")
+    	file(DOWNLOAD "${COMPONENT_MODEL_URL_V1}" "${COMPONENT_MODEL_PATH_V1}")
+    endif()
+
+    # Model trained on 500 one, 2000 two, 2000 three component objects.
+    SET(COMPONENT_MODEL_PATH_V2 "${CONFIG_DIR}/componentvalidator/modelv2_more2comp_epochs800.onnx")
+    SET(COMPONENT_MODEL_URL_V2 "https://github.com/hrilabtufts/vision_models/raw/main/componentvalidator/modelv2_more2comp_epochs800.onnx")
+
+    if (NOT EXISTS "${COMPONENT_MODEL_PATH_V2}")
+    	message("Downloading model: ${COMPONENT_MODEL_URL_V2}")
+    	file(DOWNLOAD "${COMPONENT_MODEL_URL_V2}" "${COMPONENT_MODEL_PATH_V2}")
+    endif()
 endif(OpenCV_dnn_FOUND)
 
 if (V4R_V0_FOUND)
@@ -70,5 +80,7 @@ endif(V4R_V0_FOUND)
 # build java wrappers via swig
 ADD_SUBDIRECTORY(swig)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} imgproc_swig)
+
+
 
 

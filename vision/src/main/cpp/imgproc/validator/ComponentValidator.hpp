@@ -45,7 +45,7 @@ private:
     int predicateIndex;
   } predicateFeatures;
 
-  const std::vector<std::vector<int>> shapeIdcs = {
+  const std::vector<std::vector<int>> superEllipsoidParamsIdcs = {
     {3, 4, 5, 6},  // shape indices of base component 
     {11, 12, 13, 14},  // shape indices of side component 1
     {19, 20, 21, 22}  // shape indices of side component 2  
@@ -68,21 +68,25 @@ private:
     {16, 17, 18, 19, 20, 21, 22, 23}
   };
 
-  const float minNormValue = 0;
-  const float maxNormValue = 255;
-  const int depthImageHeight = 192;
-  const int depthImageWidth = 256;
+  bool identifyShapes = false;
+  int minNormValue = 0;
+  int maxNormValue = 255;
+  int depthImageHeight = 192;
+  int depthImageWidth = 256;
+  int padding = 0;
+  int kernelSize = 19;
 
   // Thresholds to "discretize" the continuous semantic parameters into
   // semantic predicates
-  const float lowerEdginessThreshold = 0.3;
-  const float upperEdginessThreshold = 0.7;
-  const float similarityTolerance = 0.35;
-  const float positionTolerance = 0.493;
-  const float existenceThreshold = 0.8;
-  const float volumeThreshold = 0.01;
-  const double widthCompressionFactor = 0.9;  
-  const double heightCompressionFactor = 1.0; 
+  double lowerEdginessThreshold = 0.2;
+  double upperEdginessThreshold = 0.8;
+  double similarityTolerance = 0.25;
+  double positionTolerance = 0.45;
+  double existenceThreshold = 0.8;
+  double volumeThreshold = 0.02;
+  double eccentricityTolerance = 0.4;
+  double widthCompressionFactor = 1.0;  
+  double heightCompressionFactor = 1.0; 
 
   std::vector<predicateFeatures> semanticProperties;
   
@@ -95,11 +99,12 @@ private:
     const int semPredIdx);
   bool isSideComponentPresent(const int compIndex, const cv::Mat& semMat);
   bool processShape(const int compIndex, const cv::Mat& semMat, const int semPredShape);
-  bool isCylinder(const float n1, const float n2, const float ax, const float ay);
-  bool isEllipsoid(const float n1, const float n2, const float ax, const float ay);
-  bool isCuboid(const float n1, const float n2, const float ax, const float ay);
+  bool isCylinder(const float n1, const float n2);
+  bool isEllipsoid(const float n1, const float n2);
+  bool isCuboid(const float n1, const float n2);
   bool processPosition(const int compIndex, const cv::Mat& semMat, const int semPredAxis);
-  bool processSize(const int compIndex, const cv::Mat& semMat, const int semPredIdx);                                   
+  bool processSize(const int compIndex, const cv::Mat& semMat, const int semPredIdx); 
+  bool processEccentricity(const cv::Mat& semMat, const int semPredIdx);                                  
   cv::Mat applySigmoidToMatrix(const cv::Mat& semMatrix);
   
 };
@@ -107,4 +112,3 @@ private:
 
 
 #endif	/* COMPONENTVALIDATOR_HPP */
-

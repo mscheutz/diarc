@@ -4,8 +4,24 @@
     "arity": 1
   },
   "config": {
-    "model": "SemanticEncoderVersionOGmore2comp600epochs",
-    "type" : "onnx"
+    "model": "modelv2_less2comp_epochs800",
+    "type" : "onnx",
+    "identify_shapes" : false,
+    "min_norm_value" : 0,
+    "max_norm_value" : 255,
+    "depth_image_height" : 192,
+    "depth_image_width" : 256,
+    "padding" : 0,
+    "kernel_size" : 19,
+    "lower_edginess_threshold" : 0.2,
+    "upper_edginess_threshold" : 0.8,
+    "similarity_tolerance" : 0.25,
+    "position_tolerance" : 0.45,
+    "existence_threshold" : 0.8,
+    "volume_threshold" : 0.02,
+    "eccentricity_tolerance" : 0.4,
+    "width_compression_factor" : 1.0,  
+    "height_compression_factor" : 1.0
   },
   "predicates": [
     {
@@ -36,122 +52,164 @@
       "index": 5
     },
     {
+      "name": "central_component_is_elongated",
+      "index": 6
+    },
+    {
       "name": "second_component_is_shaped_like_a_cylinder",
       "shape": 0,
-      "index": 6
+      "index": 7
     },
     {
       "name": "second_component_is_shaped_like_a_cuboid",
       "shape": 1,
-      "index": 7
+      "index": 8
     },
     {
       "name": "second_component_is_shaped_like_an_ellipsoid",
       "shape": 2,
-      "index": 8
-    },
-    {
-      "name": "second_component_is_positioned_in_front",
-      "axis": 0,
       "index": 9
     },
     {
-      "name": "second_component_is_positioned_behind",
-      "axis": 1,
+      "name": "second_component_is_positioned_in_front_of_the_central_component",
+      "axis": 0,
       "index": 10
     },
     {
-      "name": "second_component_is_positioned_to_the_right",
-      "axis": 2,
+      "name": "second_component_is_positioned_behind_the_central_component",
+      "axis": 1,
       "index": 11
     },
     {
-      "name": "second_component_is_positioned_to_the_left",
-      "axis": 3,
+      "name": "second_component_is_positioned_to_the_right_of_the_central_component",
+      "axis": 2,
       "index": 12
     },
     {
-      "name": "second_component_is_positioned_on_top",
-      "axis": 4,
+      "name": "second_component_is_positioned_to_the_left_of_the_central_component",
+      "axis": 3,
       "index": 13
     },
     {
-      "name": "second_component_is_positioned_at_the_bottom",
-      "axis": 5,
+      "name": "second_component_is_positioned_on_top_of_the_central_component",
+      "axis": 4,
       "index": 14
     },
     {
-      "name": "second_component_is_larger",
+      "name": "second_component_is_positioned_at_the_bottom_of_the_central_component",
+      "axis": 5,
       "index": 15
     },
     {
-      "name": "second_component_is_smaller",
+      "name": "second_component_is_positioned_centered_along_the_depth_axis",
+      "axis": 6,
       "index": 16
     },
     {
-      "name": "second_component_is_of_similar_size",
+      "name": "second_component_is_positioned_horizontally_centered",
+      "axis": 7,
       "index": 17
+    },
+    {
+      "name": "second_component_is_positioned_vertically_centered",
+      "axis": 8,
+      "index": 18
+    },
+    {
+      "name": "second_component_is_larger_than_the_central_component",
+      "index": 19
+    },
+    {
+      "name": "second_component_is_smaller_than_the_central_component",
+      "index": 20
+    },
+    {
+      "name": "second_component_is_of_similar_size_than_the_central_component",
+      "index": 21
+    },
+    {
+      "name": "second_component_is_elongated",
+      "index": 22
     },
     {
       "name": "third_component_is_shaped_like_a_cylinder",
       "shape": 0,
-      "index": 18
+      "index": 23
     },
     {
       "name": "third_component_is_shaped_like_a_cuboid",
       "shape": 1,
-      "index": 19
+      "index": 24
     },
     {
       "name": "third_component_is_shaped_like_an_ellipsoid",
       "shape": 2,
-      "index": 20
-    },
-    {
-      "name": "third_component_is_positioned_in_front",
-      "axis": 0,
-      "index": 21
-    },
-    {
-      "name": "third_component_is_positioned_behind",
-      "axis": 1,
-      "index": 22
-    },
-    {
-      "name": "third_component_is_positioned_to_the_right",
-      "axis": 2,
-      "index": 23
-    },
-    {
-      "name": "third_component_is_positioned_to_the_left",
-      "axis": 3,
-      "index": 24
-    },
-    {
-      "name": "third_component_is_positioned_on_top",
-      "axis": 4,
       "index": 25
     },
     {
-      "name": "third_component_is_positioned_at_the_bottom",
-      "axis": 5,
+      "name": "third_component_is_positioned_in_front_of_the_central_component",
+      "axis": 0,
       "index": 26
     },
     {
-      "name": "third_component_is_larger",
+      "name": "third_component_is_positioned_behind_the_central_component",
+      "axis": 1,
       "index": 27
     },
     {
-      "name": "third_component_is_smaller",
+      "name": "third_component_is_positioned_to_the_right_of_the_central_component",
+      "axis": 2,
       "index": 28
     },
     {
-      "name": "third_component_is_of_similar_size",
+      "name": "third_component_is_positioned_to_the_left_of_the_central_component",
+      "axis": 3,
       "index": 29
     },
     {
-      "name": "unknown",
+      "name": "third_component_is_positioned_on_top_of_the_central_component",
+      "axis": 4,
       "index": 30
+    },
+    {
+      "name": "third_component_is_positioned_at_the_bottom_of_the_central_component",
+      "axis": 5,
+      "index": 31
+    },
+    {
+      "name": "third_component_is_positioned_centered_along_the_depth_axis",
+      "axis": 6,
+      "index": 32
+    },
+    {
+      "name": "third_component_is_positioned_horizontally_centered",
+      "axis": 7,
+      "index": 33
+    },
+    {
+      "name": "third_component_is_positioned_vertically_centered",
+      "axis": 8,
+      "index": 34
+    },
+    {
+      "name": "third_component_is_larger_than_the_central_component",
+      "index": 35
+    },
+    {
+      "name": "third_component_is_smaller_than_the_central_component",
+      "index": 36
+    },
+    {
+      "name": "third_component_is_of_similar_size_than_the_central_component",
+      "index": 37
+    },
+    {
+      "name": "third_component_is_elongated",
+      "index": 38
+    },
+    {
+      "name": "unknown",
+      "index": 36
     }
   ]
 }
