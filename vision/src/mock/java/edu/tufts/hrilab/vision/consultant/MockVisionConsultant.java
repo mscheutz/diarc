@@ -37,7 +37,7 @@ public class MockVisionConsultant extends VisionConsultant {
     for (MemoryObject token : tokens) {
       for (Long typeId : visionComponent.getTypeIds(0)) {
         List<Term> descriptors = visionComponent.getDescriptors(typeId);
-        if (descriptors.size() == 1 && descriptors.get(0).getName().equals("any")) {
+        if (descriptors.size() == 1 && (descriptors.get(0).getName().equals("any") || descriptors.get(0).getName().equals("all"))) {
           // use all tokens in this case
           token.setTypeId(typeId);
           filteredTokens.add(token);
@@ -68,7 +68,7 @@ public class MockVisionConsultant extends VisionConsultant {
       if (objectRef == null) {
         objectRef = getNextReferenceId();
         List<Long> tokenIds = Arrays.asList(token.getTokenId());
-        VisionReference visionRef = new VisionReference(objectRef, token.getVariable(), token.getTypeId(), tokenIds, new ArrayList<>());
+        VisionReference visionRef = new VisionReference(objectRef, token.getVariable(), token.getTypeId(), tokenIds, token.getDescriptors());
         references.put(objectRef, visionRef);
         if (visionTypes.containsKey(token.getTypeId())) {
           visionTypes.get(token.getTypeId()).add(visionRef);

@@ -3,7 +3,6 @@
  */
 
 #include <cfloat>
-//#include <eigen3/Eigen/src/StlSupport/StdVector.h>
 #include <boost/lexical_cast.hpp>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -14,6 +13,10 @@
 #include "display/Display.hpp"
 #include "imgproc/saliency/SaliencyProcessor.hpp"
 #include "point_clouds/sorted_extract_clusters.hpp"
+
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/foreach.hpp>
 
 using namespace ade::stm;
 
@@ -32,6 +35,24 @@ object_cluster_min_size(20 * (imgWidth / 320) * (imgHeight / 240)) {
 }
 
 ClusterDetector::~ClusterDetector() {
+}
+
+void ClusterDetector::loadConfig(const std::string &config) {
+  // populate tree structure pt
+  using boost::property_tree::ptree;
+  ptree pt;
+  read_xml(config, pt);
+
+  std::string predicateName;
+
+  // traverse pt
+
+  BOOST_FOREACH(ptree::value_type const& dataNode, pt.get_child("processor")) {
+          if (dataNode.first.compare("config") == 0) {
+            object_cluster_tolerance = dataNode.second.get<float>("object_cluster_tolerance", object_cluster_tolerance);
+            object_cluster_min_size = dataNode.second.get<float>("object_cluster_min_size", object_cluster_min_size);
+          }
+        }
 }
 
 void ClusterDetector::registerForCaptureNotification() {

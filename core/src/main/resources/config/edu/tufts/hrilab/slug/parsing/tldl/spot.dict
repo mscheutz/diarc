@@ -65,6 +65,7 @@ get; VERBTT ; getTo
 get me; VERBTT ; deliver
 deliver; VERBTT ; deliver
 bring; VERBTT ; deliver
+bring me; VERBTT ; deliver
 fetch; VERBTT ; deliver
 fetch me; VERBTT ; deliver
 deliver; VERBTT ; deliver
@@ -256,6 +257,8 @@ got it; VAL; holding(it)
 
 bottle; THING
 apple; THING
+unknown; RN/RN; #x.unknown($x) ; MOD
+unknown; REF/REF; #x.unknown($x) ; MOD
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -19,8 +19,8 @@ import edu.tufts.hrilab.vision.MockVisionComponent;
 
 public class SpotConfig extends DiarcConfiguration {
 
-  boolean useMockVision = true;
-  boolean useMockSpot = true;
+  boolean useMockVision;
+  boolean useMockSpot;
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
   boolean useLLM = true; //Ask Eric for HF key if you want to run with the LLM
@@ -34,21 +34,21 @@ public class SpotConfig extends DiarcConfiguration {
   public void runConfiguration() {
 
     createInstance(ListenerComponent.class);
-    //createInstance(TLDLParserComponent.class, "-dict templatedict.dict -dict spot.dict");
+//    createInstance(TLDLParserComponent.class, "-dict templatedict.dict -dict spot.dict");
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(ReferenceResolutionComponent.class);
     createInstance(DialogueComponent.class, "");
-    //createInstance(SimpleNLGComponent.class, "");
+//    createInstance(SimpleNLGComponent.class, "");
     createInstance(SimSpeechProductionComponent.class, "");
 
-    String hybridParserArgs = "-tldl spot.dict -cache -cacheName spotPickAndPlace -cachePersist true";
+    String hybridParserArgs = "-tldl spot.dict templatedict.dict -cache -cacheName spotPickAndPlace -cachePersist true";
     if (useLLM) {
       createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.6", service, model));
       hybridParserArgs += " -llm -llmService spotPickAndPlace";
     } else {
-      createInstance(SimpleNLGComponent.class, "");
+      createInstance(SimpleNLGComponent.class);
     }
-    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class,hybridParserArgs);
+    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, hybridParserArgs);
 
     if (useMockSpot) {
       createInstance(MockArmComponent.class, "-groups agent:self:agent");

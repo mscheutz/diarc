@@ -48,6 +48,8 @@ import java.util.List;
         success : observable(bottle:property); //todo: Remove if we want to demonstrate instruction
         success : observableat(apple:property, location_23:location);
         success : observable(apple:property); //todo: Remove if we want to demonstrate instruction
+        success : observableat(unknown:property, location_23:location);
+        success : observable(unknown:property); //todo: Remove if we want to demonstrate instruction
         success : at(?actor, !defaultLocation);
     }
 
@@ -73,10 +75,11 @@ import java.util.List;
     Term !props;
     Symbol !refId;
 
-    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(apple(X:physobj))");
-    act:positReference(!props);
-    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(bottle(X:physobj))");
-    act:positReference(!props);
+    //!props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(apple(X:physobj))");
+    //act:positReference(!props);
+    //!props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(bottle(X:physobj))");
+    //act:positReference(!props);
+
     op:log(debug, "[init] set up spot");
 }
 
@@ -225,7 +228,7 @@ import java.util.List;
     !typeString = op:getName(?type);
     act:gotocarrypose();
 //    act:goToPutDownPose();
-    act:askQuestionFromString(pete, "Let me know when you're holding the !typeString.", holding(X));
+    act:askQuestionFromString(pete, "Let me know when you're holding the !typeString object.", holding(X));
     op:log(info, "Finishing handoff");
     act:openGripper();
     op:sleep(500);

@@ -26,6 +26,8 @@ public class LLMParserGenerationSceneGenerator extends SceneGenerator {
     Variable y = Factory.createVariable("Y", "physobj");
     List<Term> knownProperties = Arrays.asList(
         Factory.createPredicate("any", x),
+        Factory.createPredicate("all", x),
+        Factory.createPredicate("unknown", x),
         Factory.createPredicate("blue", x),
         Factory.createPredicate("red", x),
         Factory.createPredicate("person", x),
