@@ -257,10 +257,12 @@ got it; VAL; holding(it)
 
 bottle; THING
 apple; THING
-unknown; RN/RN; #x.unknown($x) ; MOD
-unknown; REF/REF; #x.unknown($x) ; MOD
+unknown; THING
 
-
+unknown object;REF; unknown:physobj;DEFINITE
+unknown object;RN; unknown:physobj;VAR
+unknown object;DESC; unknown:property
+unknown object;DN; unknown:property
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Execution manager %%
 cancel current task; VERBI ; cancelCurrentGoal
