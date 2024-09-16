@@ -1,6 +1,37 @@
-//actions used for planning in circuit breaker screwing demos
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Variable;
 
-() = grab["?actor grabs ?physobj"](edu.tufts.hrilab.fol.Symbol ?physobj:physobj, edu.tufts.hrilab.fol.Symbol ?pose:pose) {
+/// utility actions used by configs with a cognex mounted on an arm
+() = moveToCameraHeight["moves up by a camera z height as defined by an inline constant"]() {
+    //Todo: Will/Mar: change these from hardcoded values and/or see if these need to be inverses or not
+    java.lang.Double !dist = 0.15;
+    tsc:moveZRelative(!dist);
+}
+
+() = moveToObjectHeight["moves down by a camera z height as defined by an inline constant"]() {
+    //Todo: Will/Mar: change these from hardcoded values and/or see if these need to be inverses or not
+    java.lang.Double !dist = -0.15;
+    tsc:moveZRelative(!dist);
+}
+
+() = getOn["gets ?object on to the surface beneath ?destination"](Symbol ?object, Symbol ?destination) {
+   Predicate !goalPred;
+
+   (!goalPred) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,?destination)");
+   goal:!goalPred;
+}
+
+() = goToLocation(Symbol ?destination:pose) {
+   Predicate !goalPred;
+
+   (!goalPred) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,?destination)");
+   goal:!goalPred;
+}
+
+/// actions used in planning
+
+() = grab["?actor grabs ?physobj"](Symbol ?physobj:physobj, Symbol ?pose:pose) {
 
     conditions : {
         pre : free(?actor);
@@ -15,8 +46,8 @@
         nonperf : unknownlocation(?actor);
     }
 
-    edu.tufts.hrilab.fol.Symbol !default = "default";
-    edu.tufts.hrilab.fol.Symbol !gripper = "gripper";
+    Symbol !default = "default";
+    Symbol !gripper = "gripper";
 
     op:log(info, "[grab] ?physobj");
     act:goToCameraPose(?pose);
@@ -32,7 +63,7 @@
     op:log(info, "[grab] ?physobj complete");
 }
 
-() = putdown["?actor releases ?physobj"](edu.tufts.hrilab.fol.Symbol ?physobj:physobj, edu.tufts.hrilab.fol.Symbol ?pose:pose) {
+() = putdown["?actor releases ?physobj"](Symbol ?physobj:physobj, Symbol ?pose:pose) {
     conditions : {
         pre : holding(?actor, ?physobj);
         pre : at(?actor,?pose);
@@ -43,8 +74,8 @@
         success : at(?physobj,?pose);
     }
 
-    edu.tufts.hrilab.fol.Symbol !default = "default";
-    edu.tufts.hrilab.fol.Symbol !gripper = "gripper";
+    Symbol !default = "default";
+    Symbol !gripper = "gripper";
 
     op:log(info, "[putdown] ?physobj + ?pose");
 
@@ -58,13 +89,13 @@
 }
 
 
-() = goToCameraPose["goes to pose at camera height"](edu.tufts.hrilab.fol.Symbol ?pose:pose) {
-    edu.tufts.hrilab.fol.Predicate !queryPred;
+() = goToCameraPose["goes to pose at camera height"](Symbol ?pose:pose) {
+    Predicate !queryPred;
     java.util.List !bindings;
 
     java.util.HashMap !elem;
-    edu.tufts.hrilab.fol.Symbol !currPose = "current";
-    edu.tufts.hrilab.fol.Variable !bindingVar;
+    Symbol !currPose = "current";
+    Variable !bindingVar;
     !bindingVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,X)");
     !bindings = act:queryBelief(!queryPred);
@@ -77,7 +108,7 @@
     act:gotocamerapose(?pose, !currPose);
 }
 
-() = gotocamerapose["moves to ?pose1, from ?pose2"](edu.tufts.hrilab.fol.Symbol ?pose1:pose, edu.tufts.hrilab.fol.Symbol ?pose2:pose) {
+() = gotocamerapose["moves to ?pose1, from ?pose2"](Symbol ?pose1:pose, Symbol ?pose2:pose) {
     conditions : {
         pre : at(?actor, ?pose2);
     }
@@ -89,11 +120,11 @@
         nonperf : unknownlocation(?actor);
     }
 
-    edu.tufts.hrilab.fol.Predicate !queryPred;
+    Predicate !queryPred;
     java.util.List !bindings;
     java.util.HashMap !elem;
-    edu.tufts.hrilab.fol.Symbol !cameraHeight;
-    edu.tufts.hrilab.fol.Variable !bindingVar = "X";
+    Symbol !cameraHeight;
+    Variable !bindingVar = "X";
 
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cameraHeight(?actor,!bindingVar)");
     !bindings = act:queryBelief(!queryPred);

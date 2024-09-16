@@ -1,0 +1,22 @@
+location one; REF; locationOne:pose; DEFINITE
+location one; RN; locationOne:pose; VAR
+location one; PROPERTY; locationOne:pose
+
+location two; REF; locationTwo:pose; DEFINITE
+location two; RN; locationTwo:pose; VAR
+location two; PROPERTY; locationTwo:pose
+
+location three; REF; locationThree:pose; DEFINITE
+location three; RN; locationThree:pose; VAR
+location three; PROPERTY; locationThree:pose
+
+location four; REF; locationFour:pose; DEFINITE
+location four; RN; locationFour:pose; VAR
+location four; PROPERTY; locationFour:pose
+
+location five; REF; locationFive:pose; DEFINITE
+location five; RN; locationFive:pose; VAR
+location five; PROPERTY; locationFive:pose
+
+box; RN; box:physobj ; VAR
+box; PROPERTY; box:property

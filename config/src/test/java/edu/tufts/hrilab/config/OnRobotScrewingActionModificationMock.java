@@ -59,7 +59,7 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
 
                 "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/assistaCognex.asl " +
                 "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/onRobotScrewing.asl " +
-                "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/circuitBreakerScrewingActions.asl " +
+                "-asl config/edu/tufts/hrilab/action/asl/demos/cognexArmActions.asl " +
                 "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/circuitBreakerScrewingInit.asl " +
                 "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/screwIn.asl "+
 

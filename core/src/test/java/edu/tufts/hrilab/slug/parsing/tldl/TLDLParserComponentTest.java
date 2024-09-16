@@ -3999,4 +3999,34 @@ public class TLDLParserComponentTest {
         ));
     }
 
+    @Test
+    public void pickAndPlaceTest() {
+
+        component.addDictionary("poc4.dict");
+        component.addDictionary("pickAndPlaceGenerated.dict");
+
+        assertTrue(testUtterance("robot one go to location one",
+                "INSTRUCT(brad,robotone:agent,goToLocation(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("go to location two",
+                "INSTRUCT(brad,robotone:agent,goToLocation(robotone:agent,VAR0:pose),{locationTwo(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("robot one verify that you can see a box",
+                "INSTRUCT(brad,robotone:agent,perceiveEntity(robotone:agent,VAR0:physobj),{box(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("get the box to location one",
+                "INSTRUCT(brad,robotone:agent,getOn(robotone:agent,VAR0:physobj,VAR1:pose),{box(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+    }
+
 }
