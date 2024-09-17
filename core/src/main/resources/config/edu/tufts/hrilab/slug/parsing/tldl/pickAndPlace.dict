@@ -3,7 +3,6 @@ START-TEMPLATES
 VERBI; {C\AGENT ; #x.?PH($x)}, {C ; ?PH(?ADDRESSEE)}
 
 VERBT; {(C/REF)\AGENT ; #x#y.?PH($x,$y)}, {C/REF ; #x.?PH(?ADDRESSEE, $x)}
-
 ADDRESSABLE; {AGENT ; ?PH} ,{G/G, S/S, C/C, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
 
 GOTO; {C/REF ; #x.goToPose(?ADDRESSEE,$x)} ,{(C/REF)\AGENT ; #agent#x.goToPose($agent,$x)}
@@ -51,19 +50,19 @@ detect; VERBT; detectBlock
 verify that you can see; VERBT; detectBlock
 
 %% pick up no arg %%
-pick up; C/BLOCKC ; #x.pickup(?ADDRESSEE)
-pickup; C/BLOCKC ; #x.pickup(?ADDRESSEE)
-grab; C/BLOCKC ; #x.pickup(?ADDRESSEE)
-get; C/BLOCKC ; #x.pickup(?ADDRESSEE)
+pick up; C/BLOCKC ; #x.pickUp(?ADDRESSEE)
+pickup; C/BLOCKC ; #x.pickUp(?ADDRESSEE)
+grab; C/BLOCKC ; #x.pickUp(?ADDRESSEE)
+get; C/BLOCKC ; #x.pickUp(?ADDRESSEE)
 block; BLOCKC; block;
 a; BLOCKC/BLOCKC ; #x.$x
 the; BLOCKC/BLOCKC ; #x.$x
 one; BLOCKC/BLOCKC ; #x.$x
 
 %% pick up one arg
-pickup; VERBT; pickup
-pick up; VERBT; pickup
-grab; VERBT; pickup
+pickup; VERBT; pickUp
+pick up; VERBT; pickUp
+grab; VERBT; pickUp
 get; VERBT; pickup
 
 %% put down no arg %%
@@ -111,7 +110,7 @@ clear domain; VERBI; resetDomain
 
 %%%%%%%%% Goal Wrappers %%%%%%%%%
 %TODO: Decide on wrapper name
-get; (C/REF)/REF; #x#y.blockAtWrapper(?ADDRESSEE,$x,$y)
+get; (C/REF)/REF; #x#y.moveObjectTo(?ADDRESSEE,$x,$y)
 i want; (C/WANTBLOCKATREF)/REF; #x#y.blockAtWrapper(?ADDRESSEE,$x,$y)
 at; WANTBLOCKATREF/REF; #x.$x
 to be at; WANTBLOCKATREF/REF; #x.$x

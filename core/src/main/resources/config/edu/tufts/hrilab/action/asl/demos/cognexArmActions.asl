@@ -22,7 +22,7 @@ import edu.tufts.hrilab.fol.Variable;
    goal:!goalPred;
 }
 
-() = goToLocation(Symbol ?destination:pose) {
+() = goToPose(Symbol ?destination:pose) {
    Predicate !goalPred;
 
    (!goalPred) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,?destination)");
@@ -132,7 +132,7 @@ import edu.tufts.hrilab.fol.Variable;
     !elem = op:get(!bindings, 0);
     op:log(debug, "[gotocamerapose] cameraHeight found for query !queryPred: !bindings");
     !cameraHeight = op:get(!elem, !bindingVar);
-    act:goToPose(?pose1, !cameraHeight);
+    act:goToPosePrimitive(?pose1, !cameraHeight);
     op:log(debug, "Finished going to pose ?pose1");
 }
 

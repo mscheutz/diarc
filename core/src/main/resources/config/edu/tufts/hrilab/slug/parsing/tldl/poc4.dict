@@ -1095,3 +1095,6 @@ generate offline representation for your last goal; C; translateLastGoal(?ADDRES
 that is all; VAL; mod(none,none)
 that's all; VAL; mod(none,none)
 
+open gripper; C; openGripper(?ADDRESSEE)
+close gripper; C; closeGripper(?ADDRESSEE)
+

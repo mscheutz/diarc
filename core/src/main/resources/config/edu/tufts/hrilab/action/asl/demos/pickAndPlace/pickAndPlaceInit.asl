@@ -1,5 +1,6 @@
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Term;
 
 //====================== Setup action scripts ======================
 () = init["workaround for not being able to retract facts from belief init files"](){
@@ -7,19 +8,48 @@ import edu.tufts.hrilab.fol.Predicate;
     edu.tufts.hrilab.fol.Term !toAssert;
     Symbol !robotone="robotone:agent";
 
-    Symbol !jobNameBox = "nvDet";
-    Symbol !boxDescriptor = "box";
+    //todo: there should be unique jobs for each of the block types (pete)
+    Symbol !jobNameBlock = "nvDet";
+
+    Symbol !redBlockDescriptor = "red block";
+    Symbol !blueBlockDescriptor = "blue block";
+    Symbol !greenBlockDescriptor = "green block";
+
+    Symbol !redBlock;
+    Symbol !blueBlock;
+    Symbol !greenBlock;
+
+    Term !props;
 
     //add descriptor -> Cognex job mappings
-    !robotone.tsc:addDetectionType(!boxDescriptor,!jobNameBox);
+    !robotone.tsc:addDetectionType(!redBlockDescriptor,!jobNameBlock);
+    !robotone.tsc:addDetectionType(!blueBlockDescriptor,!jobNameBlock);
+    !robotone.tsc:addDetectionType(!greenBlockDescriptor,!jobNameBlock);
 
-    //specify height of object to be used in calculations to determine z height
-    //for running Cognex Jobs
-    //objectDefinition(descriptor,zOffset,xOffset,)
-    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!boxDescriptor,0.045,0.0)");
+    //red block//
+    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!redBlockDescriptor,0.045,0.0)");
+    act:assertBelief(!toAssert);
+    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(red block(X:physobj))");
+    !redBlock = act:positReference(!props);
+    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!redBlock,pose_0:pose)");
+    op:log(debug, "[init] asserting !toAssert");
     act:assertBelief(!toAssert);
 
-   !robotone.act:setupPoses();
+    //blue block//
+    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!blueBlockDescriptor,0.045,0.0)");
+    act:assertBelief(!toAssert);
+    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(blue block(X:physobj))");
+    !blueBlock = act:positReference(!props);
+    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!blueBlock,pose_1:pose)");
+    op:log(debug, "[init] asserting !toAssert");
+    act:assertBelief(!toAssert);
+
+    //green block//
+    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!greenBlockDescriptor,0.045,0.0)");
+    act:assertBelief(!toAssert);
+
+
+    !robotone.act:setupPoses();
 }
 
 () = setupPoses() {
