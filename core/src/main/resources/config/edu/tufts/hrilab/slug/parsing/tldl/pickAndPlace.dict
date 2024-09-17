@@ -1,0 +1,172 @@
+%TODO: Restrict types for refs in certain cases
+START-TEMPLATES
+VERBI; {C\AGENT ; #x.?PH($x)}, {C ; ?PH(?ADDRESSEE)}
+
+VERBT; {(C/REF)\AGENT ; #x#y.?PH($x,$y)}, {C/REF ; #x.?PH(?ADDRESSEE, $x)}
+
+ADDRESSABLE; {AGENT ; ?PH} ,{G/G, S/S, C/C, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
+
+GOTO; {C/REF ; #x.goToPose(?ADDRESSEE,$x)} ,{(C/REF)\AGENT ; #agent#x.goToPose($agent,$x)}
+
+END-TEMPLATES
+
+robot one; ADDRESSABLE; robotone:agent
+robot two; ADDRESSABLE; robottwo:agent
+robot to; ADDRESSABLE; robottwo:agent
+
+a; REF/RN ; #x.$x ; INDEFINITE
+the; REF/RN ; #x.$x ; DEFINITE
+one; REF/RN ; #x.$x ; INDEFINITE
+
+%%%%%%%%% Actions %%%%%%%%%
+
+%% goToPose %%
+go to; GOTO
+move to; GOTO
+move your gripper to; GOTO
+location; REF/REF; #l.$l
+
+%% openGripper %%
+open gripper; VERBI; openGripper
+open the gripper; VERBI; openGripper
+open your gripper; VERBI; openGripper
+open grippers; VERBI; openGripper
+open the grippers; VERBI; openGripper
+open your grippers; VERBI; openGripper
+
+%% closeGripper %%
+close gripper; VERBI; closeGripper
+close the gripper; VERBI; closeGripper
+close your gripper; VERBI; closeGripper
+close grippers; VERBI; closeGripper
+close the grippers; VERBI; closeGripper
+close your grippers; VERBI; closeGripper
+
+%% detectBlock %%
+look for; VERBT; detectBlock
+search for; VERBT; detectBlock
+find; VERBT; detectBlock
+observe; VERBT; detectBlock
+detect; VERBT; detectBlock
+verify that you can see; VERBT; detectBlock
+
+%% pick up no arg %%
+pick up; C/BLOCKC ; #x.pickup(?ADDRESSEE)
+pickup; C/BLOCKC ; #x.pickup(?ADDRESSEE)
+grab; C/BLOCKC ; #x.pickup(?ADDRESSEE)
+get; C/BLOCKC ; #x.pickup(?ADDRESSEE)
+block; BLOCKC; block;
+a; BLOCKC/BLOCKC ; #x.$x
+the; BLOCKC/BLOCKC ; #x.$x
+one; BLOCKC/BLOCKC ; #x.$x
+
+%% pick up one arg
+pickup; VERBT; pickup
+pick up; VERBT; pickup
+grab; VERBT; pickup
+get; VERBT; pickup
+
+%% put down no arg %%
+put down; C/BLOCKC; #x.putdown(?ADDRESSEE)
+putdown; C/BLOCKC; #x.putdown(?ADDRESSEE)
+put; (C/PUTDOWNSUFFIX)/BLOCKC; #x#y.putdown(?ADDRESSEE)
+place; (C/PUTDOWNSUFFIX)/BLOCKC; #x#y.putdown(?ADDRESSEE)
+down; PUTDOWNSUFFIX; down
+
+%% moveBlockTo three arg (block,from,to) %%
+move; ((C/REF)/REF)/REF; #x#y#z.moveBlockTo(?ADDRESSEE,$x,$y,$z)
+transport; ((C/REF)/REF)/REF; #x#y#z.moveBlockTo(?ADDRESSEE,$x,$y,$z)
+relocate; ((C/REF)/REF)/REF; #x#y#z.moveBlockTo(?ADDRESSEE,$x,$y,$z)
+get; ((C/REF)/REF)/REF; #x#y#z.moveBlockTo(?ADDRESSEE,$x,$y,$z)
+move; (C/MOVEBLOCKSUFFIX)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
+transport; (C/MOVEBLOCKSUFFIX)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
+relocate; (C/MOVEBLOCKSUFFIX)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
+between; (MOVEBLOCKSUFFIX/REF)/REF; #x#y.$x,$y
+from; REF/REF; #x.$x
+to; REF/REF; #x.$x
+and; REF/REF; #x.$x
+
+%% moveBlockTo two arg (block,to) %%
+put down; (C/REF)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
+putdown; (C/REF)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
+put; (C/REF)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
+place; (C/REF)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
+place down; (C/REF)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
+put; ((C/REF)/PUTDOWNSUFFIX)/REF; #x#y#z.moveBlockTo(?ADDRESSEE,$x,$z)
+place; ((C/REF)/PUTDOWNSUFFIX)/REF; #x#y#z.moveBlockTo(?ADDRESSEE,$x,$z)
+at; REF/REF; #x.$x
+
+%% moveBlockTo one arg (to) %%
+put down; (C/REF)/BLOCKC; #x#y.moveBlockTo(?ADDRESSEE,$y)
+putdown; (C/REF)/BLOCKC; #x#y.moveBlockTo(?ADDRESSEE,$y)
+put; (C/REF)/BLOCKC; #x#y.moveBlockTo(?ADDRESSEE,$y)
+place; (C/REF)/BLOCKC; #x#y.moveBlockTo(?ADDRESSEE,$y)
+place down; (C/REF)/BLOCKC; #x#y.moveBlockTo(?ADDRESSEE,$y)
+put; ((C/REF)/PUTDOWNSUFFIX)/BLOCKC; #x#y#z.moveBlockTo(?ADDRESSEE,$z)
+place; ((C/REF)/PUTDOWNSUFFIX)/BLOCKC; #x#y#z.moveBlockTo(?ADDRESSEE,$z)
+
+%% resetDomain %%
+reset domain; VERBI; resetDomain
+clear domain; VERBI; resetDomain
+
+%%%%%%%%% Goal Wrappers %%%%%%%%%
+%TODO: Decide on wrapper name
+get; (C/REF)/REF; #x#y.blockAtWrapper(?ADDRESSEE,$x,$y)
+i want; (C/WANTBLOCKATREF)/REF; #x#y.blockAtWrapper(?ADDRESSEE,$x,$y)
+at; WANTBLOCKATREF/REF; #x.$x
+to be at; WANTBLOCKATREF/REF; #x.$x
+make it so; (C/WANTBLOCKATREF2)/REF; #x#y.blockAtWrapper(?ADDRESSEE,$x,$y)
+is at; WANTBLOCKATREF2/REF; #x.$x
+
+%%%%%%%%% Belief Assertions %%%%%%%%%
+
+%% at(X,Y) %%
+is at; (S/REF)\REF; #x#y.at($x,$y)
+moved to; (S/REF)\REF; #x#y.at($x,$y)
+has moved to; (S/REF)\REF; #x#y.at($x,$y)
+has moved from; ((S/REF)/REF)\REF; #x#y#z.at($x,$z)
+
+%% not(at(X,Y)) %%
+is not at; (S/REF)\REF; #x#y.not(at($x,$y))
+is no longer at; (S/REF)\REF; #x#y.not(at($x,$y))
+has moved from; (S/REF)\REF; #x#y.not(at($x,$y))
+
+%TODO: make sure this actually applies to domain
+%% supervisor/admin permissions %%
+eric;AGENT;eric
+is not trusted; S\AGENT ; #a.not(trusted($a))
+%define new speaker; S/LIT*; #s.name($s,$s)
+add new supervisor; S/LIT*; #s.supervisor($s)
+add new admin; S/LIT* ; #a.admin($a)
+remove supervisor; S/LIT*; #s.not(supervisor($s))
+remove admin; S/LIT* ; #a.not(admin($a))
+is a supervisor; S\AGENT; #s.supervisor($s)
+is not a supervisor; S\AGENT; #s.not(supervisor($s))
+is an admin; S\AGENT ; #a.admin($a)
+is not an admin; S\AGENT ; #a.not(admin($a))
+
+%%%%%%%%% ITK %%%%%%%%%
+where is; Q/REF ; #x.know(?ADDRESSEE,at($x,X))
+where; KNOWABLE/REF; #x.at($x,X)
+where; KNOWABLEWHEREIS/REF; #x.at($x,X)
+is; KNOWABLE\KNOWABLEWHEREIS; #x.$x
+
+%TODO add entries for variations of these
+what blocks are you aware of; VERBI; describeKnownBlocks
+what blocks are at; VERBT; describeBlocksAt
+how many blocks are at; VERBT; describeNumberOfBlocksAt
+are any blocks at; Q/REF; #x.know(at(X,$x))
+is there a; (Q/REF)/REF; #x#y.know(at($x,$y))
+what types of blocks can you detect; VERBI; describeBlockTypes
+
+is; Q/KNOWABLE; #x.know(?ADDRESSEE,$x)
+a supervisor; KNOWABLE\AGENT; #x.supervisor($x)
+an admin; KNOWABLE\AGENT; #x.admin($x)
+
+%TODO: issue somewhere with knowHow parse matching early when more args are present and overloaded entries exist which take in different numbers of args
+do; Q/ C; #x.$x
+you; AGENT; ?ADDRESSEE
+know how; (C/INF)\AGENT ; #a#i.knowHow($a,$i)
+know; (C/KNOWABLE)\AGENT ; #a#k.know($a,$k)
+to; INF/C; #x.to($x)
+see; (C/REF)\AGENT ; #x#y.see($x,$y)

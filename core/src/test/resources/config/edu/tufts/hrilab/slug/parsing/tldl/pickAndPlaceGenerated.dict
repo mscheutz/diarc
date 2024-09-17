@@ -18,5 +18,6 @@ location five; REF; locationFive:pose; DEFINITE
 location five; RN; locationFive:pose; VAR
 location five; PROPERTY; locationFive:pose
 
-box; RN; box:physobj ; VAR
-box; PROPERTY; box:property
+red block; REF; red block:physobj ; DEFINITE
+red block; RN; red block:physobj ; VAR
+red block; PROPERTY; red block:property

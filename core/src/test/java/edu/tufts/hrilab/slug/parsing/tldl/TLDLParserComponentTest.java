@@ -4001,29 +4001,464 @@ public class TLDLParserComponentTest {
 
     @Test
     public void pickAndPlaceTest() {
-
-        component.addDictionary("poc4.dict");
+        component.addDictionary("pickAndPlace.dict");
         component.addDictionary("pickAndPlaceGenerated.dict");
+        component.setUseAddressHistory(false);
 
         assertTrue(testUtterance("robot one go to location one",
-                "INSTRUCT(brad,robotone:agent,goToLocation(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,robotone:agent,goToPose(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("go to location two",
-                "INSTRUCT(brad,robotone:agent,goToLocation(robotone:agent,VAR0:pose),{locationTwo(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,self,goToPose(self,VAR0:pose),{locationTwo(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
 
-        assertTrue(testUtterance("robot one verify that you can see a box",
-                "INSTRUCT(brad,robotone:agent,perceiveEntity(robotone:agent,VAR0:physobj),{box(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+        assertTrue(testUtterance("robot one verify that you can see a red block",
+                "INSTRUCT(brad,robotone:agent,detectBlock(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
-        assertTrue(testUtterance("get the box to location one",
-                "INSTRUCT(brad,robotone:agent,getOn(robotone:agent,VAR0:physobj,VAR1:pose),{box(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+        assertTrue(testUtterance("get the red block to location one",
+                "INSTRUCT(brad,self,blockAtWrapper(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("go to location one",
+                "INSTRUCT(brad,self,goToPose(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("go to location location one",
+                "INSTRUCT(brad,self,goToPose(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("move to location one",
+                "INSTRUCT(brad,self,goToPose(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("move your gripper to location one",
+                "INSTRUCT(brad,self,goToPose(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("open gripper",
+                "INSTRUCT(brad,self,openGripper(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("open the gripper",
+                "INSTRUCT(brad,self,openGripper(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("open your gripper",
+                "INSTRUCT(brad,self,openGripper(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("open grippers",
+                "INSTRUCT(brad,self,openGripper(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("close gripper",
+                "INSTRUCT(brad,self,closeGripper(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("close your gripper",
+                "INSTRUCT(brad,self,closeGripper(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("close the gripper",
+                "INSTRUCT(brad,self,closeGripper(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("close grippers",
+                "INSTRUCT(brad,self,closeGripper(self),{})",
+                "brad",
+                "self"
+        ));
+
+
+        assertTrue(testUtterance("look for red block",
+                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("look for the red block",
+                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("look for a red block",
+                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("look for one red block",
+                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("detect a red block",
+                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("observe a red block",
+                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("find a red block",
+                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("pick up a block",
+                "INSTRUCT(brad,self,pickup(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("grab a block",
+                "INSTRUCT(brad,self,pickup(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("get a block",
+                "INSTRUCT(brad,self,pickup(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("pick up the block",
+                "INSTRUCT(brad,self,pickup(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("pick up one block",
+                "INSTRUCT(brad,self,pickup(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("pick up a red block",
+                "INSTRUCT(brad,self,pickup(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("grab a red block",
+                "INSTRUCT(brad,self,pickup(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("get a red block",
+                "INSTRUCT(brad,self,pickup(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("pick up the red block",
+                "INSTRUCT(brad,self,pickup(self,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("pick up one red block",
+                "INSTRUCT(brad,self,pickup(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("put the block down",
+                "INSTRUCT(brad,self,putdown(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("put down the block",
+                "INSTRUCT(brad,self,putdown(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("place the block down",
+                "INSTRUCT(brad,self,putdown(self),{})",
+                "brad",
+                "self"
+        ));
+        //Want this to fail
+        assertTrue(testUtterance("put the block",
+                "UNKNOWN(brad,self,[put, the, block],{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("move the red block from location one to location two",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("transport the red block from location one to location two",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("get the red block from location one to location two",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("relocate the red block from location one to location two",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("move the red block between location one and location two",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose()),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("transport the red block between location one and location two",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose()),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("get the red block between location one and location two",
+                "UNKNOWN(brad,self,[get, the, red, block, between, location, one, and, location, two],{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("relocate the red block between location one and location two",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose()),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("put the red block at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("put down the red block at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("put the red block down at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("place the red block at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("place down the red block at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("place the red block down at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("put the block at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("put down the block at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("put the block down at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("place the block at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("place down the block at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("place the block down at location one",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("reset domain",
+                "INSTRUCT(brad,self,resetDomain(self),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("clear domain",
+                "INSTRUCT(brad,self,resetDomain(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("get the red block to location one",
+                "INSTRUCT(brad,self,blockAtWrapper(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("I want the red block at location one",
+                "INSTRUCT(brad,self,blockAtWrapper(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("I want the red block to be at location one",
+                "INSTRUCT(brad,self,blockAtWrapper(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("make it so red block is at location one",
+                "INSTRUCT(brad,self,blockAtWrapper(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+
+
+        //TODO
+        //assertTrue(testUtterance("I want the red, blue, and green blocks at location one",
+        //        "",
+        //        "brad",
+        //        "self"
+        //));
+
+        assertTrue(testUtterance("the red block is at location one",
+                "STATEMENT(brad,self,at(VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("the red block has moved to location one",
+                "STATEMENT(brad,self,at(VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("the red block has moved from location two to location one",
+                "STATEMENT(brad,self,at(VAR0:physobj,VAR2:pose),{red block(VAR0:physobj),locationTwo(VAR1:pose),locationOne(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("the red block is no longer at location one",
+                "STATEMENT(brad,self,not(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("the red block has moved from location one",
+                "STATEMENT(brad,self,not(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+
+
+        assertTrue(testUtterance("eric is a supervisor",
+                "STATEMENT(brad,self,supervisor(eric),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("eric is not a supervisor",
+                "STATEMENT(brad,self,not(supervisor(eric)),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("eric is an admin",
+                "STATEMENT(brad,self,admin(eric),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("eric is not an admin",
+                "STATEMENT(brad,self,not(admin(eric)),{})",
+                "brad",
+                "self"
+        ));
+
+        //TODO: issue somewhere with knowHow parse matching early when more args are present and overloaded entries exist which take in different numbers of args
+        //assertTrue(testUtterance("do you know how to get the red block to location one",
+        assertTrue(testUtterance("do you know how to make it so the red block is at location one",
+                "QUESTION(brad,self,knowHow(self,to(blockAtWrapper(self,VAR0:physobj,VAR1:pose))),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("do you see a red block",
+                "QUESTION(brad,self,see(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("do you know where the red block is",
+                "QUESTION(brad,self,know(self,at(VAR0:physobj,X)),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("where is red block",
+                "QUESTION(brad,self,know(self,at(VAR0:physobj,X)),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("what blocks are you aware of",
+                "INSTRUCT(brad,self,describeKnownBlocks(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("what blocks are at location one",
+                "INSTRUCT(brad,self,describeBlocksAt(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("how many blocks are at location one",
+                "INSTRUCT(brad,self,describeNumberOfBlocksAt(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("are any blocks at location one",
+                "QUESTION(brad,self,know(at(X,VAR0:pose)),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("is there a red block at location one",
+                "QUESTION(brad,self,know(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("what types of blocks can you detect",
+                "INSTRUCT(brad,self,describeBlockTypes(self),{})",
+                "brad",
+                "self"
+        ));
+
+        assertTrue(testUtterance("is eric a supervisor",
+                "QUESTION(brad,self,know(self,supervisor(eric)),{})",
+                "brad",
+                "self"
+        ));
+        assertTrue(testUtterance("is eric an admin",
+                "QUESTION(brad,self,know(self,admin(eric)),{})",
                 "brad",
                 "self"
         ));
