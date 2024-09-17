@@ -10,8 +10,12 @@ public interface RobosuiteInterface {
   public void makeEnv(String env_name, String robot, Boolean render);
 
   @TRADEService
-  public void reset();
+  public Object reset();
 
   @TRADEService
-  public void step(List<Object> action);
+  public Object step(List<Object> action);
+
+  @TRADEService
+  public void setHighEnv(List<String> goal);
+
 }
