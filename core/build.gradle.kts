@@ -166,7 +166,7 @@ dependencies {
   api("com.google.code.gson:gson:2.6.2")
   api("com.google.guava:guava:33.0.0-jre")
   //trade
-  api("ai.thinkingrobots:trade:1.0.0")
+  api("ai.thinkingrobots:trade:1.1.0")
 
   //junit
   testImplementation("junit:junit:4.13.1")
