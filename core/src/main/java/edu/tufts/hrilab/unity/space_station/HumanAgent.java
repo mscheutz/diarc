@@ -4,7 +4,7 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.unity.UnityAgent;
 import edu.tufts.hrilab.unity.message.Message;
 import org.slf4j.Logger;
@@ -16,7 +16,6 @@ public class HumanAgent extends UnityAgent {
 
   public HumanAgent() {
     super();
-    setWorkload(0);
   }
 
   @Override
@@ -29,6 +28,11 @@ public class HumanAgent extends UnityAgent {
     }
   }
 
+  @Override
+  protected void init () {
+    setWorkload(0);
+  }
+
   private void workload (Message msg) {
     int level = Integer.parseInt(msg.arguments.get(0));
     setWorkload(level);
@@ -36,11 +40,11 @@ public class HumanAgent extends UnityAgent {
 
   private void setWorkload (int level) {
     //workload(player1,0)
-    Predicate workloadRetraction = Factory.createPredicate("workload", agent, "X");
-    Predicate workloadBelief = Factory.createPredicate("workload", agent, String.valueOf(level));
+    Term workloadRetraction = Factory.createPredicate("workload", agent, "X");
+    Term workloadBelief = Factory.createPredicate("workload", agent, String.valueOf(level));
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("retractBelief")).call(Object.class, workloadRetraction);
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief")).call(Object.class, workloadBelief);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("retractBelief").argTypes(Term.class)).call(Object.class, workloadRetraction);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class)).call(Object.class, workloadBelief);
       log.debug("Set workload for " + agent + " to " + level);
     } catch (TRADEException ex) {
       log.error("Error retracting or asserting workload belief", ex);

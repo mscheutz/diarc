@@ -74,9 +74,11 @@ public class UnityDIARCSpaceStationHybrid {
       players = Integer.parseInt(largs.get(largs.indexOf("-players") + 1));
     }
 
+
+
     String goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm_" + agentName + ".pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
-    if (largs.contains("--autonomy") || largs.contains("-a")) {
-      goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -goal startAutonomy(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
+    if (largs.contains("-autonomy")) {
+      goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -goal startAutonomy(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl domains/unity/space_station_llm_llama_finetuned_autonomy.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
     }
 
     DiarcComponent.createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict  -tldlNoUpdateAddressee -llm -llmService spaceStationLLMParser -noConfirmation -cache -cacheName unity_space_station"); //
@@ -100,10 +102,10 @@ public class UnityDIARCSpaceStationHybrid {
     DiarcComponent.createInstance(UnityAgent.class, "-agent rover -groups agent:" + agentName);
     DiarcComponent.createInstance(UnityPR2.class, "-agent " + agentName + " -groups agent:"  + agentName + nullAddressee );
 
-    for (int i = 0; i < players; i++) {
-      DiarcComponent.createInstance(HumanAgent.class, "-agent player" + i);
-    }
-
     DiarcComponent.createInstance(GoalManagerComponent.class, goalManagerArgs);
+
+    for (int i = 0; i < players; i++) {
+      DiarcComponent.createInstance(HumanAgent.class, "-agent player" + String.valueOf(i+1));
+    }
   }
 }

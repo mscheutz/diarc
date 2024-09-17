@@ -1,10 +1,33 @@
+import java.lang.String;
+import java.lang.Boolean;
+import java.lang.Integer;
+import java.lang.Long;
+import java.util.Array;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
+
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Variable;
+
+import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.common.NLPacket;
+
+import edu.tufts.hrilab.action.justification.Justification;
 
 /**
  * AUTONOMY BEHAVIORS
  **/
 
  () = startAutonomy () {
-  int !wait = 5000;
+  int !wait = 10000;
   op:sleep(!wait);
   op:log("info", "Starting autonomy...");
   act:autonomy();
@@ -12,7 +35,7 @@
 
 //["This is the high level autonomy manager function that will task a robot with monitoring an area if not already busy"]
 () = autonomy () {
-  int !wait = 10000;
+  int !wait = 1000;
   Predicate !atPredicate;
   Predicate !repairingPredicate;
   Predicate !atTransitPredicate;
@@ -23,6 +46,7 @@
   List !atTransitBeliefs;
   List !inTransitBeliefs;
   List !autonomyRepairingTubeBeliefs;
+  Boolean !workloadLevel;
 
   !atPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "amAt(?actor,X,Y)");
   !repairingPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "repairing(?actor,X,Y,Z)");
@@ -31,12 +55,15 @@
   !autonomyRepairingTubePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "autonomyRepairing(?actor,X)");
 
   while (true) {
+    !workloadLevel = act:isWorkloadAboveThreshold();
     !atBeliefs = act:queryBelief(!atPredicate);
     !repairingBeliefs = act:queryBelief(!repairingPredicate);
     !atTransitBeliefs = act:queryBelief(!atTransitPredicate);
     !inTransitBeliefs = act:queryBelief(!inTransitPredicate);
     !autonomyRepairingTubeBeliefs = act:queryBelief(!autonomyRepairingTubePredicate);
-    if (~op:isEmpty(!atBeliefs)) {
+    if (op:equals(!workloadLevel, false)) {
+      op:log("debug", "Not continuing because workload level is below threshold");
+    } elseif (~op:isEmpty(!atBeliefs)) {
       op:log("debug", "Not continuing autonomy because ?actor is at tube");
     } elseif (~op:isEmpty(!repairingBeliefs)) {
       op:log("debug", "Not continuing autonomy because ?actor is repairing");
@@ -52,6 +79,34 @@
     op:log("debug", "Delaying for !wait");
     op:sleep(!wait);
   }
+}
+
+(Boolean ?workloadLevel) = isWorkloadAboveThreshold () {
+  Predicate !workloadPredicate;
+  List !workloadBeliefs;
+  Symbol !levelSymbol;
+  String !levelString;
+  Variable !var;
+  Map !bindings;
+
+  !workloadPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "workload(X,Y)");
+  !workloadBeliefs = act:queryBelief(!workloadPredicate);
+  !var = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "Y");
+
+  ?workloadLevel = op:newObject("java.lang.Boolean", false);
+
+  if (op:isEmpty(!workloadBeliefs)) {
+    ?workloadLevel = op:newObject("java.lang.Boolean", false);
+  } else {
+    foreach (!workloadBelief : !workloadBeliefs) {
+      !levelSymbol = op:invokeMethod(!workloadBelief, "get", !var);
+      !levelString = op:bind("!levelSymbol");
+      if (op:equals(!levelString, "1")) {
+        ?workloadLevel = op:newObject("java.lang.Boolean", true);
+      }
+    }
+  }
+  return ?workloadLevel;
 }
 
 (Symbol ?nextArea) = getNextArea (Symbol ?lastArea, List ?currentAreaBeliefs, Symbol ?currentArea) {
@@ -217,7 +272,7 @@
   !tubeDamagedPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "propertyOf(!area,!side,!number,damaged(X))");
   !tubeOffPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "propertyOf(!area,!side,!number,off)");
 
-  String !messageString = "Please turn off tube !area !side !number so that it can be repaired";
+  String !messageString = op:bind("Please turn off tube !area !side !number so that it can be repaired");
 
   act:assertBelief(!autonomyRepairingTubePredicate);
 
@@ -263,7 +318,7 @@
     !isTubeOff = act:getSpaceStationTubeOff(?fullTube);
     if (op:equals(!isTubeOff, false)) {
       act:retractBelief(!tubeOffPredicate);
-      act:sayText(!messageString);
+      act:generateResponseFromString(!messageString);
       op:log("info", "Cannot repair !area !side !number because tube is not off (belief,unity)");
       return;
     } else {
@@ -274,4 +329,3 @@
   act:repairTubeSilent(!area, !side, !number);
   act:monitor(!area);
 }
-*/
