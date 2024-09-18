@@ -17,6 +17,8 @@ a; REF/RN ; #x.$x ; INDEFINITE
 the; REF/RN ; #x.$x ; DEFINITE
 one; REF/RN ; #x.$x ; INDEFINITE
 
+it; REF ; it:physobj ; INFOCUS
+
 %%%%%%%%% Actions %%%%%%%%%
 
 %% goToPose %%
@@ -63,13 +65,17 @@ one; BLOCKC/BLOCKC ; #x.$x
 pickup; VERBT; pickUp
 pick up; VERBT; pickUp
 grab; VERBT; pickUp
-get; VERBT; pickup
+get; VERBT; pickUp
 
 %% put down no arg %%
-put down; C/BLOCKC; #x.putdown(?ADDRESSEE)
-putdown; C/BLOCKC; #x.putdown(?ADDRESSEE)
-put; (C/PUTDOWNSUFFIX)/BLOCKC; #x#y.putdown(?ADDRESSEE)
-place; (C/PUTDOWNSUFFIX)/BLOCKC; #x#y.putdown(?ADDRESSEE)
+put down; C/BLOCKC; #x.putDown(?ADDRESSEE)
+putdown; C/BLOCKC; #x.putDown(?ADDRESSEE)
+put; (C/PUTDOWNSUFFIX)/BLOCKC; #x#y.putDown(?ADDRESSEE)
+place; (C/PUTDOWNSUFFIX)/BLOCKC; #x#y.putDown(?ADDRESSEE)
+put down; C/REF; #x.putDown(?ADDRESSEE,$x)
+putdown; C/REF; #x.putDown(?ADDRESSEE,$x)
+put; (C/PUTDOWNSUFFIX)/REF; #x#y.putDown(?ADDRESSEE,$x)
+place; (C/PUTDOWNSUFFIX)/REF; #x#y.putDown(?ADDRESSEE,$x)
 down; PUTDOWNSUFFIX; down
 
 %% moveBlockTo three arg (block,from,to) %%
@@ -80,10 +86,10 @@ get; ((C/REF)/REF)/REF; #x#y#z.moveBlockTo(?ADDRESSEE,$x,$y,$z)
 move; (C/MOVEBLOCKSUFFIX)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
 transport; (C/MOVEBLOCKSUFFIX)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
 relocate; (C/MOVEBLOCKSUFFIX)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
-between; (MOVEBLOCKSUFFIX/REF)/REF; #x#y.$x,$y
+between; (MOVEBLOCKSUFFIX/LOCREF)/REF; #x#y.$x,$y
 from; REF/REF; #x.$x
 to; REF/REF; #x.$x
-and; REF/REF; #x.$x
+and; LOCREF/REF; #x.$x
 
 %% moveBlockTo two arg (block,to) %%
 put down; (C/REF)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
@@ -109,12 +115,12 @@ reset domain; VERBI; resetDomain
 clear domain; VERBI; resetDomain
 
 %%%%%%%%% Goal Wrappers %%%%%%%%%
-%TODO: Decide on wrapper name
-get; (C/REF)/REF; #x#y.moveObjectTo(?ADDRESSEE,$x,$y)
-i want; (C/WANTBLOCKATREF)/REF; #x#y.blockAtWrapper(?ADDRESSEE,$x,$y)
+%TODO: Unsure if wrapper name is best for LLM, very close to moveBlockTo
+get; (C/REF)/REF; #x#y.getBlockTo(?ADDRESSEE,$x,$y)
+i want; (C/WANTBLOCKATREF)/REF; #x#y.getBlockTo(?ADDRESSEE,$x,$y)
 at; WANTBLOCKATREF/REF; #x.$x
 to be at; WANTBLOCKATREF/REF; #x.$x
-make it so; (C/WANTBLOCKATREF2)/REF; #x#y.blockAtWrapper(?ADDRESSEE,$x,$y)
+make it so; (C/WANTBLOCKATREF2)/REF; #x#y.getBlockTo(?ADDRESSEE,$x,$y)
 is at; WANTBLOCKATREF2/REF; #x.$x
 
 %%%%%%%%% Belief Assertions %%%%%%%%%
@@ -129,10 +135,15 @@ has moved from; ((S/REF)/REF)\REF; #x#y#z.at($x,$z)
 is not at; (S/REF)\REF; #x#y.not(at($x,$y))
 is no longer at; (S/REF)\REF; #x#y.not(at($x,$y))
 has moved from; (S/REF)\REF; #x#y.not(at($x,$y))
+%is not at; (C/REF)\REF; #x#y.forgetThat(?ADDRESSEE,at($x,$y))
+%is no longer at; (C/REF)\REF; #x#y.forgetThat(?ADDRESSEE,at($x,$y))
+%has moved from; (C/REF)\REF; #x#y.forgetThat(?ADDRESSEE,at($x,$y))
 
 %TODO: make sure this actually applies to domain
 %% supervisor/admin permissions %%
 eric;AGENT;eric
+pete;AGENT;pete
+is trusted; S\AGENT ; #a.trusted($a)
 is not trusted; S\AGENT ; #a.not(trusted($a))
 %define new speaker; S/LIT*; #s.name($s,$s)
 add new supervisor; S/LIT*; #s.supervisor($s)
@@ -145,16 +156,18 @@ is an admin; S\AGENT ; #a.admin($a)
 is not an admin; S\AGENT ; #a.not(admin($a))
 
 %%%%%%%%% ITK %%%%%%%%%
-where is; Q/REF ; #x.know(?ADDRESSEE,at($x,X))
-where; KNOWABLE/REF; #x.at($x,X)
-where; KNOWABLEWHEREIS/REF; #x.at($x,X)
-is; KNOWABLE\KNOWABLEWHEREIS; #x.$x
+%%Do we even want this since all actions require verifying the object location and/or will not take into account where it thinks a block is?
+%where is; Q/REF ; #x.know(?ADDRESSEE,whereAt($x))
+where is; VERBT ; describeBlockLocation
+%where; KNOWABLE/REF; #x.whereAt($x,X)
+%where; KNOWABLEWHEREIS/REF; #x.whereAt($x)
+%is; KNOWABLE\KNOWABLEWHEREIS; #x.$x
 
 %TODO add entries for variations of these
 what blocks are you aware of; VERBI; describeKnownBlocks
 what blocks are at; VERBT; describeBlocksAt
 how many blocks are at; VERBT; describeNumberOfBlocksAt
-are any blocks at; Q/REF; #x.know(at(X,$x))
+are any blocks at; Q/REF; #x.know(blocksAt($x))
 is there a; (Q/REF)/REF; #x#y.know(at($x,$y))
 what types of blocks can you detect; VERBI; describeBlockTypes
 

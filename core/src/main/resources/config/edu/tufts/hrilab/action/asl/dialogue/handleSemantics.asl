@@ -292,11 +292,20 @@ import java.lang.Integer;
     effects : {
       success infer: believes(?addressee,?fact);
     }
+    Term !negatedFact;
 
     // TODO: EAK: isnt this is problematic for multi-agent cases? why do we want ?fact AND believes(?addressee, ?fact)
     //brad: workaround for bel() wrapper issues with pddl
-    act:assertBelief(?fact);
-    op:log("debug", "Now believes ?fact.");
+
+    //Pick and Place 2024 Temp Change
+    if (op:invokeMethod(?fact,"isNegated")) {
+        !negatedFact = op:invokeMethod(?fact,"toUnnegatedForm");
+        act:retractBelief(!negatedFact);
+        op:log("debug", "retracted belief !negatedFact.");
+    } else {
+        act:assertBelief(?fact);
+        op:log("debug", "Now believes ?fact.");
+    }
 
     if (op:equals(?addressee,?actor)) {
       act:generateResponse(?speaker, ?responseSemantics, ?semanticType);

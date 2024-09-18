@@ -29,6 +29,12 @@ subtype(pose, location).
 actor(james).
 supervisor(james).
 admin(james).
+actor(pete).
+supervisor(pete).
+admin(pete).
+actor(eric).
+supervisor(eric).
+admin(eric).
 
 %todo: we shouldn't have to assert this.
 predicate(property_of,var,property).

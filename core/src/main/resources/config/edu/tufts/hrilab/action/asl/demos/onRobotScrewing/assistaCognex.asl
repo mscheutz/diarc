@@ -51,6 +51,8 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     Double !downDist;
     Double !backDist;
 
+    Predicate !failCond;
+
     op:log(debug, "[perceiveEntity] refID: ?refID");
 
     !descriptor = tsc:getDescriptorForID(?refID);
@@ -62,7 +64,11 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     if (~op:isEmpty(!bindings)) {
         (!binding) = op:get(!bindings, 0);
         (!distSymbol) = op:get(!binding,!bindingVar);
+    } else {
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,objectDefinition(!descriptor)))");
+        exit(FAIL_RETURNVALUE,!failCond);
     }
+
     op:log(debug, "[perceiveEntity] bindingVar: !bindingVar :::::: binding: !binding");
     !dist = op:/(!distSymbol,1);
     !downDist = op:*(!dist,-1);
@@ -87,7 +93,14 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
         !currPose =op:get(!binding,!bindingVar);
     }
 
-    act:perceiveEntityFromSymbol(?refID);
+    try {
+        act:perceiveEntityFromSymbol(?refID);
+    } catch (FAIL_RETURNVALUE) {
+        tsc:moveZRelative(!downDist);
+        tsc:moveXRelative(!backDist);
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "dont(?actor,see,?refID,atMyLocation)");
+        exit(FAIL_RETURNVALUE,!failCond);
+    }
     tsc:moveZRelative(!downDist);
     tsc:moveXRelative(!backDist);
 }

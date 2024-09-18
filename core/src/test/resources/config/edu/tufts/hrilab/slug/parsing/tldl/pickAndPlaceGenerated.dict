@@ -21,3 +21,7 @@ location five; PROPERTY; locationFive:pose
 red block; REF; red block:physobj ; DEFINITE
 red block; RN; red block:physobj ; VAR
 red block; PROPERTY; red block:property
+
+green block; REF; green block:physobj ; DEFINITE
+green block; RN; green block:physobj ; VAR
+green block; PROPERTY; green block:property
