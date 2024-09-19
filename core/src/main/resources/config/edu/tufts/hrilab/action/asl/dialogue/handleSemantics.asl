@@ -296,15 +296,31 @@ import java.lang.Integer;
 
     // TODO: EAK: isnt this is problematic for multi-agent cases? why do we want ?fact AND believes(?addressee, ?fact)
     //brad: workaround for bel() wrapper issues with pddl
-
-    //Pick and Place 2024 Temp Change
-    if (op:invokeMethod(?fact,"isNegated")) {
-        !negatedFact = op:invokeMethod(?fact,"toUnnegatedForm");
-        act:retractBelief(!negatedFact);
-        op:log("debug", "retracted belief !negatedFact.");
+    //Pick and Place 2024 - butchered this function, don't merge back in
+    Symbol !factName = op:getName(?fact);
+    java.util.List !args;
+    Symbol !arg;
+    if (op:equals(!factName,and)) {
+        !args = op:getArgs(?fact);
+        foreach(!arg : !args) {
+            if (op:invokeMethod(!arg,"isNegated")) {
+                !negatedFact = op:invokeMethod(!arg,"toUnnegatedForm");
+                act:retractBelief(!negatedFact);
+                op:log("debug", "retracted belief !negatedFact.");
+            } else {
+                act:assertBelief(!arg);
+                op:log("debug", "Now believes !arg.");
+            }
+        }
     } else {
-        act:assertBelief(?fact);
-        op:log("debug", "Now believes ?fact.");
+        if (op:invokeMethod(?fact,"isNegated")) {
+            !negatedFact = op:invokeMethod(?fact,"toUnnegatedForm");
+            act:retractBelief(!negatedFact);
+            op:log("debug", "retracted belief !negatedFact.");
+        } else {
+            act:assertBelief(?fact);
+            op:log("debug", "Now believes ?fact.");
+        }
     }
 
     if (op:equals(?addressee,?actor)) {

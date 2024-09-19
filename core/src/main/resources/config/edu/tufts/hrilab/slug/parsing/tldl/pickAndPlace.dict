@@ -19,6 +19,22 @@ one; REF/RN ; #x.$x ; INDEFINITE
 
 it; REF ; it:physobj ; INFOCUS
 
+%%TODO: test these in the current domain
+suspend current task; VERBI ; suspendSystemGoals
+resume previous task; VERBI ; resumeSystemGoals
+resume task; VERBI ; resumeSystemGoals
+resume; VERBI ; resumeSystemGoals
+cancel current task; VERBI ; cancelSystemGoals
+remove task from queue at position; C/LIT* ; #x.cancelPendingGoalByIndex(?ADDRESSEE,$x)
+%now; C/C; #x.urgentPriority(?ADDRESSEE,$x)
+%right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
+
+what is your current task; VERBI; describeCurrentGoal
+what are your pending tasks; VERBI; describePendingGoals
+cancel pending tasks; VERBI; cancelAllPendingGoals
+cancel all active tasks; VERBI; cancelAllActiveGoals
+cancel all tasks; VERBI; cancelAllCurrentGoals
+
 %%%%%%%%% Actions %%%%%%%%%
 
 %% goToPose %%
@@ -126,10 +142,10 @@ is at; WANTBLOCKATREF2/REF; #x.$x
 %%%%%%%%% Belief Assertions %%%%%%%%%
 
 %% at(X,Y) %%
-is at; (S/REF)\REF; #x#y.at($x,$y)
-moved to; (S/REF)\REF; #x#y.at($x,$y)
-has moved to; (S/REF)\REF; #x#y.at($x,$y)
-has moved from; ((S/REF)/REF)\REF; #x#y#z.at($x,$z)
+is at; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y))
+moved to; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y))
+has moved to; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y))
+has moved from; ((S/REF)/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$z))
 
 %% not(at(X,Y)) %%
 is not at; (S/REF)\REF; #x#y.not(at($x,$y))
@@ -182,3 +198,21 @@ know how; (C/INF)\AGENT ; #a#i.knowHow($a,$i)
 know; (C/KNOWABLE)\AGENT ; #a#k.know($a,$k)
 to; INF/C; #x.to($x)
 see; (C/REF)\AGENT ; #x#y.see($x,$y)
+
+%TODO: is there any nice way to have just 'location one' be a VAL which is the ref for location one?
+% Doesn't seem like it, any workaround rule will try to match fully on 'location one' rather than just 'location' and ignore the less specific entry
+location; VAL/REF; #l.pose($l);
+area; VAL/REF; #a.pose($a);
+pose; VAL/REF; #a.pose($a);
+it is at; VAL/REF; #a.pose($a);
+at; VAL/REF; #a.pose($a);
+the block is at; VAL/REF; #a.pose($a);
+
+%Same issue for blocks
+the; VAL/REF; #l.blockType($l);
+
+%TODO: ability to do this (and to do this for both block and pose questions)
+%none; VAL; pose(none);
+%none; VAL; blockType(none);
+%nevermind; VAL; pose(none);
+%nevermind; VAL; blockType(none);

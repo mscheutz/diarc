@@ -34,6 +34,7 @@ REPLY(A,B,cannot(pickUp(C),because(not(free(C)))),Z) := REPLY(A,B,cannot(pickUp(
 REPLY(A,B,cannot(pickUp(C,D),because(not(free(C)))),Z) := REPLY(A,B,cannot(pickUp(C,D),because(already(C,holding,something))),Z)
 REPLY(A,B,cannot(putDown(C,D),because(free(C))),Z) := REPLY(A,B,cannot(putDown(C,D),because(not(holding(C,anything)))),Z)
 REPLY(A,B,cannot(putDown(C),because(free(C))),Z) := REPLY(A,B,cannot(putDown(C,aBlock),because(not(holding(C,anything)))),Z)
+REPLY(A,B,cannot(putDown(C),because(D)),Z) := REPLY(A,B,cannot(putDown(C,aBlock),because(D)),Z)
 REPLY(A,B,cannot(moveBlockTo(C,D,E,F),because(G)),Z) := REPLY(A,B,cannot(move(C,D,from,to(E,F)),because(G)),Z)
 REPLY(A,B,cannot(moveBlockTo(C,D,E),because(F)),Z) := REPLY(A,B,cannot(move(C,D,to,E),because(F)),Z)
 REPLY(A,B,cannot(moveBlockTo(C,D,E),because(not(holding(C,D)))),Z) := REPLY(A,B,cannot(move(C,D,to,E),because(not(holding(C,D)))),Z)
