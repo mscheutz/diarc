@@ -253,13 +253,13 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 //TODO: this breaks planning for goToPose? Figure out issue and comment back in
-//() = detectBlock(Symbol ?block:physobj) {
-//    effects : {
-//        success : knows(?actor,see(?actor,?block));
-//    }
-//    op:log(info,"detectBlock");
-//    act:perceiveEntity(?block);
-//}
+() = detectBlock(Symbol ?block) {
+    effects : {
+        success : knows(?actor,see(?actor,?block));
+    }
+    op:log(info,"detectBlock");
+    act:perceiveEntity(?block);
+}
 
 //TODO
 () = resetDomain() {
