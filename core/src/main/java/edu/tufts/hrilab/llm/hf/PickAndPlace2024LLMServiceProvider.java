@@ -151,6 +151,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             promptVars.put("%utterance", utterance.toString());
             userMessage = validationPrompt.apply(promptVars);
         } else {
+            utterance = new Utterance.Builder(utterance).build();
             //Doesn't include suppSemantics
             semantics = replaceReferencesInSemantics(semantics);
             utterance.setSemantics(semantics);
