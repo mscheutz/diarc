@@ -146,14 +146,15 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             }
         }
 
-        //Doesn't include suppSemantics
-        semantics = replaceReferencesInSemantics(semantics);
-        utterance.setSemantics(semantics);
         Map<String,String> promptVars = new HashMap<>();
-        promptVars.put("%utterance", utterance.toString());
         if (semantics.getName().equals("doYouMean")) {
+            promptVars.put("%utterance", utterance.toString());
             userMessage = validationPrompt.apply(promptVars);
         } else {
+            //Doesn't include suppSemantics
+            semantics = replaceReferencesInSemantics(semantics);
+            utterance.setSemantics(semantics);
+            promptVars.put("%utterance", utterance.toString());
             userMessage = nlgUserPrompt.apply(promptVars);
         }
 
