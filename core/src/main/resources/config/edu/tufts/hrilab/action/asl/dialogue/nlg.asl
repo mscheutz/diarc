@@ -83,6 +83,23 @@ import java.util.Map;
     }
 }
 
+//EW Temp PickAndPlace2024
+() = generateResponse(Symbol ?addressee, Predicate ?semantics, Symbol ?semanticType, Predicate ?suppSemantics) {
+    op:log("debug", "[generateResponse] semantics: ?semantics");
+
+    Utterance !utterance;
+    UtteranceType !type;
+    if (op:equalsValue(?semanticType, direct)) {
+      !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
+      !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+      op:invokeMethod(!utterance, "setType", !type);
+      op:invokeMethod(!utterance, "setSemantics", ?semantics);
+      op:log(info,"adding supp semantics ?suppSemantics");
+      op:invokeMethod(!utterance, "addSupplementalSemantics", ?suppSemantics);
+      act:communicateUtterance(!utterance);
+    }
+}
+
 /**
  * Given a predicate, calls NLG pipeline to get its text from and then calls sayText action.
  * Called from semantics and from generateResponse with empty bindings. Submits to NLG and sayText

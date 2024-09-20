@@ -58,14 +58,31 @@ import edu.tufts.hrilab.slug.common.Utterance;
 
     // for LLM parses -- get human validation
     Predicate !querySemantics;
+    java.lang.String !utteranceString;
     Predicate !response;
     java.util.Map !bindings;
     edu.tufts.hrilab.fol.Variable !x = "X";
+    Utterance !validationUtterance;
     if (op:invokeMethod(?utterance, "needsValidation")) {
       op:log("debug", "Validating utterance: ?utterance");
       !addressee = op:invokeMethod(?utterance, "getAddressee");
       !speaker = op:invokeMethod(?utterance, "getSpeaker");
-      !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "mean(!speaker, !semantics)");
+      if (tsc:usingLLMNLG()) {
+          //EW SpotPickAndPlace: changed predicate format to pass to LLM to perform NLG
+          !utteranceString = op:invokeMethod(?utterance,"toString");
+          !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "doYouMean(!speaker, !utteranceString)");
+          //EW SpotPickAndPlace: Validation questions, responses, and any other interaction will be in the dialogue history
+          //    before the actual utterance causing that to trigger would be. This is bad from two perspectives: 1.
+          //    dialogue history is temporally incorrect (obvious to a user reading the history) 2. We almost certainly
+          //    want the original utterance and validation history together and in the correct order to be used within
+          //    any sort of nlu recovery behavior here.
+          //    Temporarily updating dialogue history here (even though semantics aren't fully populated) and not updating
+          //        below if "needsValidation" is true. Need better solution long term.
+          act:updateDialogueHistory(?utterance);
+      } else {
+        //This doesn't even work at all if using refs?
+        !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "mean(!speaker, !semantics)");
+      }
       !bindings = !addressee.act:askQuestion(!speaker, !querySemantics, val(X));
       !response = op:get(!bindings, !x);
 
@@ -112,8 +129,10 @@ import edu.tufts.hrilab.slug.common.Utterance;
     Predicate !suppSemantics;
     java.lang.Integer !indirectSemanticsSize;
 
-    op:log("debug", "[handleDialogueInput] entering action script for actor: ?actor");
-    act:updateDialogueHistory(?utterance);
+    if (~op:invokeMethod(?utterance, "needsValidation")) {
+        op:log("debug", "[handleDialogueInput] entering action script for actor: ?actor");
+        act:updateDialogueHistory(?utterance);
+    }
 
     // extract fields from utterance to use existing dialogue scripts
     !speaker = op:invokeMethod(?utterance, "getSpeaker");

@@ -12,6 +12,8 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.interfaces.NLUInterface;
+import edu.tufts.hrilab.llm.hf.LLMServiceProvider;
+import edu.tufts.hrilab.llm.hf.PickAndPlace2024LLMServiceProvider;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.slug.parsing.cache.CachedParserComponent;
@@ -35,7 +37,7 @@ import java.util.HashMap;
 public class HybridParserComponent extends DiarcComponent implements NLUInterface {
 
   private boolean useLLM = false;
-  private NLUInterface llmParser;
+  private LLMServiceProvider llmParser;
   private boolean useTLDL = false;
   private NLUInterface tldlParser;
   private boolean usePMP = false;
@@ -146,7 +148,15 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       if (prompt != null) {
         llmArgs += " -prompt " + prompt;
       }
-      llmParser = createInstance(LLMParserComponent.class, llmArgs, false);
+
+      //TODO: PickAndPlace2024 temp: using separate class to enable some new functionality with dialogue history
+      //        and using LLM for both NLU and NLG
+      //      Need to reorganize package structure or reimplement service provider to fit alongside current system
+//      if (llm != null && llm.equals("spotPickAndPlace")) {
+      llmParser = createInstance(PickAndPlace2024LLMServiceProvider.class, "");
+//      } else {
+//        llmParser = createInstance(LLMParserComponent.class, llmArgs, false);
+//      }
     }
 
     // init TLDLParserComponent
@@ -345,8 +355,12 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   @TRADEService
   @Action
   public void cacheParse(Utterance utterance) {
-    log.debug("[cacheParse] Caching parsed utterance");
-    cacheParser.addEntryToCache(utterance);
+    if (useCache) {
+      log.debug("[cacheParse] Caching parsed utterance");
+      cacheParser.addEntryToCache(utterance);
+    } else {
+      log.debug("[cacheParse] Not caching parsed utterance");
+    }
   }
 
   @TRADEService
