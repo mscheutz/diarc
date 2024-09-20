@@ -26,6 +26,13 @@ import edu.tufts.hrilab.action.justification.Justification;
  * AUTONOMY BEHAVIORS
  **/
 
+ () = disableAutonomyFirst () {
+    Predicate !autonomyBelief;
+    !autonomyBelief = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "disableAutonomy(?actor,1)");
+    act:assertBelief(!autonomyBelief);
+    op:log("info", "Disabling autonomous behavior for ?actor on first trial");
+ }
+
  () = startAutonomy () {
   int !wait = 10000;
   op:sleep(!wait);
@@ -41,11 +48,13 @@ import edu.tufts.hrilab.action.justification.Justification;
   Predicate !atTransitPredicate;
   Predicate !inTransitPredicate;
   Predicate !autonomyRepairingTubePredicate;
+  Predicate !disableAutonomyPredicate;
   List !atBeliefs;
   List !repairingBeliefs;
   List !atTransitBeliefs;
   List !inTransitBeliefs;
   List !autonomyRepairingTubeBeliefs;
+  List !disableAutonomyBeliefs;
   Boolean !workloadLevel;
 
   !atPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "amAt(?actor,X,Y)");
@@ -53,6 +62,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   !atTransitPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "amAt(?actor,prep(transit,to(X,Y)))");
   !inTransitPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "amIn(?actor,prep(transit,to(X)))");
   !autonomyRepairingTubePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "autonomyRepairing(?actor,X)");
+  !disableAutonomyPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "disableAutonomy(?actor,X)");
 
   while (true) {
     !workloadLevel = act:isWorkloadAboveThreshold();
@@ -61,8 +71,12 @@ import edu.tufts.hrilab.action.justification.Justification;
     !atTransitBeliefs = act:queryBelief(!atTransitPredicate);
     !inTransitBeliefs = act:queryBelief(!inTransitPredicate);
     !autonomyRepairingTubeBeliefs = act:queryBelief(!autonomyRepairingTubePredicate);
-    if (op:equals(!workloadLevel, false)) {
-      op:log("debug", "Not continuing because workload level is below threshold");
+    !disableAutonomyBeliefs = act:queryBelief(!disableAutonomyPredicate);
+
+    if (~op:isEmpty(!disableAutonomyBeliefs)) {
+      op:log("info", "Autonomy is disabled for ?actor");
+    } elseif (op:equals(!workloadLevel, false)) {
+      op:log("info", "Not continuing because workload level is below threshold");
     } elseif (~op:isEmpty(!atBeliefs)) {
       op:log("debug", "Not continuing autonomy because ?actor is at tube");
     } elseif (~op:isEmpty(!repairingBeliefs)) {
@@ -87,7 +101,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   Symbol !levelSymbol;
   String !levelString;
   Variable !var;
-  Map !bindings;
+  Map !workloadBelief;
 
   !workloadPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "workload(X,Y)");
   !workloadBeliefs = act:queryBelief(!workloadPredicate);
@@ -99,14 +113,14 @@ import edu.tufts.hrilab.action.justification.Justification;
     ?workloadLevel = op:newObject("java.lang.Boolean", false);
   } else {
     foreach (!workloadBelief : !workloadBeliefs) {
-      !levelSymbol = op:invokeMethod(!workloadBelief, "get", !var);
+      !levelSymbol = op:get(!workloadBelief, !var);
       !levelString = op:bind("!levelSymbol");
       if (op:equals(!levelString, "1")) {
         ?workloadLevel = op:newObject("java.lang.Boolean", true);
+        return;
       }
     }
   }
-  return ?workloadLevel;
 }
 
 (Symbol ?nextArea) = getNextArea (Symbol ?lastArea, List ?currentAreaBeliefs, Symbol ?currentArea) {

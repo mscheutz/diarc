@@ -435,9 +435,19 @@ import edu.tufts.hrilab.action.justification.Justification;
   String !goalStr;
   Predicate !goalPred;
   java.lang.Boolean !containsSelfGoal;
+  Predicate !autonomyBeliefQuery;
+  List !autonomyBeliefs;
+  Predicate !autonomyBelief;
+  Predicate !workloadBeliefsPredicate;
+  Predicate !workloadPlayerOnePredicate;
+  Predicate !workloadPlayerTwoPredicate;
 
   op:log("info", "endTrial(?actor)");
 
+  !autonomyBeliefQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "disableAutonomy(?actor,X)");
+  !workloadBeliefsPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "workload(X,Y)");
+  !workloadPlayerOnePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "workload(player1,0)");
+  !workloadPlayerTwoPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "workload(player2,0)");
   !currentGoals = tsc:getCurrentGoals(?actor);
 
   if (op:isEmpty(!currentGoals)) {
@@ -457,6 +467,21 @@ import edu.tufts.hrilab.action.justification.Justification;
       }
     }
   }
+
+  !autonomyBeliefs = act:queryBelief(!autonomyBeliefQuery);
+  if (op:isEmpty(!autonomyBeliefs)) {
+    !autonomyBelief = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "disableAutonomy(?actor,1)");
+    act:assertBelief(!autonomyBelief);
+    op:log("info", "Autonomy disabled on first trial, enabling for second");
+  } else {
+    act:retractBelief(!autonomyBeliefQuery);
+    op:log("info", "Autonomy enabled on first trial, enabling for second");
+  }
+
+  act:retractBelief(!workloadBeliefsPredicate);
+  act:assertBelief(!workloadPlayerOnePredicate);
+  act:assertBelief(!workloadPlayerTwoPredicate);
+
   op:log("info", "Trial ended for ?actor");
 }
 
