@@ -4346,17 +4346,17 @@ public class TLDLParserComponentTest {
         //));
 
         assertTrue(testUtterance("the red block is at location one",
-                "STATEMENT(brad,self,at(VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "STATEMENT(brad,self,and(not(at(VAR0:physobj,Y)),at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("the red block has moved to location one",
-                "STATEMENT(brad,self,at(VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "STATEMENT(brad,self,and(not(at(VAR0:physobj,Y)),at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("the red block has moved from location two to location one",
-                "STATEMENT(brad,self,at(VAR0:physobj,VAR2:pose),{red block(VAR0:physobj),locationTwo(VAR1:pose),locationOne(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "STATEMENT(brad,self,and(not(at(VAR0:physobj,Y)),at(VAR0:physobj,VAR2:pose)),{red block(VAR0:physobj),locationTwo(VAR1:pose),locationOne(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "self"
         ));
@@ -4414,7 +4414,7 @@ public class TLDLParserComponentTest {
         //        "self"
         //));
         assertTrue(testUtterance("where is red block",
-                "INSTRUCT(brad,self,describeBlockLocation(self,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,self,describeBlockPose(self,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
@@ -4436,12 +4436,12 @@ public class TLDLParserComponentTest {
                 "self"
         ));
         assertTrue(testUtterance("are any blocks at location one",
-                "QUESTION(brad,self,know(blocksAt(VAR0:pose)),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "QUESTION(brad,self,blocksAt(VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("is there a red block at location one",
-                "QUESTION(brad,self,know(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "QUESTION(brad,self,at(VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));

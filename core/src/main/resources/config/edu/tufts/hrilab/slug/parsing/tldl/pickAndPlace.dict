@@ -20,20 +20,20 @@ one; REF/RN ; #x.$x ; INDEFINITE
 it; REF ; it:physobj ; INFOCUS
 
 %%TODO: test these in the current domain
-suspend current task; VERBI ; suspendSystemGoals
-resume previous task; VERBI ; resumeSystemGoals
-resume task; VERBI ; resumeSystemGoals
+suspend current goal; VERBI ; suspendSystemGoals
+resume previous goal; VERBI ; resumeSystemGoals
+resume goal; VERBI ; resumeSystemGoals
 resume; VERBI ; resumeSystemGoals
-cancel current task; VERBI ; cancelSystemGoals
-remove task from queue at position; C/LIT* ; #x.cancelPendingGoalByIndex(?ADDRESSEE,$x)
+cancel current goal; VERBI ; cancelSystemGoals
+remove goal from queue at position; C/LIT* ; #x.cancelPendingGoalByIndex(?ADDRESSEE,$x)
 %now; C/C; #x.urgentPriority(?ADDRESSEE,$x)
 %right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
 
-what is your current task; VERBI; describeCurrentGoal
-what are your pending tasks; VERBI; describePendingGoals
-cancel pending tasks; VERBI; cancelAllPendingGoals
-cancel all active tasks; VERBI; cancelAllActiveGoals
-cancel all tasks; VERBI; cancelAllCurrentGoals
+what is your current goal; VERBI; describeCurrentGoal
+what are your pending goals; VERBI; describePendingGoals
+cancel pending goals; VERBI; cancelAllPendingGoals
+cancel all active goals; VERBI; cancelAllActiveGoals
+cancel all goals; VERBI; cancelAllCurrentGoals
 
 %%%%%%%%% Actions %%%%%%%%%
 
@@ -42,6 +42,7 @@ go to; GOTO
 move to; GOTO
 move your gripper to; GOTO
 location; REF/REF; #l.$l
+pose; REF/REF; #l.$l
 
 %% openGripper %%
 open gripper; VERBI; openGripper
@@ -145,7 +146,7 @@ is at; WANTBLOCKATREF2/REF; #x.$x
 is at; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y))
 moved to; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y))
 has moved to; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y))
-has moved from; ((S/REF)/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$z))
+has moved from; ((S/REF)/REF)\REF; #x#y#z.and(not(at($x,Y)),at($x,$z))
 
 %% not(at(X,Y)) %%
 is not at; (S/REF)\REF; #x#y.not(at($x,$y))
@@ -174,7 +175,7 @@ is not an admin; S\AGENT ; #a.not(admin($a))
 %%%%%%%%% ITK %%%%%%%%%
 %%Do we even want this since all actions require verifying the object location and/or will not take into account where it thinks a block is?
 %where is; Q/REF ; #x.know(?ADDRESSEE,whereAt($x))
-where is; VERBT ; describeBlockLocation
+where is; VERBT ; describeBlockPose
 %where; KNOWABLE/REF; #x.whereAt($x,X)
 %where; KNOWABLEWHEREIS/REF; #x.whereAt($x)
 %is; KNOWABLE\KNOWABLEWHEREIS; #x.$x
@@ -183,8 +184,8 @@ where is; VERBT ; describeBlockLocation
 what blocks are you aware of; VERBI; describeKnownBlocks
 what blocks are at; VERBT; describeBlocksAt
 how many blocks are at; VERBT; describeNumberOfBlocksAt
-are any blocks at; Q/REF; #x.know(blocksAt($x))
-is there a; (Q/REF)/REF; #x#y.know(at($x,$y))
+are any blocks at; Q/REF; #x.blocksAt($x)
+is there a; (Q/REF)/REF; #x#y.at($x,$y)
 what types of blocks can you detect; VERBI; describeBlockTypes
 
 is; Q/KNOWABLE; #x.know(?ADDRESSEE,$x)
@@ -201,18 +202,30 @@ see; (C/REF)\AGENT ; #x#y.see($x,$y)
 
 %TODO: is there any nice way to have just 'location one' be a VAL which is the ref for location one?
 % Doesn't seem like it, any workaround rule will try to match fully on 'location one' rather than just 'location' and ignore the less specific entry
-location; VAL/REF; #l.pose($l);
-area; VAL/REF; #a.pose($a);
-pose; VAL/REF; #a.pose($a);
-it is at; VAL/REF; #a.pose($a);
-at; VAL/REF; #a.pose($a);
-the block is at; VAL/REF; #a.pose($a);
+%location; VAL/REF; #l.pose($l);
+%area; VAL/REF; #a.pose($a);
+%pose; VAL/REF; #a.pose($a);
+%it is at; VAL/REF; #a.pose($a);
+%at; VAL/REF; #a.pose($a);
+%%the block is at; VAL/REF; #a.pose($a);
 
 %Same issue for blocks
-the; VAL/REF; #l.blockType($l);
+%the; VAL/REF; #l.blockType($l);
 
 %TODO: ability to do this (and to do this for both block and pose questions)
-%none; VAL; pose(none);
-%none; VAL; blockType(none);
+nowhere; VAL; pose(none);
+none; VAL; blockType(none);
 %nevermind; VAL; pose(none);
 %nevermind; VAL; blockType(none);
+
+yes; VAL; val(yes);
+はい; VAL; val(yes);
+no; VAL; val(no);
+いいえ; VAL ; val(no);
+
+%% LLM control %%
+clear conversation history; VERBI; clearConversationHistory
+toggle nlg; VERBI; toggleLLMNLG
+
+%% Testing only %%
+test nlg; C/LIT*; #x.testLLMNLGWithString(?ADDRESSEE,$x);

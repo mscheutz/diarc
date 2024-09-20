@@ -64,19 +64,23 @@ import edu.tufts.hrilab.action.justification.Justification;
     Predicate !failCond;
     Predicate !blockAtPred;
     Symbol !descriptor;
+    Symbol !heldBlock;
 
     //TODO: assert ?object is actually a block?
     !blockPose = act:getBlockPose(?object);
     if (op:isNull(!blockPose)) {
-        !descriptor = tsc:getDescriptorForID(?object);
-        (!bindings) = act:askQuestionFromString(?actor,"I dont know where the !descriptor is, at what pose can I expect to find it?", pose(X));
-        !blockPose = op:get(!bindings,!x);
-        if (op:equals(!blockPose,none)) {
-            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "know(?actor,theLocationOf,?object)");
-            exit(FAIL, !failCond);
-        } else {
-            !blockAtPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,!blockPose)");
-            act:assertBelief(!blockAtPred);
+        !heldBlock = act:getHeldObject();
+        if (~op:equals(?object,!heldBlock)) {
+            !descriptor = tsc:getDescriptorForID(?object);
+            (!bindings) = act:askQuestionFromString(?actor,"I dont know where the !descriptor is, at what pose can I expect to find it?", pose(X));
+            !blockPose = op:get(!bindings,!x);
+            if (op:equals(!blockPose,none)) {
+                !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,theLocationOf,?object))");
+                exit(FAIL, !failCond);
+            } else {
+                !blockAtPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,!blockPose)");
+                act:assertBelief(!blockAtPred);
+            }
         }
     }
 
@@ -100,9 +104,9 @@ import edu.tufts.hrilab.action.justification.Justification;
     //TODO: parse cognex results and split on case
 
     //No results
-    //Predicate !failCond;
-    //!failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "dont(?actor,see,anyBlocks,atMyLocation)");
-    //exit(FAIL_RETURNVALUE,!failCond);
+    Predicate !failCond;
+    !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "dont(?actor,see,anyBlocks,atMyLocation)");
+    exit(FAIL_RETURNVALUE,!failCond);
 
     ////Multiple results - ask which one to pick up
     //Map !bindings;
@@ -114,8 +118,8 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     ////Single result - pick up object
     !location = act:getCurrentLocation();
-    act:grab(!object,!location);
-    //act:grabPerceivedEntity(!object,!location);
+    //act:grab(!object,!location);
+    act:grabPerceivedEntity(!object,!location);
 }
 
 //Placeholder
@@ -140,13 +144,13 @@ import edu.tufts.hrilab.action.justification.Justification;
         op:log(debug, "going to !blockPose");
         act:goToPose(!blockPose);
         act:perceiveEntity(?object);
-        //act:grabPerceivedEntity(?object,!blockPose);
-        act:grab(?object,!blockPose);
+        act:grabPerceivedEntity(?object,!blockPose);
+        //act:grab(?object,!blockPose);
     } else {
         op:log(debug, "looking at !armPose");
         act:perceiveEntity(?object);
-        //act:grabPerceivedEntity(?object,!armPose);
-        act:grab(?object,!armPose);
+        act:grabPerceivedEntity(?object,!armPose);
+        //act:grab(?object,!armPose);
     }
 }
 
@@ -253,13 +257,13 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 //TODO: this breaks planning for goToPose? Figure out issue and comment back in
-//() = detectBlock(Symbol ?block:physobj) {
-//    effects : {
-//        success : knows(?actor,see(?actor,?block));
-//    }
-//    op:log(info,"detectBlock");
-//    act:perceiveEntity(?block);
-//}
+() = detectBlock(Symbol ?block) {
+    effects : {
+        success : knows(?actor,see(?actor,?block));
+    }
+    op:log(info,"detectBlock");
+    act:perceiveEntity(?block);
+}
 
 //TODO
 () = resetDomain() {
@@ -270,7 +274,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
 /////// ITK ///////
 //Want this?
-() = describeBlockLocation(Symbol ?block:physobj) {
+() = describeBlockPose(Symbol ?block:physobj) {
     Symbol !blockPose;
     Symbol !poseDescriptor;
     Symbol !blockDescriptor;
@@ -371,7 +375,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
     if (op:equals(!numBlocks,1)) {
-        act:generateResponseFromString("There is !numBlocks blocks at !poseDescriptor");
+        act:generateResponseFromString("There is !numBlocks block at !poseDescriptor");
     } else {
         act:generateResponseFromString("There are !numBlocks blocks at !poseDescriptor");
     }
@@ -382,26 +386,24 @@ import edu.tufts.hrilab.action.justification.Justification;
     //TODO
 }
 
-//TODO: this breaks planning for goToPose? Figure out issue and comment back in
-//() = goToAndDetect(Symbol ?block:physobj, Symbol ?pose:pose) {
-//    effects : {
-//        success : knows(?actor,at(?block,?pose));
-//    }
-//
-//    act:goToPose(?pose);
-//    act:perceiveEntity(?block);
-//}
+() = goToAndDetect(Symbol ?block, Symbol ?pose) {
+    effects : {
+        success : knows(?actor,at(?block,?pose));
+    }
 
-//TODO: this breaks planning for goToPose? Figure out issue and comment back in
-//() = goToAndDetect(Symbol ?pose:pose) {
-//    effects : {
-//        success : knows(?actor,blocksAt(?pose));
-//    }
-//
-//    act:goToPose(?pose);
-//    act:perceiveEntities(?block);
-//    //TODO: check if num results == 0 and fail if so
-//}
+    act:goToPose(?pose);
+    act:perceiveEntity(?block);
+}
+
+() = goToAndDetect(Symbol ?pose) {
+    effects : {
+        success : knows(?actor,blocksAt(?pose));
+    }
+
+    act:goToPose(?pose);
+    act:perceiveEntities();
+    //TODO: check if num results == 0 and fail if so
+}
 
 () = describeCurrentGoal["describes ?actor's current active task(s)"](){
 
@@ -416,11 +418,11 @@ import edu.tufts.hrilab.action.justification.Justification;
         foreach(!goalPred: !goalPreds){
             !status= op:getName(!goalPred);
             !goalPred= op:getArg(!goalPred,0);
-            act:generateResponseFromString("!status task: ");
+            act:generateResponseFromString("!status goal: ");
             act:generateResponse(!goalPred);
         }
     } else {
-        act:generateResponseFromString("no current task");
+        act:generateResponseFromString("no current goal");
     }
 }
 
@@ -436,7 +438,7 @@ import edu.tufts.hrilab.action.justification.Justification;
            act:generateResponse(!goalPred);
        }
     } else{
-       act:generateResponseFromString("no pending tasks");
+       act:generateResponseFromString("no pending goals");
     }
 
 }

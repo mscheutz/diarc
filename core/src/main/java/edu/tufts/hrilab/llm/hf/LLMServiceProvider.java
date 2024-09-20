@@ -139,6 +139,14 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
                         }
                         untypedAgentHierarchy.put(teamName, untypedTeamMembers);
                     }
+                    //TODO Revert this, fix this properly.
+                    for (Symbol agent : untypedAgentHierarchy.get(Factory.createSymbol("self"))) {
+                        if (!agent.getName().equals("self")) {
+                            Set<Symbol> members = new HashSet<>();
+                            members.add(agent);
+                            untypedAgentHierarchy.put(agent, members);
+                        }
+                    }
                     agentHierarchy = untypedAgentHierarchy;
                 }
             } catch (TRADEException e) {
@@ -448,5 +456,10 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     @Action
     public void toggleLLMNLG() {
         performNLG = !performNLG;
+    }
+
+    @TRADEService
+    public boolean usingLLMNLG() {
+        return performNLG;
     }
 }

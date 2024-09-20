@@ -40,6 +40,7 @@ REPLY(A,B,cannot(moveBlockTo(C,D,E),because(F)),Z) := REPLY(A,B,cannot(move(C,D,
 REPLY(A,B,cannot(moveBlockTo(C,D,E),because(not(holding(C,D)))),Z) := REPLY(A,B,cannot(move(C,D,to,E),because(not(holding(C,D)))),Z)
 REPLY(A,B,cannot(moveBlockTo(C,D),because(G)),Z) := REPLY(A,B,cannot(move(C,theBlock,to,D),because(G)),Z)
 REPLY(A,B,cannot(moveBlockTo(C,D),because(free(C))),Z) := REPLY(A,B,cannot(move(C,theBlock,to,D),because(not(holding(C,anything)))),Z)
+REPLY(A,B,cannot(getBlockTo(C,D,E),because(X)),Z) := REPLY(A,B,cannot(get(C,D,to,E),because(X)),Z)
 END_SET
 
 #Temi specific

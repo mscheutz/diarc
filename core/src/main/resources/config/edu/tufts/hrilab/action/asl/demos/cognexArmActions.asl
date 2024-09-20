@@ -29,30 +29,30 @@ import edu.tufts.hrilab.fol.Variable;
    goal:!goalPred;
 }
 
-//() = grabPerceivedEntity(Symbol ?physobj:physobj, Symbol ?pose:pose) {
-//    conditions : {
-//        pre : free(?actor);
-//    }
-//    effects : {
-//        success : holding(?actor, ?physobj);
-//        success : not(free(?actor));
-//        success : not(at(?physobj,?pose));
-//        nonperf : not(at(?actor,?pose));
-//        nonperf : unknownlocation(?actor);
-//    }
-//
-//    Symbol !default = "default";
-//    Symbol !gripper = "gripper";
-//
-//    act:rotateToEE(!gripper);
-//    tsc:openGripper();
-//    tsc:moveAndOrientToCognexTarget(?physobj);
-//    act:moveToObjectHeight();
-//    tsc:closeGripper();
-//    act:moveToCameraHeight();
-//    act:rotateToEE(!default);
-//    op:log(info, "[grabPerceivedEntity] ?physobj complete");
-//}
+() = grabPerceivedEntity(Symbol ?physobj, Symbol ?pose) {
+    conditions : {
+        pre : free(?actor);
+    }
+    effects : {
+        success : holding(?actor, ?physobj);
+        success : not(free(?actor));
+        success : not(at(?physobj,?pose));
+        nonperf : not(at(?actor,?pose));
+        nonperf : unknownlocation(?actor);
+    }
+
+    Symbol !default = "default";
+    Symbol !gripper = "gripper";
+
+    act:rotateToEE(!gripper);
+    tsc:openGripper();
+    tsc:moveAndOrientToCognexTarget(?physobj);
+    act:moveToObjectHeight();
+    tsc:closeGripper();
+    act:moveToCameraHeight();
+    act:rotateToEE(!default);
+    op:log(info, "[grabPerceivedEntity] ?physobj complete");
+}
 
 /// actions used in planning
 
