@@ -72,7 +72,9 @@ import edu.tufts.hrilab.action.justification.Justification;
         !heldBlock = act:getHeldObject();
         if (~op:equals(?object,!heldBlock)) {
             !descriptor = tsc:getDescriptorForID(?object);
-            (!bindings) = act:askQuestionFromString(?actor,"I dont know where the !descriptor is, at what pose can I expect to find it?", pose(X));
+            //TODO: replace !descriptor with Japanese version
+            (!bindings) = act:askQuestionFromString(?actor,"!descriptorがどこにあるかは分かりません。場所何番にありますか?", pose(X));
+            //(!bindings) = act:askQuestionFromString(?actor,"I dont know where the !descriptor is, at what pose can I expect to find it?", pose(X));
             !blockPose = op:get(!bindings,!x);
             if (op:equals(!blockPose,none)) {
                 !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,theLocationOf,?object))");
@@ -113,6 +115,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     //Variable !x = "X";
     ////TODO: get descriptors for all detected blocks and add into question specifically
     //!bindings = act:askQuestionFromString("I see multiple blocks, which one do you want me to pick up?", blockType(X));
+    //!bindings = act:askQuestionFromString("視野に複数のブロックが見えています。どれを拾ったらいいでしょうか？", blockType(X));
     //!object = op:get(!bindings, !x);
     ////TODO: make sure response matches one of the detected blocks
 
@@ -234,7 +237,9 @@ import edu.tufts.hrilab.action.justification.Justification;
     //  report that we cannot put down the block because the location is full
     //  Ask if the user would like to swap the held block with a block in that location
     //    (!bindings) = act:askQuestionFromString(?actor,"I cannot put down the block because the location is full. Would you like me to swap out one of the blocks?", val(X));
+    //    (!bindings) = act:askQuestionFromString(?actor,"場所がいっぱいになっているため、ブロックを置くことはできません。ブロックのどれかと交換しましょうか？", val(X));
     //      Y: act:askQuestionFromString(?actor,"Which block should be swapped?", blockType(X));
+    //      Y: act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", blockType(X));
     //          BlockType: TODO: Need swapBlock() implementation - asks where to put the held block in the interim
     //      N: exit(FAIL_RECOVERY)
     exit(FAIL_RECOVERY);
@@ -282,10 +287,14 @@ import edu.tufts.hrilab.action.justification.Justification;
     !blockPose = act:getBlockPose(?block);
     !blockDescriptor = tsc:getDescriptorForID(?block);
     if (op:isNull(!blockPose)) {
-        act:generateResponseFromString("I do not know where the !blockDescriptor is");
+        //act:generateResponseFromString("I do not know where the !blockDescriptor is");
+        //TODO: replace descriptor with Japanese version
+        act:generateResponseFromString("!blockDescriptorがどこにあるかが分かりません。");
     } else {
         !poseDescriptor = tsc:getDescriptorForPoseID(!blockPose);
-        act:generateResponseFromString("the !blockDescriptor is at !poseDescriptor");
+        //act:generateResponseFromString("the !blockDescriptor is at !poseDescriptor");
+        //TODO: replace descriptors with Japanese versions
+        act:generateResponseFromString("!blockDescriptorは!poseDescriptorにあります");
     }
 }
 
@@ -313,12 +322,14 @@ import edu.tufts.hrilab.action.justification.Justification;
         !blockDescriptor = tsc:getDescriptorForID(!block);
         !poseDescriptor = tsc:getDescriptorForPoseID(!pose);
         if (~op:equals(!blockDescriptor,none)) {
-            act:generateResponseFromString("The !blockDescriptor is at !poseDescriptor");
+            //act:generateResponseFromString("The !blockDescriptor is at !poseDescriptor");
+            act:generateResponseFromString("!blockDescriptorは!poseDescriptorにあります");
             !knowBlockAt = op:newObject("java.lang.Boolean", true);
         }
     }
     if (op:equals(!knowBlockAt,False)) {
-        act:generateResponseFromString("I don't know the location of any blocks");
+        //act:generateResponseFromString("I don't know the location of any blocks");
+        act:generateResponseFromString("ブロックはどれも場所がわかりません");
     }
 }
 
@@ -340,13 +351,16 @@ import edu.tufts.hrilab.action.justification.Justification;
         !block = op:get(!binding,!blockVar);
         !blockDescriptor = tsc:getDescriptorForID(!block);
         if (~op:equals(!blockDescriptor,none)) {
-            act:generateResponseFromString("There is a !blockDescriptor");
+            //act:generateResponseFromString("There is a !blockDescriptor");
+            //TODO: replace descriptor with Japanese version
+            act:generateResponseFromString("!blockDescriptorがあります");
             !knowBlockAt = op:newObject("java.lang.Boolean", true);
         }
     }
     if (op:equals(!knowBlockAt,False)) {
         !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
-        act:generateResponseFromString("There are no blocks at !poseDescriptor");
+        //act:generateResponseFromString("There are no blocks at !poseDescriptor");
+        act:generateResponseFromString("!poseDescriptorにブロックはありません");
     }
 }
 
@@ -375,15 +389,20 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
     if (op:equals(!numBlocks,1)) {
-        act:generateResponseFromString("There is !numBlocks block at !poseDescriptor");
+        //act:generateResponseFromString("There is !numBlocks block at !poseDescriptor");
+        //TODO: replace descriptor with Japanese version
+        act:generateResponseFromString("!poseDescriptorにブロックは一個あります");
     } else {
-        act:generateResponseFromString("There are !numBlocks blocks at !poseDescriptor");
+        //act:generateResponseFromString("There are !numBlocks blocks at !poseDescriptor");
+        //TODO: replace descriptor with Japanese version
+        act:generateResponseFromString("!poseDescriptorにブロックが!numBlocks個あります");
     }
 }
 
 //Could do same for locations if we want to
 () = describeBlockTypes() {
     //TODO
+    //?blockは感知できます == (I know how to detect ?block)
 }
 
 () = goToAndDetect(Symbol ?block, Symbol ?pose) {
@@ -418,11 +437,13 @@ import edu.tufts.hrilab.action.justification.Justification;
         foreach(!goalPred: !goalPreds){
             !status= op:getName(!goalPred);
             !goalPred= op:getArg(!goalPred,0);
-            act:generateResponseFromString("!status goal: ");
+            //act:generateResponseFromString("!status goal: ");
+            act:generateResponseFromString("!status ゴール: ");
             act:generateResponse(!goalPred);
         }
     } else {
-        act:generateResponseFromString("no current goal");
+        //act:generateResponseFromString("no current goal");
+        act:generateResponseFromString("現在ゴールはありません");
     }
 }
 
@@ -438,7 +459,8 @@ import edu.tufts.hrilab.action.justification.Justification;
            act:generateResponse(!goalPred);
        }
     } else{
-       act:generateResponseFromString("no pending goals");
+       //act:generateResponseFromString("no pending goals");
+       act:generateResponseFromString("並んでいるゴールはありません");
     }
 
 }

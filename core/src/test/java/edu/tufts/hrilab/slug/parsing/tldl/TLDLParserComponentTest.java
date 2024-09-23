@@ -5,11 +5,14 @@
 
 package edu.tufts.hrilab.slug.parsing.tldl;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.llm.LLMComponent;
+import edu.tufts.hrilab.llm.hf.LLMServiceProvider;
+import edu.tufts.hrilab.llm.hf.PickAndPlace2024LLMServiceProvider;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
 import org.junit.Ignore;
@@ -25,6 +28,8 @@ import static org.junit.Assert.assertTrue;
 
 public class TLDLParserComponentTest {
     private TLDLParserComponent component;
+    private LLMServiceProvider llmComponent;
+    private List<String> llmSummary = new ArrayList<>();
     private static Logger log = LoggerFactory.getLogger(edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponentTest.class);
 
     @Rule
@@ -4223,12 +4228,12 @@ public class TLDLParserComponentTest {
                 "self"
         ));
         assertTrue(testUtterance("move the red block between location one and location two",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose()),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("transport the red block between location one and location two",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose()),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "self"
         ));
@@ -4238,7 +4243,7 @@ public class TLDLParserComponentTest {
                 "self"
         ));
         assertTrue(testUtterance("relocate the red block between location one and location two",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose()),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "self"
         ));
@@ -4462,6 +4467,416 @@ public class TLDLParserComponentTest {
                 "brad",
                 "self"
         ));
+    }
+
+    //brad this is like this so I don't have to change a bunch of old tests, it should probably be updated at some point
+    private boolean testUtteranceLLM(String utterance, String desired, String speaker, String addressee) {
+        Utterance.Builder inputUtterance = new Utterance.Builder()
+                .setSpeaker(Factory.createSymbol(speaker))
+                .setAddressee(Factory.createSymbol(addressee))
+                .setWords(Arrays.asList(utterance.split(" ")));
+        llmSummary.add(utterance + " | " + desired);
+
+        log.info(utterance);
+        int numAttempts = 5;
+        int successCount = 0;
+        for (int i=0; i<numAttempts;i++) {
+            Utterance parseResult = llmComponent.parseUtterance(inputUtterance.build());
+            String outcome = parseResult.toString();
+            if (outcome.equals(desired)) {
+                successCount += 1;
+                log.info("outcome: " + outcome);
+                log.info("desired: " + desired + "\n");
+            } else {
+                llmSummary.add(outcome);
+                log.error("outcome: " + outcome);
+                log.error("desired: " + desired + "\n");
+            }
+        }
+        llmSummary.add(String.format("%d / %d", successCount, numAttempts));
+        log.info("successCount: {}/{}", successCount,numAttempts);
+        return true;
+    }
+
+    @Test
+    public void pickAndPlaceLLMTest() {
+        DiarcComponent.createInstance(LLMComponent.class, "-service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
+        llmComponent = DiarcComponent.createInstance(PickAndPlace2024LLMServiceProvider.class, "");
+        Map<Symbol, Set<Symbol>> hierarchy = new HashMap<>();
+        Set<Symbol> agents = new HashSet<>();
+        agents.add(Factory.createSymbol("robotone"));
+        hierarchy.put(Factory.createSymbol("robotone"),agents);
+        agents = new HashSet<>(agents);
+        agents.add(Factory.createSymbol("self"));
+        hierarchy.put(Factory.createSymbol("self"),agents);
+        llmComponent.setAgentHierarchy(hierarchy);
+
+        //Japanese input here simply taken from google translate - proper translations present in prompts
+        assertTrue(testUtteranceLLM("ロボット1、場所1へ移動",
+                "INSTRUCT(brad,robotone:agent,goToPose(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("場所 2 に移動します",
+                "INSTRUCT(brad,robotone:agent,goToPose(robotone:agent,VAR0:pose),{locationTwo(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("ロボット1、赤いブロックが見えることを確認してください",
+                "INSTRUCT(brad,robotone:agent,perceiveEntity(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        //assertTrue(testUtteranceLLM("赤いブロックを場所1に移動させる",
+        //        "INSTRUCT(brad,robotone:agent,getBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+        //        "brad",
+        //        "robotone:agent"
+        //));
+
+        assertTrue(testUtteranceLLM("あなたのグリッパーを位置 1 に移動します",//"アームのグリッパーを位置 1 に移動します。",
+                "INSTRUCT(brad,robotone:agent,goToPose(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("オープングリッパー",
+                "INSTRUCT(brad,robotone:agent,openGripper(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("グリッパーを開く",
+                "INSTRUCT(brad,robotone:agent,openGripper(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("グリッパーを開けて",
+                "INSTRUCT(brad,robotone:agent,openGripper(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("クローズグリッパー",
+                "INSTRUCT(brad,robotone:agent,closeGripper(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("グリッパーを閉じてください",
+                "INSTRUCT(brad,robotone:agent,closeGripper(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("グリッパーを閉じる",
+                "INSTRUCT(brad,robotone:agent,closeGripper(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("赤いブロックを探してください",
+                "INSTRUCT(brad,robotone:agent,perceiveEntity(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを探せ",
+                "INSTRUCT(brad,robotone:agent,perceiveEntity(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを1つ探す",
+                "INSTRUCT(brad,robotone:agent,perceiveEntity(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを検出します",
+                "INSTRUCT(brad,robotone:agent,perceiveEntity(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを観察するk",
+                "INSTRUCT(brad,robotone:agent,perceiveEntity(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを見つける",
+                "INSTRUCT(brad,robotone:agent,perceiveEntity(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("ブロックをピックアップ",
+                "INSTRUCT(brad,robotone:agent,pickUp(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("ブロックをつかむ",
+                "INSTRUCT(brad,robotone:agent,pickUp(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("ブロックを手に入れる",
+                "INSTRUCT(brad,robotone:agent,pickUp(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("ブロックを拾う",
+                "INSTRUCT(brad,robotone:agent,pickUp(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("ブロックを1つ拾う",
+                "INSTRUCT(brad,robotone:agent,pickUp(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("赤いブロックを拾う",
+                "INSTRUCT(brad,robotone:agent,pickUp(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックをつかむ",
+                "INSTRUCT(brad,robotone:agent,pickUp(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを取得する",
+                "INSTRUCT(brad,robotone:agent,pickUp(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを拾う",
+                "INSTRUCT(brad,robotone:agent,pickUp(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを1つ拾う",
+                "INSTRUCT(brad,robotone:agent,pickUp(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("ブロックを下ろす",
+                "INSTRUCT(brad,robotone:agent,putDown(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("ブロックを下に置きます",
+                "INSTRUCT(brad,robotone:agent,putDown(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("赤いブロックを場所1から場所2に移動する",
+                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを場所 1 から場所 2 に輸送する",
+                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを場所 1 から場所 2 まで取得します",
+                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを場所 1 と場所 2 の間で移動します",
+                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックを場所1と場所2の間で輸送する",
+                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        //Not sure if we want this to parse or not
+        assertTrue(testUtteranceLLM("場所1と場所2の間の赤いブロックを取得します",
+                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("赤いブロックを位置1に置く",
+                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("場所1に赤いブロックを置く",
+                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("ブロックを位置1に置く",
+                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("ブロックを場所 1 に置きます",
+                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("ドメインをリセットする",
+                "INSTRUCT(brad,robotone:agent,resetDomain(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("ドメインをクリアする",
+                "INSTRUCT(brad,robotone:agent,resetDomain(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("場所 1 に赤いブロックが欲しい",
+                "INSTRUCT(brad,robotone:agent,getBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("場所1の赤いブロックが欲しい",
+                "INSTRUCT(brad,robotone:agent,getBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックが位置1にあるようにします",
+                "INSTRUCT(brad,robotone:agent,getBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+
+        //TODO
+        //assertTrue(testUtteranceLLM("I want the red, blue, and green blocks at location one",
+        //        "",
+        //        "brad",
+        //        "robotone:agent"
+        //));
+
+        assertTrue(testUtteranceLLM("赤いブロックは位置1にあります",
+                "STATEMENT(brad,robotone:agent,and(not(at(VAR0:physobj,Y)),at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックは位置1に移動しました",
+                "STATEMENT(brad,robotone:agent,and(not(at(VAR0:physobj,Y)),at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックは場所2から場所1に移動しました",
+                "STATEMENT(brad,robotone:agent,and(not(at(VAR0:physobj,VAR1:pose)),at(VAR0:physobj,VAR2:pose)),{red block(VAR0:physobj),locationTwo(VAR1:pose),locationOne(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("赤いブロックはもう位置1には存在しません",
+                "STATEMENT(brad,robotone:agent,not(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("赤いブロックは位置1から移動しました",
+                "STATEMENT(brad,robotone:agent,not(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+
+        assertTrue(testUtteranceLLM("ericは監督者です",
+                "STATEMENT(brad,robotone:agent,supervisor(eric),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("ericは監督者ではありません",
+                "STATEMENT(brad,robotone:agent,not(supervisor(eric)),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("ericは管理者です",
+                "STATEMENT(brad,robotone:agent,admin(eric),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("ericは管理者ではありません",
+                "STATEMENT(brad,robotone:agent,not(admin(eric)),{})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        //TODO: issue somewhere with knowHow parse matching early when more args are present and overloaded entries exist which take in different numbers of args
+        //assertTrue(testUtteranceLLM("do you know how to get the red block to location one",
+        assertTrue(testUtteranceLLM("赤いブロックを場所1に移動する方法を知っていますか",
+                "QUESTION(brad,robotone:agent,knowHow(robotone:agent,to(moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose))),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("赤いブロックが見えますか",
+                "QUESTION(brad,robotone:agent,see(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        //assertTrue(testUtteranceLLM("do you know where the red block is",
+        //        "QUESTION(brad,robotone:agent,know(robotone:agent,at(VAR0:physobj,X)),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+        //        "brad",
+        //        "robotone:agent"
+        //));
+        assertTrue(testUtteranceLLM("赤いブロックはどこですか",
+                "INSTRUCT(brad,robotone:agent,describeBlockPose(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("作業領域にあるブロックは何ですか",
+                "INSTRUCT(brad,robotone:agent,describeKnownBlocks(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("位置1にあるブロックは何か",
+                "INSTRUCT(brad,robotone:agent,describeBlocksAt(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("場所1にはブロックがいくつあるか",
+                "INSTRUCT(brad,robotone:agent,describeNumberOfBlocksAt(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("位置 1 にブロックはありますか",
+                "QUESTION(brad,robotone:agent,blocksAt(VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("場所1に赤いブロックがありますか",
+                "QUESTION(brad,robotone:agent,at(VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("どのような種類のブロックを検出できますか",
+                "INSTRUCT(brad,robotone:agent,describeBlockTypes(robotone:agent),{})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        assertTrue(testUtteranceLLM("ericは監督者ですか",
+                "QUESTION(brad,robotone:agent,know(robotone:agent,supervisor(eric)),{})",
+                "brad",
+                "robotone:agent"
+        ));
+        assertTrue(testUtteranceLLM("ericは管理者ですか",
+                "QUESTION(brad,robotone:agent,know(robotone:agent,admin(eric)),{})",
+                "brad",
+                "robotone:agent"
+        ));
+
+        for (String line : llmSummary) {
+            log.info(line);
+        }
     }
 
 }

@@ -22,7 +22,7 @@ tasks.named("compileJava").get().dependsOn("copyGitHooks")
 // the repositories used to search for dependencies
 repositories {
   mavenCentral()
-//  mavenLocal()
+  mavenLocal()
   maven {
     name = "Thinking Robots TRADE mvn host"
     url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
@@ -109,9 +109,11 @@ tasks.named<Test>("test") {
   useJUnit()
   maxHeapSize = "4g"
   forkEvery = 1
-  classpath += files("src/test/resources") // this is so the ActionASLTest can read/write into this directory
+  classpath += files("src/test/resources") + // this is so the ActionASLTest can read/write into this directory
+               files(System.getProperty("user.home") + "/.diarc")
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
   systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
+  systemProperty("trade.properties.path", properties.getOrDefault("diarc.test.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
 
   // to run tests with logging printed to console
   if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {
@@ -179,7 +181,7 @@ dependencies {
   api("com.google.code.gson:gson:2.6.2")
   api("com.google.guava:guava:33.0.0-jre")
   //trade
-  api("ai.thinkingrobots:trade:1.1.0")
+  api("ai.thinkingrobots:trade:1.1.0-a")
 
   //junit
   testImplementation("junit:junit:4.13.1")
