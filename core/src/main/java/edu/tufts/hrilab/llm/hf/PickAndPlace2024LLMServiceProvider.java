@@ -277,4 +277,26 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             log.error("[testLLMNLGWithString] Error calling sayText", e);
         }
     }
+
+    //Hacky impl of getting japanese version of descriptors used in action scripts for TTS
+    @TRADEService
+    public String getJapaneseVersionOfDescriptor(Symbol descriptor) {
+        String descriptorString = descriptor.getName();
+        HashMap<String,String> descriptorMappings = new HashMap<>();
+        descriptorMappings.put("red block", "赤いブロック");
+        descriptorMappings.put("green block", "緑色のブロック");
+        descriptorMappings.put("blue block", "青いブロック");
+        descriptorMappings.put("orange block", "オレンジ色のブロック");
+        descriptorMappings.put("yellow block", "黄色いブロック");
+        descriptorMappings.put("location one", "位置1");
+        descriptorMappings.put("location two", "位置2");
+        descriptorMappings.put("location three", "位置3");
+        descriptorMappings.put("location four", "位置4");
+        descriptorMappings.put("location five", "位置5");
+        if (descriptorMappings.get(descriptorString) == null) {
+            return descriptorString;
+        } else {
+            return descriptorMappings.get(descriptorString);
+        }
+    }
 }

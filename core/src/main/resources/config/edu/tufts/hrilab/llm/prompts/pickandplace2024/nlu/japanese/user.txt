@@ -150,7 +150,7 @@ Output: {"Semantics":"not(admin(pete))","Input Type":"STATEMENT","Confidence":"1
 Example 27:
 #
 Input: 赤いブロックはどこにありますか
-Output: {"Semantics":"describeBlockLocation(robotone:agent,red block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"describeBlockPose(robotone:agent,red block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
 #
 Example 27 Notes: This example, like many of the immediately following examples are a bit tricky. These examples are all questions, but rather than being parsed at QUESTION, they are parsed as INSTRUCT commands which map to actions which answer questions. There is nothing inherent in the language which makes this the case, but referencing the list of valid actions and semantics known by the system will show that the desired outcome is to INSTRUCT this action whose corresponding description is to describe the location of the red block.
 ##

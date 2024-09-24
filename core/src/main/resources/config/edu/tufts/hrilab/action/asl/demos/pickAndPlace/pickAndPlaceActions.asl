@@ -1,6 +1,7 @@
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
 import java.util.List;
+import java.lang.String;
 import edu.tufts.hrilab.action.justification.Justification;
 
 (Symbol ?location) = getCurrentLocation() {
@@ -64,6 +65,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     Predicate !failCond;
     Predicate !blockAtPred;
     Symbol !descriptor;
+    String !japaneseDescriptor;
     Symbol !heldBlock;
 
     //TODO: assert ?object is actually a block?
@@ -72,8 +74,8 @@ import edu.tufts.hrilab.action.justification.Justification;
         !heldBlock = act:getHeldObject();
         if (~op:equals(?object,!heldBlock)) {
             !descriptor = tsc:getDescriptorForID(?object);
-            //TODO: replace !descriptor with Japanese version
-            (!bindings) = act:askQuestionFromString(?actor,"!descriptorがどこにあるかは分かりません。場所何番にありますか?", pose(X));
+            !japaneseDescriptor = tsc:getJapaneseVersionOfDescriptor(!descriptor);
+            (!bindings) = act:askQuestionFromString(?actor,"!japaneseDescriptorがどこにあるかは分かりません。場所何番にありますか?", pose(X));
             //(!bindings) = act:askQuestionFromString(?actor,"I dont know where the !descriptor is, at what pose can I expect to find it?", pose(X));
             !blockPose = op:get(!bindings,!x);
             if (op:equals(!blockPose,none)) {
@@ -283,18 +285,21 @@ import edu.tufts.hrilab.action.justification.Justification;
     Symbol !blockPose;
     Symbol !poseDescriptor;
     Symbol !blockDescriptor;
+    String !poseDescriptorJapanese;
+    String !blockDescriptorJapanese;
 
     !blockPose = act:getBlockPose(?block);
     !blockDescriptor = tsc:getDescriptorForID(?block);
     if (op:isNull(!blockPose)) {
         //act:generateResponseFromString("I do not know where the !blockDescriptor is");
-        //TODO: replace descriptor with Japanese version
-        act:generateResponseFromString("!blockDescriptorがどこにあるかが分かりません。");
+        !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
+        act:generateResponseFromString("!blockDescriptorJapaneseがどこにあるかが分かりません。");
     } else {
         !poseDescriptor = tsc:getDescriptorForPoseID(!blockPose);
         //act:generateResponseFromString("the !blockDescriptor is at !poseDescriptor");
-        //TODO: replace descriptors with Japanese versions
-        act:generateResponseFromString("!blockDescriptorは!poseDescriptorにあります");
+        !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
+        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
+        act:generateResponseFromString("!blockDescriptorJapaneseは!poseDescriptorJapaneseにあります");
     }
 }
 
@@ -307,6 +312,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     Symbol !block;
     Symbol !poseDescriptor;
     Symbol !blockDescriptor;
+    String !poseDescriptorJapanese;
+    String !blockDescriptorJapanese;
     java.lang.Boolean !knowBlockAt = false;
     java.util.HashMap !elem;
     edu.tufts.hrilab.fol.Variable !blockVar;
@@ -323,7 +330,9 @@ import edu.tufts.hrilab.action.justification.Justification;
         !poseDescriptor = tsc:getDescriptorForPoseID(!pose);
         if (~op:equals(!blockDescriptor,none)) {
             //act:generateResponseFromString("The !blockDescriptor is at !poseDescriptor");
-            act:generateResponseFromString("!blockDescriptorは!poseDescriptorにあります");
+            !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
+            !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
+            act:generateResponseFromString("!blockDescriptorJapaneseは!poseDescriptorJapaneseにあります");
             !knowBlockAt = op:newObject("java.lang.Boolean", true);
         }
     }
@@ -340,6 +349,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     Symbol !block;
     Symbol !blockDescriptor;
     Symbol !poseDescriptor;
+    String !blockDescriptorJapanese;
+    String !poseDescriptorJapanese;
     java.lang.Boolean !knowBlockAt = false;
     java.util.HashMap !elem;
     edu.tufts.hrilab.fol.Variable !blockVar;
@@ -352,15 +363,16 @@ import edu.tufts.hrilab.action.justification.Justification;
         !blockDescriptor = tsc:getDescriptorForID(!block);
         if (~op:equals(!blockDescriptor,none)) {
             //act:generateResponseFromString("There is a !blockDescriptor");
-            //TODO: replace descriptor with Japanese version
-            act:generateResponseFromString("!blockDescriptorがあります");
+            !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
+            act:generateResponseFromString("!blockDescriptorJapaneseがあります");
             !knowBlockAt = op:newObject("java.lang.Boolean", true);
         }
     }
     if (op:equals(!knowBlockAt,False)) {
         !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
         //act:generateResponseFromString("There are no blocks at !poseDescriptor");
-        act:generateResponseFromString("!poseDescriptorにブロックはありません");
+        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
+        act:generateResponseFromString("!poseDescriptorJapaneseにブロックはありません");
     }
 }
 
@@ -371,6 +383,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     Symbol !block;
     Symbol !blockDescriptor;
     Symbol !poseDescriptor;
+    String !poseDescriptorJapanese;
     java.lang.Boolean !knowBlockAt = false;
     java.util.HashMap !elem;
     edu.tufts.hrilab.fol.Variable !blockVar;
@@ -390,12 +403,12 @@ import edu.tufts.hrilab.action.justification.Justification;
     !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
     if (op:equals(!numBlocks,1)) {
         //act:generateResponseFromString("There is !numBlocks block at !poseDescriptor");
-        //TODO: replace descriptor with Japanese version
-        act:generateResponseFromString("!poseDescriptorにブロックは一個あります");
+        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
+        act:generateResponseFromString("!poseDescriptorJapaneseにブロックは一個あります");
     } else {
         //act:generateResponseFromString("There are !numBlocks blocks at !poseDescriptor");
-        //TODO: replace descriptor with Japanese version
-        act:generateResponseFromString("!poseDescriptorにブロックが!numBlocks個あります");
+        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
+        act:generateResponseFromString("!poseDescriptorJapaneseにブロックが!numBlocks個あります");
     }
 }
 

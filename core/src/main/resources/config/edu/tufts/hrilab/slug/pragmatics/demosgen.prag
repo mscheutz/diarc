@@ -22,6 +22,9 @@ END-SET
 NEW-SET
 RULES
 REPLY(A,B,cannot(putDown(C,D),because(occupied(E))),Z) := REPLY(A,B,cannot(did(putDown(C,D)),because(isOccupied(E))),Z)
+REPLY(A,B,cannot(handleSemantics(C,val(D)),because(not(know(C,how(handled(C,C,val(D),direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noQuestionWasAsked)),Z)
+REPLY(A,B,cannot(handleSemantics(C,D),because(not(know(C,how(handled(C,C,D,direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noQuestionWasAsked)),Z)
+
 END-SET
 
 #Pick and Place 2024
