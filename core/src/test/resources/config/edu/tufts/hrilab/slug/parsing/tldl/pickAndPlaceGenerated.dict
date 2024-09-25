@@ -25,3 +25,15 @@ red block; PROPERTY; red block:property
 green block; REF; green block:physobj ; DEFINITE
 green block; RN; green block:physobj ; VAR
 green block; PROPERTY; green block:property
+
+blue block; REF; blue block:physobj ; DEFINITE
+blue block; RN; blue block:physobj ; VAR
+blue block; PROPERTY; blue block:property
+
+yellow block; REF; yellow block:physobj ; DEFINITE
+yellow block; RN; yellow block:physobj ; VAR
+yellow block; PROPERTY; yellow block:property
+
+orange block; REF; orange block:physobj ; DEFINITE
+orange block; RN; orange block:physobj ; VAR
+orange block; PROPERTY; orange block:property

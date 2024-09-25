@@ -60,7 +60,7 @@ Description: The ?actor will tell the user all the blocks it believes are curren
 describeNumberOfBlocksAt(?actor,?pose:pose)
 Description: The ?actor will tell the user the number of blocks it believes are currently at pose ?pose.
 #
-describeBlocksTypes(?actor)
+describeBlockTypes(?actor)
 Description: The ?actor will tell the user all the colors of blocks it currently knows of and can detect.
 #
 describeCurrentGoal(?actor)

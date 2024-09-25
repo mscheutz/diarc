@@ -109,9 +109,11 @@ tasks.named<Test>("test") {
   useJUnit()
   maxHeapSize = "4g"
   forkEvery = 1
-  classpath += files("src/test/resources") // this is so the ActionASLTest can read/write into this directory
+  classpath += files("src/test/resources") + // this is so the ActionASLTest can read/write into this directory
+               files(System.getProperty("user.home") + "/.diarc")
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
   systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
+  systemProperty("trade.properties.path", properties.getOrDefault("diarc.test.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
 
   // to run tests with logging printed to console
   if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {

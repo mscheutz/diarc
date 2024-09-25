@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class LLMServiceProvider extends DiarcComponent implements NLGInterface{
     boolean performNLG = true;
     SimpleNLGComponent nlg;
+    boolean parserTest = false;
 
     //Set of specific user/agent back and forths to get to the bottom of a single NLU attempt
     Map<Pair<Symbol,Symbol>,Chat> currentChats = new HashMap<>();
@@ -88,12 +89,14 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     @Override
     protected void init() {
         super.init();
-        shouldRunExecutionLoop = true;
-        //if (!performNLG) {
-        //    nlg = new SimpleNLGComponent();
-        //}
-        //Always instantiating as a fallback in case LLM gets overloaded or completion request throws any other exception
-        nlg = new SimpleNLGComponent();
+        if (!parserTest) {
+            shouldRunExecutionLoop = true;
+            //if (!performNLG) {
+            //    nlg = new SimpleNLGComponent();
+            //}
+            //Always instantiating as a fallback in case LLM gets overloaded or completion request throws any other exception
+            nlg = new SimpleNLGComponent();
+        }
     }
 
     //@Override
@@ -461,5 +464,10 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     @TRADEService
     public boolean usingLLMNLG() {
         return performNLG;
+    }
+
+    //TODO: Don't keep this function around
+    public void setAgentHierarchy(Map<Symbol,Set<Symbol>> hierarchy) {
+        agentHierarchy = hierarchy;
     }
 }

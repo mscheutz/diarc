@@ -35,21 +35,15 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         log.info(llmResponse.getText());
         String responseString = llmResponse.getText();
 
-        Pattern semanticsPattern = Pattern.compile(".*\"?Semantics\"?\\s*:\\s*\"?(.*)\\((.*?)\\)\"?,\\s*\"?Input Type\"?:.*", Pattern.DOTALL);
+        Pattern semanticsPattern = Pattern.compile(".*\"?Semantics\"?\\s*:\\s*\"?(.*)\"?,\\s*\"?Input Type\"?:.*", Pattern.DOTALL);
         Matcher m = semanticsPattern.matcher(responseString);
         if (!m.matches()) {
             log.error("[spotPickAndPlaceLLMParser] cannot find Semantics result in LLM response");
             return incomingUtterance;
         }
-        String name = m.group(m.groupCount()-1);
-        String argString= m.group(m.groupCount());
-        //argString = argString.replace("\s","");
-        String[] argsStrings;
-        if (argString.isEmpty()) {
-            argsStrings = new String[0];
-        } else {
-            argsStrings = argString.split(",");
-        }
+        Predicate semantics = Factory.createPredicate(m.group(m.groupCount()));
+        String semanticsString = semantics.toString();
+        List<String> argsStrings = getArgsAsStrings(semantics);
 
         Pattern typePattern = Pattern.compile(".*\"?Input Type\"?\\s*:\\s*\"?(.*?)\"?,\\s*\"?Confidence\"?:.*", Pattern.DOTALL);
         m = typePattern.matcher(responseString);
@@ -83,33 +77,53 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         output.setUtteranceType(utteranceType);
 
         int varIndex = 0;
-        List<Symbol> args = new ArrayList<>();
-        List<Variable> vars = new ArrayList<>();
-        List<String> descriptors = new ArrayList<>();
+        Map<Symbol,Variable> varMap = new LinkedHashMap<>();
         for (String arg : argsStrings) {
+            if (arg.startsWith("?")) {
+                log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}",responseString);
+                return incomingUtterance;
+            }
             Symbol argSymbol = Factory.createFOL(arg);
-            //TODO: should generally be any reference, just know in this case all references will be locations
-            if (argSymbol.getType().equals("pose") || argSymbol.getType().equals("physobj")) {
-                Variable var = Factory.createVariable("VAR"+varIndex+++":"+argSymbol.getType());
-                vars.add(var);
-                descriptors.add(argSymbol.getName());
-                args.add(var);
-            } else {
-                args.add(Factory.createFOL(arg));
+            //Should generally be any reference, just know in this case all references will be locations
+            if (argSymbol != null && (argSymbol.getType().equals("pose") || argSymbol.getType().equals("physobj"))) {
+                if (!varMap.containsKey(argSymbol)) {
+                    Variable var = Factory.createVariable("VAR" + varIndex++ + ":" + argSymbol.getType());
+                    varMap.put(argSymbol, var);
+                }
             }
         }
 
-        output.setSemantics(Factory.createPredicate(name,args));
-        for (int i=0; i<vars.size(); i++) {
-            output.addSupplementalSemantics(Factory.createPredicate(descriptors.get(i), vars.get(i)));
+        for (Map.Entry<Symbol,Variable> entry : varMap.entrySet()) {
+            semanticsString = semanticsString.replace(entry.getKey().toString(), entry.getValue().toString());
+            output.addSupplementalSemantics(Factory.createPredicate(entry.getKey().toUntypedString(), entry.getValue()));
 
             Symbol tier = Factory.createSymbol("DEFINITE");
-            output.addTierAssignment(vars.get(i), tier);
+            output.addTierAssignment(entry.getValue(), tier);
         }
+        output.setSemantics(Factory.createPredicate(semanticsString));
 
         output.setNeedsValidation(true);
 
         return output.build();
+    }
+
+    private List<String> getArgsAsStrings(Symbol fol) {
+        List<String> argsStrings = new ArrayList<>();
+        if (fol.isPredicate()) {
+            for (Symbol arg: ((Predicate)fol).getArgs()) {
+                if (arg.isPredicate()) {
+                    argsStrings.add(arg.getName());
+                    for (Symbol argsArg : ((Predicate)arg).getArgs()) {
+                        argsStrings.addAll(getArgsAsStrings(argsArg));
+                    }
+                } else {
+                    argsStrings.add(arg.toString());
+                }
+            }
+        } else {
+            argsStrings.add(fol.toString());
+        }
+        return argsStrings;
     }
 
     @Override
@@ -261,6 +275,28 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(String.class)).call(Void.class,utterance.getWordsAsString());
         } catch (TRADEException e) {
             log.error("[testLLMNLGWithString] Error calling sayText", e);
+        }
+    }
+
+    //Hacky impl of getting japanese version of descriptors used in action scripts for TTS
+    @TRADEService
+    public String getJapaneseVersionOfDescriptor(Symbol descriptor) {
+        String descriptorString = descriptor.getName();
+        HashMap<String,String> descriptorMappings = new HashMap<>();
+        descriptorMappings.put("red block", "赤いブロック");
+        descriptorMappings.put("green block", "緑色のブロック");
+        descriptorMappings.put("blue block", "青いブロック");
+        descriptorMappings.put("orange block", "オレンジ色のブロック");
+        descriptorMappings.put("yellow block", "黄色いブロック");
+        descriptorMappings.put("location one", "位置1");
+        descriptorMappings.put("location two", "位置2");
+        descriptorMappings.put("location three", "位置3");
+        descriptorMappings.put("location four", "位置4");
+        descriptorMappings.put("location five", "位置5");
+        if (descriptorMappings.get(descriptorString) == null) {
+            return descriptorString;
+        } else {
+            return descriptorMappings.get(descriptorString);
         }
     }
 }
