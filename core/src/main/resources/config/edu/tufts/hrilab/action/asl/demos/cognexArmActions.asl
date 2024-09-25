@@ -32,6 +32,8 @@ import edu.tufts.hrilab.fol.Variable;
 () = grabPerceivedEntity(Symbol ?physobj, Symbol ?pose) {
     conditions : {
         pre : free(?actor);
+        pre : at(?physobj,?pose);
+        pre : at(?actor, ?pose);
     }
     effects : {
         success : holding(?actor, ?physobj);
@@ -51,6 +53,7 @@ import edu.tufts.hrilab.fol.Variable;
     tsc:closeGripper();
     act:moveToCameraHeight();
     act:rotateToEE(!default);
+    act:goToCameraPose(?pose);
     op:log(info, "[grabPerceivedEntity] ?physobj complete");
 }
 
@@ -85,6 +88,7 @@ import edu.tufts.hrilab.fol.Variable;
     tsc:closeGripper();
     act:moveToCameraHeight();
     act:rotateToEE(!default);
+    act:goToCameraPose(?pose);
     op:log(info, "[grab] ?physobj complete");
 }
 
@@ -101,15 +105,29 @@ import edu.tufts.hrilab.fol.Variable;
 
     Symbol !default = "default";
     Symbol !gripper = "gripper";
+    java.lang.Double !objectHeightM = 0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
+    java.lang.Double !negObjectHeightM = -0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
+    java.lang.Double !dim = 50;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
+    Predicate !failPred;
+    java.lang.Boolean !result;
+
+    !failPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "full(?pose)");
 
     op:log(info, "[putdown] ?physobj + ?pose");
 
+    tsc:moveZRelative(!objectHeightM);
+    !result = tsc:moveToOpenLocation(!dim, "blocksDet"); //todo: THIS STRING SHOULDN'T BE HARDCODED
+    op:log(debug, "[putdown] result of moveToOpenLocation: !result");
+    if (~op:equals(!result, true)) {
+        exit(FAIL, !failPred);
+    }
+    tsc:moveZRelative(!negObjectHeightM);
     act:rotateToEE(!gripper);
     act:moveToObjectHeight();
     tsc:openGripper();
     act:moveToCameraHeight();
     act:rotateToEE(!default);
-
+    act:goToCameraPose(?pose);
     op:log(info, "[putdown] ?physobj + ?pose complete");
 }
 

@@ -9,7 +9,9 @@ import edu.tufts.hrilab.fol.Term;
     Symbol !robotone="robotone:agent";
 
     //todo: there should be unique jobs for each of the block types (pete)
-    Symbol !jobNameBlock = "nvDet";
+    Symbol !jobNameBlock = "blocksDet";
+    Symbol !jobNameRed = "blocksDet";
+    Symbol !jobNameGreen = "blocksDet";
 
     Symbol !redBlockDescriptor = "red block";
     Symbol !blueBlockDescriptor = "blue block";
@@ -22,12 +24,12 @@ import edu.tufts.hrilab.fol.Term;
     Term !props;
 
     //add descriptor -> Cognex job mappings
-    !robotone.tsc:addDetectionType(!redBlockDescriptor,!jobNameBlock);
+    !robotone.tsc:addDetectionType(!redBlockDescriptor,!jobNameRed);
     !robotone.tsc:addDetectionType(!blueBlockDescriptor,!jobNameBlock);
-    !robotone.tsc:addDetectionType(!greenBlockDescriptor,!jobNameBlock);
+    !robotone.tsc:addDetectionType(!greenBlockDescriptor,!jobNameGreen);
 
     //red block//
-    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!redBlockDescriptor,0.045,0.0)");
+    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!redBlockDescriptor,0.050,0.0)");
     act:assertBelief(!toAssert);
     !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(red block(X:physobj))");
     !redBlock = act:positReference(!props);
@@ -36,7 +38,7 @@ import edu.tufts.hrilab.fol.Term;
     act:assertBelief(!toAssert);
 
     //blue block//
-    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!blueBlockDescriptor,0.045,0.0)");
+    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!blueBlockDescriptor,0.050,0.0)");
     act:assertBelief(!toAssert);
     !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(blue block(X:physobj))");
     !blueBlock = act:positReference(!props);
@@ -45,8 +47,13 @@ import edu.tufts.hrilab.fol.Term;
     act:assertBelief(!toAssert);
 
     //green block//
-    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!greenBlockDescriptor,0.045,0.0)");
+    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!greenBlockDescriptor,0.050,0.0)");
     act:assertBelief(!toAssert);
+//    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(green block(X:physobj))");
+//    !greenBlock = act:positReference(!props);
+//    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!greenBlock,pose_0:pose)");
+//    op:log(debug, "[init] asserting !toAssert");
+//    act:assertBelief(!toAssert);
 
 
     !robotone.act:setupPoses();
@@ -57,7 +64,7 @@ import edu.tufts.hrilab.fol.Term;
     Symbol !locationTwo= "location two";
     Symbol !locationThree = "location three";
 
-    Symbol !conveyorHeight = "50";
+    Symbol !conveyorHeight = "45";
     Symbol !workHeight = "-13";
     Symbol !default = "default";
 
@@ -72,7 +79,7 @@ import edu.tufts.hrilab.fol.Term;
     !cameraHeight = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cameraHeight(?actor,338)");
     act:assertBelief(!cameraHeight);
 
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 510.00f, 0.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
+    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 550.00f, 0.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
     tsc:recordPose(!locationOne, !pose, !conveyorHeight);
     op:log(info, "Setup !locationOne for ?actor");
 
@@ -84,9 +91,10 @@ import edu.tufts.hrilab.fol.Term;
     tsc:recordPose(!locationThree, !pose, !workHeight);
     op:log(info, "Setup !locationThree for ?actor");
 
+    act:goToCameraPose(pose_0:pose);
+
     //These are here so they are done for each robot if we have more than one
     tsc:openGripper();
     act:rotateToEE(!default);
-
 
 }

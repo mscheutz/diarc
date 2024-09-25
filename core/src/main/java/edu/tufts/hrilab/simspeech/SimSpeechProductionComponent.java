@@ -81,13 +81,12 @@ public class SimSpeechProductionComponent extends DiarcComponent implements Spee
 
     isSpeaking = true;
     String[] words = in.split(" ");
-    //long tmptime = 200 * words.length;
-    //if (tmptime < 500) {
-    //  tmptime = 500;
-    //} else if (tmptime > 2000) {
-    //  tmptime = 2000;
-    //}
-    long tmptime = 20000;
+    long tmptime = 200 * words.length;
+    if (tmptime < 500) {
+      tmptime = 500;
+    } else if (tmptime > 2000) {
+      tmptime = 2000;
+    }
     final long time = tmptime;
     synchronized (syncObj) {
       textTs = System.currentTimeMillis();

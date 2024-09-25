@@ -48,6 +48,22 @@ import edu.tufts.hrilab.action.justification.Justification;
     }
 }
 
+(Symbol ?holding) = checkHolding(Symbol ?physobj) {
+    Predicate !queryPred;
+    List !bindings;
+
+    ?holding = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "false");
+
+    java.util.HashMap !elem;
+    edu.tufts.hrilab.fol.Variable !bindingVar;
+    !bindingVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,?physobj)");
+    !bindings = act:queryBelief(!queryPred);
+    if (~op:isEmpty(!bindings)) {
+        ?holding = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "true");
+    }
+}
+
 () = openGripper() {
     tsc:openGripper();
 }
@@ -64,18 +80,18 @@ import edu.tufts.hrilab.action.justification.Justification;
     Predicate !failCond;
     Predicate !blockAtPred;
     Symbol !descriptor;
-    Symbol !heldBlock;
+    Symbol !holding;
 
     //TODO: assert ?object is actually a block?
     !blockPose = act:getBlockPose(?object);
-    if (op:isNull(!blockPose)) {
-        !heldBlock = act:getHeldObject();
-        if (~op:equals(?object,!heldBlock)) {
+    !holding = act:checkHolding(?object);
+    if (op:equalsValue(!holding, false)) {
+        if (op:isNull(!blockPose)) {
             !descriptor = tsc:getDescriptorForID(?object);
             (!bindings) = act:askQuestionFromString(?actor,"I dont know where the !descriptor is, at what pose can I expect to find it?", pose(X));
             !blockPose = op:get(!bindings,!x);
             if (op:equals(!blockPose,none)) {
-                !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,theLocationOf,?object))");
+                !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "know(?actor,theLocationOf,?object)");
                 exit(FAIL, !failCond);
             } else {
                 !blockAtPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,!blockPose)");
@@ -124,9 +140,10 @@ import edu.tufts.hrilab.action.justification.Justification;
 
 //Placeholder
 (List ?bindings) = perceiveEntities() {
-//(Symbol ?bindings) = perceiveEntities() {
-//    ?bindings = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "robotonephysobj_0:physobj");
-//    act:perceiveEntity(?bindings);
+    //runs a job that looks for all items known to the system and returns the set of (orderd) results. then binds the associated refrerences.
+
+
+
 }
 
 () = pickUp(Symbol ?object) {
@@ -177,11 +194,11 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     op:log(info, "[putDown]");
 
-    !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "has(theLocationBelowMe,space)");
-    !failJustification = op:newObject("edu.tufts.hrilab.action.justification.ConditionJustification", false, !failCond);
-    !thisStep = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "putDown(?actor)");
-    op:invokeMethod(!failJustification, "setStep", !thisStep);
-    exit(FAIL_PRECONDITIONS, !failJustification);
+//    !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "has(theLocationBelowMe,space)");
+//    !failJustification = op:newObject("edu.tufts.hrilab.action.justification.ConditionJustification", false, !failCond);
+//    !thisStep = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "putDown(?actor)");
+//    op:invokeMethod(!failJustification, "setStep", !thisStep);
+//    exit(FAIL_PRECONDITIONS, !failJustification);
 
     ////TODO: Should just push this down into the putdown primitive and have recovery policy only apply to this script
     //!results = act:perceiveEntities();
@@ -194,9 +211,9 @@ import edu.tufts.hrilab.action.justification.Justification;
     //        op:invokeMethod(!failJustification, "setStep", !thisStep);
     //        exit(FAIL_PRECONDITIONS, !failJustification);
     //    } else {
-    //        !location = act:getCurrentLocation();
-    //        !object = act:getHeldObject();
-    //        act:putdown(!object,!location);
+    !location = act:getCurrentLocation();
+    !object = act:getHeldObject();
+    act:putdown(!object,!location);
     //    }
     //} else {
     //    !failConds = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(implemented(perceiveEntities))");
@@ -441,4 +458,12 @@ import edu.tufts.hrilab.action.justification.Justification;
        act:generateResponseFromString("no pending goals");
     }
 
+}
+
+() = openGripper() {
+    tsc:openGripper();
+}
+
+() = closeGripper() {
+    tsc:closeGripper();
 }
