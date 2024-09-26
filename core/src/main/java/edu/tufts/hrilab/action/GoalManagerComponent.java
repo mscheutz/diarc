@@ -8,29 +8,32 @@ import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.execution.*;
-import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.goal.Goal;
+import edu.tufts.hrilab.action.goal.GoalInfo;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.goal.PriorityTier;
-import edu.tufts.hrilab.action.gui.GoalManagerGUI;
+import edu.tufts.hrilab.action.gui.ActionProgrammerAdapter;
+import edu.tufts.hrilab.action.gui.GoalManagerAdapter;
+import edu.tufts.hrilab.action.gui.GoalViewerAdapter;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.action.lock.ActionResourceLockLinear;
 import edu.tufts.hrilab.action.manager.ExecutionManager;
 import edu.tufts.hrilab.action.manager.PriorityInfo;
+import edu.tufts.hrilab.action.notification.GoalManagerNotifier;
+import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.action.planner.pddl.PddlParser;
 import edu.tufts.hrilab.action.selector.ActionSelector;
-import edu.tufts.hrilab.action.db.Database;
-import edu.tufts.hrilab.action.db.ActionDBEntry;
-import edu.tufts.hrilab.action.db.DatabaseListener;
-import edu.tufts.hrilab.action.lock.ActionResourceLockLinear;
-
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.belief.common.MemoryLevel;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.gui.GuiProvider;
 import edu.tufts.hrilab.util.Util;
 
 import java.io.BufferedReader;
@@ -41,10 +44,10 @@ import java.util.stream.Collectors;
 import edu.tufts.hrilab.util.resource.Resources;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-
-import ai.thinkingrobots.trade.*;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+
+import javax.annotation.Nonnull;
 
 /**
  * The Goal Manager (also called the Action Manager or simply “Action”)
@@ -54,11 +57,7 @@ import org.apache.commons.lang3.tuple.Pair;
  * conditions for their execution are met. When interfaced with a Planner
  * the Goal Manager can plan as well as avoid and resolve conflicting actions.
  */
-public class GoalManagerComponent extends DiarcComponent {
-  /**
-   * Optional GUI.
-   */
-  private GoalManagerGUI gui = null;
+public class GoalManagerComponent extends DiarcComponent implements GuiProvider {
   /**
    * ExecutionManager instance.
    */
@@ -109,10 +108,6 @@ public class GoalManagerComponent extends DiarcComponent {
    */
   private Map<String, PriorityInfo> goalPriorities;
   /**
-   * Main GoalManager gui flag.
-   */
-  private boolean showEditor = false;
-  /**
    * Action learning gui flag.
    */
   private boolean displayActionLearningGui = false;
@@ -157,7 +152,6 @@ public class GoalManagerComponent extends DiarcComponent {
     options.add(Option.builder("performancefile").hasArgs().argName("file").desc("parse performance models file").build());
     options.add(Option.builder("performancefileDir").hasArg().argName("dir").desc("set default action performance directory so filenames (without path) can be passed with -performancefile").build());
     options.add(Option.builder("selector").hasArg().argName("classpath").desc("set action selector type (must be full classpath)").build());
-    options.add(Option.builder("editor").desc("display main goal manager gui").build());
     options.add(Option.builder("learningGui").desc("display learning gui").build());
     options.add(Option.builder("goal").hasArgs().argName("goal-pred").desc("start goal with specified goal predicate. \"goal(actor,state)\" or \"action(actor,args)\"").build());
     options.add(Option.builder("badaction").numberOfArgs(1).desc("add bad action").build());
@@ -222,9 +216,6 @@ public class GoalManagerComponent extends DiarcComponent {
     if (cmdLine.hasOption("performancefiledir")) {
       performanceFileDir = cmdLine.getOptionValue("performancefileDir");
     }
-    if (cmdLine.hasOption("editor")) {
-      showEditor = true;
-    }
     if (cmdLine.hasOption("learningGui")) {
       displayActionLearningGui = true;
     }
@@ -280,9 +271,7 @@ public class GoalManagerComponent extends DiarcComponent {
     initializeGM();
     initializeDB();
     notifier = new GoalManagerNotifier();
-    if (showEditor) {
-      showEditor("config/edu/tufts/hrilab/action/asl");
-    }
+    Database.getInstance().addListener(notifier);
 
     //Load goal priorities
     String filepath = Resources.createFilepath("config/edu/tufts/hrilab/action/manager/priority", priorityFile);
@@ -350,13 +339,6 @@ public class GoalManagerComponent extends DiarcComponent {
     }
 
     log.debug("DB initialized");
-  }
-
-  /**
-   * Display a GUI for this goal manager
-   */
-  public void showEditor(String path) {
-    gui = new GoalManagerGUI(this, path);
   }
 
   /**
@@ -530,6 +512,14 @@ public class GoalManagerComponent extends DiarcComponent {
     return submitGoal(g, type, priorityTier, priority);
   }
 
+  /**
+   * Submit a goal to be achieved.
+   *
+   * @param g            the goal in goal(actor,state) or action(actor,args) form
+   * @param type         action execution type
+   * @param priorityTier priority tier for the submitted goal (overrides default value)
+   * @return the goal ID (for checking status)
+   */
   @TRADEService
   @Action
   public long submitGoal(Predicate g, ExecutionType type, Symbol priorityTier) {
@@ -552,6 +542,7 @@ public class GoalManagerComponent extends DiarcComponent {
     log.debug("[submitGoal]: " + g + " with execution type: " + type + ", priority: " + priority + ", and priority tier: " + priorityTier);
 
     Goal goal = new Goal(g);
+    goal.addListener(this.notifier);
     goal.setPriority(priority);
     goal.setPriorityTier(priorityTier);
     goal = em.submitGoal(goal, type);
@@ -562,9 +553,10 @@ public class GoalManagerComponent extends DiarcComponent {
   }
 
   /**
-   * Submit a goal to be achieved.
+   * Submit a goal with a metric for planning
    *
-   * @param g the goal in goal(actor,state) or action(actor,args) form
+   * @param g      the goal in goal(actor,state) or action(actor,args) form
+   * @param metric the metric in maximize(...) or minimize(...) form
    * @return the goal ID (for checking status)
    */
   @TRADEService
@@ -574,6 +566,7 @@ public class GoalManagerComponent extends DiarcComponent {
     PriorityTier priorityTier = getPriorityTierForGoal(g);
     long priority = getPriorityForGoal(g);
     Goal goal = new Goal(g);
+    goal.addListener(this.notifier);
     goal.setPriorityTier(priorityTier);
     goal.setPriority(priority);
     goal.setMetric(metric);
@@ -692,21 +685,29 @@ public class GoalManagerComponent extends DiarcComponent {
   }
 
   /**
-   * Get a copied list of the previously executed goals
+   * Get a copied list of previously executed goals.
    *
-   * @return list of Goals
+   * @return list of past <code>Goal</code>s
    */
-  public List<Goal> getPastGoals() {
-    return em.getPastGoals();
+  @TRADEService
+  public List<Predicate> getPastGoals() {
+    List<Predicate> result = new ArrayList<>();
+    for (Goal g : em.getPastGoals())
+      result.add(g.getPredicate());
+    return result;
   }
 
   /**
    * Get a copied list of the goals currently undergoing execution.
    *
-   * @return list of Goals
+   * @return list of active <code>Goal</code>s
    */
-  public List<Goal> getActiveGoals() {
-    return em.getActiveGoals();
+  @TRADEService
+  public List<Predicate> getActiveGoals() {
+    List<Predicate> result = new ArrayList<>();
+    for (Goal g : em.getActiveGoals())
+      result.add(g.getPredicate());
+    return result;
   }
 
   /**
@@ -724,6 +725,32 @@ public class GoalManagerComponent extends DiarcComponent {
       }
     }
     return pg;
+  }
+
+  /**
+   * Get goal metadata.
+   *
+   * @param goalID the goal id
+   * @return a GoalInfo object
+   */
+  @TRADEService
+  public GoalInfo getGoalInfo(long goalID) {
+    Goal goal = getGoal(goalID);
+    return goal.getInfo();
+  }
+
+  /**
+   * Get GoalInfo for all (active, current, past) goals.
+   *
+   * @return
+   */
+  @TRADEService
+  public List<GoalInfo> getAllGoals() {
+    List<GoalInfo> goals = new ArrayList<>();
+    em.getActiveGoals().forEach(g -> goals.add(g.getInfo()));
+    em.getCurrentGoals().forEach(g -> goals.add(g.getInfo()));
+    em.getPastGoals().forEach(g -> goals.add(g.getInfo()));
+    return goals;
   }
 
   /**
@@ -885,83 +912,32 @@ public class GoalManagerComponent extends DiarcComponent {
   }
 
   /**
-   * Register to be notified of all new actions and removed actions.
+   * Register to be notified of the specified NotificationType.
    *
-   * @param callback
+   * @see edu.tufts.hrilab.action.notification.GoalManagerNotifier for details on expected callback signatures.
+   *
+   * @param callback TRADE service callback
+   * @param type NotificationType
    */
   @TRADEService
-  public void registerNotification(TRADEServiceInfo callback) {
-    notifier.registerNotification(callback);
+  public void registerGoalManagerNotification(TRADEServiceInfo callback, NotificationType type) {
+    notifier.registerNotification(callback, type);
   }
 
   /**
-   * Unregister to be notified of all new actions and removed actions.
+   * Unregister to be notified of the specified NotificationType.
    *
-   * @param callback
+   * @param callback TRADE service callback
+   * @param type NotificationType
    */
   @TRADEService
-  public void unregisterNotification(TRADEServiceInfo callback) {
-    notifier.registerNotification(callback);
-  }
-
-  private class GoalManagerNotifier implements DatabaseListener {
-    /**
-     * Map of components that have requested notifications to their associated callbacks
-     */
-    private final Set<TRADEServiceInfo> componentsToNotifyCallbacks;
-
-    public GoalManagerNotifier() {
-      componentsToNotifyCallbacks = Collections.synchronizedSet(new HashSet<>());
-      Database.getInstance().addListener(this);
-    }
-
-    public void registerNotification(TRADEServiceInfo callback) {
-      componentsToNotifyCallbacks.add(callback);
-      // initially send all current actions from db
-      sendNotifications(new ArrayList<>(Database.getActionDB().getAllActions()));
-    }
-
-    public void unregisterNotification(TRADEServiceInfo callback) {
-      componentsToNotifyCallbacks.remove(callback);
-    }
-
-    //EW: Is this currently used anywhere? Modifying notification type for external action display and
-    //      modification through firebase webapp
-    private void sendNotifications(List<ActionDBEntry> actions) {
-      log.debug("[sendNotifications] action(s): " + actions);
-      // must synchronize explicitly while iterating over synchronizedSet
-      synchronized (componentsToNotifyCallbacks) {
-        for (TRADEServiceInfo callback : componentsToNotifyCallbacks) {
-          try {
-            callback.call(void.class, actions);
-          } catch (Exception e) {
-            log.error("Problem making notification callback.", e);
-          }
-        }
-      }
-    }
-
-    @Override
-    public void actionAdded(ActionDBEntry adb) {
-      if (!componentsToNotifyCallbacks.isEmpty()) {
-        List<ActionDBEntry> adbList = new ArrayList<>();
-        adbList.add(adb);
-        sendNotifications(adbList);
-      }
-    }
-
-    @Override
-    public void actionRemoved(ActionDBEntry adb) {
-      if (!componentsToNotifyCallbacks.isEmpty()) {
-        List<ActionDBEntry> adbList = new ArrayList<>();
-        adbList.add(adb);
-        sendNotifications(adbList);
-      }
-    }
+  public void unregisterGoalManagerNotification(TRADEServiceInfo callback, NotificationType type) {
+    notifier.unregisterNotification(callback, type);
   }
 
   /**
    * Utility method mainly used for testing.
+   *
    * @param predicate
    */
   public void setState(Predicate predicate) {
@@ -986,6 +962,15 @@ public class GoalManagerComponent extends DiarcComponent {
       em.shutdown();
     }
     Database.destroyInstance();
+    ActionSelector.destroyInstance();
   }
 
+  @Nonnull
+  @Override
+  public String[] getAdapterClassNames() {
+    return new String[]{
+            GoalViewerAdapter.class.getName(),
+            GoalManagerAdapter.class.getName()
+    };
+  }
 }

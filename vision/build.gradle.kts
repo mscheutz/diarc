@@ -7,7 +7,11 @@ plugins {
 repositories {
   mavenLocal()
   mavenCentral() // main maven archive
-    maven { // hrilab archive
+  maven {
+    name = "Thinking Robots TRADE mvn host"
+    url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
+  }
+  maven { // hrilab archive
     name = "HRILabArchiva"
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
     isAllowInsecureProtocol = true
@@ -153,4 +157,5 @@ dependencies {
 
   testImplementation("junit:junit:4.13.1")
 
+  implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
 }

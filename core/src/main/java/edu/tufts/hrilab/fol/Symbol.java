@@ -107,6 +107,19 @@ public class Symbol implements Cloneable, Serializable {
   }
 
   /**
+   * Get untyped version of this Symbol. If already untyped, returns "this".
+   *
+   * @return
+   */
+  public Symbol toUntyped() {
+    if (!hasType()) {
+      return this;
+    } else {
+      return Factory.createSymbol(name);
+    }
+  }
+
+  /**
    * Returns a FOL instance that is not negated (i.e., drops outer "not" if it exists). This doesn't
    * apply to the Symbol class which can't be negated, but is here as a convenience so that Term/Predicate
    * instances passed as Symbols (e.g., via getArgs) don't need to be cast to Term/Predicate.

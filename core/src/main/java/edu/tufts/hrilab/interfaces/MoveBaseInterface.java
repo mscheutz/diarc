@@ -51,10 +51,11 @@ public interface MoveBaseInterface {
     observable = {"at(?actor,?location"}
   )
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
-  Justification goToLocation(Symbol location, boolean wait) ;
+  Justification goToLocation(Symbol location, boolean wait);
 
   /**
    * go to the location and then move forward until certain distance from object in front
+   *
    * @param location name of the desired location to navigate to
    * @return justification specifying if the robot navigated to the location
    */
@@ -66,10 +67,11 @@ public interface MoveBaseInterface {
       observable = {"at(?actor,?location"}
   )
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
-  Justification goToLocation(Symbol location) ;
+  Justification goToLocation(Symbol location);
 
   /**
    * go to the location and then move forward until certain distance from object in front
+   *
    * @param desiredLocation name of the desired location to navigate to
    * @param initialLocation name of the initial location to navigate from -- used for conditions and effects
    * @return justification specifying if the robot navigated to the location
@@ -91,22 +93,24 @@ public interface MoveBaseInterface {
 
   /**
    * go to the point and orientation
-   * @param xdest x point
-   * @param ydest y point
+   *
+   * @param xdest  x point
+   * @param ydest  y point
    * @param quat_x x quaternion value
    * @param quat_y y quaternion value
    * @param quat_z z quaternion value
    * @param quat_w w quaternion value
-   * @param wait should robot wait until reached desired point and orientation
+   * @param wait   should robot wait until reached desired point and orientation
    * @return justification if the robot reach the desired point and orientation
    */
   @TRADEService
   @Action
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
-  Justification goToLocation(double xdest, double ydest, double quat_x, double quat_y, double quat_z, double quat_w, boolean wait) ;
+  Justification goToLocation(double xdest, double ydest, double quat_x, double quat_y, double quat_z, double quat_w, boolean wait);
 
   /**
    * go to the location and then move forward until certain distance from object in front
+   *
    * @param location name of the desired location to navigate to
    * @return justification specifying if the robot navigated to the location
    */
@@ -118,10 +122,11 @@ public interface MoveBaseInterface {
     observable = {"at(?actor,?location"}
   )
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
-  Justification approachLocation(Symbol location) ;
+  Justification approachLocation(Symbol location);
 
   /**
    * go to the location and then move forward until certain distance from object in front
+   *
    * @param desiredLocation name of the desired location to navigate to
    * @param initialLocation name of the initial location to navigate from -- used for conditions and effects
    * @return justification specifying if the robot navigated to the location
@@ -143,14 +148,15 @@ public interface MoveBaseInterface {
 
   @TRADEService
   @Action
-  Justification stop() ;
+  Justification stop();
 
   @TRADEService
   @Action
-  Justification isMoving() ;
+  Justification isMoving();
 
   /**
    * Observer to check if the robot is at the specified named location
+   *
    * @param locationTerm predicate to observe in form: at(?actor, ?location)
    * @return observation result
    */

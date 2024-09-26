@@ -13,6 +13,7 @@ import edu.tufts.hrilab.movebase.ChangeMapComponent;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
 import edu.tufts.hrilab.movebase.MoveBaseComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
+import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
@@ -62,7 +63,7 @@ public class TowerConfig extends DiarcConfiguration {
       log.info("Starting using NLP pipeline...");
 
       if (useGUI) {
-        createInstance(com.simspeech.SimSpeechRecognitionComponent.class,
+        createInstance(SimSpeechRecognitionComponent.class,
                 "-config demodialogues/fetchconfig.simspeech -speaker brad -addressee self");
       }
       createInstance(TLDLParserComponent.class, "-dict templatedict.dict");

@@ -3,6 +3,7 @@
  */
 
 package edu.tufts.hrilab.supermarket;
+
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.Justification;
@@ -11,66 +12,86 @@ import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.fol.Symbol;
 
 public interface SupermarketInterface {
-    void transmitNewCartBeliefs();
 
-    Integer getSimPort();
+  Integer getSimPort();
 
-    StateMachine getStateMachine();
+  StateMachine getStateMachine();
 
-    @TRADEService
-    @Action
-    Justification nop();
+  @TRADEService
+  @Action
+  Justification nop();
 
-    @TRADEService
-    @Action
-    Justification startGame();
+  @TRADEService
+  @Action
+  Justification startGame();
 
-    @TRADEService
-    @Action
-    Justification resetGame();
+  @TRADEService
+  @Action
+  Justification resetGame();
 
-    @TRADEService
-    @Action
-    Justification goNorth();
+  @TRADEService
+  @Action
+  Justification goNorth();
 
-    @TRADEService
-    @Action
-    Justification goSouth();
+  @TRADEService
+  @Action
+  Justification goSouth();
 
-    @TRADEService
-    @Action
-    Justification goEast();
+  @TRADEService
+  @Action
+  Justification goEast();
 
-    @TRADEService
-    @Action
-    Justification goWest();
+  @TRADEService
+  @Action
+  Justification goWest();
 
-    @TRADEService
-    @Action
-    Justification toggleShoppingCart();
+  @TRADEService
+  @Action
+  Justification toggleShoppingCart();
 
-    @TRADEService
-    @Action
-    Justification interactWithObject();
+  @TRADEService
+  @Action
+  Justification interactWithObject();
 
-    @TRADEService
-    @Action
-    Justification cancelInteraction();
+  @TRADEService
+  @Action
+  Justification goDir(SupermarketObservation.Direction dir);
 
-    @TRADEService
-    @Action
-    SupermarketObservation getLastObservation();
+  @TRADEService
+  @Action
+  Justification rotateCW();
 
-    @TRADEService
-    @Action
-    Symbol lastCart();
+  @TRADEService
+  @Action
+  Justification rotateCCW();
 
-    String getAgentName();
+  @TRADEService
+  @Action
+  Justification pickup(Symbol goal);
 
-    int getPlayerIndex();
+  //todo: Should this be moved to a different class, such as SupermarketAgent?
+  @TRADEService
+  @Action
+  Justification reactive_nav(Symbol goal);
 
-    @TRADEService
-    void setObservation(Object observation);
+  @TRADEService
+  @Action
+  Justification cancelInteraction();
 
-    void setStateMachine(StateMachine sm);
+  @TRADEService
+  @Action
+  SupermarketObservation getLastObservation();
+
+  @TRADEService
+  @Action
+  Symbol lastCart();
+
+  String getAgentName();
+
+  int getPlayerIndex();
+
+  @TRADEService
+  void setObservation(Object observation);
+
+  void setStateMachine(StateMachine sm);
 }

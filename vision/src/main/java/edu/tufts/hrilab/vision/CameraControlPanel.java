@@ -3368,7 +3368,7 @@ public class CameraControlPanel extends javax.swing.JFrame {
         trackerOptions_cmbBx.setEnabled(true);
         detectorOptions_cmbBx.setEnabled(true);
 
-        //get selected MemoryObjectType
+        //get selected SearchManager
         SearchManager selectedSearchType = (SearchManager) availSingleSearches_list.getSelectedValue();
 
         selectedSearchType.stop(this, false);
