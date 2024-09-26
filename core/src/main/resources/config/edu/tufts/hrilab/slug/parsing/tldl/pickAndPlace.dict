@@ -202,7 +202,7 @@ see; (C/REF)\AGENT ; #x#y.see($x,$y)
 
 %TODO: is there any nice way to have just 'location one' be a VAL which is the ref for location one?
 % Doesn't seem like it, any workaround rule will try to match fully on 'location one' rather than just 'location' and ignore the less specific entry
-%location; VAL/REF; #l.pose($l);
+location; VAL/REF; #l.pose($l);
 %area; VAL/REF; #a.pose($a);
 %pose; VAL/REF; #a.pose($a);
 %it is at; VAL/REF; #a.pose($a);
@@ -211,12 +211,13 @@ see; (C/REF)\AGENT ; #x#y.see($x,$y)
 
 %Same issue for blocks
 %the; VAL/REF; #l.blockType($l);
+block; VAL/REF; #l.blockType($l);
 
 %TODO: ability to do this (and to do this for both block and pose questions)
 nowhere; VAL; pose(none);
 none; VAL; blockType(none);
 %nevermind; VAL; pose(none);
-%nevermind; VAL; blockType(none);
+nevermind; VAL; blockType(none);
 
 yes; VAL; val(yes);
 はい; VAL; val(yes);

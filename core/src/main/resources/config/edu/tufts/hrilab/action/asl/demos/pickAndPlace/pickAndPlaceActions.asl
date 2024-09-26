@@ -1,8 +1,12 @@
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Variable;
 import java.util.List;
+import java.util.Map;
 import java.lang.String;
 import edu.tufts.hrilab.action.justification.Justification;
+import java.lang.Double;
+import java.lang.Integer;
 
 (Symbol ?location) = getCurrentLocation() {
     Predicate !queryPred;
@@ -90,9 +94,9 @@ import edu.tufts.hrilab.action.justification.Justification;
     if (op:equalsValue(!holding, false)) {
         if (op:isNull(!blockPose)) {
             !descriptor = tsc:getDescriptorForID(?object);
-            !japaneseDescriptor = tsc:getJapaneseVersionOfDescriptor(!descriptor);
-            (!bindings) = act:askQuestionFromString(?actor,"!japaneseDescriptorがどこにあるかは分かりません。場所何番にありますか?", pose(X));
-            //(!bindings) = act:askQuestionFromString(?actor,"I dont know where the !descriptor is, at what pose can I expect to find it?", pose(X));
+            (!bindings) = act:askQuestionFromString(?actor,"I dont know where the !descriptor is, at what pose can I expect to find it?", pose(X));
+//            !japaneseDescriptor = tsc:getJapaneseVersionOfDescriptor(!descriptor);
+//            (!bindings) = act:askQuestionFromString(?actor,"!japaneseDescriptorがどこにあるかは分かりません。場所何番にありますか?", pose(X));
             !blockPose = op:get(!bindings,!x);
             if (op:equals(!blockPose,none)) {
                 !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "know(?actor,theLocationOf,?object)");
@@ -114,40 +118,63 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     Symbol !default = "default";
     Symbol !gripper = "gripper";
+    List !objectList;
     Symbol !object;
     Symbol !location;
+    Integer !resultsSize;
+    Map !bindings;
+    Variable !x = "X";
+    Predicate !failCond;
 
     op:log(info, "[pickUp]");
     //TODO: Need implementation of this function (retval should be collection of objects)
-    !object = act:perceiveEntities();
+    !objectList = act:perceiveEntities();
 
-    //TODO: parse cognex results and split on case
+    !resultsSize = op:invokeMethod(!objectList, "size");
+    op:log(debug, "[pickUp] results size: !resultsSize for object list !objectList");
 
     //No results
-    Predicate !failCond;
-    !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "dont(?actor,see,anyBlocks,atMyLocation)");
-    exit(FAIL_RETURNVALUE,!failCond);
 
-    ////Multiple results - ask which one to pick up
-    //Map !bindings;
-    //Variable !x = "X";
-    ////TODO: get descriptors for all detected blocks and add into question specifically
-    //!bindings = act:askQuestionFromString("I see multiple blocks, which one do you want me to pick up?", blockType(X));
-    //!bindings = act:askQuestionFromString("視野に複数のブロックが見えています。どれを拾ったらいいでしょうか？", blockType(X));
-    //!object = op:get(!bindings, !x);
-    ////TODO: make sure response matches one of the detected blocks
-
-    ////Single result - pick up object
-    !location = act:getCurrentLocation();
-    //act:grab(!object,!location);
-    act:grabPerceivedEntity(!object,!location);
+    if (op:equals(!resultsSize, 0)) {
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "dont(?actor,see,anyBlocks,atMyLocation)");
+        exit(FAIL_RETURNVALUE,!failCond);
+    } elseif (op:equals(!resultsSize, 1)) {
+        ////Single result - pick up object
+        !object = op:get(!objectList, 0);
+        !location = act:getCurrentLocation();
+        //act:grab(!object,!location);
+    } else {
+        ////Multiple results - ask which one to pick up
+        //TODO: get descriptors for all detected blocks and add into question specifically
+        !bindings = act:askQuestionFromString(?actor, "I see multiple blocks, which one do you want me to pick up?", blockType(X));
+//        !bindings = act:askQuestionFromString(?actor, "視野に複数のブロックが見えています。どれを拾ったらいいでしょうか？", blockType(X));
+        !object = op:get(!bindings, !x);
+        ////TODO: make sure response matches one of the detected blocks
+    }
+    if (~op:equals(none)) {
+        act:grabPerceivedEntity(!object,!location);
+    }
 }
 
 //Placeholder
 (List ?bindings) = perceiveEntities() {
     //runs a job that looks for all items known to the system and returns the set of (orderd) results. then binds the associated refrerences.
 
+    Symbol !location;
+    Symbol !blockAt;
+    Predicate !fact;
 
+    ?bindings = tsc:perceiveAllEntitiesInView("blocksDet");
+    //todo: rectify block locations in belief based on what we're currently seeing. need to do at(X,Y) and holding(X).
+//    !location = act:getCurrentLocation();
+//    foreach (!result : ?bindings) {
+//        !blockLocation = act:getBlockPose(!result);
+//        if (~op:equals(!blockLocation, !location)) {
+//            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result, !blockLocation)");
+//            act:retractBelief(!fact);
+//            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result, !blockLocation)");
+//        }
+//    }
 
 }
 
@@ -190,7 +217,7 @@ import edu.tufts.hrilab.action.justification.Justification;
         pre : not(free(?actor));
     }
     List !results;
-    java.lang.Integer !resultsSize;
+    java.lang.Integer !size;
     Predicate !failCond;
     Justification !failJustification;
     Symbol !location;
@@ -206,24 +233,21 @@ import edu.tufts.hrilab.action.justification.Justification;
 //    exit(FAIL_PRECONDITIONS, !failJustification);
 
     ////TODO: Should just push this down into the putdown primitive and have recovery policy only apply to this script
-    //!results = act:perceiveEntities();
-    //if (~op:isNull(!results)) {
-    //    !size = op:invokeMethod(!results, "size");
-    //    if (op:gt(!size,3)) {
-    //        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "has(theLocationBelowMe,space)");
-    //        !failJustification = op:newObject("edu.tufts.hrilab.action.justification.ConditionJustification", false, !failCond);
-    //        !thisStep = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "putDown(?actor)");
-    //        op:invokeMethod(!failJustification, "setStep", !thisStep);
-    //        exit(FAIL_PRECONDITIONS, !failJustification);
-    //    } else {
-    !location = act:getCurrentLocation();
-    !object = act:getHeldObject();
-    act:putdown(!object,!location);
-    //    }
-    //} else {
-    //    !failConds = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(implemented(perceiveEntities))");
-    //    exit(FAIL, !failConds);
-    //}
+    !results = act:perceiveEntities();
+    if (~op:isNull(!results)) {
+        !size = op:invokeMethod(!results, "size");
+        if (op:gt(!size,1)) {
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "has(theLocationBelowMe,space)");
+            !failJustification = op:newObject("edu.tufts.hrilab.action.justification.ConditionJustification", false, !failCond);
+            !thisStep = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "putDown(?actor)");
+            op:invokeMethod(!failJustification, "setStep", !thisStep);
+            exit(FAIL_PRECONDITIONS, !failJustification);
+        } else {
+        !location = act:getCurrentLocation();
+        !object = act:getHeldObject();
+        act:putdown(!object,!location);
+        }
+    }
 }
 
 () = moveBlockTo(Symbol ?block:physobj, Symbol ?start:pose, Symbol ?destination:pose) {
@@ -255,7 +279,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     //TODO:
     //  report that we cannot put down the block because the location is full
     //  Ask if the user would like to swap the held block with a block in that location
-    //    (!bindings) = act:askQuestionFromString(?actor,"I cannot put down the block because the location is full. Would you like me to swap out one of the blocks?", val(X));
+    (!bindings) = act:askQuestionFromString(?actor,"I cannot put down the block because the location is full. Would you like me to swap out one of the blocks?", val(X));
     //    (!bindings) = act:askQuestionFromString(?actor,"場所がいっぱいになっているため、ブロックを置くことはできません。ブロックのどれかと交換しましょうか？", val(X));
     //      Y: act:askQuestionFromString(?actor,"Which block should be swapped?", blockType(X));
     //      Y: act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", blockType(X));
@@ -308,15 +332,15 @@ import edu.tufts.hrilab.action.justification.Justification;
     !blockPose = act:getBlockPose(?block);
     !blockDescriptor = tsc:getDescriptorForID(?block);
     if (op:isNull(!blockPose)) {
-        //act:generateResponseFromString("I do not know where the !blockDescriptor is");
-        !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
-        act:generateResponseFromString("!blockDescriptorJapaneseがどこにあるかが分かりません。");
+        act:generateResponseFromString("I do not know where the !blockDescriptor is");
+//        !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
+//        act:generateResponseFromString("!blockDescriptorJapaneseがどこにあるかが分かりません。");
     } else {
         !poseDescriptor = tsc:getDescriptorForPoseID(!blockPose);
-        //act:generateResponseFromString("the !blockDescriptor is at !poseDescriptor");
-        !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
-        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
-        act:generateResponseFromString("!blockDescriptorJapaneseは!poseDescriptorJapaneseにあります");
+        act:generateResponseFromString("the !blockDescriptor is at !poseDescriptor");
+//        !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
+//        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
+//        act:generateResponseFromString("!blockDescriptorJapaneseは!poseDescriptorJapaneseにあります");
     }
 }
 
@@ -346,10 +370,10 @@ import edu.tufts.hrilab.action.justification.Justification;
         !blockDescriptor = tsc:getDescriptorForID(!block);
         !poseDescriptor = tsc:getDescriptorForPoseID(!pose);
         if (~op:equals(!blockDescriptor,none)) {
-            //act:generateResponseFromString("The !blockDescriptor is at !poseDescriptor");
-            !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
-            !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
-            act:generateResponseFromString("!blockDescriptorJapaneseは!poseDescriptorJapaneseにあります");
+            act:generateResponseFromString("The !blockDescriptor is at !poseDescriptor");
+//            !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
+//            !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
+//            act:generateResponseFromString("!blockDescriptorJapaneseは!poseDescriptorJapaneseにあります");
             !knowBlockAt = op:newObject("java.lang.Boolean", true);
         }
     }
@@ -379,17 +403,17 @@ import edu.tufts.hrilab.action.justification.Justification;
         !block = op:get(!binding,!blockVar);
         !blockDescriptor = tsc:getDescriptorForID(!block);
         if (~op:equals(!blockDescriptor,none)) {
-            //act:generateResponseFromString("There is a !blockDescriptor");
-            !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
-            act:generateResponseFromString("!blockDescriptorJapaneseがあります");
+            act:generateResponseFromString("There is a !blockDescriptor");
+//            !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
+//            act:generateResponseFromString("!blockDescriptorJapaneseがあります");
             !knowBlockAt = op:newObject("java.lang.Boolean", true);
         }
     }
     if (op:equals(!knowBlockAt,False)) {
         !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
-        //act:generateResponseFromString("There are no blocks at !poseDescriptor");
-        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
-        act:generateResponseFromString("!poseDescriptorJapaneseにブロックはありません");
+        act:generateResponseFromString("There are no blocks at !poseDescriptor");
+//        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
+//        act:generateResponseFromString("!poseDescriptorJapaneseにブロックはありません");
     }
 }
 
@@ -419,13 +443,13 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
     if (op:equals(!numBlocks,1)) {
-        //act:generateResponseFromString("There is !numBlocks block at !poseDescriptor");
-        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
-        act:generateResponseFromString("!poseDescriptorJapaneseにブロックは一個あります");
+        act:generateResponseFromString("There is !numBlocks block at !poseDescriptor");
+//        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
+//        act:generateResponseFromString("!poseDescriptorJapaneseにブロックは一個あります");
     } else {
-        //act:generateResponseFromString("There are !numBlocks blocks at !poseDescriptor");
-        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
-        act:generateResponseFromString("!poseDescriptorJapaneseにブロックが!numBlocks個あります");
+        act:generateResponseFromString("There are !numBlocks blocks at !poseDescriptor");
+//        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
+//        act:generateResponseFromString("!poseDescriptorJapaneseにブロックが!numBlocks個あります");
     }
 }
 

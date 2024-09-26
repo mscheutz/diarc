@@ -1,15 +1,19 @@
-pick up the red block
-put down the red block
-get the blue block to location one
-get the blue block to location two
-get the red block to location two
------
-go to location one
------
-pick up the red block
-get the red block to location two
-get the red block to location one
-go to location three
-do you see a red block
------
 get the red block to location three
+location location one
+----
+go to location two
+the yellow block is at location two
+pick up the yellow block
+go to location three
+put down the yellow block
+----
+pick up the block
+nevermind
+----
+the green block is at location one
+what blocks are you aware of?
+move the green block from location one to location three
+get the green block to location two
+----
+place the red block at location one
+what blocks are at location three

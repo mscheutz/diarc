@@ -12,14 +12,17 @@ import edu.tufts.hrilab.fol.Term;
     Symbol !jobNameBlock = "blocksDet";
     Symbol !jobNameRed = "blocksDet";
     Symbol !jobNameGreen = "blocksDet";
+    Symbol !jobNameYellow = "blocksDet";
 
     Symbol !redBlockDescriptor = "red block";
     Symbol !blueBlockDescriptor = "blue block";
     Symbol !greenBlockDescriptor = "green block";
+    Symbol !yellowBlockDescriptor = "yellow block";
 
     Symbol !redBlock;
     Symbol !blueBlock;
     Symbol !greenBlock;
+    Symbol !yellowBlock;
 
     Term !props;
 
@@ -27,34 +30,40 @@ import edu.tufts.hrilab.fol.Term;
     !robotone.tsc:addDetectionType(!redBlockDescriptor,!jobNameRed);
     !robotone.tsc:addDetectionType(!blueBlockDescriptor,!jobNameBlock);
     !robotone.tsc:addDetectionType(!greenBlockDescriptor,!jobNameGreen);
+    !robotone.tsc:addDetectionType(!yellowBlockDescriptor,!jobNameYellow);
 
     //red block//
     !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!redBlockDescriptor,0.050,0.0)");
     act:assertBelief(!toAssert);
     !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(red block(X:physobj))");
     !redBlock = act:positReference(!props);
-    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!redBlock,pose_0:pose)");
-    op:log(debug, "[init] asserting !toAssert");
-    act:assertBelief(!toAssert);
+//    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!redBlock,pose_0:pose)");
+//    op:log(debug, "[init] asserting !toAssert");
+//    act:assertBelief(!toAssert);
 
     //blue block//
     !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!blueBlockDescriptor,0.050,0.0)");
     act:assertBelief(!toAssert);
     !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(blue block(X:physobj))");
-    !blueBlock = act:positReference(!props);
-    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!blueBlock,pose_1:pose)");
-    op:log(debug, "[init] asserting !toAssert");
+//    !blueBlock = act:positReference(!props);
+//    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!blueBlock,pose_1:pose)");
+//    op:log(debug, "[init] asserting !toAssert");
     act:assertBelief(!toAssert);
 
     //green block//
     !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!greenBlockDescriptor,0.050,0.0)");
     act:assertBelief(!toAssert);
-//    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(green block(X:physobj))");
-//    !greenBlock = act:positReference(!props);
+    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(green block(X:physobj))");
+    !greenBlock = act:positReference(!props);
 //    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!greenBlock,pose_0:pose)");
 //    op:log(debug, "[init] asserting !toAssert");
 //    act:assertBelief(!toAssert);
 
+    //yellow block/
+    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!yellowBlockDescriptor,0.050,0.0)");
+    act:assertBelief(!toAssert);
+    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(yellow block(X:physobj))");
+    !yellowBlock = act:positReference(!props);
 
     !robotone.act:setupPoses();
 }

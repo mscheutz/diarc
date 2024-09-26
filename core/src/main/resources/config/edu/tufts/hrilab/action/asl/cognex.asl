@@ -25,7 +25,7 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
         //this will fail if result doesn't have confidence > 50
         act:checkIfPositive(!result);
         //bind reference to the result that it matches
-        tsc:bindCognexResult(!ref, !result, 0);
+        tsc:bindCognexResult(!ref, !result);
         op:log("info","[perceiveEntityFromSymbol] Bound !result to !ref");
     }
 }
