@@ -36,6 +36,7 @@ public class PragRuleProver {
   private UtteranceType rightType;
   private List<Symbol> listeners;
   private Symbol speaker;
+  private Symbol addressee;
 
   ///////////////////////////////////////
   public PragRuleProver() {
@@ -55,12 +56,17 @@ public class PragRuleProver {
 
   ////////////////////////////////////////
 
-  public List<Symbol> getListeners() {
-    return listeners;
-  }
 
   public Symbol getSpeaker() {
     return speaker;
+  }
+
+  public Symbol getAddressee() {
+    return addressee;
+  }
+
+  public List<Symbol> getListeners() {
+    return listeners;
   }
 
   public UtteranceType getLeftType() {
@@ -131,6 +137,7 @@ public class PragRuleProver {
     leftSem.add(uttForm.getSemantics());
     leftType = uttForm.getType();
     speaker = uttForm.getSpeaker();
+    addressee = uttForm.getAddressee();
     listeners = uttForm.getListeners();
 
     // handle utterance

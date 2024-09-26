@@ -360,7 +360,7 @@
 //    java.util.List !predArgs;
 //    java.lang.String !pausedTaskName;
 //
-//    (!goalPred) = act:suspendCurrentGoal(?actor);
+//    (!goalPred) = act:suspendSystemGoals(?actor);
 //
 //    //don't allow freezing of nothing to throw an exception
 //    if (~op:isNull(!goalPred)) {
@@ -371,10 +371,10 @@
 //            if (~act:waitForAckFreeze()) {
 //                //waitForAck will return true if the cancel was called during freeze, in which case
 //                //  we want freeze to terminate without resuming the paused goal
-//                act:resumeCurrentGoal(?actor);
+//                act:resumeSystemGoals(?actor);
 //            }
 ////            (!taskCancelled) = act:waitForAckFreeze();
-////            act:resumeCurrentGoal(?actor);
+////            act:resumeSystemGoals(?actor);
 //        }
 //    }
 //}

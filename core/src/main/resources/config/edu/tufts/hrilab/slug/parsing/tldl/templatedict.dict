@@ -24,7 +24,7 @@ VERBTD; {((C\AGENT)/VAL)/DIR; #x#y#a.?PH($a,$x,$y)}, {(C/VAL)/DIR ; #x#y.?PH(?AD
 %ditransitive verb
 VERBDT; {((C/REF)/AGENT)\AGENT ; #a#x#y.?PH($a,$x,$y)},  {(C/REF)/AGENT ; #x#y.?PH(?ADDRESSEE,$x,$y)}
 
-ADDRESSABLE; {AGENT ; ?PH}, {G/G, S/S, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
+ADDRESSABLE; {AGENT ; ?PH}, {G/G, S/S,  C/C, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
 
 %EFFECTTEMPLATE; {(EFFECT/REF)\AGENT; #x#y.?PH($x,$y)}, {EFFECT/REF; #x.?PH($x)}, {EFFECT; ?PH}
 CONDTEMPLATE; {COND/RN; #x.?PH($x)}, {COND; ?PH}
@@ -47,12 +47,12 @@ approach; C/LREF; #x.approach(?ADDRESSEE,$x)
 approach; C/REF; #x.approach(?ADDRESSEE,$x)
 approach; C/DESC; #x.approach(?ADDRESSEE,$x)
 
-add; ((C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction($a,insert($x),$t)
-add; ((C/PP)/C)\ADV; #w#x#y.modifyAction($w,insert($x),$y)
+add; ((C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,insert($x),$t)
+add; ((C/PP)/C)\ADV; #w#x#y.modifyAction(?ADDRESSEE,$w,insert($x),$y)
 
 after; PP/C; #x.after($x)
 
-after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction($a,insert($e),$t)
+after; ((C/S)/EFFECTTYPE)/C; #a#t#e.modifyAction(?ADDRESSEE,$a,insert($e),$t)
 
 ahead; Adj; ahead
 
@@ -163,6 +163,8 @@ do not ;(((C/REF)/REF)\AGENT)/(((C/REF)/REF)\AGENT) ; #x.modify(delete($x))
 do; Q/ C; #x.$x
 %do; (Q \ WHO)/(Q \ WHO); #x.$x
 %do; (Q/WHO)/(C / AGENT) ; #x.$x
+
+do you see ; Q/REF ; #x.see(?ADDRESSEE,$x)
 
 do that; C; dothat:dialog ; ACTIVATED
 
@@ -350,24 +352,24 @@ medkit; THING
 morning; G[good] ; morning
 
 %move forward
-move; ((C\AGENT)/DIR)/REF; #x#y#a.moveObject($a,$x,$y)
-move; (C/DIR)/REF; #x#y.moveObject(?ADDRESSEE,$x,$y)
+move; ((C\AGENT)/DIR)/REF; #x#y#a.moveObjectInDirection($a,$x,$y)
+move; (C/DIR)/REF; #x#y.moveObjectInDirection(?ADDRESSEE,$x,$y)
 
 %move the object foward one meter
-move; (((C\AGENT)/VAL)/DIR)/REF; #x#y#z#a.moveObject($a,$x,$y,$z)
-move; ((C/VAL)/DIR)/REF; #x#y#z.moveObject(?ADDRESSEE,$x,$y,$z)
+move; (((C\AGENT)/VAL)/DIR)/REF; #x#y#z#a.moveObjectInDirection($a,$x,$y,$z)
+move; ((C/VAL)/DIR)/REF; #x#y#z.moveObjectInDirection(?ADDRESSEE,$x,$y,$z)
 
 %move the object foward one meter with arm one
-%move; ((((C/ARM)/VAL)/DIR)/REF)\AGENT; #g#x#y#z#a.moveObject($x,$y,$z,$a)
-%move; (((C/ARM)/VAL)/DIR)/REF; #x#y#z#a.moveObject($x,$y,$z,$a)
+%move; ((((C/ARM)/VAL)/DIR)/REF)\AGENT; #g#x#y#z#a.moveObjectInDirection($x,$y,$z,$a)
+%move; (((C/ARM)/VAL)/DIR)/REF; #x#y#z#a.moveObjectInDirection($x,$y,$z,$a)
 
 %move the object toward me
-move; (((C\AGENT)/AGENT)/TDIR)/REF; #x#y#z#a.moveObject($a,$x,$y,$z)
-move; ((C/AGENT)/TDIR)/REF; #x#y#z.moveObject(?ADDRESSEE,$x,$y,$z)
+move; (((C\AGENT)/AGENT)/TDIR)/REF; #x#y#z#a.moveObjectRelativeTo($a,$x,$y,$z)
+move; ((C/AGENT)/TDIR)/REF; #x#y#z.moveObjectRelativeTo(?ADDRESSEE,$x,$y,$z)
 
 %move the object toward the cup
-move; (((C\AGENT)/REF)/TDIR)/REF; #x#y#z#a.moveObject($a,$x,$y,$z)
-move; ((C/REF)/TDIR)/REF; #x#y#z.moveObject(?ADDRESSEE,$x,$y,$z)
+move; (((C\AGENT)/REF)/TDIR)/REF; #x#y#z#a.moveObjectRelativeTo($a,$x,$y,$z)
+move; ((C/REF)/TDIR)/REF; #x#y#z.moveObjectRelativeTo(?ADDRESSEE,$x,$y,$z)
 
 %move forward
 move; VERBTD
@@ -466,7 +468,7 @@ relax ; VERBI; rest
 %remove; ((C/WITH)/COND)/CONDITIONTYPE , ((C/WITH)/EFFECT)/EFFECTTYPE ; #t#X#a.modifyAction($a,remove($x),$t)
 remove;(C/PPadv)/COND)/CONDITIONTYPE , ((C/PPadv)/EFFECT)/EFFECTTYPE ; #t#x#a.modifyAction(?ADDRESSEE,$a,remove($x),$t)
 remove ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,$w,remove($x),none())
-remove ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE$w,remove($x),$l)
+remove ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,$w,remove($x),$l)
 
 
 
@@ -633,6 +635,8 @@ want; ((S/ INF)/AGENT)\ AGENT ; #x#y#z.want($x,$y,$z)
 %what are your goals, what are shafer's goals
 what are; (Q/QUERYABLE)/AGENT; #a#q.whatAre($a,$q)
 
+what do you see ; Q ; see(?ADDRESSEE,WHAT)
+
 what time is it; Q; timeIs(WHAT)
 what time it is; KNOWABLE; currentTime
 
@@ -654,8 +658,8 @@ will; (S\AGENT)/(S\AGENT), (S\AGENT)/(C\AGENT),((S/REF)\AGENT)/((C/REF)\AGENT) ;
 %with; PP/C; #x.with($x)
 with; (WITH/C)\C; #x#y.with($y,$x)
 
-without ; (C/C)\ADV; #w#x.modifyAction($w,remove($x),none())
-without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction($w,remove($x),$l)
+without ; (C/C)\ADV; #w#x.modifyAction(?ADDRESSEE,$w,remove($x),none())
+without ; ((C/PP)/C)\ADV; #w#x#l.modifyAction(?ADDRESSEE,$w,remove($x),$l)
 
 would have been; (S / PROP) \ REF; # x #z. past(propertyOf($x,$z))
 

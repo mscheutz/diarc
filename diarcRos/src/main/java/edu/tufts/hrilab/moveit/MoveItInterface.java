@@ -5,6 +5,7 @@ package edu.tufts.hrilab.moveit;
 
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.interfaces.ArmInterface;
 import edu.tufts.hrilab.interfaces.LearningInterface;
 
@@ -51,14 +52,11 @@ public interface MoveItInterface extends ArmInterface, LearningInterface {
 
     @TRADEService
     @Action
-    boolean pointTo(String groupName, Point3d location);
+    Justification pointTo(String groupName, Point3d location);
 
     @TRADEService
     @Action
-    boolean moveToCartesian(String groupName, Point3d point, Quat4d orientation);
-
-    @TRADEService
-    boolean goToStartPose();
+    Justification moveToCartesian(String groupName, Point3d point, Quat4d orientation);
 
     /**
      * Publish the compressed depth data to ROS after being decompressed and converted to proper point cloud form.

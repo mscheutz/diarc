@@ -31,7 +31,7 @@ GenHoughTrnf::GenHoughTrnf() {
   // number of slices (angles) in R-table
   intervals = 16;
 
-  logger = log4cxx::Logger::getLogger("ade.detector.hough.GHT");
+  logger = log4cxx::Logger::getLogger("diarc.detector.hough.GHT");
 }
 
 void GenHoughTrnf::setTresholds(int t1, int t2) {
@@ -130,8 +130,8 @@ void GenHoughTrnf::createRtable(const std::string& imgFilename) {
   // maximum width of the contour
   wtemplate = maxdx - mindx + 1;
 
-  ade::Display::createWindowIfDoesNotExist("rtable template");
-  ade::Display::displayFrame(template_img, "rtable template");
+  diarc::Display::createWindowIfDoesNotExist("rtable template");
+  diarc::Display::displayFrame(template_img, "rtable template");
 }
 
 Mat GenHoughTrnf::createTemplate(const Mat& img) {
@@ -142,8 +142,8 @@ Mat GenHoughTrnf::createTemplate(const Mat& img) {
   blur(src_gray, detected_edges, Size(3, 3));
   Canny(detected_edges, detected_edges, 1, 100, 3);
 
-  ade::Display::createWindowIfDoesNotExist("template");
-  ade::Display::displayFrame(detected_edges, "template");
+  diarc::Display::createWindowIfDoesNotExist("template");
+  diarc::Display::displayFrame(detected_edges, "template");
   return detected_edges;
 }
 
@@ -174,8 +174,8 @@ void GenHoughTrnf::accumulate(const cv::Mat& input_img) {
   Mat detected_edges;
   blur(src_gray, detected_edges, Size(3, 3));
   Canny(detected_edges, detected_edges, thr1, thr2, 3);
-  ade::Display::createWindowIfDoesNotExist("edges");
-  ade::Display::displayFrame(detected_edges, "edges");
+  diarc::Display::createWindowIfDoesNotExist("edges");
+  diarc::Display::displayFrame(detected_edges, "edges");
 
   // get Scharr matrices from image to obtain contour gradients
   Mat dx;
@@ -321,8 +321,8 @@ bool GenHoughTrnf::bestCandidate(Rect& boundingBox) {
   boundingBox = Rect(xmin_rect, ymin_rect, xmax_rect - xmin_rect, ymax_rect - ymin_rect);
 
   // show result
-  ade::Display::createWindowIfDoesNotExist("hough");
-  ade::Display::displayFrame(showimage, "hough");
+  diarc::Display::createWindowIfDoesNotExist("hough");
+  diarc::Display::displayFrame(showimage, "hough");
 
   return true;
 }

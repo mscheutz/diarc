@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.tr;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fetch.MockFetchItComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
@@ -11,7 +12,7 @@ import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
-import edu.tufts.hrilab.sphinx4.Sphinx4Component;
+import edu.tufts.hrilab.asr.sphinx4.Sphinx4Component;
 import edu.tufts.hrilab.vision.MockVisionComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,6 @@ public class MultiRobotCadddyDemo extends DiarcConfiguration {
         boolean useMockMovebase = true;
         boolean useMockManipulation = true;
         boolean useSphinx = false;
-        boolean useFirebase = true;
         boolean useSpot = true;
 
         createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
@@ -50,11 +50,6 @@ public class MultiRobotCadddyDemo extends DiarcConfiguration {
         if (useSphinx) {
             createInstance(Sphinx4Component.class, "-grammar heterogeneousAgents -nlp -speaker tyler -listener");
             //createInstance(edu.tufts.hrilab.sphinx4.Sphinx4Component.class, "-grammar learnAssemble -nlp -speaker tyler -listener andy");
-        }
-
-        if (useFirebase) {
-            //createInstance(edu.tufts.hrilab.firebase.DesktopFirebaseConnectionComponent.class, "-dialogue -emulator -firebaseGroup tr_emulated");
-            createInstance(edu.tufts.hrilab.firebase.DesktopFirebaseConnectionComponent.class, "-dialogue -emulator -firebaseGroup TuftsDemo -action -dbaction planned -dbfile /config/edu/tufts/hrilab/action/asl/demos/multiRobotCaddy.asl -dbfile /config/edu/tufts/hrilab/action/asl/domains/multiRobotCaddy.asl");
         }
 
         if (useMockVision) {
@@ -126,7 +121,7 @@ public class MultiRobotCadddyDemo extends DiarcConfiguration {
             goalManagerArgs += "-beliefinitfile demos/multiRobotCaddy/spotFacts.pl ";
         }
 
-        createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
+        createInstance(GoalManagerComponent.class,
                 goalManagerArgs
         );
 

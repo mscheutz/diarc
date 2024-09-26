@@ -4,14 +4,14 @@
 
 #include "Display.hpp"
 
-namespace ade {
+namespace diarc {
 
   //initalize static variables
   Display::Display2D_Map Display::displays2d;
   Display::Display3D_Map Display::displays3d;
   boost::mutex Display::display_mutex;
 
-  log4cxx::LoggerPtr Display::logger = log4cxx::Logger::getLogger("ade.Display");
+  log4cxx::LoggerPtr Display::logger = log4cxx::Logger::getLogger("diarc.Display");
 
   Display::Display() {
     LOG4CXX_DEBUG(Display::logger, "[display] constructor.");
@@ -562,4 +562,4 @@ namespace ade {
     }
   }
 
-} //namespace ade
+} //namespace diarc

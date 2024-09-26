@@ -4,12 +4,12 @@
 
 #include "KCFTracker.hpp"
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 KCFTracker::KCFTracker(const long long &processorId, const int imgWidth, const int imgHeight)
         : OpenCVTracker("KCF", processorId, imgWidth, imgHeight) {
   visionProcessName = "KCFTracker";
-  logger = log4cxx::Logger::getLogger("ade.tracker.KCFTracker");
+  logger = log4cxx::Logger::getLogger("diarc.tracker.KCFTracker");
 }
 
 KCFTracker::~KCFTracker() {

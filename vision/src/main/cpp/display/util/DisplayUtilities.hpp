@@ -15,10 +15,10 @@
 #include <opencv2/opencv.hpp>
 #include <log4cxx/logger.h>
 
-namespace ade {
+namespace diarc {
   namespace display {
 
-    static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("ade.display.DisplayUtilities"));
+    static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("diarc.display.DisplayUtilities"));
 
     /**
      * @brief makeCanvas Makes composite image from the given images
@@ -74,7 +74,7 @@ namespace ade {
     }
 
 
-  } //namespace ade
+  } //namespace diarc
 } //namespace display
 
 #endif	/* DISPLAYUTILITIES_HPP */

@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.util;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.io.BufferedReader;
@@ -13,8 +14,8 @@ import java.io.DataOutputStream;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,13 +33,13 @@ public class Http {
     public static String sendGetRequest (String endpointUrl, Map<String, String> headers) {
         URL url;
         HttpURLConnection con;
-
+        log.debug("GET " + endpointUrl);
         try {
             url = new URL(endpointUrl);
             con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
         } catch (Exception e) {
-            log.error("[sendGetRequest]",e);
+            log.error("[sendGetRequest] Error opening connection to " + endpointUrl, e);
             return null;
         }
 
@@ -53,16 +54,26 @@ public class Http {
         try {
             responseCode = con.getResponseCode();
         } catch (Exception e) {
-            log.error("[sendGetRequest]",e);
+            log.error("[sendGetRequest] Error reading response code", e);
             return null;
         }
 
         if (responseCode == HttpURLConnection.HTTP_OK) {
-            BufferedReader in;
+            InputStreamReader is = null;
+            BufferedReader in = null;
             try {
-                in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                is = new InputStreamReader(con.getInputStream());
+            } catch (IOException e) {
+                log.error("[sendGetRequest] Error reading input stream from connection", e);
+                is = new InputStreamReader(con.getErrorStream());
+            }
+            if (is == null) {
+                return null;
+            }
+            try {
+                in = new BufferedReader(is);
             } catch (Exception e) {
-                log.error("[sendGetRequest]",e);
+                log.error("[sendGetRequest] Error reading response", e);
                 return null;
             }
 
@@ -75,7 +86,7 @@ public class Http {
                 }
                 in.close();
             } catch (Exception e) {
-                log.error("[sendGetRequest]",e);
+                log.error("[sendGetRequest] Error reading response to StringBuffer", e);
                 return null;
             }
 
@@ -97,14 +108,14 @@ public class Http {
         URL url;
         HttpURLConnection con;
         int responseCode;
-
+        log.debug("POST " + endpointUrl);
         try {
             url = new URL(endpointUrl);
             con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("POST");
             con.setRequestProperty("Content-Type", "application/json");
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
+            log.error("[sendPostRequest] Error opening connection to " + endpointUrl, e);
             return null;
         }
 
@@ -118,34 +129,46 @@ public class Http {
         con.setDoOutput(true);
 
         // Convert request body to JSON string
-        Gson gson = new GsonBuilder().serializeNulls().create();
+        Gson gson = new GsonBuilder().disableHtmlEscaping().create();
         String requestBodyJson = gson.toJson(requestBody);
         log.debug("Request: " + requestBodyJson);
         // Send request body
         DataOutputStream wr;
         try {
             wr = new DataOutputStream(con.getOutputStream());
-            wr.writeBytes(requestBodyJson);
+            wr.write(requestBodyJson.getBytes(StandardCharsets.UTF_8));
             wr.flush();
             wr.close();
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
+            log.error("[sendPostRequest] Error writing output stream", e);
             return null;
         }
 
         try {
             responseCode = con.getResponseCode();
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
+            log.error("[sendPostRequest] Error getting response code", e);
             return null;
         }
 
-        BufferedReader in;
+        InputStreamReader is = null;
+        BufferedReader in = null;
 
         try {
-            in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            is = new InputStreamReader(con.getInputStream());
+        } catch (IOException e) {
+            log.error("[sendPostRequest] Error reading input stream from connection", e);
+            is = new InputStreamReader(con.getErrorStream());
+        }
+
+        if (is == null) {
+            return null;
+        }
+
+        try {
+            in = new BufferedReader(is);
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
+            log.error("[sendPostRequest] Error reading response", e);
             return null;
         }
 
@@ -158,7 +181,7 @@ public class Http {
             }
             in.close();
         } catch (Exception e) {
-            log.error("[sendPostRequest]",e);
+            log.error("[sendPostRequest] Error reading response to StringBuffer", e);
             return null;
         }
 

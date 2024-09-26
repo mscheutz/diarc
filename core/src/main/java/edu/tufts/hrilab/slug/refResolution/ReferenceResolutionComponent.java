@@ -76,6 +76,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
   }
 
   //todo: not great to implement callbacks here instead of in the Resolver, but I needed "getMyService" which is implemented on DiarcComponent
+
   /**
    * Calls down to the resolver to update information about consultants after a new consultant is added.
    * Additionally, registers for notifications from consultants for when new properties are added to the consultant.
@@ -117,7 +118,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
     log.info("Resolving references in " + utterance);
 //    resolver.registerWithTRADE(); // registering here causes deadlock in some trade configurations (e.g., 3 containers across 2 machines)
     //TODO:brad: I don't think we always want to do this, but we need to for the multi robot case
-    resolver.updateConsultCache(utterance.getListeners().get(0).toString());
+    resolver.updateConsultCache(utterance.getAddressee());
     Growler growler = new Growler(resolver, gh, JavaConverters.mapAsScalaMap(relevanceMap));
 
     //this check is here so that only free vars that actually exist in the semantics are resolved,
@@ -245,6 +246,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
 
   /**
    * Converts hypotheses list to the form used in Utterance.getBindings() and then adds those bindings to the Utterance.
+   *
    * @param u
    * @param hypotheses
    */
@@ -293,13 +295,13 @@ public class ReferenceResolutionComponent extends DiarcComponent {
   }
 
   @TRADEService
-  public <E> E getEntityForReference(Symbol ref, Class<E> entityJavaType){
-    return resolver.getEntityForReference(ref,entityJavaType);
+  public Map<Symbol, Double> getActivatedEntities(List<String> groupConstraints) {
+    return resolver.getActivatedEntities(groupConstraints);
   }
 
   @TRADEService
-  public <E> E getEntityForReference(Symbol ref, Class<E> entityJavaType, List<Term> constraints){
-    return resolver.getEntityForReference(ref,entityJavaType,constraints);
+  public <E> E getEntityForReference(Symbol ref, Class<E> entityJavaType){
+    return resolver.getEntityForReference(ref,entityJavaType);
   }
 
   @TRADEService
@@ -363,8 +365,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
           binding.put((Variable) queryProperty, Factory.createSymbol(p.getName()));
           bindings.add(binding);
         }
-      }
-      else if(queryProperty.isTerm()){
+      } else if (queryProperty.isTerm()) {
         log.warn("[observeProperties] invalid query format, second arg can't be a Term: "+query);
       } else{
         for (Term p : properties) {
@@ -461,7 +462,12 @@ public class ReferenceResolutionComponent extends DiarcComponent {
       List<Symbol> usages = allRefs.get(ref);
       int sum = 0;
       for (Symbol useage : usages) {
-        sum += Integer.valueOf(useage.getName().split("_")[1]);
+        try {
+            sum += Integer.valueOf(useage.getName().split("_")[1]);
+        } catch (NumberFormatException e) {
+            log.warn("Using ref that doesn't follow consultant numbering convention.");
+            sum += 0;
+        }
       }
 
       //not really sure why we need to do this, but preserving previous functionality, for now...

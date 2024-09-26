@@ -53,15 +53,19 @@ import java.lang.Integer;
     edu.tufts.hrilab.fol.Symbol !right="rightArm:yumi";
     edu.tufts.hrilab.fol.Symbol !detectionArea;
 
-
+    //TODO: resolve Japanese and English versions of this teaching template for respective demos/configs
+    //!bindings = act:askQuestionFromString(?actor,"それはどこにありますか？", pattern(area(X)));
     !bindings = act:askQuestionFromString(?actor,"Where is it located?", pattern(area(X)));
     !area= op:get(!bindings, !x);
 
     !bindings = act:askQuestionFromString(?actor,"Okay, what vision job is used to detect it?", job(X));
+    //!bindings = act:askQuestionFromString(?actor,"OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
     !job = op:get(!bindings, !x);
 
     act:defineIngredientHelper(?descriptor,!area,!job);
 
+    //!bindings = act:askQuestionFromString(?actor,"OK、検出するためにどのビジョンジョブを使用しますか？", job(X));
+    //!bindings = act:askQuestionFromString(?actor,"OK、どのあたりで?descriptorを探せばいいですか？", job(X));
     !bindings = act:askQuestionFromString(?actor,"At which area should I look for a ?descriptor?", pattern(area(X)));
     !detectionArea = op:get(!bindings, !x);
 
@@ -73,6 +77,8 @@ import java.lang.Integer;
     op:sleep(2000);
     !right.act:goTo(!detectionArea);
 
+    //act:generateResponseFromString("OK、鶏肉が何か分かりました。");
+    //act:generateResponseFromString("OK、?descriptorが何か分かりました。");
     act:generateResponseFromString("Okay, I know what ?descriptor is");
 }
 
@@ -111,7 +117,7 @@ import java.lang.Integer;
 
     act:perceiveEntityFromSymbol(?refId);
 
-    !bindings = act:askQuestionFromString(?actor,"I see a ?itemType, can you show me how to grasp it?", grasp(X));
+    !bindings = act:askQuestionFromString(?actor,"I see a ?itemType, can you show me how to grasp it?", hold(X));
     !response = op:get(!bindings, !x);
     if (~op:equalsValue(!response, none())) {
         act:defineGraspPointForDescriptor(?refId, ?itemType);
@@ -124,6 +130,11 @@ import java.lang.Integer;
 
 //Item definition
 () = defineItem[""](edu.tufts.hrilab.fol.Symbol ?itemName){
+    //TODO: implement methods that actually clean up various learning processes correctly
+    onInterrupt :{
+        suspend: tsc:pauseActionLearning(?actor,!scriptID);
+        resume: tsc:resumeActionLearning(?actor,!scriptID);
+    }
 
     java.lang.Integer !i =0;
     java.lang.Integer !optionIndex =0;
@@ -149,6 +160,9 @@ import java.lang.Integer;
     edu.tufts.hrilab.fol.Predicate !scriptID;
     edu.tufts.hrilab.fol.Symbol !startSymbol ="start";
     edu.tufts.hrilab.fol.Symbol !endSymbol= "end";
+    edu.tufts.hrilab.fol.Symbol !pauseSymbol ="pause";
+    edu.tufts.hrilab.fol.Symbol !resumeSymbol ="resume";
+
 
     java.util.List !signatureArgs;
     !signatureArgs = op:newArrayList("edu.tufts.hrilab.fol.Symbol");
@@ -163,12 +177,15 @@ import java.lang.Integer;
 
     !scriptID =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !signatureName,!signatureArgs);
 
-    act:updateActionLearning(!scriptID,!startSymbol);
+    async {
+        act:learnAction(!scriptID);
+    }
+    act:waitForActionLearningStart(!scriptID);
     !bindings = act:askQuestionFromString(?actor,"Okay. How do I prepare a ?itemName ?",!endQuery);
 
     //generate new signature that is unique to model name
     op:log(warn, "[defineItem] ending learning for: !scriptID");
-    act:updateActionLearning(!scriptID,!endSymbol);
+    act:endActionLearning(!scriptID);
 
     !responsePredicate=op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "isComplete",?itemName);
     !tmpPredicate=op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "generateResponse",?actor,!responsePredicate);
@@ -260,7 +277,7 @@ import java.lang.Integer;
     java.lang.String !status;
     Predicate !goalPred;
 
-    !goalPreds = act:getSystemGoalPredicates();
+    !goalPreds = act:getSystemGoalsPredicates();
     !resultsSize = op:size(!goalPreds);
     if(op:gt(!resultsSize,0)){
         foreach(!goalPred: !goalPreds){
@@ -278,7 +295,7 @@ import java.lang.Integer;
     java.util.List !goalPreds;
     java.lang.Integer !resultsSize=0;
 
-    !goalPreds = act:getPendingGoalsPredicates;
+    !goalPreds = act:getPendingGoals();
     !resultsSize = op:size(!goalPreds);
 
     if(op:gt(!resultsSize,0)){

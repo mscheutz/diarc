@@ -4,19 +4,31 @@
 
 package edu.tufts.hrilab.slug.listen;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.simspeech.gui.ChatAdapter;
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class ListenerComponent extends DiarcComponent {
+public class ListenerComponent extends DiarcComponent implements GuiProvider {
 
   private Queue<Utterance> inputSpeechQ = new ArrayDeque();
 
@@ -29,10 +41,27 @@ public class ListenerComponent extends DiarcComponent {
    */
   private Condition newUtteranceCondition = utteranceLock.newCondition();
 
+  private List<Symbol> diarcAgents = new ArrayList<>();
+
+  public void populateDiarcAgents() {
+    TRADEServiceConstraints getDiarcAgents = new TRADEServiceConstraints().name("getDiarcAgents").argTypes();
+    try {
+      TRADEServiceInfo service = TRADE.getAvailableService(getDiarcAgents);
+      Set<Symbol> diarcAgents = service.call(Set.class);
+      this.diarcAgents.addAll(diarcAgents);
+    } catch (TRADEException e) {
+      log.error("Exception trying to populate listeners via getDiarcAgents.", e);
+    }
+  }
+
   @TRADEService
   public void reportRecognizedSpeech(Utterance input) {
     utteranceLock.lock();
     try {
+      if (diarcAgents.isEmpty()) {
+        populateDiarcAgents();
+      }
+      input.setListeners(diarcAgents);
       inputSpeechQ.add(input);
       newUtteranceCondition.signalAll();
     } finally {
@@ -73,5 +102,19 @@ public class ListenerComponent extends DiarcComponent {
   @Override
   protected void shutdownComponent() {
     interruptWaitingForUtterance();
+  }
+
+  //==========================================================================
+  // Implement methods | GuiProvider
+  //==========================================================================
+  /**
+   * {@inheritDoc}
+   */
+  @Nonnull
+  @Override
+  public String[] getAdapterClassNames() {
+    return new String[]{
+            ChatAdapter.class.getName()
+    };
   }
 }

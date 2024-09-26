@@ -3,42 +3,39 @@
  */
 package edu.tufts.hrilab.vision;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceInfo;
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Observes;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.fol.util.PragUtil;
+import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.util.resource.Resources;
 import edu.tufts.hrilab.vision.consultant.RealVisionConsultant;
 import edu.tufts.hrilab.vision.consultant.VisionReference;
-import edu.tufts.hrilab.vision.stm.*;
-import edu.tufts.hrilab.fol.Predicate;
-import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.vision.reflection.TaskPerformanceInformation;
+import edu.tufts.hrilab.vision.stm.MemoryObject;
+import edu.tufts.hrilab.vision.stm.SearchManager;
+import edu.tufts.hrilab.vision.stm.ShortTermMemoryInterface;
 import edu.tufts.hrilab.vision.util.CompressionUtil;
 import edu.tufts.hrilab.vision.util.PredicateHelper;
-
-import java.awt.Dimension;
-import javax.vecmath.Matrix4d;
-
-import edu.tufts.hrilab.util.Util;
+import edu.tufts.hrilab.vision.webgui.VisionAdapter;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+
+import javax.annotation.Nonnull;
+import javax.vecmath.Matrix4d;
+import java.awt.*;
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+import java.util.Queue;
+import java.util.*;
 
 /**
  * DIARC Vision component.
  */
-public class VisionComponent extends DiarcComponent implements VisionInterface {
+public class VisionComponent extends DiarcComponent implements VisionInterface, GuiProvider {
 
   private boolean runSandbox = false;
   private boolean printVisionStats = false;
@@ -48,7 +45,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   private List<String> runMemObjTypes = new ArrayList();
 
   // vision configuration filename and path info
-  
+
   /**
    * Default path to vision resources (configs).
    */
@@ -463,17 +460,17 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   /* Publicly Available Methods, Advertised in VisionComponent */
   /* Short Term Memory Methods */
   @Override
-  public void startType(final long typeId) {
+  public void startType(long typeId) {
     Vision.availableSearchTypes.getInstance(this, typeId).start(this);
   }
 
   @Override
-  public void stopType(final long typeId) {
+  public void stopType(long typeId) {
     Vision.availableSearchTypes.getInstance(this, typeId).stop(this, false);
   }
 
   @Override
-  public void stopAndRemoveType(final long typeId) {
+  public void stopAndRemoveType(long typeId) {
     //final long startTime = System.currentTimeMillis();
     //log.trace(String.format("stopAndRemoveType id: %d", typeId));
 
@@ -496,12 +493,12 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   }
 
   @Override
-  public List<Long> getTypeIds(final double conf) {
-    return ShortTermMemoryInterface.getTypeIds(conf);
+  public List<Long> getTypeIds() {
+    return ShortTermMemoryInterface.getTypeIds();
   }
 
   @Override
-  public Long getTypeId(final List<? extends Symbol> descriptors) {
+  public Long getTypeId(List<? extends Symbol> descriptors) {
     log.debug(String.format("[getTypeId] called with: %s.", descriptors.toString()));
 
     Queue<Symbol> toFilter = new ArrayDeque<>(descriptors);
@@ -570,13 +567,13 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   }
 
   @Override
-  public Long getTypeId(final Symbol objectRef) {
+  public Long getTypeId(Symbol objectRef) {
     log.debug("[getTypeId] objectRef: " + objectRef);
     return Vision.consultant.getTypeId(objectRef);
   }
 
   @Override
-  public boolean nameDescriptors(final List<? extends Symbol> descriptors, final Symbol typeName) {
+  public boolean nameDescriptors(List<? extends Symbol> descriptors, Symbol typeName) {
     log.trace(String.format("[nameDescriptors] called with: %s.", descriptors.toString()));
 
     // convert descriptors to vision component form
@@ -595,7 +592,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   }
 
   @Override
-  public boolean nameDescriptors(final Long typeId, final Symbol typeName) {
+  public boolean nameDescriptors(Long typeId, Symbol typeName) {
     log.trace(String.format("[nameDescriptors] called with typeId: %d.", typeId));
 
     List<Term> visionTypeName = PredicateHelper.convertToVisionForm(typeName);
@@ -613,7 +610,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   }
 
   @Override
-  public List<Term> getDescriptors(final Long typeId) {
+  public List<Term> getDescriptors(Long typeId) {
     List<Term> descriptors = new ArrayList();
     SearchManager searchType = Vision.availableSearchTypes.getInstance(this, typeId);
     if (null != searchType) {
@@ -623,14 +620,14 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   }
 
   @Override
-  public List<Long> getTokenIds(final double conf) {
+  public List<Long> getTokenIds() {
     log.trace("[getTokenIds] called.");
-    return ShortTermMemoryInterface.getTokenIds(conf);
+    return ShortTermMemoryInterface.getTokenIds();
   }
 
   @Override
-  public List<Long> getTokenIds(final long typeId, final double conf) {
-    log.debug(String.format("[getTokenIds] (by typeId) called with typeId: %d. conf: %f.", typeId, conf));
+  public List<Long> getTokenIds(long typeId) {
+    log.debug("[getTokenIds] (by typeId) called with typeId: {}.", typeId);
     SearchManager searchType = Vision.availableSearchTypes.getInstance(this, typeId);
 
     if (searchType != null) {
@@ -659,7 +656,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
 
       //finally, get results
       log.trace(String.format("getTokenIds (by typeId). fetching results: %d", typeId));
-      return ShortTermMemoryInterface.getTokenIds(typeId, conf);
+      return ShortTermMemoryInterface.getTokenIds(typeId);
     } else {
       log.warn(String.format("Invalid type %d passed to getTokenIds.", searchType));
       return new ArrayList<>();
@@ -667,20 +664,20 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   }
 
   @Override
-  public List<Long> getTokenIds(final List<? extends Symbol> descriptors, final double conf) {
+  public List<Long> getTokenIds(List<? extends Symbol> descriptors) {
     log.debug(String.format("[getTokenIds] (by description) called with: %s.", descriptors.toString()));
     long typeId = getTypeId(descriptors);
-    return getTokenIds(typeId, conf);
+    return getTokenIds(typeId);
   }
 
   @Override
-  public List<MemoryObject> getTokens(final double conf) {
+  public List<MemoryObject> getTokens() {
     log.trace("[getTokens] called.");
-    return ShortTermMemoryInterface.getTokens(conf);
+    return ShortTermMemoryInterface.getTokens();
   }
 
   @Override
-  public List<MemoryObject> getTokens(final long typeId, final double conf) {
+  public List<MemoryObject> getTokens(long typeId) {
     log.trace(String.format("[getTokens] (by typeId) called: %d.", typeId));
 
     SearchManager searchType = Vision.availableSearchTypes.getInstance(this, typeId);
@@ -706,24 +703,24 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
 
       //finally, get results
       log.debug("getTokensByTypeId fetching results: " + typeId);
-      return ShortTermMemoryInterface.getTokens(typeId, conf);
+      return ShortTermMemoryInterface.getTokens(typeId);
     } else {
-      log.debug(String.format("Invalid type %d passed to getTokens (by typeId).", searchType));
+      log.debug("Invalid type {} passed to getTokens (by typeId).", searchType);
       return new ArrayList<>();
     }
   }
 
   @Override
-  public List<MemoryObject> getTokens(final List<? extends Symbol> descriptors, final double conf) {
+  public List<MemoryObject> getTokens(List<? extends Symbol> descriptors) {
     log.trace(String.format("getTokens (by descriptors): %s", descriptors));
     long typeId = getTypeId(descriptors);
-    return getTokens(typeId, conf);
+    return getTokens(typeId);
   }
 
   @Override
-  public MemoryObject getToken(final long tokenId, final double conf) {
+  public MemoryObject getToken(long tokenId) {
     log.trace(String.format("getToken: %d", tokenId));
-    MemoryObject mo = ShortTermMemoryInterface.getToken(tokenId, conf);
+    MemoryObject mo = ShortTermMemoryInterface.getToken(tokenId);
     log.trace(String.format("got Token: %d", tokenId));
     return mo;
   }
@@ -742,7 +739,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   }
 
   @Override
-  public boolean addDescriptor(final long typeId, final Symbol descriptor) {
+  public boolean addDescriptor(long typeId, Symbol descriptor) {
     log.trace(String.format("addDescriptor id: %d. predicate: %s", typeId, descriptor));
     SearchManager searchType = Vision.availableSearchTypes.getInstance(this, typeId);
     if (searchType == null) {
@@ -770,7 +767,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   }
 
   @Override
-  public boolean removeDescriptor(final long typeId, final Symbol descriptor) {
+  public boolean removeDescriptor(long typeId, Symbol descriptor) {
     log.trace(String.format("removeDescriptor id: %d predicate: %s", typeId, descriptor));
     SearchManager searchType = Vision.availableSearchTypes.getInstance(this, typeId);
     if (searchType == null) {
@@ -793,7 +790,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
 
   //TODO: remove
   @Override
-  public void endDescriptorChanges(final long typeId) {
+  public void endDescriptorChanges(long typeId) {
     log.trace(String.format("endDescriptorChanges id: %d", typeId));
     SearchManager searchType = Vision.availableSearchTypes.getInstance(this, typeId);
     if (searchType == null) {
@@ -811,19 +808,19 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   // ============== END Incremental Search Methods ====================================
 
   @Override
-  public boolean confirmToken(final long tokenId) {
+  public boolean confirmToken(long tokenId) {
     log.trace("ConfirmObject by key: " + tokenId);
     return ShortTermMemoryInterface.confirmObject(tokenId);
   }
 
   @Override
-  public boolean confirmToken(final MemoryObject token) {
+  public boolean confirmToken(MemoryObject token) {
     log.trace("ConfirmObject by MO: " + token);
     return ShortTermMemoryInterface.confirmObject(token);
   }
 
   @Override
-  public void takeSnapshot(final String filename) {
+  public void takeSnapshot(String filename) {
     if (filename != null && filename.endsWith(".jpg")) {
       Vision.camera.writeFrame(filename);
     } else {
@@ -969,14 +966,14 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
       return null;
     }
 
-    List<Long> tokenIds = getTokenIds(typeId, 0.0);
+    List<Long> tokenIds = getTokenIds(typeId);
 
     long timeout = 5000L; // ms
     long startTime = System.currentTimeMillis();
     while (tokenIds.isEmpty() && (System.currentTimeMillis() - startTime) < timeout) {
       log.info("[makeObservations] still looking for: " + observation);
       Util.Sleep(500);
-      tokenIds = getTokenIds(typeId, 0.0);
+      tokenIds = getTokenIds(typeId);
     }
     log.info("[makeObservations] typeId: " + typeId + " tokenIds: " + tokenIds);
 
@@ -1017,7 +1014,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
 
     TRADEServiceInfo learnService = getMyService("learn", Term.class, List.class);
 
-//    for (MemoryObject mo : getTokens(0.0)) {
+//    for (MemoryObject mo : getTokens()) {
 //      Set<Term> sceneDescriptors = MemoryObjectUtil.getBoundSceneGraphDescriptors(mo);
 //      log.info("sceneDescriptors for object " + mo.getIdentifier() + ". " + Arrays.toString(sceneDescriptors.toArray()));
 //    }
@@ -1076,7 +1073,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
 //    log.debug("pre-z: " + z);
 //    transform.transform(z);
 //    log.debug("post-z: " + z);
-//    List<MemoryObject> mos = getTokens(0.5d);
+//    List<MemoryObject> mos = getTokens();
 //    MemoryObject mo = mos.get(0);
 //    mo.transformToBase();
     log.info("[sandbox] castle has been built!");
@@ -1095,5 +1092,17 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
       log.info("object " + objRef + " is NOT at " + predicate.getArgs().get(1));
     }
     return returnVal;
+  }
+
+  /**
+   * {@inheritDoc}
+   * @return {@inheritDoc}
+   */
+  @Nonnull
+  @Override
+  public String[] getAdapterClassNames() {
+    return new String[]{
+            VisionAdapter.class.getName()
+    };
   }
 }

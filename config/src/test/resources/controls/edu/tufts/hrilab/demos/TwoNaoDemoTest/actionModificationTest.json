@@ -11,10 +11,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "updateActionLearning(dempster,doasquat(dempster),start)", "SKIPPENDING", "1704824810652" ]
-    }, {
-      "serviceName" : "joinOnGoal",
-      "serviceArgs" : [ "1704824810652", "SUCCEEDED" ]
+      "serviceArgs" : [ "learnAction(dempster,doasquat(dempster))", "ACT", "SKIPPENDING", "1704824810652" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -22,7 +19,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "raise(dempster,arms)", "NORMAL", "1704824815619" ]
+      "serviceArgs" : [ "raise(dempster,arms)", "ACT", "NORMAL", "1704824815619" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824815619", "SUCCEEDED" ]
@@ -33,7 +30,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "crouchDown(dempster)", "NORMAL", "1704824820621" ]
+      "serviceArgs" : [ "crouchDown(dempster)", "ACT", "NORMAL", "1704824820621" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824820621", "SUCCEEDED" ]
@@ -44,7 +41,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "standUp(dempster)", "NORMAL", "1704824825637" ]
+      "serviceArgs" : [ "standUp(dempster)", "ACT", "NORMAL", "1704824825637" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824825637", "SUCCEEDED" ]
@@ -55,10 +52,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "updateActionLearning(dempster,doasquat(dempster),end)", "SKIPPENDING", "1704824830664" ]
+      "serviceArgs" : [ "endActionLearning(dempster,doasquat(dempster))", "ACT", "SKIPPENDING", "1704824830664" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824830664", "SUCCEEDED" ]
+    }, {
+      "serviceName" : "joinOnGoal",
+      "serviceArgs" : [ "1704824810652", "SUCCEEDED" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -66,7 +66,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "doasquat(dempster)", "NORMAL", "1704824835636" ]
+      "serviceArgs" : [ "doasquat(dempster)", "ACT", "NORMAL", "1704824835636" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824835636", "SUCCEEDED" ]
@@ -77,7 +77,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "lower(dempster,arms)", "NORMAL", "1704824840673" ]
+      "serviceArgs" : [ "lower(dempster,arms)", "ACT", "NORMAL", "1704824840673" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824840673", "SUCCEEDED" ]
@@ -105,7 +105,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "modifyAction(dempster,doasquat(dempster),insert(lower(dempster,arms)),after(standUp(dempster)))", "NORMAL", "1704824850659" ]
+      "serviceArgs" : [ "modifyAction(dempster,doasquat(dempster),insert(lower(dempster,arms)),after(standUp(dempster)))", "ACT", "NORMAL", "1704824850659" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824850659", "SUCCEEDED" ]
@@ -116,7 +116,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "doasquat(dempster)", "NORMAL", "1704824855679" ]
+      "serviceArgs" : [ "doasquat(dempster)", "ACT", "NORMAL", "1704824855679" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824855679", "SUCCEEDED" ]
@@ -127,7 +127,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "doasquat(shafer)", "NORMAL", "1704824860695" ]
+      "serviceArgs" : [ "doasquat(shafer)", "ACT", "NORMAL", "1704824860695" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824860695", "SUCCEEDED" ]

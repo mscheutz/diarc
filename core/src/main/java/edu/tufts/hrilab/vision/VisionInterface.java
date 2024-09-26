@@ -57,7 +57,7 @@ public interface VisionInterface extends edu.tufts.hrilab.interfaces.VisionInter
    * @return true if descriptors map to an existing typeId, false otherwise
    */
   @TRADEService
-  boolean nameDescriptors(final List<? extends Symbol> descriptors, final Symbol typeName);
+  boolean nameDescriptors(List<? extends Symbol> descriptors, Symbol typeName);
 
   //=============================================================
   //======================= END: move these into interface =====
@@ -120,7 +120,7 @@ public interface VisionInterface extends edu.tufts.hrilab.interfaces.VisionInter
    */
   @TRADEService
   @Action
-  void startType(final long typeId);
+  void startType(long typeId);
 
   /**
    * Stop detecting/tracking specified SearchManager.
@@ -129,7 +129,7 @@ public interface VisionInterface extends edu.tufts.hrilab.interfaces.VisionInter
    */
   @TRADEService
   @Action
-  void stopType(final long typeId);
+  void stopType(long typeId);
 
   /**
    * Return the camera's last frame in a byte array.
@@ -159,7 +159,7 @@ public interface VisionInterface extends edu.tufts.hrilab.interfaces.VisionInter
    * @param filename
    */
   @TRADEService
-  void takeSnapshot(final String filename);
+  void takeSnapshot(String filename);
 
   /**
    * Returns the size of the image being used.

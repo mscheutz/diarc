@@ -29,13 +29,52 @@ import edu.tufts.hrilab.fol.Predicate;
     act:stopType(!typeId);
 }
 
+(java.util.List ?return) = observeScene(Predicate ?predicate) {
+
+  observes : see(?actor,!x);
+
+  java.util.List !tokenIds;
+  java.util.Map !bindings;
+  Predicate !anySearch;
+  java.util.List !groups;
+  java.util.Map !visionRefsMap;
+  java.util.Set !refsSet;
+  ?return = op:newArrayList("java.util.Map");
+
+  if (op:isVariable(!x)) {
+    // look for "any" objects
+    !anySearch = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "any(X)");
+    act:startVisualSearch(!anySearch);
+
+    // get resulting refs from search(es)
+    !groups = op:newArrayList("java.lang.String");
+    op:add(!groups, "physobj");
+    !visionRefsMap = tsc:getActivatedEntities(!groups);
+
+    // use refs to create binding results (e.g., see(self, physobj_2), see(self, physobj_3))
+    !refsSet = op:invokeMethod(!visionRefsMap, "keySet");
+    foreach(!ref : !refsSet) {
+      !bindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
+      op:put(!bindings, !x, !ref);
+      op:add(?return, !bindings);
+    }
+  } else {
+    // look for only specified object
+    !tokenIds = act:lookForObject(!x);
+    if (~op:isEmpty(!tokenIds)) {
+      !bindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
+      op:add(?return, !bindings);
+    }
+  }
+}
+
 // ?actor looks for ?objectRef in current FOV and returns list of ?tokenIds
-(java.lang.Long ?typeId, java.util.List ?tokenIds) = lookForObject(Symbol ?objectRef) {
+(java.util.List ?tokenIds) = lookForObject(Symbol ?objectRef) {
     java.lang.Long !tokenId;
     Predicate !resultPred;
 
     op:log("debug", "[lookForObject] script entered.");
-    ?typeId = act:startVisualSearch(?objectRef);
+    act:startVisualSearch(?objectRef);
     ?tokenIds = act:getTokenIds(?objectRef);
 
     // for now, explicitly update belief with resultPred
@@ -51,7 +90,7 @@ import edu.tufts.hrilab.fol.Predicate;
 
 // ?actor looks for object ref ?objectRef in current FOV. This is similar
 // to lookForObject except with success/failure based on if object is found.
-(java.lang.Long ?typeId, java.util.List ?tokenIds, java.lang.Long ?tokenId) = findObject(Symbol ?objectRef) {
+(java.util.List ?tokenIds, java.lang.Long ?tokenId) = findObject(Symbol ?objectRef) {
     Predicate !failCond;
 
     effects : {
@@ -59,7 +98,7 @@ import edu.tufts.hrilab.fol.Predicate;
       success infer : see(?actor,?objectRef);
     }
 
-    (?typeId, ?tokenIds) = act:lookForObject(?objectRef);
+    ?tokenIds = act:lookForObject(?objectRef);
     if (op:isEmpty(?tokenIds)) {
       op:log("warn", "No objects found. Exiting.");
       !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(see(?actor, ?objectRef))");
@@ -67,30 +106,4 @@ import edu.tufts.hrilab.fol.Predicate;
     } else {
       ?tokenId = op:get(?tokenIds, 0);
     }
-}
-
-// ?actor looks for on(grasp_points, ?descriptors) in current FOV.
-// This is exactly like findObject, except the ?descriptors are wrapped
-// in an on(grasp_points, ?descriptors) predicate so vision will look for
-// grasp points on the object.
-(java.lang.Long ?typeId, java.util.List ?tokenIds, java.lang.Long ?tokenId) = findGraspableObject(Symbol ?objectRef) {
-    Predicate !desc;
-    Predicate !property;
-    java.util.List !properties;
-
-
-    effects : {
-      failure infer : not(see(?actor,?objectRef));
-      success infer : see(?actor,?objectRef);
-    }
-
-    // first add "on(grasp_point,?objectRef)" property to objectRef
-    (!property) = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "on(grasp_point(ACTION_VAR0),?objectRef)");
-    (!properties) = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-    op:add(!properties, !property);
-    act:assertProperties(?objectRef, !properties);
-    op:log("debug", "Done asserting !properties properties.");
-
-    // then call normal findObject
-    (?typeId, ?tokenIds, ?tokenId) = act:findObject(?objectRef);
 }

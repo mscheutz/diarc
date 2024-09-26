@@ -20,6 +20,10 @@ repositories {
   maven {
     url = uri("https://clojars.org/repo") //This is needed for diarcros - but technically should come from the closure plugin. todo: Apply closure plugin instead?
   }
+  maven {
+      name = "Thinking Robots TRADE mvn host"
+      url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
+  }
   maven { // hrilab archive
     name = "HRILabArchiva"
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
@@ -179,6 +183,10 @@ addRosSource("tower", listOf(
     "edu/tufts/hrilab/tower/*",
     "edu/tufts/hrilab/diarcros/tower/*",
 ), listOf("movebase"))
+
+addRosSource("vision", listOf(
+        "edu/tufts/hrilab/vision/*",
+))
 
 fun addRosSource(packageName: String, sources: List<String>, depends: List<String> = emptyList()) {
 

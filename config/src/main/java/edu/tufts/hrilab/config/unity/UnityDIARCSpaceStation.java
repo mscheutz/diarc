@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.unity;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 
 import edu.tufts.hrilab.movebase.MoveBaseComponent;
@@ -24,11 +25,18 @@ public class UnityDIARCSpaceStation {
   public static void main(String[] args) {
     List<String> largs = Arrays.asList(args);
     String unityIP = "127.0.0.1";
+    String unityPort = "1755";
 
     if (largs.contains("-unity")) {
       unityIP = largs.get(largs.indexOf("-unity") + 1);
     } else {
       log.warn("No unity IP provided, using default: " + unityIP);
+    }
+
+    if (largs.contains("-port")) {
+      unityPort = largs.get(largs.indexOf("-port") + 1);
+    } else {
+      log.warn("No unity port provided, using default: " + unityPort);
     }
 
     String goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(robot1:agent) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
@@ -47,12 +55,12 @@ public class UnityDIARCSpaceStation {
     DiarcComponent.createInstance(SimpleNLGComponent.class, "");
     DiarcComponent.createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class, "");
 
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityComponent.class, "-unityip " + unityIP + " -groups agent:robot1");
+    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityComponent.class, "-unityip " + unityIP  + " -unityport " + unityPort +  " -groups agent:robot1");
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.space_station.UnitySpaceStation.class, "-agent spacestation -groups agent:robot1");
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM.class, "-groups agent:robot1 -refs refs/unity_space_station_tube_positions.json");
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityAgent.class, "-agent rover -groups agent:robot1");
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityPR2.class, "-agent robot1 -groups agent:robot1");
 
-    DiarcComponent.createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, goalManagerArgs);
+    DiarcComponent.createInstance(GoalManagerComponent.class, goalManagerArgs);
   }
 }

@@ -6,15 +6,13 @@ package edu.tufts.hrilab.llm;
 
 import java.util.UUID;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import edu.tufts.hrilab.slug.common.Utterance;
-
-import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.llm.hf.response.LlamaHFChatCompletionResponse;
+import edu.tufts.hrilab.llm.hf.response.T5BaseCompletionResponse;
 
 import edu.tufts.hrilab.llm.openai.response.*;
 import edu.tufts.hrilab.llm.llama.response.*;
@@ -65,6 +63,24 @@ public class Completion {
     type = "completion";
     inputTokens = response.tokens_evaluated;
     outputTokens = response.tokens_predicted;
+  }
+
+  public Completion (LlamaHFChatCompletionResponse response) {
+    UUID uuid = UUID.randomUUID();
+    text = response.generated_text;
+    id = uuid.toString();
+    created = System.currentTimeMillis() / 1000;
+    service = "llamahf";
+    type = "chat";
+  }
+
+  public Completion (T5BaseCompletionResponse response) {
+    UUID uuid = UUID.randomUUID();
+    text = response.translation_text;
+    id = uuid.toString();
+    created = System.currentTimeMillis() / 1000;
+    service = "t5hf";
+    type = "";
   }
 
   public String getText () {

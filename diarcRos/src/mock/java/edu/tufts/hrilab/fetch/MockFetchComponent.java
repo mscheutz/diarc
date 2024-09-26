@@ -25,31 +25,31 @@ public class MockFetchComponent extends MockMoveItComponent implements FetchInte
   }
 
   @Override
-  public boolean setTorsoPosition(double position) {
+  public Justification setTorsoPosition(double position) {
     log.info("[setTorsoPosition]");
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean pointHeadTo(MemoryObject target_object) {
+  public Justification pointHeadTo(MemoryObject target_object) {
     log.info("[pointHeadTo memObj]");
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean pointHeadTo(Symbol objectRef) {
+  public Justification pointHeadTo(Symbol objectRef) {
     log.info("[pointHeadTo objRef]");
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean pointHeadTo(Point3d target_point) {
+  public Justification pointHeadTo(Point3d target_point) {
     log.info("[pointHeadTo point]");
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -62,13 +62,6 @@ public class MockFetchComponent extends MockMoveItComponent implements FetchInte
   @Override
   public Justification lookAround() {
     log.info("[lookAround]");
-    simExecTime();
-    return new ConditionJustification(true);
-  }
-
-  @Override
-  public Justification moveObject(Symbol objectRef, String groupName, String direction) {
-    log.info("[moveObject]");
     simExecTime();
     return new ConditionJustification(true);
   }
@@ -102,7 +95,7 @@ public class MockFetchComponent extends MockMoveItComponent implements FetchInte
     return FetchBreakerStates.STATE_ENABLED;
   }
 
-  private void simExecTime() {
+  protected void simExecTime() {
     if (shouldSimExecTime) {
       try {
         Thread.sleep(simExecTimeout);

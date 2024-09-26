@@ -4,11 +4,37 @@
 
 package edu.tufts.hrilab.map;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import com.google.common.graph.EndpointPair;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.consultant.pose.PoseConsultant;
+import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.fol.Variable;
+import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.map.gui.MapAdapter;
+import edu.tufts.hrilab.map.util.Pose;
+import edu.tufts.hrilab.map.util.Utils;
+import edu.tufts.hrilab.util.Convert;
+import edu.tufts.hrilab.util.RosPackPathHelper;
+import edu.tufts.hrilab.util.resource.Resources;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.lang3.tuple.Pair;
 
+import javax.annotation.Nonnull;
+import javax.vecmath.Matrix4d;
+import javax.vecmath.Point2d;
+import javax.vecmath.Point3d;
+import javax.vecmath.Quat4d;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -18,38 +44,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
 
-import edu.tufts.hrilab.map.PathAction;
-import edu.tufts.hrilab.map.util.Pose;
-import edu.tufts.hrilab.map.util.Utils;
-import edu.tufts.hrilab.util.Convert;
-import edu.tufts.hrilab.util.RosPackPathHelper;
-import edu.tufts.hrilab.util.resource.Resources;
-//import jakarta.servlet.http.HttpServletResponse;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
 
-import com.google.common.graph.*;
-
-import edu.tufts.hrilab.action.annotations.Action;
-import edu.tufts.hrilab.fol.*;
-import edu.tufts.hrilab.consultant.pose.PoseReference;
-
-import ai.thinkingrobots.trade.*;
-//import org.springframework.core.io.ClassPathResource;
-//import org.springframework.http.MediaType;
-//import org.springframework.stereotype.Component;
-//import org.springframework.util.StreamUtils;
-//import org.springframework.web.bind.annotation.*;
-//import org.springframework.web.bind.annotation.GetMapping;
-//import org.springframework.web.bind.annotation.RequestParam;
-
-import javax.vecmath.Matrix4d;
-import javax.vecmath.Point2d;
-import javax.vecmath.Point3d;
-import javax.vecmath.Quat4d;
-
-
-public class MapComponent extends DiarcComponent {
+public class MapComponent extends DiarcComponent implements GuiProvider {
   /**
    * Robot's current pose on the current map.
    */
@@ -638,22 +634,71 @@ public class MapComponent extends DiarcComponent {
     }
     floorMaps.clear();
   }
-//
-//  @GetMapping("/goodbye")
-//  public String goodbye(@RequestParam(value = "name", defaultValue = "World") String name) {
-//
-//    return String.format("Goodbye %s!", name);
-//  }
-//
-//  @RequestMapping(value = "/test_img", method = RequestMethod.GET,
-//          produces = MediaType.IMAGE_JPEG_VALUE)
-//  public void getImage(HttpServletResponse response) throws IOException {
-//
-//    var imgFile = new ClassPathResource("image/test.jpg");
-//    response.setContentType(MediaType.IMAGE_JPEG_VALUE);
-//    StreamUtils.copy(imgFile.getInputStream(), response.getOutputStream());
-//  }
 
+  ////////////////////////////////// START GUI methods /////////////////////////////////////////////////////
+
+  // Getter method for currRobotPose
+  @TRADEService
+  public Pose getCurrRobotPose() {
+    return currRobotPose;
+  }
+
+  // Getter method for floorMaps
+  @TRADEService
+  public Map<Integer, FloorMap> getFloorMaps() {
+    return floorMaps;
+  }
+
+  // Getter method for currFloorMap
+  @TRADEService
+  public FloorMap getCurrFloorMap() {
+    return currFloorMap;
+  }
+
+  /**
+   * Records a new location using a 3D point and a default orientation quaternion.
+   * Stores the pose in `storedPoses` with a reference created by the TRADE consultant.
+   *
+   * @param meterPosition The 3D coordinate of the new location.
+   */
+  @TRADEService
+  public void recordLocation(Point3d meterPosition) {
+    Variable var = Factory.createVariable("VAR0", poseKBName);
+    List<Term> properties = new ArrayList<>();
+    PoseReference ref = consultant.createReference(var, properties);
+
+    // Create a pose pair with a meterPosition and a simple default quaternion
+    Pair<Point3d, Quat4d> currPose = Pair.of(meterPosition, new Quat4d(0,0,0,1));
+    ref.setPose(currPose.getLeft(), currPose.getRight());
+  }
+
+  /**
+   * Gets all stored map locations as a map of refId -> (position,orientation)
+   * @return an unmodifiable map of stored poses keyed by Symbol.
+   */
+  @TRADEService
+  public Map<Symbol, Pair<Point3d, Quat4d>> getStoredPoses() {
+    Map<Symbol, Pair<Point3d, Quat4d>> refs = new HashMap<>();
+    consultant.getAllReferences().forEach(ref -> refs.put(ref.refId, ref.getPose()));
+    return refs;
+  }
+
+  @TRADEService
+  public String getRefs() {
+    return consultant.getReferenceSummaries();
+  }
+  ///////////////////////////////// END GUI methods //////////////////////////////////////////
+
+  /**
+   * {@inheritDoc}
+   * @return {@inheritDoc}
+   */
+  @Nonnull
+  @Override
+  public String[] getAdapterClassNames() {
+    log.info("getting classname from map");
+    return new String[]{
+            MapAdapter.class.getName()
+    };
+  }
 }
-
-

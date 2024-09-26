@@ -72,6 +72,7 @@
     edu.tufts.hrilab.abb.cognex.CognexResult !result;
     edu.tufts.hrilab.abb.cognex.CognexReference !ref;
     java.util.List !additionalProps;
+    !additionalProps = op:newArrayList("edu.tufts.hrilab.fol.Term");
 
     (!job) = act:getCognexJobForDescriptor(?descriptor);
     (!jobName) = op:invokeMethod(!job, "getName");
@@ -82,7 +83,6 @@
     } else {
         (!result) = op:get(!cameraResults, 0);
         //create reference and add any additional props
-        (!additionalProps) = act:getEmptyProps();
         (!ref) = act:createCogRefWithProps(!job, !additionalProps);
         //bind reference to the result that it matches
         act:bindCognexResult(!ref, !result, 0);

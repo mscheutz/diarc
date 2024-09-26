@@ -11,10 +11,22 @@ java {
   }
 }
 
+tasks.register<Copy>("copyGitHooks") {
+  from(file(rootDir.path + "/git-hooks"))
+  include("pre-commit")
+  into(rootDir.path + "/.git/hooks")
+}
+tasks.named("compileJava").get().dependsOn("copyGitHooks")
+
+
 // the repositories used to search for dependencies
 repositories {
   mavenCentral()
-//  mavenLocal()
+  mavenLocal()
+  maven {
+    name = "Thinking Robots TRADE mvn host"
+    url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
+  }
   maven {
     name = "HRILabArchiva"
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
@@ -166,7 +178,7 @@ dependencies {
   api("com.google.code.gson:gson:2.6.2")
   api("com.google.guava:guava:33.0.0-jre")
   //trade
-  api("ai.thinkingrobots:trade:1.1.0")
+  api("ai.thinkingrobots:trade:1.1.1")
 
   //junit
   testImplementation("junit:junit:4.13.1")
@@ -193,6 +205,9 @@ dependencies {
   implementation("de.sciss:sphinx4-core:1.0.0")
   implementation("de.sciss:sphinx4-data:1.0.0")
 
+  //whisper
+  implementation("io.github.givimad:whisper-jni:1.6.1")
+
   //TLDL Parser component GUI
   implementation("org.jsoup:jsoup:1.12.1")
 
@@ -205,6 +220,7 @@ dependencies {
 
   implementation("javax.servlet:servlet-api:2.5")
   implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
+  implementation("org.java-websocket:Java-WebSocket:1.5.2")
 
   //DesktopFirebaseConnectionComponent
   implementation("com.google.firebase:firebase-admin:7.1.0")
@@ -218,6 +234,8 @@ dependencies {
 
   //LLM Tokenizers
   implementation("com.knuddels:jtokkit:0.4.0")
+
+  //Environment Configuration
   implementation("io.github.cdimascio:dotenv-java:3.0.0")
 
   //hosted on HRI LAB
@@ -233,10 +251,12 @@ dependencies {
   implementation("com.aldebaran:qimessaging:2.1.0.19-linux64")
 
   //ros2
-  api("io.github.pinorobotics:jros2services:3.0");
-  api("io.github.lambdaprime:jros2client:6.0")
-  api("io.github.pinorobotics:jros2actionlib:2.0");
-  api("io.github.pinorobotics:jros2tf2:1.0")
+  api("io.github.pinorobotics:jros2services:4.0");
+  api("io.github.pinorobotics:jros2tf2:2.0")
+
+
+  //gui
+  implementation("org.apache.commons:commons-imaging:1.0-alpha3") // MapAdapter
 
 }
 
@@ -312,11 +332,11 @@ publishing {
       pom {
         name = "diarc core"
         description = "core diarc functionality"
-        url = "https://hrilab.tufts.edu:22280/ade/ade"
+        url = "https://hrilab.tufts.edu:22280/diarc/diarc"
 //                licenses {
 //                    license {
 //                        name = "DIARC License"
-//                        url = "https://hrilab.tufts.edu:22280/ade/ade"
+//                        url = "https://hrilab.tufts.edu:22280/diarc/diarc"
 //                    }
 //                }
       }
@@ -333,7 +353,7 @@ publishing {
       pom {
         name = "diarc control app"
         description = "diarc libs used in control app"
-        url = "https://hrilab.tufts.edu:22280/ade/ade"
+        url = "https://hrilab.tufts.edu:22280/diarc/diarc"
 //                licenses {
 //                    license {
 //                        name = "DIARC License"

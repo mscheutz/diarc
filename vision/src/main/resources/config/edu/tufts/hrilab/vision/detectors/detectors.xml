@@ -30,14 +30,13 @@ Optional fields:
   <detector type="blob" trackers="kcf,cmt" config="blob/blobs.xml" />
   <detector type="colorbased" trackers="kcf,cmt" config="colorbased/colorbased.xml" />
   <detector type="cluster" trackers="kcf,cmt" depends="plane" config="cluster/cluster.xml" required="depth"/>
-  <detector type="cluster_advanced" trackers="kcf,cmt" depends="mastersaliency" config="cluster/cluster_advanced.xml" required="depth,v4r_v0"/>
-  <detector type="cluster2d" trackers="kcf,cmt" depends="mastersaliency" config="cluster/cluster2d.xml"/>
+  <detector type="cluster_advanced" trackers="kcf,cmt" config="cluster/cluster_advanced.xml" required="depth,v4r_v0"/>
+  <detector type="cluster2d" trackers="kcf,cmt" config="cluster/cluster2d.xml"/>
   <detector type="haar" trackers="kcf,cmt" config="haar/haars.xml"/>
   <detector type="yolo" trackers="kcf,cmt" config="yolo/yolo.json"/>
   <detector type="hough" trackers="kcf,cmt" config="hough/houghs.xml"/>
   <detector type="motion" trackers="generic" depends="opticalflow" config="motion/motion.xml"/>
   <detector type="sift" trackers="kcf,cmt" depends="sift" config="sift/sifts.xml"/>
-  <detector type="grasp" trackers="kcf,cmt" config="grasp/grasps.xml" required="depth,agilegrasp"/>
   <detector type="surfacemarking" trackers="kcf,cmt" config="surface_marking/surfacemarkings.xml"/>
   <detector type="spatialrelation" trackers="relation" config="spatial_relation/spatial_relations.xml" required="depth"/>
   <detector type="openpose" trackers="generic"  config="openpose/openpose.xml" required="openpose"/>

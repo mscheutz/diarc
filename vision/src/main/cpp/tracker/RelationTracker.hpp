@@ -23,9 +23,9 @@ protected:
 
   virtual void haveNewImage(CaptureNotification::ConstPtr notification);
 
-  virtual void haveTrackedMemoryObject(ade::stm::MemoryObject::Ptr trackedObject);
+  virtual void haveTrackedMemoryObject(diarc::stm::MemoryObject::Ptr trackedObject);
 
-  virtual int mergeObject(ade::stm::MemoryObject::Ptr newlyDetectedObject);
+  virtual int mergeObject(diarc::stm::MemoryObject::Ptr newlyDetectedObject);
 
   virtual void removeLowConfidenceObjects();
 

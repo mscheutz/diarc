@@ -59,7 +59,7 @@ public class Prompts {
     }
 
     BufferedReader reader = new BufferedReader((new InputStreamReader(stream)));
-    return reader.lines().collect(Collectors.joining());
+    return reader.lines().collect(Collectors.joining("\n"));
   }
 
   /**

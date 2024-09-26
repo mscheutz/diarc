@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.nao.MockNaoComponent;
 import edu.tufts.hrilab.nao.MockNaoInterface;
@@ -30,9 +31,9 @@ public class MockTwoNaoDemo extends DiarcConfiguration {
   public void runConfiguration() {
 
     trustedSpeechRec = createInstance(SimSpeechRecognitionComponent.class,
-            "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster -nogui");
+            "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -addressee dempster -nogui");
     untrustedSpeechRec = createInstance(SimSpeechRecognitionComponent.class,
-            "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -listener dempster -nogui");
+            "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -addressee dempster -nogui");
 
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
@@ -49,7 +50,7 @@ public class MockTwoNaoDemo extends DiarcConfiguration {
     dempster = createInstance(MockNaoComponent.class, "-groups agent:dempster");
     shafer = createInstance(MockNaoComponent.class, "-groups agent:shafer");
 
-    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, "-beliefinitfile demos.pl agents/twonaoagents.pl " +
+    createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl agents/twonaoagents.pl " +
             "-asl nao/dance.asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
             "-goal listen(self)");
   }

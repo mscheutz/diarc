@@ -15,14 +15,22 @@
 
 START-TEMPLATES
 
-TUBECMD; {C/SIDE ; #s.?PH(?ADDRESSEE,$s)}, {((C/AREA)/SIDE)/TUBE ; #t#s#a.?PH(?ADDRESSEE,$a,$s)}, {((C/SIDE)/AREA)/TUBE ; #t#a#s.?PH(?ADDRESSEE,$a,$s)}, {(C/SIDE)/AREA ; #a#s.?PH(?ADDRESSEE,$a,$s)}, {(C/AREA)/SIDE ; #s#a.?PH(?ADDRESSEE,$a,$s)}, {(C/SIDE)/TUBE ; #t#s.?PH(?ADDRESSEE,$s)}
-ADDRESSABLE; {C/C, TUBECMD/TUBECMD, TUBECMD\TUBECMD, Q/Q, C\C, Q\Q; #x.directAddress(?PH,$x)}, {AGENT ; ?PH}
-AREACMD; {C/AREA ; #a.goToArea(?ADDRESSEE, $a)}
+AREACMD; {(C/AREA)\AGENT ; #d#a.goToArea($d, $a)}, {C/AREA ; #a.goToArea(?ADDRESSEE, $a)}
+
+TUBECMD; {C/SIDE ; #s.?PH(?ADDRESSEE,$s)},  {(C/SIDE)\AGENT ; #d#s.?PH($d,$s)}, {((C/AREA)/SIDE)/TUBE ; #t#s#a.?PH(?ADDRESSEE,$a,$s)}, {(((C/AREA)/SIDE)/TUBE)\AGENT ; #d#t#s#a.?PH($d,$a,$s)}, {((C/SIDE)/AREA)/TUBE ; #t#a#s.?PH(?ADDRESSEE,$a,$s)}, {(((C/SIDE)/AREA)/TUBE)\AGENT ; #d#t#a#s.?PH($d,$a,$s)}, {(C/SIDE)/AREA ; #a#s.?PH(?ADDRESSEE,$a,$s)}, {((C/SIDE)/AREA)\AGENT ; #d#a#s.?PH($d,$a,$s)},[ {(C/AREA)/SIDE ; #s#a.?PH(?ADDRESSEE,$a,$s)}, {((C/AREA)/SIDE)\AGENT ; #d#s#a.?PH($d,$a,$s)}, {(C/SIDE)/TUBE ; #t#s.?PH(?ADDRESSEE,$s)}, {((C/SIDE)/TUBE)\AGENT ; #d#t#s.?PH($d,$s)}
+
+ADDRESSABLE; {AGENT ; ?PH}, {G/G, S/S, C/C, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
 
 END-TEMPLATES
 
 robot one; ADDRESSABLE; robot1
 robot two; ADDRESSABLE; robot2
+
+robot1; ADDRESSABLE; robot1
+robot2; ADDRESSABLE; robot2
+
+robot 1; ADDRESSABLE; robot1
+robot 2; ADDRESSABLE; robot2
 
 can; (Q / C) / AGENT ; #x #y.capableOf($x,$y)
 could; (Q / C) / AGENT ; #x #y.capableOf($x,$y)
@@ -77,10 +85,13 @@ come to; TUBECMD; goToTube
 come to; AREACMD; goToArea
 
 fix; TUBECMD; repairTube
-repair; TUBECMD; repairTube
-
 fix; C/N, C/SIDE ; #x.repairTube(?ADDRESSEE)
+fix; C ; repairTube(?ADDRESSEE)
+
+repair; TUBECMD; repairTube
 repair; C/N, C/SIDE ; #x.repairTube(?ADDRESSEE)
+repair; C ; repairTube(?ADDRESSEE)
+
 it; N ; it
 the tube; N ; theTube
 tube; N, N/SIDE; tube
@@ -88,7 +99,7 @@ tube; N, N/SIDE; tube
 %stop; C ; stopRobot(?ADDRESSEE)
 stop; C ; stop(?ADDRESSEE)
 
-autonomy ; C ; autonomy()
+autonomy ; C ; autonomy(?ADDRESSEE)
 
 what; Q/QUERYABLE; #x.$x
 which; Q/QUERYABLE; #x.$x
@@ -103,9 +114,6 @@ located; Q\Q; #x.$x
 
 you; AGENT; ?ACTOR
 
-%what is the radiation level; Q; radiationLevel(WHAT)
-%report the radiation level; Q; radiationLevel(WHAT)
-%check the radiation level; Q; radiationLevel(WHAT)
 what is the situation; Q; tubesDamaged(WHICH)
 which tubes are off; Q ;tubesOff(WHICH)
 where are you; Q ;whereAre(?ACTOR)
@@ -114,6 +122,8 @@ what are you doing; Q ;whatAre(?ACTOR,doing)
 monitor; C/AREA ; #x.monitorArea($x)
 monitor tubes ; C ; monitorArea()
 monitor tubes in; C/AREA ; #x.monitorArea($x)
+
+check; C/AREA; #x.check(?ADDRESSEE, $x)
 
 %r2 is monitoring area alpha
 is monitoring ; (C/AREA)\AGENT ; #x#a.changeBelief(monitoring($x,$a))

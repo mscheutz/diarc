@@ -6,13 +6,13 @@ package edu.tufts.hrilab.abb;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexConsultant;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexJob;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexReference;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexResult;
+import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
+import edu.tufts.hrilab.cognex.consultant.CognexJob;
+import edu.tufts.hrilab.cognex.consultant.CognexReference;
 import edu.tufts.hrilab.abb.consultant.pose.RWSPoseConsultant;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.cognex.consultant.CognexResult;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
@@ -27,15 +27,26 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
   protected RWSPoseConsultant rwsPoseConsultant;
   protected CognexConsultant cognexConsultant;
 
+  protected Map<CognexJob, String> graspPointForJob = new HashMap<>(); //todo: move this. also don't just encode the grasp point as a string.
+
   long sleepTime = 500;
   private boolean errorState = false;
   private boolean cameraResultDetected = true;
+
+  public void setSleepTime(long sleepTime) {
+    this.sleepTime = sleepTime;
+  }
 
   private void sleep(long ms) {
     try {
       Thread.sleep(ms);
     } catch (InterruptedException e) {
     }
+  }
+
+  @Override
+  public CognexResult getMatchingResult(CognexReference toReBind, List<CognexResult> results) {
+    return results.get(0);
   }
 
   @Override
@@ -77,19 +88,19 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
   @Override
   public void openGripperRapid() {
     log.info("[openGripper] opening gripper");
-    sleep(250);
+    sleep(sleepTime);
   }
 
   @Override
   public void closeGripperRapid() {
     log.info("[closeGripper] closing gripper");
-    sleep(250);
+    sleep(sleepTime);
   }
 
   @Override
   public void putDownItem(Symbol refId, Symbol pose) {
     log.info("[putDownObject] putting down item " + refId + " at pose " + pose);
-    sleep(250);
+    sleep(sleepTime);
   }
 
   @Override
@@ -108,20 +119,20 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
   public void goToCameraPose(Symbol locationRef) {
     String target = rwsPoseConsultant.getReference(locationRef).getPose();
     log.info("[goToCameraPose]: " + locationRef.getName() + " pose: " + target);
-    sleep(500);
+    sleep(sleepTime);
   }
 
   @Override
   public boolean defineGraspPointForDescriptor(Symbol refId, Symbol itemType) {
     log.info("[defineGraspPointForDescriptor] " + refId + " " + itemType);
-    sleep(250);
+    sleep(sleepTime);
     return true;
   }
 
   @Override
   public boolean perceiveEntityFromSymbol(Symbol refId) {
     log.info("[perceiveEntityFromSymbol] " + refId);
-    sleep(250);
+    sleep(sleepTime);
     CognexReference ref = cognexConsultant.getCognexReferenceForID(refId);
 
     CognexJob job = cognexConsultant.getCognexJobForCognexReference(ref);
@@ -158,20 +169,20 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
   @Override
   public void pourSauce() {
     log.info("[pourSauce] pouring sauce");
-    sleep(1000);
+    sleep(sleepTime);
   }
 
   @Override
   public void setGraspPoint(Symbol itemType, String targetString) {
     log.info("[setGraspPoint] defining grasp point for " + itemType + " to be " + targetString);
-    cognexConsultant.setGraspPointForJob(cognexConsultant.getJobForDescriptor(itemType.getName()), targetString);
+    graspPointForJob.put(cognexConsultant.getJobForDescriptor(itemType.getName()), targetString);
   }
 
   @Override
   public void moveToObject(Symbol refId) {
     CognexReference cogRef = cognexConsultant.getCognexReferenceForID(refId);
     CognexJob job = cognexConsultant.getCognexJobForCognexReference(cogRef);
-    String graspPoint = cognexConsultant.getGraspPoseForJob(job);
+    String graspPoint = graspPointForJob.get(job);
     String wobjString = String.valueOf(cogRef.result);
     log.info("moveToObject moving to object" + refId);
   }
@@ -214,7 +225,11 @@ public class MockYumiComponent extends DiarcComponent implements RWSRobotCompone
 
   @Override
   public void shutdownComponent() {
-    return;
+    try {
+      TRADE.deregister(rwsPoseConsultant);
+    } catch (TRADEException e) {
+      log.error("[shutdownComponent] exception deregistering RWSPoseConsultant", e);
+    }
   }
 
 }

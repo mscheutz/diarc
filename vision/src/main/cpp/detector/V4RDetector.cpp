@@ -62,7 +62,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 using namespace v4r;
 namespace po = boost::program_options;
 namespace bf = boost::filesystem;
@@ -72,7 +72,7 @@ V4RDetector::V4RDetector(const long long &processorId, const unsigned int imgWid
         : ObjectDetector(processorId, imgWidth, imgHeight),
           configFile_() {
   visionProcessName = "V4RDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.V4RDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.V4RDetector");
 }
 
 V4RDetector::~V4RDetector() {
@@ -1011,7 +1011,7 @@ void V4RDetector::displayResults(const MemoryObject::VecPtr &mos) {
 
   // show scene
   if (!mos->empty()) {
-    ade::Display::displayPointCloud(mos->at(0)->getCaptureData()->cloudRGB, "scene_cloud", getDisplayName());
+    diarc::Display::displayPointCloud(mos->at(0)->getCaptureData()->cloudRGB, "scene_cloud", getDisplayName());
 
     // concatenate object's clouds
     pcl::PointCloud<pcl::PointXYZ>::Ptr displayCloud(new pcl::PointCloud<pcl::PointXYZ>());
@@ -1023,7 +1023,7 @@ void V4RDetector::displayResults(const MemoryObject::VecPtr &mos) {
 
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>::Ptr model_color_handler(
             new pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>(displayCloud, 0, 255, 0));
-    ade::Display::displayPointCloud(displayCloud, model_color_handler, "model_cloud", getDisplayName());
+    diarc::Display::displayPointCloud(displayCloud, model_color_handler, "model_cloud", getDisplayName());
 
     //sleep(3.0);
   }

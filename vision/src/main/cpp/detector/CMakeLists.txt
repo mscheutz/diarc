@@ -20,18 +20,19 @@ SET(SOURCES
 	hough/GHT.cpp
 	)
 
-SET(CONFIG_DIR "../vision/build/resources/main/config/edu/tufts/hrilab/vision/detectors/")
+SET(USER_HOME_DIR $ENV{HOME})
+SET(MODEL_DIR "${USER_HOME_DIR}/.diarc/vision/detectors/")
 
-SET(YOLO_MODEL_PATH "${CONFIG_DIR}yolo/yolov3-tiny.weights")
+SET(YOLO_MODEL_PATH "${MODEL_DIR}yolo/yolov3-tiny.weights")
 SET(YOLO_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/yolo/yolov3-tiny.weights")
 
-SET(BUTTONDETECTOR_MODEL_PATH "${CONFIG_DIR}/buttondetector/buttonModelS320.onnx")
+SET(BUTTONDETECTOR_MODEL_PATH "${MODEL_DIR}/buttondetector/buttonModelS320.onnx")
 SET(BUTTONDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/buttondetector/buttonModelS320.onnx")
 
-SET(PERSONDETECTOR_MODEL_PATH "${CONFIG_DIR}/persondetector/crowdhuman_yolov5m.onnx")
+SET(PERSONDETECTOR_MODEL_PATH "${MODEL_DIR}/persondetector/crowdhuman_yolov5m.onnx")
 SET(PERSONDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/persondetector/crowdhuman_yolov5m.onnx")
 
-SET(ELEVATORDOORDETECTOR_MODEL_PATH "${CONFIG_DIR}/elevatordoordetector/elevatordoordetectorS320.onnx")
+SET(ELEVATORDOORDETECTOR_MODEL_PATH "${MODEL_DIR}/elevatordoordetector/elevatordoordetectorS320.onnx")
 SET(ELEVATORDOORDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/elevatordoordetector/elevatordoordetectorS320.onnx")
 
 # optional sources
@@ -76,14 +77,6 @@ if (OpenCV_dnn_FOUND)
 	endif(NOT EXISTS "${ELEVATORDOORDETECTOR_MODEL_PATH}")
 
 endif(OpenCV_dnn_FOUND)
-
-if (AGILEGRASP_FOUND)
-	SET(SOURCES ${SOURCES}
-		GraspDetector.cpp
-		grasp/SmallObjectGrasp.cpp
-		grasp/AgileGrasp.cpp
-	)
-endif(AGILEGRASP_FOUND)
 
 #if (PCL_GPU_PEOPLE_FOUND)
 if (USE_PCL_PEOPLE AND PCL_GPU_PEOPLE_FOUND)
@@ -131,9 +124,6 @@ ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
 # link libraries
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} common stm visionproc display capture imgproc shape_match stdc++fs)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${PCL_LIBRARIES} ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES} ${JSONCPP_LIBRARY})
-if (AGILEGRASP_FOUND)
-    TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${AGILEGRASP_LIBRARIES})
-endif (AGILEGRASP_FOUND)
 if (V4R_V0_FOUND)
   TARGET_LINK_LIBRARIES(${PROJECT_NAME} v4rSurfaceSegmenter)
 endif (V4R_V0_FOUND)

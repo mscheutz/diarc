@@ -56,17 +56,17 @@ public class MockMoveItComponent extends DiarcComponent implements MoveItInterfa
   }
 
   @Override
-  public boolean moveTo(String group_name, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
+  public Justification moveTo(String group_name, Point3d point_l, Quat4d orientation_l, Point3d point_r, Quat4d orientation_r) {
     log.info("[moveTo] method entered.");
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean moveTo(String group_name, Point3d point, Quat4d orientation) {
+  public Justification moveTo(String group_name, Point3d point, Quat4d orientation) {
     log.info("[moveTo] method entered.");
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -113,9 +113,9 @@ public class MockMoveItComponent extends DiarcComponent implements MoveItInterfa
   }
 
   @Override
-  public boolean moveToCartesian(String group_name, Point3d point, Quat4d orientation) {
+  public Justification moveToCartesian(String group_name, Point3d point, Quat4d orientation) {
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -136,37 +136,37 @@ public class MockMoveItComponent extends DiarcComponent implements MoveItInterfa
 
   @Override
   public Pair<Point3d, Quat4d> getPose(String link_name) {
-    log.info("[pointHeadTo] location method entered.");
+    log.info("[getPose] method entered.");
     simExecTime();
     return new MutablePair<>(new Point3d(1, 1, 1), new Quat4d(0, 0, 0, 1));
   }
 
   @Override
-  public boolean pointTo(String group_name, Symbol objectRef) {
+  public Justification pointTo(String group_name, Symbol objectRef) {
     simExecTime();
     log.info("[pointTo] object method entered.");
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean pointTo(String group_name, Point3d targetLocation) {
+  public Justification pointTo(String group_name, Point3d targetLocation) {
     simExecTime();
     log.info("[pointTo] location method entered.");
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean recordPose(Symbol pose_name) {
+  public Justification recordPose(Symbol pose_name) {
     log.info("[recordPose] " + pose_name);
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean saveEEPosesToFile(String filename) {
+  public Justification saveEEPosesToFile(String filename) {
     log.info("[saveEEPosesToFile] " + filename);
     simExecTime();
-    return true;  }
+    return new ConditionJustification(true);  }
 
   @Override
   public void loadEEPosesFromFile(String filename) {
@@ -191,28 +191,16 @@ public class MockMoveItComponent extends DiarcComponent implements MoveItInterfa
   }
 
   @Override
-  public boolean goToPose(Symbol pose_name) {
+  public Justification goToPose(Symbol pose_name) {
     log.info("[goToPose] " + pose_name);
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean goToStartPose() {
-    simExecTime();
-    return true;
-  }
-
-  @Override
-  public boolean goToStartPose(boolean safe) {
-    log.info("[goToStartPose]");
-    return true;
-  }
-
-  @Override
-  public boolean savePosesToFile(String filename) {
+  public Justification savePosesToFile(String filename) {
     log.info("[savePosesToFile] " + filename);
-    return true;
+    return new ConditionJustification(true);
   }
 
   //TODO:brad: maybe implement this?
@@ -222,10 +210,10 @@ public class MockMoveItComponent extends DiarcComponent implements MoveItInterfa
   }
 
   @Override
-  public boolean goToPose(String groupName, Symbol poseName) {
+  public Justification goToPose(String groupName, Symbol poseName) {
     log.info("[goToPose] " + poseName + " " + groupName);
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -247,16 +235,16 @@ public class MockMoveItComponent extends DiarcComponent implements MoveItInterfa
   }
 
   @Override
-  public boolean executeTrajectory(String trajectory_name) {
+  public Justification executeTrajectory(String trajectory_name) {
     log.info("[publishPointCloudToRos] " + trajectory_name);
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
-  public boolean saveTrajectoriesToFile(String filename) {
+  public Justification saveTrajectoriesToFile(String filename) {
     log.info("[saveTrajectoriesToFile] " + filename);
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -278,9 +266,9 @@ public class MockMoveItComponent extends DiarcComponent implements MoveItInterfa
   }
 
   @Override
-  public boolean moveGripper(String groupName, float position) {
+  public Justification moveGripper(String groupName, float position) {
     simExecTime();
-    return true;
+    return new ConditionJustification(true);
   }
 
   @Override
@@ -290,12 +278,12 @@ public class MockMoveItComponent extends DiarcComponent implements MoveItInterfa
 
   @Override
   public Justification learn(Term learningTerm) {
-    return null;
+    return new ConditionJustification(false);
   }
 
   @Override
   public Justification unlearn(Term learningTerm) {
-    return null;
+    return new ConditionJustification(false);
   }
 
   @Override

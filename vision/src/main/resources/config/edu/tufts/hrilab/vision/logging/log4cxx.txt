@@ -14,66 +14,66 @@ log4j.appender.file1.layout=org.apache.log4j.PatternLayout
 log4j.appender.file1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
 
 # Detectors
-#log4j.logger.ade.detector.BarCodeDetector=DEBUG, file1
-#log4j.logger.ade.detector.BlobDetector=INFO, file1
-#log4j.logger.ade.detector.ColorBasedDetector=DEBUG, file1
-#log4j.logger.ade.detector.ClusterDetectorAdvanced=DEBUG, file1
-#log4j.logger.ade.detector.ClusterDetector2D=DEBUG, file1
-#log4j.logger.ade.detector.ClusterDetector=TRACE
-#log4j.logger.ade.detector.FaceDetector=TRACE, file1
-#log4j.logger.ade.detector.FoodDetectorByHSV=DEBUG
-#log4j.logger.ade.detector.GraspDetector=DEBUG
-#log4j.logger.ade.detector.HoughDetector=TRACE, file1
-#log4j.logger.ade.detector.hough.GHT=DEBUG, file1
-#log4j.logger.ade.detector.SpatialRelationDetector=DEBUG, file1
-#log4j.logger.ade.detector.OpPoseDetector=DEBUG, file1
-#log4j.logger.ade.detector.people_openni.PeopleDetector=TRACE, file1
-#log4j.logger.ade.detector.SiftDetector=DEBUG, file1
-#log4j.logger.ade.detector.V4RDetector=TRACE, file1
+#log4j.logger.diarc.detector.BarCodeDetector=DEBUG, file1
+#log4j.logger.diarc.detector.BlobDetector=INFO, file1
+#log4j.logger.diarc.detector.ColorBasedDetector=DEBUG, file1
+#log4j.logger.diarc.detector.ClusterDetectorAdvanced=DEBUG, file1
+#log4j.logger.diarc.detector.ClusterDetector2D=DEBUG, file1
+#log4j.logger.diarc.detector.ClusterDetector=TRACE
+#log4j.logger.diarc.detector.FaceDetector=TRACE, file1
+#log4j.logger.diarc.detector.FoodDetectorByHSV=DEBUG
+#log4j.logger.diarc.detector.GraspDetector=DEBUG
+#log4j.logger.diarc.detector.HoughDetector=TRACE, file1
+#log4j.logger.diarc.detector.hough.GHT=DEBUG, file1
+#log4j.logger.diarc.detector.SpatialRelationDetector=DEBUG, file1
+#log4j.logger.diarc.detector.OpPoseDetector=DEBUG, file1
+#log4j.logger.diarc.detector.people_openni.PeopleDetector=TRACE, file1
+#log4j.logger.diarc.detector.SiftDetector=DEBUG, file1
+#log4j.logger.diarc.detector.V4RDetector=TRACE, file1
 
 # Trackers
-#log4j.logger.ade.opentld.TLD=DEBUG, file1
-#log4j.logger.ade.stm.TrackedObjects=TRACE, file1
-#log4j.logger.ade.tracker.CMTTracker=TRACE, file1
-#log4j.logger.ade.tracker.GenericTracker=TRACE, file1
-log4j.logger.ade.tracker.OpenCVTracker=DEBUG
-#log4j.logger.ade.tracker.RelationTracker=DEBUG, file1
-#log4j.logger.ade.tracker.RelationTracker=DEBUG, file1
-#log4j.logger.ade.tracker.V4RTracker=DEBUG, file1
+#log4j.logger.diarc.opentld.TLD=DEBUG, file1
+#log4j.logger.diarc.stm.TrackedObjects=TRACE, file1
+#log4j.logger.diarc.tracker.CMTTracker=TRACE, file1
+#log4j.logger.diarc.tracker.GenericTracker=TRACE, file1
+log4j.logger.diarc.tracker.OpenCVTracker=DEBUG
+#log4j.logger.diarc.tracker.RelationTracker=DEBUG, file1
+#log4j.logger.diarc.tracker.RelationTracker=DEBUG, file1
+#log4j.logger.diarc.tracker.V4RTracker=DEBUG, file1
 
 # Image Processors
-#log4j.logger.ade.imgproc.OpticalFlowProcessor=TRACE, file1
-#log4j.logger.ade.imgproc.PlaneProcessor=DEBUG
+#log4j.logger.diarc.imgproc.OpticalFlowProcessor=TRACE, file1
+#log4j.logger.diarc.imgproc.PlaneProcessor=DEBUG
 
 # Learners
-#log4j.logger.ade.learn.SegmentedObjectLearner=DEBUG, file1
+#log4j.logger.diarc.learn.SegmentedObjectLearner=DEBUG, file1
 
 # Validators
-#log4j.logger.ade.imgproc.validator.ColorValidator=DEBUG
-#log4j.logger.ade.imgproc.validator.GlobalFeatureValidator=DEBUG, file1
-#log4j.logger.ade.imgproc.validator.ShapeValidator=DEBUG, file1
-#log4j.logger.ade.imgproc.validator.SpatialRelationValidator=DEBUG, file1
-#log4j.logger.ade.imgproc.validator.SurfaceMarkingValidator=TRACE, file1
+#log4j.logger.diarc.imgproc.validator.ColorValidator=DEBUG
+#log4j.logger.diarc.imgproc.validator.GlobalFeatureValidator=DEBUG, file1
+#log4j.logger.diarc.imgproc.validator.ShapeValidator=DEBUG, file1
+#log4j.logger.diarc.imgproc.validator.SpatialRelationValidator=DEBUG, file1
+#log4j.logger.diarc.imgproc.validator.SurfaceMarkingValidator=TRACE, file1
 
 # Saliency
-#log4j.logger.ade.imgproc.saliency.ColorProcessor=TRACE
-#log4j.logger.ade.imgproc.saliency.MasterSaliencyProcessor=TRACE, file1
+#log4j.logger.diarc.imgproc.saliency.ColorProcessor=TRACE
+#log4j.logger.diarc.imgproc.saliency.MasterSaliencyProcessor=TRACE, file1
 
 # FOL (first order logic)
-#log4j.logger.ade.common.fol.PredicateBuilder=DEBUG
-#log4j.logger.ade.common.fol.Predicate=DEBUG
-#log4j.logger.ade.common.fol.Variable=DEBUG
-#log4j.logger.ade.common.fol.Symbol=DEBUG
-#log4j.logger.ade.common.fol.PredicateHelper=DEBUG
+#log4j.logger.diarc.common.fol.PredicateBuilder=DEBUG
+#log4j.logger.diarc.common.fol.Predicate=DEBUG
+#log4j.logger.diarc.common.fol.Variable=DEBUG
+#log4j.logger.diarc.common.fol.Symbol=DEBUG
+#log4j.logger.diarc.common.fol.PredicateHelper=DEBUG
 
 # Other
-#log4j.logger.ade.capture.Capture=DEBUG, file1
-#log4j.logger.ade.capture.CapturedFrames=TRACE, file1
-#log4j.logger.ade.detector.grasp.SmallObjectGrasp=DEBUG
-#log4j.logger.ade.display.DisplayUtilities=DEBUG
-#log4j.logger.ade.Display=DEBUG
-#log4j.logger.ade.pc.util.PointCloudUtilities=DEBUG
-#log4j.logger.ade.stm.MemoryObject=DEBUG, file1
-#log4j.logger.ade.stm.MemoryObjectInterface=TRACE, file1
-#log4j.logger.ade.stm.MemoryObjectMask=DEBUG
-#log4j.logger.ade.tools.syncedqueue=TRACE, file1
+#log4j.logger.diarc.capture.Capture=DEBUG, file1
+#log4j.logger.diarc.capture.CapturedFrames=TRACE, file1
+#log4j.logger.diarc.detector.grasp.SmallObjectGrasp=DEBUG
+#log4j.logger.diarc.display.DisplayUtilities=DEBUG
+#log4j.logger.diarc.Display=DEBUG
+#log4j.logger.diarc.pc.util.PointCloudUtilities=DEBUG
+#log4j.logger.diarc.stm.MemoryObject=DEBUG, file1
+#log4j.logger.diarc.stm.MemoryObjectInterface=TRACE, file1
+#log4j.logger.diarc.stm.MemoryObjectMask=DEBUG
+#log4j.logger.diarc.tools.syncedqueue=TRACE, file1

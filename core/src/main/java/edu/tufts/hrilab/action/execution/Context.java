@@ -17,6 +17,7 @@ import edu.tufts.hrilab.action.description.ContextDescription;
 import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.EventSpec;
+import edu.tufts.hrilab.action.execution.control.AsynchronousContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.state.StateMachine;
@@ -232,45 +233,40 @@ public abstract class Context {
         actionStatus = status;
         this.justification = justification;
       } else if (actionStatus != null && actionStatus.isTerminated()) {
-        // duplicate setting of FAIL_ANCESTOR can happen when failure initially propagates down context tree
-        // (e.g., overall condition failure), and then propagates back up context tree (normal failure propagation)
-        if (status != ActionStatus.FAIL_ANCESTOR) {
-          log.warn("Can not set context " + cmd + " to status " + status + ". Already has terminal status: " + actionStatus);
-        }
+        log.warn("Can not set context " + cmd + " to status " + status + ". Already has terminal status: " + actionStatus);
         return;
-      } else if (status == ActionStatus.SUCCESS || status == ActionStatus.APPROVED || status == ActionStatus.CANCEL || status.isFailure()) {
-        actionStatus = status;
-        this.justification = justification;
-      } else if (status == ActionStatus.RESUME) {
-        actionStatus = ActionStatus.PROGRESS;
-        this.justification = justification;
+      } else if (actionStatus == ActionStatus.SUSPEND) {
+        if (status == ActionStatus.RESUME || status == ActionStatus.CANCEL) {
+          actionStatus = status;
+          this.justification = justification;
+        } else {
+          log.debug("Can not set context {} to status {} while it has SUSPEND status.", cmd, status);
+        }
       } else {
         actionStatus = status;
         this.justification = justification;
       }
 
-      if (isTerminated()) {
-        // make sure non-async children don't continue to execute (e.g., when a parent fails overall conditions)
-        if (isFailure()) {
-          childContexts.forEach(child -> {
-            if (!child.isAsynchronous() && child.getStatus() != ActionStatus.INITIALIZED && !child.isTerminated()) {
-              child.setStatus(ActionStatus.FAIL_ANCESTOR);
-            }
-          });
-        }
+      // make sure child contexts are notified of certain ActionStatuses
+      // (1) failure, cancel, suspend of async contexts
+      // (2) when overall conditions fail
+      if (actionStatus.isFailure() || actionStatus == ActionStatus.CANCEL) {
+        childContexts.forEach(child -> {
+          if (child.getStatus() != ActionStatus.INITIALIZED && !child.isTerminated()) {
+              child.setStatus(ActionStatus.CANCEL);
+          }
+        });
+      } else if (actionStatus == ActionStatus.SUSPEND) {
+        // propagate SUSPEND down the tree to any running children (e.g., async)
+        childContexts.forEach(child -> {
+          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.SUSPEND && !child.isTerminated()) {
+              child.setStatus(ActionStatus.SUSPEND);
+          }
+        });
+      }
 
-        // make sure all children have finished execution (in the case of asynchronous children)
-        if (childContexts.anyMatch(child -> child.isAsynchronous() && !child.isTerminated())) {
-          log.debug("[setStatus] not setting status to " + actionStatus + " because there's still an active asynchronous child. Context: " + this);
-          actionStatus = ActionStatus.ACTIVE_CHILD;
-          // don't send terminalCondition signal in this case
-        } else if (caller.getStatus() == ActionStatus.ACTIVE_CHILD) {
-          // if parent is waiting on child(ren), try to propagate status up context tree
-          caller.setStatus(actionStatus);
-          terminalCondition.signalAll();
-        } else {
-          terminalCondition.signalAll();
-        }
+      if (actionStatus.isTerminated()) {
+        terminalCondition.signalAll();
       }
 
     } finally {
@@ -397,7 +393,20 @@ public abstract class Context {
    */
   public final Context getNextStep() {
     Context next = null;
-    if (getStatus() == ActionStatus.PROGRESS || getStatus() == ActionStatus.RECOVERY) {
+    if (getStatus() == ActionStatus.RESUME) {
+      // check if any child context(s) are suspended (and need to be resumed)
+      int suspendedChildIdx = childContexts.findFirstIndexOf(child -> child.getStatus() == ActionStatus.SUSPEND);
+      if (suspendedChildIdx >= 0) {
+        // suspended child found -- set as next child, and set status to RESUME
+        childContexts.get(suspendedChildIdx).setStatus(ActionStatus.RESUME);
+        childContexts.setNextIndex(suspendedChildIdx);
+      } else {
+        // no suspended children, continue normal execution
+        setupNextStep();
+      }
+
+      next = getNextStepForType();
+    } else if (getStatus() == ActionStatus.PROGRESS || getStatus() == ActionStatus.RECOVERY) {
       setupNextStep();
       next = getNextStepForType();
     }
@@ -491,8 +500,7 @@ public abstract class Context {
       contextDescription = currentChild.getContextDescription();
     } else {
       log.warn("[getContextDescription] no context description available." +
-              "this: " + this.toString() +
-              "numChildren: " + childContexts.size());
+              "this: " + this + "numChildren: " + childContexts.size());
     }
     return contextDescription;
   }

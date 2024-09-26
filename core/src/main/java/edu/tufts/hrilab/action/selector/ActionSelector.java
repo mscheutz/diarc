@@ -62,6 +62,17 @@ public abstract class ActionSelector {
     return instance;
   }
 
+  public static void destroyInstance() {
+    instanceLock.lock();
+    try {
+      if (instance != null) {
+        instance = null;
+      }
+    } finally {
+      instanceLock.unlock();
+    }
+  }
+
   /**
    * Helper method to convert string form of ActionSelector type (e.g., classpath) into a
    * Class object and set the ActionSelector type.

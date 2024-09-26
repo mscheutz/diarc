@@ -20,7 +20,7 @@ OrientationProcessor::OrientationProcessor(const long long& processorId, const u
   orientationSaliencyMap.setFilterSize(5 * (imgWidth / 320));
   orientationSaliencyMap.setBandwidth(2); //1.0);20//(2.0 * (imgWidth/320.0));
   visionProcessName = "OrientationProcessor";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.saliency.OrientationProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.saliency.OrientationProcessor");
 }
 
 OrientationProcessor::~OrientationProcessor() {
@@ -65,7 +65,7 @@ void OrientationProcessor::handleCaptureNotification(CaptureNotification::ConstP
   sendNotifications(n);
 
   if (getDisplayFlag()) {
-    ade::Display::displayFrame(resultImage, getDisplayName());
+    diarc::Display::displayFrame(resultImage, getDisplayName());
   }
 }
 

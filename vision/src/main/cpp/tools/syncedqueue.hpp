@@ -25,7 +25,7 @@ private:
 
 public:
   syncedqueue() {
-    logger = log4cxx::Logger::getLogger("ade.tools.syncedqueue");
+    logger = log4cxx::Logger::getLogger("diarc.tools.syncedqueue");
   }
 
   void push(T elem_) {

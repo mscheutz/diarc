@@ -13,8 +13,7 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.Observes;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageParser;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
-import edu.tufts.hrilab.action.translation.TranslationGenerator;
-import edu.tufts.hrilab.action.translation.TranslationInfo;
+import edu.tufts.hrilab.action.listener.DatabaseListener;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -426,10 +425,6 @@ public class Database {
       actionBuilder.addRole(new ActionBinding.Builder("ret", tsi.getServiceReturnType()).setIsReturn(true).build());
     }
 
-    // for checking if we need to add translation info for a
-    // given primitive in response to an annotation we can translate
-    TranslationGenerator t = TranslationGenerator.getInstance();
-
     // add conditions, effects and observations
     for (Annotation a : tsi.getAnnotations()) {
       if (a instanceof edu.tufts.hrilab.action.annotations.Condition) {
@@ -450,11 +445,6 @@ public class Database {
         addObservation((edu.tufts.hrilab.action.annotations.Observes) a, actionBuilder);
       } else if (a instanceof edu.tufts.hrilab.action.annotations.OnInterrupt) {
         addInterruptService(a, actionBuilder);
-      } else if (t != null && t.isAnnotationTranslatable(a)) {
-        log.debug("Adding translation info to primitive");
-        addTranslationInfo(tsi, a, actionBuilder, t.getTranslationInfoType());
-      } else if (t == null) {
-        log.debug("TRANSLATION INFO NOT AVAILABLE");
       }
     }
 
@@ -540,44 +530,6 @@ public class Database {
     esBuilder.setCommand(onCancelPredicate.getName());
     esBuilder.setInputArgs(onCancelPredicate.getArgs().stream().map(arg -> arg.toString()).collect(Collectors.toList()));
     return esBuilder.build();
-  }
-
-  private static void addTranslationInfo(TRADEServiceInfo tsi, Annotation a, ActionDBEntry.Builder builder, Class<? extends TranslationInfo> containerClass) {
-    TranslationInfo container = null;
-    try {
-      if (containerClass != null) {
-        container = containerClass.newInstance();
-      }
-    } catch (Exception e) {
-      log.error("Exception creating translation container: ", e);
-    }
-    if (container == null) {
-      log.error("Unable to create translation info container, returning");
-      return;
-    }
-    List<String> bodyLines = container.getLinesFromAnnotation(a);
-    if (bodyLines != null) {
-      container.setBody(bodyLines);
-    } else {
-      log.warn("Action had annotation for translation without any content, skipping body of TranslationInfo");
-    }
-    List<List<Annotation>> parameterAnnotations = tsi.getParameterAnnotations();
-    String[] paramNames = tsi.serviceParameterNames;
-    for (int i = 0; i < parameterAnnotations.size(); ++i) {
-      List<Annotation> as = parameterAnnotations.get(i);
-      for (Annotation pa : as) {
-        String annotationMapping = container.getMappingFromAnnotation(pa);
-        if (annotationMapping != "") {
-          try {
-            container.addParamToAnnotationBinding(paramNames[i], annotationMapping);
-          } catch (Exception e) {
-            log.error("Annotation Binding Exception when binding: " + paramNames[i] + " for service: " + tsi.serviceName, e);
-          }
-        }
-      }
-    }
-
-    builder.addTranslationInfo(container);
   }
 
   /**

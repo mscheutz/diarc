@@ -5,9 +5,13 @@ plugins {
 }
 
 repositories {
-//  mavenLocal()
+  mavenLocal()
   mavenCentral() // main maven archive
-    maven { // hrilab archive
+  maven {
+    name = "Thinking Robots TRADE mvn host"
+    url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
+  }
+  maven { // hrilab archive
     name = "HRILabArchiva"
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
     isAllowInsecureProtocol = true
@@ -111,7 +115,12 @@ tasks.named("processMockResources") {
 }
 
 val mockJarTask = tasks.register<Jar>("mockJar") {
-  from(sourceSets.getByName("mock").output)
+  // if vision is not building, include the main resources in the mockJar so they can be used by mock vision components
+  if (project.hasProperty("diarc.enableVision") && project.property("diarc.enableVision").toString().toBoolean()) {
+    from(sourceSets.getByName("mock").output)
+  } else {
+    from(sourceSets.getByName("mock").output + sourceSets.getByName("main").resources)
+  }
   archiveBaseName = "diarc-vision-mock"
   archiveVersion = properties["diarc.version"].toString()
   archiveExtension = "jar"
@@ -148,4 +157,5 @@ dependencies {
 
   testImplementation("junit:junit:4.13.1")
 
+  implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
 }

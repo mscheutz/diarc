@@ -59,7 +59,7 @@ public class AvailableTrackers {
         //get directory    
         File file = new File(configFile);
         String dir = file.getParent() + "/";
-        System.out.println("load tracker config directory: " + dir);
+        log.debug("load tracker config directory: " + dir);
 
         //get node
         Xml config = new Xml(configFile, "trackers");

@@ -81,20 +81,22 @@ public class Type {
             return name;
         }
 
-        Type test = query;
-
-        while (!test.getSuperTypes().isEmpty()) {
-            if (name.equals(test.getName())) {
-                return name;
+        String test = null;
+        //Test all supers of the query
+        for(Type querySuperType : query.getSuperTypes()) {
+            test = getCommonSuper(querySuperType);
+            if(test != null) {
+                return test;
             }
-            test = test.getSuperTypes().get(0);
         }
-
-        if (getSuperTypes().isEmpty()) {
-            return null;
-        } else {
-            return (getSuperTypes().get(0).getCommonSuper(query));
+        //test all of this type's supers
+        for(Type superType : getSuperTypes()) {
+            test = superType.getCommonSuper(query);
+            if(test != null) {
+                return test;
+            }
         }
+        return null;
     }
 
     public String getSpecific(Type query) {
