@@ -71,6 +71,8 @@ dependencies {
   testImplementation(project(":diarcRos"))
   testImplementation(project(":diarcRos","mockJar"))
   testImplementation(project(":vision","mockJar"))
+
+  implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
 }
 
 // customize diarc-config jar
@@ -177,6 +179,13 @@ tasks.register<JavaExec>("launch") {
   systemProperty("logback.configurationFile", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString())
   systemProperty("trade.properties.path", properties.getOrDefault("diarc.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
   systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
+
+  // Conditionally enable features
+  if (project.hasProperty("enableTradeTracker")) {
+    systemProperty("enableTradeTracker", project.property("enableTradeTracker").toString())
+  } else {
+    systemProperty("enableTradeTracker", "false")
+  }
 }
 
 tasks.register<Javadoc>("allJavadoc") {
@@ -227,6 +236,10 @@ repositories {
   maven {
     name = "Thinking Robots mtracs mock"
     url = uri("https://gitlab.com/api/v4/projects/34394212/packages/maven/")
+  }
+  maven {
+    name = "Thinking Robots TRADE mvn host"
+    url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
   }
   maven { // hrilab archive
     name = "HRILabArchiva"

@@ -3,36 +3,43 @@
  */
 package edu.tufts.hrilab.belief;
 
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
-import edu.tufts.hrilab.belief.operators.OperatorCheck;
 import edu.tufts.hrilab.belief.common.MemoryLevel;
-import edu.tufts.hrilab.belief.gui.BeliefGui;
+import edu.tufts.hrilab.belief.operators.OperatorCheck;
+import edu.tufts.hrilab.belief.provers.DCEC;
+import edu.tufts.hrilab.belief.provers.Prover;
 import edu.tufts.hrilab.belief.provers.clingo.ClingoProver;
+import edu.tufts.hrilab.belief.provers.prolog.Prolog;
 import edu.tufts.hrilab.belief.sql.SQL;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Predicate;
-import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.fol.Variable;
-import edu.tufts.hrilab.belief.provers.*;
-import edu.tufts.hrilab.belief.provers.prolog.Prolog;
+import edu.tufts.hrilab.fol.*;
+import edu.tufts.hrilab.gui.GuiProvider;
 import edu.tufts.hrilab.util.resource.Resources;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.io.*;
-import java.util.*;
-
+import javax.annotation.Nonnull;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import ai.thinkingrobots.trade.*;
+public class BeliefComponent extends DiarcComponent implements BeliefInterface, GuiProvider {
+  @Nonnull
+  @Override
+  public String[] getAdapterClassNames() {
+    return new String[]{
+            BeliefAdapter.class.getName()
+    };
+  }
 
-public class BeliefComponent extends DiarcComponent implements BeliefInterface {
   private static AtomicInteger nextSQLNumber = new AtomicInteger(0);
   protected List<String> agentNames;
 
@@ -68,9 +75,7 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface {
    */
   private SQL sql;
 
-  private boolean showGui = false;
   private boolean prob = false;
-  private BeliefGui beliefGui;
 
   /**
    * Regex to remove whitespace that isn't inside quotes. Used for populating SQL directly from .pl files.
@@ -115,16 +120,10 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface {
     log.debug("initializationFiles = " + initializationFiles);
     initializeFromFiles(initializationFiles);
 
-    if (showGui) {
-      beliefGui = new BeliefGui(this);
-    }
   }
 
   @Override
   protected void shutdownComponent(){
-    if(showGui){
-      beliefGui.shutdown();
-    }
     notificationRequests.clear();
     sql.closeConnection();
   }
@@ -138,7 +137,6 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface {
     options.add(Option.builder("universalfile").hasArgs().argName("filename").desc("load universal memory initialization file").build());
     options.add(Option.builder("prover").hasArg().argName("type").desc("Use prover of specified type").build());
     options.add(Option.builder("disk").hasArg().argName("databasepath").desc("Use existing sql disk located at path").build());
-    options.add(Option.builder("g").desc("show belief gui").build());
     options.add(Option.builder("prob").desc("uses probabilistic models").build());
     return options;
   }
@@ -197,9 +195,6 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface {
     }
     if (cmdLine.hasOption("prob")) {
       prob = true;
-    }
-    if (cmdLine.hasOption("g")) {
-      showGui = true;
     }
   }
 
@@ -545,9 +540,6 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface {
     assertBelief(belief, memoryLevel, Factory.createPredicate("context(none,none)"));
   }
 
-  //init(filename)
-  //Effect(context)
-  //Human(context)
   synchronized public void assertBelief(Term belief, MemoryLevel memoryLevel, Predicate source) {
     assertBelief(belief, memoryLevel, source, true);
   }
@@ -878,9 +870,15 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface {
   }
 
   synchronized public List<Map<Variable, Symbol>> queryBelief(Term query, MemoryLevel memoryLevel, boolean checkOperator) {
-    log.debug("currlevel: " + currLevel);
+    String queryName = query.getName();
     if (checkOperator && OperatorCheck.isOperator(query)) {
       return OperatorCheck.query(query, memoryLevel, this);
+    } else if (queryName.equals("assert") || queryName.equals("asserta") || queryName.equals("assertz")) {
+      assertBelief((Term) query.get(0), memoryLevel);
+      return new ArrayList<>(new HashSet<>());
+    } else if (queryName.equals("retract")) {
+      retractBelief((Term) query.get(0), memoryLevel);
+      return new ArrayList<>(new HashSet<>());
     } else {
       if (currLevel != memoryLevel) {
         ResultSet resultSet = sql.querySql(sql.joinConcentricLevels(memoryLevel, "WHERE endTime IS NULL") + " ORDER BY startTime");

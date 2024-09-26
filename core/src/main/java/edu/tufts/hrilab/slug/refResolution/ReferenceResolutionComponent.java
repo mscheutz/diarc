@@ -462,7 +462,12 @@ public class ReferenceResolutionComponent extends DiarcComponent {
       List<Symbol> usages = allRefs.get(ref);
       int sum = 0;
       for (Symbol useage : usages) {
-        sum += Integer.valueOf(useage.getName().split("_")[1]);
+        try {
+            sum += Integer.valueOf(useage.getName().split("_")[1]);
+        } catch (NumberFormatException e) {
+            log.warn("Using ref that doesn't follow consultant numbering convention.");
+            sum += 0;
+        }
       }
 
       //not really sure why we need to do this, but preserving previous functionality, for now...

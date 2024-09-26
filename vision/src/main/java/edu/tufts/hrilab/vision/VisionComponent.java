@@ -3,42 +3,39 @@
  */
 package edu.tufts.hrilab.vision;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceInfo;
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Observes;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.fol.util.PragUtil;
+import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.util.resource.Resources;
 import edu.tufts.hrilab.vision.consultant.RealVisionConsultant;
 import edu.tufts.hrilab.vision.consultant.VisionReference;
-import edu.tufts.hrilab.vision.stm.*;
-import edu.tufts.hrilab.fol.Predicate;
-import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.vision.reflection.TaskPerformanceInformation;
+import edu.tufts.hrilab.vision.stm.MemoryObject;
+import edu.tufts.hrilab.vision.stm.SearchManager;
+import edu.tufts.hrilab.vision.stm.ShortTermMemoryInterface;
 import edu.tufts.hrilab.vision.util.CompressionUtil;
 import edu.tufts.hrilab.vision.util.PredicateHelper;
-
-import java.awt.Dimension;
-import javax.vecmath.Matrix4d;
-
-import edu.tufts.hrilab.util.Util;
+import edu.tufts.hrilab.vision.webgui.VisionAdapter;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+
+import javax.annotation.Nonnull;
+import javax.vecmath.Matrix4d;
+import java.awt.*;
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+import java.util.Queue;
+import java.util.*;
 
 /**
  * DIARC Vision component.
  */
-public class VisionComponent extends DiarcComponent implements VisionInterface {
+public class VisionComponent extends DiarcComponent implements VisionInterface, GuiProvider {
 
   private boolean runSandbox = false;
   private boolean printVisionStats = false;
@@ -48,7 +45,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
   private List<String> runMemObjTypes = new ArrayList();
 
   // vision configuration filename and path info
-  
+
   /**
    * Default path to vision resources (configs).
    */
@@ -1095,5 +1092,17 @@ public class VisionComponent extends DiarcComponent implements VisionInterface {
       log.info("object " + objRef + " is NOT at " + predicate.getArgs().get(1));
     }
     return returnVal;
+  }
+
+  /**
+   * {@inheritDoc}
+   * @return {@inheritDoc}
+   */
+  @Nonnull
+  @Override
+  public String[] getAdapterClassNames() {
+    return new String[]{
+            VisionAdapter.class.getName()
+    };
   }
 }

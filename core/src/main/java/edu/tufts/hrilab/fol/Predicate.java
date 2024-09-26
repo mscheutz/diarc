@@ -4,6 +4,7 @@
 package edu.tufts.hrilab.fol;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,13 @@ public class Predicate extends Term implements Cloneable, Serializable {
     } else {
       return new Predicate("not", this.clone());
     }
+  }
+
+  @Override
+  public Term toUntyped() {
+    List<Symbol> untypedArgs = new ArrayList<>();
+    args.forEach(arg -> untypedArgs.add(arg.toUntyped()));
+    return new Predicate(name, untypedArgs);
   }
 
   /**
