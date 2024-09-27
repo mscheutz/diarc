@@ -132,7 +132,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         String responseString = llmResponse.getText().trim();
         //outgoingUtterance.setWords(List.of(responseString.split(" ")));
 
-        Pattern outputPattern = Pattern.compile(".*\"?Output\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL);
+        Pattern outputPattern = Pattern.compile(".*\"?translation\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL);
         Matcher m = outputPattern.matcher(responseString);
         if (!m.matches()) {
             log.error("[parseNLGCompletionResponse] cannot find Output field in LLM response");

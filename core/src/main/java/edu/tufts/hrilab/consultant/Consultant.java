@@ -117,6 +117,14 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
         propertiesAdded = true;
         String propName = property.getName();
         String strippedName = stripQuotesFromMorpheme(propName);
+        //Pick and Place 2024 - TODO UNDO
+        //This shouldn't generally be the case, but had mismatch in cache population and tldl. Resolving quicker for now
+        if (propName.startsWith("location")) {
+          String[] propWords = strippedName.split("location");
+          //propName = Arrays.stream(propWords).map(str -> str.substring(0, 1).toUpperCase() + str.substring(1)).collect(Collectors.joining());
+          //propName = propName.substring(0, 1).toLowerCase() + propName.substring(1);
+          strippedName = "location" + Arrays.stream(propWords).map(String::toLowerCase).collect(Collectors.joining(" "));
+        }
 
         // TODO: this should only occur if TLDL is present in the system (i.e. don't attempt this block if using just an llm)
         // TODO: this imposes an ordering constraint on diarc components (i.e., RR needs to be up first)
