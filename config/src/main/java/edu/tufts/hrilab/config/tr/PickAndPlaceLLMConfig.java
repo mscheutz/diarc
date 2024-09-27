@@ -26,7 +26,6 @@ import java.util.Arrays;
 
 public class PickAndPlaceLLMConfig extends DiarcConfiguration {
     protected static Logger log = LoggerFactory.getLogger(PickAndPlaceLLMConfig.class);
-    static public SimSpeechRecognitionComponent simSpeechRec;
     public MockYumiComponent leftArm;
     public MockYumiComponent rightArm;
     String service = "llamahf";
@@ -113,8 +112,4 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
         createInstance(SimSpeechRecognitionComponent.class, "-speaker eric -config yumiPickAndPlaceJapanese.simspeech");
     }
 
-    public static void main(String[] args) {
-        PickAndPlaceLLMConfig demoConfig = new PickAndPlaceLLMConfig();
-        demoConfig.runConfiguration();
-    }
 }

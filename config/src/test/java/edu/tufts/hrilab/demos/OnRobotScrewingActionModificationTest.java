@@ -32,7 +32,8 @@ public class OnRobotScrewingActionModificationTest extends GenerativeDiarcIntegr
   @Before
   public void initializeConfig() {
     //instantiate DIARCInstance (in mock)
-    config = new OnRobotScrewingActionModificationMock(true);
+    config = new OnRobotScrewingActionModificationMock();
+    config.setTest(true);
     config.runConfiguration();
     speechInputBrad = config.simspeech;
 

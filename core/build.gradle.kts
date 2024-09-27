@@ -111,6 +111,7 @@ tasks.named<Test>("test") {
   forkEvery = 1
   classpath += files("src/test/resources") // this is so the ActionASLTest can read/write into this directory
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
+  systemProperty("logging.config", properties["diarc.loggingConfigFile"].toString()) // for springboot
 
   // to run tests with logging printed to console
   if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {

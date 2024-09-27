@@ -94,6 +94,7 @@ tasks.named<Test>("test") {
   forkEvery = 1
   systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
+  systemProperty("logging.config", properties["diarc.loggingConfigFile"].toString()) // for springboot
 
   // to run tests with logging printed to console
   if (project.hasProperty("diarc.test.enableLogging") && project.property("diarc.test.enableLogging").toString().toBoolean()) {
@@ -177,6 +178,7 @@ tasks.register<JavaExec>("launch") {
   // jvm args
   systemProperty("component", project.findProperty("main").toString())
   systemProperty("logback.configurationFile", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString())
+  systemProperty("logging.config", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString()) // for springboot
   systemProperty("trade.properties.path", properties.getOrDefault("diarc.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
   systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
 
