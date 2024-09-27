@@ -152,7 +152,7 @@ import java.lang.Integer;
 //        !bindings = act:askQuestionFromString(?actor, "視野に複数のブロックが見えています。どれを拾ったらいいでしょうか？", blockType(X));
         !object = op:get(!bindings, !x);
         ////TODO: make sure response matches one of the detected blocks
-        if (~op:equals(none)) {
+        if (~op:equals(!object, none)) {
             act:grabPerceivedEntity(!object,!location);
         } else {
             act:generateResponseFromString("okay, I am not picking up any block");
@@ -266,13 +266,16 @@ import java.lang.Integer;
 
     }
     Symbol !response;
+    Symbol !otherBlock;
     Map !bindings;
     Variable !x = "X";
     Predicate !failCond;
-    String !blockDescriptor;
+    String !otherBlockName;
     Symbol !block;
+    Symbol !location;
+    Predicate !goalPred;
 
-    op:log("debug","[putDownAtFullLocationRecovery]");
+    op:log("debug","[putDownAtFullLocationRecovery");
     op:log("debug","[putDownAtFullLocationRecovery] ?failedActionPredicates");
     op:log("debug","[putDownAtFullLocationRecovery] ?failureReasons");
     op:log("debug","[putDownAtFullLocationRecovery] ?failedGoal");
@@ -283,21 +286,27 @@ import java.lang.Integer;
     //  report that we cannot put down the block because the location is full
     //  Ask if the user would like to swap the held block with a block in that location
     (!bindings) = act:askQuestionFromString(?actor,"I cannot put down the block because the location is full. Would you like me to swap out one of the blocks?", val(X));
+    !block = act:getHeldObject();
+    !location = act:getCurrentLocation();
     //(!bindings) = act:askQuestionFromString(?actor,"場所がいっぱいになっているため、ブロックを置くことはできません。ブロックのどれかと交換しましょうか？", val(X));
     !response = op:get(!bindings, !x);
     if (op:equals(!response,yes)) {
         !bindings = act:askQuestionFromString(?actor,"Which block should be swapped?", blockType(X));
         //act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", blockType(X));
-        !response = op:get(!bindings, !x);
-        !blockDescriptor = op:invokeMethod(!response, "getName");
-        op:log(info,!blockDescriptor);
-        if (op:equals(!blockDescriptor,"none")) {
+        !otherBlock = op:get(!bindings, !x);
+        !otherBlockName = op:invokeMethod(!otherBlock, "getName");
+        op:log(info,!otherBlock);
+        if (op:equals(!otherBlock,"none")) {
             act:generateResponseFromString("okay, I am not swapping any block");
             exit(FAIL_RECOVERY);
         } else {
-            //TODO: go from descriptor to ref
-            //TODO
-            act:generateResponseFromString("swapBlock needs to be implemented");
+            !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, pose_0:pose)");
+            goal:!goalPred;
+            act:putDown();
+            !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!otherBlock, pose_0:pose)");
+            goal:!goalPred;
+            !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!block, !location)");
+            goal:!goalPred;
         }
     } else {
         act:generateResponseFromString("okay, I am not swapping any block");

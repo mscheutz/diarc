@@ -111,16 +111,16 @@ import edu.tufts.hrilab.fol.Variable;
     Predicate !failPred;
     java.lang.Boolean !result;
 
-    !failPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "full(?pose)");
+//    !failPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "full(?pose)");
 
     op:log(info, "[putdown] ?physobj + ?pose");
 
     tsc:moveZRelative(!objectHeightM);
     !result = tsc:moveToOpenLocation(!dim, "blocksDet"); //todo: THIS STRING SHOULDN'T BE HARDCODED
     op:log(debug, "[putdown] result of moveToOpenLocation: !result");
-    if (~op:equals(!result, true)) {
-        exit(FAIL, !failPred);
-    }
+//    if (~op:equals(!result, true)) {
+//        exit(FAIL, !failPred);
+//    }
     tsc:moveZRelative(!negObjectHeightM);
     act:rotateToEE(!gripper);
     act:moveToObjectHeight();
