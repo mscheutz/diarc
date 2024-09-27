@@ -213,15 +213,20 @@ Example 38 Notes: This entry has equivalent input as example 37. This is an exam
 ##
 Example 39:
 #
+Input: 場所なし
+Output: {"Semantics":"pose(none)","Input Type":"REPLY","Confidence":"100"}
+##
+Example 40:
+#
 Input: はい
 Output: {"Semantics":"val(yes)","Input Type":"REPLY","Confidence":"100"}
 ##
-Example 40:
+Example 41:
 #
 Input: いいえ
 Output: {"Semantics":"val(no)","Input Type":"REPLY","Confidence":"100"}
 ##
-Example 41:
+Example 42:
 #
 Input: デモをリセットしてください。
 Output: {"Semantics":"resetDomain(robotone:agent)","Input Type":"INSTRUCT","Confidence":"100"}

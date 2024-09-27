@@ -69,9 +69,9 @@ import edu.tufts.hrilab.fol.Term;
 }
 
 () = setupPoses() {
-    Symbol !locationOne = "location one";
-    Symbol !locationTwo= "location two";
-    Symbol !locationThree = "location three";
+    Symbol !locationOne = "locationOne";
+    Symbol !locationTwo= "locationTwo";
+    Symbol !locationThree = "locationThree";
 
     Symbol !conveyorHeight = "45";
     Symbol !workHeight = "-13";

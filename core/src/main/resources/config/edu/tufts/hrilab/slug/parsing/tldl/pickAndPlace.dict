@@ -182,6 +182,7 @@ where is; VERBT ; describeBlockPose
 
 %TODO add entries for variations of these
 what blocks are you aware of; VERBI; describeKnownBlocks
+what blocks do you know the locations of; VERBI; describeKnownBlocks
 what blocks are at; VERBT; describeBlocksAt
 how many blocks are at; VERBT; describeNumberOfBlocksAt
 are any blocks at; Q/REF; #x.blocksAt($x)

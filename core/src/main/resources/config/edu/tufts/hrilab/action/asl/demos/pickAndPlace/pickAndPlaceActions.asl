@@ -35,6 +35,8 @@ import java.lang.Integer;
     if (~op:isEmpty(!bindings)) {
         !elem = op:get(!bindings, 0);
         (?physobj) =op:get(!elem,!bindingVar);
+    } else {
+        ?physobj = op:setNull();
     }
 }
 
@@ -95,8 +97,8 @@ import java.lang.Integer;
         if (op:isNull(!blockPose)) {
             !descriptor = tsc:getDescriptorForID(?object);
             (!bindings) = act:askQuestionFromString(?actor,"I dont know where the !descriptor is, at what pose can I expect to find it?", pose(X));
-//            !japaneseDescriptor = tsc:getJapaneseVersionOfDescriptor(!descriptor);
-//            (!bindings) = act:askQuestionFromString(?actor,"!japaneseDescriptorがどこにあるかは分かりません。場所何番にありますか?", pose(X));
+            //!japaneseDescriptor = tsc:getJapaneseVersionOfDescriptor(!descriptor);
+            //(!bindings) = act:askQuestionFromString(?actor,"!japaneseDescriptorがどこにあるかは分かりません。場所何番にありますか?", pose(X));
             !blockPose = op:get(!bindings,!x);
             if (op:equals(!blockPose,none)) {
                 !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "know(?actor,theLocationOf,?object)");
@@ -150,10 +152,13 @@ import java.lang.Integer;
 //        !bindings = act:askQuestionFromString(?actor, "視野に複数のブロックが見えています。どれを拾ったらいいでしょうか？", blockType(X));
         !object = op:get(!bindings, !x);
         ////TODO: make sure response matches one of the detected blocks
+        if (~op:equals(none)) {
+            act:grabPerceivedEntity(!object,!location);
+        } else {
+            act:generateResponseFromString("okay, I am not picking up any block");
+        }
     }
-    if (~op:equals(none)) {
-        act:grabPerceivedEntity(!object,!location);
-    }
+
 }
 
 //Placeholder
@@ -207,7 +212,6 @@ import java.lang.Integer;
     conditions : {
         pre : not(free(?actor));
     }
-    op:log(info, "[putDown] ?block");
 
     act:putDown();
 }
@@ -226,15 +230,9 @@ import java.lang.Integer;
 
     op:log(info, "[putDown]");
 
-//    !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "has(theLocationBelowMe,space)");
-//    !failJustification = op:newObject("edu.tufts.hrilab.action.justification.ConditionJustification", false, !failCond);
-//    !thisStep = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "putDown(?actor)");
-//    op:invokeMethod(!failJustification, "setStep", !thisStep);
-//    exit(FAIL_PRECONDITIONS, !failJustification);
-
     ////TODO: Should just push this down into the putdown primitive and have recovery policy only apply to this script
     !results = act:perceiveEntities();
-    if (~op:isNull(!results)) {
+    if (~op:isEmpty(!results)) {
         !size = op:invokeMethod(!results, "size");
         if (op:gt(!size,1)) {
             !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "has(theLocationBelowMe,space)");
@@ -242,12 +240,11 @@ import java.lang.Integer;
             !thisStep = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "putDown(?actor)");
             op:invokeMethod(!failJustification, "setStep", !thisStep);
             exit(FAIL_PRECONDITIONS, !failJustification);
-        } else {
-        !location = act:getCurrentLocation();
-        !object = act:getHeldObject();
-        act:putdown(!object,!location);
         }
     }
+    !location = act:getCurrentLocation();
+    !object = act:getHeldObject();
+    act:putdown(!object,!location);
 }
 
 () = moveBlockTo(Symbol ?block:physobj, Symbol ?start:pose, Symbol ?destination:pose) {
@@ -268,11 +265,17 @@ import java.lang.Integer;
         excludedGoals : {putDown(X), putDown(X,Y)}
 
     }
+    Symbol !response;
+    Map !bindings;
+    Variable !x = "X";
+    Predicate !failCond;
+    String !blockDescriptor;
+    Symbol !block;
 
-    op:log("info","[putDownAtFullLocationRecovery]");
-    op:log("info","[putDownAtFullLocationRecovery] ?failedActionPredicates");
-    op:log("info","[putDownAtFullLocationRecovery] ?failureReasons");
-    op:log("info","[putDownAtFullLocationRecovery] ?failedGoal");
+    op:log("debug","[putDownAtFullLocationRecovery]");
+    op:log("debug","[putDownAtFullLocationRecovery] ?failedActionPredicates");
+    op:log("debug","[putDownAtFullLocationRecovery] ?failureReasons");
+    op:log("debug","[putDownAtFullLocationRecovery] ?failedGoal");
 
     //Get the held block and current location from belief in order to populate question asking?
 
@@ -280,12 +283,26 @@ import java.lang.Integer;
     //  report that we cannot put down the block because the location is full
     //  Ask if the user would like to swap the held block with a block in that location
     (!bindings) = act:askQuestionFromString(?actor,"I cannot put down the block because the location is full. Would you like me to swap out one of the blocks?", val(X));
-    //    (!bindings) = act:askQuestionFromString(?actor,"場所がいっぱいになっているため、ブロックを置くことはできません。ブロックのどれかと交換しましょうか？", val(X));
-    //      Y: act:askQuestionFromString(?actor,"Which block should be swapped?", blockType(X));
-    //      Y: act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", blockType(X));
-    //          BlockType: TODO: Need swapBlock() implementation - asks where to put the held block in the interim
-    //      N: exit(FAIL_RECOVERY)
-    exit(FAIL_RECOVERY);
+    //(!bindings) = act:askQuestionFromString(?actor,"場所がいっぱいになっているため、ブロックを置くことはできません。ブロックのどれかと交換しましょうか？", val(X));
+    !response = op:get(!bindings, !x);
+    if (op:equals(!response,yes)) {
+        !bindings = act:askQuestionFromString(?actor,"Which block should be swapped?", blockType(X));
+        //act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", blockType(X));
+        !response = op:get(!bindings, !x);
+        !blockDescriptor = op:invokeMethod(!response, "getName");
+        op:log(info,!blockDescriptor);
+        if (op:equals(!blockDescriptor,"none")) {
+            act:generateResponseFromString("okay, I am not swapping any block");
+            exit(FAIL_RECOVERY);
+        } else {
+            //TODO: go from descriptor to ref
+            //TODO
+            act:generateResponseFromString("swapBlock needs to be implemented");
+        }
+    } else {
+        act:generateResponseFromString("okay, I am not swapping any block");
+        exit(FAIL_RECOVERY);
+    }
 }
 
 () = moveBlockTo(Symbol ?block:physobj, Symbol ?destination:pose) {
@@ -304,7 +321,6 @@ import java.lang.Integer;
     act:putDown();
 }
 
-//TODO: this breaks planning for goToPose? Figure out issue and comment back in
 () = detectBlock(Symbol ?block) {
     effects : {
         success : knows(?actor,see(?actor,?block));
@@ -332,9 +348,15 @@ import java.lang.Integer;
     !blockPose = act:getBlockPose(?block);
     !blockDescriptor = tsc:getDescriptorForID(?block);
     if (op:isNull(!blockPose)) {
-        act:generateResponseFromString("I do not know where the !blockDescriptor is");
-//        !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
-//        act:generateResponseFromString("!blockDescriptorJapaneseがどこにあるかが分かりません。");
+        if (act:checkHolding(?block)) {
+            act:generateResponseFromString("I am holding the !blockDescriptor");
+            //!blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
+            //act:generateResponseFromString("私は!blockDescriptorJapaneseを持っています");
+        } else {
+            act:generateResponseFromString("I do not know where the !blockDescriptor is");
+            //!blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
+            //act:generateResponseFromString("!blockDescriptorJapaneseがどこにあるかが分かりません。");
+        }
     } else {
         !poseDescriptor = tsc:getDescriptorForPoseID(!blockPose);
         act:generateResponseFromString("the !blockDescriptor is at !poseDescriptor");
@@ -376,6 +398,14 @@ import java.lang.Integer;
 //            act:generateResponseFromString("!blockDescriptorJapaneseは!poseDescriptorJapaneseにあります");
             !knowBlockAt = op:newObject("java.lang.Boolean", true);
         }
+    }
+    !block = act:getHeldObject();
+    if (~op:isNull(!block) && act:checkHolding(!block)) {
+        !blockDescriptor = tsc:getDescriptorForID(!block);
+        act:generateResponseFromString("I am holding the !blockDescriptor");
+        //!blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
+        //act:generateResponseFromString("私は!blockDescriptorJapaneseを持っています");
+        !knowBlockAt = op:newObject("java.lang.Boolean", true);
     }
     if (op:equals(!knowBlockAt,False)) {
         //act:generateResponseFromString("I don't know the location of any blocks");
@@ -472,10 +502,13 @@ import java.lang.Integer;
     effects : {
         success : knows(?actor,blocksAt(?pose));
     }
+    List !results;
 
     act:goToPose(?pose);
-    act:perceiveEntities();
-    //TODO: check if num results == 0 and fail if so
+    !results = act:perceiveEntities();
+    if (op:isEmpty(!results)) {
+        exit(FAIL);
+    }
 }
 
 () = describeCurrentGoal["describes ?actor's current active task(s)"](){

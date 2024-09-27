@@ -320,7 +320,11 @@ public class CacheDatabase {
     if (cachedUtterance != null) {
       incoming.setType(cachedUtterance.getType());
       semantics = cachedUtterance.getSemantics();
-      semantics.set(0, incoming.getAddressee());
+      //TODO: figure out full set of utterance types this is desired for
+      //EW: In the case of Reply or Statement utterance types, cannot blindly overwrite the first arg
+      if (cachedUtterance.getType() == UtteranceType.INSTRUCT) {
+        semantics.set(0, incoming.getAddressee());
+      }
       incoming.setSemantics(semantics);
       incoming.setIndirectSemantics(cachedUtterance.getIndirectSemantics());
       incoming.setBindings(cachedUtterance.getBindings());
