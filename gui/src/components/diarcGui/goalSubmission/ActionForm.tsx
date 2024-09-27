@@ -3,12 +3,11 @@ import React, { SetStateAction, useContext } from "react";
 
 // NPM packages
 import { useForm } from "react-hook-form";
-import { faSync, faCheck } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // Internal imports
 import ActionFormContext from "./ActionFormContext";
 import { SendMessage } from "react-use-websocket";
+import SubmissionStatusIndicator from "./SubmissionStatusIndicator";
 
 // CONSTANTS //
 const textBoxClassName = "block box-border w-full rounded mt-1 mb-2 text-sm "
@@ -141,20 +140,16 @@ const ActionForm: React.FC<Props> = ({
                         <div className="flex flex-row gap-2">
                             <input type="submit" value="Submit"
                                 // From Button.tsx
-                                className={submitClassName}
+                                className={submitClassName + " grow"}
                             />
-                            {submissionStatus ? (
-                                <div className="flex flex-row items-center">
-                                    {submissionStatus === "wait" ? (
-                                        <FontAwesomeIcon icon={faSync} color="#efd402" spin />
-                                    ) : (
-                                        <FontAwesomeIcon icon={faCheck} color="#00a505" />
-                                    )}
-                                </div>)
-                                : null
-                            }
+                            <SubmissionStatusIndicator status={submissionStatus} />
                         </div>
                     </>}
+
+                {/* Still show submission status even when
+                    no actions are selected */}
+                {actionFormContext.length == 0
+                    && <SubmissionStatusIndicator status={submissionStatus} />}
             </form>
         </div>
     );
