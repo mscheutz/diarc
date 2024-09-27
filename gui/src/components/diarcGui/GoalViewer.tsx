@@ -310,19 +310,19 @@ const GoalViewer: React.FC<Props> = ({
             return copy.sort(compare);
         };
 
+        setData(sorted(data));
+
         if (lastMessage === null) return;
         const newData = JSON.parse(lastMessage.data);
         if (!newData.path || newData.path !== path) return;
 
         setData(prevData => {
-        const mergedMap = new Map(
-            [...prevData, ...newData.goals].map(entry => [entry["id"], entry])
-        );
-        const mergedArray = Array.from(mergedMap.values());
-        return sorted(mergedArray);
+            const mergedMap = new Map(
+                [...prevData, ...newData.goals].map(entry => [entry["id"], entry])
+            );
+            const mergedArray = Array.from(mergedMap.values());
+            return sorted(mergedArray);
         });
-
-//         setData(sorted(data.goals));
     }, [lastMessage, sortAscending, sortCriterion, path]);
 
     useEffect(() => {
