@@ -18,9 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TwoNaoDemo extends DiarcConfiguration {
-  // for logging
-  protected static Logger log = LoggerFactory.getLogger(TwoNaoDemo.class);
-
   /**
    * Set to true to use gui for speech input
    */
@@ -74,8 +71,4 @@ public class TwoNaoDemo extends DiarcConfiguration {
     createInstance(GoalManagerComponent.class, gmArgs);
   }
 
-  public static void main(String[] args) {
-    TwoNaoDemo demoConfig = new TwoNaoDemo();
-    demoConfig.runConfiguration();
-  }
 }

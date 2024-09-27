@@ -122,8 +122,4 @@ public class PickAndPlaceLLMDemo extends DiarcConfiguration {
         }
     }
 
-    public static void main(String[] args) {
-        PickAndPlaceLLMDemo demoConfig = new PickAndPlaceLLMDemo();
-        demoConfig.runConfiguration();
-    }
 }
