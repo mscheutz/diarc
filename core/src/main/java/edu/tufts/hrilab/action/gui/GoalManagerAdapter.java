@@ -13,6 +13,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
+import edu.tufts.hrilab.action.listener.DatabaseListener;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.gui.GuiAdapter;
@@ -30,7 +31,7 @@ import java.util.*;
  * @see edu.tufts.hrilab.action.GoalManagerComponent GoalManagerComponent (the
  * corresponding <code>GuiProvider</code> for this adapter)
  */
-public class GoalManagerAdapter extends GuiAdapter {
+public class GoalManagerAdapter extends GuiAdapter implements DatabaseListener {
   //==========================================================================
   // Constants
   //==========================================================================
@@ -323,6 +324,68 @@ public class GoalManagerAdapter extends GuiAdapter {
   @Override
   public String getPathRoot() {
     return "goalManager";
+  }
+
+  //============================================================================
+  // Implementing methods | DatabaseListener
+  //============================================================================
+  
+  /**
+   * Notifies the frontend of a new action to offer the user.
+   * Called when an action is added to the database.
+   * @param adb
+   */
+  @Override
+  public void actionAdded(ActionDBEntry adb) {
+    // COPIED CODE: creation of action list
+    actionList = new ArrayList<>();
+
+    try {
+      actionList.addAll(
+              TRADE.getAvailableService(
+                      new TRADEServiceConstraints()
+                              .returnType(Set.class).name("getAllActions").argTypes()
+              ).call(Set.class)
+      );
+    } catch (TRADEException e) {
+      log.error("Failed to retrieve actions from database", e);
+    }
+
+    actionList.sort(Comparator.comparing(e ->
+            new ADBEWrapper(e).getActionSignature()));
+
+    // COPIED CODE: onConnect()
+    // update cached actions
+    retrieveActionList();
+
+    JsonArray actions = new JsonArray();
+    for (int i = 0; i < actionList.size(); i++) {
+      JsonObject action = new JsonObject();
+      action.addProperty("name", new ADBEWrapper(actionList.get(i)).getActionSignature());
+      action.addProperty("id", i + 1); // id 0 is taken by the root
+      actions.add(action);
+    }
+    JsonObject message = new JsonObject();
+    message.add("actions", actions);
+    message.addProperty("path", getPath());
+
+    try {
+      sendMessage(message);
+    } catch (TRADEException e) {
+      log.error("Couldn't send actions");
+    }
+
+    throw new UnsupportedOperationException("Unimplemented method 'actionAdded'");
+  }
+
+  /**
+   * Notifies the frontend to remove an action from display.
+   * Called when an action is removed from the database.
+   * @param adb
+   */
+  @Override
+  public void actionRemoved(ActionDBEntry adb) {
+    throw new UnsupportedOperationException("Unimplemented method 'actionRemoved'");
   }
 
 }
