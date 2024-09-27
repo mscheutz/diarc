@@ -1,9 +1,11 @@
 // IMPORTS //
-import React from "react";
+import React, { SetStateAction } from "react";
 
 // NPM packages
 import { useForm } from "react-hook-form";
 import { SendMessage } from "react-use-websocket";
+import { faSync, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // CONSTANTS //
 const textBoxClassName = "block box-border w-full rounded mt-1 mb-2 text-sm "
@@ -21,7 +23,9 @@ const submitClassName = "bg-slate-900 text-white hover:bg-slate-800 "
 
 type Props = {
     sendMessage: SendMessage,
-    path: string
+    path: string,
+    submissionStatus: string,
+    setSubmissionStatus: React.Dispatch<SetStateAction<string>>
 };
 
 /**
@@ -30,12 +34,12 @@ type Props = {
  * @version 1.0
  */
 const GoalForm: React.FC<Props> = ({
-    sendMessage, path
+    sendMessage, path, submissionStatus, setSubmissionStatus
 }) => {
     // HOOKS & CALLBACKS //
-    const { register, handleSubmit, reset } = useForm();
+    const { register, handleSubmit } = useForm();
     const onSubmitGoal = (data: any) => {
-        reset();
+        setSubmissionStatus("wait");
         sendMessage(JSON.stringify(
             {
                 type: "goal",
@@ -68,6 +72,16 @@ const GoalForm: React.FC<Props> = ({
                 // From Button.tsx
                 className={submitClassName}
             />
+            {submissionStatus ? (
+                <div className="flex flex-row items-center">
+                    {submissionStatus === "wait" ? (
+                        <FontAwesomeIcon icon={faSync} color="#efd402" spin />
+                    ) : (
+                        <FontAwesomeIcon icon={faCheck} color="#00a505" />
+                    )}
+                </div>)
+                : null
+            }
         </form>
     );
 };

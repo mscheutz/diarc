@@ -1,8 +1,10 @@
 // IMPORTS //
-import React, { useContext } from "react";
+import React, { SetStateAction, useContext } from "react";
 
 // NPM packages
 import { useForm } from "react-hook-form";
+import { faSync, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 // Internal imports
 import ActionFormContext from "./ActionFormContext";
@@ -26,7 +28,9 @@ const submitClassName = "bg-slate-900 text-white hover:bg-slate-800 "
 
 type Props = {
     sendMessage: SendMessage,
-    path: string
+    path: string,
+    submissionStatus: string,
+    setSubmissionStatus: React.Dispatch<SetStateAction<string>>
 };
 
 /**
@@ -38,12 +42,12 @@ type Props = {
 * @version 1.0
 */
 const ActionForm: React.FC<Props> = ({
-    sendMessage, path
+    sendMessage, path, submissionStatus, setSubmissionStatus
 }) => {
     // HOOKS & CALLBACKS //
     const custom = useForm();
     const onSubmitCustom = (data: any) => {
-        custom.reset();
+        setSubmissionStatus("wait");
         sendMessage(JSON.stringify(
             {
                 type: "custom",
@@ -71,13 +75,7 @@ const ActionForm: React.FC<Props> = ({
         );
     };
     const onSubmitGenerated = (data: any) => {
-        generated.reset();
-        for (let [key, value] of Object.entries(data)) {
-            if (!actionFormContext.includes(key) || value === "") {
-                delete data[key];
-            }
-        }
-
+        setSubmissionStatus("wait");
         let array: string[] = [actionFormContext[0]]
         for (let i = 1; i < actionFormContext.length; i++) {
             array.push(data[actionFormContext[i]]);
@@ -140,10 +138,22 @@ const ActionForm: React.FC<Props> = ({
                         <label className="text-sm pt-2 pb-2">
                             All fields are required.
                         </label>
-                        <input type="submit" value="Submit"
-                            // From Button.tsx
-                            className={submitClassName}
-                        />
+                        <div className="flex flex-row gap-2">
+                            <input type="submit" value="Submit"
+                                // From Button.tsx
+                                className={submitClassName}
+                            />
+                            {submissionStatus ? (
+                                <div className="flex flex-row items-center">
+                                    {submissionStatus === "wait" ? (
+                                        <FontAwesomeIcon icon={faSync} color="#efd402" spin />
+                                    ) : (
+                                        <FontAwesomeIcon icon={faCheck} color="#00a505" />
+                                    )}
+                                </div>)
+                                : null
+                            }
+                        </div>
                     </>}
             </form>
         </div>

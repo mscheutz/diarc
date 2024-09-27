@@ -167,6 +167,20 @@ public class GoalManagerAdapter extends GuiAdapter {
   }
 
   /**
+   * Send a message to the client that the goal submission was successful.
+   */
+  private void notifySubmissionSuccessful() {
+    try {
+      JsonObject json = new JsonObject();
+      json.addProperty("submit", "successful");
+      json.addProperty("path", getPath());
+      sendMessage(json);
+    } catch (TRADEException e) {
+      log.error("Failed to notify export successful", e);
+    }
+  }
+
+  /**
    * Called on receipt of custom-action message.
    *
    * @param customAction the action string.
@@ -276,13 +290,23 @@ public class GoalManagerAdapter extends GuiAdapter {
   @Override
   protected void handleMessage(JsonObject message) {
     switch (message.get("type").getAsString()) {
-      case "custom" -> submitCustomAction(
-              message.getAsJsonObject("formData").get("custom").getAsString());
-      case "form" -> submitFormAction(message.getAsJsonArray("formData"));
-      case "goal" -> submitGoal(
-              message.getAsJsonObject("formData").get("agent").getAsString(),
-              message.getAsJsonObject("formData").get("goal").getAsString()
-      );
+      case "custom" -> {
+        submitCustomAction(
+          message.getAsJsonObject("formData").get("custom").getAsString()
+        );
+        notifySubmissionSuccessful();
+      }
+      case "form" -> {
+        submitFormAction(message.getAsJsonArray("formData"));
+        notifySubmissionSuccessful();
+      }
+      case "goal" -> {
+        submitGoal(
+          message.getAsJsonObject("formData").get("agent").getAsString(),
+          message.getAsJsonObject("formData").get("goal").getAsString()
+        );
+        notifySubmissionSuccessful();
+      }
       case "export" -> {
         List<Number> selected = new Gson().fromJson(message.getAsJsonArray("selected"), ArrayList.class);
         exportActionsAsFile(selected);

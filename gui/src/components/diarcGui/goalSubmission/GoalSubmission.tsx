@@ -72,6 +72,8 @@ const GoalSubmission: React.FC<Props> = ({
 
     // Export button
     const [exportStatus, setExportStatus] = useState<string>("");
+    // Submit buttons
+    const [submissionStatus, setSubmissionStatus] = useState<string>("");
 
     const handleExport = () => {
         setExportStatus("wait");
@@ -102,7 +104,10 @@ const GoalSubmission: React.FC<Props> = ({
             }));
         }
         if (data.export) {
-            setExportStatus("successful")
+            setExportStatus("successful");
+        }
+        if (data.submit) {
+            setSubmissionStatus("successful");
         }
     },
         [lastMessage, path]);
@@ -146,6 +151,8 @@ const GoalSubmission: React.FC<Props> = ({
                             <ActionForm
                                 sendMessage={sendMessage}
                                 path={path}
+                                submissionStatus={submissionStatus}
+                                setSubmissionStatus={setSubmissionStatus}
                             />
                         </div>
                     </TabPanel>
@@ -154,6 +161,8 @@ const GoalSubmission: React.FC<Props> = ({
                             <GoalForm
                                 sendMessage={sendMessage}
                                 path={path}
+                                submissionStatus={submissionStatus}
+                                setSubmissionStatus={setSubmissionStatus}
                             />
                         </div>
                     </TabPanel>
@@ -198,6 +207,8 @@ const GoalSubmission: React.FC<Props> = ({
                                     <ActionForm
                                         sendMessage={sendMessage}
                                         path={path}
+                                        submissionStatus={submissionStatus}
+                                        setSubmissionStatus={setSubmissionStatus}
                                     />
                                 </TabPanel>
 
@@ -205,6 +216,8 @@ const GoalSubmission: React.FC<Props> = ({
                                     <GoalForm
                                         sendMessage={sendMessage}
                                         path={path}
+                                        submissionStatus={submissionStatus}
+                                        setSubmissionStatus={setSubmissionStatus}
                                     />
                                 </TabPanel>
                             </Tabs>
