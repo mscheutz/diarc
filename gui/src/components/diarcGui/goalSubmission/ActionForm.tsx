@@ -93,7 +93,7 @@ const ActionForm: React.FC<Props> = ({
 
     // DOM //
     return (
-        <div className="flex flex-col gap-1 w-full h-full border border-[#d1dbe3]
+        <div className="flex flex-col gap-1 w-full border border-[#d1dbe3]
                         rounded-md shadow-md p-3">
             {/* Custom action form */}
             <form

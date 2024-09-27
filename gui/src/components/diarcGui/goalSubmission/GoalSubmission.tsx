@@ -25,13 +25,13 @@ type Props = {
 /**
  * @author Lucien Bao
  * @version 1.0
- * GoalManager. Provides a GUI to browse Action Script Language (.asl) files,
+ * GoalSubmission. Provides a GUI to browse Action Script Language (.asl) files,
  * browse available actions, learn new actions, and submit actions and goals.
  * 
  * Action filtering logic adapted from the example at
  * https://dgreene1.github.io/react-accessible-treeview/docs/examples-Filtering.
  */
-const GoalManager: React.FC<Props> = ({
+const GoalSubmission: React.FC<Props> = ({
     path, lastMessage, sendMessage, readyState
 }) => {
     // STATE //
@@ -194,7 +194,7 @@ const GoalManager: React.FC<Props> = ({
                                     <Tab>Submit Goal</Tab>
                                 </TabList>
 
-                                <TabPanel className="hidden flex-col min-h-0 grow">
+                                <TabPanel className="hidden flex-col min-h-0 grow overflow-y-auto">
                                     <ActionForm
                                         sendMessage={sendMessage}
                                         path={path}
@@ -218,4 +218,4 @@ const GoalManager: React.FC<Props> = ({
     );
 };
 
-export default GoalManager;
+export default GoalSubmission;

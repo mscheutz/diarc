@@ -48,7 +48,7 @@ This setup includes two components:
    to run these:
 
    ```shell
-   ./gradlew launch -Pmain=edu.tufts.hrilab.action.GoalManagerImpl      # component
+   ./gradlew launch -Pmain=edu.tufts.hrilab.action.GoalManagerImpl  # component
    ./gradlew launch -Pmain=edu.tufts.hrilab.config.UnifiedGuiConfig # config
    ```
 
@@ -158,7 +158,7 @@ of their subcomponents.
     * **Filter goals**: goals can be filtered either by the name of their actor
       or by their status.
   * **Goal table** (right): goals are displayed in a tabular view.
-* **Goal manager**
+* **Goal submission**
   * **Action browser** (top left): shows a list of all loaded action signatures.
     Clicking one of these will generate a form in the *Submit Action* tab in
     the right panel. Actions can be filtered using the search bar at the top.
@@ -183,7 +183,7 @@ of their subcomponents.
     important locations.
   > **Future Goal**:
   > Implement functionality to select which agent should move when multiple agents use the same `MapComponent`, using an approach like `inGroups(this.groups.toArray(new String[0]))` for TRADE calls.
-  > 
+  >
   > **Tip**:
   > With a specified -map_folder for `MapComponent`, if the map doesn't load when clicking `Fetch Map Data`, verify the `app.base-url` in `application.properties`.
 

@@ -3,7 +3,7 @@ import BeliefViewer from "../BeliefViewer.tsx";
 import ChatViewer from "../ChatViewer.tsx";
 import GoalViewer from "../GoalViewer.tsx";
 import MapViewer from "../MapViewer.tsx";
-import GoalManager from "../goalManager/GoalManager.tsx";
+import GoalSubmission from "../goalSubmission/GoalSubmission.tsx";
 import VisionManager from "../vision/VisionManager.tsx";
 import TradeServiceViewer from "../tradeService/TradeServiceViewer.tsx";
 
@@ -29,8 +29,8 @@ const handlers = {
         component: GoalViewer
     },
     "goalManager": {
-        tabName: "Goal Manager",
-        component: GoalManager
+        tabName: "Goal Submission",
+        component: GoalSubmission
     },
     "map": {
         tabName: "Map Viewer",
