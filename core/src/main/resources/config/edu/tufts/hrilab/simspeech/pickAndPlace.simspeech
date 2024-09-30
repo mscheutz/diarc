@@ -1,8 +1,7 @@
 get the red block to location three
-location location one
+location one
 ----
 go to location two
-the yellow block is at location two
 pick up the yellow block
 go to location three
 put down the yellow block
@@ -15,12 +14,6 @@ what blocks are you aware of
 move the green block from location one to location three
 yes
 the red block
----
-(temp)
-get the green block to location two
-----
-place the red block at location one
-what blocks are at location three
 ----
 ----
 ----
@@ -40,9 +33,3 @@ what blocks are at location three
 緑色のブロックを位置1から位置3に移動してください
 はい
 赤いブロック
-----
-(temp)
-get the green block to location two
-----
-赤いブロックを位置1に置いてください
-位置3にどのブロックがありますか

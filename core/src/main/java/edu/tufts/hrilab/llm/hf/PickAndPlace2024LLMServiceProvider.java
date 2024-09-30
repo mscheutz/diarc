@@ -293,6 +293,11 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         descriptorMappings.put("location three", "位置3");
         descriptorMappings.put("location four", "位置4");
         descriptorMappings.put("location five", "位置5");
+        descriptorMappings.put("locationOne", "位置1");
+        descriptorMappings.put("locationTwo", "位置2");
+        descriptorMappings.put("locationThree", "位置3");
+        descriptorMappings.put("locationFour", "位置4");
+        descriptorMappings.put("locationFive", "位置5");
         if (descriptorMappings.get(descriptorString) == null) {
             return descriptorString;
         } else {

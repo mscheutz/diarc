@@ -219,6 +219,7 @@ nowhere; VAL; pose(none);
 none; VAL; blockType(none);
 %nevermind; VAL; pose(none);
 nevermind; VAL; blockType(none);
+never mind; VAL; blockType(none);
 
 yes; VAL; val(yes);
 はい; VAL; val(yes);
@@ -231,3 +232,24 @@ toggle nlg; VERBI; toggleLLMNLG
 
 %% Testing only %%
 test nlg; C/LIT*; #x.testLLMNLGWithString(?ADDRESSEE,$x);
+
+%% Homophones %%
+location 1; REF; locationOne:pose; DEFINITE
+location 1; RN; locationOne:pose; VAR
+location 1; PROPERTY; locationOne:pose
+
+location to; REF; locationTwo:pose; DEFINITE
+location to; RN; locationTwo:pose; VAR
+location to; PROPERTY; locationTwo:pose
+location too; REF; locationTwo:pose; DEFINITE
+location too; RN; locationTwo:pose; VAR
+location too; PROPERTY; locationTwo:pose
+location 2; REF; locationTwo:pose; DEFINITE
+location 2; RN; locationTwo:pose; VAR
+location 2; PROPERTY; locationTwo:pose
+
+location 3; REF; locationThree:pose; DEFINITE
+location 3; RN; locationThree:pose; VAR
+location 3; PROPERTY; locationThree:pose
+
+robot 1; ADDRESSABLE; robotone:agent

@@ -156,6 +156,7 @@ import java.lang.Integer;
             act:grabPerceivedEntity(!object,!location);
         } else {
             act:generateResponseFromString("okay, I am not picking up any block");
+            //act:generateResponseFromString("わかった");
         }
     }
 
@@ -169,7 +170,12 @@ import java.lang.Integer;
     Symbol !blockAt;
     Predicate !fact;
 
+    java.lang.Double !objectHeightM = 0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
+    java.lang.Double !negObjectHeightM = -0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
+
+    tsc:moveZRelative(!objectHeightM);
     ?bindings = tsc:perceiveAllEntitiesInView("blocksDet");
+    tsc:moveZRelative(!negObjectHeightM);
     //todo: rectify block locations in belief based on what we're currently seeing. need to do at(X,Y) and holding(X).
 //    !location = act:getCurrentLocation();
 //    foreach (!result : ?bindings) {
