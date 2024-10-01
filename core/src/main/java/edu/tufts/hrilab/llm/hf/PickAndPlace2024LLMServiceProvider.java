@@ -23,11 +23,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
-    Prompt nluSystemPrompt = Prompts.getPrompt("pickandplace2024/nlu/japanese/system");;
-    Prompt nluUserPrompt = Prompts.getPrompt("pickandplace2024/nlu/japanese/user");
-    Prompt nlgSystemPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/system");
-    Prompt nlgUserPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/user");
-    Prompt validationPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/validation");
+    Prompt nluSystemPrompt = Prompts.getPrompt("pickandplace2024/nlu/english/system");;
+    Prompt nluUserPrompt = Prompts.getPrompt("pickandplace2024/nlu/english/user");
+    Prompt nlgSystemPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/system");
+    Prompt nlgUserPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/user");
+    Prompt validationPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/validation");
 
     @Override
     public Utterance parseNLUCompletionResponse(Utterance incomingUtterance, Completion llmResponse) {

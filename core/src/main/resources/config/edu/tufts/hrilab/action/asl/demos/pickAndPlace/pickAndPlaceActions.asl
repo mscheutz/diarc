@@ -76,7 +76,7 @@ import java.lang.Integer;
 }
 
 () = closeGripper() {
-    tsc:openGripper();
+    tsc:closeGripper();
 }
 
 //todo: (pete) allows the LLM target for semantics to be more sane than "getOn". should be true everywhere.
@@ -425,8 +425,8 @@ import java.lang.Integer;
         !knowBlockAt = op:newObject("java.lang.Boolean", true);
     }
     if (op:equals(!knowBlockAt,False)) {
-        //act:generateResponseFromString("I don't know the location of any blocks");
-        act:generateResponseFromString("ブロックはどれも場所がわかりません");
+        act:generateResponseFromString("I don't know the location of any blocks");
+        //act:generateResponseFromString("ブロックはどれも場所がわかりません");
     }
 }
 
@@ -541,13 +541,13 @@ import java.lang.Integer;
         foreach(!goalPred: !goalPreds){
             !status= op:getName(!goalPred);
             !goalPred= op:getArg(!goalPred,0);
-            //act:generateResponseFromString("!status goal: ");
-            act:generateResponseFromString("!status ゴール: ");
+            act:generateResponseFromString("!status goal: ");
+            //act:generateResponseFromString("!status ゴール: ");
             act:generateResponse(!goalPred);
         }
     } else {
-        //act:generateResponseFromString("no current goal");
-        act:generateResponseFromString("現在ゴールはありません");
+        act:generateResponseFromString("no current goal");
+        //act:generateResponseFromString("現在ゴールはありません");
     }
 }
 
@@ -563,16 +563,8 @@ import java.lang.Integer;
            act:generateResponse(!goalPred);
        }
     } else{
-       //act:generateResponseFromString("no pending goals");
-       act:generateResponseFromString("並んでいるゴールはありません");
+       act:generateResponseFromString("no pending goals");
+       //act:generateResponseFromString("並んでいるゴールはありません");
     }
 
-}
-
-() = openGripper() {
-    tsc:openGripper();
-}
-
-() = closeGripper() {
-    tsc:closeGripper();
 }
