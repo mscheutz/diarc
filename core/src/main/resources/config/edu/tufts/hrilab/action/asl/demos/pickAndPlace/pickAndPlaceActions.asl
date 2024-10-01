@@ -145,6 +145,7 @@ import java.lang.Integer;
         !object = op:get(!objectList, 0);
         !location = act:getCurrentLocation();
         //act:grab(!object,!location);
+        act:grabPerceivedEntity(!object,!location);
     } else {
         ////Multiple results - ask which one to pick up
         //TODO: get descriptors for all detected blocks and add into question specifically
@@ -153,6 +154,7 @@ import java.lang.Integer;
         !object = op:get(!bindings, !x);
         ////TODO: make sure response matches one of the detected blocks
         if (~op:equals(!object, none)) {
+            !location = act:getCurrentLocation();
             act:grabPerceivedEntity(!object,!location);
         } else {
             act:generateResponseFromString("okay, I am not picking up any block");

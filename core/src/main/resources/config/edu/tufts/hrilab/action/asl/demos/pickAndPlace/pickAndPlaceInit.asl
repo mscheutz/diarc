@@ -13,16 +13,19 @@ import edu.tufts.hrilab.fol.Term;
     Symbol !jobNameRed = "blocksDet";
     Symbol !jobNameGreen = "blocksDet";
     Symbol !jobNameYellow = "blocksDet";
+    Symbol !jobNameOrange = "blocksDet";
 
     Symbol !redBlockDescriptor = "red block";
     Symbol !blueBlockDescriptor = "blue block";
     Symbol !greenBlockDescriptor = "green block";
     Symbol !yellowBlockDescriptor = "yellow block";
+    Symbol !orangeBlockDescriptor = "orange block";
 
     Symbol !redBlock;
     Symbol !blueBlock;
     Symbol !greenBlock;
     Symbol !yellowBlock;
+    Symbol !orangeBlock;
 
     Term !props;
 
@@ -31,6 +34,7 @@ import edu.tufts.hrilab.fol.Term;
     !robotone.tsc:addDetectionType(!blueBlockDescriptor,!jobNameBlock);
     !robotone.tsc:addDetectionType(!greenBlockDescriptor,!jobNameGreen);
     !robotone.tsc:addDetectionType(!yellowBlockDescriptor,!jobNameYellow);
+    !robotone.tsc:addDetectionType(!orangeBlockDescriptor,!jobNameOrange);
 
     //red block//
     !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!redBlockDescriptor,0.050,0.0)");
@@ -64,6 +68,12 @@ import edu.tufts.hrilab.fol.Term;
     act:assertBelief(!toAssert);
     !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(yellow block(X:physobj))");
     !yellowBlock = act:positReference(!props);
+
+    //orange block/
+    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!orangeBlockDescriptor,0.050,0.0)");
+    act:assertBelief(!toAssert);
+    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(orange block(X:physobj))");
+    !orangeBlock = act:positReference(!props);
 
     !robotone.act:setupPoses();
 }
