@@ -110,6 +110,23 @@ import edu.tufts.hrilab.fol.Variable;
     java.lang.Double !dim = 50;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
     Predicate !failPred;
     java.lang.Boolean !result;
+    java.util.List !results;
+    java.lang.Integer !size;
+    Predicate !failCond;
+    edu.tufts.hrilab.action.justification.Justification !failJustification;
+    Predicate !thisStep;
+
+    !results = act:perceiveEntities();
+    if (~op:isEmpty(!results)) {
+        !size = op:invokeMethod(!results, "size");
+        if (op:gt(!size,1)) {
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "has(theLocationBelowMe,space)");
+            !failJustification = op:newObject("edu.tufts.hrilab.action.justification.ConditionJustification", false, !failCond);
+            !thisStep = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "putdown(?actor)");
+            op:invokeMethod(!failJustification, "setStep", !thisStep);
+            exit(FAIL_PRECONDITIONS, !failJustification);
+        }
+    }
 
 //    !failPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "full(?pose)");
 

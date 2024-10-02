@@ -53,6 +53,8 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
 
     Predicate !failCond;
 
+    Symbol !blockLocation;
+
     op:log(debug, "[perceiveEntity] refID: ?refID");
 
     !descriptor = tsc:getDescriptorForID(?refID);
@@ -95,6 +97,15 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
 
     try {
         act:perceiveEntityFromSymbol(?refID);
+        !blockLocation = act:getBlockPose(?refID);
+        if (~op:equals(!blockLocation, !currPose)) {
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor,?refID))");
+            act:retractBelief(!fact);
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?refID,!blockLocation)");
+            act:retractBelief(!fact);
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?refID,!currPose)");
+            act:assertBelief(!fact);
+        }
     } catch (FAIL_RETURNVALUE) {
         tsc:moveZRelative(!downDist);
         tsc:moveXRelative(!backDist);

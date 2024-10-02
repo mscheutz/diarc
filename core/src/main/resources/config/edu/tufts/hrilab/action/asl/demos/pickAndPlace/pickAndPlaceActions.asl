@@ -110,6 +110,9 @@ import java.lang.Integer;
         }
     }
 
+    //TODO: get rid of this doubly nested action wrapping of goalspecs. Interacts badly with recovery - need to
+    //      specifically exclude the parent from any goal recovery policies
+    //  ^Is this actually just due to bad implementation for goal recovery w/ goalspecs in general?
     act:getOn(?object, ?destination);
 }
 
@@ -169,7 +172,7 @@ import java.lang.Integer;
     //runs a job that looks for all items known to the system and returns the set of (orderd) results. then binds the associated refrerences.
 
     Symbol !location;
-    Symbol !blockAt;
+    Symbol !blockLocation;
     Predicate !fact;
 
     java.lang.Double !objectHeightM = 0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
@@ -179,15 +182,18 @@ import java.lang.Integer;
     ?bindings = tsc:perceiveAllEntitiesInView("blocksDet");
     tsc:moveZRelative(!negObjectHeightM);
     //todo: rectify block locations in belief based on what we're currently seeing. need to do at(X,Y) and holding(X).
-//    !location = act:getCurrentLocation();
-//    foreach (!result : ?bindings) {
-//        !blockLocation = act:getBlockPose(!result);
-//        if (~op:equals(!blockLocation, !location)) {
-//            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result, !blockLocation)");
-//            act:retractBelief(!fact);
-//            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result, !blockLocation)");
-//        }
-//    }
+    !location = act:getCurrentLocation();
+    foreach (!result : ?bindings) {
+        !blockLocation = act:getBlockPose(!result);
+        if (~op:equals(!blockLocation, !location)) {
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor,!result))");
+            act:retractBelief(!fact);
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!blockLocation)");
+            act:retractBelief(!fact);
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!location)");
+            act:assertBelief(!fact);
+        }
+    }
 
 }
 
@@ -228,28 +234,11 @@ import java.lang.Integer;
     conditions : {
         pre : not(free(?actor));
     }
-    List !results;
-    java.lang.Integer !size;
-    Predicate !failCond;
-    Justification !failJustification;
     Symbol !location;
     Symbol !object;
-    Predicate !thisStep;
 
     op:log(info, "[putDown]");
 
-    ////TODO: Should just push this down into the putdown primitive and have recovery policy only apply to this script
-    !results = act:perceiveEntities();
-    if (~op:isEmpty(!results)) {
-        !size = op:invokeMethod(!results, "size");
-        if (op:gt(!size,1)) {
-            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "has(theLocationBelowMe,space)");
-            !failJustification = op:newObject("edu.tufts.hrilab.action.justification.ConditionJustification", false, !failCond);
-            !thisStep = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "putDown(?actor)");
-            op:invokeMethod(!failJustification, "setStep", !thisStep);
-            exit(FAIL_PRECONDITIONS, !failJustification);
-        }
-    }
     !location = act:getCurrentLocation();
     !object = act:getHeldObject();
     act:putdown(!object,!location);
@@ -262,6 +251,73 @@ import java.lang.Integer;
     act:putDown();
 }
 
+(Symbol ?pose) = getPoseWithSpace() {
+    java.lang.Integer !numBlocks;
+    java.lang.Integer !poseIndex = 0;
+    java.lang.Boolean !doneChecking = false;
+
+    op:log(debug,"getPoseWithSpace");
+
+    while (op:equals(!doneChecking, false)) {
+        ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "pose_!poseIndex:pose");
+        !numBlocks = act:getNumberOfBlocksAt(?pose);
+        if (op:lt(!numBlocks,2)) {
+            !doneChecking = op:newObject("java.lang.Boolean", true);
+        }
+        !poseIndex = op:++(!poseIndex);
+        //TODO: Don't have number of locations hardcoded
+        if (op:gt(!poseIndex,2)) {
+            ?pose = op:setNull();
+            !doneChecking = op:newObject("java.lang.Boolean", true);
+        }
+    }
+}
+
+() = swapBlocks(Symbol ?heldBlock, Symbol ?blockToSwap) {
+    Predicate !goalPred;
+    Symbol !openPose;
+    Predicate !failCond;
+    Symbol !currentPose;
+
+    conditions : {
+        pre : at(?blockToSwap,!currentPose);
+        pre : at(?actor, !currentPose);
+        pre : holding(?actor,?heldBlock);
+    }
+
+    //Move held block temporarily to an open location
+    !openPose = act:getPoseWithSpace();
+    if (op:isNull(!openPose)) {
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapBlocks)");
+        exit(FAIL, !failCond);
+    }
+    op:log(debug,"moving held block to open location");
+    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, !openPose)");
+    goal:!goalPred;
+    act:putDown();
+
+    //Move block to swap temporarily to an open location
+    !openPose = act:getPoseWithSpace();
+    if (op:isNull(!openPose)) {
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapBlocks)");
+        exit(FAIL, !failCond);
+    }
+    op:log(debug,"moving block to swap to open location");
+    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?blockToSwap, !openPose)");
+    goal:!goalPred;
+
+    //Move originally held block to desired location
+    op:log(debug,"moving held block to desired location");
+    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?heldBlock, !currentPose)");
+    goal:!goalPred;
+
+    //Do we want this? Pick swapped block back up? Ask the user?
+    //act:goToPose(!openPose);
+    //act:pickUp(?blockToSwap);
+    //act:goToPose(!currentPose);
+}
+
+
 //This currently applies to all goals and compound actions. putDown() and putDown(block) are allowed to just fail. Do we want to change this?
 () = putDownAtFullLocationRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
@@ -271,31 +327,29 @@ import java.lang.Integer;
         actionStatuses : {FAIL_PRECONDITIONS}
         failureReasons : {has(theLocationBelowMe,space)}
         excludedGoals : {putDown(X), putDown(X,Y)}
-
+    }
+    recovery : {
+        actionStatuses : {FAIL_PRECONDITIONS}
+        failureReasons : {has(theLocationBelowMe,space)}
+        excludedGoals : {putDown(X), putDown(X,Y), getBlockTo(X,Y,Z)}
     }
     Symbol !response;
     Symbol !otherBlock;
     Map !bindings;
     Variable !x = "X";
-    Predicate !failCond;
     String !otherBlockName;
     Symbol !block;
-    Symbol !location;
-    Predicate !goalPred;
 
     op:log("debug","[putDownAtFullLocationRecovery");
     op:log("debug","[putDownAtFullLocationRecovery] ?failedActionPredicates");
     op:log("debug","[putDownAtFullLocationRecovery] ?failureReasons");
     op:log("debug","[putDownAtFullLocationRecovery] ?failedGoal");
 
-    //Get the held block and current location from belief in order to populate question asking?
-
-    //TODO:
+    //TODO: Get the held block and current location from belief in order to populate question asking?
     //  report that we cannot put down the block because the location is full
     //  Ask if the user would like to swap the held block with a block in that location
     (!bindings) = act:askQuestionFromString(?actor,"I cannot put down the block because the location is full. Would you like me to swap out one of the blocks?", val(X));
     !block = act:getHeldObject();
-    !location = act:getCurrentLocation();
     //(!bindings) = act:askQuestionFromString(?actor,"場所がいっぱいになっているため、ブロックを置くことはできません。ブロックのどれかと交換しましょうか？", val(X));
     !response = op:get(!bindings, !x);
     if (op:equals(!response,yes)) {
@@ -303,18 +357,11 @@ import java.lang.Integer;
         //act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", blockType(X));
         !otherBlock = op:get(!bindings, !x);
         !otherBlockName = op:invokeMethod(!otherBlock, "getName");
-        op:log(info,!otherBlock);
-        if (op:equals(!otherBlock,"none")) {
+        if (op:equals(!otherBlockName,"none")) {
             act:generateResponseFromString("okay, I am not swapping any block");
             exit(FAIL_RECOVERY);
         } else {
-            !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, pose_0:pose)");
-            goal:!goalPred;
-            act:putDown();
-            !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!otherBlock, pose_0:pose)");
-            goal:!goalPred;
-            !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!block, !location)");
-            goal:!goalPred;
+            act:swapBlocks(!block,!otherBlock);
         }
     } else {
         act:generateResponseFromString("okay, I am not swapping any block");
@@ -464,18 +511,15 @@ import java.lang.Integer;
     }
 }
 
-() = describeNumberOfBlocksAt(Symbol ?pose:pose) {
+(java.lang.Integer ?numBlocks) = getNumberOfBlocksAt(Symbol ?pose) {
     Predicate !queryPred;
     List !bindings;
     java.util.Map !binding;
     Symbol !block;
     Symbol !blockDescriptor;
-    Symbol !poseDescriptor;
-    String !poseDescriptorJapanese;
-    java.lang.Boolean !knowBlockAt = false;
-    java.util.HashMap !elem;
     edu.tufts.hrilab.fol.Variable !blockVar;
-    java.lang.Integer !numBlocks = 0;
+
+    ?numBlocks = op:newObject("java.lang.Integer", 0);
 
     !blockVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(X,?pose)");
@@ -484,9 +528,17 @@ import java.lang.Integer;
         !block = op:get(!binding,!blockVar);
         !blockDescriptor = tsc:getDescriptorForID(!block);
         if (~op:equals(!blockDescriptor,none)) {
-            !numBlocks = op:++(!numBlocks);
+            ?numBlocks = op:++(?numBlocks);
         }
     }
+}
+
+() = describeNumberOfBlocksAt(Symbol ?pose) {
+    java.lang.Integer !numBlocks;
+    Symbol !poseDescriptor;
+    String !poseDescriptorJapanese;
+
+    !numBlocks = act:getNumberOfBlocksAt(?pose);
 
     !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
     if (op:equals(!numBlocks,1)) {
