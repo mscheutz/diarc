@@ -240,9 +240,14 @@ public class GoalManagerAdapter extends GuiAdapter implements DatabaseListener {
    * client.
    */
   private void onConnect() {
-    // update cached actions
     retrieveActionList();
+    sendActionList();
+  }
 
+  /**
+   * Updates the client of the current action list.
+   */
+  void sendActionList() {
     JsonArray actions = new JsonArray();
     for (int i = 0; i < actionList.size(); i++) {
       JsonObject action = new JsonObject();
@@ -333,59 +338,31 @@ public class GoalManagerAdapter extends GuiAdapter implements DatabaseListener {
   /**
    * Notifies the frontend of a new action to offer the user.
    * Called when an action is added to the database.
-   * @param adb
+   * @param adb the new ActionDBEntry
    */
   @Override
   public void actionAdded(ActionDBEntry adb) {
-    // COPIED CODE: creation of action list
-    actionList = new ArrayList<>();
-
-    try {
-      actionList.addAll(
-              TRADE.getAvailableService(
-                      new TRADEServiceConstraints()
-                              .returnType(Set.class).name("getAllActions").argTypes()
-              ).call(Set.class)
-      );
-    } catch (TRADEException e) {
-      log.error("Failed to retrieve actions from database", e);
-    }
-
+    actionList.add(adb);
     actionList.sort(Comparator.comparing(e ->
-            new ADBEWrapper(e).getActionSignature()));
+        new ADBEWrapper(e).getActionSignature()));
 
-    // COPIED CODE: onConnect()
-    // update cached actions
-    retrieveActionList();
-
-    JsonArray actions = new JsonArray();
-    for (int i = 0; i < actionList.size(); i++) {
-      JsonObject action = new JsonObject();
-      action.addProperty("name", new ADBEWrapper(actionList.get(i)).getActionSignature());
-      action.addProperty("id", i + 1); // id 0 is taken by the root
-      actions.add(action);
-    }
-    JsonObject message = new JsonObject();
-    message.add("actions", actions);
-    message.addProperty("path", getPath());
-
-    try {
-      sendMessage(message);
-    } catch (TRADEException e) {
-      log.error("Couldn't send actions");
-    }
-
-    throw new UnsupportedOperationException("Unimplemented method 'actionAdded'");
+    sendActionList();
   }
 
   /**
    * Notifies the frontend to remove an action from display.
    * Called when an action is removed from the database.
-   * @param adb
+   * @param adb the removed ActionDBEntry
    */
   @Override
   public void actionRemoved(ActionDBEntry adb) {
-    throw new UnsupportedOperationException("Unimplemented method 'actionRemoved'");
-  }
+    // Remove any ADBs matching the input
+    for(int i = actionList.size() - 1; i >= 0; i--) {
+      if(actionList.get(i).equals(adb)) {
+        actionList.remove(i);
+      }
+    }
 
+    sendActionList();
+  }
 }

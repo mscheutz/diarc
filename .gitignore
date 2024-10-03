@@ -20,3 +20,7 @@ elevator_lab_test/
 /gui/yarn.lock
 /gui/build/
 /gui/node_modules/
+config/bin/
+core/bin/
+diarcRos/bin/
+vision/bin/
