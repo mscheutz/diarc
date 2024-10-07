@@ -122,7 +122,7 @@ import edu.tufts.hrilab.fol.Variable;
         if (op:gt(!size,1)) {
             !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "has(theLocationBelowMe,space)");
             !failJustification = op:newObject("edu.tufts.hrilab.action.justification.ConditionJustification", false, !failCond);
-            !thisStep = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "putdown(?actor)");
+            !thisStep = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "putdown(?actor,?physobj,?pose)");
             op:invokeMethod(!failJustification, "setStep", !thisStep);
             exit(FAIL_PRECONDITIONS, !failJustification);
         }

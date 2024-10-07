@@ -71,6 +71,28 @@ import java.lang.Integer;
     }
 }
 
+(Symbol ?pose) = getPoseWithSpace() {
+    java.lang.Integer !numBlocks;
+    java.lang.Integer !poseIndex = 0;
+    java.lang.Boolean !doneChecking = false;
+
+    op:log(debug,"getPoseWithSpace");
+
+    while (op:equals(!doneChecking, false)) {
+        ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "pose_!poseIndex:pose");
+        !numBlocks = act:getNumberOfBlocksAt(?pose);
+        if (op:lt(!numBlocks,2)) {
+            !doneChecking = op:newObject("java.lang.Boolean", true);
+        }
+        !poseIndex = op:++(!poseIndex);
+        //TODO: Don't have number of locations hardcoded
+        if (op:gt(!poseIndex,2)) {
+            ?pose = op:setNull();
+            !doneChecking = op:newObject("java.lang.Boolean", true);
+        }
+    }
+}
+
 () = openGripper() {
     tsc:openGripper();
 }
@@ -132,14 +154,12 @@ import java.lang.Integer;
     Predicate !failCond;
 
     op:log(info, "[pickUp]");
-    //TODO: Need implementation of this function (retval should be collection of objects)
     !objectList = act:perceiveEntities();
 
     !resultsSize = op:invokeMethod(!objectList, "size");
     op:log(debug, "[pickUp] results size: !resultsSize for object list !objectList");
 
     //No results
-
     if (op:equals(!resultsSize, 0)) {
         !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "dont(?actor,see,anyBlocks,atMyLocation)");
         exit(FAIL_RETURNVALUE,!failCond);
@@ -181,7 +201,6 @@ import java.lang.Integer;
     tsc:moveZRelative(!objectHeightM);
     ?bindings = tsc:perceiveAllEntitiesInView("blocksDet");
     tsc:moveZRelative(!negObjectHeightM);
-    //todo: rectify block locations in belief based on what we're currently seeing. need to do at(X,Y) and holding(X).
     !location = act:getCurrentLocation();
     foreach (!result : ?bindings) {
         !blockLocation = act:getBlockPose(!result);
@@ -251,72 +270,147 @@ import java.lang.Integer;
     act:putDown();
 }
 
-(Symbol ?pose) = getPoseWithSpace() {
-    java.lang.Integer !numBlocks;
-    java.lang.Integer !poseIndex = 0;
-    java.lang.Boolean !doneChecking = false;
-
-    op:log(debug,"getPoseWithSpace");
-
-    while (op:equals(!doneChecking, false)) {
-        ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "pose_!poseIndex:pose");
-        !numBlocks = act:getNumberOfBlocksAt(?pose);
-        if (op:lt(!numBlocks,2)) {
-            !doneChecking = op:newObject("java.lang.Boolean", true);
-        }
-        !poseIndex = op:++(!poseIndex);
-        //TODO: Don't have number of locations hardcoded
-        if (op:gt(!poseIndex,2)) {
-            ?pose = op:setNull();
-            !doneChecking = op:newObject("java.lang.Boolean", true);
-        }
-    }
-}
-
-() = swapBlocks(Symbol ?heldBlock, Symbol ?blockToSwap) {
+() = swapBlocks(Symbol ?blockOne, Symbol ?blockTwo) {
     Predicate !goalPred;
-    Symbol !openPose;
     Predicate !failCond;
-    Symbol !currentPose;
+    Symbol !openPose;
+    Symbol !blockOnePose;
+    Symbol !blockTwoPose;
+    Symbol !heldBlock;
+    java.lang.Integer !numBlocks1;
+    java.lang.Integer !numBlocks2;
+    java.lang.Boolean !true = True;
+    java.lang.Boolean !false = False;
 
-    conditions : {
-        pre : at(?blockToSwap,!currentPose);
-        pre : at(?actor, !currentPose);
-        pre : holding(?actor,?heldBlock);
+    //Make sure block locations are known (and check if one of them is currently being held)
+    !heldBlock = act:getHeldObject();
+    !blockOnePose = act:getBlockPose(?blockOne);
+    !blockTwoPose = act:getBlockPose(?blockTwo);
+    if (~op:isNull(!heldBlock)) {
+        if (op:equals(!heldBlock,?blockOne)) {
+            !blockOnePose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "holding");
+        } elseif (op:equals(!heldBlock,?blockTwo)) {
+            !blockTwoPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "holding");
+        }
     }
 
-    //Move held block temporarily to an open location
-    !openPose = act:getPoseWithSpace();
-    if (op:isNull(!openPose)) {
-        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapBlocks)");
+    //Fail if either block is not present in the work area
+    if (op:isNull(!blockOnePose)) {
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "know(?actor,theLocationOf,?blockOne)");
+        exit(FAIL, !failCond);
+    } elseif (op:isNull(!blockTwoPose)) {
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "know(?actor,theLocationOf,?blockTwo)");
         exit(FAIL, !failCond);
     }
-    op:log(debug,"moving held block to open location");
-    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, !openPose)");
-    goal:!goalPred;
-    act:putDown();
 
-    //Move block to swap temporarily to an open location
-    !openPose = act:getPoseWithSpace();
-    if (op:isNull(!openPose)) {
-        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapBlocks)");
-        exit(FAIL, !failCond);
+    if (~op:isNull(!heldBlock)) {
+        if (op:equals(?blockOne,!heldBlock)) {
+            act:swapHeldBlock(!heldBlock,?blockTwo,!blockTwoPose);
+            return;
+        } elseif (op:equals(?blockTwo,!heldBlock)) {
+            act:swapHeldBlock(!heldBlock,?blockOne,!blockOnePose);
+            return;
+        } else {
+            //TODO: ideally not to one of the swap poses
+            //Move held block to open location
+            !openPose = act:getPoseWithSpace();
+            if (op:isNull(!openPose)) {
+                !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapBlocks)");
+                exit(FAIL, !failCond);
+            }
+            op:log(info,"moving held block to open location");
+            !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, !openPose)");
+            goal:!goalPred;
+            act:putDown();
+        }
     }
-    op:log(debug,"moving block to swap to open location");
-    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?blockToSwap, !openPose)");
-    goal:!goalPred;
 
-    //Move originally held block to desired location
-    op:log(debug,"moving held block to desired location");
-    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?heldBlock, !currentPose)");
-    goal:!goalPred;
+    !numBlocks1 = act:getNumberOfBlocksAt(!blockOnePose);
+    !numBlocks2 = act:getNumberOfBlocksAt(!blockTwoPose);
+    if (op:gt(!numBlocks1,1) && op:gt(!numBlocks2,1)) {
+        act:swapBlocksHelper(?blockOne,!blockOnePose,?blockTwo,!blockTwoPose, !true);
+    } elseif (op:gt(!numBlocks1,1)) {
+        act:swapBlocksHelper(?blockOne,!blockOnePose,?blockTwo,!blockTwoPose, !false);
+    } else {
+        act:swapBlocksHelper(?blockTwo,!blockTwoPose,?blockOne,!blockOnePose, !false);
+    }
 
-    //Do we want this? Pick swapped block back up? Ask the user?
-    //act:goToPose(!openPose);
-    //act:pickUp(?blockToSwap);
-    //act:goToPose(!currentPose);
+    //Pick original held block back up
+    if (~op:isNull(!heldBlock)) {
+        op:log(info,"picking original block back up");
+        !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor, !heldBlock)");
+        goal:!goalPred;
+    }
 }
 
+//TODO: is there a bug with assigning args in calls between asl scripts where args have the same names but in a different order?
+() = swapBlocksHelper(Symbol ?block1, Symbol ?block1Pose, Symbol ?block2, Symbol ?block2Pose, java.lang.Boolean ?poseFull) {
+    Predicate !goalPred;
+    Predicate !failCond;
+    Symbol !openPose;
+
+    if (op:equals(?poseFull,true)) {
+        //Move block two temporarily to an open location
+        !openPose = act:getPoseWithSpace();
+        if (op:isNull(!openPose)) {
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapBlocks)");
+            exit(FAIL, !failCond);
+        }
+        op:log(info,"moving block two to open location");
+        !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?block2, !openPose)");
+        goal:!goalPred;
+    }
+
+    //move block one to block two's pose
+    op:log(info,"moving block one to desired location");
+    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?block1, ?block2Pose)");
+    goal:!goalPred;
+
+    //Move block two to block one's location
+    op:log(info,"moving block two to desired location");
+    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?block2, ?block1Pose)");
+    goal:!goalPred;
+}
+
+() = swapHeldBlock(Symbol ?heldBlock, Symbol ?blockToSwap, Symbol ?blockToSwapPose) {
+    Predicate !goalPred;
+    java.lang.Integer !numBlocks;
+    Predicate !failCond;
+
+    !numBlocks = act:getNumberOfBlocksAt(!blockToSwapPose);
+    if (op:gt(!numBlocks,1)) {
+        //Move held block to open location
+        !openPose = act:getPoseWithSpace();
+        if (op:isNull(!openPose)) {
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapBlocks)");
+            exit(FAIL, !failCond);
+        }
+        op:log(info,"moving held block to open location");
+        !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, !openPose)");
+        goal:!goalPred;
+        act:putDown();
+
+        //Move block to swap temporarily to an open location
+        !openPose = act:getPoseWithSpace();
+        if (op:isNull(!openPose)) {
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapBlocks)");
+            exit(FAIL, !failCond);
+        }
+        op:log(info,"moving block to swap to an open location");
+        !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?blockToSwap, !openPose)");
+        goal:!goalPred;
+    }
+
+    //Move held block to swap blocks location
+    op:log(info,"moving held block to desired location");
+    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?heldBlock, ?blockToSwapPose)");
+    goal:!goalPred;
+
+    //Pick block to swap up
+    op:log(info,"pick swapped block up");
+    !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor, ?blockToSwap)");
+    goal:!goalPred;
+}
 
 //This currently applies to all goals and compound actions. putDown() and putDown(block) are allowed to just fail. Do we want to change this?
 () = putDownAtFullLocationRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
@@ -331,7 +425,7 @@ import java.lang.Integer;
     recovery : {
         actionStatuses : {FAIL_PRECONDITIONS}
         failureReasons : {has(theLocationBelowMe,space)}
-        excludedGoals : {putDown(X), putDown(X,Y), getBlockTo(X,Y,Z)}
+        goals : {getBlockTo(X,Y,Z)}
     }
     Symbol !response;
     Symbol !otherBlock;

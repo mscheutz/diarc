@@ -320,10 +320,13 @@ public class CacheDatabase {
     if (cachedUtterance != null) {
       incoming.setType(cachedUtterance.getType());
       semantics = cachedUtterance.getSemantics();
-      //TODO: figure out full set of utterance types this is desired for
-      //EW: In the case of Reply or Statement utterance types, cannot blindly overwrite the first arg
+      //EW: In the case of any other utterance type, we cannot blindly overwrite the first argument with an actor
       if (cachedUtterance.getType() == UtteranceType.INSTRUCT) {
-        semantics.set(0, incoming.getAddressee());
+        if (semantics != null && semantics.size() > 0) {
+          semantics.set(0, incoming.getAddressee());
+        } else {
+          log.warn("[get] cached utterance semantics possibly invalid {}", cachedUtterance.getSemantics());
+        }
       }
       incoming.setSemantics(semantics);
       incoming.setIndirectSemantics(cachedUtterance.getIndirectSemantics());

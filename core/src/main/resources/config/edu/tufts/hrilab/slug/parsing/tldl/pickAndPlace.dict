@@ -107,6 +107,7 @@ between; (MOVEBLOCKSUFFIX/LOCREF)/REF; #x#y.$x,$y
 from; REF/REF; #x.$x
 to; REF/REF; #x.$x
 and; LOCREF/REF; #x.$x
+swap; (C/LOCREF)/REF; #x#y.swapBlocks(?ADDRESSEE,$x,$y)
 
 %% moveBlockTo two arg (block,to) %%
 put down; (C/REF)/REF; #x#y.moveBlockTo(?ADDRESSEE,$x,$y)
