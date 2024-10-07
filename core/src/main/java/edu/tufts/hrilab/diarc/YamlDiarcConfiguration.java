@@ -7,6 +7,9 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
@@ -15,11 +18,12 @@ public class YamlDiarcConfiguration extends DiarcConfiguration {
   private String yamlConfigFile;
 
   private List<String> flags = new ArrayList<>();
+  private File tmpFileDir = new File(System.getProperty("user.dir") + "/build/resources/main/tmp/");
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
-    if (cmdLine.hasOption("config")) {
-      yamlConfigFile = cmdLine.getOptionValue("config");
+    if (cmdLine.hasOption("yaml")) {
+      yamlConfigFile = cmdLine.getOptionValue("yaml");
     }
     if (cmdLine.hasOption("flags")) {
       flags = Arrays.stream(cmdLine.getOptionValues("flags")).toList();
@@ -29,13 +33,16 @@ public class YamlDiarcConfiguration extends DiarcConfiguration {
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("config").longOpt("yamlConfig").required().hasArg().desc("YAML file defining the DIARC configuration.").build());
+    options.add(Option.builder("yaml").longOpt("yamlConfig").required().hasArg().desc("YAML file defining the DIARC configuration.").build());
     options.add(Option.builder("flags").longOpt("runtimeFlags").hasArgs().desc("Flags used to check the disableWhen and enableWhen properties in the YAML config.").build());
     return options;
   }
 
   @Override
   public void runConfiguration() {
+    tmpFileDir.mkdirs();
+    tmpFileDir.deleteOnExit();
+
     Yaml yaml = new Yaml(new Constructor(ComponentSpecification.class, new LoaderOptions()));
     InputStream inputStream = getClass().getResourceAsStream(Resources.createFilepath(defaultConfigDir, yamlConfigFile));
     for (Object object : yaml.loadAll(inputStream)) {
@@ -64,34 +71,79 @@ public class YamlDiarcConfiguration extends DiarcConfiguration {
       }
 
       // get component args
-      List<String> args = new ArrayList<>();
-      if (specification.args != null) {
-        specification.args.forEach((k, v) -> {
-          if (k.equals("flags")) {
-            // special case for "flags" arg
-            // pre-pend all flags with "-"
-            if (v instanceof Collection<?>) {
-              Collection<String> values = (Collection<String>) v;
-              values.forEach(val -> args.add("-" + val));
-            } else {
-              args.add("-" + v);
-            }
-          } else {
-            // "normal" non-flag args (i.e., arg has name and value(s))
-            args.add("-" + k);
-            if (v instanceof Collection<?>) {
-              Collection<String> values = (Collection<String>) v;
-              args.addAll(values);
-            } else {
-              args.add(v.toString());
-            }
-          }
-        });
-      }
+      List<String> args = getComponentArgs(specification);
+
+      // handle content block and add to args
+      args.addAll(handleComponentContent(specification));
 
       // instantiate component
       createInstance(componentClazz, args.toArray(new String[0]));
     }
+  }
+
+  /**
+   * Get component arguments.
+   *
+   * @param specification
+   * @return
+   */
+  private List<String> getComponentArgs(ComponentSpecification specification) {
+
+    List<String> args = new ArrayList<>();
+    if (specification.args != null) {
+      specification.args.forEach((k, v) -> {
+        if (k.equals("flags")) {
+          // special case for "flags" arg
+          // pre-pend all flags with "-"
+          if (v instanceof Collection<?>) {
+            Collection<String> values = (Collection<String>) v;
+            values.forEach(val -> args.add("-" + val));
+          } else {
+            args.add("-" + v);
+          }
+        } else {
+          // "normal" non-flag args (i.e., arg has name and value(s))
+          args.add("-" + k);
+          if (v instanceof Collection<?>) {
+            Collection<String> values = (Collection<String>) v;
+            args.addAll(values);
+          } else {
+            args.add(v.toString());
+          }
+        }
+      });
+    }
+
+    return args;
+  }
+
+  /**
+   * Write content block(s) to temp files and create component args needed to parse this temp file.
+   *
+   * @param specification
+   * @return
+   */
+  private List<String> handleComponentContent(ComponentSpecification specification) {
+    List<String> contentArgs = new ArrayList<>();
+    if (specification.content != null) {
+      specification.content.forEach((k,v) -> {
+        contentArgs.add("-" + k);
+
+        // write content to temp file
+        try {
+          File tmpFile = File.createTempFile("diarc", "." + k, tmpFileDir);
+          tmpFile.deleteOnExit();
+          FileWriter writer = new FileWriter(tmpFile);
+          writer.write(v);
+          writer.close();
+          contentArgs.add("/tmp/" + tmpFile.getName()); // relative path from directory already on classpath (config/build/resources/main/)
+        } catch (IOException e) {
+          log.error("Error writing content to temp file for component: {} type: {}.", specification.component, k, e);
+        }
+      });
+    }
+
+    return contentArgs;
   }
 
   static public class ComponentSpecification {
@@ -111,6 +163,12 @@ public class YamlDiarcConfiguration extends DiarcConfiguration {
      * (Optional) List of flags options that will cause this component to be instantiated.
      */
     public List<String> enableWhen;
+    /**
+     * (Optional) configuration file content that is written directly in the yaml file.
+     * Key: DIARC component arg name (e.g., asl, beliefinit)
+     * Value: configuration file content that will be written to a temp file
+     */
+    public Map<String, String> content;
   }
 
 }
