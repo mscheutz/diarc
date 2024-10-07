@@ -68,6 +68,9 @@ import edu.tufts.hrilab.fol.Term;
     act:assertBelief(!toAssert);
     !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(yellow block(X:physobj))");
     !yellowBlock = act:positReference(!props);
+    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!yellowBlock,pose_1:pose)");
+    op:log(info, "[init] asserting !toAssert");
+    act:assertBelief(!toAssert);
 
     //orange block/
     !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "objectDefinition(!orangeBlockDescriptor,0.050,0.0)");
