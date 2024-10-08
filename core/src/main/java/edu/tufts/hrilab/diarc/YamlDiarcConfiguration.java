@@ -1,3 +1,7 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
 package edu.tufts.hrilab.diarc;
 
 import edu.tufts.hrilab.util.resource.Resources;
@@ -8,23 +12,24 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 
+/**
+ * Class to launch a DIARC configuration specified in a YAML file.
+ */
 public class YamlDiarcConfiguration extends DiarcConfiguration {
   protected String defaultConfigDir = "config/diarc";
-  private String yamlConfigFile;
-
   private List<String> flags = new ArrayList<>();
   private File tmpFileDir = new File(System.getProperty("user.dir") + "/build/resources/main/tmp/");
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
-    if (cmdLine.hasOption("yaml")) {
-      yamlConfigFile = cmdLine.getOptionValue("yaml");
-    }
     if (cmdLine.hasOption("flags")) {
       flags = Arrays.stream(cmdLine.getOptionValues("flags")).toList();
     }
@@ -33,18 +38,35 @@ public class YamlDiarcConfiguration extends DiarcConfiguration {
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("yaml").longOpt("yamlConfig").required().hasArg().desc("YAML file defining the DIARC configuration.").build());
     options.add(Option.builder("flags").longOpt("runtimeFlags").hasArgs().desc("Flags used to check the disableWhen and enableWhen properties in the YAML config.").build());
     return options;
   }
 
   @Override
   public void runConfiguration() {
+    // get yaml file path
+    String yamlConfigFile = System.getProperty("yaml");
+    URL resourceUrl = Resources.getResource(defaultConfigDir, yamlConfigFile);
+    String filepath = yamlConfigFile;
+    if (resourceUrl != null) {
+      filepath = resourceUrl.getPath();
+    }
+
+    // load yaml as normal file (not assumed to be on classpath)
+    InputStream inputStream = null;
+    try {
+      inputStream = new FileInputStream(filepath);
+    } catch (FileNotFoundException e) {
+      log.error("Could not load YAML file: {}.", yamlConfigFile, e);
+      System.exit(-1);
+    }
+
+    // create tmp dir for reading in yaml content blocks
     tmpFileDir.mkdirs();
     tmpFileDir.deleteOnExit();
 
+    // parse the yaml and instantiate diarc components
     Yaml yaml = new Yaml(new Constructor(ComponentSpecification.class, new LoaderOptions()));
-    InputStream inputStream = getClass().getResourceAsStream(Resources.createFilepath(defaultConfigDir, yamlConfigFile));
     for (Object object : yaml.loadAll(inputStream)) {
       ComponentSpecification specification = (ComponentSpecification) object;
 
@@ -146,6 +168,9 @@ public class YamlDiarcConfiguration extends DiarcConfiguration {
     return contentArgs;
   }
 
+  /**
+   * Class that gets populated from parsed YAML file.
+   */
   static public class ComponentSpecification {
     /**
      * Fully qualified DIARC component name.
