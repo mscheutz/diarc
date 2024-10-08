@@ -94,6 +94,7 @@ tasks.named<Test>("test") {
   forkEvery = 1
   systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
+  systemProperty("logging.config", properties["diarc.loggingConfigFile"].toString()) // for springboot
 
   // to run tests with logging printed to console
   if (project.hasProperty("diarc.test.enableLogging") && project.property("diarc.test.enableLogging").toString().toBoolean()) {
@@ -156,7 +157,6 @@ tasks.register<JavaExec>("launch") {
   dependsOn("compileConfig")
 
   classpath = sourceSets.main.get().runtimeClasspath
-  mainClass = project.findProperty("main").toString()
 
   classpath += files(System.getProperty("user.home") + "/.diarc")
 
@@ -174,9 +174,20 @@ tasks.register<JavaExec>("launch") {
     systemProperty("java.library.path", visionDir + "/build/cpp/lib:" + visionDir + "/src/main/cpp/third_party/vlfeat/bin/glnxa64:.:" + environment["LD_LIBRARY_PATH"])
   }
 
+  // if launching YAML DIARC config (e.g., -Pyaml=<path/to/file.yaml>)
+  if (project.hasProperty("yaml")) {
+    mainClass = "edu.tufts.hrilab.diarc.YamlDiarcConfiguration"
+    systemProperty("component", "edu.tufts.hrilab.diarc.YamlDiarcConfiguration")
+    systemProperty("yaml", project.findProperty("yaml").toString())
+  }
+
   // jvm args
-  systemProperty("component", project.findProperty("main").toString())
+  if (project.hasProperty("main")) {
+    mainClass = project.findProperty("main").toString()
+    systemProperty("component", project.findProperty("main").toString())
+  }
   systemProperty("logback.configurationFile", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString())
+  systemProperty("logging.config", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString()) // for springboot
   systemProperty("trade.properties.path", properties.getOrDefault("diarc.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
   systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
 

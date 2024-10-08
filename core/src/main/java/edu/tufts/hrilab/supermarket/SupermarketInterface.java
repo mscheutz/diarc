@@ -15,8 +15,6 @@ public interface SupermarketInterface {
 
   Integer getSimPort();
 
-  StateMachine getStateMachine();
-
   @TRADEService
   @Action
   Justification nop();
@@ -93,5 +91,4 @@ public interface SupermarketInterface {
   @TRADEService
   void setObservation(Object observation);
 
-  void setStateMachine(StateMachine sm);
 }

@@ -36,7 +36,6 @@ public class SupermarketComponent extends DiarcComponent implements SupermarketI
   protected int socketPort = 9000;
   protected int simSocketPort = -1;
   protected SupermarketInterface simComponent;
-  protected StateMachine sm = null;
   protected boolean useSim = false;
   protected double STEP = 0.1;
 
@@ -45,27 +44,23 @@ public class SupermarketComponent extends DiarcComponent implements SupermarketI
 
   public SupermarketComponent(SupermarketInterface other) {
     this.game = new GamePlay(other.getSimPort());
-    this.sm = new StateMachine(other.getStateMachine(), false); //probably not necessary
     this.agentName = other.getAgentName();
     this.playerIndex = other.getPlayerIndex();
     this.useBelief = false;
   }
 
-    @Override
-    protected void init() {
-        super.init();
-        this.game = new GamePlay(this.socketPort);
-        // TODO: StateMachine is not serializable so this should not be done. Find another way to seed the local SM.
-        log.error("StateMachine initialized is not implemented.");
-        this.sm = new StateMachine(new String[0]);
-        Util.Sleep(500);
-        nop();
-        transmitInitialBeliefs();
-        transmitPlayerInitialBeliefs();
-        if (simSocketPort != -1) {
-            simComponent = new SupermarketComponent(this);
-        }
+  @Override
+  protected void init() {
+    super.init();
+    this.game = new GamePlay(this.socketPort);
+    Util.Sleep(500);
+    nop();
+    transmitInitialBeliefs();
+    transmitPlayerInitialBeliefs();
+    if (simSocketPort != -1) {
+      simComponent = new SupermarketComponent(this);
     }
+  }
 
   @Override
   protected List<Option> additionalUsageInfo() {
@@ -403,7 +398,11 @@ public class SupermarketComponent extends DiarcComponent implements SupermarketI
       }
 
     }
-    sm.assertBeliefs(toSubmit);
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Set.class)).call(void.class, toSubmit);
+    } catch (TRADEException e) {
+      log.error("assertBeliefs not found", e);
+    }
   }
 
   protected void transmitInitialBeliefs() {
@@ -444,7 +443,11 @@ public class SupermarketComponent extends DiarcComponent implements SupermarketI
     for (int i = 0; i < obs.basketReturns.length; i++) {
       toSubmit.add(Factory.createPredicate("object(basketReturn" + i + ", basketReturn)"));
     }
-    sm.assertBeliefs(toSubmit);
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Set.class)).call(void.class, toSubmit);
+    } catch (TRADEException e) {
+      log.error("assertBeliefs not found", e);
+    }
   }
 
   //////////////// SIMULATION //////////////////
@@ -463,31 +466,12 @@ public class SupermarketComponent extends DiarcComponent implements SupermarketI
     this.simComponent.setObservation(getLastObservation());
   }
 
-  @TRADEService
-  public StateMachine getSimStateMachine() {
-    return this.simComponent.getStateMachine();
-  }
-
-  @TRADEService
-  public void setSimStateMachine(StateMachine sm) {
-    this.simComponent.setStateMachine(sm);
-  }
-
   @Override
   public Integer getSimPort() {
     return simSocketPort;
   }
 
   //////////////// UTILS //////////////////
-  @Override
-  public StateMachine getStateMachine() {
-    return this.sm;
-  }
-
-  @Override
-  public void setStateMachine(StateMachine sm) {
-    this.sm = sm;
-  }
 
   private Predicate convertObsToBelief(String belief, boolean truth) {
     if (truth) {
