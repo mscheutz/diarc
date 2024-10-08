@@ -254,3 +254,7 @@ location 3; RN; locationThree:pose; VAR
 location 3; PROPERTY; locationThree:pose
 
 robot 1; ADDRESSABLE; robotone:agent
+
+hi; G ; hi
+hi there; G ; hi_there
+hello; G ; hello

@@ -1,6 +1,10 @@
 .gradle/
 config/build/
 core/build/
+core/src/main/resources/*-prod.properties
+core/src/main/resources/*-dev.properties
+core/src/main/resources/*-test.properties
+core/src/main/resources/serviceDocumentation.json
 diarcRos/build/
 vision/build/
 vision/src/swig/
@@ -9,3 +13,10 @@ vision/src/swig/
 .env
 docs/
 vision/src/main/cpp/cmake-build-debug/
+elevator_lab_test/
+/core/src/main/resources/config/edu/tufts/hrilab/action/asl/custom/
+/core/src/main/resources/serviceDocumentation.json
+/gui/package-lock.json
+/gui/yarn.lock
+/gui/build/
+/gui/node_modules/
