@@ -6,12 +6,17 @@ package edu.tufts.hrilab.action.asl;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.GoalManagerComponent;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.goal.GoalStatus;
+import edu.tufts.hrilab.action.justification.ConditionJustification;
+import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Symbol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.AfterClass;
@@ -20,6 +25,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ActionScriptsComponentTest {
   private static GoalManagerComponent component;
@@ -157,6 +163,24 @@ public class ActionScriptsComponentTest {
     // create goal and execute
     goalPredicate = Factory.createPredicate("finallyTest4(self:agent)");
     executeAndCheckGoal(goalPredicate, GoalStatus.FAILED);
+
+    // create goal and execute
+    goalPredicate = Factory.createPredicate("finallyTest5(self:agent)");
+    TestHelper helper = new TestHelper();
+    try {
+      TRADE.registerAllServices(helper, new ArrayList<>());
+    } catch (TRADEException e) {
+      log.error("Error registering TestHelper with TRADE.", e);
+    }
+    Long goalId = component.submitGoal(goalPredicate);
+    component.joinOnGoal(goalId);
+    Assert.assertTrue(helper.testStrings.contains("finallyTest5"));
+
+    try {
+      TRADE.deregister(helper);
+    } catch (TRADEException e) {
+      log.error("Could not de-register TestHelper.", e);
+    }
   }
 
   @Test
@@ -315,5 +339,93 @@ public class ActionScriptsComponentTest {
     Long goalId = component.submitGoal(goalPredicate);
     component.joinOnGoal(goalId);
     Assert.assertEquals(desiredStatus, component.getGoalStatus(goalId));
+  }
+
+
+  /**
+   * Helper class to expose various TRADEServices for testing ASL.
+   */
+  static public class TestHelper {
+    private static Logger log = LoggerFactory.getLogger(ActionScriptsComponentTest.TestHelper.class);
+
+    List<String> testStrings = new ArrayList<>();
+
+    @TRADEService
+    public void cacheTestString(String testString) {
+      testStrings.add(testString);
+    }
+
+    @TRADEService
+    public void tsc1() {
+      log.info("tsc1");
+    }
+
+    @TRADEService
+    public void tsc2(Symbol arg) {
+      log.info("tsc2 arg: {}", arg);
+    }
+
+    @TRADEService
+    public void tsc3(Symbol actor, Symbol arg) {
+      log.info("tsc3 actor: {} arg: {}", actor, arg);
+    }
+
+    @TRADEService
+    public Justification tsc4() {
+      log.info("tsc4");
+      return new ConditionJustification(true, Factory.createPredicate("succeeded(tsc4)"));
+    }
+
+    @TRADEService
+    public boolean tsc_bool_true() {
+      log.info("tsc_bool_true");
+      return true;
+    }
+
+    @TRADEService
+    public boolean tsc_bool_false() {
+      log.info("tsc_bool_true");
+      return false;
+    }
+
+    @TRADEService
+    public Justification tsc_justification_true() {
+      log.info("tsc_justification_true");
+      return new ConditionJustification(true);
+    }
+
+    @TRADEService
+    public Justification tsc_justification_false() {
+      log.info("tsc_justification_false");
+      return new ConditionJustification(false);
+    }
+
+    @Action
+    @TRADEService
+    public boolean act_bool_true() {
+      log.info("act_bool_true");
+      return true;
+    }
+
+    @Action
+    @TRADEService
+    public boolean act_bool_false() {
+      log.info("act_bool_false");
+      return false;
+    }
+
+    @Action
+    @TRADEService
+    public Justification act_justification_true() {
+      log.info("act_justification_true");
+      return new ConditionJustification(true);
+    }
+
+    @Action
+    @TRADEService
+    public Justification act_justification_false() {
+      log.info("act_justification_false");
+      return new ConditionJustification(false);
+    }
   }
 }
