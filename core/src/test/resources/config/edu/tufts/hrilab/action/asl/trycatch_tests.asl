@@ -43,7 +43,7 @@
       // specific catch should catch the expected status of FAIL_NOTFOUND
     } finally {
      exit(FAIL); // this should execute --> action fails
-     }
+    }
 }
 
 () = finallyTest3() {
@@ -60,6 +60,14 @@
     try {
     } finally {
       exit(FAIL); // this should execute --> action fails
+    }
+}
+
+() = finallyTest5() {
+    try {
+      exit(FAIL)
+    } finally {
+      tsc:cacheTestString("finallyTest5");
     }
 }
 
