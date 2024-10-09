@@ -24,9 +24,12 @@ import edu.tufts.hrilab.fol.Variable;
 
 () = goToPose(Symbol ?destination:pose) {
    Predicate !goalPred;
+   Symbol !currentPose;
 
-   (!goalPred) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,?destination)");
-   goal:!goalPred;
+   !currentPose = act:getCurrentLocation();
+   act:gotocamerapose(?destination,!currentPose);
+   //(!goalPred) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,?destination)");
+   //goal:!goalPred;
 }
 
 () = grabPerceivedEntity(Symbol ?physobj, Symbol ?pose) {
