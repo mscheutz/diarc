@@ -79,16 +79,17 @@ import java.lang.Integer;
     op:log(debug,"getPoseWithSpace");
 
     while (op:equals(!doneChecking, false)) {
-        ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "pose_!poseIndex:pose");
-        !numBlocks = act:getNumberOfBlocksAt(?pose);
-        if (op:lt(!numBlocks,2)) {
-            !doneChecking = op:newObject("java.lang.Boolean", true);
-        }
-        !poseIndex = op:++(!poseIndex);
         //TODO: Don't have number of locations hardcoded
         if (op:gt(!poseIndex,2)) {
             ?pose = op:setNull();
             !doneChecking = op:newObject("java.lang.Boolean", true);
+        } else {
+            ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "pose_!poseIndex:pose");
+            !numBlocks = act:getNumberOfBlocksAt(?pose);
+            if (op:lt(!numBlocks,2)) {
+                !doneChecking = op:newObject("java.lang.Boolean", true);
+            }
+            !poseIndex = op:++(!poseIndex);
         }
     }
 }
