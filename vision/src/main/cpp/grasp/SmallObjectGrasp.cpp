@@ -14,6 +14,7 @@
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/transforms.h>
+#include <pcl/common/distances.h>
 #include <math.h>
 
 using namespace diarc::grasp;
@@ -153,7 +154,7 @@ std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(pcl::PointCloud<pcl::Po
   if (bb_width < size_thresh) {
     // TODO: adjust position x- and y- offsets to account for elongated objects (make sure gripper isn't reaching too far into object)
     if (bb_length / 2 > gripper_depth) {
-      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_width).")
+      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_width).");
     }
 
     // rotate z-y_angle so y-axis is aligned along minor axis of 2D BB (i.e., gripper is grasping along short edge)
