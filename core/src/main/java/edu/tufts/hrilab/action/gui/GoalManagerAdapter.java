@@ -6,6 +6,7 @@ package edu.tufts.hrilab.action.gui;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import com.google.gson.Gson;
@@ -13,7 +14,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
-import edu.tufts.hrilab.action.listener.DatabaseListener;
+import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.gui.GuiAdapter;
@@ -21,6 +22,9 @@ import edu.tufts.hrilab.gui.GuiAdapter;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
+
+import static edu.tufts.hrilab.action.notification.NotificationType.DATABASE_ADDITION;
+import static edu.tufts.hrilab.action.notification.NotificationType.DATABASE_REMOVAL;
 
 /**
  * A WebSocket adapter for communication between the
@@ -31,7 +35,7 @@ import java.util.*;
  * @see edu.tufts.hrilab.action.GoalManagerComponent GoalManagerComponent (the
  * corresponding <code>GuiProvider</code> for this adapter)
  */
-public class GoalManagerAdapter extends GuiAdapter implements DatabaseListener {
+public class GoalManagerAdapter extends GuiAdapter {
   //==========================================================================
   // Constants
   //==========================================================================
@@ -236,7 +240,7 @@ public class GoalManagerAdapter extends GuiAdapter implements DatabaseListener {
   }
 
   /**
-   * Starts a periodic update after the connection is established to the GUI
+   * Sends the action list after the connection is established to the GUI
    * client.
    */
   private void onConnect() {
@@ -276,6 +280,33 @@ public class GoalManagerAdapter extends GuiAdapter implements DatabaseListener {
   @Override
   protected void init() {
     initializeServices();
+
+    try {
+      TRADE.registerAllServices(this, (String) null);
+      TRADEServiceInfo add = TRADE.getAvailableService(
+        new TRADEServiceConstraints()
+          .returnType(void.class)
+          .name("actionAdded")
+          .argTypes(ActionDBEntry.class)
+      );
+      TRADEServiceInfo remove = TRADE.getAvailableService(
+        new TRADEServiceConstraints()
+          .returnType(void.class)
+          .name("actionRemoved")
+          .argTypes(ActionDBEntry.class)
+      );
+      TRADEServiceInfo register = TRADE.getAvailableService(
+        new TRADEServiceConstraints()
+          .returnType(void.class)
+          .name("registerGoalManagerNotification")
+          .argTypes(TRADEServiceInfo.class, NotificationType.class)
+      );
+
+      register.call(void.class, add, DATABASE_ADDITION);
+      register.call(void.class, remove, DATABASE_REMOVAL);
+    } catch(TRADEException te) {
+      log.error("TRADEException occurred while registering for notifications", te);
+    }
   }
 
   /**
@@ -331,16 +362,12 @@ public class GoalManagerAdapter extends GuiAdapter implements DatabaseListener {
     return "goalManager";
   }
 
-  //============================================================================
-  // Implementing methods | DatabaseListener
-  //============================================================================
-  
   /**
    * Notifies the frontend of a new action to offer the user.
    * Called when an action is added to the database.
    * @param adb the new ActionDBEntry
    */
-  @Override
+  @TRADEService
   public void actionAdded(ActionDBEntry adb) {
     actionList.add(adb);
     actionList.sort(Comparator.comparing(e ->
@@ -354,7 +381,7 @@ public class GoalManagerAdapter extends GuiAdapter implements DatabaseListener {
    * Called when an action is removed from the database.
    * @param adb the removed ActionDBEntry
    */
-  @Override
+  @TRADEService
   public void actionRemoved(ActionDBEntry adb) {
     // Remove any ADBs matching the input
     for(int i = actionList.size() - 1; i >= 0; i--) {
