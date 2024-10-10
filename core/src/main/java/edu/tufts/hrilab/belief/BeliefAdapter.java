@@ -77,7 +77,7 @@ public class BeliefAdapter extends GuiAdapter {
   /**
    * Tracks the current memory level that the GUI wants access to.
    */
-  private MemoryLevel memoryLevel = MemoryLevel.UNIVERSAL;
+  private MemoryLevel memoryLevel = MemoryLevel.WORKING;
 
   /**
    * Flag to clear the timeline when sending the next update. This is turned
@@ -415,7 +415,7 @@ public class BeliefAdapter extends GuiAdapter {
     String method = message.get("method").getAsString();
     String input = "";
     if (message.has("input")) {
-      message.get("input").getAsString(); // startup message doesn't contain input
+      input = message.get("input").getAsString(); // startup message doesn't contain input
     }
 
     switch (method) {
