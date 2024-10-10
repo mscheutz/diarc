@@ -174,7 +174,7 @@ std::vector<Grasp> SmallObjectGrasp::calculateGraspPoses(pcl::PointCloud<pcl::Po
   if (bb_length < size_thresh) {
     // TODO: adjust position x- and y- offsets to account for elongated objects (make sure gripper isn't reaching too far into object)
     if (bb_width / 2 > gripper_depth) {
-      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_length).")
+      LOG4CXX_WARN(logger, "Grasp points are likely unreachable by gripper (bb_length).");
     }
 
     // rotate z90 so y-axis is aligned along major axis of 2D BB (i.e., gripper is grasping along long edge)
