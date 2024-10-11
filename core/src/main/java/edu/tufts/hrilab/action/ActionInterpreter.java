@@ -192,8 +192,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       }
       stepExecution = new StepExecution(rootStep, callStack);
     } else {
-      goal.setStatus(GoalStatus.FAILED);
-      goal.setFailConditions(rootStep.getJustification());
+      goal.setFailureStatus(GoalStatus.FAILED, rootStep.getJustification());
       log.info("Action for goal {} failed with GoalStatus: {}", goal.getPredicate(), goal.getStatus());
     }
   }
@@ -679,8 +678,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     } else if (rootActionStatus == ActionStatus.SUSPEND) {
       goal.setStatus(GoalStatus.SUSPENDED);
     } else if (rootActionStatus.isFailure()) {
-      goal.setStatus(GoalStatus.FAILED);
-      goal.setFailConditions(rootStep.getJustification());
+      goal.setFailureStatus(GoalStatus.FAILED, rootStep.getJustification());
     } else {
       log.error("[halt] Could not convert ActionStatus to GoalStatus: {} for action: {}", rootActionStatus, goal.toString());
     }
