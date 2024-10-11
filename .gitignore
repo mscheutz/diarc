@@ -24,3 +24,4 @@ config/bin/
 core/bin/
 diarcRos/bin/
 vision/bin/
+/node_modules/

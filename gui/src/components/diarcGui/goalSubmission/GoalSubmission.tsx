@@ -25,8 +25,7 @@ type Props = {
 /**
  * @author Lucien Bao
  * @version 1.0
- * GoalSubmission. Provides a GUI to browse Action Script Language (.asl) files,
- * browse available actions, learn new actions, and submit actions and goals.
+ * GoalSubmission. Provides a GUI to browse available actions and submit actions and goals.
  * 
  * Action filtering logic adapted from the example at
  * https://dgreene1.github.io/react-accessible-treeview/docs/examples-Filtering.

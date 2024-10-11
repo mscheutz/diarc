@@ -57,21 +57,21 @@ const GoalForm: React.FC<Props> = ({
             className="flex flex-col gap-1 w-full h-full border border-[#d1dbe3]
             rounded-md shadow-md p-3">
 
-            <label>Agent</label>
-            <input type="text" defaultValue="self" {...register("agent")}
-                className={textBoxClassName} required />
+            <label>
+                Agent<span className="text-red-600">*</span>
+                <input type="text" defaultValue="self" {...register("agent")}
+                       className={textBoxClassName} required/>
+            </label>
 
-            <label>Goal</label>
-            <input type="text" {...register("goal")}
-                className={textBoxClassName} required />
-
-            <label className="text-sm pt-2 pb-2">
-                All fields are required.
+            <label>
+                Goal<span className="text-red-600">*</span>
+                <input type="text" {...register("goal")}
+                       className={textBoxClassName} required/>
             </label>
 
             <input type="submit" value="Submit"
                 // From Button.tsx
-                className={submitClassName}
+                   className={submitClassName}
             />
             <br />
             <br />

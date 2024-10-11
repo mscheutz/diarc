@@ -1,5 +1,5 @@
 // IMPORTS //
-import React, { SetStateAction, useContext } from "react";
+import React, {SetStateAction, useCallback, useContext} from "react";
 
 // NPM packages
 import { useForm } from "react-hook-form";
@@ -43,8 +43,29 @@ type Props = {
 const ActionForm: React.FC<Props> = ({
     sendMessage, path, submissionStatus, setSubmissionStatus
 }) => {
+    const LOCAL_STORAGE_KEY: string = "goalSubmissionPresets";
+
     // HOOKS & CALLBACKS //
+    const addToStorage = (action: string) => {
+        const current = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+        if(!current) {
+            const stored = [action];
+            window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stored));
+            return;
+        }
+        let stored: string[] = JSON.parse(current);
+        if(stored.includes(action)) return;
+
+        stored.push(action);
+        window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stored));
+    }
+
     const custom = useForm();
+    const onSaveCustom = useCallback(() => {
+        const action: string = custom.getValues("custom");
+        addToStorage(action);
+        console.log(window.localStorage.getItem(LOCAL_STORAGE_KEY));
+    }, []);
     const onSubmitCustom = (data: any) => {
         setSubmissionStatus("wait");
         sendMessage(JSON.stringify(
@@ -64,15 +85,20 @@ const ActionForm: React.FC<Props> = ({
                 actionFormContext.slice(1).map((param, index) => {
                     return (
                         <div key={index}>
-                            <label className="font-mono">{param}</label>
-                            <input type="text" {...generated.register(param)}
-                                className={textBoxClassName} required />
+                            <label className="font-mono">
+                                {param}<span className="text-red-600">*</span>
+                                <input type="text" {...generated.register(param)}
+                                       className={textBoxClassName} required/>
+                            </label>
                         </div>
                     );
                 })
                 : <div className="py-2">No action selected.</div>
         );
     };
+    const onSaveGenerate = () => {
+        // TODO
+    }
     const onSubmitGenerated = (data: any) => {
         setSubmissionStatus("wait");
         let array: string[] = [actionFormContext[0]]
@@ -97,14 +123,24 @@ const ActionForm: React.FC<Props> = ({
                 onSubmit={custom.handleSubmit(onSubmitCustom)}
                 className="flex flex-col">
 
-                <label className="text-lg">Custom Action</label>
-                <textarea {...custom.register("custom")}
-                    className={textBoxClassName} required />
+                <label className="text-lg">
+                    Custom Action<span className="text-red-600">*</span>
+                    <textarea {...custom.register("custom")}
+                              className={textBoxClassName} required/>
+                </label>
 
-                <input
-                    type="submit" value="Submit"
-                    className={submitClassName}
-                />
+                <div className="flex flex-row gap-2">
+                    <button
+                        type="button"
+                        className={submitClassName + " grow"}
+                        onClick={onSaveCustom}>
+                        Save preset
+                    </button>
+                    <input
+                        type="submit" value="Submit"
+                        className={submitClassName + " grow"}
+                    />
+                </div>
             </form>
 
             <div className="separator text-slate-500 text-center italic my-4">
@@ -114,7 +150,7 @@ const ActionForm: React.FC<Props> = ({
             {/* Generated form */}
             <form
                 onSubmit={generated.handleSubmit(onSubmitGenerated)}
-                className="flex flex-col"
+                className="flex flex-col gap-1"
             >
                 <label className="text-lg">
                     Selected Action
@@ -133,18 +169,20 @@ const ActionForm: React.FC<Props> = ({
                 {generateForm()}
 
                 {actionFormContext.length > 0
-                    && <>
-                        <label className="text-sm pt-2 pb-2">
-                            All fields are required.
-                        </label>
-                        <div className="flex flex-row gap-2">
-                            <input type="submit" value="Submit"
-                                // From Button.tsx
-                                className={submitClassName + " grow"}
-                            />
-                            <SubmissionStatusIndicator status={submissionStatus} />
-                        </div>
-                    </>}
+                    && <div className="flex flex-row gap-2">
+                        <button
+                            type="button"
+                            className={submitClassName + " grow"}
+                            onClick={() => console.log("hello")}>
+                            Save preset
+                        </button>
+                        <input type="submit" value="Submit"
+                            // From Button.tsx
+                            className={submitClassName + " grow"}
+                        />
+                        <SubmissionStatusIndicator status={submissionStatus} />
+                    </div>
+                }
 
                 {/* Still show submission status even when
                     no actions are selected */}
