@@ -136,14 +136,22 @@ const GoalSubmission: React.FC<Props> = ({
                     </TabList>
 
                     <TabPanel className="hidden flex-col min-h-0 grow">
-                        <ActionDatabase
-                            actionList={actionList}
-                            setActionFormContext={setActionFormContext}
-                            setSelectedIds={setSelectedIds}
-                            filterNodes={filterNodes}
-                            handleExport={handleExport}
-                            exportStatus={exportStatus}
-                        />
+                        <Allotment
+                            className="h-full overflow-scroll border border-1 md:block
+                               border-[#d1dbe3] shadow-md rounded-md hidden"
+                            minSize={150}
+                            snap>
+                            {/*TODO: left off here adding the ManagePresets
+                            into a vertical allotment*/}
+                            <ActionDatabase
+                                actionList={actionList}
+                                setActionFormContext={setActionFormContext}
+                                setSelectedIds={setSelectedIds}
+                                filterNodes={filterNodes}
+                                handleExport={handleExport}
+                                exportStatus={exportStatus}
+                            />
+                        </Allotment>
                     </TabPanel>
                     <TabPanel className="hidden flex-col min-h-0 grow">
                         <div className="w-full h-full overflow-y-auto">

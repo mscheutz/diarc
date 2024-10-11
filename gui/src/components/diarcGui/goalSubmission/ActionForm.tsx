@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import ActionFormContext from "./ActionFormContext";
 import { SendMessage } from "react-use-websocket";
 import SubmissionStatusIndicator from "./SubmissionStatusIndicator";
+import {LOCAL_STORAGE_KEY} from "../util/constants";
 
 // CONSTANTS //
 const textBoxClassName = "block box-border w-full rounded mt-1 mb-2 text-sm "
@@ -43,8 +44,6 @@ type Props = {
 const ActionForm: React.FC<Props> = ({
     sendMessage, path, submissionStatus, setSubmissionStatus
 }) => {
-    const LOCAL_STORAGE_KEY: string = "goalSubmissionPresets";
-
     // HOOKS & CALLBACKS //
     const addToStorage = (action: string) => {
         const current = window.localStorage.getItem(LOCAL_STORAGE_KEY);

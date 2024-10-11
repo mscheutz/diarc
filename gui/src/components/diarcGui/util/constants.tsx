@@ -1,11 +1,11 @@
-import ActionProgrammer from "../actionProgrammer/ActionProgrammer.tsx";
-import BeliefViewer from "../BeliefViewer.tsx";
-import ChatViewer from "../ChatViewer.tsx";
-import GoalViewer from "../GoalViewer.tsx";
-import MapViewer from "../MapViewer.tsx";
-import GoalSubmission from "../goalSubmission/GoalSubmission.tsx";
-import VisionManager from "../vision/VisionManager.tsx";
-import TradeServiceViewer from "../tradeService/TradeServiceViewer.tsx";
+import ActionProgrammer from "../actionProgrammer/ActionProgrammer";
+import BeliefViewer from "../BeliefViewer";
+import ChatViewer from "../ChatViewer";
+import GoalViewer from "../GoalViewer";
+import MapViewer from "../MapViewer";
+import GoalSubmission from "../goalSubmission/GoalSubmission";
+import VisionManager from "../vision/VisionManager";
+import TradeServiceViewer from "../tradeService/TradeServiceViewer";
 
 const handlerRoots: string[] =
     ["actionProgrammer", "belief", "chat", "goalViewer", "goalManager", "map",
@@ -84,4 +84,8 @@ const statuses: string[] = [
     "failed"
 ]
 
-export { columns, Option, sortCriteria, statuses }
+export {columns, sortCriteria, statuses};
+export type { Option };
+
+const LOCAL_STORAGE_KEY: string = "goalSubmissionPresets";
+export {LOCAL_STORAGE_KEY};
