@@ -124,6 +124,8 @@ public class GoalViewerAdapter extends GuiAdapter {
       goalJson.addProperty("end", (info.end == -1) ? "" : simpleDateFormat.format(new Date(info.end)));
       goalJson.addProperty("priority", info.priority);
       goalJson.addProperty("id", info.gid);
+      if(info.failConditions != null)
+        goalJson.addProperty("failureReason", info.failConditions.getFailureReason().toString());
       result.add(goalJson);
     }
     return result;

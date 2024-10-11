@@ -9,6 +9,8 @@ import Select from "react-select"
 import ConnectionIndicator from "./util/ConnectionIndicator";
 import { Button } from "../Button";
 import { columns, Option, sortCriteria, statuses } from "./util/constants";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faCircleInfo} from "@fortawesome/free-solid-svg-icons";
 
 // SUBCOMPONENTS //
 type ChangeStatusProps = {
@@ -131,7 +133,8 @@ type Entry = {
     start: string,
     end: string,
     priority: number,
-    id: number
+    id: number,
+    failureReason?: string
 };
 
 const toArray = (e: Entry) => {
@@ -195,8 +198,10 @@ const GoalTable: React.FC<GoalTableProps> = (
                                 key={index}>
                                 <label
                                     htmlFor={row.id + ""}
-                                    className="cursor-pointer">
-                                    {prop + ""}
+                                    className="cursor-pointer"
+                                    title={prop === "failed" ? "Reason: " + row.failureReason : ""}>
+                                    {prop + ""}&nbsp;
+                                    {prop === "failed" ? <FontAwesomeIcon icon={faCircleInfo}/> : null}
                                 </label>
                             </td>
                         )}
@@ -308,7 +313,7 @@ const GoalViewer: React.FC<Props> = ({
             return copy.sort(compare);
         };
 
-        setData(sorted(data));
+        setData(d => sorted(d));
 
         if (lastMessage === null) return;
         const newData = JSON.parse(lastMessage.data);
