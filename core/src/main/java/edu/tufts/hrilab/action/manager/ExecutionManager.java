@@ -594,8 +594,7 @@ public class ExecutionManager implements GoalListener {
     List<Symbol> lockedResources = getLockedResourceNames(getRequiredResourcesForGoal(g));
     //TODO: make sure this is sensible and add pragrule
     Justification justification = new ConditionJustification(false, Factory.createPredicate("availableResources", lockedResources));
-    g.setFailConditions(justification);
-    g.setStatus(GoalStatus.FAILED);
+    g.setFailureStatus(GoalStatus.FAILED, justification);
     transferGoalToPastGoals(g);
   }
 
@@ -622,8 +621,7 @@ public class ExecutionManager implements GoalListener {
     if (getAgentTeam(untypedActor) == null) {
       log.error("[submitGoal] actor {} for goal {} not found in the agent hierarchy. Not executing. ", untypedActor, g);
       Justification justification = new ConditionJustification(false, Factory.createPredicate("actorInHierarchy", untypedActor));
-      g.setFailConditions(justification);
-      g.setStatus(GoalStatus.FAILED);
+      g.setFailureStatus(GoalStatus.FAILED, justification);
       pastGoals.add(g);
       return g;
     }
@@ -975,8 +973,7 @@ public class ExecutionManager implements GoalListener {
       return true;
     } else {
       log.info("[executeGoal] Goal " + goal + " is not permissible.");
-      goal.setFailConditions(constraintCheck);
-      goal.setStatus(GoalStatus.FAILED);
+      goal.setFailureStatus(GoalStatus.FAILED, constraintCheck);
     }
 
     log.info("[executeGoal] Failed to add goal! {}", goal);
