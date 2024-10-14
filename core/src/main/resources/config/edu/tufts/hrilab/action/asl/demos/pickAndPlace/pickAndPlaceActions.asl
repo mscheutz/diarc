@@ -55,11 +55,11 @@ import java.lang.Integer;
     }
 }
 
-(Symbol ?holding) = checkHolding(Symbol ?physobj) {
+(java.lang.Boolean ?holding) = checkHolding(Symbol ?physobj) {
     Predicate !queryPred;
     List !bindings;
 
-    ?holding = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "false");
+    ?holding = op:newObject("java.lang.Boolean", false);
 
     java.util.HashMap !elem;
     edu.tufts.hrilab.fol.Variable !bindingVar;
@@ -67,7 +67,7 @@ import java.lang.Integer;
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,?physobj)");
     !bindings = act:queryBelief(!queryPred);
     if (~op:isEmpty(!bindings)) {
-        ?holding = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "true");
+        ?holding = op:newObject("java.lang.Boolean", true);
     }
 }
 
@@ -95,6 +95,9 @@ import java.lang.Integer;
 }
 
 () = openGripper() {
+    conditions : {
+        pre : free(?actor);
+    }
     tsc:openGripper();
 }
 
@@ -503,11 +506,13 @@ import java.lang.Integer;
     Symbol !blockDescriptor;
     String !poseDescriptorJapanese;
     String !blockDescriptorJapanese;
+    Symbol !holding;
 
     !blockPose = act:getBlockPose(?block);
     !blockDescriptor = tsc:getDescriptorForID(?block);
     if (op:isNull(!blockPose)) {
-        if (act:checkHolding(?block)) {
+        !holding = act:checkHolding(?block);
+        if (op:equalsValue(!holding, true)) {
             act:generateResponseFromString("I am holding the !blockDescriptor");
             //!blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
             //act:generateResponseFromString("私は!blockDescriptorJapaneseを持っています");
@@ -540,6 +545,7 @@ import java.lang.Integer;
     java.util.HashMap !elem;
     edu.tufts.hrilab.fol.Variable !blockVar;
     edu.tufts.hrilab.fol.Variable !poseVar;
+    Symbol !holding;
 
     !blockVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
     !poseVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "Y");
@@ -559,7 +565,8 @@ import java.lang.Integer;
         }
     }
     !block = act:getHeldObject();
-    if (~op:isNull(!block) && act:checkHolding(!block)) {
+    !holding = act:checkHolding(!block);
+    if (~op:isNull(!block) && op:equalsValue(!holding, true)) {
         !blockDescriptor = tsc:getDescriptorForID(!block);
         act:generateResponseFromString("I am holding the !blockDescriptor");
         //!blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
@@ -713,5 +720,21 @@ import java.lang.Integer;
        act:generateResponseFromString("no pending goals");
        //act:generateResponseFromString("並んでいるゴールはありません");
     }
+}
 
+() = assertBlockAt(Symbol ?block, Symbol ?pose) {
+    Predicate !fact;
+    Symbol !holding;
+
+    !holding = act:checkHolding(?block);
+    if (op:equalsValue(!holding,true)) {
+        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "free(?actor)");
+        act:assertBelief(!fact);
+    }
+    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,?block)");
+    act:retractBelief(!fact);
+    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?block,X)");
+    act:retractBelief(!fact);
+    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?block,?pose)");
+    act:assertBelief(!fact);
 }

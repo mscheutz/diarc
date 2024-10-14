@@ -4,6 +4,14 @@ STATEMENT(A,B,if(X,Y),Z) := want(A,goal(B,if(X,Y)))
 STATEMENT(A,B,else(X),Z) := want(A,goal(B,else(X)))
 END-SET
 
+#PickAndPlace2024 -> for the LLM (can't handle the hack that what should be a STATEMENT is implemented as an action/INSTRUCT)
+NEW-SET
+RULES
+STATEMENT(A,B,at(X,Y),Z) := want(A,assertBlockAt(B,X,Y))
+STATEMENT(A,B,assertBlockAt(B,X,Y),Z) := want(A,assertBlockAt(B,X,Y))
+STATEMENT(A,B,assertBlockAt(C,X,Y),Z) := want(A,assertBlockAt(C,X,Y))
+END-SET
+
 ##temi 'representational workarounds'
 #TODO:brad: now that we don't have did, can this be generalize into a "then" action that handles any two goals?
 #how does that work with action learning? perhaps another prag rule to check if we're currently learning?

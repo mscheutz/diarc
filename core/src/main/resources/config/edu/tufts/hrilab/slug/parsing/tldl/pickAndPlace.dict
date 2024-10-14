@@ -144,10 +144,15 @@ is at; WANTBLOCKATREF2/REF; #x.$x
 %%%%%%%%% Belief Assertions %%%%%%%%%
 
 %% at(X,Y) %%
-is at; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y))
-moved to; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y))
-has moved to; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y))
-has moved from; ((S/REF)/REF)\REF; #x#y#z.and(not(at($x,Y)),at($x,$z))
+%is at; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y),not(holding(?ADDRESSEE,$x)))
+%moved to; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y),not(holding(?ADDRESSEE,$x)))
+%has moved to; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y),not(holding(?ADDRESSEE,$x)))
+%has moved from; ((S/REF)/REF)\REF; #x#y#z.and(not(at($x,Y)),at($x,$z),not(holding(?ADDRESSEE,$x)))
+%% Needed to swap to an action (bad) because there was no way to conditionally assert free(?actor) depending on whether the block was currently being held or not
+is at; (C/REF)\REF; #x#y.assertBlockAt(?ADDRESSEE,$x,$y)
+moved to; (C/REF)\REF; #x#y.assertBlockAt(?ADDRESSEE,$x,$y)
+has moved to; (C/REF)\REF; #x#y.assertBlockAt(?ADDRESSEE,$x,$y)
+has moved from; ((C/REF)/REF)\REF; #x#y#z.assertBlockAt(?ADDRESSEE,$x,$z)
 
 %% not(at(X,Y)) %%
 is not at; (S/REF)\REF; #x#y.not(at($x,$y))

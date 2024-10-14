@@ -41,6 +41,7 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     List !bindings;
     HashMap !binding;
     Variable !bindingVar;
+    Predicate !fact;
 
     Symbol !descriptor;
     Symbol !distSymbol;

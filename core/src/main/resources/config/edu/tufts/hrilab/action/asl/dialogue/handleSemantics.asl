@@ -301,6 +301,14 @@ import java.lang.Integer;
     }
     Term !negatedFact;
 
+    act:believeFactHelper(?fact);
+
+    if (op:equals(?addressee,?actor)) {
+      act:generateResponse(?speaker, ?responseSemantics, ?semanticType);
+    }
+}
+
+() = believeFactHelper(Predicate ?fact) {
     // TODO: EAK: isnt this is problematic for multi-agent cases? why do we want ?fact AND believes(?addressee, ?fact)
     //brad: workaround for bel() wrapper issues with pddl
     //Pick and Place 2024 - butchered this function, don't merge back in
@@ -310,14 +318,7 @@ import java.lang.Integer;
     if (op:equals(!factName,and)) {
         !args = op:getArgs(?fact);
         foreach(!arg : !args) {
-            if (op:invokeMethod(!arg,"isNegated")) {
-                !negatedFact = op:invokeMethod(!arg,"toUnnegatedForm");
-                act:retractBelief(!negatedFact);
-                op:log("debug", "retracted belief !negatedFact.");
-            } else {
-                act:assertBelief(!arg);
-                op:log("debug", "Now believes !arg.");
-            }
+            act:believeFactHelper(!arg);
         }
     } else {
         if (op:invokeMethod(?fact,"isNegated")) {
@@ -328,10 +329,6 @@ import java.lang.Integer;
             act:assertBelief(?fact);
             op:log("debug", "Now believes ?fact.");
         }
-    }
-
-    if (op:equals(?addressee,?actor)) {
-      act:generateResponse(?speaker, ?responseSemantics, ?semanticType);
     }
 }
 

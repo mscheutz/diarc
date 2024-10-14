@@ -36,7 +36,7 @@ Output: {"Semantics":"describeBlocksAt(robtone:agent,locationOne:pose)","Input T
 Example 5:
 #
 Input: I took the red block and moved it to location two
-Output: {"Semantics":"and(not(at(red block:physobj,Y)),at(red block:physobj,locationOne:pose))","Input Type":"STATEMENT","Confidence":"80"}
+Output: {"Semantics":"assertBlockAt(robotone:agent,red block:physobj,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"80"}
 #
 ##
 Example 6:
@@ -228,8 +228,8 @@ Output: {"Semantics":"val(no)","Input Type":"REPLY","Confidence":"100"}
 ##
 Example 42:
 #
-Input: reset domain
-Output: {"Semantics":"resetDomain(robotone:agent)","Input Type":"INSTRUCT","Confidence":"100"}
+Input: swap the red block and the yellow block
+Output: {"Semantics":"swapBlocks(robotone:agent,red block:physobj,yellow block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 ###
 

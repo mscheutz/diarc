@@ -4352,17 +4352,17 @@ public class TLDLParserComponentTest {
         //));
 
         assertTrue(testUtterance("the red block is at location one",
-                "STATEMENT(brad,self,and(not(at(VAR0:physobj,Y)),at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("the red block has moved to location one",
-                "STATEMENT(brad,self,and(not(at(VAR0:physobj,Y)),at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("the red block has moved from location two to location one",
-                "STATEMENT(brad,self,and(not(at(VAR0:physobj,Y)),at(VAR0:physobj,VAR2:pose)),{red block(VAR0:physobj),locationTwo(VAR1:pose),locationOne(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR2:pose),{red block(VAR0:physobj),locationTwo(VAR1:pose),locationOne(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "self"
         ));
@@ -4758,17 +4758,17 @@ public class TLDLParserComponentTest {
         //));
 
         assertTrue(testUtteranceLLM("赤いブロックは位置1にあります",
-                "STATEMENT(brad,robotone:agent,and(not(at(VAR0:physobj,Y)),at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("赤いブロックは位置1に移動しました",
-                "STATEMENT(brad,robotone:agent,and(not(at(VAR0:physobj,Y)),at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("赤いブロックは場所2から場所1に移動しました",
-                "STATEMENT(brad,robotone:agent,and(not(at(VAR0:physobj,VAR1:pose)),at(VAR0:physobj,VAR2:pose)),{red block(VAR0:physobj),locationTwo(VAR1:pose),locationOne(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
