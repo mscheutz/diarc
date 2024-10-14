@@ -83,8 +83,11 @@ import edu.tufts.hrilab.slug.common.Utterance;
         //This doesn't even work at all if using refs?
         !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "mean(!speaker, !semantics)");
       }
+      //TODO: need to relate these questions in some way such that any overwriting/cancellation of one affects the other.
+      act:suspendWaitForResponse(val(X),false);
       !bindings = !addressee.act:askQuestion(!speaker, !querySemantics, val(X));
       !response = op:get(!bindings, !x);
+      act:resumeWaitForResponse(val(X));
 
       if (op:equalsValue(!response, yes())) {
         op:log("debug", "Utterance validated.");

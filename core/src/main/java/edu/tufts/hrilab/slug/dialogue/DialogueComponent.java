@@ -165,7 +165,7 @@ public class DialogueComponent extends DiarcComponent {
   @Action
   @OnInterrupt(
           onCancelServiceCall = "cancelWaitForResponse(?responseForm)",
-          onSuspendServiceCall = "suspendWaitForResponse(?responseForm)",
+          onSuspendServiceCall = "suspendWaitForResponse(?responseForm,true)",
           onResumeServiceCall = "resumeWaitForResponse(?responseForm)"
   )
   public Map<Variable, Symbol> waitForResponse(Predicate responseForm) {
@@ -179,7 +179,7 @@ public class DialogueComponent extends DiarcComponent {
    */
   @OnInterrupt(
           onCancelServiceCall = "cancelWaitForResponse(?responseForm)",
-          onSuspendServiceCall = "suspendWaitForResponse(?responseForm)",
+          onSuspendServiceCall = "suspendWaitForResponse(?responseForm,true)",
           onResumeServiceCall = "resumeWaitForResponse(?responseForm)"
   )
   @TRADEService
@@ -198,13 +198,21 @@ public class DialogueComponent extends DiarcComponent {
 
     //add response pattern to data structure
     Answer answer;
-    if (!currentQuestions.containsKey(responseForm)) {
-      answer = new Answer();
-      currentQuestions.put(responseForm, answer);
-    } else {
-      //This should only happen upon resuming after suspension, we do not currently handle concurrent duplicate questions
-      answer = currentQuestions.get(responseForm);
+    //TODO: the below change requires all calls to waitForResponse to be able to handle empty bindings in response
+    //Issue: if any clarification/validation questions expect the same response format as an original question
+    //Solution: require the writer of whatever script is triggering this behavior to handle that explicitly? (i.e. by pausing and resuming the original question)
+    //TODO: handle this case differently? options:
+    //  Continue to hold separate notion of each question and ask the user which question they are responding to when receiving corresponding response
+    //  Ask the user to answer the other question first
+    //  Ask the user which question they want to keep
+    //  Suspend the first question and resume after the new one is answered
+    //  ...
+    if (currentQuestions.containsKey(responseForm)) {
+      log.warn("[waitForResponse] Another question expecting the same response format already exists, returning empty bindings for previous question");
+      cancelWaitForResponse(responseForm);
     }
+    answer = new Answer();
+    currentQuestions.put(responseForm, answer);
 
     //wait for answer
     try {
@@ -216,7 +224,7 @@ public class DialogueComponent extends DiarcComponent {
           answer.getResponseCondition().await();
         }
       } catch (InterruptedException e) {
-        log.error("[askQuestion] exception waiting for response", e);
+        log.error("[waitForResponse] exception waiting for response", e);
       }
     } finally {
       answer.getResponseLock().unlock();
@@ -314,15 +322,22 @@ public class DialogueComponent extends DiarcComponent {
    * one and signal the answer condition
    *
    * @param responseForm answer semantics required to match against the corresponding question
+   * @param unlock specify whether to unlock the suspended question's answer (practically causes the corresponding waitForResponse call to unblock if true, and not otherwise)
    */
   @TRADEService
   @Action
-  public void suspendWaitForResponse(Term responseForm) {
+  public void suspendWaitForResponse(Term responseForm, boolean unlock) {
     Answer answer = currentQuestions.remove(responseForm);
 
     if (answer != null) {
+      if (suspendedQuestions.get(responseForm) != null) {
+        //TODO: handle this case - may need to index by question or something else. Or not allow this
+        log.warn("[suspendWaitForResponse] suspending multiple questions expecting the same response form, only one of these will properly be resumed");
+      }
       suspendedQuestions.put(responseForm, answer);
-      unlockAnswer(answer);
+      if (unlock) {
+        unlockAnswer(answer);
+      }
     }
   }
 
