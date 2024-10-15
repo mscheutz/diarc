@@ -12,6 +12,7 @@
 #include "Grasp.hpp"
 #include <log4cxx/logger.h>
 #include <opencv2/opencv.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace diarc {
   namespace grasp {
