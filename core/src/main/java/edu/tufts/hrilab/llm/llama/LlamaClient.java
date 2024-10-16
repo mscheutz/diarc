@@ -115,7 +115,9 @@ public class LlamaClient {
     String endpoint = completionEndpoint;
     Map<String, String> headers = new HashMap<>();
     Gson gson = new Gson();
-    String response = Http.sendPostRequest(endpoint, requestBody, headers);
+
+    Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(endpoint, requestBody, headers);
+    String response = httpResponse == null ? null : httpResponse.responseString;
     log.debug("Response: " + response);
     return gson.fromJson(response, LlamaCompletionResponse.class);
   }
@@ -172,7 +174,8 @@ public class LlamaClient {
     String endpoint = completionEndpoint;
     Map<String, String> headers = new HashMap<>();
     Gson gson = new Gson();
-    String response = Http.sendPostRequest(endpoint, requestBody, headers);
+    Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(endpoint, requestBody, headers);
+    String response = httpResponse == null ? null : httpResponse.responseString;
     log.debug("Response: " + response);
     return gson.fromJson(response, LlamaCompletionResponse.class);
   }

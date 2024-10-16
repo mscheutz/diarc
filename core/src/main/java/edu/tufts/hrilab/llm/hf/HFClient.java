@@ -26,9 +26,11 @@ public class HFClient{
     static private Logger log = LoggerFactory.getLogger(HFClient.class);
 
     //Llama HuggingFace free inference endpoints ('free' with Pro account)
-    private String llamaHFCompletionEndpoint = "https://api-inference.huggingface.co/models/meta-llama/%s";
+    private String llamaHFCompletionEndpointTemplate = "https://api-inference.huggingface.co/models/meta-llama/%s";
 
-    private String t5CompletionEndpoint = "https://api-inference.huggingface.co/models/%s";
+    private String t5CompletionEndpointTemplate = "https://api-inference.huggingface.co/models/%s";
+
+    private String endpoint;
 
     //EW: Non-chat models I think are theoretically available to use, but have practically never finished loading for me
     private List<String> llamaHFCompletionModels = Arrays.asList("Llama-2-7b-hf", "Llama-2-7b-chat-hf", "Llama-2-13b-hf", "Llama-2-13b-chat-hf", "Llama-2-70b-hf", "Llama-2-70b-chat-hf", "Meta-Llama-3-8B", "Meta-Llama-3-8B-Instruct", "Meta-Llama-3-70B", "Meta-Llama-3-70B-Instruct","Meta-Llama-3.1-8B", "Meta-Llama-3.1-8B-Instruct", "Meta-Llama-3.1-70B", "Meta-Llama-3.1-70B-Instruct","Meta-Llama-3.1-405B", "Meta-Llama-3.1-405B-Instruct");
@@ -65,6 +67,10 @@ public class HFClient{
         model = modelStr;
     }
 
+    public void setEndpoint(String endpoint) {
+        this.endpoint = endpoint;
+    }
+
     public T5BaseCompletionResponse t5BaseCompletion(String prompt) {
         return t5BaseCompletion(prompt, model);
     }
@@ -84,11 +90,12 @@ public class HFClient{
     * @return the completion response from the TextSynth API
     **/
     public T5BaseCompletionResponse t5BaseCompletion (T5BaseCompletionRequestBody requestBody, String model) {
-        String endpoint = String.format(t5CompletionEndpoint, model);
+        String endpoint = String.format(t5CompletionEndpointTemplate, model);
         Map<String, String> headers = new HashMap<>();
         headers.put("Authorization", "Bearer " + apiKey);
         Gson gson = new Gson();
-        String response = Http.sendPostRequest(endpoint, requestBody, headers);
+        Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(endpoint, requestBody, headers);
+        String response = httpResponse == null ? null : httpResponse.responseString;
         log.debug("Response: " + response);
         Type t = new TypeToken<List<T5BaseCompletionResponse>>() {}.getType();
         List<T5BaseCompletionResponse> results = gson.fromJson(response, t);
@@ -182,13 +189,29 @@ public class HFClient{
         Map<String, String> headers = new HashMap<>();
         headers.put("Authorization", "Bearer " + apiKey);
         Gson gson = new Gson();
-        String response = Http.sendPostRequest(String.format(llamaHFCompletionEndpoint, model), requestBody, headers);
+        String targetEndpoint;
+        if (endpoint == null) {
+            targetEndpoint = String.format(llamaHFCompletionEndpointTemplate, model);
+        } else {
+            targetEndpoint = endpoint;
+        }
+        Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
+        String response = httpResponse == null ? null : httpResponse.responseString;
+        int responseCode = httpResponse == null ? -1 : httpResponse.responseCode;
         log.debug("Response: " + response);
-        if (response == null) {
-          log.warn("HF Model " + model + " is not yet available, setting wait_for_model to true and trying again. THIS MAY TAKE A WHILE");
-          requestBody.setWait_for_model(true);
-          response = Http.sendPostRequest(String.format(llamaHFCompletionEndpoint, model), requestBody, headers);
-          log.debug("Response attempt 2: " + response);
+        log.info("Response code: " + responseCode);
+        //TODO: get wait_for_model code for serverless endpoint and use that specifically
+        if (responseCode == 503) {
+            log.warn("[llamaHFChatCompletion] in cold start period for model, this may take up to ten minutes...");
+            //TODO: what to do here? sayText? Make sure to only sayText once?
+        } else if (responseCode == 422) {
+            log.warn("[llamaHFChatCompletion] token length of query + response may be too long. Settings for private endpoint must be updated");
+        } else if (response == null) {
+            log.warn("HF Model " + model + " is not yet available, setting wait_for_model to true and trying again. THIS MAY TAKE A WHILE");
+            requestBody.setWait_for_model(true);
+            httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
+            response = httpResponse == null ? null : httpResponse.responseString;
+            log.debug("Response attempt 2: " + response);
         }
         Type t = new TypeToken<List<LlamaHFChatCompletionResponse>>() {}.getType();
         List<LlamaHFChatCompletionResponse> results = gson.fromJson(response, t);

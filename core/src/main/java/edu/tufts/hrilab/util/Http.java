@@ -24,13 +24,23 @@ public class Http {
 
     protected static Logger log = LoggerFactory.getLogger(Http.class);
 
+    public static class HTTPRequestResponse {
+        public String responseString;
+        public int responseCode;
+
+        HTTPRequestResponse(String responseString, int responseCode) {
+            this.responseString = responseString;
+            this.responseCode = responseCode;
+        }
+    }
+
     /**
      * Returns the JSON string response from an endpoint via GET.
      * @param endpointUrl URL, including path, to make request to
      * @param headers Headers for request in a map
      * @return Response from the endpoint as JSON string
      **/
-    public static String sendGetRequest (String endpointUrl, Map<String, String> headers) {
+    public static HTTPRequestResponse sendGetRequest (String endpointUrl, Map<String, String> headers) {
         URL url;
         HttpURLConnection con;
         log.debug("GET " + endpointUrl);
@@ -68,13 +78,13 @@ public class Http {
                 is = new InputStreamReader(con.getErrorStream());
             }
             if (is == null) {
-                return null;
+                return new HTTPRequestResponse(null, responseCode);
             }
             try {
                 in = new BufferedReader(is);
             } catch (Exception e) {
                 log.error("[sendGetRequest] Error reading response", e);
-                return null;
+                return new HTTPRequestResponse(null, responseCode);
             }
 
             String inputLine;
@@ -90,11 +100,11 @@ public class Http {
                 return null;
             }
 
-            return response.toString();
+            return new HTTPRequestResponse(response.toString(),responseCode);
         } else {
             log.error("Request failed with response code: " + responseCode);
         }
-        return null;
+        return new HTTPRequestResponse(null, responseCode);
     }
 
     /**
@@ -104,7 +114,7 @@ public class Http {
      * @param headers Headers for request in a map
      * @return Response from the endpoint as JSON string
      **/
-    public static String sendPostRequest(String endpointUrl, Object requestBody, Map<String, String> headers) {
+    public static HTTPRequestResponse sendPostRequest(String endpointUrl, Object requestBody, Map<String, String> headers) {
         URL url;
         HttpURLConnection con;
         int responseCode;
@@ -162,14 +172,14 @@ public class Http {
         }
 
         if (is == null) {
-            return null;
+            return new HTTPRequestResponse(null, responseCode);
         }
 
         try {
             in = new BufferedReader(is);
         } catch (Exception e) {
             log.error("[sendPostRequest] Error reading response", e);
-            return null;
+            return new HTTPRequestResponse(null, responseCode);
         }
 
         String inputLine;
@@ -182,16 +192,16 @@ public class Http {
             in.close();
         } catch (Exception e) {
             log.error("[sendPostRequest] Error reading response to StringBuffer", e);
-            return null;
+            return new HTTPRequestResponse(null, responseCode);
         }
 
         if (responseCode == HttpURLConnection.HTTP_OK) {
-            return response.toString();
+            return new HTTPRequestResponse(response.toString(), responseCode);
         } else {
             log.error("Request failed with response code: " + responseCode + ".");
             log.error(response.toString());
         }
 
-        return null;
+        return new HTTPRequestResponse(null, responseCode);
     }
 }

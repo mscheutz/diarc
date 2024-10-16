@@ -267,7 +267,8 @@ public class OpenaiClient {
       headers.put("Authorization", "Bearer " + apiKey);
     }
     Gson gson = new Gson();
-    String response = Http.sendPostRequest(chatCompletionEndpoint, requestBody, headers);
+    Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(chatCompletionEndpoint, requestBody, headers);
+    String response = httpResponse == null ? null : httpResponse.responseString;
     log.debug("Response: " + response);
     return gson.fromJson(response, OpenaiChatCompletionResponse.class);
   }
@@ -292,7 +293,8 @@ public class OpenaiClient {
     }
     Gson gson = new Gson();
     log.debug(gson.toJson(requestBody));
-    String response = Http.sendPostRequest(chatCompletionEndpoint, requestBody, headers);
+    Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(chatCompletionEndpoint, requestBody, headers);
+    String response = httpResponse == null ? null : httpResponse.responseString;
     log.debug("Response: " + response);
     return gson.fromJson(response, OpenaiChatCompletionResponse.class);
   }

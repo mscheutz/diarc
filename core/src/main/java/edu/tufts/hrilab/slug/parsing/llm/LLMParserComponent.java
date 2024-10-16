@@ -72,7 +72,8 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
     Map<String, String> headers = new HashMap<>();
     Gson gson = new Gson();
     ParserRequestBody requestBody = new ParserRequestBody(input);
-    String rawResponse = Http.sendPostRequest(endpoint, requestBody, headers);
+    Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(endpoint, requestBody, headers);
+    String rawResponse = httpResponse == null ? null : httpResponse.responseString;
     log.debug("Response: " + rawResponse);
     return gson.fromJson(rawResponse, ParserResponse.class);
   }
