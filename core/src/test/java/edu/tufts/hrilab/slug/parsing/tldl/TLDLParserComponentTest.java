@@ -4452,11 +4452,11 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
-        assertTrue(testUtterance("what types of blocks can you detect",
-                "INSTRUCT(brad,self,describeBlockTypes(self),{})",
-                "brad",
-                "self"
-        ));
+        //assertTrue(testUtterance("what types of blocks can you detect",
+        //        "INSTRUCT(brad,self,describeBlockTypes(self),{})",
+        //        "brad",
+        //        "self"
+        //));
 
         assertTrue(testUtterance("is eric a supervisor",
                 "QUESTION(brad,self,know(self,supervisor(eric)),{})",
@@ -4858,11 +4858,11 @@ public class TLDLParserComponentTest {
                 "robotone:agent"
         ));
 
-        assertTrue(testUtteranceLLM("どのような種類のブロックを検出できますか",
-                "INSTRUCT(brad,robotone:agent,describeBlockTypes(robotone:agent),{})",
-                "brad",
-                "robotone:agent"
-        ));
+        //assertTrue(testUtteranceLLM("どのような種類のブロックを検出できますか",
+        //        "INSTRUCT(brad,robotone:agent,describeBlockTypes(robotone:agent),{})",
+        //        "brad",
+        //        "robotone:agent"
+        //));
 
         assertTrue(testUtteranceLLM("ericは監督者ですか",
                 "QUESTION(brad,robotone:agent,know(robotone:agent,supervisor(eric)),{})",

@@ -175,11 +175,6 @@ Example 31:
 Input: 場所4に黄色いブロックはありますか
 Output: {"Semantics":"at(yellow block:physobj,locationFour:pose)","Input Type":"QUESTION","Confidence":"100"}
 ##
-Example 32:
-#
-Input: どのようなブロックの感知機能はありますか
-Output: {"Semantics":"describeBlockTypes(robotone:agent)","Input Type":"INSTRUCT","Confidence":"100"}
-##
 Example 33:
 #
 Input: 赤いブロックは見えますか

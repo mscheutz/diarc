@@ -654,11 +654,11 @@ import java.lang.Integer;
     }
 }
 
-//Could do same for locations if we want to
-() = describeBlockTypes() {
-    //TODO
-    //?blockは感知できます == (I know how to detect ?block)
-}
+////Could do same for locations if we want to
+//() = describeBlockTypes() {
+//    //TODO
+//    //?blockは感知できます == (I know how to detect ?block)
+//}
 
 () = goToAndDetect(Symbol ?block, Symbol ?pose) {
     effects : {

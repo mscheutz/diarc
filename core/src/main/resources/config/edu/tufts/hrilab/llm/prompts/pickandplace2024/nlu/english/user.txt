@@ -174,11 +174,6 @@ Example 31:
 Input: the yellow block is at location four
 Output: {"Semantics":"at(yellow block:physobj,locationFour:pose)","Input Type":"QUESTION","Confidence":"100"}
 ##
-Example 32:
-#
-Input: what colors of blocks do you know of
-Output: {"Semantics":"describeBlockTypes(robotone:agent)","Input Type":"INSTRUCT","Confidence":"100"}
-##
 Example 33:
 #
 Input: do you see the red block
