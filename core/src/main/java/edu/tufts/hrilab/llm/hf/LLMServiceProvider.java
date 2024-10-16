@@ -91,27 +91,24 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
         super.init();
         if (!parserTest) {
             shouldRunExecutionLoop = true;
-            //if (!performNLG) {
-            //    nlg = new SimpleNLGComponent();
-            //}
             //Always instantiating as a fallback in case LLM gets overloaded or completion request throws any other exception
             nlg = new SimpleNLGComponent();
         }
     }
 
-    //@Override
-    //protected List<Option> additionalUsageInfo() {
-    //    List<Option> options = new ArrayList<>();
-    //    options.add(Option.builder("nlg").desc("Use the LLM to perform NLG. Otherwise use SimpleNLG.").build());
-    //    return options;
-    //}
+    @Override
+    protected List<Option> additionalUsageInfo() {
+        List<Option> options = new ArrayList<>();
+        options.add(Option.builder("nlg").desc("Use the LLM to perform NLG. Otherwise use SimpleNLG.").build());
+        return options;
+    }
 
-    //@Override
-    //protected void parseArgs (CommandLine cmdLine) {
-    //    if (cmdLine.hasOption("nlg")) {
-    //        performNLG = true;
-    //    }
-    //}
+    @Override
+    protected void parseArgs (CommandLine cmdLine) {
+        if (cmdLine.hasOption("nlg")) {
+            performNLG = true;
+        }
+    }
 
     @Override
     protected void executionLoop() {

@@ -8,92 +8,6 @@ import edu.tufts.hrilab.action.justification.Justification;
 import java.lang.Double;
 import java.lang.Integer;
 
-(Symbol ?location) = getCurrentLocation() {
-    Predicate !queryPred;
-    List !bindings;
-
-    java.util.HashMap !elem;
-    edu.tufts.hrilab.fol.Variable !bindingVar;
-    !bindingVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
-    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,X)");
-    !bindings = act:queryBelief(!queryPred);
-    if (~op:isEmpty(!bindings)) {
-        !elem = op:get(!bindings, 0);
-        (?location) =op:get(!elem,!bindingVar);
-    }
-}
-
-(Symbol ?physobj) = getHeldObject() {
-    Predicate !queryPred;
-    List !bindings;
-
-    java.util.HashMap !elem;
-    edu.tufts.hrilab.fol.Variable !bindingVar;
-    !bindingVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
-    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,X)");
-    !bindings = act:queryBelief(!queryPred);
-    if (~op:isEmpty(!bindings)) {
-        !elem = op:get(!bindings, 0);
-        (?physobj) =op:get(!elem,!bindingVar);
-    } else {
-        ?physobj = op:setNull();
-    }
-}
-
-(Symbol ?pose) = getBlockPose(Symbol ?physobj) {
-    Predicate !queryPred;
-    List !bindings;
-
-    java.util.HashMap !elem;
-    edu.tufts.hrilab.fol.Variable !bindingVar;
-    !bindingVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
-    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?physobj,X)");
-    !bindings = act:queryBelief(!queryPred);
-    if (~op:isEmpty(!bindings)) {
-        !elem = op:get(!bindings, 0);
-        (?pose) =op:get(!elem,!bindingVar);
-    }
-}
-
-(java.lang.Boolean ?holding) = checkHolding(Symbol ?physobj) {
-    Predicate !queryPred;
-    List !bindings;
-
-    ?holding = op:newObject("java.lang.Boolean", false);
-
-    java.util.HashMap !elem;
-    edu.tufts.hrilab.fol.Variable !bindingVar;
-    !bindingVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
-    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,?physobj)");
-    !bindings = act:queryBelief(!queryPred);
-    if (~op:isEmpty(!bindings)) {
-        ?holding = op:newObject("java.lang.Boolean", true);
-    }
-}
-
-(Symbol ?pose) = getPoseWithSpace() {
-    java.lang.Integer !numBlocks;
-    java.lang.Integer !poseIndex = 0;
-    java.lang.Boolean !doneChecking = false;
-
-    op:log(debug,"getPoseWithSpace");
-
-    while (op:equals(!doneChecking, false)) {
-        //TODO: Don't have number of locations hardcoded
-        if (op:gt(!poseIndex,2)) {
-            ?pose = op:setNull();
-            !doneChecking = op:newObject("java.lang.Boolean", true);
-        } else {
-            ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "pose_!poseIndex:pose");
-            !numBlocks = act:getNumberOfBlocksAt(?pose);
-            if (op:lt(!numBlocks,2)) {
-                !doneChecking = op:newObject("java.lang.Boolean", true);
-            }
-            !poseIndex = op:++(!poseIndex);
-        }
-    }
-}
-
 () = openGripper() {
     conditions : {
         pre : free(?actor);
@@ -105,15 +19,39 @@ import java.lang.Integer;
     tsc:closeGripper();
 }
 
+(List ?bindings) = perceiveEntities() {
+    //runs a job that looks for all items known to the system and returns the set of (orderd) results. then binds the associated refrerences.
+
+    Symbol !location;
+    Symbol !blockLocation;
+    Predicate !fact;
+
+    java.lang.Double !objectHeightM = 0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
+    java.lang.Double !negObjectHeightM = -0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
+
+    tsc:moveZRelative(!objectHeightM);
+    ?bindings = tsc:perceiveAllEntitiesInView("blocksDet");
+    tsc:moveZRelative(!negObjectHeightM);
+    !location = act:getCurrentLocation();
+    foreach (!result : ?bindings) {
+        !blockLocation = act:getBlockPose(!result);
+        if (~op:equals(!blockLocation, !location)) {
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor,!result))");
+            act:retractBelief(!fact);
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!blockLocation)");
+            act:retractBelief(!fact);
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!location)");
+            act:assertBelief(!fact);
+        }
+    }
+}
+
 //todo: (pete) allows the LLM target for semantics to be more sane than "getOn". should be true everywhere.
 () = getBlockTo(Symbol ?object, Symbol ?destination) {
     Symbol !blockPose;
-    java.util.Map !bindings;
-    edu.tufts.hrilab.fol.Variable !x = "X";
     Predicate !failCond;
     Predicate !blockAtPred;
     Symbol !descriptor;
-    String !japaneseDescriptor;
     Symbol !holding;
 
     //TODO: assert ?object is actually a block?
@@ -122,10 +60,7 @@ import java.lang.Integer;
     if (op:equalsValue(!holding, false)) {
         if (op:isNull(!blockPose)) {
             !descriptor = tsc:getDescriptorForID(?object);
-            (!bindings) = act:askQuestionFromString(?actor,"I dont know where the !descriptor is, at what pose can I expect to find it?", pose(X));
-            //!japaneseDescriptor = tsc:getJapaneseVersionOfDescriptor(!descriptor);
-            //(!bindings) = act:askQuestionFromString(?actor,"!japaneseDescriptorがどこにあるかは分かりません。場所何番にありますか?", pose(X));
-            !blockPose = op:get(!bindings,!x);
+            !blockPose = act:askForBlockPose(!descriptor);
             if (op:equals(!blockPose,none)) {
                 !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "know(?actor,theLocationOf,?object)");
                 exit(FAIL, !failCond);
@@ -153,8 +88,6 @@ import java.lang.Integer;
     Symbol !object;
     Symbol !location;
     Integer !resultsSize;
-    Map !bindings;
-    Variable !x = "X";
     Predicate !failCond;
 
     op:log(info, "[pickUp]");
@@ -163,61 +96,26 @@ import java.lang.Integer;
     !resultsSize = op:invokeMethod(!objectList, "size");
     op:log(debug, "[pickUp] results size: !resultsSize for object list !objectList");
 
-    //No results
     if (op:equals(!resultsSize, 0)) {
+        //No results
         !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "dont(?actor,see,anyBlocks,atMyLocation)");
         exit(FAIL_RETURNVALUE,!failCond);
     } elseif (op:equals(!resultsSize, 1)) {
-        ////Single result - pick up object
+        //Single result - pick up object
         !object = op:get(!objectList, 0);
         !location = act:getCurrentLocation();
-        //act:grab(!object,!location);
         act:grabPerceivedEntity(!object,!location);
     } else {
-        ////Multiple results - ask which one to pick up
-        //TODO: get descriptors for all detected blocks and add into question specifically
-        !bindings = act:askQuestionFromString(?actor, "I see multiple blocks, which one do you want me to pick up?", blockType(X));
-//        !bindings = act:askQuestionFromString(?actor, "視野に複数のブロックが見えています。どれを拾ったらいいでしょうか？", blockType(X));
-        !object = op:get(!bindings, !x);
+        //Multiple results - ask which one to pick up
+        !object = act:askForBlockToPickUp();
         ////TODO: make sure response matches one of the detected blocks
         if (~op:equals(!object, none)) {
             !location = act:getCurrentLocation();
             act:grabPerceivedEntity(!object,!location);
         } else {
-            act:generateResponseFromString("okay, I am not picking up any block");
-            //act:generateResponseFromString("わかった");
+            act:reportNotPickingUpBlock();
         }
     }
-
-}
-
-//Placeholder
-(List ?bindings) = perceiveEntities() {
-    //runs a job that looks for all items known to the system and returns the set of (orderd) results. then binds the associated refrerences.
-
-    Symbol !location;
-    Symbol !blockLocation;
-    Predicate !fact;
-
-    java.lang.Double !objectHeightM = 0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
-    java.lang.Double !negObjectHeightM = -0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
-
-    tsc:moveZRelative(!objectHeightM);
-    ?bindings = tsc:perceiveAllEntitiesInView("blocksDet");
-    tsc:moveZRelative(!negObjectHeightM);
-    !location = act:getCurrentLocation();
-    foreach (!result : ?bindings) {
-        !blockLocation = act:getBlockPose(!result);
-        if (~op:equals(!blockLocation, !location)) {
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor,!result))");
-            act:retractBelief(!fact);
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!blockLocation)");
-            act:retractBelief(!fact);
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!location)");
-            act:assertBelief(!fact);
-        }
-    }
-
 }
 
 () = pickUp(Symbol ?object) {
@@ -236,12 +134,10 @@ import java.lang.Integer;
         act:goToPose(!blockPose);
         act:perceiveEntity(?object);
         act:grabPerceivedEntity(?object,!blockPose);
-        //act:grab(?object,!blockPose);
     } else {
         op:log(debug, "looking at !armPose");
         act:perceiveEntity(?object);
         act:grabPerceivedEntity(?object,!armPose);
-        //act:grab(?object,!armPose);
     }
 }
 
@@ -433,8 +329,6 @@ import java.lang.Integer;
     }
     Symbol !response;
     Symbol !otherBlock;
-    Map !bindings;
-    Variable !x = "X";
     String !otherBlockName;
     Symbol !block;
 
@@ -443,26 +337,22 @@ import java.lang.Integer;
     op:log("debug","[putDownAtFullLocationRecovery] ?failureReasons");
     op:log("debug","[putDownAtFullLocationRecovery] ?failedGoal");
 
-    //TODO: Get the held block and current location from belief in order to populate question asking?
+    !block = act:getHeldObject();
+    //TODO: populate question with held block and current location?
     //  report that we cannot put down the block because the location is full
     //  Ask if the user would like to swap the held block with a block in that location
-    (!bindings) = act:askQuestionFromString(?actor,"I cannot put down the block because the location is full. Would you like me to swap out one of the blocks?", val(X));
-    !block = act:getHeldObject();
-    //(!bindings) = act:askQuestionFromString(?actor,"場所がいっぱいになっているため、ブロックを置くことはできません。ブロックのどれかと交換しましょうか？", val(X));
-    !response = op:get(!bindings, !x);
+    !response = act:reportFullLocationAndAskToSwap();
     if (op:equals(!response,yes)) {
-        !bindings = act:askQuestionFromString(?actor,"Which block should be swapped?", blockType(X));
-        //act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", blockType(X));
-        !otherBlock = op:get(!bindings, !x);
+        !otherBlock = act:askForBlockToSwap();
         !otherBlockName = op:invokeMethod(!otherBlock, "getName");
         if (op:equals(!otherBlockName,"none")) {
-            act:generateResponseFromString("okay, I am not swapping any block");
+            act:reportNotSwappingBlocks();
             exit(FAIL_RECOVERY);
         } else {
             act:swapBlocks(!block,!otherBlock);
         }
     } else {
-        act:generateResponseFromString("okay, I am not swapping any block");
+        act:reportNotSwappingBlocks();
         exit(FAIL_RECOVERY);
     }
 }
@@ -499,13 +389,10 @@ import java.lang.Integer;
 }
 
 /////// ITK ///////
-//Want this?
 () = describeBlockPose(Symbol ?block:physobj) {
     Symbol !blockPose;
     Symbol !poseDescriptor;
     Symbol !blockDescriptor;
-    String !poseDescriptorJapanese;
-    String !blockDescriptorJapanese;
     Symbol !holding;
 
     !blockPose = act:getBlockPose(?block);
@@ -513,20 +400,13 @@ import java.lang.Integer;
     if (op:isNull(!blockPose)) {
         !holding = act:checkHolding(?block);
         if (op:equalsValue(!holding, true)) {
-            act:generateResponseFromString("I am holding the !blockDescriptor");
-            //!blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
-            //act:generateResponseFromString("私は!blockDescriptorJapaneseを持っています");
+            act:reportHoldingBlock(!blockDescriptor);
         } else {
-            act:generateResponseFromString("I do not know where the !blockDescriptor is");
-            //!blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
-            //act:generateResponseFromString("!blockDescriptorJapaneseがどこにあるかが分かりません。");
+            act:reportBlockLocationUnknown(!blockDescriptor);
         }
     } else {
         !poseDescriptor = tsc:getDescriptorForPoseID(!blockPose);
-        act:generateResponseFromString("the !blockDescriptor is at !poseDescriptor");
-//        !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
-//        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
-//        act:generateResponseFromString("!blockDescriptorJapaneseは!poseDescriptorJapaneseにあります");
+        act:reportBlockIsAtPose(!blockDescriptor,!poseDescriptor);
     }
 }
 
@@ -557,10 +437,7 @@ import java.lang.Integer;
         !blockDescriptor = tsc:getDescriptorForID(!block);
         !poseDescriptor = tsc:getDescriptorForPoseID(!pose);
         if (~op:equals(!blockDescriptor,none)) {
-            act:generateResponseFromString("The !blockDescriptor is at !poseDescriptor");
-//            !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
-//            !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
-//            act:generateResponseFromString("!blockDescriptorJapaneseは!poseDescriptorJapaneseにあります");
+            act:reportBlockIsAtPose(!blockDescriptor, !poseDescriptor);
             !knowBlockAt = op:newObject("java.lang.Boolean", true);
         }
     }
@@ -568,14 +445,11 @@ import java.lang.Integer;
     !holding = act:checkHolding(!block);
     if (~op:isNull(!block) && op:equalsValue(!holding, true)) {
         !blockDescriptor = tsc:getDescriptorForID(!block);
-        act:generateResponseFromString("I am holding the !blockDescriptor");
-        //!blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
-        //act:generateResponseFromString("私は!blockDescriptorJapaneseを持っています");
+        act:reportHoldingBlock(!blockDescriptor);
         !knowBlockAt = op:newObject("java.lang.Boolean", true);
     }
     if (op:equals(!knowBlockAt,False)) {
-        act:generateResponseFromString("I don't know the location of any blocks");
-        //act:generateResponseFromString("ブロックはどれも場所がわかりません");
+        act:reportBlockLocationsAllUnknown();
     }
 }
 
@@ -586,8 +460,6 @@ import java.lang.Integer;
     Symbol !block;
     Symbol !blockDescriptor;
     Symbol !poseDescriptor;
-    String !blockDescriptorJapanese;
-    String !poseDescriptorJapanese;
     java.lang.Boolean !knowBlockAt = false;
     java.util.HashMap !elem;
     edu.tufts.hrilab.fol.Variable !blockVar;
@@ -599,59 +471,23 @@ import java.lang.Integer;
         !block = op:get(!binding,!blockVar);
         !blockDescriptor = tsc:getDescriptorForID(!block);
         if (~op:equals(!blockDescriptor,none)) {
-            act:generateResponseFromString("There is a !blockDescriptor");
-//            !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!blockDescriptor);
-//            act:generateResponseFromString("!blockDescriptorJapaneseがあります");
+            act:reportBlockExists(!blockDescriptor);
             !knowBlockAt = op:newObject("java.lang.Boolean", true);
         }
     }
     if (op:equals(!knowBlockAt,False)) {
         !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
-        act:generateResponseFromString("There are no blocks at !poseDescriptor");
-//        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
-//        act:generateResponseFromString("!poseDescriptorJapaneseにブロックはありません");
-    }
-}
-
-(java.lang.Integer ?numBlocks) = getNumberOfBlocksAt(Symbol ?pose) {
-    Predicate !queryPred;
-    List !bindings;
-    java.util.Map !binding;
-    Symbol !block;
-    Symbol !blockDescriptor;
-    edu.tufts.hrilab.fol.Variable !blockVar;
-
-    ?numBlocks = op:newObject("java.lang.Integer", 0);
-
-    !blockVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
-    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(X,?pose)");
-    !bindings = act:queryBelief(!queryPred);
-    foreach (!binding : !bindings) {
-        !block = op:get(!binding,!blockVar);
-        !blockDescriptor = tsc:getDescriptorForID(!block);
-        if (~op:equals(!blockDescriptor,none)) {
-            ?numBlocks = op:++(?numBlocks);
-        }
+        act:reportNoBlocksAtPose(!poseDescriptor);
     }
 }
 
 () = describeNumberOfBlocksAt(Symbol ?pose) {
     java.lang.Integer !numBlocks;
     Symbol !poseDescriptor;
-    String !poseDescriptorJapanese;
 
     !numBlocks = act:getNumberOfBlocksAt(?pose);
-
     !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
-    if (op:equals(!numBlocks,1)) {
-        act:generateResponseFromString("There is !numBlocks block at !poseDescriptor");
-//        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
-//        act:generateResponseFromString("!poseDescriptorJapaneseにブロックは一個あります");
-    } else {
-        act:generateResponseFromString("There are !numBlocks blocks at !poseDescriptor");
-//        !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(!poseDescriptor);
-//        act:generateResponseFromString("!poseDescriptorJapaneseにブロックが!numBlocks個あります");
-    }
+    act:reportNumberOfBlocksAt(!numBlocks,!poseDescriptor);
 }
 
 ////Could do same for locations if we want to
@@ -695,13 +531,11 @@ import java.lang.Integer;
         foreach(!goalPred: !goalPreds){
             !status= op:getName(!goalPred);
             !goalPred= op:getArg(!goalPred,0);
-            act:generateResponseFromString("!status goal: ");
-            //act:generateResponseFromString("!status ゴール: ");
+            act:reportGoalStatus(!status);
             act:generateResponse(!goalPred);
         }
     } else {
-        act:generateResponseFromString("no current goal");
-        //act:generateResponseFromString("現在ゴールはありません");
+        act:reportNoCurrentGoal();
     }
 }
 
@@ -717,24 +551,6 @@ import java.lang.Integer;
            act:generateResponse(!goalPred);
        }
     } else{
-       act:generateResponseFromString("no pending goals");
-       //act:generateResponseFromString("並んでいるゴールはありません");
+        act:reportNoPendingGoal();
     }
-}
-
-() = assertBlockAt(Symbol ?block, Symbol ?pose) {
-    Predicate !fact;
-    Symbol !holding;
-
-    !holding = act:checkHolding(?block);
-    if (op:equalsValue(!holding,true)) {
-        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "free(?actor)");
-        act:assertBelief(!fact);
-    }
-    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,?block)");
-    act:retractBelief(!fact);
-    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?block,X)");
-    act:retractBelief(!fact);
-    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?block,?pose)");
-    act:assertBelief(!fact);
 }

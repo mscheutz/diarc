@@ -16,6 +16,8 @@ import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -28,6 +30,25 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     Prompt nlgSystemPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/system");
     Prompt nlgUserPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/user");
     Prompt validationPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/validation");
+
+    @Override
+    protected List<Option> additionalUsageInfo() {
+        List<Option> options = super.additionalUsageInfo();
+        options.add(Option.builder("japanese").desc("use japanese versions of prompts").build());
+        return options;
+    }
+
+    @Override
+    protected void parseArgs (CommandLine cmdLine) {
+        super.parseArgs(cmdLine);
+        if (cmdLine.hasOption("japanese")) {
+            nluSystemPrompt = Prompts.getPrompt("pickandplace2024/nlu/japanese/system");;
+            nluUserPrompt = Prompts.getPrompt("pickandplace2024/nlu/japanese/user");
+            nlgSystemPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/system");
+            nlgUserPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/user");
+            validationPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/validation");
+        }
+    }
 
     @Override
     public Utterance parseNLUCompletionResponse(Utterance incomingUtterance, Completion llmResponse) {

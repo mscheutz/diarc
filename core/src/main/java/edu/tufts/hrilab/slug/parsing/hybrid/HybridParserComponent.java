@@ -153,7 +153,11 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       //        and using LLM for both NLU and NLG
       //      Need to reorganize package structure or reimplement service provider to fit alongside current system
 //      if (llm != null && llm.equals("spotPickAndPlace")) {
-      llmParser = createInstance(PickAndPlace2024LLMServiceProvider.class, "");
+      if (llm != null && llm.equals("pickAndPlaceJapanese")) {
+        llmParser = createInstance(PickAndPlace2024LLMServiceProvider.class, "-japanese");
+      } else {
+        llmParser = createInstance(PickAndPlace2024LLMServiceProvider.class, "");
+      }
 //      } else {
 //        llmParser = createInstance(LLMParserComponent.class, llmArgs, false);
 //      }
