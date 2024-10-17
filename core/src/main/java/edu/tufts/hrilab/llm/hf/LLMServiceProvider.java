@@ -202,15 +202,19 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
         }
 
         // Call LLM to get Completion
-        Completion response;
+        Completion response = null;
         try {
             response = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
         } catch (TRADEException e) {
             log.error("[llmParserService] Error performing chat completion", e);
+        }
+
+        if (response == null) {
             if (!parsing) {
-                log.debug("[llmParserService] Error during chat completion during NLG, using SimpleNLG as a fallback");
+                log.warn("[llmParserService] have null response from LLMComponent, using SimpleNLG as a fallback");
                 return nlg.convertSemanticsToText(utterance);
             } else {
+                log.warn("[llmParserService] have null response from LLMComponent, failing parse");
                 return utterance;
             }
         }

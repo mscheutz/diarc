@@ -200,13 +200,21 @@ public class HFClient{
         int responseCode = httpResponse == null ? -1 : httpResponse.responseCode;
         log.debug("Response: " + response);
         log.info("Response code: " + responseCode);
-        //TODO: get wait_for_model code for serverless endpoint and use that specifically
         if (responseCode == 503) {
             log.warn("[llamaHFChatCompletion] in cold start period for model, this may take up to ten minutes...");
-            //TODO: what to do here? sayText? Make sure to only sayText once?
+            //TODO: sayText to report coldstart period?
+            //Try using free endpoint temporarily
+            log.debug("[llamaHFChatCompletion] attempting using serverless endpoint...");
+            targetEndpoint = String.format(llamaHFCompletionEndpointTemplate, model);
+            httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
+            responseCode = httpResponse == null ? -1 : httpResponse.responseCode;
+            response = httpResponse == null ? null : httpResponse.responseString;
+            log.debug("serverless response: " + response);
+            log.info("serverless response code: " + responseCode);
         } else if (responseCode == 422) {
             log.warn("[llamaHFChatCompletion] token length of query + response may be too long. Settings for private endpoint must be updated");
         } else if (response == null) {
+            //TODO: get wait_for_model code for serverless endpoint and use that specifically
             log.warn("HF Model " + model + " is not yet available, setting wait_for_model to true and trying again. THIS MAY TAKE A WHILE");
             requestBody.setWait_for_model(true);
             httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
@@ -215,7 +223,12 @@ public class HFClient{
         }
         Type t = new TypeToken<List<LlamaHFChatCompletionResponse>>() {}.getType();
         List<LlamaHFChatCompletionResponse> results = gson.fromJson(response, t);
-        LlamaHFChatCompletionResponse resp = results.get(0);
+        LlamaHFChatCompletionResponse resp;
+        if (response == null) {
+            resp = new LlamaHFChatCompletionResponse();
+        } else {
+            resp = results.get(0);
+        }
         return resp;
     }
 
