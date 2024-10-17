@@ -34,7 +34,7 @@ import java.util.List;
     }
 }
 
-(Symbol ?pose) = getBlockPose(Symbol ?physobj) {
+(Symbol ?pose) = getObjectPose(Symbol ?physobj) {
     Predicate !queryPred;
     List !bindings;
 
@@ -66,7 +66,7 @@ import java.util.List;
 }
 
 (Symbol ?pose) = getPoseWithSpace() {
-    java.lang.Integer !numBlocks;
+    java.lang.Integer !numObjects;
     java.lang.Integer !poseIndex = 0;
     java.lang.Boolean !doneChecking = false;
 
@@ -79,8 +79,8 @@ import java.util.List;
             !doneChecking = op:newObject("java.lang.Boolean", true);
         } else {
             ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "pose_!poseIndex:pose");
-            !numBlocks = act:getNumberOfBlocksAt(?pose);
-            if (op:lt(!numBlocks,2)) {
+            !numObjects = act:getNumberOfObjectsAt(?pose);
+            if (op:lt(!numObjects,2)) {
                 !doneChecking = op:newObject("java.lang.Boolean", true);
             }
             !poseIndex = op:++(!poseIndex);
@@ -88,41 +88,41 @@ import java.util.List;
     }
 }
 
-(java.lang.Integer ?numBlocks) = getNumberOfBlocksAt(Symbol ?pose) {
+(java.lang.Integer ?numObjects) = getNumberOfObjectsAt(Symbol ?pose) {
     Predicate !queryPred;
     List !bindings;
     java.util.Map !binding;
-    Symbol !block;
-    Symbol !blockDescriptor;
-    edu.tufts.hrilab.fol.Variable !blockVar;
+    Symbol !object;
+    Symbol !objectDescriptor;
+    edu.tufts.hrilab.fol.Variable !objectVar;
 
-    ?numBlocks = op:newObject("java.lang.Integer", 0);
+    ?numObjects = op:newObject("java.lang.Integer", 0);
 
-    !blockVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
+    !objectVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(X,?pose)");
     !bindings = act:queryBelief(!queryPred);
     foreach (!binding : !bindings) {
-        !block = op:get(!binding,!blockVar);
-        !blockDescriptor = tsc:getDescriptorForID(!block);
-        if (~op:equals(!blockDescriptor,none)) {
-            ?numBlocks = op:++(?numBlocks);
+        !object = op:get(!binding,!objectVar);
+        !objectDescriptor = tsc:getDescriptorForID(!object);
+        if (~op:equals(!objectDescriptor,none)) {
+            ?numObjects = op:++(?numObjects);
         }
     }
 }
 
-() = assertBlockAt(Symbol ?block, Symbol ?pose) {
+() = assertObjectAt(Symbol ?object, Symbol ?pose) {
     Predicate !fact;
     Symbol !holding;
 
-    !holding = act:checkHolding(?block);
+    !holding = act:checkHolding(?object);
     if (op:equalsValue(!holding,true)) {
         !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "free(?actor)");
         act:assertBelief(!fact);
     }
-    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,?block)");
+    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,?object)");
     act:retractBelief(!fact);
-    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?block,X)");
+    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,X)");
     act:retractBelief(!fact);
-    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?block,?pose)");
+    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,?pose)");
     act:assertBelief(!fact);
 }

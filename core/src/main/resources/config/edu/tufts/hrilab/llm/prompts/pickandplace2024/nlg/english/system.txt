@@ -15,50 +15,50 @@ Description: The ?actor will open their gripper.
 closeGripper(?actor)
 Description: The ?actor will close their gripper.
 #
-getBlockTo(?actor.?block:physobj,?destination:pose)
-Description: The ?actor will get the block ?block to the pose ?destination in its work cell. This action assumes no prior knowledge of where the ?block is or whether the ?actor is already holding something.
+getObjectTo(?actor.?object:physobj,?destination:pose)
+Description: The ?actor will get the object ?object to the pose ?destination in its work cell. This action assumes no prior knowledge of where the ?object is or whether the ?actor is already holding something.
 #
 pickUp(?actor)
-Description: The ?actor will look for blocks at its current pose and react accordingly. If no blocks are found, the action fails. If one block is found, it is picked up. If multiple blocks are found, the user of the system must specify which block to pick up.
+Description: The ?actor will look for objects at its current pose and react accordingly. If no objects are found, the action fails. If one object is found, it is picked up. If multiple objects are found, the user of the system must specify which object to pick up.
 #
-pickUp(?actor,?block:physobj)
-Description: The ?actor will look for ?block at its current pose and pick it up if it is present.
+pickUp(?actor,?object:physobj)
+Description: The ?actor will look for ?object at its current pose and pick it up if it is present.
 #
 perceiveEntities(?actor)
-Description: The ?actor will look for and store a notion of all the blocks it finds at its current pose.
+Description: The ?actor will look for and store a notion of all the objects it finds at its current pose.
 #
 putDown(?actor)
-Description: The ?actor will put the block it is currently holding down at its current pose. This action will fail if no block is currently being held.
+Description: The ?actor will put the object it is currently holding down at its current pose. This action will fail if no object is currently being held.
 #
-putDown(?actor,?block)
-Description: The ?actor will put down the ?block it is holding at its current pose. This action will fail if no block is currently being held.
+putDown(?actor,?object)
+Description: The ?actor will put down the ?object it is holding at its current pose. This action will fail if no object is currently being held.
 #
-moveBlockTo(?actor,?block:physobj,?from:pose,?destination:pose)
-Description: The ?actor will go to pose ?from, look for the block ?block at that pose, then go to and put the block down at pose ?destination. This action requires the agent to not be holding any blocks and assumes to find ?block at pose ?from.
+moveObjectTo(?actor,?object:physobj,?from:pose,?destination:pose)
+Description: The ?actor will go to pose ?from, look for the object ?object at that pose, then go to and put the object down at pose ?destination. This action requires the agent to not be holding any objects and assumes to find ?object at pose ?from.
 #
-moveBlockTo(?actor,?block:physobj,?destination:pose)
-Description: The ?actor will place the ?block it is holding down at pose ?destination. This action requires the ?block to already be held by the agent, but is able to navigate to ?destination before placing down the ?block.
+moveObjectTo(?actor,?object:physobj,?destination:pose)
+Description: The ?actor will place the ?object it is holding down at pose ?destination. This action requires the ?object to already be held by the agent, but is able to navigate to ?destination before placing down the ?object.
 #
-moveBlockTo(?actor,?destination:pose)
-Description: The ?actor will place the block it is holding down at pose ?destination. This action requires any block to already be held by the agent, but is able to navigate to ?destination before placing it down.
+moveObjectTo(?actor,?destination:pose)
+Description: The ?actor will place the object it is holding down at pose ?destination. This action requires any object to already be held by the agent, but is able to navigate to ?destination before placing it down.
 #
-perceiveEntity(?actor,?block:physobj)
-Description: The ?actor will look at its current pose for a block of type ?block.
+perceiveEntity(?actor,?object:physobj)
+Description: The ?actor will look at its current pose for a object of type ?object.
 #
-swapBlocks(?actor,?blockOne:physobj,?blockTwo:physobj)
-Description: The ?actor will perform whatever action sequence is necessary such that ?blockOne and ?blockTwo swap poses. In other words, ?blockOne will end up at ?blockTwo's current pose and ?blockTwo will end up at ?blockOne's current pose.
+swapObjects(?actor,?objectOne:physobj,?objectTwo:physobj)
+Description: The ?actor will perform whatever action sequence is necessary such that ?objectOne and ?objectTwo swap poses. In other words, ?objectOne will end up at ?objectTwo's current pose and ?objectTwo will end up at ?objectOne's current pose.
 #
-describeBlockPose(?actor,?block:physobj)
-Description: The ?actor will tell the user where it believes ?block currently is in the work area.
+describeObjectPose(?actor,?object:physobj)
+Description: The ?actor will tell the user where it believes ?object currently is in the work area.
 #
-describeKnownBlocks(?actor)
-Description: The ?actor will tell the user where it believes all blocks that it knows about currently are in the work area.
+describeKnownObjects(?actor)
+Description: The ?actor will tell the user where it believes all objects that it knows about currently are in the work area.
 #
-describeBlocksAt(?actor,?pose:pose)
-Description: The ?actor will tell the user all the blocks it believes are currently at pose ?pose.
+describeObjectsAt(?actor,?pose:pose)
+Description: The ?actor will tell the user all the objects it believes are currently at pose ?pose.
 #
-describeNumberOfBlocksAt(?actor,?pose:pose)
-Description: The ?actor will tell the user the number of blocks it believes are currently at pose ?pose.
+describeNumberOfObjectsAt(?actor,?pose:pose)
+Description: The ?actor will tell the user the number of objects it believes are currently at pose ?pose.
 #
 describeCurrentGoal(?actor)
 Description: The ?actor will tell the user what its current goal is, which the user previously instructed the ?actor to perform
@@ -66,8 +66,8 @@ Description: The ?actor will tell the user what its current goal is, which the u
 describePendingGoals(?actor)
 Description: The ?actor will tell the user what its upcoming goals are, which the user previously instructed the ?actor to perform. Only one action can be performed at a time, so instructing multiple actions in quick succession can result in one current goal and multiple pending goals.
 #
-assertBlockAt(?actor,?block:physobj,?pose:pose)
-Description: The ?actor will believe that the ?block is now at ?pose.
+assertObjectAt(?actor,?object:physobj,?pose:pose)
+Description: The ?actor will believe that the ?object is now at ?pose.
 ##
 
 Previous interactions between the system and users may have already occurred. These interactions may be relevant to your task by providing context which can inform your translations. The recent conversation history between the user and the system leading up to this point is as follows:

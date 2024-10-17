@@ -54,7 +54,7 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
 
     Predicate !failCond;
 
-    Symbol !blockLocation;
+    Symbol !objectLocation;
 
     op:log(debug, "[perceiveEntity] refID: ?refID");
 
@@ -98,11 +98,11 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
 
     try {
         act:perceiveEntityFromSymbol(?refID);
-        !blockLocation = act:getBlockPose(?refID);
-        if (~op:equals(!blockLocation, !currPose)) {
+        !objectLocation = act:getObjectPose(?refID);
+        if (~op:equals(!objectLocation, !currPose)) {
             !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor,?refID))");
             act:retractBelief(!fact);
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?refID,!blockLocation)");
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?refID,!objectLocation)");
             act:retractBelief(!fact);
             !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?refID,!currPose)");
             act:assertBelief(!fact);

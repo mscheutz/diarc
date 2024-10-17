@@ -27,8 +27,8 @@ Example 4:\n
 History:\n
 pete: Is anything at locaiton two?
 \n
-Input:QUESTION(robotone:agent,pete,doYouMean(pete,QUESTION(pete,robotone:agent,blocksAt(VAR0:pose),{locationTwo(VAR0:pose),DEFINITE(VAR0:pose)})),{})
-Output:{"translation":"Are you asking me if there are blocks at location two?"}
+Input:QUESTION(robotone:agent,pete,doYouMean(pete,QUESTION(pete,robotone:agent,objectsAt(VAR0:pose),{locationTwo(VAR0:pose),DEFINITE(VAR0:pose)})),{})
+Output:{"translation":"Are you asking me if there are objects at location two?"}
 \n\n
 Example 4:\n
 History:\n

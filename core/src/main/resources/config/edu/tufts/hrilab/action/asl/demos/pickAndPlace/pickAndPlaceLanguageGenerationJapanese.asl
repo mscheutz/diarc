@@ -4,7 +4,7 @@ import edu.tufts.hrilab.fol.Variable;
 import java.lang.String;
 import java.util.Map;
 
-(Symbol ?blockPose) = askForBlockPose(Symbol ?descriptor) {
+(Symbol ?objectPose) = askForObjectPose(Symbol ?descriptor) {
     Map !bindings;
     Variable !x = "X";
     String !japaneseDescriptor;
@@ -12,18 +12,18 @@ import java.util.Map;
     !japaneseDescriptor = tsc:getJapaneseVersionOfDescriptor(?descriptor);
     (!bindings) = act:askQuestionFromString(?actor,"!japaneseDescriptorがどこにあるかは分かりません。場所何番にありますか?", pose(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
-        ?blockPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
+        ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
-        ?blockPose = op:get(!bindings,!x);
+        ?objectPose = op:get(!bindings,!x);
     }
 }
 
-(Symbol ?object) = askForBlockToPickUp() {
+(Symbol ?object) = askForObjectToPickUp() {
     Variable !x = "X";
     Map !bindings;
 
-    //TODO: get descriptors for all detected blocks and add into question specifically
-    !bindings = act:askQuestionFromString(?actor, "視野に複数のブロックが見えています。どれを拾ったらいいでしょうか？", blockType(X));
+    //TODO: get descriptors for all detected objects and add into question specifically
+    !bindings = act:askQuestionFromString(?actor, "視野に複数のブロックが見えています。どれを拾ったらいいでしょうか？", objectType(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
@@ -31,7 +31,7 @@ import java.util.Map;
     }
 }
 
-() = reportNotPickingUpBlock() {
+() = reportNotPickingUpObject() {
     act:generateResponseFromString("わかった");
 }
 
@@ -47,73 +47,73 @@ import java.util.Map;
     }
 }
 
-(Symbol ?block) = askForBlockToSwap() {
+(Symbol ?object) = askForObjectToSwap() {
     Map !bindings;
     Variable !x = "X";
 
-    act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", blockType(X));
+    act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", objectType(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
-        ?block = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
+        ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
-        ?block = op:get(!bindings, !x);
+        ?object = op:get(!bindings, !x);
     }
 }
 
-() = reportNotSwappingBlocks() {
+() = reportNotSwappingObjects() {
     //TODO: this is google translate result, get actual translation
     act:generateResponseFromString("わかりました。ブロックを交換しません");
 }
 
-() = reportHoldingBlock(Symbol ?descriptor) {
-    String !blockDescriptorJapanese;
+() = reportHoldingObject(Symbol ?descriptor) {
+    String !objectDescriptorJapanese;
 
-    !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
-    act:generateResponseFromString("私は!blockDescriptorJapaneseを持っています");
+    !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
+    act:generateResponseFromString("私は!objectDescriptorJapaneseを持っています");
 }
 
-() = reportBlockLocationUnknown(Symbol ?descriptor) {
-    String !blockDescriptorJapanese;
+() = reportObjectLocationUnknown(Symbol ?descriptor) {
+    String !objectDescriptorJapanese;
 
-    !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
-    act:generateResponseFromString("!blockDescriptorJapaneseがどこにあるかが分かりません。");
+    !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
+    act:generateResponseFromString("!objectDescriptorJapaneseがどこにあるかが分かりません。");
 }
 
-() = reportBlockIsAtPose(Symbol ?blockDescriptor, Symbol ?poseDescriptor) {
+() = reportObjectIsAtPose(Symbol ?objectDescriptor, Symbol ?poseDescriptor) {
     String !poseDescriptorJapanese;
-    String !blockDescriptorJapanese;
+    String !objectDescriptorJapanese;
 
-    !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?blockDescriptor);
+    !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?objectDescriptor);
     !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?poseDescriptor);
-    act:generateResponseFromString("!blockDescriptorJapaneseは!poseDescriptorJapaneseにあります");
+    act:generateResponseFromString("!objectDescriptorJapaneseは!poseDescriptorJapaneseにあります");
 }
 
-() = reportBlockLocationsAllUnknown() {
+() = reportObjectLocationsAllUnknown() {
     act:generateResponseFromString("ブロックはどれも場所がわかりません");
 }
 
-() = reportBlockExists(Symbol ?descriptor) {
-    String !blockDescriptorJapanese;
+() = reportObjectExists(Symbol ?descriptor) {
+    String !objectDescriptorJapanese;
 
-    !blockDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?escriptor);
-    act:generateResponseFromString("!blockDescriptorJapaneseがあります");
+    !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?escriptor);
+    act:generateResponseFromString("!objectDescriptorJapaneseがあります");
 }
 
-() = reportNoBlocksAtPose(Symbol ?descriptor) {
+() = reportNoObjectsAtPose(Symbol ?descriptor) {
     String !poseDescriptorJapanese;
 
     !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
     act:generateResponseFromString("!poseDescriptorJapaneseにブロックはありません");
 }
 
-() = reportNumberOfBlocksAt(java.lang.Integer ?numBlocks, Symbol ?descriptor) {
+() = reportNumberOfObjectsAt(java.lang.Integer ?numObjects, Symbol ?descriptor) {
     String !poseDescriptorJapanese;
 
-    if (op:equals(?numBlocks,1)) {
+    if (op:equals(?numObjects,1)) {
         !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
         act:generateResponseFromString("!poseDescriptorJapaneseにブロックは一個あります");
     } else {
         !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
-        act:generateResponseFromString("!poseDescriptorJapaneseにブロックが?numBlocks個あります");
+        act:generateResponseFromString("!poseDescriptorJapaneseにブロックが?numObjects個あります");
     }
 }
 

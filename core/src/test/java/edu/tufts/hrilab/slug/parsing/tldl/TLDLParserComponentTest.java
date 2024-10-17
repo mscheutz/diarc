@@ -4022,13 +4022,13 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("robot one verify that you can see a red block",
-                "INSTRUCT(brad,robotone:agent,detectBlock(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,robotone:agent,detectObject(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("get the red block to location one",
-                "INSTRUCT(brad,self,getBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,getObjectTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
@@ -4098,37 +4098,37 @@ public class TLDLParserComponentTest {
 
 
         assertTrue(testUtterance("look for red block",
-                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,self,detectObject(self,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("look for the red block",
-                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,self,detectObject(self,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("look for a red block",
-                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,self,detectObject(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("look for one red block",
-                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,self,detectObject(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("detect a red block",
-                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,self,detectObject(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("observe a red block",
-                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,self,detectObject(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("find a red block",
-                "INSTRUCT(brad,self,detectBlock(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,self,detectObject(self,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
@@ -4208,33 +4208,33 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("move the red block from location one to location two",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("transport the red block from location one to location two",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("get the red block from location one to location two",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("relocate the red block from location one to location two",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "self"
         ));
         //TODO: what caused this to break?
         //assertTrue(testUtterance("move the red block between location one and location two",
-        //        "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+        //        "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
         //        "brad",
         //        "self"
         //));
         //assertTrue(testUtterance("transport the red block between location one and location two",
-        //        "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+        //        "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
         //        "brad",
         //        "self"
         //));
@@ -4244,69 +4244,69 @@ public class TLDLParserComponentTest {
                 "self"
         ));
         //assertTrue(testUtterance("relocate the red block between location one and location two",
-        //        "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+        //        "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
         //        "brad",
         //        "self"
         //));
 
         //assertTrue(testUtterance("put the red block at location one",
-        //        "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+        //        "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
         //        "brad",
         //        "self"
         //));
         assertTrue(testUtterance("put down the red block at location one",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("put the red block down at location one",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("place the red block at location one",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("place down the red block at location one",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("place the red block down at location one",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("put the block at location one",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("put down the block at location one",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("put the block down at location one",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("place the block at location one",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("place down the block at location one",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("place the block down at location one",
-                "INSTRUCT(brad,self,moveBlockTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,self,moveObjectTo(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
@@ -4323,22 +4323,22 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("get the red block to location one",
-                "INSTRUCT(brad,self,getBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,getObjectTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("I want the red block at location one",
-                "INSTRUCT(brad,self,getBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,getObjectTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("I want the red block to be at location one",
-                "INSTRUCT(brad,self,getBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,getObjectTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("make it so red block is at location one",
-                "INSTRUCT(brad,self,getBlockTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,getObjectTo(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
@@ -4352,17 +4352,17 @@ public class TLDLParserComponentTest {
         //));
 
         assertTrue(testUtterance("the red block is at location one",
-                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,assertObjectAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("the red block has moved to location one",
-                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,assertObjectAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("the red block has moved from location two to location one",
-                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR2:pose),{red block(VAR0:physobj),locationTwo(VAR1:pose),locationOne(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,self,assertObjectAt(self,VAR0:physobj,VAR2:pose),{red block(VAR0:physobj),locationTwo(VAR1:pose),locationOne(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "self"
         ));
@@ -4403,7 +4403,7 @@ public class TLDLParserComponentTest {
         //TODO: issue somewhere with knowHow parse matching early when more args are present and overloaded entries exist which take in different numbers of args
         //assertTrue(testUtterance("do you know how to get the red block to location one",
         assertTrue(testUtterance("do you know how to make it so the red block is at location one",
-                "QUESTION(brad,self,knowHow(self,to(getBlockTo(self,VAR0:physobj,VAR1:pose))),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "QUESTION(brad,self,knowHow(self,to(getObjectTo(self,VAR0:physobj,VAR1:pose))),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
@@ -4420,29 +4420,29 @@ public class TLDLParserComponentTest {
         //        "self"
         //));
         assertTrue(testUtterance("where is red block",
-                "INSTRUCT(brad,self,describeBlockPose(self,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,self,describeObjectPose(self,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("what blocks are you aware of",
-                "INSTRUCT(brad,self,describeKnownBlocks(self),{})",
+                "INSTRUCT(brad,self,describeKnownObjects(self),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("what blocks are at location one",
-                "INSTRUCT(brad,self,describeBlocksAt(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,self,describeObjectsAt(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("how many blocks are at location one",
-                "INSTRUCT(brad,self,describeNumberOfBlocksAt(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,self,describeNumberOfObjectsAt(self,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("are any blocks at location one",
-                "QUESTION(brad,self,blocksAt(VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "QUESTION(brad,self,objectsAt(VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "self"
         ));
@@ -4453,7 +4453,7 @@ public class TLDLParserComponentTest {
         ));
 
         //assertTrue(testUtterance("what types of blocks can you detect",
-        //        "INSTRUCT(brad,self,describeBlockTypes(self),{})",
+        //        "INSTRUCT(brad,self,describeObjectTypes(self),{})",
         //        "brad",
         //        "self"
         //));
@@ -4531,7 +4531,7 @@ public class TLDLParserComponentTest {
         ));
 
         //assertTrue(testUtteranceLLM("赤いブロックを場所1に移動させる",
-        //        "INSTRUCT(brad,robotone:agent,getBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+        //        "INSTRUCT(brad,robotone:agent,getObjectTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
         //        "brad",
         //        "robotone:agent"
         //));
@@ -4669,55 +4669,55 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtteranceLLM("赤いブロックを場所1から場所2に移動する",
-                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,robotone:agent,moveObjectTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("赤いブロックを場所 1 から場所 2 に輸送する",
-                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,robotone:agent,moveObjectTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("赤いブロックを場所 1 から場所 2 まで取得します",
-                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,robotone:agent,moveObjectTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("赤いブロックを場所 1 と場所 2 の間で移動します",
-                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,robotone:agent,moveObjectTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("赤いブロックを場所1と場所2の間で輸送する",
-                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,robotone:agent,moveObjectTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         //Not sure if we want this to parse or not
         assertTrue(testUtteranceLLM("場所1と場所2の間の赤いブロックを取得します",
-                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+                "INSTRUCT(brad,robotone:agent,moveObjectTo(robotone:agent,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),locationTwo(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "robotone:agent"
         ));
 
         assertTrue(testUtteranceLLM("赤いブロックを位置1に置く",
-                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,robotone:agent,moveObjectTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("場所1に赤いブロックを置く",
-                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,robotone:agent,moveObjectTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
 
         assertTrue(testUtteranceLLM("ブロックを位置1に置く",
-                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,robotone:agent,moveObjectTo(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("ブロックを場所 1 に置きます",
-                "INSTRUCT(brad,robotone:agent,moveBlockTo(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,robotone:agent,moveObjectTo(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "robotone:agent"
         ));
@@ -4734,17 +4734,17 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtteranceLLM("場所 1 に赤いブロックが欲しい",
-                "INSTRUCT(brad,robotone:agent,getBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,robotone:agent,getObjectTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("場所1の赤いブロックが欲しい",
-                "INSTRUCT(brad,robotone:agent,getBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,robotone:agent,getObjectTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("赤いブロックが位置1にあるようにします",
-                "INSTRUCT(brad,robotone:agent,getBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,robotone:agent,getObjectTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
@@ -4758,17 +4758,17 @@ public class TLDLParserComponentTest {
         //));
 
         assertTrue(testUtteranceLLM("赤いブロックは位置1にあります",
-                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,assertObjectAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("赤いブロックは位置1に移動しました",
-                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,assertObjectAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("赤いブロックは場所2から場所1に移動しました",
-                "INSTRUCT(brad,self,assertBlockAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,assertObjectAt(self,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
@@ -4809,7 +4809,7 @@ public class TLDLParserComponentTest {
         //TODO: issue somewhere with knowHow parse matching early when more args are present and overloaded entries exist which take in different numbers of args
         //assertTrue(testUtteranceLLM("do you know how to get the red block to location one",
         assertTrue(testUtteranceLLM("赤いブロックを場所1に移動する方法を知っていますか",
-                "QUESTION(brad,robotone:agent,knowHow(robotone:agent,to(moveBlockTo(robotone:agent,VAR0:physobj,VAR1:pose))),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "QUESTION(brad,robotone:agent,knowHow(robotone:agent,to(moveObjectTo(robotone:agent,VAR0:physobj,VAR1:pose))),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone:agent"
         ));
@@ -4826,29 +4826,29 @@ public class TLDLParserComponentTest {
         //        "robotone:agent"
         //));
         assertTrue(testUtteranceLLM("赤いブロックはどこですか",
-                "INSTRUCT(brad,robotone:agent,describeBlockPose(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,robotone:agent,describeObjectPose(robotone:agent,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "robotone:agent"
         ));
 
         assertTrue(testUtteranceLLM("作業領域にあるブロックは何ですか",
-                "INSTRUCT(brad,robotone:agent,describeKnownBlocks(robotone:agent),{})",
+                "INSTRUCT(brad,robotone:agent,describeKnownObjects(robotone:agent),{})",
                 "brad",
                 "robotone:agent"
         ));
 
         assertTrue(testUtteranceLLM("位置1にあるブロックは何か",
-                "INSTRUCT(brad,robotone:agent,describeBlocksAt(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,robotone:agent,describeObjectsAt(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("場所1にはブロックがいくつあるか",
-                "INSTRUCT(brad,robotone:agent,describeNumberOfBlocksAt(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "INSTRUCT(brad,robotone:agent,describeNumberOfObjectsAt(robotone:agent,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "robotone:agent"
         ));
         assertTrue(testUtteranceLLM("位置 1 にブロックはありますか",
-                "QUESTION(brad,robotone:agent,blocksAt(VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
+                "QUESTION(brad,robotone:agent,objectsAt(VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "robotone:agent"
         ));
@@ -4859,7 +4859,7 @@ public class TLDLParserComponentTest {
         ));
 
         //assertTrue(testUtteranceLLM("どのような種類のブロックを検出できますか",
-        //        "INSTRUCT(brad,robotone:agent,describeBlockTypes(robotone:agent),{})",
+        //        "INSTRUCT(brad,robotone:agent,describeObjectTypes(robotone:agent),{})",
         //        "brad",
         //        "robotone:agent"
         //));

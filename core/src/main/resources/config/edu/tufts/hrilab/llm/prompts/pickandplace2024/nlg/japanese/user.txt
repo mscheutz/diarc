@@ -12,7 +12,7 @@ Output:{"translation":"了解しました"}
 ##
 Example 3:
 #
-Input:REPLY(robotone:agent,pete,cannot(pickUp(robotone:agent,anything),because(dont(robotone:agent,see,anyBlocks,atMyLocation))),{})
+Input:REPLY(robotone:agent,pete,cannot(pickUp(robotone:agent,anything),because(dont(robotone:agent,see,anyObjects,atMyLocation))),{})
 Output:{"translation":"現在のポーズの視野にブロックがないため、拾うことはできません"}
 ##
 Example 4:
@@ -22,7 +22,7 @@ Output:{"translation":"すでにものを持っているため、赤いブロッ
 ##
 Example 5:
 #
-Input:REPLY(robotone:agent,pete,getBlockTo(robotone:agent,green block:physobj,location two:pose),{})
+Input:REPLY(robotone:agent,pete,getObjectTo(robotone:agent,green block:physobj,location two:pose),{})
 Output:{"translation":"緑色のブロックを場所２番にしています"}
 ##
 Example 6:
@@ -32,7 +32,7 @@ Output:{"translation":"赤いブロックを探しています"}
 ##
 Example 7:
 #
-Input:REPLY(robotone:agent,pete,cannot(pickUp(robotone:agent,anything),because(dont(robotone:agent,see,anyBlocks,atMyLocation))),{})
+Input:REPLY(robotone:agent,pete,cannot(pickUp(robotone:agent,anything),because(dont(robotone:agent,see,anyObjects,atMyLocation))),{})
 Output:{"translation":"現在のポーズからブロックが見えないため、拾うことはできません"}
 ##
 Example 8:

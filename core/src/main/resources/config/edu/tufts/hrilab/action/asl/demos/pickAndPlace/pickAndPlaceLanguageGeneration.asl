@@ -4,24 +4,24 @@ import edu.tufts.hrilab.fol.Variable;
 import java.lang.String;
 import java.util.Map;
 
-(Symbol ?blockPose) = askForBlockPose(Symbol ?descriptor) {
+(Symbol ?objectPose) = askForObjectPose(Symbol ?descriptor) {
     Map !bindings;
     Variable !x = "X";
 
     (!bindings) = act:askQuestionFromString(?actor,"I dont know where the ?descriptor is, at what pose can I expect to find it?", pose(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
-        ?blockPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
+        ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
-        ?blockPose = op:get(!bindings,!x);
+        ?objectPose = op:get(!bindings,!x);
     }
 }
 
-(Symbol ?object) = askForBlockToPickUp() {
+(Symbol ?object) = askForObjectToPickUp() {
     Variable !x = "X";
     Map !bindings;
 
-    //TODO: get descriptors for all detected blocks and add into question specifically
-    !bindings = act:askQuestionFromString(?actor, "I see multiple blocks, which one do you want me to pick up?", blockType(X));
+    //TODO: get descriptors for all detected objects and add into question specifically
+    !bindings = act:askQuestionFromString(?actor, "I see multiple objects, which one do you want me to pick up?", objectType(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
@@ -29,15 +29,15 @@ import java.util.Map;
     }
 }
 
-() = reportNotPickingUpBlock() {
-    act:generateResponseFromString("okay, I am not picking up any block");
+() = reportNotPickingUpObject() {
+    act:generateResponseFromString("okay, I am not picking up any object");
 }
 
 (Symbol ?response) = reportFullLocationAndAskToSwap() {
     Map !bindings;
     Variable !x = "X";
 
-    (!bindings) = act:askQuestionFromString(?actor,"I cannot put down the block because the location is full. Would you like me to swap out one of the blocks?", val(X));
+    (!bindings) = act:askQuestionFromString(?actor,"I cannot put down the object because the location is full. Would you like me to swap out one of the objects?", val(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");
     } else {
@@ -45,51 +45,51 @@ import java.util.Map;
     }
 }
 
-(Symbol ?block) = askForBlockToSwap() {
+(Symbol ?object) = askForObjectToSwap() {
     Map !bindings;
     Variable !x = "X";
 
-    !bindings = act:askQuestionFromString(?actor,"Which block should be swapped?", blockType(X));
+    !bindings = act:askQuestionFromString(?actor,"Which object should be swapped?", objectType(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
-        ?block = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
+        ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
-        ?block = op:get(!bindings, !x);
+        ?object = op:get(!bindings, !x);
     }
 }
 
-() = reportNotSwappingBlocks() {
-    act:generateResponseFromString("okay, I am not swapping any block");
+() = reportNotSwappingObjects() {
+    act:generateResponseFromString("okay, I am not swapping any object");
 }
 
-() = reportHoldingBlock(Symbol ?descriptor) {
+() = reportHoldingObject(Symbol ?descriptor) {
     act:generateResponseFromString("I am holding the ?descriptor");
 }
 
-() = reportBlockLocationUnknown(Symbol ?descriptor) {
+() = reportObjectLocationUnknown(Symbol ?descriptor) {
     act:generateResponseFromString("I do not know where the ?descriptor is");
 }
 
-() = reportBlockIsAtPose(Symbol ?blockDescriptor, Symbol ?poseDescriptor) {
-    act:generateResponseFromString("the ?blockDescriptor is at ?poseDescriptor");
+() = reportObjectIsAtPose(Symbol ?objectDescriptor, Symbol ?poseDescriptor) {
+    act:generateResponseFromString("the ?objectDescriptor is at ?poseDescriptor");
 }
 
-() = reportBlockLocationsAllUnknown() {
-    act:generateResponseFromString("I don't know the location of any blocks");
+() = reportObjectLocationsAllUnknown() {
+    act:generateResponseFromString("I don't know the location of any objects");
 }
 
-() = reportBlockExists(Symbol ?descriptor) {
+() = reportObjectExists(Symbol ?descriptor) {
     act:generateResponseFromString("There is a ?descriptor");
 }
 
-() = reportNoBlocksAtPose(Symbol ?descriptor) {
-    act:generateResponseFromString("There are no blocks at ?descriptor");
+() = reportNoObjectsAtPose(Symbol ?descriptor) {
+    act:generateResponseFromString("There are no objects at ?descriptor");
 }
 
-() = reportNumberOfBlocksAt(java.lang.Integer ?numBlocks, Symbol ?descriptor) {
-    if (op:equals(?numBlocks,1)) {
-        act:generateResponseFromString("There is ?numBlocks block at ?descriptor");
+() = reportNumberOfObjectsAt(java.lang.Integer ?numObjects, Symbol ?descriptor) {
+    if (op:equals(?numObjects,1)) {
+        act:generateResponseFromString("There is ?numObjects object at ?descriptor");
     } else {
-        act:generateResponseFromString("There are ?numBlocks blocks at ?descriptor");
+        act:generateResponseFromString("There are ?numObjects objects at ?descriptor");
     }
 }
 

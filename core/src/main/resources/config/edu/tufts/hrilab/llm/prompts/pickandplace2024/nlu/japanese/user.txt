@@ -16,34 +16,34 @@ Example 1 Notes: The user is asking you to navigate to the location one. This ma
 Example 2:
 #
 Input: 場所１番にあるブロックを拾ってください。
-Output: {"Semantics":"moveBlockTo(robotone:agent,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"20"}
+Output: {"Semantics":"moveObjectTo(robotone:agent,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"20"}
 #
-Example 2 Notes: Confidence is low for this example because, without additional context, there are multiple different valid results this input could match to. The user could be asking you to pick up the block which is currently at location one, or to make it so the block you are holding gets to location one. Picking up the block at location one seems more likely, but there is no corresponding parameterization of pickUp which only takes in a pose. In these cases where there can reasonably be multiple valid meanings, it is better to return low confidence along with the chosen result.
+Example 2 Notes: Confidence is low for this example because, without additional context, there are multiple different valid results this input could match to. The user could be asking you to pick up the object which is currently at location one, or to make it so the object you are holding gets to location one. Picking up the object at location one seems more likely, but there is no corresponding parameterization of pickUp which only takes in a pose. In these cases where there can reasonably be multiple valid meanings, it is better to return low confidence along with the chosen result.
 ##
 Example 3:
 #
 Input: ボールを拾ってください。
 Output: {"Semantics":"pickUp(robotone:agent,ball:physobj)","Input Type":"INSTRUCT","Confidence":"0",}
 #
-Example 3 Notes: Confidence is low for example 3 because, while it is fairly clear what the user is asking, "ball" is not listed as a known physobj. The ?block:physobj argument therefore cannot be populated with "ball" and the action signature is left incomplete. This logical result is therefore invalid and should be associated with a low confidence.
+Example 3 Notes: Confidence is low for example 3 because, while it is fairly clear what the user is asking, "ball" is not listed as a known physobj. The ?object:physobj argument therefore cannot be populated with "ball" and the action signature is left incomplete. This logical result is therefore invalid and should be associated with a low confidence.
 ##
 Example 4:
 #
 Input: 場所１番に何があるかを教えてください。
-Output: {"Semantics":"describeBlocksAt(robtone:agent,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"80"}
+Output: {"Semantics":"describeObjectsAt(robtone:agent,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"80"}
 #
 ##
 Example 5:
 
 #
 Input: 赤いブロックを場所２番にしました。
-Output: {"Semantics":"assertBlockAt(robotone:agent,red block:physobj,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"80"}
+Output: {"Semantics":"assertObjectAt(robotone:agent,red block:physobj,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"80"}
 #
 ##
 Example 6:
 #
 Input: 赤いやつ
-Output: {"Semantics":"blockType(red block:physobj)","Input Type":"REPLY","Confidence": 90"}
+Output: {"Semantics":"objectType(red block:physobj)","Input Type":"REPLY","Confidence": 90"}
 #
 ##
 Example 7:
@@ -51,7 +51,7 @@ Example 7:
 Input: ブロックを拾ってください。
 Output: {"Semantics":"pickUp(robotone:agent)","Input Type":"INSTRUCT","Confidence":"70"}
 #
-Example 7 Notes: The user is asking you to pick up a block. An argument is specified to be picked up, block, but it is not specified which exact block the user wants you to pick up. Since "block" is not a valid physobj, you cannot use the pickUp(?actor,?block:physobj) semantics. Normally, this would mean there is no valid parse. But, given the context of the robots task and the fact that an action exists which generally looks for and picks up a block, the chosen semantics ignore "the block" and use the action which matches the intent of the command: pickUp(?actor).
+Example 7 Notes: The user is asking you to pick up a block. An argument is specified to be picked up, block, but it is not specified which exact block the user wants you to pick up. Since "block" is not a valid physobj, you cannot use the pickUp(?actor,?object:physobj) semantics. Normally, this would mean there is no valid parse. But, given the context of the robots task and the fact that an action exists which generally looks for and picks up an object, the chosen semantics ignore "the block" and use the action which matches the intent of the command: pickUp(?actor).
 ##
 Example 8:
 #
@@ -91,22 +91,22 @@ Output: {"Semantics":"putDown(robotone:agent,red block:physobj)","Input Type":"I
 Example 15:
 #
 Input: 黄色いブロックを場所1から場所2に移動してください。
-Output: {"Semantics":"moveBlockTo(robotone:agent,yellow block:physobj,locationOne:pose,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"moveObjectTo(robotone:agent,yellow block:physobj,locationOne:pose,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 Example 16:
 #
 Input: オレンジ色のブロックを場所3に置いてください。
-Output: {"Semantics":"moveBlockTo(robotone:agent,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"moveObjectTo(robotone:agent,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 Example 17:
 #
 Input: ブロックを場所1に置いてください。
-Output: {"Semantics":"moveBlockTo(robotone:agent,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"moveObjectTo(robotone:agent,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 Example 18:
 #
 Input: 赤いブロックを場所2にしてください。
-Output: {"Semantics":"getBlockTo(robotone:agent,red block:physobj,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"getObjectTo(robotone:agent,red block:physobj,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 Example 19:
 #
@@ -151,24 +151,24 @@ Output: {"Semantics":"not(admin(pete))","Input Type":"STATEMENT","Confidence":"1
 Example 27:
 #
 Input: 赤いブロックはどこにありますか
-Output: {"Semantics":"describeBlockPose(robotone:agent,red block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"describeObjectPose(robotone:agent,red block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
 #
 Example 27 Notes: This example, like many of the immediately following examples are a bit tricky. These examples are all questions, but rather than being parsed at QUESTION, they are parsed as INSTRUCT commands which map to actions which answer questions. There is nothing inherent in the language which makes this the case, but referencing the list of valid actions and semantics known by the system will show that the desired outcome is to INSTRUCT this action whose corresponding description is to describe the location of the red block.
 ##
 Example 28:
 #
 Input: 把握しているブロックを教えてください。
-Output: {"Semantics":"describeKnownBlocks(robotone:agent)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"describeKnownObjects(robotone:agent)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 Example 29:
 #
 Input: 場所2にブロックは何個ありますか
-Output: {"Semantics":"describeNumberOfBlocksAt(robotone:agent,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"describeNumberOfObjectsAt(robotone:agent,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 Example 30:
 #
 Input: 場所3にブロックはありますか
-Output: {"Semantics":"blocksAt(locationThree:pose)","Input Type":"QUESTION","Confidence":"100"}
+Output: {"Semantics":"objectsAt(locationThree:pose)","Input Type":"QUESTION","Confidence":"100"}
 ##
 Example 31:
 #
@@ -203,7 +203,7 @@ Output: {"Semantics":"abort(question)","Input Type":"REPLY","Confidence":"100"}
 Example 38:
 #
 Input: ブロックなし
-Output: {"Semantics":"blockType(none)","Input Type":"REPLY","Confidence":"100"}
+Output: {"Semantics":"objectType(none)","Input Type":"REPLY","Confidence":"100"}
 ##
 Example 39:
 #
@@ -223,7 +223,7 @@ Output: {"Semantics":"val(no)","Input Type":"REPLY","Confidence":"100"}
 Example 42:
 #
 Input: 赤いブロックと黄色いブロックを入れ替える
-Output: {"Semantics":"swapBlocks(robotone:agent,red block:physobj,yellow block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"swapObjects(robotone:agent,red block:physobj,yellow block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 ###
 

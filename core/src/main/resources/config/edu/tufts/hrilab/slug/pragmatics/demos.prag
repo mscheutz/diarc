@@ -7,9 +7,9 @@ END-SET
 #PickAndPlace2024 -> for the LLM (can't handle the hack that what should be a STATEMENT is implemented as an action/INSTRUCT)
 NEW-SET
 RULES
-STATEMENT(A,B,at(X,Y),Z) := want(A,assertBlockAt(B,X,Y))
-STATEMENT(A,B,assertBlockAt(B,X,Y),Z) := want(A,assertBlockAt(B,X,Y))
-STATEMENT(A,B,assertBlockAt(C,X,Y),Z) := want(A,assertBlockAt(C,X,Y))
+STATEMENT(A,B,at(X,Y),Z) := want(A,assertObjectAt(B,X,Y))
+STATEMENT(A,B,assertObjectAt(B,X,Y),Z) := want(A,assertObjectAt(B,X,Y))
+STATEMENT(A,B,assertObjectAt(C,X,Y),Z) := want(A,assertObjectAt(C,X,Y))
 END-SET
 
 ##temi 'representational workarounds'

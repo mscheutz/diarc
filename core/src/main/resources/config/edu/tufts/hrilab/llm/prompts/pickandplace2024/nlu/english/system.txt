@@ -28,50 +28,50 @@ Description: The ?actor will open their gripper.
 closeGripper(?actor)
 Description: The ?actor will close their gripper.
 #
-getBlockTo(?actor.?block:physobj,?destination:pose)
-Description: The ?actor will get the block ?block to the pose ?destination in its work cell. This action assumes no prior knowledge of where the ?block is or whether the ?actor is already holding something.
+getObjectTo(?actor.?object:physobj,?destination:pose)
+Description: The ?actor will get the object ?object to the pose ?destination in its work cell. This action assumes no prior knowledge of where the ?object is or whether the ?actor is already holding something.
 #
 pickUp(?actor)
-Description: The ?actor will look for any block at its current pose and pick it up if one is present.
+Description: The ?actor will look for any object at its current pose and pick it up if one is present.
 #
-pickUp(?actor,?block:physobj)
-Description: The ?actor will look for ?block at its current pose and pick it up if it is present.
+pickUp(?actor,?object:physobj)
+Description: The ?actor will look for ?object at its current pose and pick it up if it is present.
 #
 perceiveEntities(?actor)
-Description: The ?actor will look for and store a notion of all the blocks it finds at its current pose.
+Description: The ?actor will look for and store a notion of all the objects it finds at its current pose.
 #
 putDown(?actor)
-Description: The ?actor will put the block it is currently holding down at its current pose. This action will fail if no block is currently being held.
+Description: The ?actor will put the object it is currently holding down at its current pose. This action will fail if no object is currently being held.
 #
-putDown(?actor,?block)
-Description: The ?actor will put down the ?block it is holding at its current pose. This action will fail if no block is currently being held.
+putDown(?actor,?object)
+Description: The ?actor will put down the ?object it is holding at its current pose. This action will fail if no object is currently being held.
 #
-moveBlockTo(?actor,?block:physobj,?from:pose,?destination:pose)
-Description: The ?actor will go to pose ?from, look for the block ?block at that pose, then go to and put the block down at pose ?destination. This action requires the agent to not be holding any blocks and assumes to find ?block at pose ?from.
+moveObjectTo(?actor,?object:physobj,?from:pose,?destination:pose)
+Description: The ?actor will go to pose ?from, look for the object ?object at that pose, then go to and put the object down at pose ?destination. This action requires the agent to not be holding any objects and assumes to find ?object at pose ?from.
 #
-moveBlockTo(?actor,?block:physobj,?destination:pose)
-Description: The ?actor will place the ?block it is holding down at pose ?destination. This action requires the ?block to already be held by the agent, but is able to navigate to ?destination before placing down the ?block.
+moveObjectTo(?actor,?object:physobj,?destination:pose)
+Description: The ?actor will place the ?object it is holding down at pose ?destination. This action requires the ?object to already be held by the agent, but is able to navigate to ?destination before placing down the ?object.
 #
-moveBlockTo(?actor,?destination:pose)
-Description: The ?actor will place the block it is holding down at pose ?destination. This action requires any block to already be held by the agent, but is able to navigate to ?destination before placing it down.
+moveObjectTo(?actor,?destination:pose)
+Description: The ?actor will place the object it is holding down at pose ?destination. This action requires any object to already be held by the agent, but is able to navigate to ?destination before placing it down.
 #
-perceiveEntity(?actor,?block:physobj)
-Description: The ?actor will look at its current pose for a block of type ?block.
+perceiveEntity(?actor,?object:physobj)
+Description: The ?actor will look at its current pose for a object of type ?object.
 #
-swapBlocks(?actor,?blockOne:physobj,?blockTwo:physobj)
-Description: The ?actor will perform whatever action sequence is necessary such that ?blockOne and ?blockTwo swap poses. In other words, ?blockOne will end up at ?blockTwo's current pose and ?blockTwo will end up at ?blockOne's current pose.
+swapObjects(?actor,?objectOne:physobj,?objectTwo:physobj)
+Description: The ?actor will perform whatever action sequence is necessary such that ?objectOne and ?objectTwo swap poses. In other words, ?objectOne will end up at ?objectTwo's current pose and ?objectTwo will end up at ?objectOne's current pose.
 #
-describeBlockPose(?actor,?block:physobj)
-Description: The ?actor will tell the user where it believes ?block currently is in the work area.
+describeObjectPose(?actor,?object:physobj)
+Description: The ?actor will tell the user where it believes ?object currently is in the work area.
 #
-describeKnownBlocks(?actor)
-Description: The ?actor will tell the user where it believes all blocks that it knows about currently are in the work area.
+describeKnownObjects(?actor)
+Description: The ?actor will tell the user where it believes all objects that it knows about currently are in the work area.
 #
-describeBlocksAt(?actor,?pose:pose)
-Description: The ?actor will tell the user all the blocks it believes are currently at pose ?pose.
+describeObjectsAt(?actor,?pose:pose)
+Description: The ?actor will tell the user all the objects it believes are currently at pose ?pose.
 #
-describeNumberOfBlocksAt(?actor,?pose:pose)
-Description: The ?actor will tell the user the number of blocks it believes are currently at pose ?pose.
+describeNumberOfObjectsAt(?actor,?pose:pose)
+Description: The ?actor will tell the user the number of objects it believes are currently at pose ?pose.
 #
 describeCurrentGoal(?actor)
 Description: The ?actor will tell the user what its current goal is, which the user previously instructed the ?actor to perform
@@ -79,8 +79,8 @@ Description: The ?actor will tell the user what its current goal is, which the u
 describePendingGoals(?actor)
 Description: The ?actor will tell the user what its upcoming goals are, which the user previously instructed the ?actor to perform. Only one action can be performed at a time, so instructing multiple actions in quick succession can result in one current goal and multiple pending goals.
 #
-assertBlockAt(?actor,?block:physobj,?pose:pose)
-Description: The ?actor will believe that the ?block is now at ?pose. Reminder that this is an action (INSTRUCT), as the system must perform additional reasoning around this fact.
+assertObjectAt(?actor,?object:physobj,?pose:pose)
+Description: The ?actor will believe that the ?object is now at ?pose. Reminder that this is an action (INSTRUCT), as the system must perform additional reasoning around this fact.
 ##
 
 ###
@@ -94,14 +94,14 @@ Below is the list of query semantics the system is able to parse, along with a d
 knowHow(?actor,to(?action))
 Description: The human is asking if ?actor knows how to perform ?action.
 #
-see(?actor,?block:physobj)
-Description: The human is asking if ?actor can see the block ?block in its current field of view.
+see(?actor,?object:physobj)
+Description: The human is asking if ?actor can see the object ?object in its current field of view.
 #
-blocksAt(?pose:pose)
-Description: The human is asking if the agent knows whether there are any blocks currently at ?pose.
+objectsAt(?pose:pose)
+Description: The human is asking if the agent knows whether there are any objects currently at ?pose.
 #
-at(?block:physobj,?pose:pose)
-Description: The human is asking if the agent thinks that block ?block is currently at pose ?pose.
+at(?object:physobj,?pose:pose)
+Description: The human is asking if the agent thinks that object ?object is currently at pose ?pose.
 #
 know(?actor,supervisor(?user))
 Description: The human is asking if the agent thinks that ?user is a known supervisor of the system.
@@ -128,14 +128,14 @@ Description: The user is responding ot a question negatively. Examples are no, n
 pose(?pose:pose)
 Description: The user is referencing a known pose.
 #
-blockType(?block:physobj)
-Description: The user is referencing a known block.
+objectType(?object:physobj)
+Description: The user is referencing a known object.
 #
 pose(none)
 Description: The user is responding to a question asking for a specific pose by not providing one.
 #
-blockType(none)
-Description: The user is responding to a question asking for a specific block by not providing one.
+objectType(none)
+Description: The user is responding to a question asking for a specific object by not providing one.
 #
 abort(question)
 Description: These are universal semantics to represent when the user is declining to answer the question. Examples are "nevermind", "forget about it", and "im not answering that".
@@ -146,8 +146,8 @@ Description: These are universal semantics to represent when the user is declini
 Knowledge Semantics:
 Knowledge semantics are used when the user is conveying information about the world to the system. The type of input in this case is STATEMENT. Below is the list of knowledge semantics the system is able to parse, along with a description of what is being conveyed in each case:
 ##
-not(at(?block:physobj,?pose:pose))
-Description: The user is telling the system that the block ?block is no longer at pose ?pose.
+not(at(?object:physobj,?pose:pose))
+Description: The user is telling the system that the object ?object is no longer at pose ?pose.
 #
 trusted(?user)
 Description: The user is telling the system that ?user is a trusted user of the system
