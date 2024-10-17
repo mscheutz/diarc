@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class DialogueComponent extends DiarcComponent {
@@ -250,6 +251,13 @@ public class DialogueComponent extends DiarcComponent {
             .collect(Collectors.toList());
 
     boolean matches = !matchingQuestions.isEmpty();
+
+    //Universal EXIT semantics
+    if (!currentQuestions.isEmpty() && semantics.getName().equals("abort")) {
+      log.debug("[isQuestionResponse] encountered universal exit semantics");
+      matches = true;
+    }
+
     log.debug("[isQuestionResponse] semantics: " + semantics + " matches: " + matches);
     return matches;
   }
@@ -279,14 +287,35 @@ public class DialogueComponent extends DiarcComponent {
     //Bind response
     Answer response;
     if (matchingQuestions.size() == 1) {
+      //Single match
       Term question = matchingQuestions.get(0);
       response = currentQuestions.remove(question);
       response.setAnswerBindings(question.getBindings(answerSemantics));
     } else if (matchingQuestions.isEmpty()) {
+      //No direct match
+      //If universal exit semantics, then 'cancel' question with the most recent timestamp
+      if (answerSemantics.getName().equals("abort")) {
+        //TODO: allow inner semantics to either match specific question or be general "most recent" symbol?
+        AtomicReference<Term> question = new AtomicReference<>();
+        long maxTimestamp = -1;
+        currentQuestions.forEach((key, value) -> {
+            if (value.getTimestamp() > maxTimestamp) {
+                question.set(key);
+            }
+        });
+        if (question.get() != null) {
+          response = currentQuestions.remove(question.get());
+          if (response != null) {
+            unlockAnswer(response);
+          }
+          return;
+        }
+      }
       //TODO:brad clarification request
       log.warn("[answerQuestion] no matching question found for semantics " + answerSemantics + ". If this happens it means there is some weird race condition somewhere and the question was already answered by something else");
       return;
     } else {
+      //Multiple matches
       //TODO:brad: we should probably have it ask a follow up question if it's unclear what's going on here.
       log.warn("[answerQuestion] unclear which question is being responded to, using the first one... ");
       Term question = matchingQuestions.get(0);

@@ -221,11 +221,17 @@ location; VAL/REF; #l.pose($l);
 block; VAL/REF; #l.blockType($l);
 
 %TODO: ability to do this (and to do this for both block and pose questions)
+%nowhere; VAL; pose(none);
+%none; VAL; blockType(none);
+%%nevermind; VAL; pose(none);
+%nevermind; VAL; blockType(none);
+%never mind; VAL; blockType(none);
+no block; VAL; blockType(none);
 nowhere; VAL; pose(none);
-none; VAL; blockType(none);
-%nevermind; VAL; pose(none);
-nevermind; VAL; blockType(none);
-never mind; VAL; blockType(none);
+none; VAL; abort(question);
+%nevermind; VAL; abort(question);
+nevermind; VAL; abort(question);
+never mind; VAL; abort(question);
 
 yes; VAL; val(yes);
 はい; VAL; val(yes);

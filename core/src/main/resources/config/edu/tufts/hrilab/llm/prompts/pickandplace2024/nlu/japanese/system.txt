@@ -136,6 +136,9 @@ Description: The user is responding to a question asking for a specific pose by 
 #
 blockType(none)
 Description: The user is responding to a question asking for a specific block by not providing one.
+#
+abort(question)
+Description: These are universal semantics to represent when the user is declining to answer the question. Examples are "nevermind", "forget about it", and "im not answering that".
 ##
 ###
 

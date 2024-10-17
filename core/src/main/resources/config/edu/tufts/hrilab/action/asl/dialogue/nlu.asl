@@ -89,7 +89,12 @@ import edu.tufts.hrilab.slug.common.Utterance;
       !response = op:get(!bindings, !x);
       act:resumeWaitForResponse(val(X));
 
-      if (op:equalsValue(!response, yes())) {
+      if (op:isNull(!response)) {
+        op:log("debug", "Utterance validation aborted, not processing utterance");
+        //report to the user that we are done processing the original utterance?
+        act:sayText("Okay, I am ignoring the previous command");
+        return;
+      } elseif (op:equalsValue(!response, yes())) {
         op:log("debug", "Utterance validated.");
         act:cacheParse(?utterance);
       } elseif (op:equalsValue(!response, no())) {
@@ -98,7 +103,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
         act:sayText("can you please rephrase");
         return;
       } else {
-        op:log("error", "Unexpected question response: !response");
+        op:log("debug", "Unexpected question response: !response");
+        return;
       }
     }
 

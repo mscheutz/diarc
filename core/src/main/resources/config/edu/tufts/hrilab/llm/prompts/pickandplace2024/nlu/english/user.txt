@@ -197,14 +197,12 @@ Output: {"Semantics":"describePendingGoals(robotone:agent)","Input Type":"INSTRU
 Example 37:
 #
 Input: nevermind
-Output: {"Semantics":"pose(none)","Input Type":"REPLY","Confidence":"100"}
+Output: {"Semantics":"abort(question)","Input Type":"REPLY","Confidence":"100"}
 ##
 Example 38:
 #
-Input: nevermind
+Input: no block
 Output: {"Semantics":"blockType(none)","Input Type":"REPLY","Confidence":"100"}
-#
-Example 38 Notes: This entry has equivalent input as example 37. This is an example showing that the conversation history provides very important context that must be considered in order to make a correct translation. blockType(none) would be the correct parse if the user had just asked a question inquiring about a type of block, the previous example, pose(none), would be correct if the user had just asked a question whose logical answer would be a certain pose. If neither were the case, a result with low confidence would be the correct approach.
 ##
 Example 39:
 #
