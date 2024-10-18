@@ -51,7 +51,6 @@ export { handlerRoots, handlers };
 const columns = [
     "Goal",
     "Actor",
-    "Current action",
     "Status",
     "Start time",
     "End time",

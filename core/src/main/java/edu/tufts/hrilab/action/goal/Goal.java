@@ -360,6 +360,22 @@ public class Goal {
     }
   }
 
+  /**
+   * Alternate method to setStatus, to set failure condition before sending goal status notifications.
+   *
+   * @param status
+   * @param failureJustification
+   */
+  public void setFailureStatus(GoalStatus status, Justification failureJustification) {
+    if (!status.isFailure()) {
+      log.error("[setFailureStatus] status is not a failure type: {}", status);
+      setStatus(status);
+    }
+
+    info.failConditions = failureJustification;
+    setStatus(status);
+  }
+
   //TODO: Have computePriority() method, compute priority externally and pass in single value here, or have separate
   // class variables for all relevant features and use in compareTo()?
   public void setPriority(long priority) {
@@ -466,11 +482,6 @@ public class Goal {
     }
   }
 
-  public void setFailConditions(Justification cond) {
-    log.debug("[setFailCondition] actor: " + info.actor + " failcond: " + cond);
-    info.failConditions = cond;
-  }
-
   public ActionInterpreter getActionInterpreter() {
     return ai;
   }
@@ -504,6 +515,7 @@ public class Goal {
 
   /**
    * Get copy of GoalInfo.
+   *
    * @return
    */
   public GoalInfo getInfo() {

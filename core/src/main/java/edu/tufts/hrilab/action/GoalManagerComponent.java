@@ -343,13 +343,14 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
 
   /**
    * Add goal (in string form from the command line) to list of initial goals to be automatically executed.
-   * (e.g., "shafer.stand()" or "fluent_geq(inventory(self, pogo_stick), 1)")
+   * (e.g., "stand(shafer)" or "fluent_geq(inventory(self, pogo_stick), 1)")
    *
    * @param goalString
    */
   private void addInitGoal(String goalString) {
     if (goalString.contains(".")) {
       log.error("Goal predicate needs to be in either goal(actor,state) or action(actor,arg) form. Ignoring goal: " + goalString);
+      return;
     }
     Predicate goalPred = Factory.createPredicate(goalString);
     initGoals.add(goalPred);
