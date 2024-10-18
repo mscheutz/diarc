@@ -29,7 +29,15 @@ const ManagePresets: React.FC<Props> = (
 
     //@ts-ignore
     const submitCallback = (e: MouseEvent<HTMLButtonElement, MouseEvent>) => {
-        console.log("submit", e.target.id)
+        sendMessage(JSON.stringify(
+            {
+                type: "custom",
+                formData: {
+                    custom: e.target.id.slice(1) // get rid of starting 's' char
+                },
+                path: path
+            }
+        ));
     }
     //@ts-ignore
     const deleteCallback = (e: MouseEvent<HTMLButtonElement, MouseEvent>) => {
