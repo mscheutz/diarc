@@ -95,8 +95,13 @@ const ActionForm: React.FC<Props> = ({
                 : <div className="py-2">No action selected.</div>
         );
     };
-    const onSaveGenerate = () => {
-        // TODO
+    const onSaveGenerated = (data: any) => {
+        let action: string = actionFormContext[0] + "(";
+        for(let i = 1; i < actionFormContext.length - 1; i++)
+            action += data[actionFormContext[i]] + ",";
+        action += data[actionFormContext[actionFormContext.length - 1]] + ")";
+        addToStorage(action);
+        window.dispatchEvent(new Event("localStorage"));
     }
     const onSubmitGenerated = (data: any) => {
         setSubmissionStatus("wait");
@@ -172,7 +177,7 @@ const ActionForm: React.FC<Props> = ({
                         <button
                             type="button"
                             className={submitClassName + " grow"}
-                            onClick={() => console.log("hello")}>
+                            onClick={generated.handleSubmit(onSaveGenerated)}>
                             Save preset
                         </button>
                         <input type="submit" value="Submit"
