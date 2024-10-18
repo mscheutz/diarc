@@ -63,8 +63,8 @@ const ActionForm: React.FC<Props> = ({
     const onSaveCustom = useCallback(() => {
         const action: string = custom.getValues("custom");
         addToStorage(action);
-        console.log(window.localStorage.getItem(LOCAL_STORAGE_KEY));
-    }, []);
+        window.dispatchEvent(new Event("localStorage"));
+    }, [custom]);
     const onSubmitCustom = (data: any) => {
         setSubmissionStatus("wait");
         sendMessage(JSON.stringify(
@@ -185,7 +185,7 @@ const ActionForm: React.FC<Props> = ({
 
                 {/* Still show submission status even when
                     no actions are selected */}
-                {actionFormContext.length == 0
+                {actionFormContext.length === 0
                     && <SubmissionStatusIndicator status={submissionStatus} />}
             </form>
         </div>

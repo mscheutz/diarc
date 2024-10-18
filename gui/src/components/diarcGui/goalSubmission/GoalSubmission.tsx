@@ -14,6 +14,7 @@ import GoalForm from "./GoalForm";
 import ActionFormContext from "./ActionFormContext";
 import ConnectionIndicator from "../util/ConnectionIndicator";
 import ActionDatabase from "./ActionDatabase";
+import ManagePresets from "./ManagePresets";
 
 type Props = {
     path: string,
@@ -136,22 +137,14 @@ const GoalSubmission: React.FC<Props> = ({
                     </TabList>
 
                     <TabPanel className="hidden flex-col min-h-0 grow">
-                        <Allotment
-                            className="h-full overflow-scroll border border-1 md:block
-                               border-[#d1dbe3] shadow-md rounded-md hidden"
-                            minSize={150}
-                            snap>
-                            {/*TODO: left off here adding the ManagePresets
-                            into a vertical allotment*/}
-                            <ActionDatabase
-                                actionList={actionList}
-                                setActionFormContext={setActionFormContext}
-                                setSelectedIds={setSelectedIds}
-                                filterNodes={filterNodes}
-                                handleExport={handleExport}
-                                exportStatus={exportStatus}
-                            />
-                        </Allotment>
+                        <ActionDatabase
+                            actionList={actionList}
+                            setActionFormContext={setActionFormContext}
+                            setSelectedIds={setSelectedIds}
+                            filterNodes={filterNodes}
+                            handleExport={handleExport}
+                            exportStatus={exportStatus}
+                        />
                     </TabPanel>
                     <TabPanel className="hidden flex-col min-h-0 grow">
                         <div className="w-full h-full overflow-y-auto">
@@ -188,14 +181,35 @@ const GoalSubmission: React.FC<Props> = ({
                         preferredSize={"50%"}
                         minSize={350}
                         className="flex flex-col">
-                        <ActionDatabase
-                            actionList={actionList}
-                            setActionFormContext={setActionFormContext}
-                            setSelectedIds={setSelectedIds}
-                            filterNodes={filterNodes}
-                            handleExport={handleExport}
-                            exportStatus={exportStatus}
-                        />
+                        <Allotment
+                            className="h-full overflow-scroll border border-1 md:block
+                               border-[#d1dbe3] shadow-md rounded-md hidden"
+                            minSize={150}
+                            vertical={true}
+                            snap>
+                            <Allotment.Pane
+                                preferredSize={"65%"}
+                                minSize={350}
+                                className="flex flex-col">
+                                <ActionDatabase
+                                    actionList={actionList}
+                                    setActionFormContext={setActionFormContext}
+                                    setSelectedIds={setSelectedIds}
+                                    filterNodes={filterNodes}
+                                    handleExport={handleExport}
+                                    exportStatus={exportStatus}
+                                />
+                            </Allotment.Pane>
+                            <Allotment.Pane
+                                preferredSize={"35%"}
+                                minSize={150}
+                                className="flex flex-col">
+                                <p className="p-2 text-lg border-b border-[#d1dbe3]">Manage Presets</p>
+                                <ManagePresets
+                                    sendMessage={sendMessage}
+                                    path={path}/>
+                            </Allotment.Pane>
+                        </Allotment>
                     </Allotment.Pane>
 
                     {/* Right pane */}

@@ -1,7 +1,8 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 
-import {useLocalStorage} from "@uidotdev/usehooks";
 import {SendMessage} from "react-use-websocket";
+import {LOCAL_STORAGE_KEY} from "../util/constants";
+import {Button} from "../../Button";
 
 type Props = {
     sendMessage: SendMessage,
@@ -17,16 +18,51 @@ type Props = {
 const ManagePresets: React.FC<Props> = (
     {sendMessage, path}
 ) => {
-    const [presetsJSON, setPresetsJSON] = useLocalStorage(
-        "goalSubmissionPresets", "[]");
+    const [presetsJSON, setPresetsJSON] = useState<string>("[]");
+    useEffect(() => {
+        setPresetsJSON(localStorage.getItem(LOCAL_STORAGE_KEY) ?? "[]");
+    }, []);
+    window.addEventListener("localStorage", () => {
+        setPresetsJSON(localStorage.getItem(LOCAL_STORAGE_KEY) ?? "[]");
+    });
     const presets: string[] = JSON.parse(presetsJSON);
 
-    // TODO: left off here testing ManagePresets
+    //@ts-ignore
+    const submitCallback = (e: MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        console.log("submit", e.target.id)
+    }
+    //@ts-ignore
+    const deleteCallback = (e: MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        const id: string = e.target.id.slice(1); // get rid of starting 'd' char
+        const removed: string[] = presets.filter((value) => value !== id);
+        const newJSON: string = JSON.stringify(removed);
+        localStorage.setItem(LOCAL_STORAGE_KEY, newJSON);
+        setPresetsJSON(newJSON);
+    }
+
     return (
-        <div>
+        <div className="flex flex-col overflow-auto">
             {presets.map((value, index) =>
-                <div key={index}>
-                    value
+                <div
+                    key={index}
+                    className="p-1 flex flex-row items-center justify-between
+                               even:bg-slate-200"
+                >
+                    <p className="font-mono px-1">{value}</p>
+                    <div className="flex flex-row gap-2">
+                        <Button
+                            onClick={submitCallback}
+                            id={"s" + value}
+                        >
+                            Submit
+                        </Button>
+                        <Button
+                            onClick={deleteCallback}
+                            id={"d" + value}
+                        >
+                            Delete
+                        </Button>
+                    </div>
                 </div>
             )}
         </div>
