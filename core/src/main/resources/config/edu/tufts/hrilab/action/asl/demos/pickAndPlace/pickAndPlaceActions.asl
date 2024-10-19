@@ -554,3 +554,13 @@ import java.lang.Integer;
         act:reportNoPendingGoal();
     }
 }
+
+() = describeCurrentPose() {
+    Symbol !armPose;
+    Symbol !descriptor;
+
+    !armPose = act:getCurrentLocation();
+    !descriptor = tsc:getDescriptorForPoseID(!armPose);
+
+    act:reportCurrentPose(!descriptor);
+}

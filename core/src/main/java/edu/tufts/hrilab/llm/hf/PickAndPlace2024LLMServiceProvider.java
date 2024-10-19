@@ -157,6 +157,20 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         Matcher m = outputPattern.matcher(responseString);
         if (!m.matches()) {
             log.error("[parseNLGCompletionResponse] cannot find Output field in LLM response");
+            try {
+                Predicate semantics = (Predicate) outgoingUtterance.getSemantics();
+                if (semantics.getName().equals("doYouMean")) {
+                    ////Forgot this never actually worked with SimpleNLG
+                    ////Go from doYouMean semantics back to mean semantics for SimpleNLG
+                    //Predicate innerSemantics = (Predicate) semantics.get(1);
+                    //innerSemantics = Factory.createPredicate(innerSemantics.getName(), innerSemantics.get(0), innerSemantics.get(1), innerSemantics.get(2));
+                    //outgoingUtterance.setSemantics(Factory.createPredicate("mean", semantics.get(0), innerSemantics));
+                    //return nlg.convertSemanticsToText(outgoingUtterance);
+                    return outgoingUtterance;
+                }
+            } catch (Exception e) {
+                log.error("[llmChatCompletionHelper] exception attempting to transform doYouMean semantics to original form for backup SimpleNLG");
+            }
             return nlg.convertSemanticsToText(outgoingUtterance);
         }
         String output = m.group(m.groupCount());

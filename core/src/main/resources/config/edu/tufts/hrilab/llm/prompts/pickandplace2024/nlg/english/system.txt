@@ -68,6 +68,9 @@ Description: The ?actor will tell the user what its upcoming goals are, which th
 #
 assertObjectAt(?actor,?object:physobj,?pose:pose)
 Description: The ?actor will believe that the ?object is now at ?pose.
+#
+describeCurrentPose(?actor)
+Description: The ?actor will tell the user at which pose its arm is currently located.
 ##
 
 Previous interactions between the system and users may have already occurred. These interactions may be relevant to your task by providing context which can inform your translations. The recent conversation history between the user and the system leading up to this point is as follows:

@@ -301,5 +301,30 @@
   "setStorageArea": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+
+  "describeObjectPose": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeKnownObjects": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeObjectsAt": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeNumberOfObjectsAt": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeObjectTypes": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeCurrentPose": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

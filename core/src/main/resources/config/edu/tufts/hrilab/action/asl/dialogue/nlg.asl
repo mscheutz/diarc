@@ -181,7 +181,7 @@ import java.util.Map;
     // communicate utterance (which also updates dialogue history)
     // call asynchronously so that the waitForResponse is called asap so we don't miss any responses
     async {
-      act:communicateUtterance(!utterance);
+      act:communicateUtterance(?utterance);
     }
 
     // wait for response - default duration is -1, which means block indefinitely

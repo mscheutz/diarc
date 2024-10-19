@@ -8,6 +8,7 @@ import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.interfaces.NLGInterface;
 import edu.tufts.hrilab.interfaces.NLUInterface;
@@ -212,6 +213,20 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
         if (response == null) {
             if (!parsing) {
                 log.warn("[llmParserService] have null response from LLMComponent, using SimpleNLG as a fallback");
+                try {
+                    Predicate semantics = (Predicate) utterance.getSemantics();
+                    if (semantics.getName().equals("doYouMean")) {
+                        ////Forgot this never actually worked with SimpleNLG
+                        ////Go from doYouMean semantics back to mean semantics for SimpleNLG
+                        //Predicate innerSemantics = (Predicate) semantics.get(1);
+                        //innerSemantics = Factory.createPredicate(innerSemantics.getName(), innerSemantics.get(0), innerSemantics.get(1), innerSemantics.get(2));
+                        //utterance.setSemantics(Factory.createPredicate("mean", semantics.get(0), innerSemantics));
+                        //return nlg.convertSemanticsToText(utterance);
+                        return utterance;
+                    }
+                } catch (Exception e) {
+                    log.error("[llmChatCompletionHelper] exception attempting to transform doYouMean semantics to original form for backup SimpleNLG");
+                }
                 return nlg.convertSemanticsToText(utterance);
             } else {
                 log.warn("[llmParserService] have null response from LLMComponent, failing parse");

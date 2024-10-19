@@ -224,6 +224,11 @@ Example 42:
 Input: swap the red block and the yellow block
 Output: {"Semantics":"swapObjects(robotone:agent,red block:physobj,yellow block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
+Example 43:
+#
+Input: where are you now
+Output: {"Semantics":"describeCurrentPose(robotone:agent)","Input Type":"INSTRUCT","Confidence":"100"}
+##
 ###
 
 Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with the Output json as shown in the examples. The new input you are tasked with translating is:

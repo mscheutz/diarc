@@ -128,3 +128,11 @@ import java.util.Map;
 () = reportNoPendingGoal() {
    act:generateResponseFromString("並んでいるゴールはありません");
 }
+
+() = reportCurrentPose(Symbol ?armPose) {
+    String !poseDescriptorJapanese;
+    !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
+
+   //TODO: get translation
+   //act:generateResponseFromString("I am currently at ?armPose");
+}

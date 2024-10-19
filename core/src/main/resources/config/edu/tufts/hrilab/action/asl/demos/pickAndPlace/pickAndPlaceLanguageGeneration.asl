@@ -104,3 +104,7 @@ import java.util.Map;
 () = reportNoPendingGoal() {
    act:generateResponseFromString("no pending goals");
 }
+
+() = reportCurrentPose(Symbol ?armPose) {
+   act:generateResponseFromString("I am currently at ?armPose");
+}
