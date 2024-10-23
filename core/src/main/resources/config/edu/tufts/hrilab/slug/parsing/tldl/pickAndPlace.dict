@@ -279,3 +279,5 @@ robot 1; ADDRESSABLE; robotone:agent
 hi; G ; hi
 hi there; G ; hi_there
 hello; G ; hello
+
+init; C; init(?ADDRESSEE)
