@@ -110,7 +110,7 @@ import java.util.List;
     }
 }
 
-() = assertObjectAt(Symbol ?object, Symbol ?pose) {
+() = believeObjectAt(Symbol ?object, Symbol ?pose) {
     Predicate !fact;
     Symbol !holding;
 

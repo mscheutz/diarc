@@ -1,0 +1,228 @@
+Please respond with three pieces of information corresponding to the user input that I will provide after fully giving instructions. First, I would like to know the equivalent semantic form understandable by the system. Second, I would like to know the type of input as categorized by the system. Lastly, I would like a confidence value ranging between 0-100 for how confident you are that your output is a correct representation of the user's input. As an example, given the semantics exampleSemantics(exampleArguments), input type VAL, and confidence value 80, I would like the results in the following format:
+
+{"Semantics":"exampleSemantics(exampleArguments)","Input Type":"VAL","Confidence":"80"}
+
+A confidence value below 50 will indicate to the user that you do not believe there is a matching valid parse of the user's input, or that the input is ambiguous enough that it could possibly mean multiple different things. A value increasing above 50 shows that you are confident in your result and don't believe there is any ambiguity.
+
+When producing your translation, perform the task in a sequence of steps:
+1. Determine the intent of the users input.
+2. Determine the correct Input Type of the users input.
+3. Using the Input Type to narrow down the possible candidates, match the intent produced in step 1 with the Semantics whose description is most similar to that intent.
+4. Populate the Semantics of the chosen entry from Step 3 with arguments from the input.
+5. Assign a confidence to your result based on how clear the input is and how similar the produced intent and matched description are.
+6. Create the output json with all the details gathered from steps 2 through 5.
+7. Double check your work, making sure the following rules were properly followed:
+    a. All arguments in your output semantics must correctly adhere to any type restrictions. If an argument in the semantics has a type (for example :physobj), then the chosen value populating that argument must be in the provided physobj list. No exceptions. Do not include any arguments not present in the provided list. If an ambiguous object is used as an argument, look for similar semantics which do not use that argument.
+    b. Similarly, do not assume a value for an argument which is not explicitly referenced in the instruction. For example, if the user asks for something to happen, then do not assume that it is occurring at a certain pose and use semantics including a pose.
+    c. Make sure that your semantics have balanced syntax. Specifically, make sure that your semantics have the same number of open parentheses and close parentheses. If you have missing trailing ), then regenerate your semantics to have the correct form.
+    d. Make sure that the chosen semantics are actually present in the provided semantics list. Do not make up new semantics which match the input if they are not present in the provided list.
+    e. Make sure that the chosen semantics and input type match when referring back to the provided semantics list.
+If you find any of the issues in step 7, correct or regenerate your output until all the rules are properly followed. Examples of this task being performed with written out explanations of each step are as follows:
+###
+Example 1:
+Input: "open your gripper"
+1. The user is asking the robot to open its gripper
+2. The user is requesting an action be performed, therefore the input type is INSTRUCT
+3. Looking under the INSTRUCT semantics, the intent matches the description of openGripper(?actor)
+4. There are no arguments to be populated
+5. The default language for openGripper(?actor) matches the input exactly, so confidence is 100
+6. {"Semantics":"openGripper(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+7a. There are no arguments
+7b. No ghost arguments have been added
+7c. The syntax is balanced
+7d. The semantics are present in the supplied list
+7e. Everything matches
+Output: {"Semantics":"openGripper(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Example 2:
+Input: "pick up the block"
+1. The user is instructing the robot to pick up the block
+2. The user is requesting an action be performed, therefore the input type is INSTRUCT
+3. Looking under the INSTRUCT semantics, the intent matches the description of pickUp(?actor) and pickUp(?actor,?object:physobj)
+4. populating ?actor and ?object leads to pickUp(robotone,block:physobj)
+5. The language and intent are very similar, so confidence is 90
+6. {"Semantics":"pickUp(robotone,block:physobj)","Input Type":"INSTRUCT","Confidence":"90"}
+7a. I realize I made a mistake, "block" is not a valid physobj listed in the domain. Therefore the produced syntax is invalid. The term "block" may have been used as a general descriptor for the object the robot is supposed to pick up, but it could apply to a number of different objects. I will choose the less specific "pickup(?actor)" semantics when regenerating my output to fix this issue.
+7b. I have not added arguments not included in the instruction
+7c. The semantics have balanced syntax
+7d. The chosen semantics are present in the supplied list
+7e. Everything matches
+Output: {"Semantics":"pickUp(robotone)","Input Type":"INSTRUCT","Confidence":"70"}
+
+Example 3:
+Input: "I took the orange block and moved it to location three"
+1. The user is telling the robot that they moved the orange block from wherever it originally was to pose location three.
+2. The user is conveying knowledge to the system, therefore the input type is STATEMENT
+3. Looking under the STATEMENT semantics, the users intent most closely matches the description of believeObjectAt(?actor,?object:physobj,?pose:pose). The important part of the statement, is that the orange block is now at a new location.
+4. Populating the arguments produces believeObjectAt(robotone,orange block:physobj,locationThree:pose)
+5. The language used is novel and there is additional information conveyed, but the intent fully covers the statement's description and does not match any other statement, so the confidence is 75.
+6. {"Semantics":"believeObjectAt(robotone,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"75"}
+7a. orange block is a listed physobj and locationThree is a listed pose
+7b. No ghost arguments have been added
+7c. The syntax is balanced
+7d. The semantics are present in the supplied list
+7e. Everything matches
+Output: {"Semantics":"believeObjectAt(robotone,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"75"}
+
+Example 4:
+Input: "the green block is no longer at location four"
+1. The user is conveying knowledge that an object is not at a location
+2. The user is conveying knowledge, so the input type is a STATEMENT
+3. The intent very closely matches the description of "not(at(?object:physobj,?pose:pose))" (the description is "The user is telling the system that the object ?object is not at pose ?pose. There is no indication of where the ?object has gone.")
+4. The arguments given in the instruction are "green block" and "location four". Choosing the closest matches from the supplied list, we have "green block" and "locationFour". Populating the semantics gives not(at(green block,locationFour)).
+5. The instruction seems fairly straightforward and matches the description of a known semantics closely, I will give it a confidence of 100.
+6. The resulting output is {"Semantics":"not(at(green block:physobj,locationFour:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+7a. green block is a listed physobj and locationFour is a listed pose
+7b. No ghost arguments have been added
+7c. I realize I made a mistake when combining my results to produce the final output. The generated semantics have mismatched parentheses. In the populated semantics, I mistakenly left out a trailing parenthesis.
+7d. The semantics are present in the supplied list
+7e. I made another mistake, I accidentally switched from STATEMENT input type to INSTRUCT. There is no entry for not(at(?object:physobj,?pose:pose)) under the list of INSTRUCT inputs. The Input Type must be reverted.
+Output: {"Semantics":"not(at(green block:physobj,locationFour:pose))","Input Type":"STATEMENT","Confidence":"100"}
+
+Example 5:
+Input: "get me the object at location one"
+1. The intent of the user is fairly ambiguous in this case. The most straightforward assumption is that the user is asking the robot to bring them the object currently at location one
+2. The user is instructing an action, therefore the input type is INSTRUCT
+3. The chosen intent does not directly match any description of any listed semantics. Other possible intents could be that the user is asking the robot to get an object to location one, or that the robot should pick up the object which is at location one. The first possibility maps to getObjectTo(?actor,?object:physobj,?destination:pose). The second to pickUp(?actor), assuming the agent is currently at location one.
+4. The populated semantics for the two new options would be getObjectTo(robotone,object:physobj,locationOne:pose) and pickUp(robotone)
+5. It is unclear which semantics to choose. We do now know if the robot is at location one, so we will choose the other option and set confidence to 60.
+6. The resulting output is {"Semantics":"getObjectTo(robotone,object:physobj,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"60"}
+7a. object is not a listed physobj, the chosen semantics are invalid. There are no more remaining valid hypothesis to choose from. Confidence will be set to 0.
+7b. No ghost arguments have been added
+7c. The syntax is balanced
+7d. The semantics are present in the supplied list
+7e. Everything matches
+Output:{"Semantics":"getObjectTo(robotone,object:physobj,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"0"}
+###
+
+Examples of this task being performed correctly without written out explanations of each step is as follows:
+
+Input: Can you please navigate to location one
+Output: {"Semantics":"goToPose(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: let me know what is at location one
+Output: {"Semantics":"describeObjectsAt(robtone:agent,locationOne:pose)","Input Type":"QUESTION","Confidence":"80"}
+
+Input: I took the red block and moved it to location two
+Output: {"Semantics":"believeObjectAt(robotone,red block:physobj,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"80"}
+
+Input: the red one
+Output: {"Semantics":"objectType(red block:physobj)","Input Type":"REPLY","Confidence": 90"}
+
+Input: pick up the block
+Output: {"Semantics":"pickUp(robotone)","Input Type":"INSTRUCT","Confidence":"70"}
+
+Input: open gripper
+Output: {"Semantics":"openGripper(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: close gripper
+Output: {"Semantics":"closeGripper(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: detect the red block
+Output: {"Semantics":"perceiveObject(robotone, red block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: pick up the block
+Output: {"Semantics":"pickUp(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: pick up the green block
+Output: {"Semantics":"pickUp(robotone,green block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: put down the block
+Output: {"Semantics":"putDown(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: put down the red block
+Output: {"Semantics":"putDown(robotone,red block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: move the yellow block from location one to location two
+Output: {"Semantics":"moveObjectTo(robotone,yellow block:physobj,locationOne:pose,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: place the orange block at location three
+Output: {"Semantics":"moveObjectTo(robotone,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: place the block down at location one
+Output: {"Semantics":"moveObjectTo(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: get the red block to location two
+Output: {"Semantics":"getObjectTo(robotone,red block:physobj,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: suspend current task
+Output: {"Semantics":"suspendSystemGoals(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: resume current task
+Output: {"Semantics":"resumeSystemGoals(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: cancel current task
+Output: {"Semantics":"cancelSystemGoals(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: cancel all tasks
+Output: {"Semantics":"cancelAllCurrentGoals(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: the green block is not at location two
+Output: {"Semantics":"not(at(green block:physobj,locationTwo:pose))","Input Type":"STATEMENT","Confidence":"100"}
+
+Input: eric is trusted
+Output: {"Semantics":"trusted(eric)","Input Type":"STATEMENT","Confidence":"100"}
+
+Input: eric is a supervisor
+Output: {"Semantics":"supervisor(eric)","Input Type":"STATEMENT","Confidence":"100"}
+
+Input: pete is not an admin
+Output: {"Semantics":"not(admin(pete))","Input Type":"STATEMENT","Confidence":"100"}
+
+Input: where is the red block
+Output: {"Semantics":"describeObjectPose(robotone,red block:physobj)","Input Type":"QUESTION","Confidence":"100"}
+
+Input: what are the locations of all the blocks
+Output: {"Semantics":"describeKnownObjects(robotone)","Input Type":"QUESTION","Confidence":"100"}
+
+Input: how many objects are at location two
+Output: {"Semantics":"describeNumberOfObjectsAt(robotone,locationTwo:pose)","Input Type":"QUESTION","Confidence":"100"}
+
+Input: are any objects at location three
+Output: {"Semantics":"objectsAt(locationThree:pose)","Input Type":"QUESTION","Confidence":"100"}
+
+Input: is yellow block at location four
+Output: {"Semantics":"at(yellow block:physobj,locationFour:pose)","Input Type":"QUESTION","Confidence":"100"}
+
+Input: do you see the red block
+Output: {"Semantics":"see(red block:physobj)","Input Type":"QUESTION","Confidence":"100"}
+
+Input: do you know how to put down the red block
+Output: {"Semantics":"knowHow(robotone,to(putDown(robotone,red block:physobj)))","Input Type":"QUESTION","Confidence":"100"}
+
+Input: what is your current task
+Output: {"Semantics":"describeCurrentGoal(robotone)","Input Type":"QUESTION","Confidence":"100"}
+
+Input: what are your pending tasks
+Output: {"Semantics":"describePendingGoals(robotone)","Input Type":"QUESTION","Confidence":"100"}
+
+Input: nevermind
+Output: {"Semantics":"abort(question)","Input Type":"REPLY","Confidence":"100"}
+
+Input: no object
+Output: {"Semantics":"objectType(none)","Input Type":"REPLY","Confidence":"100"}
+
+Input: nowhere
+Output: {"Semantics":"pose(none)","Input Type":"REPLY","Confidence":"100"}
+
+Input: yes
+Output: {"Semantics":"val(yes)","Input Type":"REPLY","Confidence":"100"}
+
+Input: no
+Output: {"Semantics":"val(no)","Input Type":"REPLY","Confidence":"100"}
+
+Input: swap the red block and the yellow block
+Output: {"Semantics":"swapObjects(robotone,red block:physobj,yellow block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
+
+Input: where are you now
+Output: {"Semantics":"describeCurrentPose(robotone)","Input Type":"QUESTION","Confidence":"100"}
+
+Input: is eric a supervisor
+Output: {"Semantics":"know(robotone,supervisor(eric))","Input Type":"QUESTION","Confidence":"100"}
+
+Input: is eric an admin
+Output: {"Semantics":"know(robotone,admin(eric))","Input Type":"QUESTION","Confidence":"100"}
+###
+
+Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Think through your translation explicitly by following steps 1 through 7e and showing your work as in the first five provided examples. Then respond ending with the Output json as shown in the examples. The new input you are tasked with translating is:
+Input: "%input"

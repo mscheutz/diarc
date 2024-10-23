@@ -18,18 +18,19 @@ import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
-    Prompt nluSystemPrompt = Prompts.getPrompt("pickandplace2024/nlu/english/system");;
-    Prompt nluUserPrompt = Prompts.getPrompt("pickandplace2024/nlu/english/user");
-    Prompt nlgSystemPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/system");
+    Prompt nluSystemPrompt = Prompts.getPrompt("pickandplace2024/nlu/systemv3");
+    Prompt nluUserPrompt = Prompts.getPrompt("pickandplace2024/nlu/english/userv3");
+    Prompt nlgSystemPrompt = Prompts.getPrompt("pickandplace2024/nlg/system");
     Prompt nlgUserPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/user");
     Prompt validationPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/validation");
+    private String language = "English";
+    private boolean v2 = true;
 
     @Override
     protected List<Option> additionalUsageInfo() {
@@ -42,92 +43,158 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     protected void parseArgs (CommandLine cmdLine) {
         super.parseArgs(cmdLine);
         if (cmdLine.hasOption("japanese")) {
-            nluSystemPrompt = Prompts.getPrompt("pickandplace2024/nlu/japanese/system");;
-            nluUserPrompt = Prompts.getPrompt("pickandplace2024/nlu/japanese/user");
-            nlgSystemPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/system");
+            nluSystemPrompt = Prompts.getPrompt("pickandplace2024/nlu/systemv3");
+            nluUserPrompt = Prompts.getPrompt("pickandplace2024/nlu/japanese/userv3");
+            nlgSystemPrompt = Prompts.getPrompt("pickandplace2024/nlg/system");
             nlgUserPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/user");
             validationPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/validation");
+            language = "Japanese";
         }
     }
 
     @Override
     public Utterance parseNLUCompletionResponse(Utterance incomingUtterance, Completion llmResponse) {
-        Utterance.Builder output = new Utterance.Builder(incomingUtterance);
-        log.info(llmResponse.getText());
-        String responseString = llmResponse.getText();
-
-        Pattern semanticsPattern = Pattern.compile(".*\"?Semantics\"?\\s*:\\s*\"?(.*)\"?,\\s*\"?Input Type\"?:.*", Pattern.DOTALL);
-        Matcher m = semanticsPattern.matcher(responseString);
-        if (!m.matches()) {
-            log.error("[spotPickAndPlaceLLMParser] cannot find Semantics result in LLM response");
-            return incomingUtterance;
-        }
-        Predicate semantics = Factory.createPredicate(m.group(m.groupCount()));
-        String semanticsString = semantics.toString();
-        List<String> argsStrings = getArgsAsStrings(semantics);
-
-        Pattern typePattern = Pattern.compile(".*\"?Input Type\"?\\s*:\\s*\"?(.*?)\"?,\\s*\"?Confidence\"?:.*", Pattern.DOTALL);
-        m = typePattern.matcher(responseString);
-        if (!m.matches()) {
-            log.error("[spotPickAndPlaceLLMParser] cannot find Input Type result in LLM response");
-            return incomingUtterance;
-        }
-        UtteranceType utteranceType;
         try {
-            utteranceType = UtteranceType.valueOf(m.group(m.groupCount()).trim());
-        } catch (IllegalArgumentException e) {
-            log.error("[spotPickAndPlaceLLMParser] generated Input Type {} invalid", m.group(m.groupCount()));
-            return incomingUtterance;
-        }
+            Utterance.Builder output = new Utterance.Builder(incomingUtterance);
+            log.info(llmResponse.getText());
+            String responseString = llmResponse.getText();
 
-        Pattern confidencePattern = Pattern.compile(".*\"?Confidence\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL);
-        m = confidencePattern.matcher(responseString);
-        if (!m.matches()) {
-            log.error("[spotPickAndPlaceLLMParser] cannot find Confidence result in LLM response");
-            return incomingUtterance;
-        }
-        String confidenceString = m.group(m.groupCount()).trim();
-        int confidence = Integer.parseInt(confidenceString);
-        if (confidence < 50) {
-            log.info("[spotPickAndPlaceLLMServiceProvider] llm indicated parse result as low confidence ({})", confidence);
-            //TODO: start conversation and recovery dialogue?
-            //      Cache result so that script can be entered based on utterance/agent/something?
-            return incomingUtterance;
-        }
-
-        output.setUtteranceType(utteranceType);
-
-        int varIndex = 0;
-        Map<Symbol,Variable> varMap = new LinkedHashMap<>();
-        for (String arg : argsStrings) {
-            if (arg.startsWith("?")) {
-                log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}",responseString);
+            Pattern semanticsPattern = Pattern.compile(".*\"?Semantics\"?\\s*:\\s*\"?(.*)\"?,\\s*\"?Input Type\"?:.*", Pattern.DOTALL);
+            Matcher m = semanticsPattern.matcher(responseString);
+            if (!m.matches()) {
+                log.error("[spotPickAndPlaceLLMParser] cannot find Semantics result in LLM response");
                 return incomingUtterance;
             }
-            Symbol argSymbol = Factory.createFOL(arg);
-            //Should generally be any reference, just know in this case all references will be locations
-            if (argSymbol != null && (argSymbol.getType().equals("pose") || argSymbol.getType().equals("physobj"))) {
-                if (!varMap.containsKey(argSymbol)) {
-                    Variable var = Factory.createVariable("VAR" + varIndex++ + ":" + argSymbol.getType());
-                    varMap.put(argSymbol, var);
+            Predicate semantics = Factory.createPredicate(m.group(m.groupCount()));
+            String semanticsString = semantics.toString();
+            List<String> argsStrings = getArgsAsStrings(semantics);
+
+            Pattern typePattern = Pattern.compile(".*\"?Input Type\"?\\s*:\\s*\"?(.*?)\"?,\\s*\"?Confidence\"?:.*", Pattern.DOTALL);
+            m = typePattern.matcher(responseString);
+            if (!m.matches()) {
+                log.error("[spotPickAndPlaceLLMParser] cannot find Input Type result in LLM response");
+                return incomingUtterance;
+            }
+            UtteranceType utteranceType;
+            try {
+                utteranceType = UtteranceType.valueOf(m.group(m.groupCount()).trim());
+            } catch (IllegalArgumentException e) {
+                log.error("[spotPickAndPlaceLLMParser] generated Input Type {} invalid", m.group(m.groupCount()));
+                return incomingUtterance;
+            }
+
+            Pattern confidencePattern = Pattern.compile(".*\"?Confidence\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL);
+            m = confidencePattern.matcher(responseString);
+            if (!m.matches()) {
+                log.error("[spotPickAndPlaceLLMParser] cannot find Confidence result in LLM response");
+                return incomingUtterance;
+            }
+            String confidenceString = m.group(m.groupCount()).trim();
+            int confidence = Integer.parseInt(confidenceString);
+            if (confidence < 50) {
+                log.info("[spotPickAndPlaceLLMServiceProvider] llm indicated parse result as low confidence ({})", confidence);
+                //TODO: start conversation and recovery dialogue?
+                //      Cache result so that script can be entered based on utterance/agent/something?
+                return incomingUtterance;
+            }
+
+            output.setUtteranceType(utteranceType);
+
+            int varIndex = 0;
+            Map<Symbol, Variable> varMap = new LinkedHashMap<>();
+            for (String arg : argsStrings) {
+                if (arg.startsWith("?")) {
+                    log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}", responseString);
+                    return incomingUtterance;
+                }
+                Symbol argSymbol;
+                Map<String, String> descriptorTypes = getKnownDescriptorTypes();
+                if (descriptorTypes.containsKey(arg)) {
+                    //v2 only
+                    argSymbol = Factory.createSymbol(arg, descriptorTypes.get(arg));
+                } else {
+                    argSymbol = Factory.createFOL(arg);
+                }
+
+                //Should generally be any reference, just know in this case all references will be locations
+                if (argSymbol != null && (argSymbol.getType().equals("pose") || argSymbol.getType().equals("physobj"))) {
+                    if (!varMap.containsKey(argSymbol)) {
+                        Variable var = Factory.createVariable("VAR" + varIndex++ + ":" + argSymbol.getType());
+                        varMap.put(argSymbol, var);
+                    }
                 }
             }
+
+            for (Map.Entry<Symbol, Variable> entry : varMap.entrySet()) {
+                if (v2) {
+                    semanticsString = semanticsString.replace(entry.getKey().getName(), entry.getValue().toString());
+                } else {
+                    semanticsString = semanticsString.replace(entry.getKey().toString(), entry.getValue().toString());
+                }
+                output.addSupplementalSemantics(Factory.createPredicate(entry.getKey().toUntypedString(), entry.getValue()));
+
+                Symbol tier = Factory.createSymbol("DEFINITE");
+                output.addTierAssignment(entry.getValue(), tier);
+            }
+
+            if (v2 && utteranceType == UtteranceType.INSTRUCT) {
+                semanticsString = semanticsString.replaceFirst("\\(", "(robotone,");
+                if (semanticsString.endsWith(",)")) {
+                    semanticsString = semanticsString.replace(",)", ")");
+                }
+            }
+            output.setSemantics(Factory.createPredicate(semanticsString));
+
+            output.setNeedsValidation(true);
+
+            Utterance result = output.build();
+            correctCommonNLUMistakes(result);
+            return result;
+        } catch (Exception e) {
+            log.warn("[parseNLUCompletionResponse]",e);
+            return incomingUtterance;
         }
-
-        for (Map.Entry<Symbol,Variable> entry : varMap.entrySet()) {
-            semanticsString = semanticsString.replace(entry.getKey().toString(), entry.getValue().toString());
-            output.addSupplementalSemantics(Factory.createPredicate(entry.getKey().toUntypedString(), entry.getValue()));
-
-            Symbol tier = Factory.createSymbol("DEFINITE");
-            output.addTierAssignment(entry.getValue(), tier);
-        }
-        output.setSemantics(Factory.createPredicate(semanticsString));
-
-        output.setNeedsValidation(true);
-
-        return output.build();
     }
 
+    private void correctCommonNLUMistakes(Utterance utterance) {
+        try {
+            String command = utterance.getSemantics().getName();
+            if (command.equals("believeObjectAt")) {
+                utterance.setType(UtteranceType.INSTRUCT);
+                if (v2) {
+                    List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
+                    args.add(0, Factory.createSymbol("robotone"));
+                    utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
+                }
+            } else if (command.startsWith("describe")) {
+                utterance.setType(UtteranceType.INSTRUCT);
+                if (v2) {
+                    List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
+                    args.add(0, Factory.createSymbol("robotone"));
+                    utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
+                }
+            } else if (command.equals("goTo")) {
+                List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
+                utterance.setSemantics(Factory.createPredicate("goToPose", args));
+            } else if (v2 && command.equals("knowHowTo")) {
+                List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
+                args.add(0, Factory.createSymbol("robotone"));
+                Term knownPredicate = (Term) args.remove(1);
+                List<Symbol> innerArgs = knownPredicate.getArgs();
+                innerArgs.add(0,Factory.createSymbol("robotone"));
+                args.add(Factory.createPredicate(knownPredicate.getName(), innerArgs));
+                utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
+            } else if (v2 && command.equals("see")) {
+                List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
+                args.add(0, Factory.createSymbol("robotone"));
+                utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
+            }
+            //TODO: manually check if parens match
+        } catch (Exception e) {
+            log.warn("[correctCommonNLUMistakes] unexpected semantics format");
+        }
+    }
+    //prag results: QUESTION(pete,robotone,[knowHow(robotone,to(getObjectTo(robotone,robotonephysobj_0:physobj,pose_0:pose)))],{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})
     private List<String> getArgsAsStrings(Symbol fol) {
         List<String> argsStrings = new ArrayList<>();
         if (fol.isPredicate()) {
@@ -186,14 +253,6 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         //Intercept Validation Question and use specific validation prompt
         String userMessage;
         Predicate semantics = (Predicate) utterance.getSemantics();
-        StringBuilder builder = new StringBuilder();
-        if (conversationHistory.isEmpty()) {
-            builder.append("<there is no conversation history>");
-        } else {
-            for (Utterance pastUtterance : conversationHistory) {
-                builder.append(pastUtterance.getSpeaker()).append(": ").append(pastUtterance.getWordsAsString()).append("\n");
-            }
-        }
 
         Map<String,String> promptVars = new HashMap<>();
         if (semantics.getName().equals("doYouMean")) {
@@ -207,17 +266,10 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             promptVars.put("%utterance", utterance.toString());
             userMessage = nlgUserPrompt.apply(promptVars);
         }
-
-        //TODO (same as NLU)
-        //Map<String,String> nlgSystemPromptParameters = new HashMap<>();
-        //////nlgSystemPromptParameters.put("%conversationHistory%",conversationHistory);
-        //chat.setSystem(nlgSystemPrompt.apply(nlgSystemPromptParameters));
-        //Map<String,String> nlgUserPromptParameters = new HashMap<>();
-        ////nlgUserPromptParameters.put("%utteranceSemantics%",utterance.getWordsAsString());
-        //chat.addUserMessage(nlgUserPrompt.apply(nlgUserPromptParameters));
-
+        
         promptVars = new HashMap<>();
-        promptVars.put("%conversationHistory", builder.toString());
+        promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
+        promptVars.put("%language", language);
         chat.setSystem(nlgSystemPrompt.apply(promptVars));
         chat.addUserMessage(userMessage);
 
@@ -259,29 +311,16 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         if (currentChat == null) {
             currentChat = new Chat();
         }
-
-        //TODO: I tried writing this prompt in a format which is closer to a general template which can have domain
-        //  specific information applied. Swap out information from the prompt with identifiers and apply parameters
-        //  rather than hardcode the information
-        //Map<String,String> nluSystemPromptParameters = new HashMap<>();
-        //////nluSystemPromptParameters.put("%conversationHistory%",conversationHistory);
-        //currentChat.setSystem(nluSystemPrompt.apply(nluSystemPromptParameters));
-        //Map<String,String> nluUserPromptParameters = new HashMap<>();
-        ////nluUserPromptParameters.put("%utteranceSemantics%",utterance.getWordsAsString());
-        //currentChat.addUserMessage(nluUserPrompt.apply(nluUserPromptParameters));
-        StringBuilder builder = new StringBuilder();
-        if (conversationHistory.isEmpty()) {
-            builder.append("<there is no conversation history>");
-        } else {
-            for (Utterance pastUtterance : conversationHistory) {
-                builder.append(pastUtterance.getSpeaker()).append(": ").append(pastUtterance.getWordsAsString()).append("\n");
-            }
-        }
+        
         Map<String,String> promptVars = new HashMap<>();
-        promptVars.put("%conversationHistory", builder.toString());
-
+        promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
+        promptVars.put("%objectList", getObjectListString());
+        promptVars.put("%locationList", getPoseListString());
+        promptVars.put("%worldState", getWorldStateString());
         currentChat.setSystem(nluSystemPrompt.apply(promptVars));
-        currentChat.addUserMessage(nluUserPrompt.getText() + utterance.getWordsAsString());
+        promptVars.clear();
+        promptVars.put("%input", utterance.getWordsAsString());
+        currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
 
         return currentChat;
     }
@@ -292,7 +331,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         Chat chat = new Chat();
         List<Utterance> conversationHistory = new ArrayList<>();
         Predicate semanticsPred = Factory.createPredicate(semantics);
-        Utterance utterance = new Utterance.Builder().setSemantics(semanticsPred).setIsInputUtterance(false).setUtteranceType(UtteranceType.REPLY).setSpeaker(Factory.createSymbol("robotone:agent")).setListener(Factory.createSymbol("pete")).build();
+        Utterance utterance = new Utterance.Builder().setSemantics(semanticsPred).setIsInputUtterance(false).setUtteranceType(UtteranceType.REPLY).setSpeaker(Factory.createSymbol("robotone")).setListener(Factory.createSymbol("pete")).build();
         chat = generateNLGChat(utterance, conversationHistory);
 
         // Call LLM to get Completion
@@ -311,6 +350,92 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         } catch (TRADEException e) {
             log.error("[testLLMNLGWithString] Error calling sayText", e);
         }
+    }
+
+    private String getConversationHistoryString(List<Utterance> conversationHistory) {
+        StringBuilder builder = new StringBuilder();
+        if (conversationHistory.isEmpty()) {
+            builder.append("<there is no conversation history>");
+        } else {
+            for (Utterance pastUtterance : conversationHistory) {
+                builder.append(pastUtterance.getSpeaker()).append(": ").append(pastUtterance.getWordsAsString()).append("\n");
+            }
+        }
+        return builder.toString();
+    }
+    
+    private String getObjectListString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("red block\n");
+        builder.append("blue block\n");
+        builder.append("green block\n");
+        builder.append("yellow block\n");
+        builder.append("orange block\n");
+        return builder.toString();
+    }
+
+    private String getPoseListString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("locationOne\n");
+        builder.append("locationTwo\n");
+        builder.append("locationThree\n");
+        builder.append("locationFour\n");
+        builder.append("locationFive\n");
+        return builder.toString();
+    }
+
+    private String getWorldStateString() {
+        ////If parser test
+        //return "Nothing is known by the robot";
+
+        StringBuilder builder = new StringBuilder();
+        Predicate query = Factory.createPredicate("at","X","Y");
+        List<Map<Variable, Symbol>> bindings;
+        String robotLocationString = "";
+        String holdingString = "";
+        try {
+            bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)).call(List.class,query);
+            for (Map<Variable, Symbol> binding : bindings) {
+                Symbol x = binding.get(new Variable("X"));
+                Symbol y = binding.get(new Variable("Y"));
+                Symbol object = TRADE.getAvailableService(new TRADEServiceConstraints().name("getDescriptorForID").argTypes(Symbol.class)).call(Symbol.class,x);
+                Symbol pose = TRADE.getAvailableService(new TRADEServiceConstraints().name("getDescriptorForPoseID").argTypes(Symbol.class)).call(Symbol.class,y);
+                if (object.getName().equals("none")) {
+                    robotLocationString = String.format("The robot is at %s. ",pose.getName());
+                } else {
+                    builder.append(String.format("There is a %s at %s. ",object.getName(),pose.getName()));
+                }
+            }
+
+            query = Factory.createPredicate("holding","X","Y");
+            bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)).call(List.class,query);
+            for (Map<Variable, Symbol> binding : bindings) {
+                Symbol y = binding.get(new Variable("Y"));
+                Symbol object = TRADE.getAvailableService(new TRADEServiceConstraints().name("getDescriptorForID").argTypes(Symbol.class)).call(Symbol.class,y);
+                holdingString = String.format("The robot is holding a %s. ", object);
+            }
+        } catch (TRADEException e) {
+            log.error("[getWorldState] ", e);
+            return "Nothing is known by the robot";
+        }
+
+        return robotLocationString + holdingString + builder;
+    }
+
+    private Map<String,String> getKnownDescriptorTypes() {
+        //TODO: update if new names are taught
+        Map<String,String> descriptors = new HashMap<>();
+        descriptors.put("red block", "physobj");
+        descriptors.put("blue block", "physobj");
+        descriptors.put("green block", "physobj");
+        descriptors.put("yellow block", "physobj");
+        descriptors.put("orange block", "physobj");
+        descriptors.put("locationOne", "pose");
+        descriptors.put("locationTwo", "pose");
+        descriptors.put("locationThree", "pose");
+        descriptors.put("locationFour", "pose");
+        descriptors.put("locationFive", "pose");
+        return descriptors;
     }
 
     //Hacky impl of getting japanese version of descriptors used in action scripts for TTS

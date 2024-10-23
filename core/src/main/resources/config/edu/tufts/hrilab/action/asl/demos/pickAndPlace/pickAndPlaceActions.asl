@@ -388,6 +388,10 @@ import java.lang.Integer;
     }
 }
 
+() = perceiveObject(edu.tufts.hrilab.fol.Symbol ?refID) {
+    act:perceiveEntity(?refID);
+}
+
 /////// ITK ///////
 () = describeObjectPose(Symbol ?object:physobj) {
     Symbol !objectPose;
