@@ -36,12 +36,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
   private ABBAreaConsultant areaConsultant;
   private ABBLocationConsultant locationConsultant;
   private boolean firebase;
-  private boolean test;
   public GoalManagerComponent gm;
-
-  public YumiFoodOrderingMock(boolean test) {
-    this.test = test;
-  }
 
   @Override
   public void runConfiguration() {
@@ -92,9 +87,6 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
 
     String gmArgs = "";
-    if (!test) {
-      gmArgs += "-editor -beliefg ";
-    }
     gmArgs +=
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager "
                     + "-diarcagent leftArm:yumi right:yumi human:mobileManipulator "
@@ -118,13 +110,8 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
 
     gm = createInstance(GoalManagerComponent.class, gmArgs);
 
-    if (test) {
-      untrustedSimSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech -nogui");
-      simSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker brad -config yumiFoodOrdering.simspeech -nogui");
-    } else {
-      createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech");
-      createInstance(SimSpeechRecognitionComponent.class, "-speaker brad -config yumiFoodOrdering.simspeech");
-    }
+    untrustedSimSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker front -config yumiFoodOrdering.simspeech -nogui");
+    simSpeechRec = createInstance(SimSpeechRecognitionComponent.class, "-speaker brad -config yumiFoodOrdering.simspeech -nogui");
   }
 
   @Override
@@ -138,12 +125,5 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
       log.error("[shutdownConfiguration] Error deregistering consultants", e);
     }
     super.shutdownConfiguration();
-  }
-
-  public static void main(String[] args) {
-    boolean test = false;
-    YumiFoodOrderingMock demoConfig = new YumiFoodOrderingMock(test);
-    demoConfig.runConfiguration();
-    //SpringApplication.run(GuiManager.class, args);
   }
 }

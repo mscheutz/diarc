@@ -5,7 +5,7 @@
 package edu.tufts.hrilab.demos;
 
 import edu.tufts.hrilab.action.execution.ExecutionType;
-import edu.tufts.hrilab.config.OnRobotScrewingActionModificationMock;
+import edu.tufts.hrilab.config.PickAndPlaceMock;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
@@ -23,23 +23,22 @@ import java.util.concurrent.TimeUnit;
 public class PickAndPlaceTest extends GenerativeDiarcIntegrationTest {
 
   protected static Logger log = LoggerFactory.getLogger(PickAndPlaceTest.class);
-  private OnRobotScrewingActionModificationMock config;
+  private PickAndPlaceMock config;
 
   //components that we care about interacting with in tests
-  private SimSpeechRecognitionComponent speechInputBrad;
+  private SimSpeechRecognitionComponent speechInput;
 
   //@Before is run before every @Test
   @Before
   public void initializeConfig() {
     //instantiate DIARCInstance (in mock)
-    config = new OnRobotScrewingActionModificationMock(true);
+    config = new PickAndPlaceMock();
     config.runConfiguration();
-    speechInputBrad = config.simspeech;
+    speechInput = config.simspeech;
 
     //The services we wish to observe mapped to their arguments
     addServiceToObserve("assertBelief", Term.class);
     addServiceToObserve("retractBelief", Term.class);
-//    addServiceToObserve("runScrewdriverProgram", Integer.class);
     addServiceToObserve("submitGoal", Predicate.class);
     addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, Symbol.class);
     addServiceToObserve("openGripper");
@@ -50,6 +49,7 @@ public class PickAndPlaceTest extends GenerativeDiarcIntegrationTest {
     addServiceToObserve("getDescriptorForID", Symbol.class);
     addServiceToObserve("sayText", String.class);
     addServiceToObserve("goToPose", ai.thinkingrobots.mtracs.util.MPose.class);
+    //todo: there are almost certainly other services we want to track here.
     tester.setTimeoutDuration(6, TimeUnit.SECONDS);
   }
 
@@ -63,114 +63,52 @@ public class PickAndPlaceTest extends GenerativeDiarcIntegrationTest {
   //This wrapper exists so that the generator can appropriately catch input
   private void addUserInput(String input) {
     tester.markNewInput();
-    speechInputBrad.setText(input);
+    speechInput.setText(input);
   }
 
   @Test
-  public void screwingActionModificationTestOrdered() {
+  public void pickAndPlaceScriptTest() {
 
-//    private void demoSetupTest() {
-    addUserInput("setup poses");
+    addUserInput("init");
     evaluateResults();
 
-//    private void screwingParameterTeachingTest() {
-    addUserInput("Define new screw type deep M3");
+    addUserInput("get the red block to location three");
     evaluateResults();
 
-    addUserInput("4 mm");
+    addUserInput("location location one");
     evaluateResults();
 
-    addUserInput("150 millinewton meters");
+    addUserInput("go to location two");
     evaluateResults();
 
-    addUserInput("pose screw feeder");
+    addUserInput("pick up the yellow block");
     evaluateResults();
 
-    addUserInput("define new item NV30FAU");
+    addUserInput("go to location three");
     evaluateResults();
 
-    addUserInput("job n v face");
+    addUserInput("put down the yellow block");
     evaluateResults();
 
-
-//    private void screwingTeachingTest() {
-    addUserInput("I will teach you how to assemble a NV30FAU");
+    addUserInput("pick up the block");
     evaluateResults();
 
-    addUserInput("first go to pose conveyor");
+    addUserInput("nevermind");
     evaluateResults();
 
-    addUserInput("then verify that you can see the NV30FAU");
+    addUserInput("the green block is at location one");
     evaluateResults();
 
-    addUserInput("then get the NV30FAU on the work area");
+    addUserInput("what blocks are you aware of");
     evaluateResults();
 
-    addUserInput("then search for 2 mounting holes");
+    addUserInput("move the green block from location one to location three");
     evaluateResults();
 
-    addUserInput("screw a deep M3 into the bottom mounting hole");
+    addUserInput("yes");
     evaluateResults();
 
-    addUserInput("then go to pose work area");
-    evaluateResults();
-
-    addUserInput("screw a deep M3 into the top mounting hole");
-    evaluateResults();
-
-    addUserInput("then get the NV30FAU on the conveyor");
-    evaluateResults();
-
-    addUserInput("then advance the conveyor belt");
-    evaluateResults();
-
-    addUserInput("that is how you assemble a NV30FAU");
-    evaluateResults();
-
-    addUserInput("robot one assemble a NV30FAU");
-    evaluateResults();
-
-    addUserInput("robot two assemble a NV30FAU");
-    evaluateResults();
-
-    addUserInput("Define new screw type M3");
-    evaluateResults();
-
-    addUserInput("3 mm");
-    evaluateResults();
-
-    addUserInput("150 millinewton meters");
-    evaluateResults();
-
-    addUserInput("pose screw feeder");
-    evaluateResults();
-
-    addUserInput("define new item NF32SV");
-    evaluateResults();
-
-    addUserInput("job circuit breaker face");
-    evaluateResults();
-
-//    private void modifiedAssemblyTeachingTest() {
-    addUserInput("assemble an NF32SV is like assemble an NV30FAU");
-    evaluateResults();
-
-    addUserInput("replace search for 2 mounting holes with search for 2 m3 holes");
-    evaluateResults();
-
-    addUserInput("replace screw a deep M3 into the bottom mounting hole with screw an M3 screw into the left M3 hole");
-    evaluateResults();
-
-    addUserInput("replace screw a deep M3 into the top mounting hole with screw an M3 screw into the right M3 hole");
-    evaluateResults();
-
-    addUserInput("that is all");
-    evaluateResults();
-
-    addUserInput("robot one assemble an NF32SV");
-    evaluateResults();
-
-    addUserInput("robot two assemble an NF32SV");
+    addUserInput("block the red block");
     evaluateResults();
   }
 }

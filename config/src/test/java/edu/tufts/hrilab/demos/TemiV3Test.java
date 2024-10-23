@@ -382,12 +382,12 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
                     {"sayText", "Hello patient. Please come with me. I will show you to homebase.", null},
                     {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 2L},
                     {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 2L},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 2L, null},
-                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 2L, null},
+                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 2L, new HashMap<>()},
+                    {"waitForResponse", Factory.createPredicate("waitForAckTemi", "X"), 2L, new HashMap<>()},
                     {"cancelWaitForResponse", Factory.createPredicate("waitForAckTemi", "X"), null},
                     {"knowsLocation", homebaseLocSymbol, true},
                     {"goToLoc", homebaseLocSymbol, true, true},
-//                    {"sayTextDialogueHistory", Factory.createSymbol("Arrived at homebase"), true, null},
+                    {"sayText", "Arrived at homebase", null},
                     {"sayText", "I could not find the requested patient patient", null},
             }
     );

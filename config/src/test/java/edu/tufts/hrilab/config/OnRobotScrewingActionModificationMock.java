@@ -61,7 +61,9 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
                 "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/onRobotScrewing.asl " +
                 "-asl config/edu/tufts/hrilab/action/asl/demos/cognexArmActions.asl " +
                 "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/circuitBreakerScrewingInit.asl " +
-                "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/screwIn.asl "+
+                "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/screwIn.asl " +
+                        //todo: audit whether this should be here
+                "-asl config/edu/tufts/hrilab/action/asl/demos/pickAndPlace/pickAndPlaceUtil.asl " +
 
                 "-asl config/edu/tufts/hrilab/action/asl/mtracs/conveyor.asl " +
                 "-asl config/edu/tufts/hrilab/action/asl/mtracs/cr800Base.asl " +
@@ -81,11 +83,5 @@ public class OnRobotScrewingActionModificationMock extends DiarcConfiguration {
             simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker james  -addressee robotone:agent -config onRobotScrewing.simspeech");
         }
 
-    }
-
-    public static void main(String[] args) {
-        boolean test = false;
-        OnRobotScrewingActionModificationMock config= new OnRobotScrewingActionModificationMock(test);
-        config.runConfiguration();
     }
 }

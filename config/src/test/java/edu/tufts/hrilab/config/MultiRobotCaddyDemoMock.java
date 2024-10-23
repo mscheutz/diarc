@@ -93,10 +93,4 @@ public class MultiRobotCaddyDemoMock extends DiarcConfiguration {
 //        }
 
     }
-
-    public static void main(String[] args){
-        MultiRobotCaddyDemoMock demoConfig = new MultiRobotCaddyDemoMock();
-        demoConfig.runConfiguration();
-    }
-
 }

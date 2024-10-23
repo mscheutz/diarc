@@ -71,10 +71,4 @@ public class SortingDemoMock extends DiarcConfiguration {
         simspeech = createInstance(SimSpeechRecognitionComponent.class, "-nogui -speaker brad -config sortingDemo.simspeech");
 
     }
-
-    public static void main(String[] args) {
-        SortingDemoMock config= new SortingDemoMock();
-        config.runConfiguration();
-    }
-
 }

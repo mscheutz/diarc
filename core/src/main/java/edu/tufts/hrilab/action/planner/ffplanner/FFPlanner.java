@@ -39,7 +39,7 @@ public class FFPlanner extends Planner {
 
         String line;
         while ((line = reader.readLine()) != null) {
-          log.info(line);
+          log.debug(line);
           output.append(line + "\n");
         }
 

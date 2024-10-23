@@ -53,11 +53,4 @@ public class TemiV3Mock extends DiarcConfiguration {
                 "-goal listen(self:agent)"
         );
     }
-
-
-  public static void main(String[] args) {
-    TemiV3Mock diarcConfig = new TemiV3Mock();
-    diarcConfig.runConfiguration();
-  }
-
 }

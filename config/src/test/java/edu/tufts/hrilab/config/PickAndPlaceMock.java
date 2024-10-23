@@ -3,15 +3,8 @@ package edu.tufts.hrilab.config;
 import ai.thinkingrobots.mtracs.interfaces.CR800ComponentInterface;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
-import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 
 public class PickAndPlaceMock extends DiarcConfiguration {
     private CR800ComponentInterface assista;
@@ -61,9 +54,7 @@ public class PickAndPlaceMock extends DiarcConfiguration {
 
                         "-asl config/edu/tufts/hrilab/action/asl/mtracs/cr800Base.asl " +
 
-                        //TODO:brad this has to come after the agents file
-                        "-goal listen(self) " +
-                        "-goal init(self) ";
+                        "-goal listen(self) ";
 
         //goalManagerArgs +="-editor";
 

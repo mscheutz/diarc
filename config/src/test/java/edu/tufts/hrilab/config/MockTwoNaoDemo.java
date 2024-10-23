@@ -54,9 +54,4 @@ public class MockTwoNaoDemo extends DiarcConfiguration {
             "-asl nao/dance.asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
             "-goal listen(self)");
   }
-
-  public static void main(String[] args) {
-    MockTwoNaoDemo demoConfig = new MockTwoNaoDemo();
-    demoConfig.runConfiguration();
-  }
 }
