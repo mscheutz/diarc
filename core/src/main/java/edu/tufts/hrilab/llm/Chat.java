@@ -19,8 +19,8 @@ public class Chat {
 
   public int tokens = 0;
   public List<Message> messages = new ArrayList<Message>();
-  public String userName = "USER";
-  public String robotName = "ASSISTANT";
+  public String userName = "user";
+  public String robotName = "assistant";
   public String systemMessage = "";
   public String context = "";
   public String service = "openai";

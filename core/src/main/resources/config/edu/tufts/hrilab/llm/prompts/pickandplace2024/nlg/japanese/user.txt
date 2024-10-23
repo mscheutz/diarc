@@ -2,52 +2,52 @@ Given system output in the semantic form unintelligible to the user, your task i
 ###
 Example 1:
 #
-Input:REPLY(robotone:agent,pete,cannot(get(robotone:agent,green block:physobj,to,locationTwo:pose),because(not(know(robotone:agent,theLocationOf,green block:physobj)))),{})
+Input:REPLY(robotone,pete,cannot(get(robotone,green block:physobj,to,locationTwo:pose),because(not(know(robotone,theLocationOf,green block:physobj)))),{})
 Output:{"translation":"緑色のブロックの場所がわからないため、場所２番に移動することができません"}
 ##
 Example 2:
 #
-Input:REPLY(robotone:agent,pete,ack(okay),{})
+Input:REPLY(robotone,pete,ack(okay),{})
 Output:{"translation":"了解しました"}
 ##
 Example 3:
 #
-Input:REPLY(robotone:agent,pete,cannot(pickUp(robotone:agent,anything),because(dont(robotone:agent,see,anyObjects,atMyLocation))),{})
+Input:REPLY(robotone,pete,cannot(pickUp(robotone,anything),because(dont(robotone,see,anyObjects,atMyLocation))),{})
 Output:{"translation":"現在のポーズの視野にブロックがないため、拾うことはできません"}
 ##
 Example 4:
 #
-Input:REPLY(robotone:agent,pete,cannot(pickUp(robotone:agent,red block:physobj),because(already(robotone:agent,holding,something))),{})
+Input:REPLY(robotone,pete,cannot(pickUp(robotone,red block:physobj),because(already(robotone,holding,something))),{})
 Output:{"translation":"すでにものを持っているため、赤いブロックを拾うことができない"}
 ##
 Example 5:
 #
-Input:REPLY(robotone:agent,pete,getObjectTo(robotone:agent,green block:physobj,location two:pose),{})
+Input:REPLY(robotone,pete,getObjectTo(robotone,green block:physobj,location two:pose),{})
 Output:{"translation":"緑色のブロックを場所２番にしています"}
 ##
 Example 6:
 #
-Input:REPLY(robotone:agent,pete,perceiveEntity(robotone:agent,red block:physobj),{})
+Input:REPLY(robotone,pete,perceiveObject(robotone,red block:physobj),{})
 Output:{"translation":"赤いブロックを探しています"}
 ##
 Example 7:
 #
-Input:REPLY(robotone:agent,pete,cannot(pickUp(robotone:agent,anything),because(dont(robotone:agent,see,anyObjects,atMyLocation))),{})
+Input:REPLY(robotone,pete,cannot(pickUp(robotone,anything),because(dont(robotone,see,anyObjects,atMyLocation))),{})
 Output:{"translation":"現在のポーズからブロックが見えないため、拾うことはできません"}
 ##
 Example 8:
 #
-Input:REPLY(robotone:agent,pete,cannot(putDown(robotone:agent,red block:physobj),because(not(has(theLocationBelowMe,space))),{})
+Input:REPLY(robotone,pete,cannot(putDown(robotone,red block:physobj),because(not(has(theLocationBelowMe,space))),{})
 Output:{"translation":"場所がないため、赤いブロックを置くことができません"}
 ##
 Example 9:
 #
-Input:REPLY(robotone:agent,pete,cannot(detect(robotone:agent,locationOne:pose),because(not(isDetectable(locationOne:pose)))),{})
+Input:REPLY(robotone,pete,cannot(detect(robotone,locationOne:pose),because(not(isDetectable(locationOne:pose)))),{})
 Output:{"translation":"場所1番の感知が不可能なため、場所1番の感知ができません"}
 ##
 Example 10:
 #
-Input:REPLY(robotone:agent,pete,cannot(detect(robotone:agent,red block:physobj),because(dont(robotone:agent,see,red block:physobj,atMyLocation))),{})
+Input:REPLY(robotone,pete,cannot(detect(robotone,red block:physobj),because(dont(robotone,see,red block:physobj,atMyLocation))),{})
 Output:{"translation":"現在のポーズの視野には赤いブロックがないため、拾うことはできません"}
 ##
 ###

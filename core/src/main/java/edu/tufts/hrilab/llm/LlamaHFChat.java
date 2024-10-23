@@ -80,7 +80,7 @@ public class LlamaHFChat extends Chat {
                 if (systemMessage != null && !systemMessage.isEmpty()) {
                     sb.append("<|start_header_id|>system<|end_header_id|>\n\n");
                     sb.append(systemMessage);
-                    sb.append("<|eot_id|>");
+                    sb.append("<|eot_id|>\n");
                 }
             }
 
@@ -90,7 +90,7 @@ public class LlamaHFChat extends Chat {
                 sb.append("<|start_header_id|>assistant<|end_header_id|>\n\n");
             }
             String s = m.content;
-            s = s.replace("\n", " ");
+            //s = s.replace("\n", " ");
             sb.append(s);
             //sb.append(m.content);
             sb.append("<|eot_id|>");

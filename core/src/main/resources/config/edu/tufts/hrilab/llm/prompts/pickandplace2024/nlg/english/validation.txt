@@ -4,30 +4,30 @@ Example 1:\n
 History:\n
 pete: Get the block that is red to location one
 \n
-Input:QUESTION(robotone:agent,pete,doYouMean(pete,INSTRUCT(pete,robotone:agent,getBlockTo(robotone:agent,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})),{})
+Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,getBlockTo(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})),{})
 Output:{"translation":"Did you mean to instruct me to get the red block to location one?"}
 \n\n
 Example 2:\n
 History:\n
 pete: Make sure you are at the second location
 \n
-Input:QUESTION(robotone:agent,pete,doYouMean(pete,INSTRUCT(pete,robotone:agent,goToPose(robotone:agent,VAR0:pose),{locationTwo(VAR0:pose),DEFINITE(VAR0:pose)})),{})
+Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,goToPose(robotone,VAR0:pose),{locationTwo(VAR0:pose),DEFINITE(VAR0:pose)})),{})
 Output:{"translation":"Did you mean to instruct me to go to location two?"}
 \n\n
 Example 3:\n
 History:\n
-robotone:agent: I dont know where the red block is, at what location can I expect to find it?
+robotone: I dont know where the red block is, at what location can I expect to find it?
 \n
 pete: You can find it at pose one
 \n
-Input:QUESTION(robotone:agent,pete,doYouMean(pete,REPLY(pete,robotone:agent,pose(VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})),{})
+Input:QUESTION(robotone,pete,doYouMean(pete,REPLY(pete,robotone,pose(VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})),{})
 Output:{"translation":"Did you mean to tell me location one?"}
 \n\n
 Example 4:\n
 History:\n
 pete: Is anything at locaiton two?
 \n
-Input:QUESTION(robotone:agent,pete,doYouMean(pete,QUESTION(pete,robotone:agent,objectsAt(VAR0:pose),{locationTwo(VAR0:pose),DEFINITE(VAR0:pose)})),{})
+Input:QUESTION(robotone,pete,doYouMean(pete,QUESTION(pete,robotone,objectsAt(VAR0:pose),{locationTwo(VAR0:pose),DEFINITE(VAR0:pose)})),{})
 Output:{"translation":"Are you asking me if there are objects at location two?"}
 \n\n
 Example 4:\n
