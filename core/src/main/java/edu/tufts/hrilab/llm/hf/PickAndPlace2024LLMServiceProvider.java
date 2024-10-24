@@ -184,12 +184,11 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                 innerArgs.add(0,Factory.createSymbol("robotone"));
                 args.add(Factory.createPredicate(knownPredicate.getName(), innerArgs));
                 utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
-            } else if (v2 && command.equals("see")) {
-                List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
-                args.add(0, Factory.createSymbol("robotone"));
-                utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
+            //} else if (v2 && command.equals("see")) {
+            //    List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
+            //    args.add(0, Factory.createSymbol("robotone"));
+            //    utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
             }
-            //TODO: manually check if parens match
         } catch (Exception e) {
             log.warn("[correctCommonNLUMistakes] unexpected semantics format");
         }

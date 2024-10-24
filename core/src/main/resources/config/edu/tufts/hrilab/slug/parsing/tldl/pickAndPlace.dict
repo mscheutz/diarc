@@ -214,7 +214,7 @@ you; AGENT; ?ADDRESSEE
 know how; (C/INF)\AGENT ; #a#i.knowHow($a,$i)
 know; (C/KNOWABLE)\AGENT ; #a#k.know($a,$k)
 to; INF/C; #x.to($x)
-see; (C/REF)\AGENT ; #x#y.see($x,$y)
+see; (C/REF)\AGENT ; #x#y.see($y)
 
 %TODO: is there any nice way to have just 'location one' be a VAL which is the ref for location one?
 % Doesn't seem like it, any workaround rule will try to match fully on 'location one' rather than just 'location' and ignore the less specific entry

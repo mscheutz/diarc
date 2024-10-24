@@ -141,10 +141,9 @@ import java.lang.Integer;
         op:log("debug", "handleITK: observation goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
       }
-      //TODO: commented out for Pick and Place 2024 - why is askAbout entered even when !queryActor is null?
-      // elseif (~op:isNull(!queryActor) && act:askAbout(!queryActor, ?query, !knowsQuery)) {
-      //  op:log("debug", "handleITK: askAbout goal succeeded.");
-      //}
+       elseif (~op:isNull(!queryActor) && act:askAbout(!queryActor, ?query, !knowsQuery)) {
+        op:log("debug", "handleITK: askAbout goal succeeded.");
+      }
       else {
         op:log("debug", "handleITK: knows and obs goal failed, just looking in belief.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");

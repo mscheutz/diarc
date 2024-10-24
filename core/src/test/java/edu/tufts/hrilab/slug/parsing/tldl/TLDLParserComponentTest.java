@@ -4807,7 +4807,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtteranceLLM("do you see a red block",
-                "QUESTION(brad,robotone,see(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "QUESTION(brad,robotone,see(VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "robotone"
         ));
@@ -5179,7 +5179,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtteranceLLM("赤いブロックが見えますか",
-                "QUESTION(brad,robotone,see(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "QUESTION(brad,robotone,see(VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "robotone"
         ));
@@ -5414,7 +5414,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtteranceLLM("do you see a red block",
-                "QUESTION(brad,robotone,see(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "QUESTION(brad,robotone,see(VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "robotone"
         ));
@@ -5690,7 +5690,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtteranceLLM("赤いブロックは見えますか",
-                "QUESTION(brad,robotone,see(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "QUESTION(brad,robotone,see(VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "robotone"
         ));
