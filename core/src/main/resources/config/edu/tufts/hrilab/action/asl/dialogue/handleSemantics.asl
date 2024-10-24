@@ -140,8 +140,8 @@ import java.lang.Integer;
       } elseif (goal:observe(?query)) {
         op:log("debug", "handleITK: observation goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
-      }
-       elseif (~op:isNull(!queryActor) && act:askAbout(!queryActor, ?query, !knowsQuery)) {
+      } elseif (~op:isNull(!queryActor)) {
+        act:askAbout(!queryActor, ?query, !knowsQuery);
         op:log("debug", "handleITK: askAbout goal succeeded.");
       }
       else {
