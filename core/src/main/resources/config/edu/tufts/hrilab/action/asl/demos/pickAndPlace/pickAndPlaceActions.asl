@@ -9,8 +9,11 @@ import java.lang.Double;
 import java.lang.Integer;
 
 () = openGripper() {
-    conditions : {
-        pre : free(?actor);
+    Symbol !heldObject;
+
+    !heldObject = act:getHeldObject();
+    if (~op:isNull(!heldObject)) {
+        exit(FAIL,holding(?actor,!heldObject));
     }
     tsc:openGripper();
 }
@@ -54,6 +57,8 @@ import java.lang.Integer;
     Symbol !descriptor;
     Symbol !holding;
 
+    act:assertIsPhysobj(?object);
+    act:assertIsPose(?destination);
     //TODO: assert ?object is actually a physobj?
     !objectPose = act:getObjectPose(?object);
     !holding = act:checkHolding(?object);
@@ -62,7 +67,7 @@ import java.lang.Integer;
             !descriptor = tsc:getDescriptorForID(?object);
             !objectPose = act:askForObjectPose(!descriptor);
             if (op:equals(!objectPose,none)) {
-                !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "know(?actor,theLocationOf,?object)");
+                !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,theLocationOf,?object))");
                 exit(FAIL, !failCond);
             } else {
                 !objectAtPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,!objectPose)");
@@ -78,10 +83,6 @@ import java.lang.Integer;
 }
 
 () = pickUp() {
-    conditions : {
-        pre : free(?actor);
-    }
-
     Symbol !default = "default";
     Symbol !gripper = "gripper";
     List !objectList;
@@ -89,6 +90,12 @@ import java.lang.Integer;
     Symbol !location;
     Integer !resultsSize;
     Predicate !failCond;
+    Symbol !heldObject;
+
+    !heldObject = act:getHeldObject();
+    if (~op:isNull(!heldObject)) {
+        exit(FAIL_PRECONDITIONS,holding(?actor,!heldObject));
+    }
 
     op:log(info, "[pickUp]");
     !objectList = act:perceiveEntities();
@@ -108,7 +115,6 @@ import java.lang.Integer;
     } else {
         //Multiple results - ask which one to pick up
         !object = act:askForObjectToPickUp();
-        ////TODO: make sure response matches one of the detected objects
         if (~op:equals(!object, none)) {
             !location = act:getCurrentLocation();
             act:grabPerceivedEntity(!object,!location);
@@ -119,14 +125,18 @@ import java.lang.Integer;
 }
 
 () = pickUp(Symbol ?object) {
-    conditions : {
-        pre : free(?actor);
-    }
-
-    op:log(info, "[pickUp] ?object");
-
     Symbol !objectPose;
     Symbol !armPose;
+    Symbol !heldObject;
+
+    op:log(info, "[pickUp] ?object");
+    act:assertIsPhysobj(?object);
+
+    !heldObject = act:getHeldObject();
+    if (~op:isNull(!heldObject)) {
+        exit(FAIL_PRECONDITIONS,holding(?actor,!heldObject));
+    }
+
     !objectPose = act:getObjectPose(?object);
     !armPose = act:getCurrentLocation();
     if (~op:isNull(!objectPose) && ~op:equals(!armPose,!objectPose)) {
@@ -142,28 +152,37 @@ import java.lang.Integer;
 }
 
 () = putDown(Symbol ?object:physobj) {
-    conditions : {
-        pre : not(free(?actor));
+    Symbol !heldObject;
+    act:assertIsPhysobj(?object);
+
+    !heldObject = act:getHeldObject();
+    if (~op:equals(?object,!heldObject)) {
+        exit(FAIL_PRECONDITIONS,not(holding(?actor,?object)));
     }
 
     act:putDown();
 }
 
 () = putDown() {
-    conditions : {
-        pre : not(free(?actor));
-    }
     Symbol !location;
-    Symbol !object;
+    Symbol !heldObject;
 
     op:log(info, "[putDown]");
 
+    !heldObject = act:getHeldObject();
+    if (op:isNull(!heldObject)) {
+        exit(FAIL_PRECONDITIONS,not(holding(?actor,anything)));
+    }
+
     !location = act:getCurrentLocation();
-    !object = act:getHeldObject();
-    act:putdown(!object,!location);
+    act:putdown(!heldObject,!location);
 }
 
 () = moveObjectTo(Symbol ?object:physobj, Symbol ?start:pose, Symbol ?destination:pose) {
+    act:assertIsPhysobj(?object);
+    act:assertIsPose(?start);
+    act:assertIsPose(?destination);
+
     act:goToPose(?start);
     act:pickUp(?object);
     act:goToPose(?destination);
@@ -182,6 +201,11 @@ import java.lang.Integer;
     java.lang.Boolean !true = True;
     java.lang.Boolean !false = False;
 
+    if (op:equals(?objectOne,?objectTwo)) {
+        act:reportObjectsToSwapAreTheSame();
+        return;
+    }
+
     //Make sure object locations are known (and check if one of them is currently being held)
     !heldObject = act:getHeldObject();
     !objectOnePose = act:getObjectPose(?objectOne);
@@ -196,10 +220,10 @@ import java.lang.Integer;
 
     //Fail if either object is not present in the work area
     if (op:isNull(!objectOnePose)) {
-        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "know(?actor,theLocationOf,?objectOne)");
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,theLocationOf,?objectOne))");
         exit(FAIL, !failCond);
     } elseif (op:isNull(!objectTwoPose)) {
-        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "know(?actor,theLocationOf,?objectTwo)");
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,theLocationOf,?objectTwo))");
         exit(FAIL, !failCond);
     }
 
@@ -277,7 +301,7 @@ import java.lang.Integer;
     java.lang.Integer !numObjects;
     Predicate !failCond;
 
-    !numObjects = act:getNumberOfObjectsAt(!objectToSwapPose);
+    !numObjects = act:getNumberOfObjectsAt(?objectToSwapPose);
     if (op:gt(!numObjects,1)) {
         //Move held object to open location
         !openPose = act:getPoseWithSpace();
@@ -322,15 +346,17 @@ import java.lang.Integer;
         failureReasons : {has(theLocationBelowMe,space)}
         excludedGoals : {putDown(X), putDown(X,Y)}
     }
-    recovery : {
-        actionStatuses : {FAIL_PRECONDITIONS}
-        failureReasons : {has(theLocationBelowMe,space)}
-        goals : {getObjectTo(X,Y,Z)}
-    }
+    //recovery : {
+    //    actionStatuses : {FAIL_PRECONDITIONS}
+    //    failureReasons : {has(theLocationBelowMe,space)}
+    //    goals : {getObjectTo(X,Y,Z)}
+    //}
     Symbol !response;
     Symbol !otherObject;
     String !otherObjectName;
     Symbol !object;
+    Symbol !currentPose;
+    Symbol !otherObjectPose;
 
     op:log("debug","[putDownAtFullLocationRecovery");
     op:log("debug","[putDownAtFullLocationRecovery] ?failedActionPredicates");
@@ -338,6 +364,7 @@ import java.lang.Integer;
     op:log("debug","[putDownAtFullLocationRecovery] ?failedGoal");
 
     !object = act:getHeldObject();
+    !currentPose = act:getCurrentLocation();
     //TODO: populate question with held object and current location?
     //  report that we cannot put down the object because the location is full
     //  Ask if the user would like to swap the held object with a object in that location
@@ -349,6 +376,11 @@ import java.lang.Integer;
             act:reportNotSwappingObjects();
             exit(FAIL_RECOVERY);
         } else {
+            !otherObjectPose = act:getObjectPose(!otherObject);
+            if (~op:equals(!currentPose,!otherObjectPose)) {
+                act:reportObjectToSwapNotAtCurrentPose();
+                exit(FAIL_RECOVERY);
+            }
             act:swapObjects(!object,!otherObject);
         }
     } else {
@@ -357,25 +389,40 @@ import java.lang.Integer;
     }
 }
 
+//TODO: rename to placeObjectDownAt?
 () = moveObjectTo(Symbol ?object:physobj, Symbol ?destination:pose) {
-    conditions : {
-        pre : holding(?actor,?object);
+    Symbol !heldObject;
+
+    act:assertIsPhysobj(?object);
+    act:assertIsPose(?destination);
+
+    !heldObject = act:getHeldObject();
+    if (~op:equals(?object,!heldObject)) {
+        exit(FAIL_PRECONDITIONS,not(holding(?actor,?object)));
     }
+
     act:goToPose(?destination);
     act:putDown();
 }
 
+//TODO: rename to placeObjectDownAt?
 () = moveObjectTo(Symbol ?destination:pose) {
-    conditions : {
-        pre : not(free(?actor));
+    Symbol !heldObject;
+
+    act:assertIsPose(?destination);
+
+    !heldObject = act:getHeldObject();
+    if (op:isNull(!heldObject)) {
+        exit(FAIL_PRECONDITIONS,not(holding(?actor,anything)));
     }
+
     act:goToPose(?destination);
     act:putDown();
 }
 
 () = detectObject(Symbol ?object) {
     effects : {
-        success : knows(?actor,see(?actor,?object));
+        success : knows(?actor,see(?object));
     }
     op:log(info,"detectObject");
     act:perceiveEntity(?object);
@@ -398,6 +445,8 @@ import java.lang.Integer;
     Symbol !poseDescriptor;
     Symbol !objectDescriptor;
     Symbol !holding;
+
+    act:assertIsPhysobj(?object);
 
     !objectPose = act:getObjectPose(?object);
     !objectDescriptor = tsc:getDescriptorForID(?object);
@@ -468,6 +517,8 @@ import java.lang.Integer;
     java.util.HashMap !elem;
     edu.tufts.hrilab.fol.Variable !objectVar;
 
+    act:assertIsPose(?pose);
+
     !objectVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(X,?pose)");
     !bindings = act:queryBelief(!queryPred);
@@ -489,6 +540,8 @@ import java.lang.Integer;
     java.lang.Integer !numObjects;
     Symbol !poseDescriptor;
 
+    act:assertIsPose(?pose);
+
     !numObjects = act:getNumberOfObjectsAt(?pose);
     !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
     act:reportNumberOfObjectsAt(!numObjects,!poseDescriptor);
@@ -505,6 +558,9 @@ import java.lang.Integer;
         success : knows(?actor,at(?object,?pose));
     }
 
+    act:assertIsPose(?pose);
+    act:assertIsPhysobj(?object);
+
     act:goToPose(?pose);
     act:perceiveEntity(?object);
 }
@@ -514,6 +570,8 @@ import java.lang.Integer;
         success : knows(?actor,objectsAt(?pose));
     }
     List !results;
+
+    act:assertIsPose(?pose);
 
     act:goToPose(?pose);
     !results = act:perceiveEntities();

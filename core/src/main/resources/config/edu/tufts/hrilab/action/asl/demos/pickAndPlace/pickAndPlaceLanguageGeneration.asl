@@ -12,6 +12,7 @@ import java.util.Map;
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
+        //TODO: if ?objectPose does not have type pose, EXIT
         ?objectPose = op:get(!bindings,!x);
     }
 }
@@ -25,6 +26,7 @@ import java.util.Map;
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
+        //TODO: if ?object does not have type physobj, EXIT
         ?object = op:get(!bindings,!x);
     }
 }
@@ -53,6 +55,7 @@ import java.util.Map;
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
+        //TODO: if ?object does not have type physobj, EXIT
         ?object = op:get(!bindings, !x);
     }
 }
@@ -107,4 +110,12 @@ import java.util.Map;
 
 () = reportCurrentPose(Symbol ?armPose) {
    act:generateResponseFromString("I am currently at ?armPose");
+}
+
+() = reportObjectToSwapNotAtCurrentPose() {
+   act:generateResponseFromString("The object you indicated is not at my current pose");
+}
+
+() = reportObjectsToSwapAreTheSame() {
+   act:generateResponseFromString("You asked me to swap an object with itself, doing nothing");
 }

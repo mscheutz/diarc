@@ -8,6 +8,9 @@
 
     op:log(debug, "[goToPosePrimitive] pose only");
     (!goalPose) = tsc:getPoseFromSymbol(?pose);
+    if (op:isNull(!goalPose)) {
+        exit(FAIL, notAPose(?pose));
+    }
     tsc:goToPose(!goalPose);
 }
 
@@ -16,12 +19,18 @@
     java.lang.Boolean !success;
 
     (!goalPose) = tsc:getPoseFromSymbol(?pose);
+    if (op:isNull(!goalPose)) {
+        exit(FAIL, notAPose(?pose));
+    }
     (!success) = tsc:goToPosePrimitiveLong(!goalPose);
 }
 
 () = goToPosePrimitive["goes to pose with adjustment to the given cameraHeight"](edu.tufts.hrilab.fol.Symbol ?pose, edu.tufts.hrilab.fol.Symbol ?cameraHeight) {
     ai.thinkingrobots.mtracs.util.MPose !goal;
     (!goal) = tsc:getPoseFromSymbol(?pose);
+    if (op:isNull(!goal)) {
+        exit(FAIL, notAPose(?pose));
+    }
     (!goal) = tsc:adjustPoseToCameraHeight(!goal, ?cameraHeight);
     tsc:goToPose(!goal);
 }
@@ -29,6 +38,9 @@
 () = goToPosePrimitiveLong["goes to pose with adjustment to the given cameraHeight the long way around"](edu.tufts.hrilab.fol.Symbol ?pose, edu.tufts.hrilab.fol.Symbol ?cameraHeight) {
     ai.thinkingrobots.mtracs.util.MPose !goal;
     (!goal) = tsc:getPoseFromSymbol(?pose);
+    if (op:isNull(!goal)) {
+        exit(FAIL, notAPose(?pose));
+    }
     (!goal) = tsc:adjustPoseToCameraHeight(!goal, ?cameraHeight);
     tsc:goToPoseLong(!goal);
 }

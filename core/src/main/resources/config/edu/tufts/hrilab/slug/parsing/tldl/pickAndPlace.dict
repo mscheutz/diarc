@@ -17,7 +17,7 @@ a; REF/RN ; #x.$x ; INDEFINITE
 the; REF/RN ; #x.$x ; DEFINITE
 one; REF/RN ; #x.$x ; INDEFINITE
 
-it; REF ; it:physobj ; INFOCUS
+%it; REF ; it:physobj ; INFOCUS
 
 %%TODO: test these in the current domain
 suspend current goal; VERBI ; suspendSystemGoals
@@ -168,8 +168,8 @@ has moved from; (S/REF)\REF; #x#y.not(at($x,$y))
 %% supervisor/admin permissions %%
 eric;AGENT;eric
 pete;AGENT;pete
-is trusted; S\AGENT ; #a.trusted($a)
-is not trusted; S\AGENT ; #a.not(trusted($a))
+%is trusted; S\AGENT ; #a.trusted($a)
+%is not trusted; S\AGENT ; #a.not(trusted($a))
 %define new speaker; S/LIT*; #s.name($s,$s)
 add new supervisor; S/LIT*; #s.supervisor($s)
 add new admin; S/LIT* ; #a.admin($a)
@@ -207,6 +207,7 @@ what location are you at; VERBI; describeCurrentPose
 is; Q/KNOWABLE; #x.know(?ADDRESSEE,$x)
 a supervisor; KNOWABLE\AGENT; #x.supervisor($x)
 an admin; KNOWABLE\AGENT; #x.admin($x)
+%trusted; KNOWABLE\AGENT; #x.trusted($x)
 
 %TODO: issue somewhere with knowHow parse matching early when more args are present and overloaded entries exist which take in different numbers of args
 do; Q/ C; #x.$x
@@ -218,7 +219,7 @@ see; (C/REF)\AGENT ; #x#y.see($y)
 
 %TODO: is there any nice way to have just 'location one' be a VAL which is the ref for location one?
 % Doesn't seem like it, any workaround rule will try to match fully on 'location one' rather than just 'location' and ignore the less specific entry
-location; VAL/REF; #l.pose($l);
+%location; VAL/REF; #l.pose($l);
 %area; VAL/REF; #a.pose($a);
 %pose; VAL/REF; #a.pose($a);
 %it is at; VAL/REF; #a.pose($a);
@@ -230,7 +231,7 @@ location; VAL/REF; #l.pose($l);
 
 %Same issue for objects
 %the; VAL/REF; #l.objectType($l);
-block; VAL/REF; #l.objectType($l);
+%block; VAL/REF; #l.objectType($l);
 
 %TODO: ability to do this (and to do this for both object and pose questions)
 %nowhere; VAL; pose(none);

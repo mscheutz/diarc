@@ -114,6 +114,9 @@ import java.util.List;
     Predicate !fact;
     Symbol !holding;
 
+    act:assertIsPose(?pose);
+    act:assertIsPhysobj(?object);
+
     !holding = act:checkHolding(?object);
     if (op:equalsValue(!holding,true)) {
         !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "free(?actor)");
@@ -125,4 +128,26 @@ import java.util.List;
     act:retractBelief(!fact);
     !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,?pose)");
     act:assertBelief(!fact);
+}
+
+() = assertIsPhysobj(Symbol ?ref) {
+    java.lang.String !type;
+    if (op:isNull(?ref)) {
+        exit(FAIL,notAnObject(null));
+    }
+    !type = op:invokeMethod(?ref,"getType");
+    if (~op:equals("physobj",!type)) {
+        exit(FAIL,notAnObject(?ref));
+    }
+}
+
+() = assertIsPose(Symbol ?ref) {
+    java.lang.String !type;
+    if (op:isNull(?ref)) {
+        exit(FAIL,notAPose(null));
+    }
+    !type = op:invokeMethod(?ref,"getType");
+    if (~op:equals("pose",!type)) {
+        exit(FAIL,notAPose(?ref));
+    }
 }

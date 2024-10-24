@@ -148,15 +148,19 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             output.setNeedsValidation(true);
 
             Utterance result = output.build();
-            correctCommonNLUMistakes(result);
-            return result;
+            boolean parsed = correctCommonNLUMistakes(result);
+            if (parsed) {
+                return result;
+            } else {
+                return incomingUtterance;
+            }
         } catch (Exception e) {
             log.warn("[parseNLUCompletionResponse]",e);
             return incomingUtterance;
         }
     }
 
-    private void correctCommonNLUMistakes(Utterance utterance) {
+    private boolean correctCommonNLUMistakes(Utterance utterance) {
         try {
             String command = utterance.getSemantics().getName();
             if (command.equals("believeObjectAt")) {
@@ -188,10 +192,24 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             //    List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
             //    args.add(0, Factory.createSymbol("robotone"));
             //    utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
+            } else if (command.equals("pose")) {
+                Symbol arg = ((Term)utterance.getSemantics()).get(0);
+                if (!arg.isVariable() && !arg.getName().equals("none") && !(arg.isVariable() && !arg.getType().equals("pose"))) {
+                    log.warn("[correctCommonNLUMistakes] LLM returned pose(?pose) parse where ?pose is not a reference. Not allowing");
+                    return false;
+                }
+            } else if (command.equals("objectType")) {
+                Symbol arg = ((Term)utterance.getSemantics()).get(0);
+                if (!arg.isVariable() && !arg.getName().equals("none")&& !(arg.isVariable() && !arg.getType().equals("physobj"))) {
+                    log.warn("[correctCommonNLUMistakes] LLM returned objectType(?object) parse where ?object is not a reference. Not allowing");
+                    return false;
+                }
             }
         } catch (Exception e) {
             log.warn("[correctCommonNLUMistakes] unexpected semantics format");
+            return false;
         }
+        return true;
     }
     //prag results: QUESTION(pete,robotone,[knowHow(robotone,to(getObjectTo(robotone,robotonephysobj_0:physobj,pose_0:pose)))],{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})
     private List<String> getArgsAsStrings(Symbol fol) {

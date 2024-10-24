@@ -12,6 +12,9 @@ STATEMENT(A,B,believeObjectAt(B,X,Y),Z) := want(A,believeObjectAt(B,X,Y))
 STATEMENT(A,B,believeObjectAt(C,X,Y),Z) := want(A,believeObjectAt(C,X,Y))
 QUESTION(A,B,knowHowTo(B,X),Z) := itk(A,capableOf(X))
 QUESTION(A,B,knowHowTo(X),Z) := itk(A,capableOf(X))
+QUESTION(A,B,know(B,supervisor(X)),Z) := itk(A,supervisor(X))
+QUESTION(A,B,know(B,admin(X)),Z) := itk(A,admin(X))
+
 END-SET
 
 ##temi 'representational workarounds'

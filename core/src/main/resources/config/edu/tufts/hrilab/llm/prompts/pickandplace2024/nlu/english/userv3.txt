@@ -53,13 +53,9 @@ if the human says "cancel all tasks", you should produce the output: {"Semantics
 \n
 if the human says "the green block is not at location two", you should produce the output: {"Semantics":"not(at(green block,locationTwo))","Input Type":"STATEMENT","Confidence":"100"}
 \n
-if the human says "eric is trusted", you should produce the output: {"Semantics":"trusted(eric)","Input Type":"STATEMENT","Confidence":"100"}
-\n
 if the human says "eric is a supervisor", you should produce the output: {"Semantics":"supervisor(eric)","Input Type":"STATEMENT","Confidence":"100"}
 \n
 if the human says "pete is an admin", you should produce the output: {"Semantics":"admin(pete)","Input Type":"STATEMENT","Confidence":"100"}
-\n
-if the human says "ryu is not trusted", you should produce the output: {"Semantics":"not(trusted(ryu))","Input Type":"STATEMENT","Confidence":"100"}
 \n
 if the human says "test is not a supervisor", you should produce the output: {"Semantics":"not(supervisor(test))","Input Type":"STATEMENT","Confidence":"100"}
 \n

@@ -136,3 +136,13 @@ import java.util.Map;
    //TODO: get translation
    //act:generateResponseFromString("I am currently at ?armPose");
 }
+
+() = reportObjectToSwapNotAtCurrentPose() {
+   //TODO: get translation
+   act:generateResponseFromString("The object you indicated is not at my current location");
+}
+
+() = reportObjectsToSwapAreTheSame() {
+   //TODO: get translation
+   act:generateResponseFromString("You asked me to swap an object with itself, doing nothing");
+}

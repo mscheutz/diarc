@@ -82,14 +82,11 @@ Description: The human is asking if the agent knows whether there are any object
 at(?object,?pose)
 Description: The human is asking if the agent thinks that object ?object is currently at pose ?pose.
 \n
-know(robotone,supervisor(?user))
+supervisor(?user,robotone)
 Description: The human is asking if the agent thinks that ?user is a known supervisor of the system.
 \n
-know(robotone,admin(?user))
+admin(?user,robotone)
 Description: The human is asking if the agent thinks that ?user is a known admin of the system.
-\n
-know(robotone,trusted(?user))
-Description: The human is asking if the agent thinks that ?user is trusted user of the system.
 \n
 describeObjectPose(?object)
 Description: The human is asking the agent where it believes ?object currently is in the work area.
@@ -143,12 +140,6 @@ Statements are used when the user is conveying information about the world to th
 \n\n
 not(at(?object,?pose))
 Description: The user is telling the system that the object ?object is no longer at pose ?pose.
-\n
-trusted(?user)
-Description: The user is telling the system that ?user is a trusted user of the system
-\n
-not(trusted(?user))
-Description: the user is telling the system that ?user is not a trusted user of the system
 \n
 supervisor(?user)
 Description: The user is telling the system that ?user is a supervisor of the system
