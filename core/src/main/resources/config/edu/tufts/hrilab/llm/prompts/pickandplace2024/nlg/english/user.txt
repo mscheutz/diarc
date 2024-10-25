@@ -27,8 +27,8 @@ Output:{"translation":"Get the green block to location two"}
 ##
 Example 6:
 #
-Input:REPLY(robotone,pete,perceiveObject(robotone,red block:physobj),{})
-Output:{"translation":"perceive the red block"}
+Input:REPLY(robotone,pete,detectObject(robotone,red block:physobj),{})
+Output:{"translation":"detect the red block"}
 ##
 Example 7:
 #

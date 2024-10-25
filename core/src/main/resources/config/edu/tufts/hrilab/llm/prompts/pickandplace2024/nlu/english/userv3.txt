@@ -19,19 +19,17 @@ If the human says "I took the red block and moved it to location two", you shoul
 \n
 If the human says "the red one", you should produce the output: {"Semantics":"objectType(red block)","Input Type":"REPLY","Confidence": 90"}
 \n
-If the human says "pick up the block", you should produce the output: {"Semantics":"pickUp()","Input Type":"INSTRUCT","Confidence":"70"}
-\n
 if the human says "open gripper", you should produce the output: {"Semantics":"openGripper()","Input Type":"INSTRUCT","Confidence":"100"}
 \n
 if the human says "close gripper", you should produce the output: {"Semantics":"closeGripper()","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "detect the red block", you should produce the output: {"Semantics":"perceiveObject(red block)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "detect the red block", you should produce the output: {"Semantics":"detectObject(red block)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "pick up the block", you should produce the output: {"Semantics":"pickUp()","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "pick up the object", you should produce the output: {"Semantics":"pickUp()","Input Type":"INSTRUCT","Confidence":"100"}
 \n\n
 if the human says "pick up the green block", you should produce the output: {"Semantics":"pickUp(green block)","Input Type":"INSTRUCT","Confidence":"100"}
 \n\n
-if the human says "put down the block", you should produce the output: {"Semantics":"putDown()","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "put down the object", you should produce the output: {"Semantics":"putDown()","Input Type":"INSTRUCT","Confidence":"100"}
 \n\n
 if the human says "put down the red block", you should produce the output: {"Semantics":"putDown(red block)","Input Type":"INSTRUCT","Confidence":"100"}
 \n\n
@@ -39,7 +37,7 @@ if the human says "move the yellow block from location one to location two", you
 \n
 if the human says "place the orange block at location three", you should produce the output: {"Semantics":"moveObjectTo(orange block,locationThree)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "place the block down at location one", you should produce the output: {"Semantics":"moveObjectTo(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "place the object down at location one", you should produce the output: {"Semantics":"moveObjectTo(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
 if the human says "get the red block to location two", you should produce the output: {"Semantics":"getObjectTo(red block,locationTwo)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
@@ -63,7 +61,7 @@ if the human says "guest is not an admin", you should produce the output: {"Sema
 \n
 if the human says "where is the red block", you should produce the output: {"Semantics":"describeObjectPose(red block)","Input Type":"QUESTION","Confidence":"100"}
 \n
-if the human says "what are the locations of all the blocks", you should produce the output: {"Semantics":"describeKnownObjects()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "what are the locations of all the objects", you should produce the output: {"Semantics":"describeKnownObjects()","Input Type":"QUESTION","Confidence":"100"}
 \n
 if the human says "how many objects are at location two", you should produce the output: {"Semantics":"describeNumberOfObjectsAt(locationTwo)","Input Type":"QUESTION","Confidence":"100"}
 \n

@@ -61,7 +61,7 @@ import java.util.Map;
 }
 
 () = reportNotSwappingObjects() {
-    act:generateResponseFromString("okay, I am not swapping any object");
+    act:generateResponseFromString("okay, I am not swapping any objects");
 }
 
 () = reportHoldingObject(Symbol ?descriptor) {
@@ -117,5 +117,5 @@ import java.util.Map;
 }
 
 () = reportObjectsToSwapAreTheSame() {
-   act:generateResponseFromString("You asked me to swap an object with itself, doing nothing");
+   act:generateResponseFromString("You asked me to swap an object with itself. Doing nothing");
 }

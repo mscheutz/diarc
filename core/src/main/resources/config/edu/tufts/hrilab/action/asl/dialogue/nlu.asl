@@ -81,7 +81,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
       //Explicitly calling LLM NLG service independent from askQuestion because SimpleNLG does not work at all for
       //  validation questions (needless to say definitely not in Japanese). If the LLM provider returns an error or
       //  unparseable response, the system will be hanging on a question without it seeming like that is the case.
-      !validationUtterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !addressee);
+      !validationUtterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", !addressee, !speaker);
       !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "QUESTION");
       op:invokeMethod(!validationUtterance, "setType", !type);
       if (tsc:usingLLMNLG()) {

@@ -210,7 +210,7 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
             log.error("[llmParserService] Error performing chat completion", e);
         }
 
-        if (response == null) {
+        if (response == null ||response.getText() == null) {
             if (!parsing) {
                 log.warn("[llmParserService] have null response from LLMComponent, using SimpleNLG as a fallback");
                 try {
