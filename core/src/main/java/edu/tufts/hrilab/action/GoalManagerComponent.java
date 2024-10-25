@@ -254,9 +254,9 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       beliefArgs.add("-disk");
       beliefArgs.add(cmdLine.getOptionValue("beliefdisk"));
     }
-//    if (cmdLine.hasOption("beliefg")) {
-//      beliefArgs.add("-g");
-//    }
+    if (cmdLine.hasOption("beliefg")) {
+      beliefArgs.add("-g");
+    }
     if (cmdLine.hasOption("beliefgroups")) {
       beliefArgs.add("-groups");
       for (String s : cmdLine.getOptionValues("beliefgroups")) {

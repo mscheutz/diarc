@@ -6,6 +6,7 @@ package edu.tufts.hrilab.belief;
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.belief.common.MemoryLevel;
+import edu.tufts.hrilab.belief.gui.BeliefGui;
 import edu.tufts.hrilab.belief.operators.OperatorCheck;
 import edu.tufts.hrilab.belief.provers.DCEC;
 import edu.tufts.hrilab.belief.provers.Prover;
@@ -75,7 +76,9 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface, 
    */
   private SQL sql;
 
+  private boolean showGui = false;
   private boolean prob = false;
+  private BeliefGui beliefGui;
 
   /**
    * Regex to remove whitespace that isn't inside quotes. Used for populating SQL directly from .pl files.
@@ -120,10 +123,16 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface, 
     log.debug("initializationFiles = " + initializationFiles);
     initializeFromFiles(initializationFiles);
 
+    if (showGui) {
+      beliefGui = new BeliefGui(this);
+    }
   }
 
   @Override
   protected void shutdownComponent(){
+    if(showGui){
+      beliefGui.shutdown();
+    }
     notificationRequests.clear();
     sql.closeConnection();
   }
@@ -137,6 +146,7 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface, 
     options.add(Option.builder("universalfile").hasArgs().argName("filename").desc("load universal memory initialization file").build());
     options.add(Option.builder("prover").hasArg().argName("type").desc("Use prover of specified type").build());
     options.add(Option.builder("disk").hasArg().argName("databasepath").desc("Use existing sql disk located at path").build());
+    options.add(Option.builder("g").desc("show belief gui").build());
     options.add(Option.builder("prob").desc("uses probabilistic models").build());
     return options;
   }
@@ -195,6 +205,9 @@ public class BeliefComponent extends DiarcComponent implements BeliefInterface, 
     }
     if (cmdLine.hasOption("prob")) {
       prob = true;
+    }
+    if (cmdLine.hasOption("g")) {
+      showGui = true;
     }
   }
 
