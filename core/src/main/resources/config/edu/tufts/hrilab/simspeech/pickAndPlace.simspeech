@@ -1,6 +1,7 @@
 get the red block to location three
 location one
 ----
+the yellow block is at location two
 go to location two
 pick up the yellow block
 go to location three
@@ -32,4 +33,4 @@ the red block
 把握しているブロックを教えてください
 緑色のブロックを位置1から位置3に移動してください
 はい
-赤いブロック
+赤いブロッ
