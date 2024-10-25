@@ -82,12 +82,6 @@ import edu.tufts.hrilab.fol.Term;
 }
 
 () = setupPoses() {
-    Symbol !locationOne = "locationOne";
-    Symbol !locationTwo= "locationTwo";
-    Symbol !locationThree = "locationThree";
-
-    Symbol !conveyorHeight = "45";
-    Symbol !workHeight = "-13";
     Symbol !default = "default";
 
     ai.thinkingrobots.mtracs.util.MPose !pose;
@@ -100,18 +94,6 @@ import edu.tufts.hrilab.fol.Term;
     Predicate !cameraHeight;
     !cameraHeight = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cameraHeight(?actor,338)");
     act:assertBelief(!cameraHeight);
-
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", 550.00f, 0.0f, 200.00f, 3.14159f, 0.0f, 3.14159f);
-    tsc:recordPose(!locationOne, !pose, !conveyorHeight);
-    op:log(info, "Setup !locationOne for ?actor");
-
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", -10.00f, -400.00f, 200.00f, 3.14159f, 0.0f, 3.14159f);
-    tsc:recordPose(!locationTwo, !pose, !workHeight);
-    op:log(info, "Setup !locationTwo for ?actor");
-
-    (!pose)= op:newObject("ai.thinkingrobots.mtracs.util.MPose", -217.00f, -450.56f, 200.0f, 3.14159f, 0.0f, 3.14159f);
-    tsc:recordPose(!locationThree, !pose, !workHeight);
-    op:log(info, "Setup !locationThree for ?actor");
 
     act:goToCameraPose(pose_0:pose);
 
