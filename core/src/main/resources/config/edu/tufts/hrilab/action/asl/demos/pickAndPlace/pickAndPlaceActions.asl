@@ -170,6 +170,7 @@ import java.lang.Integer;
     op:log(info, "[putDown]");
 
     !heldObject = act:getHeldObject();
+    op:log(debug, "[putDown] held object is !heldObject");
     if (op:isNull(!heldObject)) {
         exit(FAIL_PRECONDITIONS,not(holding(?actor,anything)));
     }
