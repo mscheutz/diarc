@@ -108,13 +108,20 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                     return incomingUtterance;
                 }
                 Symbol argSymbol;
-                Map<String, String> descriptorTypes = getKnownDescriptorTypes();
-                if (descriptorTypes.containsKey(arg)) {
-                    //v2 only
-                    argSymbol = Factory.createSymbol(arg, descriptorTypes.get(arg));
-                } else {
+                String descriptorType = getDescriptorType(arg);
+                if (descriptorType.isEmpty()) {
                     argSymbol = Factory.createFOL(arg);
+                } else {
+                    //v2 only
+                    argSymbol = Factory.createSymbol(arg, descriptorType);
                 }
+                //Map<String, String> descriptorTypes = getKnownDescriptorTypes();
+                //if (descriptorTypes.containsKey(arg)) {
+                //    //v2 only
+                //    argSymbol = Factory.createSymbol(arg, descriptorTypes.get(arg));
+                //} else {
+                //    argSymbol = Factory.createFOL(arg);
+                //}
 
                 //Should generally be any reference, just know in this case all references will be locations
                 if (argSymbol != null && (argSymbol.getType().equals("pose") || argSymbol.getType().equals("physobj"))) {
@@ -382,23 +389,41 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     }
     
     private String getObjectListString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("red block\n");
-        builder.append("blue block\n");
-        builder.append("green block\n");
-        builder.append("yellow block\n");
-        builder.append("orange block\n");
-        return builder.toString();
+        try {
+            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getObjectDescriptors")).call(List.class);
+            return String.join("\n", propertyNames);
+        } catch (TRADEException e) {
+            log.error("[getObjectListString]", e);
+        }
+
+        return "";
+
+        //StringBuilder builder = new StringBuilder();
+        //builder.append("red block\n");
+        //builder.append("blue block\n");
+        //builder.append("green block\n");
+        //builder.append("yellow block\n");
+        //builder.append("orange block\n");
+        //return builder.toString();
     }
 
     private String getPoseListString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("locationOne\n");
-        builder.append("locationTwo\n");
-        builder.append("locationThree\n");
-        builder.append("locationFour\n");
-        builder.append("locationFive\n");
-        return builder.toString();
+        try {
+            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPoseDescriptors")).call(List.class);
+            return String.join("\n", propertyNames);
+        } catch (TRADEException e) {
+            log.error("[getPoseListString]", e);
+        }
+
+        return "";
+
+        //StringBuilder builder = new StringBuilder();
+        //builder.append("locationOne\n");
+        //builder.append("locationTwo\n");
+        //builder.append("locationThree\n");
+        //builder.append("locationFour\n");
+        //builder.append("locationFive\n");
+        //return builder.toString();
     }
 
     private String getWorldStateString() {
@@ -439,20 +464,41 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         return robotLocationString + holdingString + builder;
     }
 
-    private Map<String,String> getKnownDescriptorTypes() {
-        //TODO: update if new names are taught
-        Map<String,String> descriptors = new HashMap<>();
-        descriptors.put("red block", "physobj");
-        descriptors.put("blue block", "physobj");
-        descriptors.put("green block", "physobj");
-        descriptors.put("yellow block", "physobj");
-        descriptors.put("orange block", "physobj");
-        descriptors.put("locationOne", "pose");
-        descriptors.put("locationTwo", "pose");
-        descriptors.put("locationThree", "pose");
-        descriptors.put("locationFour", "pose");
-        descriptors.put("locationFive", "pose");
-        return descriptors;
+    //private Map<String,String> getKnownDescriptorTypes() {
+    //    //TODO: update if new names are taught
+    //    Map<String,String> descriptors = new HashMap<>();
+    //    descriptors.put("red block", "physobj");
+    //    descriptors.put("blue block", "physobj");
+    //    descriptors.put("green block", "physobj");
+    //    descriptors.put("yellow block", "physobj");
+    //    descriptors.put("orange block", "physobj");
+    //    descriptors.put("locationOne", "pose");
+    //    descriptors.put("locationTwo", "pose");
+    //    descriptors.put("locationThree", "pose");
+    //    descriptors.put("locationFour", "pose");
+    //    descriptors.put("locationFive", "pose");
+    //    return descriptors;
+    //}
+
+    private String getDescriptorType(String descriptor) {
+        try {
+            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getObjectDescriptors")).call(List.class);
+            if (propertyNames.contains(descriptor)) {
+                return "physobj";
+            }
+        } catch (TRADEException e) {
+            log.error("[getObjectListString]", e);
+        }
+
+        try {
+            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPoseDescriptors")).call(List.class);
+            if (propertyNames.contains(descriptor)) {
+                return "pose";
+            }
+        } catch (TRADEException e) {
+            log.error("[getPoseListString]", e);
+        }
+        return "";
     }
 
     //Hacky impl of getting japanese version of descriptors used in action scripts for TTS

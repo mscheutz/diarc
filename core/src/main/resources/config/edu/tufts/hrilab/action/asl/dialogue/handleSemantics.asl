@@ -137,6 +137,9 @@ import java.lang.Integer;
       if (goal:knows(?actor,?query)) {
         op:log("debug", "handleITK: knows goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?actor,?query)");
+        //TODO: undo this change -> big issue that goals are submitted not through the Execution Manager
+        //      Making hacky change to get desired behavior on short notice while covering up this bug
+        return;
       } elseif (goal:observe(?query)) {
         op:log("debug", "handleITK: observation goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");

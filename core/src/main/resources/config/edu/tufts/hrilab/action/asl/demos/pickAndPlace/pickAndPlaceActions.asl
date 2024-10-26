@@ -56,6 +56,7 @@ import java.lang.Integer;
     Predicate !objectAtPred;
     Symbol !descriptor;
     Symbol !holding;
+    Predicate !goalPred;
 
     act:assertIsPhysobj(?object);
     act:assertIsPose(?destination);
@@ -74,6 +75,23 @@ import java.lang.Integer;
                 act:assertBelief(!objectAtPred);
             }
         }
+    }
+
+    Symbol !heldObject;
+    Symbol !openPose;
+    //First put down any held object because the planner doesn't handle that gracefully (e.g. could try to put it down
+    //  at a full location and fail/enter recovery for something totally unnecessary)
+    !heldObject = act:getHeldObject();
+    if (~op:isNull(!heldObject)) {
+        !openPose = act:getPoseWithSpace(?destination);
+        if (op:isNull(!openPose)) {
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,putDownObject)");
+            exit(FAIL, !failCond);
+        }
+        op:log(info,"moving held object to open location");
+        !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, !openPose)");
+        goal:!goalPred;
+        act:putDown();
     }
 
     //TODO: get rid of this doubly nested action wrapping of goalspecs. Interacts badly with recovery - need to
@@ -128,13 +146,20 @@ import java.lang.Integer;
     Symbol !objectPose;
     Symbol !armPose;
     Symbol !heldObject;
+    Predicate !failCond;
+    Predicate !thisStep;
+    edu.tufts.hrilab.action.justification.Justification !failureJustification;
 
     op:log(info, "[pickUp] ?object");
     act:assertIsPhysobj(?object);
 
     !heldObject = act:getHeldObject();
     if (~op:isNull(!heldObject)) {
-        exit(FAIL_PRECONDITIONS,holding(?actor,!heldObject));
+        !thisStep =  op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "pickUp(?actor, ?object)");
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor,!heldObject))");
+        !failureJustification = op:newObject("edu.tufts.hrilab.action.justification.ConditionJustification", false, !failCond);
+        op:invokeMethod(!failureJustification, "setStep", !thisStep);
+        exit(FAIL_PRECONDITIONS,!failureJustification);
     }
 
     !objectPose = act:getObjectPose(?object);
@@ -190,6 +215,44 @@ import java.lang.Integer;
     act:putDown();
 }
 
+() = pickUpWhileHoldingObjectRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            catchingAction : moveObjectTo(A,X,Y,Z)
+            postRecovery : postrecovery_success
+        }
+        failureReasons : {not(holding(X,Y))}
+    }
+
+    Symbol !response;
+    Symbol !pose;
+    Symbol !currentPose;
+    Symbol !blockToPickUp;
+
+    op:log("debug","[pickUpWhileHoldingObjectRecovery");
+    op:log("debug","[pickUpWhileHoldingObjectRecovery] ?failedActionPredicates");
+    op:log("debug","[pickUpWhileHoldingObjectRecovery] ?failureReasons");
+    op:log("debug","[pickUpWhileHoldingObjectRecovery] ?failedGoal");
+
+    !currentPose = act:getCurrentLocation();
+    !response = act:reportHoldingObjectAndAskToPutDown();
+    if (op:equals(!response,yes)) {
+        !pose = act:askForPose();
+        if (op:equals(!pose,none)) {
+            exit(FAIL_RECOVERY);
+        } else {
+            act:goToPose(!pose);
+            act:putDown();
+            act:goToPose(!currentPose);
+            //only here because of ASL bug
+            !blockToPickUp = op:invokeMethod(?failedGoal,"get",1);
+            act:pickUp(!blockToPickUp);
+        }
+    } else {
+        exit(FAIL_RECOVERY);
+    }
+}
+
 () = swapObjects(Symbol ?objectOne, Symbol ?objectTwo) {
     Predicate !goalPred;
     Predicate !failCond;
@@ -236,9 +299,8 @@ import java.lang.Integer;
             act:swapHeldObject(!heldObject,?objectOne,!objectOnePose);
             return;
         } else {
-            //TODO: ideally not to one of the swap poses
             //Move held object to open location
-            !openPose = act:getPoseWithSpace();
+            !openPose = act:getPoseWithSpace(!objectOnePose);
             if (op:isNull(!openPose)) {
                 !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapObjects)");
                 exit(FAIL, !failCond);
@@ -276,7 +338,7 @@ import java.lang.Integer;
 
     if (op:equals(?poseFull,true)) {
         //Move object two temporarily to an open location
-        !openPose = act:getPoseWithSpace();
+        !openPose = act:getPoseWithSpace(?object2Pose);
         if (op:isNull(!openPose)) {
             !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapObjects)");
             exit(FAIL, !failCond);
@@ -305,7 +367,7 @@ import java.lang.Integer;
     !numObjects = act:getNumberOfObjectsAt(?objectToSwapPose);
     if (op:gt(!numObjects,1)) {
         //Move held object to open location
-        !openPose = act:getPoseWithSpace();
+        !openPose = act:getPoseWithSpace(?objectToSwapPose);
         if (op:isNull(!openPose)) {
             !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapObjects)");
             exit(FAIL, !failCond);
@@ -316,7 +378,7 @@ import java.lang.Integer;
         act:putDown();
 
         //Move object to swap temporarily to an open location
-        !openPose = act:getPoseWithSpace();
+        !openPose = act:getPoseWithSpace(?objectToSwapPose);
         if (op:isNull(!openPose)) {
             !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapObjects)");
             exit(FAIL, !failCond);
@@ -343,15 +405,9 @@ import java.lang.Integer;
         actionRecovery : {
             postRecovery : postrecovery_success
         }
-        actionStatuses : {FAIL_PRECONDITIONS}
         failureReasons : {has(theLocationBelowMe,space)}
         excludedGoals : {putDown(X), putDown(X,Y)}
     }
-    //recovery : {
-    //    actionStatuses : {FAIL_PRECONDITIONS}
-    //    failureReasons : {has(theLocationBelowMe,space)}
-    //    goals : {getObjectTo(X,Y,Z)}
-    //}
     Symbol !response;
     Symbol !otherObject;
     String !otherObjectName;
@@ -421,14 +477,6 @@ import java.lang.Integer;
     act:putDown();
 }
 
-() = detectObject(Symbol ?object) {
-    effects : {
-        success : knows(?actor,see(?object));
-    }
-    op:log(info,"detectObject");
-    act:perceiveEntity(?object);
-}
-
 //TODO
 () = resetDomain() {
     conditions : {
@@ -436,8 +484,168 @@ import java.lang.Integer;
     }
 }
 
-() = perceiveObject(edu.tufts.hrilab.fol.Symbol ?refID) {
+() = detectObject(edu.tufts.hrilab.fol.Symbol ?refID) {
     act:perceiveEntity(?refID);
+}
+
+() = handleSeeITK(Symbol ?object) {
+    effects : {
+        success : knows(?actor,see(?object));
+    }
+    List !activeGoals;
+    Predicate !state;
+    java.lang.Long !goalID;
+    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+    Symbol !objectDescriptor;
+
+    op:log(info,"detectObject");
+
+    !activeGoals = act:getActiveGoals();
+    if (op:isEmpty(!activeGoals)) {
+        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "perceiveEntity(?actor,?object)");
+        !goalID = act:submitGoal(!state);
+        !goalStatus = act:joinOnGoal(!goalID);
+        if (op:invokeMethod(!goalStatus, "isFailure")) {
+           //TODO: get better output by asserting something?
+          exit(FAIL);
+        } else {
+            !objectDescriptor = tsc:getDescriptorForID(?object);
+            act:reportDetectedObject(!objectDescriptor);
+        }
+    } else {
+        !objectDescriptor = tsc:getDescriptorForID(?object);
+        act:reportCantVerifyBecauseActiveGoal(!objectDescriptor);
+        //not exiting so no more responses occur from handleITK
+    }
+
+    //act:perceiveEntity(?object);
+}
+
+() = handleObjectAtITK(Symbol ?object, Symbol ?pose) {
+    effects : {
+        success : knows(?actor,at(?object,?pose));
+    }
+    Symbol !objectPose;
+    List !activeGoals;
+    Predicate !state;
+    java.lang.Long !goalID;
+    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+    Symbol !response;
+    Predicate !ack = "ack(okay)";
+    Symbol !objectDescriptor;
+    Symbol !poseDescriptor;
+
+    act:assertIsPose(?pose);
+    act:assertIsPhysobj(?object);
+
+    //Check belief first
+    !objectPose = act:getObjectPose(?object);
+    if (op:isNull(!objectPose)) {
+        !objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
+    }
+
+    !objectDescriptor = tsc:getDescriptorForID(?object);
+    !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
+
+    //Report findings from belief
+    if (op:equals(!objectPose,?pose)) {
+        act:reportObjectBelievedToBeAtPose(!objectDescriptor,!poseDescriptor);
+    } else {
+        act:reportObjectNotBelievedToBeAtPose(!objectDescriptor,!poseDescriptor);
+    }
+
+    //Ask if user would like the system to go verify the belief (or lack thereof)
+    !response = act:askToVerifyBelief();
+    act:generateResponse(?actor,!ack,direct);
+    if (op:equals(!response,yes)) {
+        //Check if there is an active goal blocking verification
+        !activeGoals = act:getActiveGoals();
+        if (op:isEmpty(!activeGoals)) {
+            //Verify through goToAndDetect action
+            !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goToAndDetect(?actor,?object,?pose)");
+            !goalID = act:submitGoal(!state);
+            !goalStatus = act:joinOnGoal(!goalID);
+            if (op:invokeMethod(!goalStatus, "isFailure")) {
+                //verification failed, report object is not at pose
+                act:reportObjectNotAtPose(!objectDescriptor,!poseDescriptor);
+            } else {
+                //verification succeeded, report object is at pose
+                act:reportDetectedObject(!objectDescriptor);
+            }
+        } else {
+            //If there is already an active goal, can't go verify
+            act:reportCantVerifyBecauseActiveGoal();
+            //don't exit so no more responses
+        }
+    }
+    //Otherwise do nothing, so no extra response
+}
+
+() = goToAndDetect(Symbol ?object, Symbol ?pose) {
+    act:goToPose(?pose);
+    act:perceiveEntity(?object);
+}
+
+() = handleObjectsAtITK(Symbol ?pose) {
+    effects : {
+        success : knows(?actor,objectsAt(?pose));
+    }
+
+    java.lang.Integer !num;
+    Symbol !objectPose;
+    List !activeGoals;
+    Predicate !state;
+    java.lang.Long !goalID;
+    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+    Symbol !response;
+    Predicate !ack = "ack(okay)";
+    Symbol !poseDescriptor;
+
+    act:assertIsPose(?pose);
+
+    !poseDescriptor = tsc:getDescriptorForPoseID(?pose);
+
+    !num = act:getNumberOfObjectsAt(?pose);
+    if (op:gt(!num,0)) {
+        act:reportBelieveObjectsAtPose(!poseDescriptor);
+    } else {
+        act:reportDontBelieveObjectsAtPose(!poseDescriptor);
+    }
+    !response = act:askToVerifyBelief();
+    act:generateResponse(?actor,!ack,direct);
+    if (op:equals(!response,yes)) {
+        //Check if there is an active goal blocking verification
+        !activeGoals = act:getActiveGoals();
+        if (op:isEmpty(!activeGoals)) {
+            //Verify through goToAndDetect action
+            !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goToAndDetect(?actor,?pose)");
+            !goalID = act:submitGoal(!state);
+            !goalStatus = act:joinOnGoal(!goalID);
+            if (op:invokeMethod(!goalStatus, "isFailure")) {
+                //verification failed, report objects are not at pose
+                act:reportObjectsNotAtPose(!poseDescriptor);
+            } else {
+                //verification succeeded, report objects are at pose
+                act:reportDetectedObjects(!poseDescriptor);
+                act:describeObjectsAt(?pose);
+            }
+        } else {
+            //If there is already an active goal, can't go verify
+            act:reportCantVerifyBecauseActiveGoal();
+            //don't exit so no more responses
+        }
+    }
+    //Otherwise do nothing, so no extra response
+}
+
+() = goToAndDetect(Symbol ?pose) {
+    List !results;
+
+    act:goToPose(?pose);
+    !results = act:perceiveEntities();
+    if (op:isEmpty(!results)) {
+        exit(FAIL);
+    }
 }
 
 /////// ITK ///////
@@ -553,33 +761,6 @@ import java.lang.Integer;
 //    //TODO
 //    //?objectは感知できます == (I know how to detect ?object)
 //}
-
-() = goToAndDetect(Symbol ?object, Symbol ?pose) {
-    effects : {
-        success : knows(?actor,at(?object,?pose));
-    }
-
-    act:assertIsPose(?pose);
-    act:assertIsPhysobj(?object);
-
-    act:goToPose(?pose);
-    act:perceiveEntity(?object);
-}
-
-() = goToAndDetect(Symbol ?pose) {
-    effects : {
-        success : knows(?actor,objectsAt(?pose));
-    }
-    List !results;
-
-    act:assertIsPose(?pose);
-
-    act:goToPose(?pose);
-    !results = act:perceiveEntities();
-    if (op:isEmpty(!results)) {
-        exit(FAIL);
-    }
-}
 
 () = describeCurrentGoal["describes ?actor's current active task(s)"](){
 

@@ -119,3 +119,82 @@ import java.util.Map;
 () = reportObjectsToSwapAreTheSame() {
    act:generateResponseFromString("You asked me to swap an object with itself. Doing nothing");
 }
+
+//TODO: add to translation list we need to get
+
+() = reportDetectedObject(Symbol ?objectDescriptor) {
+    act:generateResponseFromString("yes, I see ?objectDescriptor");
+}
+
+() = reportCantVerifyBecauseActiveGoal() {
+    act:generateResponseFromString("I cannot verify that because I am currently doing something");
+}
+
+() = reportObjectNotBelievedToBeAtPose(Symbol ?objectDescriptor, Symbol ?poseDescriptor) {
+    act:generateResponseFromString("I do not believe ?objectDescriptor is at ?poseDescriptor");
+}
+
+() = reportObjectBelievedToBeAtPose(Symbol ?objectDescriptor, Symbol ?poseDescriptor) {
+    act:generateResponseFromString("I believe ?objectDescriptor is at ?poseDescriptor");
+}
+
+() = reportObjectNotAtPose(Symbol ?objectDescriptor, Symbol ?poseDescriptor) {
+    act:generateResponseFromString("I do not see ?objectDescriptor at ?poseDescriptor");
+}
+
+() = reportDetectedObject(Symbol ?objectDescriptor, Symbol ?poseDescriptor) {
+    act:generateResponseFromString("I see ?objectDescriptor at ?poseDescriptor");
+}
+
+(Symbol ?response) = askToVerifyBelief() {
+    Map !bindings;
+    Variable !x = "X";
+
+    (!bindings) = act:askQuestionFromString(?actor,"Would you like me to verify that?", val(X));
+    if (op:invokeMethod(!bindings, "isEmpty")) {
+        ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");
+    } else {
+        ?response = op:get(!bindings,!x);
+    }
+}
+
+() = reportDontBelieveObjectsAtPose(Symbol ?poseDescriptor) {
+    act:generateResponseFromString("I do not believe any objects are at ?poseDescriptor");
+}
+
+() = reportBelieveObjectsAtPose(Symbol ?poseDescriptor) {
+    act:generateResponseFromString("I believe objects are at ?poseDescriptor");
+}
+
+() = reportObjectsNotAtPose(Symbol ?poseDescriptor) {
+    act:generateResponseFromString("I do not see any objects at ?poseDescriptor");
+}
+
+() = reportDetectedObjects(Symbol ?poseDescriptor) {
+    act:generateResponseFromString("I see objects at ?poseDescriptor");
+}
+
+(Symbol ?response) = reportHoldingObjectAndAskToPutDown() {
+    Map !bindings;
+    Variable !x = "X";
+
+    (!bindings) = act:askQuestionFromString(?actor,"I cannot pick up the object because I am holding something. Would you like me to put it down somewhere?", val(X));
+    if (op:invokeMethod(!bindings, "isEmpty")) {
+        ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");
+    } else {
+        ?response = op:get(!bindings,!x);
+    }
+}
+
+(Symbol ?objectPose) = askForPose() {
+    Map !bindings;
+    Variable !x = "X";
+
+    (!bindings) = act:askQuestionFromString(?actor,"Where should I put it down?", pose(X));
+    if (op:invokeMethod(!bindings, "isEmpty")) {
+        ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
+    } else {
+        //TODO: if ?objectPose does not have type pose, EXIT
+        ?objectPose = op:get(!bindings,!x);
+    }
+}

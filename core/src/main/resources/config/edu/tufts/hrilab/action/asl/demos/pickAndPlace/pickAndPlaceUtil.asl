@@ -27,6 +27,7 @@ import java.util.List;
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,X)");
     !bindings = act:queryBelief(!queryPred);
     if (~op:isEmpty(!bindings)) {
+        //TODO: bug where empty array (only sometimes) still returns true?
         !elem = op:get(!bindings, 0);
         (?physobj) =op:get(!elem,!bindingVar);
     } else {
@@ -65,23 +66,38 @@ import java.util.List;
     }
 }
 
-(Symbol ?pose) = getPoseWithSpace() {
+//EW: "poseToAvoid" is a weird/incomplete way of implementing this - rewrite
+(Symbol ?pose) = getPoseWithSpace(Symbol ?poseToAvoid) {
     java.lang.Integer !numObjects;
     java.lang.Integer !poseIndex = 0;
     java.lang.Boolean !doneChecking = false;
+    List !poseDescriptors;
+    java.lang.Integer !numberOfPoses;
+    java.lang.Integer !candidateIndex = -1;
 
     op:log(debug,"getPoseWithSpace");
 
+    !poseDescriptors = act:getPoseDescriptors();
+    !numberOfPoses = op:invokeMethod(!poseDescriptors, "size");
+
     while (op:equals(!doneChecking, false)) {
-        //TODO: Don't have number of locations hardcoded
-        if (op:gt(!poseIndex,2)) {
-            ?pose = op:setNull();
+        if (op:ge(!poseIndex,!numberOfPoses)) {
+            if (op:equals(!candidateIndex,-1)) {
+                ?pose = op:setNull();
+            } else {
+                ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "pose_!candidateIndex:pose");
+            }
             !doneChecking = op:newObject("java.lang.Boolean", true);
         } else {
             ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "pose_!poseIndex:pose");
             !numObjects = act:getNumberOfObjectsAt(?pose);
-            if (op:lt(!numObjects,2)) {
+            if (op:lt(!numObjects,1)) {
+                //choose location with 0 current blocks ideally
                 !doneChecking = op:newObject("java.lang.Boolean", true);
+            } elseif (op:lt(!numObjects,2) && ~op:equals(?pose,?poseToAvoid)) {
+                if (op:equals(!candidateIndex,-1)) {
+                    !candidateIndex = op:newObject("java.lang.Integer", !poseIndex);
+                }
             }
             !poseIndex = op:++(!poseIndex);
         }
