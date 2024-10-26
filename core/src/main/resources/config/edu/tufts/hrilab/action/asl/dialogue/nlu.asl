@@ -37,6 +37,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
 () = handleSpeechInput(Utterance ?utterance) {
     Symbol !speaker;
     Symbol !addressee;
+    Predicate !ack = "ack(okay)";
 
     op:log("debug", "handleSpeechInput for utterance: ?utterance");
 
@@ -115,7 +116,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
       if (op:isNull(!response)) {
         op:log("debug", "Utterance validation aborted, not processing utterance");
         //report to the user that we are done processing the original utterance?
-        act:sayText("Okay, I am ignoring the previous command");
+        //act:sayText("Okay, I am ignoring the previous command");
+        act:generateResponse(!ack);
         return;
       } elseif (op:equalsValue(!response, yes())) {
         op:log("debug", "Utterance validated.");
@@ -123,7 +125,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
       } elseif (op:equalsValue(!response, no())) {
         // ask for human to rephrase their request
         op:log("debug", "Utterance not validated. Asking to rephrase.");
-        act:sayText("please rephrase");
+        //act:sayText("please rephrase");
+        act:generateResponse(!ack);
         return;
       }
       //can't do this because there's no feedback from the question asking anywhere in the pipeline. askQuestion in async thread as void method
