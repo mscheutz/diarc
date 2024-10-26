@@ -135,7 +135,7 @@ import java.lang.Integer;
     } else {
         //Multiple results - ask which one to pick up
         !object = act:askForObjectToPickUp();
-        if (~op:equals(!object, none)) {
+        if (~op:equalsValue(!object, none)) {
             !location = act:getCurrentLocation();
             act:grabPerceivedEntity(!object,!location);
         } else {
@@ -298,6 +298,9 @@ import java.lang.Integer;
     } elseif (op:isNull(!objectTwoPose)) {
         !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,theLocationOf,?objectTwo))");
         exit(FAIL, !failCond);
+    } elseif (op:equalsValue(!objectOnePose,!objectTwoPose)) {
+        act:reportObjectsAtSameLocation();
+        return;
     }
 
     if (~op:isNull(!heldObject)) {
@@ -492,11 +495,30 @@ import java.lang.Integer;
 //}
 
 () = detectObject(edu.tufts.hrilab.fol.Symbol ?refID) {
+    Symbol !objectDescriptor;
+
     act:perceiveEntity(?refID);
+    !objectDescriptor = tsc:getDescriptorForID(?refID);
+    act:reportSeenObject(!objectDescriptor);
 }
 
 () = detectObjects() {
-    act:perceiveEntities();
+    List !bindings;
+    Symbol !ref;
+    Symbol !armPose;
+    Symbol !descriptor;
+
+    !bindings = act:perceiveEntities();
+    if (op:isEmpty(!bindings)) {
+        !armPose = act:getCurrentLocation();
+        !descriptor = tsc:getDescriptorForPoseID(!armPose);
+        act:reportObjectsNotAtPose(!descriptor);
+    } else {
+        foreach (!ref : !bindings) {
+            !descriptor = tsc:getDescriptorForID(!ref);
+            act:reportSeenObject(!descriptor);
+        }
+    }
 }
 
 () = handleSeeITK(Symbol ?object) {

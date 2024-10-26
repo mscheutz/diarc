@@ -210,3 +210,11 @@ import java.util.Map;
         act:generateResponseFromString(!descriptor);
     }
 }
+
+() = reportSeenObject(Symbol ?descriptor) {
+    act:generateResponseFromString("I see ?descriptor");
+}
+
+() = reportObjectsAtSameLocation() {
+    act:generateResponseFromString("The objects are already at the same pose");
+}
