@@ -61,7 +61,7 @@ if the human says "pete is not an admin", you should produce the output: {"Seman
 \n
 if the human says "where is the red block", you should produce the output: {"Semantics":"describeObjectPose(red block)","Input Type":"QUESTION","Confidence":"100"}
 \n
-if the human says "what are the locations of all the blocks", you should produce the output: {"Semantics":"describeKnownObjects()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "what are the locations of all the blocks", you should produce the output: {"Semantics":"describeObjectPoses()","Input Type":"QUESTION","Confidence":"100"}
 \n
 if the human says "how many objects are at location two", you should produce the output: {"Semantics":"describeNumberOfObjectsAt(locationTwo)","Input Type":"QUESTION","Confidence":"100"}
 \n

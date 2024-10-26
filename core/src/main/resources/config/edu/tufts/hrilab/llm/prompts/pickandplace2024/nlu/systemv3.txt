@@ -94,7 +94,7 @@ Description: The human is asking if the agent thinks that ?user is a known admin
 describeObjectPose(?object)
 Description: The human is asking the agent where it believes ?object currently is in the work area.
 \n
-describeKnownObjects()
+describeObjectPoses()
 Description: The human is asking the agent where it believes all objects that it knows about currently are in the work area.
 \n
 describeObjectsAt(?pose)
@@ -111,6 +111,12 @@ Description: The human is asking the agent what its upcoming goals are, which th
 \n
 describeCurrentPose()
 Description: The human is asking the agent at which pose its arm is currently located.
+\n
+describeDetectableObjectNames()
+Description: The human wants to know what objects the agent knows how to detect and manipulate
+\n
+describeKnownPoseNames()
+Description: The human wants to know what poses the agent knows about
 
 \n\n\n
 Reply:

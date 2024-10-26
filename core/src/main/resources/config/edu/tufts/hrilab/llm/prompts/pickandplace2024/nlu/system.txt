@@ -107,7 +107,7 @@ Description: The human is asking if the agent thinks that ?user is trusted user 
 describeObjectPose(?actor,?object:physobj)
 Description:Tthe human is asking the agent where it believes ?object currently is in the work area.
 
-describeKnownObjects(?actor)
+describeObjectPoses(?actor)
 Description: The human is asking the agent where it believes all objects that it knows about currently are in the work area.
 
 describeObjectsAt(?actor,?pose:pose)

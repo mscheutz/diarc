@@ -121,7 +121,7 @@ Output: {"Semantics":"describeObjectPose(robotone,red block:physobj)","Input Typ
 
 Example 28:
 Input: what are the locations of all the blocks
-Output: {"Semantics":"describeKnownObjects(robotone)","Input Type":"QUESTION","Confidence":"100"}
+Output: {"Semantics":"describeObjectPoses(robotone)","Input Type":"QUESTION","Confidence":"100"}
 
 Example 29:
 Input: how many objects are at location two

@@ -157,7 +157,7 @@ Example 27 Notes: This example, like many of the immediately following examples 
 Example 28:
 #
 Input: 把握しているブロックを教えてください。
-Output: {"Semantics":"describeKnownObjects(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"describeObjectPoses(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 Example 29:
 #

@@ -63,7 +63,7 @@ if the human says "guest is not an admin", you should produce the output: {"Sema
 \n
 if the human says "where is the red block", you should produce the output: {"Semantics":"describeObjectPose(red block)","Input Type":"QUESTION","Confidence":"100"}
 \n
-if the human says "what are the locations of all the objects", you should produce the output: {"Semantics":"describeKnownObjects()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "what are the locations of all the objects", you should produce the output: {"Semantics":"describeObjectPoses()","Input Type":"QUESTION","Confidence":"100"}
 \n
 if the human says "how many objects are at location two", you should produce the output: {"Semantics":"describeNumberOfObjectsAt(locationTwo)","Input Type":"QUESTION","Confidence":"100"}
 \n
@@ -96,6 +96,10 @@ if the human says "where are you now", you should produce the output: {"Semantic
 if the human says "location four", you should produce the output: {"Semantics":"pose(locationFour)","Input Type":"REPLY","Confidence":"100"}
 \n
 if the human says "the green block", you should produce the output: {"Semantics":"objectType(green block)","Input Type":"REPLY","Confidence":"100"}
+\n
+if the human says "what objects can you detect", you should produce the output: {"Semantics":"describeDetectableObjectNames()","Input Type":"QUESTION","Confidence":"100"}
+\n
+if the human says "what poses exist", you should produce the output: {"Semantics":"describeKnownPoseNames()","Input Type":"QUESTION","Confidence":"100"}
 \n
 \n\n
 

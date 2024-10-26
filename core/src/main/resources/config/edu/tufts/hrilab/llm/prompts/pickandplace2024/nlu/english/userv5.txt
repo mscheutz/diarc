@@ -194,7 +194,7 @@ Assistant Output: {"Semantics":"describeObjectPose(red block)","Input Type":"QUE
 ##
 User Input: "what are the locations of all the blocks"
 #
-Assistant Output: {"Semantics":"describeKnownObjects()","Input Type":"QUESTION","Confidence":"100"}
+Assistant Output: {"Semantics":"describeObjectPoses()","Input Type":"QUESTION","Confidence":"100"}
 ##
 
 ##

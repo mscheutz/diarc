@@ -307,7 +307,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "describeKnownObjects": {
+  "describeObjectPoses": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -324,6 +324,14 @@
     "priorityTier": "SKIPPENDING"
   },
   "describeCurrentPose": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeDetectableObjectNames": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeKnownPoseNames": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   }

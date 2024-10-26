@@ -190,13 +190,13 @@ where is; VERBT ; describeObjectPose
 %is; KNOWABLE\KNOWABLEWHEREIS; #x.$x
 
 %TODO add entries for variations of these
-what objects are you aware of; VERBI; describeKnownObjects
-what objects do you know the locations of; VERBI; describeKnownObjects
+what objects are you aware of; VERBI; describeObjectPoses
+what objects do you know the locations of; VERBI; describeObjectPoses
 what objects are at; VERBT; describeObjectsAt
 how many objects are at; VERBT; describeNumberOfObjectsAt
 are any objects at; Q/REF; #x.objectsAt($x)
-what blocks are you aware of; VERBI; describeKnownObjects
-what blocks do you know the locations of; VERBI; describeKnownObjects
+what blocks are you aware of; VERBI; describeObjectPoses
+what blocks do you know the locations of; VERBI; describeObjectPoses
 what blocks are at; VERBT; describeObjectsAt
 how many blocks are at; VERBT; describeNumberOfObjectsAt
 are any blocks at; Q/REF; #x.objectsAt($x)
@@ -204,6 +204,9 @@ is there a; (Q/REF)/REF; #x#y.at($x,$y)
 %what types of objects can you detect; VERBI; describeObjectTypes
 where are you now; VERBI; describeCurrentPose
 what location are you at; VERBI; describeCurrentPose
+
+what objects can you detect; VERBI; describeDetectableObjectNames
+what poses exist; VERBI; describeKnownPoseNames
 
 is; Q/KNOWABLE; #x.know(?ADDRESSEE,$x)
 a supervisor; KNOWABLE\AGENT; #x.supervisor($x)

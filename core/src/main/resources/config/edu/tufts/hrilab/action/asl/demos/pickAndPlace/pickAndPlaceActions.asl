@@ -476,11 +476,11 @@ import java.lang.Integer;
 }
 
 //TODO
-() = resetDomain() {
-    conditions : {
-        pre : free(?actor); //TODO can have recovery asking user where to put object down
-    }
-}
+//() = resetDomain() {
+//    conditions : {
+//        pre : free(?actor); //TODO can have recovery asking user where to put object down
+//    }
+//}
 
 () = detectObject(edu.tufts.hrilab.fol.Symbol ?refID) {
     act:perceiveEntity(?refID);
@@ -675,7 +675,7 @@ import java.lang.Integer;
 }
 
 //Describe known objects in the work area and their locations
-() = describeKnownObjects() {
+() = describeObjectPoses() {
     Predicate !queryPred;
     List !bindings;
     java.util.Map !binding;
@@ -758,11 +758,19 @@ import java.lang.Integer;
     act:reportNumberOfObjectsAt(!numObjects,!poseDescriptor);
 }
 
-////Could do same for locations if we want to
-//() = describeObjectTypes() {
-//    //TODO
-//    //?objectは感知できます == (I know how to detect ?object)
-//}
+() = describeDetectableObjectNames() {
+    List !objectList;
+
+    !objectList = tsc:getObjectDescriptors();
+    act:reportKnownObjects(!objectList);
+}
+
+() = describeKnownPoseNames() {
+    List !poseList;
+
+    !poseList = tsc:getPoseDescriptors();
+    act:reportKnownPoses(!poseList);
+}
 
 () = describeCurrentGoal["describes ?actor's current active task(s)"](){
 
