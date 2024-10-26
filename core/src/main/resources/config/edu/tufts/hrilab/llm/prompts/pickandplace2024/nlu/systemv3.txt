@@ -51,6 +51,9 @@ Description: The robot will place the object it is holding down at pose ?destina
 detectObject(?object)
 Description: The robot will look at its current pose for an object of type ?object.
 \n
+detectObjects()
+Description: The robot will look at its current pose for any objects.
+\n
 swapObjects(?objectOne,?objectTwo)
 Description: The robot will perform whatever action sequence is necessary such that ?objectOne and ?objectTwo swap poses. In other words, ?objectOne will end up at ?objectTwo's current pose and ?objectTwo will end up at ?objectOne's current pose.
 \n

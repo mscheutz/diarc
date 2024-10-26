@@ -25,6 +25,8 @@ if the human says "グリッパーを閉めてください", you should produce 
 \n
 if the human says "赤いブロックをみつけてください", you should produce the output: {"Semantics":"detectObject(red block)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
+if the human says "detect what is at your location", you should produce the output: {"Semantics":"detectObjects()","Input Type":"INSTRUCT","Confidence":"100"}
+\n
 if the human says "ブロックを拾ってください", you should produce the output: {"Semantics":"pickUp()","Input Type":"INSTRUCT","Confidence":"100"}
 \n\n
 if the human says "緑色のブロックを拾ってください", you should produce the output: {"Semantics":"pickUp(green block)","Input Type":"INSTRUCT","Confidence":"100"}

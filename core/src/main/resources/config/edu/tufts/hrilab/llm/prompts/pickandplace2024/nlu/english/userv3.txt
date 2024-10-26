@@ -25,6 +25,8 @@ if the human says "close gripper", you should produce the output: {"Semantics":"
 \n
 if the human says "detect the red block", you should produce the output: {"Semantics":"detectObject(red block)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
+if the human says "detect what is at your location", you should produce the output: {"Semantics":"detectObjects()","Input Type":"INSTRUCT","Confidence":"100"}
+\n
 if the human says "pick up the object", you should produce the output: {"Semantics":"pickUp()","Input Type":"INSTRUCT","Confidence":"100"}
 \n\n
 if the human says "pick up the green block", you should produce the output: {"Semantics":"pickUp(green block)","Input Type":"INSTRUCT","Confidence":"100"}

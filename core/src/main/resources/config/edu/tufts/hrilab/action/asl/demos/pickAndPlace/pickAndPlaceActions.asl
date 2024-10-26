@@ -486,6 +486,10 @@ import java.lang.Integer;
     act:perceiveEntity(?refID);
 }
 
+() = detectObjects() {
+    act:perceiveEntities();
+}
+
 () = handleSeeITK(Symbol ?object) {
     effects : {
         success : knows(?actor,see(?object));
@@ -496,7 +500,7 @@ import java.lang.Integer;
     edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
     Symbol !objectDescriptor;
 
-    op:log(info,"detectObject");
+    op:log(info,"handleSeeITK");
 
     !activeGoals = act:getActiveGoals();
     if (op:isEmpty(!activeGoals)) {

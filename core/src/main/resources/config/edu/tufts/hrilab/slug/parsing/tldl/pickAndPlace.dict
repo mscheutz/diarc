@@ -61,6 +61,7 @@ close the grippers; VERBI; closeGripper
 close your grippers; VERBI; closeGripper
 
 %% detectObject %%
+look for objects; VERBI; detectObjects
 look for; VERBT; detectObject
 search for; VERBT; detectObject
 find; VERBT; detectObject

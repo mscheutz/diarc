@@ -45,6 +45,9 @@ Description: The ?actor will place the object it is holding down at pose ?destin
 detectObject(?actor,?object:physobj)
 Description: The ?actor will look at its current pose for a object of type ?object.
 #
+detectObjects()
+Description: The robot will look at its current pose for any objects.
+#
 swapObjects(?actor,?objectOne:physobj,?objectTwo:physobj)
 Description: The ?actor will perform whatever action sequence is necessary such that ?objectOne and ?objectTwo swap poses. In other words, ?objectOne will end up at ?objectTwo's current pose and ?objectTwo will end up at ?objectOne's current pose.
 #
