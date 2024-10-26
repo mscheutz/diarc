@@ -83,15 +83,17 @@ import java.lang.Integer;
     //  at a full location and fail/enter recovery for something totally unnecessary)
     !heldObject = act:getHeldObject();
     if (~op:isNull(!heldObject)) {
-        !openPose = act:getPoseWithSpace(?destination);
-        if (op:isNull(!openPose)) {
-            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,putDownObject)");
-            exit(FAIL, !failCond);
+        if(~op:equalsValue(!heldObject, ?object)) {
+            !openPose = act:getPoseWithSpace(?destination);
+            if (op:isNull(!openPose)) {
+                !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,putDownObject)");
+                exit(FAIL, !failCond);
+            }
+            op:log(info,"moving held object to open location");
+            !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, !openPose)");
+            goal:!goalPred;
+            act:putDown();
         }
-        op:log(info,"moving held object to open location");
-        !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, !openPose)");
-        goal:!goalPred;
-        act:putDown();
     }
 
     //TODO: get rid of this doubly nested action wrapping of goalspecs. Interacts badly with recovery - need to
@@ -205,6 +207,13 @@ import java.lang.Integer;
 }
 
 () = moveObjectTo(Symbol ?object:physobj, Symbol ?start:pose, Symbol ?destination:pose) {
+    Symbol !objectLocation;
+
+    !objectLocation = act:getObjectPose(?object);
+    if (~op:equalsValue(!objectLocation, ?start)) {
+        exit(FAIL_PRECONDITIONS,not(at(?object,?start)));
+    }
+
     act:assertIsPhysobj(?object);
     act:assertIsPose(?start);
     act:assertIsPose(?destination);
