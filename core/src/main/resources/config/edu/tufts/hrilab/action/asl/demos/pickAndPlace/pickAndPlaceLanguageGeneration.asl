@@ -210,3 +210,7 @@ import java.util.Map;
         act:generateResponseFromString(!descriptor);
     }
 }
+
+() = reportSeenObject(Symbol ?descriptor) {
+    act:generateResponseFromString("I see ?descriptor");
+}

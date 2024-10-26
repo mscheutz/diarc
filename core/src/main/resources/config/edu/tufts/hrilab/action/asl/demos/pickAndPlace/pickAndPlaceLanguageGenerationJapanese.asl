@@ -246,3 +246,7 @@ import java.util.Map;
         act:generateResponseFromString(!japaneseDescriptor);
     }
 }
+
+() = reportSeenObject(Symbol ?descriptor) {
+    act:generateResponseFromString("I see ?descriptor");
+}

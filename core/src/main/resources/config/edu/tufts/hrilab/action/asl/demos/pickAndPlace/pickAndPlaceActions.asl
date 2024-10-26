@@ -492,11 +492,30 @@ import java.lang.Integer;
 //}
 
 () = detectObject(edu.tufts.hrilab.fol.Symbol ?refID) {
+    Symbol !objectDescriptor;
+
     act:perceiveEntity(?refID);
+    !objectDescriptor = tsc:getDescriptorForID(?refID);
+    act:reportSeenObject(!objectDescriptor);
 }
 
 () = detectObjects() {
-    act:perceiveEntities();
+    List !bindings;
+    Symbol !ref;
+    Symbol !armPose;
+    Symbol !descriptor;
+
+    !bindings = act:perceiveEntities();
+    if (op:isEmpty(!bindings)) {
+        !armPose = act:getCurrentLocation();
+        !descriptor = tsc:getDescriptorForPoseID(!armPose);
+        act:reportObjectsNotAtPose(!descriptor);
+    } else {
+        foreach (!ref : !bindings) {
+            !descriptor = tsc:getDescriptorForID(!ref);
+            act:reportSeenObject(!descriptor);
+        }
+    }
 }
 
 () = handleSeeITK(Symbol ?object) {
