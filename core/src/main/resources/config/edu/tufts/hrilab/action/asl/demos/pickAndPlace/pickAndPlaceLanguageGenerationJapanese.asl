@@ -226,3 +226,23 @@ import java.util.Map;
         act:assertIsPose(?objectPose);
     }
 }
+
+() = reportKnownObjects(java.util.List ?objects) {
+    String !descriptor;
+    String !japaneseDescriptor;
+
+    foreach (!descriptor : ?objects) {
+        !japaneseDescriptor = tsc:getJapaneseVersionOfDescriptor(!descriptor);
+        act:generateResponseFromString(!japaneseDescriptor);
+    }
+}
+
+() = reportKnownPoses(java.util.List ?poses) {
+    String !descriptor;
+    String !japaneseDescriptor;
+
+    foreach (!descriptor : ?poses) {
+        !japaneseDescriptor = tsc:getJapaneseVersionOfDescriptor(!descriptor);
+        act:generateResponseFromString(!japaneseDescriptor);
+    }
+}

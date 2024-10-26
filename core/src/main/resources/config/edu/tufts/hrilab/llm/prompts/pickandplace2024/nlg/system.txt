@@ -66,7 +66,7 @@ Description: the user is instructing the ?actor to completely discard all knowle
 describeObjectPose(?actor,?object:physobj)
 Description: The ?actor will tell the user where it believes ?object currently is in the work area.
 #
-describeKnownObjects(?actor)
+describeObjectPoses(?actor)
 Description: The ?actor will tell the user where it believes all objects that it knows about currently are in the work area.
 #
 describeObjectsAt(?actor,?pose:pose)
@@ -86,6 +86,12 @@ Description: The ?actor will believe that the ?object is now at ?pose.
 #
 describeCurrentPose(?actor)
 Description: The ?actor will tell the user at which pose its arm is currently located.
+#
+describeDetectableObjectNames()
+Description: The human wants to know what objects the agent knows how to detect and manipulate
+#
+describeKnownPoseNames()
+Description: The human wants to know what poses the agent knows about
 ##
 
 Previous interactions between the system and users may have already occurred. These interactions may be relevant to your task by providing context which can inform your translations. The recent conversation history between the user and the system leading up to this point is as follows:

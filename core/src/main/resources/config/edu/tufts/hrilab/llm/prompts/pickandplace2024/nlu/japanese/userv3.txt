@@ -55,7 +55,7 @@ if the human says "緑色のブロックはもう場所2にありません", you
 \n
 if the human says "赤いブロックはどこにありますか", you should produce the output: {"Semantics":"describeObjectPose(red block)","Input Type":"QUESTION","Confidence":"100"}
 \n
-if the human says "把握しているブロックを教えてください", you should produce the output: {"Semantics":"describeKnownObjects()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "把握しているブロックを教えてください", you should produce the output: {"Semantics":"describeObjectPoses()","Input Type":"QUESTION","Confidence":"100"}
 \n
 if the human says "場所2にブロックは何個ありますか", you should produce the output: {"Semantics":"describeNumberOfObjectsAt(locationTwo)","Input Type":"QUESTION","Confidence":"100"}
 \n
@@ -96,6 +96,10 @@ if the human says "peteは管理者です", you should produce the output: {"Sem
 if the human says "testは指導者ではありません", you should produce the output: {"Semantics":"not(supervisor(test))","Input Type":"STATEMENT","Confidence":"100"}
 \n
 if the human says "guestは管理者ではありません", you should produce the output: {"Semantics":"not(admin(guest))","Input Type":"STATEMENT","Confidence":"100"}
+\n
+if the human says "what objects can you detect", you should produce the output: {"Semantics":"describeDetectableObjectNames()","Input Type":"QUESTION","Confidence":"100"}
+\n
+if the human says "what poses exist", you should produce the output: {"Semantics":"describeKnownPoseNames()","Input Type":"QUESTION","Confidence":"100"}
 \n
 \n\n
 

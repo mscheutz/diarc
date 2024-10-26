@@ -48,7 +48,7 @@ know(trusted(user))
 \n
 describeObjectPose(object)
 \n
-describeKnownObjects()
+describeObjectPoses()
 \n
 describeObjectsAt(pose)
 \n

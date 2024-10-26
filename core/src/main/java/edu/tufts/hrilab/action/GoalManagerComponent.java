@@ -47,7 +47,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import javax.annotation.Nonnull;
+//import javax.annotation.Nonnull;
 
 /**
  * The Goal Manager (also called the Action Manager or simply “Action”)
@@ -965,7 +965,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     ActionSelector.destroyInstance();
   }
 
-  @Nonnull
+  //@Nonnull
   @Override
   public String[] getAdapterClassNames() {
     return new String[]{

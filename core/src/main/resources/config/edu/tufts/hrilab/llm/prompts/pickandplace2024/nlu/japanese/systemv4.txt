@@ -132,7 +132,7 @@ describeObjectPose(?actor,?object:physobj)
 Description:The user is asking the agent where it believes ?object currently is in the work area.
 Default Language: ?objectはどこにありますか
 
-describeKnownObjects(?actor)
+describeObjectPoses(?actor)
 Description: The user is asking the agent where it believes all objects that it knows about currently are in the work area.
 Default Language: 把握しているブロックを教えてください
 

@@ -196,3 +196,17 @@ import java.util.Map;
         act:assertIsPose(?objectPose);
     }
 }
+
+() = reportKnownObjects(java.util.List ?objects) {
+    String !descriptor;
+    foreach (!descriptor : ?objects) {
+        act:generateResponseFromString(!descriptor);
+    }
+}
+
+() = reportKnownPoses(java.util.List ?poses) {
+    String !descriptor;
+    foreach (!descriptor : ?poses) {
+        act:generateResponseFromString(!descriptor);
+    }
+}

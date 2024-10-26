@@ -4428,7 +4428,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("what blocks are you aware of",
-                "INSTRUCT(brad,self,describeKnownObjects(self),{})",
+                "INSTRUCT(brad,self,describeObjectPoses(self),{})",
                 "brad",
                 "self"
         ));
@@ -4824,7 +4824,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtteranceLLM("what blocks are you aware of",
-                "INSTRUCT(brad,robotone,describeKnownObjects(robotone),{})",
+                "INSTRUCT(brad,robotone,describeObjectPoses(robotone),{})",
                 "brad",
                 "robotone"
         ));
@@ -5196,7 +5196,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtteranceLLM("作業領域にあるブロックは何ですか",
-                "INSTRUCT(brad,robotone,describeKnownObjects(robotone),{})",
+                "INSTRUCT(brad,robotone,describeObjectPoses(robotone),{})",
                 "brad",
                 "robotone"
         ));
@@ -5438,7 +5438,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtteranceLLM("what blocks are you aware of",
-                "INSTRUCT(brad,robotone,describeKnownObjects(robotone),{})",
+                "INSTRUCT(brad,robotone,describeObjectPoses(robotone),{})",
                 "brad",
                 "robotone"
         ));
@@ -5714,7 +5714,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtteranceLLM("把握しているブロックを教えてください",
-                "INSTRUCT(brad,robotone,describeKnownObjects(robotone),{})",
+                "INSTRUCT(brad,robotone,describeObjectPoses(robotone),{})",
                 "brad",
                 "robotone"
         ));

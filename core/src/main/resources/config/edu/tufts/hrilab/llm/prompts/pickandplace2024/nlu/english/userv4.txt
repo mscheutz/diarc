@@ -173,7 +173,7 @@ Input: where is the red block
 Output: {"Semantics":"describeObjectPose(robotone,red block:physobj)","Input Type":"QUESTION","Confidence":"100"}
 
 Input: what are the locations of all the blocks
-Output: {"Semantics":"describeKnownObjects(robotone)","Input Type":"QUESTION","Confidence":"100"}
+Output: {"Semantics":"describeObjectPoses(robotone)","Input Type":"QUESTION","Confidence":"100"}
 
 Input: how many objects are at location two
 Output: {"Semantics":"describeNumberOfObjectsAt(robotone,locationTwo:pose)","Input Type":"QUESTION","Confidence":"100"}

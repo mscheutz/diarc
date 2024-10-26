@@ -6,7 +6,7 @@ package edu.tufts.hrilab.gui;
 
 import ai.thinkingrobots.trade.TRADEService;
 
-import javax.annotation.Nonnull;
+//import javax.annotation.Nonnull;
 
 /**
  * An interface which marks the implementing class as a component with a GUI.
@@ -41,6 +41,6 @@ public interface GuiProvider {
      * Provide the class names of this component's GUI adapter classes.
      */
     @TRADEService
-    @Nonnull
+    //@Nonnull
     String[] getAdapterClassNames();
 }
