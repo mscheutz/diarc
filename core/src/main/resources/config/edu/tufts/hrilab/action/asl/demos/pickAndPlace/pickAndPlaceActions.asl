@@ -31,10 +31,11 @@ import java.lang.Integer;
     java.lang.Double !objectHeightM = 0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
     java.lang.Double !negObjectHeightM = -0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
 
+    !location = act:getCurrentLocation();
+
     tsc:moveZRelative(!objectHeightM);
     ?bindings = tsc:perceiveAllEntitiesInView("blocksDet");
     tsc:moveZRelative(!negObjectHeightM);
-    !location = act:getCurrentLocation();
 
     !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(X,!location)");
     act:retractBelief(!fact);
