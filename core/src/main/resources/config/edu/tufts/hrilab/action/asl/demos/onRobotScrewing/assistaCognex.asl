@@ -99,10 +99,10 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     try {
         act:perceiveEntityFromSymbol(?refID);
         !objectLocation = act:getObjectPose(?refID);
-        if (~op:equals(!objectLocation, !currPose)) {
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor,?refID))");
+        if (~op:equals(!currPose, !objectLocation)) {
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,?refID)");
             act:retractBelief(!fact);
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?refID,!objectLocation)");
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?refID,X)");
             act:retractBelief(!fact);
             !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?refID,!currPose)");
             act:assertBelief(!fact);

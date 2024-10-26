@@ -38,10 +38,10 @@ import java.lang.Integer;
     !location = act:getCurrentLocation();
     foreach (!result : ?bindings) {
         !objectLocation = act:getObjectPose(!result);
-        if (~op:equals(!objectLocation, !location)) {
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor,!result))");
+        if (~op:equals(!location, !objectLocation)) {
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,!result)");
             act:retractBelief(!fact);
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!objectLocation)");
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,X)");
             act:retractBelief(!fact);
             !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!location)");
             act:assertBelief(!fact);
