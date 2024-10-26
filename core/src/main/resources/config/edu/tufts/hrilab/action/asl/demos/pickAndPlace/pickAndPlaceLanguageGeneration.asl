@@ -214,3 +214,7 @@ import java.util.Map;
 () = reportSeenObject(Symbol ?descriptor) {
     act:generateResponseFromString("I see ?descriptor");
 }
+
+() = reportObjectsAtSameLocation() {
+    act:generateResponseFromString("The objects are already at the same pose");
+}
