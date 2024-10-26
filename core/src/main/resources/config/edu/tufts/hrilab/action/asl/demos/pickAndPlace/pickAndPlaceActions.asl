@@ -26,7 +26,6 @@ import java.lang.Integer;
     //runs a job that looks for all items known to the system and returns the set of (orderd) results. then binds the associated refrerences.
 
     Symbol !location;
-    Symbol !objectLocation;
     Predicate !fact;
 
     java.lang.Double !objectHeightM = 0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
@@ -36,16 +35,18 @@ import java.lang.Integer;
     ?bindings = tsc:perceiveAllEntitiesInView("blocksDet");
     tsc:moveZRelative(!negObjectHeightM);
     !location = act:getCurrentLocation();
+
+    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(X,!location)");
+    act:retractBelief(!fact);
+    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,!location)");
+    act:assertBelief(!fact);
     foreach (!result : ?bindings) {
-        !objectLocation = act:getObjectPose(!result);
-        if (~op:equals(!location, !objectLocation)) {
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,!result)");
-            act:retractBelief(!fact);
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,X)");
-            act:retractBelief(!fact);
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!location)");
-            act:assertBelief(!fact);
-        }
+        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,!result)");
+        act:retractBelief(!fact);
+        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,X)");
+        act:retractBelief(!fact);
+        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!location)");
+        act:assertBelief(!fact);
     }
 }
 
