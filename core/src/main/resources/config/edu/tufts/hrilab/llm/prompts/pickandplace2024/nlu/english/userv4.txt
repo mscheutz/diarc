@@ -137,10 +137,10 @@ Input: move the yellow block from location one to location two
 Output: {"Semantics":"moveObjectTo(robotone,yellow block:physobj,locationOne:pose,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Input: place the orange block at location three
-Output: {"Semantics":"moveObjectTo(robotone,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"placeObjectDownAt(robotone,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Input: place the block down at location one
-Output: {"Semantics":"moveObjectTo(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"placeObjectDownAt(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Input: get the red block to location two
 Output: {"Semantics":"getObjectTo(robotone,red block:physobj,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}

@@ -60,11 +60,11 @@ moveObjectTo(?actor,?object:physobj,?from:pose,?destination:pose)
 Description: The user is instructing the ?actor to go to pose ?from, look for the object ?object at that pose, then go to and put the object down at pose ?destination. This action is generally instructed using verbs like move, bring, and transport.
 Default Language: move ?object from ?from to ?destination
 
-moveObjectTo(?actor,?object:physobj,?destination:pose)
+placeObjectDownAt(?actor,?object:physobj,?destination:pose)
 Description: The user is instructing the ?actor to place the ?object it is holding down at pose ?destination.
 Default Language: place ?object down at ?destination
 
-moveObjectTo(?actor,?destination:pose)
+placeObjectDownAt(?actor,?destination:pose)
 Description: The user is instructing the ?actor to place whatever object it is holding down at pose ?destination.
 Default Language: place the object down at ?destination
 

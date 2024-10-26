@@ -20,9 +20,9 @@ putDown(,?object)
 \n
 moveObjectTo(object,from,to)
 \n
-moveObjectTo(object,to)
+placeObjectDownAt(object,to)
 \n
-moveObjectTo(to)
+placeObjectDownAt(to)
 \n
 perceiveObject(object)
 \n

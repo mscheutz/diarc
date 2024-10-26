@@ -16,7 +16,7 @@ Assistant Output: {"Semantics":"goToPose(locationOne)","Input Type":"INSTRUCT","
 ##
 User Input: "get me the block at location one"
 #
-Assistant Output: {"Semantics":"moveObjectTo(locationOne)","Input Type":"INSTRUCT","Confidence":"20"}
+Assistant Output: {"Semantics":"placeObjectDownAt(locationOne)","Input Type":"INSTRUCT","Confidence":"20"}
 ##
 
 ##
@@ -104,13 +104,13 @@ Assistant Output: {"Semantics":"moveObjectTo(yellow block,locationOne,locationTw
 ##
 User Input: "place the orange block at location three"
 #
-Assistant Output: {"Semantics":"moveObjectTo(orange block,locationThree)","Input Type":"INSTRUCT","Confidence":"100"}
+Assistant Output: {"Semantics":"placeObjectDownAt(orange block,locationThree)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 
 ##
 User Input: "place the block down at location one"
 #
-Assistant Output: {"Semantics":"moveObjectTo(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
+Assistant Output: {"Semantics":"placeObjectDownAt(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 
 ##

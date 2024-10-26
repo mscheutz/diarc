@@ -14,7 +14,7 @@ Example 1 Notes: The user is asking you to navigate to the location one. This ma
 
 Example 2:
 Input: get me the block at location one
-Output: {"Semantics":"moveObjectTo(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"20"}
+Output: {"Semantics":"placeObjectDownAt(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"20"}
 Example 2 Notes: Confidence is low for this example because, without additional context, there are multiple different valid results this input could match to. The user could be asking you to pick up the object which is currently at location one, or to make it so the object you are holding gets to location one. Picking up the object at location one seems more likely, but there is no corresponding parameterization of pickUp which only takes in a pose. In these cases where there can reasonably be multiple valid meanings, it is better to return low confidence along with the chosen result.
 
 Example 3:
@@ -73,11 +73,11 @@ Output: {"Semantics":"moveObjectTo(robotone,yellow block:physobj,locationOne:pos
 
 Example 16:
 Input: place the orange block at location three
-Output: {"Semantics":"moveObjectTo(robotone,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"placeObjectDownAt(robotone,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Example 17:
 Input: place the block down at location one
-Output: {"Semantics":"moveObjectTo(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"placeObjectDownAt(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Example 18:
 Input: get the red block to location two

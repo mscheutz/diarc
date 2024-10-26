@@ -36,10 +36,10 @@ Description: The ?actor will put down the ?object it is holding at its current p
 moveObjectTo(?actor,?object:physobj,?from:pose,?destination:pose)
 Description: The ?actor will go to pose ?from, look for the object ?object at that pose, then go to and put the object down at pose ?destination. This action requires the agent to not be holding any objects and assumes to find ?object at pose ?from.
 #
-moveObjectTo(?actor,?object:physobj,?destination:pose)
+placeObjectDownAt(?actor,?object:physobj,?destination:pose)
 Description: The ?actor will place the ?object it is holding down at pose ?destination. This action requires the ?object to already be held by the agent, but is able to navigate to ?destination before placing down the ?object.
 #
-moveObjectTo(?actor,?destination:pose)
+placeObjectDownAt(?actor,?destination:pose)
 Description: The ?actor will place the object it is holding down at pose ?destination. This action requires any object to already be held by the agent, but is able to navigate to ?destination before placing it down.
 #
 detectObject(?actor,?object:physobj)

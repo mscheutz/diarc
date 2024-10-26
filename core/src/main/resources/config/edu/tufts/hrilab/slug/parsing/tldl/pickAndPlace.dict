@@ -111,24 +111,24 @@ to; REF/REF; #x.$x
 and; LOCREF/REF; #x.$x
 swap; (C/LOCREF)/REF; #x#y.swapObjects(?ADDRESSEE,$x,$y)
 
-%% moveObjectTo two arg (object,to) %%
-put down; (C/REF)/REF; #x#y.moveObjectTo(?ADDRESSEE,$x,$y)
-putdown; (C/REF)/REF; #x#y.moveObjectTo(?ADDRESSEE,$x,$y)
-put; (C/REF)/REF; #x#y.moveObjectTo(?ADDRESSEE,$x,$y)
-place; (C/REF)/REF; #x#y.moveObjectTo(?ADDRESSEE,$x,$y)
-place down; (C/REF)/REF; #x#y.moveObjectTo(?ADDRESSEE,$x,$y)
-put; ((C/REF)/PUTDOWNSUFFIX)/REF; #x#y#z.moveObjectTo(?ADDRESSEE,$x,$z)
-place; ((C/REF)/PUTDOWNSUFFIX)/REF; #x#y#z.moveObjectTo(?ADDRESSEE,$x,$z)
+%% placeObjectDownAt two arg (object,to) %%
+put down; (C/REF)/REF; #x#y.placeObjectDownAt(?ADDRESSEE,$x,$y)
+putdown; (C/REF)/REF; #x#y.placeObjectDownAt(?ADDRESSEE,$x,$y)
+put; (C/REF)/REF; #x#y.placeObjectDownAt(?ADDRESSEE,$x,$y)
+place; (C/REF)/REF; #x#y.placeObjectDownAt(?ADDRESSEE,$x,$y)
+place down; (C/REF)/REF; #x#y.placeObjectDownAt(?ADDRESSEE,$x,$y)
+put; ((C/REF)/PUTDOWNSUFFIX)/REF; #x#y#z.placeObjectDownAt(?ADDRESSEE,$x,$z)
+place; ((C/REF)/PUTDOWNSUFFIX)/REF; #x#y#z.placeObjectDownAt(?ADDRESSEE,$x,$z)
 at; REF/REF; #x.$x
 
-%% moveObjectTo one arg (to) %%
-put down; (C/REF)/BLOCKC; #x#y.moveObjectTo(?ADDRESSEE,$y)
-putdown; (C/REF)/BLOCKC; #x#y.moveObjectTo(?ADDRESSEE,$y)
-put; (C/REF)/BLOCKC; #x#y.moveObjectTo(?ADDRESSEE,$y)
-place; (C/REF)/BLOCKC; #x#y.moveObjectTo(?ADDRESSEE,$y)
-place down; (C/REF)/BLOCKC; #x#y.moveObjectTo(?ADDRESSEE,$y)
-put; ((C/REF)/PUTDOWNSUFFIX)/BLOCKC; #x#y#z.moveObjectTo(?ADDRESSEE,$z)
-place; ((C/REF)/PUTDOWNSUFFIX)/BLOCKC; #x#y#z.moveObjectTo(?ADDRESSEE,$z)
+%% placeObjectDownAt one arg (to) %%
+put down; (C/REF)/BLOCKC; #x#y.placeObjectDownAt(?ADDRESSEE,$y)
+putdown; (C/REF)/BLOCKC; #x#y.placeObjectDownAt(?ADDRESSEE,$y)
+put; (C/REF)/BLOCKC; #x#y.placeObjectDownAt(?ADDRESSEE,$y)
+place; (C/REF)/BLOCKC; #x#y.placeObjectDownAt(?ADDRESSEE,$y)
+place down; (C/REF)/BLOCKC; #x#y.placeObjectDownAt(?ADDRESSEE,$y)
+put; ((C/REF)/PUTDOWNSUFFIX)/BLOCKC; #x#y#z.placeObjectDownAt(?ADDRESSEE,$z)
+place; ((C/REF)/PUTDOWNSUFFIX)/BLOCKC; #x#y#z.placeObjectDownAt(?ADDRESSEE,$z)
 
 %% resetDomain %%
 reset domain; VERBI; resetDomain

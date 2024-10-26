@@ -9,7 +9,7 @@ Confidence (A value between 0 and 100 for how confident you are in your translat
 
 if the human says "can you please navigate to location one", you should produce the output: {"Semantics":"goToPose(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-If the human says "get me the block at location one", you should produce the output: {"Semantics":"moveObjectTo(locationOne)","Input Type":"INSTRUCT","Confidence":"20"}
+If the human says "get me the object at location one", you should produce the output: {"Semantics":"placeObjectDownAt(locationOne)","Input Type":"INSTRUCT","Confidence":"20"}
 \n
 If the human says "pick up a ball", you should produce the output: {"Semantics":"pickUp(ball)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
@@ -35,9 +35,9 @@ if the human says "赤いブロックを置いてください", you should produ
 \n\n
 if the human says "黄色いブロックを場所1から場所2に移動してください", you should produce the output: {"Semantics":"moveObjectTo(yellow block,locationOne,locationTwo)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "オレンジ色のブロックを場所3に置いてください", you should produce the output: {"Semantics":"moveObjectTo(orange block,locationThree)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "オレンジ色のブロックを場所3に置いてください", you should produce the output: {"Semantics":"placeObjectDownAt(orange block,locationThree)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "ブロックを場所1に置いてください", you should produce the output: {"Semantics":"moveObjectTo(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "ブロックを場所1に置いてください", you should produce the output: {"Semantics":"placeObjectDownAt(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
 if the human says "赤いブロックを場所2にしてください", you should produce the output: {"Semantics":"getObjectTo(red block,locationTwo)","Input Type":"INSTRUCT","Confidence":"100"}
 \n

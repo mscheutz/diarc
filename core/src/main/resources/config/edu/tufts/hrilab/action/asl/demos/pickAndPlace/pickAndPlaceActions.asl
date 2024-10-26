@@ -446,8 +446,7 @@ import java.lang.Integer;
     }
 }
 
-//TODO: rename to placeObjectDownAt?
-() = moveObjectTo(Symbol ?object:physobj, Symbol ?destination:pose) {
+() = placeObjectDownAt(Symbol ?object:physobj, Symbol ?destination:pose) {
     Symbol !heldObject;
 
     act:assertIsPhysobj(?object);
@@ -462,8 +461,7 @@ import java.lang.Integer;
     act:putDown();
 }
 
-//TODO: rename to placeObjectDownAt?
-() = moveObjectTo(Symbol ?destination:pose) {
+() = placeObjectDownAt(Symbol ?destination:pose) {
     Symbol !heldObject;
 
     act:assertIsPose(?destination);

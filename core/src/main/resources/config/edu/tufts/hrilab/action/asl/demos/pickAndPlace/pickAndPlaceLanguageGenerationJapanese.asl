@@ -147,7 +147,7 @@ import java.util.Map;
 
 () = reportObjectsToSwapAreTheSame() {
    //TODO: get translation
-   act:generateResponseFromString("You asked me to swap an object with itself, doing nothing");
+   act:generateResponseFromString("You asked me to swap an object with itself. Doing nothing");
 }
 
 //TODO: add to translation list we need to get

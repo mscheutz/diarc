@@ -40,10 +40,10 @@ REPLY(A,B,cannot(putDown(C,D),because(free(C))),Z) := REPLY(A,B,cannot(putDown(C
 REPLY(A,B,cannot(putDown(C),because(free(C))),Z) := REPLY(A,B,cannot(putDown(C,anObject),because(not(holding(C,anything)))),Z)
 REPLY(A,B,cannot(putDown(C),because(D)),Z) := REPLY(A,B,cannot(putDown(C,anObject),because(D)),Z)
 REPLY(A,B,cannot(moveObjectTo(C,D,E,F),because(G)),Z) := REPLY(A,B,cannot(move(C,D,from,to(E,F)),because(G)),Z)
-REPLY(A,B,cannot(moveObjectTo(C,D,E),because(F)),Z) := REPLY(A,B,cannot(move(C,D,to,E),because(F)),Z)
-REPLY(A,B,cannot(moveObjectTo(C,D,E),because(not(holding(C,D)))),Z) := REPLY(A,B,cannot(move(C,D,to,E),because(not(holding(C,D)))),Z)
-REPLY(A,B,cannot(moveObjectTo(C,D),because(G)),Z) := REPLY(A,B,cannot(move(C,theObject,to,D),because(G)),Z)
-REPLY(A,B,cannot(moveObjectTo(C,D),because(free(C))),Z) := REPLY(A,B,cannot(move(C,theObject,to,D),because(not(holding(C,anything)))),Z)
+REPLY(A,B,cannot(placeObjectDownAt(C,D,E),because(F)),Z) := REPLY(A,B,cannot(place(C,D,at,E),because(F)),Z)
+REPLY(A,B,cannot(placeObjectDownAt(C,D,E),because(not(holding(C,D)))),Z) := REPLY(A,B,cannot(place(C,D,at,E),because(not(holding(C,D)))),Z)
+REPLY(A,B,cannot(placeObjectDownAt(C,D),because(G)),Z) := REPLY(A,B,cannot(place(C,theObject,at,D),because(G)),Z)
+REPLY(A,B,cannot(placeObjectDownAt(C,D),because(free(C))),Z) := REPLY(A,B,cannot(place(C,theObject,at,D),because(not(holding(C,anything)))),Z)
 REPLY(A,B,cannot(getObjectTo(C,D,E),because(X)),Z) := REPLY(A,B,cannot(get(C,D,to,E),because(X)),Z)
 END_SET
 
