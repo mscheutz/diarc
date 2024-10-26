@@ -12,8 +12,8 @@ import java.util.Map;
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
-        //TODO: if ?objectPose does not have type pose, EXIT
         ?objectPose = op:get(!bindings,!x);
+        act:assertIsPose(?objectPose);
     }
 }
 
@@ -26,8 +26,8 @@ import java.util.Map;
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
-        //TODO: if ?object does not have type physobj, EXIT
         ?object = op:get(!bindings,!x);
+        act:assertIsPhysobj(?object);
     }
 }
 
@@ -55,8 +55,8 @@ import java.util.Map;
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
-        //TODO: if ?object does not have type physobj, EXIT
         ?object = op:get(!bindings, !x);
+        act:assertIsPhysobj(?object);
     }
 }
 
@@ -119,8 +119,6 @@ import java.util.Map;
 () = reportObjectsToSwapAreTheSame() {
    act:generateResponseFromString("You asked me to swap an object with itself. Doing nothing");
 }
-
-//TODO: add to translation list we need to get
 
 () = reportDetectedObject(Symbol ?objectDescriptor) {
     act:generateResponseFromString("yes, I see ?objectDescriptor");
@@ -194,7 +192,7 @@ import java.util.Map;
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
-        //TODO: if ?objectPose does not have type pose, EXIT
         ?objectPose = op:get(!bindings,!x);
+        act:assertIsPose(?objectPose);
     }
 }
