@@ -24,7 +24,7 @@ import java.util.Map;
     Map !bindings;
 
     //TODO: get descriptors for all detected objects and add into question specifically
-    !bindings = act:askQuestionFromString(?actor, "視野に複数のブロックが見えています。どれを拾ったらいいでしょうか？", objectType(X));
+    !bindings = act:askQuestionFromString(?actor, "視野に複数の物体が入っています。どれを拾ったらいいでしょうか？", objectType(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
@@ -34,14 +34,14 @@ import java.util.Map;
 }
 
 () = reportNotPickingUpObject() {
-    act:generateResponseFromString("わかった");
+    act:generateResponseFromString("承知しました。物体は拾いません");
 }
 
 (Symbol ?response) = reportFullLocationAndAskToSwap() {
     Map !bindings;
     Variable !x = "X";
 
-    (!bindings) = act:askQuestionFromString(?actor,"場所がいっぱいになっているため、ブロックを置くことはできません。ブロックのどれかと交換しましょうか？", val(X));
+    (!bindings) = act:askQuestionFromString(?actor,"場所がいっぱいになっているため、物体を置くことができません。物体のどれかを交換しましょうか？", val(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");
     } else {
@@ -53,7 +53,7 @@ import java.util.Map;
     Map !bindings;
     Variable !x = "X";
 
-    !bindings = act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", objectType(X));
+    !bindings = act:askQuestionFromString(?actor,"どの物体を交換したいいでしょうか？", objectType(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
@@ -63,7 +63,7 @@ import java.util.Map;
 }
 
 () = reportNotSwappingObjects() {
-    act:generateResponseFromString("了解しました。物体をどれも交換しません");
+    act:generateResponseFromString("承知しました。物体を交換しません");
 }
 
 () = reportHoldingObject(Symbol ?descriptor) {
@@ -90,7 +90,7 @@ import java.util.Map;
 }
 
 () = reportObjectLocationsAllUnknown() {
-    act:generateResponseFromString("ブロックはどれも場所がわかりません");
+    act:generateResponseFromString("物体はどれも場所がわかりません");
 }
 
 () = reportObjectExists(Symbol ?descriptor) {
@@ -104,7 +104,7 @@ import java.util.Map;
     String !poseDescriptorJapanese;
 
     !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
-    act:generateResponseFromString("!poseDescriptorJapaneseにブロックはありません");
+    act:generateResponseFromString("!poseDescriptorJapaneseに物体はありません");
 }
 
 () = reportNumberOfObjectsAt(java.lang.Integer ?numObjects, Symbol ?descriptor) {

@@ -5562,7 +5562,7 @@ public class TLDLParserComponentTest {
                 "robotone"
         ));
 
-        assertTrue(testUtteranceLLM("ブロックを拾ってください",
+        assertTrue(testUtteranceLLM("物体を拾ってください",
                 "INSTRUCT(brad,robotone,pickUp(robotone),{})",
                 "brad",
                 "robotone"
@@ -5574,7 +5574,7 @@ public class TLDLParserComponentTest {
                 "robotone"
         ));
 
-        assertTrue(testUtteranceLLM("ブロックを置いてください",
+        assertTrue(testUtteranceLLM("物体を置いてください",
                 "INSTRUCT(brad,robotone,putDown(robotone),{})",
                 "brad",
                 "robotone"
@@ -5598,7 +5598,7 @@ public class TLDLParserComponentTest {
                 "robotone"
         ));
 
-        assertTrue(testUtteranceLLM("ブロックを場所1に置いてください",
+        assertTrue(testUtteranceLLM("物体を場所１番に置いてください",
                 "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "robotone"
@@ -5713,7 +5713,7 @@ public class TLDLParserComponentTest {
                 "robotone"
         ));
 
-        assertTrue(testUtteranceLLM("把握しているブロックを教えてください",
+        assertTrue(testUtteranceLLM("位置を把握している物体をすべて教えてください",
                 "INSTRUCT(brad,robotone,describeObjectPoses(robotone),{})",
                 "brad",
                 "robotone"
@@ -5725,7 +5725,7 @@ public class TLDLParserComponentTest {
                 "robotone"
         ));
 
-        assertTrue(testUtteranceLLM("場所1にブロックは何個ありますか",
+        assertTrue(testUtteranceLLM("場所1に物体は何個ありますか",
                 "INSTRUCT(brad,robotone,describeNumberOfObjectsAt(robotone,VAR0:pose),{locationOne(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "robotone"

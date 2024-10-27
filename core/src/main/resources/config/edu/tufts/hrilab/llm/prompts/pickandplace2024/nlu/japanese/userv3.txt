@@ -25,11 +25,11 @@ if the human says "赤いブロックをみつけてください", you should pr
 \n
 if the human says "detect what is at your location", you should produce the output: {"Semantics":"detectObjects()","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "ブロックを拾ってください", you should produce the output: {"Semantics":"pickUp()","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "物体を拾ってください", you should produce the output: {"Semantics":"pickUp()","Input Type":"INSTRUCT","Confidence":"100"}
 \n\n
 if the human says "緑色のブロックを拾ってください", you should produce the output: {"Semantics":"pickUp(green block)","Input Type":"INSTRUCT","Confidence":"100"}
 \n\n
-if the human says "ブロックを置いてください", you should produce the output: {"Semantics":"putDown()","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "物体を置いてください", you should produce the output: {"Semantics":"putDown()","Input Type":"INSTRUCT","Confidence":"100"}
 \n\n
 if the human says "赤いブロックを置いてください", you should produce the output: {"Semantics":"putDown(red block)","Input Type":"INSTRUCT","Confidence":"100"}
 \n\n
@@ -37,7 +37,7 @@ if the human says "黄色いブロックを場所1から場所2に移動して�
 \n
 if the human says "オレンジ色のブロックを場所3に置いてください", you should produce the output: {"Semantics":"placeObjectDownAt(orange block,locationThree)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "ブロックを場所1に置いてください", you should produce the output: {"Semantics":"placeObjectDownAt(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "物体を場所１番に置いてください", you should produce the output: {"Semantics":"placeObjectDownAt(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
 if the human says "赤いブロックを場所2にしてください", you should produce the output: {"Semantics":"getObjectTo(red block,locationTwo)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
@@ -53,11 +53,11 @@ if the human says "緑色のブロックはもう場所2にありません", you
 \n
 if the human says "赤いブロックはどこにありますか", you should produce the output: {"Semantics":"describeObjectPose(red block)","Input Type":"QUESTION","Confidence":"100"}
 \n
-if the human says "把握しているブロックを教えてください", you should produce the output: {"Semantics":"describeObjectPoses()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "位置を把握している物体をすべて教えてください", you should produce the output: {"Semantics":"describeObjectPoses()","Input Type":"QUESTION","Confidence":"100"}
 \n
-if the human says "場所2にブロックは何個ありますか", you should produce the output: {"Semantics":"describeNumberOfObjectsAt(locationTwo)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "場所2に物体は何個ありますか", you should produce the output: {"Semantics":"describeNumberOfObjectsAt(locationTwo)","Input Type":"QUESTION","Confidence":"100"}
 \n
-if the human says "場所3にどのブロックがありますか", you should produce the output: {"Semantics":"objectsAt(locationThree)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "場所3に物体はひとつでもありますか", you should produce the output: {"Semantics":"objectsAt(locationThree)","Input Type":"QUESTION","Confidence":"100"}
 \n
 if the human says "場所4に黄色いブロックはありますか", you should produce the output: {"Semantics":"at(yellow block,locationFour)","Input Type":"QUESTION","Confidence":"100"}
 \n
@@ -71,7 +71,7 @@ if the human says "並んでいるゴールを教えてください", you should
 \n
 if the human says "何でもないです", you should produce the output: {"Semantics":"abort(question)","Input Type":"REPLY","Confidence":"100"}
 \n
-if the human says "ブロックなし", you should produce the output: {"Semantics":"objectType(none)","Input Type":"REPLY","Confidence":"100"}
+if the human says "物体がありません", you should produce the output: {"Semantics":"objectType(none)","Input Type":"REPLY","Confidence":"100"}
 \n
 if the human says "場所なし", you should produce the output: {"Semantics":"pose(none)","Input Type":"REPLY","Confidence":"100"}
 \n
@@ -81,7 +81,7 @@ if the human says "いいえ", you should produce the output: {"Semantics":"val(
 \n
 if the human says "赤いブロックと黄色いブロックを入れ替える", you should produce the output: {"Semantics":"swapObjects(red block,yellow block)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "where are you now", you should produce the output: {"Semantics":"describeCurrentPose()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "現在、あなたはどちらにいますか", you should produce the output: {"Semantics":"describeCurrentPose()","Input Type":"QUESTION","Confidence":"100"}
 \n
 if the human says "場所4", you should produce the output: {"Semantics":"pose(locationFour)","Input Type":"REPLY","Confidence":"100"}
 \n

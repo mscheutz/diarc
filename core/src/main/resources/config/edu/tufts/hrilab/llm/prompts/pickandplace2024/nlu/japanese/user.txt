@@ -99,7 +99,7 @@ Output: {"Semantics":"placeObjectDownAt(robotone,orange block:physobj,locationTh
 ##
 Example 17:
 #
-Input: ブロックを場所1に置いてください。
+Input: 物体を場所１番に置いてください。
 Output: {"Semantics":"placeObjectDownAt(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 Example 18:
