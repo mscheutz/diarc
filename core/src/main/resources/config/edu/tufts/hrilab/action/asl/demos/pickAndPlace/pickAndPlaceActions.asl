@@ -267,12 +267,13 @@ import java.lang.Integer;
     recovery : {
         actionRecovery : {
             catchingAction : grab(A,X,Y)
-            postRecovery : postrecovery_success
+            postRecovery : postrecovery_parent_success
         }
         failureReasons : {not(dont(A,see,X,atMyLocation))}
     }
     //TODO: should fix value/negation of failure condition
 
+    Symbol !currentPose;
     Symbol !pose;
     Symbol !blockToPickUp;
     Symbol !blockDescriptor;
@@ -282,6 +283,7 @@ import java.lang.Integer;
     op:log("debug","[pickUpCantDetectObjectRecovery] ?failureReasons");
     op:log("debug","[pickUpCantDetectObjectRecovery] ?failedGoal");
 
+    !currentPose = act:getCurrentLocation();
     !blockToPickUp = op:invokeMethod(?failedGoal,"get",0);
     !blockDescriptor = tsc:getDescriptorForID(!blockToPickUp);
     !pose = act:reportFailedDetectionAndAskForObjectPose(!blockDescriptor);
@@ -290,6 +292,7 @@ import java.lang.Integer;
     } else {
         act:believeObjectAt(!blockToPickUp,!pose);
         act:pickUp(!blockToPickUp);
+        act:goToPose(!currentPose);
     }
 }
 
