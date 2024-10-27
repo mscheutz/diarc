@@ -552,7 +552,7 @@ import java.lang.Integer;
     }
 }
 
-() = handleSeeObjectsITK() {
+() = handleSeeObjectsITK(Symbol ?actor) {
     effects : {
         success : knows(?actor,whichObjectsAtCurrentPose(?actor));
     }
