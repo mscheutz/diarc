@@ -211,6 +211,10 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                     log.warn("[correctCommonNLUMistakes] LLM returned objectType(?object) parse where ?object is not a reference. Not allowing");
                     return false;
                 }
+            } else if (command.equals("whichObjectsAtCurrentPose")) {
+                List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
+                args.add(0, Factory.createSymbol("robotone"));
+                utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
             }
         } catch (Exception e) {
             log.warn("[correctCommonNLUMistakes] unexpected semantics format");
@@ -218,7 +222,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         }
         return true;
     }
-    //prag results: QUESTION(pete,robotone,[knowHow(robotone,to(getObjectTo(robotone,robotonephysobj_0:physobj,pose_0:pose)))],{red block(VAR0:physobj),locationOne(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})
+
     private List<String> getArgsAsStrings(Symbol fol) {
         List<String> argsStrings = new ArrayList<>();
         if (fol.isPredicate()) {
@@ -274,13 +278,17 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     protected Chat generateNLGChat(Utterance utterance, List<Utterance> conversationHistory) {
         Chat chat = new Chat();
 
+
         //Intercept Validation Question and use specific validation prompt
         String userMessage;
         Predicate semantics = (Predicate) utterance.getSemantics();
+        List<String> objects = getObjects();
+        List<String> poses = getPoses();
 
-        Map<String,String> promptVars = new HashMap<>();
+        Map<String,String> promptVars = new LinkedHashMap<>();
         if (semantics.getName().equals("doYouMean")) {
             promptVars.put("%utterance", utterance.toString());
+            promptVars = populatePromptVarsWithProperties(promptVars, objects, poses);
             userMessage = validationPrompt.apply(promptVars);
         } else {
             utterance = new Utterance.Builder(utterance).build();
@@ -288,10 +296,11 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             semantics = replaceReferencesInSemantics(semantics);
             utterance.setSemantics(semantics);
             promptVars.put("%utterance", utterance.toString());
+            promptVars = populatePromptVarsWithProperties(promptVars, objects, poses);
             userMessage = nlgUserPrompt.apply(promptVars);
         }
         
-        promptVars = new HashMap<>();
+        promptVars = new LinkedHashMap<>();
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
         promptVars.put("%language", language);
         chat.setSystem(nlgSystemPrompt.apply(promptVars));
@@ -336,13 +345,16 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             currentChat = new Chat();
         }
         
-        Map<String,String> promptVars = new HashMap<>();
+        Map<String,String> promptVars = new LinkedHashMap<>();
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
-        promptVars.put("%objectList", getObjectListString());
-        promptVars.put("%locationList", getPoseListString());
+        List<String> objects = getObjects();
+        List<String> poses = getPoses();
+        promptVars.put("%objectList", String.join("\n", objects));
+        promptVars.put("%locationList", String.join("\n", poses));
         promptVars.put("%worldState", getWorldStateString());
         currentChat.setSystem(nluSystemPrompt.apply(promptVars));
         promptVars.clear();
+        populatePromptVarsWithProperties(promptVars, objects, poses);
         promptVars.put("%input", utterance.getWordsAsString());
         currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
 
@@ -387,16 +399,90 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         }
         return builder.toString();
     }
+
+    private Map<String,String> populatePromptVarsWithProperties(Map<String,String> promptVars, List<String> objects, List<String> poses) {
+        int numObjects = getObjects().size();
+        if (numObjects != 5) {
+            log.warn("[generateNLUChat] number of objects received is not 5");
+        }
+
+        if (numObjects > 0) {
+            if (!objects.get(0).equals("red block")) {
+                promptVars.put("the red block", objects.get(0));
+                promptVars.put("red block", objects.get(0));
+                promptVars.put("赤いブロック", objects.get(0));
+            }
+            if (numObjects > 1) {
+                if (!objects.get(1).equals("green block")) {
+                    promptVars.put("緑色のブロック", objects.get(1));
+                    promptVars.put("the green block", objects.get(1));
+                    promptVars.put("green block", objects.get(1));
+                }
+                if (numObjects > 2) {
+                    if (!objects.get(2).equals("yellow block")) {
+                        promptVars.put("the yellow block", objects.get(2));
+                        promptVars.put("yellow block", objects.get(2));
+                        promptVars.put("黄色いブロック", objects.get(2));
+                    }
+                    if (numObjects > 3) {
+                        if (!objects.get(3).equals("blue block")) {
+                            promptVars.put("the blue block", objects.get(3));
+                            promptVars.put("blue block", objects.get(3));
+                            promptVars.put("青いブロック", objects.get(3));
+                        }
+                        if (numObjects > 4) {
+                            if (!objects.get(4).equals("orange block")) {
+                                promptVars.put("the orange block", objects.get(4));
+                                promptVars.put("orange block", objects.get(4));
+                                promptVars.put("オレンジ色のブロック", objects.get(4));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        int numPoses = poses.size();
+        if (numPoses > 0) {
+            if (!poses.get(0).equals("locationOne")) {
+                promptVars.put("location one", poses.get(0));
+                promptVars.put("locationOne", poses.get(0));
+                promptVars.put("位置1", poses.get(0));
+            }
+            if (numPoses > 1) {
+                if (!poses.get(1).equals("locationTwo")) {
+                    promptVars.put("location two", poses.get(1));
+                    promptVars.put("locationTwo", poses.get(1));
+                    promptVars.put("位置2", poses.get(1));
+                }
+                if (numPoses > 2) {
+                    if (!poses.get(2).equals("locationThree")) {
+                        promptVars.put("location three", poses.get(2));
+                        promptVars.put("locationThree", poses.get(2));
+                        promptVars.put("位置3", poses.get(2));
+                    }
+                    if (numPoses > 3) {
+                        if (!poses.get(3).equals("locationFour")) {
+                            promptVars.put("location four", poses.get(3));
+                            promptVars.put("locationFour", poses.get(3));
+                            promptVars.put("位置4", poses.get(3));
+                        }
+                    }
+                }
+            }
+        }
+        return promptVars;
+    }
     
-    private String getObjectListString() {
+    private List<String> getObjects() {
         try {
             List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getObjectDescriptors")).call(List.class);
-            return String.join("\n", propertyNames);
+            return propertyNames;
+            //return String.join("\n", propertyNames);
         } catch (TRADEException e) {
             log.error("[getObjectListString]", e);
         }
 
-        return "";
+        return new ArrayList<>();
 
         //StringBuilder builder = new StringBuilder();
         //builder.append("red block\n");
@@ -407,15 +493,16 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         //return builder.toString();
     }
 
-    private String getPoseListString() {
+    private List<String> getPoses() {
         try {
             List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPoseDescriptors")).call(List.class);
-            return String.join("\n", propertyNames);
+            return propertyNames;
+            //return String.join("\n", propertyNames);
         } catch (TRADEException e) {
             log.error("[getPoseListString]", e);
         }
 
-        return "";
+        return new ArrayList<>();
 
         //StringBuilder builder = new StringBuilder();
         //builder.append("locationOne\n");
@@ -504,7 +591,9 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     //Hacky impl of getting japanese version of descriptors used in action scripts for TTS
     @TRADEService
     public String getJapaneseVersionOfDescriptor(Symbol descriptor) {
-        String descriptorString = descriptor.getName();
+        return getJapaneseVersionOfDescriptor(descriptor.getName());
+    }
+    public String getJapaneseVersionOfDescriptor(String descriptorString) {
         HashMap<String,String> descriptorMappings = new HashMap<>();
         descriptorMappings.put("red block", "赤いブロック");
         descriptorMappings.put("green block", "緑色のブロック");
