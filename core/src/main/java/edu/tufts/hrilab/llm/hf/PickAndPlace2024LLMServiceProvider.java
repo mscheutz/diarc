@@ -593,6 +593,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     public String getJapaneseVersionOfDescriptor(Symbol descriptor) {
         return getJapaneseVersionOfDescriptor(descriptor.getName());
     }
+    @TRADEService
     public String getJapaneseVersionOfDescriptor(String descriptorString) {
         HashMap<String,String> descriptorMappings = new HashMap<>();
         descriptorMappings.put("red block", "赤いブロック");

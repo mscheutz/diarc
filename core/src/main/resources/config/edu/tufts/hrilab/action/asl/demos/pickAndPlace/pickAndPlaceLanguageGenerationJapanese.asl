@@ -53,7 +53,7 @@ import java.util.Map;
     Map !bindings;
     Variable !x = "X";
 
-    act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", objectType(X));
+    !bindings = act:askQuestionFromString(?actor,"どのブロックと交換したらいいですか？", objectType(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
@@ -63,15 +63,14 @@ import java.util.Map;
 }
 
 () = reportNotSwappingObjects() {
-    //TODO: this is google translate result, get actual translation
-    act:generateResponseFromString("わかりました。ブロックを交換しません");
+    act:generateResponseFromString("了解しました。物体をどれも交換しません");
 }
 
 () = reportHoldingObject(Symbol ?descriptor) {
     String !objectDescriptorJapanese;
 
     !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
-    act:generateResponseFromString("私は!objectDescriptorJapaneseを持っています");
+    act:generateResponseFromString("objectDescriptorJapaneseを持っています。");
 }
 
 () = reportObjectLocationUnknown(Symbol ?descriptor) {
@@ -134,51 +133,75 @@ import java.util.Map;
 
 () = reportCurrentPose(Symbol ?armPose) {
     String !poseDescriptorJapanese;
-    !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
+    !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?armPose);
 
-   //TODO: get translation
-   //act:generateResponseFromString("I am currently at ?armPose");
+   act:generateResponseFromString("現在、!poseDescriptorJapaneseの状態です");
 }
 
 () = reportObjectToSwapNotAtCurrentPose() {
-   //TODO: get translation
-   act:generateResponseFromString("The object you indicated is not at my current location");
+   act:generateResponseFromString("ご指定の物体は現在の位置にありません");
 }
 
 () = reportObjectsToSwapAreTheSame() {
-   //TODO: get translation
-   act:generateResponseFromString("You asked me to swap an object with itself. Doing nothing");
+   act:generateResponseFromString("物体をその物体自体と交換するように依頼されたため、何もしません");
 }
 
 () = reportDetectedObject(Symbol ?objectDescriptor) {
-    act:generateResponseFromString("yes, I see ?objectDescriptor");
+    String !objectDescriptorJapanese;
+    !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?objectDescriptor);
+
+    act:generateResponseFromString("はい、!objectDescriptorJapaneseが見えます");
 }
 
 () = reportCantVerifyBecauseActiveGoal() {
-    act:generateResponseFromString("I cannot verify that because I am currently doing something");
+    act:generateResponseFromString("現在作業中ですので、それを確認することができません");
 }
 
 () = reportObjectNotBelievedToBeAtPose(Symbol ?objectDescriptor, Symbol ?poseDescriptor) {
-    act:generateResponseFromString("I do not believe ?objectDescriptor is at ?poseDescriptor");
+    String !poseDescriptorJapanese;
+    String !objectDescriptorJapanese;
+
+    !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?poseDescriptor);
+    !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?objectDescriptor);
+
+    act:generateResponseFromString("!objectDescriptorJapaneseは!poseDescriptorJapaneseにあると思いません");
 }
 
 () = reportObjectBelievedToBeAtPose(Symbol ?objectDescriptor, Symbol ?poseDescriptor) {
-    act:generateResponseFromString("I believe ?objectDescriptor is at ?poseDescriptor");
+    String !poseDescriptorJapanese;
+    String !objectDescriptorJapanese;
+
+    !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?poseDescriptor);
+    !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?objectDescriptor);
+
+    act:generateResponseFromString("!objectDescriptorJapaneseは!poseDescriptorJapaneseにあると思います");
 }
 
 () = reportObjectNotAtPose(Symbol ?objectDescriptor, Symbol ?poseDescriptor) {
-    act:generateResponseFromString("I do not see ?objectDescriptor at ?poseDescriptor");
+    String !poseDescriptorJapanese;
+    String !objectDescriptorJapanese;
+
+    !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?poseDescriptor);
+    !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?objectDescriptor);
+
+    act:generateResponseFromString("!poseDescriptorJapaneseには!objectDescriptorJapaneseは見えません");
 }
 
 () = reportDetectedObject(Symbol ?objectDescriptor, Symbol ?poseDescriptor) {
-    act:generateResponseFromString("I see ?objectDescriptor at ?poseDescriptor");
+    String !poseDescriptorJapanese;
+    String !objectDescriptorJapanese;
+
+    !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?poseDescriptor);
+    !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?objectDescriptor);
+
+    act:generateResponseFromString("!poseDescriptorJapaneseに!objectDescriptorJapaneseが見えます");
 }
 
 (Symbol ?response) = askToVerifyBelief() {
     Map !bindings;
     Variable !x = "X";
 
-    (!bindings) = act:askQuestionFromString(?actor,"Would you like me to verify that?", val(X));
+    (!bindings) = act:askQuestionFromString(?actor,"確認しましょうか?", val(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");
     } else {
@@ -187,26 +210,38 @@ import java.util.Map;
 }
 
 () = reportDontBelieveObjectsAtPose(Symbol ?poseDescriptor) {
-    act:generateResponseFromString("I do not believe any objects are at ?poseDescriptor");
+    String !poseDescriptorJapanese;
+    !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?poseDescriptor);
+
+    act:generateResponseFromString("!poseDescriptorJapaneseに物体はないと思います");
 }
 
 () = reportBelieveObjectsAtPose(Symbol ?poseDescriptor) {
-    act:generateResponseFromString("I believe objects are at ?poseDescriptor");
+    String !poseDescriptorJapanese;
+    !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?poseDescriptor);
+
+    act:generateResponseFromString("!poseDescriptorJapaneseに物体はあると思います");
 }
 
 () = reportObjectsNotAtPose(Symbol ?poseDescriptor) {
-    act:generateResponseFromString("I do not see any objects at ?poseDescriptor");
+    String !poseDescriptorJapanese;
+    !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?poseDescriptor);
+
+    act:generateResponseFromString("!poseDescriptorJapaneseに物体はひとつも見えません");
 }
 
 () = reportDetectedObjects(Symbol ?poseDescriptor) {
-    act:generateResponseFromString("I see objects at ?poseDescriptor");
+    String !poseDescriptorJapanese;
+    !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?poseDescriptor);
+
+    act:generateResponseFromString("!poseDescriptorJapaneseに物体が見えます");
 }
 
 (Symbol ?response) = reportHoldingObjectAndAskToPutDown() {
     Map !bindings;
     Variable !x = "X";
 
-    (!bindings) = act:askQuestionFromString(?actor,"I cannot pick up the object because I am holding something. Would you like me to put it down somewhere?", val(X));
+    (!bindings) = act:askQuestionFromString(?actor,"すでに物体を持っているため、拾うことはできません。どちらかに置きましょうか?", val(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");
     } else {
@@ -218,7 +253,7 @@ import java.util.Map;
     Map !bindings;
     Variable !x = "X";
 
-    (!bindings) = act:askQuestionFromString(?actor,"Where should I put it down?", pose(X));
+    (!bindings) = act:askQuestionFromString(?actor,"どちらに置きましょうか?", pose(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
@@ -248,18 +283,23 @@ import java.util.Map;
 }
 
 () = reportSeenObject(Symbol ?descriptor) {
-    act:generateResponseFromString("I see ?descriptor");
+    String !descriptorJapanese;
+    !descriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
+
+    act:generateResponseFromString("!descriptorJapaneseが見えます");
 }
 
 () = reportObjectsAtSameLocation() {
-    act:generateResponseFromString("The objects are already at the same pose");
+    act:generateResponseFromString("物体は同じポーズをとっている");
 }
 
 (Symbol ?objectPose) = reportFailedDetectionAndAskForObjectPose(Symbol ?descriptor) {
     Map !bindings;
     Variable !x = "X";
+    String !descriptorJapanese;
+    !descriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
 
-    (!bindings) = act:askQuestionFromString(?actor,"I cannot see ?descriptor, what pose is it located at?", pose(X));
+    (!bindings) = act:askQuestionFromString(?actor,"!descriptorJapaneseが見えません, 場所何番にありますか?", pose(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
