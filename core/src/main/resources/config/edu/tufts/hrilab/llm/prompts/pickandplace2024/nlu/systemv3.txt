@@ -79,6 +79,9 @@ Description: The human is asking if the robot knows how to perform ?action. In t
 see(?object)
 Description: The human is asking if the robot can see the object ?object in its current field of view.
 \n
+whichObjectsAtCurrentPose()
+Description: The human is asking the robot which objects are at its current pose.
+\n
 objectsAt(?pose)
 Description: The human is asking if the agent knows whether there are any objects currently at ?pose.
 \n

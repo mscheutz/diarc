@@ -167,3 +167,12 @@ import java.util.List;
         exit(FAIL,notAPose(?ref));
     }
 }
+
+(List ?bindings) = getObjectsAtPose(Symbol ?pose) {
+    Predicate !queryPred;
+    edu.tufts.hrilab.fol.Variable !objectVar;
+
+    !objectVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(X,?pose)");
+    ?bindings = act:queryBelief(!queryPred);
+}

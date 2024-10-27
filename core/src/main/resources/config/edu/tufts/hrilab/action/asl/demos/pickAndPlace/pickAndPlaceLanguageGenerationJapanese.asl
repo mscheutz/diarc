@@ -97,7 +97,7 @@ import java.util.Map;
 () = reportObjectExists(Symbol ?descriptor) {
     String !objectDescriptorJapanese;
 
-    !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?escriptor);
+    !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
     act:generateResponseFromString("!objectDescriptorJapaneseがあります");
 }
 

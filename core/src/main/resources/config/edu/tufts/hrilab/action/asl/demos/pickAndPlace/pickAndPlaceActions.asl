@@ -62,7 +62,6 @@ import java.lang.Integer;
 
     act:assertIsPhysobj(?object);
     act:assertIsPose(?destination);
-    //TODO: assert ?object is actually a physobj?
     !objectPose = act:getObjectPose(?object);
     !holding = act:checkHolding(?object);
     if (op:equalsValue(!holding, false)) {
@@ -523,6 +522,60 @@ import java.lang.Integer;
     }
 }
 
+() = handleSeeObjectsITK() {
+    effects : {
+        success : knows(?actor,whichObjectsAtCurrentPose(?actor));
+    }
+    List !activeGoals;
+    Predicate !state;
+    java.lang.Long !goalID;
+    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+    List !objects;
+    Symbol !object;
+    Symbol !currentPose;
+    Symbol !objectDescriptor;
+    Symbol !poseDescriptor;
+    Predicate !ack = "ack(okay)";
+    Symbol !response;
+    java.lang.Boolean !knowObjectAt = false;
+    Variable !queryVar = X;
+    java.util.HashMap !binding;
+
+    op:log(info,"handleSeeObjectsITK");
+
+    !currentPose = act:getCurrentLocation();
+    !poseDescriptor = tsc:getDescriptorForPoseID(!currentPose);
+    !objects = act:getObjectsAtPose(!currentPose);
+
+    foreach (!binding : !objects) {
+        !object = op:get(!binding,!queryVar);
+        !objectDescriptor = tsc:getDescriptorForID(!object);
+        op:log(info,!object);
+        op:log(info,!objectDescriptor);
+        if (~op:equalsValue(!objectDescriptor, none)) {
+            act:reportObjectBelievedToBeAtPose(!objectDescriptor,!poseDescriptor);
+            !knowObjectAt = op:newObject("java.lang.Boolean", true);
+        }
+    }
+    if (op:equals(!knowObjectAt,False)) {
+        act:reportDontBelieveObjectsAtPose(!poseDescriptor);
+    }
+
+    !response = act:askToVerifyBelief();
+    act:generateResponse(?actor,!ack,direct);
+    if (op:equals(!response,yes)) {
+        !activeGoals = act:getActiveGoals();
+        if (op:isEmpty(!activeGoals)) {
+            !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "detectObjects(?actor)");
+            !goalID = act:submitGoal(!state);
+            !goalStatus = act:joinOnGoal(!goalID);
+        } else {
+            act:reportCantVerifyBecauseActiveGoal();
+            //not exiting so no more responses occur from handleITK
+        }
+    }
+}
+
 () = handleSeeITK(Symbol ?object) {
     effects : {
         success : knows(?actor,see(?object));
@@ -548,8 +601,9 @@ import java.lang.Integer;
             act:reportDetectedObject(!objectDescriptor);
         }
     } else {
-        !objectDescriptor = tsc:getDescriptorForID(?object);
-        act:reportCantVerifyBecauseActiveGoal(!objectDescriptor);
+        //!objectDescriptor = tsc:getDescriptorForID(?object);
+        //act:reportCantVerifyBecauseActiveGoal(!objectDescriptor);
+        act:reportCantVerifyBecauseActiveGoal();
         //not exiting so no more responses occur from handleITK
     }
 

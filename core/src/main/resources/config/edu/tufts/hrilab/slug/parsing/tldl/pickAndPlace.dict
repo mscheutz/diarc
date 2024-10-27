@@ -256,31 +256,31 @@ yes; VAL; val(yes);
 no; VAL; val(no);
 いいえ; VAL ; val(no);
 
-%% LLM control %%
-clear conversation history; VERBI; clearConversationHistory
-toggle nlg; VERBI; toggleLLMNLG
+%%% LLM control %%
+%clear conversation history; VERBI; clearConversationHistory
+%toggle nlg; VERBI; toggleLLMNLG
 
 %% Testing only %%
-test nlg; C/LIT*; #x.testLLMNLGWithString(?ADDRESSEE,$x);
+%test nlg; C/LIT*; #x.testLLMNLGWithString(?ADDRESSEE,$x);
 
-%% Homophones %%
-location 1; REF; locationOne:pose; DEFINITE
-location 1; RN; locationOne:pose; VAR
-location 1; PROPERTY; locationOne:pose
-
-location to; REF; locationTwo:pose; DEFINITE
-location to; RN; locationTwo:pose; VAR
-location to; PROPERTY; locationTwo:pose
-location too; REF; locationTwo:pose; DEFINITE
-location too; RN; locationTwo:pose; VAR
-location too; PROPERTY; locationTwo:pose
-location 2; REF; locationTwo:pose; DEFINITE
-location 2; RN; locationTwo:pose; VAR
-location 2; PROPERTY; locationTwo:pose
-
-location 3; REF; locationThree:pose; DEFINITE
-location 3; RN; locationThree:pose; VAR
-location 3; PROPERTY; locationThree:pose
+%%% Homophones %%
+%location 1; REF; locationOne:pose; DEFINITE
+%location 1; RN; locationOne:pose; VAR
+%location 1; PROPERTY; locationOne:pose
+%
+%location to; REF; locationTwo:pose; DEFINITE
+%location to; RN; locationTwo:pose; VAR
+%location to; PROPERTY; locationTwo:pose
+%location too; REF; locationTwo:pose; DEFINITE
+%location too; RN; locationTwo:pose; VAR
+%location too; PROPERTY; locationTwo:pose
+%location 2; REF; locationTwo:pose; DEFINITE
+%location 2; RN; locationTwo:pose; VAR
+%location 2; PROPERTY; locationTwo:pose
+%
+%location 3; REF; locationThree:pose; DEFINITE
+%location 3; RN; locationThree:pose; VAR
+%location 3; PROPERTY; locationThree:pose
 
 robot 1; ADDRESSABLE; robotone:agent
 
@@ -289,3 +289,6 @@ hi there; G ; hi_there
 hello; G ; hello
 
 init; C; init(?ADDRESSEE)
+
+what do you see; Q; whichObjectsAtCurrentPose(?ADDRESSEE)
+what do you see at your location; Q; whichObjectsAtCurrentPose(?ADDRESSEE)

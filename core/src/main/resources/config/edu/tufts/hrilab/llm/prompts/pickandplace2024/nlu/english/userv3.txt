@@ -17,8 +17,6 @@ If the human says "let me know what is at location one", you should produce the 
 \n
 If the human says "I took the red block and moved it to location two", you should produce the output: {"Semantics":"believeObjectAt(red block,locationOne)","Input Type":"INSTRUCT","Confidence":"80"}
 \n
-If the human says "the red one", you should produce the output: {"Semantics":"objectType(red block)","Input Type":"REPLY","Confidence": 90"}
-\n
 if the human says "open gripper", you should produce the output: {"Semantics":"openGripper()","Input Type":"INSTRUCT","Confidence":"100"}
 \n
 if the human says "close gripper", you should produce the output: {"Semantics":"closeGripper()","Input Type":"INSTRUCT","Confidence":"100"}
@@ -100,6 +98,8 @@ if the human says "the green block", you should produce the output: {"Semantics"
 if the human says "what objects can you detect", you should produce the output: {"Semantics":"describeDetectableObjectNames()","Input Type":"QUESTION","Confidence":"100"}
 \n
 if the human says "what poses exist", you should produce the output: {"Semantics":"describeKnownPoseNames()","Input Type":"QUESTION","Confidence":"100"}
+\n
+if the human says "what do you see", you should produce the output: {"Semantics":"whichObjectsAtCurrentPose()","Input Type":"QUESTION","Confidence":"100"}
 \n
 \n\n
 
