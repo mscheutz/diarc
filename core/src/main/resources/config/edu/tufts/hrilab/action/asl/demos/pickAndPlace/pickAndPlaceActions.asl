@@ -263,6 +263,36 @@ import java.lang.Integer;
     }
 }
 
+() = pickUpCantDetectObjectRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            catchingAction : grab(A,X,Y)
+            postRecovery : postrecovery_success
+        }
+        failureReasons : {not(dont(A,see,X,atMyLocation))}
+    }
+    //TODO: should fix value/negation of failure condition
+
+    Symbol !pose;
+    Symbol !blockToPickUp;
+    Symbol !blockDescriptor;
+
+    op:log("debug","[pickUpCantDetectObjectRecovery");
+    op:log("debug","[pickUpCantDetectObjectRecovery] ?failedActionPredicates");
+    op:log("debug","[pickUpCantDetectObjectRecovery] ?failureReasons");
+    op:log("debug","[pickUpCantDetectObjectRecovery] ?failedGoal");
+
+    !blockToPickUp = op:invokeMethod(?failedGoal,"get",0);
+    !blockDescriptor = tsc:getDescriptorForID(!blockToPickUp);
+    !pose = act:reportFailedDetectionAndAskForObjectPose(!blockDescriptor);
+    if (op:equals(!pose,none)) {
+        exit(FAIL_RECOVERY);
+    } else {
+        act:believeObjectAt(!blockToPickUp,!pose);
+        act:pickUp(!blockToPickUp);
+    }
+}
+
 () = swapObjects(Symbol ?objectOne, Symbol ?objectTwo) {
     Predicate !goalPred;
     Predicate !failCond;

@@ -254,3 +254,16 @@ import java.util.Map;
 () = reportObjectsAtSameLocation() {
     act:generateResponseFromString("The objects are already at the same pose");
 }
+
+(Symbol ?objectPose) = reportFailedDetectionAndAskForObjectPose(Symbol ?descriptor) {
+    Map !bindings;
+    Variable !x = "X";
+
+    (!bindings) = act:askQuestionFromString(?actor,"I cannot see ?descriptor, what pose is it located at?", pose(X));
+    if (op:invokeMethod(!bindings, "isEmpty")) {
+        ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
+    } else {
+        ?objectPose = op:get(!bindings,!x);
+        act:assertIsPose(?objectPose);
+    }
+}
