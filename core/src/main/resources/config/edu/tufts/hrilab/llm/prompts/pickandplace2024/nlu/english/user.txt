@@ -9,12 +9,12 @@ Examples of this task being performed correctly, potentially along with addition
 
 Example 1:
 Input: Can you please navigate to location one
-Output: {"Semantics":"goToPose(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"goToPose(robotone,location one:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 Example 1 Notes: The user is asking you to navigate to the location one. This matches the description of the known goToPose(?actor,?pose:pose) action signature and location one is a known pose to the system. There are no similar actions known to the system so there is no ambiguity. The above format template can be populated with the corresponding signature details and parameterization with a high confidence.
 
 Example 2:
 Input: get me the block at location one
-Output: {"Semantics":"placeObjectDownAt(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"20"}
+Output: {"Semantics":"placeObjectDownAt(robotone,location one:pose)","Input Type":"INSTRUCT","Confidence":"20"}
 Example 2 Notes: Confidence is low for this example because, without additional context, there are multiple different valid results this input could match to. The user could be asking you to pick up the object which is currently at location one, or to make it so the object you are holding gets to location one. Picking up the object at location one seems more likely, but there is no corresponding parameterization of pickUp which only takes in a pose. In these cases where there can reasonably be multiple valid meanings, it is better to return low confidence along with the chosen result.
 
 Example 3:
@@ -24,11 +24,11 @@ Example 3 Notes: Confidence is low for example 3 because, while it is fairly cle
 
 Example 4:
 Input: let me know what is at location one
-Output: {"Semantics":"describeObjectsAt(robtone:agent,locationOne:pose)","Input Type":"QUESTION","Confidence":"80"}
+Output: {"Semantics":"describeObjectsAt(robtone:agent,location one:pose)","Input Type":"QUESTION","Confidence":"80"}
 
 Example 5:
 Input: I took the red block and moved it to location two
-Output: {"Semantics":"believeObjectAt(robotone,red block:physobj,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"80"}
+Output: {"Semantics":"believeObjectAt(robotone,red block:physobj,location one:pose)","Input Type":"INSTRUCT","Confidence":"80"}
 
 Example 6:
 Input: the red one
@@ -69,19 +69,19 @@ Output: {"Semantics":"putDown(robotone,red block:physobj)","Input Type":"INSTRUC
 
 Example 15:
 Input: move the yellow block from location one to location two
-Output: {"Semantics":"moveObjectTo(robotone,yellow block:physobj,locationOne:pose,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"moveObjectTo(robotone,yellow block:physobj,location one:pose,location two:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Example 16:
 Input: place the orange block at location three
-Output: {"Semantics":"placeObjectDownAt(robotone,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"placeObjectDownAt(robotone,orange block:physobj,location three:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Example 17:
 Input: place the block down at location one
-Output: {"Semantics":"placeObjectDownAt(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"placeObjectDownAt(robotone,location one:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Example 18:
 Input: get the red block to location two
-Output: {"Semantics":"getObjectTo(robotone,red block:physobj,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"getObjectTo(robotone,red block:physobj,location two:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Example 19:
 Input: suspend current task
@@ -101,7 +101,7 @@ Output: {"Semantics":"cancelAllCurrentGoals(robotone)","Input Type":"INSTRUCT","
 
 Example 23:
 Input: the green block is not at location two
-Output: {"Semantics":"not(at(green block:physobj,locationTwo:pose))","Input Type":"STATEMENT","Confidence":"100"}
+Output: {"Semantics":"not(at(green block:physobj,location two:pose))","Input Type":"STATEMENT","Confidence":"100"}
 
 Example 24:
 Input: eric is trusted
@@ -125,15 +125,15 @@ Output: {"Semantics":"describeObjectPoses(robotone)","Input Type":"QUESTION","Co
 
 Example 29:
 Input: how many objects are at location two
-Output: {"Semantics":"describeNumberOfObjectsAt(robotone,locationTwo:pose)","Input Type":"QUESTION","Confidence":"100"}
+Output: {"Semantics":"describeNumberOfObjectsAt(robotone,location two:pose)","Input Type":"QUESTION","Confidence":"100"}
 
 Example 30:
 Input: are any objects at location three
-Output: {"Semantics":"objectsAt(locationThree:pose)","Input Type":"QUESTION","Confidence":"100"}
+Output: {"Semantics":"objectsAt(location three:pose)","Input Type":"QUESTION","Confidence":"100"}
 
 Example 31:
 Input: is yellow block at location four
-Output: {"Semantics":"at(yellow block:physobj,locationFour:pose)","Input Type":"QUESTION","Confidence":"100"}
+Output: {"Semantics":"at(yellow block:physobj,location four:pose)","Input Type":"QUESTION","Confidence":"100"}
 
 Example 33:
 Input: do you see the red block

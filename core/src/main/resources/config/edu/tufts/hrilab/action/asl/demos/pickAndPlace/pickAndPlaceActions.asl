@@ -875,14 +875,14 @@ import java.lang.Integer;
 () = describeDetectableObjectNames() {
     List !objectList;
 
-    !objectList = tsc:getObjectDescriptors();
+    !objectList = tsc:getEnglishObjectDescriptors();
     act:reportKnownObjects(!objectList);
 }
 
 () = describeKnownPoseNames() {
     List !poseList;
 
-    !poseList = tsc:getPoseDescriptors();
+    !poseList = tsc:getEnglishPoseDescriptors();
     act:reportKnownPoses(!poseList);
 }
 

@@ -2,7 +2,7 @@ Given system output in the semantic form unintelligible to the user, your task i
 ###
 Example 1:
 #
-Input:REPLY(robotone,pete,cannot(get(robotone,green block:physobj,to,locationTwo:pose),because(not(know(robotone,theLocationOf,green block:physobj)))),{})
+Input:REPLY(robotone,pete,cannot(get(robotone,green block:physobj,to,location two:pose),because(not(know(robotone,theLocationOf,green block:physobj)))),{})
 Output:{"translation":"I cannot get the green block to location two because I do not know the location of the green block"}
 ##
 Example 2:
@@ -42,7 +42,7 @@ Output:{"translation":"I cannot put down the red block because the location belo
 ##
 Example 9:
 #
-Input:REPLY(robotone,pete,cannot(detect(robotone,locationOne:pose),because(not(isDetectable(locationOne:pose)))),{})
+Input:REPLY(robotone,pete,cannot(detect(robotone,location one:pose),because(not(isDetectable(location one:pose)))),{})
 Output:{"translation":"I cannot detect location one because location one is not detectable"}
 ##
 Example 10:

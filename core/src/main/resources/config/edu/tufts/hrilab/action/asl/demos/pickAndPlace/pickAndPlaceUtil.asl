@@ -77,7 +77,7 @@ import java.util.List;
 
     op:log(debug,"getPoseWithSpace");
 
-    !poseDescriptors = act:getPoseDescriptors();
+    !poseDescriptors = act:getEnglishPoseDescriptors();
     !numberOfPoses = op:invokeMethod(!poseDescriptors, "size");
 
     while (op:equals(!doneChecking, false)) {

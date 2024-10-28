@@ -7,15 +7,15 @@ Input Type (one of the following values based on the type of command: INSTRUCT, 
 Confidence (A value between 0 and 100 for how confident you are in your translation)
 \n\n
 
-if the human says "can you please navigate to location one", you should produce the output: {"Semantics":"goToPose(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "can you please navigate to location one", you should produce the output: {"Semantics":"goToPose(location one)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-If the human says "get me the block at location one", you should produce the output: {"Semantics":"placeObjectDownAt(locationOne)","Input Type":"INSTRUCT","Confidence":"20"}
+If the human says "get me the block at location one", you should produce the output: {"Semantics":"placeObjectDownAt(location one)","Input Type":"INSTRUCT","Confidence":"20"}
 \n
 If the human says "pick up a ball", you should produce the output: {"Semantics":"pickUp(ball)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-If the human says "let me know what is at location one", you should produce the output: {"Semantics":"describeObjectsAt(locationOne)","Input Type":"QUESTION","Confidence":"80"}
+If the human says "let me know what is at location one", you should produce the output: {"Semantics":"describeObjectsAt(location one)","Input Type":"QUESTION","Confidence":"80"}
 \n
-If the human says "I took the red block and moved it to location two", you should produce the output: {"Semantics":"believeObjectAt(red block,locationOne)","Input Type":"INSTRUCT","Confidence":"80"}
+If the human says "I took the red block and moved it to location two", you should produce the output: {"Semantics":"believeObjectAt(red block,location one)","Input Type":"INSTRUCT","Confidence":"80"}
 \n
 If the human says "the red one", you should produce the output: {"Semantics":"objectType(red block)","Input Type":"REPLY","Confidence": 90"}
 \n
@@ -35,13 +35,13 @@ if the human says "put down the block", you should produce the output: {"Semanti
 \n\n
 if the human says "put down the red block", you should produce the output: {"Semantics":"putDown(red block)","Input Type":"INSTRUCT","Confidence":"100"}
 \n\n
-if the human says "move the yellow block from location one to location two", you should produce the output: {"Semantics":"moveObjectTo(yellow block,locationOne,locationTwo)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "move the yellow block from location one to location two", you should produce the output: {"Semantics":"moveObjectTo(yellow block,location one,location two)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "place the orange block at location three", you should produce the output: {"Semantics":"placeObjectDownAt(orange block,locationThree)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "place the orange block at location three", you should produce the output: {"Semantics":"placeObjectDownAt(orange block,location three)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "place the block down at location one", you should produce the output: {"Semantics":"placeObjectDownAt(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "place the block down at location one", you should produce the output: {"Semantics":"placeObjectDownAt(location one)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "get the red block to location two", you should produce the output: {"Semantics":"getObjectTo(red block,locationTwo)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "get the red block to location two", you should produce the output: {"Semantics":"getObjectTo(red block,location two)","Input Type":"INSTRUCT","Confidence":"100"}
 \n
 if the human says "suspend current task", you should produce the output: {"Semantics":"suspendSystemGoals()","Input Type":"INSTRUCT","Confidence":"100"}
 \n
@@ -51,7 +51,7 @@ if the human says "cancel current task", you should produce the output: {"Semant
 \n
 if the human says "cancel all tasks", you should produce the output: {"Semantics":"cancelAllCurrentGoals()","Input Type":"INSTRUCT","Confidence":"100"}
 \n
-if the human says "the green block is not at location two", you should produce the output: {"Semantics":"not(at(green block,locationTwo))","Input Type":"STATEMENT","Confidence":"100"}
+if the human says "the green block is not at location two", you should produce the output: {"Semantics":"not(at(green block,location two))","Input Type":"STATEMENT","Confidence":"100"}
 \n
 if the human says "eric is trusted", you should produce the output: {"Semantics":"trusted(eric)","Input Type":"STATEMENT","Confidence":"100"}
 \n
@@ -63,11 +63,11 @@ if the human says "where is the red block", you should produce the output: {"Sem
 \n
 if the human says "what are the locations of all the blocks", you should produce the output: {"Semantics":"describeObjectPoses()","Input Type":"QUESTION","Confidence":"100"}
 \n
-if the human says "how many objects are at location two", you should produce the output: {"Semantics":"describeNumberOfObjectsAt(locationTwo)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "how many objects are at location two", you should produce the output: {"Semantics":"describeNumberOfObjectsAt(location two)","Input Type":"QUESTION","Confidence":"100"}
 \n
-if the human says "are any objects at location three", you should produce the output: {"Semantics":"objectsAt(locationThree)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "are any objects at location three", you should produce the output: {"Semantics":"objectsAt(location three)","Input Type":"QUESTION","Confidence":"100"}
 \n
-if the human says "is the yellow block at location four", you should produce the output: {"Semantics":"at(yellow block,locationFour)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "is the yellow block at location four", you should produce the output: {"Semantics":"at(yellow block,location four)","Input Type":"QUESTION","Confidence":"100"}
 \n
 if the human says "do you see the red block", you should produce the output: {"Semantics":"see(red block)","Input Type":"QUESTION","Confidence":"100"}
 \n

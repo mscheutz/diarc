@@ -282,13 +282,15 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         //Intercept Validation Question and use specific validation prompt
         String userMessage;
         Predicate semantics = (Predicate) utterance.getSemantics();
-        List<String> objects = getObjects();
-        List<String> poses = getPoses();
+        List<String> objectsEnglish = getObjects(true);
+        List<String> objectsJapanese = getObjects(false);
+        List<String> englishPoses = getPoses(true);
+        List<String> japanesePoses = getPoses(false);
 
         Map<String,String> promptVars = new LinkedHashMap<>();
         if (semantics.getName().equals("doYouMean")) {
             promptVars.put("%utterance", utterance.toString());
-            promptVars = populatePromptVarsWithProperties(promptVars, objects, poses);
+            promptVars = populatePromptVarsWithProperties(promptVars, objectsEnglish, objectsJapanese, englishPoses, japanesePoses);
             userMessage = validationPrompt.apply(promptVars);
         } else {
             utterance = new Utterance.Builder(utterance).build();
@@ -296,7 +298,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             semantics = replaceReferencesInSemantics(semantics);
             utterance.setSemantics(semantics);
             promptVars.put("%utterance", utterance.toString());
-            promptVars = populatePromptVarsWithProperties(promptVars, objects, poses);
+            promptVars = populatePromptVarsWithProperties(promptVars, objectsEnglish, objectsJapanese, englishPoses, japanesePoses);
             userMessage = nlgUserPrompt.apply(promptVars);
         }
         
@@ -347,14 +349,16 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         
         Map<String,String> promptVars = new LinkedHashMap<>();
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
-        List<String> objects = getObjects();
-        List<String> poses = getPoses();
-        promptVars.put("%objectList", String.join("\n", objects));
-        promptVars.put("%locationList", String.join("\n", poses));
+        List<String> objectsEnglish = getObjects(true);
+        List<String> objectsJapanese = getObjects(false);
+        List<String> englishPoses = getPoses(true);
+        List<String> japanesePoses = getPoses(false);
+        promptVars.put("%objectList", String.join("\n", objectsEnglish));
+        promptVars.put("%locationList", String.join("\n", englishPoses));
         promptVars.put("%worldState", getWorldStateString());
         currentChat.setSystem(nluSystemPrompt.apply(promptVars));
         promptVars.clear();
-        populatePromptVarsWithProperties(promptVars, objects, poses);
+        populatePromptVarsWithProperties(promptVars, objectsEnglish, objectsJapanese, englishPoses, japanesePoses);
         promptVars.put("%input", utterance.getWordsAsString());
         currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
 
@@ -400,72 +404,52 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         return builder.toString();
     }
 
-    private Map<String,String> populatePromptVarsWithProperties(Map<String,String> promptVars, List<String> objects, List<String> poses) {
-        int numObjects = getObjects().size();
-        if (numObjects != 5) {
+    private Map<String,String> populatePromptVarsWithProperties(Map<String,String> promptVars, List<String> objectsEnglish, List<String> objectsJapanese, List<String> posesEnglish, List<String> posesJapanese) {
+        int numObjects = objectsEnglish.size();
+        int numObjectsJapanese = objectsJapanese.size();
+        if (numObjects != 5 || numObjectsJapanese != 5) {
             log.warn("[generateNLUChat] number of objects received is not 5");
         }
 
-        if (numObjects > 0) {
-            if (!objects.get(0).equals("red block")) {
-                promptVars.put("the red block", objects.get(0));
-                promptVars.put("red block", objects.get(0));
-                promptVars.put("赤いブロック", objects.get(0));
-            }
-            if (numObjects > 1) {
-                if (!objects.get(1).equals("green block")) {
-                    promptVars.put("緑色のブロック", objects.get(1));
-                    promptVars.put("the green block", objects.get(1));
-                    promptVars.put("green block", objects.get(1));
-                }
-                if (numObjects > 2) {
-                    if (!objects.get(2).equals("yellow block")) {
-                        promptVars.put("the yellow block", objects.get(2));
-                        promptVars.put("yellow block", objects.get(2));
-                        promptVars.put("黄色いブロック", objects.get(2));
-                    }
-                    if (numObjects > 3) {
-                        if (!objects.get(3).equals("blue block")) {
-                            promptVars.put("the blue block", objects.get(3));
-                            promptVars.put("blue block", objects.get(3));
-                            promptVars.put("青いブロック", objects.get(3));
-                        }
-                        if (numObjects > 4) {
-                            if (!objects.get(4).equals("orange block")) {
-                                promptVars.put("the orange block", objects.get(4));
-                                promptVars.put("orange block", objects.get(4));
-                                promptVars.put("オレンジ色のブロック", objects.get(4));
-                            }
+        if (numObjects > 0 && numObjectsJapanese > 0) {
+            promptVars.put("the red block", objectsEnglish.get(0));
+            promptVars.put("red block", objectsEnglish.get(0));
+            promptVars.put("赤いブロック", objectsJapanese.get(0));
+            if (numObjects > 1 && numObjectsJapanese > 1) {
+                promptVars.put("緑色のブロック",objectsEnglish.get(1));
+                promptVars.put("the green block", objectsEnglish.get(1));
+                promptVars.put("green block", objectsJapanese.get(1));
+                if (numObjects > 2 && numObjectsJapanese > 2) {
+                    promptVars.put("the yellow block", objectsEnglish.get(2));
+                    promptVars.put("yellow block", objectsEnglish.get(2));
+                    promptVars.put("黄色いブロック", objectsJapanese.get(2));
+                    if (numObjects > 3 && numObjectsJapanese > 3) {
+                        promptVars.put("the blue block", objectsEnglish.get(3));
+                        promptVars.put("blue block", objectsEnglish.get(3));
+                        promptVars.put("青いブロック", objectsJapanese.get(3));
+                        if (numObjects > 4 && numObjectsJapanese > 4) {
+                            promptVars.put("the orange block", objectsEnglish.get(4));
+                            promptVars.put("orange block", objectsEnglish.get(4));
+                            promptVars.put("オレンジ色のブロック", objectsJapanese.get(4));
                         }
                     }
                 }
             }
         }
-        int numPoses = poses.size();
-        if (numPoses > 0) {
-            if (!poses.get(0).equals("locationOne")) {
-                promptVars.put("location one", poses.get(0));
-                promptVars.put("locationOne", poses.get(0));
-                promptVars.put("位置1", poses.get(0));
-            }
-            if (numPoses > 1) {
-                if (!poses.get(1).equals("locationTwo")) {
-                    promptVars.put("location two", poses.get(1));
-                    promptVars.put("locationTwo", poses.get(1));
-                    promptVars.put("位置2", poses.get(1));
-                }
-                if (numPoses > 2) {
-                    if (!poses.get(2).equals("locationThree")) {
-                        promptVars.put("location three", poses.get(2));
-                        promptVars.put("locationThree", poses.get(2));
-                        promptVars.put("位置3", poses.get(2));
-                    }
-                    if (numPoses > 3) {
-                        if (!poses.get(3).equals("locationFour")) {
-                            promptVars.put("location four", poses.get(3));
-                            promptVars.put("locationFour", poses.get(3));
-                            promptVars.put("位置4", poses.get(3));
-                        }
+        int numPosesEnglish = posesEnglish.size();
+        int numPosesJapanese = posesJapanese.size();
+        if (numPosesEnglish > 0 && numPosesJapanese > 0) {
+                promptVars.put("location one", posesEnglish.get(0));
+                promptVars.put("位置1", posesJapanese.get(0));
+            if (numPosesEnglish > 1 && numPosesJapanese > 1) {
+                    promptVars.put("location two", posesEnglish.get(1));
+                    promptVars.put("位置2", posesJapanese.get(1));
+                if (numPosesEnglish > 2 && numPosesJapanese > 2) {
+                        promptVars.put("location three", posesEnglish.get(2));
+                        promptVars.put("位置3", posesJapanese.get(2));
+                    if (numPosesEnglish > 3 && numPosesJapanese > 3) {
+                            promptVars.put("location four", posesEnglish.get(3));
+                            promptVars.put("位置4", posesJapanese.get(3));
                     }
                 }
             }
@@ -473,44 +457,36 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         return promptVars;
     }
     
-    private List<String> getObjects() {
+    private List<String> getObjects(boolean english) {
         try {
-            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getObjectDescriptors")).call(List.class);
+            List<String> propertyNames;
+            if (english) {
+                propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEnglishObjectDescriptors")).call(List.class);
+            } else {
+                propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getJapaneseObjectDescriptors")).call(List.class);
+            }
             return propertyNames;
-            //return String.join("\n", propertyNames);
         } catch (TRADEException e) {
             log.error("[getObjectListString]", e);
         }
 
         return new ArrayList<>();
-
-        //StringBuilder builder = new StringBuilder();
-        //builder.append("red block\n");
-        //builder.append("blue block\n");
-        //builder.append("green block\n");
-        //builder.append("yellow block\n");
-        //builder.append("orange block\n");
-        //return builder.toString();
     }
 
-    private List<String> getPoses() {
+    private List<String> getPoses(boolean english) {
         try {
-            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPoseDescriptors")).call(List.class);
+            List<String> propertyNames;
+            if (english) {
+                propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEnglishPoseDescriptors")).call(List.class);
+            } else {
+                propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getJapanesePoseDescriptors")).call(List.class);
+            }
             return propertyNames;
-            //return String.join("\n", propertyNames);
         } catch (TRADEException e) {
             log.error("[getPoseListString]", e);
         }
 
         return new ArrayList<>();
-
-        //StringBuilder builder = new StringBuilder();
-        //builder.append("locationOne\n");
-        //builder.append("locationTwo\n");
-        //builder.append("locationThree\n");
-        //builder.append("locationFour\n");
-        //builder.append("locationFive\n");
-        //return builder.toString();
     }
 
     private String getWorldStateString() {
@@ -551,25 +527,9 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         return robotLocationString + holdingString + builder;
     }
 
-    //private Map<String,String> getKnownDescriptorTypes() {
-    //    //TODO: update if new names are taught
-    //    Map<String,String> descriptors = new HashMap<>();
-    //    descriptors.put("red block", "physobj");
-    //    descriptors.put("blue block", "physobj");
-    //    descriptors.put("green block", "physobj");
-    //    descriptors.put("yellow block", "physobj");
-    //    descriptors.put("orange block", "physobj");
-    //    descriptors.put("locationOne", "pose");
-    //    descriptors.put("locationTwo", "pose");
-    //    descriptors.put("locationThree", "pose");
-    //    descriptors.put("locationFour", "pose");
-    //    descriptors.put("locationFive", "pose");
-    //    return descriptors;
-    //}
-
     private String getDescriptorType(String descriptor) {
         try {
-            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getObjectDescriptors")).call(List.class);
+            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEnglishObjectDescriptors")).call(List.class);
             if (propertyNames.contains(descriptor)) {
                 return "physobj";
             }
@@ -578,7 +538,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         }
 
         try {
-            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPoseDescriptors")).call(List.class);
+            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEnglishPoseDescriptors")).call(List.class);
             if (propertyNames.contains(descriptor)) {
                 return "pose";
             }
@@ -595,26 +555,18 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     }
     @TRADEService
     public String getJapaneseVersionOfDescriptor(String descriptorString) {
-        HashMap<String,String> descriptorMappings = new HashMap<>();
-        descriptorMappings.put("red block", "赤いブロック");
-        descriptorMappings.put("green block", "緑色のブロック");
-        descriptorMappings.put("blue block", "青いブロック");
-        descriptorMappings.put("orange block", "オレンジ色のブロック");
-        descriptorMappings.put("yellow block", "黄色いブロック");
-        descriptorMappings.put("location one", "位置1");
-        descriptorMappings.put("location two", "位置2");
-        descriptorMappings.put("location three", "位置3");
-        descriptorMappings.put("location four", "位置4");
-        descriptorMappings.put("location five", "位置5");
-        descriptorMappings.put("locationOne", "位置1");
-        descriptorMappings.put("locationTwo", "位置2");
-        descriptorMappings.put("locationThree", "位置3");
-        descriptorMappings.put("locationFour", "位置4");
-        descriptorMappings.put("locationFive", "位置5");
-        if (descriptorMappings.get(descriptorString) == null) {
-            return descriptorString;
-        } else {
-            return descriptorMappings.get(descriptorString);
+        List<String> englishDescriptors = getObjects(true);
+        List<String> japaneseDescriptors = getObjects(false);
+        int index = englishDescriptors.indexOf(descriptorString);
+        if (index != -1 && index < japaneseDescriptors.size()) {
+            return japaneseDescriptors.get(index);
         }
+        englishDescriptors = getPoses(true);
+        japaneseDescriptors = getPoses(false);
+        index = englishDescriptors.indexOf(descriptorString);
+        if (index != -1 && index < japaneseDescriptors.size()) {
+            return japaneseDescriptors.get(index);
+        }
+        return descriptorString;
     }
 }

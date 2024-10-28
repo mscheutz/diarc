@@ -10,13 +10,13 @@ Confidence (A value between 0 and 100 for how confident you are in your translat
 ##
 User Input: "can you please navigate to location one"
 #
-Assistant Output: {"Semantics":"goToPose(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
+Assistant Output: {"Semantics":"goToPose(location one)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 
 ##
 User Input: "get me the block at location one"
 #
-Assistant Output: {"Semantics":"placeObjectDownAt(locationOne)","Input Type":"INSTRUCT","Confidence":"20"}
+Assistant Output: {"Semantics":"placeObjectDownAt(location one)","Input Type":"INSTRUCT","Confidence":"20"}
 ##
 
 ##
@@ -28,13 +28,13 @@ Assistant Output: {"Semantics":"pickUp(ball)","Input Type":"INSTRUCT","Confidenc
 ##
 User Input: "let me know what is at location one"
 #
-Assistant Output: {"Semantics":"describeObjectsAt(locationOne)","Input Type":"QUESTION","Confidence":"80"}
+Assistant Output: {"Semantics":"describeObjectsAt(location one)","Input Type":"QUESTION","Confidence":"80"}
 ##
 
 ##
 User Input: "I took the red block and moved it to location two"
 #
-Assistant Output: {"Semantics":"believeObjectAt(red block,locationOne)","Input Type":"INSTRUCT","Confidence":"80"}
+Assistant Output: {"Semantics":"believeObjectAt(red block,location one)","Input Type":"INSTRUCT","Confidence":"80"}
 ##
 
 ##
@@ -98,25 +98,25 @@ Assistant Output: {"Semantics":"putDown(red block)","Input Type":"INSTRUCT","Con
 ##
 User Input: "move the yellow block from location one to location two"
 #
-Assistant Output: {"Semantics":"moveObjectTo(yellow block,locationOne,locationTwo)","Input Type":"INSTRUCT","Confidence":"100"}
+Assistant Output: {"Semantics":"moveObjectTo(yellow block,location one,location two)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 
 ##
 User Input: "place the orange block at location three"
 #
-Assistant Output: {"Semantics":"placeObjectDownAt(orange block,locationThree)","Input Type":"INSTRUCT","Confidence":"100"}
+Assistant Output: {"Semantics":"placeObjectDownAt(orange block,location three)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 
 ##
 User Input: "place the block down at location one"
 #
-Assistant Output: {"Semantics":"placeObjectDownAt(locationOne)","Input Type":"INSTRUCT","Confidence":"100"}
+Assistant Output: {"Semantics":"placeObjectDownAt(location one)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 
 ##
 User Input: "get the red block to location two"
 #
-Assistant Output: {"Semantics":"getObjectTo(red block,locationTwo)","Input Type":"INSTRUCT","Confidence":"100"}
+Assistant Output: {"Semantics":"getObjectTo(red block,location two)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 
 ##
@@ -146,7 +146,7 @@ Assistant Output: {"Semantics":"cancelAllCurrentGoals()","Input Type":"INSTRUCT"
 ##
 User Input: "the green block is not at location two"
 #
-Assistant Output: {"Semantics":"not(at(green block,locationTwo))","Input Type":"STATEMENT","Confidence":"100"}
+Assistant Output: {"Semantics":"not(at(green block,location two))","Input Type":"STATEMENT","Confidence":"100"}
 ##
 
 ##
@@ -200,19 +200,19 @@ Assistant Output: {"Semantics":"describeObjectPoses()","Input Type":"QUESTION","
 ##
 User Input: "how many objects are at location two"
 #
-Assistant Output: {"Semantics":"describeNumberOfObjectsAt(locationTwo)","Input Type":"QUESTION","Confidence":"100"}
+Assistant Output: {"Semantics":"describeNumberOfObjectsAt(location two)","Input Type":"QUESTION","Confidence":"100"}
 ##
 
 ##
 User Input: "are any objects at location three"
 #
-Assistant Output: {"Semantics":"objectsAt(locationThree)","Input Type":"QUESTION","Confidence":"100"}
+Assistant Output: {"Semantics":"objectsAt(location three)","Input Type":"QUESTION","Confidence":"100"}
 ##
 
 ##
 User Input: "is the yellow block at location four"
 #
-Assistant Output: {"Semantics":"at(yellow block,locationFour)","Input Type":"QUESTION","Confidence":"100"}
+Assistant Output: {"Semantics":"at(yellow block,location four)","Input Type":"QUESTION","Confidence":"100"}
 ##
 
 ##
@@ -284,7 +284,7 @@ Assistant Output: {"Semantics":"describeCurrentPose()","Input Type":"QUESTION","
 ##
 User Input: "location four"
 #
-Assistant Output: {"Semantics":"pose(locationFour)","Input Type":"REPLY","Confidence":"100"}
+Assistant Output: {"Semantics":"pose(location four)","Input Type":"REPLY","Confidence":"100"}
 ##
 
 ##

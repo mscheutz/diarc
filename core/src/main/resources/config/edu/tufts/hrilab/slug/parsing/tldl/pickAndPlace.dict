@@ -9,9 +9,9 @@ GOTO; {C/REF ; #x.goToPose(?ADDRESSEE,$x)} ,{(C/REF)\AGENT ; #agent#x.goToPose($
 
 END-TEMPLATES
 
-robot one; ADDRESSABLE; robotone:agent
-robot two; ADDRESSABLE; robottwo:agent
-robot to; ADDRESSABLE; robottwo:agent
+robot one; ADDRESSABLE; robotone
+robot two; ADDRESSABLE; robottwo
+robot to; ADDRESSABLE; robottwo
 
 a; REF/RN ; #x.$x ; INDEFINITE
 the; REF/RN ; #x.$x ; DEFINITE
@@ -34,6 +34,29 @@ what are your pending goals; VERBI; describePendingGoals
 cancel pending goals; VERBI; cancelAllPendingGoals
 cancel all active goals; VERBI; cancelAllActiveGoals
 cancel all goals; VERBI; cancelAllCurrentGoals
+
+%%% Homophones %%
+location 1; REF; locationOne:pose; DEFINITE
+location 1; RN; locationOne:pose; VAR
+location 1; PROPERTY; locationOne:pose
+
+location to; REF; location two:pose; DEFINITE
+location to; RN; location two:pose; VAR
+location to; PROPERTY; location two:pose
+location too; REF; location two:pose; DEFINITE
+location too; RN; location two:pose; VAR
+location too; PROPERTY; location two:pose
+location 2; REF; location two:pose; DEFINITE
+location 2; RN; location two:pose; VAR
+location 2; PROPERTY; location two:pose
+
+location 3; REF; location three:pose; DEFINITE
+location 3; RN; location three:pose; VAR
+location 3; PROPERTY; location three:pose
+
+location 4; REF; location four:pose; DEFINITE
+location 4; RN; location four:pose; VAR
+location 4; PROPERTY; location four:pose
 
 %%%%%%%%% Actions %%%%%%%%%
 
@@ -263,26 +286,7 @@ no; VAL; val(no);
 %% Testing only %%
 %test nlg; C/LIT*; #x.testLLMNLGWithString(?ADDRESSEE,$x);
 
-%%% Homophones %%
-%location 1; REF; locationOne:pose; DEFINITE
-%location 1; RN; locationOne:pose; VAR
-%location 1; PROPERTY; locationOne:pose
-%
-%location to; REF; locationTwo:pose; DEFINITE
-%location to; RN; locationTwo:pose; VAR
-%location to; PROPERTY; locationTwo:pose
-%location too; REF; locationTwo:pose; DEFINITE
-%location too; RN; locationTwo:pose; VAR
-%location too; PROPERTY; locationTwo:pose
-%location 2; REF; locationTwo:pose; DEFINITE
-%location 2; RN; locationTwo:pose; VAR
-%location 2; PROPERTY; locationTwo:pose
-%
-%location 3; REF; locationThree:pose; DEFINITE
-%location 3; RN; locationThree:pose; VAR
-%location 3; PROPERTY; locationThree:pose
-
-robot 1; ADDRESSABLE; robotone:agent
+robot 1; ADDRESSABLE; robotone
 
 hi; G ; hi
 hi there; G ; hi_there

@@ -54,57 +54,57 @@ Input: "I took the orange block and moved it to location three"
 1. The user is telling the robot that they moved the orange block from wherever it originally was to pose location three.
 2. The user is conveying knowledge to the system, therefore the input type is STATEMENT
 3. Looking under the STATEMENT semantics, the users intent most closely matches the description of believeObjectAt(?actor,?object:physobj,?pose:pose). The important part of the statement, is that the orange block is now at a new location.
-4. Populating the arguments produces believeObjectAt(robotone,orange block:physobj,locationThree:pose)
+4. Populating the arguments produces believeObjectAt(robotone,orange block:physobj,location three:pose)
 5. The language used is novel and there is additional information conveyed, but the intent fully covers the statement's description and does not match any other statement, so the confidence is 75.
-6. {"Semantics":"believeObjectAt(robotone,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"75"}
-7a. orange block is a listed physobj and locationThree is a listed pose
+6. {"Semantics":"believeObjectAt(robotone,orange block:physobj,location three:pose)","Input Type":"INSTRUCT","Confidence":"75"}
+7a. orange block is a listed physobj and location three is a listed pose
 7b. No ghost arguments have been added
 7c. The syntax is balanced
 7d. The semantics are present in the supplied list
 7e. Everything matches
-Output: {"Semantics":"believeObjectAt(robotone,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"75"}
+Output: {"Semantics":"believeObjectAt(robotone,orange block:physobj,location three:pose)","Input Type":"INSTRUCT","Confidence":"75"}
 
 Example 4:
 Input: "the green block is no longer at location four"
 1. The user is conveying knowledge that an object is not at a location
 2. The user is conveying knowledge, so the input type is a STATEMENT
 3. The intent very closely matches the description of "not(at(?object:physobj,?pose:pose))" (the description is "The user is telling the system that the object ?object is not at pose ?pose. There is no indication of where the ?object has gone.")
-4. The arguments given in the instruction are "green block" and "location four". Choosing the closest matches from the supplied list, we have "green block" and "locationFour". Populating the semantics gives not(at(green block,locationFour)).
+4. The arguments given in the instruction are "green block" and "location four". Choosing the closest matches from the supplied list, we have "green block" and "location four". Populating the semantics gives not(at(green block,location four)).
 5. The instruction seems fairly straightforward and matches the description of a known semantics closely, I will give it a confidence of 100.
-6. The resulting output is {"Semantics":"not(at(green block:physobj,locationFour:pose)","Input Type":"INSTRUCT","Confidence":"100"}
-7a. green block is a listed physobj and locationFour is a listed pose
+6. The resulting output is {"Semantics":"not(at(green block:physobj,location four:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+7a. green block is a listed physobj and location four is a listed pose
 7b. No ghost arguments have been added
 7c. I realize I made a mistake when combining my results to produce the final output. The generated semantics have mismatched parentheses. In the populated semantics, I mistakenly left out a trailing parenthesis.
 7d. The semantics are present in the supplied list
 7e. I made another mistake, I accidentally switched from STATEMENT input type to INSTRUCT. There is no entry for not(at(?object:physobj,?pose:pose)) under the list of INSTRUCT inputs. The Input Type must be reverted.
-Output: {"Semantics":"not(at(green block:physobj,locationFour:pose))","Input Type":"STATEMENT","Confidence":"100"}
+Output: {"Semantics":"not(at(green block:physobj,location four:pose))","Input Type":"STATEMENT","Confidence":"100"}
 
 Example 5:
 Input: "get me the object at location one"
 1. The intent of the user is fairly ambiguous in this case. The most straightforward assumption is that the user is asking the robot to bring them the object currently at location one
 2. The user is instructing an action, therefore the input type is INSTRUCT
 3. The chosen intent does not directly match any description of any listed semantics. Other possible intents could be that the user is asking the robot to get an object to location one, or that the robot should pick up the object which is at location one. The first possibility maps to getObjectTo(?actor,?object:physobj,?destination:pose). The second to pickUp(?actor), assuming the agent is currently at location one.
-4. The populated semantics for the two new options would be getObjectTo(robotone,object:physobj,locationOne:pose) and pickUp(robotone)
+4. The populated semantics for the two new options would be getObjectTo(robotone,object:physobj,location one:pose) and pickUp(robotone)
 5. It is unclear which semantics to choose. We do now know if the robot is at location one, so we will choose the other option and set confidence to 60.
-6. The resulting output is {"Semantics":"getObjectTo(robotone,object:physobj,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"60"}
+6. The resulting output is {"Semantics":"getObjectTo(robotone,object:physobj,location one:pose)","Input Type":"INSTRUCT","Confidence":"60"}
 7a. object is not a listed physobj, the chosen semantics are invalid. There are no more remaining valid hypothesis to choose from. Confidence will be set to 0.
 7b. No ghost arguments have been added
 7c. The syntax is balanced
 7d. The semantics are present in the supplied list
 7e. Everything matches
-Output:{"Semantics":"getObjectTo(robotone,object:physobj,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"0"}
+Output:{"Semantics":"getObjectTo(robotone,object:physobj,location one:pose)","Input Type":"INSTRUCT","Confidence":"0"}
 ###
 
 Examples of this task being performed correctly without written out explanations of each step is as follows:
 
 Input: Can you please navigate to location one
-Output: {"Semantics":"goToPose(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"goToPose(robotone,location one:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Input: let me know what is at location one
-Output: {"Semantics":"describeObjectsAt(robtone:agent,locationOne:pose)","Input Type":"QUESTION","Confidence":"80"}
+Output: {"Semantics":"describeObjectsAt(robtone:agent,location one:pose)","Input Type":"QUESTION","Confidence":"80"}
 
 Input: I took the red block and moved it to location two
-Output: {"Semantics":"believeObjectAt(robotone,red block:physobj,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"80"}
+Output: {"Semantics":"believeObjectAt(robotone,red block:physobj,location one:pose)","Input Type":"INSTRUCT","Confidence":"80"}
 
 Input: the red one
 Output: {"Semantics":"objectType(red block:physobj)","Input Type":"REPLY","Confidence": 90"}
@@ -134,16 +134,16 @@ Input: put down the red block
 Output: {"Semantics":"putDown(robotone,red block:physobj)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Input: move the yellow block from location one to location two
-Output: {"Semantics":"moveObjectTo(robotone,yellow block:physobj,locationOne:pose,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"moveObjectTo(robotone,yellow block:physobj,location one:pose,location two:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Input: place the orange block at location three
-Output: {"Semantics":"placeObjectDownAt(robotone,orange block:physobj,locationThree:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"placeObjectDownAt(robotone,orange block:physobj,location three:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Input: place the block down at location one
-Output: {"Semantics":"placeObjectDownAt(robotone,locationOne:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"placeObjectDownAt(robotone,location one:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Input: get the red block to location two
-Output: {"Semantics":"getObjectTo(robotone,red block:physobj,locationTwo:pose)","Input Type":"INSTRUCT","Confidence":"100"}
+Output: {"Semantics":"getObjectTo(robotone,red block:physobj,location two:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Input: suspend current task
 Output: {"Semantics":"suspendSystemGoals(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
@@ -158,7 +158,7 @@ Input: cancel all tasks
 Output: {"Semantics":"cancelAllCurrentGoals(robotone)","Input Type":"INSTRUCT","Confidence":"100"}
 
 Input: the green block is not at location two
-Output: {"Semantics":"not(at(green block:physobj,locationTwo:pose))","Input Type":"STATEMENT","Confidence":"100"}
+Output: {"Semantics":"not(at(green block:physobj,location two:pose))","Input Type":"STATEMENT","Confidence":"100"}
 
 Input: eric is trusted
 Output: {"Semantics":"trusted(eric)","Input Type":"STATEMENT","Confidence":"100"}
@@ -176,13 +176,13 @@ Input: what are the locations of all the blocks
 Output: {"Semantics":"describeObjectPoses(robotone)","Input Type":"QUESTION","Confidence":"100"}
 
 Input: how many objects are at location two
-Output: {"Semantics":"describeNumberOfObjectsAt(robotone,locationTwo:pose)","Input Type":"QUESTION","Confidence":"100"}
+Output: {"Semantics":"describeNumberOfObjectsAt(robotone,location two:pose)","Input Type":"QUESTION","Confidence":"100"}
 
 Input: are any objects at location three
-Output: {"Semantics":"objectsAt(locationThree:pose)","Input Type":"QUESTION","Confidence":"100"}
+Output: {"Semantics":"objectsAt(location three:pose)","Input Type":"QUESTION","Confidence":"100"}
 
 Input: is yellow block at location four
-Output: {"Semantics":"at(yellow block:physobj,locationFour:pose)","Input Type":"QUESTION","Confidence":"100"}
+Output: {"Semantics":"at(yellow block:physobj,location four:pose)","Input Type":"QUESTION","Confidence":"100"}
 
 Input: do you see the red block
 Output: {"Semantics":"see(red block:physobj)","Input Type":"QUESTION","Confidence":"100"}
