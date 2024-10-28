@@ -7,11 +7,11 @@ Input Type (one of the following values based on the type of command: INSTRUCT, 
 Confidence (A value between 0 and 100 for how confident you are in your translation. A confidence value below 50 will indicate to the user that you do not believe there is a matching valid parse of the user's input, or that the input is ambiguous enough that it could possibly mean multiple different things. A value increasing above 50 shows that you are confident in your result and don't believe there is any ambiguity.)
 ##
 
-if the human says "can you please navigate to location one", you should produce the output: {"Semantics":"goToPose(location one)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "場所1番にしてください", you should produce the output: {"Semantics":"goToPose(location one)","Input Type":"INSTRUCT","Confidence":"100"}
 #
 If the human says "get me the object at location one", you should produce the output: {"Semantics":"placeObjectDownAt(location one)","Input Type":"INSTRUCT","Confidence":"20"}
 #
-If the human says "let me know what is at location one", you should produce the output: {"Semantics":"describeObjectsAt(location one)","Input Type":"QUESTION","Confidence":"80"}
+If the human says "場所1にどの物体がありますか", you should produce the output: {"Semantics":"describeObjectsAt(location one)","Input Type":"QUESTION","Confidence":"80"}
 #
 If the human says "I took the red block and moved it to location two", you should produce the output: {"Semantics":"believeObjectAt(red block,location one)","Input Type":"INSTRUCT","Confidence":"80"}
 #
@@ -19,9 +19,9 @@ if the human says "グリッパーを開いてください", you should produce 
 #
 if the human says "グリッパーを閉めてください", you should produce the output: {"Semantics":"closeGripper()","Input Type":"INSTRUCT","Confidence":"100"}
 #
-if the human says "赤いブロックをみつけてください", you should produce the output: {"Semantics":"detectObject(red block)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "青いブロックをみつけてください", you should produce the output: {"Semantics":"detectObject(blue block)","Input Type":"INSTRUCT","Confidence":"100"}
 #
-if the human says "detect what is at your location", you should produce the output: {"Semantics":"detectObjects()","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "現在の位置にどのような物体があるかを検出する", you should produce the output: {"Semantics":"detectObjects()","Input Type":"INSTRUCT","Confidence":"100"}
 #
 if the human says "物体を拾ってください", you should produce the output: {"Semantics":"pickUp()","Input Type":"INSTRUCT","Confidence":"100"}
 ##
@@ -49,7 +49,7 @@ if the human says "すべてのゴールを中止してください", you should
 #
 if the human says "緑色のブロックはもう場所2にありません", you should produce the output: {"Semantics":"not(at(green block,location two))","Input Type":"STATEMENT","Confidence":"100"}
 #
-if the human says "赤いブロックはどこにありますか", you should produce the output: {"Semantics":"describeObjectPose(red block)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "青いブロックはどこにありますか", you should produce the output: {"Semantics":"describeObjectPose(blue block)","Input Type":"QUESTION","Confidence":"100"}
 #
 if the human says "位置を把握している物体をすべて教えてください", you should produce the output: {"Semantics":"describeObjectPoses()","Input Type":"QUESTION","Confidence":"100"}
 #
@@ -59,7 +59,7 @@ if the human says "場所3に物体はひとつでもありますか", you shoul
 #
 if the human says "場所4に黄色いブロックはありますか", you should produce the output: {"Semantics":"at(yellow block,location four)","Input Type":"QUESTION","Confidence":"100"}
 #
-if the human says "赤いブロックは見えますか", you should produce the output: {"Semantics":"see(red block)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "オレンジ色のブロックは見えますか", you should produce the output: {"Semantics":"see(orange block)","Input Type":"QUESTION","Confidence":"100"}
 #
 if the human says "赤いブロックを置いてくださいはできますか", you should produce the output: {"Semantics":"knowHowTo(putDown(red block))","Input Type":"QUESTION","Confidence":"100"}
 #
@@ -77,7 +77,7 @@ if the human says "はい", you should produce the output: {"Semantics":"val(yes
 #
 if the human says "いいえ", you should produce the output: {"Semantics":"val(no)","Input Type":"REPLY","Confidence":"100"}
 #
-if the human says "赤いブロックと黄色いブロックを入れ替える", you should produce the output: {"Semantics":"swapObjects(red block,yellow block)","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "オレンジ色のブロックと黄色いブロックを入れ替える", you should produce the output: {"Semantics":"swapObjects(orange block,yellow block)","Input Type":"INSTRUCT","Confidence":"100"}
 #
 if the human says "現在、あなたはどちらにいますか", you should produce the output: {"Semantics":"describeCurrentPose()","Input Type":"QUESTION","Confidence":"100"}
 #
@@ -93,12 +93,15 @@ if the human says "testは指導者ではありません", you should produce th
 #
 if the human says "guestは管理者ではありません", you should produce the output: {"Semantics":"not(admin(guest))","Input Type":"STATEMENT","Confidence":"100"}
 #
-if the human says "what objects can you detect", you should produce the output: {"Semantics":"describeDetectableObjectNames()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "どのような物体を検出できますか?", you should produce the output: {"Semantics":"describeDetectableObjectNames()","Input Type":"QUESTION","Confidence":"100"}
 #
-if the human says "what poses exist", you should produce the output: {"Semantics":"describeKnownPoseNames()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "どのようなポーズが存在するか", you should produce the output: {"Semantics":"describeKnownPoseNames()","Input Type":"QUESTION","Confidence":"100"}
 #
-if the human says "what do you see", you should produce the output: {"Semantics":"whichObjectsAtCurrentPose()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "何が見えますか", you should produce the output: {"Semantics":"whichObjectsAtCurrentPose()","Input Type":"QUESTION","Confidence":"100"}
 #
+if the human says "ericは管理者ですか", you should produce the output: {"Semantics":"admin(eric,robotone)","Input Type":"QUESTION","Confidence":"100"}
+#
+if the human says "mattは監督者ですか", you should produce the output: {"Semantics":"supervisor(matt,robotone)","Input Type":"QUESTION","Confidence":"100"}
 ##
 
 Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with the Output json as shown in the examples. The new input you are tasked with translating is:

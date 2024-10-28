@@ -305,6 +305,10 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         promptVars = new LinkedHashMap<>();
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
         promptVars.put("%language", language);
+        promptVars.put("%objectList", String.join("\n", objectsEnglish));
+        promptVars.put("%locationList", String.join("\n", englishPoses));
+        promptVars.put("%japaneseObjList", String.join("\n", objectsJapanese));
+        promptVars.put("%japanesePoseList", String.join("\n", japanesePoses));
         chat.setSystem(nlgSystemPrompt.apply(promptVars));
         chat.addUserMessage(userMessage);
 
@@ -355,6 +359,8 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         List<String> japanesePoses = getPoses(false);
         promptVars.put("%objectList", String.join("\n", objectsEnglish));
         promptVars.put("%locationList", String.join("\n", englishPoses));
+        promptVars.put("%japaneseObjList", String.join("\n", objectsJapanese));
+        promptVars.put("%japanesePoseList", String.join("\n", japanesePoses));
         promptVars.put("%worldState", getWorldStateString());
         currentChat.setSystem(nluSystemPrompt.apply(promptVars));
         promptVars.clear();
@@ -416,9 +422,9 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             promptVars.put("red block", objectsEnglish.get(0));
             promptVars.put("赤いブロック", objectsJapanese.get(0));
             if (numObjects > 1 && numObjectsJapanese > 1) {
-                promptVars.put("緑色のブロック",objectsEnglish.get(1));
-                promptVars.put("the green block", objectsEnglish.get(1));
-                promptVars.put("green block", objectsJapanese.get(1));
+                promptVars.put("the green block",objectsEnglish.get(1));
+                promptVars.put("green block", objectsEnglish.get(1));
+                promptVars.put("緑色のブロック", objectsJapanese.get(1));
                 if (numObjects > 2 && numObjectsJapanese > 2) {
                     promptVars.put("the yellow block", objectsEnglish.get(2));
                     promptVars.put("yellow block", objectsEnglish.get(2));

@@ -6,9 +6,15 @@ The complete set of objects known to the system is:
 #
 %objectList
 #
+The Japanese translations corresponding to these objects is:
+%japaneseObjList
+#
 The complete set of poses known to the system is:
 #
 %locationList
+#
+The Japanese translations corresponding to these poses is:
+%japanesePoseList
 #
 Each specific type of user input (instruction, question, reply, statement) has a different set of valid representations that can be understood. They will be described below:
 ###
