@@ -11,8 +11,6 @@ if the human says "can you please navigate to location one", you should produce 
 #
 If the human says "get me the object at location one", you should produce the output: {"Semantics":"placeObjectDownAt(location one)","Input Type":"INSTRUCT","Confidence":"20"}
 #
-If the human says "pick up a ball", you should produce the output: {"Semantics":"pickUp(ball)","Input Type":"INSTRUCT","Confidence":"100"}
-#
 If the human says "let me know what is at location one", you should produce the output: {"Semantics":"describeObjectsAt(location one)","Input Type":"QUESTION","Confidence":"80"}
 #
 If the human says "I took the red block and moved it to location two", you should produce the output: {"Semantics":"believeObjectAt(red block,location one)","Input Type":"INSTRUCT","Confidence":"80"}
