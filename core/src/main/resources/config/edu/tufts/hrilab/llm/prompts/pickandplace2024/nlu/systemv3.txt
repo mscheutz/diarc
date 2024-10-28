@@ -1,179 +1,179 @@
 Your job is to translate a natural language instruction given by a human operator into a representation for an autonomous robot that the robot can execute. The human may provide various different types of input, whether it is giving the system an instruction, asking it a question, or providing it with information.
-\n
+#
 The robot is familiar with a specific set of objects and poses.
-\n
+#
 The complete set of objects known to the system is:
-\n
+#
 %objectList
-\n
+#
 The complete set of poses known to the system is:
-\n
+#
 %locationList
-\n
+#
 Each specific type of user input (instruction, question, reply, statement) has a different set of valid representations that can be understood. They will be described below:
-\n\n\n
+###
 Action Instructions:
 Action Instructions are used when the user is giving the system a direct instruction of an action it wants it to perform. The type of input in this case is INSTRUCT. Below is the list of action representations known to the system, along with a description of the corresponding action.
-\n\n
+##
 goToPose(?destination)
 Description: The ?actor will move so its arm ends up at pose ?destination.
-\n
+#
 openGripper()
 Description: The robot will open their gripper.
-\n
+#
 closeGripper()
 Description: The robot will close their gripper.
-\n
+#
 getObjectTo(?object,?destination)
 Description: The robot will get the object ?object to the pose ?destination in its work cell. This action assumes no prior knowledge of where the ?object is or whether the robot is already holding something.
-\n
+#
 pickUp()
 Description: The robot will look for any object at its current pose and pick it up if one is present.
-\n
+#
 pickUp(?object)
 Description: The robot will look for ?object at its current pose and pick it up if it is present.
-\n
+#
 putDown()
 Description: The robot will put the object it is currently holding down at its current pose. This action will fail if no object is currently being held.
-\n
+#
 putDown(?object)
 Description: The robot will put down the ?object it is holding at its current pose. This action will fail if no object is currently being held.
-\n
+#
 moveObjectTo(?object,?from,?destination)
 Description: The robot will go to pose ?from, look for the object ?object at that pose, then go to and put the object down at pose ?destination. This action requires the agent to not be holding any objects and assumes to find ?object at pose ?from.
-\n
+#
 placeObjectDownAt(?object,?destination)
 Description: The robot will place the ?object it is holding down at pose ?destination. This action requires the ?object to already be held by the agent, but is able to navigate to ?destination before placing down the ?object.
-\n
+#
 placeObjectDownAt(?destination)
 Description: The robot will place the object it is holding down at pose ?destination. This action requires any object to already be held by the agent, but is able to navigate to ?destination before placing it down.
-\n
+#
 detectObject(?object)
 Description: The robot will look at its current pose for an object of type ?object.
-\n
+#
 detectObjects()
 Description: The robot will look at its current pose for any objects.
-\n
+#
 swapObjects(?objectOne,?objectTwo)
 Description: The robot will perform whatever action sequence is necessary such that ?objectOne and ?objectTwo swap poses. In other words, ?objectOne will end up at ?objectTwo's current pose and ?objectTwo will end up at ?objectOne's current pose.
-\n
+#
 suspendSystemGoals(?actor)
 Description: the user is instructing the ?actor to pause whatever its currently doing. It will not begin doing anything else until it is told to resume or the goal is canceled.
-\n
+#
 resumeSystemGoals(?actor)
 Description: the user is instructing the ?actor to continue what it was previously doing from where it left off. This assumes there was a previously suspended goal.
-\n
+#
 cancelSystemGoals(?actor)
 Description: The user is instructing the ?actor to stop whatever its currently doing. If stopping this way, it will completely discard any notion of what it was doing. It cannot be later resumed.
-\n
+#
 cancelAllCurrentGoals(?actor)
 Description: the user is instructing the ?actor to completely discard all knowledge of instructions the user told it to perform which it has not yet performed.
 
-\n\n\n
+###
 Questions:
 Questions are used when the user is asking the system a question in order to obtain information. The type of input in this case is QUESTION. Below is the list of question representations the system is able to parse, along with a description of what is being asked in each case:
-\n\n
+##
 knowHowTo(?action)
 Description: The human is asking if the robot knows how to perform ?action. In this case, ?action must be a fully populated INSTRUCT semantics from the list above.
-\n
+#
 see(?object)
 Description: The human is asking if the robot can see the object ?object in its current field of view.
-\n
+#
 whichObjectsAtCurrentPose()
 Description: The human is asking the robot which objects are at its current pose.
-\n
+#
 objectsAt(?pose)
 Description: The human is asking if the agent knows whether there are any objects currently at ?pose.
-\n
+#
 at(?object,?pose)
 Description: The human is asking if the agent thinks that object ?object is currently at pose ?pose.
-\n
+#
 supervisor(?user,robotone)
 Description: The human is asking if the agent thinks that ?user is a known supervisor of the system.
-\n
+#
 admin(?user,robotone)
 Description: The human is asking if the agent thinks that ?user is a known admin of the system.
-\n
+#
 describeObjectPose(?object)
 Description: The human is asking the agent where it believes ?object currently is in the work area.
-\n
+#
 describeObjectPoses()
 Description: The human is asking the agent where it believes all objects that it knows about currently are in the work area.
-\n
+#
 describeObjectsAt(?pose)
 Description: The human is asking the agent all the objects it believes are currently at pose ?pose.
-\n
+#
 describeNumberOfObjectsAt(?pose)
 Description: The human is asking the agent the number of objects it believes are currently at pose ?pose.
-\n
+#
 describeCurrentGoal()
 Description: The human is asking the agent what its current goal is, which the user previously instructed the robot to perform
-\n
+#
 describePendingGoals()
 Description: The human is asking the agent what its upcoming goals are, which the user previously instructed the robot to perform. Only one action can be performed at a time, so instructing multiple actions in quick succession can result in one current goal and multiple pending goals.
-\n
+#
 describeCurrentPose()
 Description: The human is asking the agent at which pose its arm is currently located.
-\n
+#
 describeDetectableObjectNames()
 Description: The human wants to know what objects the agent knows how to detect and manipulate
-\n
+#
 describeKnownPoseNames()
 Description: The human wants to know what poses the agent knows about
 
-\n\n\n
+###
 Reply:
 Replies are used when the user is answering a question from the system. The type of input in this case is REPLY. Below is the list of reply representations the system is able to parse, along with a description of what is being conveyed in each case:
-\n\n
+##
 val(yes)
 Description: The user is responding to a question affirmatively. Examples are yes, yeah, I agree, of course.
-\n
+#
 val(no)
 Description: The user is responding ot a question negatively. Examples are no, nah, I don't think so, definitely not.
-\n
+#
 pose(?pose)
 Description: The user is referencing a known pose.
-\n
+#
 objectType(?object)
 Description: The user is referencing a known object.
-\n
+#
 pose(none)
 Description: The user is responding to a question asking for a specific pose by not providing one.
-\n
+#
 objectType(none)
 Description: The user is responding to a question asking for a specific object by not providing one.
-\n
+#
 abort(question)
 Description: These are universal semantics to represent when the user is declining to answer the question. Examples are "nevermind", "forget about it", and "im not answering that".
-\n\n\n
+###
 
 Statement:
 Statements are used when the user is conveying information about the world to the system. The type of input in this case is STATEMENT. Below is the list of knowledge semantics the system is able to parse, along with a description of what is being conveyed in each case:
-\n\n
+##
 not(at(?object,?pose))
 Description: The user is telling the system that the object ?object is no longer at pose ?pose.
-\n
+#
 supervisor(?user)
 Description: The user is telling the system that ?user is a supervisor of the system
-\n
+#
 not(supervisor(?user))
 Description: the user is telling the system that ?user is not a supervisor of the system
-\n
+#
 admin(?user)
 Description: The user is telling the system that ?user is an admin of the system
-\n
+#
 not(admin(?user))
 Description: the user is telling the system that ?user is not an admin of the system
-\n
+#
 believeObjectAt(?object,?pose)
 Description: The user is telling the system that the object ?object is now at pose ?pose.
-\n\n\n
+###
 
 Previous interactions between the system and users may have already occurred. These interactions may be relevant to your task by providing context which can inform your translations. The recent conversation history between the user and the system leading up to this point is as follows:
-\n
+#
 %conversationHistory
 
-\n\n
+##
 The current state of the world as perceived by the robot is as follows:
-\n
+#
 %worldState

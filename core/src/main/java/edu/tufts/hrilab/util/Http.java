@@ -165,7 +165,7 @@ public class Http {
         BufferedReader in = null;
 
         try {
-            is = new InputStreamReader(con.getInputStream());
+            is = new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("[sendPostRequest] Error reading input stream from connection", e);
             is = new InputStreamReader(con.getErrorStream());
