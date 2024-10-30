@@ -58,6 +58,10 @@ dependencies {
 //    implementation(project(":vision"))
 //  }
 
+  testImplementation("ai.thinkingrobots:mtracs-mock:1.12.1") {
+    exclude(group = "edu.tufts.hrilab", module = "diarc-core") //avoid a transitive dependency with the diarc-core inclusion for the external project.
+  }
+
   testImplementation("junit:junit:4.13.1") //TODO:figure out how to inherit this from the rootProject
   testImplementation("com.fasterxml.jackson.core:jackson-core:2.7.4")
   testImplementation("com.fasterxml.jackson.core:jackson-annotations:2.7.4")
@@ -67,6 +71,8 @@ dependencies {
   testImplementation(project(":diarcRos"))
   testImplementation(project(":diarcRos","mockJar"))
   testImplementation(project(":vision","mockJar"))
+
+  implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
 }
 
 // customize diarc-config jar
@@ -88,16 +94,20 @@ tasks.named<Test>("test") {
   forkEvery = 1
   systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
+  systemProperty("logging.config", properties["diarc.loggingConfigFile"].toString()) // for springboot
 
   // to run tests with logging printed to console
-  if (project.hasProperty("diarc.testLogging") && project.property("diarc.testLogging").toString().toBoolean()) {
+  if (project.hasProperty("diarc.test.enableLogging") && project.property("diarc.test.enableLogging").toString().toBoolean()) {
     testLogging.showStandardStreams = true
   }
 
   // to run integration test(s) in generative  mode
-  if (project.hasProperty("generativeMode") && project.property("generativeMode").toString().toBoolean()) {
+  if (project.hasProperty("diarc.test.generativeMode") && project.property("diarc.test.generativeMode").toString().toBoolean()) {
     systemProperty("generativeMode", "true")
   }
+
+  systemProperty("trade.properties.path", properties.getOrDefault("diarc.test.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
+  systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.test.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
 
   //TODO:brad: is this the best way to include these resources?
   classpath += files("src/test/resources") +
@@ -147,7 +157,8 @@ tasks.register<JavaExec>("launch") {
   dependsOn("compileConfig")
 
   classpath = sourceSets.main.get().runtimeClasspath
-  mainClass = project.findProperty("main").toString()
+
+  classpath += files(System.getProperty("user.home") + "/.diarc")
 
   // planner executable path
   systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
@@ -163,11 +174,29 @@ tasks.register<JavaExec>("launch") {
     systemProperty("java.library.path", visionDir + "/build/cpp/lib:" + visionDir + "/src/main/cpp/third_party/vlfeat/bin/glnxa64:.:" + environment["LD_LIBRARY_PATH"])
   }
 
+  // if launching YAML DIARC config (e.g., -Pyaml=<path/to/file.yaml>)
+  if (project.hasProperty("yaml")) {
+    mainClass = "edu.tufts.hrilab.diarc.YamlDiarcConfiguration"
+    systemProperty("component", "edu.tufts.hrilab.diarc.YamlDiarcConfiguration")
+    systemProperty("yaml", project.findProperty("yaml").toString())
+  }
+
   // jvm args
-  systemProperty("component", project.findProperty("main").toString())
+  if (project.hasProperty("main")) {
+    mainClass = project.findProperty("main").toString()
+    systemProperty("component", project.findProperty("main").toString())
+  }
   systemProperty("logback.configurationFile", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString())
+  systemProperty("logging.config", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString()) // for springboot
   systemProperty("trade.properties.path", properties.getOrDefault("diarc.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
   systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
+
+  // Conditionally enable features
+  if (project.hasProperty("enableTradeTracker")) {
+    systemProperty("enableTradeTracker", project.property("enableTradeTracker").toString())
+  } else {
+    systemProperty("enableTradeTracker", "false")
+  }
 }
 
 tasks.register<Javadoc>("allJavadoc") {
@@ -215,6 +244,14 @@ repositories {
     url = uri("https://plugins.gradle.org/m2/")
   }
   mavenLocal() // local maven archive
+  maven {
+    name = "Thinking Robots mtracs mock"
+    url = uri("https://gitlab.com/api/v4/projects/34394212/packages/maven/")
+  }
+  maven {
+    name = "Thinking Robots TRADE mvn host"
+    url = uri("https://gitlab.com/api/v4/projects/31017133/packages/maven")
+  }
   maven { // hrilab archive
     name = "HRILabArchiva"
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")

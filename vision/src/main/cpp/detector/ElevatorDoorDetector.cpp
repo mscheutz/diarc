@@ -8,7 +8,7 @@ ElevatorDoorDetector::ElevatorDoorDetector(const long long &processorId, const i
         : NeuralDetector(processorId, imgWidth, imgHeight)
 {
   visionProcessName = "ElevatorDoorDetector";
-  logger = log4cxx::Logger::getLogger("ade.detector.ElevatorDoorDetector");
+  logger = log4cxx::Logger::getLogger("diarc.detector.ElevatorDoorDetector");
 }
 
 ElevatorDoorDetector::~ElevatorDoorDetector() {}

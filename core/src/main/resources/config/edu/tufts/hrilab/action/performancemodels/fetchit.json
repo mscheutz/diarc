@@ -1749,117 +1749,6 @@
             }
         }
     },
-    "findGraspableObject(?actor,?objectRef)": {
-        "effects": {
-            "dependent": [
-                {
-                    "effects": [],
-                    "group": "fj"
-                }
-            ],
-            "independent": []
-        },
-        "measures": {
-            "andy:agent": {
-                "caddy": {
-                    "performanceMeasures": {
-                        "effectMeasures": {
-                            "dependentMeasures": [],
-                            "marginalMeasures": []
-                        },
-                        "experience": 50,
-                        "failureSumSqDiff": 0.0,
-                        "failureTimeMean": 0.0,
-                        "failureTimeVar": 0.0,
-                        "success": 50,
-                        "successSumSqDiff": 133.0817945,
-                        "successTimeMean": 1.1999,
-                        "successTimeVar": 2.66163589
-                    }
-                },
-                "gearboxbottom": {
-                    "performanceMeasures": {
-                        "effectMeasures": {
-                            "dependentMeasures": [],
-                            "marginalMeasures": []
-                        },
-                        "experience": 50,
-                        "failureSumSqDiff": 0.0,
-                        "failureTimeMean": 0.0,
-                        "failureTimeVar": 0.0,
-                        "success": 50,
-                        "successSumSqDiff": 92.83637408000001,
-                        "successTimeMean": 1.01428,
-                        "successTimeVar": 1.8567274816000003
-                    }
-                },
-                "gearboxtop": {
-                    "performanceMeasures": {
-                        "effectMeasures": {
-                            "dependentMeasures": [],
-                            "marginalMeasures": []
-                        },
-                        "experience": 50,
-                        "failureSumSqDiff": 0.0,
-                        "failureTimeMean": 0.0,
-                        "failureTimeVar": 0.0,
-                        "success": 50,
-                        "successSumSqDiff": 75.58929522,
-                        "successTimeMean": 0.9313399999999995,
-                        "successTimeVar": 1.5117859044
-                    }
-                },
-                "largegear": {
-                    "performanceMeasures": {
-                        "effectMeasures": {
-                            "dependentMeasures": [],
-                            "marginalMeasures": []
-                        },
-                        "experience": 50,
-                        "failureSumSqDiff": 0.0,
-                        "failureTimeMean": 0.0,
-                        "failureTimeVar": 0.0,
-                        "success": 50,
-                        "successSumSqDiff": 175.430812,
-                        "successTimeMean": 1.7572,
-                        "successTimeVar": 3.5086162400000003
-                    }
-                },
-                "screw": {
-                    "performanceMeasures": {
-                        "effectMeasures": {
-                            "dependentMeasures": [],
-                            "marginalMeasures": []
-                        },
-                        "experience": 15,
-                        "failureSumSqDiff": 0.0,
-                        "failureTimeMean": 0.0,
-                        "failureTimeVar": 0.0,
-                        "success": 15,
-                        "successSumSqDiff": 48.77477773333331,
-                        "successTimeMean": 1.764866666666666,
-                        "successTimeVar": 3.2516518488888875
-                    }
-                },
-                "smallgear": {
-                    "performanceMeasures": {
-                        "effectMeasures": {
-                            "dependentMeasures": [],
-                            "marginalMeasures": []
-                        },
-                        "experience": 15,
-                        "failureSumSqDiff": 0.0,
-                        "failureTimeMean": 0.0,
-                        "failureTimeVar": 0.0,
-                        "success": 15,
-                        "successSumSqDiff": 40.295353733333336,
-                        "successTimeMean": 1.0875333333333337,
-                        "successTimeVar": 2.686356915555556
-                    }
-                }
-            }
-        }
-    },
     "findObject(?actor,?objectRef)": {
         "effects": {
             "dependent": [
@@ -3229,7 +3118,7 @@
             }
         }
     },
-    "moveObject(?actor,?objectRef,?arm,?direction)": {
+    "moveObjectFetchItPrimitive(?actor,?objectRef,?arm,?direction)": {
         "effects": {
             "dependent": [
                 {

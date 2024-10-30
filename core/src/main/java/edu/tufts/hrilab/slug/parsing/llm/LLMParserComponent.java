@@ -88,7 +88,9 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
   @Override
   public Utterance parseUtterance(Utterance input) {
     String inputString = input.getWordsAsString();
+    AlternateResponse altResponse;
     ParserResponse response = null;
+    Symbol addressee = null;
 
     log.info("parseUtterance: " + inputString);
 
@@ -100,7 +102,12 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
       }
     } else {
       try {
-        response = TRADE.getAvailableService(new TRADEServiceConstraints().name(service).argTypes(String.class)).call(ParserResponse.class, inputString);
+        altResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name(service).argTypes(String.class)).call(AlternateResponse.class, inputString);
+        response = altResponse.response;
+        if (altResponse.addressee != null) {
+          addressee = altResponse.addressee;
+          log.debug("Got addressee from alternate LLM service: " + addressee.toString());
+        }
       } catch (TRADEException ex) {
         log.error("Error calling " + service + ".", ex);
       }
@@ -128,7 +135,16 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
     Predicate semantics;
     if (UtteranceType.valueOf(response.intention.intent.toUpperCase()) == UtteranceType.INSTRUCT) {
       List<Symbol> args = new ArrayList<>();
-      args.add(input.getAddressee());
+      //EW MultiLingualPickAndPlaceDemo: Can't do this because of possibility of direct address. Response is supplying the actor
+      if (!service.equals("pickAndPlaceLLMParser")) {
+        args.add(input.getAddressee());
+      } else if (addressee != null) {
+        args.add(addressee);
+        output.setAddressee(addressee);
+      } else {
+        args.add(input.getAddressee());
+        output.setAddressee(input.getAddressee());
+      }
       Arrays.stream(prop.arguments).forEach(arg -> args.add(Factory.createFOL(arg)));
       semantics = Factory.createPredicate(prop.text, args);
     } else {
@@ -144,6 +160,7 @@ public class LLMParserComponent extends DiarcComponent implements NLUInterface {
 
     // add tier assignments to supplemental semantics
     variables.forEach(var -> output.addTierAssignment(var, Factory.createSymbol(referentMap.get(var.getName()).toString().toUpperCase())));
+//    variables.forEach(var -> output.addTierAssignment(var, Factory.createSymbol(referentMap.get(var.getName()).cognitive_status.toUpperCase())));
 
     return output.build();
   }

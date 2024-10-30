@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.nao;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.nao.MockNaoComponent;
 import edu.tufts.hrilab.nao.NaoComponent;
@@ -12,14 +13,9 @@ import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
-import edu.tufts.hrilab.sphinx4.Sphinx4Component; 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import edu.tufts.hrilab.asr.sphinx4.Sphinx4Component;
 
 public class TwoNaoDemo extends DiarcConfiguration {
-  // for logging
-  protected static Logger log = LoggerFactory.getLogger(TwoNaoDemo.class);
-
   /**
    * Set to true to use gui for speech input
    */
@@ -36,9 +32,9 @@ public class TwoNaoDemo extends DiarcConfiguration {
 
     if (simSpeech) {
       createInstance(SimSpeechRecognitionComponent.class,
-              "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -listener dempster");
+              "-config demodialogues/heteroAgentsDemo_trusted.simspeech -speaker evan -addressee dempster");
       createInstance(SimSpeechRecognitionComponent.class,
-              "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -listener dempster");
+              "-config demodialogues/heteroAgentsDemo_untrusted.simspeech -speaker ravenna -addressee dempster");
     }
 
     if (useSphinx) {
@@ -70,11 +66,7 @@ public class TwoNaoDemo extends DiarcConfiguration {
             "-asl core.asl vision.asl nao/naodemo.asl dialogue/nlg.asl dialogue/handleSemantics.asl dialogue/nlu.asl " +
             "-goal listen(self)";
 
-    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, gmArgs);
+    createInstance(GoalManagerComponent.class, gmArgs);
   }
 
-  public static void main(String[] args) {
-    TwoNaoDemo demoConfig = new TwoNaoDemo();
-    demoConfig.runConfiguration();
-  }
 }

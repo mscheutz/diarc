@@ -30,7 +30,7 @@ protected:
   virtual void handleCaptureNotification(CaptureNotification::ConstPtr notification);
   
 private:
-  ade::stm::MemoryObject::VecPtr createMemoryObjects(const std::string& variableName,
+  diarc::stm::MemoryObject::VecPtr createMemoryObjects(const std::string& variableName,
         const std::tr1::unordered_set<long long>& typeIds,
         const std::vector<cv::Rect>& rects,
         CaptureNotification::ConstPtr capture);

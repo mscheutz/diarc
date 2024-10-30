@@ -13,10 +13,10 @@
 
 IKNSaliencyMapProcessor::IKNSaliencyMapProcessor(const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight, const bool isStereo)
 : SaliencyProcessor(processorId, imgWidth, imgHeight, isStereo) {
-  //ade::Display::createWindowIfDoesNotExist("surfaceheight 2");
+  //diarc::Display::createWindowIfDoesNotExist("surfaceheight 2");
   //viewer = new pcl::visualization::CloudViewer("Relative Height Visualizer");
   visionProcessName = "IKNSaliencyMapProcessor";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.saliency.IKNSaliencyMapProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.saliency.IKNSaliencyMapProcessor");
 }
 
 IKNSaliencyMapProcessor::~IKNSaliencyMapProcessor() {
@@ -48,6 +48,6 @@ void IKNSaliencyMapProcessor::handleCaptureNotification(CaptureNotification::Con
   sendNotifications(n);
   
   if (getDisplayFlag()) {
-    ade::Display::displayFrame(resultImage, getDisplayName());
+    diarc::Display::displayFrame(resultImage, getDisplayName());
   }
 }

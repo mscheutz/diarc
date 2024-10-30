@@ -36,11 +36,11 @@ protected:
 
 private:
   bool findReferencedObject(const PredicateHelper &relation,
-                            const ade::stm::MemoryObject::Ptr &referent,
-                            const ade::stm::MemoryObject::Ptr &relatum);
+                            const diarc::stm::MemoryObject::Ptr &referent,
+                            const diarc::stm::MemoryObject::Ptr &relatum);
 
-  bool calcTargetPoint(const ade::stm::MemoryObject::Ptr &personRoot,
-                       const ade::stm::MemoryObject::Ptr &handRoot,
+  bool calcTargetPoint(const diarc::stm::MemoryObject::Ptr &personRoot,
+                       const diarc::stm::MemoryObject::Ptr &handRoot,
                        pcl::PointXYZ &targetPoint);
 
   //! last seen MemoryObject tokenIds, hashed by variable name
@@ -50,7 +50,7 @@ private:
   boost::unordered_map<long long, unsigned long long> lastFrameCompletedByType;
 
   //! handle to tracked objects db
-  ade::stm::TrackedObjects *trackedObjects;
+  diarc::stm::TrackedObjects *trackedObjects;
 };
 
 

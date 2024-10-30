@@ -15,7 +15,7 @@
 * NOTE: all pipelines (specified via xml) must end with the following:
 * videoconvert ! capsfilter caps="video/x-raw, format=BGR" ! appsink name=sink sync=false
 */
-namespace ade {
+namespace diarc {
   namespace capture {
     CaptureGStreamer::CaptureGStreamer(const std::string &configFile)
             : Capture(configFile) {
@@ -81,4 +81,4 @@ namespace ade {
       return true;
     }
   } //namespace capture
-} //namespace ade  
+} //namespace diarc

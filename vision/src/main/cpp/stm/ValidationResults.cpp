@@ -6,7 +6,7 @@
 #include "ValidationResults.hpp"
 #include <boost/lexical_cast.hpp>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 
 ValidationResults::ValidationResults()
 : validationResults_(),

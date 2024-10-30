@@ -5,6 +5,7 @@
 package edu.tufts.hrilab.demos;
 
 import edu.tufts.hrilab.config.SortingDemoMock;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -22,6 +23,13 @@ public class SortingDemoTest {
         config = new SortingDemoMock();
         config.runConfiguration();
         speechInputBrad = config.simspeech;
+    }
+
+    @After
+    public void shutdownDiarc() {
+        log.debug("[shutdownDiarc] started");
+        config.shutdownConfiguration();
+        log.debug("[shutdownDiarc] completed");
     }
 
     @Test

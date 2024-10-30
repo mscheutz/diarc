@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.unity;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 
 import edu.tufts.hrilab.movebase.MoveBaseComponent;
@@ -24,11 +25,18 @@ public class UnityDIARCSpaceStationLLM {
     List<String> largs = Arrays.asList(args);
     String unityIP = "127.0.0.1";
     String llmEndpoint = "http://127.0.0.1:8080";
+    String unityPort = "1755";
 
     if (largs.contains("-unity")) {
       unityIP = largs.get(largs.indexOf("-unity") + 1);
     } else {
       log.warn("No unity IP provided, using default: " + unityIP);
+    }
+
+    if (largs.contains("-port")) {
+      unityPort = largs.get(largs.indexOf("-port") + 1);
+    } else {
+      log.warn("No unity port provided, using default: " + unityPort);
     }
 
     if (largs.contains("-llm")) {
@@ -55,12 +63,12 @@ public class UnityDIARCSpaceStationLLM {
 
     DiarcComponent.createInstance(edu.tufts.hrilab.llm.LLMComponent.class, "-groups agent:robot1 -service llama -model 7B -endpoint " + llmEndpoint + " -stopwords }");
 
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityComponent.class, "-unityip " + unityIP + " -groups agent:robot1");
+    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityComponent.class, "-unityip " + unityIP  + " -unityport " + unityPort +  " -groups agent:robot1");
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.space_station.UnitySpaceStation.class, "-agent spacestation -groups agent:robot1");
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM.class, "-groups agent:robot1 -refs refs/unity_space_station_tube_positions.json");
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityAgent.class, "-agent rover -groups agent:robot1");
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityPR2.class, "-agent robot1 -groups agent:robot1");
 
-    DiarcComponent.createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class, goalManagerArgs);
+    DiarcComponent.createInstance(GoalManagerComponent.class, goalManagerArgs);
   }
 }

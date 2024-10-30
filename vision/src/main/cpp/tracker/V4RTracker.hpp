@@ -40,9 +40,9 @@ protected:
 
 
 private:
-  virtual void startTracking(const ade::stm::MemoryObject::Ptr &newMemObj);
+  virtual void startTracking(const diarc::stm::MemoryObject::Ptr &newMemObj);
 
-  virtual void stopTracking(const ade::stm::MemoryObject::Ptr &existingMemObj);
+  virtual void stopTracking(const diarc::stm::MemoryObject::Ptr &existingMemObj);
 
   bool createTrackingModelFromRecognitionModel(const std::string &model_dir,
                                                const std::string &model_name,

@@ -40,12 +40,12 @@ protected:
   virtual void handleMemoryObjectsNotification(MemoryObjectsNotification::ConstPtr notification);
 
 private:
-  bool haveNewObject(ade::stm::MemoryObject::Ptr object);
-  bool haveNewObjects(ade::stm::MemoryObject::VecPtr objects);
-  bool checkForShapes(ade::stm::MemoryObject::Ptr object);
-  float checkForBox(ade::stm::MemoryObject::Ptr object);
-  float checkForCylinder(ade::stm::MemoryObject::Ptr object);
-  void display(ade::stm::MemoryObject::VecPtr objects);
+  bool haveNewObject(diarc::stm::MemoryObject::Ptr object);
+  bool haveNewObjects(diarc::stm::MemoryObject::VecPtr objects);
+  bool checkForShapes(diarc::stm::MemoryObject::Ptr object);
+  float checkForBox(diarc::stm::MemoryObject::Ptr object);
+  float checkForCylinder(diarc::stm::MemoryObject::Ptr object);
+  void display(diarc::stm::MemoryObject::VecPtr objects);
 
   //for cylinder detection
   pcl::SACSegmentationFromNormals<pcl::PointXYZ, pcl::Normal> cylinderSeg;
@@ -53,7 +53,7 @@ private:
   // EXPERIMENTAL //
 //  pcl::UniqueShapeContext< pcl::PointXYZRGB> usc;
 //  PCLFeatureKNNClassifier<pcl::ShapeContext1980> classifier;
-//  bool checkShape(ade::stm::MemoryObject::Ptr object);
+//  bool checkShape(diarc::stm::MemoryObject::Ptr object);
 //  void filterPointCloud(const cv::Mat& image, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr inputCloud,
 //          pcl::PointCloud<pcl::PointXYZRGB>::Ptr& ouputCloud);
 //  void removeBorderEdges(const cv::Mat& image, pcl::PointIndicesPtr& cloudIndices);

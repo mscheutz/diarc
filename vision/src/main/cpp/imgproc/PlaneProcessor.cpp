@@ -27,7 +27,7 @@ PlaneProcessor::PlaneProcessor(const long long &processorId,
       dist_threshold(0.01),
       alwaysCalcPlane(false) {
   visionProcessName = "PlaneProcessor";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.PlaneProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.PlaneProcessor");
 }
 
 PlaneProcessor::~PlaneProcessor() {
@@ -116,7 +116,7 @@ void PlaneProcessor::handleCaptureNotification(CaptureNotification::ConstPtr not
       int yy = index / img_width;
       temp.at<uchar>(yy, xx) = 255;
     }
-    ade::Display::displayFrame(temp, getDisplayName());
+    diarc::Display::displayFrame(temp, getDisplayName());
   }
 
   return;

@@ -27,7 +27,7 @@ public class CachedParserComponent extends DiarcComponent implements NLUInterfac
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("name").hasArg().argName("string").desc("Name of cached dictionary to store").build());
     options.add(Option.builder("load").hasArgs().argName("file").desc("Name of cached dictionary to load, can have multiple").build());
-    options.add(Option.builder("persist").hasArg().argName("boolean").desc("Whether to persist cache in a named file").build());
+    options.add(Option.builder("persist").argName("boolean").desc("Whether to persist cache in a named file").build());
     return options;
   }
 
@@ -40,18 +40,12 @@ public class CachedParserComponent extends DiarcComponent implements NLUInterfac
       loadPaths = cmdLine.getOptionValues("load");
     }
     if (cmdLine.hasOption("persist")) {
-      String persistString = cmdLine.getOptionValue("persist").toLowerCase();
-      if (persistString.contains("true") || persistString.contains("y")) {
-        persist = true;
-      } else {
-        persist = false;
-      }
+      persist = true;
     }
   }
 
   @Override
   protected void init () {
-
     database = new CacheDatabase(name, loadPaths, persist);
   }
 

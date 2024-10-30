@@ -19,8 +19,14 @@ bel(D,X):-believes(A,X),diarcAgent(A),diarcAgent(D), not(A=D).
 propertyOf(X,free) :- bel(A, propertyOf(X,free)), diarcAgent(A).
 propertyOf(X,free) :- not(propertyOf(X,blocked)), propertyOf(X,location).
 
-is_supervisor(A,B):-role(A,supervisor(B)).
-admin_of(A,B):-role(A,admin(B)).
+%supervisor_of(X,D):-new_supervisor(X,A),diarcAgent(A),diarcAgent(D), not(A=D).
+%admin_of(X,D):-admin_of(X,A),diarcAgent(A),diarcAgent(D), not(A=D).
+
+supervisor_of(S,D):-supervisor(S),diarcAgent(D).
+admin_of(S,D):-admin(S),diarcAgent(D).
+%supervisor_of(A,B):-role(A,supervisor(B)).
+%admin_of(A,B):-role(A,admin(B)).
+supervisor_of(A,B):-admin_of(A,B).
 
 role(Y,novice) :- diarcAgent(X),bel(X,novice(Y)).
 
@@ -28,10 +34,19 @@ role(Y,novice) :- diarcAgent(X),bel(X,novice(Y)).
 explanationType(A, incomplete) :- not(role(A,novice)).
 
 %% rules about admin goals, which only adminstrators can give
-isAdminGoal(updateActionLearning(D,X,S)).
-isAdminGoal(modifyAction(D,X,S,A)).
-isAdminGoal(Y) :- (want(B,D,Y),Y=updateActionLearning(D,X,S),diarcAgent(D)).
-isAdminGoal(Y) :- (want(B,D,Y),Y=modifyAction(D,X,S,A),diarcAgent(D)).
+%% do we need rule with D,D,X as well?
+isAdminGoal(learnAction(D,A)).
+isAdminGoal(endActionLearning(D,A)).
+isAdminGoal(pauseActionLearning(D,A)).
+isAdminGoal(resumeActionLearning(D,A)).
+isAdminGoal(cancelActionLearning(D,A)).
+isAdminGoal(modifyAction(D,A,M,L)).
+%isAdminGoal(G) :- (want(S,G),G=learnAction(D,A),diarcAgent(D)).
+%isAdminGoal(G) :- (want(S,G),G=endActionLearning(D,A),diarcAgent(D)).
+%isAdminGoal(G) :- (want(S,G),G=pauseActionLearning(D,A),diarcAgent(D)).
+%isAdminGoal(G) :- (want(S,G),G=resumeActionLearning(D,A),diarcAgent(D)).
+%isAdminGoal(G) :- (want(S,G),G=cancelActionLearning(D,A),diarcAgent(D)).
+%isAdminGoal(G) :- (want(S,G),G=modifyAction(D,A,M,L),diarcAgent(D)).
 
 %% failure reason explination
 %brad: at some point we might want a rule this so that we can do stuff based on the actor in the goal:

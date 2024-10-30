@@ -4,9 +4,12 @@ import edu.tufts.hrilab.fol.Predicate;
 /**
  * ?actor moves ?objectRef in ?direction with ?arm (assumed that object is already being grasped)
  */
-() = moveObject(Symbol ?objectRef, Symbol ?direction, Symbol ?arm = arm, double ?dist = 0.15) {
+() = moveObjectInDirection(Symbol ?objectRef, Symbol ?direction, Symbol ?arm = arm, double ?dist = 0.15) {
     conditions : {
       pre : grasping(?actor,?objectRef,?arm);
+    }
+    effects : {
+      success : grasping(?actor,?objectRef,?arm);
     }
 
     op:log("debug", "moving ?objectRef ?direction");
@@ -17,13 +20,10 @@ import edu.tufts.hrilab.fol.Predicate;
  * ?actor moves ?arm in ?direction a distance of ?dist.
  */
 () = moveToRelative(Symbol ?direction, Symbol ?arm = arm, double ?dist = 0.15) {
-    double !negDist;
+    double !negDist = op:*(?dist, -1.0);
     javax.vecmath.Point3d !relativeLoc;
-    javax.vecmath.Quat4d !relativeOrient; // = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
+    javax.vecmath.Quat4d !relativeOrient = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
     Predicate !failCond;
-
-    !relativeOrient = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
-    !negDist = op:*(?dist, -1.0);
 
     op:log("debug", "moving ?arm ?direction");
     if (op:equalsValue(?direction, up)) {
@@ -52,46 +52,33 @@ import edu.tufts.hrilab.fol.Predicate;
 }
 
 /**
- * ?actor uses ?arm to move ?objectRef_1 ?relation ?objectRef_2
+ * ?actor uses ?arm to move ?objectRef_1 ?relation ?ref_2
+ *
+ * toward : move a max distance of ?dist (meters) towards ?objectRef2
+ * above  : target location is ?dist (meters) above ?objectRef2
  */
-() = moveObject(Symbol ?objectRef_1, Symbol ?relation, Symbol ?objectRef_2, Symbol ?arm = arm, double ?dist = 0.5) {
-    java.lang.Long !typeId;
-    java.util.List !tokenIds;
-    java.lang.Long !tokenId;
-    edu.tufts.hrilab.vision.stm.MemoryObject !token_2;
-    org.apache.commons.lang3.tuple.Pair !armPose;
+() = moveObjectRelativeTo(Symbol ?objectRef_1, Symbol ?relation, Symbol ?ref_2, double ?dist = 0.5, Symbol ?arm = arm) {
     javax.vecmath.Point3d !armLoc;
-    javax.vecmath.Point3d !mo2Loc;
     javax.vecmath.Vector3d !dirVec;
     javax.vecmath.Point3d !zDir;
     javax.vecmath.Point3d !targetLoc;
-    javax.vecmath.Quat4d !targetOrient; // = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
+    javax.vecmath.Quat4d !targetOrient = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
     Predicate !failCond;
 
-    !targetOrient = op:newObject("javax.vecmath.Quat4d",0,0,0,1);
-
-    op:log("debug", "moving ?objectRef_1 ?relation ?objectRef_2");
+    op:log("debug", "moving ?objectRef_1 ?relation ?ref_2");
 
     // get pose of ?arm, instead of ?objectRef_1 (robot might be not be looking at the object)
-    !armPose =  act:getPose(?arm);
+    org.apache.commons.lang3.tuple.Pair !armPose =  act:getEEPose(?arm);
 
-    // find objectRef_2
-    (!typeId, !tokenIds) = act:findObject(?objectRef_2);
-
-    // get objectRef_2 token from tokenId
-    op:log("debug", "Found ?objectRef_2");
-    !tokenId = op:get(!tokenIds, 0);
-    !token_2 = act:getToken(!tokenId, 0.5);
-
-    // transform object to base coordinate frame
-    op:invokeMethod(!token_2, "transformToBase");
+    // get location of ?ref_2
+    java.lang.Class !point3dClass = op:invokeStaticMethod("java.lang.Class", "forName", "javax.vecmath.Point3d");
+    javax.vecmath.Point3d !ref2Loc = tsc:getEntityForReference(?ref_2, !point3dClass);
 
     if (op:equalsValue(?relation, toward)) {
       // calculate direction vector
       !armLoc = op:invokeMethod(!armPose, "getLeft");
-      !mo2Loc = op:invokeMethod(!token_2, "getLocation");
       !dirVec = op:newObject("javax.vecmath.Vector3d");
-      op:invokeMethod(!dirVec, "sub", !mo2Loc, !armLoc);
+      op:invokeMethod(!dirVec, "sub", !ref2Loc, !armLoc);
       op:invokeMethod(!dirVec, "normalize");
 
       // calculate final relative location by scaling direction by dist to move
@@ -103,8 +90,10 @@ import edu.tufts.hrilab.fol.Predicate;
       act:moveToRelative(?arm, !targetLoc, !targetOrient);
     } elseif (op:equalsValue(?relation, above)) {
       // calculate target location
-      !targetLoc = op:invokeMethod(!token_2, "getLocation");
-      !zDir = op:newObject("javax.vecmath.Point3d" ,0,0,0.1);
+      !targetLoc = op:newObject("javax.vecmath.Point3d", !ref2Loc);
+      // add dist in meters to z-height of target object's location
+      // NOTE: this needs to include distance from eeLink to gripper tip (i.e., graspContactOffset)
+      !zDir = op:newObject("javax.vecmath.Point3d" , 0, 0, ?dist);
       op:invokeMethod(!targetLoc, "add", !zDir);
 
       // move arm and object
@@ -134,7 +123,7 @@ import edu.tufts.hrilab.fol.Predicate;
     }
 
     act:graspObject(?objectRef, ?arm);
-    act:moveObject(?objectRef, ?arm, up);
+    act:moveObjectInDirection(?objectRef, up, ?arm);
     op:log("debug", "[graspObject] successfully grasped ?objectRef");
 }
 
@@ -146,14 +135,14 @@ import edu.tufts.hrilab.fol.Predicate;
       success infer : touching(?actor,?objectRef);
     }
 
-    act:findGraspableObject(?objectRef);
+    act:look(down);
+    act:findObject(?objectRef);
     act:openGripper(?arm);
     act:moveTo(?arm, ?objectRef);
     act:graspObject(?arm, ?objectRef, !closePosition);
     act:stopAllSearches();
     op:log(debug, "[graspObject] successfully grasped ?objectRef");
 }
-
 
 /**
  * ?actor releases object ?objectRef
@@ -170,7 +159,7 @@ import edu.tufts.hrilab.fol.Predicate;
     }
 
     op:log("debug", "Trying to release ?objectRef.");
-    act:releaseObject(?arm, ?objectRef, 1.0);
+    act:releaseObject(?arm, ?objectRef, 0.1); // meters between grippers
     act:moveToRelative(up, ?arm);
     act:goToPose(carry);
 }
@@ -234,6 +223,7 @@ import edu.tufts.hrilab.fol.Predicate;
     }
 
     // find object
+    act:look(down);
     act:findObject(?objectRef, !typeId);
 
     // close gripper(s)
@@ -250,7 +240,7 @@ import edu.tufts.hrilab.fol.Predicate;
       op:sleep(3000);
 
       // go back to start pose
-      act:goToStartPose(true);
+      act:goToPose(start);
 
       // resume camera capture after arm is out of the way
       act:resumeCapture();

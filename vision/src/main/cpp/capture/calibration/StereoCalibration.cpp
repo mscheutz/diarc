@@ -19,7 +19,7 @@ calibrationMode(calibmode) {
   pointsPixel[1].resize(cornersX * cornersY);
 
   //init frames
-  CaptureNotification::ConstPtr captureNotification = ade::capture::Capture::getLastCaptureNotification();
+  CaptureNotification::ConstPtr captureNotification = diarc::capture::Capture::getLastCaptureNotification();
 
   int frame1_width, frame1_height;
   int frame2_width, frame2_height;
@@ -111,7 +111,7 @@ void StereoCalibration::getParameters(double* params) {
 
 bool StereoCalibration::takeSnapshot() {
   //get images
-  CaptureNotification::ConstPtr captureNotification = ade::capture::Capture::getLastCaptureNotification();
+  CaptureNotification::ConstPtr captureNotification = diarc::capture::Capture::getLastCaptureNotification();
 
   if (StereoCalibration::DEPTH_RGB_L == calibrationMode) {
     cv::cvtColor(captureNotification->captureData->depthFrameIntensity, images[0], cv::COLOR_BGR2GRAY);
@@ -314,13 +314,13 @@ bool StereoCalibration::findCheckerboardPoints(const int imgIndex) {
     std::string windowName = "StereoCalibration";
     windowName += oss.str();
 
-    ade::Display::createWindowIfDoesNotExist(windowName);
+    diarc::Display::createWindowIfDoesNotExist(windowName);
     images[imgIndex].copyTo(framesToDraw[imgIndex]);
     for (int i = 0; i < cornersDetected; ++i) {
       cv::circle(framesToDraw[imgIndex], cv::Point(pointsPixel[imgIndex][i].x, pointsPixel[imgIndex][i].y),
               2, CV_RGB(255, 255, 255), 1, 8, 0);
     }
-    ade::Display::displayFrame(framesToDraw[imgIndex], windowName);
+    diarc::Display::displayFrame(framesToDraw[imgIndex], windowName);
     return true;
   } else {
     printf("StereoCalibration failed to detect corners on image: %d.\n", imgIndex);

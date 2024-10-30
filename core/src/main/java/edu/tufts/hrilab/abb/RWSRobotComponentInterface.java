@@ -5,13 +5,15 @@
 package edu.tufts.hrilab.abb;
 
 import ai.thinkingrobots.trade.TRADEService;
-import edu.tufts.hrilab.abb.consultant.cognex.CognexConsultant;
+import edu.tufts.hrilab.cognex.consultant.CognexConsultant;
 import edu.tufts.hrilab.action.EffectType;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.Effect;
 import edu.tufts.hrilab.action.annotations.Observes;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.cognex.consultant.CognexReference;
+import edu.tufts.hrilab.cognex.consultant.CognexResult;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
@@ -104,4 +106,8 @@ public interface RWSRobotComponentInterface {
   @TRADEService
   @Observes({"noRapidError()"})
   List<Map<Variable, Symbol>> checkError(Term t);
+
+  @TRADEService
+  @Action
+  public CognexResult getMatchingResult(CognexReference toReBind, List<CognexResult> results);
 }

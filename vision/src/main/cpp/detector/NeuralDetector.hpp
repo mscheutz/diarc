@@ -31,7 +31,7 @@ public:
 protected:
   void displayDetectedObjects(cv::Mat& imgToDraw, const std::vector<DetectedObject>& detectedObjects, const std::string& displayName);
   virtual void handleCaptureNotification(CaptureNotification::ConstPtr notification);
-  virtual void initModel(const std::string& model_path, const std::string& backEnd, const std::string &type);
+  virtual void initModel(const std::string& model_path, const std::string& backEnd, const std::string &type, const std::string &configFile);
   virtual void setBackendAndTarget();
 
   // semantic parent type for this detector's descriptors (isA hierarchy)

@@ -16,7 +16,7 @@
 #include <boost/shared_ptr.hpp>
 #include <log4cxx/logger.h>
 
-namespace ade {
+namespace diarc {
   namespace common {
     namespace fol {
 
@@ -27,7 +27,7 @@ namespace ade {
 
         Symbol(const std::string& name)
         : name_(name),
-        logger_(log4cxx::Logger::getLogger("ade.common.fol.Symbol")) {
+        logger_(log4cxx::Logger::getLogger("diarc.common.fol.Symbol")) {
         };
 
         virtual ~Symbol() {
@@ -50,7 +50,7 @@ namespace ade {
 
     } //namespace fol
   } //namespace common
-} //namespace ade
+} //namespace diarc
 
 #endif	/* SYMBOL_HPP */
 

@@ -13,7 +13,7 @@
 SurfaceOrientationProcessor::SurfaceOrientationProcessor(const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight, const bool isStereo)
 : SaliencyProcessor(processorId, imgWidth, imgHeight, isStereo) {
   visionProcessName = "SurfaceOrienationProcessor";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.saliency.SurfaceOrienationProcessor");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.saliency.SurfaceOrienationProcessor");
 }
 
 SurfaceOrientationProcessor::~SurfaceOrientationProcessor() {
@@ -90,7 +90,7 @@ void RelativeHeightProcessor::handlePlaneNotification(PlaneNotification::ConstPt
   sendNotifications(n);
 
   if (getDisplayFlag()) {
-    ade::Display::displayFrame(img, getDisplayName());
+    diarc::Display::displayFrame(img, getDisplayName());
   }
 }
 

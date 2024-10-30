@@ -6,9 +6,9 @@
 #include "SegmentedObjectLearner.hpp"
 
 
-// NOTE: not named "ade.learn.Learner" because there could be non-static
-// loggers named "ade.learn.Learner"
-log4cxx::LoggerPtr Learner::factoryLogger = log4cxx::Logger::getLogger("ade.learn.Learner.Factory");
+// NOTE: not named "diarc.learn.Learner" because there could be non-static
+// loggers named "diarc.learn.Learner"
+log4cxx::LoggerPtr Learner::factoryLogger = log4cxx::Logger::getLogger("diarc.learn.Learner.Factory");
 
 //Factory method
 Learner::Ptr Learner::get(const LearnerType type, const long long& processorId, const int imgWidth, const int imgHeight) {
@@ -24,7 +24,7 @@ Learner::Ptr Learner::get(const LearnerType type, const long long& processorId, 
 
 Learner::Learner(const long long& processorId, const unsigned int imgWidth, const unsigned int imgHeight)
 : VisionProcess(processorId, imgWidth, imgHeight) {
-  logger = log4cxx::Logger::getLogger("ade.learn.Learner");
+  logger = log4cxx::Logger::getLogger("diarc.learn.Learner");
 }
 
 Learner::~Learner() {

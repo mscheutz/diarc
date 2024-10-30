@@ -14,7 +14,7 @@
 #include <boost/thread/thread.hpp>
 #include <pcl/io/pcd_io.h>
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     class CaptureSimulateKinect : public Capture {
@@ -55,6 +55,7 @@ namespace ade {
 
             pcdFilename = pt.get<std::string>("capture.pcdFilename");
             rgbFilename = pt.get<std::string>("capture.rgbFilename", "");
+            convertToMeters = pt.get<bool>("capture.convertToMeters", false);
             break;
           }
         }
@@ -116,6 +117,7 @@ namespace ade {
       cv::Mat tmpColor, tmpDepth;
       std::string pcdFilename;
       std::string rgbFilename;
+      bool convertToMeters;
 
       bool captureSimPC1() {
         if (!maxIndex)
@@ -145,26 +147,32 @@ namespace ade {
           }
         }
 
-        //resize pointcloud (if necessary) and fill rgb and depth frames
-        if (tmpColorCloud->width != imgWidth || tmpColorCloud->height != imgHeight) {
-          //allocate tmp images
-          if (tmpColor.empty() || tmpDepth.empty()) {
-            tmpColor.create(tmpColorCloud->height, tmpColorCloud->width, CV_8UC3);
-            tmpDepth.create(tmpColorCloud->height, tmpColorCloud->width, CV_32FC1);
-          }
-          //fill tmp color and depth from point cloud and resize
-          ade::pc::util::pointCloudToDepthAndColor(tmpDepth, tmpColor, tmpColorCloud);
-          cv::resize(tmpColor, frame, frame.size(), 0, 0, cv::INTER_LINEAR);
-          cv::resize(tmpDepth, depthFrame, depthFrame.size(), 0, 0, cv::INTER_NEAREST);
-
-          //fill frame containers with resized data
-          ade::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud);
-        } else {
-          //fill frame containers
-          cloudRGB = tmpColorCloud;
-          ade::pc::util::pointCloudToDepthAndColor(depthFrame, frame, cloudRGB);
-          pcl::copyPointCloud(*cloudRGB, *cloud);
+        if (!tmpColorCloud->isOrganized()) {
+          LOG4CXX_ERROR(logger, boost::format("[captureSimPC2]: PCD file must contain an organized point cloud: %s.") % pcdFilename);
+          return false;
         }
+
+        //diarc::Display::createWindowIfDoesNotExist("temp");
+        //diarc::Display::displayPointCloud(tmpColorCloud, "temp", "temp");
+
+        //resize pointcloud (if necessary) and fill rgb and depth frames
+        //allocate tmp images
+        if (tmpColor.empty() || tmpDepth.empty()) {
+          tmpColor.create(tmpColorCloud->height, tmpColorCloud->width, CV_8UC3);
+          tmpDepth.create(tmpColorCloud->height, tmpColorCloud->width, CV_32FC1);
+        }
+
+        //fill tmp color and depth from point cloud and resize
+        diarc::pc::util::pointCloudToDepthAndColor(tmpDepth, tmpColor, tmpColorCloud);
+        cv::resize(tmpColor, frame, frame.size(), 0, 0, cv::INTER_LINEAR);
+        cv::resize(tmpDepth, depthFrame, depthFrame.size(), 0, 0, cv::INTER_NEAREST);
+
+        if (convertToMeters) {
+          depthFrame *= (1 / 1000.0); //convert from mm to m
+        }
+
+        //fill frame containers with resized data
+        diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud);
 
         // if rgbFilename has been specified, overwrite rgb image with one loaded from file
         // this is inefficient to do it here and reload from file every time, but this class is just for testing so it should be fine
@@ -179,7 +187,6 @@ namespace ade {
 
         // sleep
         boost::this_thread::sleep(boost::posix_time::milliseconds(5));
-
         return true;
       }
 
@@ -223,4 +230,4 @@ namespace ade {
     };
 
   } //namespace capture
-} //namespace ade
+} //namespace diarc

@@ -13,7 +13,7 @@
 #include <pcl/io/openni_grabber.h>
 #include <functional> // for boost:bind --> update to lambda at some point
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     class CaptureOpenni : public Capture {
@@ -177,7 +177,7 @@ namespace ade {
         cv::cvtColor(colorImg, frame, cv::COLOR_BGR2RGB);
         depthImg.copyTo(depthFrame);
 
-        ade::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud);
+        diarc::pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud);
         return true;
       }
 
@@ -200,4 +200,4 @@ namespace ade {
     };
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc

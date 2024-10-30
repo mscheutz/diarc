@@ -4,15 +4,15 @@
 
 package edu.tufts.hrilab.llm;
 
-import edu.tufts.hrilab.util.Http;
-import java.io.InputStreamReader;
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import edu.tufts.hrilab.llm.hf.HFClient;
+
+import java.awt.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map; 
-import java.util.HashMap;
-import static java.util.Map.entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.cli.CommandLine;
@@ -24,22 +24,19 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.fol.Symbol;
 
 import edu.tufts.hrilab.llm.openai.OpenaiClient;
-import edu.tufts.hrilab.llm.openai.request.*;
-import edu.tufts.hrilab.llm.openai.response.*;
 import edu.tufts.hrilab.llm.llama.LlamaClient;
-import edu.tufts.hrilab.llm.llama.request.*;
-import edu.tufts.hrilab.llm.llama.response.*;
 
 public class LLMComponent extends DiarcComponent {
   static private Logger log = LoggerFactory.getLogger(LLMComponent.class);
 
   public String service = "openai";
-  public String model = "gpt-3.5-turbo";
+  public String model = "gpt-4o";
   public float temperature = 0.5f;
 
   private Tokenizer tokenizer = new Tokenizer();
   private OpenaiClient openai = new OpenaiClient();
   private LlamaClient llama = new LlamaClient();
+  private HFClient hf= new HFClient();
 
   /**
    * LLaMA (llama.cpp server)
@@ -143,6 +140,8 @@ public class LLMComponent extends DiarcComponent {
   public void setLLMModel (String modelStr) {
     if (service.equals("openai")) {
       openai.setModel(modelStr);
+    } else if (service.equals("llamahf") || service.equals("t5hf")) {
+      hf.setModel(service, modelStr);
     }
     model = modelStr;
   }
@@ -168,8 +167,10 @@ public class LLMComponent extends DiarcComponent {
   public void setLLMTemperature (float temperatureFloat) {
     if (service.equals("llama")) {
       llama.setTemperature(temperatureFloat);
-    } else if (service.equals("openai")) {
-      log.warn("OpenAI API does not support temperature");
+    } else if (service.equals("llamahf")) {
+      hf.setTemperature(temperatureFloat);
+    } else {
+      log.warn("Service {} does not support temperature", service);
     }
   }
 
@@ -194,6 +195,8 @@ public class LLMComponent extends DiarcComponent {
         return new Completion(openai.completion(prompt));
       case "llama" :
         return new Completion(llama.completion(prompt));
+      case "t5hf":
+        return new Completion(hf.t5BaseCompletion(prompt));
       default :
         log.error("Service " + service + " not implemented");
         return null;
@@ -224,6 +227,8 @@ public class LLMComponent extends DiarcComponent {
       case "llama" :
         log.warn("llama.cpp server cannot change model to " + model);
         return new Completion(llama.completion(prompt));
+      case "t5hf":
+        return new Completion(hf.t5BaseCompletion(prompt, model));
       default :
         log.error("Service " + service + " not implemented");
         return null;
@@ -251,6 +256,8 @@ public class LLMComponent extends DiarcComponent {
         return new Completion(openai.chatCompletion(prompt));
       case "llama" :
         return new Completion(llama.chatCompletion(prompt));
+      case "llamahf":
+        return new Completion(hf.llamaHFChatCompletion(prompt));
       default :
         log.error("Service " + service + " not implemented.");
         return null;
@@ -277,6 +284,8 @@ public class LLMComponent extends DiarcComponent {
         return new Completion(openai.chatCompletion(model, prompt));
       case "llama" :
         return new Completion(llama.chatCompletion(prompt));
+      case "llamahf" :
+        return new Completion(hf.llamaHFChatCompletion(prompt, model));
       default :
         log.error("Service " + service + " not implemented");
         return null;
@@ -296,6 +305,8 @@ public class LLMComponent extends DiarcComponent {
         return new Completion(openai.chatCompletion(messages));
       case "llama" :
         return new Completion(llama.chatCompletion(messages));
+      case "llamahf" :
+        return new Completion(hf.llamaHFChatCompletion(messages));
       default :
         log.error("Service " + service + " not implemented");
         return null;
@@ -316,6 +327,8 @@ public class LLMComponent extends DiarcComponent {
         return new Completion(openai.chatCompletion(chat));
       case "llama" :
         return new Completion(llama.chatCompletion(chat));
+       case "llamahf" :
+        return new Completion(hf.llamaHFChatCompletion(chat));
       default :
         log.error("Service " + service + " not implemented");
         return null;
@@ -338,9 +351,57 @@ public class LLMComponent extends DiarcComponent {
       case "llama" :
         log.warn("llama.cpp server cannot change model to " + model);
         return new Completion(llama.chatCompletion(chat));
+      case "llamahf" :
+        return new Completion(hf.llamaHFChatCompletion(chat, model));
       default :
         log.error("Service " + service + " not implemented");
         return null;
     }
+  }
+
+  @TRADEService
+  @Action
+  public Completion visionCompletion (Prompt prompt, byte[] image, Dimension imageSize) {
+    List<VisionMessage> vmessages = new ArrayList<VisionMessage>();
+    vmessages.add(new VisionMessage("user", prompt.toString(), image, imageSize));
+    return visionCompletion(vmessages);
+  }
+
+  /**
+   * Generates a chat completion using a vision model
+   * method based on the currently set service.
+   * @param vmessages The vision messages to use
+   * @return a Completion object containing the chat completion response
+   **/
+  @TRADEService
+  @Action
+  public Completion visionCompletion (List <VisionMessage> vmessages) {
+    switch (service) {
+      case "openai" :
+        return new Completion(openai.visionCompletion(vmessages));
+      default :
+        log.error("Service " + service + " not implemented");
+        return null;
+    }
+  }
+
+  @TRADEService
+  @Action
+  public Completion visionCompletion (Prompt prompt) {
+    Dimension imageSize = null;
+    byte[] image = null;
+    try {
+      imageSize = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageSize").argTypes()).call(Dimension.class);
+    } catch (TRADEException ex) {
+      log.error("Error getting image size from vision component");
+      return null;
+    }
+    try {
+      image = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFrame")).call(byte[].class);
+    } catch (TRADEException ex) {
+      log.error("Cannot get frame for vision inference");
+      return null;
+    }
+    return visionCompletion(prompt, image, imageSize);
   }
 }

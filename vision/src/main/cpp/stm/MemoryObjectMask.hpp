@@ -25,7 +25,7 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
-namespace ade {
+namespace diarc {
   namespace stm {
 
     class MemoryObjectMask {
@@ -163,7 +163,7 @@ namespace ade {
     };
 
   } //namespace stm
-} //namespace ade
+} //namespace diarc
 
 #endif	/* MEMORYOBJECTMASK_HPP */
 

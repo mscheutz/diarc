@@ -4,9 +4,9 @@
 
 package edu.tufts.hrilab.config;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fetch.MockFetchItComponent;
-import edu.tufts.hrilab.firebase.MockFirebaseConnectionComponent;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
@@ -81,11 +81,9 @@ public class MultiRobotCaddyDemoMock extends DiarcConfiguration {
 //            gmArgs += "-editor ";
 //        }
 
-        createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
+        createInstance(GoalManagerComponent.class,
                 goalManagerArgs
         );
-
-        createInstance(MockFirebaseConnectionComponent.class, "-dialogue -emulator -firebaseGroup TuftsDemo -action -dbaction planned -dbfile /config/edu/tufts/hrilab/action/asl/demos/multiRobotCaddy.asl -dbfile /config/edu/tufts/hrilab/action/asl/domains/multiRobotCaddy.asl");
 
         //brad: this is last so the GUI window is on top
         simSpeechRec = createInstance(SimSpeechRecognitionComponent.class,
@@ -94,11 +92,6 @@ public class MultiRobotCaddyDemoMock extends DiarcConfiguration {
 //            simRecArgs += "-nogui";
 //        }
 
-    }
-
-    public static void main(String[] args){
-        MultiRobotCaddyDemoMock demoConfig = new MultiRobotCaddyDemoMock();
-        demoConfig.runConfiguration();
     }
 
 }

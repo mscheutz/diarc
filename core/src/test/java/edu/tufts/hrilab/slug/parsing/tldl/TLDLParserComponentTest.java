@@ -40,13 +40,14 @@ public class TLDLParserComponentTest {
     }
 
     //brad this is like this so I don't have to change a bunch of old tests, it should probably be updated at some point
-    private boolean testUtterance(String utterance, String desired, String speaker, String listener) {
-        // component.addWords(complete);
-        Utterance parseResult = component.parseUtterance(new Utterance(Factory.createSymbol(speaker),
-                Factory.createSymbol(listener),
-                Arrays.asList(utterance.split(" ")),
-                UtteranceType.UNKNOWN,
-                true));
+    private boolean testUtterance(String utterance, String desired, String speaker, String addressee) {
+        Utterance.Builder inputUtterance = new Utterance.Builder()
+                .setSpeaker(Factory.createSymbol(speaker))
+                .setAddressee(Factory.createSymbol(addressee))
+                .setWords(Arrays.asList(utterance.split(" ")));
+
+
+        Utterance parseResult = component.parseUtterance(inputUtterance.build());
 
         String outcome = parseResult.toString();
         if (outcome.equals(desired)) {
@@ -57,6 +58,111 @@ public class TLDLParserComponentTest {
             log.error("desired: " + desired + "\n");
         }
         return outcome.equals(desired);
+    }
+
+    @Test
+    public void spaceStationTest() {
+        log.info("spaceStationTest");
+        component.addDictionary("pr2Unity.dict");
+        component.setUseAddressHistory(false);
+
+        assertTrue(testUtterance(
+                "go to beta",
+                "INSTRUCT(server,unknown,goToArea(unknown,beta),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot1 go to beta",
+                "INSTRUCT(server,robot1,goToArea(robot1,beta),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot1 go to beta left four",
+                "INSTRUCT(server,robot1,goToTube(robot1,beta,leftFour),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot one go to beta left four",
+                "INSTRUCT(server,robot1,goToTube(robot1,beta,leftFour),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "repair",
+                "INSTRUCT(server,unknown,repairTube(unknown),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot two repair",
+                "INSTRUCT(server,robot2,repairTube(robot2),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "repair alpha left one",
+                "INSTRUCT(server,unknown,repairTube(unknown,alpha,leftOne),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot two repair beta left four",
+                "INSTRUCT(server,robot2,repairTube(robot2,beta,leftFour),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "fix it",
+                "INSTRUCT(server,unknown,repairTube(unknown),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot two fix",
+                "INSTRUCT(server,robot2,repairTube(robot2),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "fix alpha right three",
+                "INSTRUCT(server,unknown,repairTube(unknown,alpha,rightThree),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot one fix alpha right two",
+                "INSTRUCT(server,robot1,repairTube(robot1,alpha,rightTwo),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "check alpha",
+                "INSTRUCT(server,unknown,check(unknown,alpha),{})",
+                "server",
+                "unknown"
+        ));
+
+        assertTrue(testUtterance(
+                "robot 1 check beta",
+                "INSTRUCT(server,robot1,check(robot1,beta),{})",
+                "server",
+                "unknown"
+        ));
     }
 
     //TODO:brad: see the comments in the body of this regarding refactoring the action learning/nl pipeline
@@ -586,7 +692,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Start over",
-                "INSTRUCT(commX,self,goToStartPose(false),{},{})",
+                "INSTRUCT(commX,self,goToPose(start),{},{})",
                 "commX",
                 "self"
         ));
@@ -649,7 +755,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("move the plate up",
-                "INSTRUCT(commX,shafer,moveObject(shafer,VAR0,up),{plate(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(commX,shafer,moveObjectInDirection(shafer,VAR0,up),{plate(VAR0),DEFINITE(VAR0)})",
                 "commX",
                 "shafer"
         ));
@@ -661,19 +767,19 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("now move the plate forward",
-                "INSTRUCT(commX,shafer,moveObject(shafer,VAR0,forward),{plate(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(commX,shafer,moveObjectInDirection(shafer,VAR0,forward),{plate(VAR0),DEFINITE(VAR0)})",
                 "commX",
                 "shafer"
         ));
 
         assertTrue(testUtterance("now move the plate toward me",
-                "INSTRUCT(commX,shafer,moveObject(shafer,VAR0,toward,commX),{plate(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(commX,shafer,moveObjectRelativeTo(shafer,VAR0,toward,commX),{plate(VAR0),DEFINITE(VAR0)})",
                 "commX",
                 "shafer"
         ));
 
         assertTrue(testUtterance("move it toward me",
-                "INSTRUCT(commX,shafer,moveObject(shafer,VAR0,toward,commX),{it(VAR0),INFOCUS(VAR0)})",
+                "INSTRUCT(commX,shafer,moveObjectRelativeTo(shafer,VAR0,toward,commX),{it(VAR0),INFOCUS(VAR0)})",
                 "commX",
                 "shafer"
         ));
@@ -3627,56 +3733,56 @@ public class TLDLParserComponentTest {
         component.addDictionary("foodOrdering.dict");
 //        component.addDictionary("foodOrderingHomophones.dict");
         component.addDictionary("yumiFoodOrderingGenerated.dict");
-        component.setUpdateAddressHistory(false);
+        component.setUseAddressHistory(false);
 
 //
 //        Basic NL commands
 
         assertTrue(testUtterance("right arm go to prep area",
-                "INSTRUCT(brad,self,goTo(rightArm:yumi,VAR0:area),{\"prep area\"(VAR0:area),DEFINITE(VAR0:area)})",
+                "INSTRUCT(brad,rightArm:yumi,goTo(rightArm:yumi,VAR0:area),{\"prep area\"(VAR0:area),DEFINITE(VAR0:area)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("right arm do you see a bell pepper",
-                "INSTRUCT(brad,self,doYouSee(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,doYouSee(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("right arm look for a bell pepper",
-                "INSTRUCT(brad,self,lookFor(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,lookFor(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("right arm pick up the bell pepper",
-                "INSTRUCT(brad,self,pickUp(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,pickUp(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("right arm pick it up",
-                "INSTRUCT(brad,self,pickUp(rightArm:yumi,VAR0:physobj),{it(VAR0:physobj),INFOCUS(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,pickUp(rightArm:yumi,VAR0:physobj),{it(VAR0:physobj),INFOCUS(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 //
 //        H: then go to cook top
         assertTrue(testUtterance("right arm go to cook top",
-                "INSTRUCT(brad,self,goTo(rightArm:yumi,VAR0:area),{\"cook top\"(VAR0:area),DEFINITE(VAR0:area)})",
+                "INSTRUCT(brad,rightArm:yumi,goTo(rightArm:yumi,VAR0:area),{\"cook top\"(VAR0:area),DEFINITE(VAR0:area)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("then right arm put down the bell pepper",
-                "INSTRUCT(brad,self,putDown(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,putDown(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("pause",
-                "INSTRUCT(brad,self,suspendCurrentGoal(self),{})",
+                "INSTRUCT(brad,self,suspendSystemGoals(self),{})",
                 "brad",
                 "self"
         ));
@@ -3719,7 +3825,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("then right arm saute the bell pepper for 20 seconds ",
-                "INSTRUCT(brad,self,saute(rightArm:yumi,VAR0:physobj,val(20,seconds)),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,saute(rightArm:yumi,VAR0:physobj,val(20,seconds)),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
@@ -3731,19 +3837,19 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("then right arm cook a corn for 15 seconds",
-                "INSTRUCT(brad,self,cook(rightArm:yumi,VAR0:physobj,val(15,seconds)),{corn(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,cook(rightArm:yumi,VAR0:physobj,val(15,seconds)),{corn(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("then left arm drizzle on the sauce",
-                "INSTRUCT(brad,self,drizzle(leftArm:yumi,VAR0:physobj),{sauce(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,leftArm:yumi,drizzle(leftArm:yumi,VAR0:physobj),{sauce(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("then left arm drizzle on chipotle sauce",
-                "INSTRUCT(brad,self,drizzle(leftArm:yumi,VAR0:physobj),{\"chipotle sauce\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,leftArm:yumi,drizzle(leftArm:yumi,VAR0:physobj),{\"chipotle sauce\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
@@ -3772,7 +3878,6 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
-
         assertTrue(testUtterance("item southwest bowl",
                 "REPLY(brad,self,item(\"southwest bowl\"),{})",
                 "brad",
@@ -3784,7 +3889,6 @@ public class TLDLParserComponentTest {
                 "brad",
                 "self"
         ));
-
 
         assertTrue(testUtterance("replace right arm saute the carrot for 30 seconds with right arm saute the chicken for 45 seconds",
                 "REPLY(brad,self,mod(replace(saute(rightArm:yumi,VAR1:physobj,val(45,seconds)),saute(rightArm:yumi,VAR0:physobj,val(30,seconds))),none()),{carrot(VAR0:physobj),chicken(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
@@ -3806,7 +3910,7 @@ public class TLDLParserComponentTest {
 //-
 //suspend current task
         assertTrue(testUtterance("suspend current task",
-                "INSTRUCT(brad,self,suspendCurrentGoal(self),{})",
+                "INSTRUCT(brad,self,suspendSystemGoals(self),{})",
                 "brad",
                 "self"
         ));
@@ -3830,9 +3934,8 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
-
         assertTrue(testUtterance("resume previous task",
-                "INSTRUCT(brad,self,resumeCurrentGoal(self),{})",
+                "INSTRUCT(brad,self,resumeSystemGoals(self),{})",
                 "brad",
                 "self"
         ));
@@ -3876,8 +3979,6 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
-
-
         //TODO:brad: only describes act specs
         assertTrue(testUtterance("describe how to get the corn in the serving box",
                 "INSTRUCT(brad,self,describe(self,how(to(getOn(self,VAR0:physobj,VAR1:physobj)))),{corn(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
@@ -3886,13 +3987,13 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("left arm open gripper",
-                "INSTRUCT(brad,self,openGripper(leftArm:yumi),{})",
+                "INSTRUCT(brad,leftArm:yumi,openGripper(leftArm:yumi),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("left arm close gripper",
-                "INSTRUCT(brad,self,closeGripper(leftArm:yumi),{})",
+                "INSTRUCT(brad,leftArm:yumi,closeGripper(leftArm:yumi),{})",
                 "brad",
                 "self"
         ));

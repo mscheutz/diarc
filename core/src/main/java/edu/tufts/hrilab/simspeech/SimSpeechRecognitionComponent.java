@@ -33,7 +33,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
 
   protected BufferedReader sbr;
   private Reader reader;
-  private String SConfig = "";
+  private List<String> sConfigs = new ArrayList<>();
   private String resourceConfigPath = "config/edu/tufts/hrilab/simspeech";
   public boolean useUnk = false;
   public boolean useCommand = true;
@@ -47,7 +47,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
   private int repetitions = 1;  //# times to repeat each utterance during read-from-file mode
   private SimSpeechRecognitionComponentVis gui;
   private Symbol speaker = Factory.createSymbol("brad:agent");
-  private Symbol listener = Factory.createSymbol("self:agent");
+  private Symbol addressee = Factory.createSymbol("self:agent");
   private boolean terminalInput;
 
   final protected Logger log = LoggerFactory.getLogger(this.getClass());
@@ -67,14 +67,16 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
   protected void init() {
     try {
       if (autoInput) {
-        String file = Resources.createFilepath(resourceConfigPath, SConfig);
+        if (sConfigs.size() != 1) {
+          log.error("autoInput not currently compatible with multiple config files. Only using first one.");
+        }
+        String file = Resources.createFilepath(resourceConfigPath, sConfigs.get(0));
         sbr = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(file)));
       } else if (terminalInput) {
         sbr = new BufferedReader(new InputStreamReader(System.in));
       }
     } catch (Exception e) {
       log.error("Error getting input stream. Shutting down!", e);
-      System.exit(-1);
     }
     if (useGui) {
       gui = new SimSpeechRecognitionComponentVis(this);
@@ -96,8 +98,10 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
    *
    * @return the config file to use
    */
-  public String getConfigFile() {
-    return Resources.createFilepath(resourceConfigPath, SConfig);
+  public List<String> getConfigFiles() {
+    List<String> files = new ArrayList<>();
+    sConfigs.forEach(config -> files.add(Resources.createFilepath(resourceConfigPath, config)));
+    return files;
   }
 
   /**
@@ -127,9 +131,9 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
     log.info("speaker set to: " + this.speaker);
   }
 
-  public void setListener(Symbol listener) {
-    this.listener = listener;
-    log.info("listener set to: " + this.listener);
+  public void setAddressee(Symbol addressee) {
+    this.addressee = addressee;
+    log.info("addressee set to: " + this.addressee);
   }
 
   // ********************************************************************
@@ -192,11 +196,12 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
           Utterance.Builder utterance = new Utterance.Builder()
                   .setWords(Arrays.asList(in.split(" ")))
                   .setSpeaker(speaker)
-                  .addListener(listener)
+                  .setAddressee(addressee)
                   .setIsInputUtterance(true);
 
           try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class,utterance.build());
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class))
+                    .call(void.class,utterance.build());
           } catch (TRADEException e) {
             log.error("reportRecognizedSpeech failed.", e);
           }
@@ -217,7 +222,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("cfg").longOpt("config").hasArg().argName("file").desc("load buttons from file").build());
+    options.add(Option.builder("cfg").longOpt("config").hasArgs().argName("file(s)").desc("load buttons from file(s)").build());
     options.add(Option.builder("nocommand").desc("do not include command entry field").build());
     options.add(Option.builder("unk").desc("include unk button").build());
     options.add(Option.builder("textred").desc("red button text").build());
@@ -225,7 +230,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
     options.add(Option.builder("auto").longOpt("autoInput").desc("automatically run utterances from file").build());
     options.add(Option.builder("reps").longOpt("repetitions").hasArg().argName("#").desc("# of times to repeat each utterance").build());
     options.add(Option.builder("speaker").hasArg().argName("name").desc("set speaker name").build());
-    options.add(Option.builder("listener").hasArg().argName("name").desc("set listener name").build());
+    options.add(Option.builder("addressee").hasArg().argName("name").desc("set default addressee name").build());
     options.add(Option.builder("terminal").desc("get input from terminal").build());
     options.add(Option.builder("nogui").desc("run the simspeech component without a gui").build());
     return options;
@@ -237,7 +242,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
   @Override
   protected void parseArgs(CommandLine cmdLine) {
     if (cmdLine.hasOption("cfg")) {
-      SConfig = cmdLine.getOptionValue("cfg");
+      sConfigs = Arrays.stream(cmdLine.getOptionValues("cfg")).toList();
     }
     if (cmdLine.hasOption("nocommand")) {
       useCommand = false;
@@ -260,8 +265,8 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
     if (cmdLine.hasOption("speaker")) {
       speaker = Factory.createSymbol(cmdLine.getOptionValue("speaker"));
     }
-    if (cmdLine.hasOption("listener")) {
-      listener = Factory.createSymbol(cmdLine.getOptionValue("listener"));
+    if (cmdLine.hasOption("addressee")) {
+      addressee = Factory.createSymbol(cmdLine.getOptionValue("addressee"));
     }
     if (cmdLine.hasOption("terminal")) {
       terminalInput = true;

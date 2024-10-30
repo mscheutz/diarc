@@ -11,7 +11,7 @@
 #include <capture/calibration/Cameras.hpp>
 #include <log4cxx/logger.h>
 
-namespace ade {
+namespace diarc {
   namespace pc {
     namespace util {
 
@@ -38,6 +38,6 @@ namespace ade {
                                 Eigen::Vector3f& mass_center);
     } //namespace util
   } //namespace pc
-} //namespace ade
+} //namespace diarc
 
 #endif

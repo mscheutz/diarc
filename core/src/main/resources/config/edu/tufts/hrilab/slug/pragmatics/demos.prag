@@ -32,7 +32,7 @@ QUESTION(A,B,whatAre(C,goals),Z) := itk(A,currently(is(C,WHAT)))
 QUESTION(A,B,whatAre(C,doing),Z) := itk(A,currently(is(C,WHAT)))
 
 #TODO: remove this in favor of more direct "go to start pose" instruction
-INSTRUCT(A,B,startOver(),Z) := want(A, goToStartPose())
+INSTRUCT(A,B,startOver(),Z) := want(A, goToPose(start))
 END-SET
 
 NEW-SET
@@ -177,9 +177,9 @@ RULES
 #INSTRUCT(A,B,tell(C,X),Z) := wantBel(A,C,X)
 #TODO:brad: this could also happen in the parser if we want
 #I will teach you how to dance
-STATEMENT(A,B,will(teach(A,B,to(X))),Z):= want(A,updateActionLearning(B,X,start))
+STATEMENT(A,B,will(teach(A,B,to(X))),Z):= want(A,learnAction(B,X))
 #That is how you dance
-STATEMENT(A,B,endTeaching(B,X),Z) := want(A,updateActionLearning(B,X,end))
+STATEMENT(A,B,endTeaching(B,X),Z) := want(A,endActionLearning(B,X))
 
 #TODO:brad: this could also happen in the parser if we want
 # this cancels/suspends/resumes the most recently started goal, or X, where X is a goal predicate

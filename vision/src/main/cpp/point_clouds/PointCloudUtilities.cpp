@@ -9,11 +9,11 @@
 #include "PCLFunctions.hpp"
 #include <pcl/features/moment_of_inertia_estimation.h>
 
-namespace ade {
+namespace diarc {
   namespace pc {
     namespace util {
 
-      log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("ade.pc.util.PointCloudUtilities"));
+      log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("diarc.pc.util.PointCloudUtilities"));
 
       void xyzImageToPointCloud(const cv::Mat xyzImage, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
               pcl::PointIndices::Ptr indices) {
@@ -166,7 +166,7 @@ namespace ade {
         objectPoints.cols = 1;
         //printf("cont: %s depth: %d chan: %d rows: %d cols: %d\n", (objectPoints.isContinuous()?"true":"false"), objectPoints.depth(), objectPoints.channels(), objectPoints.rows, objectPoints.cols);
 
-        ade::capture::util::projectPoints(objectPoints, imgPoints, 0);
+        diarc::capture::util::projectPoints(objectPoints, imgPoints, 0);
 
 
         //fill in point cloud
@@ -506,4 +506,4 @@ namespace ade {
 
     } //namespace util
   } //namespace pc
-} //namespace ade
+} //namespace diarc

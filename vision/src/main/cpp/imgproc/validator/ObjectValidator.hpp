@@ -37,8 +37,8 @@ protected:
   ObjectValidator(const long long& processorId, const unsigned int imgwidth,
           const unsigned int imgheight, const bool isStereo);
 
-  void sendValidationNotifications(ade::stm::MemoryObject::VecPtr validatedObjects);
-  void sendValidationNotifications(ade::stm::MemoryObject::Ptr validatedObject);
+  void sendValidationNotifications(diarc::stm::MemoryObject::VecPtr validatedObjects);
+  void sendValidationNotifications(diarc::stm::MemoryObject::Ptr validatedObject);
   void removeNotifications(std::list<Notification::Ptr> &pending, Notification::Ptr n);
 };
 

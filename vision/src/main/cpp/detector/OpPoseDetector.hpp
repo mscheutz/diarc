@@ -32,10 +32,10 @@ private:
 
   std::shared_ptr<std::vector<std::shared_ptr<op::Datum>>> createDatum(cv::Mat currFrame);
 
-  ade::stm::MemoryObject::VecPtr createMemoryObjects(const CaptureData::ConstPtr &capture,
+  diarc::stm::MemoryObject::VecPtr createMemoryObjects(const CaptureData::ConstPtr &capture,
                                                      const std::shared_ptr<std::vector<std::shared_ptr<op::Datum>>> &datumsPtr);
 
-  ade::stm::MemoryObjectPtr createMemoryObject(const CaptureData::ConstPtr &capture,
+  diarc::stm::MemoryObjectPtr createMemoryObject(const CaptureData::ConstPtr &capture,
                                                const long long &typeId,
                                                const PredicateHelper &descriptor,
                                                const op::Array<float> &poseKeypoints,

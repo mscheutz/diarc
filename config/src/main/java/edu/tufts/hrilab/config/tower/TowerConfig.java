@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.config.tower;
 
+import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fetch.FetchComponent;
 import edu.tufts.hrilab.fetch.MockFetchComponent;
@@ -12,6 +13,7 @@ import edu.tufts.hrilab.movebase.ChangeMapComponent;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
 import edu.tufts.hrilab.movebase.MoveBaseComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
+import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
@@ -20,54 +22,56 @@ import edu.tufts.hrilab.tower.ElevatorBoardingComponent;
 import edu.tufts.hrilab.map.MapComponent;
 import edu.tufts.hrilab.tf.TFComponent;
 import edu.tufts.hrilab.vision.MockVisionComponent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.util.Arrays;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class TowerConfig extends DiarcConfiguration {
-  protected static Logger log = LoggerFactory.getLogger(TowerConfig.class);
-  public List<String> args;
 
-  public void setArgs (String[] argv) {
-    args = Arrays.asList(argv);
+  private boolean mock = false;
+  private boolean useNLP = true;
+  private boolean useGUI = true;
+
+  private String map_folder = "jcc_building_maps";
+  private int floor = 4;
+
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("lab").desc("show dialogue gui").build());
+    options.add(Option.builder("headless").desc("show dialogue gui").build());
+    options.add(Option.builder("mock").desc("show dialogue gui").build());
+    return options;
+  }
+
+  @Override
+  protected void parseArgs(CommandLine cmdLine) {
+    if (cmdLine.hasOption("lab")) {
+      log.info("Starting inside lab...");
+      map_folder = "elevator_lab_test";
+      floor = 1;
+    }
+    if (cmdLine.hasOption("headless")) {
+      log.info("Starting headless...");
+      useGUI = false;
+    }
+    if (cmdLine.hasOption("mock")) {
+      log.info("Starting with mock...");
+      mock = true;
+    }
   }
 
   // start the configuration
   @Override
   public void runConfiguration() {
-    boolean mock = false;
-    boolean useNLP = true;
-    boolean useFirebase = false;
-    boolean useGUI = true;
-
-    String map_folder = "jcc_building_maps";
-    int floor = 4;
-
-    if (args.contains("-lab")) {
-      log.info("Starting inside lab...");
-      map_folder = "elevator_lab_test";
-      floor = 1;
-    }
-    if (args.contains("-firebase")) {
-      log.info("Starting with firebase...");
-      useFirebase = true;
-    }
-    if (args.contains("-headless")) {
-      log.info("Starting headless...");
-      useGUI = false;
-    }
-    if (args.contains("-mock")) {
-      log.info("Starting with mock...");
-      mock = true;
-    }
-
     if (useNLP) {
       log.info("Starting using NLP pipeline...");
 
       if (useGUI) {
-        createInstance(com.simspeech.SimSpeechRecognitionComponent.class,
-                "-config demodialogues/fetchconfig.simspeech -speaker brad -listener self");
+        createInstance(SimSpeechRecognitionComponent.class,
+                "-config demodialogues/fetchconfig.simspeech -speaker brad -addressee self");
       }
       createInstance(TLDLParserComponent.class, "-dict templatedict.dict");
 
@@ -80,10 +84,6 @@ public class TowerConfig extends DiarcConfiguration {
       createInstance(SimpleNLGComponent.class);
 
       createInstance(SimSpeechProductionComponent.class);
-
-      if (useFirebase) {
-        createInstance(edu.tufts.hrilab.firebase.DesktopFirebaseConnectionComponent.class, "-dialogue -emulator -firebaseGroup TuftsDemo");
-      }
 
     } else {
       createInstance(ReferenceResolutionComponent.class);
@@ -104,22 +104,17 @@ public class TowerConfig extends DiarcConfiguration {
     } else {
       createInstance(FetchComponent.class, "-config Fetch_TOWER.json -pose tuck -head 0.5 0.0 1.0 -torso 0.3");
       createInstance(MoveBaseComponent.class);
-      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-cameraFrame head_camera_rgb_optical_frame -capture fetch.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls") );
+      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-cameraFrame head_camera_rgb_optical_frame -capture fetch.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls"));
     }
 
-    createInstance(edu.tufts.hrilab.action.GoalManagerImpl.class,
+    createInstance(GoalManagerComponent.class,
             "-beliefinitfile demos.pl agents/agents.pl tower/tower.pl "
                     + "-dbfile core.asl vision.asl manipulation.asl dialogue/nlg.asl dialogue/handleSemantics.asl "
                     + "-dbfile tower/pressingButtons.asl tower/boardElevator.asl "
-                    + ( useGUI ? "-editor" : "" )
+                    + (useGUI ? "-editor" : "")
     );
 
 //    createInstance(com.trade.gui.TRADEServiceGui.class, "-class com.nao.MockNaoComponent");
+  }
 
-  }
-  public static void main(String[] args) {
-    TowerConfig config = new TowerConfig();
-    config.setArgs(args);
-    config.runConfiguration();
-  }
 }

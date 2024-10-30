@@ -138,6 +138,10 @@ public class JRosClientNode extends Ros2Node {
   @Override
   public <REQ extends Message, RES extends Message> RES callService(String serviceName, REQ message) {
     JRos2ServiceClient<REQ, RES> service = (JRos2ServiceClient<REQ, RES>) serviceList.get(serviceName);
+    if(service == null) {
+      log.error("Service " + serviceName + " not found. Returning null");
+      return null;
+    }
     try {
       return service.sendRequestAsync(message).get();
     } catch (InterruptedException | ExecutionException e) {

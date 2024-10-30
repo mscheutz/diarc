@@ -26,7 +26,7 @@ public:
   LearningNotification(const VisionProcessConstPtr& notifier_,
                        const long long& typeId_,
                        const unsigned long long& frameNumber_,
-                       ade::stm::MemoryObject::Ptr& object_,
+                       diarc::stm::MemoryObject::Ptr& object_,
                        PredicateHelper::Set descriptors_)
   : VisionNotification(notifier_, LEARNING, typeId_, frameNumber_),
   object(object_),
@@ -34,7 +34,7 @@ public:
   }
 
   //! detected object - intentionally non-const - can be modified concurrently
-  ade::stm::MemoryObject::Ptr object;
+  diarc::stm::MemoryObject::Ptr object;
   
   //! description of new thing being learned
   const PredicateHelper::Set descriptors;

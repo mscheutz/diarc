@@ -13,7 +13,7 @@ DepthSensorCalibration::DepthSensorCalibration(const int numCornersX, const int 
 
 bool DepthSensorCalibration::takeSnapshot() {
   //get images
-  CaptureNotification::ConstPtr captureNotification = ade::capture::Capture::getLastCaptureNotification();
+  CaptureNotification::ConstPtr captureNotification = diarc::capture::Capture::getLastCaptureNotification();
   if (!captureNotification) {
     // nothing captured yet
     return false;
@@ -131,13 +131,13 @@ bool DepthSensorCalibration::findCheckerboardPoints() {
 
 void DepthSensorCalibration::display2d() {
   std::string windowName = "DepthSensorCalibration";
-  ade::Display::createWindowIfDoesNotExist(windowName);
+  diarc::Display::createWindowIfDoesNotExist(windowName);
   imgIntensity.copyTo(frameToDraw);
   for (int i = 0; i < pointsPixel.size(); ++i) {
     cv::circle(frameToDraw, cv::Point(pointsPixel[i].x, pointsPixel[i].y),
              2, CV_RGB(255, 255, 255), 1, 8, 0);
   }
-  ade::Display::displayFrame(frameToDraw, windowName);
+  diarc::Display::displayFrame(frameToDraw, windowName);
 }
 
 void DepthSensorCalibration::display3d() {

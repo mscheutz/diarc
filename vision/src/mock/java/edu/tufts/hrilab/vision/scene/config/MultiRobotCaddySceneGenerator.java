@@ -26,7 +26,6 @@ public class MultiRobotCaddySceneGenerator extends SceneGenerator {
         Variable y = Factory.createVariable("Y", "physobj");
         List<Term> knownProperties = Arrays.asList(
                 Factory.createPredicate("any", x),
-                Factory.createPredicate("physobj", x),
                 Factory.createPredicate("person", x),
                 Factory.createPredicate("grasp_point", x),
                 Factory.createPredicate("on", x, y),
@@ -75,7 +74,7 @@ public class MultiRobotCaddySceneGenerator extends SceneGenerator {
         mo.setVariable(x);
         mo.setDetectionConfidence(0.8f);
         mo.addDescriptor(Factory.createPredicate("painkiller", x), 0.9f);
-        mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
+//        mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
         mo.setLocation(1,0,1);
 
         return mo;
@@ -91,7 +90,6 @@ public class MultiRobotCaddySceneGenerator extends SceneGenerator {
         mo.setVariable(x);
         mo.setDetectionConfidence(0.8f);
         mo.addDescriptor(Factory.createPredicate("bandagebox", x), 0.9f);
-        mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
         mo.setLocation(1,0,1);
 
         return mo;
@@ -107,7 +105,6 @@ public class MultiRobotCaddySceneGenerator extends SceneGenerator {
         mo.setVariable(x);
         mo.setDetectionConfidence(0.8f);
         mo.addDescriptor(Factory.createPredicate("medicalcaddy", x), 0.9f);
-        mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
         mo.setLocation(1,0,1);
 
         return mo;
@@ -123,7 +120,6 @@ public class MultiRobotCaddySceneGenerator extends SceneGenerator {
         mo.setVariable(x);
         mo.setDetectionConfidence(0.8f);
         mo.addDescriptor(Factory.createPredicate("antiseptic", x), 0.9f);
-        mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
         mo.setLocation(1,0,1);
 
         return mo;
@@ -138,7 +134,6 @@ public class MultiRobotCaddySceneGenerator extends SceneGenerator {
         mo.setTokenId(tokenIdGenerator.getNext());
         mo.setVariable(x);
         mo.setDetectionConfidence(0.8f);
-        mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
         mo.setLocation(1,0,1);
 
         return mo;

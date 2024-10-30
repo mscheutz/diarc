@@ -25,7 +25,7 @@
 #include <boost/foreach.hpp>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 
-using namespace ade::stm;
+using namespace diarc::stm;
 using namespace std;
 using namespace cv;
 
@@ -35,7 +35,7 @@ SurfaceMarkingDetector::SurfaceMarkingDetector(const long long& processorId, con
         const unsigned int imgHeight)
 : ObjectDetector(processorId, imgWidth, imgHeight) {
   visionProcessName = "SurfaceMarkingDetector";
-  logger = log4cxx::Logger::getLogger("ade.imgproc.detector.SurfaceMarkingDetector");
+  logger = log4cxx::Logger::getLogger("diarc.imgproc.detector.SurfaceMarkingDetector");
 }
 
 void SurfaceMarkingDetector::loadConfig(const string& config) {
@@ -177,14 +177,14 @@ bool SurfaceMarkingDetector::detect(ShapeModel &model, const Mat &img, float &co
   ShapeContext sc;
   Mat crop, gray, edge;
   calculateShapeContextBGR(img, sc, crop, gray, edge);
-  ade::Display::createWindowIfDoesNotExist("img");
-  ade::Display::displayFrame(img, "img");
-  ade::Display::createWindowIfDoesNotExist("crop");
-  ade::Display::displayFrame(crop, "crop");
-  ade::Display::createWindowIfDoesNotExist("gray");
-  ade::Display::displayFrame(gray, "gray");
-  ade::Display::createWindowIfDoesNotExist("edge");
-  ade::Display::displayFrame(edge, "edge");
+  diarc::Display::createWindowIfDoesNotExist("img");
+  diarc::Display::displayFrame(img, "img");
+  diarc::Display::createWindowIfDoesNotExist("crop");
+  diarc::Display::displayFrame(crop, "crop");
+  diarc::Display::createWindowIfDoesNotExist("gray");
+  diarc::Display::displayFrame(gray, "gray");
+  diarc::Display::createWindowIfDoesNotExist("edge");
+  diarc::Display::displayFrame(edge, "edge");
   sleep(2);
   //calculateShapeContextBGR(img, sc);
   float score = 0.0;
@@ -203,8 +203,8 @@ bool SurfaceMarkingDetector::detect(ShapeModel &model, const Mat &img, float &co
   int nPoints;
   binaryEdgeImageToPoints(edge, points, nPoints);
   drawResults(points, nPoints, debugImg);
-  ade::Display::createWindowIfDoesNotExist("debugImg");
-  ade::Display::displayFrame(debugImg, "debugImg");
+  diarc::Display::createWindowIfDoesNotExist("debugImg");
+  diarc::Display::displayFrame(debugImg, "debugImg");
   //}
 
   // DEBUG

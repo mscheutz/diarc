@@ -408,7 +408,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     !reportFailurePred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "failed", !executionPred, !becausePred);
 
     //get the plan with goal ?goalPred
-    !sm = act:getStateMachine();
+    !sm = tsc:getStateMachine();
     !ac = op:newObject("edu.tufts.hrilab.action.ActionConstraints");
     !actionSelector = op:invokeStaticMethod("edu.tufts.hrilab.action.selector.ActionSelector", "getInstance");
 

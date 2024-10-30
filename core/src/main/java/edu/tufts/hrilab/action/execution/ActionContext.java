@@ -6,7 +6,6 @@ package edu.tufts.hrilab.action.execution;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.*;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.goal.Goal;
@@ -15,7 +14,6 @@ import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.db.performanceMeasures.PerformanceMeasures;
 import edu.tufts.hrilab.action.description.ActionContextDescription;
 import edu.tufts.hrilab.action.description.ContextDescription;
-import edu.tufts.hrilab.action.translation.TranslationInfo;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -34,6 +32,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -65,6 +64,8 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    * Future for all overall conditions.
    */
   private Future overallConditionFuture = null;
+
+  private Lock doStepLock = new ReentrantLock();
 
   /**
    * @param caller
@@ -328,13 +329,13 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
 
     //todo: Check norms
     try {
-        Justification normJustification = TRADE.getAvailableService(new TRADEServiceConstraints().name("getViolations")).call(Justification.class,getArgumentValue("?actor"), stateMachine);
-        if (!normJustification.getValue()) {
-          setStatus(ActionStatus.FAIL_NORMS, normJustification);
-        }
+      Justification normJustification = TRADE.getAvailableService(new TRADEServiceConstraints().name("getViolations")).call(Justification.class, getArgumentValue("?actor"), stateMachine);
+      if (!normJustification.getValue()) {
+        setStatus(ActionStatus.FAIL_NORMS, normJustification);
+      }
     } catch (TRADEException e) {
       //TODO:brad: this is debug for now, but that relies the exception is thrown in get available, and not call. Ideally they would throw different types of exceptions.
-      log.debug("[isApproved][getViolations]",e);
+      log.debug("[isApproved][getViolations]", e);
     }
 
     // Return justifications
@@ -492,18 +493,31 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    */
   @Override
   public void doStep() {
+
     if (isScript()) {
       // nothing to be done if this is a script
       // children will be built in calls to setupNextStep
     } else if (getExecType().shouldExecute()) {    // Check that action is not simulated
-      log.debug(getCommand() + ": executing action");
-      Collection<ActionBinding> args = collectArguments();
-      Justification executionJustification = getDBE().executeAction(args);
-      if (executionJustification.getValue()) {
-        redistributeArguments();
-      } else {
-        // Sets status to fail
-        setStatus(ActionStatus.FAIL, executionJustification);
+
+      doStepLock.lock();
+      try {
+        // CANCEL and SUSPEND are the only states that can be set asynchronously so we
+        // need to ensure that a blocking execution isn't called after SUSPEND/CANCEL has been set
+        if (getStatus() == ActionStatus.CANCEL || getStatus() == ActionStatus.SUSPEND) {
+          return;
+        }
+        log.debug(getCommand() + ": executing action");
+        Collection<ActionBinding> args = collectArguments();
+        Justification executionJustification = getDBE().executeAction(args);
+        if (executionJustification.getValue()) {
+          redistributeArguments();
+        } else {
+          // Sets status to fail
+          setStatus(ActionStatus.FAIL, executionJustification);
+        }
+
+      } finally {
+        doStepLock.unlock();
       }
     } else {
       // do not execute simulations,
@@ -963,10 +977,10 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     }
   }
 
-  public synchronized void handleInterrupt(ActionStatus eStatus) {
+  private synchronized void handleInterrupt(ActionStatus eStatus) {
 
     // Collect correct onInterrupt or onResume service details if relevant, otherwise return immediately
-    EventSpec interruptEvent = null;
+    EventSpec interruptEvent;
     if (eStatus == ActionStatus.CANCEL && getDBE().hasOnCancelEvent()) {
       // OnCancel Interruption behavior
       interruptEvent = getDBE().getOnCancelEvent();
@@ -984,13 +998,10 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     Predicate interruptGoalPredicate = Factory.createPredicate("interrupt", Factory.createFOL(interruptEvent.getActor()), interruptEvent.getPredicateForm());
     Goal interruptGoal = new Goal(interruptGoalPredicate);
     ActionInterpreter ai = ActionInterpreter.createInterpreterFromEventSpec(interruptGoal, this, interruptEvent);
-    //TODO: revisit
-    //The above line was previously adding interruption contexts as a child of the current context, which is called and executed below,
-    // but is not executed as a part of this context's AI. So this context's ChildrenContext counter will never be incremented.
-    // This causes getNextStep() for this context to return the already completed interruption context, which we don't want
+    //Increment child context counter so getNextStep doesn't return the terminated context added by the above line and
+    //  executed separately in the line below.
     childContexts.getNextAndIncrement();
-    //Call interrupt event
-    ai.call();
+    ai.call(); //Call interruption event
   }
 
   /**
@@ -1001,16 +1012,36 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    */
   @Override
   public synchronized void setStatus(ActionStatus eStatus, Justification justification) {
-    super.setStatus(eStatus, justification);
-    handleInterrupt(eStatus);
-  }
 
-  public TranslationInfo getTranslation() {
-    TranslationInfo temp = getDBE().getTranslationInfo();
-    if (temp != null) {
-      return temp.generateTranslationTemplate();
+    if (getDBE() == null) {
+      // this happens during context construction because the DBE hasn't been set before the
+      // INITIALIZE status is set
+      super.setStatus(eStatus, justification);
+    } else if (isScript()) {
+      // if this is an action script, always call onInterrupt
+      super.setStatus(eStatus, justification);
+      handleInterrupt(eStatus);
+    } else {
+      // if primitive action, call onInterrupt until it's no longer blocking
+      // TODO: should onInterrupt also be called if it's not blocking, like in the script case?
+
+      try {
+        long timeout = 0;
+        while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
+          // lock NOT acquired (doStep is executing)
+          // attempt to interrupt until lock can be acquired
+          handleInterrupt(eStatus);
+          timeout = 3;
+        }
+
+        super.setStatus(eStatus, justification);
+      } catch (InterruptedException e) {
+        log.error("Exception trying to get doStepLock.", e);
+      } finally {
+        doStepLock.unlock();
+      }
     }
-    return null;
+
   }
 
 }

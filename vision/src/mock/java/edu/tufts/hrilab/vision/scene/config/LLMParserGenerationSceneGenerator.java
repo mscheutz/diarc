@@ -17,7 +17,7 @@ import java.util.List;
 
 public class LLMParserGenerationSceneGenerator extends SceneGenerator {
 
-  //Collection of all the old predicates and prefabricated objects used in the scene generator before it was split up into multiple files
+  //Collection of all the old predicates and prefabricated objects used in the scene generator beforeD it was split up into multiple files
 
   @Override
   public SceneCollection generateSceneCollection() {
@@ -28,7 +28,6 @@ public class LLMParserGenerationSceneGenerator extends SceneGenerator {
         Factory.createPredicate("any", x),
         Factory.createPredicate("blue", x),
         Factory.createPredicate("red", x),
-        Factory.createPredicate("physobj", x),
         Factory.createPredicate("person", x),
         Factory.createPredicate("grasp_point", x),
         Factory.createPredicate("on", x, y),
@@ -104,7 +103,6 @@ public class LLMParserGenerationSceneGenerator extends SceneGenerator {
     mo.setVariable(x);
     mo.setDetectionConfidence(0.8f);
     mo.addDescriptor(Factory.createPredicate(objName, x), 0.9f);
-    mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
     mo.setLocation(1, 0, 1);
 
     return mo;
@@ -120,7 +118,6 @@ public class LLMParserGenerationSceneGenerator extends SceneGenerator {
     mo.setVariable(x);
     mo.setDetectionConfidence(0.8f);
     mo.addDescriptor(Factory.createPredicate("painkiller", x), 0.9f);
-    mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
     mo.setLocation(1, 0, 1);
 
     return mo;
@@ -136,7 +133,6 @@ public class LLMParserGenerationSceneGenerator extends SceneGenerator {
     mo.setVariable(x);
     mo.setDetectionConfidence(0.8f);
     mo.addDescriptor(Factory.createPredicate("bandagebox", x), 0.9f);
-    mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
     mo.setLocation(1, 0, 1);
 
     return mo;
@@ -152,7 +148,6 @@ public class LLMParserGenerationSceneGenerator extends SceneGenerator {
     mo.setVariable(x);
     mo.setDetectionConfidence(0.8f);
     mo.addDescriptor(Factory.createPredicate("medicalcaddy", x), 0.9f);
-    mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
     mo.setLocation(1, 0, 1);
 
     return mo;
@@ -168,7 +163,6 @@ public class LLMParserGenerationSceneGenerator extends SceneGenerator {
     mo.setVariable(x);
     mo.setDetectionConfidence(0.8f);
     mo.addDescriptor(Factory.createPredicate("antiseptic", x), 0.9f);
-    mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
     mo.setLocation(1, 0, 1);
 
     return mo;
@@ -183,7 +177,6 @@ public class LLMParserGenerationSceneGenerator extends SceneGenerator {
     mo.setTokenId(tokenIdGenerator.getNext());
     mo.setVariable(x);
     mo.setDetectionConfidence(0.8f);
-    mo.addDescriptor(Factory.createPredicate("physobj", x), 0.9f);
     mo.setLocation(1, 0, 1);
 
     return mo;

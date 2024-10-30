@@ -10,7 +10,7 @@
 #include "Capture.hpp"
 
 std::vector<Cameras*> Cameras::instances;
-log4cxx::LoggerPtr Cameras::logger = log4cxx::Logger::getLogger("ade.capture.calibration.Cameras");
+log4cxx::LoggerPtr Cameras::logger = log4cxx::Logger::getLogger("diarc.capture.calibration.Cameras");
 
 Cameras* Cameras::getNewInstance(const int pairIndex, const int img1_width, const int img1_height, const int img2_width, const int img2_height) {
   //initialize all to NULL - can have up to 3 stereo pairs per vision server
@@ -858,7 +858,7 @@ bool Cameras::takeSnapshot() {
   bool result;
   try {
     //get frames
-    CaptureNotification::ConstPtr captureNotification = ade::capture::Capture::getLastCaptureNotification();
+    CaptureNotification::ConstPtr captureNotification = diarc::capture::Capture::getLastCaptureNotification();
     const cv::Mat frame1 = captureNotification->captureData->frame.clone();
     const cv::Mat frame2 = captureNotification->captureData->frame2.clone();
 
@@ -1005,12 +1005,12 @@ bool Cameras::calibrationAddSample(cv::Mat imageLeft, cv::Mat imageRight) {
 
       // display detected corners
       std::string windowName = "Calibration";
-      ade::Display::createWindowIfDoesNotExist(windowName);
+      diarc::Display::createWindowIfDoesNotExist(windowName);
       for (int i = 0; i < imgPointsTemp[lr].size(); ++i) {
         cv::circle(image[lr], cv::Point(imgPointsTemp[lr][i].x, imgPointsTemp[lr][i].y),
                 2, CV_RGB(255, 255, 255), 1, 8, 0);
       }
-      ade::Display::displayFrame(image[lr], windowName);
+      diarc::Display::displayFrame(image[lr], windowName);
     }
   }
 

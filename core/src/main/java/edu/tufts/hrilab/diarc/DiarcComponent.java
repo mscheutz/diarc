@@ -79,8 +79,8 @@ abstract public class DiarcComponent {
   }
 
   /**
-   * Called directly after construction to pass runtime values that will override default values. This should parse
-   * all the options that additionalUsageInfo provides.zs
+   * Override this method to parse command line args in the sub-class. Called directly after construction to pass
+   * runtime values that will override default values. This should parse all the options that additionalUsageInfo provides.
    *
    * @param cmdLine
    */
@@ -88,7 +88,8 @@ abstract public class DiarcComponent {
   }
 
   /**
-   * Command line options available in sub-class. This should be paired with a parseArgs implementation.
+   * Override this method to define command line options available in sub-class.
+   * This should be paired with a parseArgs implementation.
    *
    * @return
    */
@@ -152,6 +153,7 @@ abstract public class DiarcComponent {
   void collectAdditionalUsageInfo() {
     cliOptions = new Options();
     cliOptions.addOption(Option.builder("groups").longOpt("groups").hasArgs().desc("TRADE groups for this DIARC component").build());
+    cliOptions.addOption(Option.builder("help").longOpt("help").desc("Print command line options").build());
     additionalUsageInfo().stream().forEach(option -> cliOptions.addOption(option));
   }
 
@@ -176,6 +178,11 @@ abstract public class DiarcComponent {
 
     if (cmd.hasOption("groups")) {
       groups.addAll(Arrays.asList(cmd.getOptionValues("groups")));
+    }
+    if (cmd.hasOption("help")) {
+      HelpFormatter formatter = new HelpFormatter();
+      formatter.printHelp(this.getClass().toString(), cliOptions);
+      System.exit(0);
     }
 
     // parse sub-class(es)
@@ -268,7 +275,6 @@ abstract public class DiarcComponent {
         instance.services = TRADE.registerAllServices(instance, instance.groups);
       } catch (TRADEException e) {
         staticLogger.debug("Could not register with TRADE.",e);
-//        return null;
         instance.services = new HashSet<>();
       }
     } else {

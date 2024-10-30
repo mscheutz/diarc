@@ -1,5 +1,7 @@
 () = assemble["assembles model for ?modelID from belief"](edu.tufts.hrilab.fol.Symbol ?modelID){
     edu.tufts.hrilab.fol.Predicate !goalState;
+    //edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = SKIPPENDING;
+    //edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
 
     edu.tufts.hrilab.fol.Symbol !descriptor;
 
@@ -13,6 +15,7 @@
     op:log(debug,"[assemble ]goal state: !goalState");
     //TODO:brad: it's not ideal that this calls submit goal, it will break translation
     act:submitGoal(!goalState);
+    //act:submitGoal(!goalState, !execType, !priorityTier);
 }
 
 () = startLearningAssembleScript["assembles model for ?modelID from belief"](edu.tufts.hrilab.fol.Symbol ?modelName){
@@ -37,8 +40,10 @@
     op:log(debug,"objectPred !objectPred");
     act:assertBelief(!objectPred);
 
-    act:updateActionLearning(!scriptID,!startSymbol);
-
+    async {
+        act:learnAction(!scriptID);
+    }
+    act:waitForActionLearningStart(!scriptID);
 }
 
 () = endLearningAssembleScript["ends learning of assemble?modelName()"](edu.tufts.hrilab.fol.Symbol ?modelName){
@@ -55,7 +60,7 @@
     //generate new signature that is unique to model name
     (!scriptID) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "assemble!descriptor(?actor,?modelName)");
     op:log(debug, "[endLearningAssembleScript] scriptID: !scriptID");
-    act:updateActionLearning(!scriptID,!endSymbol);
+    act:endActionLearning(!scriptID);
 }
 
 () = getOn["gets ?object on to the surface beneath ?destination"](edu.tufts.hrilab.fol.Symbol ?object, edu.tufts.hrilab.fol.Symbol ?destination) {

@@ -58,18 +58,14 @@ public class PddlParser {
 
   public void parse(String domainFile, String problemFile) {
     Parser parser = new Parser();
-    try {
-      parser.parse(domainFile, problemFile);
-      if (!parser.getErrorManager().isEmpty()) {
-        StringBuilder errorMsgs = new StringBuilder();
-        parser.getErrorManager().getMessages().forEach(message -> errorMsgs.append(message.toString()).append("\n"));
-        log.error("Error parsing PDDL: " + errorMsgs);
-        return;
-      }
-    } catch (FileNotFoundException e) {
-      log.error("Could not parse domain and problem files.", e);
+    parser.parseFromStream(getClass().getResourceAsStream(domainFile), getClass().getResourceAsStream(problemFile));
+    if (!parser.getErrorManager().isEmpty()) {
+      StringBuilder errorMsgs = new StringBuilder();
+      parser.getErrorManager().getMessages().forEach(message -> errorMsgs.append(message.toString()).append("\n"));
+      log.error("Error parsing PDDL: " + errorMsgs);
       return;
     }
+
 
     parseDomain(parser.getDomain());
     parseProblem(parser.getProblem());

@@ -682,17 +682,12 @@ public class ActionScriptLanguageParser {
 
     @Override
     public void enterControlContent(ASLParser.ControlContentContext ctx) {
-      if (ctx.spec().isEmpty() && ctx.control().isEmpty()) {
-        return;
-      }
-
       EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL);
       ParserRuleContext r = ctx.getParent();
       if (r instanceof ASLParser.IfStatementContext || r instanceof ASLParser.ElifStatementContext) {
         esBuilder.setCommand("then");
       } else if (r instanceof ASLParser.WhileStatementContext) {
         esBuilder.setCommand("do");
-//      } else if (r instanceof ASLParser.ForStatementContext) {
       } else if (r instanceof ASLParser.ForStatementContext || r instanceof ASLParser.ForEachStatementContext) {
         esBuilder.setCommand("block");
       } else {
@@ -705,7 +700,6 @@ public class ActionScriptLanguageParser {
     @Override
     public void exitControlContent(ASLParser.ControlContentContext ctx) {
       ParserRuleContext r = ctx.getParent();
-//      if (r instanceof ASLParser.ForStatementContext) {
       if (r instanceof ASLParser.ForStatementContext || r instanceof ASLParser.ForEachStatementContext) {
         EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("endblock");
         curr_dbe_builder.addEventSpec(esBuilder.build());

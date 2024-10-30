@@ -9,7 +9,7 @@
 #include "util/CaptureUtilities.hpp"
 #include "firewire/FireWireHelper.hpp"                /* Firewire functions */
 
-namespace ade {
+namespace diarc {
   namespace capture {
 
     class CaptureFirewire : public Capture {
@@ -158,4 +158,4 @@ namespace ade {
     };
 
   } //namespace capture
-} //namespace ade  
+} //namespace diarc

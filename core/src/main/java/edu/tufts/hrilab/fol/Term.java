@@ -433,6 +433,13 @@ public class Term extends Symbol implements Cloneable, Serializable {
   }
 
   @Override
+  public Term toUntyped() {
+    List<Symbol> untypedArgs = new ArrayList<>();
+    args.forEach(arg -> untypedArgs.add(arg.toUntyped()));
+    return new Term(name, untypedArgs);
+  }
+
+  @Override
   public Term toUnnegatedForm() {
     if (name.equals("not")) {
       if (args.size() != 1) {

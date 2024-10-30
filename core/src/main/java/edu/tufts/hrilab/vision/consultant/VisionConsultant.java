@@ -76,7 +76,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
 
       JsonClass jsonClass = new JsonClass();
       jsonClass.visionReferences = new ArrayList<>();
-      jsonClass.visionReferences.addAll(references.values().stream().map(VisionReferenceJson::new).collect(Collectors.toList()));
+      jsonClass.visionReferences.addAll(getAllReferences().stream().map(VisionReferenceJson::new).collect(Collectors.toList()));
       gson.toJson(jsonClass, writer);
       writer.flush();
     } catch (IOException e) {
@@ -133,7 +133,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
     if(!refId.hasType()) {
       refId = Factory.createSymbol(refId.getName(), refId.getName().split("_")[0]);
     }
-    Reference ref = references.get(refId);
+    Reference ref = getReference(refId);
     if (ref == null) {
       log.error("[assertProperties] couldn't find existing ref: " + refId);
       return false;
@@ -160,17 +160,17 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   public List<Symbol> getInitialDomain(List<Term> query) {
     log.debug("[getInitialDomain] " + query);
     // convert query Properties to Predicates
-    log.debug("[getInitialDomain] vision refs: " + references.values());
+    log.debug("[getInitialDomain] vision refs: " + getAllReferences());
     List<Symbol> objectRefs = new ArrayList<>();
 
     if (query.isEmpty()) {
-      return new ArrayList<>(references.keySet());
+      return super.getInitialDomain(query);
     } else {
-      for (Symbol objectRef : references.keySet()) {
+      for (VisionReference ref : getAllReferences()) {
         // compare query with objectRef properties
         //TODO: temporary fix, domain wasn't getting filled; figure out why
-        if (edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(query, references.get(objectRef).properties)) {
-          objectRefs.add(objectRef);
+        if (edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(query, ref.properties)) {
+          objectRefs.add(ref.refId);
         }
       }
 
@@ -180,7 +180,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   }
 
   public void setTypeId(Symbol objectRef, Long typeId) {
-    VisionReference visionRef = references.get(objectRef);
+    VisionReference visionRef = getReference(objectRef);
 
     // remove from visionTypes container as old typeId
     Set<VisionReference> referencesByType = visionTypes.get(visionRef.typeId);
@@ -208,7 +208,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
     }
     // if objectRef is actually a reference resolution id
     if (!objectRef.isTerm() && objectRef.getName().startsWith(kbName)) {
-      VisionReference visionRef = references.get(objectRef);
+      VisionReference visionRef = getReference(objectRef);
       if (visionRef == null) {
         log.error("[getTypeId] vision has not created object ref: " + objectRef);
         return -1L;
@@ -248,7 +248,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
     log.debug("[getTokens] objectRef: " + objectRef);
     // if objectRef is actually a reference resolution id
     if (!objectRef.isTerm() && objectRef.getName().startsWith(kbName)) {
-      VisionReference visionRef = references.get(objectRef);
+      VisionReference visionRef = getReference(objectRef);
       // With object permanance changes, tokenId list for any objectRef should be of length 1
       // In this case we don't want to check to add the tokenId to the visionRef, because it
       //   should always already be there
@@ -256,12 +256,12 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
       // EAK: this relies on some other mechanism to update visionRefs with native MO results
 //      List<MemoryObject> tokens = new ArrayList();
 //      for (Long tokenId : visionRef.tokenIds) {
-//        MemoryObject token = visionComponent.getToken(tokenId, 0.0);
+//        MemoryObject token = visionComponent.getToken(tokenId);
 //        if (token != null) {
 //          tokens.add(token);
 //        }
 //      }
-      List<MemoryObject> tokens = visionComponent.getTokens(visionRef.typeId, 0.0);
+      List<MemoryObject> tokens = visionComponent.getTokens(visionRef.typeId);
       for (MemoryObject token : tokens) {
         if (!visionRef.tokenIds.contains(token.getTokenId())) {
           visionRef.tokenIds.add(token.getTokenId());
@@ -273,19 +273,21 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
       // otherwise it's a descriptor
       List<Symbol> descriptors = new ArrayList();
       descriptors.add(objectRef);
-      return visionComponent.getTokens(descriptors, 0.0f);
+      return visionComponent.getTokens(descriptors);
     }
   }
 
   @Override
   public List<Long> getTokenIds(Symbol objectRef) {
-    if(!objectRef.hasType()) {
-      objectRef = Factory.createSymbol(objectRef.getName() + ":" + objectRef.getName().split("_")[0]);
-    }
     log.debug("[getTokenIds] objectRef: " + objectRef);
     // if objectRef is actually a reference resolution id
-    if (!objectRef.isTerm() && objectRef.getName().startsWith(kbName)) {
-      VisionReference visionRef = references.get(objectRef);
+    if (!objectRef.isTerm() && !objectRef.isPredicate() && objectRef.getName().startsWith(kbName)) {
+
+      if(!objectRef.hasType()) {
+        objectRef = Factory.createSymbol(objectRef.getName() + ":" + this.kbName);
+      }
+
+      VisionReference visionRef = getReference(objectRef);
       // With object permanance changes, tokenId list for any objectRef should be of length 1
       // In this case we don't want to check to add the tokenId to the visionRef, because it
       //   should always already be there
@@ -293,13 +295,13 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
       // EAK: this relies on some other mechanism to update visionRefs with native MO results
 //      List<Long> tokenIds = new ArrayList();
 //      for (Long tokenId : visionRef.tokenIds) {
-//        MemoryObject token = visionComponent.getToken(tokenId, 0.0);
+//        MemoryObject token = visionComponent.getToken(tokenId);
 //        if (token != null) {
 //          tokenIds.add(tokenId);
 //        }
 //      }
       // TODO: EAK: this is inconsistent with how getTokens works, and should work the same way
-      List<Long> tokenIds = visionComponent.getTokenIds(visionRef.typeId, 0.0);
+      List<Long> tokenIds = visionComponent.getTokenIds(visionRef.typeId);
       for (Long tokenId : tokenIds) {
         if (!visionRef.tokenIds.contains(tokenId)) {
           visionRef.tokenIds.add(tokenId);
@@ -310,25 +312,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
       // otherwise it's a descriptor
       List<Symbol> descriptors = new ArrayList();
       descriptors.add(objectRef);
-      return visionComponent.getTokenIds(descriptors, 0.0f);
-    }
-  }
-
-  /**
-   * This method should probably be removed. Only added for object learning hack in AvailableLearners.
-   *
-   * @param objectRef
-   * @return
-   */
-  public boolean removeReference(Symbol objectRef) {
-    if(!objectRef.hasType()) {
-      objectRef = Factory.createSymbol(objectRef.getName() + ":" + objectRef.getName().split("_")[0]);
-    }
-    if (references.containsKey(objectRef)) {
-      references.remove(objectRef);
-      return true;
-    } else {
-      return false;
+      return visionComponent.getTokenIds(descriptors);
     }
   }
 
@@ -352,15 +336,6 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   }
 
   /**
-   * Get all POWER references known to vision.
-   *
-   * @return
-   */
-  public List<Symbol> getReferences() {
-    return new ArrayList<>(references.keySet());
-  }
-
-  /**
    * Get POWER reference that contain all specified properties.
    *
    * @param properties
@@ -369,7 +344,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   public List<Symbol> getReferences(List<Term> properties) {
     List<Symbol> objectRefs = new ArrayList<>();
 
-    for (VisionReference visionRef : references.values()) {
+    for (VisionReference visionRef : getAllReferences()) {
       if (edu.tufts.hrilab.fol.util.Utilities.containsAllPredicates(visionRef.properties, properties)) {
         objectRefs.add(visionRef.refId);
       }
@@ -384,8 +359,9 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
    * @return
    */
   public Variable getVariable(Symbol objectRef) {
-    if (references.containsKey(objectRef)) {
-      return references.get(objectRef).variable;
+    VisionReference ref = getReference(objectRef);
+    if (ref != null) {
+      return ref.variable;
     } else {
       return null;
     }
@@ -413,14 +389,6 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
     } else if (type.isAssignableFrom(MemoryObject[].class)) {
       // MemoryObject[]
       return convertToType(mos.toArray(new MemoryObject[0]), type);
-    } else if (type.isAssignableFrom(Grasp.class)) {
-      // Grasp
-      List<Grasp> grasps = convertToGrasps(mos.get(0), constraints);
-      return convertToType(grasps.get(0), type);
-    } else if (type.isAssignableFrom(Grasp[].class)) {
-      // Grasp[]
-      List<Grasp> grasps = convertToGrasps(mos.get(0), constraints);
-      return convertToType(grasps.toArray(new Grasp[0]), type);
     } else if (type.isAssignableFrom(Point3d.class)) {
       // Point3d
       return convertToType(mos.get(0).getLocation(), type);
@@ -428,41 +396,6 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
       log.error("[convertToType] Can not handle conversions to type: " + type);
       return null;
     }
-  }
-
-  protected List<Grasp> convertToGrasps(MemoryObject mo, List<? extends Term> constraints) {
-    if (constraints == null || constraints.isEmpty()) {
-      constraints = new ArrayList<>(MemoryObjectUtil.getSceneGraphDescriptors(mo));
-    }
-
-    List<Grasp> grasps = new ArrayList<>();
-
-    // find variable name of "grasp_point" constraint
-    Variable grasp_var = null;
-    for (Term constraint : constraints) {
-      if (constraint.getName().equals("grasp_point") && constraint.getOrderedVars().size() == 1) {
-        grasp_var = constraint.getOrderedVars().get(0);
-        break;
-      }
-    }
-    if (grasp_var == null) {
-      log.error("[moveTo(group,object,constraints)] must contain a \"grasp_point\" constraint.");
-      return grasps;
-    }
-
-    // before we do anything, make sure the MemoryObject is in base_link frame
-    mo.transformToBase();
-
-    // get all the grasp options
-    List<Map<Variable, MemoryObject>> bindings = new ArrayList<>();
-    if (MemoryObjectUtil.getMemoryObjectBindings(mo, constraints, bindings)) {
-      for (Map<Variable, MemoryObject> bindingsInstance : bindings) {
-        Grasp grasp = MemoryObjectUtil.convertMemoryObjectToGrasp(bindingsInstance.get(grasp_var));
-        grasps.add(grasp);
-      }
-    }
-
-    return grasps;
   }
 
   protected <U> U convertToType(Object object, Class<U> type) {
