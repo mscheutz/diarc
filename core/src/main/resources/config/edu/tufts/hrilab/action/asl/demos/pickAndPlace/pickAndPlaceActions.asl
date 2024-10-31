@@ -87,7 +87,7 @@ import java.lang.Integer;
         if(~op:equalsValue(!heldObject, ?object)) {
             !openPose = act:getPoseWithSpace(?destination);
             if (op:isNull(!openPose)) {
-                !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,putDownObject)");
+                !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(find(?actor,openSpace,to,putDownObject))");
                 exit(FAIL, !failCond);
             }
             op:log(info,"moving held object to open location");
@@ -342,7 +342,7 @@ import java.lang.Integer;
             //Move held object to open location
             !openPose = act:getPoseWithSpace(!objectOnePose);
             if (op:isNull(!openPose)) {
-                !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapObjects)");
+                !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(find(?actor,openSpace,to,swapObjects))");
                 exit(FAIL, !failCond);
             }
             op:log(info,"moving held object to open location");
@@ -380,7 +380,7 @@ import java.lang.Integer;
         //Move object two temporarily to an open location
         !openPose = act:getPoseWithSpace(?object2Pose);
         if (op:isNull(!openPose)) {
-            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapObjects)");
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(find(?actor,openSpace,to,swapObjects))");
             exit(FAIL, !failCond);
         }
         op:log(info,"moving object two to open location");
@@ -409,7 +409,7 @@ import java.lang.Integer;
         //Move held object to open location
         !openPose = act:getPoseWithSpace(?objectToSwapPose);
         if (op:isNull(!openPose)) {
-            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapObjects)");
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(find(?actor,openSpace,to,swapObjects))");
             exit(FAIL, !failCond);
         }
         op:log(info,"moving held object to open location");
@@ -420,7 +420,7 @@ import java.lang.Integer;
         //Move object to swap temporarily to an open location
         !openPose = act:getPoseWithSpace(?objectToSwapPose);
         if (op:isNull(!openPose)) {
-            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "find(?actor,openSpace,to,swapObjects)");
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(find(?actor,openSpace,to,swapObjects))");
             exit(FAIL, !failCond);
         }
         op:log(info,"moving object to swap to an open location");
@@ -570,36 +570,14 @@ import java.lang.Integer;
 
     op:log(info,"handleSeeObjectsITK");
 
-    !currentPose = act:getCurrentLocation();
-    !poseDescriptor = tsc:getDescriptorForPoseID(!currentPose);
-    !objects = act:getObjectsAtPose(!currentPose);
-
-    foreach (!binding : !objects) {
-        !object = op:get(!binding,!queryVar);
-        !objectDescriptor = tsc:getDescriptorForID(!object);
-        op:log(info,!object);
-        op:log(info,!objectDescriptor);
-        if (~op:equalsValue(!objectDescriptor, none)) {
-            act:reportObjectBelievedToBeAtPose(!objectDescriptor,!poseDescriptor);
-            !knowObjectAt = op:newObject("java.lang.Boolean", true);
-        }
-    }
-    if (op:equals(!knowObjectAt,False)) {
-        act:reportDontBelieveObjectsAtPose(!poseDescriptor);
-    }
-
-    !response = act:askToVerifyBelief();
-    act:generateResponse(?actor,!ack,direct);
-    if (op:equals(!response,yes)) {
-        !activeGoals = act:getActiveGoals();
-        if (op:isEmpty(!activeGoals)) {
-            !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "detectObjects(?actor)");
-            !goalID = act:submitGoal(!state);
-            !goalStatus = act:joinOnGoal(!goalID);
-        } else {
-            act:reportCantVerifyBecauseActiveGoal();
-            //not exiting so no more responses occur from handleITK
-        }
+    !activeGoals = act:getActiveGoals();
+    if (op:isEmpty(!activeGoals)) {
+        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "detectObjects(?actor)");
+        !goalID = act:submitGoal(!state);
+        !goalStatus = act:joinOnGoal(!goalID);
+    } else {
+        act:reportCantVerifyBecauseActiveGoal();
+        //not exiting so no more responses occur from handleITK
     }
 }
 
