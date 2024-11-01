@@ -4,10 +4,7 @@
 
 package edu.tufts.hrilab.llm.hf;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.llm.Chat;
@@ -469,9 +466,14 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         try {
             List<String> propertyNames;
             if (english) {
-                propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEnglishObjectDescriptors")).call(List.class);
+                //TODO: should be based on group
+                HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getEnglishObjectDescriptors"));
+                propertyNames = services.iterator().next().call(List.class);
+
             } else {
-                propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getJapaneseObjectDescriptors")).call(List.class);
+                //TODO: should be based on group
+                HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getJapaneseObjectDescriptors"));
+                propertyNames = services.iterator().next().call(List.class);
             }
             return propertyNames;
         } catch (TRADEException e) {
@@ -485,9 +487,11 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         try {
             List<String> propertyNames;
             if (english) {
-                propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEnglishPoseDescriptors")).call(List.class);
+                HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getEnglishPoseDescriptors"));
+                propertyNames = services.iterator().next().call(List.class);
             } else {
-                propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getJapanesePoseDescriptors")).call(List.class);
+                HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getJapanesePoseDescriptors"));
+                propertyNames = services.iterator().next().call(List.class);
             }
             return propertyNames;
         } catch (TRADEException e) {
@@ -511,8 +515,8 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             for (Map<Variable, Symbol> binding : bindings) {
                 Symbol x = binding.get(new Variable("X"));
                 Symbol y = binding.get(new Variable("Y"));
-                Symbol object = TRADE.getAvailableService(new TRADEServiceConstraints().name("getDescriptorForID").argTypes(Symbol.class)).call(Symbol.class,x);
-                Symbol pose = TRADE.getAvailableService(new TRADEServiceConstraints().name("getDescriptorForPoseID").argTypes(Symbol.class)).call(Symbol.class,y);
+                Symbol object = ((HashSet<TRADEServiceInfo>)TRADE.getAvailableServices(new TRADEServiceConstraints().name("getDescriptorForID").argTypes(Symbol.class))).iterator().next().call(Symbol.class,x);
+                Symbol pose = ((HashSet<TRADEServiceInfo>)TRADE.getAvailableServices(new TRADEServiceConstraints().name("getDescriptorForPoseID").argTypes(Symbol.class))).iterator().next().call(Symbol.class,y);
                 if (object.getName().equals("none")) {
                     robotLocationString = String.format("The robot is at %s. ",pose.getName());
                 } else {
@@ -524,7 +528,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)).call(List.class,query);
             for (Map<Variable, Symbol> binding : bindings) {
                 Symbol y = binding.get(new Variable("Y"));
-                Symbol object = TRADE.getAvailableService(new TRADEServiceConstraints().name("getDescriptorForID").argTypes(Symbol.class)).call(Symbol.class,y);
+                Symbol object = ((HashSet<TRADEServiceInfo>)TRADE.getAvailableServices(new TRADEServiceConstraints().name("getDescriptorForID").argTypes(Symbol.class))).iterator().next().call(Symbol.class,y);
                 holdingString = String.format("The robot is holding a %s. ", object);
             }
         } catch (TRADEException e) {
@@ -537,7 +541,8 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
 
     private String getDescriptorType(String descriptor) {
         try {
-            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEnglishObjectDescriptors")).call(List.class);
+            HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getEnglishObjectDescriptors"));
+            List<String> propertyNames = services.iterator().next().call(List.class);
             if (propertyNames.contains(descriptor)) {
                 return "physobj";
             }
@@ -546,7 +551,8 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         }
 
         try {
-            List<String> propertyNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getEnglishPoseDescriptors")).call(List.class);
+            HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getEnglishPoseDescriptors"));
+            List<String> propertyNames = services.iterator().next().call(List.class);
             if (propertyNames.contains(descriptor)) {
                 return "pose";
             }
