@@ -76,17 +76,17 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     !dist = op:/(!distSymbol,1);
     !downDist = op:*(!dist,-1);
 
-    !bindingVar =op:newObject("edu.tufts.hrilab.fol.Variable","B");
-    if (~op:isEmpty(!bindings)) {
-        !binding = op:get(!bindings, 0);
-        !xDistSymbol = op:get(!binding,!bindingVar);
-    }
-    !xDist = op:/(!xDistSymbol,1);
-    op:log(debug, "[perceiveEntity] xDist: !xDist:::::: xDistSymbol: !xDistSymbol");
-    !backDist = op:*(!xDist,-1);
+    //!bindingVar =op:newObject("edu.tufts.hrilab.fol.Variable","B");
+    //if (~op:isEmpty(!bindings)) {
+    //    !binding = op:get(!bindings, 0);
+    //    !xDistSymbol = op:get(!binding,!bindingVar);
+    //}
+    //!xDist = op:/(!xDistSymbol,1);
+    //op:log(debug, "[perceiveEntity] xDist: !xDist:::::: xDistSymbol: !xDistSymbol");
+    //!backDist = op:*(!xDist,-1);
 
     tsc:moveZRelative(!dist);
-    tsc:moveXRelative(!xDist);
+    //tsc:moveXRelative(!xDist);
 
     !bindingVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,X)");
@@ -109,12 +109,12 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
         }
     } catch (FAIL_RETURNVALUE) {
         tsc:moveZRelative(!downDist);
-        tsc:moveXRelative(!backDist);
+        //tsc:moveXRelative(!backDist);
         !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "dont(?actor,see,?refID,atMyLocation)");
         exit(FAIL_RETURNVALUE,!failCond);
     }
     tsc:moveZRelative(!downDist);
-    tsc:moveXRelative(!backDist);
+    //tsc:moveXRelative(!backDist);
 }
 
 () = observeDescriptor["runs a job for the given ?descriptor and saves the results in the cognex consultant"](edu.tufts.hrilab.fol.Symbol ?descriptor, java.lang.Integer ?numResults) {
