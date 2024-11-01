@@ -75,7 +75,12 @@ import java.util.List;
     java.lang.Integer !numberOfPoses;
     java.lang.Integer !candidateIndex = -1;
 
+    java.lang.String !actorName;
+    java.lang.String !poseString;
+
     op:log(debug,"getPoseWithSpace");
+
+    !actorName = op:getName(?actor);
 
     !poseDescriptors = act:getEnglishPoseDescriptors();
     !numberOfPoses = op:invokeMethod(!poseDescriptors, "size");
@@ -85,11 +90,13 @@ import java.util.List;
             if (op:equals(!candidateIndex,-1)) {
                 ?pose = op:setNull();
             } else {
-                ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "pose_!candidateIndex:pose");
+                !poseString = op:invokeStaticMethod("java.lang.String","join","",!actorName,"pose_!candidateIndex:pose");
+                ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !poseString);
             }
             !doneChecking = op:newObject("java.lang.Boolean", true);
         } else {
-            ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "pose_!poseIndex:pose");
+            !poseString = op:invokeStaticMethod("java.lang.String","join","",!actorName,"pose_!poseIndex:pose");
+            ?pose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !poseString);
             !numObjects = act:getNumberOfObjectsAt(?pose);
             if (op:lt(!numObjects,1)) {
                 //choose location with 0 current blocks ideally

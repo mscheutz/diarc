@@ -145,7 +145,8 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             }
 
             if (v2 && utteranceType == UtteranceType.INSTRUCT) {
-                semanticsString = semanticsString.replaceFirst("\\(", "(robotone,");
+                String actorName = incomingUtterance.getAddressee().getName();
+                semanticsString = semanticsString.replaceFirst("\\(", "("+actorName+",");
                 if (semanticsString.endsWith(",)")) {
                     semanticsString = semanticsString.replace(",)", ")");
                 }
@@ -168,20 +169,21 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     }
 
     private boolean correctCommonNLUMistakes(Utterance utterance) {
+        String actorName = utterance.getAddressee().getName();
         try {
             String command = utterance.getSemantics().getName();
             if (command.equals("believeObjectAt")) {
                 utterance.setType(UtteranceType.INSTRUCT);
                 if (v2) {
                     List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
-                    args.add(0, Factory.createSymbol("robotone"));
+                    args.add(0, Factory.createSymbol(actorName));
                     utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
                 }
             } else if (command.startsWith("describe")) {
                 utterance.setType(UtteranceType.INSTRUCT);
                 if (v2) {
                     List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
-                    args.add(0, Factory.createSymbol("robotone"));
+                    args.add(0, Factory.createSymbol(actorName));
                     utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
                 }
             } else if (command.equals("goTo")) {
@@ -189,10 +191,10 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                 utterance.setSemantics(Factory.createPredicate("goToPose", args));
             } else if (v2 && command.equals("knowHowTo")) {
                 List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
-                args.add(0, Factory.createSymbol("robotone"));
+                args.add(0, Factory.createSymbol(actorName));
                 Term knownPredicate = (Term) args.remove(1);
                 List<Symbol> innerArgs = knownPredicate.getArgs();
-                innerArgs.add(0,Factory.createSymbol("robotone"));
+                innerArgs.add(0,Factory.createSymbol(actorName));
                 args.add(Factory.createPredicate(knownPredicate.getName(), innerArgs));
                 utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
             //} else if (v2 && command.equals("see")) {
@@ -213,7 +215,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                 }
             } else if (command.equals("whichObjectsAtCurrentPose")) {
                 List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
-                args.add(0, Factory.createSymbol("robotone"));
+                args.add(0, Factory.createSymbol(actorName));
                 utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
             }
         } catch (Exception e) {
