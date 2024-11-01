@@ -136,15 +136,23 @@ const GoalSubmission: React.FC<Props> = ({
                         <Tab>Submit Goal</Tab>
                     </TabList>
 
-                    <TabPanel className="hidden flex-col min-h-0 grow">
-                        <ActionDatabase
-                            actionList={actionList}
-                            setActionFormContext={setActionFormContext}
-                            setSelectedIds={setSelectedIds}
-                            filterNodes={filterNodes}
-                            handleExport={handleExport}
-                            exportStatus={exportStatus}
-                        />
+                    <TabPanel className="hidden flex-col min-h-0 grow gap-5">
+                        <div className="basis-2/3 min-h-0">
+                            <ActionDatabase
+                                actionList={actionList}
+                                setActionFormContext={setActionFormContext}
+                                setSelectedIds={setSelectedIds}
+                                filterNodes={filterNodes}
+                                handleExport={handleExport}
+                                exportStatus={exportStatus}
+                            />
+                        </div>
+                        <div className="basis-1/3 min-h-0 overflow-y-auto border border-1 border-[#d1dbe3] rounded-md
+                                        shadow-md">
+                            <ManagePresets
+                                sendMessage={sendMessage}
+                                path={path}/>
+                        </div>
                     </TabPanel>
                     <TabPanel className="hidden flex-col min-h-0 grow">
                         <div className="w-full h-full overflow-y-auto">
