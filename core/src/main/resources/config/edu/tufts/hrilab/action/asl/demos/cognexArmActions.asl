@@ -15,6 +15,7 @@ import java.util.List;
     Symbol !objectHeightSymbol;
     java.lang.Double !objectHeightM;
     java.lang.Double !cameraHeight;
+    java.lang.Double !cameraHeightM;
 
     !descriptor = tsc:getDescriptorForID(?physobj);
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","objectDefinition(!descriptor,A,B)");
@@ -33,8 +34,9 @@ import java.util.List;
     !bindings = act:queryBelief(!queryPred);
     !binding = op:get(!bindings, 0);
     !cameraHeight = op:get(!binding, !bindingVar);
+    !cameraHeightM = op:/(!cameraHeight,1000);
 
-    !dist = op:-(!cameraHeight,!objectHeightM);
+    !dist = op:-(!cameraHeightM,!objectHeightM);
     tsc:moveZRelative(!dist);
 }
 
@@ -48,6 +50,7 @@ import java.util.List;
     Symbol !objectHeightSymbol;
     java.lang.Double !objectHeightM;
     java.lang.Double !cameraHeight;
+    java.lang.Double !cameraHeightM;
 
     !descriptor = tsc:getDescriptorForID(?physobj);
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","objectDefinition(!descriptor,A,B)");
@@ -66,8 +69,9 @@ import java.util.List;
     !bindings = act:queryBelief(!queryPred);
     !binding = op:get(!bindings, 0);
     !cameraHeight = op:get(!binding, !bindingVar);
+    !cameraHeightM = op:/(!cameraHeight,1000);
 
-    !dist = op:-(!cameraHeight,!objectHeightM);
+    !dist = op:-(!cameraHeightM,!objectHeightM);
     op:*(!dist,-1);
     tsc:moveZRelative(!dist);
 }
