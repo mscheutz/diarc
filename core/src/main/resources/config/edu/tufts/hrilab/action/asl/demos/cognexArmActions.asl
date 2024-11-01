@@ -72,7 +72,7 @@ import java.util.List;
     !cameraHeightM = op:/(!cameraHeight,1000);
 
     !dist = op:-(!cameraHeightM,!objectHeightM);
-    op:*(!dist,-1);
+    !dist = op:*(!dist,-1);
     tsc:moveZRelative(!dist);
 }
 
