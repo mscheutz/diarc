@@ -22,8 +22,16 @@ supervisor(brad).
 supervisor(pete).
 supervisor(james).
 supervisor(eric).
+supervisor(たたら).
+supervisor(佐藤).
+supervisor(鈴木).
+supervisor(高橋).
 
 %% admin
 admin(brad).
 admin(james).
 admin(eric).
+admin(たたら).
+admin(佐藤).
+admin(鈴木).
+admin(高橋).

@@ -291,6 +291,7 @@ robot 1; ADDRESSABLE; robotone
 hi; G ; hi
 hi there; G ; hi_there
 hello; G ; hello
+こんにちは; G; こんにちは
 
 init; C; init(?ADDRESSEE)
 
