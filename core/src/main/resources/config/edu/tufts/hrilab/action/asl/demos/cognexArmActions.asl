@@ -1,17 +1,78 @@
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Variable;
+import java.util.HashMap;
+import java.util.List;
 
 /// utility actions used by configs with a cognex mounted on an arm
-() = moveToCameraHeight["moves up by a camera z height as defined by an inline constant"]() {
-    //Todo: Will/Mar: change these from hardcoded values and/or see if these need to be inverses or not
-    java.lang.Double !dist = 0.15;
+() = moveToCameraHeight["moves up by a camera z height as defined by an inline constant"](Symbol ?physobj,Symbol ?pose) {
+    java.lang.Double !dist;
+    Symbol !descriptor;
+    Predicate !queryPred;
+    List !bindings;
+    java.util.HashMap !binding;
+    Variable !bindingVar;
+    Symbol !objectHeightSymbol;
+    java.lang.Double !objectHeightM;
+    java.lang.Double !cameraHeight;
+    java.lang.Double !cameraHeightM;
+
+    !descriptor = tsc:getDescriptorForID(?physobj);
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","objectDefinition(!descriptor,A,B)");
+    !bindings = act:queryBelief(!queryPred);
+    !bindingVar =op:newObject("edu.tufts.hrilab.fol.Variable","A");
+    if (~op:isEmpty(!bindings)) {
+        (!binding) = op:get(!bindings, 0);
+        (!objectHeightSymbol) = op:get(!binding,!bindingVar);
+    } else {
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,objectDefinition(!descriptor)))");
+        exit(FAIL_RETURNVALUE,!failCond);
+    }
+    !objectHeightM = op:/(!objectHeightSymbol,1);
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cameraHeight(?actor,!bindingVar)");
+    !bindings = act:queryBelief(!queryPred);
+    !binding = op:get(!bindings, 0);
+    !cameraHeight = op:get(!binding, !bindingVar);
+    !cameraHeightM = op:/(!cameraHeight,1000);
+
+    !dist = op:-(!cameraHeightM,!objectHeightM);
     tsc:moveZRelative(!dist);
 }
 
-() = moveToObjectHeight["moves down by a camera z height as defined by an inline constant"]() {
-    //Todo: Will/Mar: change these from hardcoded values and/or see if these need to be inverses or not
-    java.lang.Double !dist = -0.15;
+() = moveToObjectHeight["moves down by a camera z height as defined by an inline constant"](Symbol ?physobj, Symbol ?pose) {
+    java.lang.Double !dist;
+    Symbol !descriptor;
+    Predicate !queryPred;
+    List !bindings;
+    java.util.HashMap !binding;
+    Variable !bindingVar;
+    Symbol !objectHeightSymbol;
+    java.lang.Double !objectHeightM;
+    java.lang.Double !cameraHeight;
+    java.lang.Double !cameraHeightM;
+
+    !descriptor = tsc:getDescriptorForID(?physobj);
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","objectDefinition(!descriptor,A,B)");
+    !bindings = act:queryBelief(!queryPred);
+    !bindingVar =op:newObject("edu.tufts.hrilab.fol.Variable","A");
+    if (~op:isEmpty(!bindings)) {
+        (!binding) = op:get(!bindings, 0);
+        (!objectHeightSymbol) = op:get(!binding,!bindingVar);
+    } else {
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,objectDefinition(!descriptor)))");
+        exit(FAIL_RETURNVALUE,!failCond);
+    }
+    !objectHeightM = op:/(!objectHeightSymbol,1);
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "cameraHeight(?actor,!bindingVar)");
+    !bindings = act:queryBelief(!queryPred);
+    !binding = op:get(!bindings, 0);
+    !cameraHeight = op:get(!binding, !bindingVar);
+    !cameraHeightM = op:/(!cameraHeight,1000);
+
+    !dist = op:-(!cameraHeightM,!objectHeightM);
+    op:*(!dist,-1);
     tsc:moveZRelative(!dist);
 }
 
@@ -52,9 +113,9 @@ import edu.tufts.hrilab.fol.Variable;
     act:rotateToEE(!gripper);
     tsc:openGripper();
     tsc:moveAndOrientToCognexTarget(?physobj);
-    act:moveToObjectHeight();
+    act:moveToObjectHeight(?physobj,?pose);
     tsc:closeGripper();
-    act:moveToCameraHeight();
+    act:moveToCameraHeight(?physobj,?pose);
     act:rotateToEE(!default);
     act:goToCameraPose(?pose);
     op:log(info, "[grabPerceivedEntity] ?physobj complete");
@@ -87,9 +148,9 @@ import edu.tufts.hrilab.fol.Variable;
     act:rotateToEE(!gripper);
     tsc:openGripper();
     tsc:moveAndOrientToCognexTarget(?physobj);
-    act:moveToObjectHeight();
+    act:moveToObjectHeight(?physobj,?pose);
     tsc:closeGripper();
-    act:moveToCameraHeight();
+    act:moveToCameraHeight(?physobj,?pose);
     act:rotateToEE(!default);
     act:goToCameraPose(?pose);
     op:log(info, "[grab] ?physobj complete");
@@ -108,9 +169,6 @@ import edu.tufts.hrilab.fol.Variable;
 
     Symbol !default = "default";
     Symbol !gripper = "gripper";
-    java.lang.Double !objectHeightM = 0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
-    java.lang.Double !negObjectHeightM = -0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
-    java.lang.Double !dim = 50;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
     Predicate !failPred;
     java.lang.Boolean !result;
     java.util.List !results;
@@ -118,6 +176,18 @@ import edu.tufts.hrilab.fol.Variable;
     Predicate !failCond;
     edu.tufts.hrilab.action.justification.Justification !failJustification;
     Predicate !thisStep;
+
+    Symbol !descriptor;
+    Predicate !queryPred;
+    List !bindings;
+    java.util.HashMap !binding;
+    Variable !bindingVar;
+    Symbol !objectHeightSymbol;
+    java.lang.Double !objectHeightM;
+    Symbol !dimSymbol;
+    java.lang.Double !dim;
+
+    op:log(info, "[putdown] ?physobj + ?pose");
 
     !results = act:perceiveEntities();
     if (~op:isEmpty(!results)) {
@@ -131,21 +201,26 @@ import edu.tufts.hrilab.fol.Variable;
         }
     }
 
-//    !failPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "full(?pose)");
+    !descriptor = tsc:getDescriptorForID(?physobj);
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","objectDefinition(!descriptor,A,B)");
+    !bindings = act:queryBelief(!queryPred);
+    !bindingVar =op:newObject("edu.tufts.hrilab.fol.Variable","B");
+    if (~op:isEmpty(!bindings)) {
+        !binding = op:get(!bindings, 0);
+        op:log(info,!queryPred);
+        op:log(info,!binding);
+        !dimSymbol = op:get(!binding,!bindingVar);
+    } else {
+         !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,objectDefinition(!descriptor)))");
+         exit(FAIL_RETURNVALUE,!failCond);
+     }
+    !dim = op:/(!dimSymbol,1);
 
-    op:log(info, "[putdown] ?physobj + ?pose");
-
-    tsc:moveZRelative(!objectHeightM);
     !result = tsc:moveToOpenLocation(!dim, "blocksDet"); //todo: THIS STRING SHOULDN'T BE HARDCODED
-    op:log(debug, "[putdown] result of moveToOpenLocation: !result");
-//    if (~op:equals(!result, true)) {
-//        exit(FAIL, !failPred);
-//    }
-    tsc:moveZRelative(!negObjectHeightM);
     act:rotateToEE(!gripper);
-    act:moveToObjectHeight();
+    act:moveToObjectHeight(?physobj,?pose);
     tsc:openGripper();
-    act:moveToCameraHeight();
+    act:moveToCameraHeight(?physobj,?pose);
     act:rotateToEE(!default);
     act:goToCameraPose(?pose);
     op:log(info, "[putdown] ?physobj + ?pose complete");
