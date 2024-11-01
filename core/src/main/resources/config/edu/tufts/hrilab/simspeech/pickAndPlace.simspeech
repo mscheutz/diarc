@@ -1,10 +1,10 @@
-get the red block to location three
+get the red block to location two
 location one
 ----
-the yellow block is at location two
-go to location two
+the yellow block is at location one
+go to location one
 pick up the yellow block
-go to location three
+go to location two
 put down the yellow block
 ----
 pick up the block
@@ -12,19 +12,22 @@ nevermind
 ----
 the green block is at location one
 what objects do you know the locations of
-move the green block from location one to location three
+move the green block from location one to location two
 yes
 the red block
 ----
+place the red block down at location one
+what objects are at location two
 ----
 ----
-赤いブロックを場所3にしてください
+----
+赤いブロックを場所2にしてください
 場所1
 ----
-黄色いブロックは場所2にあります
-場所2番にしてください
+黄色いブロックは場所1にあります
+場所1番にしてください
 黄色いブロックを拾ってください
-場所3番にしてください
+場所2番にしてください
 黄色いブロックを置いてください
 ----
 物体を拾ってください
@@ -32,6 +35,9 @@ the red block
 ----
 緑色のブロックは場所1にあります
 位置を把握している物体をすべて教えてください
-緑色のブロックを場所1から場所3に移動してください
+緑色のブロックを場所1から場所2に移動してください
 はい
 赤いブロック
+----
+赤いブロックを場所1に置いてください
+場所2にどの物体がありますか
