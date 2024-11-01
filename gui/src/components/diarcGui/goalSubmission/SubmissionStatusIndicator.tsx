@@ -1,11 +1,12 @@
 import React from "react";
 
 // Libraries //
-import { faSync, faCheck } from "@fortawesome/free-solid-svg-icons";
+import {faSync, faCheck, faQuestion} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 type Props = {
-    status: string
+    goal: string,
+    submissionStatus: string
 };
 
 /**
@@ -16,23 +17,34 @@ type Props = {
  * 
  * @author Lucien Bao
  */
-const SubmissionStatusIndicator: React.FC<Props> = ({ status }) => {
-    if (status !== "wait" && status !== "successful") return <></>;
+const SubmissionStatusIndicator: React.FC<Props> = ({ goal, submissionStatus }) => {
+    if (submissionStatus !== "wait" && submissionStatus !== "successful") {
+        return <div className="rounded-md outline outline-1 outline-[#d1dbe3]
+                        flex items-center justify-center px-2 gap-2 w-full shadow-md">
+            <p className="text-center">
+                Goal submission: &nbsp;
+                <FontAwesomeIcon icon={faQuestion} color="#2766e5"/>
+                &nbsp;none submitted
+            </p>
+        </div>
+    }
 
     return (
-        <div className="rounded-md border border-1 border-[#d1dbe3]
-                        flex items-center justify-center px-2 gap-2">
-            <p>
-                Status:
-                {status === "wait" ?
-                    " waiting..."
-                    : " successful!"
+        <div className="rounded-md outline outline-1 outline-[#d1dbe3]
+                        flex items-center justify-center px-2 gap-2 w-full shadow-md">
+            <p className="text-center">
+                <code>{goal}</code>&nbsp;submission: &nbsp;
+                {
+                    submissionStatus === "wait" ?
+                        <FontAwesomeIcon icon={faSync} color="#efd402" spin/>
+                        : <FontAwesomeIcon icon={faCheck} color="#00a505"/>
+                }
+                {
+                    submissionStatus === "wait" ?
+                        " waiting..."
+                        : " successful!"
                 }
             </p>
-            {status === "wait" ?
-                <FontAwesomeIcon icon={faSync} color="#efd402" spin />
-                : <FontAwesomeIcon icon={faCheck} color="#00a505" />
-            }
         </div>
     );
 }

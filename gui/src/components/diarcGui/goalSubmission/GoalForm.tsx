@@ -4,9 +4,6 @@ import React, { SetStateAction } from "react";
 // NPM packages
 import { useForm } from "react-hook-form";
 import { SendMessage } from "react-use-websocket";
-import { faSync, faCheck } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import SubmissionStatusIndicator from "./SubmissionStatusIndicator";
 
 // CONSTANTS //
 const textBoxClassName = "block box-border w-full rounded mt-1 mb-2 text-sm "
@@ -25,7 +22,7 @@ const submitClassName = "bg-slate-900 text-white hover:bg-slate-800 "
 type Props = {
     sendMessage: SendMessage,
     path: string,
-    submissionStatus: string,
+    setLastGoalSubmitted: React.Dispatch<SetStateAction<string>>,
     setSubmissionStatus: React.Dispatch<SetStateAction<string>>
 };
 
@@ -35,11 +32,14 @@ type Props = {
  * @version 1.0
  */
 const GoalForm: React.FC<Props> = ({
-    sendMessage, path, submissionStatus, setSubmissionStatus
+    sendMessage, path, setLastGoalSubmitted, setSubmissionStatus
 }) => {
     // HOOKS & CALLBACKS //
     const { register, handleSubmit } = useForm();
     const onSubmitGoal = (data: any) => {
+        const goal: string = data.goal;
+        setLastGoalSubmitted(goal);
+
         setSubmissionStatus("wait");
         sendMessage(JSON.stringify(
             {
@@ -73,9 +73,6 @@ const GoalForm: React.FC<Props> = ({
                 // From Button.tsx
                    className={submitClassName}
             />
-            <br />
-            <br />
-            <SubmissionStatusIndicator status={submissionStatus} />
         </form>
     );
 };

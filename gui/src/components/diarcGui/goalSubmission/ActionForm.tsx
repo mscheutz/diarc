@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 // Internal imports
 import ActionFormContext from "./ActionFormContext";
 import { SendMessage } from "react-use-websocket";
-import SubmissionStatusIndicator from "./SubmissionStatusIndicator";
 import {LOCAL_STORAGE_KEY} from "../util/constants";
 
 // CONSTANTS //
@@ -29,7 +28,7 @@ const submitClassName = "bg-slate-900 text-white hover:bg-slate-800 "
 type Props = {
     sendMessage: SendMessage,
     path: string,
-    submissionStatus: string,
+    setLastGoalSubmitted: React.Dispatch<SetStateAction<string>>,
     setSubmissionStatus: React.Dispatch<SetStateAction<string>>
 };
 
@@ -42,7 +41,7 @@ type Props = {
 * @version 1.0
 */
 const ActionForm: React.FC<Props> = ({
-    sendMessage, path, submissionStatus, setSubmissionStatus
+    sendMessage, path, setLastGoalSubmitted, setSubmissionStatus
 }) => {
     // HOOKS & CALLBACKS //
     const addToStorage = (action: string) => {
@@ -66,6 +65,9 @@ const ActionForm: React.FC<Props> = ({
         window.dispatchEvent(new Event("localStorage"));
     }, [custom]);
     const onSubmitCustom = (data: any) => {
+        const goal: string = data.custom;
+        const goalName: string = goal.slice(0, goal.indexOf("("));
+        setLastGoalSubmitted(goalName);
         setSubmissionStatus("wait");
         sendMessage(JSON.stringify(
             {
@@ -104,6 +106,8 @@ const ActionForm: React.FC<Props> = ({
         window.dispatchEvent(new Event("localStorage"));
     }
     const onSubmitGenerated = (data: any) => {
+        setLastGoalSubmitted(actionFormContext[0]);
+
         setSubmissionStatus("wait");
         let array: string[] = [actionFormContext[0]]
         for (let i = 1; i < actionFormContext.length; i++) {
@@ -184,14 +188,8 @@ const ActionForm: React.FC<Props> = ({
                             // From Button.tsx
                             className={submitClassName + " grow"}
                         />
-                        <SubmissionStatusIndicator status={submissionStatus} />
                     </div>
                 }
-
-                {/* Still show submission status even when
-                    no actions are selected */}
-                {actionFormContext.length === 0
-                    && <SubmissionStatusIndicator status={submissionStatus} />}
             </form>
         </div>
     );

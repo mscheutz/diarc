@@ -15,6 +15,7 @@ import ActionFormContext from "./ActionFormContext";
 import ConnectionIndicator from "../util/ConnectionIndicator";
 import ActionDatabase from "./ActionDatabase";
 import ManagePresets from "./ManagePresets";
+import SubmissionStatusIndicator from "./SubmissionStatusIndicator";
 
 type Props = {
     path: string,
@@ -73,6 +74,7 @@ const GoalSubmission: React.FC<Props> = ({
     // Export button
     const [exportStatus, setExportStatus] = useState<string>("");
     // Submit buttons
+    const [lastGoalSubmitted, setLastGoalSubmitted] = useState<string>("");
     const [submissionStatus, setSubmissionStatus] = useState<string>("");
 
     const handleExport = () => {
@@ -151,7 +153,10 @@ const GoalSubmission: React.FC<Props> = ({
                                         shadow-md">
                             <ManagePresets
                                 sendMessage={sendMessage}
-                                path={path}/>
+                                path={path}
+                                setLastGoalSubmitted={setLastGoalSubmitted}
+                                setSubmissionStatus={setSubmissionStatus}
+                            />
                         </div>
                     </TabPanel>
                     <TabPanel className="hidden flex-col min-h-0 grow">
@@ -159,7 +164,7 @@ const GoalSubmission: React.FC<Props> = ({
                             <ActionForm
                                 sendMessage={sendMessage}
                                 path={path}
-                                submissionStatus={submissionStatus}
+                                setLastGoalSubmitted={setLastGoalSubmitted}
                                 setSubmissionStatus={setSubmissionStatus}
                             />
                         </div>
@@ -169,7 +174,7 @@ const GoalSubmission: React.FC<Props> = ({
                             <GoalForm
                                 sendMessage={sendMessage}
                                 path={path}
-                                submissionStatus={submissionStatus}
+                                setLastGoalSubmitted={setLastGoalSubmitted}
                                 setSubmissionStatus={setSubmissionStatus}
                             />
                         </div>
@@ -215,7 +220,10 @@ const GoalSubmission: React.FC<Props> = ({
                                 <p className="p-2 text-lg border-b border-[#d1dbe3]">Manage Presets</p>
                                 <ManagePresets
                                     sendMessage={sendMessage}
-                                    path={path}/>
+                                    path={path}
+                                    setLastGoalSubmitted={setLastGoalSubmitted}
+                                    setSubmissionStatus={setSubmissionStatus}
+                                />
                             </Allotment.Pane>
                         </Allotment>
                     </Allotment.Pane>
@@ -236,7 +244,7 @@ const GoalSubmission: React.FC<Props> = ({
                                     <ActionForm
                                         sendMessage={sendMessage}
                                         path={path}
-                                        submissionStatus={submissionStatus}
+                                        setLastGoalSubmitted={setLastGoalSubmitted}
                                         setSubmissionStatus={setSubmissionStatus}
                                     />
                                 </TabPanel>
@@ -245,7 +253,7 @@ const GoalSubmission: React.FC<Props> = ({
                                     <GoalForm
                                         sendMessage={sendMessage}
                                         path={path}
-                                        submissionStatus={submissionStatus}
+                                        setLastGoalSubmitted={setLastGoalSubmitted}
                                         setSubmissionStatus={setSubmissionStatus}
                                     />
                                 </TabPanel>
@@ -254,7 +262,10 @@ const GoalSubmission: React.FC<Props> = ({
                     </Allotment.Pane>
                 </Allotment>
 
-                <ConnectionIndicator readyState={readyState} />
+                <div className="w-full flex flex-row justify-stretch gap-5">
+                    <ConnectionIndicator readyState={readyState} />
+                    <SubmissionStatusIndicator goal={lastGoalSubmitted} submissionStatus={submissionStatus} />
+                </div>
             </div>
         </ActionFormContext.Provider>
     );

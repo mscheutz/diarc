@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {SetStateAction, useEffect, useState} from "react";
 
 import {SendMessage} from "react-use-websocket";
 import {LOCAL_STORAGE_KEY} from "../util/constants";
@@ -6,7 +6,9 @@ import {Button} from "../../Button";
 
 type Props = {
     sendMessage: SendMessage,
-    path: string
+    path: string,
+    setLastGoalSubmitted: React.Dispatch<SetStateAction<string>>,
+    setSubmissionStatus: React.Dispatch<SetStateAction<string>>
 };
 
 /**
@@ -16,7 +18,7 @@ type Props = {
  * @version 1.0
  */
 const ManagePresets: React.FC<Props> = (
-    {sendMessage, path}
+    {sendMessage, path, setLastGoalSubmitted, setSubmissionStatus}
 ) => {
     const [presetsJSON, setPresetsJSON] = useState<string>("[]");
     useEffect(() => {
@@ -29,11 +31,15 @@ const ManagePresets: React.FC<Props> = (
 
     //@ts-ignore
     const submitCallback = (e: MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        const goal: string = e.target.id.slice(1);
+        const goalName: string = goal.slice(0, goal.indexOf("("));
+        setLastGoalSubmitted(goalName);
+        setSubmissionStatus("wait");
         sendMessage(JSON.stringify(
             {
                 type: "custom",
                 formData: {
-                    custom: e.target.id.slice(1) // get rid of starting 's' char
+                    custom: goal // get rid of starting 's' char
                 },
                 path: path
             }
