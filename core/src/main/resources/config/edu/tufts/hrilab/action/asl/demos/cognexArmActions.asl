@@ -207,14 +207,13 @@ import java.util.List;
     !bindingVar =op:newObject("edu.tufts.hrilab.fol.Variable","B");
     if (~op:isEmpty(!bindings)) {
         !binding = op:get(!bindings, 0);
-        op:log(info,!queryPred);
-        op:log(info,!binding);
         !dimSymbol = op:get(!binding,!bindingVar);
     } else {
          !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,objectDefinition(!descriptor)))");
          exit(FAIL_RETURNVALUE,!failCond);
      }
     !dim = op:/(!dimSymbol,1);
+    !dim = op:*(!dim,1000);
 
     !result = tsc:moveToOpenLocation(!dim, "blocksDet"); //todo: THIS STRING SHOULDN'T BE HARDCODED
     act:rotateToEE(!gripper);
