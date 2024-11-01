@@ -9,10 +9,6 @@ GOTO; {C/REF ; #x.goToPose(?ADDRESSEE,$x)} ,{(C/REF)\AGENT ; #agent#x.goToPose($
 
 END-TEMPLATES
 
-robot one; ADDRESSABLE; robotone
-robot two; ADDRESSABLE; robottwo
-robot to; ADDRESSABLE; robottwo
-
 a; REF/RN ; #x.$x ; INDEFINITE
 the; REF/RN ; #x.$x ; DEFINITE
 one; REF/RN ; #x.$x ; INDEFINITE
@@ -285,8 +281,6 @@ no; VAL; val(no);
 
 %% Testing only %%
 %test nlg; C/LIT*; #x.testLLMNLGWithString(?ADDRESSEE,$x);
-
-robot 1; ADDRESSABLE; robotone
 
 hi; G ; hi
 hi there; G ; hi_there
