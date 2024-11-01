@@ -28,8 +28,31 @@ import java.lang.Integer;
     Symbol !location;
     Predicate !fact;
 
-    java.lang.Double !objectHeightM = 0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
-    java.lang.Double !negObjectHeightM = -0.050;//todo: URGENT @ PETE THIS SHOULDN'T BE HARDCODED
+    Predicate !queryPred;
+    List !bindings;
+    java.util.HashMap !binding;
+    Variable !bindingVar;
+    Symbol !distSymbol;
+    Predicate !failCond;
+
+    java.lang.Double !objectHeightM;
+    java.lang.Double !negObjectHeightM;
+
+    //TODO: Eventually if we have multiple objects of different heights we will need to either cycle through every
+    //  object height and take pictures and/or pass in a relevant set of objects to do so for
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","objectDefinition(D,A,B)");
+    !bindings = act:queryBelief(!queryPred);
+
+    !bindingVar =op:newObject("edu.tufts.hrilab.fol.Variable","A");
+    if (~op:isEmpty(!bindings)) {
+        (!binding) = op:get(!bindings, 0);
+        (!distSymbol) = op:get(!binding,!bindingVar);
+    } else {
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,objectHeights))");
+        exit(FAIL_RETURNVALUE,!failCond);
+    }
+    !objectHeightM = op:/(!distSymbol,1);
+    !negObjectHeightM = op:*(!objectHeightM,-1);
 
     !location = act:getCurrentLocation();
 
