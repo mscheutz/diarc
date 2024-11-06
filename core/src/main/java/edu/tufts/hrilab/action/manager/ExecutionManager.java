@@ -1852,6 +1852,80 @@ public class ExecutionManager implements GoalListener {
     return agentTeam.cancelActionLearning(newAction);
   }
 
+  @Action
+  @TRADEService
+  public boolean resumeActionLearning(Symbol actor) {
+    log.debug("[resumeActionLearning] {}", actor);
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[resumeActionLearning] unknown actor supplied {}", actor);
+      return false;
+    }
+
+    Predicate activeSignature = agentTeam.getActiveLearningSignature();
+    if (activeSignature == null) {
+      log.error("[resumeActionLearning] {} does not have an active learning state", actor);
+      return false;
+    }
+
+    return resumeActionLearning(actor,activeSignature);
+  }
+
+  @Action
+  @TRADEService
+  public boolean endActionLearning(Symbol actor) {
+    log.debug("[endActionLearning] {}, {}", actor);
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[endActionLearning] unknown actor supplied {}", actor);
+      return false;
+    }
+
+    Predicate activeSignature = agentTeam.getActiveLearningSignature();
+    if (activeSignature == null) {
+      log.error("[endActionLearning] {} does not have an active learning state", actor);
+      return false;
+    }
+
+    return endActionLearning(actor,activeSignature);
+  }
+
+  @Action
+  @TRADEService
+  public boolean pauseActionLearning(Symbol actor) {
+    log.debug("[pauseActionLearning] {}, {}", actor);
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[pauseActionLearning] unknown actor supplied {}", actor);
+      return false;
+    }
+    Predicate activeSignature = agentTeam.getActiveLearningSignature();
+    if (activeSignature == null) {
+      log.error("[pauseActionLearning] {} does not have an active learning state", actor);
+      return false;
+    }
+
+    return pauseActionLearning(actor,activeSignature);
+  }
+
+  @Action
+  @TRADEService
+  public boolean cancelActionLearning(Symbol actor) {
+    log.debug("[cancelActionLearning] {}, {}", actor);
+    AgentTeam agentTeam = getAgentTeam(actor);
+    if (agentTeam == null) {
+      log.error("[cancelActionLearning] unknown actor supplied {}", actor);
+      return false;
+    }
+    Predicate activeSignature = agentTeam.getActiveLearningSignature();
+    if (activeSignature == null) {
+      log.error("[cancelActionLearning] {} does not have an active learning state", actor);
+      return false;
+    }
+
+    return cancelActionLearning(actor,activeSignature);
+  }
+
   @TRADEService
   @Action
   public ActionLearningStatus getLearningStatus(Symbol actor) {

@@ -25,6 +25,7 @@ REPLY(A,B,cannot(putDown(C,D),because(occupied(E))),Z) := REPLY(A,B,cannot(did(p
 REPLY(A,B,cannot(handleSemantics(C,val(D)),because(not(know(C,how(handled(C,C,val(D),direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noMatchingQuestionWasAsked)),Z)
 REPLY(A,B,cannot(handleSemantics(C,blockType(D)),because(not(know(C,how(handled(C,C,blockType(D),direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noMatchingQuestionWasAsked)),Z)
 REPLY(A,B,cannot(handleSemantics(C,pose(D)),because(not(know(C,how(handled(C,C,pose(D),direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noMatchingQuestionWasAsked)),Z)
+REPLY(A,B,cannot(handleSemantics(C,taskName(D)),because(not(know(C,how(handled(C,C,taskName(D),direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noMatchingQuestionWasAsked)),Z)
 #REPLY(A,B,cannot(handleSemantics(C,D),because(not(know(C,how(handled(C,C,D,direct)))))),Z) := REPLY(A,B,cannot(handleReply(C,D),because(noMatchingQuestionWasAsked)),Z)
 END-SET
 

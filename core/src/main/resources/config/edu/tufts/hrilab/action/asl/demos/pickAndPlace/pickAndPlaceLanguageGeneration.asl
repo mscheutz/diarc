@@ -232,3 +232,21 @@ import java.util.Map;
         act:assertIsPose(?objectPose);
     }
 }
+
+(String ?name) = askForTaskName() {
+    Symbol !response;
+    Map !bindings;
+    Variable !x = "X";
+
+    (!bindings) = act:askQuestionFromString(?actor,"What is the name of the new task?", taskName(X));
+    if (op:invokeMethod(!bindings, "isEmpty")) {
+        ?name = op:setNull();
+    } else {
+        !response = op:get(!bindings,!x);
+        ?name = op:getName(!response);
+    }
+}
+
+() = reportActionLearningStart(String ?name) {
+    act:generateResponseFromString("How do I perform ?name");
+}

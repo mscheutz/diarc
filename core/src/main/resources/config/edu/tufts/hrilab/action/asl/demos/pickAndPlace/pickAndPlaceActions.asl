@@ -933,3 +933,21 @@ import java.lang.Integer;
 
     act:reportCurrentPose(!descriptor);
 }
+
+() = learnNewTask() {
+    Predicate !actionSignature;
+    String !taskName;
+    !taskName = act:askForTaskName();
+    
+    if (op:isNull(!taskName)) {
+        exit(FAIL, not(taskName,supplied));
+    }
+
+    !actionSignature = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !taskName);
+    op:log(info,!actionSignature);
+    async {
+        act:learnAction(!actionSignature);
+    }
+    act:waitForActionLearningStart(!actionSignature);
+    act:reportActionLearningStart(!taskName);
+}

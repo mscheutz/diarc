@@ -196,6 +196,10 @@ public class AgentTeam {
         return actionLearning.shouldExecute();
     }
 
+    protected Predicate getActiveLearningSignature() {
+        return actionLearning.getActiveLearningSignature();
+    }
+
     //// Resources ////
     public Resource getResource(Symbol name) {
         return resources.get(name);

@@ -86,6 +86,10 @@ public class ActionLearning {
     ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("cancelActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("endActionLearning(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelActionLearning(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("changeLearningExecution(?actor,?status)"));
     ignoreActionSet.add(Factory.createPredicate("endLearningAssembleScript(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("freeze(?actor)"));
@@ -98,6 +102,18 @@ public class ActionLearning {
     ignoreActionSet.add(Factory.createPredicate("cancelAllPendingGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllActiveGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelPendingGoalByIndex(?actor)"));
+
+    //spotPickAndPlace - Only here because of workaround implementation of itk actions
+    ignoreActionSet.add(Factory.createPredicate("believeObjectAt(?actor,?object,?pose)"));
+    ignoreActionSet.add(Factory.createPredicate("describeObjectPose(?actor,?object)"));
+    ignoreActionSet.add(Factory.createPredicate("describeObjectPoses(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("describeObjectsAt(?actor,?pose)"));
+    ignoreActionSet.add(Factory.createPredicate("describeNumberOfObjectsAt(?actor,?pose)"));
+    ignoreActionSet.add(Factory.createPredicate("describeCurrentGoal(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("describePendingGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("describeCurrentPose(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("describeDetectableObjectNames(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("describeKnownPoseNames(?actor)"));
   }
 
   public void startQueuingGoals() {
@@ -371,6 +387,18 @@ public class ActionLearning {
 
   public boolean shouldExecute() {
     return executeAction;
+  }
+
+  //TODO: Shouldn't learning states be indexed by something more detailed than just signature name?
+  public Predicate getActiveLearningSignature() {
+    if (currentLearningState == null) {
+      log.warn("[getActiveLearningName] method called but current learning state is null");
+      return null;
+    } else {
+      List<Symbol> args = currentLearningState.getRoleNames();
+      args.add(0, Factory.createVariable("?actor"));
+      return Factory.createPredicate(currentLearningState.getName(),args);
+    }
   }
 
   //TODO: cancelTeachingByModification

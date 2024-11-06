@@ -291,3 +291,13 @@ init; C; init(?ADDRESSEE)
 
 what do you see; Q; whichObjectsAtCurrentPose(?ADDRESSEE)
 what do you see at your location; Q; whichObjectsAtCurrentPose(?ADDRESSEE)
+
+%% Temp learning language %%
+i will teach you a new task; VERBI; learnNewTask
+i will teach you how to perform a new task; VERBI; learnNewTask
+
+i am done teaching; VERBI; endActionLearning
+those are the steps of the task; VERBI; endActionLearning
+
+task a; VAL; taskName(task a)
+perform task a; VERBI; task a

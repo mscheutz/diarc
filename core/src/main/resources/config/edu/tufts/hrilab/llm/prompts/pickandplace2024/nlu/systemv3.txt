@@ -74,6 +74,15 @@ Description: The user is instructing the ?actor to stop whatever its currently d
 #
 cancelAllCurrentGoals(?actor)
 Description: the user is instructing the ?actor to completely discard all knowledge of instructions the user told it to perform which it has not yet performed.
+#
+learnNewTask(?actor)
+Description: the user is instructing the ?actor that they will begin teaching the system a new action. This will be done by having the user describe a sequence of actions to be performed, and the system remembering said action sequence.
+#
+endActionLearning(?actor)
+Description: To be used after learnNewTask(?actor), the user is instructing the ?actor that they are finished describing the action sequence of the new task. At this point the learning phase will end and the new action will be ready for execution.
+#
+task a(?actor)
+Description: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as "task a" when instructed by the user.
 
 ###
 Questions:
@@ -151,6 +160,9 @@ Description: The user is responding to a question asking for a specific object b
 #
 abort(question)
 Description: These are universal semantics to represent when the user is declining to answer the question. Examples are "nevermind", "forget about it", and "im not answering that".
+#
+taskName(?name)
+Description: Prompted by the learnNewTask action, the user is answering a question from the system about what the to-be-learned task should be called. ?name has no restriction on possible values.
 ###
 
 Statement:

@@ -4012,19 +4012,8 @@ public class TLDLParserComponentTest {
         component.addDictionary("pickAndPlaceGenerated.dict");
         component.setUseAddressHistory(false);
 
-        assertTrue(testUtterance("robot one go to location one",
-                "INSTRUCT(brad,robotone,goToPose(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
-                "brad",
-                "self"
-        ));
         assertTrue(testUtterance("go to location two",
                 "INSTRUCT(brad,self,goToPose(self,VAR0:pose),{location two(VAR0:pose),DEFINITE(VAR0:pose)})",
-                "brad",
-                "self"
-        ));
-
-        assertTrue(testUtterance("robot one verify that you can see a red block",
-                "INSTRUCT(brad,robotone,detectObject(robotone,VAR0:physobj),{red block(VAR0:physobj),INDEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));

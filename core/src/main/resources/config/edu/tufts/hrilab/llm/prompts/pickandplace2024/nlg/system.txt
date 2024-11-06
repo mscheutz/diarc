@@ -100,6 +100,12 @@ Description: The human wants to know what objects the agent knows how to detect 
 #
 describeKnownPoseNames()
 Description: The human wants to know what poses the agent knows about
+#
+learnNewTask(?actor)
+Description: the user is instructing the ?actor that they will begin teaching the system a new action. This will be done by having the user describe a sequence of actions to be performed, and the system remembering said action sequence.
+#
+endActionLearning(?actor)
+Description: To be used after learnNewTask(?actor), the user is instructing the ?actor that they are finished describing the action sequence of the new task. At this point the learning phase will end and the new action will be ready for execution.
 ##
 
 Previous interactions between the system and users may have already occurred. These interactions may be relevant to your task by providing context which can inform your translations. The recent conversation history between the user and the system leading up to this point is as follows:
