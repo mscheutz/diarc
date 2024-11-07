@@ -6,6 +6,9 @@ package edu.tufts.hrilab.llm.hf;
 
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.db.ActionDBEntry;
+import edu.tufts.hrilab.action.goal.GoalInfo;
+import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Completion;
@@ -28,6 +31,8 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     Prompt validationPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/validation");
     private String language = "English";
     private boolean v2 = true;
+    private boolean registeredForNewActions = false;
+    private String learnedActionsString = "";
 
     @Override
     protected List<Option> additionalUsageInfo() {
@@ -46,6 +51,25 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             nlgUserPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/user");
             validationPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/validation");
             language = "Japanese";
+        }
+    }
+
+    ////EW: I may have used this incorrectly or the "when joined" case may not work?
+    //@Override
+    //protected void init() {
+    //    super.init();
+    //    try {
+    //        TRADE.registerNotificationNowOrWhenJoined(this, new TRADEServiceConstraints().name("handleDatabaseAddition").argTypes(ActionDBEntry.class), "registerForNotifications");
+    //    } catch (TRADEException e) {
+    //        log.error("[init] error registering for notification of callback service used as new db entry listener", e);
+    //    }
+    //}
+
+    @Override
+    protected void executionLoop () {
+        super.executionLoop();
+        if (!registeredForNewActions) {
+            registerForNotifications();
         }
     }
 
@@ -105,7 +129,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                     return incomingUtterance;
                 }
                 Symbol argSymbol;
-                String descriptorType = getDescriptorType(arg);
+                String descriptorType = getDescriptorType(incomingUtterance.getAddressee().getName(),arg);
                 if (descriptorType.isEmpty()) {
                     argSymbol = Factory.createFOL(arg);
                 } else {
@@ -281,10 +305,10 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         //Intercept Validation Question and use specific validation prompt
         String userMessage;
         Predicate semantics = (Predicate) utterance.getSemantics();
-        List<String> objectsEnglish = getObjects(true);
-        List<String> objectsJapanese = getObjects(false);
-        List<String> englishPoses = getPoses(true);
-        List<String> japanesePoses = getPoses(false);
+        List<String> objectsEnglish = getObjects(utterance.getSpeaker().getName(),true);
+        List<String> objectsJapanese = getObjects(utterance.getSpeaker().getName(),false);
+        List<String> englishPoses = getPoses(utterance.getSpeaker().getName(),true);
+        List<String> japanesePoses = getPoses(utterance.getSpeaker().getName(),false);
 
         Map<String,String> promptVars = new LinkedHashMap<>();
         if (semantics.getName().equals("doYouMean")) {
@@ -352,15 +376,16 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         
         Map<String,String> promptVars = new LinkedHashMap<>();
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
-        List<String> objectsEnglish = getObjects(true);
-        List<String> objectsJapanese = getObjects(false);
-        List<String> englishPoses = getPoses(true);
-        List<String> japanesePoses = getPoses(false);
+        List<String> objectsEnglish = getObjects(utterance.getAddressee().getName(),true);
+        List<String> objectsJapanese = getObjects(utterance.getAddressee().getName(),false);
+        List<String> englishPoses = getPoses(utterance.getAddressee().getName(),true);
+        List<String> japanesePoses = getPoses(utterance.getAddressee().getName(),false);
         promptVars.put("%objectList", String.join("\n", objectsEnglish));
         promptVars.put("%locationList", String.join("\n", englishPoses));
         promptVars.put("%japaneseObjList", String.join("\n", objectsJapanese));
         promptVars.put("%japanesePoseList", String.join("\n", japanesePoses));
-        promptVars.put("%worldState", getWorldStateString());
+        promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
+        promptVars.put("%learnedActions%",learnedActionsString);
         currentChat.setSystem(nluSystemPrompt.apply(promptVars));
         promptVars.clear();
         populatePromptVarsWithProperties(promptVars, objectsEnglish, objectsJapanese, englishPoses, japanesePoses);
@@ -462,18 +487,21 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         return promptVars;
     }
     
-    private List<String> getObjects(boolean english) {
+    private List<String> getObjects(String actorName, boolean english) {
         try {
-            List<String> propertyNames;
+            List<String> propertyNames = new ArrayList<>();
             if (english) {
                 //TODO: should be based on group
-                HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getEnglishObjectDescriptors"));
-                propertyNames = services.iterator().next().call(List.class);
-
+                TRADEServiceInfo tsi = getServiceForAgent(actorName, "getEnglishObjectDescriptors");
+                if (tsi != null) {
+                    propertyNames = tsi.call(List.class);
+                }
             } else {
                 //TODO: should be based on group
-                HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getJapaneseObjectDescriptors"));
-                propertyNames = services.iterator().next().call(List.class);
+                TRADEServiceInfo tsi = getServiceForAgent(actorName, "getJapaneseObjectDescriptors");
+                if (tsi != null) {
+                    propertyNames = tsi.call(List.class);
+                }
             }
             return propertyNames;
         } catch (TRADEException e) {
@@ -483,15 +511,19 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         return new ArrayList<>();
     }
 
-    private List<String> getPoses(boolean english) {
+    private List<String> getPoses(String agentName, boolean english) {
         try {
-            List<String> propertyNames;
+            List<String> propertyNames = new ArrayList<>();
             if (english) {
-                HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getEnglishPoseDescriptors"));
-                propertyNames = services.iterator().next().call(List.class);
+                TRADEServiceInfo tsi = getServiceForAgent(agentName,"getEnglishPoseDescriptors");
+                if (tsi != null) {
+                    propertyNames = tsi.call(List.class);
+                }
             } else {
-                HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getJapanesePoseDescriptors"));
-                propertyNames = services.iterator().next().call(List.class);
+                TRADEServiceInfo tsi = getServiceForAgent(agentName,"getJapanesePoseDescriptors");
+                if (tsi != null) {
+                    propertyNames = tsi.call(List.class);
+                }
             }
             return propertyNames;
         } catch (TRADEException e) {
@@ -501,7 +533,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         return new ArrayList<>();
     }
 
-    private String getWorldStateString() {
+    private String getWorldStateString(Symbol agent) {
         ////If parser test
         //return "Nothing is known by the robot";
 
@@ -515,34 +547,54 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             for (Map<Variable, Symbol> binding : bindings) {
                 Symbol x = binding.get(new Variable("X"));
                 Symbol y = binding.get(new Variable("Y"));
-                Symbol object = ((HashSet<TRADEServiceInfo>)TRADE.getAvailableServices(new TRADEServiceConstraints().name("getDescriptorForID").argTypes(Symbol.class))).iterator().next().call(Symbol.class,x);
-                Symbol pose = ((HashSet<TRADEServiceInfo>)TRADE.getAvailableServices(new TRADEServiceConstraints().name("getDescriptorForPoseID").argTypes(Symbol.class))).iterator().next().call(Symbol.class,y);
-                if (object.getName().equals("none")) {
-                    robotLocationString = String.format("The robot is at %s. ",pose.getName());
-                } else {
-                    builder.append(String.format("There is a %s at %s. ",object.getName(),pose.getName()));
+                TRADEServiceInfo tsi = getServiceForAgent(agent.getName(),"getDescriptorForID",Symbol.class);
+                if (tsi != null) {
+                    Symbol object = tsi.call(Symbol.class, x);
+                    tsi = getServiceForAgent(agent.getName(), "getDescriptorForPoseID", Symbol.class);
+                    if (tsi != null) {
+                        Symbol pose = tsi.call(Symbol.class, y);
+                        if (x.getName().startsWith(agent.getName())) {
+                            if (object.getName().equals("none")) {
+                                robotLocationString = String.format("The robot is at %s. ", pose.getName());
+                            } else {
+                                builder.append(String.format("There is a %s at %s. ", object.getName(), pose.getName()));
+                            }
+                        }
+                    }
                 }
             }
 
             query = Factory.createPredicate("holding","X","Y");
             bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)).call(List.class,query);
             for (Map<Variable, Symbol> binding : bindings) {
+                Symbol x = binding.get(new Variable("X"));
                 Symbol y = binding.get(new Variable("Y"));
-                Symbol object = ((HashSet<TRADEServiceInfo>)TRADE.getAvailableServices(new TRADEServiceConstraints().name("getDescriptorForID").argTypes(Symbol.class))).iterator().next().call(Symbol.class,y);
-                holdingString = String.format("The robot is holding a %s. ", object);
+                if (x.getName().startsWith(agent.getName())) {
+                    TRADEServiceInfo tsi = getServiceForAgent(agent.getName(),"getDescriptorForID", Symbol.class);
+                    if (tsi != null) {
+                        Symbol object = tsi.call(Symbol.class, y);
+                        holdingString = String.format("The robot is holding a %s. ", object);
+                    }
+                }
             }
         } catch (TRADEException e) {
             log.error("[getWorldState] ", e);
             return "Nothing is known by the robot";
         }
-
+        if (robotLocationString.isEmpty() && holdingString.isEmpty()) {
+            log.warn("[getWorldState] no matching beliefs found for agent {}", agent);
+            return "Nothing is known by the robot";
+        }
         return robotLocationString + holdingString + builder;
     }
 
-    private String getDescriptorType(String descriptor) {
+    private String getDescriptorType(String agentName, String descriptor) {
+        List<String> propertyNames = new ArrayList<>();
         try {
-            HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getEnglishObjectDescriptors"));
-            List<String> propertyNames = services.iterator().next().call(List.class);
+            TRADEServiceInfo tsi = getServiceForAgent(agentName,"getEnglishObjectDescriptors");
+            if (tsi != null) {
+                propertyNames = tsi.call(List.class);
+            }
             if (propertyNames.contains(descriptor)) {
                 return "physobj";
             }
@@ -551,8 +603,10 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         }
 
         try {
-            HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name("getEnglishPoseDescriptors"));
-            List<String> propertyNames = services.iterator().next().call(List.class);
+            TRADEServiceInfo tsi = getServiceForAgent(agentName,"getEnglishPoseDescriptors");
+            if (tsi != null) {
+                propertyNames = tsi.call(List.class);
+            }
             if (propertyNames.contains(descriptor)) {
                 return "pose";
             }
@@ -567,20 +621,70 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     public String getJapaneseVersionOfDescriptor(Symbol descriptor) {
         return getJapaneseVersionOfDescriptor(descriptor.getName());
     }
+    //TODO: use actor
     @TRADEService
     public String getJapaneseVersionOfDescriptor(String descriptorString) {
-        List<String> englishDescriptors = getObjects(true);
-        List<String> japaneseDescriptors = getObjects(false);
+        List<String> englishDescriptors = getObjects("robotone",true);
+        List<String> japaneseDescriptors = getObjects("robotone",false);
         int index = englishDescriptors.indexOf(descriptorString);
         if (index != -1 && index < japaneseDescriptors.size()) {
             return japaneseDescriptors.get(index);
         }
-        englishDescriptors = getPoses(true);
-        japaneseDescriptors = getPoses(false);
+        englishDescriptors = getPoses("robotone",true);
+        japaneseDescriptors = getPoses("robotone",false);
         index = englishDescriptors.indexOf(descriptorString);
         if (index != -1 && index < japaneseDescriptors.size()) {
             return japaneseDescriptors.get(index);
         }
         return descriptorString;
+    }
+
+    @TRADEService
+    //public void registerForNotifications(TRADEServiceInfo notificationHandler) {
+    public void registerForNotifications() {
+        try {
+            TRADEServiceInfo registerService = TRADE.getAvailableService(new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
+            TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseAddition").argTypes(ActionDBEntry.class));
+            registerService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
+            registeredForNewActions = true;
+            log.info("[registerForNotifications] successfully registered for database additions");
+        } catch (TRADEException e) {
+            log.debug("[registerForNotifications] error registering for actionDB notifications", e);
+        }
+    }
+
+    @TRADEService
+    public void handleDatabaseAddition(ActionDBEntry entry) throws TRADEException {
+        if (entry.isScript() && entry.getDBFile() == null && !entry.getName().equals("planned")) {
+            log.info("[handleDatabaseAddition] have learned action {}", entry.getName());
+            //learnedActions.add(entry);
+            learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n",entry.getSignature(false),entry.getName());
+        }
+    }
+
+    @Override
+    public void shutdownComponent() {
+        super.shutdownComponent();
+        try {
+            TRADEServiceInfo unregisterService = TRADE.getAvailableService(new TRADEServiceConstraints().name("unregisterGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
+            TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleGoalNotification").argTypes(GoalInfo.class));
+            unregisterService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
+        } catch (TRADEException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    TRADEServiceInfo getServiceForAgent(String agentName, String serviceName, Class<?>... argTypes) {
+        HashSet<TRADEServiceInfo> services = (HashSet<TRADEServiceInfo>) TRADE.getAvailableServices(new TRADEServiceConstraints().name(serviceName).argTypes(argTypes));
+        for (TRADEServiceInfo tsi : services) {
+            Collection<String> groups = tsi.getGroups();
+            for (String group : groups) {
+                if (group.contains(agentName)) {
+                    return tsi;
+                }
+            }
+        }
+        log.warn("[getServiceForAgent] could not find service {} for agent {}", serviceName, agentName);
+        return null;
     }
 }
