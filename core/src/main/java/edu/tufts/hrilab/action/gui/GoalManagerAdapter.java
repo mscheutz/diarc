@@ -6,6 +6,7 @@ package edu.tufts.hrilab.action.gui;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import com.google.gson.Gson;
@@ -13,6 +14,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
+import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.gui.GuiAdapter;
@@ -20,6 +22,9 @@ import edu.tufts.hrilab.gui.GuiAdapter;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
+
+import static edu.tufts.hrilab.action.notification.NotificationType.DATABASE_ADDITION;
+import static edu.tufts.hrilab.action.notification.NotificationType.DATABASE_REMOVAL;
 
 /**
  * A WebSocket adapter for communication between the
@@ -167,6 +172,20 @@ public class GoalManagerAdapter extends GuiAdapter {
   }
 
   /**
+   * Send a message to the client that the goal submission was successful.
+   */
+  private void notifySubmissionSuccessful() {
+    try {
+      JsonObject json = new JsonObject();
+      json.addProperty("submit", "successful");
+      json.addProperty("path", getPath());
+      sendMessage(json);
+    } catch (TRADEException e) {
+      log.error("Failed to notify export successful", e);
+    }
+  }
+
+  /**
    * Called on receipt of custom-action message.
    *
    * @param customAction the action string.
@@ -221,13 +240,18 @@ public class GoalManagerAdapter extends GuiAdapter {
   }
 
   /**
-   * Starts a periodic update after the connection is established to the GUI
+   * Sends the action list after the connection is established to the GUI
    * client.
    */
   private void onConnect() {
-    // update cached actions
     retrieveActionList();
+    sendActionList();
+  }
 
+  /**
+   * Updates the client of the current action list.
+   */
+  void sendActionList() {
     JsonArray actions = new JsonArray();
     for (int i = 0; i < actionList.size(); i++) {
       JsonObject action = new JsonObject();
@@ -256,6 +280,33 @@ public class GoalManagerAdapter extends GuiAdapter {
   @Override
   protected void init() {
     initializeServices();
+
+    try {
+      TRADE.registerAllServices(this, (String) null);
+      TRADEServiceInfo add = TRADE.getAvailableService(
+        new TRADEServiceConstraints()
+          .returnType(void.class)
+          .name("actionAdded")
+          .argTypes(ActionDBEntry.class)
+      );
+      TRADEServiceInfo remove = TRADE.getAvailableService(
+        new TRADEServiceConstraints()
+          .returnType(void.class)
+          .name("actionRemoved")
+          .argTypes(ActionDBEntry.class)
+      );
+      TRADEServiceInfo register = TRADE.getAvailableService(
+        new TRADEServiceConstraints()
+          .returnType(void.class)
+          .name("registerGoalManagerNotification")
+          .argTypes(TRADEServiceInfo.class, NotificationType.class)
+      );
+
+      register.call(void.class, add, DATABASE_ADDITION);
+      register.call(void.class, remove, DATABASE_REMOVAL);
+    } catch(TRADEException te) {
+      log.error("TRADEException occurred while registering for notifications", te);
+    }
   }
 
   /**
@@ -276,13 +327,23 @@ public class GoalManagerAdapter extends GuiAdapter {
   @Override
   protected void handleMessage(JsonObject message) {
     switch (message.get("type").getAsString()) {
-      case "custom" -> submitCustomAction(
-              message.getAsJsonObject("formData").get("custom").getAsString());
-      case "form" -> submitFormAction(message.getAsJsonArray("formData"));
-      case "goal" -> submitGoal(
-              message.getAsJsonObject("formData").get("agent").getAsString(),
-              message.getAsJsonObject("formData").get("goal").getAsString()
-      );
+      case "custom" -> {
+        submitCustomAction(
+          message.getAsJsonObject("formData").get("custom").getAsString()
+        );
+        notifySubmissionSuccessful();
+      }
+      case "form" -> {
+        submitFormAction(message.getAsJsonArray("formData"));
+        notifySubmissionSuccessful();
+      }
+      case "goal" -> {
+        submitGoal(
+          message.getAsJsonObject("formData").get("agent").getAsString(),
+          message.getAsJsonObject("formData").get("goal").getAsString()
+        );
+        notifySubmissionSuccessful();
+      }
       case "export" -> {
         List<Number> selected = new Gson().fromJson(message.getAsJsonArray("selected"), ArrayList.class);
         exportActionsAsFile(selected);
@@ -301,4 +362,34 @@ public class GoalManagerAdapter extends GuiAdapter {
     return "goalManager";
   }
 
+  /**
+   * Notifies the frontend of a new action to offer the user.
+   * Called when an action is added to the database.
+   * @param adb the new ActionDBEntry
+   */
+  @TRADEService
+  public void actionAdded(ActionDBEntry adb) {
+    actionList.add(adb);
+    actionList.sort(Comparator.comparing(e ->
+        new ADBEWrapper(e).getActionSignature()));
+
+    sendActionList();
+  }
+
+  /**
+   * Notifies the frontend to remove an action from display.
+   * Called when an action is removed from the database.
+   * @param adb the removed ActionDBEntry
+   */
+  @TRADEService
+  public void actionRemoved(ActionDBEntry adb) {
+    // Remove any ADBs matching the input
+    for(int i = actionList.size() - 1; i >= 0; i--) {
+      if(actionList.get(i).equals(adb)) {
+        actionList.remove(i);
+      }
+    }
+
+    sendActionList();
+  }
 }

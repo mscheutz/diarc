@@ -3,7 +3,7 @@ import BeliefViewer from "../BeliefViewer";
 import ChatViewer from "../ChatViewer";
 import GoalViewer from "../GoalViewer";
 import MapViewer from "../MapViewer";
-import GoalManager from "../goalManager/GoalManager";
+import GoalSubmission from "../goalSubmission/GoalSubmission";
 import VisionManager from "../vision/VisionManager";
 import TradeServiceViewer from "../tradeService/TradeServiceViewer";
 
@@ -29,8 +29,8 @@ const handlers = {
         component: GoalViewer
     },
     "goalManager": {
-        tabName: "Goal Manager",
-        component: GoalManager
+        tabName: "Goal Submission",
+        component: GoalSubmission
     },
     "map": {
         tabName: "Map Viewer",
@@ -83,4 +83,8 @@ const statuses: string[] = [
     "failed"
 ]
 
-export { columns, Option, sortCriteria, statuses }
+export {columns, sortCriteria, statuses};
+export type { Option };
+
+const LOCAL_STORAGE_KEY: string = "goalSubmissionPresets";
+export {LOCAL_STORAGE_KEY};
