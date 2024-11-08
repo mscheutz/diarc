@@ -417,10 +417,18 @@ class Resolver(groups: java.util.List[String]) {
   }
 
   protected def getActivatedEntities(groups: util.Collection[String]): java.util.Map[Symbol, java.lang.Double] = {
-    consultants.find(_.tsi.getGroups.containsAll(groups)) match {
-      case Some(c) => TRADE.getAvailableService(c.tsc.name("getActivatedEntities").argTypes())
-        .call(classOf[java.util.Map[Symbol, java.lang.Double]])
-      case None => throw new Exception("No consultant keyed with groups " + groups)
+    val filteredConsultants = consultants.filter(_.tsi.getGroups.containsAll(groups))
+    if (filteredConsultants.isEmpty) {
+      throw new Exception("No consultant keyed with groups " + groups)
+    } else {
+      filteredConsultants.map(c => TRADE.getAvailableService(c.tsc.name("getActivatedEntities").argTypes())
+          .call(classOf[java.util.Map[Symbol, java.lang.Double]]))
+        .reduce {
+          (a, b) => {
+            a.putAll(b)
+            return a
+          }
+        }
     }
   }
 
@@ -496,14 +504,24 @@ class Resolver(groups: java.util.List[String]) {
   def getProperties(ref: Symbol): java.util.List[Term] = {
     val consultantName = ref.getType;
     log.debug("CONSULTANTNAME: " + consultantName)
-    val consultant: ConsultantInfo = consultants.find(_.kbName.equalsIgnoreCase(consultantName)).getOrElse(return new java.util.ArrayList[Term])
-    try {
-      TRADE.getAvailableService(consultant.tsc.name("getAssertedProperties").argTypes(classOf[Symbol]))
-        .call(classOf[java.util.List[Term]], ref)
-    } catch {
-      case e: TRADEException => log.error("[getProperties] call of getAssertedProperties for ref: " + ref + " from: " + consultant.kbName, e)
-        new java.util.ArrayList[Term]()
+    val matchingConsultants: Iterable[ConsultantInfo] = consultants.filter(c => c.kbName.equalsIgnoreCase(consultantName))
+    if (matchingConsultants.isEmpty) {
+      return new java.util.ArrayList[Term];
     }
+    matchingConsultants.map(c => {
+        try {
+          TRADE.getAvailableService(c.tsc.name("getAssertedProperties").argTypes(classOf[Symbol]))
+            .call(classOf[java.util.List[Term]], ref)
+        } catch {
+          case e: TRADEException => log.error("[getProperties] call of getAssertedProperties for ref: " + ref + " from: " + c.kbName, e)
+            return new java.util.ArrayList[Term]()
+        }
+      }).reduce {
+        (a, b) => {
+          a.addAll(b)
+          return a
+        }
+      }
   }
 
   //brad: the structure of this is wild...
