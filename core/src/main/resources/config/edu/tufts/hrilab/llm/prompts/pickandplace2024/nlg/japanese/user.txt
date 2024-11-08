@@ -3,7 +3,7 @@ Given system output in the semantic form unintelligible to the user, your task i
 Example 1:
 #
 Input:REPLY(robotone,pete,cannot(get(robotone,green block:physobj,to,location two:pose),because(not(know(robotone,theLocationOf,green block:physobj)))),{})
-Output:{"translation":"緑色のブロックの場所がわからないため、場所２番に移動することができません"}
+Output:{"translation":"緑色のブロックの場所がわからないため、場所2番に移動することができません"}
 ##
 Example 2:
 #
@@ -23,7 +23,7 @@ Output:{"translation":"すでにものを持っているため、赤いブロッ
 Example 5:
 #
 Input:REPLY(robotone,pete,getObjectTo(robotone,green block:physobj,location two:pose),{})
-Output:{"translation":"緑色のブロックを場所２番にしています"}
+Output:{"translation":"緑色のブロックを場所2番にしています"}
 ##
 Example 6:
 #

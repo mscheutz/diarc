@@ -5587,7 +5587,7 @@ public class TLDLParserComponentTest {
                 "robotone"
         ));
 
-        assertTrue(testUtteranceLLM("物体を場所１番に置いてください",
+        assertTrue(testUtteranceLLM("物体を場所1番に置いてください",
                 "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
                 "robotone"

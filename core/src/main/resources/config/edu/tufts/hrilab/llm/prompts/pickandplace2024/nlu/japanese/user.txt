@@ -8,14 +8,14 @@ Examples of this task being performed correctly, potentially along with addition
 ###
 Example 1:
 #
-Input: ポーズ１番にしてください。
+Input: ポーズ1番にしてください。
 Output: {"Semantics":"goToPose(robotone,location one:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 #
 Example 1 Notes: The user is asking you to navigate to the location one. This matches the description of the known goToPose(?actor,?pose:pose) action signature and location one is a known pose to the system. There are no similar actions known to the system so there is no ambiguity. The above format template can be populated with the corresponding signature details and parameterization with a high confidence.
 ##
 Example 2:
 #
-Input: 場所１番にあるブロックを拾ってください。
+Input: 場所1番にあるブロックを拾ってください。
 Output: {"Semantics":"placeObjectDownAt(robotone,location one:pose)","Input Type":"INSTRUCT","Confidence":"20"}
 #
 Example 2 Notes: Confidence is low for this example because, without additional context, there are multiple different valid results this input could match to. The user could be asking you to pick up the object which is currently at location one, or to make it so the object you are holding gets to location one. Picking up the object at location one seems more likely, but there is no corresponding parameterization of pickUp which only takes in a pose. In these cases where there can reasonably be multiple valid meanings, it is better to return low confidence along with the chosen result.
@@ -29,13 +29,13 @@ Example 3 Notes: Confidence is low for example 3 because, while it is fairly cle
 ##
 Example 4:
 #
-Input: 場所１番に何があるかを教えてください。
+Input: 場所1番に何があるかを教えてください。
 Output: {"Semantics":"describeObjectsAt(robtone:agent,location one:pose)","Input Type":"INSTRUCT","Confidence":"80"}
 #
 ##
 Example 5:
 #
-Input: 赤いブロックを場所２番にしました。
+Input: 赤いブロックを場所2番にしました。
 Output: {"Semantics":"believeObjectAt(robotone,red block:physobj,location one:pose)","Input Type":"INSTRUCT","Confidence":"80"}
 #
 ##
@@ -99,7 +99,7 @@ Output: {"Semantics":"placeObjectDownAt(robotone,orange block:physobj,location t
 ##
 Example 17:
 #
-Input: 物体を場所１番に置いてください。
+Input: 物体を場所1番に置いてください。
 Output: {"Semantics":"placeObjectDownAt(robotone,location one:pose)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 Example 18:
