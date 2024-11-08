@@ -108,10 +108,10 @@ import edu.tufts.hrilab.slug.common.Utterance;
       }
 
       //TODO: need to relate these questions in some way such that any overwriting/cancellation of one affects the other.
-      act:suspendWaitForResponse(val(X),false);
+      act:suspendWaitForResponse(val(X),!addressee,false);
       !bindings = !addressee.act:askQuestionFromUtterance(!validationUtterance, val(X),1,-1);
       !response = op:get(!bindings, !x);
-      act:resumeWaitForResponse(val(X));
+      act:resumeWaitForResponse(val(X),!addressee);
 
       if (op:isNull(!response)) {
         op:log("debug", "Utterance validation aborted, not processing utterance");

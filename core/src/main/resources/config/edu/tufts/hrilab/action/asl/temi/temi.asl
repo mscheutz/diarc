@@ -253,7 +253,7 @@
 
     op:log("info","[fetch] entering waitForAck");
     act:startAcknowledgeDisplay("Please place ?item on my tray.");
-    act:waitForResponse(!waitForAckForm);
+    act:waitForResponse(!waitForAckForm,?actor);
     act:endAcknowledgeDisplay();
     op:log("info","[fetch] out waitForAck");
 
@@ -332,7 +332,7 @@
 
     op:log("info","[fetch] entering waitForAck");
     act:startAcknowledgeDisplay("Please place ?item on my tray.");
-    act:waitForResponse(!waitForAckForm);
+    act:waitForResponse(!waitForAckForm,?actor);
     act:endAcknowledgeDisplay();
     op:log("info","[fetch] out waitForAck");
 
@@ -357,7 +357,7 @@
     edu.tufts.hrilab.fol.Predicate !waitForAckForm = "waitForAckTemi(X)";
 
     act:startQRCodeDisplay(?url, ?header);
-    act:waitForResponse(!waitForAckForm);
+    act:waitForResponse(!waitForAckForm,?actor);
     act:endQRCodeDisplay();
 }
 

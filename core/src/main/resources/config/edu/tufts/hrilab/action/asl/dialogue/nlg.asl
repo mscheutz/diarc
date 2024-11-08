@@ -175,6 +175,9 @@ import java.util.Map;
   //Communicate the utterance ?attempts times (default 1) while waiting for ?duration seconds
   ?answerBindings = op:setNull(); // require bc of the weird way ASL handles return args
   Long !count = 0;
+  Symbol !speaker;
+
+  !speaker = op:invokeMethod(?utterance, "getSpeaker");
   while (op:isNull(?answerBindings) && op:lt(!count, ?attempts)) {
     !count = op:++(!count);
 
@@ -185,12 +188,12 @@ import java.util.Map;
     }
 
     // wait for response - default duration is -1, which means block indefinitely
-    ?answerBindings = act:waitForResponse(?responseForm, ?duration);
+    ?answerBindings = act:waitForResponse(?responseForm, !speaker, ?duration);
   }
 
   //If we timed out and did not receive a response, we need to remove the active question ourselves
   if (op:isNull(?answerBindings)) {
-    act:cancelWaitForResponse(?responseForm);
+    act:cancelWaitForResponse(?responseForm, !speaker);
   }
   //TODO:EW: else interrupt looping communicateUtterance we are potentially in if we received a response mid loop?
 }

@@ -21,10 +21,7 @@ import edu.tufts.hrilab.slug.dialogue.gui.DialogueGui;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,8 +36,11 @@ public class DialogueComponent extends DiarcComponent {
 
   private DialogueConsultant consultant;
   private List<TRADEServiceInfo> dialogueHistorySubscribers = new ArrayList<>();
-  private ConcurrentHashMap<Term, Answer> currentQuestions = new ConcurrentHashMap<>();
-  private ConcurrentHashMap<Term, Answer> suspendedQuestions = new ConcurrentHashMap<>();
+  //TODO: I believe this should live at the level of AgentTeams. At least everything here should be indexed
+  //  based on more details of the utterance which represents the asked question.
+  //  For now at least differentiating between agent. Previously questions from and answers to different agents step on each other
+  private ConcurrentHashMap<Symbol,ConcurrentHashMap<Term, Answer>> currentQuestionsPerAgent = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<Symbol,ConcurrentHashMap<Term, Answer>> suspendedQuestionsPerAgent = new ConcurrentHashMap<>();
   private boolean showDialogueGui = false;
   private DialogueGui dialogueGui;
 
@@ -57,6 +57,38 @@ public class DialogueComponent extends DiarcComponent {
       TRADE.registerAllServices(consultant, consultantGroups);
     } catch (TRADEException e) {
       log.error("[init] exception registering dialogue consultant");
+    }
+
+    registerForDiarcAgents();
+  }
+
+  private void registerForDiarcAgents() {
+    // Register to get notified of DIARC agents. To protect against a race
+    // condition, this must happen before trying to get them now.
+    try {
+      TRADE.registerNotificationNowOrWhenJoined(this,
+              new TRADEServiceConstraints().returnType(Set.class).name("getDiarcAgents").argTypes(),
+              "populateDiarcAgents"
+      );
+    } catch (TRADEException e) {
+      log.error("Failed to request notification for DIARC agents", e);
+    }
+  }
+
+  @TRADEService
+  public void populateDiarcAgents(TRADEServiceInfo service) {
+    TRADEServiceInfo diarcAgentsService = service;
+
+    try {
+      @SuppressWarnings("unchecked")
+      Set<Symbol> agents = diarcAgentsService.call(Set.class);
+      agents.forEach(agent -> {
+        currentQuestionsPerAgent.put(agent.toUntyped(), new ConcurrentHashMap<>());
+        suspendedQuestionsPerAgent.put(agent.toUntyped(), new ConcurrentHashMap<>());
+      });
+      log.debug("DIARC agents received");
+    } catch (TRADEException e) {
+      log.error("Error trying to get diarc agents.", e);
     }
   }
 
@@ -83,11 +115,16 @@ public class DialogueComponent extends DiarcComponent {
     }
 
     //Believe shutdown during Question Asking was causing a thread to hang
-    List<Term> questionsToCancel = new ArrayList<>();
-    questionsToCancel.addAll(currentQuestions.keySet());
-    questionsToCancel.addAll(suspendedQuestions.keySet());
-    for (Term question: questionsToCancel) {
-      cancelWaitForResponse(question);
+    for (Symbol agent : currentQuestionsPerAgent.keySet()) {
+      ConcurrentHashMap<Term,Answer> currentQuestions = currentQuestionsPerAgent.get(agent);
+      ConcurrentHashMap<Term,Answer> suspendedQuestions = suspendedQuestionsPerAgent.get(agent);
+      List<Term> questionsToCancel = new ArrayList<>(currentQuestions.keySet());
+      if (suspendedQuestions != null) {
+        questionsToCancel.addAll(suspendedQuestions.keySet());
+      }
+      for (Term question : questionsToCancel) {
+        cancelWaitForResponse(question,agent);
+      }
     }
   }
 
@@ -165,12 +202,12 @@ public class DialogueComponent extends DiarcComponent {
   @TRADEService
   @Action
   @OnInterrupt(
-          onCancelServiceCall = "cancelWaitForResponse(?responseForm)",
-          onSuspendServiceCall = "suspendWaitForResponse(?responseForm,true)",
-          onResumeServiceCall = "resumeWaitForResponse(?responseForm)"
+          onCancelServiceCall = "cancelWaitForResponse(?responseForm,?speaker)",
+          onSuspendServiceCall = "suspendWaitForResponse(?responseForm,?speaker,true)",
+          onResumeServiceCall = "resumeWaitForResponse(?responseForm,?speaker)"
   )
-  public Map<Variable, Symbol> waitForResponse(Predicate responseForm) {
-    return waitForResponse(responseForm, -1);
+  public Map<Variable, Symbol> waitForResponse(Predicate responseForm, Symbol speaker) {
+    return waitForResponse(responseForm, speaker,-1);
   }
 
   /**
@@ -179,13 +216,13 @@ public class DialogueComponent extends DiarcComponent {
    * @return Bindings from the answer, or null if no answer was received in time
    */
   @OnInterrupt(
-          onCancelServiceCall = "cancelWaitForResponse(?responseForm)",
-          onSuspendServiceCall = "suspendWaitForResponse(?responseForm,true)",
-          onResumeServiceCall = "resumeWaitForResponse(?responseForm)"
+          onCancelServiceCall = "cancelWaitForResponse(?responseForm,?speaker)",
+          onSuspendServiceCall = "suspendWaitForResponse(?responseForm,?speaker,true)",
+          onResumeServiceCall = "resumeWaitForResponse(?responseForm,?speaker)"
   )
   @TRADEService
   @Action
-  public Map<Variable, Symbol> waitForResponse(Predicate responseForm, long waitDuration) {
+  public Map<Variable, Symbol> waitForResponse(Predicate responseForm, Symbol speaker, long waitDuration) {
 
     //TODO:brad: make this safer
     if(responseForm.getName().equals("pattern")){
@@ -197,6 +234,8 @@ public class DialogueComponent extends DiarcComponent {
       }
     }
 
+    speaker = speaker.toUntyped();
+    ConcurrentHashMap<Term,Answer> currentQuestions = currentQuestionsPerAgent.get(speaker);
     //add response pattern to data structure
     Answer answer;
     //TODO: the below change requires all calls to waitForResponse to be able to handle empty bindings in response
@@ -210,7 +249,7 @@ public class DialogueComponent extends DiarcComponent {
     //  ...
     if (currentQuestions.containsKey(responseForm)) {
       log.warn("[waitForResponse] Another question expecting the same response format already exists, returning empty bindings for previous question");
-      cancelWaitForResponse(responseForm);
+      cancelWaitForResponse(responseForm,speaker);
     }
     answer = new Answer();
     currentQuestions.put(responseForm, answer);
@@ -246,6 +285,8 @@ public class DialogueComponent extends DiarcComponent {
   @TRADEService
   @Action
   public boolean isQuestionResponse(Symbol speaker, Symbol listener, Term semantics) {
+    listener = listener.toUntyped();
+    ConcurrentHashMap<Term,Answer> currentQuestions = currentQuestionsPerAgent.get(listener);
     List<Term> matchingQuestions = currentQuestions.keySet().stream()
             .filter(semantics::instanceOf)
             .collect(Collectors.toList());
@@ -278,7 +319,8 @@ public class DialogueComponent extends DiarcComponent {
   @TRADEService
   @Action
   public synchronized void answerQuestion(Symbol speaker, Symbol listener, Term answerSemantics) {
-
+    listener = listener.toUntyped();
+    ConcurrentHashMap<Term,Answer> currentQuestions = currentQuestionsPerAgent.get(listener);
     //get matching question
     List<Term> matchingQuestions = currentQuestions.keySet().stream()
             .filter(answerSemantics::instanceOf)
@@ -334,7 +376,11 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void cancelWaitForResponse(Term responseForm) {
+  public void cancelWaitForResponse(Term responseForm, Symbol listener) {
+    listener = listener.toUntyped();
+    ConcurrentHashMap<Term,Answer> currentQuestions = currentQuestionsPerAgent.get(listener);
+    ConcurrentHashMap<Term,Answer> suspendedQuestions = suspendedQuestionsPerAgent.get(listener);
+
     Answer answer = currentQuestions.remove(responseForm);
 
     if (answer == null) {
@@ -355,7 +401,11 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void suspendWaitForResponse(Term responseForm, boolean unlock) {
+  public void suspendWaitForResponse(Term responseForm, Symbol listener, boolean unlock) {
+    listener = listener.toUntyped();
+    ConcurrentHashMap<Term,Answer> currentQuestions = currentQuestionsPerAgent.get(listener);
+    ConcurrentHashMap<Term,Answer> suspendedQuestions = suspendedQuestionsPerAgent.get(listener);
+
     Answer answer = currentQuestions.remove(responseForm);
 
     if (answer != null) {
@@ -377,7 +427,11 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void resumeWaitForResponse(Term responseForm) {
+  public void resumeWaitForResponse(Term responseForm, Symbol listener) {
+    listener = listener.toUntyped();
+    ConcurrentHashMap<Term,Answer> currentQuestions = currentQuestionsPerAgent.get(listener);
+    ConcurrentHashMap<Term,Answer> suspendedQuestions = suspendedQuestionsPerAgent.get(listener);
+
     Answer answer = suspendedQuestions.remove(responseForm);
 
     if (answer != null) {
