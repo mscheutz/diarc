@@ -265,8 +265,4 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
       log.error("Error parsing config file: ", ioe);
     }
   }
-
-  public void shutdown() {
-    this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-  }
 }

@@ -289,8 +289,5 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
     } catch (InterruptedException e) {
       log.error("[shutdown]");
     }
-    if (useGui) {
-      gui.shutdown();
-    }
   }
 }
