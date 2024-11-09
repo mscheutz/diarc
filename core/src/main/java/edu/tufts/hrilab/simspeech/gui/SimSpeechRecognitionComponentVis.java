@@ -114,7 +114,7 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
     }
 
     int i = sConfigs.get(0).lastIndexOf(File.separator);
-    this.setTitle(sConfigs.get(0).substring(i + 1));
+    this.setTitle(sConfigs.get(0).substring(i + 1) + " | Addressee: " + component.getAddressee());
     this.setSize(scrollPane.getPreferredSize());
     this.setVisible(true);
   }

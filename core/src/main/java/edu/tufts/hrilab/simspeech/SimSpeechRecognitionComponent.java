@@ -136,6 +136,10 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
     log.info("addressee set to: " + this.addressee);
   }
 
+  public Symbol getAddressee() {
+    return this.addressee;
+  }
+
   // ********************************************************************
   // *** SimSpeech methods
   // ********************************************************************
