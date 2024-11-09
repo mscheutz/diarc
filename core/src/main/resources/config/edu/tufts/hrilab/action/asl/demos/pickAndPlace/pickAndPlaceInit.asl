@@ -44,14 +44,11 @@ import java.util.HashMap;
     //TODO: not sure if we always want this
     !actorName = op:getName(?actor);
     !pose0String = op:invokeStaticMethod("java.lang.String","join","",!actorName,"pose_0:pose");
-    op:log(info,!pose0String);
     !pose0 = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !pose0String);
-    op:log(info,!pose0);
 
     //TODO:brad: what is this for? how should we handle it?
     Predicate !fact;
     !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,!pose0)");
-    op:log(info,!fact);
     act:assertBelief(!fact);
 
     Predicate !cameraHeightPredicate;
