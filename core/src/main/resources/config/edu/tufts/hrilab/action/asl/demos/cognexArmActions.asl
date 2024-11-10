@@ -51,6 +51,8 @@ import java.util.List;
     java.lang.Double !objectHeightM;
     java.lang.Double !cameraHeight;
     java.lang.Double !cameraHeightM;
+    java.lang.Double !graspDepth;
+    java.lang.Double !graspDepthM;
 
     !descriptor = tsc:getDescriptorForID(?physobj);
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","objectDefinition(!descriptor,A,B)");
@@ -71,7 +73,13 @@ import java.util.List;
     !cameraHeight = op:get(!binding, !bindingVar);
     !cameraHeightM = op:/(!cameraHeight,1000);
 
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "graspDepth(!descriptor,!bindingVar)");
+    !bindings = act:queryBelief(!queryPred);
+    !binding = op:get(!bindings, 0);
+    !graspDepthM = op:get(!binding, !bindingVar);
+
     !dist = op:-(!cameraHeightM,!objectHeightM);
+    !dist = op:+(!dist,!graspDepthM);
     !dist = op:*(!dist,-1);
     tsc:moveZRelative(!dist);
 }
