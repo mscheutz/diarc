@@ -63,7 +63,7 @@ Example 11:
 Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,learnNewTask(robotone),{})),{})
 Output:{"translation":"Did you mean to tell me the that you will begin teaching me a new task?"}
 ##
-Example 11:
+Example 12:
 Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,endActionLearning(robotone),{})),{})
 Output:{"translation":"Did you mean to tell me the that you are finished teaching me the new task?"}
 ##

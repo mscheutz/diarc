@@ -308,13 +308,12 @@ import java.util.Map;
     }
 }
 
-//TODO
 (String ?name) = askForTaskName() {
     Symbol !response;
     Map !bindings;
     Variable !x = "X";
 
-    (!bindings) = act:askQuestionFromString(?actor,"What is the name of the new task?", taskName(X));
+    (!bindings) = act:askQuestionFromString(?actor,"課題の呼び方は何と言いますか?", taskName(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         ?name = op:setNull();
     } else {
@@ -324,5 +323,5 @@ import java.util.Map;
 }
 
 () = reportActionLearningStart(String ?name) {
-    act:generateResponseFromString("How do I perform ?name");
+    act:generateResponseFromString("?nameの実行方法を教えてください");
 }

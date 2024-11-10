@@ -75,7 +75,7 @@ Example 15:
 Input:REPLY(robotone,pete,cannot(putDown(robotone,anObject),because(not(holding(robotone,anything)))),{})
 Output:{"translation":"I cannot put down an object because I am not holding anything"}
 ##
-Example 15:
+Example 16:
 #
 Input:REPLY(robotone,pete,cannot(task a(robottwo),because(not(know(robottwo,how("task a(robottwo)"))))),{})
 Output:{"translation":"I cannot perform task a because I was never taught how to"}
