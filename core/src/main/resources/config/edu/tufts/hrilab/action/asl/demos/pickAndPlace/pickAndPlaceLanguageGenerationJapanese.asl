@@ -70,7 +70,7 @@ import java.util.Map;
     String !objectDescriptorJapanese;
 
     !objectDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?descriptor);
-    act:generateResponseFromString("objectDescriptorJapaneseを持っています。");
+    act:generateResponseFromString("!objectDescriptorJapaneseを持っています。");
 }
 
 () = reportObjectLocationUnknown(Symbol ?descriptor) {
