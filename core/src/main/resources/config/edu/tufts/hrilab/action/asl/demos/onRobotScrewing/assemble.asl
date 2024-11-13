@@ -60,7 +60,7 @@
     //generate new signature that is unique to model name
     (!scriptID) =op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "assemble!descriptor(?actor,?modelName)");
     op:log(debug, "[endLearningAssembleScript] scriptID: !scriptID");
-    act:endActionLearning(!scriptID);
+    act:endActionLearningPrimitive(!scriptID);
 }
 
 () = getOn["gets ?object on to the surface beneath ?destination"](edu.tufts.hrilab.fol.Symbol ?object, edu.tufts.hrilab.fol.Symbol ?destination) {

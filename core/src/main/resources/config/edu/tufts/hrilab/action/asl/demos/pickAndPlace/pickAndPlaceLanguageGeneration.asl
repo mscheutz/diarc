@@ -250,3 +250,11 @@ import java.util.Map;
 () = reportActionLearningStart(String ?name) {
     act:generateResponseFromString("How do I perform ?name");
 }
+
+() = reportActionLearned(String ?name) {
+    act:generateResponseFromString("I have learned how to perform ?name");
+}
+
+() = reportNoLearningState() {
+    act:generateResponseFromString("I cannot end learning because you haven't started teaching me anything");
+}

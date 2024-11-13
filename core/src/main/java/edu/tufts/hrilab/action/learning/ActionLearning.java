@@ -231,8 +231,8 @@ public class ActionLearning {
   }
 
   //Cleanly finish learning, if parent learning state then resume learning
-  public boolean endActionLearning(Predicate newAction) {
-    log.debug("[endActionLearning] " + newAction);
+  public boolean endActionLearningPrimitive(Predicate newAction) {
+    log.debug("[endActionLearningPrimitive] " + newAction);
 
     boolean currentState;
     LearningState learningState;
@@ -244,7 +244,7 @@ public class ActionLearning {
       learningState = pausedLearningStates.get(newAction.getName());
       currentState = false;
       if (learningState == null) {
-        log.error("[endActionLearning] called for action with no learning state: {}", newAction);
+        log.error("[endActionLearningPrimitive] called for action with no learning state: {}", newAction);
         return false;
       }
     }

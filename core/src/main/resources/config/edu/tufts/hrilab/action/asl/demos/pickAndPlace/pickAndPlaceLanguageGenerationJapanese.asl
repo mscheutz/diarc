@@ -325,3 +325,11 @@ import java.util.Map;
 () = reportActionLearningStart(String ?name) {
     act:generateResponseFromString("?nameの実行方法を教えてください");
 }
+
+() = reportActionLearned(String ?name) {
+    act:generateResponseFromString("?nameは実行できる");
+}
+
+() = reportNoLearningState() {
+    act:generateResponseFromString("まだ私に教え始めていない");
+}

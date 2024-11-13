@@ -1818,14 +1818,14 @@ public class ExecutionManager implements GoalListener {
 
   @Action
   @TRADEService
-  public boolean endActionLearning(Symbol actor, Predicate newAction) {
-    log.debug("[endActionLearning] {}, {}", actor, newAction);
+  public boolean endActionLearningPrimitive(Symbol actor, Predicate newAction) {
+    log.debug("[endActionLearningPrimitive] {}, {}", actor, newAction);
     AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.error("[endActionLearning] unknown actor supplied {}", actor);
+      log.error("[endActionLearningPrimitive] unknown actor supplied {}", actor);
       return false;
     }
-    return agentTeam.endActionLearning(newAction);
+    return agentTeam.endActionLearningPrimitive(newAction);
   }
 
   @Action
@@ -1873,21 +1873,21 @@ public class ExecutionManager implements GoalListener {
 
   @Action
   @TRADEService
-  public boolean endActionLearning(Symbol actor) {
-    log.debug("[endActionLearning] {}, {}", actor);
+  public boolean endActionLearningPrimitive(Symbol actor) {
+    log.debug("[endActionLearningPrimitive] {}, {}", actor);
     AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
-      log.error("[endActionLearning] unknown actor supplied {}", actor);
+      log.error("[endActionLearningPrimitive] unknown actor supplied {}", actor);
       return false;
     }
 
     Predicate activeSignature = agentTeam.getActiveLearningSignature();
     if (activeSignature == null) {
-      log.error("[endActionLearning] {} does not have an active learning state", actor);
+      log.error("[endActionLearningPrimitive] {} does not have an active learning state", actor);
       return false;
     }
 
-    return endActionLearning(actor,activeSignature);
+    return endActionLearningPrimitive(actor,activeSignature);
   }
 
   @Action

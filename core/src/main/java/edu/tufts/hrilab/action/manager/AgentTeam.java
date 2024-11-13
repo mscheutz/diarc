@@ -152,8 +152,8 @@ public class AgentTeam {
         return actionLearning.learnAction(newAction);
     }
 
-    protected boolean endActionLearning(Predicate newAction) {
-        return actionLearning.endActionLearning(newAction);
+    protected boolean endActionLearningPrimitive(Predicate newAction) {
+        return actionLearning.endActionLearningPrimitive(newAction);
     }
 
     protected boolean pauseActionLearning(Predicate newAction) {

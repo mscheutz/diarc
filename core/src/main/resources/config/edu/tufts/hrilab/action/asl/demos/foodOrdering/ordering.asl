@@ -185,7 +185,7 @@ import java.lang.Integer;
 
     //generate new signature that is unique to model name
     op:log(warn, "[defineItem] ending learning for: !scriptID");
-    act:endActionLearning(!scriptID);
+    act:endActionLearningPrimitive(!scriptID);
 
     !responsePredicate=op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "isComplete",?itemName);
     !tmpPredicate=op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "generateResponse",?actor,!responsePredicate);

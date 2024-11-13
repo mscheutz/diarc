@@ -947,7 +947,17 @@ import java.lang.Integer;
     op:log(info,!actionSignature);
     async {
         act:learnAction(!actionSignature);
+        act:reportActionLearned(!taskName);
     }
     act:waitForActionLearningStart(!actionSignature);
     act:reportActionLearningStart(!taskName);
+}
+
+() = endActionLearning() {
+    java.lang.Boolean !learningStateExists = False;
+
+    !learningStateExists = tsc:endActionLearningPrimitive(?actor);
+    if (op:equals(!learningStateExists,False)) {
+        act:reportNoLearningState();
+    }
 }
