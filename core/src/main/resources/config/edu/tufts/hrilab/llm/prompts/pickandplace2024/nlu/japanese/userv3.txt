@@ -107,9 +107,17 @@ if the human says "課題を教えます", you should produce the output: {"Sema
 #
 if the human says 課題の手段は以上です", you should produce the output: {"Semantics":"endActionLearning()","Input Type":"INSTRUCT","Confidence":"100"}
 #
-if the human says "テスト実験を実行する", you should produce the output: {"Semantics":"テスト実験()","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "テスト実験を実行する", you should produce the output: {"Semantics":"test experiment()","Input Type":"INSTRUCT","Confidence":"100"}
 #
-if the human says "テスト実験と呼びます", you should produce the output: {"Semantics":"taskName(テスト実験)","Input Type":"REPLY","Confidence":"100"}
+if the human says "テスト実験と呼びます", you should produce the output: {"Semantics":"taskName(test experiment)","Input Type":"REPLY","Confidence":"100"}
+#
+if the human says "入れ替え作業を実行する", you should produce the output: {"Semantics":"replacement operation()","Input Type":"INSTRUCT","Confidence":"100"}
+#
+if the human says "入れ替え作業と呼びます", you should produce the output: {"Semantics":"taskName(replacement operation)","Input Type":"REPLY","Confidence":"100"}
+#
+if the human says "課題Aを実行する", you should produce the output: {"Semantics":"task A()","Input Type":"INSTRUCT","Confidence":"100"}
+#
+if the human says "課題Aと呼びます", you should produce the output: {"Semantics":"taskName(task A)","Input Type":"REPLY","Confidence":"100"}
 ##
 ##
 

@@ -161,7 +161,7 @@ abort(question)
 Description: These are universal semantics to represent when the user is declining to answer the question. Examples are "nevermind", "forget about it", and "im not answering that".
 #
 taskName(?name)
-Description: Prompted by the learnNewTask action, the user is answering a question from the system about what the to-be-learned task should be called. ?name has no restriction on possible values.
+Description: Prompted by the learnNewTask action, the user is answering a question from the system about what the to-be-learned task should be called. ?name has no restriction on possible values. If the corresponding answer is given in Japanese, convert the value of ?name to its equivalent English translation. For example, a bad value would result in taskName(課題A). A good value would result in taskName(task A).
 ###
 
 Statement:

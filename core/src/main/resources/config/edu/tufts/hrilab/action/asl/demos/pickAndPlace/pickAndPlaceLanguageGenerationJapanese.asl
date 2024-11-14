@@ -323,11 +323,22 @@ import java.util.Map;
 }
 
 () = reportActionLearningStart(String ?name) {
-    act:generateResponseFromString("?nameの実行方法を教えてください");
+    //TODO: can turn this into a question (just for utteranceType, not expecting an answer through the normal means)
+    Predicate !pred;
+    !pred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "how(?actor,perform(?name))");
+    op:log(info,"!pred");
+    act:generateResponse(!pred);
+
+    //act:generateResponseFromString("?nameの実行方法を教えてください");
 }
 
 () = reportActionLearned(String ?name) {
-    act:generateResponseFromString("?nameは実行できる");
+    Predicate !pred;
+    !pred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knowHowTo(?actor,perform(?name))");
+    op:log(info,"!pred");
+    act:generateResponse(!pred);
+
+    //act:generateResponseFromString("?nameは実行できる");
 }
 
 () = reportNoLearningState() {
