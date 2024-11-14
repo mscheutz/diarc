@@ -15,6 +15,8 @@ import edu.tufts.hrilab.util.Http;
 
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,8 @@ public class HFClient{
     private String t5CompletionEndpointTemplate = "https://api-inference.huggingface.co/models/%s";
 
     private String endpoint;
+
+    private final Pattern UNICODE_PATTERN = Pattern.compile("(?<!\\\\)\\\\u(\\p{XDigit}{4})");
 
     //EW: Non-chat models I think are theoretically available to use, but have practically never finished loading for me
     private List<String> llamaHFCompletionModels = Arrays.asList("Llama-2-7b-hf", "Llama-2-7b-chat-hf", "Llama-2-13b-hf", "Llama-2-13b-chat-hf", "Llama-2-70b-hf", "Llama-2-70b-chat-hf", "Meta-Llama-3-8B", "Meta-Llama-3-8B-Instruct", "Meta-Llama-3-70B", "Meta-Llama-3-70B-Instruct","Meta-Llama-3.1-8B", "Meta-Llama-3.1-8B-Instruct", "Meta-Llama-3.1-70B", "Meta-Llama-3.1-70B-Instruct","Meta-Llama-3.1-405B", "Meta-Llama-3.1-405B-Instruct");
@@ -228,6 +232,22 @@ public class HFClient{
             resp = new LlamaHFChatCompletionResponse();
         } else {
             resp = results.get(0);
+            Matcher unicodeMatcher = UNICODE_PATTERN.matcher(resp.generated_text);
+            if (unicodeMatcher.find()) {
+                try {
+                    log.warn("[lamaHFChatCompletion] found escaped unicode strings in response. Attempting to convert to unicode characters.");
+                    unicodeMatcher.reset(resp.generated_text);
+                    String original = resp.generated_text;
+                    resp.generated_text = unicodeMatcher.replaceAll(match -> {
+                        char c = (char) Integer.parseInt(match.group(1), 16);
+                        return Character.toString(c);
+                    });
+                    log.warn("[llamaHFChatCompletion] original: " + original + "\n corrected: " + resp.generated_text);
+                } catch (Exception e) {
+                    log.error("llamaHFChatCompletion] error attempting to convert escaped unicode literals to valid characters in response " + resp);
+                    resp = new LlamaHFChatCompletionResponse();
+                }
+            }
         }
         return resp;
     }
