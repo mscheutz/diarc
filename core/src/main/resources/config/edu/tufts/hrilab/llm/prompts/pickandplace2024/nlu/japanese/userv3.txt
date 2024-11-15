@@ -99,9 +99,9 @@ if the human says "どのようなポーズが存在するか", you should produ
 #
 if the human says "何が見えますか", you should produce the output: {"Semantics":"whichObjectsAtCurrentPose()","Input Type":"QUESTION","Confidence":"100"}
 #
-if the human says "ericは管理者ですか", you should produce the output: {"Semantics":"admin(eric,robotone)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "ericは管理者ですか", you should produce the output: {"Semantics":"admin(eric)","Input Type":"QUESTION","Confidence":"100"}
 #
-if the human says "mattは監督者ですか", you should produce the output: {"Semantics":"supervisor(matt,robotone)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "mattは監督者ですか", you should produce the output: {"Semantics":"supervisor(matt)","Input Type":"QUESTION","Confidence":"100"}
 #
 if the human says "課題を教えます", you should produce the output: {"Semantics":"learnNewTask()","Input Type":"INSTRUCT","Confidence":"100"}
 #

@@ -102,10 +102,10 @@ Description: The human is asking if the agent knows whether there are any object
 at(?object,?pose)
 Description: The human is asking if the agent thinks that object ?object is currently at pose ?pose.
 #
-supervisor(?user,robotone)
+supervisor(?user)
 Description: The human is asking if the agent thinks that ?user is a known supervisor of the system.
 #
-admin(?user,robotone)
+admin(?user)
 Description: The human is asking if the agent thinks that ?user is a known admin of the system.
 #
 describeObjectPose(?object)

@@ -100,9 +100,9 @@ if the human says "what poses exist", you should produce the output: {"Semantics
 if the human says "what do you see", you should produce the output: {"Semantics":"whichObjectsAtCurrentPose()","Input Type":"QUESTION","Confidence":"100"}
 #
 #
-if the human says "is eric an admin", you should produce the output: {"Semantics":"admin(eric,robotone)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "is eric an admin", you should produce the output: {"Semantics":"admin(eric)","Input Type":"QUESTION","Confidence":"100"}
 #
-if the human says "is matt a supervisor", you should produce the output: {"Semantics":"supervisor(matt,robotone)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "is matt a supervisor", you should produce the output: {"Semantics":"supervisor(matt)","Input Type":"QUESTION","Confidence":"100"}
 #
 if the human says "i will teach you a new task", you should produce the output: {"Semantics":"learnNewTask()","Input Type":"INSTRUCT","Confidence":"100"}
 #
