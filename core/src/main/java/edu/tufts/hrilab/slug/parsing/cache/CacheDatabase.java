@@ -320,12 +320,30 @@ public class CacheDatabase {
     if (cachedUtterance != null) {
       incoming.setType(cachedUtterance.getType());
       semantics = cachedUtterance.getSemantics();
+      //TODO: PickAndPlace2024 Hacks
       //EW: In the case of any other utterance type, we cannot blindly overwrite the first argument with an actor
       if (cachedUtterance.getType() == UtteranceType.INSTRUCT) {
         if (semantics != null && semantics.size() > 0) {
           semantics.set(0, incoming.getAddressee());
         } else {
           log.warn("[get] cached utterance semantics possibly invalid {}", cachedUtterance.getSemantics());
+        }
+      }
+      //EW: this is only safe because we know it is for this domain, need to have better long term solution
+      else if (cachedUtterance.getType() == UtteranceType.QUESTION) {
+        List<Symbol> args = semantics.getArgs();
+        if (incoming.getAddressee().getName().equals("robotone")) {
+          for (int i=0;i<args.size();i++) {
+            if (args.get(i).getName().equals("robottwo")) {
+              semantics.set(i,incoming.getAddressee());
+            }
+          }
+        } else if (incoming.getAddressee().getName().equals("robottwo")) {
+          for (int i=0;i<args.size();i++) {
+            if (args.get(i).getName().equals("robotone")) {
+              semantics.set(i,incoming.getAddressee());
+            }
+          }
         }
       }
       incoming.setSemantics(semantics);
