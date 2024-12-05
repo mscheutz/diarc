@@ -87,8 +87,6 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                 return incomingUtterance;
             }
             Predicate semantics = Factory.createPredicate(m.group(m.groupCount()));
-            String semanticsString = semantics.toString();
-            List<String> argsStrings = getArgsAsStrings(semantics);
 
             Pattern typePattern = Pattern.compile(".*\"?Input Type\"?\\s*:\\s*\"?(.*?)\"?,\\s*\"?Confidence\"?:.*", Pattern.DOTALL);
             m = typePattern.matcher(responseString);
@@ -123,57 +121,16 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
 
             int varIndex = 0;
             Map<Symbol, Variable> varMap = new LinkedHashMap<>();
-            for (String arg : argsStrings) {
-                if (arg.startsWith("?")) {
-                    log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}", responseString);
-                    return incomingUtterance;
-                }
-                Symbol argSymbol;
-                String descriptorType = getDescriptorType(incomingUtterance.getAddressee().getName(),arg);
-                if (descriptorType.isEmpty()) {
-                    argSymbol = Factory.createFOL(arg);
-                } else {
-                    //v2 only
-                    argSymbol = Factory.createSymbol(arg, descriptorType);
-                }
-                //Map<String, String> descriptorTypes = getKnownDescriptorTypes();
-                //if (descriptorTypes.containsKey(arg)) {
-                //    //v2 only
-                //    argSymbol = Factory.createSymbol(arg, descriptorTypes.get(arg));
-                //} else {
-                //    argSymbol = Factory.createFOL(arg);
-                //}
-
-                //Should generally be any reference, just know in this case all references will be locations
-                if (argSymbol != null && (argSymbol.getType().equals("pose") || argSymbol.getType().equals("physobj"))) {
-                    if (!varMap.containsKey(argSymbol)) {
-                        Variable var = Factory.createVariable("VAR" + varIndex++ + ":" + argSymbol.getType());
-                        varMap.put(argSymbol, var);
-                    }
-                }
-            }
-
-            for (Map.Entry<Symbol, Variable> entry : varMap.entrySet()) {
-                if (v2) {
-                    semanticsString = semanticsString.replace(entry.getKey().getName(), entry.getValue().toString());
-                } else {
-                    semanticsString = semanticsString.replace(entry.getKey().toString(), entry.getValue().toString());
-                }
-                output.addSupplementalSemantics(Factory.createPredicate(entry.getKey().toUntypedString(), entry.getValue()));
-
-                Symbol tier = Factory.createSymbol("DEFINITE");
-                output.addTierAssignment(entry.getValue(), tier);
-            }
-
+            List<Symbol> processedArguments = new ArrayList<>();
             if (v2 && utteranceType == UtteranceType.INSTRUCT) {
                 String actorName = incomingUtterance.getAddressee().getName();
-                semanticsString = semanticsString.replaceFirst("\\(", "("+actorName+",");
-                if (semanticsString.endsWith(",)")) {
-                    semanticsString = semanticsString.replace(",)", ")");
-                }
+                processedArguments.add(Factory.createSymbol(actorName));
             }
-            output.setSemantics(Factory.createPredicate(semanticsString));
-
+            processedArguments = processSemantics(semantics, processedArguments, varMap, output, incomingUtterance.getAddressee().getName());
+            if (processedArguments == null) {
+                return incomingUtterance;
+            }
+            output.setSemantics(Factory.createPredicate(semantics.getName(), processedArguments));
             output.setNeedsValidation(true);
 
             Utterance result = output.build();
@@ -246,23 +203,58 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         return true;
     }
 
-    private List<String> getArgsAsStrings(Symbol fol) {
-        List<String> argsStrings = new ArrayList<>();
-        if (fol.isPredicate()) {
-            for (Symbol arg: ((Predicate)fol).getArgs()) {
-                if (arg.isPredicate()) {
-                    argsStrings.add(arg.getName());
-                    for (Symbol argsArg : ((Predicate)arg).getArgs()) {
-                        argsStrings.addAll(getArgsAsStrings(argsArg));
+    private List<Symbol> processSemantics(Predicate semantics, List<Symbol> processedArguments, Map<Symbol,Variable> varMap, Utterance.Builder output, String actor) {
+        for (Symbol arg: semantics.getArgs()) {
+            if (arg.isPredicate()) {
+                List<Symbol> innerArgs = processSemantics((Predicate)arg,new ArrayList<>(),varMap,output,actor);
+                if (innerArgs == null) {
+                    return null;
+                }
+                processedArguments.add(Factory.createPredicate(arg.getName(), innerArgs));
+            } else {
+                String argString = arg.toString();
+                if (argString.startsWith("?")) {
+                    log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}", argString);
+                    return null;
+                }
+                Symbol argSymbol;
+                String descriptorType = getDescriptorType(actor,argString);
+                if (descriptorType.isEmpty()) {
+                    argSymbol = Factory.createFOL(argString);
+                } else {
+                    //v2 only
+                    argSymbol = Factory.createSymbol(argString, descriptorType);
+                }
+
+                //Should generally be any reference, just know in this case all references will be locations
+                if (argSymbol != null && (argSymbol.getType().equals("pose") || argSymbol.getType().equals("physobj"))) {
+                    if (!varMap.containsKey(argSymbol)) {
+                        Variable var = Factory.createVariable("VAR" + varMap.size() + ":" + argSymbol.getType());
+                        varMap.put(argSymbol, var);
+
+                        output.addSupplementalSemantics(Factory.createPredicate(argSymbol.toUntypedString(), var));
+                        Symbol tier = Factory.createSymbol("DEFINITE");
+                        output.addTierAssignment(var, tier);
+
+                        processedArguments.add(var);
+                    } else {
+                        processedArguments.add(varMap.get(argSymbol));
                     }
                 } else {
-                    argsStrings.add(arg.toString());
+                    //TODO: this isn't always the case, if we want to allow variables to be generated by the LLM this needs to change and the prompt needs to be updated
+                    //Domain-specific safeguard to prevent the LLM from capitalizing arguments
+                    //If argument is a wildcard, don't want it to be capitalized by the LLM just because it recognizes it as a proper noun
+                    if (Character.isUpperCase(argString.charAt(0)) && argString.length() > 1) {
+                        String lowercaseArg = argString;
+                        lowercaseArg = Character.toLowerCase(lowercaseArg.charAt(0)) + lowercaseArg.substring(1);
+                        processedArguments.add(Factory.createSymbol(lowercaseArg));
+                    } else {
+                        processedArguments.add(Factory.createSymbol(argString));
+                    }
                 }
             }
-        } else {
-            argsStrings.add(fol.toString());
         }
-        return argsStrings;
+        return processedArguments;
     }
 
     @Override
@@ -353,10 +345,10 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                         if (refs.get(arg).size() == 1) {
                             transformedArgs.add(Factory.createSymbol(refs.get(arg).get(0).getName(),refs.get(arg).get(0).get(0).getType()));
                         }
-                        //TODO: this should only be present for testing
-                        else {
-                            transformedArgs.add(arg);
-                        }
+                        ////TODO: this should only be present for testing
+                        //else {
+                        //    transformedArgs.add(arg);
+                        //}
                     } catch (TRADEException e) {
                         log.warn("[generateREG]", e);
                     }
@@ -496,12 +488,20 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                 if (tsi != null) {
                     propertyNames = tsi.call(List.class);
                 }
+                //else {
+                //    //parserTest only
+                //    return Arrays.asList("red block", "orange block", "yellow block", "blue block", "green block");
+                //}
             } else {
                 //TODO: should be based on group
                 TRADEServiceInfo tsi = getServiceForAgent(actorName, "getJapaneseObjectDescriptors");
                 if (tsi != null) {
                     propertyNames = tsi.call(List.class);
                 }
+                //else {
+                //    //parserTest only
+                //    return Arrays.asList("赤いブロック", "オレンジ色のブロック", "黄色いブロック", "青いブロック", "緑色のブロック");
+                //}
             }
             return propertyNames;
         } catch (TRADEException e) {
@@ -519,11 +519,19 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                 if (tsi != null) {
                     propertyNames = tsi.call(List.class);
                 }
+                //else {
+                //    //parserTest only
+                //    return Arrays.asList("location one", "location two", "location three", "location four", "location five");
+                //}
             } else {
                 TRADEServiceInfo tsi = getServiceForAgent(agentName,"getJapanesePoseDescriptors");
                 if (tsi != null) {
                     propertyNames = tsi.call(List.class);
                 }
+                //else {
+                //    //parserTest only
+                //    return Arrays.asList("場所1","場所2","場所3","場所4","場所5");
+                //}
             }
             return propertyNames;
         } catch (TRADEException e) {
@@ -590,28 +598,14 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
 
     private String getDescriptorType(String agentName, String descriptor) {
         List<String> propertyNames = new ArrayList<>();
-        try {
-            TRADEServiceInfo tsi = getServiceForAgent(agentName,"getEnglishObjectDescriptors");
-            if (tsi != null) {
-                propertyNames = tsi.call(List.class);
-            }
-            if (propertyNames.contains(descriptor)) {
-                return "physobj";
-            }
-        } catch (TRADEException e) {
-            log.error("[getObjectListString]", e);
+        propertyNames  = getObjects(agentName, true);
+        if (propertyNames.contains(descriptor)) {
+            return "physobj";
         }
 
-        try {
-            TRADEServiceInfo tsi = getServiceForAgent(agentName,"getEnglishPoseDescriptors");
-            if (tsi != null) {
-                propertyNames = tsi.call(List.class);
-            }
-            if (propertyNames.contains(descriptor)) {
-                return "pose";
-            }
-        } catch (TRADEException e) {
-            log.error("[getPoseListString]", e);
+    propertyNames = getPoses(agentName, true);
+        if (propertyNames.contains(descriptor)) {
+            return "pose";
         }
         return "";
     }
