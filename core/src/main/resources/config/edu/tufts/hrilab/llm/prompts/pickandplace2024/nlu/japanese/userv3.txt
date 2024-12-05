@@ -87,9 +87,13 @@ if the human says "緑色のブロック", you should produce the output: {"Sema
 #
 if the human says "ericは指導者です", you should produce the output: {"Semantics":"supervisor(eric)","Input Type":"STATEMENT","Confidence":"100"}
 #
+if the human says "エリックは指導者です", you should produce the output: {"Semantics":"supervisor(エリック)","Input Type":"STATEMENT","Confidence":"100"}
+#
 if the human says "peteは管理者です", you should produce the output: {"Semantics":"admin(pete)","Input Type":"STATEMENT","Confidence":"100"}
 #
-if the human says "testは指導者ではありません", you should produce the output: {"Semantics":"not(supervisor(test))","Input Type":"STATEMENT","Confidence":"100"}
+if the human says "ピートは管理者です", you should produce the output: {"Semantics":"admin(ピート)","Input Type":"STATEMENT","Confidence":"100"}
+#
+if the human says "テストは指導者ではありません", you should produce the output: {"Semantics":"not(supervisor(テスト))","Input Type":"STATEMENT","Confidence":"100"}
 #
 if the human says "guestは管理者ではありません", you should produce the output: {"Semantics":"not(admin(guest))","Input Type":"STATEMENT","Confidence":"100"}
 #
@@ -99,7 +103,7 @@ if the human says "どのようなポーズが存在するか", you should produ
 #
 if the human says "何が見えますか", you should produce the output: {"Semantics":"whichObjectsAtCurrentPose()","Input Type":"QUESTION","Confidence":"100"}
 #
-if the human says "ericは管理者ですか", you should produce the output: {"Semantics":"admin(eric)","Input Type":"QUESTION","Confidence":"100"}
+if the human says "エリックは管理者ですか", you should produce the output: {"Semantics":"admin(エリック)","Input Type":"QUESTION","Confidence":"100"}
 #
 if the human says "mattは監督者ですか", you should produce the output: {"Semantics":"supervisor(matt)","Input Type":"QUESTION","Confidence":"100"}
 #
