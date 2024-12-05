@@ -46,7 +46,7 @@ public class HFClient{
     public String model = "Meta-Llama-3.1-70B-Instruct";
 
     private String apiKey = null;
-    private int maxNewTokens = 1028;
+    private int maxNewTokens = 128;
     private float temperature = 0.6f;
 
     public HFClient () {
