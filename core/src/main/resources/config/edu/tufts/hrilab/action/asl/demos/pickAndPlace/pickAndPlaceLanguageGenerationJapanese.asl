@@ -37,6 +37,54 @@ import java.util.Map;
     act:generateResponseFromString("承知しました。物体は拾いません");
 }
 
+//TODO: Either make parallel pipeline or update existing one to handle a list of response formats (referred pipeline being askQuestion variations)
+//      Don't want to do now for fear of breaking things. Writing just this method strangely for now.
+(Symbol ?response) = reportFullLocationAndAskToSwapV2() {
+    Map !bindings;
+    Variable !x = X;
+    Variable !y = Y;
+    Predicate !yesNoResponseForm = val(X);
+    Predicate !objectTypeResponseForm = objectType(Y);
+    java.util.List !responseFormList;
+
+    edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?actor);
+    edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "QUESTION");
+    op:invokeMethod(!utterance, "setType", !type);
+    op:invokeMethod(!utterance, "setWords", "場所がいっぱいになっているため、物体を置くことができません。物体のどれかを交換しましょうか？");
+
+    op:log(debug,"[reportFullLocationAndAskToSwapV2] asking question");
+    async {
+      act:communicateUtterance(!utterance);
+    }
+
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    op:add(!responseFormList,!yesNoResponseForm);
+    op:add(!responseFormList,!objectTypeResponseForm);
+
+    op:log(debug,"[reportFullLocationAndAskToSwapV2] waiting for one of two response forms");
+    !bindings = act:waitForOneOfResponses(!responseFormList, ?actor, -1);
+    if (op:invokeMethod(!bindings, "isEmpty")) {
+        op:log(debug,"[reportFullLocationAndAskToSwapV2] got empty bindings, answering 'no'");
+        ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");
+    } else {
+        op:log(debug,"[reportFullLocationAndAskToSwapV2] have bindings !bindings");
+        ?response = op:invokeMethod(!bindings,"get",!x);
+        op:log(debug,"[reportFullLocationAndAskToSwapV2] X binding value ?response");
+        if (op:isNull(?response)) {
+            ?response = op:get(!bindings,!y);
+            op:log(debug,"[reportFullLocationAndAskToSwapV2] Y binding value ?response");
+            if (op:isNull(?response)) {
+                op:log(warn,"[reportFullLocationAndAskToSwapV2] No binding found for X or Y, this shouldn't be the case");
+                ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");
+            } else {
+                if (~op:equalsValue(?response,none)) {
+                    act:assertIsPhysobj(?response);
+                }
+            }
+        }
+    }
+}
+
 (Symbol ?response) = reportFullLocationAndAskToSwap() {
     Map !bindings;
     Variable !x = "X";
@@ -235,6 +283,54 @@ import java.util.Map;
     !poseDescriptorJapanese = tsc:getJapaneseVersionOfDescriptor(?poseDescriptor);
 
     act:generateResponseFromString("!poseDescriptorJapaneseに物体が見えます");
+}
+
+//TODO: Either make parallel pipeline or update existing one to handle a list of response formats (referred pipeline being askQuestion variations)
+//      Don't want to do now for fear of breaking things. Writing just this method strangely for now.
+(Symbol ?response) = reportHoldingObjectAndAskToPutDownV2() {
+    Map !bindings;
+    Variable !x = X;
+    Variable !y = Y;
+    Predicate !yesNoResponseForm = val(X);
+    Predicate !objectTypeResponseForm = pose(Y);
+    java.util.List !responseFormList;
+
+    edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?actor);
+    edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "QUESTION");
+    op:invokeMethod(!utterance, "setType", !type);
+    op:invokeMethod(!utterance, "setWords", "すでに物体を持っているため、拾うことはできません。どちらかに置きましょうか?");
+
+    op:log(debug,"[reportHoldingObjectAndAskToPutDownV2] asking question");
+    async {
+      act:communicateUtterance(!utterance);
+    }
+
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    op:add(!responseFormList,!yesNoResponseForm);
+    op:add(!responseFormList,!objectTypeResponseForm);
+
+    op:log(debug,"[reportHoldingObjectAndAskToPutDownV2] waiting for one of two response forms");
+    !bindings = act:waitForOneOfResponses(!responseFormList, ?actor, -1);
+    if (op:invokeMethod(!bindings, "isEmpty")) {
+        op:log(debug,"[reportHoldingObjectAndAskToPutDownV2] got empty bindings, answering 'no'");
+        ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");
+    } else {
+        op:log(debug,"[reportHoldingObjectAndAskToPutDownV2] have bindings !bindings");
+        ?response = op:invokeMethod(!bindings,"get",!x);
+        op:log(debug,"[reportHoldingObjectAndAskToPutDownV2] X binding value ?response");
+        if (op:isNull(?response)) {
+            ?response = op:get(!bindings,!y);
+            op:log(debug,"[reportHoldingObjectAndAskToPutDownV2] Y binding value ?response");
+            if (op:isNull(?response)) {
+                op:log(warn,"[reportHoldingObjectAndAskToPutDownV2] No binding found for X or Y, this shouldn't be the case");
+                ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");
+            } else {
+                if (~op:equalsValue(?response,none)) {
+                    act:assertIsPose(?response);
+                }
+            }
+        }
+    }
 }
 
 (Symbol ?response) = reportHoldingObjectAndAskToPutDown() {

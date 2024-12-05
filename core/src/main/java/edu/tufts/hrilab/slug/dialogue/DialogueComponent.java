@@ -23,8 +23,15 @@ import org.apache.commons.cli.Option;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public class DialogueComponent extends DiarcComponent {
@@ -213,7 +220,7 @@ public class DialogueComponent extends DiarcComponent {
   /**
    * @param responseForm answer semantics which this method will block until receiving
    * @param waitDuration duration this method will block until giving up. If a negative number, will block indefinitely
-   * @return Bindings from the answer, or null if no answer was received in time
+   * @return Bindings from the answer, or an empty map if no answer was received in time or the question was overwritten/canceled
    */
   @OnInterrupt(
           onCancelServiceCall = "cancelWaitForResponse(?responseForm,?speaker)",
@@ -273,6 +280,72 @@ public class DialogueComponent extends DiarcComponent {
     return answer.getAnswerBindings();
   }
 
+  //TODO: after implementing this and looking at other functions, is everything in this file actually threadsafe?
+  //This functionality also is affected by decisions made on how to handle duplicate questions being asked by the system, which needs to be revisited.
+  /**
+   * @param responseForms List of answer semantics which this method will block until receiving one of
+   * @param waitDuration duration this method will block until giving up. If a negative number, will block indefinitely
+   * @return Bindings from the corresponding answer, or an empty map if no answer was received in time or any of the questions were overwritten
+   */
+  @OnInterrupt(
+          onCancelServiceCall = "cancelWaitForResponse(?responseForm,?speaker)",
+          onSuspendServiceCall = "suspendWaitForResponse(?responseForm,?speaker,true)",
+          onResumeServiceCall = "resumeWaitForResponse(?responseForm,?speaker)"
+  )
+  @TRADEService
+  @Action
+  public Map<Variable,Symbol> waitForOneOfResponses(List<Predicate> responseForms, Symbol speaker, long waitDuration) {
+    if (responseForms.isEmpty()) {
+      log.warn("[waitForOneOfResponses] empty form list supplied");
+      return new HashMap<>();
+    }
+
+    //joint condition specific to this function which is used to wait for one of the response forms being supplied
+    Lock jointResponseLock = new ReentrantLock();
+    Condition jointResponseCondition = jointResponseLock.newCondition();
+    //thread for each response form
+    ExecutorService executor = Executors.newFixedThreadPool(responseForms.size());
+    Map<Predicate, Future<Map<Variable,Symbol>>> questionFutures = new HashMap<>();
+    for (Predicate form: responseForms) {
+      questionFutures.put(form,executor.submit(() -> {
+        Map<Variable,Symbol> bindings = waitForResponse(form, speaker, waitDuration);
+        //In each thread, you signal the condition if the response is supplied (or if the question is overwritten)
+        jointResponseLock.lock();
+        jointResponseCondition.signal();
+        jointResponseLock.unlock();
+        return bindings;
+      }));
+    }
+
+    jointResponseLock.lock();
+    try {
+      jointResponseCondition.await();
+    } catch (InterruptedException e) {
+      log.error("[waitForOneOfResponses] interrupted while waiting on joint response condition", e);
+    }
+    jointResponseLock.unlock();
+
+    //After the condition is signaled, you get the corresponding bindings and cancel all other questions
+    Map<Variable,Symbol> returnBindings = new HashMap<>();
+    for (Map.Entry<Predicate,Future<Map<Variable,Symbol>>> questionFuture : questionFutures.entrySet()) {
+      if (questionFuture.getValue().isDone()) {
+          try {
+              returnBindings = questionFuture.getValue().get();
+          } catch (InterruptedException | ExecutionException e) {
+              log.error("[waitForOneOfResponses] exception getting bindings from completed question future", e);
+          }
+      } else {
+        //This is potentially problematic in deep edge cases depending on solution to users ignoring system questions.
+        //If a validation question is asked and the user proceeds to answer an original question where one of the valid
+        //  response forms is identical, this would cancel the validation question.
+        cancelWaitForResponse(questionFuture.getKey(),speaker);
+      }
+    }
+
+    executor.shutdown();
+
+    return returnBindings;
+  }
 
   /**
    * Determines if the semantics of a given utterance are an answer to any currently active questions

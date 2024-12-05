@@ -234,6 +234,9 @@ import java.lang.Integer;
     Symbol !objectLocation;
 
     !objectLocation = act:getObjectPose(?object);
+    if (op:isNull(!objectLocation)) {
+        exit(FAIL_PRECONDITIONS,not(at(?object,?start)));
+    }
     if (~op:equalsValue(!objectLocation, ?start)) {
         exit(FAIL_PRECONDITIONS,not(at(?object,?start)));
     }
@@ -267,22 +270,42 @@ import java.lang.Integer;
     op:log("debug","[pickUpWhileHoldingObjectRecovery] ?failureReasons");
     op:log("debug","[pickUpWhileHoldingObjectRecovery] ?failedGoal");
 
+    //!currentPose = act:getCurrentLocation();
+    //!response = act:reportHoldingObjectAndAskToPutDown();
+    //if (op:equals(!response,yes)) {
+    //    !pose = act:askForPose();
+    //    if (op:equals(!pose,none)) {
+    //        exit(FAIL_RECOVERY);
+    //    } else {
+    //        act:goToPose(!pose);
+    //        act:putDown();
+    //        act:goToPose(!currentPose);
+    //        //only here because of ASL bug
+    //        !blockToPickUp = op:invokeMethod(?failedGoal,"get",1);
+    //        act:pickUp(!blockToPickUp);
+    //    }
+    //} else {
+    //    exit(FAIL_RECOVERY);
+    //}
+
     !currentPose = act:getCurrentLocation();
-    !response = act:reportHoldingObjectAndAskToPutDown();
-    if (op:equals(!response,yes)) {
+    //(bad var name, could be either response)
+    !pose = act:reportHoldingObjectAndAskToPutDownV2();
+    if (op:equals(!pose,yes)) {
         !pose = act:askForPose();
-        if (op:equals(!pose,none)) {
-            exit(FAIL_RECOVERY);
-        } else {
-            act:goToPose(!pose);
-            act:putDown();
-            act:goToPose(!currentPose);
-            //only here because of ASL bug
-            !blockToPickUp = op:invokeMethod(?failedGoal,"get",1);
-            act:pickUp(!blockToPickUp);
-        }
-    } else {
+    } elseif (op:equals(!pose,no)) {
         exit(FAIL_RECOVERY);
+    }
+
+    if (op:equals(!pose,none)) {
+        exit(FAIL_RECOVERY);
+    } else {
+        act:goToPose(!pose);
+        act:putDown();
+        act:goToPose(!currentPose);
+        //only here because of ASL bug
+        !blockToPickUp = op:invokeMethod(?failedGoal,"get",1);
+        act:pickUp(!blockToPickUp);
     }
 }
 
@@ -485,27 +508,51 @@ import java.lang.Integer;
 
     !object = act:getHeldObject();
     !currentPose = act:getCurrentLocation();
-    //TODO: populate question with held object and current location?
-    //  report that we cannot put down the object because the location is full
-    //  Ask if the user would like to swap the held object with a object in that location
-    !response = act:reportFullLocationAndAskToSwap();
-    if (op:equals(!response,yes)) {
+    ////TODO: populate question with held object and current location?
+    ////  report that we cannot put down the object because the location is full
+    ////  Ask if the user would like to swap the held object with a object in that location
+    //!response = act:reportFullLocationAndAskToSwap();
+    //if (op:equals(!response,yes)) {
+    //    !otherObject = act:askForObjectToSwap();
+    //    !otherObjectName = op:invokeMethod(!otherObject, "getName");
+    //    if (op:equals(!otherObjectName,"none")) {
+    //        act:reportNotSwappingObjects();
+    //        exit(FAIL_RECOVERY);
+    //    } else {
+    //        !otherObjectPose = act:getObjectPose(!otherObject);
+    //        if (~op:equals(!currentPose,!otherObjectPose)) {
+    //            act:reportObjectToSwapNotAtCurrentPose();
+    //            exit(FAIL_RECOVERY);
+    //        }
+    //        act:swapObjects(!object,!otherObject);
+    //    }
+    //} else {
+    //    act:reportNotSwappingObjects();
+    //    exit(FAIL_RECOVERY);
+    //}
+
+    //(bad var name, could be either response)
+    !otherObject = act:reportFullLocationAndAskToSwapV2();
+    if (op:equals(!otherObject,yes)) {
         !otherObject = act:askForObjectToSwap();
         !otherObjectName = op:invokeMethod(!otherObject, "getName");
-        if (op:equals(!otherObjectName,"none")) {
-            act:reportNotSwappingObjects();
-            exit(FAIL_RECOVERY);
-        } else {
-            !otherObjectPose = act:getObjectPose(!otherObject);
-            if (~op:equals(!currentPose,!otherObjectPose)) {
-                act:reportObjectToSwapNotAtCurrentPose();
-                exit(FAIL_RECOVERY);
-            }
-            act:swapObjects(!object,!otherObject);
-        }
-    } else {
+    } elseif (op:equals(!otherObject,no)) {
         act:reportNotSwappingObjects();
         exit(FAIL_RECOVERY);
+    } else {
+        !otherObjectName = op:invokeMethod(!otherObject, "getName");
+    }
+
+    if (op:equals(!otherObjectName,"none")) {
+        act:reportNotSwappingObjects();
+        exit(FAIL_RECOVERY);
+    } else {
+        !otherObjectPose = act:getObjectPose(!otherObject);
+        if (op:isNull(!otherObjectPose) || ~op:equals(!currentPose,!otherObjectPose)) {
+            act:reportObjectToSwapNotAtCurrentPose();
+            exit(FAIL_RECOVERY);
+        }
+        act:swapObjects(!object,!otherObject);
     }
 }
 
