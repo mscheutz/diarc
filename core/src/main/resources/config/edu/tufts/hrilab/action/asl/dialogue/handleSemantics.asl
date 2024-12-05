@@ -144,8 +144,15 @@ import java.lang.Integer;
         op:log("debug", "handleITK: observation goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
       } elseif (~op:isNull(!queryActor)) {
-        act:askAbout(!queryActor, ?query, !knowsQuery);
-        op:log("debug", "handleITK: askAbout goal succeeded.");
+        //TODO: change back this block of code when fixed. Bug somewhere causes askAbout to be called even if !queryActor is null
+        //      (&& not short circuiting but written as if it should)
+        op:log("debug", "handleITK: askAbout goal enter. !queryActor");
+        if (act:askAbout(!queryActor, ?query, !knowsQuery)) {
+            op:log("debug", "handleITK: askAbout goal succeeded.");
+        } else {
+            op:log("debug", "handleITK: knows and obs goal failed, just looking in belief.");
+            !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
+        }
       }
       else {
         op:log("debug", "handleITK: knows and obs goal failed, just looking in belief.");

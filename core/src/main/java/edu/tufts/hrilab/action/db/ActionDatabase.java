@@ -278,6 +278,46 @@ public class ActionDatabase {
     return (!actionsWithPostcond.isEmpty() || !actionsWithSignature.isEmpty());
   }
 
+  //TODO: PickAndPlace2024 Impl - used for "do you know how to X" - does this extend to all domains?
+  //  Also depends what questions this is actually used for and how RR interacts with this for activated entities vs not
+  /**
+   * Extension of {@link #actionExists(Predicate)} that does additional type checking of arguments between the supplied
+   * goal and matching ActionDBEntry.
+   */
+  @TRADEService
+  public Boolean actionExecutable(Predicate goal) {
+    List<ActionDBEntry> actionsWithPostcond;
+    if (goal.getName().equals("goal") && goal.size() == 2) {
+      actionsWithPostcond = getActionsByEffect(goal.get(0), (Predicate) goal.get(1));
+    } else {
+      actionsWithPostcond = getActionsByEffect(null, goal);
+    }
+    List<ActionDBEntry> actionsWithSignature = getActionsBySignature(goal);
+
+    actionsWithPostcond = actionsWithPostcond.stream().filter(action -> {
+      Predicate signature = (Predicate) goal.get(1);
+      for (int i=0;i<signature.getArgs().size();i++) {
+        String argSemanticType = action.getRoleSemanticType(i);
+        if (!(argSemanticType.isEmpty() || argSemanticType.equals(goal.get(i).getType()))) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+    actionsWithSignature = actionsWithSignature.stream().filter(action -> {
+      //ignore actor
+      for (int i=1;i<goal.getArgs().size();i++) {
+        String argSemanticType = action.getRoleSemanticType(i);
+        if (!(argSemanticType.isEmpty() || argSemanticType.equals(goal.get(i).getType()))) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+
+    return (!actionsWithPostcond.isEmpty() || !actionsWithSignature.isEmpty());
+  }
+
   /**
    * Lookup by postcondition.
    *

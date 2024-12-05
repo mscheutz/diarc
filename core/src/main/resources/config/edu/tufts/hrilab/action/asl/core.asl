@@ -14,7 +14,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
       success : knows(?actor,capableOf(?goal));
     }
 
-    if (tsc:actionExists(?goal)) {
+    if (tsc:actionExecutable(?goal)) {
       !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "capableOf(?goal)");
       act:assertBelief(!toAssert);
       //TODO: pull out - pickAndPlace2024 hack to get around itk pipeline not submitting goals through ExecutionManager
