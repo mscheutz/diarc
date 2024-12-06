@@ -14,7 +14,6 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import javax.annotation.Nonnull;
 
 /**
  * An implementation of the Spring server backend. Spins up a
@@ -81,7 +80,7 @@ public class GuiManager implements WebSocketConfigurer {
    * @param registry registry object that configures request mappings
    */
   @Override
-  public void registerWebSocketHandlers(@Nonnull WebSocketHandlerRegistry registry) {
+  public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
     try {
       registry.addHandler(Handler.createHandler(), "ws")
               .setAllowedOrigins(parseCorsOrigins());

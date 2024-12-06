@@ -1,0 +1,11 @@
+kg; VAL\NUM ; #x.$x
+in x; VAL\NUM ; #x.$x
+x; VAL\NUM ; #x.$x
+y; VAL\NUM ; #x.$x
+in y; VAL\NUM ; #x.$x
+set goal as; C/NUM/NUM; #x#y.set_goal(?ADDRESSEE, $x,$y)
+go to; C/POSE; #x.go_to(?ADDRESSEE, $x)
+stop; C; stop(?ADDRESSEE)
+one; POSE; pose1
+two; POSE; pose2
+home; POSE; home
