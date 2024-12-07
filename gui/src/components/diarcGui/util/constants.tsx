@@ -6,10 +6,11 @@ import MapViewer from "../MapViewer.tsx";
 import GoalManager from "../goalManager/GoalManager.tsx";
 import VisionManager from "../vision/VisionManager.tsx";
 import TradeServiceViewer from "../tradeService/TradeServiceViewer.tsx";
+import VLAViewer from "../VLAViewer.tsx";
 
 const handlerRoots: string[] =
     ["actionProgrammer", "belief", "chat", "goalViewer", "goalManager", "map",
-        "vision", "tradeService"];
+        "vision", "tradeService", "vla"];
 
 const handlers = {
     "actionProgrammer": {
@@ -43,6 +44,10 @@ const handlers = {
     "vision": {
         tabName: "Vision Manager",
         component: VisionManager
+    },
+    "vla": {
+        tabName: "VLA Viewer",
+        component: VLAViewer
     }
 };
 

@@ -20,3 +20,5 @@ elevator_lab_test/
 /gui/yarn.lock
 /gui/build/
 /gui/node_modules/
+
+.DS_Store
