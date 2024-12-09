@@ -373,6 +373,8 @@ import java.lang.Integer;
     Predicate !becausePredicate;
     java.lang.Boolean !madeTentativeAccept = false;
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    java.lang.Boolean !waitingForResponse;
+    Predicate !responsePredicate;
 
     conditions : {
       or : {
@@ -397,6 +399,17 @@ import java.lang.Integer;
 
     //Can also reimplement ignoreTentativeAccept filter if desired
     if(~act:checkIgnoreTentativeAccept(?state)){
+        //PickAndPlace 2024 - know that goals which ignore tentative accept also always skip the queue, can't generally make this assumption.
+        //If goal doesn't skip the queue, potentially perform special reporting depending on system state
+        if (~op:equalsValue(?priority,SKIPPENDING)) {
+            //if question has been asked, say no and return
+            if (tsc:isAgentWaitingForResponse(?actor)) {
+                //Not written for SimpleNLG
+                !responsePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "pleaseAnswerMyQuestionBeforeSendingFurtherInstructions()");
+                act:generateResponse(!responsePredicate);
+                return;
+            }
+        }
         act:generateResponse(?speaker, ?tentativeAcceptSemantics, ?semanticType);
     }
     !madeTentativeAccept = op:newObject("java.lang.Boolean", "true");

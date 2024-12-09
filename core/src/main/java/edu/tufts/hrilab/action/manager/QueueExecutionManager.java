@@ -4,7 +4,10 @@
 
 package edu.tufts.hrilab.action.manager;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.execution.RootContext;
 import edu.tufts.hrilab.action.goal.Goal;
@@ -14,6 +17,8 @@ import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.common.UtteranceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +72,42 @@ public class QueueExecutionManager extends ExecutionManager {
   @Override
   protected void handleConflictingLowerPriorityGoal(Goal g) {
     //QueueEM: Simply leave in the pending queue rather than rejecting
+    //PickAndPlace2024 - Report that the goal is being added to the queue
+    Symbol actor = g.getActor();
+    if (!actor.getName().equals("self")) {
+      //Currently need to use semantics rather than string for NLG for flexibility between EN/JP
+      //String statusReport = null;
+      Predicate statusReportSemantics = null;
+      Goal conflictingGoal = agentGoals.get(g.getActor());
+      if (conflictingGoal != null) {
+        if (conflictingGoal.getStatus().equals(GoalStatus.ACTIVE)) {
+          statusReportSemantics = Factory.createPredicate("okayAddingToMyCurrentQueueOfTasks()");
+          //statusReport = "okay, adding to my current queue of tasks";
+        } else if (conflictingGoal.getStatus().equals(GoalStatus.SUSPENDED)) {
+          //Could add currently suspended goal predicate to semantics and corresponding examples to NLG prompt if we want to report what the goal is
+          statusReportSemantics = Factory.createPredicate("okayMyCurrentTaskIsSuspendedAddingThisToMyQueue()");
+          //statusReport = "okay, my current task is suspended. Adding this to my queue";
+        }
+        //if (statusReport != null) {
+        if (statusReportSemantics != null) {
+          Utterance utt = new Utterance.Builder()
+                  .setSpeaker(g.getActor())
+                  .setAddressee(Factory.createSymbol("user"))
+                  .setUtteranceType(UtteranceType.REPLY)
+                  .setIsInputUtterance(false)
+                  //.setWords(List.of(statusReport.split(" ")))
+                  .setSemantics(statusReportSemantics)
+                  .build();
+          try {
+            utt = TRADE.getAvailableService(new TRADEServiceConstraints().name("convertSemanticsToText").argTypes(Utterance.class)).call(Utterance.class, utt);
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("updateDialogueHistory").argTypes(Utterance.class)).call(void.class, utt);
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(String.class)).call(void.class, utt.getWordsAsString());
+          } catch (TRADEException e) {
+            log.error("[handleConflictingLowerPriorityGoal]", e);
+          }
+        }
+      }
+    }
   }
 
   //TODO: extend definition of resources past just whole agents/teams

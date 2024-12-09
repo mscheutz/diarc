@@ -512,6 +512,12 @@ public class DialogueComponent extends DiarcComponent {
     }
   }
 
+  @TRADEService
+  public boolean isAgentWaitingForResponse(Symbol agent) {
+    ConcurrentHashMap<Term,Answer> currentQuestions = currentQuestionsPerAgent.get(agent);
+    return !(currentQuestions == null || currentQuestions.isEmpty());
+  }
+
   private void unlockAnswer(Answer answer) {
     answer.getResponseLock().lock();
     try {
