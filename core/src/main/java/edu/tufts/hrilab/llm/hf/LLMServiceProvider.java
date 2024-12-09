@@ -16,11 +16,16 @@ import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Completion;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
+import edu.tufts.hrilab.slug.parsing.cache.CacheDatabase;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 // This class is just a template for a class which can provide relevant LLM NLU and NLG services with access to dialogue
@@ -33,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class LLMServiceProvider extends DiarcComponent implements NLGInterface{
     boolean performNLG = true;
     SimpleNLGComponent nlg;
+    CacheDatabase cacheDatabase;
     boolean parserTest = false;
 
     //Set of specific user/agent back and forths to get to the bottom of a single NLU attempt
@@ -54,6 +60,8 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
 
     private boolean addedAgents = false;
     private boolean registeredForDialogueNotifications = false;
+
+    private ExecutorService executor = Executors.newCachedThreadPool();
 
     /**
      * Generate a Chat object to call LLM's chatCompletion service with for the generation task. Practically entails
@@ -95,6 +103,7 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
             //Always instantiating as a fallback in case LLM gets overloaded or completion request throws any other exception
             nlg = new SimpleNLGComponent();
         }
+        cacheDatabase = new CacheDatabase("pickAndPlace2024Reverse",null,true,true);
     }
 
     @Override
@@ -158,11 +167,47 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
 
     @Override
     public Utterance convertSemanticsToText(Utterance u) {
-        if (performNLG) {
-            return llmGenerationService(u);
-        } else {
-            return nlg.convertSemanticsToText(u);
+        Future<Utterance> cachedFuture = null;
+        Future<Utterance> genFuture = null;
+
+        genFuture = executor.submit(() -> {
+            if (performNLG) {
+                return llmGenerationService(u);
+            } else {
+                return nlg.convertSemanticsToText(u);
+            }
+        });
+
+        cachedFuture = executor.submit(() -> cacheDatabase.get(u));
+
+        Utterance cacheOutput = null;
+        Utterance genOutput = null;
+
+        //TODO: what if gen uses ?actor, which isn't in supplemental semantics?
+        try {
+            cacheOutput = cachedFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("[convertSemanticsToText] error getting cached database result", e);
         }
+
+        if (cacheOutput != null && !cacheOutput.getWordsAsString().isEmpty()) {
+            log.debug("[convertSemanticsToText] using cached response");
+            return cacheOutput;
+        }
+
+        try {
+            genOutput = genFuture.get();
+            if (genOutput != null) {
+                String genWords = genOutput.getWordsAsString();
+                if (!genWords.isEmpty()) {
+                    cacheDatabase.add(genOutput);
+                    return genOutput;
+                }
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("[convertSemanticsToText] error getting generated result", e);
+        }
+        return u;
     }
 
     public Utterance parseUtterance(Utterance utterance) {

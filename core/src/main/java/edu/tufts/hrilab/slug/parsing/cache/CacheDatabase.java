@@ -46,14 +46,17 @@ public class CacheDatabase {
   static private String cacheDirectoryPath = "config/edu/tufts/hrilab/slug/parsing/cache";
   private String tableName = "cache";
   private String defaultCacheName = "diarc-parser-cache";
+  private String defaultReverseCacheName = "diarc-parser-cache-reverse";
   private String file = null;
+  private boolean reverseCache;
 
   private Connection connection;
   private Statement statement;
   private PreparedStatement getStatement;
   private PreparedStatement insertStatement;
 
-  public CacheDatabase (String name, String[] loadPaths, boolean persist) {
+  public CacheDatabase (String name, String[] loadPaths, boolean persist, boolean reverseCache) {
+    this.reverseCache = reverseCache;
     String homeDirPath;
 
     if (persist) {
@@ -66,14 +69,22 @@ public class CacheDatabase {
         return;
       }
 
-      if (name!= null && name.equals(defaultCacheName)) {
-        log.warn("The cache name \"" + defaultCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
+      if (name!= null) {
+        if(reverseCache && name.equals(defaultReverseCacheName)) {
+          log.warn("The cache name \"" + defaultReverseCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
+        } else if (reverseCache && name.equals(defaultCacheName)) {
+          log.warn("The cache name \"" + defaultCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
+        }
       }
 
       if (name != null) {
         file = Paths.get(homeDirPath, name + ".sqlite").toString();
       } else {
-        file = Paths.get(homeDirPath, defaultCacheName + ".sqlite").toString();
+        if (reverseCache) {
+          file = Paths.get(homeDirPath, defaultReverseCacheName + ".sqlite").toString();
+        } else {
+          file = Paths.get(homeDirPath, defaultCacheName + ".sqlite").toString();
+        }
       }
     }
 
@@ -140,7 +151,12 @@ public class CacheDatabase {
    */
   private void initializeTable () {
     String tableQuery = "CREATE TABLE IF NOT EXISTS " + tableName + " ( words TEXT NOT NULL, utterance JSONB NOT NULL, created BIGINT NOT NULL);";
-    String indexQuery = "CREATE INDEX IF NOT EXISTS cache_words_idx ON " + tableName + " (words);";
+    String indexQuery;
+    if (reverseCache) {
+      indexQuery = "CREATE INDEX IF NOT EXISTS cache_utterance_idx ON " + tableName + " (utterance);";
+    } else {
+      indexQuery = "CREATE INDEX IF NOT EXISTS cache_words_idx ON " + tableName + " (words);";
+    }
     boolean success = false;
     boolean indexSuccess = false;
 
@@ -171,8 +187,13 @@ public class CacheDatabase {
    * PreparedStatement for inserting data ignores insertion if a conflicting entry already exists.
    */
   private void initializeStatements () {
-    String getQuery = "SELECT utterance FROM " + tableName + " WHERE words = ? ORDER BY created DESC LIMIT 1;";
+    String getQuery;
     String insertQuery = "INSERT OR IGNORE INTO " + tableName + " ( words, utterance, created) VALUES (?, ?, ?);";
+    if (reverseCache) {
+      getQuery = "SELECT words FROM " + tableName + " WHERE utterance = ? ORDER BY created DESC LIMIT 1;";
+    } else {
+      getQuery = "SELECT utterance FROM " + tableName + " WHERE words = ? ORDER BY created DESC LIMIT 1;";
+    }
     try {
       getStatement = connection.prepareStatement(getQuery);
     } catch (SQLException ex) {
@@ -193,8 +214,15 @@ public class CacheDatabase {
    * @param loadPaths Cache database files to load entries from
    */
   private void loadCache(String[] loadPaths) {
-    String eraseQuery = "DELETE FROM " + tableName + " WHERE words IS NOT NULL;";
-    String selectQuery = "SELECT words, utterance, created FROM " + tableName + " WHERE words IS NOT NULL;";
+    String eraseQuery;
+    String selectQuery;
+    if (reverseCache) {
+      eraseQuery = "DELETE FROM " + tableName + " WHERE utterance IS NOT NULL;";
+      selectQuery = "SELECT words, utterance, created FROM " + tableName + " WHERE utterance IS NOT NULL;";
+    } else {
+      eraseQuery = "DELETE FROM " + tableName + " WHERE words IS NOT NULL;";
+      selectQuery = "SELECT words, utterance, created FROM " + tableName + " WHERE words IS NOT NULL;";
+    }
     boolean eraseSuccess = false;
     String dbPath;
 
@@ -264,7 +292,14 @@ public class CacheDatabase {
   public void add (Utterance entry) {
     int rows = -1;
     String words = entry.getWordsAsString();
-    List<String> wordsList = entry.getWords();
+    List<String> wordsList;
+    if (reverseCache) {
+      //Making reverse cache structure the same as for parsing for code reusability and ease of impl. Indexing by utterance
+      //  so we don't want to include the words when storing (because that will be the "words" field now). Can change.
+      wordsList = new ArrayList<>();
+    } else {
+      wordsList = entry.getWords();
+    }
     UtteranceType type = entry.getType();
     Symbol semantics = entry.getSemantics();
     List<Term> indirectSemantics = entry.getIndirectSemantics();
@@ -294,14 +329,26 @@ public class CacheDatabase {
    * @return The Utterance object with updated values if found in the cache; otherwise, returns the incoming Utterance unchanged.
    */
   public Utterance get (Utterance incoming) {
+    String getStatementString;
     String words = incoming.getWordsAsString();
+    if (reverseCache) {
+      List<String> wordsList = new ArrayList<>();//incoming.getWords();
+      UtteranceType type = incoming.getType();
+      Symbol semantics = incoming.getSemantics();
+      List<Term> indirectSemantics = incoming.getIndirectSemantics();
+      List<Map<Variable, Symbol>> bindings = incoming.getBindings();
+      CachedUtterance cached = new CachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, incoming.getSupplementalSemantics(), incoming.getTierAssignments());
+      getStatementString = cached.toJSON();
+    } else {
+      getStatementString = words;
+    }
     ResultSet results = null;
     CachedUtterance cachedUtterance = null;
     String json;
     Predicate semantics;
 
     try {
-      getStatement.setString(1, words);
+      getStatement.setString(1, getStatementString);
       results = getStatement.executeQuery();
     } catch (SQLException ex) {
       log.error("[get] Couldn't execute SELECT query on cache database.", ex);
@@ -309,6 +356,13 @@ public class CacheDatabase {
 
     try {
       if (results.next()) {
+        if (reverseCache) {
+          String cachedWords = results.getString("words");
+          if (cachedWords != null) {
+            incoming.setWords(cachedWords);
+            return incoming;
+          }
+        }
         json = results.getString("utterance");
         cachedUtterance = CachedUtterance.fromJSON(json);
         log.debug("[get] Cache hit for [" + words + "] = " + json);
