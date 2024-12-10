@@ -291,7 +291,6 @@ button to reconnect.
     * {@inheritDoc}
     * @return {@inheritDoc}
     */
-   @Nonnull
    @Override
    public String[] getAdapterClassNames() {
        return new String[] {MyAdapter.class.getName()};

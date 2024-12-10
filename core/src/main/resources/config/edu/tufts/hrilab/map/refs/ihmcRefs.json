@@ -1,0 +1,58 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_0:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "home(VAR0:location)"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "one(VAR0:location)"
+      ],
+      "position": [
+        3.0,
+        0.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "two(VAR0:location)"
+      ],
+      "position": [
+        0.0,
+        3.0,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ]
+}
