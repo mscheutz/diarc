@@ -2,12 +2,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Util {
-    private static Map<String, String> objectMapping = new HashMap<>();
 
     public static Map<String, String> reformatInputData(Map<String, Integer> inputData) {
         Map<String, String> result = new HashMap<>();
-        objectMapping.clear();
-        int objectCounter = 1;
 
         for (String originalKey : inputData.keySet()) {
             String[] components = originalKey.split(" ");
@@ -24,27 +21,17 @@ public class Util {
             } else {
                 throw new IllegalArgumentException("Unexpected key format: " + originalKey);
             }
-            if (!objectMapping.containsKey(obj1)) {
-                objectMapping.put(obj1, "obj" + objectCounter);
-                objectCounter++;
-            }
-            if (obj2 != null && !objectMapping.containsKey(obj2)) {
-                objectMapping.put(obj2, "obj" + objectCounter);
-                objectCounter++;
-            }
+
             String funcString;
             if (obj2 != null) {
-                funcString = String.format("%s(%s, %s)", action, objectMapping.get(obj1), objectMapping.get(obj2));
+                funcString = String.format("%s(%s, %s)", action, obj1, obj2);
             } else {
-                funcString = String.format("%s(%s)", action, objectMapping.get(obj1));
+                funcString = String.format("%s(%s)", action, obj1);
             }
+
             result.put(originalKey, funcString);
         }
         return result;
-    }
-
-    public static Map<String, String> getObjectMapping() {
-        return new HashMap<>(objectMapping);
     }
 
     public static String[] getActionStates() {

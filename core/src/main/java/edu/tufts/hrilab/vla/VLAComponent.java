@@ -62,12 +62,4 @@ public class VLAComponent extends DiarcComponent implements GuiProvider {
     public List<String> retrieveActionBeliefs() {
         return new ArrayList<>(actionBeliefs.values());
     }
-
-    /**
-     * Mapping of object name -> object number used in belief arrays
-     * (ex. glazed_rim_procelain_ramekin -> obj2)
-    */
-    public static Map<String, String> retrieveObjectMapping() {
-        return Util.getObjectMapping();
-    }
 }
