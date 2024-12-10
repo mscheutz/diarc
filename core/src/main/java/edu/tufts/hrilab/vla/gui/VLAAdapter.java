@@ -31,4 +31,23 @@ public class VLAAdapter extends GuiAdapter {
     protected boolean providesTradeServices() {
         return false;
     }
+
+    private Session webSocketSession;
+
+    public VLAAdapter(Session webSocketSession) {
+        this.webSocketSession = webSocketSession;
+    }
+
+    public void sendToWebSocket(String message) {
+        if (webSocketSession != null && webSocketSession.isOpen()) {
+            try {
+                webSocketSession.getRemote().sendString(message);
+                System.out.println("Message sent: " + message);
+            } catch (Exception e) {
+                System.err.println("Failed to send message: " + e.getMessage());
+            }
+        } else {
+            System.out.println("WebSocket is not connected.");
+        }
+    }
 }
