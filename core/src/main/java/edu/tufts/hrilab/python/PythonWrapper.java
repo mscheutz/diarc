@@ -5,8 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class PythonWrapper {
-  PythonWrapper(String file) {
-    file = "/home/mfawn/code/diarc/diarc/core/src/main/python/examples/minimal_example.py";
+  public PythonWrapper(String file) {
     String classpath = System.getProperty("java.class.path");
     ProcessBuilder processBuilder = new ProcessBuilder();
     processBuilder.command("python3", "-m", file, classpath);
