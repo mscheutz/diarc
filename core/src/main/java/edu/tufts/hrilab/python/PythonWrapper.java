@@ -1,39 +1,36 @@
 package edu.tufts.hrilab.python;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 
 public class PythonWrapper {
   public PythonWrapper(String file) {
     String classpath = System.getProperty("java.class.path");
     ProcessBuilder processBuilder = new ProcessBuilder();
     processBuilder.command("python3", "-m", file, classpath);
-    processBuilder.redirectErrorStream(true);
     processBuilder.inheritIO();
-
+    Process process = null;
     try {
-      Process process = processBuilder.start();
-
-      // Read output stream
-      BufferedReader outputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-      BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-
-      // Print output
-      String line;
-      while ((line = outputReader.readLine()) != null) {
-        System.out.println("OUTPUT: " + line);
-      }
-
-      // Print errors
-      while ((line = errorReader.readLine()) != null) {
-        System.err.println("ERROR: " + line);
-      }
-
+      process = processBuilder.start();
       int exitCode = process.waitFor();
-//      log.info("Python script exited with code: " + exitCode);
+      System.out.println("Python script exited with code: " + exitCode);
     } catch (IOException | InterruptedException e) {
       e.printStackTrace();
+    } finally {
+      if (process != null) {
+//        OutputStream stdin = process.getOutputStream();
+//        writer = new BufferedWriter(new OutputStreamWriter(stdin));
+//        try {
+//          writer.write("shutdown"); // Send shutdown signal
+//          writer.flush();
+//          writer.close();
+//        } catch (IOException e) {
+//          throw new RuntimeException(e);
+//        }
+        if (process.isAlive()) {
+          // Todo: This is super unsafe! Figure out how to write to python to make this better
+          process.destroyForcibly();
+        }
+      }
     }
   }
 }
