@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.vision.stm;
 
+import com.google.gson.JsonObject;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
@@ -896,4 +897,20 @@ public class MemoryObject implements Serializable {
 
     return true;
   }
+
+  ////////////////////////////////// START GUI methods /////////////////////////////////////////////////////
+  public JsonObject toJson() {
+    JsonObject json = new JsonObject();
+    json.addProperty("typeId", typeId);
+    json.addProperty("tokenId", tokenId);
+    JsonObject bbox = new JsonObject();
+    bbox.addProperty("x", boundingBox.x);
+    bbox.addProperty("y", boundingBox.y);
+    bbox.addProperty("width", boundingBox.width);
+    bbox.addProperty("height", boundingBox.height);
+    json.add("boundingBox", bbox);
+    json.addProperty("detectionConfidence", detectionConfidence);
+    return json;
+  }
+  ///////////////////////////////// END GUI methods //////////////////////////////////////////
 }

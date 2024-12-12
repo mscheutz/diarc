@@ -183,7 +183,10 @@ public class TryContext extends Context {
     // find applicable catch context (if any) and set it as the next child context to execute
     while (currParserStep != null && !currParserStep.isEmpty()) {
       ControlFactory.Control controlType = ControlFactory.Control.fromString(currParserStep.getCommand());
-      if (controlType == ControlFactory.Control.CATCH) {
+      if (controlType == ControlFactory.Control.FINALLY) {
+        // didn't find applicable catch context before finally context (always after catch(es))
+        return false;
+      } else if (controlType == ControlFactory.Control.CATCH) {
         // add catch context to children
         CatchContext catchContext = (CatchContext) setupNextStep(currParserStep);
 
@@ -198,6 +201,8 @@ public class TryContext extends Context {
           childContexts.remove(catchContext);
         }
       }
+
+      // set next step to check
       currParserStep = currParserStep.getRest();
     }
 

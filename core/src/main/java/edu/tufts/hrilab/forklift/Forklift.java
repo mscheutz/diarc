@@ -15,21 +15,23 @@ import edu.tufts.hrilab.consultant.pose.PoseConsultant;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.*;
+import edu.tufts.hrilab.forklift.messages.*;
 import edu.tufts.hrilab.interfaces.MoveBaseInterface;
 import edu.tufts.hrilab.ros2.Ros2Factory;
 import edu.tufts.hrilab.ros2.Ros2Node;
-import edu.tufts.hrilab.ros2.Ros2Subscriber;
-import edu.tufts.hrilab.ros2.SubscriberCallback;
-import edu.tufts.hrilab.ros2.ros2jrosclient.generated.ControllerCommandRequestMessage;
-import edu.tufts.hrilab.ros2.ros2jrosclient.generated.ControllerCommandResponseMessage;
-import id.jros2messages.vision_msgs.Detection3DArrayMessage;
-import id.jros2messages.vision_msgs.Detection3DMessage;
 import edu.tufts.hrilab.util.RotationHelpers;
 import edu.tufts.hrilab.util.SimpleGeometry;
 import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.vision.consultant.VisionReference;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import edu.tufts.hrilab.forklift.RosForkliftStateListener;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.vecmath.*;
 import java.util.*;
@@ -38,12 +40,10 @@ import java.util.*;
 public class Forklift extends DiarcComponent implements MoveBaseInterface {
 
   private Ros2Node node;
-  private Ros2Node subNode;
   private PoseConsultant consultant;
   private AITVisionConsultant visConsultant;
-  private String map_frame;
-  private String base_frame;
-  private Map<String, Boolean> topicMap = new HashMap<>();
+  private String map_frame = "map";
+  private String base_frame = "base";
   public boolean ready = false;
 
   //todo: load from config?
@@ -51,6 +51,12 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
   private final String visDescriptor = "physobj";
   private final double pointDistThresh = .25;
   private final double orientationThresh = .40;
+
+  private static final boolean wait_for_ros_topic = true;
+  private static final boolean ros_cmd_as_echo = true;
+  private RosForkliftStateListener forkliftStateListener;
+
+  private Map<Symbol, Symbol> diarcToAitRefs = new HashMap<>();
 
   @Override
   protected void init() {
@@ -69,14 +75,26 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
       log.error("Error registering pose consultant.", e);
     }
 
-    subNode = Ros2Factory.getDefaultNode();
-    subNode.spin(100);
-  }
 
+    node = Ros2Factory.getDefaultNode();
+    node.createTf();
+    node.spin(100);
+
+    try {
+      URI uri = new URI("ws://localhost:9090");
+      forkliftStateListener = new RosForkliftStateListener(uri, "/current_mission", "Success", "Failure");
+      if (wait_for_ros_topic) {
+        forkliftStateListener.connect();
+      }
+    } catch (URISyntaxException e) {
+      log.error("Error connecting to /current_mission topic",e);
+    }
+  }
 
   public Forklift() {
     super();
   }
+
 
   @Override
   public double[] getPoseGlobalQuat() {
@@ -95,12 +113,16 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
 
   private Pair<Point3d, Quat4d> getLocationPose(Symbol location) {
     Pair<Point3d, Quat4d> pose = null;
-    if (!location.isTerm() && location.getName().startsWith(consultant.getKBName())) {
+    if (!location.isTerm()) {
       // location is a reference
       PoseReference poseReference = consultant.getReference(location);
       if (poseReference != null && poseReference.hasPose()) {
         pose = poseReference.getPose();
+      } else {
+        log.error("Pose " + location + " not in consultant");
       }
+    } else {
+      log.error("Wrong type");
     }
     return pose;
   }
@@ -135,19 +157,23 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
   @Override
   public Justification goToLocation(double xdest, double ydest, double quat_x, double quat_y,
                                     double quat_z, double quat_w, boolean wait) {
-    ControllerCommandRequestMessage msg = new ControllerCommandRequestMessage();
-    //{end_x: 2.0, end_y: 11.0, end_yaw: 1.5, driving_direction: 0, command: 0}"
-    msg.end_x = xdest;
-    msg.end_y = ydest;
-    msg.end_yaw = RotationHelpers.quatToXYZRotations(new Quat4d(quat_x, quat_y, quat_z, quat_w)).z;
-    msg.driving_direction = false; //todo: Check this based on if carrying something or not
-    msg.command = 0;
-    ControllerCommandResponseMessage resp = node.callService("controller_service", msg);
-    if (resp.success) {
-      return new ConditionJustification(true);
-    } else {
-      return new ConditionJustification(false);
-    }
+    // ControllerCommandRequestMessage msg = new ControllerCommandRequestMessage();
+    // //{end_x: 2.0, end_y: 11.0, end_yaw: 1.5, driving_direction: 0, command: 0}"
+    // msg.end_x = xdest;
+    // msg.end_y = ydest;
+    // msg.end_yaw = RotationHelpers.quatToXYZRotations(new Quat4d(quat_x, quat_y, quat_z, quat_w)).z;
+    // msg.driving_direction = false; //todo: Check this based on if carrying something or not
+    // msg.command = 0;
+    // ControllerCommandResponseMessage resp = node.callService("controller_service", msg);
+    // if (resp != null && resp.success) {
+    //   return new ConditionJustification(true);
+    // } else {
+    //   log.error("Goto failed. Continuing"); //todo: for testing
+
+    //   return new ConditionJustification(true);
+    // }
+
+    return new ConditionJustification(true);
   }
 
   private Justification goToLocation(Point3d point, Quat4d quat) {
@@ -161,8 +187,7 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
     Point3d objectPose = new Point3d();
 
     //Calculate point given an offset
-    Point3d newPoint = RotationHelpers.calcTargetOffset(objectPose, objectOrientation, new Vector3d(0
-            , 0, 1), 1.0f);
+    Point3d newPoint = RotationHelpers.calcTargetOffset(objectPose, objectOrientation, new Vector3d(0, 0, 1), 1.0f);
 
     Quat4d newRotation = new Quat4d(objectOrientation);
     newRotation.inverse();
@@ -177,14 +202,15 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
 
   @Override
   public Justification stop() {
-    ControllerCommandRequestMessage msg = new ControllerCommandRequestMessage();
-    msg.command = 3;
-    ControllerCommandResponseMessage resp = node.callService("controller_service", msg);
-    if (resp.success) {
-      return new ConditionJustification(true);
-    } else {
-      return new ConditionJustification(false);
-    }
+    // ControllerCommandRequestMessage msg = new ControllerCommandRequestMessage();
+    // msg.command = 3;
+    // ControllerCommandResponseMessage resp = node.callService("controller_service", msg);
+    // if (resp.success) {
+    //   return new ConditionJustification(true);
+    // } else {
+    //   return new ConditionJustification(false);
+    // }
+    return new ConditionJustification(true);
   }
 
   //todo
@@ -236,36 +262,13 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
     ref.setPose(currPose.getLeft(), currPose.getRight());
   }
 
-  public void updateRefs(String topic, String descriptor) {
-    SubscriberCallback<Detection3DArrayMessage> callback = arrayMessage -> {
-      log.info("Received.");
-      topicMap.put(topic, true);
-      if (!topicMap.containsValue(true)) {
-        ready = true;
-        subNode.end();
-      }
-      if (descriptor.equals(visDescriptor)) {
-//        for (Detection3DMessage obj : arrayMessage.detections) {
-//          createObjRef(obj);
-//        }
-      } else if (descriptor.equals(mapDescriptor)) {
-        for (Detection3DMessage pose : arrayMessage.detections) {
-//          createPoseRef(pose, new ArrayList<>());
-        }
-      }
-    };
-
-    Ros2Subscriber<Detection3DArrayMessage> sub = Ros2Factory.getDefaultSubscriber(Detection3DArrayMessage.class,
-            topic, callback);
-    subNode.addAndStartSubscriber(sub);
-  }
-
   // Populates belief with the distances between zones, e.g. fluent_equals(dist(zone1, zone2), 5)
   private void calculateDistances() {
     List<Term> properties = new ArrayList<>();
     Set<Term> beliefs = new HashSet<>();
-    properties.add(Factory.createPredicate("loadingzone", Factory.createVariable("VAR0", mapDescriptor)));
+    properties.add(Factory.createPredicate("ground", Factory.createVariable("VAR0", mapDescriptor)));
     properties.add(Factory.createPredicate("truck", Factory.createVariable("VAR0", mapDescriptor)));
+    properties.add(Factory.createPredicate("trailer", Factory.createVariable("VAR0", mapDescriptor)));
     properties.add(Factory.createPredicate("location", Factory.createVariable("VAR0", mapDescriptor)));
     List<Symbol> refs = consultant.getReferencesWithAnyProperties(properties);
     for (Symbol ref1 : refs) {
@@ -282,14 +285,14 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
       try {
         Thread.sleep(500);
       } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+        log.error("Error waiting on assertBeliefs:", e);
       }
     }
 
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Set.class)).call(void.class, beliefs);
     } catch (TRADEException e) {
-      log.error("[calculateDistances]",e);
+      log.error("[calculateDistances]", e);
     }
 
   }
@@ -299,35 +302,43 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
 
   }
 
-  //FIXME: Mock class until I know what the actual version looks like
-  private class Area {
-    String name;
-    int slots;
-    int pallets;
-    int x;
-    int y;
-  }
-
   // FIXME: This needs to change once we know what the area object looks like
   @TRADEService
   @Action
   public void initAreas() {
-    List<Area> areas = getAreas();
+    List<GetAreasResponseMessage> areas = getAreas();
     Set<Term> beliefs = new HashSet<>();
-    for (Area area : areas) {
+    for (GetAreasResponseMessage area : areas) {
 
+
+//      Category category = Category.values()[area.category];
+//      // Create location reference for each area
+//      List<Term> properties = new ArrayList<>();
+//      properties.add(Factory.createPredicate(category.name(), Factory.createVariable("VAR0", mapDescriptor)));
+//
+//      Symbol name = Factory.createSymbol(category.name() + area.id, mapDescriptor);
+//      PoseReference location = consultant.createReference(Factory.createVariable("VAR0", mapDescriptor), properties);
+////      PoseReference location = consultant.createNamedReference(Factory.createVariable("VAR0", mapDescriptor), properties, name);
+
+      Category category = Category.values()[area.category];
       // Create location reference for each area
       List<Term> properties = new ArrayList<>();
-      if (area.name.contains("loadingzone")) {
-        properties.add(Factory.createPredicate("loadingzone", Factory.createVariable("VAR0", mapDescriptor)));
-      } else if (area.name.contains("truck")) {
-        properties.add(Factory.createPredicate("truck", Factory.createVariable("VAR0", mapDescriptor)));
-      }
+      properties.add(Factory.createPredicate(category.name(), Factory.createVariable("VAR0", mapDescriptor)));
+
+//      if (area.id.contains("loadingzone")) {
+//        properties.add(Factory.createPredicate("loadingzone", Factory.createVariable("VAR0", mapDescriptor)));
+//      } else if (area.id.contains("truck")) {
+//        properties.add(Factory.createPredicate("truck", Factory.createVariable("VAR0", mapDescriptor)));
+//      }
+
 
       PoseReference location = consultant.createReference(Factory.createVariable("VAR0", mapDescriptor), properties);
       Point3d pt = new Point3d(area.x, area.y, 0);
       Quat4d qt = new Quat4d(0, 0, 0, 1);
       location.setPose(pt, qt);
+
+      // TODO: is this needed anywhere?
+      diarcToAitRefs.put(location.refId, Factory.createSymbol(area.id, mapDescriptor));
 
       beliefs.add(Factory.createPredicate("fluent_equals",
               Factory.createPredicate("current_weight", location.refId),
@@ -346,24 +357,24 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Set.class)).call(void.class, beliefs);
     } catch (TRADEException e) {
-      log.error("[initAreas]",e);
+      log.error("[initAreas]", e);
     }
 
     calculateDistances();
   }
 
-  private int getFluentAsInt(String fluent, Symbol location) {
+  private Integer getFluentAsInt(String fluent, Symbol location) {
     Variable x = Factory.createVariable("X");
-
-    List<Map<Variable, Symbol>> bindings = null;
+    List<Map<Variable, Symbol>> bindings;
     try {
-      bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class)).call(List.class, Factory.createPredicate("fluent_equals",
-              Factory.createPredicate(fluent, location), x));
+      bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class))
+              .call(List.class, Factory.createPredicate("fluent_equals", Factory.createPredicate(fluent, location), x));
       Symbol val = bindings.get(0).get(x);
       return Float.valueOf(val.getName()).intValue();
     } catch (TRADEException e) {
-      throw new RuntimeException(e);
+      log.error("[getFluentAsInt]", e);
     }
+    return null;
   }
 
   @Action
@@ -421,26 +432,34 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
   }
 
   //TODO: Change to ROS call
-  private List<Area> getAreas() {
-    List<Area> areas = new ArrayList<>();
-    Area zonea = new Area();
-    zonea.name = "loadingzone1";
+  private List<GetAreasResponseMessage> getAreas() {
+
+    //  node.addService(new GetAreasServiceDefinition(), "get_areas");
+    //  GetAreasResponseMessage resp = node.callService("get_areas", new GetAreasRequestMessage());
+    //  log.info("Received " + resp);
+
+    List<GetAreasResponseMessage> areas = new ArrayList<>();
+    GetAreasResponseMessage zonea = new GetAreasResponseMessage();
+    zonea.id = "ground_1"; // ground_1
+    zonea.category = 0;
     zonea.slots = 5;
     zonea.pallets = 3;
     zonea.x = 0;
     zonea.y = 0;
     areas.add(zonea);
 
-    Area zoneb = new Area();
-    zoneb.name = "loadingzone2";
+    GetAreasResponseMessage zoneb = new GetAreasResponseMessage();
+    zoneb.id = "ground_2"; // ground_2
+    zoneb.category = 0;
     zoneb.slots = 5;
     zoneb.pallets = 3;
     zoneb.x = 5;
     zoneb.y = 5;
     areas.add(zoneb);
 
-    Area truck = new Area();
-    truck.name = "truck1";
+    GetAreasResponseMessage truck = new GetAreasResponseMessage();
+    truck.id = "loading_platform"; // loading_platform
+    truck.category = 2;
     truck.slots = 3;
     truck.pallets = 0;
     truck.x = 5;
@@ -448,6 +467,111 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
     areas.add(truck);
 
     return areas;
+
+  }
+
+  @TRADEService
+  @Action
+  public Justification load_prim() {
+    LoadRequestMessage msg = new LoadRequestMessage();
+    LoadResponseMessage resp = node.callService("load", msg);
+    if (resp != null && resp.success) {
+      return new ConditionJustification(true);
+    } else {
+      log.error("Load failed. Continuing"); //todo: for testing
+
+      return new ConditionJustification(true);
+    }
+  }
+
+  @TRADEService
+  @Action
+  public Justification unload_prim() {
+    UnloadRequestMessage msg = new UnloadRequestMessage();
+    UnloadResponseMessage resp = node.callService("unload", msg);
+    if (resp != null && resp.success) {
+      return new ConditionJustification(true);
+    } else {
+      log.error("Unload failed. Continuing"); //todo: for testing
+      return new ConditionJustification(true);
+    }
+  }
+
+  public String sendRosCmd(String cmd) {
+    StringBuilder output = new StringBuilder();
+    ProcessBuilder processBuilder = new ProcessBuilder();
+
+    String test_prefix = ros_cmd_as_echo ? "echo " : "";
+
+    // Set the command to be executed
+    processBuilder.command("bash", "-c", test_prefix + "source /home/ros/workspace/ros_environment/install/setup.bash && " + test_prefix + cmd);
+
+    try {
+      // Start the process
+      Process process = processBuilder.start();
+
+      // Read the output of the command
+      BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      String line;
+      while ((line = reader.readLine()) != null) {
+        output.append(line).append("\n");
+      }
+
+      // Wait for the process to complete and check the exit value
+      int exitValue = process.waitFor();
+      if (exitValue != 0) {
+        // Read any error output if the command failed
+        BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        StringBuilder errorOutput = new StringBuilder();
+        while ((line = errorReader.readLine()) != null) {
+          errorOutput.append(line).append("\n");
+        }
+        throw new IOException("Error executing command: " + errorOutput.toString());
+      }
+
+    } catch (IOException | InterruptedException e) {
+      log.error("[sendRosCmd]",e);
+    }
+
+    return output.toString();
+  }
+
+  boolean WaitForForkliftReady() {
+    if (wait_for_ros_topic) {
+      return forkliftStateListener.WaitForNextStatePublish();
+    }
+
+    return true;
+  }
+
+  @TRADEService
+  @Action
+  public Justification deliver_prim(Symbol from, Symbol to) {
+
+    String result;
+
+    DeliverRequestMessage msg = new DeliverRequestMessage(from.getName(), to.getName());
+
+    String loading_area_id = msg.loading_area_id;
+    String unloading_area_id = msg.unloading_area_id;
+
+    result = sendRosCmd("ros2 service call /send_order crayler_nav_msgs/srv/SendOrder \"{loading_area_id: \"" + loading_area_id + "\", unloading_area_id: \"" + unloading_area_id + "\", nr_pallets: " + msg.nr_pallets + "}\"");
+    log.warn("send order result: {}", result);
+
+    String behavior_tree_to_execute = "loading_demo.xml";
+
+    result = sendRosCmd("ros2 service call /start_bt crayler_nav_msgs/srv/SendMessage \"{message: \"" + behavior_tree_to_execute + "\"}\"");
+    log.warn("send message result: {}", result);
+
+    boolean mission_result = WaitForForkliftReady();
+
+    return new ConditionJustification(mission_result);
+  }
+
+  private enum Category {
+    ground,
+    trailer,
+    truck
   }
 
 }

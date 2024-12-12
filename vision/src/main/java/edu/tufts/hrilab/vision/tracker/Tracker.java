@@ -37,7 +37,7 @@ public class Tracker extends VisionProcess<TrackerType, TrackerDetail, NativeTra
   @Override
   protected void perform() {
     final String trackerName = this.toString();
-    System.out.println("starting new " + trackerName + " tracker task.");
+    log.debug("starting new " + trackerName + " tracker task.");
 
     //start image processing dependecies
     for (ImageProcessor dependency : dependencies.values()) {

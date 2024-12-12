@@ -41,23 +41,17 @@ public class TemiV3Mock extends DiarcConfiguration {
     nlg = createInstance(SimpleNLGComponent.class);
     gm = createInstance(GoalManagerComponent.class,
 //                "-editor " +
-                "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
-                "-beliefinitfile demos.pl " +
-                "-beliefinitfile agents/agents.pl " +
-                "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector " +
-                "-dbfile core.asl " +
-                "-dbfile dialogue/nlg.asl " +
-                "-dbfile dialogue/nlu.asl " +
-                "-dbfile dialogue/handleSemantics.asl " +
-                "-dbfile temi/temi.asl " +
-                "-goal listen(self:agent)"
-        );
-    }
-
-
-  public static void main(String[] args) {
-    TemiV3Mock diarcConfig = new TemiV3Mock();
-    diarcConfig.runConfiguration();
+            "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
+                    "-beliefinitfile demos.pl " +
+                    "-beliefinitfile agents/agents.pl " +
+                    "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector " +
+                    "-dbfile core.asl " +
+                    "-dbfile dialogue/nlg.asl " +
+                    "-dbfile dialogue/nlu.asl " +
+                    "-dbfile dialogue/handleSemantics.asl " +
+                    "-dbfile temi/temi.asl " +
+                    "-goal listen(self:agent)"
+    );
   }
 
 }

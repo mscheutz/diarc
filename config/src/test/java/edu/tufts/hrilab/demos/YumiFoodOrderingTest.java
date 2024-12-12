@@ -25,7 +25,8 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
 
   @Before
   public void initializeDiarc() {
-    diarcConfig = new YumiFoodOrderingMock(true);
+    diarcConfig = new YumiFoodOrderingMock();
+    diarcConfig.setTest(true);
     diarcConfig.runConfiguration();
     simSpeechRec = diarcConfig.simSpeechRec;
     untrustedSimSpeechRec = diarcConfig.untrustedSimSpeechRec;

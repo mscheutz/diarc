@@ -10,8 +10,4 @@ public class RosVisionConfig extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.vision.VisionComponent.class);
   }
 
-  public static void main(String[] args) {
-    RosVisionConfig config = new RosVisionConfig();
-    config.runConfiguration();
-  }
 }
