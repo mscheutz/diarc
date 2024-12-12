@@ -46,7 +46,7 @@ public class SimSpeechProductionComponentVis extends JFrame {
     new Thread(() -> {
       // sleep, then hide
       Sleep(time);
-      this.setVisible(false);
+//      this.setVisible(false);
       isSpeaking = false;
     }).start();
   }

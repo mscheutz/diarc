@@ -7,12 +7,8 @@ import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.unity.UnityAgent;
 import edu.tufts.hrilab.unity.message.Message;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 public class HumanAgent extends UnityAgent {
-  static private Logger log = LoggerFactory.getLogger(HumanAgent.class);
 
   public HumanAgent() {
     super();

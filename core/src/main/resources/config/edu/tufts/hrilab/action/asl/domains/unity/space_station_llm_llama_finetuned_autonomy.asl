@@ -202,17 +202,14 @@ import edu.tufts.hrilab.action.justification.Justification;
     !nextArea = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !areaStr);
   }
 
-  act:monitorArea(!nextArea);
+  act:monitor(!nextArea);
 }
 
 //["This will monitor an area and move to all tubes to "]
 () = monitor (Symbol ?area) {
   Symbol !tubeToRepair;
-
   Predicate !lastAreaMonitoredPredicate;
-
   List !damagedTubes;
-
   int !damagedTubesSize;
 
   !lastAreaMonitoredPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "lastMonitored(?actor,?area)");
