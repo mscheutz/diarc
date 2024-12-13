@@ -987,17 +987,17 @@ import java.lang.Integer;
     !taskName = act:askForTaskName();
     
     if (op:isNull(!taskName)) {
-        exit(FAIL, not(taskName,supplied));
+        exit(FAIL, not(supplied(taskName)));
     }
 
     !actionSignature = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !taskName);
     op:log(info,!actionSignature);
     async {
-        act:learnAction(!actionSignature);
-        act:reportActionLearned(!taskName);
+        act:waitForActionLearningStart(!actionSignature);
+        act:reportActionLearningStart(!taskName);
     }
-    act:waitForActionLearningStart(!actionSignature);
-    act:reportActionLearningStart(!taskName);
+    act:learnAction(!actionSignature);
+    act:reportActionLearned(!taskName);
 }
 
 () = endActionLearning() {
