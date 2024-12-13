@@ -253,6 +253,7 @@ import java.util.List;
     act:gotocamerapose(?pose, !currPose);
 }
 
+//TODO: need different nonperf effects depending on whether the movement primitive is actually interruptible or not
 () = gotocamerapose["moves to ?pose1, from ?pose2"](Symbol ?pose1:pose, Symbol ?pose2:pose) {
     conditions : {
         pre : at(?actor, ?pose2);
@@ -260,9 +261,9 @@ import java.util.List;
     effects : {
         success : not(at(?actor, ?pose2));
         success : at(?actor,?pose1);
-        nonperf : not(at(?actor,?pose1));
-        nonperf : not(at(?actor,?pose2));
-        nonperf : unknownlocation(?actor);
+        //nonperf : not(at(?actor,?pose1));
+        //nonperf : not(at(?actor,?pose2));
+        //nonperf : unknownlocation(?actor);
     }
 
     Predicate !queryPred;
@@ -278,6 +279,9 @@ import java.util.List;
     op:log(debug, "[gotocamerapose] cameraHeight found for query !queryPred: !bindings");
     !cameraHeight = op:get(!elem, !bindingVar);
     act:goToPosePrimitive(?pose1, !cameraHeight);
-    op:log(debug, "Finished going to pose ?pose1");
+    //Until nonInterruptible blocks are implemented, having this as the last call without nonperf effects is safe if
+    //  the primitive is not actually interruptible. The very last call this grounds out to is a goTo tsc. If canceled
+    //  at any point before this action is complete, we are still at the original pose. (we do not handle exceptions
+    //  during primitive execution as of now)
 }
 
