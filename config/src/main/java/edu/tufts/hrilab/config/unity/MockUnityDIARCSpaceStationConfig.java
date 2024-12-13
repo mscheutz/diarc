@@ -16,6 +16,7 @@ import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent;
+import edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.unity.*;
@@ -76,31 +77,32 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
   @Override
   public void runConfiguration() {
     // mock sim env
-    DiarcComponent.createInstance(MockUnitySpaceStationComponent.class, "-config mock_space_station_settings.json");
+    createInstance(MockUnitySpaceStationComponent.class, "-config mock_space_station_settings.json");
 
-    DiarcComponent.createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict  -tldlNoUpdateAddressee -llm -llmService spaceStationLLMParser -noConfirmation -cache -cacheName unity_space_station");
-    DiarcComponent.createInstance(LLMComponent.class, "-groups agent:" + agentName + " -service llama -model 7B -endpoint " + llmEndpoint + " -stopwords }");
-    DiarcComponent.createInstance(UnitySpaceStationLLM.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
+//    createInstance(LLMParserComponent.class, "-service spaceStationLLMParser");
+    createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict  -tldlNoUpdateAddressee -llm -llmService spaceStationLLMParser -noConfirmation -cache -cacheName unity_space_station");
+    createInstance(LLMComponent.class, "-groups agent:" + agentName + " -service llama -model 7B -endpoint " + llmEndpoint + " -stopwords }");
+    createInstance(UnitySpaceStationLLM.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
 
-    DiarcComponent.createInstance(ListenerComponent.class, "");
-    DiarcComponent.createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
-    DiarcComponent.createInstance(ReferenceResolutionComponent.class, "");
-    DiarcComponent.createInstance(DialogueComponent.class, "");
-    DiarcComponent.createInstance(SimpleNLGComponent.class, "-modifierService spaceStationModifyNLG");
-    DiarcComponent.createInstance(UnitySpaceStationNLGComponent.class, "");
+    createInstance(ListenerComponent.class);
+    createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
+    createInstance(ReferenceResolutionComponent.class);
+    createInstance(DialogueComponent.class);
+    createInstance(SimpleNLGComponent.class, "-modifierService spaceStationModifyNLG");
+    createInstance(UnitySpaceStationNLGComponent.class);
 
-    DiarcComponent.createInstance(MapComponent.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
-    DiarcComponent.createInstance(MockMoveBaseComponent.class, "-groups agent:" + agentName);
-    DiarcComponent.createInstance(MockUnityPR2Component.class, "-groups agent:"  + agentName);
-    DiarcComponent.createInstance(SimSpeechProductionComponent.class, "-gui -groups agent:"  + agentName);
-//    DiarcComponent.createInstance(MockUnityPR2Component.class, "-groups agent:"  + agentName2); // add for two robot case
+    createInstance(MapComponent.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
+    createInstance(MockMoveBaseComponent.class, "-groups agent:" + agentName);
+    createInstance(MockUnityPR2Component.class, "-groups agent:"  + agentName);
+    createInstance(SimSpeechProductionComponent.class, "-gui -groups agent:"  + agentName);
+//    createInstance(MockUnityPR2Component.class, "-groups agent:"  + agentName2); // add for two robot case
 
-    DiarcComponent.createInstance(GoalManagerComponent.class, goalManagerArgs);
+    createInstance(GoalManagerComponent.class, goalManagerArgs);
 
     for (int i = 0; i < players; i++) {
       String humanAgent = "player" + (i + 1);
-      DiarcComponent.createInstance(MockHumanAgent.class, "-agent " + humanAgent + " -groups " + humanAgent);
-      DiarcComponent.createInstance(SimSpeechRecognitionComponent.class, "-speaker " + humanAgent + " -groups " + humanAgent + " -config space_station.simspeech");
+      createInstance(MockHumanAgent.class, "-agent " + humanAgent + " -groups " + humanAgent);
+      createInstance(SimSpeechRecognitionComponent.class, "-speaker " + humanAgent + " -groups " + humanAgent + " -config space_station.simspeech");
     }
 
     // TODO: add guis to set workloads
