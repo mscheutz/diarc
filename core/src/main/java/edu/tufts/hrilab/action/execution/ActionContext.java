@@ -1058,6 +1058,11 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
 
   private synchronized void handleInterrupt(ActionStatus eStatus) {
 
+    if (getStatus().equals(ActionStatus.INITIALIZED)) {
+      log.debug("[handleInterrupt] action hasn't started execution yet, not calling interrupt behavior for status {}", eStatus);
+      return;
+    }
+
     // Collect correct onInterrupt or onResume service details if relevant, otherwise return immediately
     EventSpec interruptEvent;
     if (eStatus == ActionStatus.CANCEL && getDBE().hasOnCancelEvent()) {

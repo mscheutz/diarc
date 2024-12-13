@@ -546,11 +546,25 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       if (currentStep == null) {
         log.warn("[suspend] AI for goal has already terminated: {}", goal.getPredicate());
       } else if (currentStep.isTerminated()) {
-        // setting suspended flag will set nextStep to suspended in the mainLoop before it's executed
         suspended.set(true);
+        ////TODO: Should writing blocking async AIs be considered bad practice and forbidden, or should this logic exist? (or the answer to both is yes)
+        ////Even with this block, logic would need to be added to resume in order to resume the async AIs (and probably prevent it from doing other things)
+        //if (!shouldUpdate.get()) {
+        //  //If the script is complete except for waiting on async AIs, suspend the async AIs or else this action
+        //  //  will continue to block indefinitely
+        //  for (ActionInterpreter ai : asyncAIs.values()) {
+        //    if (ai.isRunning) {
+        //      ai.suspend();
+        //    }
+        //  }
+        //}
       } else {
         suspended.set(true);
-        currentStep.setStatus(ActionStatus.SUSPEND);
+        // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
+        // have the next step's status be updated.
+        if (currentStep.isAction() && ((ActionContext)currentStep).getDBE().hasOnSuspendEvent()) {
+          currentStep.setStatus(ActionStatus.SUSPEND);
+        }
       }
     } finally {
       currentStepLock.unlock();
@@ -613,12 +627,28 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           log.warn("[cancel] goal has already terminated: {}", goal.getPredicate());
         }
       } else if (currentStep.isTerminated()) {
-        // setting cancel flag will set nextStep to cancel in the mainLoop before it's executed
-        canceled.set(true);
+        //TODO: Should writing blocking async AIs be considered bad practice and forbidden, or should this logic exist? (or the answer to both is yes)
+        if (shouldUpdate.get()) {
+          // setting cancel flag will set nextStep to cancel in the mainLoop before it's executed
+          canceled.set(true);
+        } else {
+          //If the script is complete except for waiting on async AIs, cancel the async AIs or else this action
+          //  will continue to block indefinitely
+          this.goal.setStatus(GoalStatus.CANCELED);
+          for (ActionInterpreter ai : asyncAIs.values()) {
+            if (ai.isRunning) {
+              ai.cancel();
+            }
+          }
+        }
       } else {
         // in normal operation
         canceled.set(true);
-        currentStep.setStatus(ActionStatus.CANCEL);
+        // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
+        // have the next step's status be updated.
+        if (currentStep.isAction() && ((ActionContext)currentStep).getDBE().hasOnCancelEvent()) {
+          currentStep.setStatus(ActionStatus.CANCEL);
+        }
       }
     } finally {
       currentStepLock.unlock();
