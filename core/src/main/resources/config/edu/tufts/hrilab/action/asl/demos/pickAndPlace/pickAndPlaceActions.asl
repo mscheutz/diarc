@@ -57,21 +57,8 @@ import java.lang.Integer;
     !location = act:getCurrentLocation();
 
     tsc:moveZRelative(!objectHeightM);
-    ?bindings = tsc:perceiveAllEntitiesInView("blocksDet");
+    ?bindings = tsc:perceiveAllEntitiesInView("blocksDet", !location, ?actor);
     tsc:moveZRelative(!negObjectHeightM);
-
-    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(X,!location)");
-    act:retractBelief(!fact);
-    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,!location)");
-    act:assertBelief(!fact);
-    foreach (!result : ?bindings) {
-        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,!result)");
-        act:retractBelief(!fact);
-        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,X)");
-        act:retractBelief(!fact);
-        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!location)");
-        act:assertBelief(!fact);
-    }
 }
 
 //todo: (pete) allows the LLM target for semantics to be more sane than "getOn". should be true everywhere.
