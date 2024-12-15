@@ -59,9 +59,10 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
     
     // this does all the work
     // TODO: we could return partial utterance to the extent that we've extracted them for further processing and troubleshooting
-    private static Utterance extractInstruction(Utterance u) {
-	System.out.println("UTTERANCE IS: " + u);
+    private Utterance extractInstruction(Utterance u) {
 	// Remove disfluencies and politeness forms
+	log.info("Instruction: " + u.getWordsAsString());
+
         String sentence = u.getWordsAsString().replaceAll("\\b(?:a|hey|please|um|uh|ah|oh|or|i|red|that|'m|the)\\b", "").trim();
         String cleanedSentence = sentence.replaceAll(",","").replaceAll("1","one").replaceAll("2","two").trim();
 	
@@ -89,13 +90,22 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	    return null;
 	}
 
+	// MS: do we need to pass u in for some default values?
+	Utterance.Builder builder = new Utterance.Builder(u);
+	// set the addressee
+	builder.setAddressee(new Symbol(robot));
+	// assume "INSTRUCT"
+	builder.setUtteranceType(UtteranceType.INSTRUCT);
+
 	// get rid of the address
         cleanedRemaining = cleanedSentence.replaceAll("\\b(?:robots|rubber one|robot one|row bot one|rowboat one|robot two|rubber two|robot too|row bot two|row bot too|rowboat two|rowboat too|robot won|row bot won|rowboat won|robot to|row bot to|rowboat to)\\b","").trim();
 	
-	String area;
-	int areaindex;
+	log.info("Cleaned instruction: " + cleanedRemaining);
 	
-	// check for area (must always be part of the command)
+	// check for area reference
+	String area = "";
+	int areaindex;
+	boolean noarea = false;       
 	if ((areaindex = cleanedRemaining.indexOf("alpha")) > -1) {
 	    area = "alpha";
 	}
@@ -107,69 +117,98 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	    area = "gamma";
 	}
 	else {
-	    System.err.println("NO AREA specified for robot " + robot);
-	    return null; 
+	    noarea = true;
 	}
 
-	// MS: do we need to pass u in for some default values?
-	Utterance.Builder builder= new Utterance.Builder(u);
-	// set the addressee
-	builder.setAddressee(new Symbol(robot));
-	// assume "INSTRUCT"
-	builder.setUtteranceType(UtteranceType.INSTRUCT);
-	// check area for broken tubes
-	if (cleanedRemaining.matches("(monitor|check)(.*)")) {
-	    //return "---: Robot " + robot + ", check area " + area + " for broken tubes";
-	    builder.setSemantics(Factory.createPredicate("check(" + robot + "," + area + ")"));
-	    // return the updated utterance
-	    return builder.build();			    
-	}
-
+	// check for tube reference
 	String side = "", number = "";
-	// extra a potential reference to a particular tube 
 	int tubeindex;
+	boolean notube = false;
 	if ((tubeindex = cleanedRemaining.indexOf("left")) > -1 || (tubeindex = cleanedRemaining.indexOf("les")) > -1 ||
 	    (tubeindex = cleanedRemaining.indexOf("lasts")) > -1) {
 	    side = "left";
-	    cleanedRemaining = cleanedRemaining.substring(tubeindex + 4).trim();
 	    // get the number
-	    String[] items = cleanedRemaining.split("\\s+\\s+");
-	    number = items[0];
+	    String[] items = cleanedRemaining.substring(tubeindex + 4).trim().split("\\s+");
+	    // capitalize first letter
+	    number = items[0].substring(0, 1).toUpperCase() + items[0].substring(1);
 	}
 	else if ((tubeindex = cleanedRemaining.indexOf("right")) > -1 || (tubeindex = cleanedRemaining.indexOf("gumroad")) > -1) {
 	    side = "right";
-	    cleanedRemaining = cleanedRemaining.substring(tubeindex + 5).trim();
 	    // get the number
-	    String[] items = cleanedRemaining.split("\\s+\\s+");
-	    number = items[0];
+	    String[] items = cleanedRemaining.substring(tubeindex + 5).trim().split("\\s+");
+	    // capitalize first letter
+	    number = items[0].substring(0, 1).toUpperCase() + items[0].substring(1);
 	}
+	else {
+	    notube = true;
+	}
+	
+	log.info("Area: " + area + "; Tube: " + side + number);
 
-	// now check for movement to area or tubes
-	if (cleanedRemaining.matches("(go|drive|move|come|get)(.*)")) {
-	    // if we have tube information, we'll go directly to the tube
-	    if (!side.isEmpty() && !number.isEmpty()) {
-		// MS: DO WE HAVE TO CAPITALIZE THE NUMBER?
-		builder.setSemantics(Factory.createPredicate("goToTube(" + robot + "," + area + "," + side + number +  ")"));
+		 
+	// check area for broken tubes
+	if (cleanedRemaining.matches("(monitor|check|look in|observe)(.*)")) {
+	    if (noarea) {
+		System.err.println("NO AREA specified");
+		return null;
 	    }
-	    // else it is just the area
 	    else {
-		//return "---: Robot " + robot + ", goToArea " + area;
-		builder.setSemantics(Factory.createPredicate("goToArea(" + robot + "," + area + ")"));
+		//return "---: Robot " + robot + ", check area " + area + " for broken tubes";
+		builder.setSemantics(Factory.createPredicate("check(" + robot + "," + area + ")"));
+		// return the updated utterance
+		return builder.build();
+	    }
+	}
+	// now check for movement to area or tubes
+	else if (cleanedRemaining.matches("(go|drive|move|come|get)(.*)")) {
+	    // if we don't have tube information, we need the are
+	    if (notube) {
+		// if we don't have area info
+		if (noarea) {
+		    System.err.println("NO AREA or TUBE specified for location");
+		    return null;
+		}
+		else {
+		    builder.setSemantics(Factory.createPredicate("goToArea(" + robot + "," + area + ")"));
+		}
+	    }
+	    else {
+		// we have a tube, check if we don't have an area, go to current
+		if (noarea) {
+		    builder.setSemantics(Factory.createPredicate("goToTube(" + robot + "," + side + number +  ")"));
+		}
+		else {
+		    builder.setSemantics(Factory.createPredicate("goToTube(" + robot + "," + area + "," + side + number +  ")"));
+		}
 	    }
 	}
 	// check for repair, need the exact tube info
 	else if (cleanedRemaining.matches("(repair|re pair|fix)(.*)")) {
-	    if (!side.isEmpty() && !number.isEmpty()) {
-		System.err.println("NO SIDE specified for robot " + robot + " in wing " + area);
+	    if (notube) {
+		System.err.println("NO TUBE specified for repair");
 		return null;
 	    }
+	    else if (noarea) {
+		if (notube) {
+		    builder.setSemantics(Factory.createPredicate("repairTube(" + robot + ")"));
+		}
+		else {
+		    builder.setSemantics(Factory.createPredicate("repairTube(" + robot + "," + side + number + ")"));		
+		}
+	    }
 	    else {
-		//return "---: Robot " + robot + ", repair " + area + " " + side + " " + number;
-		builder.setSemantics(Factory.createPredicate("repairTube(" + robot + "," + area + "," + side + number +  ")"));
+		if (notube) {
+		    System.err.println("NO TUBE specified for repair in area " + area);
+		    return null;		    
+		}
+		else {
+		    builder.setSemantics(Factory.createPredicate("repairTube(" + robot + "," + area + "," + side + number + ")"));		
+		}
 	    }
 	}
 	// this is an unknown command
 	else {
+	    System.err.println("MATCHES: " + cleanedRemaining.matches("(go|drive|move|come|get)(.*)"));
 	    System.err.println("NO KNOWN COMMAND specified for robot " + robot);
 	    return null;
 	}
