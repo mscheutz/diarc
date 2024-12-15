@@ -52,9 +52,10 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private boolean cachePersist = false;
   private boolean cacheTldl = false;
   private String llm = null;
-  private String prompt = null;
+  private String prompt = null;  
   private Symbol unknownListener = null;
-
+  private Class matcherclass = null;
+    
   private boolean confirmation = true;
 
   private ExecutorService executor = Executors.newCachedThreadPool();
@@ -62,7 +63,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("tldl").hasArgs().required().argName("file").desc("load tldl dictionary from file(s)").build());
+    options.add(Option.builder("tldl").hasArgs().argName("file").desc("load tldl dictionary from file(s)").build());
     options.add(Option.builder("llm").argName("boolean").desc("Use the LLM parser").build());
     options.add(Option.builder("llmService").hasArg().argName("string").desc("Name of TRADE Service to call in LLMParserComponent.parseUtterance()").build());
     options.add(Option.builder("llmPrompt").hasArg().argName("string").desc("Prompt to use with LLM parser").build());
@@ -73,7 +74,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     options.add(Option.builder("cachePersist").argName("file").desc("Persist cache in on users computer").build());
     options.add(Option.builder("cacheTldl").desc("Cache TLDL parses").build());
     options.add(Option.builder("noConfirmation").argName("boolean").desc("Ask human to confirm LLM parser response for cache").build());
-    options.add(Option.builder("patternMatching").desc("use pattern matching parser").build());
+    options.add(Option.builder("patternMatching").argName("boolean").desc("use pattern matching parser").build());
+    options.add(Option.builder("matcher").hasArg().argName("string").desc("Optional name of Pattern Matcher Component to be used").build());
     options.add(Option.builder("tldlNoUpdateAddressee").desc("TLDL: do not update addressee after direct address").build());
     return options;
   }
@@ -130,8 +132,19 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       log.debug("Do not require confirmation from LLM parser before storing in cache");
     }
     if (cmdLine.hasOption("patternMatching")) {
+	    System.out.println("==========>>>>> ");	
       usePMP = true;
       log.debug("Using the pattern matching parser");
+    }
+    if (usePMP && cmdLine.hasOption("matcher")) {
+	try {
+	    System.out.println("==========>>>>> ");
+	  matcherclass = Class.forName(cmdLine.getOptionValue("matcher"));
+	  log.info("Using pattern matcher " + matcherclass);
+	}
+	catch(ClassNotFoundException cnfe) {
+	  log.error("Could not find pattern matcher " + cmdLine.getOptionValue("matcher") + ".  Using default");
+	}
     }
   }
 
@@ -160,7 +173,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
     // init PatternMatchingParser
     if (usePMP) {
-      patternMatchingParser = createInstance(PatternMatchingParser.class, "", false);
+	patternMatchingParser = createInstance((matcherclass == null) ? PatternMatchingParser.class : matcherclass, "", false);
     }
 
     // init CachedParserComponent
@@ -218,6 +231,9 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     Utterance tldlOutput = null;
     Utterance llmOutput = null;
 
+
+    // TODO: we should allow for defining a policy which should be checked when...
+    
     //Check cache first
     if (cachedFuture != null) {
       try {
