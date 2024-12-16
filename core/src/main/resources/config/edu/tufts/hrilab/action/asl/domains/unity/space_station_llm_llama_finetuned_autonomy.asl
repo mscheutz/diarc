@@ -40,7 +40,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
   while (true) {
 //    !isHighWorkload = act:isWorkloadAboveThreshold();
-    !isHighWorkload = op:newObject("java.lang.Boolean", true)
+    !isHighWorkload = op:newObject("java.lang.Boolean", true);
     !nextArea = act:getNextAreaToMonitor();
     act:monitor(!nextArea, ?isAdaptive, !isHighWorkload);
   }
