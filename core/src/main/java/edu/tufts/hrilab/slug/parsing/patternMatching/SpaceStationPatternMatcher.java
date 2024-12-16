@@ -3,10 +3,7 @@
  */
 package edu.tufts.hrilab.slug.parsing.patternMatching;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Symbol;
@@ -19,21 +16,18 @@ import edu.tufts.hrilab.slug.common.UtteranceType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInterface {
     final protected Logger log = LoggerFactory.getLogger(this.getClass());
 
+    String lastrobot = "";
+    String lastside = "";
+    String lastnumber = "";    
+    String lastarea = "";
+	
     /**
      * @param u
      * @return
@@ -55,6 +49,8 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
       “Robot 1, check for broken tubes in Alpha”   INSTRUCT(player1,robot1,check(robot1,alpha),{})
       “Robot 2, go to Beta Right 10”               INSTRUCT(player1,robot1,goToTube(robot2,beta,leftFour),{})
       “Robot 2, repair Beta Right 10”              INSTRUCT(player1,robot1,repairTube(robot2,beta,rightTen),{})
+
+      if no robot, area, side or number are provided, it will automatically use the last ones if there are any
     */
     
     // this does all the work
@@ -86,9 +82,14 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	    robot = "robot2";
 	}
 	else {
+	    robot = lastrobot;
+	}
+	// if no robot was ever addressed, report an error
+	if (robot.isEmpty()) {
 	    log.error("NO ROBOT ADDRESSED");
 	    return null;
 	}
+	lastrobot = robot;
 
 	// MS: do we need to pass u in for some default values?
 	Utterance.Builder builder = new Utterance.Builder(u);
@@ -117,8 +118,10 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	    area = "gamma";
 	}
 	else {
+	    area = lastarea;
 	    noarea = true;
 	}
+	lastarea = area;
 
 	// check for tube reference
 	String side = "", number = "";
@@ -141,10 +144,13 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	}
 	else {
 	    notube = true;
+	    side = lastside;
+	    number = lastnumber;
 	}
-	
+	lastside = side;
+	lastnumber = number;
+	       
 	log.info("Area: " + area + "; Tube: " + side + number);
-
 		 
 	// check area for broken tubes
 	if (cleanedRemaining.matches("(monitor|check|look in|observe)(.*)")) {
