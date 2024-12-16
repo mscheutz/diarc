@@ -34,6 +34,11 @@ import java.util.regex.Pattern;
 public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInterface {
     final protected Logger log = LoggerFactory.getLogger(this.getClass());
 
+    String lastrobot = "";
+    String lastside = "";
+    String lastnumber = "";    
+    String lastarea = "";
+	
     /**
      * @param u
      * @return
@@ -55,6 +60,8 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
       “Robot 1, check for broken tubes in Alpha”   INSTRUCT(player1,robot1,check(robot1,alpha),{})
       “Robot 2, go to Beta Right 10”               INSTRUCT(player1,robot1,goToTube(robot2,beta,leftFour),{})
       “Robot 2, repair Beta Right 10”              INSTRUCT(player1,robot1,repairTube(robot2,beta,rightTen),{})
+
+      if no robot, area, side or number are provided, it will automatically use the last ones if there are any
     */
     
     // this does all the work
@@ -86,9 +93,14 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	    robot = "robot2";
 	}
 	else {
+	    robot = lastrobot;
+	}
+	// if no robot was ever addressed, report an error
+	if (robot.isEmpty()) {
 	    System.err.println("NO ROBOT ADDRESSED");
 	    return null;
 	}
+	lastrobot = robot;
 
 	// MS: do we need to pass u in for some default values?
 	Utterance.Builder builder = new Utterance.Builder(u);
@@ -117,8 +129,10 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	    area = "gamma";
 	}
 	else {
+	    area = lastarea;
 	    noarea = true;
 	}
+	lastarea = area;
 
 	// check for tube reference
 	String side = "", number = "";
@@ -141,10 +155,13 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	}
 	else {
 	    notube = true;
+	    side = lastside;
+	    number = lastnumber;
 	}
-	
+	lastside = side;
+	lastnumber = number;
+	       
 	log.info("Area: " + area + "; Tube: " + side + number);
-
 		 
 	// check area for broken tubes
 	if (cleanedRemaining.matches("(monitor|check|look in|observe)(.*)")) {
