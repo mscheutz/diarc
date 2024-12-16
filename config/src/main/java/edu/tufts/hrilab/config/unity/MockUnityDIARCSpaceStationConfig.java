@@ -39,13 +39,15 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
   private int players = 1;
   private String goalManagerArgs;
   private boolean startAutonomy = false;
+  private boolean adaptiveAutonomy = false;
 
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("llm").hasArg().argName("endpoint").desc("Set LLM endpoint.").build());
     options.add(Option.builder("agent").hasArg().argName("name").desc("Set robot agent name.").build());
     options.add(Option.builder("players").hasArg().argName("number").desc("Set number of human players (1 or 2).").build());
-    options.add(Option.builder("autonomy").desc("Flag to enable autonomy.").build());
+    options.add(Option.builder("nonadaptive").desc("Flag to enable non-adaptive autonomy.").build());
+    options.add(Option.builder("adaptive").desc("Flag to enable adaptive autonomy.").build());
     return options;
   }
   protected void parseArgs(CommandLine cmdLine) {
@@ -63,8 +65,13 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
       players = Integer.parseInt(cmdLine.getOptionValue("players"));
     }
 
-    if (cmdLine.hasOption("autonomy")) {
+    if (cmdLine.hasOption("nonadaptive")) {
       startAutonomy = true;
+    }
+
+    if (cmdLine.hasOption("adaptive")) {
+      startAutonomy = true;
+      adaptiveAutonomy = true;
     }
   }
 
@@ -96,8 +103,12 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
             "-asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl ";
     // TODO: why are different pl files needed here?
     if (startAutonomy) {
-      goalManagerArgs += "-goal autonomy(" + agentName + ") " +
-              "-beliefinitfile unity/pr2UnityTeam_smm.pl ";
+      goalManagerArgs += "-beliefinitfile unity/pr2UnityTeam_smm.pl ";
+      if (adaptiveAutonomy) {
+        goalManagerArgs += "-goal autonomy(" + agentName + ",true) ";
+      } else {
+        goalManagerArgs += "-goal autonomy(" + agentName + ",false) ";
+      }
     } else {
       goalManagerArgs += "-beliefinitfile unity/pr2UnityTeam_smm_" + agentName + ".pl ";
     }
