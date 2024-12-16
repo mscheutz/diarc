@@ -73,7 +73,7 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     // mock sim env
     createInstance(MockUnitySpaceStationComponent.class, "-config mock_space_station_settings.json");
 
-    createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict -tldlNoUpdateAddressee -cache -cacheName unity_space_station");
+    createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict -tldlNoUpdateAddressee -cache -cacheName unity_space_station -patternMatching -matcher SpaceStationPatternMatcher -parsingSequence pattern");
 
     createInstance(ListenerComponent.class);
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");

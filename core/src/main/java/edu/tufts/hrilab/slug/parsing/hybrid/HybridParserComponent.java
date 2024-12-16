@@ -56,6 +56,9 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private Symbol unknownListener = null;
   private Class matcherclass = null;
 
+    // we have four parsers for now
+    private String[] sequence;
+    
   private boolean confirmation = true;
 
   private ExecutorService executor = Executors.newCachedThreadPool();
@@ -77,6 +80,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     options.add(Option.builder("patternMatching").argName("boolean").desc("use pattern matching parser").build());
     options.add(Option.builder("matcher").hasArg().argName("string").desc("Optional name of Pattern Matcher Component to be used").build());
     options.add(Option.builder("tldlNoUpdateAddressee").desc("TLDL: do not update addressee after direct address").build());
+    options.add(Option.builder("parsingSequence").hasArg().argName("string").desc("Sequence parsers (default cache, tldl, pattern, llm").build());
     return options;
   }
 
@@ -137,12 +141,20 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
     if (usePMP && cmdLine.hasOption("matcher")) {
       try {
-        matcherclass = Class.forName(cmdLine.getOptionValue("matcher"));
+        matcherclass = Class.forName("edu.tufts.hrilab.slug.parsing.patternMatching." + cmdLine.getOptionValue("matcher"));
         log.info("Using pattern matcher " + matcherclass);
       } catch (ClassNotFoundException cnfe) {
         log.error("Could not find pattern matcher {}. Using default.", cmdLine.getOptionValue("matcher"));
       }
     }
+    // generate the sequence information
+    if (cmdLine.hasOption("parsingSequence")) {
+	sequence = cmdLine.getOptionValue("parsingSequence").split("\\s+");
+    }
+    else {
+	sequence = new String[]{"cache","tldl","pattern","llm"};
+    }
+    System.err.println("USING SEQUENCE " + Arrays.toString(sequence));
   }
 
   @Override
@@ -228,83 +240,89 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     Utterance tldlOutput = null;
     Utterance llmOutput = null;
 
-
-    // TODO: we should allow for defining a policy which should be checked when...
-
-    //Check cache first
-    if (cachedFuture != null) {
-      try {
-        cachedOutput = cachedFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
-        log.error("[parseUtterance] Error getting cached parser results.", e);
-      }
-
-      if (cachedOutput != null && cachedOutput.getSemantics() != null) {
-        log.debug("[parseUtterance] Using cached parser response");
-        return applyAddressee(incoming, cachedOutput);
-      }
+    // 
+    for(int i=0; i<sequence.length; i++) {
+	switch(sequence[i]) {
+	    case "cache":
+	    //Check cache first
+	    if (cachedFuture != null) {
+		try {
+		    cachedOutput = cachedFuture.get();
+		} catch (InterruptedException | ExecutionException e) {
+		    log.error("[parseUtterance] Error getting cached parser results.", e);
+		}
+		
+		if (cachedOutput != null && cachedOutput.getSemantics() != null) {
+		    log.debug("[parseUtterance] Using cached parser response");
+		    return applyAddressee(incoming, cachedOutput);
+		}
+	    }
+	    break;
+	case "pattern": 
+	    //Try patternmatching parser
+	    if (pmpFuture != null) {
+		try {
+		    pmpOutput = pmpFuture.get();
+		} catch (InterruptedException | ExecutionException e) {
+		    log.error("[parseUtterance] Error getting pattern matching parser results.", e);
+		}
+		
+		//TODO:brad: what should this return in the no match case?
+		if (pmpOutput != null) {
+		    return pmpOutput;
+		}
+	    }
+	    break;
+	case "tldl":       
+	    //Try TLDLParser, return if not null or UNKNOWN
+	    if (tldlFuture != null) {
+		try {
+		    tldlOutput = tldlFuture.get();
+		} catch (InterruptedException | ExecutionException e) {
+		    log.error("[parseUtterance] Error getting tldl parser results.", e);
+		}
+		
+		if (tldlOutput != null && tldlOutput.getSemantics() != null) {
+		    preserveAddressee(tldlOutput);
+		    if (tldlOutput.getType() != UtteranceType.UNKNOWN) {
+			log.debug("[parseUtterance] Using tldl parser response");
+			if (useCache && cacheTldl) {
+			    cacheParse(tldlOutput);
+			}
+			return applyAddressee(incoming, tldlOutput);
+		    } else {
+			//Use TLDL UNKNOWN parse in case LLM parse fails
+			output = tldlOutput;
+		    }
+		}	    
+	    }
+	    break;
+	case "llm":
+	    //Try LLMParser last
+	    if (llmFuture != null) {
+		try {
+		    llmOutput = llmFuture.get();
+		} catch (InterruptedException | ExecutionException e) {
+		    log.error("[parseUtterance] Error getting llm parser results.", e);
+		}
+		
+		if (llmOutput != null && llmOutput.getSemantics() != null) {
+		    log.debug("[parseUtterance] Using llm parser response");
+		    preserveAddressee(llmOutput);
+		    output = llmOutput;
+		    if (confirmation) {
+			output.setNeedsValidation(true);
+		    } else if (useCache) {
+			cacheParse(output);
+		    }
+		}
+	    }
+	default: break;
+	}
     }
-
-    //Try patternmatching parser
-    if (pmpFuture != null) {
-      try {
-        pmpOutput = pmpFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
-        log.error("[parseUtterance] Error getting pattern matching parser results.", e);
-      }
-
-      //TODO:brad: what should this return in the no match case?
-      if (pmpOutput != null) {
-        return pmpOutput;
-      }
-    }
-
-    //Try TLDLParser, return if not null or UNKNOWN
-    if (tldlFuture != null) {
-      try {
-        tldlOutput = tldlFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
-        log.error("[parseUtterance] Error getting tldl parser results.", e);
-      }
-
-      if (tldlOutput != null && tldlOutput.getSemantics() != null) {
-        preserveAddressee(tldlOutput);
-        if (tldlOutput.getType() != UtteranceType.UNKNOWN) {
-          log.debug("[parseUtterance] Using tldl parser response");
-          if (useCache && cacheTldl) {
-            cacheParse(tldlOutput);
-          }
-          return applyAddressee(incoming, tldlOutput);
-        } else {
-          //Use TLDL UNKNOWN parse in case LLM parse fails
-          output = tldlOutput;
-        }
-      }
-    }
-
-    //Try LLMParser last
-    if (llmFuture != null) {
-      try {
-        llmOutput = llmFuture.get();
-      } catch (InterruptedException | ExecutionException e) {
-        log.error("[parseUtterance] Error getting llm parser results.", e);
-      }
-
-      if (llmOutput != null && llmOutput.getSemantics() != null) {
-        log.debug("[parseUtterance] Using llm parser response");
-        preserveAddressee(llmOutput);
-        output = llmOutput;
-        if (confirmation) {
-          output.setNeedsValidation(true);
-        } else if (useCache) {
-          cacheParse(output);
-        }
-      }
-    }
-
     return applyAddressee(incoming, output);
   }
-
+    
   /**
    * On parsed utterances with directly-addressed listeners, store a map of the speaker->listener
    * so that parsed utterances with "unknown" listeners can be inferred from the map.
