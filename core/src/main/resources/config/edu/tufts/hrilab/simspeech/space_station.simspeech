@@ -10,7 +10,5 @@ robot 1 fix alpha right three
 robot 1 fix alpha right two
 robot 1 check alpha
 robot 1 check beta
-robot 1 which tubes are damaged
-robot 1 which tubes are broken
-robot 1 which tubes in beta are damaged
-robot 1 which tubes ine beta are broken
+robot 1 go to beta left nine
+robot 1 repair beta left nine

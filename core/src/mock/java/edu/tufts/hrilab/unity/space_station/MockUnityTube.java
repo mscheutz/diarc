@@ -6,11 +6,14 @@ package edu.tufts.hrilab.unity.space_station;
 
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class MockUnityTube {
+  private static Logger log = LoggerFactory.getLogger(MockUnityTube.class);
   private String name;
   private String simName;
   private boolean isDamaged = false;
@@ -61,8 +64,11 @@ public class MockUnityTube {
           health -= decayWhileOff;
         }
 
+        log.debug("Tube {} health decayed to {}.", name, health);
+
         if (health <= 0) {
           isBroken = true;
+          log.warn("Tube {} broken.", name);
         }
       }
     }
@@ -71,6 +77,7 @@ public class MockUnityTube {
 
   public void startTubeDamage() {
     isDamaged = true;
+    log.warn("Tube {} damaged.", name);
   }
 
   public float getHealth() {

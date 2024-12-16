@@ -69,7 +69,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /**
    * File defining priority information values for goals
    */
-  private String priorityFile = "default.json";
+  private List<String> priorityFiles = new ArrayList<>();
   /**
    * Scripts or goals to instantiate on start-up. Goal predicates hashed by actor.
    */
@@ -106,7 +106,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * A map of goal names to priority information (tier and value) to be used by the execution manager to order goals.
    * These are loaded from json files found in config.action.manager.priority
    */
-  private Map<String, PriorityInfo> goalPriorities;
+  private Map<String, PriorityInfo> goalPriorities = new HashMap<>();
   /**
    * Action learning gui flag.
    */
@@ -157,7 +157,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     options.add(Option.builder("badaction").numberOfArgs(1).desc("add bad action").build());
     options.add(Option.builder("badstate").numberOfArgs(1).desc("add bad state").build());
     options.add(Option.builder("executionManagerType").hasArgs().desc("fully qualified type for execution manager").build());
-    options.add(Option.builder("priorityFile").hasArgs().desc("goal priority information file").build());
+    options.add(Option.builder("priorityFile").hasArgs().desc("goal priority information file(s)").build());
     options.add(Option.builder("nomemorymanager").desc("Do not utilize the memory manager in the goal manager to prune old goals").build());
     options.add(Option.builder("historylength").hasArg().argName("time").desc("How long to keep past goals").build());
 
@@ -185,7 +185,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       }
     }
     if (cmdLine.hasOption("priorityFile")) {
-      priorityFile = cmdLine.getOptionValue("priorityFile");
+      priorityFiles.addAll(Arrays.asList(cmdLine.getOptionValues("priorityFile")));
     }
     if (cmdLine.hasOption("badaction")) {
       initialConstraints.addForbiddenAction(cmdLine.getOptionValue("badaction"));
@@ -274,11 +274,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     Database.getInstance().addListener(notifier);
 
     //Load goal priorities
-    String filepath = Resources.createFilepath("config/edu/tufts/hrilab/action/manager/priority", priorityFile);
-    if (!loadGoalPriorities(filepath)) {
-      goalPriorities = new HashMap<>();
-      goalPriorities.put("default", new PriorityInfo(1L, PriorityTier.NORMAL));
-    }
+    loadGoalPriorities();
 
     PerformanceAssessment.setExecutionManager(em, false);
 
@@ -387,7 +383,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
 
     // add all PDDL facts to belief (e.g., predicates, functions, types, constants, objects, init, etc)
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Set.class)).call(void.class, parser.getFacts());
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBeliefs").argTypes(Set.class))
+              .call(void.class, parser.getFacts());
     } catch (TRADEException e) {
       log.error("Error adding PDDL facts to Belief.", e);
     }
@@ -402,38 +399,50 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
+   * Load all priority files and combine them into goalPriorities Map.
+   */
+  private void loadGoalPriorities() {
+    if (priorityFiles.isEmpty()) {
+      priorityFiles.add("default.json");
+    }
+
+    priorityFiles.forEach(file -> {
+      String filepath = Resources.createFilepath("config/edu/tufts/hrilab/action/manager/priority", file);
+      goalPriorities.putAll(loadGoalPriorityFile(filepath));
+    });
+
+    if (!goalPriorities.containsKey("default")) {
+      log.warn("[loadGoalPriorities] don't have 'default' entry, setting to 1");
+      goalPriorities.put("default", new PriorityInfo(1L, PriorityTier.NORMAL));
+    }
+  }
+
+  /**
    * Attempts to load goal priority information defined in the provided json file. If any issues occur, priorities
    * are reset to be equal for all goals.
    *
    * @param filepath the path to the file starting from config.action.manager.priority
    * @return boolean indicating whether the priority information was loaded successfully or not
    */
-  private boolean loadGoalPriorities(String filepath) {
-    Gson gson = new Gson();
+  private Map<String, PriorityInfo> loadGoalPriorityFile(String filepath) {
     BufferedReader reader;
     try {
       reader = new BufferedReader((new InputStreamReader(ExecutionManager.class.getResourceAsStream(filepath))));
     } catch (NullPointerException ex) {
-      log.error("[loadGoalPriorities] Error loading file {}", filepath, ex);
-      return false;
+      log.error("[loadGoalPriorityFile] Error loading file {}", filepath, ex);
+      return new HashMap<>();
     }
 
+    Gson gson = new Gson();
     try {
-      goalPriorities = gson.fromJson(reader, new TypeToken<Map<String, PriorityInfo>>() {
-      }.getType());
+      return gson.fromJson(reader, new TypeToken<Map<String, PriorityInfo>>() {}.getType());
     } catch (JsonSyntaxException e) {
-      log.error("[loadGoalPriorities] malformed json in file {}", filepath, e);
-      return false;
+      log.error("[loadGoalPriorityFile] malformed json in file {}", filepath, e);
+      return new HashMap<>();
     } catch (JsonIOException e) {
-      log.error("[loadGoalPriorities] unable to load json from file {}", filepath, e);
-      return false;
+      log.error("[loadGoalPriorityFile] unable to load json from file {}", filepath, e);
+      return new HashMap<>();
     }
-
-    if (!goalPriorities.containsKey("default")) {
-      log.warn("[loadGoalPriorities] don't have 'default' entry, setting to 1");
-      goalPriorities.put("default", new PriorityInfo(1L, PriorityTier.NORMAL));
-    }
-    return true;
   }
 
   /**
@@ -693,8 +702,9 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   public List<Predicate> getPastGoals() {
     List<Predicate> result = new ArrayList<>();
-    for (Goal g : em.getPastGoals())
+    for (Goal g : em.getPastGoals()) {
       result.add(g.getPredicate());
+    }
     return result;
   }
 
@@ -706,8 +716,9 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   public List<Predicate> getActiveGoals() {
     List<Predicate> result = new ArrayList<>();
-    for (Goal g : em.getActiveGoals())
+    for (Goal g : em.getActiveGoals()) {
       result.add(g.getPredicate());
+    }
     return result;
   }
 
@@ -915,10 +926,9 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /**
    * Register to be notified of the specified NotificationType.
    *
-   * @see edu.tufts.hrilab.action.notification.GoalManagerNotifier for details on expected callback signatures.
-   *
    * @param callback TRADE service callback
-   * @param type NotificationType
+   * @param type     NotificationType
+   * @see edu.tufts.hrilab.action.notification.GoalManagerNotifier for details on expected callback signatures.
    */
   @TRADEService
   public void registerGoalManagerNotification(TRADEServiceInfo callback, NotificationType type) {
@@ -929,7 +939,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * Unregister to be notified of the specified NotificationType.
    *
    * @param callback TRADE service callback
-   * @param type NotificationType
+   * @param type     NotificationType
    */
   @TRADEService
   public void unregisterGoalManagerNotification(TRADEServiceInfo callback, NotificationType type) {

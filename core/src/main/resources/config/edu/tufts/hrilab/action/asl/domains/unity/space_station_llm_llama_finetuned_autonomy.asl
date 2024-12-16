@@ -25,71 +25,33 @@ import edu.tufts.hrilab.action.justification.Justification;
 /**
  * AUTONOMY BEHAVIORS
  **/
-
- () = disableAutonomyFirst () {
-    Predicate !autonomyBelief;
-    !autonomyBelief = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "disableAutonomy(?actor,1)");
-    act:assertBelief(!autonomyBelief);
-    op:log("info", "Disabling autonomous behavior for ?actor on first trial");
- }
-
- () = startAutonomy () {
-  int !wait = 10000;
-  op:sleep(!wait);
-  op:log("info", "Starting autonomy...");
-  act:autonomy();
+ () = autonomyTest() {
+   while (true) {
+     op:log("info", "Running autonomy temp loop.");
+    op:sleep(1000);
+   }
  }
 
 //["This is the high level autonomy manager function that will task a robot with monitoring an area if not already busy"]
-() = autonomy () {
+() = autonomy() {
   int !wait = 1000;
-  Predicate !atPredicate;
-  Predicate !repairingPredicate;
-  Predicate !atTransitPredicate;
-  Predicate !inTransitPredicate;
-  Predicate !autonomyRepairingTubePredicate;
-  Predicate !disableAutonomyPredicate;
-  List !atBeliefs;
-  List !repairingBeliefs;
-  List !atTransitBeliefs;
-  List !inTransitBeliefs;
-  List !autonomyRepairingTubeBeliefs;
-  List !disableAutonomyBeliefs;
   Boolean !workloadLevel;
+  List !autonomyRepairingTubeBeliefs;
 
-  !atPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "amAt(?actor,X,Y)");
-  !repairingPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "repairing(?actor,X,Y,Z)");
-  !atTransitPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "amAt(?actor,prep(transit,to(X,Y)))");
-  !inTransitPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "amIn(?actor,prep(transit,to(X)))");
-  !autonomyRepairingTubePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "autonomyRepairing(?actor,X)");
-  !disableAutonomyPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "disableAutonomy(?actor,X)");
-
+  Predicate !autonomyRepairingTubePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "autonomyRepairing(?actor,X)");
   while (true) {
     !workloadLevel = act:isWorkloadAboveThreshold();
-    !atBeliefs = act:queryBelief(!atPredicate);
-    !repairingBeliefs = act:queryBelief(!repairingPredicate);
-    !atTransitBeliefs = act:queryBelief(!atTransitPredicate);
-    !inTransitBeliefs = act:queryBelief(!inTransitPredicate);
     !autonomyRepairingTubeBeliefs = act:queryBelief(!autonomyRepairingTubePredicate);
-    !disableAutonomyBeliefs = act:queryBelief(!disableAutonomyPredicate);
 
-    if (~op:isEmpty(!disableAutonomyBeliefs)) {
-      op:log("info", "Autonomy is disabled for ?actor");
-    } elseif (op:equals(!workloadLevel, false)) {
-      op:log("info", "Not continuing because workload level is below threshold");
-    } elseif (~op:isEmpty(!atBeliefs)) {
-      op:log("debug", "Not continuing autonomy because ?actor is at tube");
-    } elseif (~op:isEmpty(!repairingBeliefs)) {
-      op:log("debug", "Not continuing autonomy because ?actor is repairing");
-    } elseif (~op:isEmpty(!atTransitBeliefs)) {
-      op:log("debug", "Not continuing autonomy because ?actor is in transit to tube");
-    } elseif (~op:isEmpty(!inTransitBeliefs)) {
-      op:log("debug", "Not continuing autonomy because ?actor is in transit to area");
-    } elseif (~op:isEmpty(!autonomyRepairingTubeBeliefs)) {
-      act:continueAutonomyRepair();
-    } else {
-      act:determineAreaToMonitor();
-    }
+//    if (op:equals(!workloadLevel, false)) {
+//      op:log("info", "Not continuing because workload level is below threshold");
+//    } else
+
+//    if (~op:isEmpty(!autonomyRepairingTubeBeliefs)) {
+//      act:continueAutonomyRepair();
+//    } else {
+      act:monitorNextArea();
+//    }
     op:log("debug", "Delaying for !wait");
     op:sleep(!wait);
   }
@@ -158,7 +120,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 //["This is the action that will determine the next area to monitor"]
-() = determineAreaToMonitor () {
+() = monitorNextArea () {
   Symbol !nextArea;
   Symbol !currentArea;
   Symbol !lastArea;
@@ -273,7 +235,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   Boolean !isTubeOff = false;
 
   op:log("info", "fullTube ?fullTube");
-  !tubeParts = op:invokeStaticMethod("edu.tufts.hrilab.llm.LLMListener", "fromFullTube", ?fullTube);
+  !tubeParts = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "fromFullTube", ?fullTube);
   !area = op:get(!tubeParts, 0);
   !side = op:get(!tubeParts, 1);
   !number = op:get(!tubeParts, 2);
