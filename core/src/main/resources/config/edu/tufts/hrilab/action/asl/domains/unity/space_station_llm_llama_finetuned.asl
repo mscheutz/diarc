@@ -31,14 +31,14 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 () = goToTube(Symbol ?area, Symbol ?tubeCombined) {
-  Symbol !side = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "getTubeSide", ?tubeCombined);
-  Symbol !number = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "getTubeNumber", ?tubeCombined);
+  Symbol !side = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "getTubeSide", ?tubeCombined);
+  Symbol !number = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "getTubeNumber", ?tubeCombined);
   act:goto(?area, !side, !number);
 }
 
 () = goToTube(Symbol ?tubeCombined) {
-  Symbol !side = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "getTubeSide", ?tubeCombined);
-  Symbol !number = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "getTubeNumber", ?tubeCombined);
+  Symbol !side = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "getTubeSide", ?tubeCombined);
+  Symbol !number = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "getTubeNumber", ?tubeCombined);
   act:goto(!side, !number);
 }
 
@@ -47,14 +47,14 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 () = repairTube(Symbol ?area, Symbol ?tubeCombined) {
-  Symbol !side = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "getTubeSide", ?tubeCombined);
-  Symbol !number = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "getTubeNumber", ?tubeCombined);
+  Symbol !side = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "getTubeSide", ?tubeCombined);
+  Symbol !number = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "getTubeNumber", ?tubeCombined);
   act:repair(?area, !side, !number);
 }
 
 () = repairTube(Symbol ?tubeCombined) {
-  Symbol !side = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "getTubeSide", ?tubeCombined);
-  Symbol !number = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "getTubeNumber", ?tubeCombined);
+  Symbol !side = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "getTubeSide", ?tubeCombined);
+  Symbol !number = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "getTubeNumber", ?tubeCombined);
   act:repair(!side, !number);
 }
 
@@ -186,7 +186,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     act:assertBelief(!transitAreaBeliefPredicate);
 
-    !areaLocation = act:resolveReferenceLLM(?area);
+    !areaLocation = act:getSpaceStationReference(?area);
     ?goToJustification = act:goToLocation(!areaLocation, true);
 
     act:notInTransit();
@@ -218,7 +218,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
   !anyTubeBeliefPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "amAt(?actor,X,Y)");
   act:retractBelief(!anyTubeBeliefPredicate);
-  !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "toFullTube", ?area, ?side, ?number);
+  !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "toFullTube", ?area, ?side, ?number);
   !transitTubeBeliefPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "amAt(?actor,prep(transit,to(?side,?number)))");
 
   if (op:isEmpty(!currentAreaBeliefs)) {
@@ -239,7 +239,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     op:log("info", "Already at tube ?side ?number");
   } else {
     op:log("info", "Not at tube ?side ?number ( !fullTube )");
-    !fullTubeLocation = act:resolveReferenceLLM(!fullTube);
+    !fullTubeLocation = act:getSpaceStationReference(!fullTube);
     ?goToJustification = act:goToLocation(!fullTubeLocation, true);
   }
 
@@ -261,7 +261,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     ?return = op:newArrayList("java.util.Map");
     !bindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
-    !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "toFullTube", !area, !side, !number);
+    !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "toFullTube", !area, !side, !number);
 
     !isTubeBroken = act:getSpaceStationTubeBroken(!fullTube);
 
@@ -288,7 +288,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     ?return = op:newArrayList("java.util.Map");
     !bindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
-    !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "toFullTube", !area, !side, !number);
+    !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "toFullTube", !area, !side, !number);
 
     !isTubeOff = act:getSpaceStationTubeOff(!fullTube);
 
@@ -319,7 +319,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     ?return = op:newArrayList("java.util.Map");
     !bindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
-    !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "toFullTube", !area, !side, !number);
+    !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "toFullTube", !area, !side, !number);
 
     !tubeDamagePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "propertyOf(!area,!side,!number,damaged(X))");
     act:retractBelief(!tubeDamagePredicate);
@@ -385,7 +385,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
   act:generateResponseFromString(!repairingMessageString);
 
-  !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM", "toFullTube", ?area, ?side, ?number);
+  !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "toFullTube", ?area, ?side, ?number);
   !repairBeliefPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "repairing(?actor,?area,?side,?number)");
 
   act:startPR2Repair(!fullTube);
@@ -435,16 +435,12 @@ import edu.tufts.hrilab.action.justification.Justification;
   String !goalStr;
   Predicate !goalPred;
   java.lang.Boolean !containsSelfGoal;
-  Predicate !autonomyBeliefQuery;
-  List !autonomyBeliefs;
-  Predicate !autonomyBelief;
   Predicate !workloadBeliefsPredicate;
   Predicate !workloadPlayerOnePredicate;
   Predicate !workloadPlayerTwoPredicate;
 
   op:log("info", "endTrial(?actor)");
 
-  !autonomyBeliefQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "disableAutonomy(?actor,X)");
   !workloadBeliefsPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "workload(X,Y)");
   !workloadPlayerOnePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "workload(player1,0)");
   !workloadPlayerTwoPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "workload(player2,0)");
@@ -466,16 +462,6 @@ import edu.tufts.hrilab.action.justification.Justification;
         tsc:cancelGoal(!goalID);
       }
     }
-  }
-
-  !autonomyBeliefs = act:queryBelief(!autonomyBeliefQuery);
-  if (op:isEmpty(!autonomyBeliefs)) {
-    !autonomyBelief = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "disableAutonomy(?actor,1)");
-    act:assertBelief(!autonomyBelief);
-    op:log("info", "Autonomy disabled on first trial, enabling for second");
-  } else {
-    act:retractBelief(!autonomyBeliefQuery);
-    op:log("info", "Autonomy enabled on first trial, enabling for second");
   }
 
   act:retractBelief(!workloadBeliefsPredicate);

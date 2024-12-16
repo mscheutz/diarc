@@ -45,17 +45,17 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
   private String endpoint = "http://localhost:8000/parse/";
   private List<String> tldlDictionaries = new ArrayList<>();
-  private  HashMap<Symbol, Symbol> addresseeMap = new HashMap<>();
+  private HashMap<Symbol, Symbol> addresseeMap = new HashMap<>();
   private boolean tldlUpdateAddressee = true;
   private String cacheName = null;
   private String[] cacheLoads = null;
   private boolean cachePersist = false;
   private boolean cacheTldl = false;
   private String llm = null;
-  private String prompt = null;  
+  private String prompt = null;
   private Symbol unknownListener = null;
   private Class matcherclass = null;
-    
+
   private boolean confirmation = true;
 
   private ExecutorService executor = Executors.newCachedThreadPool();
@@ -117,7 +117,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
     if (useCache && cmdLine.hasOption("cacheLoad")) {
       cacheLoads = cmdLine.getOptionValues("cacheLoad");
-      log.debug("Loading pre-existing cache" + ( cacheLoads.length == 1 ? "" : "s" ) + ": " + String.join(", ", cacheLoads) );
+      log.debug("Loading pre-existing cache" + (cacheLoads.length == 1 ? "" : "s") + ": " + String.join(", ", cacheLoads));
     }
     if (useCache && cmdLine.hasOption("cachePersist")) {
       cachePersist = true;
@@ -132,19 +132,16 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       log.debug("Do not require confirmation from LLM parser before storing in cache");
     }
     if (cmdLine.hasOption("patternMatching")) {
-	    System.out.println("==========>>>>> ");	
       usePMP = true;
       log.debug("Using the pattern matching parser");
     }
     if (usePMP && cmdLine.hasOption("matcher")) {
-	try {
-	    System.out.println("==========>>>>> ");
-	  matcherclass = Class.forName(cmdLine.getOptionValue("matcher"));
-	  log.info("Using pattern matcher " + matcherclass);
-	}
-	catch(ClassNotFoundException cnfe) {
-	  log.error("Could not find pattern matcher " + cmdLine.getOptionValue("matcher") + ".  Using default");
-	}
+      try {
+        matcherclass = Class.forName(cmdLine.getOptionValue("matcher"));
+        log.info("Using pattern matcher " + matcherclass);
+      } catch (ClassNotFoundException cnfe) {
+        log.error("Could not find pattern matcher {}. Using default.", cmdLine.getOptionValue("matcher"));
+      }
     }
   }
 
@@ -173,7 +170,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
     // init PatternMatchingParser
     if (usePMP) {
-	patternMatchingParser = createInstance((matcherclass == null) ? PatternMatchingParser.class : matcherclass, "", false);
+      patternMatchingParser = createInstance((matcherclass == null) ? PatternMatchingParser.class : matcherclass, "", false);
     }
 
     // init CachedParserComponent
@@ -233,7 +230,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
 
     // TODO: we should allow for defining a policy which should be checked when...
-    
+
     //Check cache first
     if (cachedFuture != null) {
       try {
@@ -314,7 +311,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
    *
    * @param parsedUtterance
    */
-  private void preserveAddressee (Utterance parsedUtterance) {
+  private void preserveAddressee(Utterance parsedUtterance) {
     Symbol semantics = parsedUtterance.getSemantics();
     Symbol addressee = null;
     if (semantics != null && semantics.isTerm()) {
@@ -339,7 +336,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
    * @param parsedUtterance
    * @return
    */
-  private Utterance applyAddressee (Utterance incomingUtterance, Utterance parsedUtterance) {
+  private Utterance applyAddressee(Utterance incomingUtterance, Utterance parsedUtterance) {
     if (!Utilities.equalsIgnoreType(incomingUtterance.getAddressee(), unknownListener)) {
       return parsedUtterance;
     }
@@ -390,7 +387,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     super.shutdownComponent();
     if (useTLDL) {
       try {
-        ((TLDLParserComponent)tldlParser).deregisterDictionary();
+        ((TLDLParserComponent) tldlParser).deregisterDictionary();
       } catch (Exception e) {
         log.error("[TLDLParserComponent] exception deregistering dictionary", e);
       }

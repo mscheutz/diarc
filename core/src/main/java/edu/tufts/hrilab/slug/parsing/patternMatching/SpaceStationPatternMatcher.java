@@ -3,31 +3,15 @@
  */
 package edu.tufts.hrilab.slug.parsing.patternMatching;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.interfaces.NLUInterface;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -63,26 +47,19 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 
       if no robot, area, side or number are provided, it will automatically use the last ones if there are any
     */
-    
-    // this does all the work
-    // TODO: we could return partial utterance to the extent that we've extracted them for further processing and troubleshooting
-    private Utterance extractInstruction(Utterance u) {
-	// Remove disfluencies and politeness forms
-	log.info("Instruction: " + u.getWordsAsString());
 
-        String sentence = u.getWordsAsString().replaceAll("\\b(?:a|hey|please|um|uh|ah|oh|or|i|red|that|'m|the)\\b", "").trim();
-        String cleanedSentence = sentence.replaceAll(",","").replaceAll("1","one").replaceAll("2","two").trim();
-	
-        // Define patterns to match the robot addressee with homophones ("robots" will be matched to "robot 1")
-        Pattern robotone = Pattern.compile("\\b(?:robots|robots one|rubber one|robot one|row bot one|rowboat one|rubber won|robot won|row bot won|rowboat won)\\b", Pattern.CASE_INSENSITIVE);
+  // this does all the work
+  // TODO: we could return partial utterance to the extent that we've extracted them for further processing and troubleshooting
+  private Utterance extractInstruction(Utterance u) {
+    // Remove disfluencies and politeness forms
+    log.info("Instruction: " + u.getWordsAsString());
 
-	Pattern robottwo = Pattern.compile("\\b(?:robots two|robots to|robot two|robot to|rubber two|rubber to|robot too|row bot two|row bot too|row bot to|rowboat two|rowboat too|rowboat to)\\b", Pattern.CASE_INSENSITIVE);
-	
-        // Create matchers for the cleaned sentence
-        Matcher robotonematcher = robotone.matcher(cleanedSentence);
-	Matcher robottwomatcher = robottwo.matcher(cleanedSentence);
+    String sentence = u.getWordsAsString().replaceAll("\\b(?:a|hey|please|um|uh|ah|oh|or|i|red|that|'m|the)\\b", "").trim();
+    String cleanedSentence = sentence.replaceAll(",", "").replaceAll("1", "one").replaceAll("2", "two").trim();
 
-	String cleanedRemaining;
+    // Define patterns to match the robot addressee with homophones ("robots" will be matched to "robot 1")
+    Pattern robotone = Pattern.compile("\\b(?:robots|robots one|rubber one|robot one|row bot one|rowboat one|rubber won|robot won|row bot won|rowboat won)\\b", Pattern.CASE_INSENSITIVE);
+    Pattern robottwo = Pattern.compile("\\b(?:robots two|robots to|robot two|robot to|rubber two|rubber to|robot too|row bot two|row bot too|row bot to|rowboat two|rowboat too|rowboat to)\\b", Pattern.CASE_INSENSITIVE);
 
 	// check for the robot addressee -- must always be part of a command
 	String robot;
@@ -102,12 +79,9 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	}
 	lastrobot = robot;
 
-	// MS: do we need to pass u in for some default values?
-	Utterance.Builder builder = new Utterance.Builder(u);
-	// set the addressee
-	builder.setAddressee(new Symbol(robot));
-	// assume "INSTRUCT"
-	builder.setUtteranceType(UtteranceType.INSTRUCT);
+	// Create matchers for the cleaned sentence
+    Matcher robotonematcher = robotone.matcher(cleanedSentence);
+    Matcher robottwomatcher = robottwo.matcher(cleanedSentence);
 
 	// get rid of the address
         cleanedRemaining = cleanedSentence.replaceAll("\\b(?:robots|rubber one|robot one|row bot one|rowboat one|robot two|rubber two|robot too|row bot two|row bot too|rowboat two|rowboat too|robot won|row bot won|rowboat won|robot to|row bot to|rowboat to)\\b","").trim();
@@ -166,7 +140,7 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	// check area for broken tubes
 	if (cleanedRemaining.matches("(monitor|check|look in|observe)(.*)")) {
 	    if (noarea) {
-		System.err.println("NO AREA specified");
+		log.error("NO AREA specified");
 		return null;
 	    }
 	    else {
@@ -182,7 +156,7 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	    if (notube) {
 		// if we don't have area info
 		if (noarea) {
-		    System.err.println("NO AREA or TUBE specified for location");
+		    log.error("NO AREA or TUBE specified for location");
 		    return null;
 		}
 		else {
@@ -202,7 +176,7 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	// check for repair, need the exact tube info
 	else if (cleanedRemaining.matches("(repair|re pair|fix)(.*)")) {
 	    if (notube) {
-		System.err.println("NO TUBE specified for repair");
+		log.errorr("NO TUBE specified for repair");
 		return null;
 	    }
 	    else if (noarea) {
@@ -215,7 +189,7 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	    }
 	    else {
 		if (notube) {
-		    System.err.println("NO TUBE specified for repair in area " + area);
+		    log.error("NO TUBE specified for repair in area " + area);
 		    return null;		    
 		}
 		else {
@@ -225,14 +199,14 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	}
 	// this is an unknown command
 	else {
-	    System.err.println("MATCHES: " + cleanedRemaining.matches("(go|drive|move|come|get)(.*)"));
-	    System.err.println("NO KNOWN COMMAND specified for robot " + robot);
+	    log.errror("MATCHES: " + cleanedRemaining.matches("(go|drive|move|come|get)(.*)"));
+	    log.error("NO KNOWN COMMAND specified for robot " + robot);
 	    return null;
 	}
 	// return the updated utterance
 	return builder.build();
-    }
-
+  }
+    
     /*
     // this is for testing only
     public static void main(String[] args) {
@@ -242,7 +216,7 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
         for (String instruction[] : instructions) {
 	    String parsed = extractInstruction(instruction[0]);
 	    if (parsed.equals("")) {
-		System.out.println("Original: " + instruction[0] + "  Intended: " + instruction[1]);
+		log.info("Original: " + instruction[0] + "  Intended: " + instruction[1]);
 	    }
         }
     }

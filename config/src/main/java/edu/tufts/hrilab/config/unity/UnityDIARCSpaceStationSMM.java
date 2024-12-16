@@ -56,7 +56,7 @@ public class UnityDIARCSpaceStationSMM {
 
     String goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(robot1:agent) -goal initializeTrial(robot2:agent) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
     if (largs.contains("--autonomy") || largs.contains("-a")) {
-      goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(robot1:agent) -goal initializeTrial(robot2:agent) -goal startAutonomy(robot1:agent) -goal listen(self) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
+      goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(robot1:agent) -goal initializeTrial(robot2:agent) -goal autonomy(robot1:agent) -goal listen(self) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
     }
 
     DiarcComponent.createInstance(TLDLParserComponent.class, "-dict pr2Unity.dict");

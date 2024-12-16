@@ -28,13 +28,26 @@ public class MockUnitySpaceStationComponent extends DiarcComponent implements Un
 
   private static final int NUM_TRIALS = 1;
 
-  private static final int TUBES_PER_SIDE = 12;
-
+  /**
+   * Path to simulator json config.
+   */
   private String configFile;
-
+  /**
+   * Parsed simulator config json info.
+   */
   private SimulatorConfig simulatorConfig;
-
+  /**
+   * Space station tubes, hashed by diarc name (e.g., alphaLeftThree).
+   */
   private Map<String, MockUnityTube> tubes;
+  /**
+   * Estimated time (sec) since start of component. Used to control tube damage.
+   */
+  private long estimatedTimeSeconds = 0;
+  /**
+   * Index into simulatorConfig's tube damage schedule.
+   */
+  private int tubeEventIndex = 0;
 
   private static Map<String, String> digitsToWords = new HashMap<>();
 
@@ -55,6 +68,7 @@ public class MockUnitySpaceStationComponent extends DiarcComponent implements Un
 
   public MockUnitySpaceStationComponent() {
     super();
+    this.executionLoopCycleTime = 1000;
     this.shouldRunExecutionLoop = true;
   }
 
@@ -117,37 +131,24 @@ public class MockUnitySpaceStationComponent extends DiarcComponent implements Un
 
   @Override
   protected void executionLoop() {
-    long startTimeMillis = System.currentTimeMillis();
-    //todo: should this be killable via some other method?
-    long estimatedTimeSeconds;
-    long prevSecond = 0;
-    int tubeEventIndex = 0;
-    int numTubeEvents = simulatorConfig.trials[0].tubes.length;
-    while (true) {
-      estimatedTimeSeconds = (System.currentTimeMillis() - startTimeMillis) / 1000;
+    ++estimatedTimeSeconds; // assumes loop time is one second
 
-      if (estimatedTimeSeconds - prevSecond > 1 && tubeEventIndex < numTubeEvents) {
-        prevSecond = estimatedTimeSeconds;
-        //handle tube breakage specified in an event if clock matches
-        if (estimatedTimeSeconds > simulatorConfig.trials[0].tubes[tubeEventIndex].time) {
-
-          String tube = simulatorConfig.trials[0].tubes[tubeEventIndex].tube;
-          //todo: handle if random tube(?) for now it is hardcoded assuming the tube id will be in config
-          if (tube == null || tube.isEmpty()) {
-            log.error("[executionLoop] tube damaged events require tube id specified in valid format e.g. Alpha:L:1");
-          }
-          MockUnityTube currentTube = tubes.get(toDiarcTubeName(tube));
-          currentTube.startTubeDamage();
-          log.info("[MockUnitySpaceStationSimulationImpl] damaged tube at " + currentTube.getName());
-
-          tubeEventIndex++;
+    if (tubeEventIndex < simulatorConfig.trials[0].tubes.length) {
+      //handle tube breakage specified in an event if clock matches
+      if (estimatedTimeSeconds > simulatorConfig.trials[0].tubes[tubeEventIndex].time) {
+        String tube = simulatorConfig.trials[0].tubes[tubeEventIndex].tube;
+        if (tube == null || tube.isEmpty()) {
+          log.error("[executionLoop] tube damaged events require tube id specified in valid format e.g. Alpha:L:1");
         }
+        MockUnityTube currentTube = tubes.get(toDiarcTubeName(tube));
+        currentTube.startTubeDamage();
+        tubeEventIndex++;
       }
+    }
 
-      //handle tube decay for the current step
-      for (MockUnityTube tube : tubes.values()) {
-        tube.updateStep();
-      }
+    //handle tube decay for the current step
+    for (MockUnityTube tube : tubes.values()) {
+      tube.updateStep();
     }
   }
 
@@ -249,6 +250,19 @@ public class MockUnitySpaceStationComponent extends DiarcComponent implements Un
   @TRADEService
   public boolean repairMockTube(Symbol tube) {
     return tubes.get(tube.getName()).repairTube();
+  }
+
+  //////////////////////////////////////////////////////////
+  // Helper methods to expose turning tubes on/off via a gui
+  //////////////////////////////////////////////////////////
+  @TRADEService
+  public void turnTubeOn(Symbol tube) {
+    tubes.get(tube.getName()).turnOn();
+  }
+
+  @TRADEService
+  public void turnTubeOff(Symbol tube) {
+    tubes.get(tube.getName()).turnOff();
   }
 
   //Classes Required for JSON parsing of config file.

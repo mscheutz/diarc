@@ -19,6 +19,7 @@ import edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent;
 import edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
+import edu.tufts.hrilab.trade.gui.TRADEServiceGui;
 import edu.tufts.hrilab.unity.*;
 import edu.tufts.hrilab.unity.space_station.MockHumanAgent;
 import edu.tufts.hrilab.unity.space_station.MockUnitySpaceStationComponent;
@@ -35,9 +36,9 @@ import java.util.List;
 public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
   private String llmEndpoint = "http://192.168.0.177:9900"; //"http://127.0.0.1:8080";
   private String agentName = "robot1";
-  private String disableAutonomy = "";
   private int players = 1;
   private String goalManagerArgs;
+  private boolean startAutonomy = false;
 
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
@@ -45,7 +46,6 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     options.add(Option.builder("agent").hasArg().argName("name").desc("Set robot agent name.").build());
     options.add(Option.builder("players").hasArg().argName("number").desc("Set number of human players (1 or 2).").build());
     options.add(Option.builder("autonomy").desc("Flag to enable autonomy.").build());
-    options.add(Option.builder("disableAutonomyFirst").desc("Flag to disable autonomy at first.").build());
     return options;
   }
   protected void parseArgs(CommandLine cmdLine) {
@@ -63,14 +63,8 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
       players = Integer.parseInt(cmdLine.getOptionValue("players"));
     }
 
-    if (cmdLine.hasOption("disableAutonomyFirst")) {
-      disableAutonomy = " -goal disableAutonomyFirst(" + agentName + ":agent)";
-    }
-
     if (cmdLine.hasOption("autonomy")) {
-      goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -goal startAutonomy(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl domains/unity/space_station_llm_llama_finetuned_autonomy.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl" + disableAutonomy;
-    } else {
-      goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm_" + agentName + ".pl -dbfile domains/unity/space_station_llm_llama_finetuned.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
+      startAutonomy = true;
     }
   }
 
@@ -79,10 +73,7 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     // mock sim env
     createInstance(MockUnitySpaceStationComponent.class, "-config mock_space_station_settings.json");
 
-//    createInstance(LLMParserComponent.class, "-service spaceStationLLMParser");
-    createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict  -tldlNoUpdateAddressee -llm -llmService spaceStationLLMParser -noConfirmation -cache -cacheName unity_space_station");
-    createInstance(LLMComponent.class, "-groups agent:" + agentName + " -service llama -model 7B -endpoint " + llmEndpoint + " -stopwords }");
-    createInstance(UnitySpaceStationLLM.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
+    createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict -tldlNoUpdateAddressee -cache -cacheName unity_space_station");
 
     createInstance(ListenerComponent.class);
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
@@ -92,11 +83,24 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     createInstance(UnitySpaceStationNLGComponent.class);
 
     createInstance(MapComponent.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
-    createInstance(MockMoveBaseComponent.class, "-groups agent:" + agentName);
+    createInstance(MockMoveBaseComponent.class, "-groups agent:" + agentName + " -simExecTime");
     createInstance(MockUnityPR2Component.class, "-groups agent:"  + agentName);
     createInstance(SimSpeechProductionComponent.class, "-gui -groups agent:"  + agentName);
-//    createInstance(MockUnityPR2Component.class, "-groups agent:"  + agentName2); // add for two robot case
 
+    goalManagerArgs = "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
+            "-priorityFile default.json space_station_priority.json " +
+            "-goal listen(self) " +
+            "-goal initializeTrial(" + agentName + ") " +
+            "-asl domains/unity/space_station_llm_llama_finetuned.asl " +
+            "-asl domains/unity/space_station_llm_llama_finetuned_autonomy.asl " +
+            "-asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl ";
+    // TODO: why are different pl files needed here?
+    if (startAutonomy) {
+      goalManagerArgs += "-goal autonomy(" + agentName + ") " +
+              "-beliefinitfile unity/pr2UnityTeam_smm.pl ";
+    } else {
+      goalManagerArgs += "-beliefinitfile unity/pr2UnityTeam_smm_" + agentName + ".pl ";
+    }
     createInstance(GoalManagerComponent.class, goalManagerArgs);
 
     for (int i = 0; i < players; i++) {
@@ -106,5 +110,6 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     }
 
     // TODO: add guis to set workloads
+    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.unity.space_station.MockUnitySpaceStationComponent");
   }
 }
