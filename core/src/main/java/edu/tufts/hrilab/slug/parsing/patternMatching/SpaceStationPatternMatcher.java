@@ -99,7 +99,7 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
 	builder.setUtteranceType(UtteranceType.INSTRUCT);
 
 	// get rid of the address
-        cleanedRemaining = cleanedSentence.replaceAll("\\b(?:robots|rubber one|robot one|row bot one|rowboat one|robot two|rubber two|robot too|row bot two|row bot too|rowboat two|rowboat too|robot won|row bot won|rowboat won|robot to|row bot to|rowboat to)\\b","").trim();
+	cleanedRemaining = cleanedSentence.replaceAll("\\b(?:robots|rubber one|robot one|robotone|row bot one|rowboat one|robot two|robottwo|rubber two|robot too|row bot two|row bot too|rowboat two|rowboat too|robot won|row bot won|rowboat won|robot to|row bot to|rowboat to)\\b","").trim();
 	
 	log.info("Cleaned instruction: " + cleanedRemaining);
 	

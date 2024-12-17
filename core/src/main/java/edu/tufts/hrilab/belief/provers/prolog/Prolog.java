@@ -354,7 +354,12 @@ public class Prolog implements Prover {
     types.putAll(getTypeMap(term));
 
     //don't want type info
-    String sanitized = PrologUtil.makePrologSafe(term);
+    String sanitized = "";
+    try {
+      sanitized = PrologUtil.makePrologSafe(term);
+    } catch (ClassCastException e) {
+      log.error("Exception trying to sanitize term: {}", term, e);
+    }
 
     //regex to find all strings that precede "()" and don't contain "," or "("
     Matcher m = Pattern.compile("([^,\\(]*)(?=\\(\\))")
