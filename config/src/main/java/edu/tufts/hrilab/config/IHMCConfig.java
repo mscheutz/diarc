@@ -2,10 +2,12 @@ package edu.tufts.hrilab.config;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.consultant.pose.PoseConsultant;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.python.PythonWrapper;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
@@ -24,7 +26,10 @@ public class IHMCConfig extends DiarcConfiguration {
   public void runConfiguration() {
 
     createInstance(ListenerComponent.class);
-    createInstance(TLDLParserComponent.class, "-dict templatedict.dict -dict mfawn/ihmc.dict");
+    createInstance(TLDLParserComponent.class, "" +
+//            "-dict templatedict.dict " +
+            "-dict mfawn/ihmc.dict"
+    );
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(ReferenceResolutionComponent.class);
     createInstance(DialogueComponent.class, "");
@@ -40,6 +45,7 @@ public class IHMCConfig extends DiarcConfiguration {
                     + "-asl dialogue/nlg.asl "
                     + "-asl dialogue/nlu.asl "
                     + "-asl dialogue/handleSemantics.asl "
+                    + "-asl demos/ihmc.asl "
                     + "-goal listen(self:agent) "
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
     );
@@ -58,6 +64,12 @@ public class IHMCConfig extends DiarcConfiguration {
     String refsConfigFile = "refs/ihmcRefs.json";
     String filename = Resources.createFilepath(refsConfigDir, refsConfigFile);
     consultant.loadReferencesFromFile(filename);
+
+    String file = "ihmc.ihmc_wrapper";
+    TRADEServiceConstraints c = new TRADEServiceConstraints().inGroups();
+
+    PythonWrapper wrapper = new PythonWrapper(file);
+    wrapper.start();
 
   }
 }

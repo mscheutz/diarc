@@ -1,4 +1,6 @@
 import warnings
+import logging
+import sys
 
 import numpy as np
 from jpype.types import *
@@ -16,6 +18,7 @@ PY_TO_JAVA_MAP = {
     np.float64: JDouble
 }
 
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 def to_java_object(arg):
     """
@@ -35,6 +38,8 @@ def to_java_class(arg):
     """
     if isinstance(arg, JClass):
         return arg
+    elif isinstance(type(arg), JClass):
+        return type(arg)
     clazz = PY_TO_JAVA_MAP.get(type(arg))
     if clazz is None:
         warnings.warn(f"Unsupported java type {type(arg)}. Using generic object.")

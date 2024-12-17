@@ -26,52 +26,59 @@ else:
 class TRADEWrapper:
 
     # Threading methods
-    def __init__(self):
-        self.running = threading.Event()
-        self.running.set()  # Allow the thread to run
-
-    def _spin(self):
-        while self.running.is_set():
-            time.sleep(1)  # Simulate some work
-
-    def spin(self):
-        """
-        Launches a background process that spins until the parent process exits
-        :return:
-        """
-        self.thread = threading.Thread(target=self._spin, daemon=True)
-        self.thread.start()
-
-    def stop(self):
-        """
-        Manually stops the background process
-        :return:
-        """
-        self.running.clear()  # Stop the loop
-        self.thread.join()    # Wait for the thread to finish
+    # def __init__(self):
+    #     self.running = threading.Event()
+    #     self.running.set()  # Allow the thread to run
+    #
+    # def _spin(self):
+    #     while self.running.is_set():
+    #         time.sleep(1)  # Simulate some work
+    #
+    # def spin(self):
+    #     """
+    #     Launches a background process that spins until the parent process exits
+    #     :return:
+    #     """
+    #     self.thread = threading.Thread(target=self._spin, daemon=True)
+    #     self.thread.start()
+    #
+    # def stop(self):
+    #     """
+    #     Manually stops the background process
+    #     :return:
+    #     """
+    #     self.running.clear()  # Stop the loop
+    #     self.thread.join()  # Wait for the thread to finish
 
     def call_trade(self, name: str, *args) -> JObject:
+        return self.call_trade(name, [], args)
+
+    def call_trade(self, name: str, groups: list[str], *args) -> JObject:
         """
         Calls a generic TRADE service. Name is the name of the service, argv is vararg arguments.
 
         :param name: Name of the TRADE service
+        :param groups: TRADE Component groups for the service
         :param args: The TRADE service's varargs
         :return: The return value of the TRADE service, almost certainly java object
         """
-        constraints = TRADEServiceConstraints()  # Initialize the TRADE constraints
-        constraints.name(name)  # Add the service's name to the constraints
+        try:
+            constraints = TRADEServiceConstraints()  # Initialize the TRADE constraints
+            constraints.name(name)  # Add the service's name to the constraints
 
-        # Get Java classes that correspond to the arguments
-        class_array = [to_java_class(arg) for arg in args]
-        constraints.argTypes(class_array)  # Add the argument types to the constraints
+            # Get Java classes that correspond to the arguments
+            class_array = [to_java_class(arg) for arg in args]
+            constraints.argTypes(class_array)  # Add the argument types to the constraints
+            if groups:
+                constraints.inGroups(groups)
 
         # Todo: Better error handling
-        try:
             service = TRADE.getAvailableService(constraints)  # Get the TRADE service
             parameters = convert_to_java_object(list(args))  # Convert the arguments to their Java versions
             return service.call(JObject, *parameters)  # Call the service
-        except TRADEException as ex:
-            print(f"Caught TRADE exception: {str(ex)}")
+        except Exception as ex:
+            print(f"Caught exception: {str(ex)}")
+            raise(ex)
 
     def create_action(self, name: str, args, preconds, effects, executor: str) -> JObject:
         """

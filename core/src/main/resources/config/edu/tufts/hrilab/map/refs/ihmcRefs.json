@@ -22,7 +22,7 @@
       "refId": "location_1:location",
       "variable": "VAR0:location",
       "properties": [
-        "one(VAR0:location)"
+        "alpha(VAR0:location)"
       ],
       "position": [
         3.0,
@@ -40,7 +40,7 @@
       "refId": "location_2:location",
       "variable": "VAR0:location",
       "properties": [
-        "two(VAR0:location)"
+        "beta(VAR0:location)"
       ],
       "position": [
         0.0,
