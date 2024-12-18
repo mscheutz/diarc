@@ -769,6 +769,16 @@ public class ActionScriptLanguageParser {
       }
     }
 
+    @Override public void enterNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx) {
+      EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("nointerrupt");
+      curr_dbe_builder.addEventSpec(esBuilder.build());
+    }
+
+    @Override public void exitNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx) {
+      EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.CONTROL).setCommand("endnointerrupt");
+      curr_dbe_builder.addEventSpec(esBuilder.build());
+    }
+
     @Override
     public void visitErrorNode(ErrorNode node) {
       log.warn("error parsing " + dbFile + " : " + node.getSymbol().getText() + " at line: " + node.getSymbol().getLine() + ":" + node.getSymbol().getCharPositionInLine());

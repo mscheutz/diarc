@@ -38,6 +38,14 @@ import java.lang.Integer;
     java.lang.Double !objectHeightM;
     java.lang.Double !negObjectHeightM;
 
+    Symbol !heldObject;
+    java.lang.Integer !tracker = 0;
+    Symbol !result;
+
+    onInterrupt :{
+        cancel: act:perceiveEntitiesOnCancel(!tracker,!negObjectHeightM);
+    }
+
     //TODO: Eventually if we have multiple objects of different heights we will need to either cycle through every
     //  object height and take pictures and/or pass in a relevant set of objects to do so for
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory","createPredicate","objectDefinition(D,A,B)");
@@ -56,9 +64,60 @@ import java.lang.Integer;
 
     !location = act:getCurrentLocation();
 
-    tsc:moveZRelative(!objectHeightM);
-    ?bindings = tsc:perceiveAllEntitiesInView("blocksDet", !location, ?actor);
-    tsc:moveZRelative(!negObjectHeightM);
+    noInterrupt {
+        tsc:moveZRelative(!objectHeightM);
+        !tracker = op:++(!tracker); //1
+    }
+    noInterrupt {
+        ?bindings = tsc:perceiveAllEntitiesInView("blocksDet");
+        op:log(info,?bindings);
+        tsc:moveZRelative(!negObjectHeightM);
+
+        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(X,!location)");
+        op:log(info,!fact);
+        act:retractBelief(!fact);
+        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,!location)");
+        op:log(info,!fact);
+        act:assertBelief(!fact);
+        op:log(info,?bindings);
+        foreach (!result : ?bindings) {
+            op:log(info,?bindings);
+            op:log(info,!result);
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,!result)");
+            op:log(info,!fact);
+            act:retractBelief(!fact);
+            ////PickAndPlace2024 - Unique Object Assumption
+            //!heldObject = act:getHeldObject();
+            //if (~op:isNull(!heldObject)) {
+            //    if(op:equalsValue(!heldObject, !result)) {
+            //        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "free(?actor)");
+            //        act:assertBelief(!fact);
+            //    }
+            //}
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,X)");
+            op:log(info,!fact);
+            act:retractBelief(!fact);
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(!result,!location)");
+            op:log(info,!fact);
+            act:assertBelief(!fact);
+        }
+    }
+}
+
+() = perceiveEntitiesOnCancel(java.lang.Integer ?tracker, Double ?zDist) {
+    Predicate !responsePredicate;
+
+    //If we have lowered the camera but the picture hasn't been taken yet, don't take it. Just raise back to pose height
+    if (op:equals(!tracker,1)) {
+        //TODO: can replace with hardcoded message if having an actual translation
+        !responsePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "returningToASafeStateBeforeCancelingMyCurrentTask()");
+        act:generateResponse(!responsePredicate);
+        tsc:moveZRelative(!zDist);
+    }
+
+    //Otherwise:
+    //  1. No movement has occurred, do nothing and cancel
+    //  2. The picture has already been taken, allow the action to complete
 }
 
 //todo: (pete) allows the LLM target for semantics to be more sane than "getOn". should be true everywhere.
@@ -995,3 +1054,15 @@ import java.lang.Integer;
         act:reportNoLearningState();
     }
 }
+
+////TODO: could potentially do something like this (probably would want it as a core QueueEM action)
+//() = suspendSystemGoalsPickAndPlace() {
+//    !status = act:suspendSystemGoals();
+//    //if status false
+//    //  sayText(goal not found)
+//    //if status true_interrupted
+//    //  Nothing
+//    //if status true_setting_suspend
+//    //  sayText(Will stop at the next available moment)
+//}
+//Same for cancel

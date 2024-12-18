@@ -178,6 +178,8 @@ public class ScriptParser {
         return Collections.singletonList("endtry");
       case "catch":
         return Arrays.asList("catch", "finally");
+      case "nointerrupt":
+        return Collections.singletonList("endnointerrupt");
       case "finally":
         return Collections.emptyList();
       default:

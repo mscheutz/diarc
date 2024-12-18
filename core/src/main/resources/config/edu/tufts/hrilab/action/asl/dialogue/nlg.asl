@@ -176,6 +176,11 @@ import java.util.Map;
   ?answerBindings = op:setNull(); // require bc of the weird way ASL handles return args
   Long !count = 0;
   Symbol !speaker;
+  Integer !tracker = 0;
+
+  onInterrupt : {
+    resume: act:askQuestionFromUtteranceOnResume(!tracker,?utterance);
+  }
 
   !speaker = op:invokeMethod(?utterance, "getSpeaker");
   while (op:isNull(?answerBindings) && op:lt(!count, ?attempts)) {
@@ -183,12 +188,16 @@ import java.util.Map;
 
     // communicate utterance (which also updates dialogue history)
     // call asynchronously so that the waitForResponse is called asap so we don't miss any responses
-    async {
-      act:communicateUtterance(?utterance);
+    noInterrupt {
+      async {
+        act:communicateUtterance(?utterance);
+      }
+      !tracker = op:newObject("java.lang.Integer", 1);
     }
 
     // wait for response - default duration is -1, which means block indefinitely
     ?answerBindings = act:waitForResponse(?responseForm, !speaker, ?duration);
+    !tracker = op:newObject("java.lang.Integer", 2);
   }
 
   //If we timed out and did not receive a response, we need to remove the active question ourselves
@@ -196,6 +205,12 @@ import java.util.Map;
     act:cancelWaitForResponse(?responseForm, !speaker);
   }
   //TODO:EW: else interrupt looping communicateUtterance we are potentially in if we received a response mid loop?
+}
+
+() = askQuestionFromUtteranceOnResume(Integer ?tracker, Utterance ?utterance) {
+    if (op:equals(?tracker,1)) {
+        act:communicateUtterance(?utterance);
+    }
 }
 
 /**

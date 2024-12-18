@@ -140,17 +140,19 @@ import java.util.List;
     act:assertIsPose(?pose);
     act:assertIsPhysobj(?object);
 
-    !holding = act:checkHolding(?object);
-    if (op:equalsValue(!holding,true)) {
-        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "free(?actor)");
+    noInterrupt {
+        !holding = act:checkHolding(?object);
+        if (op:equalsValue(!holding,true)) {
+            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "free(?actor)");
+            act:assertBelief(!fact);
+        }
+        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,?object)");
+        act:retractBelief(!fact);
+        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,X)");
+        act:retractBelief(!fact);
+        !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,?pose)");
         act:assertBelief(!fact);
     }
-    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,?object)");
-    act:retractBelief(!fact);
-    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,X)");
-    act:retractBelief(!fact);
-    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?object,?pose)");
-    act:assertBelief(!fact);
 }
 
 () = assertIsPhysobj(Symbol ?ref) {

@@ -33,7 +33,12 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
 () = perceiveEntity["Looks for an entity at the current location"](edu.tufts.hrilab.fol.Symbol ?refID) {
     Symbol !currPose = "current";
 
+    onInterrupt :{
+        cancel: act:perceiveEntityOnCancel(!tracker,!dist);
+    }
     effects : {
+        success : not(holding(?actor,?refID));
+        success : not(at(?refID,!objectLocation)); //not(at(?refID,X));
         success : at(?refID, !currPose);
     }
 
@@ -55,6 +60,8 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     Predicate !failCond;
 
     Symbol !objectLocation;
+    Symbol !heldObject;
+    java.lang.Integer !tracker = 0;
 
     op:log(debug, "[perceiveEntity] refID: ?refID");
 
@@ -85,8 +92,12 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     //op:log(debug, "[perceiveEntity] xDist: !xDist:::::: xDistSymbol: !xDistSymbol");
     //!backDist = op:*(!xDist,-1);
 
-    tsc:moveZRelative(!dist);
-    //tsc:moveXRelative(!xDist);
+
+    noInterrupt {
+        tsc:moveZRelative(!dist);
+        //tsc:moveXRelative(!xDist);
+        !tracker = op:++(!tracker); //1
+    }
 
     !bindingVar = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor,X)");
@@ -96,25 +107,45 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
         !currPose =op:get(!binding,!bindingVar);
     }
 
-    try {
-        act:perceiveEntityFromSymbol(?refID);
-        !objectLocation = act:getObjectPose(?refID);
-        if (~op:equals(!currPose, !objectLocation)) {
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor,?refID)");
-            act:retractBelief(!fact);
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?refID,X)");
-            act:retractBelief(!fact);
-            !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?refID,!currPose)");
-            act:assertBelief(!fact);
+    noInterrupt {
+        try {
+            act:perceiveEntityFromSymbol(?refID);
+            !objectLocation = act:getObjectPose(?refID);
+            //PickAndPlace2024 - Unique Object Assumption
+            !heldObject = act:getHeldObject();
+            if (~op:isNull(!heldObject)) {
+                if(op:equalsValue(!heldObject, ?refID)) {
+                    !fact = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "free(?actor)");
+                    act:assertBelief(!fact);
+                }
+            }
+        } catch (FAIL_RETURNVALUE) {
+            tsc:moveZRelative(!downDist);
+            //tsc:moveXRelative(!backDist);
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "dont(?actor,see,?refID,atMyLocation)");
+            exit(FAIL_RETURNVALUE,!failCond);
         }
-    } catch (FAIL_RETURNVALUE) {
         tsc:moveZRelative(!downDist);
         //tsc:moveXRelative(!backDist);
-        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "dont(?actor,see,?refID,atMyLocation)");
-        exit(FAIL_RETURNVALUE,!failCond);
     }
-    tsc:moveZRelative(!downDist);
-    //tsc:moveXRelative(!backDist);
+}
+
+() = perceiveEntityOnCancel(java.lang.Integer ?tracker, Double ?zDist) {
+    Double !reverseDist;
+    Predicate !responsePredicate;
+
+    //If we have lowered the camera but the picture hasn't been taken yet, don't take it. Just raise back to pose height
+    if (op:equals(!tracker,1)) {
+        //TODO: can replace with hardcoded message if having an actual translation
+        !responsePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "returningToASafeStateBeforeCancelingMyCurrentTask()");
+        act:generateResponse(!responsePredicate);
+        !reverseDist = op:*(!dist,-1);
+        tsc:moveZRelative(!reverseDist);
+    }
+
+    //Otherwise:
+    //  1. No movement has occurred, do nothing and cancel
+    //  2. The picture has already been taken, allow the action to complete
 }
 
 () = observeDescriptor["runs a job for the given ?descriptor and saves the results in the cognex consultant"](edu.tufts.hrilab.fol.Symbol ?descriptor, java.lang.Integer ?numResults) {

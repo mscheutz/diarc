@@ -85,4 +85,14 @@ public class RecoveryGoalContext extends GoalContext {
     return newGoalContext;
   }
 
+  //PickAndPlace2024 Note
+  ////TODO: fully consider implications of this - cannot make transition to recovery nonInterruptible. But shouldn't be
+  ////  entering recovery from within a noInterrupt block anyway. Only case this should be possible is overallconditions
+  ////  being violated -> should execution not be halted until reaching the end of the noInterrupt block in this case?
+  ////Reset interruptibility flag inside recovery
+  //@Override
+  //public boolean isInterruptible() {
+  //  return true;
+  //}
+
 }

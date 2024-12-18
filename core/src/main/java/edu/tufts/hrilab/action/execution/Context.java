@@ -132,6 +132,11 @@ public abstract class Context {
   protected ActionConstraints constraints;
 
   /**
+   * Whether execution of the current context can be interrupted by suspension/cancellation
+   */
+  private Boolean interruptible = null;
+
+  /**
    * Context constructor.
    *
    * @param parent parent context
@@ -739,6 +744,22 @@ public abstract class Context {
     } finally {
       statusLock.unlock();
     }
+  }
+
+  protected boolean hasNoInterruptAncestor() {
+    if (this.caller == null) {
+      return false;
+    } else if (!this.caller.isInterruptible()) {
+      return true;
+    }
+    return this.caller.hasNoInterruptAncestor();
+  }
+
+  public boolean isInterruptible() {
+    if (interruptible == null) {
+      interruptible = !hasNoInterruptAncestor();
+    }
+    return interruptible;
   }
 
   /**

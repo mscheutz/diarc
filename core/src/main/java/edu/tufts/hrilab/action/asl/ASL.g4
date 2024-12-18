@@ -56,6 +56,7 @@ INTERRUPT : 'onInterrupt';
 SUSPEND : 'suspend';
 CANCEL : 'cancel';
 RESUME : 'resume';
+NOINTERRUPT: 'noInterrupt';
 
 // fragments
 fragment NAMECHAR : LETTER | DIGIT | HEADCHAR;
@@ -249,6 +250,7 @@ control : (
         | asyncStatement
         | joinStatement
         | returnStatement
+        | noInterruptStatement
         );
 
 ifStatement : IF '(' booleanExpression ')' controlContent elifStatement* elseStatement?;
@@ -295,3 +297,6 @@ returnStatement : RETURN ';';
 asyncStatement : singleArgReturn? ASYNC controlContent;
 
 joinStatement : singleArgReturn? JOIN inputList ';';
+
+//Experimental - PickAndPlace2024 Impl
+noInterruptStatement : NOINTERRUPT controlContent;

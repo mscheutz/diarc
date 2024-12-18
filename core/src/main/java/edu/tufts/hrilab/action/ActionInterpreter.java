@@ -7,7 +7,6 @@ import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.listener.ActionListener;
-import edu.tufts.hrilab.action.listener.GoalListener;
 import edu.tufts.hrilab.action.lock.ActionResourceLock;
 
 import edu.tufts.hrilab.action.priority.PriorityCalculator;
@@ -23,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -467,7 +467,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
       // main execution loop (wrapped in suspend/resume logic)
       while (!this.goal.getStatus().isTerminated()) {
-        if (suspended.get()) {
+        if (suspended.get() && (currentStep == null || currentStep.isInterruptible())) {
           // suspend logic
           suspendLock.lock();
           try {
@@ -511,9 +511,9 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       // because the cancel/suspend hooks happens asynchronously to the main execution loop, it's possible the currentStep
       // already has a terminal status in the calls to cancel/suspend (and can't be cancelled/suspended). This ensures
       // the cancel/suspend is set on the nextStep and propagated up/down the context tree
-      if (suspended.get() && nextStep != null && nextStep.getStatus() != ActionStatus.SUSPEND) {
+      if (suspended.get() && nextStep != null && nextStep.isInterruptible() && nextStep.getStatus() != ActionStatus.SUSPEND) {
         nextStep.setStatus(ActionStatus.SUSPEND);
-      }  else if (canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL) {
+      }  else if (canceled.get() && nextStep != null && nextStep.isInterruptible() && nextStep.getStatus() != ActionStatus.CANCEL) {
         nextStep.setStatus(ActionStatus.CANCEL);
       }
 
@@ -562,7 +562,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         suspended.set(true);
         // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
         // have the next step's status be updated.
-        if (currentStep.isAction() && ((ActionContext)currentStep).getDBE().hasOnSuspendEvent()) {
+        if (currentStep.isInterruptible() && currentStep.isAction() && ((ActionContext)currentStep).getDBE().hasOnSuspendEvent()) {
           currentStep.setStatus(ActionStatus.SUSPEND);
         }
       }
@@ -622,6 +622,32 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       if (currentStep == null) {
         // update the goal status if canceling from a suspend state
         if (suspended.get()) {
+          //PickAndPlace2024 - Discussion to have in general, but needed for implementation of this domain
+          //  Want to execute onCancel behaviors even from a suspended state. E.g. if the suspend behavior caches some
+          //  relevant state but cancel needs to clear it, or if suspend is allowed in some subsymbolic intermediate state
+          //  but cancel needs to terminate in a 'safe' state.
+          //Collect trace of contexts to set status to cancel (bottom to top) and trigger potential onCancel behaviors
+          boolean loop = true;
+          Context contextToSetStatus = rootStep;
+          List<Context> contextsToSetStatus = new ArrayList<>();
+          contextsToSetStatus.add(contextToSetStatus);
+          while (loop) {
+            AtomicReference<Context> c = new AtomicReference<>();
+            contextToSetStatus.getChildContexts().getChildrenContexts().forEach(context -> {
+                if (context.getStatus().equals(ActionStatus.SUSPEND)) {
+                  c.set(context);
+                }
+            });
+            if (c.get() != null) {
+              contextToSetStatus = c.get();
+              contextsToSetStatus.add(0,c.get());
+            } else {
+              loop = false;
+            }
+          }
+          //Actually don't want to set the upcoming step to cancel because it never began execution
+          contextsToSetStatus.remove(0);
+          contextsToSetStatus.forEach(c -> c.setStatus(ActionStatus.CANCEL));
           this.goal.setStatus(GoalStatus.CANCELED);
         } else {
           log.warn("[cancel] goal has already terminated: {}", goal.getPredicate());
@@ -646,7 +672,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         canceled.set(true);
         // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
         // have the next step's status be updated.
-        if (currentStep.isAction() && ((ActionContext)currentStep).getDBE().hasOnCancelEvent()) {
+        if (currentStep.isInterruptible() && currentStep.isAction() && ((ActionContext)currentStep).getDBE().hasOnCancelEvent()) {
           currentStep.setStatus(ActionStatus.CANCEL);
         }
       }
@@ -672,6 +698,18 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   private void halt() {
     if (!shouldUpdate.get()) {
       log.error("[halt] halt has already been called: {}", goal.getPredicate());
+      return;
+    }
+
+    //PickAndPlace2024
+    //If a noInterrupt block reaches the end of an action script, but the user instructed suspend somehwere inside that block,
+    // then previously we would terminate the AI and then potentially begin execution of a next goal without ever actually suspending.
+    // This way we get a suspension by delaying halt() until a resume or cancel is called.
+    if (suspended.get()) {
+      //Root step and context trace of the goal will still have the original terminal status and prevent any further
+      //  execution of this AI on resume or cancel (two warn logs will occur).
+      goal.setStatus(GoalStatus.SUSPENDED);
+      shouldUpdate.set(false);
       return;
     }
 

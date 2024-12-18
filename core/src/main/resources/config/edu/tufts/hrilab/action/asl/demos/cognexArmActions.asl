@@ -102,6 +102,9 @@ import java.util.List;
 }
 
 () = grabPerceivedEntity(Symbol ?physobj, Symbol ?pose) {
+    onInterrupt :{
+        cancel: act:grabOnCancel(!tracker,?physobj,?pose);
+    }
     conditions : {
         pre : free(?actor);
         pre : at(?physobj,?pose);
@@ -111,28 +114,74 @@ import java.util.List;
         success : holding(?actor, ?physobj);
         success : not(free(?actor));
         success : not(at(?physobj,?pose));
-        nonperf : not(at(?actor,?pose));
-        nonperf : unknownlocation(?actor);
+        //nonperf : not(at(?actor,?pose));
+        //nonperf : unknownlocation(?actor);
     }
 
     Symbol !default = "default";
     Symbol !gripper = "gripper";
+    java.lang.Integer !tracker = 0;
 
-    act:rotateToEE(!gripper);
+    noInterrupt {
+        act:rotateToEE(!gripper);
+        !tracker = op:++(!tracker); //1
+    }
     tsc:openGripper();
     tsc:moveAndOrientToCognexTarget(?physobj);
-    act:moveToObjectHeight(?physobj,?pose);
-    tsc:closeGripper();
-    act:moveToCameraHeight(?physobj,?pose);
+    noInterrupt {
+        act:moveToObjectHeight(?physobj,?pose);
+        !tracker = op:++(!tracker); //2
+    }
+
+    noInterrupt {
+        tsc:closeGripper();
+        act:moveToCameraHeight(?physobj,?pose);
+        act:rotateToEE(!default);
+        act:goToCameraPose(?pose);
+        op:log(info, "[grabPerceivedEntity] ?physobj complete");
+    }
+}
+
+() = grabOnCancel(java.lang.Integer ?tracker, Symbol ?physobj, Symbol ?pose) {
+    //don't need any effects because we revert to the starting state here
+
+    Symbol !default = "default";
+    Symbol !gripper = "gripper";
+    Predicate !responsePredicate;
+
+    //If we entered this script, we are backtracking to a sane pose rather than going forward through the script to do so.
+    op:log(info,"[grabOnCancel] in method");
+
+    //Only performed perception, nothing needs to be done
+    if (op:equals(?tracker,0)) {
+        return;
+    }
+
+    //TODO: can replace with hardcoded message if having an actual translation
+    !responsePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "returningToASafeStateBeforeCancelingMyCurrentTask()");
+    act:generateResponse(!responsePredicate);
+
+    //Have lowered gripper to the object - raise back to camera height before switching tcp and pose
+    if (op:equals(?tracker,2)) {
+        act:moveToCameraHeight(?physobj,?pose);
+    }
+
+    //Already messed with TCP and pose - revert TCP to default and return to a valid pose
+    //if (op:lt(?tracker,3)) {
     act:rotateToEE(!default);
     act:goToCameraPose(?pose);
-    op:log(info, "[grabPerceivedEntity] ?physobj complete");
+    //}
+
+    //Else, we have progressed far enough to have grabbed the object. The action should have finished successfully
+    //  and not been canceled due to a noninterrupt block around the remainder of steps
 }
 
 /// actions used in planning
 
 () = grab["?actor grabs ?physobj"](Symbol ?physobj:physobj, Symbol ?pose:pose) {
-
+    onInterrupt :{
+        cancel: act:grabOnCancel(!tracker,?physobj,?pose);
+    }
     conditions : {
         pre : free(?actor);
         pre : at(?physobj,?pose);
@@ -142,26 +191,36 @@ import java.util.List;
         success : holding(?actor, ?physobj);
         success : not(free(?actor));
         success : not(at(?physobj,?pose));
-        nonperf : not(at(?actor,?pose));
-        nonperf : unknownlocation(?actor);
+        //nonperf : not(at(?actor,?pose));
+        //nonperf : unknownlocation(?actor);
     }
 
     Symbol !default = "default";
     Symbol !gripper = "gripper";
+    java.lang.Integer !tracker = 0;
 
     op:log(info, "[grab] ?physobj");
     act:goToCameraPose(?pose);
     act:perceiveEntity(?physobj);
 
-    act:rotateToEE(!gripper);
+    noInterrupt {
+        act:rotateToEE(!gripper);
+        !tracker = op:++(!tracker); //1
+    }
     tsc:openGripper();
     tsc:moveAndOrientToCognexTarget(?physobj);
-    act:moveToObjectHeight(?physobj,?pose);
-    tsc:closeGripper();
-    act:moveToCameraHeight(?physobj,?pose);
-    act:rotateToEE(!default);
-    act:goToCameraPose(?pose);
-    op:log(info, "[grab] ?physobj complete");
+    noInterrupt {
+        act:moveToObjectHeight(?physobj,?pose);
+        !tracker = op:++(!tracker); //2
+    }
+
+    noInterrupt {
+        tsc:closeGripper();
+        act:moveToCameraHeight(?physobj,?pose);
+        act:rotateToEE(!default);
+        act:goToCameraPose(?pose);
+        op:log(info, "[grab] ?physobj complete");
+    }
 }
 
 () = putdown["?actor releases ?physobj"](Symbol ?physobj:physobj, Symbol ?pose:pose) {
@@ -194,6 +253,7 @@ import java.util.List;
     java.lang.Double !objectHeightM;
     Symbol !dimSymbol;
     java.lang.Double !dim;
+    java.lang.Integer !tracker = 0;
 
     op:log(info, "[putdown] ?physobj + ?pose");
 
@@ -223,14 +283,49 @@ import java.util.List;
     !dim = op:/(!dimSymbol,1);
     !dim = op:*(!dim,1000);
 
-    !result = tsc:moveToOpenLocation(!dim, "blocksDet"); //todo: THIS STRING SHOULDN'T BE HARDCODED
-    act:rotateToEE(!gripper);
-    act:moveToObjectHeight(?physobj,?pose);
-    tsc:openGripper();
-    act:moveToCameraHeight(?physobj,?pose);
+    noInterrupt {
+        !result = tsc:moveToOpenLocation(!dim, "blocksDet"); //todo: THIS STRING SHOULDN'T BE HARDCODED
+        act:rotateToEE(!gripper);
+        !tracker = op:++(!tracker); //1
+    }
+    noInterrupt {
+        act:moveToObjectHeight(?physobj,?pose);
+        !tracker = op:++(!tracker); //2
+    }
+    noInterrupt {
+        tsc:openGripper();
+        act:moveToCameraHeight(?physobj,?pose);
+        act:rotateToEE(!default);
+        act:goToCameraPose(?pose);
+        op:log(info, "[putdown] ?physobj + ?pose complete");
+    }
+}
+
+() = putdownOnCancel(java.lang.Integer ?tracker, Symbol ?physobj, Symbol ?pose) {
+    //Don't need effects because the action is either backtracked to starting state or allowed to complete successfully and not enter here
+
+    //No movement occurred yet, do nothing
+    if (op:equals(?tacker,0)) {
+        return;
+    }
+
+    //TODO: can replace with hardcoded message if having an actual translation
+    !responsePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "returningToASafeStateBeforeCancelingMyCurrentTask()");
+    act:generateResponse(!responsePredicate);
+
+    //Lowered to table, but not released -> raise back up
+    if (op:equals(?tracker,2)) {
+        act:moveToCameraHeight(?physobj,?pose);
+    }
+
+    //Go back to default tcp and camera pose
+    //if (op:lt(?tracker,3)) {
     act:rotateToEE(!default);
     act:goToCameraPose(?pose);
-    op:log(info, "[putdown] ?physobj + ?pose complete");
+    //}
+
+    //Else, we have progressed far enough to have released the object. The action should have finished successfully
+    //  and not been canceled due to a noninterrupt block around the remainder of steps
 }
 
 
