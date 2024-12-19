@@ -80,7 +80,7 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     // mock sim env
     createInstance(MockUnitySpaceStationComponent.class, "-config mock_space_station_settings.json");
 
-    createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict -tldlNoUpdateAddressee -patternMatching -matcher SpaceStationPatternMatcher -parsingSequence pattern");
+    createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict -tldlNoUpdateAddressee -patternMatching -matcher SpaceStationPatternMatcher -parsingSequence pattern tldl");
 
     createInstance(ListenerComponent.class);
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
@@ -98,8 +98,8 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
             "-priorityFile default.json space_station_priority.json " +
             "-goal listen(self) " +
             "-goal initializeTrial(" + agentName + ") " +
-            "-asl domains/unity/space_station_llm_llama_finetuned.asl " +
-            "-asl domains/unity/space_station_llm_llama_finetuned_autonomy.asl " +
+            "-asl domains/unity/space_station.asl " +
+            "-asl domains/unity/space_station_autonomy.asl " +
             "-asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl ";
     // TODO: why are different pl files needed here?
     if (startAutonomy) {

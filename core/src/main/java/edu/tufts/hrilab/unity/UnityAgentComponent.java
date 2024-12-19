@@ -25,7 +25,7 @@ import edu.tufts.hrilab.unity.message.Message;
 /**
  * Routes agent-specific messages from UnityComponent to and from TRADE services.
  */
-public class UnityAgent extends DiarcComponent {
+public class UnityAgentComponent extends DiarcComponent {
 
   public String agent = ""; //name of agent, must match Unity
   public boolean isConnected = false;

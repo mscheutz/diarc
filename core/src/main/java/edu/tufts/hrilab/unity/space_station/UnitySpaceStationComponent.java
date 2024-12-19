@@ -12,14 +12,14 @@ import org.slf4j.LoggerFactory;
 
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.unity.UnityAgent;
+import edu.tufts.hrilab.unity.UnityAgentComponent;
 import edu.tufts.hrilab.unity.message.*;
 
-public class UnitySpaceStation extends UnityAgent implements UnitySpaceStationInterface {
+public class UnitySpaceStationComponent extends UnityAgentComponent implements UnitySpaceStationInterface {
 
-  static private Logger log = LoggerFactory.getLogger(UnitySpaceStation.class);
+  static private Logger log = LoggerFactory.getLogger(UnitySpaceStationComponent.class);
 
-  public UnitySpaceStation() {
+  public UnitySpaceStationComponent() {
     super();
   }
 

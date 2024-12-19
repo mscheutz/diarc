@@ -20,11 +20,6 @@ team(self).
 
 amIn(robot1,alpha).
 workload(1).
-distraction(1).
-propertyOf(betarighttwo,damaged(100)).
-propertyOf(alphaleftone,damaged(80)).
-propertyOf(alphalefttwo,damaged(30)).
-propertyOf(alphaleftthree,damaged(50)).
 
 /* agent name infrence */
 have(A,exists(X,name(X))):-name(A,Y).

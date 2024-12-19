@@ -8,7 +8,7 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 
 import edu.tufts.hrilab.movebase.MoveBaseComponent;
 import edu.tufts.hrilab.tf.TFComponent;
-import edu.tufts.hrilab.unity.UnityPR2;
+import edu.tufts.hrilab.unity.UnityPR2Component;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +31,6 @@ public class UnityDIARCSpaceStationSMMSpoke {
         DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:" + agentName + " -point_dist_thresh 0.5");
         DiarcComponent.createInstance(TFComponent.class, " -groups agent:" + agentName);
 
-        DiarcComponent.createInstance(UnityPR2.class, "-agent " + agentName + " -groups agent:" + agentName);
+        DiarcComponent.createInstance(UnityPR2Component.class, "-agent " + agentName + " -groups agent:" + agentName);
     }
 }

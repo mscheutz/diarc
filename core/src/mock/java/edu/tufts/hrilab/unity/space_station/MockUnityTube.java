@@ -68,12 +68,12 @@ public class MockUnityTube {
 
         if (health <= 0) {
           isBroken = true;
+          isDamaged = false;
           log.warn("Tube {} broken.", name);
         }
       }
     }
   }
-
 
   public void startTubeDamage() {
     isDamaged = true;

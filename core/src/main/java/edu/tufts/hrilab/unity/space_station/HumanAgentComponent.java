@@ -9,12 +9,12 @@ import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.unity.UnityAgent;
+import edu.tufts.hrilab.unity.UnityAgentComponent;
 import edu.tufts.hrilab.unity.message.Message;
 
-public class HumanAgent extends UnityAgent {
+public class HumanAgentComponent extends UnityAgentComponent {
 
-  public HumanAgent() {
+  public HumanAgentComponent() {
     super();
   }
 

@@ -12,3 +12,4 @@ robot 1 check alpha
 robot 1 check beta
 robot 1 go to beta left nine
 robot 1 repair beta left nine
+robot 1 what tubes are damaged

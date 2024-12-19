@@ -15,7 +15,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.unity.message.*;
 
-public class UnityPR2 extends UnityAgent implements UnityPR2Interface {
+public class UnityPR2Component extends UnityAgentComponent implements UnityPR2Interface {
 
   @Override
   protected void route(Message msg) {
