@@ -246,97 +246,6 @@ import edu.tufts.hrilab.action.justification.Justification;
   act:notInTransit();
 }
 
-//["This is an observer action that determines whether a particular tube is broken"]
-(List ?return) = checkTubeBroken(Predicate ?predicate) {
-    Symbol !area;
-    Symbol !side;
-    Symbol !number;
-    Map !bindings;
-    Boolean !isTubeBroken = false;
-    Symbol !fullTube;
-
-    op:log("info", "Checking if tube is broken");
-
-    observes : propertyOf(!area,!side,!number,broken);
-
-    ?return = op:newArrayList("java.util.Map");
-    !bindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
-    !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "toFullTube", !area, !side, !number);
-
-    !isTubeBroken = act:getSpaceStationTubeBroken(!fullTube);
-
-    if (op:equals(!isTubeBroken, true)) {
-      op:log("info", "Tube is broken");
-      op:add(?return, !bindings);
-    } else {
-      op:log("info", "Tube is not broken");
-    }
-}
-
-//["This is an observer action that determines whether a particular tube is off"]
-(List ?return) = checkTubeOff(Predicate ?predicate) {
-    Symbol !area;
-    Symbol !side;
-    Symbol !number;
-    Map !bindings;
-    Boolean !isTubeOff = false;
-    Symbol !fullTube;
-
-    op:log("info", "Checking if tube is off");
-
-    observes : propertyOf(!area,!side,!number,off);
-
-    ?return = op:newArrayList("java.util.Map");
-    !bindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
-    !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "toFullTube", !area, !side, !number);
-
-    !isTubeOff = act:getSpaceStationTubeOff(!fullTube);
-
-    if (op:equals(!isTubeOff, true)) {
-      op:log("info", "Tube !area !side is off");
-      op:add(?return, !bindings);
-    } else {
-      op:log("info", "Tube !area !side !number is not off");
-    }
-}
-
-//["This is an observer action that determines whether a particular tube is damaged and how much health it has"]
-(List ?return) = checkTubeDamaged(Predicate ?predicate) {
-    Symbol !area;
-    Symbol !side;
-    Symbol !number;
-    Map !bindings;
-    Boolean !isTubeDamaged = false;
-    float !tubeHealth;
-    Symbol !fullTube;
-    Variable !damageAmount;
-    Symbol !tubeHealthSymbol;
-    Predicate !tubeDamagePredicate;
-
-    op:log("info", "Checking if tube is damaged");
-
-    observes : propertyOf(!area,!side,!number,damaged(!damageAmount));
-
-    ?return = op:newArrayList("java.util.Map");
-    !bindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
-    !fullTube = op:invokeStaticMethod("edu.tufts.hrilab.unity.space_station.TubeNameHelpers", "toFullTube", !area, !side, !number);
-
-    !tubeDamagePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "propertyOf(!area,!side,!number,damaged(X))");
-    act:retractBelief(!tubeDamagePredicate);
-
-    !isTubeDamaged = act:getSpaceStationTubeDamaged(!fullTube);
-
-    if (op:equals(!isTubeDamaged, true)) {
-      !tubeHealth = act:getSpaceStationTubeHealth(!fullTube);
-      op:log("info", "Tube !area !side !number is damaged !tubeHealth");
-      !tubeHealthSymbol = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "!tubeHealth");
-      op:put(!bindings, !damageAmount, !tubeHealthSymbol);
-      op:add(?return, !bindings);
-    } else {
-      op:log("info", "Tube !area !side !number is not off");
-    }
-}
-
 //["This instructs the robot to go to a tube and to repair it if damaged. Usage: repairTube(robot1, area, side, number) -llm"]
 () = repair (Symbol ?area, Symbol ?side, Symbol ?number) {
   String !repairedMessageString = op:bind("Repaired tube ?area ?side ?number");
@@ -480,7 +389,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 //["This will check an area for damaged tubes"]
-() = check (Symbol ?area) {
+() = check(Symbol ?area) {
   conditions : {
     pre infer: not(repairing(?actor,X,Y,Z));
   }
