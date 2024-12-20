@@ -180,11 +180,13 @@ public class PragmaticsComponent extends DiarcComponent implements PragmaticsInt
     updateRelevantBeliefsAndDialogueHistory();
     if (utterance.isInputUtterance()) {
       applyInputPragmaticMeaning(utterance);
+      log.info("[applyPragmaticMeaning] INPUT. direct meaning: {} indirect meaning: {}",
+              utterance.getBoundSemanticsPredicate(), utterance.getBoundIndirectSemanticsPredicate());
     } else {
       applyOutputPragmaticMeaning(utterance);
+      log.info("[applyPragmaticMeaning] OUTPUT. direct meaning: {} indirect meaning: {}",
+              utterance.getBoundSemanticsPredicate(), utterance.getBoundIndirectSemanticsPredicate());
     }
-    log.info("[applyPragmaticMeaning] direct meaning: {} indirect meaning: {}",
-            utterance.getBoundSemanticsPredicate(), utterance.getBoundIndirectSemanticsPredicate());
     return utterance;
   }
 

@@ -1,15 +1,29 @@
 robot 1 go to beta
-robot 1 go to beta left four
-robot 1 go to beta left four
+robot 1 go to beta left nine
+robot 1 go to tube beta left nine
+robot 1 go to left nine
+robot 1 go to tube left nine
+----------------------------
+robot 1 repair beta left nine
 robot 1 repair
-robot 1 repair alpha left one
-robot 1 repair beta left four
-robot 1 fix it
+robot 1 repair it
+robot 1 repair the tube
 robot 1 fix
-robot 1 fix alpha right three
-robot 1 fix alpha right two
+robot 1 fix it
+robot 1 fix the tube
+robot 1 fix beta left nine
+----------------------------
 robot 1 check alpha
 robot 1 check beta
-robot 1 go to beta left nine
-robot 1 repair beta left nine
+robot 1 check gamma
+----------------------------
 robot 1 what tubes are damaged
+robot 1 what tubes are broken
+robot 1 what tubes are off
+----------------------------
+robot 1 where are you
+robot 1 are you in beta
+robot 1 are you in area beta
+----------------------------
+robot 1 what tube are you at
+robot 1 what tube are you in front of

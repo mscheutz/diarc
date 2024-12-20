@@ -108,6 +108,18 @@ tubes are damaged; QUERYABLE; propertyOf(WHAT,damaged(AMOUNT))
 tubes are broken; QUERYABLE; propertyOf(WHAT,broken)
 tubes are off; QUERYABLE; propertyOf(WHAT,off)
 
+where are you; Q ; amIn(?ADDRESSEE,AREA)
+what area are you in; Q ; amIn(?ADDRESSEE,AREA)
+are you in; Q/AREA ; #x.amIn(?ADDRESSEE,$x)
+are you in area; Q/AREA ; #x.amIn(?ADDRESSEE,$x)
+
+what tube are you at; Q ; amAt(?ADDRESSEE,LR,NUM)
+what tube are you in front of; Q ; amAt(?ADDRESSEE,LR,NUM)
+%are you at left; Q/NUMBER ; #n.amAt(?ADDRESSEE,left,$n)
+%are you at right; Q/NUMBER ; #n.amAt(?ADDRESSEE,right,$n)
+%are you at tube left; Q/NUMBER ; #n.amAt(?ADDRESSEE,left,$n)
+%are you at tube right; Q/NUMBER ; #n.amAt(?ADDRESSEE,right,$n)
+
 level; Q\Q; #x.$x
 
 at; Q\Q; #x.$x
@@ -115,8 +127,6 @@ located; Q\Q; #x.$x
 
 you; AGENT; ?ACTOR
 
-%% TODO: implement this
-where are you; Q ; amIn(?ADDRESSEE,WHAT)
 
 monitor; C/AREA ; #x.monitorArea($x)
 monitor tubes ; C ; monitorArea()

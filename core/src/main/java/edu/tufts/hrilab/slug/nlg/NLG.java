@@ -1005,8 +1005,12 @@ public class NLG {
         }
         for (Map<Variable, Symbol> binding : bindings) {
           Symbol s = PragUtil.fillSymbol(binding, new Variable("WHAT"));
-          NLGElement np = generateNP(s);
-          c.addCoordinate(np);
+          if (!s.isVariable()) {
+            NLGElement np = generateNP(s);
+            c.addCoordinate(np);
+          } else {
+            log.warn("No WHAT variable defining subject.");
+          }
         }
         subject = c;
       } else {

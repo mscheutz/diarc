@@ -128,7 +128,10 @@ public class MockUnityPR2Component extends DiarcComponent implements UnityPR2Int
     Symbol stateAmount = ((Term)state.get(3)).get(0);
     TRADEServiceInfo tubeHealthService = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSpaceStationTubeHealth").argTypes(Symbol.class));
     for (Map<Variable,Symbol> tube : results) {
-      Symbol tubeName = TubeNameHelpers.toFullTube(tube.get(stateArea), tube.get(stateSide), tube.get(stateNum));
+      Symbol area = stateArea.isVariable() ? tube.get(stateArea) : stateArea;
+      Symbol side = stateSide.isVariable() ? tube.get(stateSide) : stateSide;
+      Symbol num = stateNum.isVariable() ? tube.get(stateNum) : stateNum;
+      Symbol tubeName = TubeNameHelpers.toFullTube(area, side, num);
       float health = tubeHealthService.call(Float.class, tubeName);
       float damage = 100 - health;
 
