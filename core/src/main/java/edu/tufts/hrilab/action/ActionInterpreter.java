@@ -647,8 +647,18 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           }
           //Actually don't want to set the upcoming step to cancel because it never began execution
           contextsToSetStatus.remove(0);
-          contextsToSetStatus.forEach(c -> c.setStatus(ActionStatus.CANCEL));
-          this.goal.setStatus(GoalStatus.CANCELED);
+          //PickAndPlace2024 Question
+          //If there are no contexts which are suspended, this means we suspended after the last step of the goal. In this
+          //  case the "suspended state" is just a formality to prevent the next action from starting. Canceling at this
+          //  point should just allow the goal to terminate as it would've? Makes no sense to set canceled status and not
+          //  assert success effects or failure justifications at this point.
+          if (!contextsToSetStatus.isEmpty()) {
+            contextsToSetStatus.forEach(c -> c.setStatus(ActionStatus.CANCEL));
+            this.goal.setStatus(GoalStatus.CANCELED);
+          } else {
+            resume();
+            return;
+          }
         } else {
           log.warn("[cancel] goal has already terminated: {}", goal.getPredicate());
         }
@@ -702,7 +712,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     }
 
     //PickAndPlace2024
-    //If a noInterrupt block reaches the end of an action script, but the user instructed suspend somehwere inside that block,
+    //If a noInterrupt block reaches the end of an action script, but the user instructed suspend somewhere inside that block,
     // then previously we would terminate the AI and then potentially begin execution of a next goal without ever actually suspending.
     // This way we get a suspension by delaying halt() until a resume or cancel is called.
     if (suspended.get()) {

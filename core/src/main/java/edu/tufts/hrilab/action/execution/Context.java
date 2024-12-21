@@ -18,6 +18,7 @@ import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.EventSpec;
 import edu.tufts.hrilab.action.execution.control.AsynchronousContext;
+import edu.tufts.hrilab.action.execution.control.NoInterruptContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.state.StateMachine;
@@ -749,7 +750,8 @@ public abstract class Context {
   protected boolean hasNoInterruptAncestor() {
     if (this.caller == null) {
       return false;
-    } else if (!this.caller.isInterruptible()) {
+    } else if (this.caller instanceof NoInterruptContext) {
+    //} else if (!this.caller.isInterruptible()) {
       return true;
     }
     return this.caller.hasNoInterruptAncestor();

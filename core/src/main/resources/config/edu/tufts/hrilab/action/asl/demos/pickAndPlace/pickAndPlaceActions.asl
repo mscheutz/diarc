@@ -107,12 +107,14 @@ import java.lang.Integer;
 () = perceiveEntitiesOnCancel(java.lang.Integer ?tracker, Double ?zDist) {
     Predicate !responsePredicate;
 
+    op:log(debug,"[perceiveEntitiesOnCancel] ?tracker ?zDist");
+
     //If we have lowered the camera but the picture hasn't been taken yet, don't take it. Just raise back to pose height
     if (op:equals(!tracker,1)) {
         //TODO: can replace with hardcoded message if having an actual translation
         !responsePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "returningToASafeStateBeforeCancelingMyCurrentTask()");
         act:generateResponse(!responsePredicate);
-        tsc:moveZRelative(!zDist);
+        tsc:moveZRelative(?zDist);
     }
 
     //Otherwise:
@@ -121,7 +123,7 @@ import java.lang.Integer;
 }
 
 //todo: (pete) allows the LLM target for semantics to be more sane than "getOn". should be true everywhere.
-() = getObjectTo(Symbol ?object, Symbol ?destination) {
+() = getObjectTo(Symbol ?object:physobj, Symbol ?destination:pose) {
     Symbol !objectPose;
     Predicate !failCond;
     Predicate !objectAtPred;
@@ -214,7 +216,7 @@ import java.lang.Integer;
     }
 }
 
-() = pickUp(Symbol ?object) {
+() = pickUp(Symbol ?object:physobj) {
     Symbol !objectPose;
     Symbol !armPose;
     Symbol !heldObject;
@@ -343,7 +345,7 @@ import java.lang.Integer;
         exit(FAIL_RECOVERY);
     }
 
-    if (op:equals(!pose,none)) {
+    if (op:isNull(!pose) || op:equals(!pose,none)) {
         exit(FAIL_RECOVERY);
     } else {
         act:goToPose(!pose);
@@ -382,7 +384,7 @@ import java.lang.Integer;
     }
 }
 
-() = swapObjects(Symbol ?objectOne, Symbol ?objectTwo) {
+() = swapObjects(Symbol ?objectOne:physobj, Symbol ?objectTwo:physobj) {
     Predicate !goalPred;
     Predicate !failCond;
     Symbol !openPose;
@@ -638,7 +640,7 @@ import java.lang.Integer;
 //    }
 //}
 
-() = detectObject(edu.tufts.hrilab.fol.Symbol ?refID) {
+() = detectObject(edu.tufts.hrilab.fol.Symbol ?refID:physobj) {
     Symbol !objectDescriptor;
 
     act:perceiveEntity(?refID);
@@ -955,7 +957,7 @@ import java.lang.Integer;
     }
 }
 
-() = describeNumberOfObjectsAt(Symbol ?pose) {
+() = describeNumberOfObjectsAt(Symbol ?pose:pose) {
     java.lang.Integer !numObjects;
     Symbol !poseDescriptor;
 

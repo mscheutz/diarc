@@ -32,10 +32,10 @@ public class NoInterruptContext extends Context {
         }
     }
 
-    @Override
-    public boolean isInterruptible() {
-        return false;
-    }
+    //@Override
+    //public boolean isInterruptible() {
+    //    return false;
+    //}
 
     @Override
     public Context copy(Context newParent) {

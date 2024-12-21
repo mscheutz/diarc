@@ -20,9 +20,11 @@ public class RecoveryGoalContext extends GoalContext {
   }
 
   @Override
-  public void doStep() {
-    ActionContext recoveryContext = new ActionContext(this, this.stateMachine, recoveryAction.getEntry(), recoveryAction.getBindings(), this.executionType, goal.getActor());
-    childContexts.add(recoveryContext);
+  public void setupNextStep() {
+    if (this.getChildContexts().isEmpty()) {
+      ActionContext recoveryContext = new ActionContext(this, this.stateMachine, recoveryAction.getEntry(), recoveryAction.getBindings(), this.executionType, goal.getActor());
+      childContexts.add(recoveryContext);
+    }
   }
 
   @Override

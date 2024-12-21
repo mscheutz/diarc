@@ -15,7 +15,9 @@ import java.util.Map;
         ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
         ?objectPose = op:get(!bindings,!x);
-        act:assertIsPose(?objectPose);
+        if (~op:equalsValue(?objectPose,none)) {
+            act:assertIsPose(?objectPose);
+        }
     }
 }
 
@@ -29,7 +31,9 @@ import java.util.Map;
         ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
         ?object = op:get(!bindings,!x);
-        act:assertIsPhysobj(?object);
+        if (~op:equalsValue(?object,none)) {
+            act:assertIsPhysobj(?object);
+        }
     }
 }
 
@@ -40,6 +44,9 @@ import java.util.Map;
 //TODO: Either make parallel pipeline or update existing one to handle a list of response formats (referred pipeline being askQuestion variations)
 //      Don't want to do now for fear of breaking things. Writing just this method strangely for now.
 (Symbol ?response) = reportFullLocationAndAskToSwapV2() {
+    onInterrupt : {
+        resume: act:reportHoldingObjectAndAskToPutDownV2OnResume(!utterance);
+    }
     Map !bindings;
     Variable !x = X;
     Variable !y = Y;
@@ -106,7 +113,9 @@ import java.util.Map;
         ?object = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
         ?object = op:get(!bindings, !x);
-        act:assertIsPhysobj(?object);
+        if (~op:equalsValue(?object,none)) {
+            act:assertIsPhysobj(?object);
+        }
     }
 }
 
@@ -288,6 +297,9 @@ import java.util.Map;
 //TODO: Either make parallel pipeline or update existing one to handle a list of response formats (referred pipeline being askQuestion variations)
 //      Don't want to do now for fear of breaking things. Writing just this method strangely for now.
 (Symbol ?response) = reportHoldingObjectAndAskToPutDownV2() {
+    onInterrupt : {
+        resume: act:reportHoldingObjectAndAskToPutDownV2OnResume(!utterance);
+    }
     Map !bindings;
     Variable !x = X;
     Variable !y = Y;
@@ -333,6 +345,12 @@ import java.util.Map;
     }
 }
 
+() = reportHoldingObjectAndAskToPutDownV2OnResume(edu.tufts.hrilab.slug.common.Utterance ?utterance) {
+    if (~op:isNull(?utterance)) {
+        act:communicateUtterance(?utterance);
+    }
+}
+
 (Symbol ?response) = reportHoldingObjectAndAskToPutDown() {
     Map !bindings;
     Variable !x = "X";
@@ -354,7 +372,9 @@ import java.util.Map;
         ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
         ?objectPose = op:get(!bindings,!x);
-        act:assertIsPose(?objectPose);
+        if (~op:equalsValue(?objectPose,none)) {
+            act:assertIsPose(?objectPose);
+        }
     }
 }
 
@@ -400,7 +420,9 @@ import java.util.Map;
         ?objectPose = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "none");
     } else {
         ?objectPose = op:get(!bindings,!x);
-        act:assertIsPose(?objectPose);
+        if (~op:equalsValue(?objectPose,none)) {
+            act:assertIsPose(?objectPose);
+        }
     }
 }
 

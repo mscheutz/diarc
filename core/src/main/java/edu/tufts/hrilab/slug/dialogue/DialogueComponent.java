@@ -210,8 +210,9 @@ public class DialogueComponent extends DiarcComponent {
   @Action
   @OnInterrupt(
           onCancelServiceCall = "cancelWaitForResponse(?responseForm,?speaker)",
-          onSuspendServiceCall = "suspendWaitForResponse(?responseForm,?speaker,true)",
-          onResumeServiceCall = "resumeWaitForResponse(?responseForm,?speaker)"
+          onSuspendServiceCall = "cancelWaitForResponse(?responseForm,?speaker)"
+          //onSuspendServiceCall = "suspendWaitForResponse(?responseForm,?speaker,true)",
+          //onResumeServiceCall = "resumeWaitForResponse(?responseForm,?speaker)"
   )
   public Map<Variable, Symbol> waitForResponse(Predicate responseForm, Symbol speaker) {
     return waitForResponse(responseForm, speaker,-1);
@@ -224,8 +225,9 @@ public class DialogueComponent extends DiarcComponent {
    */
   @OnInterrupt(
           onCancelServiceCall = "cancelWaitForResponse(?responseForm,?speaker)",
-          onSuspendServiceCall = "suspendWaitForResponse(?responseForm,?speaker,true)",
-          onResumeServiceCall = "resumeWaitForResponse(?responseForm,?speaker)"
+          onSuspendServiceCall = "cancelWaitForResponse(?responseForm,?speaker)"
+          //onSuspendServiceCall = "suspendWaitForResponse(?responseForm,?speaker,true)",
+          //onResumeServiceCall = "resumeWaitForResponse(?responseForm,?speaker)"
   )
   @TRADEService
   @Action
@@ -288,9 +290,10 @@ public class DialogueComponent extends DiarcComponent {
    * @return Bindings from the corresponding answer, or an empty map if no answer was received in time or any of the questions were overwritten
    */
   @OnInterrupt(
-          onCancelServiceCall = "cancelWaitForResponse(?responseForm,?speaker)",
-          onSuspendServiceCall = "suspendWaitForResponse(?responseForm,?speaker,true)",
-          onResumeServiceCall = "resumeWaitForResponse(?responseForm,?speaker)"
+          onCancelServiceCall = "cancelWaitForOneOfResponses(?responseForms,?speaker)",
+          onSuspendServiceCall = "cancelWaitForOneOfResponses(?responseForms,?speaker)"
+          //onSuspendServiceCall = "suspendWaitForOneOfResponses(?responseForms,?speaker,true)",
+          //onResumeServiceCall = "resumeWaitForOneOfResponses(?responseForms,?speaker)"
   )
   @TRADEService
   @Action
@@ -345,6 +348,13 @@ public class DialogueComponent extends DiarcComponent {
     executor.shutdown();
 
     return returnBindings;
+  }
+  @TRADEService
+  @Action
+  public void cancelWaitForOneOfResponses(List<Term> responseForm, Symbol listener) {
+    if (!responseForm.isEmpty()) {
+      cancelWaitForResponse(responseForm.get(0),listener);
+    }
   }
 
   /**

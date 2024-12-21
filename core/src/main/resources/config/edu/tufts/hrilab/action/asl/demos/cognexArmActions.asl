@@ -150,7 +150,7 @@ import java.util.List;
     Predicate !responsePredicate;
 
     //If we entered this script, we are backtracking to a sane pose rather than going forward through the script to do so.
-    op:log(info,"[grabOnCancel] in method");
+    op:log(debug,"[grabOnCancel] in method ?tracker ?physobj ?pose");
 
     //Only performed perception, nothing needs to be done
     if (op:equals(?tracker,0)) {
@@ -224,6 +224,9 @@ import java.util.List;
 }
 
 () = putdown["?actor releases ?physobj"](Symbol ?physobj:physobj, Symbol ?pose:pose) {
+    onInterrupt :{
+        cancel: act:putdownOnCancel(!tracker,?physobj,?pose);
+    }
     conditions : {
         pre : holding(?actor, ?physobj);
         pre : at(?actor,?pose);
@@ -303,9 +306,13 @@ import java.util.List;
 
 () = putdownOnCancel(java.lang.Integer ?tracker, Symbol ?physobj, Symbol ?pose) {
     //Don't need effects because the action is either backtracked to starting state or allowed to complete successfully and not enter here
+    Predicate !responsePredicate;
+    Symbol !default = "default";
+
+    op:log(debug,"[putdownOnCancel] ?tracker, ?physobj, ?pose");
 
     //No movement occurred yet, do nothing
-    if (op:equals(?tacker,0)) {
+    if (op:equals(?tracker,0)) {
         return;
     }
 

@@ -134,12 +134,15 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
     Double !reverseDist;
     Predicate !responsePredicate;
 
+    op:log(debug,"[perceiveEntityOnCancel] ?tracker, ?zDist");
+
     //If we have lowered the camera but the picture hasn't been taken yet, don't take it. Just raise back to pose height
     if (op:equals(!tracker,1)) {
         //TODO: can replace with hardcoded message if having an actual translation
         !responsePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "returningToASafeStateBeforeCancelingMyCurrentTask()");
         act:generateResponse(!responsePredicate);
         !reverseDist = op:*(!dist,-1);
+        op:log(debug,"[perceiveEntityOnCancel] moving back up");
         tsc:moveZRelative(!reverseDist);
     }
 

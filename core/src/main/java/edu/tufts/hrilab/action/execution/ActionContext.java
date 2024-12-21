@@ -71,6 +71,10 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
 
   private Lock doStepLock = new ReentrantLock();
 
+  //PickAndPlace2024 - temp indication to know if this context was suspended from an INITIALIZED state. In this case
+  //  you don't want to call onResume behaviors when resuming this context.
+  private boolean suspendedFromInitialized = false;
+
   /**
    * @param caller
    * @param sm
@@ -1057,9 +1061,12 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   }
 
   private synchronized void handleInterrupt(ActionStatus eStatus) {
-
-    if (getStatus().equals(ActionStatus.INITIALIZED)) {
-      log.debug("[handleInterrupt] action hasn't started execution yet, not calling interrupt behavior for status {}", eStatus);
+    //PickAndPlace2024
+    //Note to self - can do the same here for cancel and actually allow the status of upcoming but never started contexts
+    //  to be set to CANCEL.
+    if (eStatus.equals(ActionStatus.RESUME) && suspendedFromInitialized) {
+      log.debug("[handleInterrupt] action hadn't started execution yet when suspended, not calling interrupt behavior for status {}", eStatus);
+      suspendedFromInitialized = false;
       return;
     }
 
@@ -1082,6 +1089,11 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     Predicate interruptGoalPredicate = Factory.createPredicate("interrupt", Factory.createFOL(interruptEvent.getActor()), interruptEvent.getPredicateForm());
     Goal interruptGoal = new Goal(interruptGoalPredicate);
     ActionInterpreter ai = ActionInterpreter.createInterpreterFromEventSpec(interruptGoal, this, interruptEvent);
+    //TODO: this technically doesn't break anything but doesn't seem fully correct after suspend/resume refactor. If we
+    //  are resuming, do we want this behavior to be added as a sibling to the current suspended leaf rather than at the
+    //  level of the corresponding script? Currently, if a higher level script, will be a completed sibling to a context
+    //  which is suspended and will undergo further execution on resume. This means when that context completes we will
+    //  get a warning message when encountering this child as the "next step" because it is already terminated.
     //Increment child context counter so getNextStep doesn't return the terminated context added by the above line and
     //  executed separately in the line below.
     childContexts.getNextAndIncrement();
@@ -1096,47 +1108,59 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    */
   @Override
   public synchronized void setStatus(ActionStatus eStatus, Justification justification) {
-
     if (getDBE() == null) {
       // this happens during context construction because the DBE hasn't been set before the
       // INITIALIZE status is set
       super.setStatus(eStatus, justification);
-    } else if (isScript()) {
-        if (eStatus.isFailure() && recovery.shouldAttemptRecovery(eStatus, justification, this)) {
-            log.debug("[setStatus] not propagating failure: " + eStatus);
-            super.setStatus(ActionStatus.RECOVERY, justification);
-        } else if (getStatus() == ActionStatus.RECOVERY && (eStatus == ActionStatus.FAIL_RECOVERY || eStatus == ActionStatus.EXIT_RECOVERY)) {
-            //If this context is undergoing recovery and gets a recovery failure status propagated up to it, catch it and
-            // start propagating the original failure reasons up the tree instead
-            ActionStatus originalFailureStatus = recovery.getOriginalFailureStatus();
-            Justification originalFailureJustification = recovery.getOriginalFailureJustification();
-            super.setStatus(originalFailureStatus, originalFailureJustification);
-        } else {
-            // if this is an action script, always call onInterrupt
-            super.setStatus(eStatus, justification);
-            handleInterrupt(eStatus);
-        }
     } else {
-      // if primitive action, call onInterrupt until it's no longer blocking
-      // TODO: should onInterrupt also be called if it's not blocking, like in the script case?
-
-      try {
-        long timeout = 0;
-        while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
-          // lock NOT acquired (doStep is executing)
-          // attempt to interrupt until lock can be acquired
-          handleInterrupt(eStatus);
-          timeout = 3;
-        }
-
+      if (getStatus().equals(ActionStatus.INITIALIZED) && eStatus.equals(ActionStatus.SUSPEND)) {
+        log.debug("[setStatus] action hasn't started execution yet, not calling interrupt behavior for SUSPEND");
+        suspendedFromInitialized = true;
         super.setStatus(eStatus, justification);
-      } catch (InterruptedException e) {
-        log.error("Exception trying to get doStepLock.", e);
-      } finally {
-        doStepLock.unlock();
+        return;
+      }
+
+      if (isScript()) {
+        if (eStatus.isFailure() && recovery.shouldAttemptRecovery(eStatus, justification, this)) {
+          log.debug("[setStatus] not propagating failure: " + eStatus);
+          super.setStatus(ActionStatus.RECOVERY, justification);
+        } else if (getStatus() == ActionStatus.RECOVERY && (eStatus == ActionStatus.FAIL_RECOVERY || eStatus == ActionStatus.EXIT_RECOVERY)) {
+          //If this context is undergoing recovery and gets a recovery failure status propagated up to it, catch it and
+          // start propagating the original failure reasons up the tree instead
+          ActionStatus originalFailureStatus = recovery.getOriginalFailureStatus();
+          Justification originalFailureJustification = recovery.getOriginalFailureJustification();
+          super.setStatus(originalFailureStatus, originalFailureJustification);
+        } else {
+          handleInterrupt(eStatus);
+          super.setStatus(eStatus, justification);
+        }
+      } else {
+        // if primitive action, call onInterrupt until it's no longer blocking
+        // TODO: should onInterrupt also be called if it's not blocking, like in the script case?
+
+        try {
+          if (eStatus == ActionStatus.RESUME) {
+            //TODO: Discussion to be had if this is actually desired. I think action learning is a concrete case where yes
+            //  (at least as implemented right now). Allow primitives to have their onResume behaviors executed
+            handleInterrupt(eStatus);
+          }
+
+          long timeout = 0;
+          while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
+            // lock NOT acquired (doStep is executing)
+            // attempt to interrupt until lock can be acquired
+            handleInterrupt(eStatus);
+            timeout = 3;
+          }
+
+          super.setStatus(eStatus, justification);
+        } catch (InterruptedException e) {
+          log.error("Exception trying to get doStepLock.", e);
+        } finally {
+          doStepLock.unlock();
+        }
       }
     }
-
   }
 
   /**
