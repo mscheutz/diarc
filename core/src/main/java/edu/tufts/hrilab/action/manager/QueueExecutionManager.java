@@ -261,6 +261,26 @@ public class QueueExecutionManager extends ExecutionManager {
       }
     }
 
+    //PickAndPlace2024 - Last second addition. Get rid of this, have wrapper script with failure justification and handling if we want this
+    if (resumedIds.isEmpty()) {
+      Predicate resumedNothingSemantics = Factory.createPredicate("cannotResumeTaskBecauseIHaveNoCurrentTask()");
+      Utterance utt = new Utterance.Builder()
+              .setSpeaker(actor)
+              .setAddressee(Factory.createSymbol("user"))
+              .setUtteranceType(UtteranceType.REPLY)
+              .setIsInputUtterance(false)
+              //.setWords(List.of(statusReport.split(" ")))
+              .setSemantics(resumedNothingSemantics)
+              .build();
+      try {
+        utt = TRADE.getAvailableService(new TRADEServiceConstraints().name("convertSemanticsToText").argTypes(Utterance.class)).call(Utterance.class, utt);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("updateDialogueHistory").argTypes(Utterance.class)).call(void.class, utt);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(String.class)).call(void.class, utt.getWordsAsString());
+      } catch (TRADEException e) {
+        log.error("[handleConflictingLowerPriorityGoal]", e);
+      }
+    }
+
     return resumedIds;
   }
 
