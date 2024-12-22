@@ -81,11 +81,11 @@ public class QueueExecutionManager extends ExecutionManager {
       Goal conflictingGoal = agentGoals.get(g.getActor());
       if (conflictingGoal != null) {
         if (conflictingGoal.getStatus().equals(GoalStatus.ACTIVE)) {
-          statusReportSemantics = Factory.createPredicate("okayAddingToMyCurrentQueueOfTasks()");
+          statusReportSemantics = Factory.createPredicate("addingToMyCurrentQueueOfTasks()");
           //statusReport = "okay, adding to my current queue of tasks";
         } else if (conflictingGoal.getStatus().equals(GoalStatus.SUSPENDED)) {
           //Could add currently suspended goal predicate to semantics and corresponding examples to NLG prompt if we want to report what the goal is
-          statusReportSemantics = Factory.createPredicate("okayMyCurrentTaskIsSuspendedAddingThisToMyQueue()");
+          statusReportSemantics = Factory.createPredicate("myCurrentTaskIsSuspendedAddingThisToMyQueue()");
           //statusReport = "okay, my current task is suspended. Adding this to my queue";
         }
         //if (statusReport != null) {
@@ -258,6 +258,26 @@ public class QueueExecutionManager extends ExecutionManager {
     if (agentTeam != null) {
       for (Symbol member: agentTeam.getMemberNames()) {
         resumedIds.addAll(resumeSystemGoals(member));
+      }
+    }
+
+    //PickAndPlace2024 - Last second addition. Get rid of this, have wrapper script with failure justification and handling if we want this
+    if (resumedIds.isEmpty()) {
+      Predicate resumedNothingSemantics = Factory.createPredicate("cannotResumeTaskBecauseIHaveNoCurrentTask()");
+      Utterance utt = new Utterance.Builder()
+              .setSpeaker(actor)
+              .setAddressee(Factory.createSymbol("user"))
+              .setUtteranceType(UtteranceType.REPLY)
+              .setIsInputUtterance(false)
+              //.setWords(List.of(statusReport.split(" ")))
+              .setSemantics(resumedNothingSemantics)
+              .build();
+      try {
+        utt = TRADE.getAvailableService(new TRADEServiceConstraints().name("convertSemanticsToText").argTypes(Utterance.class)).call(Utterance.class, utt);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("updateDialogueHistory").argTypes(Utterance.class)).call(void.class, utt);
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(String.class)).call(void.class, utt.getWordsAsString());
+      } catch (TRADEException e) {
+        log.error("[handleConflictingLowerPriorityGoal]", e);
       }
     }
 
