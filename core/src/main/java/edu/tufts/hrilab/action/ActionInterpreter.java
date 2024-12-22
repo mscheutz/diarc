@@ -691,7 +691,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     }
 
     // if canceling from a suspended state, we need to unblock the suspend
-    if (suspended.get()) {
+    if (suspended.getAndSet(false)) {
       suspendLock.lock();
       try {
         suspendCondition.signal();

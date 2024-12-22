@@ -40,6 +40,7 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     SimpleNLGComponent nlg;
     CacheDatabase cacheDatabase;
     boolean parserTest = false;
+    protected String language = "English";
 
     //Set of specific user/agent back and forths to get to the bottom of a single NLU attempt
     Map<Pair<Symbol,Symbol>,Chat> currentChats = new HashMap<>();
@@ -103,13 +104,14 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
             //Always instantiating as a fallback in case LLM gets overloaded or completion request throws any other exception
             nlg = new SimpleNLGComponent();
         }
-        cacheDatabase = new CacheDatabase("pickAndPlace2024Reverse",null,true,true);
+        cacheDatabase = new CacheDatabase("pickAndPlace2024Reverse", null, true, true, language);
     }
 
     @Override
     protected List<Option> additionalUsageInfo() {
         List<Option> options = new ArrayList<>();
         options.add(Option.builder("nlg").desc("Use the LLM to perform NLG. Otherwise use SimpleNLG.").build());
+        options.add(Option.builder("japanese").desc("use japanese versions of prompts").build());
         return options;
     }
 
@@ -117,6 +119,9 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     protected void parseArgs (CommandLine cmdLine) {
         if (cmdLine.hasOption("nlg")) {
             performNLG = true;
+        }
+        if (cmdLine.hasOption("japanese")) {
+            language = "Japanese";
         }
     }
 

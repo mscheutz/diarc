@@ -55,8 +55,11 @@ public class CacheDatabase {
   private PreparedStatement getStatement;
   private PreparedStatement insertStatement;
 
-  public CacheDatabase (String name, String[] loadPaths, boolean persist, boolean reverseCache) {
+  private String language;
+
+  public CacheDatabase (String name, String[] loadPaths, boolean persist, boolean reverseCache, String language) {
     this.reverseCache = reverseCache;
+    this.language = language;
     String homeDirPath;
 
     if (persist) {
@@ -291,20 +294,22 @@ public class CacheDatabase {
    */
   public void add (Utterance entry) {
     int rows = -1;
-    String words = entry.getWordsAsString();
-    List<String> wordsList;
-    if (reverseCache) {
-      //Making reverse cache structure the same as for parsing for code reusability and ease of impl. Indexing by utterance
-      //  so we don't want to include the words when storing (because that will be the "words" field now). Can change.
-      wordsList = new ArrayList<>();
-    } else {
-      wordsList = entry.getWords();
-    }
     UtteranceType type = entry.getType();
     Symbol semantics = entry.getSemantics();
     List<Term> indirectSemantics = entry.getIndirectSemantics();
     List<Map<Variable, Symbol>> bindings = entry.getBindings();
-    CachedUtterance cached = new CachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments());
+    String words = entry.getWordsAsString();
+    List<String> wordsList;
+    CachedUtterance cached;
+    if (reverseCache) {
+      //Making reverse cache structure the same as for parsing for code reusability and ease of impl. Indexing by utterance
+      //  so we don't want to include the words when storing (because that will be the "words" field now). Can change.
+      wordsList = new ArrayList<>();
+      cached = new ReverseCachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments(), language);
+    } else {
+      wordsList = entry.getWords();
+      cached = new CachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments());
+    }
 
     try {
       insertStatement.setString(1, words);
@@ -337,7 +342,7 @@ public class CacheDatabase {
       Symbol semantics = incoming.getSemantics();
       List<Term> indirectSemantics = incoming.getIndirectSemantics();
       List<Map<Variable, Symbol>> bindings = incoming.getBindings();
-      CachedUtterance cached = new CachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, incoming.getSupplementalSemantics(), incoming.getTierAssignments());
+      CachedUtterance cached = new ReverseCachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, incoming.getSupplementalSemantics(), incoming.getTierAssignments(), language);
       getStatementString = cached.toJSON();
     } else {
       getStatementString = words;

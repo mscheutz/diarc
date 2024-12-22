@@ -29,17 +29,16 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     Prompt nlgSystemPrompt = Prompts.getPrompt("pickandplace2024/nlg/system");
     Prompt nlgUserPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/user");
     Prompt validationPrompt = Prompts.getPrompt("pickandplace2024/nlg/english/validation");
-    private String language = "English";
     private boolean v2 = true;
     private boolean registeredForNewActions = false;
     private String learnedActionsString = "";
 
-    @Override
-    protected List<Option> additionalUsageInfo() {
-        List<Option> options = super.additionalUsageInfo();
-        options.add(Option.builder("japanese").desc("use japanese versions of prompts").build());
-        return options;
-    }
+    //@Override
+    //protected List<Option> additionalUsageInfo() {
+    //    List<Option> options = super.additionalUsageInfo();
+    //    options.add(Option.builder("japanese").desc("use japanese versions of prompts").build());
+    //    return options;
+    //}
 
     @Override
     protected void parseArgs (CommandLine cmdLine) {
@@ -50,7 +49,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             nlgSystemPrompt = Prompts.getPrompt("pickandplace2024/nlg/system");
             nlgUserPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/user");
             validationPrompt = Prompts.getPrompt("pickandplace2024/nlg/japanese/validation");
-            language = "Japanese";
+            //language = "Japanese";
         }
     }
 
