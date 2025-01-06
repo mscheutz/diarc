@@ -4,61 +4,124 @@ import sys
 import threading
 
 import rclpy
+from pytrade.java_util import to_java_object, to_java_object_from_class
 from pytrade.wrapper import TRADEWrapper
 
 from ai.thinkingrobots.trade import TRADE
 from edu.tufts.hrilab.interfaces import IHMCInterface
-from edu.tufts.hrilab.fol import Factory, Symbol
+from edu.tufts.hrilab.fol import Factory, Symbol, Predicate
 from edu.tufts.hrilab.action.justification import ConditionJustification, Justification
-
-from jpype import JImplements, JOverride
+from edu.tufts.hrilab.consultant.pose import PoseConsultant, PoseReference
+from jpype import JImplements, JOverride, JClass, JString
 from geometry_msgs.msg import Point, Quaternion, Pose
 from ihmc_common_msgs.msg import PoseListMessage
+from behavior_msgs.msg import AI2RCommandMessage, AI2RStatusMessage
 from behavior_msgs.msg import ContinuousWalkingCommandMessage
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
-locations = {"home": (0.0, 0.0),
-             "pose1": (3.0, 0.0),
-             "pose2": (0.0, 3.0)}
-
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-logging.info("This will show up in Java output")
 
 
 @JImplements(IHMCInterface)
 class NadiaWrapper:
     def __init__(self, trade_wrapper: TRADEWrapper):
+        self._executing = False
+        self._behavior_status = ""
         self.trade_wrapper = trade_wrapper
         self.node = rclpy.create_node('diarc_node')
         self._qos_profile = QoSProfile(
-            reliability=QoSReliabilityPolicy.RELIABLE,
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=1
         )
+        self._walk_timer = None
         self._walk_publisher = self.node.create_publisher(ContinuousWalkingCommandMessage,
                                                           '/ihmc/continuous_walking/command',
                                                           qos_profile=self._qos_profile)
-        self._walk_timer = None
+        self._command_publisher = self.node.create_publisher(AI2RCommandMessage,
+                                                             '/ihmc/behavior_tree/ai2r_command',
+                                                             qos_profile=self._qos_profile)
+        self._behavior_subscriber = self.node.create_subscription(AI2RStatusMessage,
+                                                                  '/ihmc/behavior_tree/ai2r_status',
+                                                                  self._behavior_callback,
+                                                                  self._qos_profile)
+
+        ### Consultant
+        self.kb_name = to_java_object("location")
+        self.consultant = PoseConsultant(JClass(PoseReference), self.kb_name,
+                                         to_java_object_from_class([], "java.util.ArrayList"))
+
+    def _behavior_callback(self, msg):
+        for obj in msg.objects:
+            name = obj.object_name
+            position = obj.object_pose_in_world.position
+            orientation = obj.object_pose_in_world.orientation
+            # todo: update pose in consultant
+        if self._executing:
+            if msg.completed_behavior != '':
+                self._behavior_status = "success"
+            elif msg.failed_behavior != '':
+                self._behavior_status = "failure"
+            else:
+                self._behavior_status = "progress"
 
     @JOverride
     def walk(self):
+        logging.info("[walk]")
         command = ContinuousWalkingCommandMessage()
         command.publish_to_controller = True
         command.enable_continuous_walking = True
         self._walk_publisher.publish(command)
 
     @JOverride
-    def open_door(self):
-        logging.info("Opening door")
-        # Get door handle coords
-        # Insert handle to scene graph
-        # Call behavior tree
-        pass
+    def push_door_primitive(self) -> Justification:
+        logging.info("[push_door]")
+        command = AI2RCommandMessage()
+        command.behavior_to_execute = "PUSH DOOR"
+        self._command_publisher.publish(command)
+        self._executing = True
+
+        while self._behavior_status == "progress" or self._behavior_status == "":
+            logging.info("in progress...")
+            time.sleep(1)
+
+        if self._behavior_status == "success":
+            ret = self._handle_return(True)
+        elif self._behavior_status == "failure":
+            ret = self._handle_return(False)
+        else:
+            ret = self._handle_return(False)
+
+        self._behavior_status = ""
+        self._executing = False
+        return ret
+
+    @JOverride
+    def pull_door_primitive(self) -> Justification:
+        logging.info("[pull_door]")
+        command = AI2RCommandMessage()
+        command.behavior_to_execute = "PULL DOOR"
+        self._command_publisher.publish(command)
+        self._executing = True
+        logging.info(self._behavior_status)
+        while self._behavior_status == "progress" or self._behavior_status == "":
+            logging.info("in progress...")
+            time.sleep(1)
+
+        if self._behavior_status == "success":
+            ret = self._handle_return(True)
+        elif self._behavior_status == "failure":
+            ret = self._handle_return(False)
+        else:
+            ret = self._handle_return(False)
+
+        self._behavior_status = ""
+        self._executing = False
+        return ret
 
     # Todo
     def _get_pose_from_symbol(self, symbol):
         obj = self.trade_wrapper.call_trade("getActivatedEntities", ["location"])
-
         return obj
 
     def _goto_helper(self, x, y):
@@ -96,28 +159,26 @@ class NadiaWrapper:
         pass
 
     @JOverride
-    def goToLocation(self, location, wait):
-        try:
-            logging.info(f"[goToLocation] {location}, {wait}")
-        except Exception as ex:
-            logging.info(f"Caught exception: {str(ex)}")
-            raise(ex)
+    def goToLocation(self, location: Symbol, wait: bool) -> Justification:
+        logging.info(f"[goToLocation] {location}, {wait}")
         return self._handle_return(True)
 
     @JOverride
-    def goToLocation(self, desiredLocation, initialLocation):
+    def goToLocation(self, desiredLocation: Symbol, initialLocation: Symbol) -> Justification:
+        logging.info(f"[checkAt] {desiredLocation}, {initialLocation}")
         return self._handle_return(True)
 
     @JOverride
-    def goToLocation(self, xdest, ydest, quat_x, quat_y, quat_z, quat_w, wait):
+    def goToLocation(self, xdest, ydest, quat_x, quat_y, quat_z, quat_w, wait) -> Justification:
+        logging.info(f"[checkAt] {xdest}")
         return self._handle_return(True)
 
     @JOverride
-    def approachLocation(self, location):
+    def approachLocation(self, location) -> Justification:
         return self._handle_return(True)
 
     @JOverride
-    def approachLocation(self, desiredLocation, initialLocation):
+    def approachLocation(self, desiredLocation, initialLocation) -> Justification:
         return self._handle_return(True)
 
     @JOverride
@@ -131,20 +192,34 @@ class NadiaWrapper:
 
     @JOverride
     def isMoving(self):
+        logging.info(f"[isMoving]")
         return self._handle_return(True)
 
     @JOverride
     def checkAt(self, locationTerm):
-        print(f"[checkAt] {locationTerm}")
-        return [{}]
+        logging.info(f"[checkAt] {locationTerm}")
+        # Todo: Return something
 
-    def _handle_return(self, value: bool):
-        return ConditionJustification(value)
+    def _handle_return(self, value: bool, reason: Predicate = None):
+        if reason is None:
+            return ConditionJustification(value)
+        return ConditionJustification(value, reason)
 
     @JOverride
     def goToLocation(self, location):
         logging.info(f"{location}")
         return self._handle_return(True)
+
+
+def listen_for_input():
+    """Function to listen for input commands."""
+    logging.info("Listening for commands...")
+    while True:
+        command = input().strip()  # Read input from stdin
+        if command.lower() == "shutdown":
+            logging.info("Shutdown command received. Exiting...")
+            break
+
 
 if __name__ == '__main__':
     rclpy.init()
@@ -156,23 +231,19 @@ if __name__ == '__main__':
     try:
         nadia_wrapper = NadiaWrapper(trade_wrapper)
         TRADE.registerAllServices(nadia_wrapper, "")
+        TRADE.registerAllServices(nadia_wrapper.consultant, nadia_wrapper.kb_name)
+        nadia_wrapper.consultant.loadReferencesFromFile(
+            "/home/mfawn/code/diarc/diarc/core/src/main/python/ihmc/ihmcRefs.json")
+
         time.sleep(2)
-        print(TRADE.getAvailableServices())
-        nadia_wrapper.open_door()
-        trade_wrapper.call_trade("open_door", "")
+
+        ros_thread = threading.Thread(target=rclpy.spin, args=(nadia_wrapper.node,))
+        ros_thread.start()
+        # input_thread = threading.Thread(target=listen_for_input, daemon=True)
+        # input_thread.start()
+
+        # todo: fail at push panel
+        # todo: change to push failing
+
     except Exception as ex:
         logging.info(ex)
-    # refId = Factory.createSymbol("location_1", "location")
-    #
-    # ros_thread = threading.Thread(target=rclpy.spin, args=(nadia_wrapper.node,))
-    # ros_thread.start()
-
-    # # nadia_wrapper.set_goal()
-    # # nadia_wrapper.walk()
-    # try:
-    #     while True:
-    #         time.sleep(1)
-    # except KeyboardInterrupt:
-    #     nadia_wrapper.node.destroy_node()
-    #     rclpy.shutdown()
-    #     ros_thread.join()

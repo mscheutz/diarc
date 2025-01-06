@@ -6,4 +6,6 @@ in y; VAL\NUM ; #x.$x
 set goal as; C/NUM/NUM; #x#y.set_goal(?ADDRESSEE, $x,$y)
 go to; C/REF; #x.goToLocation(?ADDRESSEE, $x)
 stop moving; C; stop(?ADDRESSEE)
-open door; C; open_door(?ADDRESSEE)
+open the door; C; goal(?ADDRESSEE, open())
+pull the door; C; open()
+push the door; C; open()

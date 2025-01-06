@@ -26,9 +26,18 @@ def to_java_object(arg):
     :param arg: A python object
     :return: A corresponding java object
     """
+    # Todo: Handle interfaces
     constructor = to_java_class(arg)
     return constructor(arg)
 
+def to_java_object_from_class(arg, clazz: str):
+    """
+    Turns a python object into its java equivalent, from a specific Java classpath.
+    :param clazz:
+    :param arg: A python object
+    :return: A corresponding java object
+    """
+    return JClass(clazz)(arg)
 
 def to_java_class(arg):
     """

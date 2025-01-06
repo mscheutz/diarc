@@ -2,12 +2,9 @@ package edu.tufts.hrilab.python;
 
 import java.io.*;
 
-public class PythonWrapper implements Runnable {
+public class PythonWrapper {
 
-
-  private Thread thread;
   private final String file;
-  private boolean running = false;
   private Process process;
 
   public PythonWrapper(String file) {
@@ -15,57 +12,50 @@ public class PythonWrapper implements Runnable {
   }
 
   public void start() {
-    running = true;
-    thread = new Thread(this);
-    thread.start();
-  }
-
-  public void stop() {
-    running = false;
-  }
-
-  private void shutdown() {
-    if (thread != null && thread.isAlive()) {
+    Thread processThread = new Thread(() -> {
       try {
-        // Attempt graceful shutdown
-        System.out.println("Attempting shutdown: ");
+        // Create the ProcessBuilder and start the process
+        String classpath = System.getProperty("java.class.path");
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.command("python3", "-m", file, classpath);
+        processBuilder.inheritIO();
+        process = processBuilder.start();
 
-        OutputStream stdin = process.getOutputStream();
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stdin));
-        writer.write("shutdown\n");
-        writer.flush();
-        writer.close();
-
-        // Wait for process to exit
+        // Wait for the process to complete (blocking)
         process.waitFor();
       } catch (IOException | InterruptedException e) {
-        e.printStackTrace();
-      } finally {
-        System.out.println("ensuring shutdown: ");
+        System.err.println("Error while launching or monitoring the process: " + e.getMessage());
+      }
+    });
 
-        // Ensure process termination
-        if (thread.isAlive()) {
-          thread.interrupt();
+    // Register a shutdown hook to terminate the process if it is still running
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      if (process != null && process.isAlive()) {
+        try (OutputStream outputStream = process.getOutputStream()) {
+          // Write "shutdown" to the process's standard input
+          // Todo: Why doesn't this connect to python's stdin?
+          outputStream.write("shutdown\n".getBytes());
+          outputStream.flush();
+        } catch (IOException e) {
+          System.err.println("Error while sending 'shutdown' command: " + e.getMessage());
+        }
+
+        // Wait briefly to allow the process to respond, then terminate
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          System.err.println("Interrupted while waiting for process shutdown.");
+        }
+
+        if (process.isAlive()) {
+          System.out.println("Forcing process termination...");
+          process.destroy();
         }
       }
-    }
-  }
+    }));
 
-  @Override
-  public void run() {
-    String classpath = System.getProperty("java.class.path");
-    ProcessBuilder processBuilder = new ProcessBuilder();
-    processBuilder.command("python3", "-m", file, classpath);
-    processBuilder.inheritIO();
-    try {
-      process = processBuilder.start();
-      int exitCode = process.waitFor();
-      System.out.println("Python script exited with code: " + exitCode);
-    } catch (IOException | InterruptedException e) {
-      e.printStackTrace();
-    } finally {
-      System.out.println("finally run");
-      shutdown();
-    }
+    // Start the thread to monitor the process
+    processThread.setDaemon(true); // Make it a daemon thread so it won't block JVM termination
+    processThread.start();
   }
 }

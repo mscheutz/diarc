@@ -16,21 +16,10 @@ public interface IHMCInterface extends MoveBaseInterface {
 
   @TRADEService
   @Action
-  void test1(Symbol test_symbol);
+  public Justification push_door_primitive();
 
 
   @TRADEService
   @Action
-  @Effect(
-          effect={"at(?actor,?location)"},
-          type = EffectType.SUCCESS,
-          observable = {"at(?actor,?location"}
-  )
-  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
-  Justification test2(Symbol location);
-
-
-  @TRADEService
-  @Action
-  public void open_door();
+  public Justification pull_door_primitive();
 }

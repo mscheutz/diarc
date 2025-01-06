@@ -16,6 +16,7 @@ import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
+import edu.tufts.hrilab.tts.MaryTTSComponent;
 import edu.tufts.hrilab.util.resource.Resources;
 
 import java.util.ArrayList;
@@ -35,12 +36,15 @@ public class IHMCConfig extends DiarcConfiguration {
     createInstance(DialogueComponent.class, "");
     createInstance(SimpleNLGComponent.class, "");
     createInstance(SimSpeechProductionComponent.class, "");
+//    createInstance(MaryTTSComponent.class, "");
+
 //
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
                     "-beliefinitfile agents/agents.pl "
                     + "-beliefinitfile demos.pl "
+                    + "-beliefinitfile demos/ihmc.pl "
                     + "-asl core.asl "
                     + "-asl dialogue/nlg.asl "
                     + "-asl dialogue/nlu.asl "
@@ -50,24 +54,9 @@ public class IHMCConfig extends DiarcConfiguration {
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
     );
 
-    createInstance(SimSpeechRecognitionComponent.class, "-speaker marlow -config ihmc.simspeech");
-
-    String kbName = "location";
-    PoseConsultant consultant = new PoseConsultant(PoseReference.class, kbName, new ArrayList<>());
-    try {
-      TRADE.registerAllServices(consultant, kbName);
-    } catch (TRADEException e) {
-      throw new RuntimeException(e);
-    }
-
-    String refsConfigDir = "config/edu/tufts/hrilab/map";
-    String refsConfigFile = "refs/ihmcRefs.json";
-    String filename = Resources.createFilepath(refsConfigDir, refsConfigFile);
-    consultant.loadReferencesFromFile(filename);
+//    createInstance(SimSpeechRecognitionComponent.class, "-speaker marlow -config ihmc.simspeech");
 
     String file = "ihmc.ihmc_wrapper";
-    TRADEServiceConstraints c = new TRADEServiceConstraints().inGroups();
-
     PythonWrapper wrapper = new PythonWrapper(file);
     wrapper.start();
 

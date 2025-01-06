@@ -1,3 +1,4 @@
+import logging
 import sys
 import warnings
 import threading
@@ -8,6 +9,9 @@ import jpype.imports
 from jpype import JObject
 
 from pytrade.java_util import to_java_class, convert_to_java_object
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.info("This will show up in Java output")
 
 # Todo: Should we still allow user specified jars?
 try:
@@ -72,13 +76,13 @@ class TRADEWrapper:
             if groups:
                 constraints.inGroups(groups)
 
-        # Todo: Better error handling
+            # Todo: Better error handling
             service = TRADE.getAvailableService(constraints)  # Get the TRADE service
             parameters = convert_to_java_object(list(args))  # Convert the arguments to their Java versions
             return service.call(JObject, *parameters)  # Call the service
         except Exception as ex:
             print(f"Caught exception: {str(ex)}")
-            raise(ex)
+            raise (ex)
 
     def create_action(self, name: str, args, preconds, effects, executor: str) -> JObject:
         """
@@ -113,3 +117,12 @@ class TRADEWrapper:
 
     def parse_goal(self, goal: str):
         return [goal]
+
+
+def exit_test():
+    logging.info("Exiting wrapper")
+
+
+import atexit
+
+atexit.register(exit_test)
