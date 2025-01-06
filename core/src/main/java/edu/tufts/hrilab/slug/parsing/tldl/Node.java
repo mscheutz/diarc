@@ -44,7 +44,7 @@ public class Node {
   }
 
  //constructor used to create a new Node during the combination process, when NodeEntries already exist.
-  private Node(Node left, Node right, List<NodeEntry> validGrammar) {
+  public Node(Node left, Node right, List<NodeEntry> validGrammar) {
     label = left.label + " " + right.label;
     rules = validGrammar;
     lAncestor = left;
@@ -89,8 +89,51 @@ public class Node {
     }
   }
 
+  public List<NodeEntry> combineTest(Node partner) {
+    List<NodeEntry> validCombinations = new ArrayList<>();
+
+    for (NodeEntry current : this.rules) {
+      log.debug("POSSIBLE PARSE: {}", current);
+      for (NodeEntry next : partner.rules) {
+        log.debug("checking possible combination: \"" + current + "\" \"" + next + "\"");
+        //cloning here so multiple trees can be built
+        NodeEntry currentClone = null;
+        NodeEntry nextClone = null;
+        try {
+          if (current != null) {
+            currentClone = current.clone();
+          }
+          if (next != null) {
+            nextClone = next.clone();
+          }
+        } catch (Exception e) {
+          log.error("Exception in cloning in combine. " + e);
+        }
+
+        NodeEntry combination = null;
+        if (currentClone != null) {
+          combination = currentClone.combine(nextClone);
+          //if null, nextClone.combine(currentCLone);
+        }
+        if (combination != null) validCombinations.add(combination);
+        log.trace("valid combinations size" + validCombinations.size());
+      }
+    }
+
+    if (!validCombinations.isEmpty()) {
+      log.debug("Combining " + this.label + " and " + partner.label);
+      return validCombinations;
+    } else {
+      return null;
+    }
+  }
+
   public String getLabel() {
     return label;
+  }
+
+  public List<NodeEntry> getRules() {
+    return rules;
   }
 
   public List<String> getSemantics() {
