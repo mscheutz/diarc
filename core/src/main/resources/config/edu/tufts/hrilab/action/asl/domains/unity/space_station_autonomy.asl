@@ -38,9 +38,14 @@ import edu.tufts.hrilab.action.justification.Justification;
   Boolean !isHighWorkload;
   Symbol !nextArea;
 
+  // wait for n milliseconds before starting autonomy. This is to give users a chance to override autonomy with
+  // instructions without the robot instantly continuing autonomy between instructions.
+  op:sleep(15000);
+  act:generateResponseFromString("Starting autonomy action.");
+
   while (true) {
-//    !isHighWorkload = act:isWorkloadAboveThreshold();
-    !isHighWorkload = op:newObject("java.lang.Boolean", true);
+    !isHighWorkload = act:isWorkloadAboveThreshold();
+//    !isHighWorkload = op:newObject("java.lang.Boolean", true); // for testing
     !nextArea = act:getNextAreaToMonitor();
     act:monitor(!nextArea, ?isAdaptive, !isHighWorkload);
   }
