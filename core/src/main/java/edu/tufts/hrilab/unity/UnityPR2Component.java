@@ -14,8 +14,16 @@ import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.unity.message.*;
+import edu.tufts.hrilab.unity.space_station.SpaceStationObservers;
 
 public class UnityPR2Component extends UnityAgentComponent implements UnityPR2Interface {
+  private SpaceStationObservers observers;
+
+  @Override
+  public void init() {
+    observers = new SpaceStationObservers();
+    observers.registerWithTRADE(this.getMyGroups());
+  }
 
   @Override
   protected void route(Message msg) {
