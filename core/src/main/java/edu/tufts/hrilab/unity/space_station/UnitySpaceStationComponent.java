@@ -62,7 +62,7 @@ public class UnitySpaceStationComponent extends UnityAgentComponent implements U
    * Response is list of strings containing all matching tubes
    */
   protected List<Symbol> tubesResponse(Message msg) {
-    List<Symbol> tubes = new ArrayList<Symbol>();
+    List<Symbol> tubes = new ArrayList<>();
     List<String> res = null;
     Symbol tube;
     try {

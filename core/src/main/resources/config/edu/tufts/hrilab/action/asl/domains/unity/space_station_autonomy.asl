@@ -180,25 +180,11 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 () = autonomyRepair(Symbol ?fullTube) {
+  List !tubeParts;
   Symbol !area;
   Symbol !side;
   Symbol !number;
-  Symbol !tubeHealthSymbol;
 
-  Predicate !tubeBrokenPredicate;
-  Predicate !tubeDamagedPredicate;
-  Predicate !tubeOffPredicate;
-
-  List !tubeParts;
-  List !tubeBrokenBeliefs;
-  List !tubeDamagedBeliefs;
-  List !tubeOffBeliefs;
-
-  float !tubeHealth;
-
-  Boolean !isTubeBroken = false;
-  Boolean !isTubeDamaged = false;
-  Boolean !isTubeOff = false;
   long !currTime;
   long !nextMsgTime = 0;
   long !repeatMsgTime = 10000; // milliseconds
@@ -209,10 +195,6 @@ import edu.tufts.hrilab.action.justification.Justification;
   !side = op:get(!tubeParts, 1);
   !number = op:get(!tubeParts, 2);
 
-  !tubeBrokenPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "propertyOf(!area,!side,!number,broken)");
-  !tubeDamagedPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "propertyOf(!area,!side,!number,damaged(X))");
-  !tubeOffPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "propertyOf(!area,!side,!number,off)");
-
   String !messageString = op:bind("Please turn off tube !area !side !number so that it can be repaired");
 
   act:goToTubeSilent(!area, !side, !number);
@@ -220,42 +202,28 @@ import edu.tufts.hrilab.action.justification.Justification;
   // while tube isn't off, wait
   while (op:equals(!isTubeOff, false)) {
 
-    //is tube broken
-    !isTubeBroken = act:getSpaceStationTubeBroken(?fullTube);
-    if (op:equals(!isTubeBroken, true)) {
-      act:assertBelief(!tubeBrokenPredicate);
+    // observe if tube is broken
+    if (obs:propertyOf(!area,!side,!number,broken)) {
       act:generateResponseFromString("Tube !area !side !number is now broken. Resuming monitoring.");
       op:log("info", "Cannot repair !area !side !number because tube is broken (unity)");
       return;
     }
 
-    //is tube damaged
-    !isTubeDamaged = act:getSpaceStationTubeDamaged(?fullTube);
-    if (op:equals(!isTubeDamaged, false)) {
+    // observe if tube is damaged
+    if (~obs:propertyOf(!area,!side,!number,damaged(X))) {
       op:log("info", "Cannot repair !area !side !number because tube is not damaged (belief,unity)");
       return;
-    } else {
-      !tubeHealth = act:getSpaceStationTubeHealth(?fullTube);
-      //op:log("debug", "Tube !area !side !number is damaged !tubeHealth");
-      !tubeHealthSymbol = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "!tubeHealth");
-      !tubeDamagedPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "propertyOf(!area,!side,!number,damaged(!tubeHealthSymbol))");
-      act:assertBelief(!tubeDamagedPredicate);
     }
 
-    //is tube off
-    !isTubeOff = act:getSpaceStationTubeOff(?fullTube);
-    if (op:equals(!isTubeOff, false)) {
-      act:retractBelief(!tubeOffPredicate);
+    // observe if tube is off
+    if (~obs:propertyOf(!area,!side,!number,off)) {
       !currTime = op:invokeStaticMethod("java.lang.System", "currentTimeMillis");
       if (op:gt(!currTime, !nextMsgTime)) {
         !nextMsgTime = op:invokeStaticMethod("java.lang.Long", "sum", !currTime, !repeatMsgTime);
         act:generateResponseFromString(!messageString);
         op:log("info", "Cannot repair !area !side !number because tube is not off (belief,unity)");
       }
-    } else {
-      act:assertBelief(!tubeOffPredicate);
     }
-
   }
 
   act:repairTubeAction(!area, !side, !number);

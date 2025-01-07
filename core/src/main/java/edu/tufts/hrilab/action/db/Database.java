@@ -577,6 +577,10 @@ public class Database {
   @TRADEService
   @Action
   public boolean isDiarcAgent(Symbol agentRef) {
+    if (agentRef == null) {
+      return false;
+    }
+
     Set<String> agentStrings = new HashSet<>();
     Set<String> untypedAgentStrings = new HashSet<>();
     try {

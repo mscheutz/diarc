@@ -5,12 +5,12 @@
 package edu.tufts.hrilab.unity;
 
 import ai.thinkingrobots.trade.*;
+import edu.tufts.hrilab.action.ConditionType;
+import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.annotations.Condition;
 import edu.tufts.hrilab.action.annotations.Observes;
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.fol.Term;
-import edu.tufts.hrilab.fol.Variable;
+import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.unity.space_station.TubeNameHelpers;
 
 import java.util.ArrayList;
@@ -47,85 +47,52 @@ public class MockUnityPR2Component extends DiarcComponent implements UnityPR2Int
   //////////////////////////////////////////////////////////
   // Space Station Observers
   //////////////////////////////////////////////////////////
+  private Symbol getCurrentArea(Symbol actor) throws TRADEException {
+
+    Variable areaVar = Factory.createVariable("A");
+    Predicate query = Factory.createPredicate("amIn", actor, areaVar);
+
+    List<Map<Variable, Symbol>> bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class))
+            .call(List.class, query);
+
+    Symbol result = null;
+    if (!bindings.isEmpty()) {
+      result = bindings.get(0).get(areaVar);
+    }
+
+    return result;
+  }
 
   @TRADEService
-  @Observes({"propertyOf(TUBE,damaged(AMOUNT))"})
-  public List<Map<Variable, Symbol>> observeTubesDamaged2(Term state) throws TRADEException {
-    List<Map<Variable, Symbol>> tubesDamaged = observeTubesDamaged(Factory.createPredicate("propertyOf(AREA,SIDE,NUMBER,damaged(AMOUNT))"));
-    Variable area = Factory.createVariable("AREA");
-    Variable side = Factory.createVariable("SIDE");
-    Variable num = Factory.createVariable("NUMBER");
-    Variable amount = Factory.createVariable("AMOUNT");
-
-    List<Map<Variable,Symbol>> results = new ArrayList<>();
-    Symbol stateTubeName = state.get(0);
+  @Action
+  @Condition(
+          condition={"amIn(?actor,!area)"},
+          type= ConditionType.PRE
+  )
+  @Observes({"propertyOf(tube(!area,!side,!number),damaged(!amount))"})
+  public List<Map<Variable, Symbol>> observeTubesDamaged(Symbol actor, Term state) throws TRADEException {
+    // get info about requested state
+    Term stateTube = (Term) state.get(0);
+    Symbol stateArea = stateTube.get(0);
+    Symbol stateSide = stateTube.get(1);
+    Symbol stateNum = stateTube.get(2);
     Symbol stateAmount = ((Term)state.get(1)).get(0);
-    for (Map<Variable, Symbol> tube : tubesDamaged) {
-      Symbol fullTubeName = TubeNameHelpers.toFullTube(tube.get(area), tube.get(side), tube.get(num));
 
-      Map<Variable,Symbol> solution = new HashMap<>();
-      solution.put((Variable) stateTubeName, fullTubeName);
-      solution.put((Variable) stateAmount, tube.get(amount));
-      results.add(solution);
+    // clear old beliefs
+    TRADE.getAvailableService(new TRADEServiceConstraints().name("retractBelief").argTypes(Term.class))
+            .call(void.class, Factory.createPredicate("propertyOf(tube(A,S,N),damaged(AMOUNT))"));
+
+    // get current area, and only get results from that area
+    Symbol currentArea = getCurrentArea(actor);
+    if (currentArea == null) {
+      return null;
     }
-
-    return results;
-  }
-
-  @TRADEService
-  @Observes({"propertyOf(TUBE,broken)"})
-  public List<Map<Variable, Symbol>> observeTubesBroken2(Term state) throws TRADEException {
-    List<Map<Variable, Symbol>> tubesBroken = observeTubesBroken(Factory.createPredicate("propertyOf(AREA,SIDE,NUMBER,broken)"));
-    Variable area = Factory.createVariable("AREA");
-    Variable side = Factory.createVariable("SIDE");
-    Variable num = Factory.createVariable("NUMBER");
-
-    List<Map<Variable,Symbol>> results = new ArrayList<>();
-    Symbol stateTubeName = state.get(0);
-    for (Map<Variable, Symbol> tube : tubesBroken) {
-      Map<Variable,Symbol> solution = new HashMap<>();
-      Symbol fullTubeName = TubeNameHelpers.toFullTube(tube.get(area), tube.get(side), tube.get(num));
-      solution.put((Variable) stateTubeName, fullTubeName);
-      results.add(solution);
-    }
-
-    return results;
-  }
-
-
-  @TRADEService
-  @Observes({"propertyOf(TUBE,off)"})
-  public List<Map<Variable, Symbol>> observeTubesOff2(Term state) throws TRADEException {
-    List<Map<Variable, Symbol>> tubesBroken = observeTubesOff(Factory.createPredicate("propertyOf(AREA,SIDE,NUMBER,off)"));
-    Variable area = Factory.createVariable("AREA");
-    Variable side = Factory.createVariable("SIDE");
-    Variable num = Factory.createVariable("NUMBER");
-
-    List<Map<Variable,Symbol>> results = new ArrayList<>();
-    Symbol stateTubeName = state.get(0);
-    for (Map<Variable, Symbol> tube : tubesBroken) {
-      Map<Variable,Symbol> solution = new HashMap<>();
-      Symbol fullTubeName = TubeNameHelpers.toFullTube(tube.get(area), tube.get(side), tube.get(num));
-      solution.put((Variable) stateTubeName, fullTubeName);
-      results.add(solution);
-    }
-
-    return results;
-  }
-
-  @TRADEService
-  @Observes({"propertyOf(AREA,SIDE,NUMBER,damaged(AMOUNT))"})
-  public List<Map<Variable, Symbol>> observeTubesDamaged(Term state) throws TRADEException {
-    List<Symbol> damagedTubes = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSpaceStationTubesDamaged").argTypes())
-            .call(List.class);
+    List<Symbol> damagedTubes = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSpaceStationTubesDamaged").argTypes(Symbol.class))
+              .call(List.class, currentArea);
 
     List<Map<Variable,Symbol>> results = getRelevantTubes(state, damagedTubes);
 
     // add damage amount to each damaged tube result
-    Symbol stateArea = state.get(0);
-    Symbol stateSide = state.get(1);
-    Symbol stateNum = state.get(2);
-    Symbol stateAmount = ((Term)state.get(3)).get(0);
     TRADEServiceInfo tubeHealthService = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSpaceStationTubeHealth").argTypes(Symbol.class));
     for (Map<Variable,Symbol> tube : results) {
       Symbol area = stateArea.isVariable() ? tube.get(stateArea) : stateArea;
@@ -143,19 +110,51 @@ public class MockUnityPR2Component extends DiarcComponent implements UnityPR2Int
   }
 
   @TRADEService
-  @Observes({"propertyOf(AREA,SIDE,NUMBER,broken)"})
-  public List<Map<Variable, Symbol>> observeTubesBroken(Term state) throws TRADEException {
-    List<Symbol> brokenTubes = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSpaceStationTubesBroken").argTypes())
-            .call(List.class);
+  @Action
+  @Condition(
+          condition={"amIn(?actor,!area)"},
+          type= ConditionType.PRE
+  )
+  @Observes({"propertyOf(tube(!area,!side,!number),broken)"})
+  public List<Map<Variable, Symbol>> observeTubesBroken(Symbol actor, Term state) throws TRADEException {
+
+    // clear old beliefs
+    // NOTE: technically broken tube facts don't need to be cleared because once a tube is broken, bc it stays broken forever,
+    //       but this will keep things consistent with damaged and off tubes, and more intuitive for users
+    TRADE.getAvailableService(new TRADEServiceConstraints().name("retractBelief").argTypes(Term.class))
+            .call(void.class, Factory.createPredicate("propertyOf(tube(A,S,N),broken)"));
+
+    // get current area, and only get results from that area
+    Symbol currentArea = getCurrentArea(actor);
+    if (currentArea == null) {
+      return null;
+    }
+    List<Symbol> brokenTubes = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSpaceStationTubesBroken").argTypes(Symbol.class))
+            .call(List.class, currentArea);
 
     return getRelevantTubes(state, brokenTubes);
   }
 
   @TRADEService
-  @Observes({"propertyOf(AREA,SIDE,NUMBER,off)"})
-  public List<Map<Variable, Symbol>> observeTubesOff(Term state) throws TRADEException {
-    List<Symbol> tubesOff = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSpaceStationTubesOff").argTypes())
-            .call(List.class);
+  @Action
+  @Condition(
+          condition={"amIn(?actor,!area)"},
+          type= ConditionType.PRE
+  )
+  @Observes({"propertyOf(tube(!area,!side,!number),off)"})
+  public List<Map<Variable, Symbol>> observeTubesOff(Symbol actor, Term state) throws TRADEException {
+
+    // clear old beliefs
+    TRADE.getAvailableService(new TRADEServiceConstraints().name("retractBelief").argTypes(Term.class))
+            .call(void.class, Factory.createPredicate("propertyOf(tube(A,S,N),off)"));
+
+    // get current area, and only get results from that area
+    Symbol currentArea = getCurrentArea(actor);
+    if (currentArea == null) {
+      return null;
+    }
+    List<Symbol> tubesOff = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSpaceStationTubesOff").argTypes(Symbol.class))
+            .call(List.class, currentArea);
 
     return getRelevantTubes(state, tubesOff);
   }
@@ -163,9 +162,10 @@ public class MockUnityPR2Component extends DiarcComponent implements UnityPR2Int
   private List<Map<Variable, Symbol>> getRelevantTubes(Term state, List<Symbol> tubes) {
     List<Map<Variable,Symbol>> results = new ArrayList<>();
     if (!tubes.isEmpty()) {
-      Symbol stateArea = state.get(0);
-      Symbol stateSide = state.get(1);
-      Symbol stateNum = state.get(2);
+      Term stateTube = (Term) state.get(0);
+      Symbol stateArea = stateTube.get(0);
+      Symbol stateSide = stateTube.get(1);
+      Symbol stateNum = stateTube.get(2);
 
 
       for (Symbol tube : tubes) {

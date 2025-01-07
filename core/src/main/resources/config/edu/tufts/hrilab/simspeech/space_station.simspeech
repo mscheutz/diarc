@@ -18,8 +18,12 @@ robot 1 check beta
 robot 1 check gamma
 ----------------------------
 robot 1 what tubes are damaged
+robot 1 what tubes are damaged in alpha
+robot 1 what tubes are damaged in beta
 robot 1 what tubes are broken
+robot 1 what tubes are broken in beta
 robot 1 what tubes are off
+robot 1 what tubes are off in beta
 ----------------------------
 robot 1 where are you
 robot 1 are you in beta

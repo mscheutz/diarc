@@ -112,12 +112,7 @@ import java.lang.Integer;
     }
 }
 
-() = handleITK["reply to itk semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?query, Symbol  ?semanticType) {
-    Predicate !defaultResponse;
-    java.util.List !beliefs;
-    java.lang.Boolean !retVal;
-    java.util.Map !firstBinding;
-    java.util.Set !queryVariables;
+() = handleITK["reply to itk semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?query, Symbol ?semanticType) {
     Predicate !knowsQuery;
     Symbol !queryActor;
 
@@ -129,50 +124,75 @@ import java.lang.Integer;
       // try to get into a state of knowing about ?query.
       !queryActor = act:getActorFromQuery(?query);
 
-      // form goal for ?actor to know ?query, so results can be relayed back to ?speaker
-      if (goal:knows(?actor,?query)) {
+     // form goal for ?actor to know ?query, so results can be relayed back to ?speaker
+     // attempt to perform action or observation (to populate belief) before looking up answer in belief
+      try {
+        goal:knows(?actor,?query);
         op:log("debug", "handleITK: knows goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?actor,?query)");
-      } elseif (goal:observe(?query)) {
+        act:generateITKResponse(?speaker, ?query, !knowsQuery);
+        return;
+      } catch (FAIL_NOTFOUND) {
+        op:log("debug", "handleITK: no knows() action found.");
+      }
+
+      try {
+        goal:observe(?query);
         op:log("debug", "handleITK: observation goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
-      } elseif (~op:isNull(!queryActor) && act:askAbout(!queryActor, ?query, !knowsQuery)) {
+        act:generateITKResponse(?speaker, ?query, !knowsQuery);
+        return;
+      } catch (FAIL_NOTFOUND) {
+        op:log("debug", "handleITK: no observer found.");
+      }
+
+      // attempt to ask another diarc agent about the query, else just look up in belier
+      if (~op:isNull(!queryActor) && act:askAbout(!queryActor, ?query, !knowsQuery)) {
         op:log("debug", "handleITK: askAbout goal succeeded.");
       } else {
         op:log("debug", "handleITK: knows and obs goal failed, just looking in belief.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
       }
 
-      // query belief for results
-      !beliefs = act:queryBelief(!knowsQuery);
-      op:log("debug", "Queried for ?query; result: !beliefs");
-
-      if (op:invokeMethod(!beliefs, "isEmpty")) {
-        !queryVariables = op:invokeMethod(?query, "getVars");
-        if (op:invokeMethod(!queryVariables, "isEmpty")) {
-          !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(no)");
-        } else {
-          !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
-        }
-
-        act:generateResponse(?speaker, !defaultResponse, direct);
-      } else {
-        !firstBinding = op:invokeMethod(!beliefs, "get", 0);
-        if (op:invokeMethod(!firstBinding, "isEmpty")) {
-
-          //performing verbosity check by querying listener expertise
-          !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "novice(?speaker)");
-          if (act:querySupport(!defaultResponse)) {
-            !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(yes,?query)");
-          } else {
-            !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(yes)");
-          }
-          act:generateResponse(?speaker, !defaultResponse, direct);
-        } else {
-          act:generateResponse(?speaker, ?query, !beliefs, direct);
-        }
-      }
+      act:generateITKResponse(?speaker, ?query, !knowsQuery);
     }
+}
+
+() = generateITKResponse(Symbol ?speaker, Predicate ?query, Predicate ?knowsQuery) {
+    Predicate !defaultResponse;
+    java.util.List !beliefs;
+    java.util.Map !firstBinding;
+    java.util.Set !queryVariables;
+
+  // query belief for results
+  !beliefs = act:queryBelief(?knowsQuery);
+  op:log("debug", "Queried for ?query; result: !beliefs");
+
+  if (op:invokeMethod(!beliefs, "isEmpty")) {
+    !queryVariables = op:invokeMethod(?query, "getVars");
+    if (op:invokeMethod(!queryVariables, "isEmpty")) {
+      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(no)");
+    } else {
+      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
+    }
+
+    act:generateResponse(?speaker, !defaultResponse, direct);
+  } else {
+    !firstBinding = op:invokeMethod(!beliefs, "get", 0);
+    if (op:invokeMethod(!firstBinding, "isEmpty")) {
+
+      //performing verbosity check by querying listener expertise
+      !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "novice(?speaker)");
+      if (act:querySupport(!defaultResponse)) {
+        !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(yes,?query)");
+      } else {
+        !defaultResponse = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "ack(yes)");
+      }
+      act:generateResponse(?speaker, !defaultResponse, direct);
+    } else {
+      act:generateResponse(?speaker, ?query, !beliefs, direct);
+    }
+  }
 }
 
 () = handleWantDefault["reply to want semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?state, Symbol ?semanticType) {

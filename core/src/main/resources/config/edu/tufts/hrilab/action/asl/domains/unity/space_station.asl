@@ -284,12 +284,12 @@ import edu.tufts.hrilab.action.justification.Justification;
     pre infer: not(repairing(?actor,X,Y,Z));
     pre infer: amIn(?actor,?area);
     pre infer: amAt(?actor,?side,?number);
-    pre obs : not(propertyOf(?area,?side,?number,broken));
-    pre obs : propertyOf(?area,?side,?number,damaged(!damageAmount));
-    pre obs : propertyOf(?area,?side,?number,off);
+    pre obs : not(propertyOf(tube(?area,?side,?number),broken));
+    pre obs : propertyOf(tube(?area,?side,?number),damaged(!damageAmount));
+    pre obs : propertyOf(tube(?area,?side,?number),off);
   }
   effects : {
-    success infer : not(propertyOf(?area,?side,?number,damaged(X)));
+    success infer : not(propertyOf(tube(?area,?side,?number),damaged(X)));
   }
 
   act:generateResponseFromString(!repairingMessageString);
@@ -327,13 +327,13 @@ import edu.tufts.hrilab.action.justification.Justification;
 
 () = initializeTrial () {
   effects : {
-    success: not(amIn(?actor,X));
-    success: not(amAt(?actor,X,Y));
-    success: not(lastIn(?actor,X));
+    success infer: not(amIn(?actor,X));
+    success infer: not(amAt(?actor,X,Y));
+    success infer: not(lastIn(?actor,X));
     success infer: not(repairing(?actor,X,Y,Z));
-    success infer: not(propertyOf(?actor,X,Y,damaged(Z)));
-    success infer: not(propertyOf(?actor,X,Y,off));
-    success infer: not(propertyOf(?actor,X,Y,broken));
+    success infer: not(propertyOf(TUBE,damaged(Z)));
+    success infer: not(propertyOf(TUBE,off));
+    success infer: not(propertyOf(TUBE,broken));
   }
   op:log("info", "State reset for ?actor");
 }
