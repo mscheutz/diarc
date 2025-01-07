@@ -792,7 +792,9 @@ grab; (C/REF)\AGENT ; #y#x.graspObject($y,$x)
 %%grab; (C/REF)\AGENT ; #x.graspObject($x)
 grab; C/REF ; #x.graspObject(?ADDRESSEE,$x)
 grab; ((C/REF)/PP)/REF ; #x#y#z.graspObject(?ADDRESSEE, $x,$y,$z)
+%%grab; (((C/REF)/PP)/REF)\AGENT ; ; #x.graspObject(?ADDRESSEE,$x)
 on; (REF\REF)/REF; #x#y.on($x,$y); MOD
+%%on; (?ADDRESSEE)/REF; #x#y.on($x,$y); MOD
 on; REF/REF ; #x.$x
 on; PP ; on
 table; THING

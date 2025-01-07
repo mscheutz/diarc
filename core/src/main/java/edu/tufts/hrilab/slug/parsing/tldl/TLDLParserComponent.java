@@ -409,6 +409,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       log.debug("possible foundEntries size: " + entries.size());
       //initialize new Node in the Parse space
       Node found = new Node(entries);
+      nodeCollection.add(found);
       //Try to combine the new Node with the rest of the current parse
       currentParse.addNode(found);
     }
@@ -468,7 +469,8 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         UtteranceType tTest = terminalCategories.get(nodeRule.syntax.type);
         Symbol mainSemanticsTest = fullSemanticsTest.remove(0);
         mainSemanticsTest = updateDirectAddress(mainSemanticsTest, interactor, listener, tTest);
-        mainSemanticsTest = updateSpeakerNames(mainSemanticsTest, addressHistory.get(Pair.of(interactor, listener)), interactor);
+        // mainSemanticsTest = updateSpeakerNames(mainSemanticsTest, addressHistory.get(Pair.of(interactor, listener)), interactor);
+        mainSemanticsTest = updateSpeakerNames(mainSemanticsTest, listener, interactor);
         List<Term> supplementalSemanticsTest = new ArrayList<>();
         for (Symbol semTest : fullSemanticsTest) {
           if (semTest.isTerm()) {
@@ -483,7 +485,8 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
         Utterance utteranceTest = new Utterance.Builder()
                 .setSpeaker(interactor)
-                .addListener(addressHistory.get(Pair.of(interactor, listener)))
+                // .addListener(addressHistory.get(Pair.of(interactor, listener)))
+                .addListener(listener)
                 .setSemantics(mainSemanticsTest)
                 .setSupplementalSemantics(supplementalSemanticsTest)
                 .setTierAssignments(POWERSemanticsTest.getRight())
@@ -570,27 +573,27 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         log.debug("utterance words: " + utterance.getWordsAsString());
 
         // NOTE: if we want to support multiple parse options, we should process
-        // the rest of the parse o
-        // ptions and add them to the Utterance before returning
+        // the rest of the parse options and add them to the Utterance before returning
 
-        // TODO: This is where we can add multiple parases to the chart
-        doChartParsing(utterance);
+        //This is where we do chart parsing to collection multiple parses at the end of the utterance
+        //TODO send partial semantics (e.g. "grab the mug") from "grab the mug on the table"
+        List<Utterance> final_parses = doChartParsing(utterance);
 
-        return utterance;
+        return final_parses.get(0);
       }
     }
     log.warn("tried to send incomplete semantics, nothing sent... " + possibleSemantics);
     return null;
   }
 
-  private void doChartParsing(Utterance utterance) {
+  private List<Utterance> doChartParsing(Utterance utterance) {
     log.debug("[doChartParsing] utterance: {}", utterance);
 
     LinkedList<Utterance> all_parses = new LinkedList();
     all_parses.add(utterance);
 
     //////////////////////////////////////////////////////////////////
-    // TESTING CHAR PARSING GIVEN WORDS, RULES, AND EXISITING METHODS
+    // TESTING CHART PARSING GIVEN WORDS, RULES, AND EXISTING METHODS
     // nodeCollection
     // TEST 1: TRY COMBINING
     ArrayList<List<NodeEntry>> masterNodeEntry = new ArrayList<>();
@@ -615,7 +618,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
     /////////////////////////////////////////////////////////////////////
     // Main parsing algorithm
-
 
     // Populate the chart based on the sentence and grammarRules
     for (int length = 1; length <= nodeCollection.size(); length++) {
@@ -697,7 +699,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     // Node n1 = new Node(this, partner, validCombinations);
     //ArrayList<NodeEntry> validcombinationsTest2 = NodeCollection.get(0).combineTest(themuglist.get(0));
 
-    log.info("MADE IT OUT OF LOOP");
     NodeEntry combination = null;
 
     List<Utterance> packetTest = new LinkedList<>();
@@ -713,35 +714,24 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
     List<Node> lastList = cellrow[cellrow.length - 1]; // Accessing the last list in the array
     Node lastElement = lastList.get(lastList.size() - 1);
+
+
     for (Node endParse : lastList) {
-      List<NodeEntry> syntaxrules = endParse.getRules();
-      for (NodeEntry nodeentry : syntaxrules) {
-        log.info(nodeentry.getSyntax());
-        if (nodeentry.getSyntax().length() == 1) {
-          //completeParses.add(nodeentry);
-          List<Entry> tempoentry = new ArrayList<>();
-          tempoentry.add(nodeentry);
-          Node completedNode = new Node(tempoentry);
-          completeParses.add(completedNode);
-          log.info("completed parse");
+      Utterance utTest = createUtterance(endParse, utterance.getSpeaker(), utterance.getAddressee());
+      packetTest.add(utTest);
+
+      //List<NodeEntry> rule = endParse.rules;
+
+      //if (rule.get(0).semantics.isComplete() && terminalCategories.get(rule.get(0).syntax.type) != null) {
+          //Pair<List<Symbol>, Map<Variable, Symbol>> DIARCSemantics = rule.get(0).semantics.getDIARCSemantics();
+          //List<Symbol> fullSemantics = DIARCSemantics.getLeft();
+          //log.debug("full semantics: " + fullSemantics);
+
+          //add to final list of parses
+          //packetTest.add(fullSemantics);
         }
-      }
 
-    }
-
-
-    for (Node ne : completeParses) {
-      //List<Node> cellContent = this.chart[1][endOfParse];
-      //Node arg1 = cellContent.get(0);
-
-      // get speaker
-      Symbol arg2 = utterance.getSpeaker();
-      // get lister
-      Symbol arg3 = utterance.getListeners().get(0);
-      // create new NLPacket with speaker, listener, and node
-      List<Utterance> parsesInNode = collectUtterances(ne, utterance, arg2, arg3);
-      packetTest.add(parsesInNode.get(0));
-    }
+    return packetTest;
 
     // END OF CHART PARSING
     //////////////////////////////////////////////////////////////////

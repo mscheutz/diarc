@@ -89,6 +89,62 @@ public class Node {
     }
   }
 
+  public Node reverseCombine(Node partner) {
+    List<NodeEntry> validCombinations = new ArrayList<>();
+    boolean reverse = false;
+    boolean ref = false;
+    for (NodeEntry current : this.rules) {
+      for (NodeEntry next : partner.rules) {
+        //cloning here so multiple trees can be built
+        NodeEntry currentClone = null;
+        NodeEntry nextClone = null;
+        try {
+          currentClone = isNull(current) ? null : current.clone();
+          nextClone = isNull(next) ? null : next.clone();
+        } catch (Exception e) {
+          log.error("Exception in cloning in combine. " + e);
+        }
+
+        NodeEntry combination = null;
+        if (!isNull(currentClone)) {
+          combination = currentClone.combine(nextClone);
+          if (currentClone.syntax.toString().endsWith(("REF")) &&
+                  nextClone.syntax.toString().equals("RN")) {
+            ref = true;
+          }
+
+          if (combination == null) {
+            combination = nextClone.combine(currentClone);
+            if (combination != null) {
+              reverse = true;
+            }
+          }
+        }
+        if (combination != null) validCombinations.add(combination);
+        log.debug("valid combinations size" + validCombinations.size());
+      }
+    }
+    if (!validCombinations.isEmpty()) {
+      if (reverse == true) {
+        return new Node(partner, this, validCombinations);
+      } else {
+        return new Node(this, partner, validCombinations);
+      }
+    } else if (ref == true && validCombinations.isEmpty()) {
+      String line = "the: REF/RN : #x.$x : DEFINITE";
+      String[] splitLine = line.split(":");
+      Entry e = new Entry(splitLine[0].trim(), new SyntacticRule(splitLine[1].trim()), new SemanticRule(splitLine[2].trim()), splitLine[3].trim());
+      List<Entry> temp = new ArrayList();
+      temp.add(e);
+      Node n = new Node(temp);
+      Node articleCombo = n.reverseCombine(partner);
+      return this.reverseCombine(articleCombo);
+    }
+
+    return null;
+
+  }
+
   public List<NodeEntry> combineTest(Node partner) {
     List<NodeEntry> validCombinations = new ArrayList<>();
 

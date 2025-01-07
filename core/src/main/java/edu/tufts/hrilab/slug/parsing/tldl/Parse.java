@@ -91,6 +91,34 @@ public class Parse {
     return retVal;
   }
 
+  public boolean addNodeReverse(Node n) {
+    boolean retVal = true;
+    //if tree is empty
+    if (inFocus.isEmpty()) {
+      inFocus.push(n);
+      log.debug("inFocus: " + inFocus.peek().label);
+      return retVal;
+    }
+    log.debug("inFocus: " + inFocus.peek().label);
+
+    Node combination = inFocus.peek().reverseCombine(n);
+
+    if (combination != null) {
+      log.debug("combination size " + combination.rules.size());
+    } else {
+      //log.debug("No valid combinations");
+    }
+
+    if (combination != null) {
+      inFocus.pop();
+      addNodeReverse(combination);
+    } else{
+      inFocus.push(n);
+      log.debug("inFocus: " + inFocus.peek().label);
+    }
+    return retVal;
+  }
+
   //checks if any of the current parses are a terminal case, but doesn't care which one
   public boolean checkTerminal() {
     if (!inFocus.isEmpty()) {
