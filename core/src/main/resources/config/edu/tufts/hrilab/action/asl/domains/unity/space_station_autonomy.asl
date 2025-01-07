@@ -44,8 +44,8 @@ import edu.tufts.hrilab.action.justification.Justification;
   act:generateResponseFromString("Starting autonomy action.");
 
   while (true) {
-    !isHighWorkload = act:isWorkloadAboveThreshold();
-//    !isHighWorkload = op:newObject("java.lang.Boolean", true); // for testing
+//    !isHighWorkload = act:isWorkloadAboveThreshold();
+    !isHighWorkload = op:newObject("java.lang.Boolean", true); // for testing
     !nextArea = act:getNextAreaToMonitor();
     act:monitor(!nextArea, ?isAdaptive, !isHighWorkload);
   }
@@ -185,6 +185,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   Symbol !side;
   Symbol !number;
 
+  Boolean !isTubeOff = false;
   long !currTime;
   long !nextMsgTime = 0;
   long !repeatMsgTime = 10000; // milliseconds
@@ -203,26 +204,28 @@ import edu.tufts.hrilab.action.justification.Justification;
   while (op:equals(!isTubeOff, false)) {
 
     // observe if tube is broken
-    if (obs:propertyOf(!area,!side,!number,broken)) {
+    if (obs:propertyOf(tube(!area,!side,!number),broken)) {
       act:generateResponseFromString("Tube !area !side !number is now broken. Resuming monitoring.");
       op:log("info", "Cannot repair !area !side !number because tube is broken (unity)");
       return;
     }
 
     // observe if tube is damaged
-    if (~obs:propertyOf(!area,!side,!number,damaged(X))) {
+    if (~obs:propertyOf(tube(!area,!side,!number),damaged(X))) {
       op:log("info", "Cannot repair !area !side !number because tube is not damaged (belief,unity)");
       return;
     }
 
     // observe if tube is off
-    if (~obs:propertyOf(!area,!side,!number,off)) {
+    if (~obs:propertyOf(tube(!area,!side,!number),off)) {
       !currTime = op:invokeStaticMethod("java.lang.System", "currentTimeMillis");
       if (op:gt(!currTime, !nextMsgTime)) {
         !nextMsgTime = op:invokeStaticMethod("java.lang.Long", "sum", !currTime, !repeatMsgTime);
         act:generateResponseFromString(!messageString);
         op:log("info", "Cannot repair !area !side !number because tube is not off (belief,unity)");
       }
+    } else {
+      !isTubeOff = op:newObject("java.lang.Boolean", true);
     }
   }
 
