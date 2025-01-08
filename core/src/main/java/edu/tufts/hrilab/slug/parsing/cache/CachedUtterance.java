@@ -93,6 +93,9 @@ public class CachedUtterance {
    * @return A list of Terms representing indirect semantics.
    */
   public List<Term> getIndirectSemantics () {
+    if (indirectSemantics == null) {
+      return new ArrayList<>();
+    }
     List<Term> indirectSemantics = new ArrayList<Term>();
     for (String indirectSemantic : this.indirectSemantics) {
       indirectSemantics.add(Factory.createPredicate(indirectSemantic));
@@ -101,6 +104,9 @@ public class CachedUtterance {
   }
 
   public List<? extends Term> getSupplementalSemantics() {
+    if (supplementalSemantics == null) {
+      return new ArrayList<>();
+    }
     List<Term> supplementalSemantics = new ArrayList<Term>();
     for (String supplementalSemantic : this.supplementalSemantics) {
       supplementalSemantics.add(Factory.createPredicate(supplementalSemantic));
@@ -109,6 +115,9 @@ public class CachedUtterance {
   }
 
   public Map<Variable, Symbol> getTierAssignments() {
+    if (tierAssignments == null) {
+      return new HashMap<>();
+    }
     HashMap<Variable, Symbol> tierAssignments = new HashMap<>();
     for (Map.Entry<String, String> entry : this.tierAssignments.entrySet()) {
       tierAssignments.put(new Variable(entry.getKey()), Factory.createSymbol(entry.getValue()));
@@ -122,6 +131,9 @@ public class CachedUtterance {
    * @return A list of bindings represented as maps of Variable to Symbol.
    */
   public List<Map<Variable, Symbol>> getBindings () {
+    if (bindings == null) {
+      return new ArrayList<>();
+    }
     List<Map<Variable, Symbol>> bindings = new ArrayList<Map<Variable, Symbol>>();
     for (Map<String, String> bindingStrings : this.bindings) {
       Map<Variable, Symbol> binding = new HashMap<Variable, Symbol>();
