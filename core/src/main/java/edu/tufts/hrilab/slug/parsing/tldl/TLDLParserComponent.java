@@ -65,6 +65,9 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   //chart
   public List<Node>[][] chart;
 
+  // Completed nodes (can inlude fragments and phrases) and full sentences
+  public List<Node> completedNodes = new ArrayList<>();
+
   // ADDED FOR GUI
   private boolean usingGUI = false;
   private int guiWidth = 1265;
@@ -628,6 +631,11 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
                       Node combinedNode = new Node(left, right, validCombinations);
                       // Potential spot to create utterance with node and send down the pipeline
                       // Make a decision to reset chart to continue parsing
+                      Node combinedNodeCopy = combinedNode.clone();
+                      completedNodes.add(combinedNodeCopy);
+
+
+
 
                       // Add the combined node to the chart
                       if (chart[start][end] == null) {

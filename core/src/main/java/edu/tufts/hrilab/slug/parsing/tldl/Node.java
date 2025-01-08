@@ -19,7 +19,7 @@ import static java.util.Objects.isNull;
 //Really all of the possible meanings of a parse should be kept in separate nodes in separate trees
 //so that different possible meanings can be associated with different possible parse structures,
 //and then we wouldn't need Parse.reviseParse/
-public class Node {
+public class Node implements Cloneable {
   private static Logger log = LoggerFactory.getLogger(Node.class);
 
   String label;
@@ -204,4 +204,28 @@ public class Node {
     rules.add(new NodeEntry(e, null, null));
   }
 
+  //@Override
+  public Node clone() throws CloneNotSupportedException {
+    Node clonedNode = (Node) super.clone();
+
+    // Deep copy the rules list
+    if (this.rules != null) {
+      clonedNode.rules = new ArrayList<>();
+      for (NodeEntry rule : this.rules) {
+        clonedNode.rules.add(rule.clone()); // NodeEntry already has a clone method
+      }
+    }
+
+    // Deep copy the ancestors (if needed)
+    if (this.lAncestor != null) {
+      clonedNode.lAncestor = this.lAncestor.clone();
+    }
+    if (this.rAncestor != null) {
+      clonedNode.rAncestor = this.rAncestor.clone();
+    }
+
+    return clonedNode;
+  }
 }
+
+
