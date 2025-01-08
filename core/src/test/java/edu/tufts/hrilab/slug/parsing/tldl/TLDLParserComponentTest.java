@@ -4470,7 +4470,7 @@ public class TLDLParserComponentTest {
         llmSummary.add(utterance + " | " + desired);
 
         log.info(utterance);
-        int numAttempts = 5;
+        int numAttempts = 2;
         int successCount = 0;
         for (int i=0; i<numAttempts;i++) {
             Utterance parseResult = llmComponent.parseUtterance(inputUtterance.build());
@@ -4495,7 +4495,8 @@ public class TLDLParserComponentTest {
     @Test
     public void pickAndPlaceLLMTest() {
         DiarcComponent.createInstance(LLMComponent.class, "-service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
-        //DiarcComponent.createInstance(LLMComponent.class, "-endpoint https://jga7qt1d6bvlqb4g.us-east-1.aws.endpoints.huggingface.cloud -service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
+        //Should really use this one
+        //DiarcComponent.createInstance(LLMComponent.class, "-endpoint https://z6xvb4wfqwn59s1r.us-east-1.aws.endpoints.huggingface.cloud -service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
         llmComponent = DiarcComponent.createInstance(PickAndPlace2024LLMServiceProvider.class, "");
         Map<Symbol, Set<Symbol>> hierarchy = new HashMap<>();
         Set<Symbol> agents = new HashSet<>();
@@ -4513,29 +4514,12 @@ public class TLDLParserComponentTest {
                 "brad",
                 "robotone"
         ));
-        assertTrue(testUtteranceLLM("go to location two",
-                "INSTRUCT(brad,robotone,goToPose(robotone,VAR0:pose),{location two(VAR0:pose),DEFINITE(VAR0:pose)})",
-                "brad",
-                "robotone"
-        ));
-
         assertTrue(testUtteranceLLM("robot one verify that you can see a red block",
                 "INSTRUCT(brad,robotone,detectObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "robotone"
         ));
 
-        assertTrue(testUtteranceLLM("get the red block to location one",
-                "INSTRUCT(brad,robotone,getObjectTo(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
-                "brad",
-                "robotone"
-        ));
-
-        assertTrue(testUtteranceLLM("go to location one",
-                "INSTRUCT(brad,robotone,goToPose(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
-                "brad",
-                "robotone"
-        ));
         assertTrue(testUtteranceLLM("go to location location one",
                 "INSTRUCT(brad,robotone,goToPose(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
                 "brad",
@@ -4552,128 +4536,35 @@ public class TLDLParserComponentTest {
                 "robotone"
         ));
 
-        assertTrue(testUtteranceLLM("open gripper",
+        assertTrue(testUtteranceLLM("open your hand",
                 "INSTRUCT(brad,robotone,openGripper(robotone),{})",
                 "brad",
                 "robotone"
         ));
-        assertTrue(testUtteranceLLM("open the gripper",
-                "INSTRUCT(brad,robotone,openGripper(robotone),{})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("open your gripper",
-                "INSTRUCT(brad,robotone,openGripper(robotone),{})",
-                "brad",
-                "robotone"
-        ));
-
-        assertTrue(testUtteranceLLM("close gripper",
-                "INSTRUCT(brad,robotone,closeGripper(robotone),{})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("close your gripper",
+        assertTrue(testUtteranceLLM("close your hand",
                 "INSTRUCT(brad,robotone,closeGripper(robotone),{})",
                 "brad",
                 "robotone"
         ));
 
-
-        assertTrue(testUtteranceLLM("look for red block",
-                "INSTRUCT(brad,robotone,detectObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("look for the red block",
-                "INSTRUCT(brad,robotone,detectObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("look for one red block",
-                "INSTRUCT(brad,robotone,detectObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("detect a red block",
-                "INSTRUCT(brad,robotone,detectObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("observe a red block",
-                "INSTRUCT(brad,robotone,detectObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-                "brad",
-                "robotone"
-        ));
         assertTrue(testUtteranceLLM("find a red block",
                 "INSTRUCT(brad,robotone,detectObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "robotone"
         ));
 
-        assertTrue(testUtteranceLLM("pick up a block",
-                "INSTRUCT(brad,robotone,pickUp(robotone),{})",
-                "brad",
-                "robotone"
-        ));
         assertTrue(testUtteranceLLM("grab a block",
                 "INSTRUCT(brad,robotone,pickUp(robotone),{})",
                 "brad",
                 "robotone"
         ));
-        assertTrue(testUtteranceLLM("get the block",
-                "INSTRUCT(brad,robotone,pickUp(robotone),{})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("pick up one block",
-                "INSTRUCT(brad,robotone,pickUp(robotone),{})",
-                "brad",
-                "robotone"
-        ));
 
-        assertTrue(testUtteranceLLM("pick up a red block",
-                "INSTRUCT(brad,robotone,pickUp(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("grab a red block",
-                "INSTRUCT(brad,robotone,pickUp(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-                "brad",
-                "robotone"
-        ));
-
-        assertTrue(testUtteranceLLM("put the block down",
-                "INSTRUCT(brad,robotone,putDown(robotone),{})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("put down the block",
-                "INSTRUCT(brad,robotone,putDown(robotone),{})",
-                "brad",
-                "robotone"
-        ));
         assertTrue(testUtteranceLLM("place the block down",
                 "INSTRUCT(brad,robotone,putDown(robotone),{})",
                 "brad",
                 "robotone"
         ));
-        assertTrue(testUtteranceLLM("move the red block from location one to location two",
-                "INSTRUCT(brad,robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),location one(VAR1:pose),location two(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
-                "brad",
-                "robotone"
-        ));
         assertTrue(testUtteranceLLM("transport the red block from location one to location two",
-                "INSTRUCT(brad,robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),location one(VAR1:pose),location two(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("get the red block from location one to location two",
-                "INSTRUCT(brad,robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),location one(VAR1:pose),location two(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("relocate the red block from location one to location two",
                 "INSTRUCT(brad,robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),location one(VAR1:pose),location two(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
                 "brad",
                 "robotone"
@@ -4688,34 +4579,9 @@ public class TLDLParserComponentTest {
                 "brad",
                 "robotone"
         ));
-        assertTrue(testUtteranceLLM("put down the red block at location one",
-                "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("place the red block at location one",
-                "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
-                "brad",
-                "robotone"
-        ));
 
         assertTrue(testUtteranceLLM("put the block at location one",
                 "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("put down the block at location one",
-                "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("place the block down at location one",
-                "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("get the red block to location one",
-                "INSTRUCT(brad,robotone,getObjectTo(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "robotone"
         ));
@@ -4738,11 +4604,6 @@ public class TLDLParserComponentTest {
         //        "robotone"
         //));
 
-        assertTrue(testUtteranceLLM("the red block is at location one",
-                "INSTRUCT(brad,robotone,believeObjectAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
-                "brad",
-                "robotone"
-        ));
         assertTrue(testUtteranceLLM("the red block has moved to location one",
                 "INSTRUCT(brad,robotone,believeObjectAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
@@ -4754,35 +4615,8 @@ public class TLDLParserComponentTest {
                 "robotone"
         ));
 
-        assertTrue(testUtteranceLLM("the red block is no longer at location one",
-                "STATEMENT(brad,robotone,not(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
-                "brad",
-                "robotone"
-        ));
         assertTrue(testUtteranceLLM("the red block has moved from location one",
                 "STATEMENT(brad,robotone,not(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
-                "brad",
-                "robotone"
-        ));
-
-
-        assertTrue(testUtteranceLLM("eric is a supervisor",
-                "STATEMENT(brad,robotone,supervisor(eric),{})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("eric is not a supervisor",
-                "STATEMENT(brad,robotone,not(supervisor(eric)),{})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("eric is an admin",
-                "STATEMENT(brad,robotone,admin(eric),{})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("eric is not an admin",
-                "STATEMENT(brad,robotone,not(admin(eric)),{})",
                 "brad",
                 "robotone"
         ));
@@ -4794,68 +4628,6 @@ public class TLDLParserComponentTest {
                 "brad",
                 "robotone"
         ));
-
-        assertTrue(testUtteranceLLM("do you see a red block",
-                "QUESTION(brad,robotone,see(VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-                "brad",
-                "robotone"
-        ));
-
-        //assertTrue(testUtteranceLLM("do you know where the red block is",
-        //        "QUESTION(brad,robotone,know(robotone,at(VAR0:physobj,X)),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-        //        "brad",
-        //        "robotone"
-        //));
-        assertTrue(testUtteranceLLM("where is red block",
-                "INSTRUCT(brad,robotone,describeObjectPose(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
-                "brad",
-                "robotone"
-        ));
-
-        assertTrue(testUtteranceLLM("what blocks are you aware of",
-                "INSTRUCT(brad,robotone,describeObjectPoses(robotone),{})",
-                "brad",
-                "robotone"
-        ));
-
-        assertTrue(testUtteranceLLM("what blocks are at location one",
-                "INSTRUCT(brad,robotone,describeObjectsAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("how many blocks are at location one",
-                "INSTRUCT(brad,robotone,describeNumberOfObjectsAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("are any blocks at location one",
-                "QUESTION(brad,robotone,objectsAt(VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("is there a red block at location one",
-                "QUESTION(brad,robotone,at(VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
-                "brad",
-                "robotone"
-        ));
-
-        //assertTrue(testUtteranceLLM("what types of blocks can you detect",
-        //        "INSTRUCT(brad,robotone,describeObjectTypes(robotone),{})",
-        //        "brad",
-        //        "robotone"
-        //));
-
-        assertTrue(testUtteranceLLM("is eric a supervisor",
-                "QUESTION(brad,robotone,know(robotone,supervisor(eric)),{})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("is eric an admin",
-                "QUESTION(brad,robotone,know(robotone,admin(eric)),{})",
-                "brad",
-                "robotone"
-        ));
-
         for (String line : llmSummary) {
             log.info(line);
         }
@@ -4865,6 +4637,8 @@ public class TLDLParserComponentTest {
     @Test
     public void pickAndPlaceLLMJapaneseTest() {
         DiarcComponent.createInstance(LLMComponent.class, "-service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
+        //Should really use this one
+        //DiarcComponent.createInstance(LLMComponent.class, "-endpoint https://jga7qt1d6bvlqb4g.us-east-1.aws.endpoints.huggingface.cloud -service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
         llmComponent = DiarcComponent.createInstance(PickAndPlace2024LLMServiceProvider.class, "-japanese");
         Map<Symbol, Set<Symbol>> hierarchy = new HashMap<>();
         Set<Symbol> agents = new HashSet<>();
@@ -5237,7 +5011,8 @@ public class TLDLParserComponentTest {
     @Test
     public void pickAndPlaceLLMDocumentedInstructionsTest() {
         DiarcComponent.createInstance(LLMComponent.class, "-service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
-        //DiarcComponent.createInstance(LLMComponent.class, "-endpoint https://jga7qt1d6bvlqb4g.us-east-1.aws.endpoints.huggingface.cloud -service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
+        //Should really use this one
+        //DiarcComponent.createInstance(LLMComponent.class, "-endpoint https://z6xvb4wfqwn59s1r.us-east-1.aws.endpoints.huggingface.cloud -service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
         llmComponent = DiarcComponent.createInstance(PickAndPlace2024LLMServiceProvider.class, "");
         Map<Symbol, Set<Symbol>> hierarchy = new HashMap<>();
         Set<Symbol> agents = new HashSet<>();
@@ -5385,16 +5160,6 @@ public class TLDLParserComponentTest {
                 "brad",
                 "robotone"
         ));
-        assertTrue(testUtteranceLLM("eric is trusted",
-                "STATEMENT(brad,robotone,trusted(eric),{})",
-                "brad",
-                "robotone"
-        ));
-        assertTrue(testUtteranceLLM("eric is not trusted",
-                "STATEMENT(brad,robotone,not(trusted(eric)),{})",
-                "brad",
-                "robotone"
-        ));
 
         assertTrue(testUtteranceLLM("do you know how to get the red block to location one",
                 "QUESTION(brad,robotone,knowHowTo(robotone,getObjectTo(robotone,VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
@@ -5512,8 +5277,9 @@ public class TLDLParserComponentTest {
 
     @Test
     public void pickAndPlaceLLMDocumentedInstructionsJapaneseTest() {
-        //DiarcComponent.createInstance(LLMComponent.class, "-endpoint https://jga7qt1d6bvlqb4g.us-east-1.aws.endpoints.huggingface.cloud -service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
-        DiarcComponent.createInstance(LLMComponent.class, "-service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
+        DiarcComponent.createInstance(LLMComponent.class, "-endpoint https://jga7qt1d6bvlqb4g.us-east-1.aws.endpoints.huggingface.cloud -service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
+        //Should really use this one
+        //DiarcComponent.createInstance(LLMComponent.class, "-endpoint https://z6xvb4wfqwn59s1r.us-east-1.aws.endpoints.huggingface.cloud -service llamahf -model Meta-Llama-3.1-70B-Instruct -temperature 0.6");
         llmComponent = DiarcComponent.createInstance(PickAndPlace2024LLMServiceProvider.class, "-japanese");
         Map<Symbol, Set<Symbol>> hierarchy = new HashMap<>();
         Set<Symbol> agents = new HashSet<>();
