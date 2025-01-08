@@ -578,6 +578,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         //This is where we do chart parsing to collection multiple parses at the end of the utterance
         //TODO send partial semantics (e.g. "grab the mug") from "grab the mug on the table"
         List<Utterance> final_parses = doChartParsing(utterance);
+        doChartParsingIncrementally(utterance);
 
         return final_parses.get(0);
       }
@@ -585,6 +586,102 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     log.warn("tried to send incomplete semantics, nothing sent... " + possibleSemantics);
     return null;
   }
+
+  private void addNodeToChart(Node newNode, int position) {
+    log.debug("[addNodeToChart] Adding new node at position {}: {}", position, newNode);
+
+    // Initialize the chart cell for the single token
+    if (chart[position][position] == null) {
+      chart[position][position] = new ArrayList<>();
+    }
+    chart[position][position].add(newNode);
+
+    // Expand the chart dynamically by combining the new node with existing nodes
+    for (int length = 1; length <= position + 1; length++) {
+      for (int start = position - length + 1; start >= 0; start--) {
+        int end = start + length - 1;
+
+        if (end != position) {
+          continue; // Skip ranges that don't include the new node
+        }
+
+        // Iterate over possible split points
+        for (int split = start; split < end; split++) {
+          List<Node> leftNodes = chart[start][split];
+          List<Node> rightNodes = chart[split + 1][end];
+
+          if (leftNodes != null && rightNodes != null) {
+            for (Node left : leftNodes) {
+              for (Node right : rightNodes) {
+                try {
+                  // Attempt to combine nodes
+                  List<NodeEntry> validCombinations = left.combineTest(right);
+
+                  // Check if there are valid combinations
+                  if (!validCombinations.isEmpty()) {
+                    //masterNodeEntry.add(validCombinations);
+
+                    try {
+                      log.debug("[addNodeToChart] Combining nodes: {} and {}", left, right);
+                      Node combinedNode = new Node(left, right, validCombinations);
+
+                      // Add the combined node to the chart
+                      if (chart[start][end] == null) {
+                        chart[start][end] = new ArrayList<>();
+                      }
+                      chart[start][end].add(combinedNode);
+                      log.debug("[addNodeToChart] Combined node added to chart: {}", combinedNode);
+                    } catch (Exception e) {
+                      log.error("[addNodeToChart] Error while creating combined node: {}", e.getMessage(), e);
+                    }
+                  } else {
+                    log.debug("[addNodeToChart] No valid combinations found for nodes: {} and {}", left, right);
+                  }
+                } catch (Exception e) {
+                  log.error("[addNodeToChart] Error during combineTest for nodes: {} and {}", left, right, e);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  public void doChartParsingIncrementally(Utterance input) {
+    List<Pair<String, List<Entry>>> tokens = dictionary.tokenize(input.getWords());
+    log.debug("[doChartParsingIncrementally] Tokenized input: {}", tokens);
+
+    // Initialize the chart for the first token
+    int tokenCount = tokens.size();
+    chart = new ArrayList[tokenCount][tokenCount];
+
+    // Process each token incrementally
+    for (int position = 0; position < tokens.size(); position++) {
+      String token = tokens.get(position).getLeft();
+      List<Entry> entries = tokens.get(position).getRight();
+
+      if (entries.isEmpty()) {
+        log.warn("[doChartParsingIncrementally] Unknown token: {}", token);
+        continue;
+      }
+
+      // Create a new node for the token and add it incrementally to the chart
+      Node newNode = new Node(entries);
+      log.debug("[doChartParsingIncrementally] Created new node: {}", newNode);
+
+      addNodeToChart(newNode, position);
+    }
+
+    // Retrieve final parses
+    List<Node> finalParses = chart[0][tokenCount - 1];
+    if (finalParses == null || finalParses.isEmpty()) {
+      log.warn("[doChartParsingIncrementally] No valid parses found.");
+    } else {
+      log.info("[doChartParsingIncrementally] Found {} complete parses.", finalParses.size());
+    }
+  }
+
 
   private List<Utterance> doChartParsing(Utterance utterance) {
     log.debug("[doChartParsing] utterance: {}", utterance);
@@ -723,13 +820,13 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       //List<NodeEntry> rule = endParse.rules;
 
       //if (rule.get(0).semantics.isComplete() && terminalCategories.get(rule.get(0).syntax.type) != null) {
-          //Pair<List<Symbol>, Map<Variable, Symbol>> DIARCSemantics = rule.get(0).semantics.getDIARCSemantics();
-          //List<Symbol> fullSemantics = DIARCSemantics.getLeft();
-          //log.debug("full semantics: " + fullSemantics);
+      //Pair<List<Symbol>, Map<Variable, Symbol>> DIARCSemantics = rule.get(0).semantics.getDIARCSemantics();
+      //List<Symbol> fullSemantics = DIARCSemantics.getLeft();
+      //log.debug("full semantics: " + fullSemantics);
 
-          //add to final list of parses
-          //packetTest.add(fullSemantics);
-        }
+      //add to final list of parses
+      //packetTest.add(fullSemantics);
+    }
 
     return packetTest;
 
