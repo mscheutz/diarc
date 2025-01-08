@@ -75,7 +75,7 @@ public class CacheDatabase {
       if (name!= null) {
         if(reverseCache && name.equals(defaultReverseCacheName)) {
           log.warn("The cache name \"" + defaultReverseCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
-        } else if (reverseCache && name.equals(defaultCacheName)) {
+        } else if (name.equals(defaultCacheName)) {
           log.warn("The cache name \"" + defaultCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
         }
       }
