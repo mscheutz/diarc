@@ -575,8 +575,9 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         // NOTE: if we want to support multiple parse options, we should process
         // the rest of the parse options and add them to the Utterance before returning
 
-        //This is where we do chart parsing to collection multiple parses at the end of the utterance
+        // This is where we do chart parsing to collection multiple parses at the end of the utterance
         //TODO send partial semantics (e.g. "grab the mug") from "grab the mug on the table"
+        //
         List<Utterance> final_parses = doChartParsing(utterance);
         doChartParsingIncrementally(utterance);
 
@@ -621,9 +622,12 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
                   if (!validCombinations.isEmpty()) {
                     //masterNodeEntry.add(validCombinations);
 
+                    // Need to catch node combination errors
                     try {
                       log.debug("[addNodeToChart] Combining nodes: {} and {}", left, right);
                       Node combinedNode = new Node(left, right, validCombinations);
+                      // Potential spot to create utterance with node and send down the pipeline
+                      // Make a decision to reset chart to continue parsing
 
                       // Add the combined node to the chart
                       if (chart[start][end] == null) {
@@ -649,6 +653,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   }
 
   public void doChartParsingIncrementally(Utterance input) {
+    List<Utterance> completeUtteranceNodes = new ArrayList<>();
     List<Pair<String, List<Entry>>> tokens = dictionary.tokenize(input.getWords());
     log.debug("[doChartParsingIncrementally] Tokenized input: {}", tokens);
 
@@ -671,6 +676,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       log.debug("[doChartParsingIncrementally] Created new node: {}", newNode);
 
       addNodeToChart(newNode, position);
+
     }
 
     // Retrieve final parses
