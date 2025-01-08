@@ -517,8 +517,13 @@ public final class Utterance implements Serializable {
     this.indirectSemantics = indirectSemantics;
   }
 
+  public void setTierAssignments(Map<Variable, Symbol> tierAssignments) {
+    this.tierAssignments = tierAssignments;
+  }
+
   public void addBinding(Map<Variable, Symbol> binding) {
     bindings.add(binding);
+    this.boundSemantics = null;
   }
 
   public void setBindings(List<Map<Variable, Symbol>> bindings) {
