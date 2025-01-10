@@ -14,41 +14,51 @@ import static edu.tufts.hrilab.slug.parsing.tldl.Entry.generateSyntaxes;
 
 public class Parse {
 
-  //Used to generate unique free variable IDs within a parse
-  private class VariableFactory {
-    int counter;
+  // Used to generate unique free variable IDs within a parse
+  private static class VariableFactory {
+    private int counter;
+
     VariableFactory() {
       counter = 0;
     }
 
     Variable getNewVariable(String type) {
-      Variable newVar = new Variable("VAR" + counter,type);
+      Variable newVar = new Variable("VAR" + counter, type);
       counter += 1;
       return newVar;
     }
   }
 
+  // Lazily initialized static VariableFactory
   private static VariableFactory variableFactory;
+
+  private static synchronized void ensureVariableFactoryInitialized() {
+    if (variableFactory == null) {
+      variableFactory = new VariableFactory();
+    }
+  }
 
   private Set<String> terminalCategories;
 
-  private Logger log = LoggerFactory.getLogger(this.getClass());
+  private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-  //The nodes occupying the parse space
-  //the top of the stack is the end of the utterance
-  private Stack<Node> inFocus;
+  // The nodes occupying the parse space
+  // the top of the stack is the end of the utterance
+  private final Stack<Node> inFocus;
 
   public Parse(Set<String> categories) {
-    variableFactory = new VariableFactory();
+    ensureVariableFactoryInitialized(); // Ensure variableFactory is initialized
     inFocus = new Stack<>();
     terminalCategories = categories;
   }
 
-  static Variable getNextVar() {
+  public static Variable getNextVar() {
+    ensureVariableFactoryInitialized(); // Ensure variableFactory is initialized
     return variableFactory.getNewVariable("");
   }
 
-  static Variable getNextVar(String type) {
+  public static Variable getNextVar(String type) {
+    ensureVariableFactoryInitialized(); // Ensure variableFactory is initialized
     return variableFactory.getNewVariable(type);
   }
 
@@ -60,11 +70,11 @@ public class Parse {
     return inFocus.peek();
   }
 
-  //Update the parse space with a new Node
+  // Update the parse space with a new Node
   public boolean addNode(Node n) {
     boolean retVal = true;
     log.debug("***adding node: " + n.label);
-    //if tree is empty
+    // If tree is empty
     if (inFocus.isEmpty()) {
       inFocus.push(n);
       log.debug("inFocus: " + inFocus.peek().label);
@@ -84,12 +94,13 @@ public class Parse {
       inFocus.pop();
       log.debug("root morpheme (for combining): " + combination.label);
       addNode(combination);
-    } else{
+    } else {
       inFocus.push(n);
       log.debug("inFocus: " + inFocus.peek().label);
     }
     return retVal;
   }
+
 
   public boolean addNodeReverse(Node n) {
     boolean retVal = true;

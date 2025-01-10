@@ -482,7 +482,7 @@ class SemanticRule implements Cloneable {
     List<Symbol> semBindings = new ArrayList<>();
     Map<Variable, Symbol> ghBindings = new LinkedHashMap<>();
 
-    //base cases
+    //base casesåç
     if (args.isEmpty()) {
       if (ghTier.equals("VAR")) {
 
