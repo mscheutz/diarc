@@ -129,7 +129,13 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       }
     }
 
-    // Replace the old chart with the expanded chart
+    // Initialize the new rows and columns for the expanded chart
+    for (int i = currentChartSize; i < newSize; i++) {
+      for (int j = 0; j < newSize; j++) {
+        newChart[i][j] = new ArrayList<>();
+      }
+    }
+
     chart = newChart;
     currentChartSize = newSize;
   }
@@ -146,14 +152,20 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       expandChart(words.size());
     }
 
+    log.debug("Chart size after expansion: {}", currentChartSize);
+
     // Use the incremental chart parsing logic
     doChartParsingWithDP(input);
 
     // Build a partially parsed Utterance based on the current state of the chart
-    return buildPartialUtterance(input);
+    Utterance partialUtterance = buildPartialUtterance(input);
+
+    log.debug("Partial Utterance after parsing: {}", partialUtterance);
+
+    return partialUtterance;
   }
 
-  private Utterance buildPartialUtterance(Utterance input) {
+  public Utterance buildPartialUtterance(Utterance input) {
     // Retrieve final parses from the chart
     List<Node> finalParses = chart[0][currentChartSize - 1];
     if (finalParses == null || finalParses.isEmpty()) {
@@ -182,39 +194,41 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     return parseIncrementally(input);
   }
 
+
+
   public void doChartParsingWithDP(Utterance input) {
     List<Pair<String, List<Entry>>> tokens = dictionary.tokenize(input.getWords());
     log.debug("[doChartParsingWithDP] Tokenized input: {}", tokens);
 
+    int startOffset = currentChartSize - tokens.size();
     int tokenCount = tokens.size();
-    if (chart == null || chart.length < tokenCount) {
-      log.error("[doChartParsingWithDP] Chart is not initialized or too small.");
-      return;
-    }
 
-    // Initialize chart with single-token spans
+    // Initialize chart cells for the new tokens
     for (int i = 0; i < tokenCount; i++) {
+      int chartIndex = startOffset + i;
       List<Entry> entries = tokens.get(i).getRight();
+
       if (entries.isEmpty()) {
         log.warn("[doChartParsingWithDP] Unknown token: {}", tokens.get(i).getLeft());
         continue;
       }
+
       Node node = new Node(entries);
-      if (chart[i][i] == null) {
-        chart[i][i] = new ArrayList<>();
+      if (chart[chartIndex][chartIndex] == null) {
+        chart[chartIndex][chartIndex] = new ArrayList<>();
       }
-      chart[i][i].add(node);
+      chart[chartIndex][chartIndex].add(node);
     }
 
-    // Fill the chart for longer spans
-    for (int span = 2; span <= tokenCount; span++) {
-      for (int start = 0; start <= tokenCount - span; start++) {
+    // Combine spans across the full chart (including old and new nodes)
+    for (int span = 2; span <= currentChartSize; span++) {
+      for (int start = 0; start <= currentChartSize - span; start++) {
         int end = start + span - 1;
+
         if (chart[start][end] == null) {
           chart[start][end] = new ArrayList<>();
         }
 
-        // Combine smaller spans to fill this span
         for (int split = start; split < end; split++) {
           List<Node> leftNodes = chart[start][split];
           List<Node> rightNodes = chart[split + 1][end];
@@ -225,26 +239,8 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
                 try {
                   List<NodeEntry> validCombinations = left.combineTest(right);
                   if (!validCombinations.isEmpty()) {
-                    try {
-
                     Node combinedNode = new Node(left, right, validCombinations);
-                    // Potential spot to create utterance with node and send down the pipeline
-                    // Make a decision to reset chart to continue parsing
-                    Node combinedNodeCopy = combinedNode.clone();
-                     //Create full utterance with completed node
-
-                    Utterance nodeUtterance = createUtterance(combinedNodeCopy, input.getSpeaker(), input.getAddressee());
-                    completedNodes.put(combinedNodeCopy, nodeUtterance);
-                      // Add the combined node to the chart
-                      if (chart[start][end] == null) {
-                        chart[start][end] = new ArrayList<>();
-                      }
-                      chart[start][end].add(combinedNode);
-                      log.debug("[addNodeToChart] Combined node added to chart: {}", combinedNode);
-
-
-                    } catch (Exception e) {  log.error("Error calling addUtteranceWL.");}
-
+                    chart[start][end].add(combinedNode);
                   }
                 } catch (Exception e) {
                   log.error("[doChartParsingWithDP] Error combining nodes: {}", e.getMessage(), e);
