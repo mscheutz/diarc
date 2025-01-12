@@ -69,8 +69,8 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
   //chart
   public List<Node>[][] chart;
-  private boolean isChartInitialized = false;
-  private int currentChartSize = 0;
+  public boolean isChartInitialized = false;
+  public int currentChartSize = 0;
 
 
 
@@ -115,6 +115,14 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   private void initializeChart(int initialSize) {
     currentChartSize = initialSize;
     chart = new ArrayList[initialSize][initialSize];
+  }
+
+  public boolean isChartInitialized() {
+    return isChartInitialized;
+  }
+
+  public int getCurrentChartSize() {
+    return currentChartSize;
   }
 
   // Expand the chart for incremental parsing
@@ -217,7 +225,13 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       if (chart[chartIndex][chartIndex] == null) {
         chart[chartIndex][chartIndex] = new ArrayList<>();
       }
-      chart[chartIndex][chartIndex].add(node);
+
+      // **Check for duplicates before adding**
+      if (!chart[chartIndex][chartIndex].contains(node)) {
+        chart[chartIndex][chartIndex].add(node);
+      } else {
+        log.debug("[doChartParsingWithDP] Duplicate node detected, skipping: {}", node.getLabel());
+      }
     }
 
     // Combine spans across the full chart (including old and new nodes)
@@ -240,7 +254,13 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
                   List<NodeEntry> validCombinations = left.combineTest(right);
                   if (!validCombinations.isEmpty()) {
                     Node combinedNode = new Node(left, right, validCombinations);
-                    chart[start][end].add(combinedNode);
+
+                    // **Check for duplicates before adding**
+                    if (!chart[start][end].contains(combinedNode)) {
+                      chart[start][end].add(combinedNode);
+                    } else {
+                      log.debug("[doChartParsingWithDP] Duplicate combined node detected, skipping: {}", combinedNode.getLabel());
+                    }
                   }
                 } catch (Exception e) {
                   log.error("[doChartParsingWithDP] Error combining nodes: {}", e.getMessage(), e);
