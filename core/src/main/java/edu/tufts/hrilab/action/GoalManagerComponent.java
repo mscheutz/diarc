@@ -691,7 +691,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Action
   @TRADEService
   public List<Goal> getCurrentGoals(Goal queryGoal) {
-    return em.getCurrentGoals();
+    return em.getCurrentGoals(queryGoal);
   }
 
   /**

@@ -38,8 +38,8 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
   private String agentName = "robot1";
   private int players = 1;
   private String goalManagerArgs;
-  private boolean startAutonomy = false;
-  private boolean adaptiveAutonomy = false;
+  private boolean startAutonomy = true;
+  private boolean adaptiveAutonomy = true;
 
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();

@@ -352,6 +352,8 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     java.util.List !goals;
     Goal !goal;
     java.lang.Long !goalId;
+    op:log("debug", "[cancelGoal] Looking for goal: ?goalPredicate");
+
 
     !goals = act:getGoal(?goalPredicate);
     if (~op:isEmpty(!goals)) {
@@ -400,9 +402,12 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     Predicate !mostRecentGoalPred;
     Goal !queryGoal;
     Goal !goal;
+    op:log("debug", "[getGoal] Looking for goal: ?goalPredicate.");
+
 
     !mostRecentGoalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goal(mostRecent)");
     if (op:equals(?goalPredicate, !mostRecentGoalPred)) {
+      op:log("debug", "[getGoal] Equals most recent.");
       // find 3rd most recently submitted goal (this goal will be the most recent
       // goal that isn't this cancel goal or a dialogue goal)
       //          BEFORE goal submission. Change back if changing that (in achieveState in handleSemantics.asl)
@@ -415,6 +420,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
         }
     } else {
       // find matching goal
+      op:log("debug", "[getGoal] Looking for match.");
       !queryGoal = op:newObject("edu.tufts.hrilab.action.goal.Goal", ?goalPredicate);
       ?goals = act:getCurrentGoals(!queryGoal);
     }
