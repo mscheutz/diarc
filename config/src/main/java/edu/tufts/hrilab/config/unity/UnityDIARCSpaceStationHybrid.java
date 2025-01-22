@@ -78,12 +78,10 @@ public class UnityDIARCSpaceStationHybrid {
       goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -goal autonomy(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station.asl domains/unity/space_station_autonomy.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
     }
 
+
+
+    // Language
     DiarcComponent.createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict  -tldlNoUpdateAddressee -llm -llmService spaceStationLLMParser -noConfirmation -cache -cacheName unity_space_station"); //
-
-    DiarcComponent.createInstance(MapComponent.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
-    DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:" + agentName + " -point_dist_thresh 0.5");
-    DiarcComponent.createInstance(TFComponent.class, " -groups agent:"  + agentName);
-
     DiarcComponent.createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     DiarcComponent.createInstance(ReferenceResolutionComponent.class, "");
     DiarcComponent.createInstance(DialogueComponent.class, "");
@@ -93,6 +91,12 @@ public class UnityDIARCSpaceStationHybrid {
 
     DiarcComponent.createInstance(LLMComponent.class, "-groups agent:" + agentName + " -service llama -model 7B -endpoint " + llmEndpoint + " -stopwords }");
 
+    // PR2s
+    DiarcComponent.createInstance(MapComponent.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
+    DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:" + agentName + " -point_dist_thresh 0.5");
+    DiarcComponent.createInstance(TFComponent.class, " -groups agent:"  + agentName);
+
+    // Unity
     DiarcComponent.createInstance(UnityComponent.class, "-unityip " + unityIP  + " -unityport " + unityPort + " -groups agent:"  + agentName);
     DiarcComponent.createInstance(UnitySpaceStationComponent.class, "-agent spacestation -groups agent:"  + agentName);
     DiarcComponent.createInstance(UnitySpaceStationLLM.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");
