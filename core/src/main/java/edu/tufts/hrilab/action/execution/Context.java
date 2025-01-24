@@ -18,6 +18,7 @@ import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.EventSpec;
 import edu.tufts.hrilab.action.execution.control.AsynchronousContext;
+import edu.tufts.hrilab.action.execution.control.NoInterruptContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.state.StateMachine;
@@ -130,6 +131,11 @@ public abstract class Context {
    * context.
    */
   protected ActionConstraints constraints;
+
+  /**
+   * Whether execution of the current context can be interrupted by suspension/cancellation
+   */
+  private Boolean interruptible = null;
 
   /**
    * Context constructor.
@@ -739,6 +745,22 @@ public abstract class Context {
     } finally {
       statusLock.unlock();
     }
+  }
+
+  protected boolean hasNoInterruptAncestor() {
+    if (this.caller == null) {
+      return false;
+    } else if (this.caller instanceof NoInterruptContext) {
+      return true;
+    }
+    return this.caller.hasNoInterruptAncestor();
+  }
+
+  public boolean isInterruptible() {
+    if (interruptible == null) {
+      interruptible = !hasNoInterruptAncestor();
+    }
+    return interruptible;
   }
 
   /**

@@ -473,7 +473,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
       // main execution loop (wrapped in suspend/resume logic)
       while (!this.goal.getStatus().isTerminated()) {
-        if (suspended.get()) {
+        if (suspended.get() && (currentStep == null || currentStep.isInterruptible())) {
           // suspend logic
           suspendLock.lock();
           try {
@@ -518,9 +518,9 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       // because the cancel/suspend hooks happens asynchronously to the main execution loop, it's possible the currentStep
       // already has a terminal status in the calls to cancel/suspend (and can't be cancelled/suspended). This ensures
       // the cancel/suspend is set on the nextStep and propagated up/down the context tree
-      if (suspended.get() && nextStep != null && nextStep.getStatus() != ActionStatus.SUSPEND) {
+      if (suspended.get() && nextStep != null && nextStep.getStatus() != ActionStatus.SUSPEND && nextStep.isInterruptible()) {
         nextStep.setStatus(ActionStatus.SUSPEND);
-      }  else if (canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL) {
+      }  else if (canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL && nextStep.isInterruptible()) {
         nextStep.setStatus(ActionStatus.CANCEL);
       }
 
@@ -557,7 +557,11 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         suspended.set(true);
       } else {
         suspended.set(true);
-        currentStep.setStatus(ActionStatus.SUSPEND);
+        // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
+        // have the next step's status be updated.
+        if (currentStep.isInterruptible() && currentStep.isAction() && ((ActionContext)currentStep).getDBE().hasOnSuspendEvent()) {
+          currentStep.setStatus(ActionStatus.SUSPEND);
+        }
       }
     } finally {
       currentStepLock.unlock();
@@ -619,7 +623,11 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       } else {
         // in normal operation
         canceled.set(true);
-        currentStep.setStatus(ActionStatus.CANCEL);
+        // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
+        // have the next step's status be updated.
+        if (currentStep.isInterruptible() && currentStep.isAction() && ((ActionContext)currentStep).getDBE().hasOnCancelEvent()) {
+          currentStep.setStatus(ActionStatus.CANCEL);
+        }
       }
     } finally {
       currentStepLock.unlock();

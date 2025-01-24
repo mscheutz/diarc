@@ -927,4 +927,14 @@ public interface ASLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitJoinStatement(ASLParser.JoinStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ASLParser#noInterruptStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ASLParser#noInterruptStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx);
 }

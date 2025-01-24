@@ -1116,6 +1116,18 @@ public class ASLBaseListener implements ASLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitJoinStatement(ASLParser.JoinStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

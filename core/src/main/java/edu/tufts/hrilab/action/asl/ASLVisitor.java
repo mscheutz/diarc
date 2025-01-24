@@ -562,4 +562,10 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitJoinStatement(ASLParser.JoinStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ASLParser#noInterruptStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNoInterruptStatement(ASLParser.NoInterruptStatementContext ctx);
 }
