@@ -258,14 +258,14 @@ public abstract class Context {
       // (2) when overall conditions fail
       if (actionStatus.isFailure() || actionStatus == ActionStatus.CANCEL) {
         childContexts.forEach(child -> {
-          if (child.getStatus() != ActionStatus.INITIALIZED && !child.isTerminated()) {
+          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.PARENT_CANCELED && !child.isTerminated()) {
               child.setStatus(ActionStatus.CANCEL);
           }
         });
       } else if (actionStatus == ActionStatus.SUSPEND) {
         // propagate SUSPEND down the tree to any running children (e.g., async)
         childContexts.forEach(child -> {
-          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.SUSPEND && !child.isTerminated()) {
+          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.SUSPEND && child.getStatus() != ActionStatus.PARENT_SUSPENDED && !child.isTerminated()) {
               child.setStatus(ActionStatus.SUSPEND);
           }
         });
@@ -401,10 +401,16 @@ public abstract class Context {
     Context next = null;
     if (getStatus() == ActionStatus.RESUME) {
       // check if any child context(s) are suspended (and need to be resumed)
-      int suspendedChildIdx = childContexts.findFirstIndexOf(child -> child.getStatus() == ActionStatus.SUSPEND);
+      int suspendedChildIdx = childContexts.findFirstIndexOf(child -> child.getStatus() == ActionStatus.SUSPEND || child.getStatus() == ActionStatus.PARENT_SUSPENDED);
       if (suspendedChildIdx >= 0) {
-        // suspended child found -- set as next child, and set status to RESUME
-        childContexts.get(suspendedChildIdx).setStatus(ActionStatus.RESUME);
+        Context childContext = childContexts.get(suspendedChildIdx);
+        if (childContext.getStatus() == ActionStatus.SUSPEND) {
+          // suspended child found -- set as next child, and set status to RESUME
+          childContext.setStatus(ActionStatus.RESUME);
+        } else {
+          // child which never began execution found -- set as next child, and set status to INITIALIZED
+          childContext.setStatus(ActionStatus.INITIALIZED);
+        }
         childContexts.setNextIndex(suspendedChildIdx);
       } else {
         // no suspended children, continue normal execution

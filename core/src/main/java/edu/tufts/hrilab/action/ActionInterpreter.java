@@ -519,9 +519,9 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       // already has a terminal status in the calls to cancel/suspend (and can't be cancelled/suspended). This ensures
       // the cancel/suspend is set on the nextStep and propagated up/down the context tree
       if (suspended.get() && nextStep != null && nextStep.getStatus() != ActionStatus.SUSPEND && nextStep.isInterruptible()) {
-        nextStep.setStatus(ActionStatus.SUSPEND);
+        nextStep.setStatus(ActionStatus.PARENT_SUSPENDED);
       }  else if (canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL && nextStep.isInterruptible()) {
-        nextStep.setStatus(ActionStatus.CANCEL);
+        nextStep.setStatus(ActionStatus.PARENT_CANCELED);
       }
 
       // update current step
