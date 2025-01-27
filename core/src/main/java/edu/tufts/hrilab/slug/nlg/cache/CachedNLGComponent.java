@@ -1,0 +1,56 @@
+package edu.tufts.hrilab.slug.nlg.cache;
+
+import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.interfaces.NLGInterface;
+import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.parsing.cache.CacheDatabase;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class CachedNLGComponent extends DiarcComponent implements NLGInterface {
+    private String name = null;
+    private String[] loadPaths = null;
+    private boolean persist = false;
+    private CacheDatabase database;
+
+    @Override
+    protected List<Option> additionalUsageInfo() {
+        List<Option> options = new ArrayList<>();
+        options.add(Option.builder("name").hasArg().argName("string").desc("Name of cached dictionary to store").build());
+        options.add(Option.builder("load").hasArgs().argName("file").desc("Name of cached dictionary to load, can have multiple").build());
+        options.add(Option.builder("persist").argName("boolean").desc("Whether to persist cache in a named file").build());
+        return options;
+    }
+
+    @Override
+    protected void parseArgs(CommandLine cmdLine) {
+        if (cmdLine.hasOption("name")) {
+            name = cmdLine.getOptionValue("name");
+        }
+        if (cmdLine.hasOption("load")) {
+            loadPaths = cmdLine.getOptionValues("load");
+        }
+        if (cmdLine.hasOption("persist")) {
+            persist = true;
+        }
+    }
+
+    @Override
+    protected void init () {
+        database = new CacheDatabase(name, loadPaths, persist, true, "English");
+    }
+
+    @Override
+    public Utterance convertSemanticsToText(Utterance u) {
+        return database.get(u);
+    }
+
+    @TRADEService
+    public void addEntryToCache(Utterance entry) {
+        database.add(entry);
+    }
+}

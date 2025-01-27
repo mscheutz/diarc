@@ -55,7 +55,7 @@ public class CacheDatabaseTest {
 
   @Test
   public void tableTest() {
-    database = new CacheDatabase ("cache-database-test", null, false);
+    database = new CacheDatabase ("cache-database-test", null, false, false, "English");
     assertTrue(database != null);
     log.info("Database exists after construction");
     //assertTrue(InsertTest("matt", "ava", "go home"));
