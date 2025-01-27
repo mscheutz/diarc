@@ -36,17 +36,21 @@ public class CachedUtterance {
   public String semantics = null; //Symbol
   //public List<String> boundSemantics = null; //List<Term>
   public List<String> indirectSemantics = new ArrayList<>(); //List<Term>
-  //public List<String> supplementalSemantics = new ArrayList<>(); //List<Term>
+  public List<String> supplementalSemantics = new ArrayList<>(); //List<Term>
   private List<Map<String, String>> bindings = new ArrayList<>(); //List<Map<Variable, Symbol>>
-  //private Map<Variable, Symbol> tierAssignments = new LinkedHashMap<>();
+  private Map<String, String> tierAssignments = new HashMap<>();
   //private String language = "en";
   //private Map<String,List<String>> translations = new HashMap<>();
 
-  public CachedUtterance (List<String> words, UtteranceType type, Symbol semantics, List<Term> indirectSemantics, List<Map<Variable, Symbol>> bindings) {
+  public CachedUtterance (List<String> words, UtteranceType type, Symbol semantics, List<Term> indirectSemantics, List<Map<Variable, Symbol>> bindings, List<Term> supplementalSemantics, Map<Variable,Symbol> tierAssignments) {
     this.words = words;
     this.type = type.toString();
     this.semantics = semantics.toString();
     this.indirectSemantics = new ArrayList<String>();
+    this.supplementalSemantics = supplementalSemantics.stream().map(Term::toString).toList();
+    this.tierAssignments = new HashMap<>();
+
+
 
     for (Symbol indirectSemantic : indirectSemantics) {
       this.indirectSemantics.add(indirectSemantic.toString());
@@ -58,6 +62,10 @@ public class CachedUtterance {
         bindingStrings.put(entry.getKey().toString(), entry.getValue().toString());
       }
       this.bindings.add(bindingStrings);
+    }
+
+    for (Map.Entry<Variable, Symbol> entry : tierAssignments.entrySet()) {
+      this.tierAssignments.put(entry.getKey().toString(), entry.getValue().toString());
     }
   }
 
@@ -85,11 +93,36 @@ public class CachedUtterance {
    * @return A list of Terms representing indirect semantics.
    */
   public List<Term> getIndirectSemantics () {
+    if (indirectSemantics == null) {
+      return new ArrayList<>();
+    }
     List<Term> indirectSemantics = new ArrayList<Term>();
     for (String indirectSemantic : this.indirectSemantics) {
       indirectSemantics.add(Factory.createPredicate(indirectSemantic));
     }
     return indirectSemantics;
+  }
+
+  public List<? extends Term> getSupplementalSemantics() {
+    if (supplementalSemantics == null) {
+      return new ArrayList<>();
+    }
+    List<Term> supplementalSemantics = new ArrayList<Term>();
+    for (String supplementalSemantic : this.supplementalSemantics) {
+      supplementalSemantics.add(Factory.createPredicate(supplementalSemantic));
+    }
+    return supplementalSemantics;
+  }
+
+  public Map<Variable, Symbol> getTierAssignments() {
+    if (tierAssignments == null) {
+      return new HashMap<>();
+    }
+    HashMap<Variable, Symbol> tierAssignments = new HashMap<>();
+    for (Map.Entry<String, String> entry : this.tierAssignments.entrySet()) {
+      tierAssignments.put(new Variable(entry.getKey()), Factory.createSymbol(entry.getValue()));
+    }
+    return tierAssignments;
   }
 
   /**
@@ -98,6 +131,9 @@ public class CachedUtterance {
    * @return A list of bindings represented as maps of Variable to Symbol.
    */
   public List<Map<Variable, Symbol>> getBindings () {
+    if (bindings == null) {
+      return new ArrayList<>();
+    }
     List<Map<Variable, Symbol>> bindings = new ArrayList<Map<Variable, Symbol>>();
     for (Map<String, String> bindingStrings : this.bindings) {
       Map<Variable, Symbol> binding = new HashMap<Variable, Symbol>();

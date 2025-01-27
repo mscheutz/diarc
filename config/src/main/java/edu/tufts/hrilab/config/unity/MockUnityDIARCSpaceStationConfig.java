@@ -15,6 +15,7 @@ import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
+import edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent;
 import edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent;
 import edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
@@ -86,7 +87,8 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(ReferenceResolutionComponent.class);
     createInstance(DialogueComponent.class);
-    createInstance(SimpleNLGComponent.class, "-modifierService spaceStationModifyNLG");
+    //createInstance(SimpleNLGComponent.class, "-modifierService spaceStationModifyNLG");
+    createInstance(HybridNLGComponent.class, "");
     createInstance(UnitySpaceStationNLGComponent.class);
 
     createInstance(MapComponent.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");

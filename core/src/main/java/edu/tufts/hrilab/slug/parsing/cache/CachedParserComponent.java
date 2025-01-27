@@ -46,7 +46,7 @@ public class CachedParserComponent extends DiarcComponent implements NLUInterfac
 
   @Override
   protected void init () {
-    database = new CacheDatabase(name, loadPaths, persist);
+    database = new CacheDatabase(name, loadPaths, persist, false, "English");
   }
 
   /**
