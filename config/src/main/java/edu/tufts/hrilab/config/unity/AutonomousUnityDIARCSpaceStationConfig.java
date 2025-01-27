@@ -80,11 +80,6 @@ public class AutonomousUnityDIARCSpaceStationConfig {
       players = Integer.parseInt(largs.get(largs.indexOf("-players") + 1));
     }
 
-    String goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm_" + agentName + ".pl -dbfile domains/unity/space_station.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
-    if (largs.contains("-autonomy")) {
-      goalManagerArgs = "-goal listen(self:agent) -goal initializeTrial(" + agentName + ":agent) -goal autonomy(" + agentName + ":agent) -beliefinitfile unity/pr2UnityTeam_smm.pl -dbfile domains/unity/space_station.asl domains/unity/space_station_autonomy.asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl";
-    }
-
     // Language
     DiarcComponent.createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict -tldlNoUpdateAddressee -patternMatching -matcher SpaceStationPatternMatcher -parsingSequence pattern tldl");
     DiarcComponent.createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
@@ -122,7 +117,7 @@ public class AutonomousUnityDIARCSpaceStationConfig {
     }
 
 
-    goalManagerArgs = "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
+    String goalManagerArgs = "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
             "-priorityFile default.json space_station_priority.json " +
             "-goal listen(self) " +
             "-goal initializeTrial(" + agentName + ") " +
