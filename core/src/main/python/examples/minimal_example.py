@@ -26,19 +26,7 @@ if __name__ == '__main__':
     logging.info("This will show up in Java output")
 
     wrapper = TRADEWrapper()
-    wrapper.spin()
     dummyObject = dummyWrapper()
     TRADE.registerAllServices(dummyObject, "")
     time.sleep(1)
-    logging.info(TRADE.getAvailableServices())
-    wrapper.call_trade("undock", )
-
-    # Todo: Figure out how to make this work, and move it into spin
-    # while True:
-    #     # user_input = sys.stdin.readline()
-    #     user_input = input()
-    #     logging.info(user_input)
-    #     if user_input == "shutdown":
-    #         wrapper.stop()  # Stop the program on receiving "shutdown"
-    #         break
-    #     time.sleep(1)
+    wrapper.call_trade("undock")

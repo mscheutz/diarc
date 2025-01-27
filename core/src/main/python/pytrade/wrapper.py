@@ -11,7 +11,7 @@ from jpype import JObject
 from pytrade.java_util import to_java_class, convert_to_java_object
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-logging.info("This will show up in Java output")
+logging.info("Starting PyTRADE")
 
 # Todo: Should we still allow user specified jars?
 try:
@@ -29,35 +29,9 @@ else:
 
 class TRADEWrapper:
 
-    # Threading methods
-    # def __init__(self):
-    #     self.running = threading.Event()
-    #     self.running.set()  # Allow the thread to run
-    #
-    # def _spin(self):
-    #     while self.running.is_set():
-    #         time.sleep(1)  # Simulate some work
-    #
-    # def spin(self):
-    #     """
-    #     Launches a background process that spins until the parent process exits
-    #     :return:
-    #     """
-    #     self.thread = threading.Thread(target=self._spin, daemon=True)
-    #     self.thread.start()
-    #
-    # def stop(self):
-    #     """
-    #     Manually stops the background process
-    #     :return:
-    #     """
-    #     self.running.clear()  # Stop the loop
-    #     self.thread.join()  # Wait for the thread to finish
-
-    def call_trade(self, name: str, *args) -> JObject:
-        return self.call_trade(name, [], args)
-
-    def call_trade(self, name: str, groups: list[str], *args) -> JObject:
+    def call_trade(self, name: str, groups: list[str] = None, *args) -> JObject:
+        if groups is None:
+            groups = []
         """
         Calls a generic TRADE service. Name is the name of the service, argv is vararg arguments.
 

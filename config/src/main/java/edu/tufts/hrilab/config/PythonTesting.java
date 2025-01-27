@@ -20,5 +20,6 @@ public class PythonTesting extends DiarcConfiguration {
                     "-asl kinova/kinova_examples.asl ");
     String file = "examples.minimal_example";
     PythonWrapper wrapper = new PythonWrapper(file);
+    wrapper.start();
   }
 }
