@@ -1,9 +1,10 @@
-package edu.tufts.hrilab.slug.parsing.cache;
+package edu.tufts.hrilab.slug.nlg.cache;
 
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.slug.common.UtteranceType;
+import edu.tufts.hrilab.slug.parsing.cache.CachedUtterance;
 
 import java.util.List;
 import java.util.Map;

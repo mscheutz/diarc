@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.slug.parsing.cache;
 
+import edu.tufts.hrilab.slug.nlg.cache.ReverseCachedUtterance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
@@ -17,11 +18,7 @@ import java.sql.PreparedStatement;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.HashMap;
 import java.util.Map;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,7 +29,6 @@ import java.net.URL;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.fol.Term;
