@@ -21,7 +21,6 @@ import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.NLPacket;
 
 import edu.tufts.hrilab.action.justification.Justification;
-Res
 /**
  * AUTONOMY BEHAVIORS
  **/
