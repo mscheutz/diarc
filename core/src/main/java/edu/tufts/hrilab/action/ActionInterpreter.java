@@ -70,17 +70,12 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   private AtomicBoolean canceled = new AtomicBoolean(false);
 
   /**
-   * Flag for canceling this ActionInterpreter.
-   */
-  private AtomicBoolean shouldCancel = new AtomicBoolean(false);
-
-  /**
    * Class for handling action execution.
    */
   private StepExecution stepExecution;
 
   /**
-   * Listeners. Need to be notified when execution status changes.
+   * ActionListeners (i.e., Context listeners). Need to be notified when execution step changes.
    */
   private List<ActionListener> listeners = new ArrayList<>();
 

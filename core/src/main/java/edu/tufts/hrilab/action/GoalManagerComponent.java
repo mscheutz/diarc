@@ -985,8 +985,8 @@ public class GoalManagerComponent extends DiarcComponent {
       }
       em.shutdown();
     }
-    ActionSelector.destroyInstance();
     Database.destroyInstance();
+    ActionSelector.destroyInstance();
   }
 
 }

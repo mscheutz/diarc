@@ -146,9 +146,9 @@ public class ExecutionManager implements ActionListener {
   private StateMachine sm;
 
   /**
-   * External components to be notified of action and associated step progress
+   * External components to be notified of action execution step progress
    */
-  private List<ActionListener> aiListeners;
+  private List<ActionListener> aiListeners = new ArrayList<>();
 
   private boolean displayActionLearningGui = false;
 
@@ -158,8 +158,6 @@ public class ExecutionManager implements ActionListener {
   protected void init(StateMachine sm, RootContext rootContext, Collection<String> groups) {
     this.sm = sm;
     this.rootContext = rootContext;
-
-    aiListeners = new ArrayList<>();
 
     //TODO:brad: prune based on context size not time
     //start memory management thread to prune every N seconds
@@ -264,7 +262,7 @@ public class ExecutionManager implements ActionListener {
    * supplied agentTeam, its children, and all direct ancestors in the hierarchy
    */
   protected Set<Symbol> getRelevantAgents(Symbol agentTeam) {
-    agentTeam = getUntypedSymbol(agentTeam);
+    agentTeam = agentTeam.toUntyped();
     //Gather names of the AgentTeam and all descendants
     Set<Symbol> agentList = getDescendants(agentTeam);
     //Gather names of all direct ancestors
@@ -287,7 +285,7 @@ public class ExecutionManager implements ActionListener {
    * hierarchy
    */
   protected Set<Symbol> getDescendants(Symbol agentTeam) {
-    agentTeam = getUntypedSymbol(agentTeam);
+    agentTeam = agentTeam.toUntyped();
 
     //Get self and all descendants from hierarchy
     Set<Symbol> agentList = agentHierarchy.get(agentTeam);
@@ -620,7 +618,7 @@ public class ExecutionManager implements ActionListener {
   public Goal submitGoal(Goal g, ExecutionType execType) {
     log.info("[submitGoal] submitting goal {} with exec type {}, priority {}, tier {}", g, execType, g.getPriority(), g.getPriorityTier());
 
-    Symbol untypedActor = getUntypedSymbol(g.getActor());
+    Symbol untypedActor = g.getActor().toUntyped();
     if (getAgentTeam(untypedActor) == null) {
       log.error("[submitGoal] actor {} for goal {} not found in the agent hierarchy. Not executing. ", untypedActor, g);
       Justification justification = new ConditionJustification(false, Factory.createPredicate("actorInHierarchy", untypedActor));
@@ -1456,7 +1454,7 @@ public class ExecutionManager implements ActionListener {
 
   public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
     log.trace("[getSystemGoalsPredicates] {}", actor);
-    return getSystemGoalsPredicatesHelper(getUntypedSymbol(actor), new ArrayList<>());
+    return getSystemGoalsPredicatesHelper(actor.toUntyped(), new ArrayList<>());
   }
 
   private List<Predicate> getSystemGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
@@ -1493,13 +1491,13 @@ public class ExecutionManager implements ActionListener {
 
   public Predicate getNextGoalPredicate(Symbol agent) {
     log.trace("[getNextGoalPredicate] {}", agent);
-    agent = getUntypedSymbol(agent);
+    agent = agent.toUntyped();
     synchronized (pendingGoalsLock) {
       log.trace("[getNextGoalPredicate] {} have pendingGoalsLock", agent);
       Iterator<PendingGoal> pendingGoalIterator = pendingGoals.descendingIterator();
       while (pendingGoalIterator.hasNext()) {
         PendingGoal pg = pendingGoalIterator.next();
-        if (agent.equals(getUntypedSymbol(pg.getGoal().getActor()))) {
+        if (agent.equals(pg.getGoal().getActor().toUntyped())) {
           log.trace("[getNextGoalPredicate] {} releasing pendingGoalsLock", agent);
           return pg.getGoal().getPredicate();
         }
@@ -1953,7 +1951,7 @@ public class ExecutionManager implements ActionListener {
   @OnInterrupt(onCancelServiceCall = "endFreeze(?actor)", onSuspendServiceCall = "endFreeze(?actor)")
   public void freeze(Symbol actor) {
     log.debug("[freeze] {}", actor);
-    actor = getUntypedSymbol(actor);
+    actor = actor.toUntyped();
     //Set the AgentTeam and all children as 'frozen'
     AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
@@ -2003,7 +2001,7 @@ public class ExecutionManager implements ActionListener {
   @TRADEService
   public void endFreeze(Symbol actor) {
     log.debug("[endFreeze] {}", actor);
-    actor = getUntypedSymbol(actor);
+    actor = actor.toUntyped();
     //Unfreeze the AgentTeam and all children
     AgentTeam agentTeam = getAgentTeam(actor);
     if (agentTeam == null) {
@@ -2082,15 +2080,8 @@ public class ExecutionManager implements ActionListener {
   //  }
   //}
 
-  protected Symbol getUntypedSymbol(Symbol s) {
-    if (s.hasType()) {
-      s = Factory.createSymbol(s.toUntypedString());
-    }
-    return s;
-  }
-
   protected AgentTeam getAgentTeam(Symbol name) {
-    name = getUntypedSymbol(name);
+    name = name.toUntyped();
     AgentTeam agentTeam = agentTeams.get(name);
     if (agentTeam == null) {
       log.warn("[getAgentTeam] no AgentTeam found for name: {}", name);

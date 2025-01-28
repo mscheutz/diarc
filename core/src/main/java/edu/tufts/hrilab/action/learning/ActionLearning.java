@@ -86,6 +86,10 @@ public class ActionLearning {
     ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("cancelActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("endActionLearning(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("cancelActionLearning(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("changeLearningExecution(?actor,?status)"));
     ignoreActionSet.add(Factory.createPredicate("endLearningAssembleScript(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("freeze(?actor)"));

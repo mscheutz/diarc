@@ -331,38 +331,38 @@ public class Goal implements Serializable {
   }
 
   /**
-   * Set the goal status to CANCEL and also attempt to cancel the
-   * goal execution.
+   * Cancels goal execution (if currently being executed). If being executed, calls cancel
+   * on the ActionInterpreter which will set the status of this goal once execution has terminated.
    */
   public void cancel() {
-    // set status to cancel which can be overwritten by AI
-    status = GoalStatus.CANCELED;
-
     if (ai != null) {
+      // the AI will set the CANCELED status once it has terminated
       ai.cancel();
+    } else {
+      setStatus(GoalStatus.CANCELED);
     }
   }
 
   /**
-   * TODO: this is a half-baked attempt at pausing a goal, but only
-   * pauses the current AI, and not any child AIs. Something closer to
-   * how cancel works will need to be implemented. For instance, suspend could cancel the goal execution
-   * but keep the goal as a current goal in the BGM.
+   * Suspends goal execution (if currently being executed). If being executed, calls suspend
+   * on the ActionInterpreter which will set the status of this goal once execution has fully suspended.
    */
   public void suspend() {
-    // set status to cancel which can be overwritten by AI
-    status = GoalStatus.SUSPENDED;
-
     if (ai != null) {
+      // the AI will set the SUSPENDED status once it has been suspended
       ai.suspend();
+    } else {
+      setStatus(GoalStatus.SUSPENDED);
     }
   }
 
+  /**
+   * Resumes goal execution (if currently suspended). Calls suspend
+   * on the ActionInterpreter which will set the status of this goal once execution has resumed.
+   */
   public void resume() {
-    // set status to active which can be overwritten by AI
-    status = GoalStatus.ACTIVE;
-
     if (ai != null) {
+      // the AI will set the ACTIVE status once it has resumed
       ai.resume();
     }
   }
