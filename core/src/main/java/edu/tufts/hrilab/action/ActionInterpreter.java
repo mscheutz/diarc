@@ -600,9 +600,8 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   }
 
   /**
-   * Sets the shouldCancel flag to true, which will cause the main AI loop to
-   * set the next step's ActionStatus to CANCEL. This does not explicitly
-   * halt the ActionInterpreter, but instead relies on the handling of the
+   * Sets the canceled flag to true, and sets the current context to CANCEL.
+   * This does not explicitly halt the ActionInterpreter, but instead relies on the handling of the
    * CANCEL status by the currently running action. This allows for graceful
    * handling of canceled actions (e.g., via try/catch/finally). This is the
    * only option for external classes.
@@ -694,6 +693,18 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   private void halt() {
     if (!shouldUpdate.get()) {
       log.error("[halt] halt has already been called: {}", goal.getPredicate());
+      return;
+    }
+
+    //PickAndPlace2024
+    //If a noInterrupt block reaches the end of an action script, but the user instructed suspend somewhere inside that block,
+    // then previously we would terminate the AI and then potentially begin execution of a next goal without ever actually suspending.
+    // This way we get a suspension by delaying halt() until a resume or cancel is called.
+    if (suspended.get()) {
+      //Root step and context trace of the goal will still have the original terminal status and prevent any further
+      //  execution of this AI on resume or cancel (two warn logs will occur).
+      goal.setStatus(GoalStatus.SUSPENDED);
+      shouldUpdate.set(false);
       return;
     }
 
