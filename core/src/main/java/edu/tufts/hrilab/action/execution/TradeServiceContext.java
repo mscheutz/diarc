@@ -87,6 +87,15 @@ public class TradeServiceContext extends ArgumentBasedContext {
     }
   }
 
+  protected void setArgumentType(int index, Class<?> type) {
+    if (index < inputArgTypes.size()) {
+      inputArgTypes.remove(index);
+      inputArgTypes.add(index, type);
+    } else {
+      log.error("[setArgumentType] supplied index out of bounds");
+    }
+  }
+
   /**
    * Helper method to check if TRADE groups contains the diarc agent (e.g., agent:dempster or agent:dempster:nao).
    *

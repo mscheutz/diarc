@@ -1166,19 +1166,18 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       interruptContext = new TradeServiceContext(leafContext, leafContext.stateMachine, interruptEvent.getCommand(), interruptEvent.getInputArgs(), interruptEvent.getReturnArgs(), actor);
       int index = 0;
       for (int i=0; i < inputArgs.size(); i++) {
-        String name = inputArgs.get(i);
-        if (!name.equals("?actor")) {
-          name = "var" + index++;
-        }
+        String argName = inputArgs.get(i);
+        String name = "var" + index++;
         ActionBinding value = new ActionBinding.Builder(name,inputArgTypes.get(i))
                 .setSemanticType(null)
                 .setDefaultValue(null)
-                .setValue(arguments.get(inputArgs.get(i)))
+                .setValue(arguments.get(argName))
                 .setIsLocal(false)
                 .setIsReturn(false)
                 .setIsVarArg(false)
                 .build();
         interruptContext.arguments.replace(name,value);
+        ((TradeServiceContext)interruptContext).setArgumentType(index-1, value.getBindingTypeDeep());
       }
     } else {
       log.error("");
