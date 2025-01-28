@@ -1213,25 +1213,27 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       // INITIALIZE status is set
       super.setStatus(eStatus, justification);
     } else if (isScript()) {
-        if (eStatus.isFailure() && recovery.shouldAttemptRecovery(eStatus, justification, this)) {
-            log.debug("[setStatus] not propagating failure: " + eStatus);
-            super.setStatus(ActionStatus.RECOVERY, justification);
-        } else if (getStatus() == ActionStatus.RECOVERY && (eStatus == ActionStatus.FAIL_RECOVERY || eStatus == ActionStatus.EXIT_RECOVERY)) {
-            //If this context is undergoing recovery and gets a recovery failure status propagated up to it, catch it and
-            // start propagating the original failure reasons up the tree instead
-            ActionStatus originalFailureStatus = recovery.getOriginalFailureStatus();
-            Justification originalFailureJustification = recovery.getOriginalFailureJustification();
-            super.setStatus(originalFailureStatus, originalFailureJustification);
-        } else {
-            // if this is an action script, always call onInterrupt
-            super.setStatus(eStatus, justification);
-            handleInterrupt(eStatus);
-        }
+      if (eStatus.isFailure() && recovery.shouldAttemptRecovery(eStatus, justification, this)) {
+        log.debug("[setStatus] not propagating failure: " + eStatus);
+        super.setStatus(ActionStatus.RECOVERY, justification);
+      } else if (getStatus() == ActionStatus.RECOVERY && (eStatus == ActionStatus.FAIL_RECOVERY || eStatus == ActionStatus.EXIT_RECOVERY)) {
+        //If this context is undergoing recovery and gets a recovery failure status propagated up to it, catch it and
+        // start propagating the original failure reasons up the tree instead
+        ActionStatus originalFailureStatus = recovery.getOriginalFailureStatus();
+        Justification originalFailureJustification = recovery.getOriginalFailureJustification();
+        super.setStatus(originalFailureStatus, originalFailureJustification);
+      } else {
+        handleInterrupt(eStatus);
+        super.setStatus(eStatus, justification);
+      }
     } else {
-      // if primitive action, call onInterrupt until it's no longer blocking
-      // TODO: should onInterrupt also be called if it's not blocking, like in the script case?
-
       try {
+        //Q: is there any other way to do this?
+        //If a primitive was suspended, doStepLock will not be held. Still want to call resume behavior in this case though
+        if (getStatus() == ActionStatus.SUSPEND && eStatus == ActionStatus.RESUME) {
+          handleInterrupt(eStatus);
+        }
+
         long timeout = 0;
         while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
           // lock NOT acquired (doStep is executing)
@@ -1239,7 +1241,6 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
           handleInterrupt(eStatus);
           timeout = 3;
         }
-
         super.setStatus(eStatus, justification);
       } catch (InterruptedException e) {
         log.error("Exception trying to get doStepLock.", e);
