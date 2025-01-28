@@ -660,8 +660,20 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           log.warn("[cancel] goal has already terminated: {}", goal.getPredicate());
         }
       } else if (currentStep.isTerminated()) {
-        // setting cancel flag will set nextStep to cancel in the mainLoop before it's executed
-        canceled.set(true);
+        if (shouldUpdate.get()) {
+          // setting cancel flag will set nextStep to cancel in the mainLoop before it's executed
+          canceled.set(true);
+        } else {
+          //TODO: Should writing blocking async AIs be considered bad practice and forbidden, or should this logic exist? (or the answer to both is yes)
+          //If the script is complete except for waiting on async AIs, cancel the async AIs or else this action
+          //  will continue to block indefinitely
+          this.goal.setStatus(GoalStatus.CANCELED);
+          for (ActionInterpreter ai : asyncAIs.values()) {
+            if (ai.isRunning) {
+              ai.cancel();
+            }
+          }
+        }
       } else {
         // in normal operation
         canceled.set(true);
