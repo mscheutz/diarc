@@ -1,25 +1,15 @@
-package edu.tufts.hrilab.config;
+package edu.tufts.hrilab.config.python;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.GoalManagerComponent;
-import edu.tufts.hrilab.consultant.pose.PoseConsultant;
-import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.python.PythonWrapper;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
-import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
-import edu.tufts.hrilab.tts.MaryTTSComponent;
-import edu.tufts.hrilab.util.resource.Resources;
-
-import java.util.ArrayList;
 
 public class IHMCConfig extends DiarcConfiguration {
 

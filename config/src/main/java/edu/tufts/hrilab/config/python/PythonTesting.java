@@ -1,15 +1,8 @@
-package edu.tufts.hrilab.config;
+package edu.tufts.hrilab.config.python;
 
 import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.python.PythonWrapper;
-import edu.tufts.hrilab.util.Util;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.concurrent.*;
 
 public class PythonTesting extends DiarcConfiguration {
 
