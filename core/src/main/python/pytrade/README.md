@@ -11,19 +11,88 @@ With PyTRADE, developers can:
 -   Use DIARC components in Python.
 -   Integrate DIARC with Python-based tools, such as simulation environments or reinforcement learning libraries.
 
-## File Structure
+## Developing with PyTRADE
+This section briefly go over the basics needed to create a new Python script and integrate it with DIARC via PyTRADE. If you find it difficult to follow, please see the [example](./README.md#example--using-pytrade-in-python).
 
-### `core/src/main/python`
+---
+### File Structure
 
-This is where you’ll write your Python code. Start by creating a new [Python package](https://docs.python.org/3/tutorial/modules.html#packages). Refer to other projects in the repository for examples.
+`core/src/main/python`: This is where you’ll write your Python code.
 
-### `core/src/main/java/python`
+`core/src/main/python/pytrade`: This is where PyTRADE actually lives, as well as some python/java utilities.
 
-This directory contains the Java code responsible for starting the Python process.
+`core/src/main/java/edu/tufts/hrilab/python`: This directory contains the Java code responsible for starting the Python process.
 
-## Example: Using PyTRADE in Python
+`config/src/main/java/edu/tufts/hrilab`: This is where DIARC launch files live.
+
+---
+### Initializing Your Project
+1. Start by creating a new [Python package](https://docs.python.org/3/tutorial/modules.html#packages) in `core/src/main/python`. Make sure you have an `__init__.py`
+> **Note:** If you're familiar with Python package management, feel free to make your python package anywhere. Regardless, it does need to be a package. However, you're on your own with importing the `pytrade` package.  
+2. Create a new virtual environment, for example [venv](https://docs.python.org/3/library/venv.html).
+3. It is recommended that you make a `requirements.txt` so other people can easily run your code.
+4. Create an entry point for your script, e.g. `main.py`.
+
+
+---
+### Using TRADE Services from Python
+1. To use TRADE in Python, simply import `pytrade.wrapper`. The JVM will start automatically.
+2. Instantiate the `TRADEWrapper` object:
+
+    ```python
+    wrapper = TRADEWrapper()  
+    ```
+
+3. Call TRADE methods through the wrapper, e.g., `wrapper.call_trade("your_method_name")`.
+
+> **Note:** You can also import any DIARC or TRADE classes directly from their Java packages using JPype. Ensure your java imports come AFTER the `pytrade` import!
+---
+### Implementing an existing Java Interface in Python
+
+You can implement existing Java interfaces in Python to advertise services through TRADE. For example, to control a robotic arm via Python:
+
+1.  Create a new Python class based on an existing Java interface, e.g., `PythonArmComponent`.
+2.  Decorate the class with `@JImplements([YourInterface])`:
+
+    ```python
+    @JImplements(ArmInterface)
+    class PythonArmComponent:
+    ```
+
+    Ensure you import the relevant interface (e.g., `ArmInterface`).
+3.  Implement all methods from the Java interface, using `@JOverride` for each:
+
+    ```python
+    @JOverride
+    def moveTo(self, position):
+        # Implementation here
+    ```     
+4.  Instantiate and register your Python class with TRADE:
+
+    ```python
+    your_object = PythonArmComponent()
+    TRADE.registerAllServices(your_object, "")
+    ```
+
+
+Your methods should now be accessible through TRADE if they align with Java methods annotated as `@TRADEService`.
+
+---
+
+### Creating a New Interface
+
+If no existing Java interface fits your needs, you can define a new one in Java and use it with PyTRADE:
+
+1.  Write your new Java interface and include the necessary methods.
+2.  Annotate the methods with `@TRADEService`.
+3.  Implement the new interface in Python, following the steps outlined in the previous section.
+---
+## [Example: Using PyTRADE in Python](example)
 
 Follow these steps to implement and register a simple TRADE service in Python:
+### 0. File Setup
+
+In `core/src/main/python`, create a package with python file called `main.py` and a file called `__init__.py`. All following code will be in the former. 
 
 ### 1. **Logging**
 
@@ -130,60 +199,21 @@ When you run the script, you should see the following:
 1.  The log message: `INFO:root:This will show up in Java output`
 2.  The output from the `undock` method: `Undocking`
 
-## Developing with PyTRADE
+Take a breather! Your Python code is done. If you want to integrate your code into DIARC, see the next section. 
 
-### Connecting Your Python Code to TRADE
+---
+## Adding a Python Script to a DIARC Config
 
--   To use TRADE in Python, simply import `pytrade.wrapper`. The JVM will start automatically.
--   For full DIARC integration, instantiate the `TRADEWrapper` object:
+1. Follow the regular instructions for [creating a DIARC config](https://github.com/mscheutz/diarc/wiki/Writing-a-New-DIARC-Config).
+2. Add your Python file as follows:
+```java
+String file = "examples.minimal_example";
+PythonWrapper wrapper = new PythonWrapper(file);
+wrapper.start();
+```
+> **Note:** Your file should follow **Python package notation**. For most simple use cases, this will just be the directory that your `__init__.py`, followed by your python file. No `.py` extension!
 
-    ```python
-    wrapper = TRADEWrapper()  
-    ```
-
--   Call TRADE methods through the wrapper, e.g., `wrapper.call_trade("your_method_name")`.
-
-> **Note:** You can also import any DIARC or TRADE classes directly from their Java packages using JPype. Ensure your java imports come AFTER the `pytrade` import!
-
-### Implementing an existing Java Interface in Python
-
-You can implement existing Java interfaces in Python to advertise services through TRADE. For example, to control a robotic arm via Python:
-
-1.  Create a new Python class based on an existing Java interface, e.g., `PythonArmComponent`.
-2.  Decorate the class with `@JImplements([YourInterface])`:
-
-    ```python
-    @JImplements(ArmInterface)
-    class PythonArmComponent:
-    ```
-
-    Ensure you import the relevant interface (e.g., `ArmInterface`).
-3.  Implement all methods from the Java interface, using `@JOverride` for each:
-
-    ```python
-    @JOverride
-    def moveTo(self, position):
-        # Implementation here
-    ```     
-4.  Instantiate and register your Python class with TRADE:
-
-    ```python
-    your_object = PythonArmComponent()
-    TRADE.registerAllServices(your_object, "")
-    ```
-
-
-Your methods should now be accessible through TRADE if they align with Java methods annotated as `@TRADEService`.
-
-----------
-
-### Creating a New Interface
-
-If no existing Java interface fits your needs, you can define a new one in Java and use it with PyTRADE:
-
-1.  Write your new Java interface and include the necessary methods.
-2.  Annotate the methods with `@TRADEService`.
-3.  Implement the new interface in Python, following the steps outlined in the previous section.
+3. Launch your file as outlined in the DIARC config tutorial.
 
 ## Support
 
