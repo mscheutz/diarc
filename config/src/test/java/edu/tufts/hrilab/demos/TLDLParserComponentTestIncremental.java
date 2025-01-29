@@ -21,11 +21,13 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
+
 import static org.junit.Assert.assertTrue;
 
 public class TLDLParserComponentTestIncremental {
+    protected Logger log = LoggerFactory.getLogger(this.getClass());
     private TLDLParserComponent component;
-    private static Logger log = LoggerFactory.getLogger(TLDLParserComponentTestIncremental.class);
+    //private static Logger log = LoggerFactory.getLogger(TLDLParserComponentTestIncremental.class);
 
     @Rule
     public TestRule watcher = new TestWatcher() {
@@ -52,7 +54,7 @@ public class TLDLParserComponentTestIncremental {
                 .build();
 
         Utterance part2 = new Utterance.Builder()
-                .setWords(Arrays.asList("on", "the", "table"))
+                .setWords(Arrays.asList("by", "the", "handle"))
                 .setSpeaker(Factory.createSymbol("speaker"))
                 .setAddressee(Factory.createSymbol("listener"))
                 .build();
@@ -70,7 +72,7 @@ public class TLDLParserComponentTestIncremental {
 
         // Parse a new input after reset
         Utterance newInput = new Utterance.Builder()
-                .setWords(Arrays.asList("grab", "the", "cup"))
+                .setWords(Arrays.asList("grab", "the", "mug", "by", "the", "top"))
                 .setSpeaker(Factory.createSymbol("speaker"))
                 .setAddressee(Factory.createSymbol("listener"))
                 .build();
@@ -89,7 +91,7 @@ public class TLDLParserComponentTestIncremental {
         component.addDictionary("incrementalTesting.dict");
 
         // Define the input utterance broken into words
-        String[] words = {"grab", "the", "mug", "on", "the", "table"};
+        String[] words = {"grab", "the", "mug", "by", "the", "top"};
 
         // Set up speaker and listener
         Symbol speaker = Factory.createSymbol("speaker");

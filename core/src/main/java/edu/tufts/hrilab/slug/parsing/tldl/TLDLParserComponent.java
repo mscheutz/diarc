@@ -181,12 +181,36 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       return input;
     }
 
-    // For simplicity, return the first valid parse (can be modified to handle multiple parses)
-    Node bestParse = finalParses.get(0);
-    //return createParsedUtterance(bestParse, input.getSpeaker(), input.getAddressee());
+    // Create a list or some structure to hold debug utterances if you want to inspect them
+    List<Utterance> debugUtterances = new ArrayList<>();
+
     Symbol speaker = input.getSpeaker();
     Symbol addressee = input.getAddressee();
-    Utterance endOfChartUtterance = createUtterance(bestParse, speaker, addressee);
+
+    Utterance endOfChartUtterance = null;
+
+    // Only proceed if finalParses is non-empty
+    if (!finalParses.isEmpty()) {
+      // Iterate through all parses to create debug utterances
+      for (int i = 0; i < finalParses.size(); i++) {
+        Node currentParse = finalParses.get(i);
+        Utterance debugUtterance = createUtterance(currentParse, speaker, addressee);
+        debugUtterances.add(debugUtterance);
+      }
+
+      // The first parse in finalParses is considered "best"
+      // but remember to check again to avoid IndexOutOfBounds
+      Node bestParse = finalParses.get(0);
+      endOfChartUtterance = createUtterance(bestParse, speaker, addressee);
+    } else {
+      // Handle the case where finalParses is empty, if needed
+      // e.g., set endOfChartUtterance = null or throw an exception
+      // endOfChartUtterance = null;
+    }
+
+     // perform reasoning on multiple parses in debugUtterances here if needed
+
+// Finally, return only the best parse's utterance
     return endOfChartUtterance;
 
   }
