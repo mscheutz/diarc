@@ -23,7 +23,7 @@ This section briefly go over the basics needed to create a new Python script and
 
 `core/src/main/java/edu/tufts/hrilab/python`: This directory contains the Java code responsible for starting the Python process.
 
-`config/src/main/java/edu/tufts/hrilab`: This is where DIARC launch files live.
+`config/src/main/java/edu/tufts/hrilab/config`: This is where DIARC launch files live.
 
 ---
 ### Initializing Your Project
@@ -32,8 +32,11 @@ This section briefly go over the basics needed to create a new Python script and
 2. Create a new virtual environment, for example [venv](https://docs.python.org/3/library/venv.html).
 3. It is recommended that you make a `requirements.txt` so other people can easily run your code.
 4. Create an entry point for your script, e.g. `main.py`.
-
-
+5. Update your python path:
+```bash
+export PYTHONPATH="[path/to/diarc]/core/src/main/python:$PYTHONPATH"
+```
+> **Note:** Consider adding this to your `~/.bashrc` so your path stays updated.
 ---
 ### Using TRADE Services from Python
 1. To use TRADE in Python, simply import `pytrade.wrapper`. The JVM will start automatically.
@@ -68,7 +71,7 @@ You can implement existing Java interfaces in Python to advertise services throu
         # Implementation here
     ```     
 4.  Instantiate and register your Python class with TRADE:
-
+    
     ```python
     your_object = PythonArmComponent()
     TRADE.registerAllServices(your_object, "")
@@ -214,9 +217,10 @@ wrapper.start();
 > **Note:** Your file should follow **Python package notation**. For most simple use cases, this will just be the directory that your `__init__.py`, followed by your python file. No `.py` extension!
 
 3. Launch your file as outlined in the DIARC config tutorial.
+```bash
+./gradlew launch -Pmain=edu.tufts.hrilab.config.python.PythonTesting
+```
 
 ## Support
 
 For additional help or questions, contact **[marlow.fawn@gmail.com](mailto:marlow.fawn@gmail.com)**.
-
-
