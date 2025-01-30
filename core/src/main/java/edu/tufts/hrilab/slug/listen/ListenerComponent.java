@@ -17,7 +17,6 @@ import edu.tufts.hrilab.simspeech.gui.ChatAdapter;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -110,7 +109,6 @@ public class ListenerComponent extends DiarcComponent implements GuiProvider {
   /**
    * {@inheritDoc}
    */
-  @Nonnull
   @Override
   public String[] getAdapterClassNames() {
     return new String[]{

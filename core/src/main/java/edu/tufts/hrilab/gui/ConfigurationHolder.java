@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import javax.annotation.PostConstruct;
 
 /**
  * Manages application configurations such as base URL and CORS origins. This class initializes
@@ -65,7 +64,6 @@ public class ConfigurationHolder {
     /**
      * Logs the initial configuration state upon class initialization.
      */
-    @PostConstruct
     private void init() {
         logger.info("Base URL Set: {}", BASE_URL);
         logger.info("CORS Origins Set: {}", CORS_ORIGIN);
