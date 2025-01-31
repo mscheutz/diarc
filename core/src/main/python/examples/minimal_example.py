@@ -1,32 +1,31 @@
 import time
 import sys
 import logging
-from pytrade.wrapper import TRADEWrapper
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
+from pytrade.wrapper import TRADEWrapper
 from ai.thinkingrobots.trade import TRADE
 from jpype import JImplements, JOverride
 from edu.tufts.hrilab.interfaces import DockingInterface
 
-
 @JImplements(DockingInterface)
-class dummyWrapper:
+class DockingComponent:
     @JOverride
     def dock(self, dockId):
-        pass
+        logging.info(f"Docking: {dockId}")
 
     @JOverride
     def undock(self):
-        print("Undocking")
-        pass
+        logging.info("Undocking")
 
 
 if __name__ == '__main__':
-    # Todo: Print doesn't working, need to use logging. Figure out why.
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-    logging.info("This will show up in Java output")
 
     wrapper = TRADEWrapper()
-    dummyObject = dummyWrapper()
-    TRADE.registerAllServices(dummyObject, "")
+    docking_component = DockingComponent()
+    TRADE.registerAllServices(docking_component, "")
     time.sleep(1)
-    wrapper.call_trade("undock")
+
+    while True:
+        wrapper.call_trade("undock")
+        time.sleep(5)

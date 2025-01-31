@@ -25,8 +25,12 @@ This section briefly go over the basics needed to create a new Python script and
 
 `config/src/main/java/edu/tufts/hrilab/config`: This is where DIARC launch files live.
 
+`~/.diarc/trade.properties`: This file specifies how you want TRADE to be configured, including networking. 
+
+`~/.gradle/gradle.properties`: This file tells gradle to point to your personal `trade.properties`
+
 ---
-### Initializing Your Project
+### Initializing Your Python Project
 1. Start by creating a new [Python package](https://docs.python.org/3/tutorial/modules.html#packages) in `core/src/main/python`. Make sure you have an `__init__.py`
 > **Note:** If you're familiar with Python package management, feel free to make your python package anywhere. Regardless, it does need to be a package. However, you're on your own with importing the `pytrade` package.  
 2. Create a new virtual environment, for example [venv](https://docs.python.org/3/library/venv.html).
@@ -37,6 +41,26 @@ This section briefly go over the basics needed to create a new Python script and
 export PYTHONPATH="[path/to/diarc]/core/src/main/python:$PYTHONPATH"
 ```
 > **Note:** Consider adding this to your `~/.bashrc` so your path stays updated.
+
+### [Initializing your TRADE Config](config)
+
+If you're interested in calling your Python functions from TRADE, do the following:
+
+1. Create a file `~/.diarc/trade.properties` if it doesn't already exist.
+2. To that file, add the lines:
+
+```
+STARTBROADCAST=true
+STARTDISCOVERY=true
+STARTACCEPTINGCONNECTIONS=true
+```
+
+3. Create a `~/.gradle/gradle.properties` if it doesn't already exist.
+2. To that file, add the line:
+
+```diarc.tradePropertiesFile=/home/[your_username]/.diarc/trade.properties```
+
+
 ---
 ### Using TRADE Services from Python
 1. To use TRADE in Python, simply import `pytrade.wrapper`. The JVM will start automatically.
@@ -102,17 +126,16 @@ In `core/src/main/python`, create a package with python file called `main.py` an
 Start by setting up your logging so it's visible from a java console:
 
 ```python
+import time
 import sys
 import logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-logging.info("This will show up in Java output")
 ```
 
 ### 2. **Imports**
 Start by importing `pytrade`. The order of imports matter here, and importing `pytrade` first allows you to import java classes. Import anything else you may need for the project.
 
 ```python
-import time
 from pytrade.wrapper import TRADEWrapper
 from ai.thinkingrobots.trade import TRADE
 from jpype import JImplements, JOverride
@@ -128,13 +151,11 @@ Define a Python class that implements the `DockingInterface` Java interface. Use
 class DockingComponent:
     @JOverride
     def dock(self, dockId):
-        # Implementation for dock method
-        print("Docking")
+        logging.info(f"Docking: {dockId}")
 
     @JOverride
     def undock(self):
-        # Implementation for undock method
-        print("Undocking")
+        logging.info("Undocking")
 ```
 ### 4. **Initialize the TRADE Wrapper**
 
@@ -159,7 +180,9 @@ TRADE.registerAllServices(docking_component, "")
 Use the `call_trade` method of the `TRADEWrapper` to call the service you just registered in TRADE:
 
 ```python
-wrapper.call_trade("undock")
+while True:
+    wrapper.call_trade("undock")
+    time.sleep(5)
 ```
 
 ### 7. **Run the Script**
@@ -168,6 +191,10 @@ Put everything together and ensure the script runs without issues:
 
 ```python
 import time
+import sys
+import logging
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
 from pytrade.wrapper import TRADEWrapper
 from ai.thinkingrobots.trade import TRADE
 from jpype import JImplements, JOverride
@@ -177,24 +204,23 @@ from edu.tufts.hrilab.interfaces import DockingInterface
 class DockingComponent:
     @JOverride
     def dock(self, dockId):
-        # Implementation for dock method
-        print("Docking")
-
+        logging.info(f"Docking: {dockId}")
 
     @JOverride
     def undock(self):
-        # Implementation for undock method
-        print("Undocking")
-        
+        logging.info("Undocking")
+
 if __name__ == '__main__':
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-    logging.info("This will show up in Java output")
+
 
     wrapper = TRADEWrapper()
     docking_component = DockingComponent()
     TRADE.registerAllServices(docking_component, "")
-    time.sleep(1)  # Wait for services to register
-    wrapper.call_trade("undock")
+    time.sleep(1)
+
+    while True:
+        wrapper.call_trade("undock")
+        time.sleep(5)
 ```
 
 When you run the script, you should see the following:
@@ -206,17 +232,32 @@ Take a breather! Your Python code is done. If you want to integrate your code in
 
 ---
 ## Adding a Python Script to a DIARC Config
-
-1. Follow the regular instructions for [creating a DIARC config](https://github.com/mscheutz/diarc/wiki/Writing-a-New-DIARC-Config).
-2. Add your Python file as follows:
+1. Update your `trade.properties`
+2. Follow the regular instructions for [creating a DIARC config](https://github.com/mscheutz/diarc/wiki/Writing-a-New-DIARC-Config).
+3. Add your Python file as follows:
 ```java
 String file = "examples.minimal_example";
 PythonWrapper wrapper = new PythonWrapper(file);
 wrapper.start();
+try {
+    Thread.sleep(2000);
+} catch (InterruptedException e) {
+    throw new RuntimeException(e);
+}
 ```
 > **Note:** Your file should follow **Python package notation**. For most simple use cases, this will just be the directory that your `__init__.py`, followed by your python file. No `.py` extension!
 
-3. Launch your file as outlined in the DIARC config tutorial.
+4. If you [set up your TRADE config](./README.md#initializing-your-trade-config), make a TRADE call by adding the following:
+
+```java
+try {
+    TRADE.getAvailableService(new TRADEServiceConstraints().name("dock")).call(void.class, Factory.createSymbol(""));
+} catch (TRADEException e) {
+    throw new RuntimeException(e);
+}
+```
+
+5. Launch your file as outlined in the DIARC config tutorial.
 ```bash
 ./gradlew launch -Pmain=edu.tufts.hrilab.config.python.PythonTesting
 ```
