@@ -115,6 +115,7 @@ public class ReferenceResolutionComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Utterance resolveReferences(Utterance utterance) {
+    Utterance uttCheck = utterance;
     log.info("Resolving references in " + utterance);
 //    resolver.registerWithTRADE(); // registering here causes deadlock in some trade configurations (e.g., 3 containers across 2 machines)
     //TODO:brad: I don't think we always want to do this, but we need to for the multi robot case

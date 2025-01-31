@@ -4,15 +4,23 @@
 
 package edu.tufts.hrilab.demos;
 
+
 import java.util.Arrays;
 import java.util.List;
-
+import java.util.Collection;
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.parsing.tldl.Node;
+import edu.tufts.hrilab.python.PythonWrapper;
+import edu.tufts.hrilab.interfaces.ASRInterface;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -20,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+
+
 
 
 import static org.junit.Assert.assertTrue;
@@ -46,7 +56,15 @@ public class TLDLParserComponentTestIncremental {
         component.addDictionary("incrementalTesting.dict");
         //component.setUseAddressHistory(false);
 
-        // Simulate incremental input
+        String file = "examples.minimal_example";
+        PythonWrapper wrapper = new PythonWrapper(file);
+        wrapper.start();
+
+
+
+
+
+            // Simulate incremental input
         Utterance part1 = new Utterance.Builder()
                 .setWords(Arrays.asList("grab", "the", "mug"))
                 .setSpeaker(Factory.createSymbol("speaker"))
@@ -58,6 +76,23 @@ public class TLDLParserComponentTestIncremental {
                 .setSpeaker(Factory.createSymbol("speaker"))
                 .setAddressee(Factory.createSymbol("listener"))
                 .build();
+
+
+
+        Collection<TRADEServiceInfo> myParsingServices = TRADE.getAvailableServices(new TRADEServiceConstraints().name("undock"));
+
+
+
+        for(TRADEServiceInfo service : myParsingServices) {
+            if (service.serviceString.equals("getLastRecognizedText()")) {
+                try {
+                    service.call(void.class, "");
+                } catch(TRADEException te) {
+                    // handle the failure
+
+                }
+            }
+        }
 
         // Parse the first part
         Utterance phrase1 = component.parseUtterance(part1);

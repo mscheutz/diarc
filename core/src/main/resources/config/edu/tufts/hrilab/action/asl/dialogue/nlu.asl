@@ -14,7 +14,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
       // wait for input utterance
       op:log("debug", "Waiting for utterance.");
       !utterance = act:waitForUtterance();
-      op:log("debug", "Received utterance: !utterance");
+      op:info("debug", "Received utterance: !utterance");
 
       // to exit while loop during shutdown
       if (op:isNull(!utterance)) {
@@ -38,7 +38,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
     Symbol !speaker;
     Symbol !addressee;
 
-    op:log("debug", "handleSpeechInput for utterance: ?utterance");
+    op:debug("debug", "handleSpeechInput for utterance: ?utterance");
 
     // parse utterance
     op:log("debug", "calling parser ...");
