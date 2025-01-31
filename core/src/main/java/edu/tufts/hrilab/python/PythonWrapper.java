@@ -21,7 +21,6 @@ public class PythonWrapper {
         processBuilder.inheritIO();
         process = processBuilder.start();
 
-        // Wait for the process to complete (blocking)
         process.waitFor();
       } catch (IOException | InterruptedException e) {
         System.err.println("Error while launching or monitoring the process: " + e.getMessage());
@@ -31,31 +30,12 @@ public class PythonWrapper {
     // Register a shutdown hook to terminate the process if it is still running
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       if (process != null && process.isAlive()) {
-        try (OutputStream outputStream = process.getOutputStream()) {
-          // Write "shutdown" to the process's standard input
-          // Todo: Why doesn't this connect to python's stdin?
-          outputStream.write("shutdown\n".getBytes());
-          outputStream.flush();
-        } catch (IOException e) {
-          System.err.println("Error while sending 'shutdown' command: " + e.getMessage());
-        }
-
-        // Wait briefly to allow the process to respond, then terminate
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          System.err.println("Interrupted while waiting for process shutdown.");
-        }
-
-        if (process.isAlive()) {
-          System.out.println("Forcing process termination...");
-          process.destroy();
-        }
+        System.out.println("Forcing process termination...");
+        process.destroy();
       }
     }));
 
     // Start the thread to monitor the process
-    processThread.setDaemon(true); // Make it a daemon thread so it won't block JVM termination
     processThread.start();
   }
 }
