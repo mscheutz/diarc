@@ -60,6 +60,7 @@ public class PythonWrapper {
               "STARTDISCOVERY=false\n" +
               "STARTACCEPTINGCONNECTIONS=false\n" +
               "SERVERIPS=\n" +
+              "SCANFORSERVER=\n" +
               "CONNECTCONTAINERS="+ "127.0.0.1@10002";
 
       // Write content to file
