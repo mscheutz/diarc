@@ -54,21 +54,29 @@ STARTBROADCAST=true
 STARTDISCOVERY=true
 STARTACCEPTINGCONNECTIONS=true
 ```
+**IF YOU USE A MAC:**
+```
+STARTBROADCAST=false
+STARTDISCOVERY=false
+STARTACCEPTINGCONNECTIONS=true
+SERVERIPS=127.0.0.1@10002
+CONNECTCONTAINERS=
+```
+
 
 3. Create a `~/.gradle/gradle.properties` if it doesn't already exist.
 2. To that file, add the line:
 
 ```diarc.tradePropertiesFile=/home/[your_username]/.diarc/trade.properties```
 
-
 ---
 ### Using TRADE Services from Python
 1. To use TRADE in Python, simply import `pytrade.wrapper`. The JVM will start automatically.
 2. Instantiate the `TRADEWrapper` object:
 
-    ```python
-    wrapper = TRADEWrapper()  
-    ```
+```python
+wrapper = TRADEWrapper()  
+```
 
 3. Call TRADE methods through the wrapper, e.g., `wrapper.call_trade("your_method_name")`.
 
@@ -81,10 +89,10 @@ You can implement existing Java interfaces in Python to advertise services throu
 1.  Create a new Python class based on an existing Java interface, e.g., `PythonArmComponent`.
 2.  Decorate the class with `@JImplements([YourInterface])`:
 
-    ```python
-    @JImplements(ArmInterface)
-    class PythonArmComponent:
-    ```
+```python
+@JImplements(ArmInterface)
+class PythonArmComponent:
+```
 
     Ensure you import the relevant interface (e.g., `ArmInterface`).
 3.  Implement all methods from the Java interface, using `@JOverride` for each:
@@ -237,7 +245,7 @@ Take a breather! Your Python code is done. If you want to integrate your code in
 3. Add your Python file as follows:
 ```java
 String file = "examples.minimal_example";
-PythonWrapper wrapper = new PythonWrapper(file);
+PythonWrapper wrapper = new PythonWrapper(file, false); // Pass true as second arg if using mac
 wrapper.start();
 try {
     Thread.sleep(2000);

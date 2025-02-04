@@ -16,7 +16,7 @@ public class PythonTesting extends DiarcConfiguration {
             "-beliefinitfile agents/agents.pl " +
                     "-asl kinova/kinova_examples.asl ");
     String file = "examples.minimal_example";
-    PythonWrapper wrapper = new PythonWrapper(file);
+    PythonWrapper wrapper = new PythonWrapper(file); //pass in true if using mac
     wrapper.start();
     try {
       Thread.sleep(2000);
