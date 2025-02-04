@@ -188,7 +188,10 @@ tasks.register<JavaExec>("launch") {
   }
   systemProperty("logback.configurationFile", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString())
   systemProperty("logging.config", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString()) // for springboot
-  systemProperty("trade.properties.path", properties.getOrDefault("diarc.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
+  val tradePropertiesPath = System.getenv("TRADE_PROPERTIES_PATH")
+    ?: project.findProperty("diarc.tradePropertiesFile") as? String
+    ?: "src/main/resources/default/trade.properties.default"
+  systemProperty("trade.properties.path", tradePropertiesPath)
   systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
 
   // Conditionally enable features

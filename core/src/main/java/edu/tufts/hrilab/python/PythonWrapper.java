@@ -1,7 +1,6 @@
 package edu.tufts.hrilab.python;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class PythonWrapper {
@@ -52,8 +51,6 @@ public class PythonWrapper {
 
   private void setSpoke(ProcessBuilder processBuilder) {
     try {
-      InetAddress ip = InetAddress.getLocalHost();
-      System.out.println("Local IP Address: " + ip.getHostAddress());
       // Create a temporary file
       File tempFile = File.createTempFile("trade_spoke", ".properties");
       tempFile.deleteOnExit(); // Ensure deletion on program exit
@@ -64,9 +61,7 @@ public class PythonWrapper {
               "STARTACCEPTINGCONNECTIONS=false\n" +
               "SERVERIPS=\n" +
               "CONNECTCONTAINERS="+ "127.0.0.1@10002";
-//              "CONNECTCONTAINERS=" + ip + "@10001";
 
-      System.out.println(content);
       // Write content to file
       try (BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
         writer.write(content);
