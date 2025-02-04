@@ -25,50 +25,29 @@ This section briefly go over the basics needed to create a new Python script and
 
 `config/src/main/java/edu/tufts/hrilab/config`: This is where DIARC launch files live.
 
-`~/.diarc/trade.properties`: This file specifies how you want TRADE to be configured, including networking. 
-
-`~/.gradle/gradle.properties`: This file tells gradle to point to your personal `trade.properties`
-
 ---
 ### Initializing Your Python Project
 1. Start by creating a new [Python package](https://docs.python.org/3/tutorial/modules.html#packages) in `core/src/main/python`. Make sure you have an `__init__.py`
-> **Note:** If you're familiar with Python package management, feel free to make your python package anywhere. Regardless, it does need to be a package. However, you're on your own with importing the `pytrade` package.  
-2. Create a new virtual environment, for example [venv](https://docs.python.org/3/library/venv.html).
-3. It is recommended that you make a `requirements.txt` so other people can easily run your code.
+> **Note:** If you're familiar with Python package management, feel free to make your python package anywhere.  
+2. Create a new virtual environment, for example [venv](https://docs.python.org/3/library/venv.html). It is recommended that you also make a `requirements.txt`.
 4. Create an entry point for your script, e.g. `main.py`.
 5. Update your python path:
 ```bash
 export PYTHONPATH="[path/to/diarc]/core/src/main/python:$PYTHONPATH"
 ```
-> **Note:** Consider adding this to your `~/.bashrc` so your path stays updated.
-
-### [Initializing your TRADE Config](config)
-
-If you're interested in calling your Python functions from TRADE, do the following:
-
-1. Create a file `~/.diarc/trade.properties` if it doesn't already exist.
-2. To that file, add the lines:
-
+6. Update your trade properties path:
+```bash
+export TRADE_PROPERTIES_PATH="[path/to/diarc]/core/src/main/python/pytrade/local_trade_hub.properties"
 ```
-STARTBROADCAST=true
-STARTDISCOVERY=true
-STARTACCEPTINGCONNECTIONS=true
-```
+> **Note:** Consider adding these environment variables to your `~/.bashrc` so your paths stays updated.
 
-3. Create a `~/.gradle/gradle.properties` if it doesn't already exist.
-2. To that file, add the line:
-
-```diarc.tradePropertiesFile=/home/[your_username]/.diarc/trade.properties```
-
-
----
 ### Using TRADE Services from Python
 1. To use TRADE in Python, simply import `pytrade.wrapper`. The JVM will start automatically.
 2. Instantiate the `TRADEWrapper` object:
 
-    ```python
-    wrapper = TRADEWrapper()  
-    ```
+```python
+wrapper = TRADEWrapper()  
+```
 
 3. Call TRADE methods through the wrapper, e.g., `wrapper.call_trade("your_method_name")`.
 
@@ -81,10 +60,10 @@ You can implement existing Java interfaces in Python to advertise services throu
 1.  Create a new Python class based on an existing Java interface, e.g., `PythonArmComponent`.
 2.  Decorate the class with `@JImplements([YourInterface])`:
 
-    ```python
-    @JImplements(ArmInterface)
-    class PythonArmComponent:
-    ```
+```python
+@JImplements(ArmInterface)
+class PythonArmComponent:
+```
 
     Ensure you import the relevant interface (e.g., `ArmInterface`).
 3.  Implement all methods from the Java interface, using `@JOverride` for each:
@@ -237,7 +216,7 @@ Take a breather! Your Python code is done. If you want to integrate your code in
 3. Add your Python file as follows:
 ```java
 String file = "examples.minimal_example";
-PythonWrapper wrapper = new PythonWrapper(file);
+PythonWrapper wrapper = new PythonWrapper(file, true);
 wrapper.start();
 try {
     Thread.sleep(2000);
