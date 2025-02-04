@@ -39,7 +39,7 @@ import edu.tufts.hrilab.slug.common.UtteranceType;
 
 public class CacheDatabase {
   static private Logger log = LoggerFactory.getLogger(CacheDatabase.class);
-  static private String cacheDirectoryPath = "config/edu/tufts/hrilab/slug/parsing/cache";
+  static private String cacheDirectoryPath = "/";
   private String tableName = "cache";
   private String defaultCacheName = "diarc-parser-cache";
   private String defaultReverseCacheName = "diarc-parser-cache-reverse";
@@ -360,8 +360,11 @@ public class CacheDatabase {
         if (reverseCache) {
           String cachedWords = results.getString("words");
           if (cachedWords != null) {
-            incoming.setWords(cachedWords);
-            return incoming;
+            Utterance.Builder output = new Utterance.Builder(incoming);
+            output.setWords(cachedWords);
+            return output.build();
+          } else {
+            return null;
           }
         }
         json = results.getString("utterance");
@@ -372,17 +375,18 @@ public class CacheDatabase {
       log.error("[get] Couldn't get utterance from ResultSet", ex);
     }
 
+    Utterance.Builder output = new Utterance.Builder();
     if (cachedUtterance != null) {
-      incoming.setType(cachedUtterance.getType());
+      output.setUtteranceType(cachedUtterance.getType());
       semantics = cachedUtterance.getSemantics();
       semantics.set(0, incoming.getAddressee());
-      incoming.setSemantics(semantics);
-      incoming.setIndirectSemantics(cachedUtterance.getIndirectSemantics());
-      incoming.setBindings(cachedUtterance.getBindings());
-      incoming.setSupplementalSemantics(cachedUtterance.getSupplementalSemantics());
-      incoming.setTierAssignments(cachedUtterance.getTierAssignments());
+      output.setSemantics(semantics);
+      output.setIndirectSemantics(cachedUtterance.getIndirectSemantics());
+      output.setBindings(cachedUtterance.getBindings());
+      output.setSupplementalSemantics(cachedUtterance.getSupplementalSemantics());
+      output.setTierAssignments(cachedUtterance.getTierAssignments());
     }
 
-    return incoming;
+    return output.build();
   }
 }

@@ -60,8 +60,9 @@ public class SimpleNLGComponent extends DiarcComponent implements NLGInterface {
         log.debug("semantics for utterance: " + u.getSemantics());
         lastTranslation = realization;
         log.debug("generated text: " + realization);
-        u.setWords(realization);
-        return u;
+        Utterance.Builder output = new Utterance.Builder(u);
+        output.setWords(realization);
+        return output.build();
     }
 }
 

@@ -39,8 +39,8 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
   private String agentName = "robot1";
   private int players = 1;
   private String goalManagerArgs;
-  private boolean startAutonomy = true;
-  private boolean adaptiveAutonomy = true;
+  private boolean startAutonomy = false;
+  private boolean adaptiveAutonomy = false;
 
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
@@ -88,7 +88,7 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     createInstance(ReferenceResolutionComponent.class);
     createInstance(DialogueComponent.class);
     //createInstance(SimpleNLGComponent.class, "-modifierService spaceStationModifyNLG");
-    createInstance(HybridNLGComponent.class, "");
+    createInstance(HybridNLGComponent.class, "-cacheLoad ss_nlg_cache.sqlite -cachePersist");
     createInstance(UnitySpaceStationNLGComponent.class);
 
     createInstance(MapComponent.class, "-groups agent:" + agentName + " -refs refs/unity_space_station_tube_positions.json");

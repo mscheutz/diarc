@@ -241,6 +241,11 @@ public final class Utterance implements Serializable {
       return this;
     }
 
+    public Builder setWords(String words) {
+      this.words = new ArrayList<>(Arrays.asList(words.trim().split(" ")));
+      return this;
+    }
+
     public Builder setWords(List<String> words) {
       this.words = new ArrayList<>(words);
       return this;
