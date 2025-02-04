@@ -188,11 +188,20 @@ tasks.register<JavaExec>("launch") {
   }
   systemProperty("logback.configurationFile", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString())
   systemProperty("logging.config", properties.getOrDefault("diarc.loggingConfigFile", "src/main/resources/default/logback.xml").toString()) // for springboot
-  val tradePropertiesPath = System.getenv("TRADE_PROPERTIES_PATH")
-    ?: project.findProperty("diarc.tradePropertiesFile") as? String
-    ?: "src/main/resources/default/trade.properties.default"
-  systemProperty("trade.properties.path", tradePropertiesPath)
   systemProperty("tradeLogging.config.path", properties.getOrDefault("diarc.tradeLoggingConfigFile", "src/main/resources/default/tradeLogging.config").toString())
+
+  val defaultPath = "src/main/resources/default/trade.properties.default"
+
+  val envPath = System.getenv("TRADE_PROPERTIES_PATH")
+  val gradleProp = (project.findProperty("diarc.tradePropertiesFile") as? String)
+    ?.takeIf { it != defaultPath } // Ignore if it's the default path
+
+  if (envPath != null && gradleProp != null) {
+    logger.warn("Both TRADE_PROPERTIES_PATH and diarc.tradePropertiesFile are set. Using TRADE_PROPERTIES_PATH ($envPath).")
+  }
+
+  systemProperty("trade.properties.path", envPath ?: gradleProp ?: defaultPath)
+
 
   // Conditionally enable features
   if (project.hasProperty("enableTradeTracker")) {
