@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.StringJoiner;
 
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Variable;
@@ -53,7 +54,7 @@ public class CacheDatabase {
 
   private String language;
 
-  public CacheDatabase (String name, String[] loadPaths, boolean persist, boolean reverseCache, String language) {
+  public CacheDatabase(String name, String[] loadPaths, boolean persist, boolean reverseCache, String language) {
     this.reverseCache = reverseCache;
     this.language = language;
     String homeDirPath;
@@ -68,8 +69,8 @@ public class CacheDatabase {
         return;
       }
 
-      if (name!= null) {
-        if(reverseCache && name.equals(defaultReverseCacheName)) {
+      if (name != null) {
+        if (reverseCache && name.equals(defaultReverseCacheName)) {
           log.warn("The cache name \"" + defaultReverseCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
         } else if (name.equals(defaultCacheName)) {
           log.warn("The cache name \"" + defaultCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
@@ -100,7 +101,7 @@ public class CacheDatabase {
    * If a file path is provided, it initializes the database at that path.
    * If no file path is provided, it initializes an in-memory database.
    */
-  private void initializeDatabase () {
+  private void initializeDatabase() {
     String connectionString = file == null ? "jdbc:sqlite::memory:" : "jdbc:sqlite:" + file;
 
     try {
@@ -125,7 +126,7 @@ public class CacheDatabase {
    * @param file The name of the database file.
    * @return The absolute path of the database file if found; otherwise, null.
    */
-  private static String getDatabasePath (String file) {
+  private static String getDatabasePath(String file) {
     String cachePath = Resources.createFilepath(CacheDatabase.cacheDirectoryPath, file);
     URL u = CacheDatabase.class.getResource(cachePath);
     URI uri = null;
@@ -148,7 +149,7 @@ public class CacheDatabase {
    * Creates an index on the words column of it does not already exist.
    * The table consists of columns: words (TEXT), utterance (JSONB), and created (BIGINT).
    */
-  private void initializeTable () {
+  private void initializeTable() {
     String tableQuery = "CREATE TABLE IF NOT EXISTS " + tableName + " ( words TEXT NOT NULL, utterance JSONB NOT NULL, created BIGINT NOT NULL);";
     String indexQuery;
     if (reverseCache) {
@@ -185,7 +186,7 @@ public class CacheDatabase {
    * PreparedStatement for retrieving data selects the latest utterance for the given words.
    * PreparedStatement for inserting data ignores insertion if a conflicting entry already exists.
    */
-  private void initializeStatements () {
+  private void initializeStatements() {
     String getQuery;
     String insertQuery = "INSERT OR IGNORE INTO " + tableName + " ( words, utterance, created) VALUES (?, ?, ?);";
     if (reverseCache) {
@@ -288,7 +289,7 @@ public class CacheDatabase {
    *
    * @param entry The Utterance object to add to the cache.
    */
-  public void add (Utterance entry) {
+  public void add(Utterance entry) {
     int rows = -1;
     UtteranceType type = entry.getType();
     Symbol semantics = entry.getSemantics();
@@ -300,8 +301,7 @@ public class CacheDatabase {
     if (reverseCache) {
       //Making reverse cache structure the same as that for parsing for code reusability and ease of impl. Indexing by utterance
       //  so we don't want to include the words when storing (because that will be the "words" field now). Can change.
-      wordsList = new ArrayList<>();
-      cached = new ReverseCachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments(), language);
+      cached = new ReverseCachedUtterance(type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments(), language);
     } else {
       wordsList = entry.getWords();
       cached = new CachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments());
@@ -329,16 +329,17 @@ public class CacheDatabase {
    * @param incoming The Utterance object containing the words to retrieve from the cache.
    * @return The Utterance object with updated values if found in the cache; otherwise, returns the incoming Utterance unchanged.
    */
-  public Utterance get (Utterance incoming) {
+  public Utterance get(Utterance incoming) {
     String getStatementString;
     String words = incoming.getWordsAsString();
     if (reverseCache) {
-      List<String> wordsList = new ArrayList<>();//incoming.getWords();
-      UtteranceType type = incoming.getType();
-      Symbol semantics = incoming.getSemantics();
-      List<Term> indirectSemantics = incoming.getIndirectSemantics();
-      List<Map<Variable, Symbol>> bindings = incoming.getBindings();
-      CachedUtterance cached = new ReverseCachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, incoming.getSupplementalSemantics(), incoming.getTierAssignments(), language);
+      CachedUtterance cached = new ReverseCachedUtterance(incoming.getType(),
+              incoming.getSemantics(),
+              incoming.getIndirectSemantics(),
+              incoming.getBindings(),
+              incoming.getSupplementalSemantics(),
+              incoming.getTierAssignments(),
+              language);
       getStatementString = cached.toJSON();
     } else {
       getStatementString = words;
@@ -360,8 +361,25 @@ public class CacheDatabase {
         if (reverseCache) {
           String cachedWords = results.getString("words");
           if (cachedWords != null) {
+
+            StringJoiner joiner = new StringJoiner(" and ");
+            if (incoming.getBindings().isEmpty()) {
+              // no bindings to apply --> use cached words directly
+              joiner.add(cachedWords);
+            } else {
+              // apply bindings to output words with free-variables
+              // e.g., tube ALPHA SIDE NUM is broken --> tube beta left four is broken
+              for (Map<Variable, Symbol> bindingOption : incoming.getBindings()) {
+                String cachedWordsCopy = new String(cachedWords);
+                for (Map.Entry<Variable, Symbol> entry : bindingOption.entrySet()) {
+                  cachedWordsCopy = cachedWordsCopy.replaceAll(entry.getKey().toString(), entry.getValue().toString());
+                }
+                joiner.add(cachedWordsCopy);
+              }
+            }
+
             Utterance.Builder output = new Utterance.Builder(incoming);
-            output.setWords(cachedWords);
+            output.setWords(joiner.toString());
             return output.build();
           } else {
             return null;

@@ -6,14 +6,21 @@ import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.slug.parsing.cache.CachedUtterance;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class ReverseCachedUtterance extends CachedUtterance {
-    private String language;
+  private String language;
 
-    public ReverseCachedUtterance (List<String> words, UtteranceType type, Symbol semantics, List<Term> indirectSemantics, List<Map<Variable, Symbol>> bindings, List<Term> supplementalSemantics, Map<Variable,Symbol> tierAssignments, String language) {
-        super(words,type,semantics,indirectSemantics,bindings,supplementalSemantics,tierAssignments);
-        this.language = language;
+  public ReverseCachedUtterance(UtteranceType type, Symbol semantics, List<Term> indirectSemantics, List<Map<Variable, Symbol>> bindings, List<Term> supplementalSemantics, Map<Variable, Symbol> tierAssignments, String language) {
+    super(new ArrayList<>(), type, semantics, indirectSemantics, bindings, supplementalSemantics, tierAssignments);
+
+    if (bindings == null || bindings.isEmpty()) {
+      this.bindings = null;
+    } else {
+      this.bindings = new ArrayList<>();
     }
+    this.language = language;
+  }
 }

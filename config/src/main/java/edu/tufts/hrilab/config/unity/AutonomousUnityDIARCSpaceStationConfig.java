@@ -14,6 +14,7 @@ import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
+import edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent;
 import edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
@@ -85,7 +86,8 @@ public class AutonomousUnityDIARCSpaceStationConfig {
     DiarcComponent.createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     DiarcComponent.createInstance(ReferenceResolutionComponent.class, "");
     DiarcComponent.createInstance(DialogueComponent.class, "");
-    DiarcComponent.createInstance(SimpleNLGComponent.class, "-modifierService spaceStationModifyNLG");
+//    DiarcComponent.createInstance(SimpleNLGComponent.class, "-modifierService spaceStationModifyNLG");
+    DiarcComponent.createInstance(HybridNLGComponent.class, "-cacheLoad ss_nlg_cache.sqlite -cachePersist");
     DiarcComponent.createInstance(UnitySpaceStationNLGComponent.class, "");
     DiarcComponent.createInstance(ListenerComponent.class, "");
 
