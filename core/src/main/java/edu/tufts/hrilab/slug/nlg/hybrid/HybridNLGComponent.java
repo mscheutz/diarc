@@ -61,7 +61,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
 
     @Override
     public void init() {
-        simpleNLGComponent = createInstance(SimpleNLGComponent.class, "-modifierService " + modifierService);
+        simpleNLGComponent = createInstance(SimpleNLGComponent.class, "-modifierService " + modifierService, false);
 
         StringBuilder cacheArgs = new StringBuilder();
         if (cacheName != null) {
@@ -75,7 +75,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
         if (cachePersist) {
             cacheArgs.append(" -persist ");
         }
-        cachedNLGComponent = createInstance(CachedNLGComponent.class, cacheArgs.toString());
+        cachedNLGComponent = createInstance(CachedNLGComponent.class, cacheArgs.toString(), false);
     }
 
     @Override

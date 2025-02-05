@@ -41,7 +41,8 @@ import edu.tufts.hrilab.action.justification.Justification;
   }
 
   int !wait = 1000;
-  Boolean !isHighWorkload;
+  Boolean !isHighWorkload = false;
+  Boolean !lastHighWorkload = false;
   Symbol !nextArea;
 
   // wait for n milliseconds before starting autonomy. This is to give users a chance to override autonomy with
@@ -50,8 +51,20 @@ import edu.tufts.hrilab.action.justification.Justification;
   act:generateResponseFromString("Starting autonomy action.");
 
   while (true) {
-//    !isHighWorkload = act:isWorkloadAboveThreshold();
-    !isHighWorkload = op:newObject("java.lang.Boolean", true); // for testing
+    !isHighWorkload = act:isWorkloadAboveThreshold();
+//    !isHighWorkload = op:newObject("java.lang.Boolean", true); // for testing
+
+    // logging for workload switching
+    if (~op:equals(!isHighWorkload, !lastHighWorkload)) {
+      if (op:equals(!isHighWorkload, true)) {
+        op:log("info", "HIGH WORKLOAD DETECTED");
+        !lastHighWorkload = op:newObject("java.lang.Boolean", true);
+      } else {
+        op:log("info", "HIGH WORKLOAD NO LONGER DETECTED");
+        !lastHighWorkload = op:newObject("java.lang.Boolean", false);
+      }
+    }
+
     !nextArea = act:getNextAreaToMonitor();
     act:monitor(!nextArea, ?isAdaptive, !isHighWorkload);
   }
