@@ -98,11 +98,6 @@ public class AutonomousUnityDIARCSpaceStationConfig {
       DiarcComponent.createInstance(MockMoveBaseComponent.class, "-groups agent:" + agentName + " -simExecTime");
       DiarcComponent.createInstance(MockUnityPR2Component.class, "-groups agent:" + agentName);
       DiarcComponent.createInstance(SimSpeechProductionComponent.class, "-gui -groups agent:" + agentName);
-      for (int i = 0; i < players; i++) {
-        String humanAgent = "player" + (i + 1);
-        DiarcComponent.createInstance(MockHumanAgent.class, "-agent " + humanAgent + " -groups " + humanAgent);
-        DiarcComponent.createInstance(SimSpeechRecognitionComponent.class, "-speaker " + humanAgent + " -groups " + humanAgent + " -config space_station.simspeech");
-      }
     } else {
       // Unity
       DiarcComponent.createInstance(UnitySpaceStationComponent.class, "-agent spacestation -groups agent:" + agentName);
@@ -113,11 +108,7 @@ public class AutonomousUnityDIARCSpaceStationConfig {
       //PR2
       DiarcComponent.createInstance(MoveBaseComponent.class, "-groups agent:" + agentName + " -point_dist_thresh 0.5");
       DiarcComponent.createInstance(TFComponent.class, " -groups agent:" + agentName);
-      for (int i = 0; i < players; i++) {
-        DiarcComponent.createInstance(HumanAgentComponent.class, "-agent player" + String.valueOf(i + 1));
-      }
     }
-
 
     String goalManagerArgs = "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
             "-priorityFile default.json space_station_priority.json " +
@@ -140,5 +131,17 @@ public class AutonomousUnityDIARCSpaceStationConfig {
     DiarcComponent.createInstance(GoalManagerComponent.class, goalManagerArgs);
 
 
+    // start human component *after* GM
+    if (mock) {
+      for (int i = 0; i < players; i++) {
+        String humanAgent = "player" + (i + 1);
+        DiarcComponent.createInstance(MockHumanAgent.class, "-agent " + humanAgent + " -groups " + humanAgent);
+        DiarcComponent.createInstance(SimSpeechRecognitionComponent.class, "-speaker " + humanAgent + " -groups " + humanAgent + " -config space_station.simspeech");
+      }
+    } else {
+      for (int i = 0; i < players; i++) {
+        DiarcComponent.createInstance(HumanAgentComponent.class, "-agent player" + (i + 1));
+      }
+    }
   }
 }

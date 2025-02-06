@@ -31,13 +31,17 @@ import edu.tufts.hrilab.action.justification.Justification;
    }
  }
 
+// helper action to cancel and restart a ?goal. Needed for cleanly suspending and resuming an autonomy action.
+ () = cancelAndRestartGoal(Predicate ?goal) {
+   act:submitGoal(?goal);
+   act:cancelGoal(?goal);
+ }
+
 //["This is the high level autonomy manager function that will task a robot with monitoring an area if not already busy"]
 () = autonomy(boolean ?isAdaptive) {
-  Predicate !autonomy_goal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "autonomy(robot1,true)");
+  Predicate !autonomyGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "autonomy(?actor,?isAdaptive)");
   onInterrupt :{
-    cancel: act:generateResponseFromString("Cancelling.");
-    suspend: act:cancelGoal(!autonomy_goal);
-    resume:  act:submitGoal(!autonomy_goal);
+    resume:  act:cancelAndRestartGoal(!autonomyGoal);
   }
 
   int !wait = 1000;
