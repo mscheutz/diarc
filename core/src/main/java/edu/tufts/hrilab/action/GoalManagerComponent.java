@@ -597,8 +597,8 @@ public class GoalManagerComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void cancelGoal(long gid) {
-    em.cancelGoal(gid);
+  public boolean cancelGoal(long gid) {
+    return em.cancelGoal(gid);
   }
 
   /**
@@ -643,8 +643,8 @@ public class GoalManagerComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void suspendGoal(long gid) {
-    em.suspendGoal(gid);
+  public boolean suspendGoal(long gid) {
+    return em.suspendGoal(gid);
   }
 
   /**
@@ -652,8 +652,8 @@ public class GoalManagerComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void resumeGoal(long gid) {
-    em.resumeGoal(gid);
+  public boolean resumeGoal(long gid) {
+    return em.resumeGoal(gid);
   }
 
   /**

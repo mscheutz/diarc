@@ -360,12 +360,13 @@ public class Goal implements Serializable {
    * Cancels goal execution (if currently being executed). If being executed, calls cancel
    * on the ActionInterpreter which will set the status of this goal once execution has terminated.
    */
-  public void cancel() {
+  public boolean cancel() {
     if (ai != null) {
       // the AI will set the CANCELED status once it has terminated
-      ai.cancel();
+      return ai.cancel();
     } else {
       setStatus(GoalStatus.CANCELED);
+      return true;
     }
   }
 
@@ -373,12 +374,13 @@ public class Goal implements Serializable {
    * Suspends goal execution (if currently being executed). If being executed, calls suspend
    * on the ActionInterpreter which will set the status of this goal once execution has fully suspended.
    */
-  public void suspend() {
+  public boolean suspend() {
     if (ai != null) {
       // the AI will set the SUSPENDED status once it has been suspended
-      ai.suspend();
+      return ai.suspend();
     } else {
       setStatus(GoalStatus.SUSPENDED);
+      return true;
     }
   }
 
@@ -386,13 +388,15 @@ public class Goal implements Serializable {
    * Resumes goal execution (if currently suspended). Calls suspend
    * on the ActionInterpreter which will set the status of this goal once execution has resumed.
    */
-  public void resume() {
+  public boolean resume() {
     // set status to active which can be overwritten by AI
     status = GoalStatus.ACTIVE;
 
     if (ai != null) {
       // the AI will set the ACTIVE status once it has resumed
-      ai.resume();
+      return ai.resume();
+    } else {
+      return true;
     }
   }
 

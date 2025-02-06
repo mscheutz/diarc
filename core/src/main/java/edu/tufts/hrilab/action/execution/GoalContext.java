@@ -209,29 +209,30 @@ public class GoalContext extends ArgumentBasedContext {
    * @param justification the reason for the context's execution status
    */
   @Override
-  public synchronized void setStatus(ActionStatus eStatus, Justification justification) {
+  public synchronized boolean setStatus(ActionStatus eStatus, Justification justification) {
 
     if (eStatus == ActionStatus.INITIALIZED) {
       // allow context to be (re)set to INITIALIZED, which is required for a context to be reset for re-use
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     } else if (this.isTerminated()) {
       log.warn("Trying to set status of previously terminated context: " + this.getSignatureInPredicateForm()
               + ". Current status is: " + this.getStatus() + ", tried to set to: " + eStatus);
+      return false;
     } else if (!eStatus.isTerminated() || eStatus == ActionStatus.CANCEL || eStatus == ActionStatus.SUCCESS) {
       log.debug("Can't recover from action status: " + eStatus);
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     } else if (recovery.shouldAttemptRecovery(eStatus, justification, this)) {
       log.debug("[setStatus] not propagating failure: " + eStatus);
-      super.setStatus(ActionStatus.RECOVERY, justification);
+      return super.setStatus(ActionStatus.RECOVERY, justification);
     } else if (getStatus() == ActionStatus.RECOVERY && (eStatus == ActionStatus.FAIL_RECOVERY || eStatus == ActionStatus.EXIT_RECOVERY)) {
       //If this context is undergoing recovery and gets a recovery failure status propagated up to it, catch it and
       // start propagating the original failure reasons up the tree instead
       ActionStatus originalFailureStatus = recovery.getOriginalFailureStatus();
       Justification originalFailureJustification = recovery.getOriginalFailureJustification();
-      super.setStatus(originalFailureStatus, originalFailureJustification);
+      return super.setStatus(originalFailureStatus, originalFailureJustification);
     } else {
       log.debug("[setStatus] passing exit handling to super class: " + eStatus);
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     }
   }
 

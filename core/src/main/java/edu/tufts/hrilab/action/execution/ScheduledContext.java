@@ -163,7 +163,7 @@ public class ScheduledContext extends Context {
                     if (getStatus() == ActionStatus.RESUME && scheduledTaskExecuting) {
                         //Goal was suspended, resume inner goal and wait for completion signal from task blocking on joinOnGoal
                         try {
-                            TRADE.getAvailableService(new TRADEServiceConstraints().name("resumeGoal").argTypes(Long.class)).call(void.class, scheduledGoalId);
+                            TRADE.getAvailableService(new TRADEServiceConstraints().name("resumeGoal").argTypes(Long.class)).call(boolean.class, scheduledGoalId);
                         } catch (TRADEException e) {
                             log.error("[ScheduledContext] exception setting scheduled goal status through TRADE", e);
                             //TODO: what justification to return in this case?
@@ -226,16 +226,20 @@ public class ScheduledContext extends Context {
 
 
     @Override
-    public synchronized void setStatus(ActionStatus eStatus, Justification justification) {
+    public synchronized boolean setStatus(ActionStatus eStatus, Justification justification) {
         if (eStatus == ActionStatus.CANCEL) {
             if (scheduledTaskExecuting) {
                 //Cancelling this goal when the scheduled task is active -> cancel that task.
                 try {
-                    TRADE.getAvailableService(new TRADEServiceConstraints().name("cancelGoal").argTypes(Long.class)).call(void.class, scheduledGoalId);
+                    boolean canceled = TRADE.getAvailableService(new TRADEServiceConstraints().name("cancelGoal").argTypes(Long.class)).call(boolean.class, scheduledGoalId);
+                    if (!canceled) {
+                        log.warn("[ScheduledContext] unable to cancel scheduled goal, not setting status");
+                        return false;
+                    }
                 } catch (TRADEException e) {
                     log.error("[ScheduledContext] exception setting scheduled goal status through TRADE", e);
                     //TODO: what justification to return in this case?
-                    setStatus(ActionStatus.FAIL);
+                    return setStatus(ActionStatus.FAIL);
                 }
             } else {
                 //Cancelling this goal before the scheduled task is active -> unblock 'sleep' in doStep and cancel the task
@@ -251,24 +255,27 @@ public class ScheduledContext extends Context {
                 //(The TimerTask will still be running and waiting on joinOnGoal to return. This will not occur until the
                 //  original goal terminates after resume or cancel. In resume, merge into the still running timer task.)
                 try {
-                    TRADE.getAvailableService(new TRADEServiceConstraints().name("suspendGoal").argTypes(Long.class)).call(void.class, scheduledGoalId);
-                    //TODO: wait for inner goal's status to be SUSPEND before updating this?
+                    boolean suspended = TRADE.getAvailableService(new TRADEServiceConstraints().name("suspendGoal").argTypes(Long.class)).call(boolean.class, scheduledGoalId);
+                    if (!suspended) {
+                        log.warn("[ScheduledContext] unable to suspend scheduled goal, not setting status");
+                        return false;
+                    }
                 } catch (TRADEException e) {
                     log.error("[ScheduledContext] exception setting scheduled goal status through TRADE", e);
                     //TODO: what justification?
-                    setStatus(ActionStatus.FAIL);
+                    return setStatus(ActionStatus.FAIL);
                 }
                 taskLock.lock();
                 taskComplete.signal();
                 taskLock.unlock();
             } else {
                 log.warn("[setStatus] cannot suspend scheduled goal which has not begun execution yet. Not updating status");
-                return;
+                return false;
             }
         }
         //Letting resume merging/logic occur in doStep
 
-        super.setStatus(eStatus,justification);
+        return super.setStatus(eStatus,justification);
     }
 
     // Does it ever make sense to have this as a descendant of a noInterrupt context? Should these just return true?

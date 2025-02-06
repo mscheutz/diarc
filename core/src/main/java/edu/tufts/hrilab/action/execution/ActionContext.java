@@ -1205,25 +1205,25 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    * @param justification
    */
   @Override
-  public synchronized void setStatus(ActionStatus eStatus, Justification justification) {
+  public synchronized boolean setStatus(ActionStatus eStatus, Justification justification) {
 
     if (getDBE() == null) {
       // this happens during context construction because the DBE hasn't been set before the
       // INITIALIZE status is set
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     } else if (isScript()) {
       if (eStatus.isFailure() && recovery.shouldAttemptRecovery(eStatus, justification, this)) {
         log.debug("[setStatus] not propagating failure: " + eStatus);
-        super.setStatus(ActionStatus.RECOVERY, justification);
+        return super.setStatus(ActionStatus.RECOVERY, justification);
       } else if (getStatus() == ActionStatus.RECOVERY && (eStatus == ActionStatus.FAIL_RECOVERY || eStatus == ActionStatus.EXIT_RECOVERY)) {
         //If this context is undergoing recovery and gets a recovery failure status propagated up to it, catch it and
         // start propagating the original failure reasons up the tree instead
         ActionStatus originalFailureStatus = recovery.getOriginalFailureStatus();
         Justification originalFailureJustification = recovery.getOriginalFailureJustification();
-        super.setStatus(originalFailureStatus, originalFailureJustification);
+        return super.setStatus(originalFailureStatus, originalFailureJustification);
       } else {
         handleInterrupt(eStatus);
-        super.setStatus(eStatus, justification);
+        return super.setStatus(eStatus, justification);
       }
     } else {
       try {
@@ -1240,14 +1240,14 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
           handleInterrupt(eStatus);
           timeout = 3;
         }
-        super.setStatus(eStatus, justification);
+        return super.setStatus(eStatus, justification);
       } catch (InterruptedException e) {
         log.error("Exception trying to get doStepLock.", e);
       } finally {
         doStepLock.unlock();
       }
     }
-
+    return false;
   }
 
   /**

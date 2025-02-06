@@ -1165,8 +1165,7 @@ public class ExecutionManager implements ActionListener {
     Goal goal = getActiveGoal(gid);
     if (goal != null) {
       log.debug("[cancelGoal] {} canceling active goal {}", gid, goal);
-      cancelActiveGoal(goal);
-      return true;
+      return cancelActiveGoal(goal);
     }
 
     log.warn("[cancelGoal] cannot find current goal for gid {}", gid);
@@ -1220,9 +1219,9 @@ public class ExecutionManager implements ActionListener {
    *
    * @param goal
    */
-  private void cancelActiveGoal(Goal goal) {
+  private boolean cancelActiveGoal(Goal goal) {
     log.debug("[cancelActiveGoal] goal: {}", goal.getPredicate());
-    goal.cancel();
+    boolean retVal = goal.cancel();
 
     // if goal doesn't have an AI, remove it from goals list and add to pastGoals
     // if goal does have an AI, the actionComplete method will be called to
@@ -1231,6 +1230,7 @@ public class ExecutionManager implements ActionListener {
     if (!hasAI) {
       transferGoalToPastGoals(goal);
     }
+    return retVal;
   }
 
   /**
@@ -1269,15 +1269,15 @@ public class ExecutionManager implements ActionListener {
     log.trace("[suspendActiveGoal] " + goal.getPredicate());
     if (goal == null) {
       log.warn("[suspendActiveGoal] goal is null.");
-      return false;
     } else if (goal.getStatus() == GoalStatus.SUSPENDED) {
       log.warn("[suspendActiveGoal] goal status is already SUSPENDED");
-      return false;
     } else {
-      goal.suspend();
-      onActiveGoalUpdated(goal, GoalStatus.SUSPENDED, UpdateType.UPDATED);
+      if (goal.suspend()) {
+        onActiveGoalUpdated(goal, GoalStatus.SUSPENDED, UpdateType.UPDATED);
+        return true;
+      }
     }
-    return true;
+    return false;
   }
 
   /**
@@ -1317,12 +1317,13 @@ public class ExecutionManager implements ActionListener {
     log.trace("[resumeGoal] " + goal);
     if (goal == null) {
       log.warn("[resumeGoal] goal is null.");
-      return false;
+    } else {
+      if (goal.resume()) {
+        onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.UPDATED);
+        return true;
+      }
     }
-
-    goal.resume();
-    onActiveGoalUpdated(goal, GoalStatus.ACTIVE, UpdateType.UPDATED);
-    return true;
+    return false;
   }
 
   /**

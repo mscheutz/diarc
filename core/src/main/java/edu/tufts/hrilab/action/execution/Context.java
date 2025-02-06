@@ -228,7 +228,7 @@ public abstract class Context {
    * @param status
    * @param justification
    */
-  public void setStatus(ActionStatus status, Justification justification) {
+  public boolean setStatus(ActionStatus status, Justification justification) {
     log.debug("Setting context " + getSignatureInPredicateForm() + " to status " + status);
 
     try {
@@ -240,13 +240,14 @@ public abstract class Context {
         this.justification = justification;
       } else if (actionStatus != null && actionStatus.isTerminated()) {
         log.warn("Can not set context " + cmd + " to status " + status + ". Already has terminal status: " + actionStatus);
-        return;
+        return false;
       } else if (actionStatus == ActionStatus.SUSPEND) {
         if (status == ActionStatus.RESUME || status == ActionStatus.CANCEL) {
           actionStatus = status;
           this.justification = justification;
         } else {
           log.debug("Can not set context {} to status {} while it has SUSPEND status.", cmd, status);
+          return false;
         }
       } else {
         actionStatus = status;
@@ -278,6 +279,7 @@ public abstract class Context {
     } finally {
       statusLock.unlock();
     }
+    return true;
   }
 
   /**
@@ -288,9 +290,9 @@ public abstract class Context {
    *
    * @param status
    */
-  public final void setStatus(ActionStatus status) {
+  public final boolean setStatus(ActionStatus status) {
     log.debug("Setting context " + getSignatureInPredicateForm() + " to status " + status + " with justification: " + justification);
-    setStatus(status, this.justification);
+    return setStatus(status, this.justification);
   }
 
   /**

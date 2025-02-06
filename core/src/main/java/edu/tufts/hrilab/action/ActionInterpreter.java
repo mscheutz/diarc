@@ -539,7 +539,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   /**
    * Suspend the Action Interpreter's script.
    */
-  public void suspend() {
+  public boolean suspend() {
     // lock on the currentStep so cancelling doesn't accidentally cancel an old step
     currentStepLock.lock();
     suspendLock.lock();
@@ -547,6 +547,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     try {
       if (currentStep == null) {
         log.warn("[suspend] AI for goal has already terminated: {}", goal.getPredicate());
+        return false;
       } else if (currentStep.isTerminated()) {
         // setting suspended flag will set nextStep to suspended in the mainLoop before it's executed
         suspended.set(true);
@@ -562,12 +563,13 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       currentStepLock.unlock();
       suspendLock.unlock();
     }
+    return true;
   }
 
   /**
    * Resume the Action Interpreter's script after suspending.
    */
-  public void resume() {
+  public boolean resume() {
     // lock on the currentStep in case suspend has not fully completed
     currentStepLock.lock();
     suspendLock.lock();
@@ -587,11 +589,13 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         }
       } else {
         log.warn("[resume] trying to resume an ActionInterpreter that wasn't paused.");
+        return false;
       }
     } finally {
       currentStepLock.unlock();
       suspendLock.unlock();
     }
+    return true;
   }
 
   /**
@@ -601,7 +605,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
    * handling of canceled actions (e.g., via try/catch/finally). This is the
    * only option for external classes.
    */
-  public void cancel() {
+  public boolean cancel() {
     // lock on the currentStep so cancelling doesn't accidentally cancel an old step
     currentStepLock.lock();
 
@@ -641,7 +645,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
             //    assert success effects or failure justifications at this point.
             // This block can be removed if we are allowing suspend/cancel primitives to instead just fail in this case
             resume();
-            return;
+            return true;
           } else {
             if (suspended) {
               leafToSet.setStatus(ActionStatus.CANCEL);
@@ -653,6 +657,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           }
         } else {
           log.warn("[cancel] goal has already terminated: {}", goal.getPredicate());
+          return false;
         }
       } else if (currentStep.isTerminated()) {
         if (shouldUpdate.get()) {
@@ -691,6 +696,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         suspendLock.unlock();
       }
     }
+    return true;
   }
 
   /**

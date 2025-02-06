@@ -26,13 +26,14 @@ public class IfContext extends Context {
   }
 
   @Override
-  public void setStatus(ActionStatus eStatus, Justification justification) {
+  public boolean setStatus(ActionStatus eStatus, Justification justification) {
     if (eStatus.isFailure() && childContexts.getNextIndex() == 1) {
       // if condition context failed, treat as if the condition returned false
       log.debug("If condition failed: " + childContexts.get(0));
     } else {
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     }
+    return true;
   }
 
   private void addNextStep() {
