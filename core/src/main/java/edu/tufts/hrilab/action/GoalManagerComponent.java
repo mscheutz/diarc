@@ -460,8 +460,12 @@ public class GoalManagerComponent extends DiarcComponent {
   @Action
   public PriorityTier getPriorityTierForGoal(Predicate g) {
     String goalName = g.getName();
+    //Persistent goal's priority should be based on inner goal
+    if (goalName.equals("persistent") && g.getArgs().size() > 1) {
+      goalName = g.get(1).getName();
+    }
     if (goalPriorities.containsKey(goalName)) {
-      return goalPriorities.get(g.getName()).getPriorityTier();
+      return goalPriorities.get(goalName).getPriorityTier();
     } else {
       return goalPriorities.get("default").getPriorityTier();
     }
@@ -474,8 +478,12 @@ public class GoalManagerComponent extends DiarcComponent {
   @Action
   public long getPriorityForGoal(Predicate g) {
     String goalName = g.getName();
+    //Persistent goal's priority should be based on inner goal
+    if (goalName.equals("persistent") && g.getArgs().size() > 1) {
+      goalName = g.get(1).getName();
+    }
     if (goalPriorities.containsKey(goalName)) {
-      return goalPriorities.get(g.getName()).getPriority();
+      return goalPriorities.get(goalName).getPriority();
     } else {
       return goalPriorities.get("default").getPriority();
     }

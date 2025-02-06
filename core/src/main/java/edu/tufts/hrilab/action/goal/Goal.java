@@ -20,7 +20,13 @@ import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.justification.Justification;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -53,13 +59,17 @@ public class Goal implements Serializable {
   private GoalStatus status = GoalStatus.PENDING;
   private Symbol actor;
   private Observable observable = Observable.FALSE;
-  private boolean persistent = false;
   private boolean isAction = false;
   private static final IdGenerator idGenerator = new IdGenerator();
   private Predicate metric;
   private Set<Resource> requiredResources = null;
   private Set<Resource> heldResources = null;
   private boolean isLearningGoal = false;
+  private boolean persistent = false;
+  private boolean scheduled = false;
+  private Long scheduledDelay = null;
+  private TimeUnit scheduledDelayTimeUnit = null;
+  private Date scheduledDate = null;
 
   /**
    * The ActionInterpreter currently executing this Goal. Can be null if this Goal isn't currently being executed.
@@ -142,6 +152,22 @@ public class Goal implements Serializable {
 
   public boolean isPersistent() {
     return persistent;
+  }
+
+  public boolean isScheduled() {
+    return scheduled;
+  }
+
+  public long getScheduledDelay() {
+    return scheduledDelay;
+  }
+
+  public TimeUnit getScheduledDelayTimeUnit() {
+    return scheduledDelayTimeUnit;
+  }
+
+  public Date getScheduledDate() {
+    return scheduledDate;
   }
 
   public Symbol getActor() {
@@ -361,6 +387,9 @@ public class Goal implements Serializable {
    * on the ActionInterpreter which will set the status of this goal once execution has resumed.
    */
   public void resume() {
+    // set status to active which can be overwritten by AI
+    status = GoalStatus.ACTIVE;
+
     if (ai != null) {
       // the AI will set the ACTIVE status once it has resumed
       ai.resume();
@@ -395,14 +424,10 @@ public class Goal implements Serializable {
   public Goal(Predicate goalState) {
     gid = idGenerator.getNext();
 
-    // check persistent first bc other goal predicate forms could be nested inside
-    if (goalState.getName().equals("persistent")) {             // persistent goal
-      if (goalState.size() != 2) {  // illegal structure
-        log.error("[Goal] illegal predicate structure: " + goalState);
-        return;
-      }
-      goalState = (Predicate) goalState.get(1);
-      persistent = true;
+    // check for certain special forms first bc other goal predicate forms could be nested inside
+    Predicate unwrappedGoalState = unwrapGoalPredicate(goalState, true);
+    if (unwrappedGoalState != null) {
+      goalState = unwrappedGoalState;
     }
 
     // handle special goal predicate forms
@@ -470,16 +495,10 @@ public class Goal implements Serializable {
       // should be a predicate
       Predicate predicate = (Predicate) goalState;
 
-      // check persistent first bc other goal predicate forms could be nested inside
-      if (predicate.getName().equals("persistent")) {             // persistent goal
-        if (predicate.size() != 1) {  // illegal structure
-          log.error("[Goal] illegal predicate structure: " + predicate);
-          return;
-        }
-        predicate = (Predicate) predicate.get(0);
-        persistent = true;
+      predicate = unwrapGoalPredicate(predicate, false);
+      if (predicate == null) {
+        return;
       }
-
 
       // error messages for deprecated special predicate forms
       switch (goalState.getName()) {
@@ -492,6 +511,95 @@ public class Goal implements Serializable {
     } else {
       log.error("Goal state is not a Variable or Predicate: " + goalState);
     }
+  }
+
+  /**
+   * Check for special goal forms on submission (Currently 'scheduled' and 'persistent'). Unwraps the predicate to
+   * submit while populating class variables with values based on wrapper names and arguments.
+   */
+  private Predicate unwrapGoalPredicate(Predicate goalState, boolean actorIncluded) {
+    if (goalState.getName().equals("persistent")) {
+      if (actorIncluded) {
+        if (goalState.size() != 2) {  // illegal structure
+          log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
+          return null;
+        }
+        goalState = (Predicate) goalState.get(1);
+      } else {
+        if (goalState.size() != 1) {
+          log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
+          return null;
+        }
+        goalState = (Predicate) goalState.get(0);
+      }
+      persistent = true;
+
+      return unwrapGoalPredicate(goalState, false);
+    } else if (goalState.getName().equals("scheduled")) {
+      int formatType = 0;
+      String dateString = "";
+      String delayString = "";
+      String timeUnitString = "";
+      if (actorIncluded) {
+        if (goalState.size() == 3) {
+          dateString = goalState.get(2).toString();
+          formatType = 2;
+        } else if (goalState.size() == 4) {
+          delayString = goalState.get(2).toString();
+          timeUnitString = goalState.get(3).toString();
+          formatType = 1;
+        }
+        goalState = (Predicate) goalState.get(1);
+      } else {
+        if (goalState.size() == 2) {
+          dateString = goalState.get(1).toString();
+          formatType = 2;
+        } else if (goalState.size() == 3) {
+          delayString = goalState.get(1).toString();
+          timeUnitString = goalState.get(2).toString();
+          formatType = 1;
+        }
+        goalState = (Predicate) goalState.get(0);
+      }
+      try {
+        if (formatType == 0) {
+          log.error("[Goal] illegal predicate structure for scheduled goal: " + goalState);
+          return null;
+        } else if (formatType == 1) {
+          scheduledDelay = Long.parseLong(delayString);
+          scheduledDelayTimeUnit = TimeUnit.valueOf(timeUnitString);
+        } else if (formatType == 2) {
+          SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
+          Date date = null;
+          //TODO: what date format do we expect? Is only the LLM able to target this flexibly?
+          try {
+            date = formatter.parse(dateString);
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.HOUR_OF_DAY,date.getHours());
+            calendar.set(Calendar.MINUTE,date.getMinutes());
+            calendar.set(Calendar.SECOND,date.getSeconds());
+            date = calendar.getTime();
+          } catch (ParseException ignored) {}
+          if (date == null) {
+            formatter = new SimpleDateFormat("MM-dd-yyyyTHH-mm-ss", Locale.ENGLISH);
+            date = formatter.parse(dateString);
+          }
+          scheduledDate = date;
+        }
+      } catch (Exception e) {
+        log.error("[Goal] exception while parsing arguments for scheduled goal: " + goalState, e);
+      }
+      scheduled = true;
+
+      //Modified Impl:
+      //With current implementation of disjoint goal submission due to needing to adhere to resource constraints
+      // of inner goal while allowing this goal to be active, need to cut off here to allow for 'scheduled persistent goals'
+      // or 'scheduled persistent scheduled  to be possible.
+      //return unwrapGoalPredicate(goalState, false);
+      return goalState;
+    }
+
+    return goalState;
   }
 
   @Override
