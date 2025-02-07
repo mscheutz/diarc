@@ -55,7 +55,11 @@ public class AgentTeam {
         members.put(member.getName(), member);
     }
 
-    protected void addParentTeam(AgentTeam parentTeam) {
+    protected void removeMember(AgentTeam member) {
+        members.remove(member.name);
+    }
+
+    protected void setParentTeam(AgentTeam parentTeam) {
         this.parentTeam = parentTeam;
     }
 

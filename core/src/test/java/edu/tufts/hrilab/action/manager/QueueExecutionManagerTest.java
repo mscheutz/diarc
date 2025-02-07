@@ -539,6 +539,11 @@ public class QueueExecutionManagerTest {
     Goal freeze1Goal = submitGoalAndWait(goalPred, ExecutionType.ACT, 1L, PriorityTier.LOW);
     assertSame(freeze1Goal.getStatus(), GoalStatus.ACTIVE);
     em.suspendGoal(freeze1Goal.getId());
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      log.error(e.getMessage());
+    }
     assertSame(freeze1Goal.getStatus(), GoalStatus.SUSPENDED);
 
     goalPred = Factory.createPredicate("freeze", "self:agent");
@@ -675,16 +680,31 @@ public class QueueExecutionManagerTest {
     assertSame(freezeGoal2.getStatus(), GoalStatus.ACTIVE);
 
     em.cancelSystemGoals(Factory.createSymbol("agent1:agent"));
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      log.error(e.getMessage());
+    }
     assertSame(freezeGoal1.getStatus(), GoalStatus.CANCELED);
     assertSame(freezeGoal2.getStatus(), GoalStatus.ACTIVE);
 
     em.cancelSystemGoals(Factory.createSymbol("team1:agent"));
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      log.error(e.getMessage());
+    }
     assertSame(freezeGoal2.getStatus(), GoalStatus.CANCELED);
 
     goalPred = Factory.createPredicate("freeze", "self:agent");
     Goal freezeGoal3 = submitGoalAndWait(goalPred);
     assertSame(freezeGoal3.getStatus(), GoalStatus.ACTIVE);
     em.cancelSystemGoals(Factory.createSymbol("team1:agent"));
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      log.error(e.getMessage());
+    }
     assertSame(freezeGoal2.getStatus(), GoalStatus.CANCELED);
 
     cancelAllGoals();
@@ -700,10 +720,20 @@ public class QueueExecutionManagerTest {
     assertSame(freezeGoal2.getStatus(), GoalStatus.ACTIVE);
 
     em.suspendSystemGoals(Factory.createSymbol("agent1:agent"));
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      log.error(e.getMessage());
+    }
     assertSame(freezeGoal1.getStatus(), GoalStatus.SUSPENDED);
     assertSame(freezeGoal2.getStatus(), GoalStatus.ACTIVE);
 
     em.suspendSystemGoals(Factory.createSymbol("team1:agent"));
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      log.error(e.getMessage());
+    }
     assertSame(freezeGoal2.getStatus(), GoalStatus.SUSPENDED);
 
     em.resumeSystemGoals(Factory.createSymbol("team1:agent"));

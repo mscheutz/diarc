@@ -216,8 +216,11 @@ public class ExecutionManager implements ActionListener {
           // children than the existing notion of the parent (want most immediate parent)
           AgentTeam existingParent = member.getParentTeam();
           if (existingParent == null || agentHierarchy.get(existingParent.getName()).size() > numMembers) {
-            member.addParentTeam(team);
+            member.setParentTeam(team);
             team.addMember(member);
+            if (existingParent != null) {
+              existingParent.removeMember(member);
+            }
           }
         }
       }

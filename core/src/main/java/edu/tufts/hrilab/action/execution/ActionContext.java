@@ -1222,25 +1222,31 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
         Justification originalFailureJustification = recovery.getOriginalFailureJustification();
         return super.setStatus(originalFailureStatus, originalFailureJustification);
       } else {
-        handleInterrupt(eStatus);
-        return super.setStatus(eStatus, justification);
+        boolean ret = super.setStatus(eStatus, justification);
+        if (ret) {
+          handleInterrupt(eStatus);
+        }
+        return ret;
       }
     } else {
       try {
-        //Q: is there any other way to do this?
-        //If a primitive was suspended, doStepLock will not be held. Still want to call resume behavior in this case though
-        if (getStatus() == ActionStatus.SUSPEND && eStatus == ActionStatus.RESUME) {
-          handleInterrupt(eStatus);
-        }
+        boolean ret = super.setStatus(eStatus, justification);
+        if (ret) {
+          //Q: is there any other way to do this?
+          //If a primitive was suspended, doStepLock will not be held. Still want to call resume behavior in this case though
+          if (getStatus() == ActionStatus.SUSPEND && eStatus == ActionStatus.RESUME) {
+            handleInterrupt(eStatus);
+          }
 
-        long timeout = 0;
-        while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
-          // lock NOT acquired (doStep is executing)
-          // attempt to interrupt until lock can be acquired
-          handleInterrupt(eStatus);
-          timeout = 3;
+          long timeout = 0;
+          while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
+            // lock NOT acquired (doStep is executing)
+            // attempt to interrupt until lock can be acquired
+            handleInterrupt(eStatus);
+            timeout = 3;
+          }
         }
-        return super.setStatus(eStatus, justification);
+        return ret;
       } catch (InterruptedException e) {
         log.error("Exception trying to get doStepLock.", e);
       } finally {
