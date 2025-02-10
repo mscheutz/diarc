@@ -57,7 +57,12 @@ class ASRComponent:
                     final_text = result.get("text", "")
                     self.last_text = final_text
                     logging.info(f"[ASR] Final: {final_text}")
-                    #incremental_parse(final_text)
+
+                    # Send each word incrementally to Java
+                    words = final_text.split()
+                    for i in range(len(words)):
+                        incremental_text = " ".join(words[:i+1])  # Build word-by-word phrase
+                        TRADE.call_service("incrementalParse", incremental_text)
                 else:
                     partial = json.loads(rec.PartialResult())
                     logging.info(f"[ASR] Partial: {partial.get('partial', '')}")

@@ -32,6 +32,8 @@ import org.junit.runner.Description;
 
 
 
+
+
 import static org.junit.Assert.assertTrue;
 
 public class TLDLParserComponentTestIncremental {
@@ -52,70 +54,92 @@ public class TLDLParserComponentTestIncremental {
 
     @Test
     public void parsingTest() {
-        log.info("Testing incremental parse for 'grab the mug' followed by 'on the table'");
+        log.info("Testing incremental parsing with real-time ASR input");
+
         component.addDictionary("incrementalTesting.dict");
-        //component.setUseAddressHistory(false);
-
-        String file = "examples.minimal_example";
-        PythonWrapper wrapper = new PythonWrapper(file);
-        wrapper.start();
 
 
+        // Initialize Python ASR wrapper
+        String file = "examples.minimal_example"; // Specify the python file you want to run, according to its package path
+        PythonWrapper wrapper = new PythonWrapper(file, true); // Declare the wrapper as a TRADE spoke
+        wrapper.start(); // Start the wrapper
 
+        // Wait for PyTRADE to start
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
-
-            // Simulate incremental input
-        Utterance part1 = new Utterance.Builder()
-                .setWords(Arrays.asList("grab", "the", "mug"))
-                .setSpeaker(Factory.createSymbol("speaker"))
-                .setAddressee(Factory.createSymbol("listener"))
-                .build();
-
-        Utterance part2 = new Utterance.Builder()
-                .setWords(Arrays.asList("by", "the", "handle"))
-                .setSpeaker(Factory.createSymbol("speaker"))
-                .setAddressee(Factory.createSymbol("listener"))
-                .build();
+        // Call the 'dock' TRADE service with an empty symbol as an argument
+        try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("dock")).call(void.class, Factory.createSymbol(""));
+        } catch (TRADEException e) {
+            throw new RuntimeException(e);
+        }
 
 
 
-        Collection<TRADEServiceInfo> myParsingServices = TRADE.getAvailableServices(new TRADEServiceConstraints().name("undock"));
+        // Get available TRADE services
+        Collection<TRADEServiceInfo> myParsingServices = TRADE.getAvailableServices(new TRADEServiceConstraints());
 
-
-
-        for(TRADEServiceInfo service : myParsingServices) {
+        // Identify the ASR service and fetch incremental words
+        String recognizedText = "";
+        for (TRADEServiceInfo service : myParsingServices) {
             if (service.serviceString.equals("getLastRecognizedText()")) {
                 try {
-                    service.call(void.class, "");
-                } catch(TRADEException te) {
-                    // handle the failure
-
+                    recognizedText = service.call(String.class, ""); // Fetch ASR output
+                    log.info("Received from ASR: {}", recognizedText);
+                } catch (TRADEException te) {
+                    log.error("Error retrieving recognized text from ASR", te);
                 }
             }
         }
 
-        // Parse the first part
-        Utterance phrase1 = component.parseUtterance(part1);
-        log.info("Result of part 1 parsing: {}", phrase1);
+        // Ensure we received some text from ASR
+        if (recognizedText.isEmpty()) {
+            log.warn("No recognized text received from ASR.");
+            return;
+        }
 
-        // Parse the second part incrementally and create full utterance that builds on first phrase (e.g. "grab the mug...on the table")
-        Utterance phrase2 = component.parseUtterance(part2);
-        log.info("Result of part 2 parsing: {}", phrase2);
+        // Split text incrementally and send to Java parser
+        String[] words = recognizedText.split(" ");
+        StringBuilder incrementalPhrase = new StringBuilder();
 
-        // Reset the chart
+        for (String word : words) {
+            incrementalPhrase.append(word).append(" "); // Append new word incrementally
+            String partialText = incrementalPhrase.toString().trim();
+
+            // Call incremental parsing function
+            incrementalParse(partialText);
+        }
+
+        // Reset parser state before final utterance
         component.resetChart();
 
-        // Parse a new input after reset
-        Utterance newInput = new Utterance.Builder()
+        // Parse a final reference phrase to test full sentence parsing
+        Utterance finalUtterance = new Utterance.Builder()
                 .setWords(Arrays.asList("grab", "the", "mug", "by", "the", "top"))
                 .setSpeaker(Factory.createSymbol("speaker"))
                 .setAddressee(Factory.createSymbol("listener"))
                 .build();
 
-        Utterance newResult = component.parseUtterance(newInput);
-        log.info("Result after reset: {}", newResult);
+        Utterance finalResult = component.parseUtterance(finalUtterance);
+        log.info("Final result after reset: {}", finalResult);
+    }
 
+    // Helper function to parse incrementally
+    public void incrementalParse(String text) {
+        log.info("Incrementally parsing: {}", text);
 
+        Utterance partialUtterance = new Utterance.Builder()
+                .setWords(Arrays.asList(text.split(" "))) // Split words dynamically
+                .setSpeaker(Factory.createSymbol("speaker"))
+                .setAddressee(Factory.createSymbol("listener"))
+                .build();
+
+        Utterance result = component.parseUtterance(partialUtterance);
+        log.info("Result after incremental parsing '{}': {}", text, result);
     }
 
     @Test
@@ -161,6 +185,8 @@ public class TLDLParserComponentTestIncremental {
 
         assertTrue("Final parse should produce a valid utterance.", finalResult != null);
     }
+
+
 
 
 }
