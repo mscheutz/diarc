@@ -15,6 +15,8 @@ import edu.tufts.hrilab.util.Http;
 
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,9 +28,13 @@ public class HFClient{
     static private Logger log = LoggerFactory.getLogger(HFClient.class);
 
     //Llama HuggingFace free inference endpoints ('free' with Pro account)
-    private String llamaHFCompletionEndpoint = "https://api-inference.huggingface.co/models/meta-llama/%s";
+    private String llamaHFCompletionEndpointTemplate = "https://api-inference.huggingface.co/models/meta-llama/%s";
 
-    private String t5CompletionEndpoint = "https://api-inference.huggingface.co/models/%s";
+    private String t5CompletionEndpointTemplate = "https://api-inference.huggingface.co/models/%s";
+
+    private String endpoint;
+
+    private final Pattern UNICODE_PATTERN = Pattern.compile("(?<!\\\\)\\\\u(\\p{XDigit}{4})");
 
     //EW: Non-chat models I think are theoretically available to use, but have practically never finished loading for me
     private List<String> llamaHFCompletionModels = Arrays.asList("Llama-2-7b-hf", "Llama-2-7b-chat-hf", "Llama-2-13b-hf", "Llama-2-13b-chat-hf", "Llama-2-70b-hf", "Llama-2-70b-chat-hf", "Meta-Llama-3-8B", "Meta-Llama-3-8B-Instruct", "Meta-Llama-3-70B", "Meta-Llama-3-70B-Instruct","Meta-Llama-3.1-8B", "Meta-Llama-3.1-8B-Instruct", "Meta-Llama-3.1-70B", "Meta-Llama-3.1-70B-Instruct","Meta-Llama-3.1-405B", "Meta-Llama-3.1-405B-Instruct");
@@ -40,7 +46,7 @@ public class HFClient{
     public String model = "Meta-Llama-3.1-70B-Instruct";
 
     private String apiKey = null;
-    private int maxNewTokens = 1028;
+    private int maxNewTokens = 128;
     private float temperature = 0.6f;
 
     public HFClient () {
@@ -65,6 +71,10 @@ public class HFClient{
         model = modelStr;
     }
 
+    public void setEndpoint(String endpoint) {
+        this.endpoint = endpoint;
+    }
+
     public T5BaseCompletionResponse t5BaseCompletion(String prompt) {
         return t5BaseCompletion(prompt, model);
     }
@@ -84,11 +94,12 @@ public class HFClient{
     * @return the completion response from the TextSynth API
     **/
     public T5BaseCompletionResponse t5BaseCompletion (T5BaseCompletionRequestBody requestBody, String model) {
-        String endpoint = String.format(t5CompletionEndpoint, model);
+        String endpoint = String.format(t5CompletionEndpointTemplate, model);
         Map<String, String> headers = new HashMap<>();
         headers.put("Authorization", "Bearer " + apiKey);
         Gson gson = new Gson();
-        String response = Http.sendPostRequest(endpoint, requestBody, headers);
+        Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(endpoint, requestBody, headers);
+        String response = httpResponse == null ? null : httpResponse.responseString;
         log.debug("Response: " + response);
         Type t = new TypeToken<List<T5BaseCompletionResponse>>() {}.getType();
         List<T5BaseCompletionResponse> results = gson.fromJson(response, t);
@@ -182,17 +193,62 @@ public class HFClient{
         Map<String, String> headers = new HashMap<>();
         headers.put("Authorization", "Bearer " + apiKey);
         Gson gson = new Gson();
-        String response = Http.sendPostRequest(String.format(llamaHFCompletionEndpoint, model), requestBody, headers);
+        String targetEndpoint;
+        if (endpoint == null) {
+            targetEndpoint = String.format(llamaHFCompletionEndpointTemplate, model);
+        } else {
+            targetEndpoint = endpoint;
+        }
+        Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
+        String response = httpResponse == null ? null : httpResponse.responseString;
+        int responseCode = httpResponse == null ? -1 : httpResponse.responseCode;
         log.debug("Response: " + response);
-        if (response == null) {
-          log.warn("HF Model " + model + " is not yet available, setting wait_for_model to true and trying again. THIS MAY TAKE A WHILE");
-          requestBody.setWait_for_model(true);
-          response = Http.sendPostRequest(String.format(llamaHFCompletionEndpoint, model), requestBody, headers);
-          log.debug("Response attempt 2: " + response);
+        log.info("Response code: " + responseCode);
+        if (responseCode == 503) {
+            log.warn("[llamaHFChatCompletion] in cold start period for model, this may take up to ten minutes...");
+            //TODO: sayText to report coldstart period?
+            //Try using free endpoint temporarily
+            log.debug("[llamaHFChatCompletion] attempting using serverless endpoint...");
+            targetEndpoint = String.format(llamaHFCompletionEndpointTemplate, model);
+            httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
+            responseCode = httpResponse == null ? -1 : httpResponse.responseCode;
+            response = httpResponse == null ? null : httpResponse.responseString;
+            log.debug("serverless response: " + response);
+            log.info("serverless response code: " + responseCode);
+        } else if (responseCode == 422) {
+            log.warn("[llamaHFChatCompletion] token length of query + response may be too long. Settings for private endpoint must be updated");
+        } else if (response == null) {
+            //TODO: get wait_for_model code for serverless endpoint and use that specifically
+            log.warn("HF Model " + model + " is not yet available, setting wait_for_model to true and trying again. THIS MAY TAKE A WHILE");
+            requestBody.setWait_for_model(true);
+            httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
+            response = httpResponse == null ? null : httpResponse.responseString;
+            log.debug("Response attempt 2: " + response);
         }
         Type t = new TypeToken<List<LlamaHFChatCompletionResponse>>() {}.getType();
         List<LlamaHFChatCompletionResponse> results = gson.fromJson(response, t);
-        LlamaHFChatCompletionResponse resp = results.get(0);
+        LlamaHFChatCompletionResponse resp;
+        if (response == null) {
+            resp = new LlamaHFChatCompletionResponse();
+        } else {
+            resp = results.get(0);
+            Matcher unicodeMatcher = UNICODE_PATTERN.matcher(resp.generated_text);
+            if (unicodeMatcher.find()) {
+                try {
+                    log.warn("[lamaHFChatCompletion] found escaped unicode strings in response. Attempting to convert to unicode characters.");
+                    unicodeMatcher.reset(resp.generated_text);
+                    String original = resp.generated_text;
+                    resp.generated_text = unicodeMatcher.replaceAll(match -> {
+                        char c = (char) Integer.parseInt(match.group(1), 16);
+                        return Character.toString(c);
+                    });
+                    log.warn("[llamaHFChatCompletion] original: " + original + "\n corrected: " + resp.generated_text);
+                } catch (Exception e) {
+                    log.error("llamaHFChatCompletion] error attempting to convert escaped unicode literals to valid characters in response " + resp);
+                    resp = new LlamaHFChatCompletionResponse();
+                }
+            }
+        }
         return resp;
     }
 

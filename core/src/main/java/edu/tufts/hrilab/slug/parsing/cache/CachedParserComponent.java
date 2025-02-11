@@ -7,12 +7,11 @@ package edu.tufts.hrilab.slug.parsing.cache;
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.interfaces.NLUInterface;
+import edu.tufts.hrilab.slug.cache.CacheDatabase;
 import edu.tufts.hrilab.slug.common.Utterance;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +45,7 @@ public class CachedParserComponent extends DiarcComponent implements NLUInterfac
 
   @Override
   protected void init () {
-    database = new CacheDatabase(name, loadPaths, persist);
+    database = new CacheDatabase(name, loadPaths, persist, false, "English");
   }
 
   /**

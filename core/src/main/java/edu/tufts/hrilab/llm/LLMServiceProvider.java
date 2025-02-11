@@ -2,7 +2,7 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-package edu.tufts.hrilab.llm.hf;
+package edu.tufts.hrilab.llm;
 
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
@@ -147,21 +147,14 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
         }
     }
 
-    @Override
-    public Utterance convertSemanticsToText(Utterance u) {
-        if (performNLG) {
-            return llmGenerationService(u);
-        } else {
-            return nlg.convertSemanticsToText(u);
-        }
-    }
-
-    public Utterance parseUtterance(Utterance utterance) {
+    @TRADEService
+    public Utterance parseUtteranceLLMService(Utterance utterance) {
         return llmChatCompletionHelper(utterance, true);
     }
 
-    public Utterance llmGenerationService(Utterance utterance) {
-        return llmChatCompletionHelper(utterance, false);
+    @TRADEService
+    public Utterance convertSemanticsToTextLLMService(Utterance u) {
+        return llmChatCompletionHelper(u, false);
     }
 
     private Utterance llmChatCompletionHelper(Utterance utterance, boolean parsing) {
@@ -194,17 +187,16 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
         }
 
         // Call LLM to get Completion
-        Completion response;
+        Completion response = null;
         try {
             response = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
         } catch (TRADEException e) {
             log.error("[llmParserService] Error performing chat completion", e);
-            if (!parsing) {
-                log.debug("[llmParserService] Error during chat completion during NLG, using SimpleNLG as a fallback");
-                return nlg.convertSemanticsToText(utterance);
-            } else {
-                return utterance;
-            }
+        }
+
+        if (response == null ||response.getText() == null) {
+            log.warn("[llmChatCompletionHelper] have null response from LLM, returning original utterance");
+            return utterance;
         }
 
         //Add LLM's response to the chat //TODO: do we actually generally want this present in the chat in this way?
@@ -442,11 +434,5 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
         currentChats = new HashMap<>();
         conversationMappings = new HashMap<>();
         currentConversations = new HashMap<>();
-    }
-
-    @TRADEService
-    @Action
-    public void toggleLLMNLG() {
-        performNLG = !performNLG;
     }
 }

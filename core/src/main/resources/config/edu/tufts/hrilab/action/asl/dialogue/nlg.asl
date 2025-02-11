@@ -83,6 +83,23 @@ import java.util.Map;
     }
 }
 
+//Temp PickAndPlace2024
+() = generateResponse(Symbol ?addressee, Predicate ?semantics, Symbol ?semanticType, Predicate ?suppSemantics) {
+    op:log("debug", "[generateResponse] semantics: ?semantics");
+
+    Utterance !utterance;
+    UtteranceType !type;
+    if (op:equalsValue(?semanticType, direct)) {
+      !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
+      !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+      op:invokeMethod(!utterance, "setType", !type);
+      op:invokeMethod(!utterance, "setSemantics", ?semantics);
+      op:log(info,"adding supp semantics ?suppSemantics");
+      op:invokeMethod(!utterance, "addSupplementalSemantics", ?suppSemantics);
+      act:communicateUtterance(!utterance);
+    }
+}
+
 /**
  * Given a predicate, calls NLG pipeline to get its text from and then calls sayText action.
  * Called from semantics and from generateResponse with empty bindings. Submits to NLG and sayText
@@ -158,24 +175,42 @@ import java.util.Map;
   //Communicate the utterance ?attempts times (default 1) while waiting for ?duration seconds
   ?answerBindings = op:setNull(); // require bc of the weird way ASL handles return args
   Long !count = 0;
+  Symbol !speaker;
+  Integer !tracker = 0;
+
+  onInterrupt : {
+    resume: act:askQuestionFromUtteranceOnResume(!tracker,?utterance);
+  }
+
+  !speaker = op:invokeMethod(?utterance, "getSpeaker");
   while (op:isNull(?answerBindings) && op:lt(!count, ?attempts)) {
     !count = op:++(!count);
 
     // communicate utterance (which also updates dialogue history)
     // call asynchronously so that the waitForResponse is called asap so we don't miss any responses
-    async {
-      act:communicateUtterance(!utterance);
+    noInterrupt {
+      async {
+        act:communicateUtterance(?utterance);
+      }
+      !tracker = op:newObject("java.lang.Integer", 1);
     }
 
     // wait for response - default duration is -1, which means block indefinitely
-    ?answerBindings = act:waitForResponse(?responseForm, ?duration);
+    ?answerBindings = act:waitForResponse(?responseForm, !speaker, ?duration);
+    !tracker = op:newObject("java.lang.Integer", 2);
   }
 
   //If we timed out and did not receive a response, we need to remove the active question ourselves
   if (op:isNull(?answerBindings)) {
-    act:cancelWaitForResponse(?responseForm);
+    act:cancelWaitForResponse(?responseForm, !speaker);
   }
   //TODO:EW: else interrupt looping communicateUtterance we are potentially in if we received a response mid loop?
+}
+
+() = askQuestionFromUtteranceOnResume(Integer ?tracker, Utterance ?utterance) {
+    if (op:equals(?tracker,1)) {
+        act:communicateUtterance(?utterance);
+    }
 }
 
 /**

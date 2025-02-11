@@ -30,11 +30,17 @@ public class OpenTTSComponent extends DiarcComponent implements SpeechProduction
   public boolean sayText(String text) {
     String endpoint = String.format(openTTSEndpoint, "marytts:cmu-bdl-hsmm", text);
     Map<String, String> headers = new HashMap<>();
-    String response = Http.sendGetRequest(endpoint, headers);
-    byte[] wav = response.getBytes(StandardCharsets.ISO_8859_1);
-    playWavFile(wav);
+    Http.HTTPRequestResponse response = Http.sendGetRequest(endpoint, headers);
+    if (response != null) {
+      String responseText = response.responseString;
+      if (responseText != null) {
+        byte[] wav = responseText.getBytes(StandardCharsets.ISO_8859_1);
+        playWavFile(wav);
 //    log.info("Response: " + response);
-    return true;
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

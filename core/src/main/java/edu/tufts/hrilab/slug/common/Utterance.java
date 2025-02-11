@@ -523,6 +523,7 @@ public final class Utterance implements Serializable {
 
   public void addBinding(Map<Variable, Symbol> binding) {
     bindings.add(binding);
+    this.boundSemantics = null;
   }
 
   public void setBindings(List<Map<Variable, Symbol>> bindings) {
