@@ -119,11 +119,19 @@ public class AutonomousUnityDIARCSpaceStationConfig {
             "-asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl ";
     // TODO: why are different pl files needed here?
     if (startAutonomy) {
+      // set init autonomy area to monitor
+      String initArea;
+      if (agentName.equals("robot1")) {
+        initArea = "alpha";
+      } else {
+        initArea = "beta";
+      }
+
       goalManagerArgs += "-beliefinitfile unity/pr2UnityTeam_smm.pl ";
       if (adaptiveAutonomy) {
-        goalManagerArgs += "-goal autonomy(" + agentName + ",true) ";
+        goalManagerArgs += "-goal autonomy(" + agentName + ",true," + initArea + ")";
       } else {
-        goalManagerArgs += "-goal autonomy(" + agentName + ",false) ";
+        goalManagerArgs += "-goal autonomy(" + agentName + ",false," + initArea + ")";
       }
     } else {
       goalManagerArgs += "-beliefinitfile unity/pr2UnityTeam_smm_" + agentName + ".pl ";

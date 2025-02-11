@@ -38,8 +38,8 @@ import edu.tufts.hrilab.action.justification.Justification;
  }
 
 //["This is the high level autonomy manager function that will task a robot with monitoring an area if not already busy"]
-() = autonomy(boolean ?isAdaptive) {
-  Predicate !autonomyGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "autonomy(?actor,?isAdaptive)");
+() = autonomy(boolean ?isAdaptive, Symbol ?initAreaToMonitor) {
+  Predicate !autonomyGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "autonomy(?actor,?isAdaptive,?initAreaToMonitor)");
   onInterrupt :{
     resume:  act:cancelAndRestartGoal(!autonomyGoal);
   }
@@ -69,7 +69,7 @@ import edu.tufts.hrilab.action.justification.Justification;
       }
     }
 
-    !nextArea = act:getNextAreaToMonitor();
+    !nextArea = act:getNextAreaToMonitor(?initAreaToMonitor);
     act:monitor(!nextArea, ?isAdaptive, !isHighWorkload);
   }
 }
@@ -131,13 +131,11 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 //["This is the action that will determine the next area to monitor"]
-(Symbol ?nextArea) = getNextAreaToMonitor() {
+(Symbol ?nextArea) = getNextAreaToMonitor(Symbol ?initAreaToMonitor) {
   Symbol !lastArea;
   Variable !keyX = "X";
   Map !currentAreaMap;
   Map !lastAreaMap;
-
-  String !areaStr = "alpha";
 
   op:log("info", "activeMonitor()");
 
@@ -162,7 +160,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     ?nextArea = act:getNextArea(!lastArea, !currentAreaBeliefs, !currentArea);
   } else {
     //first time only
-    ?nextArea = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !areaStr);
+    ?nextArea = op:newObject("edu.tufts.hrilab.fol.Symbol", ?initAreaToMonitor);
   }
 
 }
