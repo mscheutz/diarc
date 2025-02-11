@@ -9,7 +9,7 @@ public interface ASRInterface {
      */
     @TRADEService
     @Action
-    void startRecognition();
+    String startRecognition();
 
     /**
      * Stops the ASR recognition process.

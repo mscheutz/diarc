@@ -1,0 +1,175 @@
+package edu.tufts.hrilab.config.parsing;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.TRADEServiceInfo;
+import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
+import edu.tufts.hrilab.python.PythonWrapper;
+
+public class TLDLIncrementalParserTest extends DiarcConfiguration {
+    private TLDLParserComponent component;
+    private PythonWrapper wrapper;
+    private final Queue<String> recognizedTextQueue = new ConcurrentLinkedQueue<>();
+    private final AtomicBoolean isProcessing = new AtomicBoolean(false);
+
+    @Override
+    public void runConfiguration() {
+        log.info("Running DIARC Configuration for Incremental Parsing Test");
+
+        // Initialize TLDL Parser Component
+        component = new TLDLParserComponent();
+        component.addDictionary("incrementalTesting.dict");
+
+        // Start Python ASR Service
+        initializePythonWrapper();
+
+        // Start a background thread for ASR recognition
+        Thread asrThread = new Thread(this::fetchAsrText);
+        asrThread.setDaemon(true); // Allows program to exit cleanly
+        asrThread.start();
+
+        // Start processing queue in a separate thread
+        new Thread(this::processQueueContinuously).start();
+    }
+
+    /**
+     * Fetch ASR recognized text and add it to the queue for processing.
+     * Runs in a separate background thread.
+     */
+    private void fetchAsrText() {
+        while (!Thread.currentThread().isInterrupted()) { // Allows graceful stopping
+            log.info("🔊 START SPEAKING NOW"); // Prompt user
+
+            try {
+                String recognizedText = TRADE.getAvailableService(new TRADEServiceConstraints().name("startRecognition")).call(String.class);
+
+                log.info("Raw TRADE response: {}", recognizedText);
+
+                if (recognizedText == null || recognizedText.isEmpty()) {
+                    log.warn("No recognized text received from ASR.");
+                    continue;
+                }
+
+                log.info("Received ASR text from Python: '{}'", recognizedText);
+
+                // Add recognized text to queue for processing
+                recognizedTextQueue.add(recognizedText);
+            } catch (TRADEException e) {
+                log.error("Error retrieving recognized text from ASR", e);
+            }
+
+            // Sleep briefly to prevent excessive polling
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                log.error("ASR listening thread interrupted", e);
+                Thread.currentThread().interrupt(); // Allow graceful exit
+            }
+        }
+    }
+
+    /**
+     * Process phrases from the queue dynamically.
+     * If no new input is received within 5 seconds, perform a final parse.
+     */
+    private void processQueueContinuously() {
+        StringBuilder incrementalPhrase = new StringBuilder();
+        long lastInputTime = System.currentTimeMillis();
+
+        while (!Thread.currentThread().isInterrupted()) { // Allows graceful stopping
+            if (!recognizedTextQueue.isEmpty()) {
+                isProcessing.set(true);
+                String recognizedText = recognizedTextQueue.poll(); // Fetch next phrase
+                lastInputTime = System.currentTimeMillis();// Update last input time
+
+                // ✅ Check if the spoken phrase is "reset"
+                if (recognizedText.equalsIgnoreCase("reset")) {
+                    log.info("🔄 Reset command detected! Clearing queue and resetting parser.");
+
+                    recognizedTextQueue.clear(); // ✅ Clear all queued phrases
+                    component.resetChart(); // ✅ Reset the parser component
+
+                    incrementalPhrase.setLength(0); // ✅ Clear incremental phrase tracking
+
+                    log.info("✅ Queue and parser have been reset.");
+                    continue; // ✅ Skip further processing for this iteration
+                }
+
+                if (recognizedText != null) {
+                    log.info("Processing new phrase: {}", recognizedText);
+
+                    // ✅ Process only the new phrase (not everything before)
+                    processIncrementalParsing(recognizedText);
+                }
+            } else {
+                long timeSinceLastInput = System.currentTimeMillis() - lastInputTime;
+
+                if (isProcessing.get() && timeSinceLastInput > 5000) { // If silent for 5+ sec, finalize parse
+                    log.info("No new input detected. Performing final parse.");
+                    //component.resetChart();
+                    Utterance finalUtterance = createUtterance(incrementalPhrase.toString().trim());
+                    Utterance finalResult = component.parseUtterance(finalUtterance);
+                    log.info("Final result after reset: {}", finalResult);
+                    incrementalPhrase.setLength(0); // Clear accumulated phrase
+                }
+
+                isProcessing.set(false);
+                try {
+                    Thread.sleep(3000); // Wait before checking queue again
+                } catch (InterruptedException e) {
+                    log.error("Processing thread interrupted", e);
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+    }
+
+    /**
+     * Start the Python ASR service.
+     */
+    private void initializePythonWrapper() {
+        String file = "asr.asr_service"; // Python module path
+        wrapper = new PythonWrapper(file, true); // Start Python as a TRADE spoke
+        wrapper.start();
+
+        try {
+            Thread.sleep(2000); // Allow time for PyTRADE to initialize
+        } catch (InterruptedException e) {
+            log.error("PythonWrapper initialization interrupted", e);
+        }
+    }
+
+    /**
+     * Process a phrase incrementally.
+     */
+    private void processIncrementalParsing(String newPhrase) {
+        log.info("Incrementally parsing new phrase: {}", newPhrase);
+
+        // ✅ Only process the most recent phrase
+        Utterance partialUtterance = createUtterance(newPhrase);
+        Utterance result = component.parseUtterance(partialUtterance);
+
+        log.info("✅ Result after parsing new phrase '{}': {}", newPhrase, result);
+    }
+
+    /**
+     * Create an utterance object for parsing.
+     */
+    private Utterance createUtterance(String phrase) {
+        return new Utterance.Builder()
+                .setWords(Arrays.asList(phrase.split(" ")))
+                .setSpeaker(Factory.createSymbol("speaker"))
+                .setAddressee(Factory.createSymbol("listener"))
+                .build();
+    }
+}

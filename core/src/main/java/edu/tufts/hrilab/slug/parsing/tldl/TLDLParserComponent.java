@@ -287,7 +287,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
                     }
                   }
                 } catch (Exception e) {
-                  log.error("[doChartParsingWithDP] Error combining nodes: {}", e.getMessage(), e);
+                  // Do nothing - silently catch the exception);
                 }
               }
             }
