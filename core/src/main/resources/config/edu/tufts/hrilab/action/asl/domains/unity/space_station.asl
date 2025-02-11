@@ -325,7 +325,16 @@ import edu.tufts.hrilab.action.justification.Justification;
   act:generateResponseFromString(!messageString);
 }
 
-() = initializeTrial () {
+() = initializeTrial(Symbol ?initArea, Boolean ?adaptive) {
+  effects : {
+    success infer: init_area(?initArea);
+    success infer: adaptive_autonomy(?adaptive);
+  }
+  op:log("info", "Initialized ?actor to go to ?initArea with adaptive: ?adaptive");
+}
+
+
+() = resetTrial() {
   effects : {
     success infer: not(amIn(?actor,X));
     success infer: not(amAt(?actor,X,Y));
@@ -335,6 +344,21 @@ import edu.tufts.hrilab.action.justification.Justification;
     success infer: not(propertyOf(TUBE,off));
     success infer: not(propertyOf(TUBE,broken));
   }
+  Symbol !initArea;
+  Boolean !adaptive;
+  Variable !var = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createVariable", "X");
+
+  Predicate !initAreaPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "init_area(X)");
+  List !initAreaBeliefs = act:queryBelief(!initAreaPredicate);
+  Map !initAreaBelief = op:get(!initAreaBeliefs, 0);
+  Symbol !initAreaSymbol = op:get(!initAreaBelief, !var);
+
+  Predicate !adaptivePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "adaptive_autonomy(X)");
+  List !adaptiveBeliefs = act:queryBelief(!adaptivePredicate);
+  Map !adaptiveBelief = op:get(!adaptiveBeliefs, 0);
+  Symbol !adaptiveSymbol = op:get(!adaptiveBelief, !var);
+
+  goal:autonomy(?actor, !adaptiveSymbol, !initAreaSymbol);
   op:log("info", "State reset for ?actor");
 }
 

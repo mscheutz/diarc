@@ -113,7 +113,6 @@ public class AutonomousUnityDIARCSpaceStationConfig {
     String goalManagerArgs = "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
             "-priorityFile default.json space_station_priority.json " +
             "-goal listen(self) " +
-            "-goal initializeTrial(" + agentName + ") " +
             "-asl domains/unity/space_station.asl " +
             "-asl domains/unity/space_station_autonomy.asl " +
             "-asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl ";
@@ -126,13 +125,8 @@ public class AutonomousUnityDIARCSpaceStationConfig {
       } else {
         initArea = "beta";
       }
-
+      goalManagerArgs += "-goal initializeTrial(" + agentName + "," + initArea + "," + adaptiveAutonomy + ") ";
       goalManagerArgs += "-beliefinitfile unity/pr2UnityTeam_smm.pl ";
-      if (adaptiveAutonomy) {
-        goalManagerArgs += "-goal autonomy(" + agentName + ",true," + initArea + ")";
-      } else {
-        goalManagerArgs += "-goal autonomy(" + agentName + ",false," + initArea + ")";
-      }
     } else {
       goalManagerArgs += "-beliefinitfile unity/pr2UnityTeam_smm_" + agentName + ".pl ";
     }

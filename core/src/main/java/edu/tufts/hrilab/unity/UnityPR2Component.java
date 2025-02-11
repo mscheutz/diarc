@@ -94,7 +94,7 @@ public class UnityPR2Component extends UnityAgentComponent implements UnityPR2In
    */
   private void reset(Message msg) {
     String robotName = msg.agent;
-    String predicateStr = "initializeTrial(" + robotName + ")";
+    String predicateStr = "reset_trial(" + robotName + ")";
     Predicate goal = Factory.createPredicate(predicateStr);
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class)).call(Long.class, goal);
