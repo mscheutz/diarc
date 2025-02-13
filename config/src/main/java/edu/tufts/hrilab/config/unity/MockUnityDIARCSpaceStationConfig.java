@@ -81,7 +81,7 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     // mock sim env
     createInstance(MockUnitySpaceStationComponent.class, "-config mock_space_station_settings.json");
 
-    createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict -tldlNoUpdateAddressee -patternMatching -matcher SpaceStationPatternMatcher -parsingSequence pattern tldl");
+    createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict -noUpdateAddressee -patternMatching -matcher SpaceStationPatternMatcher -parsingSequence pattern tldl");
 
     createInstance(ListenerComponent.class);
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
@@ -119,7 +119,7 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     for (int i = 0; i < players; i++) {
       String humanAgent = "player" + (i + 1);
       createInstance(MockHumanAgent.class, "-agent " + humanAgent + " -groups " + humanAgent);
-      createInstance(SimSpeechRecognitionComponent.class, "-speaker " + humanAgent + " -groups " + humanAgent + " -config space_station.simspeech");
+      createInstance(SimSpeechRecognitionComponent.class, "-speaker " + humanAgent + " -addressee " + agentName + " -groups " + humanAgent + " -config space_station.simspeech");
     }
 
     // TODO: add guis to set workloads

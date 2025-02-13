@@ -46,14 +46,14 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private String endpoint = "http://localhost:8000/parse/";
   private List<String> tldlDictionaries = new ArrayList<>();
   private HashMap<Symbol, Symbol> addresseeMap = new HashMap<>();
-  private boolean tldlUpdateAddressee = true;
+  private boolean updateAddressee = true;
   private String cacheName = null;
   private String[] cacheLoads = null;
   private boolean cachePersist = false;
   private boolean cacheTldl = false;
   private String llm = null;
   private String prompt = null;
-  private Symbol unknownListener = null;
+  private Symbol unknownListener = Factory.createSymbol("unknown");
   private Class matcherclass = null;
 
   // we have four parsers for now
@@ -79,7 +79,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     options.add(Option.builder("noConfirmation").argName("boolean").desc("Ask human to confirm LLM parser response for cache").build());
     options.add(Option.builder("patternMatching").argName("boolean").desc("use pattern matching parser").build());
     options.add(Option.builder("matcher").hasArg().argName("string").desc("Optional name of Pattern Matcher Component to be used").build());
-    options.add(Option.builder("tldlNoUpdateAddressee").desc("TLDL: do not update addressee after direct address").build());
+    options.add(Option.builder("noUpdateAddressee").desc("do not update addressee after direct address (TLDL and PM)").build());
     options.add(Option.builder("parsingSequence").hasArgs().argName("option1 option2 ...").desc("Sequence parsers (default cache, tldl, pattern, llm)").build());
     return options;
   }
@@ -92,8 +92,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
               .filter(dict -> !dict.isEmpty())
               .forEach(dict -> tldlDictionaries.add("-dict " + dict));
     }
-    if (cmdLine.hasOption("tldlNoUpdateAddressee")) {
-      tldlUpdateAddressee = false;
+    if (cmdLine.hasOption("noUpdateAddressee")) {
+      updateAddressee = false;
     }
     if (cmdLine.hasOption("llm")) {
       useLLM = true;
@@ -147,13 +147,14 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
         log.error("Could not find pattern matcher {}. Using default.", cmdLine.getOptionValue("matcher"));
       }
     }
+
     // generate the sequence information
     if (cmdLine.hasOption("parsingSequence")) {
       sequence = cmdLine.getOptionValues("parsingSequence");
     } else {
       sequence = new String[]{"cache", "tldl", "pattern", "llm"};
     }
-    System.err.println("USING SEQUENCE " + Arrays.toString(sequence));
+    log.info("Using sequence: {}", Arrays.toString(sequence));
   }
 
   @Override
@@ -173,7 +174,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     // init TLDLParserComponent
     if (useTLDL) {
       String tldlArgs = String.join(" ", tldlDictionaries);
-      if (!tldlUpdateAddressee) {
+      if (!updateAddressee) {
         tldlArgs += " -noUpdateAddressee";
       }
       tldlParser = createInstance(TLDLParserComponent.class, tldlArgs, false);
@@ -181,7 +182,11 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
     // init PatternMatchingParser
     if (usePMP) {
-      patternMatchingParser = createInstance((matcherclass == null) ? PatternMatchingParser.class : matcherclass, "", false);
+      String pmArgs = "";
+      if (!updateAddressee) {
+        pmArgs += " -noUpdateAddressee";
+      }
+      patternMatchingParser = createInstance((matcherclass == null) ? PatternMatchingParser.class : matcherclass, pmArgs, false);
     }
 
     // init CachedParserComponent
@@ -200,7 +205,6 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       }
       cacheParser = createInstance(CachedParserComponent.class, cacheArgs, false);
     }
-    unknownListener = Factory.createSymbol("unknown");
   }
 
   /**
@@ -268,6 +272,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
             //TODO:brad: what should this return in the no match case?
             if (pmpOutput != null && pmpOutput.getSemantics() != null) {
+              log.debug("[parseUtterance] Using pattern matcher parser response");
               return pmpOutput;
             }
           }

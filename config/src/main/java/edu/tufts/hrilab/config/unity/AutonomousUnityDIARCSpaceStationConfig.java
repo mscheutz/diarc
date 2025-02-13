@@ -82,7 +82,7 @@ public class AutonomousUnityDIARCSpaceStationConfig {
     }
 
     // Language
-    DiarcComponent.createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict -tldlNoUpdateAddressee -patternMatching -matcher SpaceStationPatternMatcher -parsingSequence pattern tldl");
+    DiarcComponent.createInstance(HybridParserComponent.class, "-tldl pr2Unity.dict -noUpdateAddressee -patternMatching -matcher SpaceStationPatternMatcher -parsingSequence pattern tldl");
     DiarcComponent.createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     DiarcComponent.createInstance(ReferenceResolutionComponent.class, "");
     DiarcComponent.createInstance(DialogueComponent.class, "");

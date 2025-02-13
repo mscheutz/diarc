@@ -44,7 +44,7 @@ public class UnityComponent extends DiarcComponent {
   private String ip = "127.0.0.1";
   private int port = 1755;
   private SocketConnection socketClient;
-  private static List<Message> queue = new ArrayList<Message>();
+  private static List<Message> queue = new ArrayList<>();
 
   public UnityComponent() {
     super();
