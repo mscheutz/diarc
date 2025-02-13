@@ -35,6 +35,7 @@ public class HumanAgentComponent extends UnityAgentComponent {
 
   private void workload (Message msg) {
     int level = Integer.parseInt(msg.arguments.get(0));
+    log.info("Workload received: {}", level);
     setWorkload(level);
   }
 
