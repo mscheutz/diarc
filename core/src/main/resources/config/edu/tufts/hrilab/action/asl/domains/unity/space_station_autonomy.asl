@@ -38,7 +38,7 @@ import edu.tufts.hrilab.action.justification.Justification;
  }
 
 //["This is the high level autonomy manager function that will task a robot with monitoring an area if not already busy"]
-() = autonomy(boolean ?isAdaptive, Symbol ?initAreaToMonitor) {
+() = autonomy(Symbol ?isAdaptive, Symbol ?initAreaToMonitor) {
   Predicate !autonomyGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "autonomy(?actor,?isAdaptive,?initAreaToMonitor)");
   onInterrupt :{
     resume:  act:cancelAndRestartGoal(!autonomyGoal);
