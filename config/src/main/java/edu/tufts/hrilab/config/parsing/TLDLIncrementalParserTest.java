@@ -19,6 +19,7 @@ import edu.tufts.hrilab.python.PythonWrapper;
 public class TLDLIncrementalParserTest extends DiarcConfiguration {
     private TLDLParserComponent component;
     private PythonWrapper wrapper;
+    private PythonWrapper wrapper_planner;
     private final Queue<String> recognizedTextQueue = new ConcurrentLinkedQueue<>();
     private final AtomicBoolean isProcessing = new AtomicBoolean(false);
 
@@ -37,6 +38,10 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         Thread asrThread = new Thread(this::fetchAsrText);
         asrThread.setDaemon(true); // Allows program to exit cleanly
         asrThread.start();
+
+        Thread plannerThread = new Thread(this::commToPlanner);
+        plannerThread.setDaemon(true); // Allows program to exit cleanly
+        plannerThread.start();
 
         // Start processing queue in a separate thread
         new Thread(this::processQueueContinuously).start();
@@ -73,6 +78,37 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 log.error("ASR listening thread interrupted", e);
+                Thread.currentThread().interrupt(); // Allow graceful exit
+            }
+        }
+    }
+
+    /**
+     * Communicate with planner
+     * Runs in a separate background thread.
+     */
+    private void commToPlanner() {
+        while (!Thread.currentThread().isInterrupted()) { // Allows graceful stopping
+            log.info("Planner is ready"); // Prompt user
+      //
+            // try {
+            //     Thread.sleep(10000);
+            // } catch (InterruptedException e) {
+            //     log.error("Planner thread interrupted", e);
+            //     Thread.currentThread().interrupt(); // Allow graceful exit
+            // }
+
+            try {
+                TRADE.getAvailableService(new TRADEServiceConstraints().name("send_goal")).call(String.class);
+            } catch (TRADEException e) {
+                log.error("Error communicating to planner", e);
+            }
+
+            // Sleep briefly to prevent excessive polling
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                log.error("Planner thread interrupted", e);
                 Thread.currentThread().interrupt(); // Allow graceful exit
             }
         }
@@ -141,6 +177,10 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         String file = "asr.asr_service"; // Python module path
         wrapper = new PythonWrapper(file, true); // Start Python as a TRADE spoke
         wrapper.start();
+
+        String file_planner = "planner.experiment0";
+        wrapper_planner = new PythonWrapper(file_planner, true);
+        wrapper_planner.start();
 
         try {
             Thread.sleep(2000); // Allow time for PyTRADE to initialize

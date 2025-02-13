@@ -1,23 +1,28 @@
-import sys
-import os
-import queue
-import sounddevice as sd
-import vosk
 import json
 import logging
+import os
+import queue
+import sys
 import time
 
 from pytrade.wrapper import TRADEWrapper
+import ai.thinkingrobots.trade.TRADEService
+import sounddevice as sd
+import vosk
 from ai.thinkingrobots.trade import TRADE
-import ai.thinkingrobots.trade.TRADEService;
+from edu.tufts.hrilab.interfaces import (
+    ASRInterface,
+)  # Assume you have an ASRInterface defined in Java
 from jpype import JImplements, JOverride, JString
-from edu.tufts.hrilab.interfaces import ASRInterface  # Assume you have an ASRInterface defined in Java
+
 
 # Initialize Logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.info("Starting ASR Service...")
 
-model_path = "/Users/mitchellabrams/vosk-model-small-en-us-0.15"
+model_path = (
+    "/home/toeleric/research/boundmpc_speech/src/diarc/vosk-model-small-en-us-0.15"
+)
 if not os.path.exists(model_path):
     logging.error("Please download and unzip the Vosk model first.")
     sys.exit()
@@ -27,10 +32,12 @@ samplerate = 16000
 device = None  # default input device
 q = queue.Queue()
 
+
 def callback(indata, frames, time_info, status):
     if status:
         logging.warning(f"Sounddevice Status: {status}")
     q.put(bytes(indata))
+
 
 @JImplements(ASRInterface)
 class ASRComponent:
@@ -38,15 +45,19 @@ class ASRComponent:
         self.active = False
         self.last_text = ""
 
-
-
     @JOverride
     def startRecognition(self):
         self.active = True
         logging.info("ASR Recognition Started.")
 
-        with sd.RawInputStream(samplerate=samplerate, blocksize=8000, device=device,
-                               dtype='int16', channels=1, callback=callback):
+        with sd.RawInputStream(
+            samplerate=samplerate,
+            blocksize=8000,
+            device=device,
+            dtype="int16",
+            channels=1,
+            callback=callback,
+        ):
             rec = vosk.KaldiRecognizer(model, samplerate)
 
             while True:
@@ -65,13 +76,12 @@ class ASRComponent:
                     logging.info(f"[ASR] Final: {final_text}")
                     print(f"Recognized Text (Python): {final_text}")
 
-                    #java_string = JString(final_text)  # Convert to a proper Java String
-                    #logging.info(f"Returning to Java as JString: {java_string}")
+                    # java_string = JString(final_text)  # Convert to a proper Java String
+                    # logging.info(f"Returning to Java as JString: {java_string}")
                     return final_text  # Return as Java String
 
         logging.info("Returning default 'No speech recognized' to Java")
         return "No speech recognized"  # Ensure return is always a Java String
-
 
     @JOverride
     def stopRecognition(self):
@@ -94,13 +104,14 @@ class ASRComponent:
     def isRecognitionActive(self):
         return self.active
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     wrapper = TRADEWrapper()
     asr_component = ASRComponent()
     TRADE.registerAllServices(asr_component, "")
 
     logging.info("ASR Service registered with TRADE.")
-    #asr_component.startRecognition()
+    # asr_component.startRecognition()
     time.sleep(4)
-    #wrapper.call_trade("getLastRecognizedText")
-    #wrapper.call_trade("stopRecognition")
+    # wrapper.call_trade("getLastRecognizedText")
+    # wrapper.call_trade("stopRecognition")
