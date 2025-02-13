@@ -105,12 +105,18 @@ public class PoseConsultant extends Consultant<PoseReference> {
     PoseRefJson loadedPoseRefs = gson.fromJson(reader, PoseRefJson.class);
     log.debug("Parsed pose references from json:\n" + gson.toJson(loadedPoseRefs));
 
+    int maxRefNumber = -1;
+
     for (PoseReferenceJson ref : loadedPoseRefs.poseReferences) {
       Symbol refId = Factory.createSymbol(ref.getRefId());
       if (getReference(refId) != null) {
         log.error("[loadReferencesFromFile] reference " + refId + " already exists. Not loaded from file: " + ref);
         continue;
       }
+
+      String refNumberString = refId.getName().split("_")[1];
+      int refNumber = Integer.parseInt(refNumberString);
+      maxRefNumber = Math.max(refNumber, maxRefNumber);
 
       // update reference counters
       addReference(
@@ -120,6 +126,9 @@ public class PoseConsultant extends Consultant<PoseReference> {
                       ref.getProperties().stream().map(Factory::createPredicate).collect(Collectors.toList()),
                       ref.getPosition(), ref.getOrientation())
       );
+
+      //todo: (pete) it would really be better to not store refIds in the JSON file. encourages bad behavior (hardcoded refIds in scripts, etc).
+      this.refNumber = ++maxRefNumber;
     }
   }
 
