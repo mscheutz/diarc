@@ -66,6 +66,8 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
                 recognizedTextQueue.add(recognizedText);
             } catch (TRADEException e) {
                 log.error("Error retrieving recognized text from ASR", e);
+                log.warn("Resetting ASR system to allow retry...");
+                resetASRSystem();
             }
 
             // Sleep briefly to prevent excessive polling
@@ -163,6 +165,12 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         }
     }
 
+    private void resetASRSystem() {
+        recognizedTextQueue.clear();  // ✅ Clear any pending recognized text
+        component.resetChart();       // ✅ Reset parser component
+        log.info("✅ ASR system reset. Please try speaking again.");
+    }
+
     /**
      * Process a phrase incrementally.
      */
@@ -173,7 +181,22 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         Utterance partialUtterance = createUtterance(newPhrase);
         Utterance result = component.parseUtterance(partialUtterance);
 
-        log.info("✅ Result after parsing new phrase '{}': {}", newPhrase, result);
+        String parsedResult = result.toString();
+
+        // ✅ Send parse result to Python via TRADE
+        try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("logParse")).call(Void.class, parsedResult);
+        } catch (TRADEException e) {
+            log.error("Error sending parsed result to Python", e);
+        }
+
+        // ✅ Map parsed result to an action via Python
+
+        try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("mapParsedTextToAction")).call(String.class, parsedResult);
+        } catch (TRADEException e) {
+            log.error("Error mapping parsed result to action", e);
+        }
     }
 
     /**

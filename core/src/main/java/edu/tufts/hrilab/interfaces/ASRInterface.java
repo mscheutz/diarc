@@ -40,4 +40,16 @@ public interface ASRInterface {
     @TRADEService
     @Action
     boolean isRecognitionActive();
+
+
+    @TRADEService
+    @Action
+    void logParse(String parsedText);
+
+    @TRADEService
+    @Action
+    String mapParsedTextToAction(String parsedText);
+
+
+
 }
