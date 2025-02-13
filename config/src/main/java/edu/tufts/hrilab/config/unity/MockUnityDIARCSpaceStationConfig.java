@@ -99,27 +99,25 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     goalManagerArgs = "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
             "-priorityFile default.json space_station_priority.json " +
             "-goal listen(self) " +
-            "-goal initializeTrial(" + agentName + ") " +
+            "-goal resetTrial(" + agentName + ") " +
             "-asl domains/unity/space_station.asl " +
             "-asl domains/unity/space_station_autonomy.asl " +
             "-asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl ";
     // TODO: why are different pl files needed here?
     if (startAutonomy) {
       goalManagerArgs += "-beliefinitfile unity/pr2UnityTeam_smm.pl ";
-      if (adaptiveAutonomy) {
-        goalManagerArgs += "-goal autonomy(" + agentName + ",true) ";
-      } else {
-        goalManagerArgs += "-goal autonomy(" + agentName + ",false) ";
-      }
+      goalManagerArgs += "-goal initializeTrial(" + agentName + ",alpha," + adaptiveAutonomy + ") ";
     } else {
       goalManagerArgs += "-beliefinitfile unity/pr2UnityTeam_smm_" + agentName + ".pl ";
     }
+    goalManagerArgs += "-goal resetTrial(" + agentName + ") ";
     createInstance(GoalManagerComponent.class, goalManagerArgs);
 
     for (int i = 0; i < players; i++) {
       String humanAgent = "player" + (i + 1);
       createInstance(MockHumanAgent.class, "-agent " + humanAgent + " -groups " + humanAgent);
       createInstance(SimSpeechRecognitionComponent.class, "-speaker " + humanAgent + " -addressee " + agentName + " -groups " + humanAgent + " -config space_station.simspeech");
+      createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.unity.space_station.MockHumanAgent" + " -groups " + humanAgent);
     }
 
     // TODO: add guis to set workloads

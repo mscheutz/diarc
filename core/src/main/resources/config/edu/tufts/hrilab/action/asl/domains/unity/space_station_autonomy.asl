@@ -91,7 +91,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     foreach (!workloadBelief : !workloadBeliefs) {
       !levelSymbol = op:get(!workloadBelief, !var);
       !levelString = op:bind("!levelSymbol");
-      if (op:equals(!levelString, "1")) {
+      if (op:equalsValue(!levelString, "1")) {
         ?isHighWorkload = op:newObject("java.lang.Boolean", true);
         return;
       }

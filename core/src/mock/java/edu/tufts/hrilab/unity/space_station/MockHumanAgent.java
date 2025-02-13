@@ -39,7 +39,7 @@ public class MockHumanAgent extends DiarcComponent {
    * @param level 0 = low workload, 1 = high workload
    */
   @TRADEService
-  public void setWorkload(int level) {
+  public void setWorkload(Integer level) {
     //workload(player1,0)
     Term workloadRetraction = Factory.createPredicate("workload", agent, "X");
     Term workloadBelief = Factory.createPredicate("workload", agent, String.valueOf(level));
