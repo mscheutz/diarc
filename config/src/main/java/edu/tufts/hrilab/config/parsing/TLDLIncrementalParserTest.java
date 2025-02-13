@@ -5,6 +5,9 @@ import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
@@ -22,6 +25,10 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
     private PythonWrapper wrapper_planner;
     private final Queue<String> recognizedTextQueue = new ConcurrentLinkedQueue<>();
     private final AtomicBoolean isProcessing = new AtomicBoolean(false);
+
+    private static final Set<String> FILLER_WORDS = new HashSet<>(Arrays.asList(
+            "huh", "uh", "okay", "um", "wait", "actually"
+    ));
 
     @Override
     public void runConfiguration() {
@@ -71,6 +78,8 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
                 recognizedTextQueue.add(recognizedText);
             } catch (TRADEException e) {
                 log.error("Error retrieving recognized text from ASR", e);
+                log.warn("Resetting ASR system to allow retry...");
+                resetASRSystem();
             }
 
             // Sleep briefly to prevent excessive polling
@@ -141,6 +150,20 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
                     continue; // ✅ Skip further processing for this iteration
                 }
 
+                if (recognizedText.equalsIgnoreCase("exit") || recognizedText.equalsIgnoreCase("stop")) {
+                    log.info("🔴 Exit command detected! Terminating program.");
+
+                    recognizedTextQueue.clear(); // Clear all queued phrases
+                    component.resetChart(); // Reset the parser component
+                    incrementalPhrase.setLength(0); // Clear incremental phrase tracking
+
+                    log.info("✅ Cleanup complete. Exiting...");
+
+                    // Gracefully stop the program
+                    System.exit(0); // Immediately terminates the Java process
+                }
+
+
                 if (recognizedText != null) {
                     log.info("Processing new phrase: {}", recognizedText);
 
@@ -150,7 +173,7 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
             } else {
                 long timeSinceLastInput = System.currentTimeMillis() - lastInputTime;
 
-                if (isProcessing.get() && timeSinceLastInput > 5000) { // If silent for 5+ sec, finalize parse
+                if (isProcessing.get() && timeSinceLastInput > 9000) { // If silent for 5+ sec, finalize parse
                     log.info("No new input detected. Performing final parse.");
                     //component.resetChart();
                     Utterance finalUtterance = createUtterance(incrementalPhrase.toString().trim());
@@ -189,17 +212,42 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         }
     }
 
+    private void resetASRSystem() {
+        recognizedTextQueue.clear();  // ✅ Clear any pending recognized text
+        component.resetChart();       // ✅ Reset parser component
+        log.info("✅ ASR system reset. Please try speaking again.");
+    }
+
     /**
      * Process a phrase incrementally.
      */
     private void processIncrementalParsing(String newPhrase) {
         log.info("Incrementally parsing new phrase: {}", newPhrase);
 
+        // ✅ Filter out filler words
+        String cleanedPhrase = Arrays.stream(newPhrase.split("\\s+")).filter(word -> !FILLER_WORDS.contains(word.toLowerCase())).collect(Collectors.joining(" "));
+
+
         // ✅ Only process the most recent phrase
-        Utterance partialUtterance = createUtterance(newPhrase);
+        Utterance partialUtterance = createUtterance(cleanedPhrase);
         Utterance result = component.parseUtterance(partialUtterance);
 
-        log.info("✅ Result after parsing new phrase '{}': {}", newPhrase, result);
+        String parsedResult = result.toString();
+
+        // ✅ Send parse result to Python via TRADE
+        try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("logParse")).call(Void.class, parsedResult);
+        } catch (TRADEException e) {
+            log.error("Error sending parsed result to Python", e);
+        }
+
+        // ✅ Map parsed result to an action via Python
+
+        try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("mapParsedTextToAction")).call(String.class, parsedResult);
+        } catch (TRADEException e) {
+            log.error("Error mapping parsed result to action", e);
+        }
     }
 
     /**
