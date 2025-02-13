@@ -105,6 +105,20 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
                     continue; // ✅ Skip further processing for this iteration
                 }
 
+                if (recognizedText.equalsIgnoreCase("exit")) {
+                    log.info("🔴 Exit command detected! Terminating program.");
+
+                    recognizedTextQueue.clear(); // Clear all queued phrases
+                    component.resetChart(); // Reset the parser component
+                    incrementalPhrase.setLength(0); // Clear incremental phrase tracking
+
+                    log.info("✅ Cleanup complete. Exiting...");
+
+                    // Gracefully stop the program
+                    System.exit(0); // Immediately terminates the Java process
+                }
+
+
                 if (recognizedText != null) {
                     log.info("Processing new phrase: {}", recognizedText);
 
@@ -114,7 +128,7 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
             } else {
                 long timeSinceLastInput = System.currentTimeMillis() - lastInputTime;
 
-                if (isProcessing.get() && timeSinceLastInput > 5000) { // If silent for 5+ sec, finalize parse
+                if (isProcessing.get() && timeSinceLastInput > 9000) { // If silent for 5+ sec, finalize parse
                     log.info("No new input detected. Performing final parse.");
                     //component.resetChart();
                     Utterance finalUtterance = createUtterance(incrementalPhrase.toString().trim());
