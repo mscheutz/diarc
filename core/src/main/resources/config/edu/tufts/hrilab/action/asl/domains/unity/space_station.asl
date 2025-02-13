@@ -358,7 +358,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   Map !adaptiveBelief = op:get(!adaptiveBeliefs, 0);
   Symbol !adaptiveSymbol = op:get(!adaptiveBelief, !var);
 
-  act:autonomy(!adaptiveSymbol, !initAreaSymbol);
+  act:submitGoal("autonomy(?actor, !adaptiveSymbol, !initAreaSymbol)");
   op:log("info", "State reset for ?actor");
 }
 
