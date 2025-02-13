@@ -11,7 +11,7 @@ THING;{RN; ph ; VAR}, {DN; ph}
 VERBI; {C\AGENT ; #x.ph($x)}, {C ; ph(?ADDRESSEE)}
 
 %transitive verb
-VERBT; {(C/REF)\AGENT; #a#y.ph($a,$y)}, {C/REF ; #x.ph(?ADDRESSEE,$x)}, {((C/ARM)/REF)\AGENT ; #a#x#r.ph($a,$y,$r)}, {(C/ARM)/REF ; #x#r.ph(?ADDRESSEE,$x,$r)}
+%%VERBT; {(C/REF)\AGENT; #a#y.ph($a,$y)}, {C/REF ; #x.ph(?ADDRESSEE,$x)}, {((C/ARM)/REF)\AGENT ; #a#x#r.ph($a,$y,$r)}, {(C/ARM)/REF ; #x#r.ph(?ADDRESSEE,$x,$r)}
 
 %transitive verb with direction argument
 %VERBTDDEG; {((C/DEG)/DIR)\AGENT ; #x#y#z.ph($y,$z)}, {(C/DEG)/DIR ; #x#y.ph($x,$y)}
@@ -580,8 +580,12 @@ that; LREF/LN ; x.$x ; FAMILIAR
 %that is how you
 that; (((S/C)/AGENT)/HOW)/IS ; #i#h#a#c.endTeaching($a,$c)
 
-the; REF/RN ; #x.$x ; DEFINITE
-the; LREF/LN ; #x.$x ; DEFINITE
+%%the; REF/RN ; #x.$x ; DEFINITE
+%%the; LREF/LN ; #x.$x ; DEFINITE
+
+the; NN/NN ; #x.$x
+the; NN/PART; #x.$x
+
 
 then; C/C; #x. $x
 
@@ -788,32 +792,37 @@ now; PROP/PROP ;#x.$x
 %%put; ((C/REF)/ON) ; #x#a#y#z.put(?ADDRESSEE,$x,$y,$z)
 put; ((C/REF)/PP)/REF ; #x#y#z.put(?ADDRESSEE, $x,$y, $z)
 
-grab; (C/REF)\AGENT ; #y#x.graspObject($y,$x)
+%%grab; (C/NN)\AGENT ; #x#y.graspObject($x,$y)
 %%grab; (C/REF)\AGENT ; #x.graspObject($x)
-grab; C/REF ; #x.graspObject(?ADDRESSEE,$x)
-grab; ((C/REF)/PP)/REF ; #x#y#z.graspObject(?ADDRESSEE, $x,$y,$z)
+grab; C/NN ; #x.graspObject(?ADDRESSEE,$x)
+%%grab; ((C/NN)/PP)/NN ; #x#z#y.graspObject(?ADDRESSEE, $x,$z,$y)
 %%grab; (((C/REF)/PP)/REF)\AGENT ; ; #x.graspObject(?ADDRESSEE,$x)
-on; (REF\REF)/REF; #x#y.on($x,$y); MOD
-on; (?ADDRESSEE)/REF; #x#y.on($x,$y); MOD
-on; REF/REF ; #x.$x
+on; (NN\NN)/NN; #y#x.on($x,$y); MOD
+on; (?ADDRESSEE)/NN; #y#x.on($x,$y); MOD
+on; NN/NN ; #x.$x
 on; PP ; on
-table; THING
-mug; THING
+table; NN; table
+mug; NN; mug
+mouse; NN; mouse
+bottom; NN; bottom
 
 %%%%%%%%%%%%% NEW ENTRIES %%%%%%%%%%%%%%%%%%%%%%%%
-by; (REF\REF)/REF; #x#y.by($x,$y); MOD
-by; (REF\REF)/REF; #x#y.near($x,$y); MOD
-by; (REF\REF)/REF; #x#y.$x,$y; MOD
-by; (PP/REF); #x.by($x)
-by; (PP/REF); #x.near($x)
-%%by; REF/REF; #x.$x
+by; (NN\NN)/NN; #y#x.by($x,$y); MOD
+from; (NN\NN)/NN; #y#x.from($x,$y); MOD
+by; (NN\NN)/NN; #y#x.near($x,$x); MOD
+by; (NN\NN)/NN; #x#y.$x,$y; MOD
+by; (PP/NN); #x.by($x)
+by; (PP/NN); #x.near($x)
+%%by; NN/RNN; #x.$x
 %%by; PP; by
 
-handle; THING
-top; THING
+handle; NN; handle
+top; PART; top
+side; NN; side
+bottom; NN; bottom
 
-grab; (((C/PP)/REF)\AGENT); #agent#obj#pp.graspObject($agent,$obj,$pp)
-grab; ((C/PP)/REF); #obj#pp.graspObject(?ADDRESSEE,$obj,$pp)
+%%grab; (((C/PP)/NN)\AGENT); #agent#obj#pp.graspObject($agent,$obj,$pp)
+%%grab; ((C/PP)/NN); #obj#pp.graspObject(?ADDRESSEE,$obj,$pp)
 
 
 

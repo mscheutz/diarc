@@ -44,8 +44,27 @@ class ASRComponent:
 
         # ✅ Define the action mapping dictionary inside the class
         self.ACTION_MAP = {
-            r"INSTRUCT\(speaker,listener,graspObject\(listener,VAR\d+\),\{ph\(VAR\d+\),DEFINITE\(VAR\d+\)\}\)": "GRASP(MUG)",
-            r"INSTRUCT\(speaker,listener,graspObject\(listener,VAR\d+\),\{ph\(VAR\d+\),ph\(VAR\d+\),on\(VAR\d+,VAR\d+\),DEFINITE\(VAR\d+\),DEFINITE\(VAR\d+\)\}\)": "GRASP(MUG_ON_TABLE)"
+            # Grasp mug by a specific part
+            r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{by\(mug,handle\)\}\)": "GRASP(MUG_BY_HANDLE)",
+            r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{by\(mug,top\)\}\)": "GRASP(MUG_BY_TOP)",
+            r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{from\(mug,top\)\}\)": "GRASP(MUG_BY_TOP)",
+
+            # These map to the same action
+            r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{by\(mug,bottom\)\}\)": "GRASP(MUG_BY_BOTTOM)",
+            r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{from\(mug,bottom\)\}\)": "GRASP(MUG_BY_BOTTOM)",
+
+            # Grasping near a specific part
+            r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{near\(mug,handle\)\}\)": "GRASP(MUG_NEAR_HANDLE)",
+
+            # General grasping
+            r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{\}\)": "GRASP(MUG_DEFAULT)",
+
+            # Grasping mug from table
+            r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{on\(mug,table\)\}\)": "GRASP(MUG_ON_TABLE)",
+
+            # Greeting messages
+            r"^GREETING\(.*\)": "SAY(GREETING)"
+
         }
 
     def action_mapper(self, parsed_text):
@@ -126,7 +145,7 @@ class ASRComponent:
             # ✅ Convert Java String to native Python string
             if isinstance(parsed_text, JString):
                 parsed_text = str(parsed_text)
-            logging.info(f"[Python] Mapping parsed text to action: {parsed_text}")
+            #logging.info(f"[Python] Mapping parsed text to action: {parsed_text}")
 
             # ✅ Call the dictionary-based action mapping function
             action = self.action_mapper(parsed_text)

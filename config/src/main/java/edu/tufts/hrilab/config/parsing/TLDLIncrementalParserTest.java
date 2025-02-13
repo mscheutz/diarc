@@ -5,6 +5,9 @@ import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
@@ -21,6 +24,10 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
     private PythonWrapper wrapper;
     private final Queue<String> recognizedTextQueue = new ConcurrentLinkedQueue<>();
     private final AtomicBoolean isProcessing = new AtomicBoolean(false);
+
+    private static final Set<String> FILLER_WORDS = new HashSet<>(Arrays.asList(
+            "huh", "uh", "okay", "um", "wait", "actually"
+    ));
 
     @Override
     public void runConfiguration() {
@@ -107,7 +114,7 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
                     continue; // ✅ Skip further processing for this iteration
                 }
 
-                if (recognizedText.equalsIgnoreCase("exit")) {
+                if (recognizedText.equalsIgnoreCase("exit") || recognizedText.equalsIgnoreCase("stop")) {
                     log.info("🔴 Exit command detected! Terminating program.");
 
                     recognizedTextQueue.clear(); // Clear all queued phrases
@@ -177,8 +184,12 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
     private void processIncrementalParsing(String newPhrase) {
         log.info("Incrementally parsing new phrase: {}", newPhrase);
 
+        // ✅ Filter out filler words
+        String cleanedPhrase = Arrays.stream(newPhrase.split("\\s+")).filter(word -> !FILLER_WORDS.contains(word.toLowerCase())).collect(Collectors.joining(" "));
+
+
         // ✅ Only process the most recent phrase
-        Utterance partialUtterance = createUtterance(newPhrase);
+        Utterance partialUtterance = createUtterance(cleanedPhrase);
         Utterance result = component.parseUtterance(partialUtterance);
 
         String parsedResult = result.toString();
