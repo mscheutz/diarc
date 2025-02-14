@@ -95,19 +95,8 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
     super();
   }
 
-
   @Override
-  public double[] getPoseGlobalQuat() {
-    Matrix4d transform = node.lookupTransform(map_frame, base_frame);
-    Quat4d quat = new Quat4d();
-    transform.get(quat);
-    Vector3d trans = new Vector3d();
-    transform.get(trans);
-    return new double[]{trans.x, trans.y, quat.x, quat.y, quat.z, quat.w};
-  }
-
-  @Override
-  public void setPoseGlobal(double x, double y, double theta) {
+  public void setPose(Point3d location, Quat4d orientation) {
 
   }
 
@@ -127,7 +116,8 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
     return pose;
   }
 
-  protected Pair<Point3d, Quat4d> getPose() {
+  @Override
+  public Pair<Point3d, Quat4d> getPose() {
     Matrix4d transform = node.lookupTransform(map_frame, base_frame);
     Quat4d quat = new Quat4d();
     transform.get(quat);
@@ -152,6 +142,12 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
   @Override
   public Justification goToLocation(Symbol desiredLocation, Symbol initialLocation) {
     return goToLocation(desiredLocation);
+  }
+
+  @Override
+  public Justification goToLocation(Point3d location, Quat4d orientation, boolean wait) {
+    log.warn("[goToLocation] not implemented.");
+    return new ConditionJustification(false);
   }
 
   @Override

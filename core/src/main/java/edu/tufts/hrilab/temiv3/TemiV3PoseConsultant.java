@@ -98,7 +98,7 @@ public class TemiV3PoseConsultant extends Consultant<TemiV3PoseReference> {
     }
 
     @Override
-    public boolean addPropertiesHandled(List<Term> properties) {
+    public boolean addPropertiesHandled(List<? extends Term> properties) {
         boolean propertiesAdded = true;
         for (Term property : properties) {
             if (!propertiesHandled.stream().anyMatch(p -> edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(p, property))) {

@@ -188,8 +188,8 @@ public class Utilities {
           }
         } else if (sym1.isVariable() && sym2.isVariable()) {
           //names don't have to be equal, just non-empty types (not sure about value?!)
-          String type1 = ((Variable) sym1).getType();
-          String type2 = ((Variable) sym2).getType();
+          String type1 = sym1.getType();
+          String type2 = sym2.getType();
           if ((type1 != null && !type1.isEmpty())
                   && (type2 != null && !type2.isEmpty())
                   && (!type1.equalsIgnoreCase(type2))) {

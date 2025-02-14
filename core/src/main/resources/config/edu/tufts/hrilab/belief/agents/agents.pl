@@ -14,6 +14,7 @@ name(temi,temi).
 name(leftArm,leftArm).
 name(rightArm,rightArm).
 name(human,human).
+name(ava,ava).
 
 actor(brad).
 actor(eric).
@@ -27,6 +28,7 @@ actor(ravenna).
 actor(marlow).
 actor(manager).
 actor(front).
+actor(patient).
 
 diarcAgent(self).
 diarcAgent(dempster).
@@ -46,6 +48,7 @@ diarcAgent(mobileyumi).
 diarcAgent(leftArm).
 diarcAgent(rightArm).
 diarcAgent(human).
+diarcAgent(ava).
 
 memberOf(X,X).
 memberOf(temi, self).
@@ -55,9 +58,11 @@ memberOf(leftArm, self).
 memberOf(rightArm, self).
 memberOf(human, self).
 memberOf(human, self).
+memberOf(ava, self).
 object(temi, agent).
 object(andy, agent).
 object(fetch, agent).
+object(ava, agent).
 object(leftArm, yumi).
 object(rightArm, yumi).
 object(human, mobileyumi).
@@ -78,6 +83,7 @@ supervisor(ravenna).
 supervisor(tyler).
 supervisor(marlow).
 supervisor(manager).
+supervisor(patient).
 
 %% admin
 admin(brad).

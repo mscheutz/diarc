@@ -100,7 +100,7 @@ import edu.tufts.hrilab.fol.Term;
 
    //define ingredients
    act:defineIngredientHelper("\"bell pepper\"",!pantryArea,"detBellPepper");
-   act:defineIngredientHelper("corn",!pantryArea,"detCorn");
+   act:defineIngredientHelper("corn",!prepArea,"detCorn");
    act:defineIngredientHelper("carrot",!pantryArea,"detCarrot");
 //   act:defineIngredientHelper("chicken",!pantryArea,"detChicken");
 

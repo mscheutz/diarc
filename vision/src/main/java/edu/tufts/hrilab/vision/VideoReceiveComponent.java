@@ -13,12 +13,16 @@ import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.vision.gui.VideoDisplay;
 import edu.tufts.hrilab.vision.util.CompressionUtil;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.zip.DataFormatException;
@@ -46,6 +50,21 @@ public class VideoReceiveComponent extends DiarcComponent {
 
     shouldRunExecutionLoop = true;
     executionLoopCycleTime = 30; // ~30hz
+  }
+
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("fps").hasArg().argName("integer").desc("frames per second of feed").build());
+    return options;
+  }
+
+  @Override
+  protected void parseArgs(CommandLine cmdLine) {
+    if (cmdLine.hasOption("fps")) {
+      executionLoopCycleTime = Integer.parseInt(cmdLine.getOptionValue("fps"));
+      log.info("receiving video at " + cmdLine.getOptionValue("fps") + "fps");
+    }
   }
 
   @Override

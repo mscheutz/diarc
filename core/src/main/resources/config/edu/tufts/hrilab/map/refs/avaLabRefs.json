@@ -1,0 +1,186 @@
+{
+  "poseReferences": [
+    {
+      "refId": "location_0:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "dock(VAR0:location)"
+      ],
+      "position": [
+        -0.03652259308689226,
+        0.7643826170636434,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.768602,
+        0.6397272
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "bullpen(VAR0:location)"
+      ],
+      "position": [
+        7.761807612485979,
+        -1.696797375596191,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.5121768,
+        0.85888
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "arena(VAR0:location)"
+      ],
+      "position": [
+        -3.130012140870972,
+        7.106391297284713,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.1131937,
+        0.9935729
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "elevator(VAR0:location)"
+      ],
+      "position": [
+        -0.1097221388812151,
+        3.892246179050917,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.963469,
+        0.2678201
+      ]
+    },
+    {
+      "refId": "location_5:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "coffee maker(VAR0:location)"
+      ],
+      "position": [
+        1.575684409921422,
+        1.435805793554873,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.9614606,
+        0.2749428
+      ]
+    },
+    {
+      "refId": "location_6:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "evans office(VAR0:location)"
+      ],
+      "position": [
+        5.481004269086903,
+        -1.598694306869579,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.895106,
+        0.4458533
+      ]
+    },
+    {
+      "refId": "location_8:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "exit(VAR0:location)"
+      ],
+      "position": [
+        -10.82934184901444,
+        -2.4600656472536,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.3603573,
+        0.9328143
+      ]
+    },
+    {
+      "refId": "location_9:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "back door(VAR0:location)"
+      ],
+      "position": [
+        0.636078470080424,
+        10.22051342611405,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.6980345,
+        0.7160641
+      ]
+    },
+    {
+      "refId": "location_10:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "cramer(VAR0:location)"
+      ],
+      "position": [
+        -3.28342093578331,
+        8.629918884356673,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.1527661,
+        0.9882624
+      ]
+    },
+    {
+      "refId": "location_11:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "test(VAR0:location)"
+      ],
+      "position": [
+        -0.3008073604922309,
+        7.654876309286075,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7374547,
+        0.6753966
+      ]
+    }
+  ]
+}
+
+

@@ -734,8 +734,11 @@ successfully; (C\AGENT)/(C\AGENT); #x.complete($x)
 %successfully; C/C; #x.complete($x)
 first; FIRST/C; #x.modify(insert($x))
 
-%save this pose as
+% save this location
+save this location as; C/LOC; #x.recordLocation(?ADDRESSEE,$x)
+this location is; C/LOC; #x.recordLocation(?ADDRESSEE,$x)
 
+%save this pose as
 save this pose as; C/POSE; #x.recordPose($x)
 this pose is; C/POSE; #x.recordPose($x)
 %save this pose as; C/POSE; #x.recordEEPose($x)

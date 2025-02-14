@@ -11,20 +11,17 @@ import ai.thinkingrobots.trade.TRADEServiceInfo;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.gui.ConfigurationHolder;
 import edu.tufts.hrilab.gui.GuiAdapter;
 import edu.tufts.hrilab.map.FloorMap;
-import edu.tufts.hrilab.map.MapObject;
-import edu.tufts.hrilab.map.util.Pose;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
@@ -34,9 +31,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Handles WebSocket messages for MapComponent-related functionalities within the web interface.
@@ -45,20 +40,15 @@ import java.util.Set;
  */
 public class MapAdapter extends GuiAdapter {
 
+  private FloorMap currFloorMap;
+  private int currentFloor = -1;
+
   //==========================================================================
   // Constructors
   //==========================================================================
   public MapAdapter(Collection<String> groups) {
     super(groups);
   }
-
-  //==========================================================================
-  // Constants
-  //==========================================================================
-  /**
-   * Static logger instance.
-   */
-  private static final Logger log = LoggerFactory.getLogger(MapAdapter.class);
 
   //======================================================================
   // Implementing methods | TextWebSocketHandler
@@ -75,8 +65,8 @@ public class MapAdapter extends GuiAdapter {
 
     switch (message.get("action").getAsString()) {
       case "fetchMapData":
-        fetchRefs();
         fetchMapData();
+        fetchKnownLocations();
         break;
       case "navigateToPoint":
         double x = message.get("x").getAsDouble();
@@ -95,10 +85,10 @@ public class MapAdapter extends GuiAdapter {
         fetchRobotPose();
         break;
       case "fetchKeyLocations":
-        fetchKeyLocations();
+        fetchKnownLocations();
         break;
       case "fetchPastLocations":
-        fetchPastLocations();
+        log.error("fetchPastLocations not currently supported.");
         break;
       default:
         JsonObject response = new JsonObject();
@@ -117,61 +107,65 @@ public class MapAdapter extends GuiAdapter {
   //======================================================================
 
   /**
+   * Update local current FloorMap and current floor number.
+   */
+  private void fetchCurrentFloorMap() {
+    try {
+      currentFloor = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrentFloor").argTypes().inGroups(this.groups.toArray(new String[0])))
+              .call(Integer.class);
+
+      // only update the current floor map when not initialized or if not on the correct floor
+      if (currFloorMap == null || currentFloor != currFloorMap.getFloorNumber()) {
+        currFloorMap = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrentFloorMap").argTypes().inGroups(this.groups.toArray(new String[0])))
+                .call(FloorMap.class);
+      }
+    } catch (TRADEException e) {
+      log.error("Error getting map.", e);
+      currentFloor = -1;
+      currFloorMap = null;
+    }
+  }
+
+  /**
    * Fetches and sends map data to the client, including current floor and associated metadata.
    */
   private void fetchMapData() {
-    log.info("Fetching map data for the current floor.");
+    fetchCurrentFloorMap();
+
     JsonObject response = new JsonObject();
+    if (currFloorMap != null && currFloorMap.getMapYamlFile() != null) {
+      // TODO: this should use the pixelMap because the yaml/pgm files might not exist on this machine
+      // Assumes corresponding .yaml and .pgm files share the same name and directory.
+      String pgmFilePath = currFloorMap.getMapYamlFile().replace(".yaml", ".pgm");
+      String pngFileName;
+      try {
+        pngFileName = convertPGMtoPNG(pgmFilePath);
+        response.addProperty("currentFloor", currentFloor);
+        String baseUrl = ConfigurationHolder.getBaseUrl();
+        response.addProperty("mapImageUrl", baseUrl + "/images/" + pngFileName);
+        response.addProperty("success", true);
+        response.addProperty("message", "Map data fetched successfully.");
+        response.addProperty("path", getPath());
+      } catch (ImageReadException | ImageWriteException | IOException e) {
+        log.error("Error converting map PGM to PNG");
+        response.addProperty("success", false);
+        response.addProperty("error", "Failed to retrieve map data.");
+        response.addProperty("path", getPath());
+      }
+    } else {
+      response.addProperty("success", false);
+      response.addProperty("error", "Failed to retrieve map data.");
+      response.addProperty("path", getPath());
+    }
 
     try {
-      int currentFloor = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrFloor").inGroups(this.groups.toArray(new String[0]))).call(Integer.class);
-      @SuppressWarnings("unchecked")
-      Map<Integer, FloorMap> floorMaps = (Map<Integer, FloorMap>)
-              TRADE.getAvailableService(
-                      new TRADEServiceConstraints()
-                              .name("getFloorMaps")
-                              .inGroups(this.groups.toArray(new String[0]))
-              ).call(Map.class);
-      FloorMap currentMap = floorMaps.get(currentFloor);
-
-      // Assumes corresponding .yaml and .pgm files share the same name and directory.
-      String pgmFilePath = currentMap.getMapYamlFile().replace(".yaml", ".pgm");
-
-      log.info("Converting PGM to PNG for file: {}", pgmFilePath);
-
-      String pngFileName = convertPGMtoPNG(pgmFilePath);
-      response.addProperty("currentFloor", currentFloor);
-      String baseUrl = ConfigurationHolder.getBaseUrl();
-      response.addProperty("mapImageUrl", baseUrl + "/images/" + pngFileName);
-      response.addProperty("success", true);
-      response.addProperty("message", "Map data fetched successfully.");
-      // Send the initial map data response
-      response.addProperty("path", getPath());
-      try {
-        sendMessage(response);
-      } catch (TRADEException e) {
-        log.error("Failed to send message", e);
-      }
-
-    } catch (Exception e) {
-      log.error("Failed to retrieve or convert map data: {}", e.getMessage(), e);
-      response.addProperty("success", false);
-      response.addProperty("error", "Failed to retrieve map data: " + e.getMessage());
-      response.addProperty("path", getPath());
-      try {
-        sendMessage(response);
-      } catch (TRADEException ex) {
-        log.error("Failed to send message", ex);
-      }
+      sendMessage(response);
+    } catch (TRADEException ex) {
+      log.error("Failed to send message", ex);
     }
 
     // Fetch and send robot pose
     fetchRobotPose();
-
-    // Fetch and send key/past locations
-    fetchKeyLocations();
-    fetchPastLocations();
-
   }
 
   /**
@@ -222,7 +216,7 @@ public class MapAdapter extends GuiAdapter {
               .argTypes(Double.class, Double.class, Double.class, Double.class, Double.class, Double.class, Boolean.class));
 
       Point2d pixelPosition = new Point2d(x, y);
-      FloorMap currFloorMap = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrFloorMap").inGroups(this.groups.toArray(new String[0]))).call(FloorMap.class);
+      FloorMap currFloorMap = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrentFloorMap").inGroups(this.groups.toArray(new String[0]))).call(FloorMap.class);
       Point3d meterPosition = currFloorMap.getPixelMap().toMeter(pixelPosition);
       x = meterPosition.getX();
       y = meterPosition.getY();
@@ -235,14 +229,6 @@ public class MapAdapter extends GuiAdapter {
         response.addProperty("message", "Navigation to point initiated successfully.");
         log.info("Navigation to point successfully initiated.");
         fetchRobotPose();  // Call to fetch robot pose after successful navigation
-
-        // Create new location and add to past locations
-        TRADE.getAvailableService(new TRADEServiceConstraints()
-                        .name("recordLocation").inGroups(this.groups.toArray(new String[0]))
-                        .argTypes(Point3d.class))
-                .call(void.class, meterPosition);
-
-        fetchPastLocations();
       } else {
         response.addProperty("success", false);
         response.addProperty("message", "Failed to initiate navigation.");
@@ -309,109 +295,57 @@ public class MapAdapter extends GuiAdapter {
    * Fetches and sends the current pose of the robot to the client.
    */
   private void fetchRobotPose() {
-    log.info("Fetching robot pose.");
     JsonObject response = new JsonObject();
 
+    // get current robot pose
+    Pair<Point3d, Quat4d> currPose = null;
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("updateRobotPose").inGroups(this.groups.toArray(new String[0]))).call(void.class);
-      Pose currPose = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrRobotPose").inGroups(this.groups.toArray(new String[0]))).call(Pose.class);
-      Point3d position = currPose.getPosition();
-      Quat4d orientation = currPose.getOrientation();
+      currPose = TRADE.getAvailableService(new TRADEServiceConstraints()
+                      .name("getPose").argTypes().inGroups(this.groups.toArray(new String[0])))
+              .call(Pair.class);
 
-      JsonObject positionJson = new JsonObject();
-      positionJson.addProperty("x", position.getX());
-      positionJson.addProperty("y", position.getY());
-      positionJson.addProperty("z", position.getZ());
-      JsonObject orientationJson = new JsonObject();
-      positionJson.addProperty("x", orientation.getX());
-      positionJson.addProperty("y", orientation.getY());
-      positionJson.addProperty("z", orientation.getZ());
-      positionJson.addProperty("w", orientation.getW());
-
-      response.add("position", positionJson);
-      response.add("orientation", orientationJson);
-
-      try {
-        // FloorMap (requires a map)
-        FloorMap currFloorMap = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrFloorMap").inGroups(this.groups.toArray(new String[0]))).call(FloorMap.class);
-        // PixelMap
-        Point2d robotPixelPosition = currFloorMap.getPixelMap().toPixel(position);
-
-        // Add the robot's pixel position to the response
-        JsonObject pixlePos = new JsonObject();
-        pixlePos.addProperty("x", robotPixelPosition.getX());
-        pixlePos.addProperty("y", robotPixelPosition.getY());
-        response.add("robotPixelPosition", pixlePos);
-      } catch (Exception e) {
-        // Handle the case where the FloorMap or PixelMap is not available
-        response.add("robotPixelPosition", JsonNull.INSTANCE);
-        log.error("Failed to retrieve the FloorMap or PixelMap: {}", e.getMessage(), e);
-      }
-
-      response.addProperty("success", true);
-      response.addProperty("message", "Robot pose fetched successfully.");
-    } catch (Exception e) {
-      log.error("Error fetching robot pose: {}", e.getMessage(), e);
-      response.addProperty("success", false);
-      response.addProperty("error", "Failed to fetch robot pose: " + e.getMessage());
-    }
-
-    response.addProperty("path", getPath());
-    try {
-      sendMessage(response);
-    } catch (TRADEException ex) {
-      log.error("Failed to send message", ex);
-    }
-  }
-
-  /**
-   * Fetches and sends information about key locations and their properties to the client.
-   */
-  private void fetchKeyLocations() {
-    log.info("Fetching key locations from FloorMap.");
-
-    JsonObject response = new JsonObject();
-    JsonObject finalLocationsWithPositions = new JsonObject();
-
-    try {
-      FloorMap currFloorMap = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrFloorMap").inGroups(this.groups.toArray(new String[0]))).call(FloorMap.class);
-      Set<MapObject> objects = currFloorMap.getAllObjects();
-      if (objects != null) {
-        log.info("Fetched {} objects from the current floor map.", objects.size());
-
-        for (MapObject object : objects) {
-          Point2d pixelPosition = object.getCenterPixel();
-          Symbol symbol = object.getReferenceId();
-
-          // Get the full description and modify it
-          String description = object.toString();
-          Point3d position = object.getPosition();
-          // Regex to find and replace the coordinate part of the description
-          description = description.replaceAll("\\(\\d+\\.\\d+, \\d+\\.\\d+\\)$", "(" + position.getX() + ", " + position.getY() + ")");
-
-          JsonObject positionJson = new JsonObject();
-          positionJson.addProperty("x", pixelPosition.getX());
-          positionJson.addProperty("y", pixelPosition.getY());
-          positionJson.addProperty("description", description);
-
-          finalLocationsWithPositions.add(symbol.toString(), positionJson);
-        }
-
-        response.add("keyLocations", finalLocationsWithPositions);
-        response.addProperty("success", true);
-        response.addProperty("message", "Key locations fetched successfully.");
-      } else {
-        log.error("No objects found in the current floor map.");
+      if (currPose == null) {
         response.addProperty("success", false);
-        response.addProperty("error", "No objects available in the current floor map.");
+        response.addProperty("error", "Failed to fetch robot pose.");
+      } else {
+        Point3d position = currPose.getLeft();
+        Quat4d orientation = currPose.getRight();
+
+        JsonObject positionJson = new JsonObject();
+        positionJson.addProperty("x", position.getX());
+        positionJson.addProperty("y", position.getY());
+        positionJson.addProperty("z", position.getZ());
+        JsonObject orientationJson = new JsonObject();
+        positionJson.addProperty("x", orientation.getX());
+        positionJson.addProperty("y", orientation.getY());
+        positionJson.addProperty("z", orientation.getZ());
+        positionJson.addProperty("w", orientation.getW());
+
+        response.add("position", positionJson);
+        response.add("orientation", orientationJson);
+
+        response.addProperty("success", true);
+        response.addProperty("message", "Robot pose fetched successfully.");
       }
-    } catch (Exception e) {
-      log.error("Error fetching key locations: {}", e.getMessage(), e);
-      response.addProperty("success", false);
-      response.addProperty("error", "Error during map data retrieval: " + e.getMessage());
+    } catch (TRADEException e) {
+      log.error("Error fetching robot pose.", e);
     }
 
-    // Send the final JsonObject back to the client
+    // get current pixel location on map
+    if (currFloorMap == null || currFloorMap.getPixelMap() == null || currPose == null) {
+      response.add("robotPixelPosition", JsonNull.INSTANCE);
+    } else {
+      // PixelMap
+      Point2d robotPixelPosition = currFloorMap.getPixelMap().toPixel(currPose.getLeft());
+
+      // Add the robot's pixel position to the response
+      JsonObject pixlePos = new JsonObject();
+      pixlePos.addProperty("x", robotPixelPosition.getX());
+      pixlePos.addProperty("y", robotPixelPosition.getY());
+      response.add("robotPixelPosition", pixlePos);
+    }
+
+    // send response
     response.addProperty("path", getPath());
     try {
       sendMessage(response);
@@ -420,40 +354,28 @@ public class MapAdapter extends GuiAdapter {
     }
   }
 
-  private void fetchRefs() {
-    log.info("Fetching key locations from refs.");
-
+  private void fetchKnownLocations() {
     JsonObject response = new JsonObject();
-    JsonObject finalLocationsWithPositions = new JsonObject();
+    JsonObject knownPosesJson = new JsonObject();
 
     try {
       // Fetch the description from the TRADE service
-      String description = TRADE.getAvailableService(new TRADEServiceConstraints().name("getRefs").inGroups(this.groups.toArray(new String[0]))).call(String.class);
-
-      // Split the description into lines
-      String[] lines = description.split("\n");
+      Map<Symbol, PoseReference> knownPoses = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReferences").argTypes().inGroups(this.groups.toArray(new String[0])))
+              .call(Map.class);
 
       // Loop through each line to extract information
-      for (String line : lines) {
-        // Splitting by '=' to separate the key part from the value part
-        String[] parts = line.split("=", 2);  // Limit split to 2 parts to ensure only the first '=' is used as the delimiter
-        if (parts.length == 2) {
-          String refId = parts[0].trim();   // "movebaselocation_4:movebaselocation"
-          String properties = parts[1].trim(); // "[tableELocation(VAR0:movebaselocation)] (not null)"
+      for (Symbol refId : knownPoses.keySet()) {
+        PoseReference ref = knownPoses.get(refId);
 
-          Symbol symbol = Factory.createSymbol(refId);
+        JsonObject positionJson = new JsonObject();
+        positionJson.addProperty("x", ref.getPose().getLeft().x);
+        positionJson.addProperty("y", ref.getPose().getLeft().y);
+        positionJson.addProperty("description", ref.properties.toString());
 
-          JsonObject positionJson = new JsonObject();
-          positionJson.add("x", JsonNull.INSTANCE);
-          positionJson.add("y", JsonNull.INSTANCE);
-
-          positionJson.addProperty("description", properties);
-
-          finalLocationsWithPositions.add(symbol.toString(), positionJson);
-        }
+        knownPosesJson.add(refId.toString(), positionJson);
       }
+      response.add("keyLocations", knownPosesJson);
 
-      response.add("keyLocations", finalLocationsWithPositions);
       response.addProperty("success", true);
       response.addProperty("message", "Key locations fetched successfully.");
 
@@ -461,79 +383,6 @@ public class MapAdapter extends GuiAdapter {
       log.error("Error fetching key locations: {}", e.getMessage(), e);
       response.addProperty("success", false);
       response.addProperty("error", "Error during ref data retrieval: " + e.getMessage());
-    }
-
-    // Send the final JsonObject back to the client
-    response.addProperty("path", getPath());
-    try {
-      sendMessage(response);
-    } catch (TRADEException ex) {
-      log.error("Failed to send message", ex);
-    }
-  }
-
-  /**
-   * Retrieves and sends past robot locations to the client.
-   */
-  private void fetchPastLocations() {
-    log.info("Fetching past locations.");
-
-    JsonObject response = new JsonObject();
-
-    Map<Symbol, Pair<Point3d, Quat4d>> storedPoses = new HashMap<>(); // Initialize storedPoses
-
-    try {
-      @SuppressWarnings("unchecked")
-      Map<Symbol, Pair<Point3d, Quat4d>> tempStoredPoses = (Map<Symbol, Pair<Point3d, Quat4d>>)
-              TRADE.getAvailableService(
-                      new TRADEServiceConstraints()
-                              .name("getStoredPoses")
-                              .inGroups(this.groups.toArray(new String[0]))
-              ).call(Map.class);
-      storedPoses = tempStoredPoses;
-    } catch (TRADEException e) {
-      log.error("Failed to retrieve stored poses: {}", e.getMessage(), e);
-    } catch (Exception e) {
-      log.error("An unexpected error occurred: {}", e.getMessage(), e);
-    }
-
-    // Early exit if no locations are stored
-    // initial location is excluded from "pastLocations"
-    if (storedPoses.isEmpty()) {
-      response.add("pastLocations", new JsonObject()); // Empty object for no locations
-      response.addProperty("path", getPath());
-      try {
-        sendMessage(response);
-      } catch (TRADEException ex) {
-        log.error("Failed to send message", ex);
-      }
-      return;
-    }
-
-    JsonObject finalLocationsWithPositions = new JsonObject();
-    try {
-      for (Map.Entry<Symbol, Pair<Point3d, Quat4d>> entry : storedPoses.entrySet()) {
-        Symbol symbol = entry.getKey();
-        Pair<Point3d, Quat4d> pose = entry.getValue();
-        Point3d position = pose.getLeft();
-
-        FloorMap currFloorMap = TRADE.getAvailableService(new TRADEServiceConstraints().name("getCurrFloorMap").inGroups(this.groups.toArray(new String[0]))).call(FloorMap.class);
-        Point2d robotPixelPosition = currFloorMap.getPixelMap().toPixel(position);
-
-        JsonObject positionJson = new JsonObject();
-        positionJson.addProperty("x", robotPixelPosition.getX());
-        positionJson.addProperty("y", robotPixelPosition.getY());
-
-        finalLocationsWithPositions.add(symbol.toString(), positionJson);
-      }
-
-      response.add("pastLocations", finalLocationsWithPositions);
-      response.addProperty("success", true);
-      response.addProperty("message", "Past locations fetched successfully.");
-    } catch (Exception e) {
-      log.error("Error fetching past locations: {}", e.getMessage(), e);
-      response.addProperty("success", false);
-      response.addProperty("error", "Error during map data retrieval: " + e.getMessage());
     }
 
     // Send the final JsonObject back to the client

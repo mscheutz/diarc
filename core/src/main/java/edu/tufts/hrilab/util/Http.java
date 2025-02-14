@@ -4,12 +4,13 @@
 
 package edu.tufts.hrilab.util;
 
-import java.io.IOException;
+import java.awt.image.BufferedImage;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.DataOutputStream;
+import java.io.IOException;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -19,6 +20,8 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.imageio.ImageIO;
 
 public class Http {
 
@@ -74,6 +77,7 @@ public class Http {
                 in = new BufferedReader(is);
             } catch (Exception e) {
                 log.error("[sendGetRequest] Error reading response", e);
+
                 return null;
             }
 
@@ -193,5 +197,31 @@ public class Http {
         }
 
         return null;
+    }
+
+    /**
+     * Get an image as a BufferedImage from a remote source.
+     *
+     * @param endpointUrl url of image to get
+     * @return image data as BufferedImage
+     */
+    public static BufferedImage sendGetImage (String endpointUrl) {
+        BufferedImage bufferedImage = null;
+        URL url = null;
+        try {
+            url = new URL(endpointUrl);
+        } catch (Exception e) {
+            log.error("[sendGetImage] Error constructing URL", e);
+        }
+
+        if (url != null) {
+            try {
+                bufferedImage = ImageIO.read(url);
+            } catch (IOException e) {
+                log.error("[sendGetImage] Error getting image", e);
+            }
+        }
+
+        return bufferedImage;
     }
 }

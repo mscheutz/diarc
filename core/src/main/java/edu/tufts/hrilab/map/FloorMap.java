@@ -12,8 +12,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import edu.tufts.hrilab.map.util.Pose;
-import edu.tufts.hrilab.map.util.Utils;
+import edu.tufts.hrilab.util.Convert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -225,7 +224,7 @@ public class FloorMap {
     // bring between [0,2pi]
     ang = ang % (2 * Math.PI);
 
-    return Utils.convertToMatrix4d(new Pose(pos, Utils.eulerToQuat4d(ang, 0, 0)));
+    return Convert.convertToMatrix4d(pos, Convert.convertToQuat4d(ang, 0, 0));
   }
 
   /**
@@ -275,7 +274,7 @@ public class FloorMap {
     MapObject minB = null;
     for (MapObject button : buttonsToElevatorDoors.keySet()) {
       Point3d currCenter = button.getPosition();
-      double d = Utils.dist(currCenter, p);
+      double d = currCenter.distance(p);
       if (d < minD) {
         minD = d;
         minB = button;
@@ -326,7 +325,7 @@ public class FloorMap {
       double minDist = Double.POSITIVE_INFINITY;
       int minIdx = -1;
       for (int i = 0; i < neighbors.size(); i++) {
-        double d = Utils.dist(p, getPortalBetween(currRoom, neighbors.get(i)).getPosition());
+        double d = p.distance(getPortalBetween(currRoom, neighbors.get(i)).getPosition());
         if (d < minDist || minIdx < 0) {
           minDist = d;
           minIdx = i;
@@ -342,7 +341,7 @@ public class FloorMap {
   /**
    * queries if a point is a portal
    *
-   * @param p Point in meter-space being query
+   * @param p Point in meter-space being queried
    * @return true if there is a portal at p, false otherwise
    */
   public boolean isPortal(Point3d p) {

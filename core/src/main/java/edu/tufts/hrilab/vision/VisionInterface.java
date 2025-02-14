@@ -137,7 +137,7 @@ public interface VisionInterface extends edu.tufts.hrilab.interfaces.VisionInter
    * @return the image in a byte array
    */
   @TRADEService
-  byte[] getFrame();
+  public byte[] getFrame();
 
   /**
    * Return the camera's last disparity frame in a byte array.
@@ -167,7 +167,7 @@ public interface VisionInterface extends edu.tufts.hrilab.interfaces.VisionInter
    * @return Dimension containing the size
    */
   @TRADEService
-  Dimension getImageSize();
+  public Dimension getImageSize();
 
   /**
    * Entry point in vision for making world observations.

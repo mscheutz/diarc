@@ -76,6 +76,13 @@
         "properties": [
           "elevator_open(VAR0:physobj)"
         ]
+      },
+      {
+        "refId": "physobj_11:physobj",
+        "variable": "VAR0:physobj",
+        "properties": [
+          "personYOLO(VAR0:physobj)"
+        ]
       }
     ]
   }

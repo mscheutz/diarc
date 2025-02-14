@@ -44,13 +44,4 @@ public final class FOL {
     return term.getArgs();
   }
 
-  /**
-   * Utility
-   */
-
-  // TODO:brad: add all FOL factory constructors, or remove this one
-  public static Predicate createPredicate(String desc){
-    return Factory.createPredicate(desc);
-  }
-
 }

@@ -4,8 +4,6 @@
 
 package edu.tufts.hrilab.map;
 
-import edu.tufts.hrilab.map.PathAction;
-import edu.tufts.hrilab.map.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +93,7 @@ public class PathPlanner {
     MapObject prev = start;
     double dist = 0;
     for (MapObject curr : path) {
-      dist += Utils.dist(curr.getPosition(), prev.getPosition());
+      dist += curr.getPosition().distance(prev.getPosition());
       prev = curr;
     }
     return dist;

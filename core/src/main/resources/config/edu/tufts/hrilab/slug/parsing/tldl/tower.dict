@@ -1,0 +1,23 @@
+
+% temporary! the "me" shouldn't be hardcoded (maybe 'take' can be a VERBDT??)
+take me to; C/REF ; #x.takeSpeakerTo(?ADDRESSEE,$x)
+take me to the; C/REF ; #x.takeSpeakerTo(?ADDRESSEE,$x)
+
+the; REF/LOC ; #x.$x ; DEFINITE
+
+the; LOC/LOC ; #x.$x ; DEFINITE
+
+elevator; LOC ; elevator
+ava; LOC ; ava
+bullpen; LOC ; bullpen
+
+kitchen; LOC ; kitchen
+
+robot; ADDRESSABLE; self % ??
+
+me; RN; me; VAR
+them; RN; them; VAR
+him; RN; him; VAR
+her; RN; her; VAR
+my dog; RN; my dog; VAR
+

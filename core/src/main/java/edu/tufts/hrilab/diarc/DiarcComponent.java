@@ -78,6 +78,9 @@ abstract public class DiarcComponent {
   protected void init() {
   }
 
+  protected void postRegistrationInit() {
+  }
+
   /**
    * Override this method to parse command line args in the sub-class. Called directly after construction to pass
    * runtime values that will override default values. This should parse all the options that additionalUsageInfo provides.
@@ -273,6 +276,7 @@ abstract public class DiarcComponent {
     if (registerWithTrade) {
       try {
         instance.services = TRADE.registerAllServices(instance, instance.groups);
+        instance.postRegistrationInit();
       } catch (TRADEException e) {
         staticLogger.debug("Could not register with TRADE.",e);
         instance.services = new HashSet<>();

@@ -3999,4 +3999,176 @@ public class TLDLParserComponentTest {
         ));
     }
 
+    @Test
+    public void avaTowerTest() {
+        component.addDictionary("avaTemplate.dict");
+        component.addDictionary("avadict.dict");
+
+        String speaker = "brad";
+
+        assertTrue(testUtterance("save locations to file",
+                "INSTRUCT(brad,self,saveLocationsToFile(self),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("this location is the kitchen",
+                "INSTRUCT(brad,self,saveLocation(self,kitchen),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("save this location as kitchen",
+                "INSTRUCT(brad,self,saveLocation(self,kitchen),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("please stop",
+                "INSTRUCT(brad,self,stop(self),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("hey ava",
+                "INSTRUCT(brad,self,heyAva(self),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("hey AV",
+                "INSTRUCT(brad,self,heyAva(self),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("go to the arena",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("robot go to the arena",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("could you please drive to the arena",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("bring andy to the arena",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("take me to the arena",
+                "INSTRUCT(brad,self,escortToLocation(self,brad,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("show andy the arena",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("robot take andy to the arena",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("deliver this box to the arena",
+                "INSTRUCT(brad,self,deliverToLocation(self,VAR0,VAR1),{box(VAR0),arena(VAR1),REFACTIVATED(VAR0),DEFINITE(VAR1)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("get a box to the arena",
+                "INSTRUCT(brad,self,deliverToLocation(self,VAR0,VAR1),{box(VAR0),arena(VAR1),INDEFINITE(VAR0),DEFINITE(VAR1)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("are you able to deliver this box to the arena",
+                "INSTRUCT(brad,self,deliverToLocation(self,VAR0,VAR1),{box(VAR0),arena(VAR1),REFACTIVATED(VAR0),DEFINITE(VAR1)})",
+                speaker, "self"));
+
+//        assertTrue(testUtterance("how do i get to the arena",
+//                "INSTRUCT(brad,self,goToLocation(self,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
+//                speaker, "self"));
+
+//        assertTrue(testUtterance("do you know how to get to the arena",
+//                "QUESTION(brad,self,knowHow(self,to(goToLocation(self,VAR0))),{arena(VAR0),DEFINITE(VAR0)})",
+//                speaker, "self"));
+
+
+
+        assertTrue(testUtterance("please transport this box to the arena",
+                "INSTRUCT(brad,self,deliverToLocation(self,VAR0,VAR1),{box(VAR0),arena(VAR1),REFACTIVATED(VAR0),DEFINITE(VAR1)})",
+                speaker, "self"));
+
+
+        assertTrue(testUtterance("show andy how to get to the bathroom",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{bathroom(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("show andy how to reach the bathroom",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{bathroom(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("show andy how to access the bathroom",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{bathroom(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+
+        assertTrue(testUtterance("show andy directions to the bathroom",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{bathroom(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+
+        assertTrue(testUtterance("show andy the directions to the bathroom",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{bathroom(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("show andy the way to the bathroom",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{bathroom(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("show andy the path to the bathroom",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{bathroom(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("show andy the route to the bathroom",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{bathroom(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("show andy the location of the bathroom",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{bathroom(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("get to the restroom ",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0),{bathroom(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("andy is near the elevator",
+                "STATEMENT(brad,self,at(andy,VAR0),{elevator(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("matt is in the hri lab",
+                "STATEMENT(brad,self,at(matt,VAR0),{481b hri lab(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("bring andy from the elevator to the hri lab",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0,VAR1),{elevator(VAR0),481b hri lab(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("bring andy to the kitchen",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0),{430 kitchenette(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+//        assertTrue(testUtterance("could you please take this box to andy in the exit",
+//                "DELIVER BOX TO ANDY IN LOBBY",
+//                speaker, "self"));
+
+//        assertTrue(testUtterance("i need help getting to the arena",
+//                "???",
+//                speaker, "self"));
+//
+
+
+//        assertTrue(testUtterance("bring this to the arena",
+//                "DELIVER 'THIS' TO ARENA",
+//                speaker, "self"));
+
+//        assertTrue(testUtterance("could you please take this box to the exit and guide chris to the arena ",
+//                "DELIVER BOX TO ANDY IN LOBBY AND ESCORT CHRIS (WHERE IS HE) TO ELEVATOR",
+//                speaker, "self"));
+
+        // also how common of a command is this?
+//        assertTrue(testUtterance("transport yourself to the arena",
+//                "INSTRUCT(brad,self,escortToLocation(self,self,VAR0),{arena(VAR0),DEFINITE(VAR0)})",
+//                speaker, "self"));
+
+
+//        assertTrue(testUtterance("go to elaines office",
+//                "INSTRUCT(brad,self,goToLocation(self,VAR0),{451 elaine short(VAR0),DEFINITE(VAR0)})",
+//                speaker, "self"));
+    }
 }

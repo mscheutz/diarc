@@ -5,7 +5,7 @@
 package edu.tufts.hrilab.map;
 
 import com.google.common.graph.EndpointPair;
-import edu.tufts.hrilab.map.util.Utils;
+import edu.tufts.hrilab.util.Convert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +109,7 @@ public class PixelMap {
 
       Quat4d orientation = new Quat4d(0, 0, 0, 1);
       if (isPortal(property)) {
-        orientation = Utils.eulerToQuat4d(0, 0, getPortalNormalAngle(mo));
+        orientation = Convert.convertToQuat4d(0, 0, getPortalNormalAngle(mo));
       }
       mo.setOrientation(orientation);
 

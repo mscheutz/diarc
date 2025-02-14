@@ -11,7 +11,8 @@ package edu.tufts.hrilab.tts;
 
 import java.io.*;
 
-import ai.thinkingrobots.trade.TRADEService;
+import ai.thinkingrobots.trade.*;
+import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.interfaces.SpeechProductionInterface;
 import edu.tufts.hrilab.interfaces.VoiceProsodyInterface;
@@ -29,11 +30,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sound.sampled.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -70,6 +68,7 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
 
   private boolean useGui = false;
   private MaryTTSComponentVis gui;
+  private float volume = 1.0f;
 
   /**
    * The configuration file from which to load canned-phrases.
@@ -87,6 +86,10 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
   }
 
   private Emotion e;
+
+  // mixer vars set by flags
+  private int mixerID = -1;
+  private boolean muteMics;
 
   // boolean markers set by args flags
   private boolean saveToWav;
@@ -280,43 +283,67 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
   public boolean sayText(String text, boolean wait) {
     final String finalText = text;
 
-    Future<Boolean> future = executor.submit(new Callable<Boolean>() {
+    if (text.isEmpty()) {
+      log.debug("[sayText] Given empty string ''. This will cause MaryTTS to loop indefinitely. Returning false instead.");
+      return false;
+    }
 
-      @Override
-      public Boolean call() throws Exception {
-
-        // split on new words
-        List<String> splitText = splitOnNewWords(finalText);
-        log.info("words", splitText);
-
-        boolean result = true;
-        for (String t : splitText) {
-          if (newWordMap.containsKey(t)) {
-            result &= playWavFile(newWordMap.get(t));
-          } else {
-            result &= textToSpeech(t, true);
-          }
-        }
-        return result;
+    // Turn off the microphone
+    if (muteMics) {
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("disableMicrophone").onLocalhost());
+        service.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[sayText] Exception disabling microphone", e);
       }
+    }
+
+    Future<Boolean> future = executor.submit(() -> {
+
+      // split on new words
+      List<String> splitText = splitOnNewWords(finalText);
+      log.info("sayText(" + String.join(", ", splitText) + ")");
+
+      boolean result = true;
+      for (String t : splitText) {
+        if (newWordMap.containsKey(t)) {
+          result &= playWavFile(newWordMap.get(t));
+        } else {
+          result &= textToSpeech(t, true);
+        }
+      }
+      return result;
     });
 
+    Boolean future_result = true;
     if (wait) {
       try {
         log.debug("Waiting for future to finish.");
-        Boolean future_result = future.get();
+        future_result = future.get();
         log.debug("Future finished.");
-        return future_result;
+//      } catch (InterruptedException | ExecutionException | TimeoutException e) {
       } catch (InterruptedException | ExecutionException e) {
-        log.error("Error waiting on sayText to finish.", e);
+        log.error("Error waiting on sayText '{}' to finish.", text, e);
       }
     }
-    return true;
+
+    // Turn on the microphone
+    if (muteMics) {
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("enableMicrophone").onLocalhost());
+        service.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[sayText] Exception disabling microphone", e);
+      }
+    }
+
+    return future_result;
   }
 
   private boolean textToSpeech(String text, boolean wait) {
     speaking = true;
     doc = db.newDocument();
+    AtomicBoolean isDone = new AtomicBoolean(false);
 
     // GB: add punctuation if none-exists, default to '.'
     if (!(text.endsWith(".") || text.endsWith(",") || text.endsWith("?") || text.endsWith("!"))) {
@@ -347,10 +374,40 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
         File f = new File(wavFilename);
         AudioSystem.write(ais, audioFileFormat.getType(), f);
       } else {
-        ap = new AudioPlayer(ais);
-        ap.start();
-        if (wait) {
-          ap.join();
+        Clip playbackClip = null;
+
+        try {
+          if (mixerID == -1) {
+            playbackClip = AudioSystem.getClip();
+          } else {
+            playbackClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
+          }
+          playbackClip.open(ais);
+
+          // LineListener to close the clip when done
+          Clip finalPlaybackClip = playbackClip;
+          playbackClip.addLineListener(event -> {
+            if (event.getType() == LineEvent.Type.STOP) {
+              finalPlaybackClip.close();
+              isDone.set(true);
+            }
+          });
+        } catch (LineUnavailableException ex) {
+          log.error("line unavailable", ex);
+        } catch (IOException ex) {
+          log.error("io exception reading file", ex);
+        }
+
+        if (volume < 1.0f) {
+          FloatControl gainControl = (FloatControl) playbackClip.getControl(FloatControl.Type.MASTER_GAIN);
+          gainControl.setValue(20f * (float) Math.log10(volume));
+        }
+
+        playbackClip.loop(0);
+        playbackClip.start();
+
+        while (wait && !isDone.get()) {
+          Util.Sleep(1);
         }
       }
       log.debug("Exiting textToSpeech");
@@ -435,19 +492,35 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
 
     AudioFormat audioFormat = new AudioFormat(16000, 16, 1, true, true);
 
+    AtomicBoolean isDone = new AtomicBoolean(false);
     Clip playbackClip;
     try {
-      playbackClip = AudioSystem.getClip();
+      if (mixerID == -1) {
+        playbackClip = AudioSystem.getClip();
+      } else {
+        playbackClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
+      }
+
+      Clip finalPlaybackClip = playbackClip;
+      // LineListener to close the clip when done
+      playbackClip.addLineListener(event -> {
+        if (event.getType() == LineEvent.Type.STOP) {
+          finalPlaybackClip.close();
+          isDone.set(true);
+        }
+      });
+      if (volume < 1.0f) {
+        FloatControl gainControl = (FloatControl) playbackClip.getControl(FloatControl.Type.MASTER_GAIN);
+        gainControl.setValue(20f * (float) Math.log10(volume));
+      }
       playbackClip.open(audioFormat, data, 0, data.length);
       playbackClip.start();
-      // TODO: change this to listen to the STOP event
-      while (playbackClip.isRunning()) {
-        Util.Sleep(100);
+      while (!isDone.get()) {
+        Util.Sleep(1);
       }
     } catch (LineUnavailableException e1) {
-      e1.printStackTrace();
+      throw new RuntimeException("[playWavFile] LineUnavailableException", e1);
     }
-
     return true;
   }
 
@@ -636,11 +709,17 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
     options.add(Option.builder("female").desc("use female voice").build());
     options.add(Option.builder("config").hasArg().argName("file").desc("set configuration file").build());
     options.add(Option.builder("gui").desc("create gui").build());
+    options.add(Option.builder("volume").hasArg().desc("set volume of output").build());
+    options.add(Option.builder("showMixers").argName("boolean").desc("Show all mixers").build());
+    options.add(Option.builder("matchMixer").hasArgs().argName("name").desc("String to match for mixer in case of device re-ordering. Do not quote argument if spaces needed.").build());
+    options.add(Option.builder("mixer").hasArg().argName("id").desc("ID of mixer to select for speaker").build());
+    options.add(Option.builder("muteMics").argName("boolean").desc("Mute mics when speaking").build());
     return options;
   }
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
+    String volumeStr;
     if (cmdLine.hasOption("wav")) {
       log.debug("found WAV, saving to file");
       saveToWav = true;
@@ -671,6 +750,37 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
     if (cmdLine.hasOption("gui")) {
       useGui = true;
     }
+    if (cmdLine.hasOption("volume")) {
+      volumeStr = cmdLine.getOptionValue("volume");
+      volume = Float.parseFloat(volumeStr);
+      if (volume < 0.0f) {
+        volume = 0.0f;
+        log.warn("volume argument " + volumeStr + " < 0.0, using 0.0");
+      } else if (volume > 1.0f) {
+        volume = 1.0f;
+        log.warn("volume argument " + volumeStr + " > 1.0, using 1.0");
+      }
+      log.debug("setting volume " + volume);
+    }
+    if (cmdLine.hasOption("showMixers")) {
+      ConfigurableMicrophone.showMixers();
+    }
+    if (cmdLine.hasOption("muteMics")) {
+      muteMics = true;
+    }
+    if (cmdLine.hasOption("mixer") || cmdLine.hasOption("matchMixer")) {
+      if (cmdLine.hasOption("mixer")) {
+        mixerID = Integer.parseInt(cmdLine.getOptionValue("mixer"));
+      } else if (cmdLine.hasOption("matchMixer")) {
+        String matchString = String.join(" ", cmdLine.getOptionValues("matchMixer"));
+        mixerID = ConfigurableMicrophone.matchMixer(matchString);
+        log.debug("Matching mixer string \"" + matchString + "\"");
+      }
+      log.debug("Using mixer " + mixerID);
+    } else {
+      log.debug("Using default mixer");
+    }
+
   }
 
 }
