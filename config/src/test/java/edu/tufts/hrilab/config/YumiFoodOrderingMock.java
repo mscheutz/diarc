@@ -35,12 +35,11 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
   private ItemConsultant itemConsultant;
   private ABBAreaConsultant areaConsultant;
   private ABBLocationConsultant locationConsultant;
-  private boolean firebase;
-  private boolean test;
+  private boolean test = false;
   public GoalManagerComponent gm;
 
-  public YumiFoodOrderingMock(boolean test) {
-    this.test = test;
+  public void setTest(boolean flag) {
+    this.test = flag;
   }
 
   @Override
@@ -140,10 +139,4 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
     super.shutdownConfiguration();
   }
 
-  public static void main(String[] args) {
-    boolean test = false;
-    YumiFoodOrderingMock demoConfig = new YumiFoodOrderingMock(test);
-    demoConfig.runConfiguration();
-    //SpringApplication.run(GuiManager.class, args);
-  }
 }

@@ -47,7 +47,7 @@ public class QueueExecutionManager extends ExecutionManager {
     }
 
     //New goal was added as active, update current goal for that agent and all children
-    Symbol actor = getUntypedSymbol(g.getActor());
+    Symbol actor = g.getActor().toUntyped();
     if (updateType == UpdateType.ADDED) {
       if (!agentGoals.containsKey(actor)) {
         log.warn("[onActiveGoalUpdated] received goal with actor not present in group hierarchy: " + actor);
@@ -158,7 +158,7 @@ public class QueueExecutionManager extends ExecutionManager {
   public List<Long> cancelSystemGoals(Symbol actor) {
     log.debug("[cancelSystemGoals] in method");
     List<Long> canceledIds = new ArrayList<>();
-    actor = getUntypedSymbol(actor);
+    actor = actor.toUntyped();
     long goalId = getSystemGid(actor);
     if (goalId != -1) {
       if (cancelGoal(goalId)) {
@@ -181,7 +181,7 @@ public class QueueExecutionManager extends ExecutionManager {
   public List<Long> suspendSystemGoals(Symbol actor) {
     log.info("[suspendSystemGoals] {}", actor);
     List<Long> suspendedIds = new ArrayList<>();
-    actor = getUntypedSymbol(actor);
+    actor = actor.toUntyped();
     long goalId = getSystemGid(actor);
     if (goalId != -1) {
       if (suspendGoal(goalId)) {
@@ -205,7 +205,7 @@ public class QueueExecutionManager extends ExecutionManager {
   public List<Long> resumeSystemGoals(Symbol actor) {
     log.debug("[resumeSystemGoals] in method");
     List<Long> resumedIds = new ArrayList<>();
-    actor = getUntypedSymbol(actor);
+    actor = actor.toUntyped();
     long goalId = getSystemGid(actor);
     if (goalId != -1) {
       if (resumeGoal(goalId)) {
@@ -234,7 +234,7 @@ public class QueueExecutionManager extends ExecutionManager {
   @Override
   public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
     log.trace("[getSystemGoalsPredicates] {}", actor);
-    return getSystemGoalsPredicatesHelper(getUntypedSymbol(actor), new ArrayList<>());
+    return getSystemGoalsPredicatesHelper(actor.toUntyped(), new ArrayList<>());
   }
 
   private List<Predicate> getSystemGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {

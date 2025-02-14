@@ -33,7 +33,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
 
   protected BufferedReader sbr;
   private Reader reader;
-  private String SConfig = "";
+  private List<String> sConfigs = new ArrayList<>();
   private String resourceConfigPath = "config/edu/tufts/hrilab/simspeech";
   public boolean useUnk = false;
   public boolean useCommand = true;
@@ -67,14 +67,16 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
   protected void init() {
     try {
       if (autoInput) {
-        String file = Resources.createFilepath(resourceConfigPath, SConfig);
+        if (sConfigs.size() != 1) {
+          log.error("autoInput not currently compatible with multiple config files. Only using first one.");
+        }
+        String file = Resources.createFilepath(resourceConfigPath, sConfigs.get(0));
         sbr = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(file)));
       } else if (terminalInput) {
         sbr = new BufferedReader(new InputStreamReader(System.in));
       }
     } catch (Exception e) {
       log.error("Error getting input stream. Shutting down!", e);
-      System.exit(-1);
     }
     if (useGui) {
       gui = new SimSpeechRecognitionComponentVis(this);
@@ -96,8 +98,10 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
    *
    * @return the config file to use
    */
-  public String getConfigFile() {
-    return Resources.createFilepath(resourceConfigPath, SConfig);
+  public List<String> getConfigFiles() {
+    List<String> files = new ArrayList<>();
+    sConfigs.forEach(config -> files.add(Resources.createFilepath(resourceConfigPath, config)));
+    return files;
   }
 
   /**
@@ -218,7 +222,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("cfg").longOpt("config").hasArg().argName("file").desc("load buttons from file").build());
+    options.add(Option.builder("cfg").longOpt("config").hasArgs().argName("file(s)").desc("load buttons from file(s)").build());
     options.add(Option.builder("nocommand").desc("do not include command entry field").build());
     options.add(Option.builder("unk").desc("include unk button").build());
     options.add(Option.builder("textred").desc("red button text").build());
@@ -238,7 +242,7 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
   @Override
   protected void parseArgs(CommandLine cmdLine) {
     if (cmdLine.hasOption("cfg")) {
-      SConfig = cmdLine.getOptionValue("cfg");
+      sConfigs = Arrays.stream(cmdLine.getOptionValues("cfg")).toList();
     }
     if (cmdLine.hasOption("nocommand")) {
       useCommand = false;

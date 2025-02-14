@@ -14,17 +14,12 @@ import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.asr.sphinx4.Sphinx4Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TwoNaoDemo extends DiarcConfiguration {
-  // for logging
-  protected static Logger log = LoggerFactory.getLogger(TwoNaoDemo.class);
-
   /**
    * Set to true to use gui for speech input
    */
-  public boolean simSpeech = true;
+  public boolean simSpeech = false;
   /**
    * Set
    */
@@ -74,8 +69,4 @@ public class TwoNaoDemo extends DiarcConfiguration {
     createInstance(GoalManagerComponent.class, gmArgs);
   }
 
-  public static void main(String[] args) {
-    TwoNaoDemo demoConfig = new TwoNaoDemo();
-    demoConfig.runConfiguration();
-  }
 }

@@ -26,6 +26,7 @@ tasks.named<Test>("test") {
 
   val visionDir = layout.projectDirectory;
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
+  systemProperty("logging.config", properties["diarc.loggingConfigFile"].toString()) // for springboot
   systemProperty("java.library.path", visionDir.toString() + "/build/cpp/lib:" + visionDir + "/src/main/cpp/third_party/vlfeat/bin/glnxa64:.:" + environment["LD_LIBRARY_PATH"])
 }
 
@@ -157,4 +158,5 @@ dependencies {
 
   testImplementation("junit:junit:4.13.1")
 
+  implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
 }

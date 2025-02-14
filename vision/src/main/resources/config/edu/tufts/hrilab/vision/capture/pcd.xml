@@ -26,5 +26,6 @@ Optional:
 	<imageHeight>240</imageHeight>
 	<hasStereo>false</hasStereo>
 	<hasDepth>true</hasDepth>
+	<convertToMeters>false</convertToMeters>
 	<publishCloudToRos>false</publishCloudToRos>
 </capture>
