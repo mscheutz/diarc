@@ -62,17 +62,6 @@ public abstract class ActionSelector {
     return instance;
   }
 
-  public static void destroyInstance() {
-    instanceLock.lock();
-    try {
-      if (instance != null) {
-        instance = null;
-      }
-    } finally {
-      instanceLock.unlock();
-    }
-  }
-
   /**
    * Destroy ActionSelector singleton.
    */
