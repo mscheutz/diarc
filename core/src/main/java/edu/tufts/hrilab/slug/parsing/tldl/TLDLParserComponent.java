@@ -355,35 +355,30 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       return filteredParses;
     }
 
-    List<Symbol> queries = new ArrayList<>();
+    log.debug("[pruneParsesWithBelief] Evaluating {} candidate parses.", candidateParses.size());
 
-    // Convert each candidate parse into a Prolog query Symbol
+    // Query each parse individually
     for (Utterance parse : candidateParses) {
-      Symbol query = generateQueryFromParse(parse);
-      if (query != null) {
-        queries.add(query);
+      Predicate query = generateQueryFromParse(parse);
+      if (query == null) {
+        log.warn("[pruneParsesWithBelief] Skipping null query for parse: {}", parse);
+        continue;
       }
-    }
 
-    log.debug("[pruneParsesWithBelief] Generated {} queries for belief reasoning.", queries.size());
+      List<Map<Variable, Symbol>> beliefResults = new ArrayList<>();
 
-    List<List<Map<Variable, Symbol>>> beliefResults = new ArrayList<>();
+      try {
+        // Query the belief system with a single parse (using Predicate)
+        beliefResults = TRADE.getAvailableService(
+                new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)
+        ).call(List.class, query);
+      } catch (TRADEException e) {
+        log.warn("Could not query beliefs for parse: {}", parse, e);
+        continue;
+      }
 
-    try {
-      beliefResults = TRADE.getAvailableService(ß
-              new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)).call(List.class, queries);
-    } catch (TRADEException e) {
-      log.warn("Could not query beliefs.", e);
-    }
-
-    log.debug("[pruneParsesWithBelief] Received {} belief results.", beliefResults.size());
-
-    // Apply reasoning to filter valid parses
-    for (int i = 0; i < candidateParses.size(); i++) {
-      Utterance parse = candidateParses.get(i);
-      List<Map<Variable, Symbol>> result = (i < beliefResults.size()) ? beliefResults.get(i) : null;
-
-      if (isValidParse(parse, result)) {
+      // Apply reasoning to determine if the parse should be kept
+      if (isValidParse(parse, beliefResults)) {
         filteredParses.add(parse);
       } else {
         log.debug("[pruneParsesWithBelief] Pruning parse: {}", parse);
@@ -395,18 +390,19 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   }
 
 
+
   /**
-   * Converts an Utterance into a Prolog query Symbol.
+   * Converts an Utterance into a Prolog query Predicate.
    *
    * @param parse The Utterance object representing a parse.
-   * @return A Symbol representing the Prolog query.
+   * @return A Predicate representing the Prolog query.
    */
-  private Symbol generateQueryFromParse(Utterance parse) {
+  private Predicate generateQueryFromParse(Utterance parse) {
     if (parse == null || parse.getSemantics() == null) {
       return null;
     }
-    // Convert the semantics of the parse into a Symbol for querying Prolog
-    return Factory.createSymbol("query_parse(" + parse.getSemantics().toString() + ")");
+    // Construct a Prolog-style query as a Predicate
+    return Factory.createPredicate("query_parse", "X", parse.getSemantics().toString());
   }
 
   /**
@@ -427,10 +423,12 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       Symbol worldAmount = binding.get(Factory.createVariable("worldAmount"));
 
       if (beliefAmount != null && worldAmount != null) {
-        // Perform reasoning (e.g., compare belief and world states)
-        Symbol difference = Factory.createSymbol(String.valueOf(Integer.parseInt(beliefAmount.getName()) - Integer.parseInt(worldAmount.getName())));
+        // Compute the belief difference
+        Symbol difference = Factory.createSymbol(String.valueOf(
+                Integer.parseInt(beliefAmount.getName()) - Integer.parseInt(worldAmount.getName())
+        ));
 
-        // Example: Only accept parses where difference is non-negative
+        // Example: Keep parses where belief and world state are consistent
         if (Integer.parseInt(difference.getName()) >= 0) {
           return true;
         }
@@ -439,6 +437,8 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
     return false;
   }
+
+
 
 
 
