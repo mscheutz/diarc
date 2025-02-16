@@ -129,7 +129,7 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
 
 
                 if (recognizedText != null) {
-                    log.info("Processing new phrase: {}", recognizedText);
+                    //log.info("Processing new phrase: {}", recognizedText);
 
                     // ✅ Process only the new phrase (not everything before)
                     processIncrementalParsing(recognizedText);
@@ -191,8 +191,8 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         // ✅ Only process the most recent phrase
         Utterance partialUtterance = createUtterance(cleanedPhrase);
         Utterance result = component.parseUtterance(partialUtterance);
-
-        String parsedResult = result.toString();
+        String parsedResult = (result != null) ? result.toString() : "PARSE_FAILED";
+        log.warn("Parsing result is null, using default: {}", parsedResult);
 
         // ✅ Send parse result to Python via TRADE
         try {
