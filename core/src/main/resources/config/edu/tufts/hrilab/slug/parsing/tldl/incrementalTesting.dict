@@ -308,7 +308,7 @@ is trusted; S\AGENT ; #a.trusted($a)
 is a novice; S\AGENT; #a.novice($a)
 is in; (S/PLACE)\AGENT; #a#p.isIn($a,$p)
 
-it; REF ; it ; INFOCUS
+%%it; REF ; it ; INFOCUS
 
 %%%%%%%%%%%  J  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -797,6 +797,26 @@ now; PROP/PROP ;#x.$x
 
 grab; C/NN ; #x.graspObject(?ADDRESSEE,$x)
 put; C/NN ; #x.placeObject(?ADDRESSEE,$x)
+pass; C/NN ; #x.pass(?ADDRESSEE,$x)
+but; (C/C)\C ; #x#y.and($x,$y)
+%% avoid the laptop
+avoid; C/NN; #x.avoid(?ADDRESSEE,$x)
+go; C/ADV; #x.go(?ADDRESSEE,$x)
+laptop; NN; laptop
+
+screwdriver; NN; screwdriver
+
+
+
+it; NN/ADV; #x.$x
+keep; C/NN; #x.keep(?ADDRESSEE,$x)
+keep; (C/NN)/ADV; #x#y.keep(?ADDRESSEE,$x, $y)
+keep; (C/NN)\ADV; #x#y.keep(?ADDRESSEE,$x, $y)
+it; NN/NN; it
+
+upright; ADV; upright
+faster; ADV; faster
+
 % 3 arguments
 put; (C/NN)/NN ; #y#x.put(?ADDRESSEE, $x, $y)
 put; ((C/NN)/NN)/NN ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
@@ -889,11 +909,6 @@ in; PP; in
 
 in; REF/REF ; #x.$x
 
-
-
-
-
-
 on; NN/NN ; #x.$x
 on; PP ; on
 in; NN/NN ; #x.$x
@@ -910,6 +925,7 @@ apple; NN; apple
 box; NN; box
 mat; NN; mat
 towel; NN; towel
+cup; NN; cup
 
 %%%%%%%%%%%%% NEW ENTRIES %%%%%%%%%%%%%%%%%%%%%%%%
 by; (NN\NN)/NN; #y#x.by($x,$y); MOD

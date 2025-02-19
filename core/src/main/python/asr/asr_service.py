@@ -42,6 +42,7 @@ class ASRComponent:
         self.active = False
         self.last_text = ""
 
+
         # ✅ Define the action mapping dictionary inside the class
         self.ACTION_MAP = {
             # Grasp mug by a specific part
@@ -63,11 +64,29 @@ class ASRComponent:
             r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{on\(mug,table\)\}\)": "GRASP(MUG_ON_TABLE)",
 
             # Greeting messages
-            r"^GREETING\(.*\)": "SAY(GREETING)"
+            r"^GREETING\(.*\)": "SAY(GREETING)",
+
+            # Pass the mug while keeping it upright
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,mug\),keep\(listener,upright\)\),\{\}\)": "PASS(MUG,MANNER(UPRIGHT))",
+
+            # Pass the cup while keeping it upright
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,cup\),keep\(listener,upright\)\),\{\}\)": "PASS(CUP,MANNER(UPRIGHT))",
+
+            # Pass the bottle while keeping it upright
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,bottle\),keep\(listener,upright\)\),\{\}\)": "PASS(BOTTLE,MANNER(UPRIGHT))",
+
+            # Pass the mug while avoiding the laptop
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,mug\),avoid\(listener,laptop\)\),\{\}\)": "PASS(MUG, AVOID(AGENT, LAPTOP))",
+
+            # Pass the screwdriver while going faster
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,mug\),go\(listener,faster\)\),\{\}\)": "PASS(SCREWDRIVER, GO(AGENT, FASTER))"
+
+
 
         }
 
-    def action_mapper(self, parsed_text):
+
+def action_mapper(self, parsed_text):
         """Map parsed text to a robot action using regex pattern matching."""
         import re  # ✅ Import regex module
 

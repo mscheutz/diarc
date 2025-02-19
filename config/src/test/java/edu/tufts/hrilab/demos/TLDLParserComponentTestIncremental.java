@@ -70,7 +70,8 @@ public class TLDLParserComponentTestIncremental {
         component.addDictionary("incrementalTesting.dict");
 
         // Define the input phrases
-        String[] phrases = {"put the apple", "on the towel", "on the box"};
+        //String[] phrases = {"put the apple", "on the towel", "on the box"};
+        String[] phrases = {"pass the mug", "but go faster"};
 
         // Set up speaker and listener
         Symbol speaker = Factory.createSymbol("speaker");
