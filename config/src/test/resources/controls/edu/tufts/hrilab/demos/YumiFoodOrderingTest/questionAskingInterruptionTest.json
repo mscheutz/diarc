@@ -56,6 +56,9 @@
     "serviceCalls" : [ {
       "serviceName" : "sayText",
       "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "Okay. How do I prepare a \"southwest bowl\" ?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
