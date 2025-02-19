@@ -9,12 +9,7 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.interfaces.NLGInterface;
-import edu.tufts.hrilab.interfaces.NLUInterface;
-import edu.tufts.hrilab.llm.Chat;
-import edu.tufts.hrilab.llm.Completion;
 import edu.tufts.hrilab.slug.common.Utterance;
-import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,16 +17,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-// This class is just a template for a class which can provide relevant LLM NLU and NLG services with access to dialogue
-//  history and tracking specific chat contexts.
-// Including a subclass of this one in a config will provide necessary services for NLU and NLG on its own (still need
-//  to have a separate LLMComponent)
-// Temp: To use alongside the HybridParseComponent, pass in "-llm spotPickAndPlace"
-//TODO: rework existing dialogue llm structure/LLMParserComponent/this to coexist or have single version of things
-//TODO: commandLine arg for performNLG
-public abstract class LLMServiceProvider extends DiarcComponent implements NLGInterface{
-    boolean performNLG = true;
-    SimpleNLGComponent nlg;
+public abstract class LLMServiceProvider extends DiarcComponent {
+    boolean parserTest = false;
+    protected String language = "English";
 
     //Set of specific user/agent back and forths to get to the bottom of a single NLU attempt
     Map<Pair<Symbol,Symbol>,Chat> currentChats = new HashMap<>();
@@ -44,9 +32,7 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     Map<Symbol,Set<Integer>> conversationMappings = new HashMap<>();
     Map<Integer,List<Utterance>> currentConversations = new HashMap<>();
     AtomicInteger counter = new AtomicInteger();
-
     //TODO: be conscious of maxToken limit on each Chat
-    //TODO: history length pruning for conversation history if going too long
 
     private Map<Symbol,Set<Symbol>> agentHierarchy;
 
@@ -88,27 +74,25 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     @Override
     protected void init() {
         super.init();
-        shouldRunExecutionLoop = true;
-        //if (!performNLG) {
-        //    nlg = new SimpleNLGComponent();
-        //}
-        //Always instantiating as a fallback in case LLM gets overloaded or completion request throws any other exception
-        nlg = new SimpleNLGComponent();
+        if (!parserTest) {
+            shouldRunExecutionLoop = true;
+        }
     }
 
-    //@Override
-    //protected List<Option> additionalUsageInfo() {
-    //    List<Option> options = new ArrayList<>();
-    //    options.add(Option.builder("nlg").desc("Use the LLM to perform NLG. Otherwise use SimpleNLG.").build());
-    //    return options;
-    //}
+    //TODO: 'japanese' shouldn't be at this level?
+    @Override
+    protected List<Option> additionalUsageInfo() {
+        List<Option> options = new ArrayList<>();
+        options.add(Option.builder("japanese").desc("use japanese versions of prompts").build());
+        return options;
+    }
 
-    //@Override
-    //protected void parseArgs (CommandLine cmdLine) {
-    //    if (cmdLine.hasOption("nlg")) {
-    //        performNLG = true;
-    //    }
-    //}
+    @Override
+    protected void parseArgs (CommandLine cmdLine) {
+        if (cmdLine.hasOption("japanese")) {
+            language = "Japanese";
+        }
+    }
 
     @Override
     protected void executionLoop() {
@@ -138,6 +122,14 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
                             untypedTeamMembers.add(Factory.createSymbol(teamMember.toUntypedString()));
                         }
                         untypedAgentHierarchy.put(teamName, untypedTeamMembers);
+                    }
+                    //TODO Revert this, fix this properly.
+                    for (Symbol agent : untypedAgentHierarchy.get(Factory.createSymbol("self"))) {
+                        if (!agent.getName().equals("self")) {
+                            Set<Symbol> members = new HashSet<>();
+                            members.add(agent);
+                            untypedAgentHierarchy.put(agent, members);
+                        }
                     }
                     agentHierarchy = untypedAgentHierarchy;
                 }
