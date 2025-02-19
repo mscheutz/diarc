@@ -5,6 +5,8 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 
 import java.io.Serializable;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class GoalInfo implements Serializable {
   /**
@@ -61,6 +63,14 @@ public class GoalInfo implements Serializable {
    */
   public long priority = 1;
 
+  public boolean scheduled = false;
+
+  public Long scheduledDelay = null;
+
+  public TimeUnit scheduledDelayTimeUnit = null;
+
+  public Date scheduledDate = null;
+
   public GoalInfo(long gid) {
     this.gid = gid;
   }
@@ -78,5 +88,9 @@ public class GoalInfo implements Serializable {
     this.metric = other.metric;
     this.persistent = other.persistent;
     this.priority = other.priority;
+    this.scheduled = other.scheduled;
+    this.scheduledDelay = other.scheduledDelay;
+    this.scheduledDelayTimeUnit = other.scheduledDelayTimeUnit;
+    this.scheduledDate = other.scheduledDate;
   }
 }

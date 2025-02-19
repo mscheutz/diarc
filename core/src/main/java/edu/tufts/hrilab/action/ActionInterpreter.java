@@ -573,6 +573,10 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
     try {
       if (suspended.getAndSet(false)) {
+        // update the goal status
+        this.goal.setStatus(GoalStatus.ACTIVE);
+
+        // attempt to resume action execution
         if (currentStep == null) {
           // goal has been fully suspended
           rootStep.setStatus(ActionStatus.RESUME);

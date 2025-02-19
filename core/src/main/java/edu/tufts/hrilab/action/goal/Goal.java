@@ -49,15 +49,10 @@ public class Goal {
   private Set<GoalListener> listeners = new HashSet<>();
   private GoalInfo info;
   private Observable observable = Observable.FALSE;
-  private boolean isAction = false;
   private static final IdGenerator idGenerator = new IdGenerator();
   private Set<Resource> requiredResources = null;
   private Set<Resource> heldResources = null;
   private boolean isLearningGoal = false;
-  private boolean scheduled = false;
-  private Long scheduledDelay = null;
-  private TimeUnit scheduledDelayTimeUnit = null;
-  private Date scheduledDate = null;
 
   /**
    * The ActionInterpreter currently executing this Goal. Can be null if this Goal isn't currently being executed.
@@ -227,8 +222,8 @@ public class Goal {
                     log.error("[Goal] illegal predicate structure for scheduled goal: " + goalState);
                     return null;
                 } else if (formatType == 1) {
-                    scheduledDelay = Long.parseLong(delayString);
-                    scheduledDelayTimeUnit = TimeUnit.valueOf(timeUnitString);
+                    info.scheduledDelay = Long.parseLong(delayString);
+                    info.scheduledDelayTimeUnit = TimeUnit.valueOf(timeUnitString);
                 } else if (formatType == 2) {
                     SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
                     Date date = null;
@@ -245,12 +240,12 @@ public class Goal {
                         formatter = new SimpleDateFormat("MM-dd-yyyyTHH-mm-ss", Locale.ENGLISH);
                         date = formatter.parse(dateString);
                     }
-                    scheduledDate = date;
+                    info.scheduledDate = date;
                 }
             } catch (Exception e) {
                 log.error("[Goal] exception while parsing arguments for scheduled goal: " + goalState, e);
             }
-            scheduled = true;
+            info.scheduled = true;
 
             //Modified Impl:
             //With current implementation of disjoint goal submission due to needing to adhere to resource constraints
@@ -330,19 +325,19 @@ public class Goal {
   }
 
   public boolean isScheduled() {
-    return scheduled;
+    return info.scheduled;
   }
 
   public long getScheduledDelay() {
-    return scheduledDelay;
+    return info.scheduledDelay;
   }
 
   public TimeUnit getScheduledDelayTimeUnit() {
-    return scheduledDelayTimeUnit;
+    return info.scheduledDelayTimeUnit;
   }
 
   public Date getScheduledDate() {
-    return scheduledDate;
+    return info.scheduledDate;
   }
 
   public Symbol getActor() {
@@ -584,20 +579,12 @@ public class Goal {
    * on the ActionInterpreter which will set the status of this goal once execution has resumed.
    */
   public boolean resume() {
-    // set status to active which can be overwritten by AI
-    status = GoalStatus.ACTIVE;
-
     if (ai != null) {
       // the AI will set the ACTIVE status once it has resumed
       return ai.resume();
     } else {
       return true;
     }
-  }
-
-  public void setFailConditions(Justification cond) {
-    log.debug("[setFailCondition] actor: " + actor + " failcond: " + cond);
-    failConditions = cond;
   }
 
   public ActionInterpreter getActionInterpreter() {
