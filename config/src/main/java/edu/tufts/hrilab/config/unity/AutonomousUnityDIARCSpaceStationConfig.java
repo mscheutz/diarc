@@ -23,8 +23,6 @@ import edu.tufts.hrilab.unity.MockUnityPR2Component;
 import edu.tufts.hrilab.unity.UnityAgentComponent;
 import edu.tufts.hrilab.unity.UnityComponent;
 import edu.tufts.hrilab.unity.UnityPR2Component;
-import edu.tufts.hrilab.unity.space_station.HumanAgentComponent;
-import edu.tufts.hrilab.unity.space_station.MockHumanAgent;
 import edu.tufts.hrilab.unity.space_station.MockUnitySpaceStationComponent;
 import edu.tufts.hrilab.unity.space_station.UnitySpaceStationComponent;
 import edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM;
@@ -137,12 +135,7 @@ public class AutonomousUnityDIARCSpaceStationConfig {
     if (mock) {
       for (int i = 0; i < players; i++) {
         String humanAgent = "player" + (i + 1);
-        DiarcComponent.createInstance(MockHumanAgent.class, "-agent " + humanAgent + " -groups " + humanAgent);
         DiarcComponent.createInstance(SimSpeechRecognitionComponent.class, "-speaker " + humanAgent + " -groups " + humanAgent + " -config space_station.simspeech");
-      }
-    } else {
-      for (int i = 0; i < players; i++) {
-        DiarcComponent.createInstance(HumanAgentComponent.class, "-agent player" + (i + 1));
       }
     }
   }

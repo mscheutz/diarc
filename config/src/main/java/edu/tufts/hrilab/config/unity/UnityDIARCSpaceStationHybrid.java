@@ -19,7 +19,6 @@ import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.unity.UnityAgentComponent;
 import edu.tufts.hrilab.unity.UnityComponent;
 import edu.tufts.hrilab.unity.UnityPR2Component;
-import edu.tufts.hrilab.unity.space_station.HumanAgentComponent;
 import edu.tufts.hrilab.unity.space_station.UnitySpaceStationComponent;
 import edu.tufts.hrilab.unity.space_station.llm.UnitySpaceStationLLM;
 import edu.tufts.hrilab.unity.space_station.nlg.UnitySpaceStationNLGComponent;
@@ -42,7 +41,6 @@ public class UnityDIARCSpaceStationHybrid {
     String agentName = "robot1";
     String nullAddressee = "";
     String disableAutonomy = "";
-    int players = 1;
 
     if (largs.contains("-unity")) {
       unityIP = largs.get(largs.indexOf("-unity") + 1);
@@ -68,10 +66,6 @@ public class UnityDIARCSpaceStationHybrid {
 
     if (largs.contains("-nullAddressee")) {
       nullAddressee = " -nullAddressee";
-    }
-
-    if (largs.contains("-players")) {
-      players = Integer.parseInt(largs.get(largs.indexOf("-players") + 1));
     }
 
     if (largs.contains("-disableAutonomyFirst")) {
@@ -105,9 +99,5 @@ public class UnityDIARCSpaceStationHybrid {
     DiarcComponent.createInstance(UnityPR2Component.class, "-agent " + agentName + " -groups agent:"  + agentName + nullAddressee );
 
     DiarcComponent.createInstance(GoalManagerComponent.class, goalManagerArgs);
-
-    for (int i = 0; i < players; i++) {
-      DiarcComponent.createInstance(HumanAgentComponent.class, "-agent player" + String.valueOf(i+1));
-    }
   }
 }

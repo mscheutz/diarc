@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import edu.tufts.hrilab.fol.Term;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -69,6 +70,9 @@ public class UnityAgentComponent extends DiarcComponent {
       case "connected":
         connected(msg);
         break;
+      case "workload":
+        workload(msg);
+        break;
     }
   }
 
@@ -113,6 +117,33 @@ public class UnityAgentComponent extends DiarcComponent {
     String agent = msg.arguments.get(0);
     log.info("Connected " + agent + " to Unity");
     isConnected = true;
+  }
+
+  /**
+   * Message received when a player has an updated workload.
+   *
+   * All "workload" messages will contain the following:
+   * actor = connected agent
+   * arg[0] = player name
+   * arg[1] = player workload value
+   *
+   * @param msg - Message with action "workload".
+   **/
+  protected void workload(Message msg) {
+    String player = msg.arguments.get(0);
+    String level = msg.arguments.get(1);
+    log.info("Workload for {} received: {}", player, level);
+
+    // update belief with workload belief. e.g., workload(player1,0)
+    Term workloadRetraction = Factory.createPredicate("workload", player, "X");
+    Term workloadBelief = Factory.createPredicate("workload", player, level);
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("retractBelief").argTypes(Term.class)).call(void.class, workloadRetraction);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class)).call(void.class, workloadBelief);
+      log.debug("Set workload for " + player + " to " + level);
+    } catch (TRADEException ex) {
+      log.error("Error retracting or asserting workload belief", ex);
+    }
   }
 
   /**

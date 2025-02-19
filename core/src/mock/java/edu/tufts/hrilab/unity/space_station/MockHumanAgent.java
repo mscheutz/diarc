@@ -13,6 +13,10 @@ import org.apache.commons.cli.Option;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This is a helper component for running a mock unity space station environment. This
+ * component is entirely optional, and is only needed to help update player workload values in belief.
+ */
 public class MockHumanAgent extends DiarcComponent {
 
   private String agent;
@@ -44,8 +48,8 @@ public class MockHumanAgent extends DiarcComponent {
     Term workloadRetraction = Factory.createPredicate("workload", agent, "X");
     Term workloadBelief = Factory.createPredicate("workload", agent, String.valueOf(level));
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("retractBelief").argTypes(Term.class)).call(Object.class, workloadRetraction);
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class)).call(Object.class, workloadBelief);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("retractBelief").argTypes(Term.class)).call(void.class, workloadRetraction);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class)).call(void.class, workloadBelief);
       log.debug("Set workload for " + agent + " to " + level);
     } catch (TRADEException ex) {
       log.error("Error retracting or asserting workload belief", ex);
