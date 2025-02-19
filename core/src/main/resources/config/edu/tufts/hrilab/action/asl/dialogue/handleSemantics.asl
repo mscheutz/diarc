@@ -33,9 +33,12 @@ import java.lang.Integer;
       // if more than one binding option for the semantics
       // TODO: contextualize clarifications into their poorly formed referring expressions
       op:log("debug", "Generating multiple bindings error");
-      !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.slug.dialogue.ResponseGeneration", "generateClarificationMultipleMeanings", ?actor, ?speaker, ?semantics);
-      // TODO: this should use askQuestion instead of generateResponse
-      act:generateResponse(?speaker, !failureEffects, direct);
+      !failureEffects = op:invokeStaticMethod("edu.tufts.hrilab.slug.dialogue.ResponseGeneration", "generateClarificationMultipleMeanings", ?actor, ?speaker, ?semantics, ?suppSemantics);
+      //act:generateResponse(?speaker, !failureEffects, direct);
+      // TODO: For now asking a question without expecting a response in order to have correct utterance type for LLM NLG
+      // Generally need to generate an output utterance that is meaningful to the user and get in return the proper semantic
+      //  bindings from the answer bindings (or fail gracefully)
+      act:askQuestion(?speaker, !failureEffects, nonexistent(X), 1, 5);
     } elseif (op:gt(!varsSize, 0)) {
       // if any unbound variables in supplemental semantics
       // TODO: contextualize clarifications into their poorly formed referring expressions
@@ -140,16 +143,33 @@ import java.lang.Integer;
       // try to get into a state of knowing about ?query.
       !queryActor = act:getActorFromQuery(?query);
 
+      // TODO: Issue here is that 'knows' and 'observes' goals don't adhere to potential constraints set by the ExecutionManager.
+      //    In the PickAndPlace domain we first did relevant belief queries and reported the system's current belief to the user.
+      //    Then asked the user if they wanted the system to go verify its beliefs. If the user said yes but there was a
+      //    resource constraint violation with an active goal, then the system denied to verify and reported the conflict.
+      //    Do we want something similar here in general? Conditional behavior based on EM subclass and underlying actions
+      //    resource requirements could be tricky. Would need to extract the selected action and expose a method indicating
+      //    if it causes a resource conflict or not.
       // form goal for ?actor to know ?query, so results can be relayed back to ?speaker
       if (goal:knows(?actor,?query)) {
         op:log("debug", "handleITK: knows goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?actor,?query)");
+        //return;
       } elseif (goal:observe(?query)) {
         op:log("debug", "handleITK: observation goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
-      } elseif (~op:isNull(!queryActor) && act:askAbout(!queryActor, ?query, !knowsQuery)) {
-        op:log("debug", "handleITK: askAbout goal succeeded.");
-      } else {
+      } elseif (~op:isNull(!queryActor)) {
+        //TODO: change back this block of code when fixed. Bug somewhere causes askAbout to be called even if !queryActor is null
+        //      (&& not short circuiting but written as if it should)
+        op:log("debug", "handleITK: askAbout goal enter. !queryActor");
+        if (act:askAbout(!queryActor, ?query, !knowsQuery)) {
+            op:log("debug", "handleITK: askAbout goal succeeded.");
+        } else {
+            op:log("debug", "handleITK: knows and obs goal failed, just looking in belief.");
+            !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
+        }
+      }
+      else {
         op:log("debug", "handleITK: knows and obs goal failed, just looking in belief.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
       }
@@ -306,11 +326,35 @@ import java.lang.Integer;
 
     // TODO: EAK: isnt this is problematic for multi-agent cases? why do we want ?fact AND believes(?addressee, ?fact)
     //brad: workaround for bel() wrapper issues with pddl
-    act:assertBelief(?fact);
-    op:log("debug", "Now believes ?fact.");
+    act:believeFactHelper(?fact);
 
     if (op:equals(?addressee,?actor)) {
       act:generateResponse(?speaker, ?responseSemantics, ?semanticType);
+    }
+}
+
+// Is this universally desired?
+// Properly retract negated facts rather than asserting negated form, also unwrap 'and' predicates.
+() = believeFactHelper(Predicate ?fact) {
+    Symbol !factName = op:getName(?fact);
+    java.util.List !args;
+    Symbol !arg;
+    Term !negatedFact;
+
+    if (op:equals(!factName,and)) {
+        !args = op:getArgs(?fact);
+        foreach(!arg : !args) {
+            act:believeFactHelper(!arg);
+        }
+    } else {
+        if (op:invokeMethod(?fact,"isNegated")) {
+            !negatedFact = op:invokeMethod(?fact,"toUnnegatedForm");
+            act:retractBelief(!negatedFact);
+            op:log("debug", "retracted belief !negatedFact.");
+        } else {
+            act:assertBelief(?fact);
+            op:log("debug", "Now believes ?fact.");
+        }
     }
 }
 
@@ -346,6 +390,8 @@ import java.lang.Integer;
     Predicate !becausePredicate;
     java.lang.Boolean !madeTentativeAccept = false;
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    java.lang.Boolean !waitingForResponse;
+    Predicate !responsePredicate;
 
     conditions : {
       or : {
@@ -367,6 +413,19 @@ import java.lang.Integer;
       //obligation infer : not(isForbidden(?state));
     }
 
+    // Q: The motivation behind using SKIPPENDING (i.e. lack of resource conflict) to be the conditional here was to still
+    //  allow the user to do things like ask the system for relevant information to inform question answers, modify task
+    //  execution, or supply information to the system. Should there be a different check made?
+    //      handleITK and handleWantBel go through separate pipelines, so maybe this is an accurate check.
+    // If the agent being tasked with a goal which doesn't skip the queue is currently awaiting user response to a question
+    //  it has asked, reject the goal and request an answer to the question first (In practice found that this case leads
+    //  to users frequently being confused about system state. Also allows for potential of overlapping questions to be asked).
+    if (~op:equalsValue(?priority,SKIPPENDING)) {
+        if (tsc:isAgentWaitingForResponse(?actor)) {
+            act:generateResponseFromString("Please answer my question before sending further instructions");
+            return;
+        }
+    }
 
     //Can also reimplement ignoreTentativeAccept filter if desired
     if(~act:checkIgnoreTentativeAccept(?state)){
