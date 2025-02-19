@@ -60,6 +60,11 @@ class ASRComponent:
             # General grasping
             r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{\}\)": "GRASP(MUG_DEFAULT)",
 
+            # General passing
+            r"INSTRUCT\(speaker,listener,pass\(listener,mug\),\{\}\)": "PASS(MUG_DEFAULT)",
+            r"INSTRUCT\(speaker,listener,pass\(listener,cup\),\{\}\)": "GRASP(CUP_DEFAULT)",
+            r"INSTRUCT\(speaker,listener,pass\(listener,screwdriver\),\{\}\)": "GRASP(SCREWDRIVER_DEFAULT)",
+
             # Grasping mug from table
             r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{on\(mug,table\)\}\)": "GRASP(MUG_ON_TABLE)",
 
