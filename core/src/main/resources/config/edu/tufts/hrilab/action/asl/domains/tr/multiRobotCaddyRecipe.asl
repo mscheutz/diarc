@@ -348,7 +348,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 }
 
 // generates a recovery plan for a failure, runs performance assessment, and submits the plan
-() = generateRecoveryPlanAndAssess(List ?brokenActionPredicate, List ?failureReasons, Predicate ?goal) {
+() = generateRecoveryPlanAndAssess(Predicate ?brokenActionPredicate, List ?failureReasons, Predicate ?goal) {
 
     recovery: {
       actionStatuses: {FAIL_POSTCONDITIONS}
