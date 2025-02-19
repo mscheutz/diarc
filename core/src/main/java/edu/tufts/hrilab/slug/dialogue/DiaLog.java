@@ -94,6 +94,16 @@ public class DiaLog {
     dialogueHistory.add(u);
   }
 
+  public void updateHistory(Utterance u) {
+    for (int i = dialogueHistory.size()-1; i >= 0; i--) {
+      if (dialogueHistory.get(i).getWordsAsString().equals(u.getWordsAsString())) {
+        dialogueHistory.set(i,u);
+        return;
+      }
+    }
+    log.warn("[updateHistory] could not find utterance in history matching supplied utterance {}", u);
+  }
+
   public void addNLInput(Utterance input) {
     try {
       nlInputLock.lock();

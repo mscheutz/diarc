@@ -1,6 +1,7 @@
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.slug.dialogue.Question;
 import java.lang.Integer;
 
 () = handleSemantics["Handle semantics (direct or indirect)"](Symbol ?speaker, Symbol ?addressee, Term ?semantics, Term ?suppSemantics, Symbol ?semanticType) {
@@ -14,6 +15,8 @@ import java.lang.Integer;
     Predicate !failureEffects;
     Predicate !becausePredicate;
     Predicate !state;
+    java.util.Map !matchingQuestions;
+    Question !matchingQuestion;
 
     op:log("debug", "[handleSemantics] entering action script for actor: ?actor");
 
@@ -43,13 +46,21 @@ import java.lang.Integer;
       try {
         !currSemantics = op:invokeMethod(?semantics, "get", 0);
         op:log("debug", "passing off semantics: !currSemantics");
+        !matchingQuestions = act:getMatchingQuestions(?speaker,?addressee,!currSemantics);
         // TODO:brad:the way things are right now this is the only way we can do this.
         //      Ideally we could move this logic into an action selector, so we can
         //      remove the if else and have it  just be the one state spec
-        if(act:isQuestionResponse(?speaker,?addressee,!currSemantics)){
-          act:answerQuestion(?speaker,?addressee,!currSemantics);
-        } else{
+        if (op:invokeMethod(!matchingQuestions,"isEmpty")) {
           goal:handled(?actor, ?addressee, !currSemantics, ?semanticType);
+        } else {
+            op:log("debug", "have matching questions, !matchingQuestions");
+            !matchingQuestion = act:selectQuestionToAnswer(!matchingQuestions);
+            if (op:isNull(!matchingQuestion)) {
+                op:log("debug", "No matching question was selected to answer");
+                return;
+            }
+            op:log("debug", "selected question to answer, !matchingQuestion");
+            act:answerQuestion(!matchingQuestion,!currSemantics);
         }
       } catch(!failureConditions) {
         !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "handleSemantics(?actor,!currSemantics)");
@@ -385,4 +396,131 @@ import java.lang.Integer;
       op:log("debug", "?state achieved with status !goalStatus");
       act:generateResponse(?speaker, ?acceptSemantics, ?semanticType);
     }
+}
+
+(Question ?matchingQuestion) = selectQuestionToAnswer(java.util.Map ?questions) {
+    java.util.List !agentQuestions;
+    java.lang.Integer !numAgents = 0;
+    java.util.Set !agentSet;
+    Symbol !key;
+    Symbol !agent;
+    java.util.Map !bindings;
+    edu.tufts.hrilab.fol.Variable !x = "X";
+    Symbol !response;
+    java.lang.String !numberString;
+
+    op:log("debug", "[selectQuestionToAnswer] in method");
+
+    //Check ?actor first
+    !agentQuestions = op:invokeMethod(?questions,"get",?actor);
+    ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions);
+    if (~op:isNull(?matchingQuestion)) {
+        op:log("debug", "[selectQuestionToAnswer] single matching question for actor, returning");
+        //Have disambiguous question for direct ?actor
+        return;
+    } else {
+        //Only reaches this block if ?actor did not have any matching questions
+        op:log("debug", "[selectQuestionToAnswer] no matching question for actor, searching team members");
+        !agentSet = op:invokeMethod(?questions,"keySet");
+        foreach (!key : !agentSet) {
+            !numAgents = op:++(!numAgents);
+        }
+        //!numAgents = op:invokeMethod(!agentSet,"size");
+        if (op:equals(!numAgents,1)) {
+            op:log("debug", "[selectQuestionToAnswer] single team member has matching questions, answering for child");
+            //Only one agent has asked questions, disambiguate for that agent
+            foreach(!agent : !agentSet) {
+                !agentQuestions = op:invokeMethod(?questions,"get",!agent);
+                ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions);
+                if (~op:isNull(?matchingQuestion)) {
+                    return;
+                }
+            }
+        } else {
+            //Multiple agents have asked questions, determine which agent the user is meaning to address
+            op:log("debug", "[selectQuestionToAnswer] multiple team members have matching questions, selecting amongst them");
+            act:generateResponseFromString("Multiple agents have asked questions relevant to your response. Possible candidates are:");
+            foreach(!agent : !agentSet) {
+                act:generateResponseFromString(!agent);
+            }
+            act:suspendWaitForResponse(agent(X),?actor,false);
+            !bindings = act:askQuestionFromString(?actor, "Which one did you mean to address?", agent(X));
+            act:resumeWaitForResponse(agent(X),?actor);
+            if (~op:invokeMethod(!bindings,"isEmpty")) {
+                !response = op:get(!bindings,!x);
+                !response = op:invokeMethod(!response,"toUntyped");
+                !agentQuestions = op:invokeMethod(?questions,"get",!response);
+                if (op:isNull(!agentQuestions)) {
+                    act:generateResponseFromString("agent !response was not a valid option");
+                } else {
+                    ?matchingQuestion = act:selectQuestionToAnswerHelper(!agentQuestions);
+                    return;
+                }
+            }
+        }
+
+    }
+    exit(FAIL,not(know(?actor,whichQuestionYouAreAnswering)));
+}
+
+(Question ?matchingQuestion) = selectQuestionToAnswerHelper(java.util.List ?agentQuestions) {
+    Symbol !agent;
+    java.lang.Integer !numQuestions = 0;
+    Predicate !errorPred;
+    //Predicate !disambiguationPred;
+    java.lang.Integer !questionIndex;
+    java.lang.Integer !spokenIndex;
+    java.lang.String !questionString;
+    Question !question;
+    java.util.Map !bindings;
+    edu.tufts.hrilab.fol.Variable !x = "X";
+    Symbol !response;
+    java.lang.String !numberString;
+    java.lang.Integer !questionNumber;
+
+    if (op:isNull(?agentQuestions)) {
+        return;
+    } elseif (op:isEmpty(?agentQuestions)) {
+        return;
+    }
+    op:log("debug", "[selectQuestionToAnswerHelper] in method ?agentQuestions");
+
+    //TODO: still need to figure out multilingual solution
+    foreach(!question : ?agentQuestions) {
+        !numQuestions = op:++(!numQuestions);
+    }
+    //!numQuestions = op:invokeMethod(?agentQuestions,"size");
+    if (op:equals(!numQuestions,1)) {
+        op:log("debug", "[selectQuestionToAnswerHelper] single matching question, returning");
+        //One matching question for direct agent, select
+        ?matchingQuestion = op:get(?agentQuestions,0);
+        return;
+    } elseif (op:gt(!numQuestions,1)) {
+        op:log("debug", "[selectQuestionToAnswerHelper] multiple matching question, asking disambiguation question");
+        //Multiple matching questions for direct agent, disambiguate between them
+        act:generateResponseFromString("It is unclear which question you are answering. Possible candidates are:");
+        for (!questionIndex=0; !questionIndex lt !numQuestions; !questionIndex ++) {
+            !question = op:get(?agentQuestions,!questionIndex);
+            !questionString = op:invokeMethod(!question,"getQuestionString");
+            !spokenIndex = op:++(!questionIndex);
+            act:generateResponseFromString("Option !spokenIndex: !questionString");
+        }
+        act:suspendWaitForResponse(num(X),?actor,false);
+        !bindings = act:askQuestionFromString(?actor, "Which question did you mean to answer?", num(X));
+        act:resumeWaitForResponse(num(X),?actor);
+        if (~op:invokeMethod(!bindings,"isEmpty")) {
+            !response = op:get(!bindings,!x);
+            !numberString = op:getName(!response);
+            !questionNumber = op:newObject("java.lang.Integer", !numberString);
+            !questionNumber = op:--(!questionNumber);
+            if (op:lt(!questionNumber,!numQuestions)) {
+                ?matchingQuestion = op:get(?agentQuestions,!questionNumber);
+                return;
+            } else {
+                act:generateResponseFromString("Question !questionNumber was not a valid option");
+            }
+        }
+    }
+    op:log("debug", "[selectQuestionToAnswerHelper] unclear which question was being answered");
+    exit(FAIL,not(know(?actor,whichQuestionYouAreAnswering)));
 }

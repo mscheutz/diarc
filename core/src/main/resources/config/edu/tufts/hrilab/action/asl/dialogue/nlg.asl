@@ -119,17 +119,23 @@ import java.util.Map;
     }
 }
 
+(Map ?answerBindings) = askQuestion(Symbol ?addressee, Predicate ?questionSemantics, Predicate ?responseForm, long ?attempts=1, long ?duration=-1) {
+    List !responseForms = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    op:add(!responseForms, ?responseForm);
+    ?answerBindings = act:askQuestion(?addressee, ?questionSemantics, !responseForms, ?attempts, ?duration);
+}
+
 /**
  * Convenience method for communicating an utterance and then waiting for a response.
  * The question to be asked is specified in first-order-logic form.
  *
  * ?addressee - who to ask the question to
  * ?questionSemantics - semantics of the question to ask
- * ?responseForm - specifies the semantic form that answers need to take
+ * ?responseForms - specifies the set of semantic forms that answers can take
  * ?attempts - number of times to re-ask the questions if there's no response within ?duration
  * ?duration - ?duration to wait for response
  */
-(Map ?answerBindings) = askQuestion(Symbol ?addressee, Predicate ?questionSemantics, Predicate ?responseForm, long ?attempts=1, long ?duration=-1) {
+(Map ?answerBindings) = askQuestion(Symbol ?addressee, Predicate ?questionSemantics, Predicate ?responseForms, long ?attempts=1, long ?duration=-1) {
 
   // build question utterance
   Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
@@ -138,7 +144,13 @@ import java.util.Map;
   op:invokeMethod(!utterance, "setSemantics", ?questionSemantics);
 
   // ask question and wait for response
-  ?answerBindings = act:askQuestionFromUtterance(!utterance, ?responseForm, ?attempts, ?duration);
+  ?answerBindings = act:askQuestionFromUtterance(!utterance, ?responseForms, ?attempts, ?duration);
+}
+
+(Map ?answerBindings) = askQuestionFromString(Symbol ?addressee, String ?words, Predicate ?responseForm, long ?attempts=1, long ?duration=-1) {
+    List !responseForms = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    op:add(!responseForms, ?responseForm);
+    ?answerBindings = act:askQuestionFromString(?addressee, ?words, !responseForms, ?attempts, ?duration);
 }
 
 /**
@@ -147,11 +159,11 @@ import java.util.Map;
  *
  * ?addressee - who to ask the question to
  * ?words - exact words to say in the question
- * ?responseForm - specifies the semantic form that answers need to take
+ * ?responseForms - specifies the set of semantic form that answers can take
  * ?attempts - number of times to re-ask the questions if there's no response within ?duration
  * ?duration - ?duration to wait for response
  */
-(Map ?answerBindings) = askQuestionFromString(Symbol ?addressee, String ?words, Predicate ?responseForm, long ?attempts=1, long ?duration=-1) {
+(Map ?answerBindings) = askQuestionFromString(Symbol ?addressee, String ?words, List ?responseForms, long ?attempts=1, long ?duration=-1) {
 
   // build question utterance
   Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
@@ -160,30 +172,43 @@ import java.util.Map;
   op:invokeMethod(!utterance, "setWords", ?words);
 
   // ask question and wait for response
-  ?answerBindings = act:askQuestionFromUtterance(!utterance, ?responseForm, ?attempts, ?duration);
+  ?answerBindings = act:askQuestionFromUtterance(!utterance, ?responseForms, ?attempts, ?duration);
+}
+
+(Map ?answerBindings) = askQuestionFromUtterance(Utterance ?utterance, Predicate ?responseForm, long ?attempts, long ?duration) {
+    List !responseForms = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    op:add(!responseForms, ?responseForm);
+    ?answerBindings = act:askQuestionFromUtterance(?utterance, !responseForms, ?attempts, ?duration);
 }
 
 /**
  * Ask a question and wait for the response. This take in an Utterance, so users should prefer to use one
  * of the convenience methods instead.
  *
- * ?responseForm - specifies the semantic form that answers need to take
+ * ?responseForms - specifies the set of semantic forms that answers can take
  * ?attempts - number of times to re-ask the questions if there's no response within ?duration
  * ?duration - ?duration to wait for response
  **/
-(Map ?answerBindings) = askQuestionFromUtterance(Utterance ?utterance, Predicate ?responseForm, long ?attempts, long ?duration) {
+(Map ?answerBindings) = askQuestionFromUtterance(Utterance ?utterance, List ?responseForms, long ?attempts, long ?duration) {
   //Communicate the utterance ?attempts times (default 1) while waiting for ?duration seconds
-  ?answerBindings = op:setNull(); // require bc of the weird way ASL handles return args
+  ?answerBindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
   Long !count = 0;
   Symbol !speaker;
   Integer !tracker = 0;
+  String !questionString;
 
   onInterrupt : {
     resume: act:askQuestionFromUtteranceOnResume(!tracker,?utterance);
   }
 
+  //Preemptively converting semantics in order to index question asking effectively
+  if (~op:invokeMethod(?utterance, "hasWords")) {
+    ?utterance = act:applyPragmaticMeaning(?utterance);
+    ?utterance = act:convertSemanticsToText(?utterance);
+  }
+
   !speaker = op:invokeMethod(?utterance, "getSpeaker");
-  while (op:isNull(?answerBindings) && op:lt(!count, ?attempts)) {
+  while (op:invokeMethod(?answerBindings,"isEmpty") && op:lt(!count, ?attempts)) {
     !count = op:++(!count);
 
     // communicate utterance (which also updates dialogue history)
@@ -196,13 +221,14 @@ import java.util.Map;
     }
 
     // wait for response - default duration is -1, which means block indefinitely
-    ?answerBindings = act:waitForResponse(?responseForm, !speaker, ?duration);
+    !questionString = op:invokeMethod(?utterance, "getWordsAsString");
+    ?answerBindings = act:waitForResponse(!questionString, ?responseForms, !speaker, ?duration);
     !tracker = op:newObject("java.lang.Integer", 2);
   }
 
   //If we timed out and did not receive a response, we need to remove the active question ourselves
   if (op:isNull(?answerBindings)) {
-    act:cancelWaitForResponse(?responseForm, !speaker);
+    act:cancelWaitForResponse(!questionString, ?responseForms, !speaker);
   }
   //TODO:EW: else interrupt looping communicateUtterance we are potentially in if we received a response mid loop?
 }
