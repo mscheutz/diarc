@@ -87,7 +87,7 @@ public class AutonomousUnityDIARCSpaceStationConfig {
     DiarcComponent.createInstance(ReferenceResolutionComponent.class, "");
     DiarcComponent.createInstance(DialogueComponent.class, "");
 //    DiarcComponent.createInstance(SimpleNLGComponent.class, "-modifierService spaceStationModifyNLG");
-    DiarcComponent.createInstance(HybridNLGComponent.class, "-cacheLoad ss_nlg_cache.sqlite -cachePersist");
+    DiarcComponent.createInstance(HybridNLGComponent.class, "-cacheLoad ss_nlg_cache.sqlite -cachePersist -cacheName nlg_cache_" + agentName);
     DiarcComponent.createInstance(UnitySpaceStationNLGComponent.class, "");
     DiarcComponent.createInstance(ListenerComponent.class, "");
 
