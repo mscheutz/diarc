@@ -220,7 +220,7 @@ import java.util.StringTokenizer;
  * This is a recovery policy executed when a parameter to a function doesn't have a known location.
  * It attempts to find the location of the thing.
  */
-() = unknownLocationRecoveryPolicy(Predicate ?failedActionSignature, List ?failureReasons, Predicate ?failedGoal) {
+() = unknownLocationRecoveryPolicy(List ?failedActionSignature, List ?failureReasons, Predicate ?failedGoal) {
     Symbol !thing;
 
     recovery : {

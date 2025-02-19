@@ -190,7 +190,7 @@ public class Goal {
             }
             info.persistent = true;
 
-            return unwrapGoalPredicate(goalState, false);
+            return unwrapGoalPredicate(goalState, true);
         } else if (goalState.getName().equals("scheduled")) {
             int formatType = 0;
             String dateString = "";

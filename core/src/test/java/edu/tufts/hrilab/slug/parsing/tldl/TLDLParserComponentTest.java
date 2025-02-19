@@ -4171,4 +4171,48 @@ public class TLDLParserComponentTest {
 //                "INSTRUCT(brad,self,goToLocation(self,VAR0),{451 elaine short(VAR0),DEFINITE(VAR0)})",
 //                speaker, "self"));
     }
+
+    @Test
+    public void avaDemoTest() {
+        component.addDictionary("avaTemplate.dict");
+        component.addDictionary("avadict.dict");
+
+        String speaker = "brad";
+
+        assertTrue(testUtterance("noon",
+                "REPLY(brad,self,time(12-00-00),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("10 minutes",
+                "REPLY(brad,self,val(10,MINUTES),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("10 minute",
+                "REPLY(brad,self,val(10,MINUTES),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("10 seconds",
+                "REPLY(brad,self,val(10,SECONDS),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("1 second",
+                "REPLY(brad,self,val(1,SECONDS),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("in 1 second",
+                "REPLY(brad,self,val(1,SECONDS),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("add a new scheduled task",
+                "INSTRUCT(brad,self,scheduleGoal(self),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("the task is go to the coffee maker",
+                "REPLY(brad,self,val(goToLocation(self,VAR0)),{coffee maker(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("every 1 hour",
+                "REPLY(brad,self,val(1,HOURS),{})",
+                speaker, "self"));
+    }
 }

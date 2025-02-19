@@ -64,7 +64,7 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class);
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
     createInstance(edu.tufts.hrilab.slug.nlg.SimpleNLGComponent.class);
-    createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class, "-wakeWord ava robot -wakeBypass evan -wakeTimeout 0");
+    createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
     if (useGUI) {
       createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker patient -addressee self ");
@@ -94,7 +94,7 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.llm.LLMComponent.class);
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
       "-goal listen(self) monitorBattery(self) -beliefinitfile demos.pl agents/ava.pl"
-        + " -dbfile core.asl manipulation.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl vision.asl tower/ava.asl tower/avaVlm.asl"
+        + " -dbfile core.asl manipulation.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl vision.asl ava/ava.asl ava/scheduledGoals.asl"
         + " -priorityFile default.json avaPriority.json"
         + (useQueueEM ? " -executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager" : ""));
 

@@ -368,3 +368,29 @@ room 440 a; LREF; 440a richard townsend; DEFINITE
 room 440 l; LREF; 440l storage; DEFINITE
 room 481 f; LREF; 481f phd student offices; DEFINITE
 room 481 b; LREF; 481b phd student offices; DEFINITE
+
+% Scheduled (run init in 10 seconds, run init at 11:54:00)
+%test; C; scheduled(?ADDRESSEE,init(?ADDRESSEE),10,SECONDS)
+%test; C; scheduled(?ADDRESSEE,init(?ADDRESSEE),11-54-00)
+% Scheduled persistent (in 10 seconds, run init as a persistent goal)
+%test; C; scheduled(?ADDRESSEE,persistent(?ADDRESSEE,init(?ADDRESSEE)),10,SECONDS)
+% Persistent scheduled (every 10 seconds run init)
+%test; C; persistent(?ADDRESSEE,scheduled(init(?ADDRESSEE),10,SECONDS))
+% Scheduled Persistent Scheduled (starting at noon, run init every 10 seconds)
+% (I think this case might actually not have expected behavior right now. First execution doesn't happen at noon, but 10 seconds after noon)
+%test; C; scheduled(?ADDRESSEE,persistent(?ADDRESSEE,scheduled(init(?ADDRESSEE),10,SECONDS)),12-00-00)
+
+noon; VAL; time(12-00-00)
+
+minute; VAL\NUM ; #x.val($x,MINUTES)
+minutes; VAL\NUM ; #x.val($x,MINUTES)
+second; VAL\NUM ; #x.val($x,SECONDS)
+seconds; VAL\NUM ; #x.val($x,SECONDS)
+hour; VAL\NUM ; #x.val($x,HOURS)
+hours; VAL\NUM ; #x.val($x,HOURS)
+
+the task is; VAL/C; #x.val($x)
+
+add a new scheduled task; C; scheduleGoal(?ADDRESSEE)
+
+every; PP/LREF; #x.$x
