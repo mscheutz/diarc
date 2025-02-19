@@ -1143,8 +1143,9 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       }
 
       interruptContext = new ActionContext(leafContext, leafContext.stateMachine, action, new HashMap<>(), ExecutionType.ACT, actor);
-      for (int i=0; i<action.getNumRoles(); i++) {
-        String name = action.getRoleName(i);
+      List<ActionBinding> inputRoles = action.getInputRoles();
+      for (int i=0; i<inputRoles.size(); i++) {
+        String name = inputRoles.get(i).getName();
         String argName = name;
         if (!argName.equals("?actor")) {
           argName = inputArgs.get(i - 1);
@@ -1229,9 +1230,9 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
         return ret;
       }
     } else {
-      try {
-        boolean ret = super.setStatus(eStatus, justification);
-        if (ret) {
+      boolean ret = super.setStatus(eStatus, justification);
+      if (ret) {
+        try {
           //Q: is there any other way to do this?
           //If a primitive was suspended, doStepLock will not be held. Still want to call resume behavior in this case though
           if (getStatus() == ActionStatus.SUSPEND && eStatus == ActionStatus.RESUME) {
@@ -1245,12 +1246,12 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
             handleInterrupt(eStatus);
             timeout = 3;
           }
+          return ret;
+        } catch (InterruptedException e) {
+          log.error("Exception trying to get doStepLock.", e);
+        } finally {
+          doStepLock.unlock();
         }
-        return ret;
-      } catch (InterruptedException e) {
-        log.error("Exception trying to get doStepLock.", e);
-      } finally {
-        doStepLock.unlock();
       }
     }
     return false;

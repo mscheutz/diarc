@@ -375,11 +375,13 @@ public class Goal implements Serializable {
    * on the ActionInterpreter which will set the status of this goal once execution has fully suspended.
    */
   public boolean suspend() {
+    // set status to suspend which can be overwritten by AI
+    status = GoalStatus.SUSPENDED;
+
     if (ai != null) {
       // the AI will set the SUSPENDED status once it has been suspended
       return ai.suspend();
     } else {
-      setStatus(GoalStatus.SUSPENDED);
       return true;
     }
   }
