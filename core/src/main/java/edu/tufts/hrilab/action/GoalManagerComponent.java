@@ -450,8 +450,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Action
   public PriorityTier getPriorityTierForGoal(Predicate g) {
     String goalName = g.getName();
+    //Persistent goal's priority should be based on inner goal
+    if (goalName.equals("persistent") && g.getArgs().size() > 1) {
+      goalName = g.get(1).getName();
+    }
     if (goalPriorities.containsKey(goalName)) {
-      return goalPriorities.get(g.getName()).getPriorityTier();
+      return goalPriorities.get(goalName).getPriorityTier();
     } else {
       return goalPriorities.get("default").getPriorityTier();
     }
@@ -464,8 +468,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Action
   public long getPriorityForGoal(Predicate g) {
     String goalName = g.getName();
+    //Persistent goal's priority should be based on inner goal
+    if (goalName.equals("persistent") && g.getArgs().size() > 1) {
+      goalName = g.get(1).getName();
+    }
     if (goalPriorities.containsKey(goalName)) {
-      return goalPriorities.get(g.getName()).getPriority();
+      return goalPriorities.get(goalName).getPriority();
     } else {
       return goalPriorities.get("default").getPriority();
     }
@@ -590,8 +598,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   @TRADEService
   @Action
-  public void cancelGoal(long gid) {
-    em.cancelGoal(gid);
+  public boolean cancelGoal(long gid) {
+    return em.cancelGoal(gid);
   }
 
   /**
@@ -636,8 +644,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   @TRADEService
   @Action
-  public void suspendGoal(long gid) {
-    em.suspendGoal(gid);
+  public boolean suspendGoal(long gid) {
+    return em.suspendGoal(gid);
   }
 
   /**
@@ -645,8 +653,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   @TRADEService
   @Action
-  public void resumeGoal(long gid) {
-    em.resumeGoal(gid);
+  public boolean resumeGoal(long gid) {
+    return em.resumeGoal(gid);
   }
 
   /**

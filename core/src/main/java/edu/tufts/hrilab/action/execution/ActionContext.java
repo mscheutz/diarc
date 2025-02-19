@@ -17,6 +17,7 @@ import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.db.performanceMeasures.PerformanceMeasures;
 import edu.tufts.hrilab.action.description.ActionContextDescription;
 import edu.tufts.hrilab.action.description.ContextDescription;
+import edu.tufts.hrilab.action.util.Utilities;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -1074,13 +1075,127 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       return;
     }
 
+    //TODO: This doesn't break anything functionally (actually it could), but the resulting tree structure doesn't seem fully correct after
+    // the suspend/resume refactor. Do we want this context to be added where it chronologically makes sense rather
+    // than always at the level of the corresponding script, even if out of place? For example currently, if this is occurring for a higher level script,
+    // this context will either be a completed sibling after a context which could have been suspended and undergo further execution on resume OR
+    // a completed sibling after the next step which was returned but never actually begun execution if the current leaf was not interruptible.
+    // This means that "getCurrent" on the script context will incorrectly return this interruption context rather than the
+    // ActionContext corresponding to the step which would actually occur on resume (whether the "next" step or the currently suspended one).
+    // We also get a warning message when encountering this child as the "next step" sometime after resume because it is already terminated (and the history is out of order)
+    // The issue on the flip side is that we need to create the context with the caller set to this context in order for
+    // argument binding to be possible and occur correctly.
+
+    //// Original Code
+    //Predicate interruptGoalPredicate = Factory.createPredicate("interrupt", Factory.createFOL(interruptEvent.getActor()), interruptEvent.getPredicateForm());
+    //Goal interruptGoal = new Goal(interruptGoalPredicate);
+    //ActionInterpreter ai = ActionInterpreter.createInterpreterFromEventSpec(interruptGoal, this, interruptEvent);
+    //childContexts.getNextAndIncrement();
+    //ai.call();
+
+    //// WIP - create context 'manually' by supplying any relevant input argument bindings and add to appropriate location ////
+    // Gather details from EventSpec
+    String command = interruptEvent.getCommand();
+    String eventSpecActor = interruptEvent.getActor();
+    Symbol actor;
+    if (Utilities.isScriptVariable(eventSpecActor)) {
+      actor = getActor(eventSpecActor);
+    } else {
+      actor = Factory.createSymbol(eventSpecActor);
+    }
+    List<Class<?>> inputArgTypes = new ArrayList<>();
+    List<String> inputArgs = interruptEvent.getInputArgs();
+    for (String arg : inputArgs) {
+      Class cls = getArgumentType(arg);
+      if (cls == null) {
+        log.warn("[addEvent] null role type returned for argument: " + arg + " Defaulting to String type.");
+        cls = String.class;
+      }
+      inputArgTypes.add(cls);
+    }
+
+    //Get context to add child to. Add to current leaf unless encountering PARENT_<>, in which case it should be slot in before it (in all cases)
+    Context leafContext = this;
+    Context childContext = getChildContexts().getCurrent();
+    boolean insertBeforeCurrent = false;
+    while (childContext != null) {
+      if (childContext.getStatus() == ActionStatus.PARENT_CANCELED || childContext.getStatus() == ActionStatus.PARENT_SUSPENDED) {
+        insertBeforeCurrent = true;
+        break;
+      }
+      if (childContext.isTerminated()) {
+        break;
+      }
+      leafContext = childContext;
+      childContext = leafContext.getChildContexts().getCurrent();
+    }
+
+    //TODO: is there a better way to do/think about this?
+    //Create Interruption context -> Create first as a child of the desired lower level context (since there is no Context
+    // constructor which doesn't take in a parent and immediately bind then together), then need to manually
+    // add values of propagated arguments to the child context directly (these would normally be taken from the parent on lookup - originally this)
+    ArgumentBasedContext interruptContext = null;
+    if (interruptEvent.getType() == EventSpec.EventType.ACTION) {
+      ActionDBEntry action = Database.getActionDB().getAction(command, actor, inputArgTypes);
+      if (action == null) {
+        log.error("[handleInterrupt] defined interruption action not found, not interrupting: " + command);
+        return;
+      }
+
+      interruptContext = new ActionContext(leafContext, leafContext.stateMachine, action, new HashMap<>(), ExecutionType.ACT, actor);
+      for (int i=0; i<action.getNumRoles(); i++) {
+        String name = action.getRoleName(i);
+        String argName = name;
+        if (!argName.equals("?actor")) {
+          argName = inputArgs.get(i - 1);
+          ActionBinding value = new ActionBinding.Builder(name, action.getRoleJavaType(i))
+                  .setSemanticType(action.getRoleSemanticType(i))
+                  .setDefaultValue(action.getRoleDefault(i))
+                  .setValue(arguments.get(argName))
+                  .setIsLocal(action.getRoleLocal(i))
+                  .setIsReturn(action.getRoleReturn(i))
+                  .setIsVarArg(action.getRoleIsVarArg(i))
+                  .build();
+          //TODO: Do you need both of these? Just the bound version? Is there an issue with adding both?
+          // Don't know when lookup would occur based on arguments from the bound predicate vs the generic signature.
+          interruptContext.arguments.replace(name, value);
+          interruptContext.arguments.put(argName,value);
+        }
+      }
+    } else if (interruptEvent.getType() == EventSpec.EventType.TSC) {
+      interruptContext = new TradeServiceContext(leafContext, leafContext.stateMachine, interruptEvent.getCommand(), interruptEvent.getInputArgs(), interruptEvent.getReturnArgs(), actor);
+      int index = 0;
+      for (int i=0; i < inputArgs.size(); i++) {
+        String argName = inputArgs.get(i);
+        String name = "var" + index++;
+        ActionBinding value = new ActionBinding.Builder(name,inputArgTypes.get(i))
+                .setSemanticType(null)
+                .setDefaultValue(null)
+                .setValue(arguments.get(argName))
+                .setIsLocal(false)
+                .setIsReturn(false)
+                .setIsVarArg(false)
+                .build();
+        interruptContext.arguments.replace(name,value);
+        ((TradeServiceContext)interruptContext).setArgumentType(index-1, value.getBindingTypeDeep());
+      }
+    } else {
+      log.error("");
+      return;
+    }
+
+    //Create Interpreter for interruption context and execute
     Predicate interruptGoalPredicate = Factory.createPredicate("interrupt", Factory.createFOL(interruptEvent.getActor()), interruptEvent.getPredicateForm());
     Goal interruptGoal = new Goal(interruptGoalPredicate);
-    ActionInterpreter ai = ActionInterpreter.createInterpreterFromEventSpec(interruptGoal, this, interruptEvent);
-    //Increment child context counter so getNextStep doesn't return the terminated context added by the above line and
-    //  executed separately in the line below.
-    childContexts.getNextAndIncrement();
-    ai.call(); //Call interruption event
+    interruptGoal.bindPredicate(interruptContext);
+    ActionInterpreter ai = ActionInterpreter.createInterpreterFromContext(interruptGoal, interruptContext);
+    if (insertBeforeCurrent) {
+      leafContext.childContexts.insert(interruptContext, leafContext.childContexts.size()-1);
+    } else {
+      leafContext.childContexts.add(interruptContext);
+    }
+    leafContext.childContexts.getNextAndIncrement();
+    ai.call();
   }
 
   /**
@@ -1090,48 +1205,55 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    * @param justification
    */
   @Override
-  public synchronized void setStatus(ActionStatus eStatus, Justification justification) {
+  public synchronized boolean setStatus(ActionStatus eStatus, Justification justification) {
 
     if (getDBE() == null) {
       // this happens during context construction because the DBE hasn't been set before the
       // INITIALIZE status is set
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     } else if (isScript()) {
-        if (eStatus.isFailure() && recovery.shouldAttemptRecovery(eStatus, justification, this)) {
-            log.debug("[setStatus] not propagating failure: " + eStatus);
-            super.setStatus(ActionStatus.RECOVERY, justification);
-        } else if (getStatus() == ActionStatus.RECOVERY && (eStatus == ActionStatus.FAIL_RECOVERY || eStatus == ActionStatus.EXIT_RECOVERY)) {
-            //If this context is undergoing recovery and gets a recovery failure status propagated up to it, catch it and
-            // start propagating the original failure reasons up the tree instead
-            ActionStatus originalFailureStatus = recovery.getOriginalFailureStatus();
-            Justification originalFailureJustification = recovery.getOriginalFailureJustification();
-            super.setStatus(originalFailureStatus, originalFailureJustification);
-        } else {
-            // if this is an action script, always call onInterrupt
-            super.setStatus(eStatus, justification);
-            handleInterrupt(eStatus);
-        }
-    } else {
-      // if primitive action, call onInterrupt until it's no longer blocking
-      // TODO: should onInterrupt also be called if it's not blocking, like in the script case?
-
-      try {
-        long timeout = 0;
-        while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
-          // lock NOT acquired (doStep is executing)
-          // attempt to interrupt until lock can be acquired
+      if (eStatus.isFailure() && recovery.shouldAttemptRecovery(eStatus, justification, this)) {
+        log.debug("[setStatus] not propagating failure: " + eStatus);
+        return super.setStatus(ActionStatus.RECOVERY, justification);
+      } else if (getStatus() == ActionStatus.RECOVERY && (eStatus == ActionStatus.FAIL_RECOVERY || eStatus == ActionStatus.EXIT_RECOVERY)) {
+        //If this context is undergoing recovery and gets a recovery failure status propagated up to it, catch it and
+        // start propagating the original failure reasons up the tree instead
+        ActionStatus originalFailureStatus = recovery.getOriginalFailureStatus();
+        Justification originalFailureJustification = recovery.getOriginalFailureJustification();
+        return super.setStatus(originalFailureStatus, originalFailureJustification);
+      } else {
+        boolean ret = super.setStatus(eStatus, justification);
+        if (ret) {
           handleInterrupt(eStatus);
-          timeout = 3;
         }
+        return ret;
+      }
+    } else {
+      try {
+        boolean ret = super.setStatus(eStatus, justification);
+        if (ret) {
+          //Q: is there any other way to do this?
+          //If a primitive was suspended, doStepLock will not be held. Still want to call resume behavior in this case though
+          if (getStatus() == ActionStatus.SUSPEND && eStatus == ActionStatus.RESUME) {
+            handleInterrupt(eStatus);
+          }
 
-        super.setStatus(eStatus, justification);
+          long timeout = 0;
+          while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
+            // lock NOT acquired (doStep is executing)
+            // attempt to interrupt until lock can be acquired
+            handleInterrupt(eStatus);
+            timeout = 3;
+          }
+        }
+        return ret;
       } catch (InterruptedException e) {
         log.error("Exception trying to get doStepLock.", e);
       } finally {
         doStepLock.unlock();
       }
     }
-
+    return false;
   }
 
   /**
@@ -1139,5 +1261,15 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    */
   public Recovery getRecovery() {
     return recovery;
+  }
+
+  @Override
+  public boolean canSuspendInterruptibly() {
+    return isInterruptible() && getDBE().hasOnSuspendEvent();
+  }
+
+  @Override
+  public boolean canCancelInterruptibly() {
+    return isInterruptible() && getDBE().hasOnCancelEvent();
   }
 }

@@ -18,6 +18,7 @@ import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.EventSpec;
 import edu.tufts.hrilab.action.execution.control.AsynchronousContext;
+import edu.tufts.hrilab.action.execution.control.NoInterruptContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.state.StateMachine;
@@ -132,6 +133,11 @@ public abstract class Context {
   protected ActionConstraints constraints;
 
   /**
+   * Whether execution of the current context can be interrupted by suspension/cancellation
+   */
+  private Boolean interruptible = null;
+
+  /**
    * Context constructor.
    *
    * @param parent parent context
@@ -222,7 +228,7 @@ public abstract class Context {
    * @param status
    * @param justification
    */
-  public void setStatus(ActionStatus status, Justification justification) {
+  public boolean setStatus(ActionStatus status, Justification justification) {
     log.debug("Setting context " + getSignatureInPredicateForm() + " to status " + status);
 
     try {
@@ -234,13 +240,14 @@ public abstract class Context {
         this.justification = justification;
       } else if (actionStatus != null && actionStatus.isTerminated()) {
         log.warn("Can not set context " + cmd + " to status " + status + ". Already has terminal status: " + actionStatus);
-        return;
+        return false;
       } else if (actionStatus == ActionStatus.SUSPEND) {
         if (status == ActionStatus.RESUME || status == ActionStatus.CANCEL) {
           actionStatus = status;
           this.justification = justification;
         } else {
           log.debug("Can not set context {} to status {} while it has SUSPEND status.", cmd, status);
+          return false;
         }
       } else {
         actionStatus = status;
@@ -252,14 +259,14 @@ public abstract class Context {
       // (2) when overall conditions fail
       if (actionStatus.isFailure() || actionStatus == ActionStatus.CANCEL) {
         childContexts.forEach(child -> {
-          if (child.getStatus() != ActionStatus.INITIALIZED && !child.isTerminated()) {
+          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.PARENT_CANCELED && !child.isTerminated()) {
               child.setStatus(ActionStatus.CANCEL);
           }
         });
       } else if (actionStatus == ActionStatus.SUSPEND) {
         // propagate SUSPEND down the tree to any running children (e.g., async)
         childContexts.forEach(child -> {
-          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.SUSPEND && !child.isTerminated()) {
+          if (child.getStatus() != ActionStatus.INITIALIZED && child.getStatus() != ActionStatus.SUSPEND && child.getStatus() != ActionStatus.PARENT_SUSPENDED && !child.isTerminated()) {
               child.setStatus(ActionStatus.SUSPEND);
           }
         });
@@ -272,6 +279,7 @@ public abstract class Context {
     } finally {
       statusLock.unlock();
     }
+    return true;
   }
 
   /**
@@ -282,9 +290,9 @@ public abstract class Context {
    *
    * @param status
    */
-  public final void setStatus(ActionStatus status) {
+  public final boolean setStatus(ActionStatus status) {
     log.debug("Setting context " + getSignatureInPredicateForm() + " to status " + status + " with justification: " + justification);
-    setStatus(status, this.justification);
+    return setStatus(status, this.justification);
   }
 
   /**
@@ -395,10 +403,16 @@ public abstract class Context {
     Context next = null;
     if (getStatus() == ActionStatus.RESUME) {
       // check if any child context(s) are suspended (and need to be resumed)
-      int suspendedChildIdx = childContexts.findFirstIndexOf(child -> child.getStatus() == ActionStatus.SUSPEND);
+      int suspendedChildIdx = childContexts.findFirstIndexOf(child -> child.getStatus() == ActionStatus.SUSPEND || child.getStatus() == ActionStatus.PARENT_SUSPENDED);
       if (suspendedChildIdx >= 0) {
-        // suspended child found -- set as next child, and set status to RESUME
-        childContexts.get(suspendedChildIdx).setStatus(ActionStatus.RESUME);
+        Context childContext = childContexts.get(suspendedChildIdx);
+        if (childContext.getStatus() == ActionStatus.SUSPEND) {
+          // suspended child found -- set as next child, and set status to RESUME
+          childContext.setStatus(ActionStatus.RESUME);
+        } else {
+          // child which never began execution found -- set as next child, and set status to INITIALIZED
+          childContext.setStatus(ActionStatus.INITIALIZED);
+        }
         childContexts.setNextIndex(suspendedChildIdx);
       } else {
         // no suspended children, continue normal execution
@@ -739,6 +753,36 @@ public abstract class Context {
     } finally {
       statusLock.unlock();
     }
+  }
+
+  protected boolean hasNoInterruptAncestor() {
+    if (this.caller == null) {
+      return false;
+    } else if (this.caller instanceof NoInterruptContext) {
+      return true;
+    }
+    return this.caller.hasNoInterruptAncestor();
+  }
+
+  public boolean isInterruptible() {
+    if (interruptible == null) {
+      interruptible = !hasNoInterruptAncestor();
+    }
+    return interruptible;
+  }
+
+  /**
+   * @return true if this context can have its execution interrupted immediately on setting SUSPEND ActionStatus
+   */
+  public boolean canSuspendInterruptibly() {
+    return false;
+  }
+
+  /**
+   * @return true if this context can have its execution interrupted immediately on setting CANCEL ActionStatus
+   */
+  public boolean canCancelInterruptibly() {
+    return false;
   }
 
   /**

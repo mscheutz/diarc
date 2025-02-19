@@ -21,7 +21,13 @@ import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.justification.Justification;
 
 import java.util.HashSet;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -43,10 +49,15 @@ public class Goal {
   private Set<GoalListener> listeners = new HashSet<>();
   private GoalInfo info;
   private Observable observable = Observable.FALSE;
+  private boolean isAction = false;
   private static final IdGenerator idGenerator = new IdGenerator();
   private Set<Resource> requiredResources = null;
   private Set<Resource> heldResources = null;
   private boolean isLearningGoal = false;
+  private boolean scheduled = false;
+  private Long scheduledDelay = null;
+  private TimeUnit scheduledDelayTimeUnit = null;
+  private Date scheduledDate = null;
 
   /**
    * The ActionInterpreter currently executing this Goal. Can be null if this Goal isn't currently being executed.
@@ -65,113 +76,192 @@ public class Goal {
   private PriorityTier priorityTier = PriorityTier.NORMAL;
 
 
-  /**
-   * Construct goal that defines the actor to achieve the goal, and the desired goal/action. This is the main method
-   * used when using the GoalManager submitGoal method.
-   *
-   * @param goalState
-   */
-  public Goal(Predicate goalState) {
-    info = new GoalInfo(idGenerator.getNext());
+    /**
+     * Construct goal that defines the actor to achieve the goal, and the desired goal/action. This is the main method
+     * used when using the GoalManager submitGoal method.
+     *
+     * @param goalState
+     */
+    public Goal(Predicate goalState) {
+        info = new GoalInfo(idGenerator.getNext());
 
-    // check persistent first bc other goal predicate forms could be nested inside
-    if (goalState.getName().equals("persistent")) {             // persistent goal
-      if (goalState.size() != 2) {  // illegal structure
-        log.error("[Goal] illegal predicate structure: " + goalState);
-        return;
-      }
-      goalState = (Predicate) goalState.get(1);
-      info.persistent = true;
-    }
-
-    // handle special goal predicate forms
-    switch (goalState.getName()) {
-      case "sti":
-      case "did":
-        log.error("Goal form is no longer supported: " + goalState);
-        break;
-      case "obs":
-      case "observe":
-        observable = Observable.TRUE;
-        // fall through
-      case "goal":
-        info.unboundGoal = goalState.get(1);
-        break;
-      default: // default case is an explicit action to execute
-        info.isAction = true;
-        info.unboundGoal = goalState;
-    }
-
-    // actor is always first arg
-    info.actor = goalState.get(0);
-  }
-
-  /**
-   * Construct goal with explicit actor. This is primarily used for creating goal instance from ASL
-   *
-   * @param actor
-   * @param goalState
-   */
-  public Goal(Symbol actor, Symbol goalState) {
-    this(actor, goalState, Observable.FALSE);
-
-    // handle special cases
-    switch (goalState.getName()) {
-      case "obs":
-      case "observe":
-        info.unboundGoal = ((Predicate) goalState).get(0);
-        this.observable = Observable.TRUE;
-    }
-  }
-
-  /**
-   * Goal constructor used to explicitly mark goal as an observation. It's possible to
-   * have an observation goal without the OBS(actor, state) predicate form. This is almost
-   * always the case for observations from conditions and effects checks.
-   *
-   * @param actor      the actor doing the observing (can be null, if it can be inferred from predicate)
-   * @param goalState  the goal predicate
-   * @param observable enum specifying if goal is observable, and if so what type (true/false/default)
-   */
-  public Goal(Symbol actor, Symbol goalState, Observable observable) {
-    info = new GoalInfo(idGenerator.getNext());
-    this.observable = observable;
-    info.actor = actor;
-
-    if (actor == null) {
-      log.error("Invalid null actor for goal: " + goalState);
-      return;
-    }
-
-    if (goalState.isVariable()) {
-      info.unboundGoal = goalState;
-    } else if (goalState.isPredicate()) {
-      // should be a predicate
-      Predicate predicate = (Predicate) goalState;
-
-      // check persistent first bc other goal predicate forms could be nested inside
-      if (predicate.getName().equals("persistent")) {             // persistent goal
-        if (predicate.size() != 1) {  // illegal structure
-          log.error("[Goal] illegal predicate structure: " + predicate);
-          return;
+        // check for certain special forms first bc other goal predicate forms could be nested inside
+        Predicate unwrappedGoalState = unwrapGoalPredicate(goalState, true);
+        if (unwrappedGoalState != null) {
+            goalState = unwrappedGoalState;
         }
-        predicate = (Predicate) predicate.get(0);
-        info.persistent = true;
-      }
 
+        // handle special goal predicate forms
+        switch (goalState.getName()) {
+            case "sti":
+            case "did":
+                log.error("Goal form is no longer supported: " + goalState);
+                break;
+            case "obs":
+            case "observe":
+                observable = Observable.TRUE;
+                // fall through
+            case "goal":
+                info.unboundGoal = goalState.get(1);
+                break;
+            default: // default case is an explicit action to execute
+                info.isAction = true;
+                info.unboundGoal = goalState;
+        }
 
-      // error messages for deprecated special predicate forms
-      switch (goalState.getName()) {
-        case "sti":
-        case "did":
-          log.error("Goal form is no longer supported: " + predicate);
-      }
-
-      this.info.unboundGoal = predicate;
-    } else {
-      log.error("Goal state is not a Variable or Predicate: " + goalState);
+        // actor is always first arg
+        info.actor = goalState.get(0);
     }
-  }
+
+    /**
+     * Construct goal with explicit actor. This is primarily used for creating goal instance from ASL
+     *
+     * @param actor
+     * @param goalState
+     */
+    public Goal(Symbol actor, Symbol goalState) {
+        this(actor, goalState, Observable.FALSE);
+
+        // handle special cases
+        switch (goalState.getName()) {
+            case "obs":
+            case "observe":
+                info.unboundGoal = ((Predicate)goalState).get(0);
+                this.observable = Observable.TRUE;
+        }
+    }
+
+    /**
+     * Goal constructor used to explicitly mark goal as an observation. It's possible to
+     * have an observation goal without the OBS(actor, state) predicate form. This is almost
+     * always the case for observations from conditions and effects checks.
+     *
+     * @param actor      the actor doing the observing (can be null, if it can be inferred from predicate)
+     * @param goalState  the goal predicate
+     * @param observable enum specifying if goal is observable, and if so what type (true/false/default)
+     */
+    public Goal(Symbol actor, Symbol goalState, Observable observable) {
+        info = new GoalInfo(idGenerator.getNext());
+        this.observable = observable;
+        info.actor = actor;
+
+        if (actor == null) {
+            log.error("Invalid null actor for goal: " + goalState);
+            return;
+        }
+
+        if (goalState.isVariable()) {
+            info.unboundGoal = goalState;
+        } else if (goalState.isPredicate()) {
+            // should be a predicate
+            Predicate predicate = (Predicate) goalState;
+
+            predicate = unwrapGoalPredicate(predicate, false);
+            if (predicate == null) {
+                return;
+            }
+
+            // error messages for deprecated special predicate forms
+            switch (goalState.getName()) {
+                case "sti":
+                case "did":
+                    log.error("Goal form is no longer supported: " + predicate);
+            }
+
+            info.unboundGoal = predicate;
+        } else {
+            log.error("Goal state is not a Variable or Predicate: " + goalState);
+        }
+    }
+
+    /**
+     * Check for special goal forms on submission (Currently 'scheduled' and 'persistent'). Unwraps the predicate to
+     * submit while populating class variables with values based on wrapper names and arguments.
+     */
+    private Predicate unwrapGoalPredicate(Predicate goalState, boolean actorIncluded) {
+        if (goalState.getName().equals("persistent")) {
+            if (actorIncluded) {
+                if (goalState.size() != 2) {  // illegal structure
+                    log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
+                    return null;
+                }
+                goalState = (Predicate) goalState.get(1);
+            } else {
+                if (goalState.size() != 1) {
+                    log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
+                    return null;
+                }
+                goalState = (Predicate) goalState.get(0);
+            }
+            info.persistent = true;
+
+            return unwrapGoalPredicate(goalState, false);
+        } else if (goalState.getName().equals("scheduled")) {
+            int formatType = 0;
+            String dateString = "";
+            String delayString = "";
+            String timeUnitString = "";
+            if (actorIncluded) {
+                if (goalState.size() == 3) {
+                    dateString = goalState.get(2).toString();
+                    formatType = 2;
+                } else if (goalState.size() == 4) {
+                    delayString = goalState.get(2).toString();
+                    timeUnitString = goalState.get(3).toString();
+                    formatType = 1;
+                }
+                goalState = (Predicate) goalState.get(1);
+            } else {
+                if (goalState.size() == 2) {
+                    dateString = goalState.get(1).toString();
+                    formatType = 2;
+                } else if (goalState.size() == 3) {
+                    delayString = goalState.get(1).toString();
+                    timeUnitString = goalState.get(2).toString();
+                    formatType = 1;
+                }
+                goalState = (Predicate) goalState.get(0);
+            }
+            try {
+                if (formatType == 0) {
+                    log.error("[Goal] illegal predicate structure for scheduled goal: " + goalState);
+                    return null;
+                } else if (formatType == 1) {
+                    scheduledDelay = Long.parseLong(delayString);
+                    scheduledDelayTimeUnit = TimeUnit.valueOf(timeUnitString);
+                } else if (formatType == 2) {
+                    SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
+                    Date date = null;
+                    //TODO: what date format do we expect? Is only the LLM able to target this flexibly?
+                    try {
+                        date = formatter.parse(dateString);
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.set(Calendar.HOUR_OF_DAY,date.getHours());
+                        calendar.set(Calendar.MINUTE,date.getMinutes());
+                        calendar.set(Calendar.SECOND,date.getSeconds());
+                        date = calendar.getTime();
+                    } catch (ParseException ignored) {}
+                    if (date == null) {
+                        formatter = new SimpleDateFormat("MM-dd-yyyyTHH-mm-ss", Locale.ENGLISH);
+                        date = formatter.parse(dateString);
+                    }
+                    scheduledDate = date;
+                }
+            } catch (Exception e) {
+                log.error("[Goal] exception while parsing arguments for scheduled goal: " + goalState, e);
+            }
+            scheduled = true;
+
+            //Modified Impl:
+            //With current implementation of disjoint goal submission due to needing to adhere to resource constraints
+            // of inner goal while allowing this goal to be active, need to cut off here to allow for 'scheduled persistent goals'
+            // or 'scheduled persistent scheduled  to be possible.
+            //return unwrapGoalPredicate(goalState, false);
+            return goalState;
+        }
+
+        return goalState;
+    }
 
   /**
    * Get the goal predicate. This can contain free variables, and it can also become bound
@@ -237,6 +327,22 @@ public class Goal {
 
   public boolean isPersistent() {
     return info.persistent;
+  }
+
+  public boolean isScheduled() {
+    return scheduled;
+  }
+
+  public long getScheduledDelay() {
+    return scheduledDelay;
+  }
+
+  public TimeUnit getScheduledDelayTimeUnit() {
+    return scheduledDelayTimeUnit;
+  }
+
+  public Date getScheduledDate() {
+    return scheduledDate;
   }
 
   public Symbol getActor() {
@@ -449,12 +555,13 @@ public class Goal {
    * Cancels goal execution (if currently being executed). If being executed, calls cancel
    * on the ActionInterpreter which will set the status of this goal once execution has terminated.
    */
-  public void cancel() {
+  public boolean cancel() {
     if (ai != null) {
       // the AI will set the CANCELED status once it has terminated
-      ai.cancel();
+      return ai.cancel();
     } else {
       setStatus(GoalStatus.CANCELED);
+      return true;
     }
   }
 
@@ -462,12 +569,13 @@ public class Goal {
    * Suspends goal execution (if currently being executed). If being executed, calls suspend
    * on the ActionInterpreter which will set the status of this goal once execution has fully suspended.
    */
-  public void suspend() {
+  public boolean suspend() {
     if (ai != null) {
       // the AI will set the SUSPENDED status once it has been suspended
-      ai.suspend();
+      return ai.suspend();
     } else {
       setStatus(GoalStatus.SUSPENDED);
+      return true;
     }
   }
 
@@ -475,11 +583,21 @@ public class Goal {
    * Resumes goal execution (if currently suspended). Calls suspend
    * on the ActionInterpreter which will set the status of this goal once execution has resumed.
    */
-  public void resume() {
+  public boolean resume() {
+    // set status to active which can be overwritten by AI
+    status = GoalStatus.ACTIVE;
+
     if (ai != null) {
       // the AI will set the ACTIVE status once it has resumed
-      ai.resume();
+      return ai.resume();
+    } else {
+      return true;
     }
+  }
+
+  public void setFailConditions(Justification cond) {
+    log.debug("[setFailCondition] actor: " + actor + " failcond: " + cond);
+    failConditions = cond;
   }
 
   public ActionInterpreter getActionInterpreter() {

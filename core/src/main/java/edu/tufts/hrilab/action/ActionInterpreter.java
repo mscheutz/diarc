@@ -466,7 +466,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
 
       // main execution loop (wrapped in suspend/resume logic)
       while (!this.goal.getStatus().isTerminated()) {
-        if (suspended.get()) {
+        if (suspended.get() && (currentStep == null || currentStep.isInterruptible())) {
           // suspend logic
           suspendLock.lock();
           try {
@@ -510,10 +510,10 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       // because the cancel/suspend hooks happens asynchronously to the main execution loop, it's possible the currentStep
       // already has a terminal status in the calls to cancel/suspend (and can't be cancelled/suspended). This ensures
       // the cancel/suspend is set on the nextStep and propagated up/down the context tree
-      if (suspended.get() && nextStep != null && nextStep.getStatus() != ActionStatus.SUSPEND) {
-        nextStep.setStatus(ActionStatus.SUSPEND);
-      }  else if (canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL) {
-        nextStep.setStatus(ActionStatus.CANCEL);
+      if (suspended.get() && nextStep != null && nextStep.getStatus() != ActionStatus.SUSPEND && nextStep.isInterruptible()) {
+        nextStep.setStatus(ActionStatus.PARENT_SUSPENDED);
+      }  else if (canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL && nextStep.isInterruptible()) {
+        nextStep.setStatus(ActionStatus.PARENT_CANCELED);
       }
 
       // update current step
@@ -536,7 +536,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   /**
    * Suspend the Action Interpreter's script.
    */
-  public void suspend() {
+  public boolean suspend() {
     // lock on the currentStep so cancelling doesn't accidentally cancel an old step
     currentStepLock.lock();
     suspendLock.lock();
@@ -544,33 +544,35 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     try {
       if (currentStep == null) {
         log.warn("[suspend] AI for goal has already terminated: {}", goal.getPredicate());
+        return false;
       } else if (currentStep.isTerminated()) {
         // setting suspended flag will set nextStep to suspended in the mainLoop before it's executed
         suspended.set(true);
       } else {
         suspended.set(true);
-        currentStep.setStatus(ActionStatus.SUSPEND);
+        // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
+        // have the next step's status be updated.
+        if (currentStep.canSuspendInterruptibly()) {
+          currentStep.setStatus(ActionStatus.SUSPEND);
+        }
       }
     } finally {
       currentStepLock.unlock();
       suspendLock.unlock();
     }
+    return true;
   }
 
   /**
    * Resume the Action Interpreter's script after suspending.
    */
-  public void resume() {
+  public boolean resume() {
     // lock on the currentStep in case suspend has not fully completed
     currentStepLock.lock();
     suspendLock.lock();
 
     try {
       if (suspended.getAndSet(false)) {
-        // update the goal status
-        this.goal.setStatus(GoalStatus.ACTIVE);
-
-        // attempt to resume action execution
         if (currentStep == null) {
           // goal has been fully suspended
           rootStep.setStatus(ActionStatus.RESUME);
@@ -584,11 +586,13 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         }
       } else {
         log.warn("[resume] trying to resume an ActionInterpreter that wasn't paused.");
+        return false;
       }
     } finally {
       currentStepLock.unlock();
       suspendLock.unlock();
     }
+    return true;
   }
 
   /**
@@ -598,7 +602,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
    * handling of canceled actions (e.g., via try/catch/finally). This is the
    * only option for external classes.
    */
-  public void cancel() {
+  public boolean cancel() {
     // lock on the currentStep so cancelling doesn't accidentally cancel an old step
     currentStepLock.lock();
 
@@ -607,24 +611,81 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       if (currentStep == null) {
         // update the goal status if canceling from a suspend state
         if (suspended.get()) {
-          this.goal.setStatus(GoalStatus.CANCELED);
+          //PickAndPlace2024 - Discussion to have in general, but needed for implementation of this domain
+          //  Want to execute onCancel behaviors even from a suspended state. E.g. if the suspend behavior caches some
+          //  relevant state but cancel needs to clear it, or if suspend is allowed in some subsymbolic intermediate state
+          //  but cancel needs to terminate in a 'safe' state.
+          Context c = rootStep;
+          Context leafToSet = null;
+          boolean suspended = true;
+          //Push suspended trace onto callStack so all relevant contexts' status can be set to CANCEL (and call relevant
+          //  interruption behaviors) in stepExecution finishStep status propagation.
+          while (c != null) {
+            if (c.getStatus() == ActionStatus.SUSPEND) {
+              callStack.before(c);
+              leafToSet = c;
+            } else if (c.getStatus() == ActionStatus.PARENT_SUSPENDED) {
+              callStack.before(c);
+              leafToSet = c;
+              suspended = false;
+              break;
+            }
+            c = c.getChildContexts().getCurrent();
+          }
+          //Don't want leaf on stack, will be current step
+          callStack.next();
+
+          if (leafToSet == null) {
+            //Q: If there are no contexts which are suspended, this means we suspended after the last step of the goal. In this
+            //    case the "suspended state" is just a formality to prevent the next action from starting. Canceling at this
+            //    point should just allow the goal to terminate as it would've? Makes no sense to set canceled status and not
+            //    assert success effects or failure justifications at this point.
+            // This block can be removed if we are allowing suspend/cancel primitives to instead just fail in this case
+            resume();
+            return true;
+          } else {
+            if (suspended) {
+              leafToSet.setStatus(ActionStatus.CANCEL);
+            } else {
+              leafToSet.setStatus(ActionStatus.PARENT_CANCELED);
+            }
+            setCurrentStep(leafToSet);
+            shouldUpdate.set(true);
+          }
         } else {
           log.warn("[cancel] goal has already terminated: {}", goal.getPredicate());
+          return false;
         }
       } else if (currentStep.isTerminated()) {
-        // setting cancel flag will set nextStep to cancel in the mainLoop before it's executed
-        canceled.set(true);
+        if (shouldUpdate.get()) {
+          // setting cancel flag will set nextStep to cancel in the mainLoop before it's executed
+          canceled.set(true);
+        } else {
+          //TODO: Should writing blocking async AIs be considered bad practice and forbidden, or should this logic exist? (or the answer to both is yes)
+          //If the script is complete except for waiting on async AIs, cancel the async AIs or else this action
+          //  will continue to block indefinitely
+          this.goal.setStatus(GoalStatus.CANCELED);
+          for (ActionInterpreter ai : asyncAIs.values()) {
+            if (ai.isRunning) {
+              ai.cancel();
+            }
+          }
+        }
       } else {
         // in normal operation
         canceled.set(true);
-        currentStep.setStatus(ActionStatus.CANCEL);
+        // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
+        // have the next step's status be updated.
+        if (currentStep.canCancelInterruptibly()) {
+          currentStep.setStatus(ActionStatus.CANCEL);
+        }
       }
     } finally {
       currentStepLock.unlock();
     }
 
     // if canceling from a suspended state, we need to unblock the suspend
-    if (suspended.get()) {
+    if (suspended.getAndSet(false)) {
       suspendLock.lock();
       try {
         suspendCondition.signal();
@@ -632,6 +693,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         suspendLock.unlock();
       }
     }
+    return true;
   }
 
   /**
@@ -641,6 +703,18 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   private void halt() {
     if (!shouldUpdate.get()) {
       log.error("[halt] halt has already been called: {}", goal.getPredicate());
+      return;
+    }
+
+    //PickAndPlace2024
+    //If a noInterrupt block reaches the end of an action script, but the user instructed suspend somewhere inside that block,
+    // then previously we would terminate the AI and then potentially begin execution of a next goal without ever actually suspending.
+    // This way we get a suspension by delaying halt() until a resume or cancel is called.
+    if (suspended.get()) {
+      //Root step and context trace of the goal will still have the original terminal status and prevent any further
+      //  execution of this AI on resume or cancel (two warn logs will occur).
+      goal.setStatus(GoalStatus.SUSPENDED);
+      shouldUpdate.set(false);
       return;
     }
 

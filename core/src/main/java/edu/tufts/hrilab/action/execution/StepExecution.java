@@ -247,6 +247,14 @@ public class StepExecution {
 //            throw new RuntimeException(e);
 //          }
           break;
+        case PARENT_SUSPENDED:
+          context.caller.setStatus(ActionStatus.SUSPEND, context.getJustification());
+          context.performAdditionalStatusUpdates();
+          return context.getJustification();
+        case PARENT_CANCELED:
+          context.caller.setStatus(ActionStatus.CANCEL, context.getJustification());
+          context.performAdditionalStatusUpdates();
+          return context.getJustification();
         case SUSPEND:
         case CANCEL:
           context.caller.setStatus(context.getStatus(), context.getJustification());

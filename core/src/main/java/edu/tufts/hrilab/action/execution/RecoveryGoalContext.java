@@ -20,9 +20,11 @@ public class RecoveryGoalContext extends GoalContext {
   }
 
   @Override
-  public void doStep() {
-    ActionContext recoveryContext = new ActionContext(this, this.stateMachine, recoveryAction.getEntry(), recoveryAction.getBindings(), this.executionType, goal.getActor());
-    childContexts.add(recoveryContext);
+  public void setupNextStep() {
+    if (this.getChildContexts().isEmpty()) {
+      ActionContext recoveryContext = new ActionContext(this, this.stateMachine, recoveryAction.getEntry(), recoveryAction.getBindings(), this.executionType, goal.getActor());
+      childContexts.add(recoveryContext);
+    }
   }
 
   @Override
@@ -43,27 +45,28 @@ public class RecoveryGoalContext extends GoalContext {
    * @param justification the reason for the context's execution status
    */
   @Override
-  public synchronized void setStatus(ActionStatus eStatus, Justification justification) {
+  public synchronized boolean setStatus(ActionStatus eStatus, Justification justification) {
 
     if (eStatus.isFailure() && eStatus != ActionStatus.EXIT_RECOVERY) {
       //Catch any failure status and overwrite with FAIL_RECOVERY to propagate up the rest of the tree
       log.debug("[setStatus] changing failure status to FAIL_RECOVERY from: " + eStatus);
-      super.setStatus(ActionStatus.FAIL_RECOVERY, justification);
+      return super.setStatus(ActionStatus.FAIL_RECOVERY, justification);
     } else if (eStatus == ActionStatus.INITIALIZED) {
       // allow context to be (re)set to INITIALIZED, which is required for a context to be reset for re-use
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     } else if (this.isTerminated()) {
       log.warn("Trying to set status of previously terminated context: " + this.getSignatureInPredicateForm()
               + ". Current status is: " + this.getStatus() + ", tried to set to: " + eStatus);
+      return false;
     } else if (!eStatus.isTerminated() || eStatus == ActionStatus.CANCEL || eStatus == ActionStatus.SUCCESS) {
       log.debug("Can't recover from action status: " + eStatus);
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     } else if (recovery.shouldAttemptRecovery(eStatus, justification, this)) {
       log.debug("[setStatus] not propagating failure: " + eStatus);
-      super.setStatus(ActionStatus.RECOVERY, justification);
+      return super.setStatus(ActionStatus.RECOVERY, justification);
     } else {
       log.debug("[setStatus] passing exit handling to super class: " + eStatus);
-      super.setStatus(eStatus, justification);
+      return super.setStatus(eStatus, justification);
     }
   }
 
