@@ -99,7 +99,6 @@ public class MockUnityDIARCSpaceStationConfig extends DiarcConfiguration {
     goalManagerArgs = "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
             "-priorityFile default.json space_station_priority.json " +
             "-goal listen(self) " +
-            "-goal resetTrial(" + agentName + ") " +
             "-asl domains/unity/space_station.asl " +
             "-asl domains/unity/space_station_autonomy.asl " +
             "-asl core.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl ";

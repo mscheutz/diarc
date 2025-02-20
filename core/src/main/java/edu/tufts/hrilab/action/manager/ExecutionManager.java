@@ -147,10 +147,16 @@ public class ExecutionManager implements GoalListener {
    */
   private List<ActionListener> aiListeners = new ArrayList<>();
 
-  private boolean displayActionLearningGui = false;
+  /**
+   * Lock for waitForGoalStatus method.
+   */
+  private final Lock goalStatusUpdateLock = new ReentrantLock();
+  /**
+   * Lock condition for waitForGoalStatus method.
+   */
+  private final Condition goalStatusUpdateCondition = goalStatusUpdateLock.newCondition();
 
-  public ExecutionManager() {
-  }
+  private boolean displayActionLearningGui = false;
 
   protected void init(StateMachine sm, RootContext rootContext, Collection<String> groups) {
     this.sm = sm;
@@ -792,7 +798,10 @@ public class ExecutionManager implements GoalListener {
           goalStatuses.add(activeGoal.getStatus());
           if (activeGoal.getStatus() == GoalStatus.ACTIVE) {
             log.trace("[supersedeGoals] suspending active goal {}", activeGoal);
-            suspendGoal(activeGoal.getId());
+            if (suspendActiveGoal(activeGoal)) {
+              // wait for goal to be suspended
+              waitForGoalStatus(activeGoal, GoalStatus.SUSPENDED);
+            }
           }
           log.debug("[supersedeGoals] unlocking resources and removing active goal {}", activeGoal);
           unlockResources(activeGoal);
@@ -995,6 +1004,26 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
+   * Convenience method to wait until a particular goal has a particular goal status. This
+   * relies on the GoalListener callback.
+   *
+   * @param goal
+   * @param status
+   */
+  protected void waitForGoalStatus(Goal goal, GoalStatus status) {
+    goalStatusUpdateLock.lock();
+    try {
+      while (goal.getStatus() != status) {
+        goalStatusUpdateCondition.await();
+      }
+    } catch (InterruptedException e) {
+      log.error("Error waiting for goal {} with status {}", goal, status);
+    } finally {
+      goalStatusUpdateLock.unlock();
+    }
+  }
+
+  /**
    * Notify EM of goal status changes, so goal can be properly managed (e.g., moved to past goals).
    *
    * @param info GoalInfo of the goal with changed status
@@ -1003,6 +1032,15 @@ public class ExecutionManager implements GoalListener {
   public void goalStatusChanged(GoalInfo info) {
     log.debug("[goalStatusChanged] goal: {} status: {}", info.goal, info.status);
 
+    // notify everyone waiting on goal status notifications
+    goalStatusUpdateLock.lock();
+    try {
+      goalStatusUpdateCondition.signalAll();
+    } finally {
+      goalStatusUpdateLock.unlock();
+    }
+
+    // transfer terminated goals to past goals
     if (info.status.isTerminated()) {
       Goal goal = getGoal(info.gid);
       if (goal == null) {
@@ -1233,7 +1271,7 @@ public class ExecutionManager implements GoalListener {
       log.warn("[suspendGoal] goal is null.");
       return false;
     }
-    if (g.getStatus().equals(GoalStatus.PENDING)) {
+    if (g.getStatus() == GoalStatus.PENDING) {
       log.warn("[suspendGoal] attempting to suspend a pending goal");
       return false;
     } else if (g.getStatus().isTerminated()) {
@@ -2016,7 +2054,9 @@ public class ExecutionManager implements GoalListener {
 
     for (TRADEServiceInfo tsi : tsis) {
       try {
-        if (tsi.call(Boolean.class, goalPred)) return true;
+        if (tsi.call(Boolean.class, goalPred)) {
+          return true;
+        }
       } catch (TRADEException e) {
         log.error("[checkIgnoreTentativeAccept] error calling ignoreTentativeAccept", e);
       }
@@ -2112,6 +2152,7 @@ public class ExecutionManager implements GoalListener {
   public void setActionLearningGuiFlag(boolean flag) {
     displayActionLearningGui = flag;
   }
+
   public boolean getActionLearningGuiFlag() {
     return displayActionLearningGui;
   }
