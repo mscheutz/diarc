@@ -6,6 +6,7 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.ava.message.response.Obstacle;
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.interfaces.LidarInterface;
 import edu.tufts.hrilab.interfaces.MoveBaseInterface;
 
@@ -135,4 +136,9 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
   @Action
   @TRADEService
   Justification lookAt(double x, double y, double duration);
+
+  //todo: this shouldn't live here
+  @TRADEService
+  @Action
+  public Symbol parseTime(Symbol input, Symbol amOrPm);
 }

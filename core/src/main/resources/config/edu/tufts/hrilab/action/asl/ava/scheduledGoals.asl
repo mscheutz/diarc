@@ -11,8 +11,11 @@ import java.util.Map;
     Predicate !goalPredicate;
     Predicate !scheduledGoal;
     Predicate !confirmation;
+    Symbol !interval;
     Symbol !time;
-    Symbol !units;
+    Symbol !addl;
+    Symbol !intervalUnits;
+    Symbol !timeSymbol = "none";
 
     !bindings = act:askQuestionFromString(?actor, "What would you like to do?", val(X));
     !goalPredicate = op:get(!bindings, !x);
@@ -22,23 +25,39 @@ import java.util.Map;
     //!time = op:get(!bindings, !x);
     //op:log(debug, "[scheduleGoal] time !time");
 
-    !bindings = act:askQuestionFromString(?actor, "How long should I wait before performing this goal?", val(X,Y));
+    !bindings = act:askQuestionFromString(?actor, "When should this task be scheduled for?", val(X,Y));
     !time = op:get(!bindings, !x);
-    !units = op:get(!bindings, !y);
-    op:log(debug, "[scheduleGoal] time/units: !time/!units");
-
-    !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, !goalPredicate, !time, !units)");
-    op:log(debug, "[scheduleGoal] goal to submit: !scheduledGoal");
+    !addl = op:get(!bindings, !y);
+    if (~op:equalsValue(!addl, pm())) {
+      if (~op:equalsValue(!addl, am())) {
+        !time = act:parseTime(!time, !addl);
+        !timeSymbol = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "notNone"); //this is a bad way to do this!
+      }
+    }
+    op:log(debug, "[scheduleGoal] time/units: !time/!addl");
 
     !bindings = act:askQuestionFromString(?actor, "Should this task be repeated?", val(X));
     !confirmation = op:get(!bindings, !x);
+
     if (op:equalsValue(!confirmation, yes())) {
       !bindings = act:askQuestionFromString(?actor, "How often?", val(X,Y));
-      !time = op:get(!bindings, !x);
-      !units = op:get(!bindings, !y);
-      !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, !scheduledGoal), !time, !units)");
-      op:log(debug, "[scheduleGoal] scheduledGoal: !scheduledGoal");
+      !interval = op:get(!bindings, !x);
+      !intervalUnits = op:get(!bindings, !y);
+      if (op:equalsValue(!timeSymbol, "none")) {
+          !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time, !addl)");
+      } else  {
+          !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time)");
+      }
+    } else {
+      if (op:equalsValue(!timeSymbol, "none")) {
+          !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, !goalPredicate, !time, !addl)");
+      } else {
+          !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, !goalPredicate, !time)");
+      }
     }
+    op:log(info, "[scheduleGoal] scheduledGoal: !scheduledGoal");
 
     act:submitGoal(!scheduledGoal);
+
+    act:generateResponse(?actor, "added(!scheduledGoal)", direct);
 }

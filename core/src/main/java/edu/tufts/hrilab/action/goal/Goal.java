@@ -237,7 +237,7 @@ public class Goal {
                         date = calendar.getTime();
                     } catch (ParseException ignored) {}
                     if (date == null) {
-                        formatter = new SimpleDateFormat("MM-dd-yyyyTHH-mm-ss", Locale.ENGLISH);
+                        formatter = new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH);
                         date = formatter.parse(dateString);
                     }
                     info.scheduledDate = date;

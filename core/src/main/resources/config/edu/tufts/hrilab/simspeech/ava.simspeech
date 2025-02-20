@@ -1,8 +1,20 @@
 add a new scheduled task
-the task is go to the coffee maker
-10 seconds
+the task is stand
+1:30 p.m.
 yes
-every 10 seconds
+every 1 minute
+---------
+add a new scheduled task
+the task is sit
+in 1 second
+yes
+every 1 minute
+---------
+add a new scheduled task
+the task is stand
+in 1 minute
+yes
+every 2 minutes
 --------
 go to elevator
 go to arena

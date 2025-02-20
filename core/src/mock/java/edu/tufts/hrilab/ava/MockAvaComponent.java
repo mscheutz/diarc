@@ -8,6 +8,7 @@ import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.ava.message.response.Obstacle;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
@@ -17,6 +18,9 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -219,5 +223,23 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     List<Map<Variable,Symbol>> results = new ArrayList<>();
     results.add(new HashMap<>()); // i.e., true
     return results;
+  }
+
+  @Override
+  public Symbol parseTime(Symbol input, Symbol amOrPm) {
+    String inputString = input.toString();
+    if (!inputString.contains(":")) {
+      inputString = new StringBuilder(inputString).insert(inputString.length() - 2, ':').toString();
+    }
+    try {
+      LocalTime localTime = LocalTime.parse(inputString, DateTimeFormatter.ofPattern("H:m"));
+      if (amOrPm.getName().strip().equals("am")) {
+        localTime.plusHours(12);
+      }
+      return Factory.createSymbol(localTime.format(DateTimeFormatter.ofPattern("HH-mm-ss")));
+    } catch (DateTimeParseException e) {
+      log.error("[parseTime] error parsing time input: %s %s".formatted(input, amOrPm));
+    }
+    return Factory.createSymbol("none");
   }
 }

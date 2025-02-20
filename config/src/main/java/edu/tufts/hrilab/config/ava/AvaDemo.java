@@ -67,7 +67,7 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
     if (useGUI) {
-      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker patient -addressee self ");
+      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker evan -addressee self ");
     }
     createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -male -volume 0.0 -showMixers -matchMixer ALC256 Analog" + ((useMicrophone) ? " -muteMics" : ""));
     //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://192.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");

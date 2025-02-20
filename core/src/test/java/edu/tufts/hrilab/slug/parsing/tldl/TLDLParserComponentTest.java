@@ -4214,5 +4214,18 @@ public class TLDLParserComponentTest {
         assertTrue(testUtterance("every 1 hour",
                 "REPLY(brad,self,val(1,HOURS),{})",
                 speaker, "self"));
+
+        assertTrue(testUtterance("1 p.m. ",
+                "REPLY(brad,self,val(1,pm),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("at 1 p.m. ",
+                "REPLY(brad,self,val(1,pm),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("at 1 a.m. ",
+                "REPLY(brad,self,val(1,am),{})",
+                speaker, "self"));
+
     }
 }

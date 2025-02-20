@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.ava;
 
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.ava.message.AvaMoveGoal;
 import edu.tufts.hrilab.ava.message.response.*;
 import edu.tufts.hrilab.ava.util.Utilities;
@@ -25,6 +26,9 @@ import edu.tufts.hrilab.fol.Variable;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -987,5 +991,24 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     FAILED_DRIVE_WAYPOINT,
     OTHER,
     NONE,
+  }
+
+  //todo: this shouldn't live here
+  @Override
+  public Symbol parseTime(Symbol input, Symbol amOrPm) {
+    String inputString = input.toString();
+    if (!inputString.contains(":")) {
+      inputString = new StringBuilder(inputString).insert(inputString.length() - 2, ':').toString();
+    }
+    try {
+      LocalTime localTime = LocalTime.parse(inputString, DateTimeFormatter.ofPattern("H:m"));
+      if (amOrPm.getName().strip().equals("am")) {
+        localTime.plusHours(12);
+      }
+      return Factory.createSymbol(localTime.format(DateTimeFormatter.ofPattern("HH-mm-ss")));
+    } catch (DateTimeParseException e) {
+      log.error("[parseTime] error parsing time input: %s %s".formatted(input, amOrPm));
+    }
+    return Factory.createSymbol("none");
   }
 }

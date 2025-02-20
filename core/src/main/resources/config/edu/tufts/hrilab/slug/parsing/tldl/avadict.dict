@@ -394,3 +394,6 @@ the task is; VAL/C; #x.val($x)
 add a new scheduled task; C; scheduleGoal(?ADDRESSEE)
 
 every; PP/LREF; #x.$x
+
+a.m.; VAL\NUM; #x.val($x, am)
+p.m.; VAL\NUM; #x.val($x, pm)
