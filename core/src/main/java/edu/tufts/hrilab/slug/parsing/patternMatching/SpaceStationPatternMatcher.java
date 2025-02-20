@@ -170,7 +170,26 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
     log.info("Area: " + area + "; Tube: " + side + number);
 
     // check area for broken tubes
-    if (cleanedRemaining.matches("(monitor|check|look in|observe)(.*)")) {
+    if (cleanedRemaining.matches("(what tubes|which tubes|what tube|which tube)(.*)")) {
+        // What tubes are broken in Alpha -- Which tubes are broken in Alpha
+	builder.setUtteranceType(UtteranceType.QUESTION);	    
+	builder.setSemantics(Factory.createPredicate("propertyOf(tube(" + (noarea ? "AREA" : area) + ",LR,NUM),damaged(AMOUNT))"));
+        // return the updated utterance
+        return builder.build();
+    }
+    else if (cleanedRemaining.matches("(where are you|which area are you|which wing are you)(.*)")) {
+	builder.setUtteranceType(UtteranceType.QUESTION);	    
+	builder.setSemantics(Factory.createPredicate("amIn(" + robot + ",AREA)"));
+        // return the updated utterance
+        return builder.build();
+    }
+    else if (cleanedRemaining.matches("()(.*)")) {
+	// What tube is broken in Alpha -- Which tube is broken in Alpha
+	builder.setSemantics(Factory.createPredicate("check(" + robot + "," + area + ")"));
+        // return the updated utterance
+        return builder.build();
+    }    
+    else if (cleanedRemaining.matches("(monitor|check|look in|search for|observe)(.*)")) {
       if (noarea) {
         log.error("NO AREA specified");
         return null;
