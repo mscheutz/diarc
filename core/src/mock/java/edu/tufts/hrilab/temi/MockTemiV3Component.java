@@ -170,32 +170,6 @@ public class MockTemiV3Component extends DiarcComponent implements TemiV3Interfa
         log.info("[followMe]");
     }
 
-
-    @OnInterrupt(onCancelServiceCall = "interruptFollowBlocking()", onSuspendServiceCall = "interruptFollowBlocking()")
-    @Override
-    public void followMeBlocking() {
-        followMe();
-        startAcknowledgeDisplay("following until interrupted");
-        try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForResponse").argTypes(Predicate.class)).call(Object.class, Factory.createPredicate("waitForAckTemi", "X"));
-        } catch (TRADEException e) {
-            log.error("[followMeBlocking] error blocking with waitForResponse", e);
-        }
-        stopMoving();
-        endAcknowledgeDisplay();
-    }
-
-    @Override
-    public void interruptFollowBlocking() {
-        try {
-            //TODO:brad: I don't think these are the query semantics we want, we'll see if we can come up with a way to fix them.
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("cancelWaitForResponse").argTypes(Predicate.class)).call(void.class, Factory.createPredicate("waitForAckTemi", "X"));
-        } catch (TRADEException e) {
-            log.error("[interruptFollowBlocking] error calling cancelWaitForResponse", e);
-        }
-        stopMoving();
-    }
-
     @Override
     public void stopMoving() {
 //        sendPositionUpdate();

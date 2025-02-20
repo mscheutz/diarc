@@ -60,22 +60,6 @@ public interface TemiV3Interface {
     void followMe();
 
     /**
-     * Blocking version of followMe (waits for acknowledgement)
-     */
-    @TRADEService
-    @Action
-    @OnInterrupt(onCancelServiceCall = "interruptFollowBlocking()", onSuspendServiceCall = "interruptFollowBlocking()")
-    @Effect( effect={"not(at(?actor,X))"},
-            type= EffectType.ALWAYS)
-    @Effect( effect={"at(?actor,unknown)"},
-            type= EffectType.ALWAYS)
-    void followMeBlocking();
-
-    @Action
-    @TRADEService
-    void interruptFollowBlocking();
-
-    /**
      * Stop moving. Has side effect of causing goToLocationStatus and ReposeStatus to be set to ABORT. We additionally
      *  unlock the goToLoc() condition to prevent deadlock upon temi primitives failing.
      */

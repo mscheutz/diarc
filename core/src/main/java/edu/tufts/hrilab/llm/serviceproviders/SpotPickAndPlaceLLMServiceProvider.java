@@ -2,15 +2,15 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-package edu.tufts.hrilab.llm.hf;
+package edu.tufts.hrilab.llm.serviceproviders;
 
-import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Completion;
+import edu.tufts.hrilab.llm.LLMServiceProvider;
 import edu.tufts.hrilab.llm.Prompt;
 import edu.tufts.hrilab.llm.Prompts;
 import edu.tufts.hrilab.slug.common.Utterance;

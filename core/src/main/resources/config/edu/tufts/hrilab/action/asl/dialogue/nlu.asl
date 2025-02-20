@@ -37,6 +37,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
 () = handleSpeechInput(Utterance ?utterance) {
     Symbol !speaker;
     Symbol !addressee;
+    Predicate !ack = "ack(okay)";
 
     op:log("debug", "handleSpeechInput for utterance: ?utterance");
 
@@ -58,6 +59,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
 
     // for LLM parses -- get human validation
     Predicate !querySemantics;
+    java.lang.String !utteranceString;
     Predicate !response;
     java.util.Map !bindings;
     edu.tufts.hrilab.fol.Variable !x = "X";
@@ -65,20 +67,39 @@ import edu.tufts.hrilab.slug.common.Utterance;
       op:log("debug", "Validating utterance: ?utterance");
       !addressee = op:invokeMethod(?utterance, "getAddressee");
       !speaker = op:invokeMethod(?utterance, "getSpeaker");
-      !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "mean(!speaker, !semantics)");
-      !bindings = !addressee.act:askQuestion(!speaker, !querySemantics, val(X));
-      !response = op:get(!bindings, !x);
+      act:updateDialogueHistory(?utterance);
+      if (tsc:usingLLMNLG()) {
+        //EW SpotPickAndPlace: changed predicate format to pass to LLM to perform NLG
+        //  ^was this mainly to include supplemental semantics for refs?
+        !utteranceString = op:invokeMethod(?utterance,"toString");
+        !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "doYouMean(!speaker, !utteranceString)");
+      } else {
+        !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "mean(!speaker, !semantics)");
+      }
 
-      if (op:equalsValue(!response, yes())) {
+      //Wrapping question in suspend/resume for val(X) in case of validation of a yes/no answer. Only potential awkwardness
+      //  arises if the goal prompting the original question is canceled, then answering the validation question will cause
+      //  the validated response to hit nothing.
+      act:suspendWaitForResponse(val(X),!addressee,false);
+      !bindings = !addressee.act:askQuestion(!speaker, !querySemantics, val(X),1,-1);
+      !response = op:get(!bindings, !x);
+      act:resumeWaitForResponse(val(X),!addressee);
+
+      if (op:isNull(!response)) {
+        op:log("debug", "Utterance validation aborted, not processing utterance");
+        act:sayText("Okay, I am ignoring the previous command"); //TODO: not sure about this
+        return;
+      } elseif (op:equalsValue(!response, yes())) {
         op:log("debug", "Utterance validated.");
         act:cacheParse(?utterance);
       } elseif (op:equalsValue(!response, no())) {
         // ask for human to rephrase their request
         op:log("debug", "Utterance not validated. Asking to rephrase.");
-        act:sayText("can you please rephrase");
+        act:sayText("please rephrase");
         return;
       } else {
         op:log("error", "Unexpected question response: !response");
+        return;
       }
     }
 
@@ -113,7 +134,12 @@ import edu.tufts.hrilab.slug.common.Utterance;
     java.lang.Integer !indirectSemanticsSize;
 
     op:log("debug", "[handleDialogueInput] entering action script for actor: ?actor");
-    act:updateDialogueHistory(?utterance);
+
+    if (op:invokeMethod(?utterance, "needsValidation")) {
+      act:updateDialogueHistoryUtterance(?utterance);
+    } else {
+      act:updateDialogueHistory(?utterance);
+    }
 
     // extract fields from utterance to use existing dialogue scripts
     !speaker = op:invokeMethod(?utterance, "getSpeaker");

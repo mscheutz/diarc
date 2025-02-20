@@ -193,6 +193,9 @@
     }, {
       "serviceName" : "checkError",
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
+    } , {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "A motion error has occurred in go to pose, is it safe to proceed?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -911,6 +914,9 @@
     "serviceCalls" : [ {
       "serviceName" : "sayText",
       "serviceArgs" : [ "okay", "true" ]
+    }, {
+      "serviceName" : "sayText",
+      "serviceArgs" : [ "okay. are there any more differences?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {

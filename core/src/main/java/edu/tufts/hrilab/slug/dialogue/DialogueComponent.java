@@ -12,6 +12,7 @@ import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
@@ -23,11 +24,13 @@ import org.apache.commons.cli.Option;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class DialogueComponent extends DiarcComponent {
 
@@ -38,8 +41,10 @@ public class DialogueComponent extends DiarcComponent {
 
   private DialogueConsultant consultant;
   private List<TRADEServiceInfo> dialogueHistorySubscribers = new ArrayList<>();
-  private ConcurrentHashMap<Term, Answer> currentQuestions = new ConcurrentHashMap<>();
-  private ConcurrentHashMap<Term, Answer> suspendedQuestions = new ConcurrentHashMap<>();
+  //I believe this should live at the level of AgentTeams.
+  private ConcurrentHashMap<Symbol,Set<Question>> questionsPerAgent = new ConcurrentHashMap<>();
+  private Map<Symbol,Set<Symbol>> agentHierarchy = new HashMap<>();
+
   private boolean showDialogueGui = false;
   private DialogueGui dialogueGui;
 
@@ -56,6 +61,66 @@ public class DialogueComponent extends DiarcComponent {
       TRADE.registerAllServices(consultant, consultantGroups);
     } catch (TRADEException e) {
       log.error("[init] exception registering dialogue consultant");
+    }
+
+    registerForDiarcAgents();
+  }
+
+  private void registerForDiarcAgents() {
+    // Register to get notified of DIARC agents. To protect against a race
+    // condition, this must happen before trying to get them now.
+    try {
+      TRADE.registerNotificationNowOrWhenJoined(this,
+              new TRADEServiceConstraints().returnType(Set.class).name("getDiarcAgents").argTypes(),
+              "populateDiarcAgents"
+      );
+    } catch (TRADEException e) {
+      log.error("Failed to request notification for DIARC agents", e);
+    }
+  }
+
+  @TRADEService
+  public void populateDiarcAgents(TRADEServiceInfo service) {
+    TRADEServiceInfo diarcAgentsService = service;
+
+    try {
+      @SuppressWarnings("unchecked")
+      Set<Symbol> agents = diarcAgentsService.call(Set.class);
+      agents.forEach(agent -> {
+        questionsPerAgent.put(agent.toUntyped(), new HashSet<>());
+        questionsPerAgent.put(agent.toUntyped(), new HashSet<>());
+      });
+      log.debug("DIARC agents received");
+
+      agentHierarchy = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllAgentTeams")).call(Map.class);
+      if (agentHierarchy != null) {
+        //Strip type information in order to more easily match
+        // against actors in below functions
+        Map<Symbol, Set<Symbol>> untypedAgentHierarchy = new HashMap<>();
+        for (Map.Entry<Symbol, Set<Symbol>> agentTeam : agentHierarchy.entrySet()) {
+          Symbol teamName = agentTeam.getKey();
+          teamName = Factory.createSymbol(teamName.toUntypedString());
+          Set<Symbol> teamMembers = agentTeam.getValue();
+          Set<Symbol> untypedTeamMembers = new HashSet<>();
+          for (Symbol teamMember : teamMembers) {
+            untypedTeamMembers.add(Factory.createSymbol(teamMember.toUntypedString()));
+          }
+          untypedAgentHierarchy.put(teamName, untypedTeamMembers);
+        }
+        //TODO Revert this, fix this properly.
+        for (Symbol agent : untypedAgentHierarchy.get(Factory.createSymbol("self"))) {
+          if (!agent.getName().equals("self")) {
+            Set<Symbol> members = new HashSet<>();
+            members.add(agent);
+            untypedAgentHierarchy.put(agent, members);
+          }
+        }
+        agentHierarchy = untypedAgentHierarchy;
+      } else {
+        agentHierarchy = new HashMap<>();
+      }
+    } catch (TRADEException e) {
+      log.error("Error trying to get diarc agents.", e);
     }
   }
 
@@ -82,11 +147,11 @@ public class DialogueComponent extends DiarcComponent {
     }
 
     //Believe shutdown during Question Asking was causing a thread to hang
-    List<Term> questionsToCancel = new ArrayList<>();
-    questionsToCancel.addAll(currentQuestions.keySet());
-    questionsToCancel.addAll(suspendedQuestions.keySet());
-    for (Term question: questionsToCancel) {
-      cancelWaitForResponse(question);
+    for (Symbol agent : questionsPerAgent.keySet()) {
+      Set<Question> currentQuestions = questionsPerAgent.get(agent);
+      for (Question question : currentQuestions) {
+        question.endWaitForResponse();
+      }
     }
   }
 
@@ -95,6 +160,19 @@ public class DialogueComponent extends DiarcComponent {
   public void updateDialogueHistory(Utterance utt) {
     diaLog.addHistory(utt);
     notifyDialogueHistorySubscribers(utt);
+  }
+
+  //TODO: Need way to handle interaction of incoming utterances and potential validation questions. The original pipeline
+  //  caused validation questions to hit DiaLog before the utterance itself which prompted it. Causes history to be out of
+  //  order. Pushing to dialogue history early in cases of needsValidation utterances solves temporal issue, but that
+  //  utterance won't be fully populated (won't have hit RR or Prag yet). Can push and update utterances separately, but
+  //  then would need to update subscribers to be able to handle both addition and udpate notifications.
+  //Should this use Dialog NLInputs and have separate notifier? Still wouldn't solve the issue of dialogue history being out of order though
+  @TRADEService
+  @Action
+  public void updateDialogueHistoryUtterance(Utterance utt) {
+    diaLog.updateHistory(utt);
+    //notifyDialogueHistorySubscribers(utt,true);
   }
 
   @TRADEService
@@ -107,10 +185,10 @@ public class DialogueComponent extends DiarcComponent {
     for (TRADEServiceInfo subscriber : dialogueHistorySubscribers) {
       try {
         subscriber.call(void.class, utt);
-      } catch (TRADEException e) {
+      } catch (Exception e) {
         log.error("Could not make callback to: " + subscriber, e);
         //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
-        if (e.getMessage().startsWith("Service not available any longer")) {
+        if (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null")) {
           servicesToRemove.add(subscriber);
         }
       }
@@ -164,189 +242,204 @@ public class DialogueComponent extends DiarcComponent {
   @TRADEService
   @Action
   @OnInterrupt(
-          onCancelServiceCall = "cancelWaitForResponse(?responseForm)",
-          onSuspendServiceCall = "suspendWaitForResponse(?responseForm)",
-          onResumeServiceCall = "resumeWaitForResponse(?responseForm)"
+          onCancelServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker)",
+          onSuspendServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker)"
   )
-  public Map<Variable, Symbol> waitForResponse(Predicate responseForm) {
-    return waitForResponse(responseForm, -1);
+  public Map<Variable, Symbol> waitForResponse(String questionString, List<Term> responseForms, Symbol speaker) {
+    return waitForResponse(questionString, responseForms, speaker,-1);
   }
 
   /**
-   * @param responseForm answer semantics which this method will block until receiving
+   * @param questionString String corresponding to question which was asked
+   * @param responseForms List of possible semantic forms which are considered answers to the question
+   * @param speaker The agent which had asked the question
    * @param waitDuration duration this method will block until giving up. If a negative number, will block indefinitely
-   * @return Bindings from the answer, or null if no answer was received in time
+   * @return Bindings from the answer, or an empty map if no answer was received in time or the question was overwritten/canceled
    */
   @OnInterrupt(
-          onCancelServiceCall = "cancelWaitForResponse(?responseForm)",
-          onSuspendServiceCall = "suspendWaitForResponse(?responseForm)",
-          onResumeServiceCall = "resumeWaitForResponse(?responseForm)"
+          onCancelServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker)",
+          onSuspendServiceCall = "cancelWaitForResponse(?questionString,?responseForms,?speaker)"
   )
   @TRADEService
   @Action
-  public Map<Variable, Symbol> waitForResponse(Predicate responseForm, long waitDuration) {
+  public Map<Variable, Symbol> waitForResponse(String questionString, List<Term> responseForms, Symbol speaker, long waitDuration) {
+    if (responseForms.isEmpty()) {
+      log.warn("[waitForOneOfResponses] empty form list supplied");
+      return new HashMap<>();
+    }
 
-    //TODO:brad: make this safer
-    if(responseForm.getName().equals("pattern")){
-      responseForm=(Predicate) responseForm.get(0);
-      try {
-        TRADE.getAvailableService(new TRADEServiceConstraints().name("activatePattern").argTypes(String.class)).call(Boolean.class,responseForm.getName());
-      } catch (TRADEException e) {
-        log.error("[waitForResponse]",e);
+    for (Term responseForm : responseForms) {
+      //TODO:brad: make this safer
+      if (responseForm.getName().equals("pattern")) {
+          responseForm = (Predicate) responseForm.get(0);
+
+          try {
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("activatePattern").argTypes(String.class)).call(Boolean.class, responseForm.getName());
+          } catch (TRADEException e) {
+              log.error("[waitForResponse]", e);
+          }
       }
     }
 
-    //add response pattern to data structure
-    Answer answer;
-    if (!currentQuestions.containsKey(responseForm)) {
-      answer = new Answer();
-      currentQuestions.put(responseForm, answer);
+    speaker = speaker.toUntyped();
+    Question question = new Question(questionString, responseForms);
+    Set<Question> currentQuestions = questionsPerAgent.get(speaker);
+    if (currentQuestions == null) {
+      log.warn("[waitForResponse] unexpected speaker encountered {}", speaker);
+      questionsPerAgent.put(speaker, Set.of(question));
+      currentQuestions = questionsPerAgent.get(speaker);
     } else {
-      //This should only happen upon resuming after suspension, we do not currently handle concurrent duplicate questions
-      answer = currentQuestions.get(responseForm);
+      currentQuestions.add(question);
     }
 
-    //wait for answer
-    try {
-      answer.getResponseLock().lock();
-      try {
-        if (waitDuration > 0) {
-          answer.getResponseCondition().await(waitDuration, TimeUnit.SECONDS);
-        } else {
-          answer.getResponseCondition().await();
-        }
-      } catch (InterruptedException e) {
-        log.error("[askQuestion] exception waiting for response", e);
-      }
-    } finally {
-      answer.getResponseLock().unlock();
-    }
-
-    return answer.getAnswerBindings();
+    Map<Variable,Symbol> bindings = question.waitForResponse(waitDuration);
+    currentQuestions.remove(question);
+    return bindings;
   }
-
-
-  /**
-   * Determines if the semantics of a given utterance are an answer to any currently active questions
-   *
-   * @param speaker   currently not used
-   * @param listener  currently not used
-   * @param semantics answer semantics provided by the interlocutor
-   * @return
-   */
-  @TRADEService
-  @Action
-  public boolean isQuestionResponse(Symbol speaker, Symbol listener, Term semantics) {
-    List<Term> matchingQuestions = currentQuestions.keySet().stream()
-            .filter(semantics::instanceOf)
-            .collect(Collectors.toList());
-
-    boolean matches = !matchingQuestions.isEmpty();
-    log.debug("[isQuestionResponse] semantics: " + semantics + " matches: " + matches);
-    return matches;
-  }
-
 
   //TODO:brad the logic in this primitive should be moved to some sort of action selector
   // that can issue goals/plans to ask the appropriate clarification questions, and also
   // decide which question a given answer is for.
-
-  /**
-   * Search currently 'active' questions from one that matches answerSemantics.
-   * Get the relevant bindings from the answer, save them and unlock the question thread.
-   *
-   * @param speaker         currently not used
-   * @param listener        currently not used
-   * @param answerSemantics answer semantics provided by the interlocutor
-   */
   @TRADEService
   @Action
-  public synchronized void answerQuestion(Symbol speaker, Symbol listener, Term answerSemantics) {
-
-    //get matching question
-    List<Term> matchingQuestions = currentQuestions.keySet().stream()
-            .filter(answerSemantics::instanceOf)
+  public synchronized Map<Symbol,List<Question>> getMatchingQuestions(Symbol speaker, Symbol listener, Term answerSemantics) {
+    Map<Symbol,List<Question>> matchingQuestionPerAgent = new HashMap<>();
+    if (questionsPerAgent.isEmpty()) {
+      return matchingQuestionPerAgent;
+    }
+    listener = listener.toUntyped();
+    speaker = speaker.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(listener);
+    //get matching question(s)
+    List<Question> matchingQuestions = currentQuestions.stream()
+            .filter(q -> q.isActive() && q.isMatchingAnswerSemantics(answerSemantics))
             .toList();
 
     //Bind response
-    Answer response;
-    if (matchingQuestions.size() == 1) {
-      Term question = matchingQuestions.get(0);
-      response = currentQuestions.remove(question);
-      response.setAnswerBindings(question.getBindings(answerSemantics));
-    } else if (matchingQuestions.isEmpty()) {
-      //TODO:brad clarification request
-      log.warn("[answerQuestion] no matching question found for semantics " + answerSemantics + ". If this happens it means there is some weird race condition somewhere and the question was already answered by something else");
-      return;
+    if (matchingQuestions.isEmpty()) {
+      //No direct match
+      if (answerSemantics.getName().equals("abort")) {
+        //If universal exit semantics, then 'cancel' question with the most recent timestamp
+        //TODO: should this case just act as a match to any/all? If multiple current questions then ask to disambiguate?
+        //TODO: allow inner semantics to either match specific question or be general "most recent" symbol?
+        AtomicReference<Question> question = new AtomicReference<>();
+        long maxTimestamp = -1;
+        currentQuestions.forEach(q -> {
+          if (q.getTimestamp() > maxTimestamp) {
+            question.set(q);
+          }
+        });
+        if (question.get() != null) {
+          Question mostRecent = question.get();
+          if (mostRecent != null) {
+            matchingQuestionPerAgent.put(listener,List.of(mostRecent));
+          }
+        }
+      } else {
+        //Check children if no matching question is found
+        Set<Symbol> children = agentHierarchy.get(listener);
+        if (children != null) {
+          for (Symbol child : children) {
+            if (!(child.getName().equals(listener.getName()))) {
+              matchingQuestionPerAgent.putAll(getMatchingQuestions(speaker,child,answerSemantics));
+            }
+          }
+        }
+      }
     } else {
-      //TODO:brad: we should probably have it ask a follow up question if it's unclear what's going on here.
-      log.warn("[answerQuestion] unclear which question is being responded to, using the first one... ");
-      Term question = matchingQuestions.get(0);
-      response = currentQuestions.remove(question);
-      response.setAnswerBindings(question.getBindings(answerSemantics));
+      matchingQuestionPerAgent.put(listener,matchingQuestions);
     }
+    return matchingQuestionPerAgent;
+  }
 
-    unlockAnswer(response);
+  @TRADEService
+  @Action
+  public synchronized void answerQuestion(Question question, Term answerSemantics) {
+    Term matchingForm = question.getLastFormMatch();
+    question.answer(matchingForm.getBindings(answerSemantics));
   }
 
   /**
-   * Remove the answer corresponding to the provided semantics from the current or suspended question collections and
-   * signal the answer condition
+   * Remove the question corresponding to the provided string and response semantics from the current question
+   * collection and signal the answer condition without setting response bindings
    *
-   * @param responseForm answer semantics required to match against the corresponding question
+   * @param questionString String corresponding to question which was asked
+   * @param responseForms List of possible semantic forms required to match against the corresponding question
+   * @param listener The agent which had asked the question
    */
   @TRADEService
   @Action
-  public void cancelWaitForResponse(Term responseForm) {
-    Answer answer = currentQuestions.remove(responseForm);
+  public void cancelWaitForResponse(String questionString, List<Term> responseForms, Symbol listener) {
+    listener = listener.toUntyped();
+    Set<Question> currentQuestions = questionsPerAgent.get(listener);
+    //get matching question(s)
+    List<Question> matchingQuestions = currentQuestions.stream()
+            .filter(q -> q.isMatchingQuestion(questionString) && q.hasMatchingResponseForms(responseForms))
+            .toList();
 
-    if (answer == null) {
-      answer = suspendedQuestions.remove(responseForm);
-    }
-
-    if (answer != null) {
-      unlockAnswer(answer);
-    }
-  }
-
-  /**
-   * Transfer the answer corresponding to the provided semantics from the current question collection to the suspended
-   * one and signal the answer condition
-   *
-   * @param responseForm answer semantics required to match against the corresponding question
-   */
-  @TRADEService
-  @Action
-  public void suspendWaitForResponse(Term responseForm) {
-    Answer answer = currentQuestions.remove(responseForm);
-
-    if (answer != null) {
-      suspendedQuestions.put(responseForm, answer);
-      unlockAnswer(answer);
+    for (Question q : matchingQuestions) {
+      q.endWaitForResponse();
     }
   }
 
   /**
-   * Put the previously cached answer back into the current questions collection for consideration
-   *
-   * @param responseForm answer semantics required to match against the corresponding question
+   * Suspend the question(s) corresponding to the provided response semantics. Optionally unlock the answer to
+   *  unblock waitForResponse call(s).
+   * @param responseForm semantic form to match against the current questions
+   * @param listener The agent which had asked the question
+   * @param unlock specify whether to unlock the suspended question's answer (practically causes the corresponding waitForResponse call to unblock if true, and not otherwise)
    */
   @TRADEService
   @Action
-  public void resumeWaitForResponse(Term responseForm) {
-    Answer answer = suspendedQuestions.remove(responseForm);
+  public void suspendWaitForResponse(Term responseForm, Symbol listener, boolean unlock) {
+    listener = listener.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(listener);
+    //get matching question(s)
+    List<Question> matchingQuestions = currentQuestions.stream()
+            .filter(q -> q.isActive() && q.hasMatchingResponseForm(responseForm))
+            .toList();
 
-    if (answer != null) {
-      currentQuestions.put(responseForm, answer);
+    if (matchingQuestions.size() > 1) {
+      log.warn("[suspendWaitForResponse] suspending multiple questions");
+    }
+
+    for (Question question : matchingQuestions) {
+      question.suspend();
+      if (unlock) {
+        question.endWaitForResponse();
+      }
     }
   }
 
-  private void unlockAnswer(Answer answer) {
-    answer.getResponseLock().lock();
-    try {
-      answer.getResponseCondition().signalAll();
-    } finally {
-      answer.getResponseLock().unlock();
+  /**
+   * Resume the previously suspended question(s) to allow them to match future question responses
+   *
+   * @param responseForm answer semantics required to match against the corresponding question
+   * @param listener The agent which had asked the question
+   *
+   */
+  @TRADEService
+  @Action
+  public void resumeWaitForResponse(Term responseForm, Symbol listener) {
+    listener = listener.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(listener);
+    //get matching question(s)
+    List<Question> matchingQuestions = currentQuestions.stream()
+            .filter(q -> q.isActive() && q.hasMatchingResponseForm(responseForm))
+            .toList();
+
+    if (matchingQuestions.size() > 1) {
+      log.warn("[resumeWaitForResponse] suspending multiple questions");
     }
+
+    for (Question question : matchingQuestions) {
+      question.resume();
+    }
+  }
+
+  @TRADEService
+  public boolean isAgentWaitingForResponse(Symbol agent) {
+    Set<Question> currentQuestions = questionsPerAgent.get(agent);
+    return !(currentQuestions == null || currentQuestions.stream().noneMatch(Question::isActive));
   }
 }

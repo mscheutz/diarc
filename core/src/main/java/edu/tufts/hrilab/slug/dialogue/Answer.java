@@ -8,6 +8,7 @@ package edu.tufts.hrilab.slug.dialogue;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Variable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -25,6 +26,7 @@ public class Answer {
   public Answer() {
     this.responseLock = new ReentrantLock();
     this.responseCondition = responseLock.newCondition();
+    this.answerBindings = new HashMap<>();
   }
 
   public Lock getResponseLock() {

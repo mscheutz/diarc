@@ -38,7 +38,7 @@ public class PickAndPlaceLLMDemoTest extends GenerativeDiarcIntegrationTest {
         addServiceToObserve("goToCameraPose", Symbol.class);
         addServiceToObserve("sayText", String.class, Boolean.class);
         addServiceToObserve("perceiveEntityFromSymbol", Symbol.class);
-        addServiceToObserve("waitForResponse", Predicate.class);
+        addServiceToObserve("waitForResponse", String.class, List.class, Symbol.class);
         addServiceToObserve("addDetectionType", Symbol.class, Symbol.class);
         addServiceToObserve("addItem", Symbol.class);
 

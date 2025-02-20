@@ -123,6 +123,8 @@ public class LLMComponent extends DiarcComponent {
       llama.setEndpoint(endpoint);
     } else if (service.equals("openai")) {
       openai.setEndpoint(endpoint);
+    } else if (service.equals("llamahf")) {
+      hf.setEndpoint(endpoint);
     }
   }
 

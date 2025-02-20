@@ -130,7 +130,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, uses, a, medical, caddy],{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "val(X)", "-1", "{X=medicalcaddy:physobj}" ]
+      "serviceArgs" : [ "What container does it use?", "[val(X)]", "self:agent", "-1", "{X=medicalcaddy:physobj}" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "where is there a medicalcaddy", "true" ]
@@ -141,7 +141,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, medical, caddy, at, table, a],{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "val(X)", "-1", "{X=observableAt(1,medicalcaddy:physobj,tableA:area)}" ]
+      "serviceArgs" : [ "where is there a medicalcaddy", "[val(X)]", "self:agent", "-1", "{X=observableAt(1,medicalcaddy:physobj,tableA:area)}" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "observableAt(medicalcaddy,tableA:area)", "null" ]
@@ -170,7 +170,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, 2, painkillers],{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "val(X)", "-1", "{X=contains(2,painkiller:property)}" ]
+      "serviceArgs" : [ "Okay. What does a medkit contain?", "[val(X)]", "self:agent", "-1", "{X=contains(2,painkiller:property)}" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "where are there painkillers", "true" ]
@@ -181,7 +181,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, are, 2, painkillers, at, table, b],{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "val(X)", "-1", "{X=observableAt(2,painkiller:property,tableB:area)}" ]
+      "serviceArgs" : [ "where are there painkillers", "[val(X)]", "self:agent", "-1", "{X=observableAt(2,painkiller:property,tableB:area)}" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "observableAt(painkiller,tableB:area)", "null" ]
@@ -201,7 +201,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, one, antiseptic],{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "val(X)", "-1", "{X=contains(1,antiseptic:physobj)}" ]
+      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "-1", "{X=contains(1,antiseptic:physobj)}" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "where is there an antiseptic", "true" ]
@@ -212,7 +212,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, antiseptic, at, table, c],{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "val(X)", "-1", "{X=observableAt(1,antiseptic:physobj,tableC:area)}" ]
+      "serviceArgs" : [ "where is there an antiseptic", "[val(X)]", "self:agent", "-1", "{X=observableAt(1,antiseptic:physobj,tableC:area)}" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "observableAt(antiseptic,tableC:area)", "null" ]
@@ -229,7 +229,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[it, contains, one, bandage, box],{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "val(X)", "-1", "{X=contains(1,bandagebox:physobj)}" ]
+      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "-1", "{X=contains(1,bandagebox:physobj)}" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "where is there a bandagebox", "true" ]
@@ -240,7 +240,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[there, is, 1, bandage, box, at, table, e],{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "val(X)", "-1", "{X=observableAt(1,bandagebox:physobj,tableE:area)}" ]
+      "serviceArgs" : [ "where is there a bandagebox", "[val(X)]", "self:agent", "-1", "{X=observableAt(1,bandagebox:physobj,tableE:area)}" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "observableAt(bandagebox,tableE:area)", "null" ]
@@ -257,7 +257,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[that, is, all],{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "val(X)", "-1", "{X=none}" ]
+      "serviceArgs" : [ "does it contain anything else?", "[val(X)]", "self:agent", "-1", "{X=none}" ]
     }, {
       "serviceName" : "assertBelief",
       "serviceArgs" : [ "recipe(medkit,container(medicalcaddy:physobj),contents(contains(2,painkiller:property),contains(1,antiseptic:physobj),contains(1,bandagebox:physobj)))", "null" ]
@@ -356,7 +356,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[yes],{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "val(X)", "-1", "{X=yes}" ]
+      "serviceArgs" : [ "Do you want me to execute it?", "[val(X)]", "self:agent", "-1", "{X=yes}" ]
     }, {
       "serviceName" : "submitGoal",
       "serviceArgs" : [ "planned(self:agent)", "216" ]
@@ -379,7 +379,7 @@
       "serviceArgs" : [ "UNKNOWN(evan,self:agent,[ready],{})", "null" ]
     }, {
       "serviceName" : "waitForResponse",
-      "serviceArgs" : [ "val(X)", "-1", "{X=ready}" ]
+      "serviceArgs" : [ "Can I please have physobj_4:physobj", "[val(X)]", "self:agent", "-1", "{X=ready}" ]
     }, {
       "serviceName" : "closeGripper",
       "serviceArgs" : [ "justification(true)" ]

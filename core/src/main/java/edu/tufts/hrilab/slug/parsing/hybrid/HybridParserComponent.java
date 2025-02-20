@@ -64,9 +64,6 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("tldl").hasArgs().required().argName("file").desc("load tldl dictionary from file(s)").build());
     options.add(Option.builder("llm").argName("boolean").desc("Use the LLM parser").build());
-    options.add(Option.builder("llmService").hasArg().argName("string").desc("Name of TRADE Service to call in LLMParserComponent.parseUtterance()").build());
-    options.add(Option.builder("llmPrompt").hasArg().argName("string").desc("Prompt to use with LLM parser").build());
-    options.add(Option.builder("llmEndpoint").hasArg().argName("string").desc("Endpoint for LLMParserComponent").build());
     options.add(Option.builder("cache").argName("boolean").desc("Use the cache").build());
     options.add(Option.builder("cacheLoad").hasArgs().argName("file").desc("Load cached database from file, can have multiple").build());
     options.add(Option.builder("cacheName").hasArg().argName("string").desc("Name of cache").build());
@@ -92,18 +89,6 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     if (cmdLine.hasOption("llm")) {
       useLLM = true;
       log.debug("Using LLM parser");
-    }
-    if (cmdLine.hasOption("llmService")) {
-      llm = cmdLine.getOptionValue("llmService");
-      log.debug("Using LLM parser via TRADE Service " + llm);
-    }
-    if (cmdLine.hasOption("llmPrompt")) {
-      prompt = cmdLine.getOptionValue("llmPrompt");
-      log.debug("Using LLM parser with prompt " + prompt);
-    }
-    if (cmdLine.hasOption("llmEndpoint")) {
-      endpoint = cmdLine.getOptionValue("llmEndpoint");
-      log.debug("Using LLM parser at endpoint " + endpoint);
     }
     if (cmdLine.hasOption("cache")) {
       useCache = true;
@@ -139,14 +124,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   public void init() {
     // init LLMParserComponent
     if (useLLM) {
-      String llmArgs = "-endpoint " + endpoint;
-      if (llm != null) {
-        llmArgs += " -service " + llm;
-      }
-      if (prompt != null) {
-        llmArgs += " -prompt " + prompt;
-      }
-      llmParser = createInstance(LLMParserComponent.class, llmArgs, false);
+      llmParser = createInstance(LLMParserComponent.class, "", false);
     }
 
     // init TLDLParserComponent
