@@ -3,6 +3,10 @@
     "priority": 1,
     "priorityTier": "URGENT"
   },
+  "scheduleGoal": {
+    "priority": 1,
+    "priorityTier": "URGENT"
+  },
   "monitorBattery": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"

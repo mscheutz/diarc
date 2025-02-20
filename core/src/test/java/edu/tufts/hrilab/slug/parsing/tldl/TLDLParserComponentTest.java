@@ -4227,5 +4227,9 @@ public class TLDLParserComponentTest {
                 "REPLY(brad,self,val(1,am),{})",
                 speaker, "self"));
 
+        assertTrue(testUtterance("the task is go to the back door",
+                "REPLY(brad,self,val(goToLocation(self,VAR0)),{back door(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
     }
 }

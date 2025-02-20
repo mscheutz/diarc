@@ -233,8 +233,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     }
     try {
       LocalTime localTime = LocalTime.parse(inputString, DateTimeFormatter.ofPattern("H:m"));
-      if (amOrPm.getName().strip().equals("am")) {
-        localTime.plusHours(12);
+      if (amOrPm.getName().strip().equals("pm")) {
+        localTime = localTime.plusHours(12);
       }
       return Factory.createSymbol(localTime.format(DateTimeFormatter.ofPattern("HH-mm-ss")));
     } catch (DateTimeParseException e) {
