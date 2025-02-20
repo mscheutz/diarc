@@ -115,8 +115,12 @@ tubes are off; QUERYABLE; propertyOf(tube(AREA,LR,NUM),off)
 %% questions about robot's area location
 where are you; Q ; amIn(?ADDRESSEE,AREA)
 what area are you in; Q ; amIn(?ADDRESSEE,AREA)
-are you in; Q/AREA ; #x.amIn(?ADDRESSEE,$x)
+which area are you in; Q ; amIn(?ADDRESSEE,AREA)
+what wing are you in; Q ; amIn(?ADDRESSEE,AREA)
+which wing are you in; Q ; amIn(?ADDRESSEE,AREA)
 are you in area; Q/AREA ; #x.amIn(?ADDRESSEE,$x)
+are you in wing; Q/AREA ; #x.amIn(?ADDRESSEE,$x)
+are you in; Q/AREA ; #x.amIn(?ADDRESSEE,$x)
 
 %% questions about robot's tube side and number location
 what tube are you at; Q ; amAt(?ADDRESSEE,LR,NUM)
