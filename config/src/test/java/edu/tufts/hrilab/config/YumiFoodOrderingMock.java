@@ -92,7 +92,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
 
     String gmArgs = "";
     if (!test) {
-      gmArgs += "-editor -beliefg ";
+      gmArgs += "";
     }
     gmArgs +=
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager "

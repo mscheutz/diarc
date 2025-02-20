@@ -43,7 +43,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     String res = null;
     log.debug("Sending getMapMetadata request");
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
     }
@@ -78,7 +79,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     RMSResponse resObj = new RMSResponse();
     log.debug("Sending setVelocity request");
     try {
-      res = Http.sendPostRequest(uri, request, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, request, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
       resObj.errorMessage = "Error making request to HTTP server";
@@ -103,7 +105,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     RMSResponse resObj = new RMSResponse();
     log.debug("Sending goToArbitrary request");
     try {
-      res = Http.sendPostRequest(uri, request, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, request, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
       resObj.errorMessage = "Error making request to HTTP server";
@@ -129,7 +132,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     RMSResponse resObj = new RMSResponse();
     log.debug("Sending goToArbitrary request");
     try {
-      res = Http.sendPostRequest(uri, args, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
       resObj.errorMessage = "Error making request to HTTP server";
@@ -150,7 +154,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     String res = null;
     log.debug("Sending getPosition request");
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
     }
@@ -187,7 +192,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     String res = null;
     log.debug("Sending health request");
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
     }
@@ -211,7 +217,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     String res = null;
     log.debug("Sending getZLiftCameraTilt request");
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
     }
@@ -235,7 +242,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     String res = null;
     log.debug("Sending getRuntime request");
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
     }
@@ -259,7 +267,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     String res = null;
     log.debug("Sending lidar request");
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
     }
@@ -283,7 +292,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     String res = null;
     log.debug("Sending dynamic obstacles request");
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
     }
@@ -307,7 +317,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     String res = null;
     log.debug("Sending dock status request");
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
     }
@@ -332,7 +343,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     RMSResponse resObj = new RMSResponse();
     log.debug("Sending stop request");
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
       resObj.errorMessage = "Error making request to HTTP server";
@@ -352,7 +364,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     RMSResponse resObj = new RMSResponse();
     log.debug("Sending dock request");
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
       resObj.errorMessage = "Error making request to HTTP server";
@@ -374,7 +387,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     RMSResponse resObj = new RMSResponse();
     log.debug("Sending setZLift request");
     try {
-      res = Http.sendPostRequest(uri, args, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
       resObj.errorMessage = "Error making request to HTTP server";
@@ -396,7 +410,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     RMSResponse resObj = new RMSResponse();
     log.debug("Sending setCameraTilt request");
     try {
-      res = Http.sendPostRequest(uri, args, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
       resObj.errorMessage = "Error making request to HTTP server";
@@ -421,7 +436,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     RMSResponse resObj = new RMSResponse();
     log.debug("Sending lookAt request");
     try {
-      res = Http.sendPostRequest(uri, args, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(uri, args, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
       resObj.errorMessage = "Error making request to HTTP server";
@@ -451,7 +467,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     String uri = baseUrl + "/robot/drive/position?includeVelocity=true";
     String res;
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
       return false;
@@ -518,7 +535,8 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     String res = null;
     log.debug("Sending drive status request");
     try {
-      res = Http.sendGetRequest(uri, null);
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
     } catch (Exception ex) {
       log.error("Error making request to " + uri, ex);
     }

@@ -566,7 +566,7 @@ public class Goal {
    */
   public boolean suspend() {
     // set status to suspend which can be overwritten by AI
-    status = GoalStatus.SUSPENDED;
+    info.status = GoalStatus.SUSPENDED;
 
     if (ai != null) {
       // the AI will set the SUSPENDED status once it has been suspended

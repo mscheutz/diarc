@@ -63,6 +63,9 @@ public class ScheduledContext extends Context {
     //True if the scheduled task is currently executing. False while sleeping before scheduled time and after execution.
     boolean scheduledTaskExecuting = false;
     private long timerStart = -1;
+    //*Should only be set if the child of a persistent goal*
+    private boolean firstExecutionImmediate = false;
+    private boolean firstExecution = true;
 
     public ScheduledContext(Context c, StateMachine sm, Predicate goalPred, long delay, TimeUnit timeUnit) {
         super(c, sm, "scheduled");
@@ -173,7 +176,12 @@ public class ScheduledContext extends Context {
                         //Schedule inner goal to be submitted at the appropriate time
                         if (relative) {
                             timerStart = System.currentTimeMillis();
-                            scheduledTaskTimer.schedule(scheduledTask, timeUnit.toMillis(delay));
+                            if (firstExecutionImmediate && firstExecution) {
+                                scheduledTaskTimer.schedule(scheduledTask, 0);
+                                firstExecution = false;
+                            } else {
+                                scheduledTaskTimer.schedule(scheduledTask, timeUnit.toMillis(delay));
+                            }
                         } else {
                             scheduledTaskTimer.schedule(scheduledTask, time);
                         }
@@ -201,6 +209,9 @@ public class ScheduledContext extends Context {
             //TODO: Should copying this have the current relative delay or the starting relative delay? (Or current only for one cycle)
             //long remainingDelay = timeUnit.toMillis(delay) - (System.currentTimeMillis() - timerStart);
             newScheduledContext = new ScheduledContext(newParent, newParent.stateMachine, scheduledGoalPred, delay, timeUnit);
+            if (firstExecutionImmediate) {
+                newScheduledContext.setFirstExecutionImmediate();
+            }
         } else {
             newScheduledContext = new ScheduledContext(newParent, newParent.stateMachine, scheduledGoalPred, time);
         }
@@ -287,5 +298,9 @@ public class ScheduledContext extends Context {
     @Override
     public boolean canCancelInterruptibly() {
         return isInterruptible();
+    }
+
+    public void setFirstExecutionImmediate() {
+        firstExecutionImmediate = true;
     }
 }

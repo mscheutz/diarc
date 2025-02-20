@@ -148,6 +148,9 @@ public class GoalContext extends ArgumentBasedContext {
         child = new ScheduledContext(caller, stateMachine, goal.getPredicate(), goal.getScheduledDate());
       } else {
         child = new ScheduledContext(caller, stateMachine, goal.getPredicate(), goal.getScheduledDelay(), goal.getScheduledDelayTimeUnit());
+        if (goal.isPersistent()) {
+          ((ScheduledContext)child).setFirstExecutionImmediate();
+        }
       }
     } else if (goal.isObservation()) {
       child = new ObservationContext(caller, stateMachine, goal.getPredicate(), goal.getActor(), Observable.TRUE);
