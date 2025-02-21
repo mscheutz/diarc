@@ -1,11 +1,11 @@
 add a new patrol path lab patrol
-location coffee maker
-location back door
-location dock
+coffee maker
+back door
+dock
 that is all
 ---------
 add a new scheduled task
-perform lab patrol with wifi evaluation
+the task is perform lab patrol with wifi evaluation
 at 12:00 p.m.
 yes
 every 1 hour

@@ -59,7 +59,7 @@ public class AvaDemo extends DiarcConfiguration {
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
 
-    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl avadict.dict avaTemplate.dict -cacheName ava");
+    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist");
     createInstance(edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class);
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
