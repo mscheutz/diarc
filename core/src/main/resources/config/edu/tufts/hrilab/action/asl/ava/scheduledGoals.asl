@@ -2,6 +2,7 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Variable;
 import java.util.Map;
+import java.util.List;
 
 () = scheduleGoal() {
 
@@ -60,4 +61,16 @@ import java.util.Map;
     act:submitGoal(!scheduledGoal);
 
     act:generateResponse(?actor, "added(!scheduledGoal)", direct);
+}
+
+() = forEach(Predicate ?collection, Symbol ?actionName) {
+    Predicate !goalPred;
+    List !args;
+    Symbol !arg;
+
+    !args = op:invokeMethod(?collection, "getArgs");
+    foreach (!arg : !args) {
+        !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?actionName(?actor, !arg)");
+        act:submitGoal(!goalPred);
+    }
 }
