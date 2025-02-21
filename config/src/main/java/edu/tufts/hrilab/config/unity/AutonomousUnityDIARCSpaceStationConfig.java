@@ -5,6 +5,7 @@
 package edu.tufts.hrilab.config.unity;
 
 import edu.tufts.hrilab.action.GoalManagerComponent;
+import edu.tufts.hrilab.asr.sphinx4.Sphinx4Component;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.map.MapComponent;
 import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
@@ -128,6 +129,9 @@ public class AutonomousUnityDIARCSpaceStationConfig {
     } else {
       goalManagerArgs += "-beliefinitfile unity/pr2UnityTeam_smm_" + agentName + ".pl ";
     }
+    if(mock){
+      goalManagerArgs += "-goal resetTrial(" + agentName + ") ";
+    }
     DiarcComponent.createInstance(GoalManagerComponent.class, goalManagerArgs);
 
 
@@ -135,7 +139,7 @@ public class AutonomousUnityDIARCSpaceStationConfig {
     if (mock) {
       for (int i = 0; i < players; i++) {
         String humanAgent = "player" + (i + 1);
-        DiarcComponent.createInstance(SimSpeechRecognitionComponent.class, "-speaker " + humanAgent + " -groups " + humanAgent + " -config space_station.simspeech");
+        DiarcComponent.createInstance(SimSpeechRecognitionComponent.class, "-speaker " + humanAgent + " -addressee " + agentName + " -groups " + humanAgent + " -config space_station.simspeech");
       }
     }
   }
