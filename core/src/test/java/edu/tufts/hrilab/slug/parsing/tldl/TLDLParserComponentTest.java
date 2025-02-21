@@ -4231,5 +4231,17 @@ public class TLDLParserComponentTest {
                 "REPLY(brad,self,val(goToLocation(self,VAR0)),{back door(VAR0),DEFINITE(VAR0)})",
                 speaker, "self"));
 
+
+        assertTrue(testUtterance("perform lab patrol with wifi evaluation",
+                "INSTRUCT(brad,self,patrol(self,lab,wifiEvaluation),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("add a new patrol path",
+                "INSTRUCT(brad,self,addPatrolPath(self),{})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("the name is lab patrol",
+                "REPLY(brad,self,val(\"lab patrol\"),{})",
+                speaker, "self"));
     }
 }

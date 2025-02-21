@@ -1,20 +1,19 @@
-add a new scheduled task
-the task is stand
-1:30 p.m.
-yes
-every 1 minute
+add a new patrol path lab patrol
+location coffee maker
+location back door
+location dock
+that is all
 ---------
 add a new scheduled task
-the task is sit
-in 1 second
+perform lab patrol with wifi evaluation
+at 12:00 p.m.
 yes
-every 1 minute
+every 1 hour
 ---------
-add a new scheduled task
-the task is stand
-in 1 minute
-yes
-every 2 minutes
+modify a scheduled task
+task 1
+the interval
+every 30 minutes
 --------
 go to elevator
 go to arena

@@ -3,6 +3,7 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Variable;
 import java.util.Map;
 import java.util.List;
+import java.lang.String;
 
 () = scheduleGoal() {
 
@@ -73,4 +74,67 @@ import java.util.List;
         !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?actionName(?actor, !arg)");
         act:submitGoal(!goalPred);
     }
+}
+
+() = definePatrolPath(Symbol ?name) {
+    Map !bindings;
+    Variable !x = "X";
+    Predicate !locationId;
+    String !tmpString;
+    Symbol !tmp;
+    Predicate !location = "none()";
+    List !locations;
+    Predicate !collectionDefinition;
+    Predicate !locationsPredicate;
+
+    !locations = op:newArrayList("edu.tufts.hrilab.fol.Symbol");
+
+    !bindings = act:askQuestionFromString(?actor,"What location is on the path?", val(X));
+    !locationId = op:get(!bindings, !x);
+    !tmpString = op:invokeMethod(!locationId, "getName");
+    !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !tmpString);
+    op:log(debug, "location: !tmp");
+    op:add(!locations, !tmp);
+
+    !bindings = act:askQuestionFromString(?actor,"Is there another location on the path?", val(X));
+    !locationId = op:get(!bindings, !x);
+    !tmpString = op:invokeMethod(!locationId, "getName");
+    !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !tmpString);
+    op:log(debug, "location: !tmp");
+    while(~op:equalsValue(!locationId,"none()")){
+        op:add(!locations, !tmp);
+        !bindings = act:askQuestionFromString(?actor,"Is there another location on the path?", val(X));
+        !locationId = op:get(!bindings, !x);
+        op:log(debug, "location: !locationId");
+    }
+    !locationsPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and", !locations);
+    !collectionDefinition = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?name, !locationsPredicate)");
+    op:log(debug, "[definePatrolPath] collection definition: !collectionDefinition");
+    act:assertBelief(!collectionDefinition);
+
+}
+
+() = patrol(Symbol ?collectionName, Symbol ?actionName) {
+
+  Predicate !queryPred;
+  Variable !x = "X";
+  Predicate !locations;
+  Map !elem;
+  List !bindings;
+
+  !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?collectionName,X)");
+  !bindings = act:queryBelief(!queryPred);
+  if (~op:isEmpty(!bindings)) {
+     !elem = op:get(!bindings, 0);
+     !locations = op:get(!elem,!x);
+     act:forEach(!locations, ?actionName);
+  } else {
+    exit(FAIL, known(patrol, ?collectionName));
+  }
+}
+
+() = wifiEvaluation(Symbol ?locationId) {
+    act:goToLocation(?locationId);
+    op:log(info, "[wifiEvaluation] evaluating wifi quality at ?locationId");
+    //todo: actual call to do something useful. log to somewhere?
 }
