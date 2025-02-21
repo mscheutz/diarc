@@ -10,6 +10,17 @@ at 12:00 p.m.
 yes
 every 1 hour
 ---------
+add a new scheduled task
+the task is stand
+at 2:00 p.m.
+yes
+every 1 hour
+add a new scheduled task
+the task is sit
+at 2:05 p.m.
+yes
+every 30 minutes
+---------
 modify a scheduled task
 task 1
 the interval

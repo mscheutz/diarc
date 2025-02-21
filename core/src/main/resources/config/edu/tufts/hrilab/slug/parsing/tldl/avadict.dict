@@ -407,7 +407,7 @@ perform lab patrol with wifi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiE
 add a new patrol path; C/LIT*; #x.definePatrolPath(?ADDRESSEE,$x)
 the name is; VAL/LIT*; #x.val($x)
 that is all; VAL; val(none)
-modify a scheduled task; C; modifyScheduledTask(?ADDRESSEE)
+modify a scheduled task; C; modifyScheduledGoal(?ADDRESSEE)
 the interval; VAL; val(interval)
 
 location; VAL/REF; #x.val($x)

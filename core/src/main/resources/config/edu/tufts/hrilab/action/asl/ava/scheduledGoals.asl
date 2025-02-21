@@ -64,6 +64,19 @@ import java.lang.String;
     act:generateResponse(?actor, "added(!scheduledGoal)", direct);
 }
 
+() = modifyScheduledGoal() {
+    List !currentGoals;
+
+    !currentGoals = act:getCurrentGoals();
+    op:log(debug, "[modifyScheduledGoal] current goals: !currentGoals");
+
+    //todo: remove this hack. should query for actual goals and actual semantics
+    act:sayText("There is one goal scheduled");
+    act:sayText("Scheduled goal #1 is:");
+    act:sayText("Perform lab patrol with wifi evaluation at 12:00 p.m.");
+
+}
+
 () = forEach(Predicate ?collection, Symbol ?actionName) {
     Predicate !goalPred;
     List !args;
