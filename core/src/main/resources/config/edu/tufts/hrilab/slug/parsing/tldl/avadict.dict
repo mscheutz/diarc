@@ -382,12 +382,12 @@ room 481 b; LREF; 481b phd student offices; DEFINITE
 
 noon; VAL; time(12-00-00)
 
-minute; VAL\NUM ; #x.val($x,MINUTES)
-minutes; VAL\NUM ; #x.val($x,MINUTES)
-second; VAL\NUM ; #x.val($x,SECONDS)
-seconds; VAL\NUM ; #x.val($x,SECONDS)
-hour; VAL\NUM ; #x.val($x,HOURS)
-hours; VAL\NUM ; #x.val($x,HOURS)
+minute; VAL\NUM ; #x.time($x,MINUTES)
+minutes; VAL\NUM ; #x.time($x,MINUTES)
+second; VAL\NUM ; #x.time($x,SECONDS)
+seconds; VAL\NUM ; #x.time($x,SECONDS)
+hour; VAL\NUM ; #x.time($x,HOURS)
+hours; VAL\NUM ; #x.time($x,HOURS)
 
 the task is; VAL/C; #x.val($x)
 the task is; VAL/VERBT; #x.val($x)
@@ -396,8 +396,8 @@ add a new scheduled task; C; scheduleGoal(?ADDRESSEE)
 
 every; PP/LREF; #x.$x
 
-a.m.; VAL\NUM; #x.val($x, am)
-p.m.; VAL\NUM; #x.val($x, pm)
+a.m.; VAL\NUM; #x.time($x, am)
+p.m.; VAL\NUM; #x.time($x, pm)
 
 testtest; C; testtest(?ADDRESSEE)
 
@@ -408,6 +408,15 @@ add a new patrol path; C/LIT*; #x.definePatrolPath(?ADDRESSEE,$x)
 the name is; VAL/LIT*; #x.val($x)
 that is all; VAL; val(none)
 modify a scheduled task; C; modifyScheduledGoal(?ADDRESSEE)
-the interval; VAL; val(interval)
+the interval; VAL; timingOf(interval)
 
 location; VAL/REF; #x.val($x)
+
+execution; VAL; timingOf(execution)
+first execution; VAL; timingOf(execution)
+interval; VAL; timingOf(interval)
+
+%TODO: generalize
+task 1; VAL; num(1)
+task 2; VAL; num(2)
+task 3; VAL; num(3)

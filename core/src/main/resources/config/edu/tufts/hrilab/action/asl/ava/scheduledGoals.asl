@@ -27,7 +27,7 @@ import java.lang.String;
     //!time = op:get(!bindings, !x);
     //op:log(debug, "[scheduleGoal] time !time");
 
-    !bindings = act:askQuestionFromString(?actor, "When should this task be scheduled for?", val(X,Y));
+    !bindings = act:askQuestionFromString(?actor, "When should this task be scheduled for?", time(X,Y));
     !time = op:get(!bindings, !x);
     !addl = op:get(!bindings, !y);
     if (~op:equalsValue(!addl, pm())) {
@@ -42,7 +42,7 @@ import java.lang.String;
     !confirmation = op:get(!bindings, !x);
 
     if (op:equalsValue(!confirmation, yes())) {
-      !bindings = act:askQuestionFromString(?actor, "How often?", val(X,Y));
+      !bindings = act:askQuestionFromString(?actor, "How often?", time(X,Y));
       !interval = op:get(!bindings, !x);
       !intervalUnits = op:get(!bindings, !y);
       if (op:equalsValue(!timeSymbol, "none")) {
@@ -65,16 +65,135 @@ import java.lang.String;
 }
 
 () = modifyScheduledGoal() {
-    List !currentGoals;
+    Predicate !scheduledGoalPred;
+    java.lang.Long !goalId;
+    java.lang.String !goalPredName;
+    Predicate !innerGoalPred;
+    java.lang.String !innerGoalPredName;
+    java.util.Map !bindings;
+    edu.tufts.hrilab.fol.Variable !x = "X";
+    edu.tufts.hrilab.fol.Variable !y = "Y";
+    Symbol !response;
+    Symbol !yResponse;
+    java.lang.Boolean !success;
+    java.lang.Boolean !modifyInnerGoal = false;
+    java.lang.Integer !numArgs;
+    java.util.List !responseFormList;
+    Predicate !responseForm;
 
-    !currentGoals = act:getCurrentGoals();
-    op:log(debug, "[modifyScheduledGoal] current goals: !currentGoals");
+    op:log("info", "[modifyScheduledGoal] in method");
+    !scheduledGoalPred = act:selectScheduledGoal();
+    !goalId = tsc:getGoalId(!scheduledGoalPred);
+    op:log("info", "[modifyScheduledGoal] have goal !scheduledGoalPred with id !goalId");
 
-    //todo: remove this hack. should query for actual goals and actual semantics
-    act:sayText("There is one goal scheduled");
-    act:sayText("Scheduled goal #1 is:");
-    act:sayText("Perform lab patrol with wifi evaluation at 12:00 p.m.");
+    //TODO: theoretically could have endlessly nested scheduled/persistent goals, not sure how to handle that generally other than canceling/resubmitting with entire new specification
+    !goalPredName = op:invokeMethod(!scheduledGoalPred, "getName");
+    if (op:equals(!goalPredName,"persistent")) {
+        !innerGoalPred = op:invokeMethod(!scheduledGoalPred,"get",1);
+        !innerGoalPredName = op:invokeMethod(!innerGoalPred, "getName");
+        if (op:equals(!innerGoalPredName,"scheduled")) {
+            //Ask to modify either inner or outer timing
+            !bindings = act:askQuestionFromString(?actor, "Would you like to modify the timing of the first execution, or the interval at which it is executed?", timingOf(X));
+            if (~op:invokeMethod(!bindings,"isEmpty")) {
+                !response = op:get(!bindings,!x);
+                if (op:equalsValue(!response,execution)) {
+                    op:log("info", "[modifyScheduledGoal] got response to modify first execution");
+                } elseif (op:equalsValue(!response,interval)) {
+                    op:log("info", "[modifyScheduledGoal] got response to modify scheduled goal interval");
+                    !modifyInnerGoal = op:newObject("java.lang.Boolean", true);
+                } else {
+                    exit(FAIL,not(understand(?actor,whatToModify)));
+                }
+            } else {
+                exit(FAIL,not(understand(?actor,whatToModify)));
+            }
+        }
+    }
 
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "time(X)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "time(X,Y)");
+    op:add(!responseFormList,!responseForm);
+    !bindings = act:askQuestionFromString(?actor, "When would you like to schedule this goal instead?", !responseFormList);
+    if (~op:invokeMethod(!bindings,"isEmpty")) {
+        !response = op:get(!bindings,!x);
+        !yResponse = op:get(!bindings,!y);
+        op:log("debug", "!response");
+        op:log("debug", "!yResponse");
+        if (op:isNull(!yResponse)) {
+            !success = tsc:updateScheduledGoalTime(!goalId, !response, !modifyInnerGoal);
+        } else {
+            if (op:equalsValue(!yResponse, pm()) || op:equalsValue(!yResponse, am())) {
+                !response = act:parseTime(!response, !yResponse);
+                !success = tsc:updateScheduledGoalTime(!goalId, !response, !modifyInnerGoal);
+            } else {
+                !success = tsc:updateScheduledGoalTime(!goalId, !response, !yResponse, !modifyInnerGoal);
+            }
+        }
+        if (op:equals(!success,True)) {
+            return;
+        }
+    }
+    exit(FAIL,not(schedule(?actor,theSuppliedTime)));
+
+    ////todo: remove this hack. should query for actual goals and actual semantics
+    //act:sayText("There is one goal scheduled");
+    //act:sayText("Scheduled goal #1 is:");
+    //act:sayText("Perform lab patrol with wifi evaluation at 12:00 p.m.");
+
+}
+
+(Predicate ?scheduledGoalPred) = selectScheduledGoal() {
+    List !scheduledGoals;
+    Predicate !goalPred;
+    java.lang.Integer !numGoals;
+    java.lang.Integer !goalIndex;
+    java.lang.Integer !spokenIndex;
+    java.util.Map !bindings;
+    edu.tufts.hrilab.fol.Variable !x = "X";
+    Symbol !response;
+    java.lang.String !numberString;
+    java.lang.Integer !goalNumber;
+
+    !scheduledGoals = act:getScheduledGoals();
+    op:log(debug, "[modifyScheduledGoal] current scheduled goals: !scheduledGoals");
+    !numGoals = op:invokeMethod(!scheduledGoals, "size");
+
+    if (op:isEmpty(!scheduledGoals)) {
+        //TODO: test NLG
+        exit(FAIL,not(exist(scheduledGoals)));
+        //act:generateResponse("There are no currently scheduled goals");
+        //return;
+    } elseif (op:equals(!numGoals,1)) {
+        //TODO: could report what this goal is
+        ?scheduledGoalPred = op:get(!scheduledGoals,0);
+        return;
+    } else {
+        act:generateResponseFromString("There are multiple currently scheduled goals");
+        for (!goalIndex=0; !goalIndex lt !numGoals; !goalIndex ++) {
+            !goalPred = op:get(!scheduledGoals,!goalIndex);
+            !spokenIndex = op:++(!goalIndex);
+            act:generateResponseFromString("Option !spokenIndex");
+            act:generateResponse(!goalPred);
+        }
+        act:suspendWaitForResponse(num(X),?actor,false);
+        !bindings = act:askQuestionFromString(?actor, "Which number goal did you want to modify?", num(X));
+        act:resumeWaitForResponse(num(X),?actor);
+        if (~op:invokeMethod(!bindings,"isEmpty")) {
+            !response = op:get(!bindings,!x);
+            !numberString = op:getName(!response);
+            !goalNumber = op:newObject("java.lang.Integer", !numberString);
+            !goalNumber = op:--(!goalNumber);
+            if (op:lt(!goalNumber,!numGoals)) {
+                ?scheduledGoalPred = op:get(!scheduledGoals,!goalNumber);
+                return;
+            } else {
+                act:generateResponseFromString("Goal !goalNumber was not a valid option");
+            }
+        }
+    }
+    exit(FAIL,now(know(?actor,whichGoalYouWantToModify)));
 }
 
 () = forEach(Predicate ?collection, Symbol ?actionName) {

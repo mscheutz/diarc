@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
@@ -1377,6 +1379,93 @@ public class ExecutionManager implements GoalListener {
     return new ArrayList<>(pastGoals);
   }
 
+  /**
+   * Get a copied list of all scheduled goals yet to be executed or currently being executed under the scope of a persistent context
+   */
+  public List<Goal> getScheduledGoals() {
+    List<Goal> scheduledGoals = new ArrayList<>();
+    synchronized (goalsLock) {
+      for (Goal goal : getActiveGoals()) {
+        if (goal.isScheduled()) {
+          //If persistent, always add because will always execute again
+          if (goal.isPersistent()) {
+            scheduledGoals.add(goal);
+          } else {
+            Date date = goal.getScheduledDate();
+            if (date != null) {
+              if (date.after(new Date())) {
+                //If scheduled for an absolute time which has yet to occur, add
+                scheduledGoals.add(goal);
+              }
+            } else {
+              //If scheduled on a delay which has not fully passed yet, add
+              long delay = goal.getScheduledDelay();
+              TimeUnit timeunit = goal.getScheduledDelayTimeUnit();
+              if (System.currentTimeMillis() - goal.getStartTime() < timeunit.toMillis(delay)) {
+                scheduledGoals.add(goal);
+              }
+            }
+          }
+        }
+      }
+    }
+    return scheduledGoals;
+  }
+
+  public boolean updateScheduledGoalTime(Long goalId, Symbol timeSymbol, boolean modifyInnerGoal) {
+    return updateScheduledGoalTime(goalId, timeSymbol, null, modifyInnerGoal);
+  }
+
+  public boolean updateScheduledGoalTime(Long goalId, Symbol timeSymbol, Symbol timeUnitSymbol, boolean modifyInnerGoal) {
+    Goal goal = getGoal(goalId);
+    if (goal == null) {
+      log.warn("[updateScheduledGoalTime] goal not found for gid: {}", goalId);
+      return false;
+    }
+
+    String timeString = timeSymbol.toString();
+    if (timeUnitSymbol == null) {
+      //TODO: allow date specifying month/day/year
+      SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
+      Date date = null;
+      try {
+        date = formatter.parse(timeString);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, date.getHours());
+        calendar.set(Calendar.MINUTE, date.getMinutes());
+        calendar.set(Calendar.SECOND, date.getSeconds());
+        date = calendar.getTime();
+        if (modifyInnerGoal) {
+          //TODO: should check if the goal has already executed?
+          //TODO: should maybe achieve this through cancel/resubmit of a new goal rather than what I'm doing here
+          goal.updateScheduledGoalDate(timeSymbol);
+          return true;
+        } else {
+          return goal.setScheduledDate(date);
+        }
+      } catch (ParseException e) {
+        log.error("[updateScheduledGoalTime] supplied time symbol doesn't match expected date format", e);
+        return false;
+      }
+    }
+
+    try {
+      long delay = Long.parseLong(timeString);
+      TimeUnit timeUnit = TimeUnit.valueOf(timeUnitSymbol.toString());
+      if (modifyInnerGoal) {
+        //TODO: should check if the goal has already executed?
+        //TODO: should maybe achieve this through cancel/resubmit of a new goal rather than what I'm doing here
+        goal.updateScheduledGoalDelay(timeSymbol,timeUnitSymbol);
+        return true;
+      } else {
+        return goal.setScheduledDelay(delay, timeUnit);
+      }
+    } catch (Exception e) {
+      log.error("[updateScheduledGoalTime] cannot parse supplied delay or timeunit", e);
+      return false;
+    }
+  }
+
   public void cancelAllPendingGoals() {
     log.debug("[cancelAllPendingGoals] in method");
     synchronized (pendingGoalsLock) {
@@ -1620,7 +1709,7 @@ public class ExecutionManager implements GoalListener {
    *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
-  protected List<Goal> getActiveGoals(Goal queryGoal) {
+  protected List<Goal> getActiveGoals(Predicate queryGoal) {
     log.debug("[getActiveGoals] {}", queryGoal);
     return getGoalHelper(getActiveGoals(), queryGoal);
   }
@@ -1630,7 +1719,7 @@ public class ExecutionManager implements GoalListener {
    *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
-  public List<Goal> getPastGoals(Goal queryGoal) {
+  public List<Goal> getPastGoals(Predicate queryGoal) {
     log.debug("[getPastGoals] {}", queryGoal);
     return getGoalHelper(getPastGoals(), queryGoal);
   }
@@ -1640,7 +1729,7 @@ public class ExecutionManager implements GoalListener {
    *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
-  public List<Goal> getCurrentGoals(Goal queryGoal) {
+  public List<Goal> getCurrentGoals(Predicate queryGoal) {
     log.debug("[getCurrentGoals] {}", queryGoal);
     return getGoalHelper(getCurrentGoals(), queryGoal);
   }
@@ -1650,7 +1739,7 @@ public class ExecutionManager implements GoalListener {
    *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
-  public List<Goal> getAllGoals(Goal queryGoal) {
+  public List<Goal> getAllGoals(Predicate queryGoal) {
     log.debug("[getAllGoals] {}", queryGoal);
     synchronized (pendingGoalsLock) {
       log.trace("[getAllGoals] {} have pendingGoalsLock", queryGoal);
@@ -1745,11 +1834,11 @@ public class ExecutionManager implements GoalListener {
     return returnGoal;
   }
 
-  private List<Goal> getGoalHelper(List<Goal> goalCollection, Goal queryGoal) {
+  private List<Goal> getGoalHelper(List<Goal> goalCollection, Predicate queryGoal) {
     log.trace("[getGoalHelper] {}. {}", goalCollection, queryGoal);
     List<Goal> matchingGoals = new ArrayList<>();
     for (Goal currGoal : goalCollection) {
-      if (currGoal.getActor().equals(queryGoal.getActor()) && currGoal.getPredicate().instanceOf(queryGoal.getPredicate())) {
+      if (currGoal.getPredicate().instanceOf(queryGoal)) {
         matchingGoals.add(currGoal);
       }
     }

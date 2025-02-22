@@ -746,6 +746,43 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
+   * Get all scheduled goals which are either yet to be executed, or are currently executing under the scope of a persistent context
+   */
+  @TRADEService
+  public List<Predicate> getScheduledGoals() {
+    List<Predicate> result = new ArrayList<>();
+    for (Goal g : em.getScheduledGoals()) {
+      result.add(g.getPredicate());
+    }
+    return result;
+  }
+
+  /**
+   * Get all scheduled goals for a specific actor which are either yet to be executed, or are currently executing under the scope of a persistent context
+   */
+  @TRADEService
+  @Action
+  public List<Predicate> getScheduledGoals(Symbol actor) {
+    List<Predicate> pg = new ArrayList<>();
+    for (Goal g : em.getScheduledGoals()) {
+      if (g.getActor().equals(actor)) {
+        pg.add(g.getPredicate());
+      }
+    }
+    return pg;
+  }
+
+  @TRADEService
+  public boolean updateScheduledGoalTime(long goalId, Symbol time, boolean modifyInnerGoal) {
+    return em.updateScheduledGoalTime(goalId,time,modifyInnerGoal);
+  }
+
+  @TRADEService
+  public boolean updateScheduledGoalTime(long goalId, Symbol delay, Symbol timeUnit, boolean modifyInnerGoal) {
+    return em.updateScheduledGoalTime(goalId,delay,timeUnit,modifyInnerGoal);
+  }
+
+  /**
    * Get goal metadata.
    *
    * @param goalID the goal id
@@ -843,8 +880,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   @TRADEService
   public List<Long> getGoalIds(Predicate goal) {
-    Goal queryGoal = new Goal(goal);
-    List<Goal> goals = em.getAllGoals(queryGoal);
+    //Goal queryGoal = new Goal(goal);
+    List<Goal> goals = em.getAllGoals(goal);
     return goals.stream().map(Goal::getId).collect(Collectors.toList());
   }
 

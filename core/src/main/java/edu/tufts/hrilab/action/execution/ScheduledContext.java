@@ -91,7 +91,6 @@ public class ScheduledContext extends Context {
                 taskLock.lock();
                 scheduledTaskExecuting = true;
                 taskLock.unlock();
-                timerStart = System.currentTimeMillis();
                 try {
                     try {
                         scheduledGoalId = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class)).call(Long.class, scheduledGoalPred);
@@ -122,6 +121,7 @@ public class ScheduledContext extends Context {
      * begun execution, resets the scheduled task timer to occur on the supplied delay.
      */
     public void updateScheduledDelay(long delay, TimeUnit timeUnit) {
+        relative = true;
         //Always update these fields in case this context is a persistent goal's child and will be reused
         this.delay = delay;
         this.timeUnit = timeUnit;
@@ -131,11 +131,25 @@ public class ScheduledContext extends Context {
             scheduledTaskTimer.cancel();
             scheduledTask.cancel();
             createScheduledTask();
-            scheduledTaskTimer.schedule(scheduledTask, timeUnit.toMillis(delay));
-
-            //Other option is to have the next execution be on this delay relative to original submission
-            ////Q: What happens here if the new time is lower and the scheduled time is in the past? Does it execute immediately?
-            //scheduledTaskTimer.schedule(scheduledTask, timerStart + timeUnit.toMillis(delay));
+            //scheduledTaskTimer.schedule(scheduledTask, timeUnit.toMillis(delay));
+            ////Other option is to have the next execution be on this delay relative to original submission
+            if (timerStart == -1) {
+                log.warn("[updateScheduledDelay] encountered unexpected state, task executing but timer start not set");
+                scheduledTaskTimer.schedule(scheduledTask, timeUnit.toMillis(delay));
+                return;
+            }
+            long delayMillis = timeUnit.toMillis(delay);
+            if (delayMillis <= 0) {
+                log.error("[updateScheduledDelay] supplied delay invalid: {}", delay);
+                return;
+            }
+            long newScheduledTime = timerStart + delayMillis;
+            while (newScheduledTime < System.currentTimeMillis()) {
+                newScheduledTime += delayMillis;
+            }
+            long newScheduledDelay = newScheduledTime - System.currentTimeMillis();
+            scheduledTaskTimer.schedule(scheduledTask, newScheduledDelay);
+            timerStart = System.currentTimeMillis();
         }
     }
 
@@ -145,6 +159,7 @@ public class ScheduledContext extends Context {
      * begun execution, resets the scheduled task timer to occur at the supplied time.
      */
     public void updateScheduledTime(Date time) {
+        relative = false;
         this.time = time;
 
         if (!scheduledTaskExecuting && !doStepLock.tryLock()) {
@@ -153,6 +168,28 @@ public class ScheduledContext extends Context {
             createScheduledTask();
             //TODO: Are we expecting the day to be passed in correctly or just a time of day? Do we need to check if the time is in the past?
             scheduledTaskTimer.schedule(scheduledTask, time);
+            timerStart = System.currentTimeMillis();
+        }
+    }
+
+    public void resetTask(Predicate newPredicate) {
+        scheduledGoalPred = newPredicate;
+        if (!scheduledTaskExecuting && !doStepLock.tryLock()) {
+            scheduledTaskTimer.cancel();
+            scheduledTask.cancel();
+            createScheduledTask();
+            long timeLeft;
+            if (relative) {
+                timeLeft = delay -  (System.currentTimeMillis() - timerStart);
+            } else {
+                timeLeft = time.getTime() - System.currentTimeMillis();
+            }
+            if (timeLeft < 0) {
+                log.warn("[resetTask] remaining delay detected to be negative");
+                timeLeft = 0;
+            }
+            scheduledTaskTimer.schedule(scheduledTask, timeLeft);
+            //timerStart = System.currentTimeMillis();
         }
     }
 
@@ -185,6 +222,7 @@ public class ScheduledContext extends Context {
                         } else {
                             scheduledTaskTimer.schedule(scheduledTask, time);
                         }
+                        timerStart = System.currentTimeMillis();
                     }
                     //Wait on goal to complete execution - signal in scheduled task after joinOnGoal returns
                     taskLock.lock();

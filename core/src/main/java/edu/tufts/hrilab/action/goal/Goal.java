@@ -8,6 +8,7 @@ import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.description.ContextDescription;
 import edu.tufts.hrilab.action.execution.ArgumentBasedContext;
+import edu.tufts.hrilab.action.execution.ScheduledContext;
 import edu.tufts.hrilab.action.listener.GoalListener;
 import edu.tufts.hrilab.action.manager.Resource;
 import edu.tufts.hrilab.fol.Factory;
@@ -332,12 +333,95 @@ public class Goal {
     return info.scheduledDelay;
   }
 
+  //TODO: remove these two functions
+  public boolean updateScheduledGoalDate(Symbol dateSymbol) {
+      Predicate unboundGoal = (Predicate)info.unboundGoal;
+      if (unboundGoal != null && unboundGoal.getName().equals("persistent")) {
+          Predicate innerScheduledGoal = (Predicate)unboundGoal.get(1);
+          if (innerScheduledGoal.getName().equals("scheduled")) {
+              Predicate newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), dateSymbol);
+              info.unboundGoal = Factory.createPredicate("persistent", unboundGoal.get(0), newScheduledPred);
+              Predicate boundGoal = info.goal;
+              if (boundGoal != null) {
+                  innerScheduledGoal = (Predicate) boundGoal.get(1);
+                  newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), dateSymbol);
+                  info.goal = Factory.createPredicate("persistent", boundGoal.get(0), newScheduledPred);
+              }
+              return true;
+          }
+      }
+      return false;
+  }
+  public boolean updateScheduledGoalDelay(Symbol delaySymbol, Symbol timeUnitSymbol) {
+      Predicate unboundGoal = (Predicate)info.unboundGoal;
+      if (unboundGoal != null && unboundGoal.getName().equals("persistent")) {
+          Predicate innerScheduledGoal = (Predicate)unboundGoal.get(1);
+          if (innerScheduledGoal.getName().equals("scheduled")) {
+              Predicate newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), delaySymbol, timeUnitSymbol);
+              info.unboundGoal = Factory.createPredicate("persistent", unboundGoal.get(0), newScheduledPred);
+              Predicate boundGoal = info.goal;
+              if (boundGoal != null) {
+                  innerScheduledGoal = (Predicate) boundGoal.get(1);
+                  newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), delaySymbol, timeUnitSymbol);
+                  info.goal = Factory.createPredicate("persistent", boundGoal.get(0), newScheduledPred);
+              }
+              ScheduledContext scheduledContext = getScheduledContext();
+              if (scheduledContext != null) {
+                  scheduledContext.resetTask(getPredicate());
+              }
+              return true;
+          }
+      }
+      return false;
+  }
+
+  public boolean setScheduledDelay(Long delay, TimeUnit timeUnit) {
+      if (isScheduled()) {
+          ScheduledContext scheduledContext = getScheduledContext();
+          if (scheduledContext != null) {
+              scheduledContext.updateScheduledDelay(delay, timeUnit);
+              info.scheduledDelay = delay;
+              info.scheduledDelayTimeUnit = timeUnit;
+              return true;
+          }
+      }
+      return false;
+  }
+
+  private ScheduledContext getScheduledContext() {
+      contextLock.lock();
+      try {
+          if (rootContext != null) {
+              if (!rootContext.getChildContexts().isEmpty()) {
+                  if (rootContext.getChildContexts().get(0) instanceof  ScheduledContext) {
+                      return (ScheduledContext) rootContext.getChildContexts().get(0);
+                  }
+              }
+          }
+      } finally {
+          contextLock.unlock();
+      }
+      return null;
+  }
+
   public TimeUnit getScheduledDelayTimeUnit() {
     return info.scheduledDelayTimeUnit;
   }
 
   public Date getScheduledDate() {
     return info.scheduledDate;
+  }
+
+  public boolean setScheduledDate(Date scheduledDate) {
+      if (isScheduled()) {
+          ScheduledContext scheduledContext = getScheduledContext();
+          if (scheduledContext != null) {
+              scheduledContext.updateScheduledTime(scheduledDate);
+              info.scheduledDate = scheduledDate;
+              return true;
+          }
+      }
+      return false;
   }
 
   public Symbol getActor() {
