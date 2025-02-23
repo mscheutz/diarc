@@ -42,5 +42,9 @@
   "stopFollow": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "definePatrolPath": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

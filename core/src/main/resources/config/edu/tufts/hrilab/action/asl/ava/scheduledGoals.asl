@@ -4,6 +4,7 @@ import edu.tufts.hrilab.fol.Variable;
 import java.util.Map;
 import java.util.List;
 import java.lang.String;
+import java.lang.Long;
 
 () = scheduleGoal() {
 
@@ -115,7 +116,7 @@ import java.lang.String;
     op:add(!responseFormList,!responseForm);
     !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "time(X,Y)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString(?actor, "When would you like to schedule this goal instead?", !responseFormList);
+    !bindings = act:askQuestionFromString(?actor, "When would you like to schedule this task instead?", !responseFormList);
     if (~op:invokeMethod(!bindings,"isEmpty")) {
         !response = op:get(!bindings,!x);
         !yResponse = op:get(!bindings,!y);
@@ -132,6 +133,7 @@ import java.lang.String;
             }
         }
         if (op:equals(!success,True)) {
+            act:generateResponseFromString("Ok");
             return;
         }
     }
@@ -170,15 +172,15 @@ import java.lang.String;
         ?scheduledGoalPred = op:get(!scheduledGoals,0);
         return;
     } else {
-        act:generateResponseFromString("There are multiple currently scheduled goals");
+        act:generateResponseFromString("There are multiple currently scheduled tasks");
         for (!goalIndex=0; !goalIndex lt !numGoals; !goalIndex ++) {
             !goalPred = op:get(!scheduledGoals,!goalIndex);
             !spokenIndex = op:++(!goalIndex);
-            act:generateResponseFromString("Option !spokenIndex");
+            act:generateResponseFromString("Task !spokenIndex");
             act:generateResponse(!goalPred);
         }
         act:suspendWaitForResponse(num(X),?actor,false);
-        !bindings = act:askQuestionFromString(?actor, "Which number goal did you want to modify?", num(X));
+        !bindings = act:askQuestionFromString(?actor, "Which task did you want to modify?", num(X));
         act:resumeWaitForResponse(num(X),?actor);
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
@@ -189,7 +191,7 @@ import java.lang.String;
                 ?scheduledGoalPred = op:get(!scheduledGoals,!goalNumber);
                 return;
             } else {
-                act:generateResponseFromString("Goal !goalNumber was not a valid option");
+                act:generateResponseFromString("Task !goalNumber was not a valid option");
             }
         }
     }
@@ -239,6 +241,7 @@ import java.lang.String;
         !locationId = op:get(!bindings, !x);
         op:log(debug, "location: !locationId");
     }
+    act:generateResponseFromString("Added new patrol path ?name");
     !locationsPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and", !locations);
     !collectionDefinition = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?name, !locationsPredicate)");
     op:log(debug, "[definePatrolPath] collection definition: !collectionDefinition");
@@ -253,6 +256,7 @@ import java.lang.String;
   Predicate !locations;
   Map !elem;
   List !bindings;
+  Predicate !goalPred;
 
   !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?collectionName,X)");
   !bindings = act:queryBelief(!queryPred);
@@ -263,6 +267,12 @@ import java.lang.String;
   } else {
     exit(FAIL, known(patrol, ?collectionName));
   }
+  !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "sayFinishedPatrol(?actor, ?collectionName, ?actionName)");
+  act:submitGoal(!goalPred);
+}
+
+() = sayFinishedPatrol(Symbol ?collectionName, Symbol ?actionName) {
+  act:generateResponseFromString("Finished patrol on path ?collectionName with ?actionName");
 }
 
 () = wifiEvaluation(Symbol ?locationId) {

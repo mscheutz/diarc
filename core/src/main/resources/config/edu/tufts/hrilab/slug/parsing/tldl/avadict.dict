@@ -125,6 +125,7 @@ go; VERBT; goToLocation
 move; VERBT; goToLocation
 
 follow; C; follow(?ADDRESSEE)
+follow me; C; follow(?ADDRESSEE)
 stop following; C; stopFollow(?ADDRESSEE)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ESCORTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -186,10 +187,13 @@ cramer; LREF; cramer; DEFINITE
 evans office; LREF; evans office; DEFINITE
 exit; LOC; exit
 test; LOC; test
+desk alpha; LOC; desk alpha
+desk beta; LOC; desk beta
 
 % both lab and 4th floor
 elevator; LOC; elevator
 dock; LOC; dock
+doc; LOC; dock
 
 % 4th floor specific
 lab space; LOC; lab space
@@ -404,6 +408,7 @@ testtest; C; testtest(?ADDRESSEE)
 perform; (C/C)/C; #x,#y,#z.patrol($y,$z)
 
 perform lab patrol with wifi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
+perform office patrol with wifi evaluation; C; patrol(?ADDRESSEE, office patrol, wifiEvaluation)
 add a new patrol path; C/LIT*; #x.definePatrolPath(?ADDRESSEE,$x)
 the name is; VAL/LIT*; #x.val($x)
 that is all; VAL; val(none)

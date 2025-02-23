@@ -1,25 +1,32 @@
+follow me
+this location is the coffee maker
+this location is desk alpha
+this location is desk beta
+stop following
 add a new patrol path lab patrol
 coffee maker
-back door
+desk alpha
+desk beta
+dock
+that is all
+---------
+add a new patrol path office patrol
+evans office
+desk alpha
 dock
 that is all
 ---------
 add a new scheduled task
 the task is perform lab patrol with wifi evaluation
-at 12:00 p.m.
+at 3:00 p.m.
 yes
 every 1 hour
 ---------
 add a new scheduled task
-the task is stand
-at 2:00 p.m.
+the task is perform office patrol with wifi evaluation
+at 4:00 p.m.
 yes
-every 1 hour
-add a new scheduled task
-the task is sit
-at 2:05 p.m.
-yes
-every 30 minutes
+every 2 hours
 ---------
 modify a scheduled task
 task 1
@@ -34,7 +41,8 @@ go to coffee maker
 go to evans office
 go to exit
 go to back door
-go to cramer
+go to crameear
+
 go to test
 
 go home

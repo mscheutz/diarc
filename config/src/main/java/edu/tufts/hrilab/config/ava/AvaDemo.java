@@ -1,6 +1,8 @@
 package edu.tufts.hrilab.config.ava;
 
+import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -63,13 +65,15 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class);
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
-    createInstance(edu.tufts.hrilab.slug.nlg.SimpleNLGComponent.class);
+//    createInstance(edu.tufts.hrilab.slug.nlg.SimpleNLGComponent.class);
+    DiarcComponent.createInstance(HybridNLGComponent.class, "-simpleNLG -cache -cachePersist -cacheName ava-reverse");
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
     if (useGUI) {
-      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker evan -addressee self ");
+      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker evan -addressee ava");
     }
-    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -male -volume 0.0 -showMixers -matchMixer ALC256 Analog" + ((useMicrophone) ? " -muteMics" : ""));
+    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
+//    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -male -volume 0.0 -showMixers -matchMixer ALC256 Analog" + ((useMicrophone) ? " -muteMics" : ""));
     //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://192.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
     if (useMicrophone) {
