@@ -14,62 +14,8 @@
       "orientation": [
         0.0,
         0.0,
-        0.768602,
-        0.6397272
-      ]
-    },
-    {
-      "refId": "location_2:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "bullpen(VAR0:location)"
-      ],
-      "position": [
-        7.761807612485979,
-        -1.696797375596191,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.5121768,
-        0.85888
-      ]
-    },
-    {
-      "refId": "location_3:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "arena(VAR0:location)"
-      ],
-      "position": [
-        -3.130012140870972,
-        7.106391297284713,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.1131937,
-        0.9935729
-      ]
-    },
-    {
-      "refId": "location_4:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "elevator(VAR0:location)"
-      ],
-      "position": [
-        -0.1097221388812151,
-        3.892246179050917,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.963469,
-        0.2678201
+        0.7686020288902752,
+        0.6397272240461186
       ]
     },
     {
@@ -86,8 +32,8 @@
       "orientation": [
         0.0,
         0.0,
-        0.9614606,
-        0.2749428
+        0.96146058623948,
+        0.2749427960649912
       ]
     },
     {
@@ -104,8 +50,8 @@
       "orientation": [
         0.0,
         0.0,
-        0.895106,
-        0.4458533
+        0.8951060374347273,
+        0.4458533186462796
       ]
     },
     {
@@ -122,44 +68,44 @@
       "orientation": [
         0.0,
         0.0,
-        0.3603573,
-        0.9328143
+        0.3603573176669179,
+        0.9328143457322599
       ]
     },
     {
-      "refId": "location_9:location",
+      "refId": "location_2:location",
       "variable": "VAR0:location",
       "properties": [
-        "back door(VAR0:location)"
+        "bullpen(VAR0:location)"
       ],
       "position": [
-        0.636078470080424,
-        10.22051342611405,
+        7.761807612485979,
+        -1.696797375596191,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.6980345,
-        0.7160641
+        0.5121768182185805,
+        0.8588800305511192
       ]
     },
     {
-      "refId": "location_10:location",
+      "refId": "location_3:location",
       "variable": "VAR0:location",
       "properties": [
-        "cramer(VAR0:location)"
+        "arena(VAR0:location)"
       ],
       "position": [
-        -3.28342093578331,
-        8.629918884356673,
+        -3.130012140870972,
+        7.106391297284713,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.1527661,
-        0.9882624
+        -0.11319370445224242,
+        0.9935729390801556
       ]
     },
     {
@@ -176,11 +122,117 @@
       "orientation": [
         0.0,
         0.0,
-        0.7374547,
-        0.6753966
+        0.7374546993201958,
+        0.6753965993774025
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "elevator(VAR0:location)"
+      ],
+      "position": [
+        -0.1097221388812151,
+        3.892246179050917,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.9634689422279905,
+        0.26782008394083734
+      ]
+    },
+    {
+      "refId": "location_10:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "cramer(VAR0:location)"
+      ],
+      "position": [
+        -3.28342093578331,
+        8.629918884356673,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.1527660959850802,
+        0.9882623740269977
+      ]
+    },
+    {
+      "refId": "location_9:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "back door(VAR0:location)"
+      ],
+      "position": [
+        0.636078470080424,
+        10.22051342611405,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.6980345144845445,
+        0.7160641148586671
+      ]
+    },
+    {
+      "refId": "location_16:location",
+      "variable": "X",
+      "properties": [
+        "\"desk alpha\"(X)"
+      ],
+      "position": [
+        -1.705873875472754,
+        6.396160000561477,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.9991964626183498,
+        0.04008028307006579
+      ]
+    },
+    {
+      "refId": "location_19:location",
+      "variable": "X",
+      "properties": [
+        "\"front door\"(X)"
+      ],
+      "position": [
+        7.700203610616325,
+        0.7229843443616943,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.0626067662668593,
+        0.9980382722208637
+      ]
+    },
+    {
+      "refId": "location_18:location",
+      "variable": "X",
+      "properties": [
+        "\"desk beta\"(X)"
+      ],
+      "position": [
+        -0.2362372624813392,
+        7.152629239280007,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.21924316902627175,
+        0.9756702480015047
       ]
     }
   ]
 }
-
-

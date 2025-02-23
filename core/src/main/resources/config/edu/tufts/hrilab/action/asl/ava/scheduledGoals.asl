@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.List;
 import java.lang.String;
 import java.lang.Long;
+import java.lang.Integer;
 
 () = scheduleGoal() {
 
@@ -149,9 +150,9 @@ import java.lang.Long;
 (Predicate ?scheduledGoalPred) = selectScheduledGoal() {
     List !scheduledGoals;
     Predicate !goalPred;
-    java.lang.Integer !numGoals;
-    java.lang.Integer !goalIndex;
-    java.lang.Integer !spokenIndex;
+    Integer !numGoals;
+    Integer !goalIndex;
+    Integer !spokenIndex;
     java.util.Map !bindings;
     edu.tufts.hrilab.fol.Variable !x = "X";
     Symbol !response;
@@ -198,15 +199,36 @@ import java.lang.Long;
     exit(FAIL,now(know(?actor,whichGoalYouWantToModify)));
 }
 
+() = listScheduledGoals() {
+    List !scheduledGoals;
+    Integer !numGoals;
+    Predicate !goalPred;
+
+    !scheduledGoals = act:getScheduledGoals();
+    op:log(debug, "[listScheduledGoals] current scheduled goals: !scheduledGoals");
+    !numGoals = op:invokeMethod(!scheduledGoals, "size");
+    if (op:isEmpty(!scheduledGoals)) {
+        act:generateResponseFromString("There are no scheduled tasks");
+    } else {
+        for (!goalIndex=0; !goalIndex lt !numGoals; !goalIndex ++) {
+            !goalPred = op:get(!scheduledGoals,!goalIndex);
+            !spokenIndex = op:++(!goalIndex);
+            act:generateResponse(!goalPred);
+        }
+    }
+}
+
 () = forEach(Predicate ?collection, Symbol ?actionName) {
     Predicate !goalPred;
     List !args;
     Symbol !arg;
+    Long !gid;
 
     !args = op:invokeMethod(?collection, "getArgs");
     foreach (!arg : !args) {
         !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?actionName(?actor, !arg)");
-        act:submitGoal(!goalPred);
+        !gid = act:submitGoal(!goalPred);
+//        act:joinOnGoal(!gid);
     }
 }
 
@@ -239,13 +261,18 @@ import java.lang.Long;
         op:add(!locations, !tmp);
         !bindings = act:askQuestionFromString(?actor,"Is there another location on the path?", val(X));
         !locationId = op:get(!bindings, !x);
+        !tmpString = op:invokeMethod(!locationId, "getName");
+        !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !tmpString);
         op:log(debug, "location: !locationId");
     }
     act:generateResponseFromString("Added new patrol path ?name");
     !locationsPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and", !locations);
+    !collectionDefinition = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?name, X)");
+    act:retractBelief(!collectionDefinition);
     !collectionDefinition = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?name, !locationsPredicate)");
     op:log(debug, "[definePatrolPath] collection definition: !collectionDefinition");
     act:assertBelief(!collectionDefinition);
+
 
 }
 

@@ -3,6 +3,7 @@ this location is the coffee maker
 this location is desk alpha
 this location is desk beta
 stop following
+---------
 add a new patrol path lab patrol
 coffee maker
 desk alpha
@@ -11,8 +12,8 @@ dock
 that is all
 ---------
 add a new patrol path office patrol
-evans office
-desk alpha
+front door
+back door
 dock
 that is all
 ---------
@@ -32,6 +33,8 @@ modify a scheduled task
 task 1
 the interval
 every 30 minutes
+--------
+what are your scheduled tasks
 --------
 go to elevator
 go to arena

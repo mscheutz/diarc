@@ -148,7 +148,7 @@ public class PoseConsultant extends Consultant<PoseReference> {
       gson.toJson(jsonClass, writer);
       writer.flush();
     } catch (IOException e) {
-      log.error("Trying to write vision references json to file.", e);
+      log.error("Trying to write pose references json to file.", e);
       return false;
     }
 

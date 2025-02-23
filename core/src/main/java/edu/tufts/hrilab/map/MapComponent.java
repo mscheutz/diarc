@@ -383,7 +383,8 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
 
   @TRADEService
   public Justification saveLocationsToFile() {
-    String path  = System.getProperty("user.dir") + "/" + refsConfigDir + refsConfigFile;
+    //todo: should this just be written somewhere more reasonable? something like the user.home/.diarc? we lose references from the git repo then, but it feels bad to load from the classpath and then write to the file in the source.
+    String path  = System.getProperty("user.dir") + "/../core/src/main/resources/" + refsConfigDir + "/" + refsConfigFile;
     boolean result = consultant.writeReferencesToFile(path);
     return new ConditionJustification(result);
   }

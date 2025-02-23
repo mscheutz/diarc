@@ -304,7 +304,7 @@ import java.util.StringTokenizer;
     // TODO;daniel; monitor and reject tasks when charging potentially?
     while (true) {
         !currBatteryLevel = act:getBatteryLevel();
-        op:log("info", "[monitorBattery] battery level: !currBatteryLevel");
+//        op:log(o", "[monitorBattery] battery level: !currBatteryLevel");
 
         if (op:lt(!currBatteryLevel, !veryLowChargeLevel) && op:equals(!sentUrgentGoalHome, false)) {
             // Urgent case

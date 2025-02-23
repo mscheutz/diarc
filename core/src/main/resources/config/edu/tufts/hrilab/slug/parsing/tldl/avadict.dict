@@ -409,6 +409,7 @@ perform; (C/C)/C; #x,#y,#z.patrol($y,$z)
 
 perform lab patrol with wifi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
 perform office patrol with wifi evaluation; C; patrol(?ADDRESSEE, office patrol, wifiEvaluation)
+perform lab patrol with wi-fi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
 add a new patrol path; C/LIT*; #x.definePatrolPath(?ADDRESSEE,$x)
 the name is; VAL/LIT*; #x.val($x)
 that is all; VAL; val(none)
@@ -420,6 +421,8 @@ location; VAL/REF; #x.val($x)
 execution; VAL; timingOf(execution)
 first execution; VAL; timingOf(execution)
 interval; VAL; timingOf(interval)
+
+what are your scheduled tasks; C; listScheduledGoals(?ADDRESSEE)
 
 %TODO: generalize
 task 1; VAL; num(1)

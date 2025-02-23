@@ -114,6 +114,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
     
     @Override
     public Utterance convertSemanticsToText(Utterance incoming) {
+        log.debug("[convertSemanticsToText] hit with utterance: " + incoming);
 
         Future<Utterance> llmFuture = null;
         Future<Utterance> simpleNLGFuture = null;
@@ -129,7 +130,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
             cachedFuture = executor.submit(() -> cacheNLG.convertSemanticsToText(incoming));
         }
 
-        Utterance output = incoming;
+        Utterance output = null;
         Utterance cachedOutput = null;
         Utterance simpleNLGOutput = null;
         Utterance llmOutput = null;
@@ -143,7 +144,8 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
             }
 
             if (cachedOutput != null && !cachedOutput.getWordsAsString().isEmpty()) {
-                log.debug("[convertSemanticsToText] Using cached NLG response");
+                log.debug("[convertSemanticsToText] Using cached NLG response: " + cachedOutput);
+                log.debug("[convertSemanticsToText] Using cached NLG words: " + cachedOutput.getWordsAsString());
                 return cachedOutput;
             }
         }
