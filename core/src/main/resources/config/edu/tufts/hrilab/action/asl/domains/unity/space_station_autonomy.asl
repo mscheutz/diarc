@@ -53,7 +53,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
   // wait for n milliseconds before starting autonomy. This is to give users a chance to override autonomy with
   // instructions without the robot instantly continuing autonomy between instructions.
-  op:sleep(1000);
+  op:sleep(10000);
   act:generateResponseFromString("Starting autonomy mode.");
 
   while (true) {
