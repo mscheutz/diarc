@@ -226,6 +226,7 @@ import java.util.Map;
     !tracker = op:newObject("java.lang.Integer", 2);
   }
 
+  //TODO EW: If "abort" semantics supplied as answer to question, EXIT fail from this script or let caller handle case?
   //If we timed out and did not receive a response, we need to remove the active question ourselves
   if (op:isNull(?answerBindings)) {
     act:cancelWaitForResponse(!questionString, ?responseForms, !speaker);

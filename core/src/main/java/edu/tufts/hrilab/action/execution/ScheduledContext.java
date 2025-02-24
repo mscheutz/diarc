@@ -131,24 +131,29 @@ public class ScheduledContext extends Context {
             scheduledTaskTimer.cancel();
             scheduledTask.cancel();
             createScheduledTask();
-            //scheduledTaskTimer.schedule(scheduledTask, timeUnit.toMillis(delay));
-            ////Other option is to have the next execution be on this delay relative to original submission
-            if (timerStart == -1) {
-                log.warn("[updateScheduledDelay] encountered unexpected state, task executing but timer start not set");
+            //TODO: should be handled elsewhere probably, also how do we want this to work?
+            //      If updating inner interval e.g. "every 30 minutes" should be relative time?
+            //      But if updating outer scheduled time e.g. "in 20 seconds" should be absolute time?
+            if (caller != null && caller instanceof PersistentContext) {
+                if (timerStart == -1) {
+                    log.warn("[updateScheduledDelay] encountered unexpected state, task executing but timer start not set");
+                    scheduledTaskTimer.schedule(scheduledTask, timeUnit.toMillis(delay));
+                    return;
+                }
+                long delayMillis = timeUnit.toMillis(delay);
+                if (delayMillis <= 0) {
+                    log.error("[updateScheduledDelay] supplied delay invalid: {}", delay);
+                    return;
+                }
+                long newScheduledTime = timerStart + delayMillis;
+                while (newScheduledTime < System.currentTimeMillis()) {
+                    newScheduledTime += delayMillis;
+                }
+                long newScheduledDelay = newScheduledTime - System.currentTimeMillis();
+                scheduledTaskTimer.schedule(scheduledTask, newScheduledDelay);
+            } else {
                 scheduledTaskTimer.schedule(scheduledTask, timeUnit.toMillis(delay));
-                return;
             }
-            long delayMillis = timeUnit.toMillis(delay);
-            if (delayMillis <= 0) {
-                log.error("[updateScheduledDelay] supplied delay invalid: {}", delay);
-                return;
-            }
-            long newScheduledTime = timerStart + delayMillis;
-            while (newScheduledTime < System.currentTimeMillis()) {
-                newScheduledTime += delayMillis;
-            }
-            long newScheduledDelay = newScheduledTime - System.currentTimeMillis();
-            scheduledTaskTimer.schedule(scheduledTask, newScheduledDelay);
             timerStart = System.currentTimeMillis();
         }
     }
@@ -262,7 +267,7 @@ public class ScheduledContext extends Context {
     protected void resetConcreteContext() {
         scheduledTaskExecuting = false;
         timerStart = -1;
-        if (!relative && System.currentTimeMillis() > time.getTime()) {
+        if (!firstExecution && !relative && System.currentTimeMillis() > time.getTime()) {
             //TODO: is this desired? Want it to work this way if wrapped in a persistent goal
             //If the task is scheduled for a Date which has already passed, advance the day
             Calendar cal = Calendar.getInstance();

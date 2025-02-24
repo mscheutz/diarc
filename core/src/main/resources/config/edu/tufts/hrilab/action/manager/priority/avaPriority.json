@@ -5,7 +5,7 @@
   },
   "scheduleGoal": {
     "priority": 1,
-    "priorityTier": "URGENT"
+    "priorityTier": "NORMAL"
   },
   "monitorBattery": {
     "priority": 1,

@@ -393,8 +393,8 @@ seconds; VAL\NUM ; #x.time($x,SECONDS)
 hour; VAL\NUM ; #x.time($x,HOURS)
 hours; VAL\NUM ; #x.time($x,HOURS)
 
-the task is; VAL/C; #x.val($x)
-the task is; VAL/VERBT; #x.val($x)
+the task is; VAL/C; #x.taskPredicate($x)
+the task is; VAL/VERBT; #x.taskPredicate($x)
 
 add a new scheduled task; C; scheduleGoal(?ADDRESSEE)
 
@@ -411,12 +411,12 @@ perform lab patrol with wifi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiE
 perform office patrol with wifi evaluation; C; patrol(?ADDRESSEE, office patrol, wifiEvaluation)
 perform lab patrol with wi-fi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
 add a new patrol path; C/LIT*; #x.definePatrolPath(?ADDRESSEE,$x)
-the name is; VAL/LIT*; #x.val($x)
-that is all; VAL; val(none)
+the name is; VAL/LIT*; #x.name($x)
+that is all; VAL; location(none)
 modify a scheduled task; C; modifyScheduledGoal(?ADDRESSEE)
 the interval; VAL; timingOf(interval)
 
-location; VAL/REF; #x.val($x)
+location; VAL/REF; #x.location($x)
 
 execution; VAL; timingOf(execution)
 first execution; VAL; timingOf(execution)
@@ -424,7 +424,10 @@ interval; VAL; timingOf(interval)
 
 what are your scheduled tasks; C; listScheduledGoals(?ADDRESSEE)
 
+%num is special term
 %TODO: generalize
-task 1; VAL; num(1)
-task 2; VAL; num(2)
-task 3; VAL; num(3)
+task 1; VAL; number(1)
+task 2; VAL; number(2)
+task 3; VAL; number(3)
+
+nevermind; VAL; abort(question)

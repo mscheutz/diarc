@@ -356,7 +356,12 @@ public class DialogueComponent extends DiarcComponent {
   @Action
   public synchronized void answerQuestion(Question question, Term answerSemantics) {
     Term matchingForm = question.getLastFormMatch();
-    question.answer(matchingForm.getBindings(answerSemantics));
+    if (matchingForm != null) {
+      question.answer(matchingForm.getBindings(answerSemantics));
+    } else {
+      log.debug("[answerQuestion] last form match for supplied question is null, should indicate question was aborted");
+      question.answer(new HashMap<>());
+    }
   }
 
   /**

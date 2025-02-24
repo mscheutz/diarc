@@ -178,16 +178,16 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     Future<Utterance> pmpFuture = null;
 
     if (useLLM) {
-      llmFuture = executor.submit(() -> llmParser.parseUtterance(incoming));
+      llmFuture = executor.submit(() -> llmParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
     if (useTLDL) {
-      tldlFuture = executor.submit(() -> tldlParser.parseUtterance(incoming));
+      tldlFuture = executor.submit(() -> tldlParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
     if (useCache) {
-      cachedFuture = executor.submit(() -> cacheParser.parseUtterance(incoming));
+      cachedFuture = executor.submit(() -> cacheParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
     if (usePMP) {
-      pmpFuture = executor.submit(() -> patternMatchingParser.parseUtterance(incoming));
+      pmpFuture = executor.submit(() -> patternMatchingParser.parseUtterance(new Utterance.Builder(incoming).build()));
     }
 
     Utterance output = incoming;
