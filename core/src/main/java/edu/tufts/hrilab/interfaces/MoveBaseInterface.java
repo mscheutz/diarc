@@ -63,15 +63,15 @@ public interface MoveBaseInterface {
    * @param location name of the desired location to navigate to
    * @return justification specifying if the robot navigated to the location
    */
-  @TRADEService
-  @Action
-  @Effect(
-          effect={"at(?actor,?location)"},
-          type = EffectType.SUCCESS,
-          observable = {"at(?actor,?location)"}
-  )
-  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
-  Justification goToLocation(Symbol location);
+//  @TRADEService
+//  @Action
+//  @Effect(
+//          effect={"at(?actor,?location)"},
+//          type = EffectType.SUCCESS,
+//          observable = {"at(?actor,?location)"}
+//  )
+//  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
+//  Justification goToLocation(Symbol location);
 
   /**
    * go to the location and then move forward until certain distance from object in front
@@ -81,18 +81,19 @@ public interface MoveBaseInterface {
    * @return justification specifying if the robot navigated to the location
    */
   @TRADEService
-  @Action
-  @Condition(
-      condition={"at(?actor,?initialLocation)"},
-      type= ConditionType.PRE,
-      observable={"at(?actor,?initialLocation)"}
-  )
-  @Effect(
-      effect={"at(?actor,?desiredLocation)", "not(at(?actor,?initialLocation))"},
-      type = EffectType.SUCCESS,
-      observable = {"at(?actor,?desiredLocation)", "not(at(?actor,?initialLocation))"}
-  )
-  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
+//  @Action
+//  @Condition(
+//      condition={"at(?actor,?initialLocation)"},
+//      type= ConditionType.PRE,
+//      observable={"at(?actor,?initialLocation)"}
+//  )
+//  @Effect(
+//      effect={"at(?actor,?desiredLocation)", "not(at(?actor,?initialLocation))"},
+//      type = EffectType.SUCCESS,
+//      observable = {"at(?actor,?desiredLocation)"},
+//      infer = {"not(at(?actor,?initialLocation))"}
+//  )
+//  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol desiredLocation, Symbol initialLocation);
 
   /**

@@ -26,4 +26,4 @@ admin(evan).
 
 %% Specific beliefs to ava
 alwaysAt(patient,robot).
-at(self,unknown).
+at(ava,unknown).

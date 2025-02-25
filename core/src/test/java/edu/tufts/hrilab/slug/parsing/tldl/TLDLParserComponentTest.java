@@ -4243,5 +4243,9 @@ public class TLDLParserComponentTest {
         assertTrue(testUtterance("the name is lab patrol",
                 "REPLY(brad,self,val(\"lab patrol\"),{})",
                 speaker, "self"));
+
+        assertTrue(testUtterance("i will teach you how to dance",
+                "REPLY(brad,self,val(\"lab patrol\"),{})",
+                speaker, "self"));
     }
 }
