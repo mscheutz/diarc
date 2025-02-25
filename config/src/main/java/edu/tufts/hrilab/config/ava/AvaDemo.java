@@ -2,12 +2,12 @@ package edu.tufts.hrilab.config.ava;
 
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
-import edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class AvaDemo extends DiarcConfiguration {
   boolean useMockAva = false;
@@ -16,6 +16,11 @@ public class AvaDemo extends DiarcConfiguration {
   boolean useGUI = false;
   boolean useQueueEM = true;
   String avaArgs = "";
+  boolean useLLMParser = true;
+  boolean useLLMNLG = true;
+  String service = "llamahf";
+  String model = "Meta-Llama-3.1-70B-Instruct";
+  boolean usePrivateEndpoint = false; //Do not set to true, use arg
 
   @Override
   protected List<Option> additionalUsageInfo() {
@@ -28,6 +33,7 @@ public class AvaDemo extends DiarcConfiguration {
     options.add(Option.builder("uri").hasArg().desc("set ava uri").build());
     options.add(Option.builder("map").hasArg().desc("set map file").build());
     options.add(Option.builder("mock").desc("use mock ava component").build());
+    options.add(Option.builder("privateEndpoint").desc("run using privately hosted endpoint rather than free serverless endpoint").build());
     return options;
   }
 
@@ -57,17 +63,46 @@ public class AvaDemo extends DiarcConfiguration {
     if (cmdLine.hasOption("map")) {
       avaArgs += " -map " + cmdLine.getOptionValue("map");
     }
+    if (cmdLine.hasOption("privateEndpoint")) {
+      log.warn("You have configured the system to use the privately hosted HuggingFace endpoint. THIS COSTS MONEY AND SHOULD NOT BE USED FOR FRIVOLOUS TESTING. If you are doing this intentionally, please enter 1 into the console");
+      System.out.println("Enter: ");
+      Scanner reader = new Scanner(System.in);
+      int in = reader.nextInt();
+      if (in == 1) {
+        log.warn("using private endpoint");
+        usePrivateEndpoint = true;
+      } else {
+        log.warn("not using private endpoint");
+      }
+    }
   }
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
 
-    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist");
+    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist";
+    if (useLLMParser) {
+      parserArgs += " -llm";
+    }
+    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, parserArgs);
     createInstance(edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class);
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
 //    createInstance(edu.tufts.hrilab.slug.nlg.SimpleNLGComponent.class);
-    DiarcComponent.createInstance(HybridNLGComponent.class, "-simpleNLG -cache -cachePersist -cacheName ava-reverse");
+    String nlgArgs = "-simpleNLG -cache -cachePersist -cacheName ava-reverse";
+    if (useLLMNLG) {
+      nlgArgs += " -llm";
+    }
+    DiarcComponent.createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
+
+    if (useLLMNLG || useLLMParser) {
+      createInstance(edu.tufts.hrilab.llm.serviceproviders.AvaLLMServiceProvider.class,"");
+      String llmComponentArgs = String.format("-service %s -model %s -temperature 0.6", service, model);
+      if (usePrivateEndpoint) {
+        llmComponentArgs += " -endpoint https://z6xvb4wfqwn59s1r.us-east-1.aws.endpoints.huggingface.cloud";
+      }
+      createInstance(edu.tufts.hrilab.llm.LLMComponent.class, llmComponentArgs);
+    }
 
     if (useGUI) {
       createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker evan -addressee ava");
@@ -95,7 +130,6 @@ public class AvaDemo extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.ava.AvaComponent.class, avaArgs); //Ava_SomervilleHQ_Master_12262023_G
     }
 
-    createInstance(edu.tufts.hrilab.llm.LLMComponent.class);
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
       "-goal listen(self) monitorBattery(self) -beliefinitfile demos.pl agents/ava.pl"
         + " -dbfile core.asl manipulation.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl vision.asl ava/ava.asl ava/scheduledGoals.asl"

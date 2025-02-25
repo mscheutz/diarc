@@ -184,7 +184,7 @@
       "refId": "location_16:location",
       "variable": "X",
       "properties": [
-        "\"desk alpha\"(X)"
+        "desk alpha(X)"
       ],
       "position": [
         -1.705873875472754,
@@ -202,7 +202,7 @@
       "refId": "location_19:location",
       "variable": "X",
       "properties": [
-        "\"front door\"(X)"
+        "front door(X)"
       ],
       "position": [
         7.700203610616325,
@@ -220,7 +220,7 @@
       "refId": "location_18:location",
       "variable": "X",
       "properties": [
-        "\"desk beta\"(X)"
+        "desk beta(X)"
       ],
       "position": [
         -0.2362372624813392,

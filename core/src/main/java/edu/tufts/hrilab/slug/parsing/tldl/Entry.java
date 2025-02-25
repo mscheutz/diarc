@@ -321,7 +321,7 @@ class SemanticRule implements Cloneable {
     body=body.trim();
 
     //TODO:brad: what if we put everything in quotes? would that affect anything?
-    Pattern alphaNumericPattern = Pattern.compile("\\w+");
+    Pattern alphaNumericPattern = Pattern.compile("[\\w ]+");
     Matcher matcher = alphaNumericPattern.matcher(body);
     if (!matcher.matches()) {
       body="\"" + body + "\"";
