@@ -121,13 +121,13 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
         Future<Utterance> cachedFuture = null;
 
         if (useLLM) {
-            llmFuture = executor.submit(() -> llmGenerator.convertSemanticsToText(incoming));
+            llmFuture = executor.submit(() -> llmGenerator.convertSemanticsToText(new Utterance.Builder(incoming).build()));
         }
         if (useSimpleNLG) {
-            simpleNLGFuture = executor.submit(() -> simpleNLG.convertSemanticsToText(incoming));
+            simpleNLGFuture = executor.submit(() -> simpleNLG.convertSemanticsToText(new Utterance.Builder(incoming).build()));
         }
         if (useCache) {
-            cachedFuture = executor.submit(() -> cacheNLG.convertSemanticsToText(incoming));
+            cachedFuture = executor.submit(() -> cacheNLG.convertSemanticsToText(new Utterance.Builder(incoming).build()));
         }
 
         Utterance output = null;

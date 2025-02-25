@@ -8,6 +8,7 @@ import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.description.ContextDescription;
 import edu.tufts.hrilab.action.execution.ArgumentBasedContext;
+import edu.tufts.hrilab.action.execution.PersistentContext;
 import edu.tufts.hrilab.action.execution.ScheduledContext;
 import edu.tufts.hrilab.action.listener.GoalListener;
 import edu.tufts.hrilab.action.manager.Resource;
@@ -347,6 +348,12 @@ public class Goal {
                   newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), dateSymbol);
                   info.goal = Factory.createPredicate("persistent", boundGoal.get(0), newScheduledPred);
               }
+              if (isScheduled()) {
+                  ScheduledContext scheduledContext = getScheduledContext();
+                  if (scheduledContext != null) {
+                      scheduledContext.resetTask(getPredicate());
+                  }
+              }
               return true;
           }
       }
@@ -365,9 +372,11 @@ public class Goal {
                   newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), delaySymbol, timeUnitSymbol);
                   info.goal = Factory.createPredicate("persistent", boundGoal.get(0), newScheduledPred);
               }
-              ScheduledContext scheduledContext = getScheduledContext();
-              if (scheduledContext != null) {
-                  scheduledContext.resetTask(getPredicate());
+              if (isScheduled()) {
+                  ScheduledContext scheduledContext = getScheduledContext();
+                  if (scheduledContext != null) {
+                      scheduledContext.resetTask(getPredicate());
+                  }
               }
               return true;
           }
@@ -382,6 +391,7 @@ public class Goal {
               scheduledContext.updateScheduledDelay(delay, timeUnit);
               info.scheduledDelay = delay;
               info.scheduledDelayTimeUnit = timeUnit;
+              info.scheduledDate = null;
               return true;
           }
       }
@@ -391,11 +401,13 @@ public class Goal {
   private ScheduledContext getScheduledContext() {
       contextLock.lock();
       try {
-          if (rootContext != null) {
-              if (!rootContext.getChildContexts().isEmpty()) {
-                  if (rootContext.getChildContexts().get(0) instanceof  ScheduledContext) {
-                      return (ScheduledContext) rootContext.getChildContexts().get(0);
-                  }
+          Context c = rootContext;
+          while (c != null && !c.getChildContexts().isEmpty()) {
+              Context child = c.getChildContexts().get(0);
+              if (child instanceof ScheduledContext) {
+                  return (ScheduledContext) child;
+              } else if (child instanceof PersistentContext) {
+                  c = child;
               }
           }
       } finally {
@@ -418,6 +430,8 @@ public class Goal {
           if (scheduledContext != null) {
               scheduledContext.updateScheduledTime(scheduledDate);
               info.scheduledDate = scheduledDate;
+              info.scheduledDelay = null;
+              info.scheduledDelayTimeUnit = null;
               return true;
           }
       }

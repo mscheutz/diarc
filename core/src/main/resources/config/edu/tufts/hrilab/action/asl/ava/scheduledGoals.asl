@@ -22,8 +22,20 @@ import edu.tufts.hrilab.action.justification.Justification;
     Symbol !addl;
     Symbol !intervalUnits;
     Symbol !timeSymbol = "none";
+    java.util.List !responseFormList;
+    Predicate !responseForm;
 
-    !bindings = act:askQuestionFromString(?actor, "What would you like to do?", val(X));
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "time(X)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "time(X,Y)");
+    op:add(!responseFormList,!responseForm);
+
+
+    !bindings = act:askQuestionFromString(?actor, "What would you like to do?", taskPredicate(X));
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
     !goalPredicate = op:get(!bindings, !x);
     op:log(debug, "[scheduleGoal] goal !goalPredicate");
 
@@ -31,28 +43,59 @@ import edu.tufts.hrilab.action.justification.Justification;
     //!time = op:get(!bindings, !x);
     //op:log(debug, "[scheduleGoal] time !time");
 
-    !bindings = act:askQuestionFromString(?actor, "When should this task be scheduled for?", time(X,Y));
+    !bindings = act:askQuestionFromString(?actor, "When should this task be scheduled for?", !responseFormList);
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
     !time = op:get(!bindings, !x);
     !addl = op:get(!bindings, !y);
-    if (~op:equalsValue(!addl, pm())) {
-      if (~op:equalsValue(!addl, am())) {
-        !time = act:parseTime(!time, !addl);
+    op:log("debug",!addl);
+    if (~op:isNull(!addl)) {
+        if (op:equalsValue(!addl, pm) || op:equalsValue(!addl, am)) {
+            !time = act:parseTime(!time, !addl);
+            !timeSymbol = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "notNone"); //this is a bad way to do this!
+        }
+    } else {
         !timeSymbol = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "notNone"); //this is a bad way to do this!
-      }
     }
     op:log(debug, "[scheduleGoal] time/units: !time/!addl");
 
     !bindings = act:askQuestionFromString(?actor, "Should this task be repeated?", val(X));
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
     !confirmation = op:get(!bindings, !x);
 
+    //TODO: clean this up
     if (op:equalsValue(!confirmation, yes())) {
-      !bindings = act:askQuestionFromString(?actor, "How often?", time(X,Y));
+      !bindings = act:askQuestionFromString(?actor, "How often?", !responseFormList);
+      if (op:invokeMethod(!bindings,"isEmpty")) {
+          exit(FAIL,not(wasAnswered(myQuestion)));
+      }
       !interval = op:get(!bindings, !x);
       !intervalUnits = op:get(!bindings, !y);
       if (op:equalsValue(!timeSymbol, "none")) {
-          !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time, !addl)");
+          if (op:isNull(!intervalUnits)) {
+            !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval)), !time, !addl)");
+          } else {
+            if (op:equalsValue(!intervalUnits, pm) || op:equalsValue(!intervalUnits, am)) {
+                !interval = act:parseTime(!interval, !intervalUnits);
+                !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval)), !time, !addl)");
+            } else {
+                !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time, !addl)");
+            }
+          }
       } else  {
-          !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time)");
+          if (op:isNull(!intervalUnits)) {
+            !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval)), !time)");
+          } else {
+            if (op:equalsValue(!intervalUnits, pm) || op:equalsValue(!intervalUnits, am)) {
+                !interval = act:parseTime(!interval, !intervalUnits);
+                !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval)), !time)");
+            } else {
+                !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time)");
+            }
+          }
       }
     } else {
       if (op:equalsValue(!timeSymbol, "none")) {
@@ -128,7 +171,7 @@ import edu.tufts.hrilab.action.justification.Justification;
         if (op:isNull(!yResponse)) {
             !success = tsc:updateScheduledGoalTime(!goalId, !response, !modifyInnerGoal);
         } else {
-            if (op:equalsValue(!yResponse, pm()) || op:equalsValue(!yResponse, am())) {
+            if (op:equalsValue(!yResponse, pm) || op:equalsValue(!yResponse, am)) {
                 !response = act:parseTime(!response, !yResponse);
                 !success = tsc:updateScheduledGoalTime(!goalId, !response, !modifyInnerGoal);
             } else {
@@ -138,9 +181,11 @@ import edu.tufts.hrilab.action.justification.Justification;
         if (op:equals(!success,True)) {
             act:generateResponseFromString("Ok");
             return;
+        } else {
+            exit(FAIL,cannot(parse(?actor,theSuppliedTime)));
         }
     }
-    exit(FAIL,not(schedule(?actor,theSuppliedTime)));
+    exit(FAIL,not(supplied(timing)));
 
     ////todo: remove this hack. should query for actual goals and actual semantics
     //act:sayText("There is one goal scheduled");
@@ -171,8 +216,9 @@ import edu.tufts.hrilab.action.justification.Justification;
         //act:generateResponse("There are no currently scheduled goals");
         //return;
     } elseif (op:equals(!numGoals,1)) {
-        //TODO: could report what this goal is
         ?scheduledGoalPred = op:get(!scheduledGoals,0);
+        act:generateResponseFromString("There is currently one scheduled task");
+        act:generateResponse(?scheduledGoalPred);
         return;
     } else {
         act:generateResponseFromString("There are multiple currently scheduled tasks");
@@ -182,9 +228,9 @@ import edu.tufts.hrilab.action.justification.Justification;
             act:generateResponseFromString("Task !spokenIndex");
             act:generateResponse(!goalPred);
         }
-        act:suspendWaitForResponse(num(X),?actor,false);
-        !bindings = act:askQuestionFromString(?actor, "Which task did you want to modify?", num(X));
-        act:resumeWaitForResponse(num(X),?actor);
+        act:suspendWaitForResponse(number(X),?actor,false);
+        !bindings = act:askQuestionFromString(?actor, "Which task did you want to modify?", number(X));
+        act:resumeWaitForResponse(number(X),?actor);
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
             !numberString = op:getName(!response);
@@ -194,11 +240,11 @@ import edu.tufts.hrilab.action.justification.Justification;
                 ?scheduledGoalPred = op:get(!scheduledGoals,!goalNumber);
                 return;
             } else {
-                act:generateResponseFromString("Task !goalNumber was not a valid option");
+                act:generateResponseFromString("Task !numberString was not a valid option");
             }
         }
     }
-    exit(FAIL,now(know(?actor,whichGoalYouWantToModify)));
+    exit(FAIL,not(know(?actor,whichGoalYouWantToModify)));
 }
 
 () = listScheduledGoals() {
@@ -260,21 +306,33 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     !locations = op:newArrayList("edu.tufts.hrilab.fol.Symbol");
 
-    !bindings = act:askQuestionFromString(?actor,"What location is on the path?", val(X));
+    !bindings = act:askQuestionFromString(?actor,"What location is on the path?", location(X));
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
     !locationId = op:get(!bindings, !x);
+    if (op:equalsValue(!locationId,"none()")) {
+        exit(FAIL,not(wasSupplied(anyLocation)));
+    }
     !tmpString = op:invokeMethod(!locationId, "getName");
     !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !tmpString);
     op:log(debug, "location: !tmp");
     op:add(!locations, !tmp);
 
-    !bindings = act:askQuestionFromString(?actor,"Is there another location on the path?", val(X));
+    !bindings = act:askQuestionFromString(?actor,"What other location is on the path?", location(X));
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
     !locationId = op:get(!bindings, !x);
     !tmpString = op:invokeMethod(!locationId, "getName");
     !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !tmpString);
     op:log(debug, "location: !tmp");
     while(~op:equalsValue(!locationId,"none()")){
         op:add(!locations, !tmp);
-        !bindings = act:askQuestionFromString(?actor,"Is there another location on the path?", val(X));
+        !bindings = act:askQuestionFromString(?actor,"What other location is on the path?", location(X));
+        if (op:invokeMethod(!bindings,"isEmpty")) {
+            exit(FAIL,not(wasAnswered(myQuestion)));
+        }
         !locationId = op:get(!bindings, !x);
         !tmpString = op:invokeMethod(!locationId, "getName");
         !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !tmpString);
