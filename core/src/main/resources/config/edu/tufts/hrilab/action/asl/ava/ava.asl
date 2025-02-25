@@ -15,123 +15,30 @@ import java.util.Map;
 import java.util.Random;
 import java.util.StringTokenizer;
 
-/******************************** General behavior scripts Scripts ********************************/
-
-() = handleAvaDialogue(Symbol ?addressee) {
-    Variable !x = "X";
-    Variable !y = "Y";
-    Variable !z = "Z";
-    Variable !w = "W";
-
-    Predicate !confirmationSemantics;
-    Predicate !answerSemantics;
-    Map !bindings;
-    String !yesOrNo;
-    boolean !understood = false;
-
-    String !responseForm = "or(";
-    !responseForm = op:invokeMethod(!responseForm, "concat", "want(!w,escortToLocation(self,!x,!y)),");
-    !responseForm = op:invokeMethod(!responseForm, "concat", "want(!w,escortToLocation(self,!x,!y,!z)),");
-    !responseForm = op:invokeMethod(!responseForm, "concat", "want(!w,goToLocation(self,!y)),");
-    !responseForm = op:invokeMethod(!responseForm, "concat", "want(!w,goHome(self))");
-    !responseForm = op:invokeMethod(!responseForm, "concat", ")");
-
-    op:log("debug", "Response form: !responseForm");
-
-    String !questionString = "";
-    String !suggestedInput = "take me to the elevator";
-    int !responseTimeout = -1;
-    boolean !disableWakeWord = false;
-    Predicate !yesSemantics = op:createPredicate("val(yes)");
-    while (true) {
-//      tsc:setSuggestedInput(!suggestedInput);
-      !answerSemantics = act:askQuestionFromString(?addressee, !questionString, !responseForm, 1, !responseTimeout, !disableWakeWord);
-      op:log("info", "got answer semantics: !answerSemantics");
-
-      if (op:isNull(!answerSemantics)) {
-        op:log("info", "answer semantics are NULL");
-        tsc:displayText("Going back to idle");
-        !questionString = op:assign("");
-        !responseTimeout = op:assign(-1);
-        !disableWakeWord = op:assign(false);
-      } else {
-//        tsc:setSuggestedInput("yes or no");
-        !confirmationSemantics = act:askQuestionFromString(?addressee, "Did I understand that correctly?", "val(!x)", 1, 30);
-
-        if (op:isNull(!confirmationSemantics)) {
-          tsc:displayText("Going back to idle");
-          !understood = op:assign(true); // exit while loop
-        } else {
-          // check confirmation semantics and set !understood
-          if (op:equals(!confirmationSemantics, !yesSemantics)) {
-            // understood speaker correctly, process response
-            op:log("info", "Confirmed with yes");
-            !suggestedInput = op:setNull();
-//            tsc:setSuggestedInput(!suggestedInput);
-
-            goal:handled(?actor, ?actor, !answerSemantics, direct);
-            !questionString = op:assign("");
-            !suggestedInput = op:assign("take me to the elevator");
-            !responseTimeout = op:assign(-1);
-            !disableWakeWord = op:assign(false);
-          } else {
-            // did not understand correctly -- ask "clarifying" question
-            op:log("info", "Response semantics: !confirmationSemantics");
-            !questionString = op:assign("What would you like me to do?");
-            !responseTimeout = op:assign(20);
-            !disableWakeWord = op:assign(true);
-          }
-        }
-      }
-    }
-}
-
 /******************************** Move Escort Deliver Scripts ********************************/
 
 () = escortToLocation(Symbol ?escortee, Symbol ?dstLoc) {
-    Symbol !escorteeLoc;
+    Symbol !current;
 
-    // TODO;daniel; this doesn't deal with novel names
     conditions : {
-//        pre : confirmed(?dstLoc);
-        or : {
-            pre : at(?escortee, !escorteeLoc);
-            pre : alwaysAt(?escortee, robot);
-        }
+       pre infer : not(at(?actor, unknown));
     }
-    op:log("debug", "Starting [escortToLocation] with ?escortee, ?dstLoc");
 
-    Predicate !isSpeakerPred = op:createPredicate("alwaysAt(?escortee, robot)");
-    List !beliefs = act:queryBelief(!isSpeakerPred);
-
-    if (op:invokeMethod(!beliefs, "isEmpty")) {
-        // If the escortee is not at the robot
-        act:escortToLocation(?escortee, !escorteeLoc, ?dstLoc);
-    } else {
-        // If the escortee is at the robot (should only be true if the escortee is the speaker)
-        act:escortToLocation(?escortee, "robot", ?dstLoc);
-    }
-//  op:log("debug", "Finishing [escortToLocation]");
+    !current = act:getCurrentLocation();
+    act:escortToLocation(?escortee, !current, ?dstLoc);
 }
 
 () = escortToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
-//    conditions : {
-//        or : {
-//            pre : confirmed(?dstLoc);
-//            pre : confirmed(?escorteeLoc);
-//        }
-//    }
-
     // always forget the location of the person escorting
     effects : {
         always infer : not(at(?escortee, ?escorteeLoc));
     }
 
-    op:log("debug", "Starting [escortToLocation] with ?escortee, ?escorteeLoc, ?dstLoc");
-
-
     Predicate !assertPred = op:createPredicate("at(?escortee,?escorteeLoc)");
     act:assertBelief(!assertPred);
+
+    act:goToLocation(?escorteeLoc);
+    act:sayText("Please come with me");
 
     // Check if the person is not at the robot
     Predicate !queryPred = op:createPredicate("at(?escortee,robot)");
@@ -447,4 +354,64 @@ import java.util.StringTokenizer;
 
     !currentLocation = act:getCurrentLocation();
     act:generateResponse(at(?actor, !currentLocation));
+}
+
+() = learnNewTask() {
+    Predicate !actionSignature;
+    Predicate !pred;
+    String !taskName;
+    !taskName = act:askForTaskName();
+
+    if (op:isNull(!taskName)) {
+        exit(FAIL, not(supplied(taskName)));
+    }
+
+    !actionSignature = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !taskName);
+    op:log(info,!actionSignature);
+    async {
+        act:waitForActionLearningStart(!actionSignature);
+
+        op:log(info, !taskName);
+        act:learningPrompt(!taskName);
+    }
+    act:learnAction(!actionSignature);
+    !pred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knowHowTo(?actor,perform(!taskName))");
+    act:generateResponse(!pred);
+}
+
+() = learningPrompt(String ?taskName) {
+    Predicate !pred;
+    !pred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "how(?actor,perform(?taskName))");
+    op:log(info,"!pred");
+    act:generateResponse(!pred);
+}
+
+() = endTaskLearning() {
+    java.lang.Boolean !learningStateExists = False;
+
+    !learningStateExists = tsc:endActionLearning(?actor);
+    if (op:equals(!learningStateExists,False)) {
+        act:generateResponseFromString("Not currently learning");
+    }
+}
+
+
+(String ?name) = askForTaskName() {
+    Symbol !response;
+    Map !bindings;
+    Variable !x = "X";
+
+    (!bindings) = act:askQuestionFromString(?actor,"What is the name of the task?", taskName(X));
+   if (op:invokeMethod(!bindings, "isEmpty")) {
+        ?name = op:setNull();
+    } else {
+        !response = op:get(!bindings,!x);
+        ?name = op:getName(!response);
+    }
+}
+
+() = say(String ?literal) {
+    act:toggleVoiceOn();
+    act:sayText(?literal);
+    act:toggleVoiceOff();
 }
