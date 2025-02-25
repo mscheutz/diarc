@@ -1,4 +1,3 @@
-from pytrade.wrapper import TRADEWrapper
 import copy
 import logging
 import sys
@@ -25,13 +24,21 @@ from bound_mpc_msg.srv import MPCParams, Trajectory, UpdateConstraints
 from control_msgs.action import GripperCommand
 from edu.tufts.hrilab.interfaces import PlannerInterface
 from jpype import JImplements, JOverride, JString
+from pytrade.wrapper import TRADEWrapper
 from rclpy.action import ActionClient
 from rclpy.node import Node
 from scipy.spatial.transform import Rotation as R
 
 # Initialize Logging
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-logging.info("Starting Planner Service...")
+formatter = logging.Formatter(
+    fmt="%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%H:%M:%S",
+)
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(formatter)
+logger = logging.getLogger("Logger")
+logger.addHandler(handler)
+logger.info("Starting Planner Service...")
 
 
 @JImplements(PlannerInterface)
@@ -41,14 +48,14 @@ class DiarcWrapper:
         self.orientations = []
         self.received_pose = False
 
-        p_cup_side = np.array([0.4, 0.45, 0.27])
+        p_cup_side = np.array([0.4, 0.45, 0.07])
         r_cup_side = R.from_euler("XYZ", [0, 0, np.pi / 2]).as_matrix()
         # p_cup_side = np.array([0.4, -0.4, 0.27])
         # r_cup_side = R.from_euler("XYZ", [0, 0, -np.pi / 2]).as_matrix()
         self.positions.append(p_cup_side)
         self.orientations.append(r_cup_side)
 
-        p_cup_top = p_cup_side + np.array([0.0, 0.0, 0.05])
+        p_cup_top = p_cup_side + np.array([-0.04, 0.0, 0.05])
         r_cup_top = R.from_euler("XYZ", [0, np.pi / 2, 0]).as_matrix()
         r_cup_top = R.from_euler("XYZ", [0, 0, np.pi / 2]).as_matrix() @ r_cup_top
         self.positions.append(p_cup_top)
@@ -80,9 +87,16 @@ class DiarcWrapper:
         self.add_obs = [self.obstacles[obs_id]]
 
     @JOverride
-    def send_goal(self):
-        logging.info("GOAL RECEIVED")
-        self.go_to_pose(0)
+    def send_to_planner(self, instruction):
+        logger.info(f"(Planner) Instruction received {instruction}")
+        split_instr = str(instruction).split("(")
+        logger.info(f"(Planner) Split instruction{split_instr}")
+        if split_instr[0] == "GRASP":
+            logger.info(f"(Planner) Grasping instruction {split_instr[1]}")
+            if split_instr[1] == "MUG_DEFAULT)":
+                self.go_to_pose(0)
+            else:
+                self.go_to_pose(1)
         return "s"
 
 
@@ -118,15 +132,15 @@ class ExperimentRunner(Node):
         self.q0[6] = np.pi / 2
 
         # Define obstacles as boxes by limits (-x, -y, -z, x, y, z)
-        p1 = np.array([0.4, 0.45, 0.27])
+        p1 = np.array([0.4, 0.45, 0.07])
         self.obstacles = [
             [
                 0.2,
                 -1.0,
+                -0.1,
+                1.0,
+                1.0,
                 0.0,
-                1.0,
-                1.0,
-                0.2,
             ],
             [
                 p1[0] - 0.03,
@@ -209,7 +223,7 @@ class ExperimentRunner(Node):
         resp = future.result()
 
     def command_gripper(self, position):
-        logging.info("Opening gripper ...")
+        logger.info("Opening gripper ...")
         msg = GripperCommand.Goal()
         msg.command.position = position
         msg.command.max_effort = 100.0
@@ -258,7 +272,7 @@ class ExperimentRunner(Node):
             e_r_bound,
         ) = get_default_path(p0, r0, len(p_via))
         stop = time.time()
-        logging.info(f"Path planning took {stop - start:.2f}s")
+        logger.info(f"Path planning took {stop - start:.2f}s")
 
         # Publish Trajectory
         p0fk, _, _ = self.robot_model.forward_kinematics(q0, 0 * q0)
@@ -287,21 +301,11 @@ def main(diarc_wrapper):
     # Listener to actual robot data
     listener = RobotListener()
     # Create Logger
-    logger = Logger(0.0, node.params.n)
+    logger_mpc = Logger(0.0, node.params.n)
     # Start the logging
-    logger.start()
-    while logger.i < 1:
-        rclpy.spin_once(logger)
-
-    # wrapper = TRADEWrapper()
-    # wrapper.spin()
-    # dummyObject = dummyWrapper()
-    # TRADE.registerAllServices(dummyObject, "")
-    # time.sleep(1)
-    # logging.info(TRADE.getAvailableServices())
-    # wrapper.call_trade(
-    #     "undock",
-    # )
+    logger_mpc.start()
+    while logger_mpc.i < 1:
+        rclpy.spin_once(logger_mpc)
 
     # Initial Cartesian pose
     q0 = node.q0
@@ -316,10 +320,11 @@ def main(diarc_wrapper):
         new_obs = True
         init = True
         while (
-            logger.phi_max - logger.phi > 0.01
-            or np.linalg.norm(logger.dq_traj[-1]) > 0.01
-            or logger.phi_max == 0.0
+            logger_mpc.phi_max - logger_mpc.phi > 0.01
+            or np.linalg.norm(logger_mpc.dq_traj[-1]) > 0.01
+            or logger_mpc.phi_max == 0.0
         ):
+            # while True:
             # if init:
             #     diarc_wrapper.go_to_pose(0)
             #     init = False
@@ -333,28 +338,27 @@ def main(diarc_wrapper):
             #     diarc_wrapper.add_obstacles(0)
             #     new_obs = False
 
-            logging.info(f"{diarc_wrapper.received_pose}")
             if diarc_wrapper.received_pose:
-                logging.info("Received pose")
+                logger.info("Received pose")
                 diarc_wrapper.received_pose = False
-                if logger.i > 0:
-                    node.p_horizon = [x[-1][:3] for x in logger.p_traj_horizon[1:]]
+                if logger_mpc.i > 0:
+                    node.p_horizon = [x[-1][:3] for x in logger_mpc.p_traj_horizon[1:]]
                     p0 = node.p_horizon[0]
-                    r0 = R.from_rotvec(logger.p_traj[-1][3:]).as_matrix()
+                    r0 = R.from_rotvec(logger_mpc.p_traj[-1][3:]).as_matrix()
                     node.update = True
                 p1 = diarc_wrapper.p_des
                 r1 = diarc_wrapper.r_des
 
-                logging.info(f"(Replanning) at phi = {logger.phi:.3f}m")
-                logging.info(f"(Replanning) p0 = {p0}")
-                logging.info(f"(Replanning) p1 = {p1}")
+                logger.info(f"(Replanning) at phi = {logger_mpc.phi:.3f}m")
+                logger.info(f"(Replanning) p0 = {p0}")
+                logger.info(f"(Replanning) p1 = {p1}")
                 node.plan_path(p0, p1, r0, r1, q0, p_horizon=node.p_horizon)
             if diarc_wrapper.add_obs is not None:
-                logging.info("(Replanning) New obstacles triggering replanning")
-                if logger.i > 0:
-                    node.p_horizon = [x[-1][:3] for x in logger.p_traj_horizon[1:]]
+                logger.info("(Replanning) New obstacles triggering replanning")
+                if logger_mpc.i > 0:
+                    node.p_horizon = [x[-1][:3] for x in logger_mpc.p_traj_horizon[1:]]
                     p0 = node.p_horizon[0]
-                    r0 = R.from_rotvec(logger.p_traj[-1][3:]).as_matrix()
+                    r0 = R.from_rotvec(logger_mpc.p_traj[-1][3:]).as_matrix()
                     node.update = True
                 p1 = diarc_wrapper.p_des
                 r1 = diarc_wrapper.r_des
@@ -363,16 +367,16 @@ def main(diarc_wrapper):
                 node.plan_path(p0, p1, r0, r1, q0, p_horizon=node.p_horizon)
 
             if diarc_wrapper.e_r_bound is not None:
-                logging.info("(BoundsUpdate) Updating MPC bounds")
+                logger.info("(BoundsUpdate) Updating MPC bounds")
                 node.send_constraints(diarc_wrapper.e_r_bound)
                 diarc_wrapper.e_r_bound = None
 
-            rclpy.spin_once(logger, timeout_sec=0.001)
+            rclpy.spin_once(logger_mpc, timeout_sec=0.001)
             if node.params.simulate:
                 rclpy.spin_once(listener, timeout_sec=0.001)
 
     except KeyboardInterrupt:
-        logging.info("Caught KeyboardInterrupt")
+        logger.info("Caught KeyboardInterrupt")
         pass
 
     # Close the gripper in the real experiment
@@ -380,7 +384,7 @@ def main(diarc_wrapper):
         node.command_gripper(position=1.0)
 
     # Stop the logging thread
-    logger.stop()
+    logger_mpc.stop()
     listener.stop_logging = True
 
     # Plot stuff
@@ -390,7 +394,7 @@ def main(diarc_wrapper):
     tail = "scen0"
 
     plotter = Plotter(
-        logger,
+        logger_mpc,
         node.params,
         listener=listener,
         obstacles=node.obstacles,
@@ -409,5 +413,5 @@ if __name__ == "__main__":
     planner_component = DiarcWrapper()
     TRADE.registerAllServices(planner_component, "")
 
-    logging.info("Planner Service registered with TRADE.")
+    logger.info("Planner Service registered with TRADE.")
     main(planner_component)

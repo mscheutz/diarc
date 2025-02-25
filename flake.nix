@@ -58,7 +58,6 @@
               libusb1
               gmp
               portaudio
-              jdk17
             ]
           }:${pkgs.stdenv.cc.cc.lib}/lib"
             source .venv/bin/activate

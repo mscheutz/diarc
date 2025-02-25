@@ -46,10 +46,6 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         asrThread.setDaemon(true); // Allows program to exit cleanly
         asrThread.start();
 
-        Thread plannerThread = new Thread(this::commToPlanner);
-        plannerThread.setDaemon(true); // Allows program to exit cleanly
-        plannerThread.start();
-
         // Start processing queue in a separate thread
         new Thread(this::processQueueContinuously).start();
     }
@@ -84,40 +80,9 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
 
             // Sleep briefly to prevent excessive polling
             try {
-                Thread.sleep(500);
+                Thread.sleep(50);
             } catch (InterruptedException e) {
                 log.error("ASR listening thread interrupted", e);
-                Thread.currentThread().interrupt(); // Allow graceful exit
-            }
-        }
-    }
-
-    /**
-     * Communicate with planner
-     * Runs in a separate background thread.
-     */
-    private void commToPlanner() {
-        while (!Thread.currentThread().isInterrupted()) { // Allows graceful stopping
-            log.info("Planner is ready"); // Prompt user
-      //
-            // try {
-            //     Thread.sleep(10000);
-            // } catch (InterruptedException e) {
-            //     log.error("Planner thread interrupted", e);
-            //     Thread.currentThread().interrupt(); // Allow graceful exit
-            // }
-
-            try {
-                TRADE.getAvailableService(new TRADEServiceConstraints().name("send_goal")).call(String.class);
-            } catch (TRADEException e) {
-                log.error("Error communicating to planner", e);
-            }
-
-            // Sleep briefly to prevent excessive polling
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                log.error("Planner thread interrupted", e);
                 Thread.currentThread().interrupt(); // Allow graceful exit
             }
         }
@@ -163,7 +128,6 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
                     System.exit(0); // Immediately terminates the Java process
                 }
 
-
                 if (recognizedText != null) {
                     log.info("Processing new phrase: {}", recognizedText);
 
@@ -184,7 +148,7 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
 
                 isProcessing.set(false);
                 try {
-                    Thread.sleep(3000); // Wait before checking queue again
+                    Thread.sleep(50); // Wait before checking queue again
                 } catch (InterruptedException e) {
                     log.error("Processing thread interrupted", e);
                     Thread.currentThread().interrupt();
@@ -201,12 +165,13 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         wrapper = new PythonWrapper(file, true); // Start Python as a TRADE spoke
         wrapper.start();
 
-        String file_planner = "planner.experiment0";
+        // String file_planner = "planner.experiment0";
+        String file_planner = "planner.experiment1";
         wrapper_planner = new PythonWrapper(file_planner, true);
         wrapper_planner.start();
 
         try {
-            Thread.sleep(2000); // Allow time for PyTRADE to initialize
+            Thread.sleep(5000); // Allow time for PyTRADE to initialize
         } catch (InterruptedException e) {
             log.error("PythonWrapper initialization interrupted", e);
         }
@@ -227,7 +192,6 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         // ✅ Filter out filler words
         String cleanedPhrase = Arrays.stream(newPhrase.split("\\s+")).filter(word -> !FILLER_WORDS.contains(word.toLowerCase())).collect(Collectors.joining(" "));
 
-
         // ✅ Only process the most recent phrase
         Utterance partialUtterance = createUtterance(cleanedPhrase);
         Utterance result = component.parseUtterance(partialUtterance);
@@ -242,11 +206,17 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         }
 
         // ✅ Map parsed result to an action via Python
-
+        String action = "NONE";
         try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("mapParsedTextToAction")).call(String.class, parsedResult);
+            action = TRADE.getAvailableService(new TRADEServiceConstraints().name("mapParsedTextToAction")).call(String.class, parsedResult);
         } catch (TRADEException e) {
             log.error("Error mapping parsed result to action", e);
+        }
+
+        try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("send_to_planner")).call(String.class, action);
+        } catch (TRADEException e) {
+            log.error("Error sending instructions to planner", e);
         }
     }
 

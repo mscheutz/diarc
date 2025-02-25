@@ -9,5 +9,5 @@ public interface PlannerInterface {
      */
     @TRADEService
     @Action
-    void send_goal();
+    void send_to_planner(String parsedText);
 }
