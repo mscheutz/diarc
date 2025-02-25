@@ -209,6 +209,9 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     }
 
      // perform reasoning on multiple parses in debugUtterances here if needed
+    List<Utterance> candidateParses = getParsesFromChartCell(0, currentChartSize - 1, speaker, addressee);
+    List<Utterance> validParses = pruneParsesWithBelief(candidateParses);
+
 
 // Finally, return only the best parse's utterance
     return endOfChartUtterance;
@@ -337,6 +340,107 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
     return options;
   }
+
+  /**
+   * Prunes a list of candidate parses using Prolog-based belief reasoning.
+   *
+   * @param candidateParses List of possible Utterance interpretations.
+   * @return Filtered list of valid Utterances after belief reasoning.
+   */
+  public List<Utterance> pruneParsesWithBelief(List<Utterance> candidateParses) {
+    List<Utterance> filteredParses = new ArrayList<>();
+
+    if (candidateParses.isEmpty()) {
+      log.warn("[pruneParsesWithBelief] No candidate parses to evaluate.");
+      return filteredParses;
+    }
+
+    log.debug("[pruneParsesWithBelief] Evaluating {} candidate parses.", candidateParses.size());
+
+    // Query each parse individually
+    for (Utterance parse : candidateParses) {
+      Predicate query = generateQueryFromParse(parse);
+      if (query == null) {
+        log.warn("[pruneParsesWithBelief] Skipping null query for parse: {}", parse);
+        continue;
+      }
+
+      List<Map<Variable, Symbol>> beliefResults = new ArrayList<>();
+
+      try {
+        // Query the belief system with a single parse (using Predicate)
+        beliefResults = TRADE.getAvailableService(
+                new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)
+        ).call(List.class, query);
+      } catch (TRADEException e) {
+        log.warn("Could not query beliefs for parse: {}", parse, e);
+        continue;
+      }
+
+      // Apply reasoning to determine if the parse should be kept
+      if (isValidParse(parse, beliefResults)) {
+        filteredParses.add(parse);
+      } else {
+        log.debug("[pruneParsesWithBelief] Pruning parse: {}", parse);
+      }
+    }
+
+    log.info("[pruneParsesWithBelief] Returning {} filtered parses.", filteredParses.size());
+    return filteredParses;
+  }
+
+
+
+  /**
+   * Converts an Utterance into a Prolog query Predicate.
+   *
+   * @param parse The Utterance object representing a parse.
+   * @return A Predicate representing the Prolog query.
+   */
+  private Predicate generateQueryFromParse(Utterance parse) {
+    if (parse == null || parse.getSemantics() == null) {
+      return null;
+    }
+    // Construct a Prolog-style query as a Predicate
+    return Factory.createPredicate("query_parse", "X", parse.getSemantics().toString());
+  }
+
+  /**
+   * Determines if a parse is valid based on Prolog belief reasoning.
+   *
+   * @param parse The candidate Utterance.
+   * @param beliefResults The corresponding Prolog query results.
+   * @return True if the parse is valid, False otherwise.
+   */
+  private boolean isValidParse(Utterance parse, List<Map<Variable, Symbol>> beliefResults) {
+    if (beliefResults == null || beliefResults.isEmpty()) {
+      return false; // No supporting belief means it's likely invalid.
+    }
+
+    // Example: Apply a custom filtering rule based on belief results.
+    for (Map<Variable, Symbol> binding : beliefResults) {
+      Symbol beliefAmount = binding.get(Factory.createVariable("beliefAmount"));
+      Symbol worldAmount = binding.get(Factory.createVariable("worldAmount"));
+
+      if (beliefAmount != null && worldAmount != null) {
+        // Compute the belief difference
+        Symbol difference = Factory.createSymbol(String.valueOf(
+                Integer.parseInt(beliefAmount.getName()) - Integer.parseInt(worldAmount.getName())
+        ));
+
+        // Example: Keep parses where belief and world state are consistent
+        if (Integer.parseInt(difference.getName()) >= 0) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+
+
+
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
@@ -660,7 +764,12 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         Pair<List<Symbol>, Map<Variable, Symbol>> POWERSemanticsTest = nodeRule.semantics.getDIARCSemantics();
         List<Symbol> fullSemanticsTest = POWERSemanticsTest.getLeft();
         log.debug("full semantics: " + fullSemanticsTest);
+
         UtteranceType tTest = terminalCategories.get(nodeRule.syntax.type);
+        if (tTest == null) {
+          log.warn("Skipping nodeRule with unknown terminal category: {}", nodeRule.syntax.type);
+          continue;
+        }
         Symbol mainSemanticsTest = fullSemanticsTest.remove(0);
         mainSemanticsTest = updateDirectAddress(mainSemanticsTest, interactor, listener, tTest);
         // mainSemanticsTest = updateSpeakerNames(mainSemanticsTest, addressHistory.get(Pair.of(interactor, listener)), interactor);
@@ -677,6 +786,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         }
         log.debug("Bindings: " + POWERSemanticsTest);
 
+
         Utterance utteranceTest = new Utterance.Builder()
                 .setSpeaker(interactor)
                 // .addListener(addressHistory.get(Pair.of(interactor, listener)))
@@ -691,7 +801,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
       }
     } catch (Exception e) {
-      log.error("Error calling addUtteranceWL.");
+      log.error("Error calling nodeRule");
     }
     return null;
   }
@@ -715,7 +825,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       return utteranceList;
 
     } catch (Exception e) {
-      log.error("Error calling addUtteranceWL.");
+      log.error("Error calling collectUtterances");
     }
     return null;
   }
@@ -893,6 +1003,40 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     }
   }
 
+  /**
+   * Retrieves all valid parses from a specific cell in the chart.
+   *
+   * @param start The start index of the chart cell.
+   * @param end The end index of the chart cell.
+   * @return List of Utterance objects representing possible parses.
+   */
+  public List<Utterance> getParsesFromChartCell(int start, int end, Symbol speaker, Symbol addressee) {
+    List<Utterance> parses = new ArrayList<>();
+
+    // Ensure the chart is initialized and the cell contains parses
+    if (chart == null || start < 0 || end >= chart.length || chart[start][end] == null) {
+      log.warn("[getParsesFromChartCell] Invalid chart cell ({}, {}).", start, end);
+      return parses;
+    }
+
+    log.debug("[getParsesFromChartCell] Retrieving parses from cell ({}, {}).", start, end);
+
+    for (Node node : chart[start][end]) {
+      try {
+        // Convert the node to an utterance
+        Utterance utterance = createUtterance(node, speaker, addressee);
+        if (utterance != null) {
+          parses.add(utterance);
+        }
+      } catch (Exception e) {
+        log.error("[getParsesFromChartCell] Error converting node to utterance.", e);
+      }
+    }
+
+    log.debug("[getParsesFromChartCell] Found {} parses.", parses.size());
+    return parses;
+  }
+
 
 
   private List<Utterance> doChartParsing(Utterance utterance) {
@@ -952,7 +1096,7 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
                 }
               } catch (Exception e) {
-                log.error("Error calling addUtteranceWL.");
+                log.error("Error calling validcombinationsTest");
               }
             }
           }
@@ -986,12 +1130,12 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
               NodeCollectionCopy.add(combinedNode);
               log.info("COMBINED");
             } catch (Exception e) {
-              log.error("Error calling addUtteranceWL.");
+              log.error("Error calling validcombinationsTest");
             }
           }
           log.info("validcombinationsTest: {}", validcombinationsTest);
         } catch (Exception e) {
-          log.error("Error calling addUtteranceWL.");
+          log.error("Error calling validcombinationsTest");
         }
       }
 

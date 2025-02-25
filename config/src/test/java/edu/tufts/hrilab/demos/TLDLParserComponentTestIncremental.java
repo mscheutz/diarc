@@ -13,6 +13,8 @@ import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import edu.tufts.hrilab.action.GoalManagerComponent;
+import edu.tufts.hrilab.belief.BeliefComponent;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fol.Factory;
@@ -39,6 +41,11 @@ public class TLDLParserComponentTestIncremental {
 
     protected Logger log = LoggerFactory.getLogger(this.getClass());
     private TLDLParserComponent component;
+    private BeliefComponent beliefComponent;
+
+
+
+
     //private static Logger log = LoggerFactory.getLogger(TLDLParserComponentTestIncremental.class);
 
     @Rule
@@ -50,6 +57,8 @@ public class TLDLParserComponentTestIncremental {
 
     public TLDLParserComponentTestIncremental() {
         component = DiarcComponent.createInstance(TLDLParserComponent.class, "");
+        beliefComponent = DiarcComponent.createInstance(BeliefComponent.class, "-initfile demos.pl -initfile agents/agents.pl");
+
     }
 
 
@@ -61,7 +70,8 @@ public class TLDLParserComponentTestIncremental {
         component.addDictionary("incrementalTesting.dict");
 
         // Define the input phrases
-        String[] phrases = {"grab the mug", "by the handle"};
+        //String[] phrases = {"put the apple", "on the towel", "on the box"};
+        String[] phrases = {"pass the mug", "but go faster"};
 
         // Set up speaker and listener
         Symbol speaker = Factory.createSymbol("speaker");

@@ -58,6 +58,7 @@ class ASRComponent:
         self.last_text = ""
         self.rec = vosk.KaldiRecognizer(model, samplerate)
 
+
         # ✅ Define the action mapping dictionary inside the class
         self.ACTION_MAP = {
             # Grasp mug by a specific part
@@ -71,13 +72,34 @@ class ASRComponent:
             r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{near\(mug,handle\)\}\)": "GRASP(MUG_NEAR_HANDLE)",
             # General grasping
             r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{\}\)": "GRASP(MUG_DEFAULT)",
+            # General passing
+            r"INSTRUCT\(speaker,listener,pass\(listener,mug\),\{\}\)": "PASS(MUG_DEFAULT)",
+            r"INSTRUCT\(speaker,listener,pass\(listener,cup\),\{\}\)": "GRASP(CUP_DEFAULT)",
+            r"INSTRUCT\(speaker,listener,pass\(listener,screwdriver\),\{\}\)": "GRASP(SCREWDRIVER_DEFAULT)",
             # Grasping mug from table
             r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{on\(mug,table\)\}\)": "GRASP(MUG_ON_TABLE)",
             # Greeting messages
             r"^GREETING\(.*\)": "SAY(GREETING)",
+
+            # Pass the mug while keeping it upright
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,mug\),keep\(listener,upright\)\),\{\}\)": "PASS(MUG,MANNER(UPRIGHT))",
+
+            # Pass the cup while keeping it upright
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,cup\),keep\(listener,upright\)\),\{\}\)": "PASS(CUP,MANNER(UPRIGHT))",
+
+            # Pass the bottle while keeping it upright
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,bottle\),keep\(listener,upright\)\),\{\}\)": "PASS(BOTTLE,MANNER(UPRIGHT))",
+
+            # Pass the mug while avoiding the laptop
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,mug\),avoid\(listener,laptop\)\),\{\}\)": "PASS(MUG, AVOID(AGENT, LAPTOP))",
+
+            # Pass the screwdriver while going faster
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,mug\),go\(listener,faster\)\),\{\}\)": "PASS(SCREWDRIVER, GO(AGENT, FASTER))"
+
         }
 
-    def action_mapper(self, parsed_text):
+
+def action_mapper(self, parsed_text):
         """Map parsed text to a robot action using regex pattern matching."""
         import re  # ✅ Import regex module
 

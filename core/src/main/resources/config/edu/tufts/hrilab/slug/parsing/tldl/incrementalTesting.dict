@@ -11,7 +11,7 @@ THING;{RN; ph ; VAR}, {DN; ph}
 VERBI; {C\AGENT ; #x.ph($x)}, {C ; ph(?ADDRESSEE)}
 
 %transitive verb
-%%VERBT; {(C/REF)\AGENT; #a#y.ph($a,$y)}, {C/REF ; #x.ph(?ADDRESSEE,$x)}, {((C/ARM)/REF)\AGENT ; #a#x#r.ph($a,$y,$r)}, {(C/ARM)/REF ; #x#r.ph(?ADDRESSEE,$x,$r)}
+VERBT; {(C/REF)\AGENT; #a#y.ph($a,$y)}, {C/REF ; #x.ph(?ADDRESSEE,$x)}, {((C/ARM)/REF)\AGENT ; #a#x#r.ph($a,$y,$r)}, {(C/ARM)/REF ; #x#r.ph(?ADDRESSEE,$x,$r)}
 
 %transitive verb with direction argument
 %VERBTDDEG; {((C/DEG)/DIR)\AGENT ; #x#y#z.ph($y,$z)}, {(C/DEG)/DIR ; #x#y.ph($x,$y)}
@@ -308,7 +308,7 @@ is trusted; S\AGENT ; #a.trusted($a)
 is a novice; S\AGENT; #a.novice($a)
 is in; (S/PLACE)\AGENT; #a#p.isIn($a,$p)
 
-it; REF ; it ; INFOCUS
+%%it; REF ; it ; INFOCUS
 
 %%%%%%%%%%%  J  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -789,27 +789,151 @@ in the box; RELATION\REF; #x.at($x,box)
 open; PROP ;open
 now; PROP/PROP ;#x.$x
 
-%%put; ((C/REF)/ON) ; #x#a#y#z.put(?ADDRESSEE,$x,$y,$z)
-put; ((C/REF)/PP)/REF ; #x#y#z.put(?ADDRESSEE, $x,$y, $z)
+
 
 %%grab; (C/NN)\AGENT ; #x#y.graspObject($x,$y)
 %%grab; (C/REF)\AGENT ; #x.graspObject($x)
+
+
 grab; C/NN ; #x.graspObject(?ADDRESSEE,$x)
+put; C/NN ; #x.placeObject(?ADDRESSEE,$x)
+pass; C/NN ; #x.pass(?ADDRESSEE,$x)
+but; (C/C)\C ; #x#y.and($x,$y)
+%% avoid the laptop
+avoid; C/NN; #x.avoid(?ADDRESSEE,$x)
+go; C/ADV; #x.go(?ADDRESSEE,$x)
+laptop; NN; laptop
+
+screwdriver; NN; screwdriver
+
+
+
+it; NN/ADV; #x.$x
+keep; C/NN; #x.keep(?ADDRESSEE,$x)
+keep; (C/NN)/ADV; #x#y.keep(?ADDRESSEE,$x, $y)
+keep; (C/NN)\ADV; #x#y.keep(?ADDRESSEE,$x, $y)
+it; NN/NN; it
+
+upright; ADV; upright
+faster; ADV; faster
+
+% 3 arguments
+put; (C/NN)/NN ; #y#x.put(?ADDRESSEE, $x, $y)
+put; ((C/NN)/NN)/NN ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
+put; (((C/NN)/NN)/NN)/NN ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
+
+put; (C/NN)/NN ; #y#x.put(?ADDRESSEE, $x, $y)
+put; ((C/NN)/PP)/PP ; #y#x.put(?ADDRESSEE, $x, $y)
+put; ((C/NN)/PP)/PP ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
+put; ((C/NN)/PP)/PP ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
+
+put; (C/NN)\NN ; #y#x.put(?ADDRESSEE, $x, $y)
+put; ((C/NN)/NN)\NN ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
+put; (((C/NN)/NN)/NN)\NN ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
+
+put; (C/NN)\NN ; #y#x.put(?ADDRESSEE, $x, $y)
+put; ((C/NN)/PP)\PP ; #y#x.put(?ADDRESSEE, $x, $y)
+put; ((C/NN)/PP)\PP ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
+put; ((C/NN)/PP)\PP ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
+
+on; (NN/NN)/NN ; #y#x.on($x, $y)
+in; (NN/NN)/NN ; #y#x.in($x, $y)
+
+on; PP/NN ; #x.on($x)
+in; PP/NN ; #x.in($x)
+
+on; (NN/NN)\NN ; #y#x.on($x, $y)
+in; (NN/NN)\NN ; #y#x.in($x, $y)
+
+on; NN\NN ; #y#x.on($x, $y)
+in; NN\NN ; #y#x.in($x, $y)
+
+on; (NN/NN)\NN ; #x.on($x)
+in; (NN/NN)\NN ; #x.in($x)
+
+on; NN\NN ; #x.on($x)
+in; NN\NN ; #x.in($x)
+
+on; PP\NN ; #x.on($x)
+in; PP\NN ; #x.in($x)
+
+
+
+
+
+%%put; C/NN ; #x.placeObject(?ADDRESSEE,$x)
+%%put; VERBT; put
+%%put; (C/REF)/PP; #x#y.put(?ADDRESSEE,$x, $y)
+%%put; (C/REF)/PP; #x#y.put($x,$y)
+%%put; (C/NN)/NN; #x#y.put(?ADDRESSEE,$x, $y)
+%%put; (C/NN)/NN; #x#y.put($x,$y)
+%%put; ((C/NN)/NN)/NN; #x#y#z.put(?ADDRESSEE,$x, $y, $z)
+%%put; ((C/NN)/NN)/NN; #x#y#z.put($x,$y, $z)
+%%put; ((C/REF)/ON) ; #x#a#y#z.put(?ADDRESSEE,$x,$y,$z)
+%%put; ((C/REF)/PP)/REF ; #x#y#z.put(?ADDRESSEE, $x,$y, $z)
+%%put; ((C/NN)/PP)/NN ; #x#y#z.put(?ADDRESSEE, $x,$y, $z)
+%%put; (C/NN)/NN ; #x#y#z.put(?ADDRESSEE, $x,$y, $z)
+
 %%grab; ((C/NN)/PP)/NN ; #x#z#y.graspObject(?ADDRESSEE, $x,$z,$y)
 %%grab; (((C/REF)/PP)/REF)\AGENT ; ; #x.graspObject(?ADDRESSEE,$x)
 on; (NN\NN)/NN; #y#x.on($x,$y); MOD
 on; (?ADDRESSEE)/NN; #y#x.on($x,$y); MOD
+in; (NN\NN)/NN; #y#x.in($x,$y); MOD
+in; (?ADDRESSEE)/NN; #y#x.in($x,$y); MOD
+
+
+%% Test Entries
+%%put; ((C/REF)/ON) ; #x#a#y#z.put(?ADDRESSEE,$x,$y,$z)
+%%put; ((C/REF)/PP)/REF ; #x#y#z.put(?ADDRESSEE, $x,$y, $z)
+
+%%put; (C/REF)/REF; #x#y.put(?ADDRESSEE,$x,$y)
+%%put; (C/REF)/REF ; #x#y.place($x,$y)
+
+%%grab; (C/REF)\AGENT ; #y#x.graspObject($y,$x)
+%%grab; (C/REF)\AGENT ; #x.graspObject($x)
+%%grab; C/REF ; #x.graspObject(?ADDRESSEE,$x)
+%%grab; ((C/REF)/PP)/REF ; #x#y#z.graspObject(?ADDRESSEE, $x,$y,$z)
+on; (REF\REF)/REF; #x#y.on($x,$y); MOD
+on; REF/REF ; #x.$x
+on; PP ; on
+in; PP; in
+%%table; THING
+%%mug; THING
+
+
+
+%%put; VERBT; put
+%%put; (C/REF)/PP; #x#y.put(?ADDRESSEE,$x, $y)
+%%put; (C/REF)/PP; #x#y.put($x,$y)
+%%on; REF/REF ; #x.$x
+
+in; REF/REF ; #x.$x
+
 on; NN/NN ; #x.$x
 on; PP ; on
+in; NN/NN ; #x.$x
+in; PP ; in
+on; (NN/NN)/NN ; #x.$x
+on; PP/NN ; on
+in; (NN/NN)/NN ; #x.$x
+in; PP/NN ; in
 table; NN; table
 mug; NN; mug
 mouse; NN; mouse
 bottom; NN; bottom
+apple; NN; apple
+box; NN; box
+mat; NN; mat
+towel; NN; towel
+cup; NN; cup
 
 %%%%%%%%%%%%% NEW ENTRIES %%%%%%%%%%%%%%%%%%%%%%%%
 by; (NN\NN)/NN; #y#x.by($x,$y); MOD
 from; (NN\NN)/NN; #y#x.from($x,$y); MOD
-by; (NN\NN)/NN; #y#x.near($x,$x); MOD
+in; (NN\NN)/NN; #y#x.in($x,$y); MOD
+
+
+on; (NN\NN)/NN; #y#x.on($x,$x); MOD
 by; (NN\NN)/NN; #x#y.$x,$y; MOD
 by; (PP/NN); #x.by($x)
 by; (PP/NN); #x.near($x)
@@ -825,13 +949,9 @@ bottom; NN; bottom
 %%grab; ((C/PP)/NN); #obj#pp.graspObject(?ADDRESSEE,$obj,$pp)
 
 
-
-%%put; VERBT; put
-%%put; (C/REF)/PP; #x#y.put(?ADDRESSEE,$x, $y)
-%%put; (C/REF)/PP; #x#y.put($x,$y)
 %%on; REF/REF ; #x.$x
 
-in; REF/REF ; #x.$x
+%%in; NN/RNN ; #x.$x
 
 
 
