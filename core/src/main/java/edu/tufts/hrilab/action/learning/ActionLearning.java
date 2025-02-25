@@ -83,6 +83,7 @@ public class ActionLearning {
     ignoreActionSet.add(Factory.createPredicate("modifyAction(?actor,?action,?modification,?location)"));
     ignoreActionSet.add(Factory.createPredicate("learnAction(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("endActionLearning(?actor,?action)"));
+    ignoreActionSet.add(Factory.createPredicate("endTaskLearning(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("pauseActionLearning(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("resumeActionLearning(?actor,?action)"));
     ignoreActionSet.add(Factory.createPredicate("cancelActionLearning(?actor,?action)"));
@@ -375,6 +376,18 @@ public class ActionLearning {
 
   public boolean shouldExecute() {
     return executeAction;
+  }
+
+  //TODO: Shouldn't learning states be indexed by something more detailed than just signature name?
+  public Predicate getActiveLearningSignature() {
+    if (currentLearningState == null) {
+      log.warn("[getActiveLearningName] method called but current learning state is null");
+      return null;
+    } else {
+      List<Symbol> args = currentLearningState.getRoleNames();
+      args.add(0, Factory.createVariable("?actor"));
+      return Factory.createPredicate(currentLearningState.getName(),args);
+    }
   }
 
   //TODO: cancelTeachingByModification
