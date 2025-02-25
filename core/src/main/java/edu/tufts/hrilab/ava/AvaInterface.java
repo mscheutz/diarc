@@ -28,8 +28,7 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
    */
   @TRADEService
   @Action
-  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
-  Justification goHome();
+  Justification goHomePrimitive();
 
   @TRADEService
   @Action

@@ -432,7 +432,11 @@ task 1; VAL; number(1)
 task 2; VAL; number(2)
 task 3; VAL; number(3)
 
-stop; C; cancelGoal(?ADDRESSEE)
-pause; C; suspendGoal(?ADDRESSEE)
-resume; C; resumeGoal(?ADDRESSEE)
+stop; C; cancelSystemGoals(?ADDRESSEE)
+pause; C; suspendSystemGoals(?ADDRESSEE)
+resume; C; resumeSystemGoals(?ADDRESSEE)
 nevermind; VAL; abort(question)
+
+%i will teach you a new task; C; learnNewTask(?ADDRESSEE)
+%end
+where are you now; C; describeCurrentLocation(?ADDRESSEE)

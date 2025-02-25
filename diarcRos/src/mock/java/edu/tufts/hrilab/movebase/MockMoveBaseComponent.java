@@ -100,7 +100,7 @@ public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInt
     return new ConditionJustification(false);
   }
 
-  @Override
+//  @Override
   public Justification goToLocation(Symbol location) {
     return goToLocation(location, true);
   }

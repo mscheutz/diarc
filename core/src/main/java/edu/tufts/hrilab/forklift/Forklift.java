@@ -134,7 +134,7 @@ public class Forklift extends DiarcComponent implements MoveBaseInterface {
             pose.getRight().z, pose.getRight().w, wait);
   }
 
-  @Override
+//  @Override
   public Justification goToLocation(Symbol location) {
     return goToLocation(location, true);
   }

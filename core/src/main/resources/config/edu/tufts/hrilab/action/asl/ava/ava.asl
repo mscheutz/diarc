@@ -44,7 +44,7 @@ import java.util.StringTokenizer;
     boolean !disableWakeWord = false;
     Predicate !yesSemantics = op:createPredicate("val(yes)");
     while (true) {
-      tsc:setSuggestedInput(!suggestedInput);
+//      tsc:setSuggestedInput(!suggestedInput);
       !answerSemantics = act:askQuestionFromString(?addressee, !questionString, !responseForm, 1, !responseTimeout, !disableWakeWord);
       op:log("info", "got answer semantics: !answerSemantics");
 
@@ -55,7 +55,7 @@ import java.util.StringTokenizer;
         !responseTimeout = op:assign(-1);
         !disableWakeWord = op:assign(false);
       } else {
-        tsc:setSuggestedInput("yes or no");
+//        tsc:setSuggestedInput("yes or no");
         !confirmationSemantics = act:askQuestionFromString(?addressee, "Did I understand that correctly?", "val(!x)", 1, 30);
 
         if (op:isNull(!confirmationSemantics)) {
@@ -67,7 +67,7 @@ import java.util.StringTokenizer;
             // understood speaker correctly, process response
             op:log("info", "Confirmed with yes");
             !suggestedInput = op:setNull();
-            tsc:setSuggestedInput(!suggestedInput);
+//            tsc:setSuggestedInput(!suggestedInput);
 
             goal:handled(?actor, ?actor, !answerSemantics, direct);
             !questionString = op:assign("");
@@ -144,7 +144,7 @@ import java.util.StringTokenizer;
     if (op:invokeMethod(!beliefs, "isEmpty")) {
         act:lookForPerson(?escortee);
         act:generateResponse(!escortConfirmationPred);
-        tsc:setSuggestedInput("yes or no");
+//        tsc:setSuggestedInput("yes or no");
         !answerSemantics = act:askQuestionFromString(patient, "Is that okay", !yesOrNoResponseForm);
         if (op:equals(!answerSemantics, !yesSemantics)) {
             op:log("info", "Given yes");
@@ -197,7 +197,7 @@ import java.util.StringTokenizer;
     // Check if the person is not at the robot find the person and confirm that they can go with you
     Predicate !yesSemantics = op:createPredicate("val(yes)");
     Predicate !noSemantics = op:createPredicate("val(no)");
-    tsc:setSuggestedInput("yes or no");
+//    tsc:setSuggestedInput("yes or no");
     Predicate !answerSemantics = act:askQuestionFromString(patient, "Hello, I am looking for ?person. Are you here?", !yesOrNoResponseForm);
 
     Predicate !retractPred = op:createPredicate("at(?person,!x)");
@@ -258,7 +258,7 @@ import java.util.StringTokenizer;
     Predicate !confirmationSemantics;
     Predicate !yesSemantics = op:createPredicate("val(yes)");
     while (op:equals(!understood, false)) {
-        tsc:setSuggestedInput("!thing is at the kitchen");
+//        tsc:setSuggestedInput("!thing is at the kitchen");
         !answerSemantics = act:askQuestionFromString(patient, "Do you know where is !thing?", !atResponseForm);
         tsc:displayText("yes or no");
         !confirmationSemantics = act:askQuestionFromString(patient, "Did I understand that correctly?", "val(X)");
@@ -374,120 +374,6 @@ import java.util.StringTokenizer;
     }
 }
 
-/******************************** Demo Scripts ********************************/
-
-/**
- * Testing the robot functionality over (ideally 2 hours)
- * Main actions: go to location, wait for a bit, find a dynamic object and say hello to it, repeat
- */
-() = longDemo() {
-    op:log("info", "Starting [longDemo]");
-    Random !rand = op:newObject("java.util.Random");
-    int !locationNumber;
-    String !locationPrefix = "location_";
-    String !locationSuffix = ":location";
-    String !locationNumberString;
-    String !locationString;
-
-    while (true) {
-        !locationNumber = op:invokeMethod(!rand, "nextInt", 45);
-        !locationNumberString = op:invokeStaticMethod("java.lang.String", "valueOf", !locationNumber);
-        !locationString = op:invokeMethod(!locationPrefix, "concat", "!locationNumberString");
-        !locationString = op:invokeMethod(!locationString, "concat", "!locationSuffix");
-        act:callCommandWaitFace(!locationString);
-    }
-    op:log("info", "Finishing [longDemo]");
-}
-
-() = callCommandWaitFace(Symbol ?loc) {
-    Predicate !commandPred = op:createPredicate("commandWaitFace(?actor, ?loc)");
-    long !commandGoalID = act:submitGoal(!commandPred);
-    act:joinOnGoal(!commandGoalID);
-}
-
-() = commandWaitFace(Symbol ?loc) {
-    int !sleepTime = op:*(10, 1000); // 10 seconds
-
-    act:goToLocation(?loc);
-    op:sleep(!sleepTime);
-    act:lookAtMoving(); // Doesn't actually work for now......
-    act:generateResponseFromString("Hello! I'm Ava");
-}
-
-() = lookAtMoving() {
-    java.util.List !obs = act:getDynamicObstacles();
-
-    Obstacle !targetObs;
-    if (op:invokeMethod(!obs, "isEmpty")) {
-        op:log("info", "[lookAtMoving] No obs found");
-    } else {
-        !targetObs = op:get(!obs, 0);
-        act:lookAtObstacle(!targetObs);
-    }
-}
-
-() = driveEverywhereDemo() {
-    op:log("info", "Starting [driveEveryRef]");
-    Predicate !commandPred;
-    long !commandGoalID;
-
-    for (!i=0; !i lt 45; !i++) {
-        op:log("info", "goToLocation(?actor, location_!i:location)");
-        !commandPred = op:createPredicate("goToLocation(?actor, location_!i:location)");
-        !commandGoalID = act:submitGoal(!commandPred);
-        act:joinOnGoal(!commandGoalID);
-//        op:sleep(5000);
-    }
-    op:log("info", "Finishing [driveEveryRef]");
-}
-
-() = longDrivingDemo() {
-    op:log("info", "Starting [longDrivingDemo]");
-    Symbol !cs160 = "location_20:location";
-    Symbol !cs11 = "location_43:location";
-    Symbol !meetingRoom = "location_1:location";
-    Predicate !commandPred;
-    long !commandGoalID;
-
-    while (true) {
-        op:log("info", "Drive to !cs160");
-        !commandPred = op:createPredicate("goToLocation(?actor, !cs160)");
-        op:log("info", "Submit pred");
-        !commandGoalID = act:submitGoal(!commandPred);
-        op:log("info", "Wait for goal to finish");
-        act:joinOnGoal(!commandGoalID);
-
-        op:log("info", "Drive to !cs11");
-        !commandPred = op:createPredicate("goToLocation(?actor, !cs11)");
-        !commandGoalID = act:submitGoal(!commandPred);
-        act:joinOnGoal(!commandGoalID);
-
-        op:log("info", "Drive to !meetingRoom");
-        !commandPred = op:createPredicate("goToLocation(?actor, !meetingRoom)");
-        !commandGoalID = act:submitGoal(!commandPred);
-        act:joinOnGoal(!commandGoalID);
-    }
-    op:log("info", "Finishing [longDrivingDemo]");
-}
-
-(boolean ?foundPerson) = findPerson () {
-    Symbol !personRef = op:newObject("edu.tufts.hrilab.fol.Symbol", "physobj_11:physobj");
-    java.util.List !tokenIds;
-
-    act:startVisualSearch(!personRef);
-    !tokenIds = act:getTokenIds(!personRef);
-
-    if (op:isEmpty(!tokenIds)) {
-        ?foundPerson = op:newObject("java.lang.Boolean", false);
-        op:log("info", "No person found");
-    } else {
-        ?foundPerson = op:newObject("java.lang.Boolean", true);
-        op:log("info", "Person found");
-    }
-
-    act:stopVisualSearch(!personRef);
-}
-
 () = saveLocation(Symbol ?location) {
     tsc:saveLocation(?location);
 }
@@ -503,6 +389,62 @@ import java.util.StringTokenizer;
 () = stand() {
     tsc:setZLift(90.0);
 }
+
+() = goToLocation(Symbol ?location) {
+    Symbol !current;
+
+    conditions : {
+        pre infer : at(?actor, !current);
+        //todo: pete should this have a nonperf effect?
+    }
+    effects : {
+        success : at(?actor, ?location);
+        success infer : not(at(?actor, !current));
+        nonperf infer : not(at(?actor, !current));
+        nonperf infer : at(?actor, unknown);
+    }
+    onInterrupt : {
+        cancel : act:stop();
+        suspend : act:stop();
+    }
+
+    act:goToLocation(?location, !current);
+}
+
+() = goHome() {
+    Symbol !homeLocation = location_0:location;
+    onInterrupt : {
+        cancel : act:stop();
+        suspend : act:stop();
+    }
+    //todo: this should not be hardcoded here.
+    act:goToLocation(!homeLocation);
+    act:goHomePrimitive();
+}
+
 /******************************** Misc Testing Scripts ********************************/
 
+(Symbol ?currentLocation) = getCurrentLocation() {
+    List !bindings;
+    Map !binding;
+    Symbol !startLoc = "unknown";
+    Predicate !queryPred;
+    Variable !x = X;
 
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "at(?actor, X)");
+
+    !bindings = act:queryBelief(!queryPred);
+    if (op:isEmpty(!bindings)) {
+        op:log("warn", "[getCurrentLocation] locQuery returned no results");
+    } else {
+        !binding = op:get(!bindings, 0);
+        ?currentLocation = op:get(!binding, !x);
+    }
+}
+
+() = describeCurrentLocation() {
+    Symbol !currentLocation;
+
+    !currentLocation = act:getCurrentLocation();
+    act:generateResponse(at(?actor, !currentLocation));
+}

@@ -369,7 +369,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     return followPathRes;
   }
 
-  @Override
+//  @Override
   public Justification goToLocation(Symbol location) {
     return goToLocation(location, true);
   }
@@ -702,7 +702,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     log.debug("[reinstateMoveGoal]: {}", currentMoveGoal);
     if (currentMoveGoal.isIdle()) {
     } else if (currentMoveGoal.isGoHome()) {
-      goHome();
+      goHomePrimitive();
     } else if (currentMoveGoal.isGoToLocation()) {
       goToLocation((Symbol) currentMoveGoal.getParameters().get(0), (boolean) currentMoveGoal.getParameters().get(1));
     } else {
@@ -711,16 +711,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @Override
-  public Justification goHome() {
+  public Justification goHomePrimitive() {
     log.debug("Starting [goHome]");
     currentMoveGoal.setGoHomeGoal();
     Symbol home = Factory.createSymbol(dockLocation);
-    try {
-      goToLocation(home, true);
-    } catch (Exception ex) {
-      log.error("Error going home ", ex);
-      return new ConditionJustification(false, Factory.createPredicate("able", "home"));
-    }
     Justification ret;
     if (!stopped) {
       ret = goToDock();

@@ -54,7 +54,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @Override
-  public Justification goHome() {
+  public Justification goHomePrimitive() {
     log.info("[goHome] called.");
     return new ConditionJustification(true);
   }
@@ -167,12 +167,12 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     return new ConditionJustification(true);
   }
 
-  @Override
-  public Justification goToLocation(Symbol location) {
-    log.info("[goToLocation] called. location: {}", location);
-    Util.Sleep(10000);
-    return new ConditionJustification(true);
-  }
+//  @Override
+//  public Justification goToLocation(Symbol location) {
+//    log.info("[goToLocation] called. location: {}", location);
+//    Util.Sleep(10000);
+//    return new ConditionJustification(true);
+//  }
 
   @Override
   public Justification goToLocation(Symbol desiredLocation, Symbol initialLocation) {
