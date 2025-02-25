@@ -183,12 +183,6 @@ public class SpaceStationPatternMatcher extends DiarcComponent implements NLUInt
         // return the updated utterance
         return builder.build();
     }
-    else if (cleanedRemaining.matches("()(.*)")) {
-	// What tube is broken in Alpha -- Which tube is broken in Alpha
-	builder.setSemantics(Factory.createPredicate("check(" + robot + "," + area + ")"));
-        // return the updated utterance
-        return builder.build();
-    }    
     else if (cleanedRemaining.matches("(monitor|check|look in|search for|observe)(.*)")) {
       if (noarea) {
         log.error("NO AREA specified");
