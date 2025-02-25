@@ -161,7 +161,10 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
             if (llmOutput != null && !llmOutput.getWordsAsString().isEmpty()){
                 log.debug("[convertSemanticsToText] Using llm NLG response");
                 output = llmOutput;
-                cacheParse(output);
+                if (useCache) {
+                    cacheParse(output);
+                }
+                return output;
             }
         }
 
