@@ -96,6 +96,7 @@ around; AtPP/LREF; #x.$x
 near; AtPP/LREF; #x.$x
 by; AtPP/LREF; #x.$x
 at; AtPP/LREF; #x.$x
+at; AtPP/REF; #x.$x
 inside; AtPP/LREF; #x.$x
 besides; AtPP/LREF; #x.$x
 adjacent; AtPP/LREF; #x.$x
@@ -194,6 +195,7 @@ desk beta; LOC; desk beta
 elevator; LOC; elevator
 dock; LOC; dock
 doc; LOC; dock
+doc; LREF; dock; DEFINITE
 
 % 4th floor specific
 lab space; LOC; lab space
@@ -428,3 +430,7 @@ what are your scheduled tasks; C; listScheduledGoals(?ADDRESSEE)
 task 1; VAL; num(1)
 task 2; VAL; num(2)
 task 3; VAL; num(3)
+
+stop; C; cancelGoal(?ADDRESSEE)
+pause; C; suspendGoal(?ADDRESSEE)
+resume; C; resumeGoal(?ADDRESSEE)

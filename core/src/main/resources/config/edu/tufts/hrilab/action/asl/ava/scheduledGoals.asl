@@ -6,6 +6,8 @@ import java.util.List;
 import java.lang.String;
 import java.lang.Long;
 import java.lang.Integer;
+import edu.tufts.hrilab.action.goal.GoalStatus;
+import edu.tufts.hrilab.action.justification.Justification;
 
 () = scheduleGoal() {
 
@@ -223,12 +225,25 @@ import java.lang.Integer;
     List !args;
     Symbol !arg;
     Long !gid;
+    GoalStatus !goalStatus;
+    Justification !failureJustification;
+    List !failureReasons;
+
+    onInterrupt : {
+      cancel : act:cancelGoal(!gid);
+      suspend : act:suspendGoal(!gid);
+      resume : act:resumeGoal(!gid);
+    }
 
     !args = op:invokeMethod(?collection, "getArgs");
     foreach (!arg : !args) {
         !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?actionName(?actor, !arg)");
         !gid = act:submitGoal(!goalPred);
-//        act:joinOnGoal(!gid);
+        !goalStatus = act:joinOnGoal(!gid);
+        if (op:invokeMethod(!goalStatus, "isFailure")) {
+          !failureJustification = act:getGoalFailConditions(!gid);
+          exit(FAIL, !failureJustification);
+        }
     }
 }
 
