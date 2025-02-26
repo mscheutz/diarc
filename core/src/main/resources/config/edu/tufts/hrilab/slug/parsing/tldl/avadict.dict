@@ -414,9 +414,9 @@ what are your scheduled tasks; C; listScheduledGoals(?ADDRESSEE)
 
 %num is special term
 %TODO: generalize
-task 1; VAL; number(1)
-task 2; VAL; number(2)
-task 3; VAL; number(3)
+%task 1; VAL; number(1)
+%task 2; VAL; number(2)
+%task 3; VAL; number(3)
 
 stop; C; cancelSystemGoals(?ADDRESSEE)
 pause; C; suspendSystemGoals(?ADDRESSEE)

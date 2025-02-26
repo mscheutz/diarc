@@ -68,7 +68,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private AvaAPIInterface api;
   private double pointDistThresh = .75; //meters
-  private double orientationThresh = .4; //radians
+  private double orientationThresh = .55; //radians
   private double zLiftThresh = .05; //meters
   private double cameraTiltThresh = 0.2;
   private double cameraHeight = 1.350; //meters

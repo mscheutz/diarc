@@ -206,6 +206,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     Symbol !response;
     java.lang.String !numberString;
     java.lang.Integer !goalNumber;
+    Predicate !goalPredExtended;
+    Long !gid;
 
     !scheduledGoals = act:getScheduledGoals();
     op:log(debug, "[modifyScheduledGoal] current scheduled goals: !scheduledGoals");
@@ -218,16 +220,20 @@ import edu.tufts.hrilab.action.justification.Justification;
         //return;
     } elseif (op:equals(!numGoals,1)) {
         ?scheduledGoalPred = op:get(!scheduledGoals,0);
+        !gid = tsc:getGoalId(?scheduledGoalPred);
+        !goalPredExtended = tsc:getWrappedScheduledGoalPredicate(!gid);
         act:generateResponseFromString("There is currently one scheduled task");
-        act:generateResponse(?scheduledGoalPred);
+        act:generateResponse(!goalPredExtended);
         return;
     } else {
         act:generateResponseFromString("There are multiple currently scheduled tasks");
         for (!goalIndex=0; !goalIndex lt !numGoals; !goalIndex ++) {
             !goalPred = op:get(!scheduledGoals,!goalIndex);
             !spokenIndex = op:++(!goalIndex);
+            !gid = tsc:getGoalId(!goalPred);
+            !goalPredExtended = tsc:getWrappedScheduledGoalPredicate(!gid);
             act:generateResponseFromString("Task !spokenIndex");
-            act:generateResponse(!goalPred);
+            act:generateResponse(!goalPredExtended);
         }
         act:suspendWaitForResponse(option(X),?actor,false);
         !bindings = act:askQuestionFromString(?actor, "Which task did you want to modify?", option(X));
