@@ -190,6 +190,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                     if (Character.isUpperCase(argString.charAt(0)) && argString.length() > 1) {
                         try {
                             TimeUnit.valueOf(argString);
+                            processedArguments.add(Factory.createSymbol(argString));
                         } catch (IllegalArgumentException ignored) {
                             String lowercaseArg = argString;
                             lowercaseArg = Character.toLowerCase(lowercaseArg.charAt(0)) + lowercaseArg.substring(1);

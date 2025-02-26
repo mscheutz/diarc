@@ -564,9 +564,9 @@ import java.lang.Integer;
             !spokenIndex = op:++(!questionIndex);
             act:generateResponseFromString("Option !spokenIndex: !questionString");
         }
-        act:suspendWaitForResponse(num(X),?actor,false);
-        !bindings = act:askQuestionFromString(?actor, "Which question did you mean to answer?", num(X));
-        act:resumeWaitForResponse(num(X),?actor);
+        act:suspendWaitForResponse(option(X),?actor,false);
+        !bindings = act:askQuestionFromString(?actor, "Which question did you mean to answer?", option(X));
+        act:resumeWaitForResponse(option(X),?actor);
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
             !numberString = op:getName(!response);

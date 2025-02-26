@@ -228,9 +228,9 @@ import edu.tufts.hrilab.action.justification.Justification;
             act:generateResponseFromString("Task !spokenIndex");
             act:generateResponse(!goalPred);
         }
-        act:suspendWaitForResponse(number(X),?actor,false);
-        !bindings = act:askQuestionFromString(?actor, "Which task did you want to modify?", number(X));
-        act:resumeWaitForResponse(number(X),?actor);
+        act:suspendWaitForResponse(option(X),?actor,false);
+        !bindings = act:askQuestionFromString(?actor, "Which task did you want to modify?", option(X));
+        act:resumeWaitForResponse(option(X),?actor);
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
             !numberString = op:getName(!response);

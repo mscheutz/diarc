@@ -23,6 +23,9 @@ Description: The robot will navigate through the map to end up at location ?dest
 follow()
 Description: The robot will use its camera to detect the person instructing this action and follow them until told to stop.
 #
+say(?words)
+Description: The robot will use its speaker to say the given words out loud.
+#
 stopFollow()
 Description: Related to the follow() action, the robot will stop following the user.
 #
@@ -121,6 +124,9 @@ Description: These are universal semantics to represent when the user is declini
 #
 taskName(?name)
 Description: Prompted by the learnNewTask action, the user is answering a question from the system about what the to-be-learned task should be called. ?name has no restriction on possible values.
+#
+option(?number)
+Description: Prompted to select from a list of numbered options, the user is answering which of those options they want to select. ?number is expected to be an integer.
 ###
 
 The system you are representing consists of a single robot, called an AVA. Previous interactions between the system and users may have already occurred. These interactions may be relevant to your task by providing context which can inform your translations. The recent conversation history between the user and the system leading up to this point is as follows:

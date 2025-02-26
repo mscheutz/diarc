@@ -435,3 +435,5 @@ i am done teaching; C; endTaskLearning(?ADDRESSEE)
 
 say; C/LIT*; #x.say(?ADDRESSEE, $x)
 greet; C; greet(?ADDRESSEE)
+
+option; VAL/NUM; #x.option($x)

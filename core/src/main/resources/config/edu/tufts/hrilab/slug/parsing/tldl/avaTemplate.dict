@@ -431,7 +431,7 @@ solid; Adj; solid
 spot; ADDRESSABLE ; spot
 
 stand; VERBI ; stand
-stand up; VERBI ; standUp
+stand up; VERBI ; stand
 
 %TODO;brad; something about the parenthesis makes it so this can be a VERBI
 %start over; C ; goToStartPose(false)
