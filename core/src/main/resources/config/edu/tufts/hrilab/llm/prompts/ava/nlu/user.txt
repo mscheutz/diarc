@@ -123,6 +123,8 @@ if the human says "report the wifi signal quality at coffee maker", you should p
 #
 if the human says "report the wifi signal quality for patrol path lab patrol", you should produce the output: {"Semantics":"reportWifiForPatrol(lab patrol)","Input Type":"INSTRUCT","Confidence":"80"}
 #
+if the human says "what locations are in lab patrol", you should produce the output: {"Semantics":"describeAllLocationsOnPatrolPath(lab patrol)","Input Type":"INSTRUCT","Confidence":"80"}
+#
 ##
 
 Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with the Output json as shown in the examples. The new input you are tasked with translating is:

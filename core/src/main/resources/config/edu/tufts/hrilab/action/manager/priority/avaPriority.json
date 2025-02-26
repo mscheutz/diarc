@@ -82,5 +82,9 @@
   "describeAllKnownPatrolPaths":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "describeAllLocationsOnPatrolPath":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

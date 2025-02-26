@@ -333,7 +333,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     !locations = op:newArrayList("edu.tufts.hrilab.fol.Symbol");
 
-    !bindings = act:askQuestionFromString(?actor,"What location is on the path?", location(X));
+    !bindings = act:askQuestionFromString(?actor,"What's the first location on the path?", location(X));
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -344,19 +344,10 @@ import edu.tufts.hrilab.action.justification.Justification;
     !tmpString = op:invokeMethod(!locationId, "getName");
     !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !tmpString);
     op:log(debug, "location: !tmp");
-    op:add(!locations, !tmp);
 
-    !bindings = act:askQuestionFromString(?actor,"What other location is on the path?", location(X));
-    if (op:invokeMethod(!bindings,"isEmpty")) {
-        exit(FAIL,not(wasAnswered(myQuestion)));
-    }
-    !locationId = op:get(!bindings, !x);
-    !tmpString = op:invokeMethod(!locationId, "getName");
-    !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !tmpString);
-    op:log(debug, "location: !tmp");
     while(~op:equalsValue(!locationId,"none()")){
         op:add(!locations, !tmp);
-        !bindings = act:askQuestionFromString(?actor,"What other location is on the path?", location(X));
+        !bindings = act:askQuestionFromString(?actor,"What's the next location on the path?", location(X));
         if (op:invokeMethod(!bindings,"isEmpty")) {
             exit(FAIL,not(wasAnswered(myQuestion)));
         }

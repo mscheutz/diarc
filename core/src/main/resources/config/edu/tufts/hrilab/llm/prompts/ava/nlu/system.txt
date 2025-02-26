@@ -113,6 +113,9 @@ Description: The robot will list all locations it currently has saved.
 describeAllKnownPatrolPaths()
 Description: The robot will list all patrol paths it currently has saved.
 #
+describeAllLocationsOnPatrolPath(?pathName:path)
+Description: The robot will list all locations included along the saved patrol path under the name ?pathName.
+#
 repeatLastQuestion()
 Description: The robot will repeat the last question it asked which the user still has yet to answer.
 #
