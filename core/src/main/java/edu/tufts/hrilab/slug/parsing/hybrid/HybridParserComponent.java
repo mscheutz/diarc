@@ -256,8 +256,9 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
             }
 
             if (cachedOutput != null && cachedOutput.getSemantics() != null) {
-              log.debug("[parseUtterance] Using cached parser response");
-              return applyAddressee(incoming, cachedOutput);
+              output = applyAddressee(incoming, cachedOutput);
+              log.debug("[parseUtterance] Using cached parser response: {}", output);
+              return output;
             }
           }
           break;
@@ -272,7 +273,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
 
             //TODO:brad: what should this return in the no match case?
             if (pmpOutput != null && pmpOutput.getSemantics() != null) {
-              log.debug("[parseUtterance] Using pattern matcher parser response");
+              log.debug("[parseUtterance] Using pattern matcher parser response: {}", pmpOutput);
               return pmpOutput;
             }
           }
@@ -289,11 +290,12 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
             if (tldlOutput != null && tldlOutput.getSemantics() != null) {
               preserveAddressee(tldlOutput);
               if (tldlOutput.getType() != UtteranceType.UNKNOWN) {
-                log.debug("[parseUtterance] Using tldl parser response");
                 if (useCache && cacheTldl) {
                   cacheParse(tldlOutput);
                 }
-                return applyAddressee(incoming, tldlOutput);
+                output = applyAddressee(incoming, tldlOutput);
+                log.debug("[parseUtterance] Using tldl parser response: {}", output);
+                return output;
               } else {
                 //Use TLDL UNKNOWN parse in case LLM parse fails
                 output = tldlOutput;
@@ -311,7 +313,6 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
             }
 
             if (llmOutput != null && llmOutput.getSemantics() != null) {
-              log.debug("[parseUtterance] Using llm parser response");
               preserveAddressee(llmOutput);
               output = llmOutput;
               if (confirmation) {
@@ -319,6 +320,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
               } else if (useCache) {
                 cacheParse(output);
               }
+              log.debug("[parseUtterance] Using llm parser response: {}", output);
+              return output;
             }
           }
         default:

@@ -10,6 +10,7 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
+import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Predicate;
@@ -111,7 +112,11 @@ public class UnityPR2Component extends UnityAgentComponent implements UnityPR2In
     String predicateStr = "endTrial(" + robotName + ")";
     Predicate goal = Factory.createPredicate(predicateStr);
     try {
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class)).call(Long.class, goal);
+      // submit endTrial goal
+      Long goalId = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class)).call(Long.class, goal);
+
+      // wait for endTrial goal to terminate for returning. This prevents overlap issues when running multiple trials in the same diarc instance
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("joinOnGoal").argTypes(Long.class)).call(GoalStatus.class, goalId);
     } catch (TRADEException e) {
       log.error("Error ending trial", e);
     }
