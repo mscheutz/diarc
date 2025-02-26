@@ -18,23 +18,22 @@ import java.util.StringTokenizer;
 /******************************** Move Escort Deliver Scripts ********************************/
 
 () = escortToLocation(Symbol ?escortee, Symbol ?dstLoc) {
-    conditions : {
-       pre infer : not(at(?actor, unknown));
-    }
+    String !locName = tsc:getMapReferenceName(?dstLoc);
 
-    act:say("Please come with me");
+    act:say("Hello ?escortee. Please come with me, I will show you to !locName");
 
     act:goToLocation(?dstLoc);
-    act:say("Arrived");
+    act:say("Arrived at !locName");
 }
 
 () = escortFromToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
+    String !locName = tsc:getMapReferenceName(?dstLoc);
 
     act:goToLocation(?escorteeLoc);
-    act:say("Please come with me");
+    act:say("Hello ?escortee. Please come with me, I will show you to !locName");
 
     act:goToLocation(?dstLoc);
-    act:say("Arrived");
+    act:say("Arrived at !locName");
 }
 
 /**
@@ -44,6 +43,7 @@ import java.util.StringTokenizer;
  */
 () = deliver(Symbol ?obj, Symbol ?dstLoc) {
     act:goToLocation(?dstLoc);
+    act:say("Here is ?obj");
     op:log("info", "[deliverToLocation] Delivering ?obj to ?dstLoc");
 }
 
@@ -266,6 +266,7 @@ import java.util.StringTokenizer;
     effects : {
         success : at(?actor, ?location);
         success infer : not(at(?actor, !current));
+        success infer : at(?actor, ?location);
         nonperf infer : not(at(?actor, !current));
         nonperf infer : at(?actor, unknown);
         failure infer : not(at(?actor, !current));
@@ -306,6 +307,7 @@ import java.util.StringTokenizer;
     !bindings = act:queryBelief(!queryPred);
     if (op:isEmpty(!bindings)) {
         op:log("warn", "[getCurrentLocation] locQuery returned no results");
+        ?currentLocation = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "unknown");
     } else {
         !binding = op:get(!bindings, 0);
         ?currentLocation = op:get(!binding, !x);
