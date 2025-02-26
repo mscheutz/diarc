@@ -37,6 +37,24 @@
       ]
     },
     {
+      "refId": "location_26:location",
+      "variable": "X",
+      "properties": [
+        "waiting room(X)"
+      ],
+      "position": [
+        -9.644844213025198,
+        2.137309188044539,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.43048014682621627,
+        0.9026000460826928
+      ]
+    },
+    {
       "refId": "location_21:location",
       "variable": "X",
       "properties": [
@@ -88,6 +106,24 @@
         0.0,
         -0.9991964626183498,
         0.04008028307006579
+      ]
+    },
+    {
+      "refId": "location_27:location",
+      "variable": "X",
+      "properties": [
+        "testing room(X)"
+      ],
+      "position": [
+        4.973053777207316,
+        0.5523088395310972,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.9995849834405365,
+        0.028807306020910008
       ]
     },
     {
