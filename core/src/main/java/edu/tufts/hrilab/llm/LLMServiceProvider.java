@@ -317,6 +317,8 @@ public abstract class LLMServiceProvider extends DiarcComponent {
         for (Symbol agentTeam : agentTeams) {
             members.addAll(getDescendants(agentTeam));
         }
+        //TODO: not sure we want this, adding default listener of any actorless generateResponse to every conversation
+        members.add(Factory.createSymbol("person"));
         return startLLMConversation(members);
     }
     /**
@@ -409,6 +411,8 @@ public abstract class LLMServiceProvider extends DiarcComponent {
         if (agentList == null) {
             agentList = new HashSet<>();
             agentList.add(agentTeam);
+        } else {
+            agentList = new HashSet<>(agentList);
         }
         return agentList;
     }
