@@ -162,7 +162,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
                 log.debug("[convertSemanticsToText] Using llm NLG response");
                 output = llmOutput;
                 if (useCache) {
-                    cacheParse(output);
+                    cacheNLGOutput(output);
                 }
                 return output;
             }
@@ -179,7 +179,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
             if (simpleNLGOutput != null && !simpleNLGOutput.getWordsAsString().isEmpty()) {
                 log.debug("[convertSemanticsToText] Using SimpleNLG response");
                 if (useCache && cacheSimpleNLG) {
-                    cacheParse(simpleNLGOutput);
+                    cacheNLGOutput(simpleNLGOutput);
                 }
                 return simpleNLGOutput;
             }
@@ -190,12 +190,12 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
 
     @TRADEService
     @Action
-    public void cacheParse(Utterance utterance) {
+    public void cacheNLGOutput(Utterance utterance) {
         if (useCache) {
-            log.debug("[cacheParse] Caching parsed utterance");
+            log.debug("[cacheNLGOutput] Caching parsed utterance");
             cacheNLG.addEntryToCache(utterance);
         } else {
-            log.debug("[cacheParse] Not caching parsed utterance");
+            log.debug("[cacheNLGOutput] Not caching parsed utterance");
         }
     }
 
