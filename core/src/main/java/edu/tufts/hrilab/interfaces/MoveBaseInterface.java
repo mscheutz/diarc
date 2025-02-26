@@ -47,14 +47,8 @@ public interface MoveBaseInterface {
    *
    * @param location - name of the goal location
    */
-  //@TRADEService
-  //@Action
-  //@Effect(
-  //  effect={"at(?actor,?location)"},
-  //  type = EffectType.SUCCESS,
-  //  observable = {"at(?actor,?location)"}
-  //)
-  //@OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
+  @TRADEService
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol location, boolean wait);
 
   /**

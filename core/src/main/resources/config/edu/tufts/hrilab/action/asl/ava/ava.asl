@@ -47,39 +47,6 @@ import java.util.StringTokenizer;
     op:log("info", "[deliverToLocation] Delivering ?obj to ?dstLoc");
 }
 
-() = lookForPerson(Symbol ?person) {
-    Symbol !personLoc;
-
-    conditions : {
-        pre : at(?person, !personLoc);
-    }
-
-    Predicate !iWillFindPred = op:createPredicate("ack(i will find ?person at,!personLoc)");
-    act:generateResponse(!iWillFindPred);
-
-    act:goToLocation(!personLoc);
-
-    // Check if the person is not at the robot find the person and confirm that they can go with you
-    Predicate !yesSemantics = op:createPredicate("val(yes)");
-    Predicate !noSemantics = op:createPredicate("val(no)");
-//    tsc:setSuggestedInput("yes or no");
-    Predicate !answerSemantics = act:askQuestionFromString(patient, "Hello, I am looking for ?person. Are you here?", !yesOrNoResponseForm);
-
-    Predicate !retractPred = op:createPredicate("at(?person,!x)");
-    if (op:equals(!answerSemantics, !yesSemantics)) {
-        op:log("info", "Given yes");
-        // Person is found function can be completed
-    } elseif (op:equals(!answerSemantics, !noSemantics)) {
-        op:log("info", "Given no");
-        // This will cause the unknownLocationRecoveryPolicy to be called
-        act:retractBelief(!retractPred);
-        act:lookForPerson(?person);
-    } else {
-        op:log("info", "Given something else");
-        // This will cause the question to be asked again
-        act:lookForPerson(?person);
-    }
-}
 
 /**
  * This is a recovery policy executed when a parameter to a function doesn't have a known location.
@@ -156,9 +123,9 @@ import java.util.StringTokenizer;
 () = monitorBattery() {
     int !sleepTime = 30000; // 30s How often to check the battery
     double !currBatteryLevel;
-    double !lowChargeLevel = 40; // Threshold to finish tasks and then go home and charge
+    double !lowChargeLevel = 10; // Threshold to finish tasks and then go home and charge
     double !veryLowChargeLevel = 20; // Threshold to suspend tasks and go home and charge immediately
-    double !enoughChargeLevel = 50; // Threshold to stop charging
+    double !enoughChargeLevel = 30; // Threshold to stop charging
     boolean !sentGoalHome = false;
     boolean !sentUrgentGoalHome = false;
     Predicate !goHomeGoalPred = op:createPredicate("goHomeAndCharge(?actor, !enoughChargeLevel)");
