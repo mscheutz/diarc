@@ -282,7 +282,9 @@ import java.util.StringTokenizer;
 }
 
 () = saveLocation(Symbol ?location) {
+    Variable !x;
     effects : {
+        success infer : not(at(?actor, !x));
         success infer : at(?actor, ?location);
     }
     tsc:saveLocation(?location);
