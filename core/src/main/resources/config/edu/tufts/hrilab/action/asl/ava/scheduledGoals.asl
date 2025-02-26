@@ -381,6 +381,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   if (~op:isEmpty(!bindings)) {
      !elem = op:get(!bindings, 0);
      !locations = op:get(!elem,!x);
+     act:generateResponseFromString("Starting patrol on path ?collectionName with ?actionName");
      act:forEach(!locations, ?actionName);
   } else {
     exit(FAIL, known(patrol, ?collectionName));
@@ -498,4 +499,9 @@ import edu.tufts.hrilab.action.justification.Justification;
     } else {
         act:generateResponseFromString(!questionString);
     }
+}
+
+() = takePhoto(Symbol ?location:location) {
+    act:goToLocation(?location);
+    act:generateResponse("taking(photo(at(?location)))");
 }
