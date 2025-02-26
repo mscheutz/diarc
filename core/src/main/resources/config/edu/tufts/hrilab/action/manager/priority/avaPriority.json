@@ -50,5 +50,25 @@
   "patrol": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "endActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "endTaskLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "pauseActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "resumeActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "cancelActionLearning": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

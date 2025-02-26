@@ -298,6 +298,10 @@ public class LearningState {
     return new ArrayList<>(valueActBindingMap.values());
   }
 
+  public List<Symbol> getRoleNames() {
+    return new ArrayList<>(inputRoles);
+  }
+
   public List<EventSpec> getEventSpecs() {
     return eventSpecs;
   }

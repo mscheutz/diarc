@@ -181,21 +181,7 @@ stand; C; stand(?ADDRESSEE)
 
 % Lab specific locations
 arena; LOC; arena
-back door; LOC; back door
 bullpen; LOC; bullpen
-coffee maker; LOC; coffee maker
-cramer; LREF; cramer; DEFINITE
-evans office; LREF; evans office; DEFINITE
-exit; LOC; exit
-test; LOC; test
-desk alpha; LOC; desk alpha
-desk beta; LOC; desk beta
-
-% both lab and 4th floor
-elevator; LOC; elevator
-dock; LOC; dock
-doc; LOC; dock
-doc; LREF; dock; DEFINITE
 
 % 4th floor specific
 lab space; LOC; lab space
@@ -440,3 +426,12 @@ nevermind; VAL; abort(question)
 %i will teach you a new task; C; learnNewTask(?ADDRESSEE)
 %end
 where are you now; C; describeCurrentLocation(?ADDRESSEE)
+
+i will teach you a new task; C; learnNewTask(?ADDRESSEE)
+
+the task name is; VAL/LIT*; #x.taskName($x)
+task greet; VAL; taskName(greet)
+i am done teaching; C; endTaskLearning(?ADDRESSEE)
+
+say; C/LIT*; #x.say(?ADDRESSEE, $x)
+greet; C; greet(?ADDRESSEE)

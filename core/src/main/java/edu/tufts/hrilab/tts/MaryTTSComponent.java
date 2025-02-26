@@ -12,6 +12,7 @@ package edu.tufts.hrilab.tts;
 import java.io.*;
 
 import ai.thinkingrobots.trade.*;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.interfaces.SpeechProductionInterface;
@@ -79,6 +80,7 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
   private DocumentBuilder db;
   private Transformer tr;
   private String voiceStr;    // default to female voice
+  private boolean enabled;
 
 
   private enum Emotion {
@@ -266,10 +268,24 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
     voice = Voice.getVoice(vc);
   }
 
+  @TRADEService
+  @Action
+  public void toggleVoiceOn() {
+    this.enabled = true;
+  }
+
+  @TRADEService
+  @Action
+  public void toggleVoiceOff() {
+    this.enabled = false;
+  }
+
   @Override
   public boolean sayText(String text) {
-    sayText(text, true);
-    return true;
+    if (this.enabled) {
+      sayText(text, true);
+    }
+      return true;
   }
 
   /**

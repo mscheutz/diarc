@@ -86,6 +86,9 @@ Description: the user is instructing the robot that they will begin teaching the
 endActionLearning()
 Description: To be used after learnNewTask(), the user is instructing the robot that they are finished describing the action sequence of the new task. At this point the learning phase will end and the new action will be ready for execution.
 #
+describeCurrentLocation(?name)
+Description: The robot will describe the current location it understands itself to be located at.
+#
 %learnedActions%
 
 ###

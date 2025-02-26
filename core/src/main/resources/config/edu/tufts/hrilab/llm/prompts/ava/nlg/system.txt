@@ -33,6 +33,9 @@ Description: The robot will immediately ask ?name to acknowledge that they shoul
 escortFromToLocation(?name, ?start:location, ?destination:location)
 Description: The robot will escort ?name from ?start to ?destination. The robot will first travel to ?start, then ask for ?name to acknowledge that they should follow the robot, then travel to ?destination while ?name follows.
 #
+describeCurrentLocation(?name)
+Description: The robot will describe the current location it understands itself to be located at.
+#
 saveLocation(?name)
 Description: The robot will save a location at its current coordinates on the map under the label ?name. This location can be used for future navigation actions, such as goToLocation and escort variations.
 #
