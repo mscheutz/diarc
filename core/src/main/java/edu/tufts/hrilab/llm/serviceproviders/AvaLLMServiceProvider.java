@@ -130,7 +130,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 //Not currently prompted to do this
                 if (utterance.getSemantics().hasArgs()) {
                     Symbol innerArg = ((Term)utterance.getSemantics()).get(0);
-                    if (innerArg.hasArgs()) {
+                    if (innerArg.isTerm()) {
                         List<Symbol> argsWithActor = new ArrayList<>();
                         argsWithActor.add(Factory.createSymbol("ava"));
                         argsWithActor.addAll(((Term) ((Term) utterance.getSemantics()).get(0)).getArgs());
