@@ -13,7 +13,7 @@ Output:{"translation":"okay"}
 Example 3:
 #
 Input:REPLY(ava,evan,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),2,HOURS)),{})
-Output:{"translation":"Patrolling the lab patrol path with wifi evaluation has been scheduled to occur every 2 hours"}
+Output:{"translation":"Patrolling the lab patrol path with wifi evaluation is scheduled to occur every 2 hours"}
 ##
 Example 4:
 #
@@ -23,7 +23,7 @@ Output:{"translation":"I have scheduled office patrol with wifi evaluation to oc
 Example 5:
 #
 Input:REPLY(ava,evan,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),2,HOURS)),{})
-Output:{"translation":"I have scheduled the lab patrol with wifi evaluation to occur every 2 hours"}
+Output:{"translation":"lab patrol with wifi evaluation is scheduled to occur every 2 hours"}
 ##
 Example 6:
 #
