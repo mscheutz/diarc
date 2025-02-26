@@ -279,12 +279,6 @@ import edu.tufts.hrilab.action.justification.Justification;
     Justification !failureJustification;
     List !failureReasons;
 
-    onInterrupt : {
-      cancel : act:cancelGoal(!gid);
-      suspend : act:suspendGoal(!gid);
-      resume : act:resumeGoal(!gid);
-    }
-
     !args = op:invokeMethod(?collection, "getArgs");
     foreach (!arg : !args) {
         !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?actionName(?actor, !arg)");
@@ -293,6 +287,8 @@ import edu.tufts.hrilab.action.justification.Justification;
         if (op:invokeMethod(!goalStatus, "isFailure")) {
           !failureJustification = act:getGoalFailConditions(!gid);
           exit(FAIL, !failureJustification);
+        } elseif (op:equalsValue(!goalStatus,"CANCELED")) {
+            exit(CANCEL);
         }
     }
 }
@@ -384,7 +380,7 @@ import edu.tufts.hrilab.action.justification.Justification;
      act:generateResponseFromString("Starting patrol on path ?collectionName with ?actionName");
      act:forEach(!locations, ?actionName);
   } else {
-    exit(FAIL, known(patrol, ?collectionName));
+    exit(FAIL, not(known(patrol, ?collectionName)));
   }
   !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "sayFinishedPatrol(?actor, ?collectionName, ?actionName)");
   act:submitGoal(!goalPred);
@@ -423,7 +419,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     !result = op:get(!elem,!x);
     act:generateResponse("wifiQualityAt(?location, !result)");
   } else {
-      exit(FAIL, known(wifi(?location)));
+      exit(FAIL, not(known(wifiQualityAt(?location))));
   }
 }
 
@@ -447,7 +443,7 @@ import edu.tufts.hrilab.action.justification.Justification;
         act:reportWifiForLocation(!location);
      }
   } else {
-    exit(FAIL, known(patrol, ?collectionName));
+    exit(FAIL, not(known(patrol, ?collectionName)));
   }
 }
 
