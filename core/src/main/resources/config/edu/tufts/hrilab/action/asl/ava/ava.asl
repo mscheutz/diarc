@@ -18,14 +18,14 @@ import java.util.StringTokenizer;
 /******************************** Move Escort Deliver Scripts ********************************/
 
 () = escortToLocation(Symbol ?escortee, Symbol ?dstLoc) {
-    Symbol !current;
-
     conditions : {
        pre infer : not(at(?actor, unknown));
     }
 
-    !current = act:getCurrentLocation();
-    act:escortFromToLocation(?escortee, !current, ?dstLoc);
+    act:say("Please come with me");
+
+    act:goToLocation(?dstLoc);
+    act:say("Arrived");
 }
 
 () = escortFromToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
@@ -42,7 +42,7 @@ import java.util.StringTokenizer;
  * Example command: "Take this object to the lobby"
  * Probably somehow check if an object is in the robot's  possession and then once it is it can drive to the location
  */
-() = deliverToLocation(Symbol ?obj, Symbol ?dstLoc) {
+() = deliver(Symbol ?obj, Symbol ?dstLoc) {
     act:goToLocation(?dstLoc);
     op:log("info", "[deliverToLocation] Delivering ?obj to ?dstLoc");
 }
@@ -263,10 +263,6 @@ import java.util.StringTokenizer;
 () = goToLocation(Symbol ?location) {
     Symbol !current;
 
-    conditions : {
-        pre infer : at(?actor, !current);
-        //todo: pete should this have a nonperf effect?
-    }
     effects : {
         success : at(?actor, ?location);
         success infer : not(at(?actor, !current));
@@ -279,6 +275,8 @@ import java.util.StringTokenizer;
         cancel : act:stop();
         suspend : act:stop();
     }
+
+    !current = act:getCurrentLocation();
 
     act:goToLocation(?location, !current);
 }
