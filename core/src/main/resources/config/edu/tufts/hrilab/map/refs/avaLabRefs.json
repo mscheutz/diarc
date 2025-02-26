@@ -1,24 +1,6 @@
 {
   "poseReferences": [
     {
-      "refId": "location_0:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "dock(VAR0:location)"
-      ],
-      "position": [
-        -0.03652259308689226,
-        0.7643826170636434,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.7686020288902752,
-        0.6397272240461186
-      ]
-    },
-    {
       "refId": "location_5:location",
       "variable": "VAR0:location",
       "properties": [
@@ -55,21 +37,39 @@
       ]
     },
     {
-      "refId": "location_9:location",
-      "variable": "VAR0:location",
+      "refId": "location_21:location",
+      "variable": "X",
       "properties": [
-        "back door(VAR0:location)"
+        "back door(X)"
       ],
       "position": [
-        0.636078470080424,
-        10.22051342611405,
+        -5.353174761016407,
+        2.457457928365445,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.6980345144845445,
-        0.7160641148586671
+        0.9999988018356653,
+        0.0015480075044605752
+      ]
+    },
+    {
+      "refId": "location_0:location",
+      "variable": "VAR0:location",
+      "properties": [
+        "dock(VAR0:location)"
+      ],
+      "position": [
+        -0.03652259308689226,
+        0.7643826170636434,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7686020288902752,
+        0.6397272240461186
       ]
     },
     {
