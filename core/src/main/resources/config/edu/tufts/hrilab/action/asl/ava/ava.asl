@@ -461,3 +461,23 @@ import java.util.StringTokenizer;
         act:generateResponseFromString("There are no saved patrol paths");
     }
 }
+
+() = describeAllLocationsOnPatrolPath(Symbol ?pathName) {
+    Predicate !queryPred;
+    Variable !x = "X";
+    Map !elem;
+    List !bindings;
+    Predicate !locationsPredicate;
+    Predicate !generateResponsePredicate;
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?pathName,X)");
+    !bindings = act:queryBelief(!queryPred);
+    if (~op:isEmpty(!bindings)) {
+     !elem = op:get(!bindings, 0);
+     !locationsPredicate = op:get(!elem,!x);
+     !generateResponsePredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "patrolPath(?pathName,contains(!locationsPredicate))");
+     act:generateResponse(!generateResponsePredicate);
+    } else {
+        act:generateResponseFromString("I don't have a patrol path saved under the name ?pathName");
+    }
+}
