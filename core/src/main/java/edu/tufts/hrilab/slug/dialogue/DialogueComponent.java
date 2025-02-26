@@ -24,6 +24,7 @@ import org.apache.commons.cli.Option;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -446,5 +447,17 @@ public class DialogueComponent extends DiarcComponent {
   public boolean isAgentWaitingForResponse(Symbol agent) {
     Set<Question> currentQuestions = questionsPerAgent.get(agent);
     return !(currentQuestions == null || currentQuestions.stream().noneMatch(Question::isActive));
+  }
+
+  @TRADEService
+  public String getLastQuestion(Symbol agent) {
+    agent = agent.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(agent);
+    if (currentQuestions.isEmpty()) {
+      return "";
+    } else {
+      Question mostRecentQuestion = currentQuestions.stream().max(Comparator.comparingLong(Question::getTimestamp)).get();
+      return mostRecentQuestion.getQuestionString();
+    }
   }
 }
