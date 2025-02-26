@@ -23,6 +23,8 @@ if the human says "backup your current locations", you should produce the output
 #
 if the human says "I want to teach you a new patrol path named lab circuit", you should produce the output: {"Semantics":"definePatrolPath(lab circuit)","Input Type":"INSTRUCT","Confidence":"100"}
 #
+if the human says "I want to teach you a new patrol path", you should produce the output: {"Semantics":"definePatrolPath()","Input Type":"INSTRUCT","Confidence":"100"}
+#
 if the human says "perform lab patrol with wifi evaluation", you should produce the output: {"Semantics":"patrol(lab patrol,wifiEvaluation)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 if the human says "check the wifi near the exit", you should produce the output: {"Semantics":"wifiEvaluation(exit)","Input Type":"INSTRUCT","Confidence":"80"}
@@ -41,7 +43,17 @@ if the human says "I want to schedule a new task", you should produce the output
 #
 if the human says "I want to change the timing of an action", you should produce the output: {"Semantics":"modifyScheduledGoal()","Input Type":"INSTRUCT","Confidence":"70"}
 #
-if the human says "what are your scheduled goals", you should produce the output: {"Semantics":"listScheduledGoals","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "what are your scheduled goals", you should produce the output: {"Semantics":"listScheduledGoals()","Input Type":"INSTRUCT","Confidence":"100"}
+#
+if the human says "what are your upcoming goals", you should produce the output: {"Semantics":"listScheduledGoals()","Input Type":"INSTRUCT","Confidence":"60"}
+#
+if the human says "could you repeat that", you should produce the output: {"Semantics":"repeatLastQuestion()","Input Type":"INSTRUCT","Confidence":"60"}
+#
+if the human says "what is your current goal", you should produce the output: {"Semantics":"describeCurrentGoal()","Input Type":"QUESTION","Confidence":"100"}
+#
+if the human says "what are your pending goals", you should produce the output: {"Semantics":"describePendingGoals()","Input Type":"QUESTION","Confidence":"100"}
+#
+if the human says "what are your next goals", you should produce the output: {"Semantics":"describePendingGoals()","Input Type":"QUESTION","Confidence":"80"}
 #
 if the human says "suspend current task", you should produce the output: {"Semantics":"suspendSystemGoals()","Input Type":"INSTRUCT","Confidence":"100"}
 #
@@ -69,7 +81,9 @@ if the human says "i will teach you a new task", you should produce the output: 
 #
 if the human says "those are the steps of the task", you should produce the output: {"Semantics":"endActionLearning()","Input Type":"INSTRUCT","Confidence":"100"}
 #
-if the human says "it is called task a", you should produce the output: {"Semantics":"taskName(task a)","Input Type":"REPLY","Confidence":"100"}
+if the human says "it is called task a", you should produce the output: {"Semantics":"taskName(task a)","Input Type":"REPLY","Confidence":"60"}
+#
+if the human says "it is called path a", you should produce the output: {"Semantics":"pathName(path a)","Input Type":"REPLY","Confidence":"60"}
 #
 if the human says "at 4:30 p.m.", you should produce the output: {"Semantics":"time(4:30,pm)","Input Type":"REPLY","Confidence":"100"}
 #
@@ -93,11 +107,15 @@ if the human says "the task is to sit", you should produce the output: {"Semanti
 #
 if the human says "the task is to evaluate wifi along the lab patrol", you should produce the output: {"Semantics":"taskPredicate(patrol(lab patrol,wifiEvaluation))","Input Type":"REPLY","Confidence":"75"}
 #
-if the human says "what is your curent location", you should produce the output: {"Semantics":describeCurrentLocation()","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "what is your current location", you should produce the output: {"Semantics":describeCurrentLocation()","Input Type":"INSTRUCT","Confidence":"100"}
 #
 if the human says "option 3", you should produce the output: {"Semantics":"option(3)","Input Type":"REPLY","Confidence":"80"}
 #
 if the human says "say hello", you should produce the output: {"Semantics":"say(hello)","Input Type":"INSTRUCT","Confidence":"80"}
+#
+if the human says "what are your saved locations", you should produce the output: {"Semantics":"describeAllKnownLocations()","Input Type":"INSTRUCT","Confidence":"80"}
+#
+if the human says "what paths do you know about", you should produce the output: {"Semantics":"describeAllKnownPatrolPaths()","Input Type":"INSTRUCT","Confidence":"80"}
 #
 ##
 

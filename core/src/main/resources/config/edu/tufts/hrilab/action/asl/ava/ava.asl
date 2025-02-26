@@ -400,8 +400,17 @@ import java.util.StringTokenizer;
     Symbol !response;
     Map !bindings;
     Variable !x = "X";
+    java.util.List !responseFormList;
+    Predicate !responseForm;
 
-    (!bindings) = act:askQuestionFromString(?actor,"What is the name of the task?", taskName(X));
+    //Doing this as a kind of failsafe, not sure if we want such similar semantics at all though
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "pathName(X)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "taskName(X)");
+    op:add(!responseFormList,!responseForm);
+
+    (!bindings) = act:askQuestionFromString(?actor,"What is the name of the task?", !responseFormList);
    if (op:invokeMethod(!bindings, "isEmpty")) {
         ?name = op:setNull();
     } else {
@@ -414,4 +423,41 @@ import java.util.StringTokenizer;
     act:toggleVoiceOn();
     act:sayText(?literal);
     act:toggleVoiceOff();
+}
+
+() = describeAllKnownLocations() {
+    List !locationNames;
+    java.lang.String !locationName;
+
+    !locationNames = tsc:getMapLocationNames();
+    if (op:isEmpty(!locationNames)) {
+        act:generateResponseFromString("There are no saved locations");
+    } else {
+        act:generateResponseFromString("I know the following locations");
+        foreach(!locationName : !locationNames) {
+            act:generateResponseFromString(!locationName);
+        }
+    }
+}
+
+() = describeAllKnownPatrolPaths() {
+    Predicate !queryPred;
+    Variable !x = "X";
+    Symbol !path;
+    Symbol !pathName;
+    Map !elem;
+    List !bindings;
+
+    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(X,Y)");
+    !bindings = act:queryBelief(!queryPred);
+    if (~op:isEmpty(!bindings)) {
+        act:generateResponseFromString("I know the following patrol paths");
+        foreach(!elem : !bindings) {
+            !path = op:get(!elem,!x);
+            !pathName = op:invokeMethod(!path,"getName");
+            act:generateResponseFromString(!pathName);
+        }
+    } else {
+        act:generateResponseFromString("There are no saved patrol paths");
+    }
 }

@@ -44,6 +44,9 @@ Description: The robot will write its current set of saved locations to a file s
 definePatrolPath(?name)
 Description: The robot will begin in a targeted conversation with the user to define a new path of locations under the label ?name, which the robot can later use for patrol tasks.
 #
+definePatrolPath()
+Description: Same as the definePatrolPath(?name) action, but the label of the patrol path is not supplied in the instruction. This version of the action will additionally ask the user to supply the name of the path.
+#
 patrol(?pathName:path, ?actionName)
 Description: The robot will navigate between all the locations included in the path ?pathName, and perform the action corresponding to ?actionName at each location. ?actionName is untyped, but the set of valid values here is only the name any known action semantic form (for example, wifiEvaluation or takePhoto).
 #
@@ -92,6 +95,21 @@ Description: To be used after learnNewTask(), the user is instructing the robot 
 describeCurrentLocation(?name)
 Description: The robot will describe the current location it understands itself to be located at.
 #
+describeCurrentGoal()
+Description: The robot will report what its current task is.
+#
+describePendingGoals()
+Description: The robot will report what its pending tasks are. Pending tasks are not scheduled tasks, they are tasks which will be executed immediately in succession when the currently pursued task is complete.
+#
+describeAllKnownLocations()
+Description: The robot will list all locations it currently has saved.
+#
+describeAllKnownPatrolPaths()
+Description: The robot will list all patrol paths it currently has saved.
+#
+repeatLastQuestion()
+Description: The robot will repeat the last question it asked which the user still has yet to answer.
+#
 %learnedActions%
 
 ###
@@ -123,7 +141,10 @@ abort(question)
 Description: These are universal semantics to represent when the user is declining to answer the question. Examples are "nevermind", "forget about it", and "im not answering that".
 #
 taskName(?name)
-Description: Prompted by the learnNewTask action, the user is answering a question from the system about what the to-be-learned task should be called. ?name has no restriction on possible values.
+Description: Prompted by the learnNewTask action, the user is answering a question from the system about what the to-be-learned task should be called. ?name has no restriction on possible values. This form will generally follow a question in the conversation history asking "What is the name of the task?".
+#
+pathName(?name)
+Description: Prompted by the definePatrolPath() action, the user is answering a question from the system about what the to-be-learned path should be called. ?name has no restriction on possible values. This form will generally follow a question in the conversation history asking "What is the name of the path?".
 #
 option(?number)
 Description: Prompted to select from a list of numbered options, the user is answering which of those options they want to select. ?number is expected to be an integer.

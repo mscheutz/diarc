@@ -399,7 +399,7 @@ perform lab patrol with wifi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiE
 perform office patrol with wifi evaluation; C; patrol(?ADDRESSEE, office patrol, wifiEvaluation)
 perform lab patrol with wi-fi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
 add a new patrol path; C/LIT*; #x.definePatrolPath(?ADDRESSEE,$x)
-the name is; VAL/LIT*; #x.name($x)
+%the name is; VAL/LIT*; #x.name($x)
 that is all; VAL; location(none)
 modify a scheduled task; C; modifyScheduledGoal(?ADDRESSEE)
 the interval; VAL; timingOf(interval)
@@ -437,3 +437,23 @@ say; C/LIT*; #x.say(?ADDRESSEE, $x)
 greet; C; greet(?ADDRESSEE)
 
 option; VAL/NUM; #x.option($x)
+
+what is your current task; VERBI; describeCurrentGoal
+what are your pending tasks; VERBI; describePendingGoals
+cancel pending tasks; VERBI; cancelAllPendingGoals
+cancel all pending tasks; VERBI; cancelAllPendingGoals
+cancel all active tasks; VERBI; cancelAllActiveGoals
+cancel all tasks; VERBI; cancelAllCurrentGoals
+what is your current goal; VERBI; describeCurrentGoal
+what are your pending goals; VERBI; describePendingGoals
+cancel pending goals; VERBI; cancelAllPendingGoals
+cancel all pending goals; VERBI; cancelAllPendingGoals
+cancel all active goals; VERBI; cancelAllActiveGoals
+cancel all goals; VERBI; cancelAllCurrentGoals
+
+the path name is; VAL/LIT*; #x.pathName($x)
+
+what did you ask me; VERBI; repeatLastQuestion
+
+what locations do you have saved; VERBI; describeAllKnownLocations
+what patrol paths do you have saved; VERBI; describeAllKnownPatrolPaths

@@ -70,5 +70,17 @@
   "cancelActionLearning": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "repeatLastQuestion":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeAllKnownLocations":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeAllKnownPatrolPaths":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

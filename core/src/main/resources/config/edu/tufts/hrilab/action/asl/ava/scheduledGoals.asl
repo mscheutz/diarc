@@ -296,6 +296,29 @@ import edu.tufts.hrilab.action.justification.Justification;
     }
 }
 
+() = definePatrolPath() {
+    Map !bindings;
+    Variable !x = "X";
+    Symbol !pathName;
+    String !nameString;
+    java.util.List !responseFormList;
+    Predicate !responseForm;
+
+    //Doing this as a kind of failsafe, not sure if we want such similar semantics at all though
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "pathName(X)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "taskName(X)");
+    op:add(!responseFormList,!responseForm);
+
+    !bindings = act:askQuestionFromString(?actor,"What is the name of the path?", !responseFormList);
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
+    !pathName = op:get(!bindings, !x);
+    act:definePatrolPath(!pathName);
+}
+
 () = definePatrolPath(Symbol ?name) {
     Map !bindings;
     Variable !x = "X";
@@ -382,4 +405,54 @@ import edu.tufts.hrilab.action.justification.Justification;
     act:goToLocation(?locationId);
     op:log(info, "[wifiEvaluation] evaluating wifi quality at ?locationId");
     //todo: actual call to do something useful. log to somewhere?
+}
+
+
+//TODO: these can probably just be moved to a core asl script (though is
+() = describeCurrentGoal["describes ?actor's current active task(s)"](){
+
+    java.util.List !goalPreds;
+    java.lang.Integer !resultsSize=0;
+    java.lang.String !status;
+    Predicate !goalPred;
+
+    !goalPreds = act:getSystemGoalsPredicates();
+    !resultsSize = op:size(!goalPreds);
+    if(op:gt(!resultsSize,0)){
+        foreach(!goalPred: !goalPreds){
+            !status= op:getName(!goalPred);
+            !goalPred= op:getArg(!goalPred,0);
+            act:generateResponseFromString("!status task: ");
+            act:generateResponse(!goalPred);
+        }
+    } else {
+        act:generateResponseFromString("no current task");
+    }
+}
+
+() = describePendingGoals["describes ?actor's pending goals task"](){
+    java.util.List !goalPreds;
+    java.lang.Integer !resultsSize=0;
+
+    !goalPreds = act:getPendingGoals();
+    !resultsSize = op:size(!goalPreds);
+
+    if(op:gt(!resultsSize,0)){
+       foreach(!goalPred: !goalPreds){
+           act:generateResponse(!goalPred);
+       }
+    } else{
+       act:generateResponseFromString("no pending tasks");
+    }
+
+}
+
+() = repeatLastQuestion() {
+    java.lang.String !questionString;
+    !questionString = tsc:getLastQuestion(?actor);
+    if (op:invokeMethod(!questionString,"isEmpty")) {
+        act:generateResponseFromString("I have no currently pending questions");
+    } else {
+        act:generateResponseFromString(!questionString);
+    }
 }

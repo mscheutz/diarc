@@ -464,6 +464,18 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     return consultant.getReference(refId);
   }
 
+  @TRADEService
+  public List<String> getMapLocationNames() {
+    List<String> locationNames = new ArrayList<>();
+    Map<Symbol,PoseReference> refs = getMapReferences();
+    for (PoseReference ref : refs.values()) {
+      if (!ref.properties.isEmpty()) {
+        locationNames.add(ref.properties.get(0).getName());
+      }
+    }
+    return locationNames;
+  }
+
   @Override
   protected void shutdownComponent() {
     try {
