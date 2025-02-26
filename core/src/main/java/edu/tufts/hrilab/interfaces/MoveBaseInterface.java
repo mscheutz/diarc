@@ -48,12 +48,6 @@ public interface MoveBaseInterface {
    * @param location - name of the goal location
    */
   @TRADEService
-  @Action
-  @Effect(
-    effect={"at(?actor,?location)"},
-    type = EffectType.SUCCESS,
-    observable = {"at(?actor,?location)"}
-  )
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol location, boolean wait);
 
@@ -81,7 +75,7 @@ public interface MoveBaseInterface {
    * @return justification specifying if the robot navigated to the location
    */
   @TRADEService
-//  @Action
+  @Action
 //  @Condition(
 //      condition={"at(?actor,?initialLocation)"},
 //      type= ConditionType.PRE,
