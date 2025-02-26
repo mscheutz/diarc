@@ -2,7 +2,9 @@ package edu.tufts.hrilab.ava;
 
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
+import edu.tufts.hrilab.action.EffectType;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.annotations.Effect;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.ava.message.response.Obstacle;
@@ -32,6 +34,11 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
 
   @TRADEService
   @Action
+  @Effect(
+          effect={"at(?actor,unknown)"},
+          type = EffectType.ALWAYS,
+          infer = {"at(?actor,unknown)"}
+  )
   Justification stopFollow();
 
   @TRADEService
@@ -140,4 +147,9 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
   @TRADEService
   @Action
   public Symbol parseTime(Symbol input, Symbol amOrPm);
+
+  @TRADEService
+  @Action
+  public Integer getWifiSignalStrength();
+
 }

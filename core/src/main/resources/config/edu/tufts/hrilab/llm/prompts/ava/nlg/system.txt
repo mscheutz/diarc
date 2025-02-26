@@ -54,6 +54,12 @@ Description: The robot will navigate between all the locations included in the p
 wifiEvaluation(?location:location)
 Description: The robot will measure the strength of a wifi signal at ?location and save the results for a later report.
 #
+reportWifiForLocation(?location:location)
+Description: The robot will report the wifi signal quality at ?location measured the last time it visited ?location and ran wifi evaluation.
+#
+reportWifiForPatrol(?pathName:path)
+Description: The robot will report the wifi signal quality at every location in patrol path ?patrol.
+#
 takePhoto(?location:location)
 Description: The robot will take a photo at ?location and include it in a report to be sent to the user.
 #

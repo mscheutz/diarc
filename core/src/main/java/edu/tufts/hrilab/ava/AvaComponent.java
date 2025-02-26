@@ -4,7 +4,6 @@
 
 package edu.tufts.hrilab.ava;
 
-import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.ava.message.AvaMoveGoal;
 import edu.tufts.hrilab.ava.message.response.*;
 import edu.tufts.hrilab.ava.util.Utilities;
@@ -24,6 +23,8 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -53,6 +54,8 @@ import javax.vecmath.Tuple3d;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+
+import static java.lang.System.getProperty;
 
 /**
  * Represents the Ava robot navigation functionality.
@@ -1006,5 +1009,30 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       log.error("[parseTime] error parsing time input: %s %s".formatted(input, amOrPm));
     }
     return Factory.createSymbol("none");
+  }
+
+  @Override
+  public Integer getWifiSignalStrength() {
+    String tmpFilePath = getProperty("user.home") + "/.diarc/tmp";
+    String tmpFilePathExtra = "\"" + tmpFilePath + "\"";
+
+    ProcessBuilder pb = new ProcessBuilder("awk", "NR==3 {printf(\"%.0f\\n\",$3*10/7) > " + tmpFilePathExtra + "}", "/proc/net/wireless");
+    ProcessBuilder readerPb = new ProcessBuilder("cat", tmpFilePath);
+    pb.inheritIO();
+    String homeDirPath = getProperty("user.home");
+    pb.directory(new File(homeDirPath));
+    readerPb.directory(new File(homeDirPath));
+    try {
+      Process process = pb.start();
+      process.waitFor();
+      process = readerPb.start();
+      String result = new String(process.getInputStream().readAllBytes()).replace("\"", "").strip();
+      return Integer.parseInt(result);
+    } catch (IOException | NumberFormatException e) {
+      log.error("[getWifiSignalStrength] failed to get wifi signal strength with exception: ", e);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return -1;
   }
 }

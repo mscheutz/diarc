@@ -6,6 +6,7 @@ import java.util.List;
 import java.lang.String;
 import java.lang.Long;
 import java.lang.Integer;
+import java.lang.Double;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.justification.Justification;
 
@@ -402,9 +403,60 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 () = wifiEvaluation(Symbol ?locationId) {
+    Integer !result = 0;
+    Variable !x;
+
+    effects : {
+        success : not(wifi(?locationId, !x));
+        success : wifi(?locationId, !result);
+    }
+
     act:goToLocation(?locationId);
     op:log(info, "[wifiEvaluation] evaluating wifi quality at ?locationId");
-    //todo: actual call to do something useful. log to somewhere?
+    !result = act:getWifiSignalStrength();
+}
+
+() = reportWifiForLocation(Symbol ?location) {
+  Predicate !queryPred;
+  Variable !x = "X";
+  Map !elem;
+  List !bindings;
+  Symbol !result;
+  Predicate !resultPredicate;
+
+  !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifi(?location,X)");
+  !bindings = act:queryBelief(!queryPred);
+  if (~op:isEmpty(!bindings)) {
+    !elem = op:get(!bindings, 0);
+    !result = op:get(!elem,!x);
+    act:generateResponse("wifiQualityAt(?location, !result)");
+  } else {
+      exit(FAIL, known(wifi(?location)));
+  }
+}
+
+() = reportWifiForPatrol(Symbol ?collectionName) {
+  Predicate !queryPred;
+  Variable !x = "X";
+  List !locations;
+  Map !elem;
+  List !bindings;
+  Symbol !result;
+  Predicate !resultPredicate;
+  Symbol !location;
+
+  !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?collectionName,X)");
+  !bindings = act:queryBelief(!queryPred);
+  if (~op:isEmpty(!bindings)) {
+     !elem = op:get(!bindings, 0);
+     !result = op:get(!elem,!x);
+     !locations = op:invokeMethod(!result, "getArgs");
+     foreach(!location : !locations) {
+        act:reportWifiForLocation(!location);
+     }
+  } else {
+    exit(FAIL, known(patrol, ?collectionName));
+  }
 }
 
 

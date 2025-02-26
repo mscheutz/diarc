@@ -79,7 +79,7 @@ public class AvaDemo extends DiarcConfiguration {
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
 
-    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist";
+    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava";
     if (useLLMParser) {
       parserArgs += " -llm";
     }
@@ -88,7 +88,7 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class);
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
 //    createInstance(edu.tufts.hrilab.slug.nlg.SimpleNLGComponent.class);
-    String nlgArgs = "-simpleNLG -cache -cachePersist -cacheName ava-reverse";
+    String nlgArgs = "-simpleNLG -cache -cacheName ava-reverse";
     if (useLLMNLG) {
       nlgArgs += " -llm";
     }

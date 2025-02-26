@@ -18,6 +18,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -26,7 +28,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.lang.System.getProperty;
+
 public class MockAvaComponent extends DiarcComponent implements AvaInterface {
+
+  boolean toggle = false;
 
   @Override
   public void init() {
@@ -131,7 +137,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
 
   @Override
   public Justification lookAt(double x, double y, double duration) {
-    log.info("[lookAt] called. (x,y)=({},{}). durtation: {}", x,y,duration);
+    log.info("[lookAt] called. (x,y)=({},{}). durtation: {}", x, y, duration);
     return new ConditionJustification(true);
   }
 
@@ -220,7 +226,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   @Override
   public List<Map<Variable, Symbol>> checkAt(Term locationTerm) {
     log.info("[checkAt] called. locationTerm: {}", locationTerm);
-    List<Map<Variable,Symbol>> results = new ArrayList<>();
+    List<Map<Variable, Symbol>> results = new ArrayList<>();
     results.add(new HashMap<>()); // i.e., true
     return results;
   }
@@ -244,4 +250,15 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     }
     return Factory.createSymbol("none");
   }
+
+  @Override
+  public Integer getWifiSignalStrength() {
+    toggle = !toggle;
+    if (toggle) {
+      return 50;
+    } else {
+      return 75;
+    }
+  }
 }
+

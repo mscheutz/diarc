@@ -29,6 +29,8 @@ if the human says "perform lab patrol with wifi evaluation", you should produce 
 ##
 if the human says "check the wifi near the exit", you should produce the output: {"Semantics":"wifiEvaluation(exit)","Input Type":"INSTRUCT","Confidence":"80"}
 ##
+if the human says "evaluate the wifi at the coffee maker", you should produce the output: {"Semantics":"wifiEvaluation(coffee maker)","Input Type":"INSTRUCT","Confidence":"80"}
+##
 if the human says "take a photo of the coffee maker", you should produce the output: {"Semantics":"takePhoto(coffee maker)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
 if the human says "sit down", you should produce the output: {"Semantics":"sit()","Input Type":"INSTRUCT","Confidence":"100"}
@@ -116,6 +118,10 @@ if the human says "say hello", you should produce the output: {"Semantics":"say(
 if the human says "what are your saved locations", you should produce the output: {"Semantics":"describeAllKnownLocations()","Input Type":"INSTRUCT","Confidence":"80"}
 #
 if the human says "what paths do you know about", you should produce the output: {"Semantics":"describeAllKnownPatrolPaths()","Input Type":"INSTRUCT","Confidence":"80"}
+#
+if the human says "report the wifi signal quality at coffee maker", you should produce the output: {"Semantics":"reportWifiForLocation(coffee maker)","Input Type":"INSTRUCT","Confidence":"80"}
+#
+if the human says "report the wifi signal quality for patrol path lab patrol", you should produce the output: {"Semantics":"reportWifiForPatrol(lab patrol)","Input Type":"INSTRUCT","Confidence":"80"}
 #
 ##
 

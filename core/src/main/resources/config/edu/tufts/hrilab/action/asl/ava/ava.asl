@@ -282,6 +282,9 @@ import java.util.StringTokenizer;
 }
 
 () = saveLocation(Symbol ?location) {
+    effects : {
+        success infer : at(?actor, ?location);
+    }
     tsc:saveLocation(?location);
 }
 
@@ -309,6 +312,8 @@ import java.util.StringTokenizer;
         success infer : not(at(?actor, !current));
         nonperf infer : not(at(?actor, !current));
         nonperf infer : at(?actor, unknown);
+        failure infer : not(at(?actor, !current));
+        failure infer : at(?actor, unknown);
     }
     onInterrupt : {
         cancel : act:stop();
