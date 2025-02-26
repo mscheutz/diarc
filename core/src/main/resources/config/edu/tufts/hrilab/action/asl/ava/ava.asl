@@ -25,60 +25,18 @@ import java.util.StringTokenizer;
     }
 
     !current = act:getCurrentLocation();
-    act:escortToLocation(?escortee, !current, ?dstLoc);
+    act:escortFromToLocation(?escortee, !current, ?dstLoc);
 }
 
-() = escortToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
-    // always forget the location of the person escorting
-    effects : {
-        always infer : not(at(?escortee, ?escorteeLoc));
-    }
-
-    Predicate !assertPred = op:createPredicate("at(?escortee,?escorteeLoc)");
-    act:assertBelief(!assertPred);
+() = escortFromToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
 
     act:goToLocation(?escorteeLoc);
-    act:sayText("Please come with me");
+    act:say("Please come with me");
 
-    // Check if the person is not at the robot
-    Predicate !queryPred = op:createPredicate("at(?escortee,robot)");
-    Predicate !escortConfirmationPred = op:createPredicate("ack(i am here to escort you to,?dstLoc)");
-    List !beliefs = act:queryBelief(!queryPred);
-
-    Predicate !answerSemantics;
-    Predicate !yesSemantics = op:createPredicate("val(yes)");
-    Predicate !noSemantics = op:createPredicate("val(no)");
-    if (op:invokeMethod(!beliefs, "isEmpty")) {
-        act:lookForPerson(?escortee);
-        act:generateResponse(!escortConfirmationPred);
-//        tsc:setSuggestedInput("yes or no");
-        !answerSemantics = act:askQuestionFromString(patient, "Is that okay", !yesOrNoResponseForm);
-        if (op:equals(!answerSemantics, !yesSemantics)) {
-            op:log("info", "Given yes");
-            // Continue
-        } elseif (op:equals(!answerSemantics, !noSemantics)) {
-            op:log("info", "Given no");
-            act:generateResponseFromString("Let me know if you need assistance later.");
-            op:log("info", "?escortee does not want to be escorted to ?dstLoc");
-            exit(CANCEL);
-        } else {
-            op:log("info", "Given something else");
-            // TODO;daniel; Doesn't handle unexpected replies that are not yes or no
-        }
-    }
-
-    Predicate !pleaseFollowPred = op:createPredicate("ack(please follow me to,?dstLoc)");
-    op:log("debug", "before generating response");
-    act:generateResponse(!pleaseFollowPred);
-
-    op:log("debug", "going to start going to location bruh");
-    act:goToLocation(?dstLoc); //TODO;daniel; make sure that this uses the more complicated go to location with person following code and update the persons destination location (also should the robot generally try to forget where otehr things are)
-
-    Predicate !arrivalPred = op:createPredicate("ack(here is,?dstLoc)");
-    act:generateResponse(!arrivalPred);
-
-    op:log("info", "[escortToLocation] Escorting ?escortee from ?escorteeLoc to ?dstLoc");
+    act:goToLocation(?dstLoc);
+    act:say("Arrived");
 }
+
 /**
  * TODO;daniel; This doesn't check if the object is in the robot's possession
  * Example command: "Take this object to the lobby"
