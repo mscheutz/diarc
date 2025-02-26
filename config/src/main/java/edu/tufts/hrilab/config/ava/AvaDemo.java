@@ -64,22 +64,23 @@ public class AvaDemo extends DiarcConfiguration {
       avaArgs += " -map " + cmdLine.getOptionValue("map");
     }
     if (cmdLine.hasOption("privateEndpoint")) {
-      log.warn("You have configured the system to use the privately hosted HuggingFace endpoint. THIS COSTS MONEY AND SHOULD NOT BE USED FOR FRIVOLOUS TESTING. If you are doing this intentionally, please enter 1 into the console");
-      System.out.println("Enter: ");
-      Scanner reader = new Scanner(System.in);
-      int in = reader.nextInt();
-      if (in == 1) {
-        log.warn("using private endpoint");
-        usePrivateEndpoint = true;
-      } else {
-        log.warn("not using private endpoint");
-      }
+      log.warn("You have configured the system to use the privately hosted HuggingFace endpoint.");// THIS COSTS MONEY AND SHOULD NOT BE USED FOR FRIVOLOUS TESTING. If you are doing this intentionally, please enter 1 into the console");
+      usePrivateEndpoint = true;
+      //System.out.println("Enter: ");
+      //Scanner reader = new Scanner(System.in);
+      //int in = reader.nextInt();
+      //if (in == 1) {
+      //  log.warn("using private endpoint");
+      //  usePrivateEndpoint = true;
+      //} else {
+      //  log.warn("not using private endpoint");
+      //}
     }
   }
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
 
-    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava";
+    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist";
     if (useLLMParser) {
       parserArgs += " -llm";
     }
@@ -88,7 +89,7 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class);
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
 //    createInstance(edu.tufts.hrilab.slug.nlg.SimpleNLGComponent.class);
-    String nlgArgs = "-simpleNLG -cache -cacheName ava-reverse";
+    String nlgArgs = "-simpleNLG -cache -cacheName ava-reverse -cachePersist";
     if (useLLMNLG) {
       nlgArgs += " -llm";
     }
@@ -99,7 +100,8 @@ public class AvaDemo extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.llm.serviceproviders.AvaLLMServiceProvider.class,"");
       String llmComponentArgs = String.format("-service %s -model %s -temperature 0.6", service, model);
       if (usePrivateEndpoint) {
-        llmComponentArgs += " -endpoint https://z6xvb4wfqwn59s1r.us-east-1.aws.endpoints.huggingface.cloud";
+        //llmComponentArgs += " -endpoint https://z6xvb4wfqwn59s1r.us-east-1.aws.endpoints.huggingface.cloud";
+        llmComponentArgs += " -endpoint https://jga7qt1d6bvlqb4g.us-east-1.aws.endpoints.huggingface.cloud";
       }
       createInstance(edu.tufts.hrilab.llm.LLMComponent.class, llmComponentArgs);
     }
