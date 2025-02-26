@@ -248,19 +248,22 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 () = listScheduledGoals() {
-    List !scheduledGoals;
+    List !scheduledGoalIds;
     Integer !numGoals;
     Predicate !goalPred;
+    Long !gid;
+    edu.tufts.hrilab.action.goal.GoalInfo !goalInfo;
+    java.lang.Boolean !isPersistent;
+    java.lang.Boolean !isScheduled;
 
-    !scheduledGoals = act:getScheduledGoals();
-    op:log(debug, "[listScheduledGoals] current scheduled goals: !scheduledGoals");
-    !numGoals = op:invokeMethod(!scheduledGoals, "size");
-    if (op:isEmpty(!scheduledGoals)) {
+    !scheduledGoalIds = tsc:getScheduledGoalIds();
+    //op:log(debug, "[listScheduledGoals] current scheduled goals: !scheduledGoals");
+    !numGoals = op:invokeMethod(!scheduledGoalIds, "size");
+    if (op:isEmpty(!scheduledGoalIds)) {
         act:generateResponseFromString("There are no scheduled tasks");
     } else {
-        for (!goalIndex=0; !goalIndex lt !numGoals; !goalIndex ++) {
-            !goalPred = op:get(!scheduledGoals,!goalIndex);
-            !spokenIndex = op:++(!goalIndex);
+        foreach (!gid : !scheduledGoalIds) {
+            !goalPred = tsc:getWrappedScheduledGoalPredicate(!gid);
             act:generateResponse(!goalPred);
         }
     }

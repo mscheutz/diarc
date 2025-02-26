@@ -756,6 +756,14 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     }
     return result;
   }
+  @TRADEService
+  public List<Long> getScheduledGoalIds() {
+    List<Long> result = new ArrayList<>();
+    for (Goal g : em.getScheduledGoals()) {
+      result.add(g.getId());
+    }
+    return result;
+  }
 
   /**
    * Get all scheduled goals for a specific actor which are either yet to be executed, or are currently executing under the scope of a persistent context
@@ -770,6 +778,28 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       }
     }
     return pg;
+  }
+  @TRADEService
+  @Action
+  public List<Long> getScheduledGoalIds(Symbol actor) {
+    List<Long> pg = new ArrayList<>();
+    for (Goal g : em.getScheduledGoals()) {
+      if (g.getActor().equals(actor)) {
+        pg.add(g.getId());
+      }
+    }
+    return pg;
+  }
+
+  @TRADEService
+  public Predicate getWrappedScheduledGoalPredicate(Long goalid) {
+    Goal g = getGoal(goalid);
+    if (g != null) {
+      return g.getWrappedGoalPredicate();
+    } else {
+      log.error("[getWrappedScheduledGoalPredicate] goal not found for id {}", goalid);
+      return null;
+    }
   }
 
   @TRADEService

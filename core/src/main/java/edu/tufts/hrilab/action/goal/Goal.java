@@ -22,6 +22,7 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.justification.Justification;
 
+import java.text.DateFormat;
 import java.util.HashSet;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -422,6 +423,26 @@ public class Goal {
 
   public Date getScheduledDate() {
     return info.scheduledDate;
+  }
+
+  public Predicate getWrappedGoalPredicate() {
+      Predicate goalPred = info.goal.clone();
+      if (info.scheduled) {
+          if (info.scheduledDelay != null) {
+              Symbol delaySymbol = Factory.createSymbol(info.scheduledDelay.toString());
+              Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledDelayTimeUnit.toString());
+              goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,delaySymbol,timeUnitSymbol);
+          } else {
+              String pattern = "HH-mm-ss";
+              DateFormat df = new SimpleDateFormat(pattern);
+              Symbol dateSymbol = Factory.createSymbol(df.format(info.scheduledDate));
+              goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,dateSymbol);
+          }
+      }
+      if (info.persistent) {
+          goalPred = Factory.createPredicate("persistent",info.actor, goalPred);
+      }
+      return goalPred;
   }
 
   public boolean setScheduledDate(Date scheduledDate) {
