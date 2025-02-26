@@ -430,7 +430,7 @@ public class DialogueComponent extends DiarcComponent {
     Set<Question>currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
     List<Question> matchingQuestions = currentQuestions.stream()
-            .filter(q -> q.isActive() && q.hasMatchingResponseForm(responseForm))
+            .filter(q -> !q.isActive() && q.hasMatchingResponseForm(responseForm))
             .toList();
 
     if (matchingQuestions.size() > 1) {
