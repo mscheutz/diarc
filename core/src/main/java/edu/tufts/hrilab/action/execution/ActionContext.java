@@ -1230,12 +1230,13 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
         return ret;
       }
     } else {
+      ActionStatus originalStatus = getStatus();
       boolean ret = super.setStatus(eStatus, justification);
       if (ret) {
         try {
           //Q: is there any other way to do this?
           //If a primitive was suspended, doStepLock will not be held. Still want to call resume behavior in this case though
-          if (getStatus() == ActionStatus.SUSPEND && eStatus == ActionStatus.RESUME) {
+          if (originalStatus == ActionStatus.SUSPEND && eStatus == ActionStatus.RESUME) {
             handleInterrupt(eStatus);
           }
 

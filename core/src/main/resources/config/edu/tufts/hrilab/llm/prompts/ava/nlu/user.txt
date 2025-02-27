@@ -125,6 +125,12 @@ if the human says "report the wifi signal quality for patrol path lab patrol", y
 #
 if the human says "what locations are in lab patrol", you should produce the output: {"Semantics":"describeAllLocationsOnPatrolPath(lab patrol)","Input Type":"INSTRUCT","Confidence":"80"}
 #
+if the human says "that is how you perform that task", you should produce the output: {"Semantics":"endActionLearning()","Input Type":"INSTRUCT","Confidence":"80"}
+#
+if the human says "cancel all scheduled tasks", you should produce the output: {"Semantics":"cancelAllScheduledGoals()","Input Type":"INSTRUCT","Confidence":"100"}
+#
+if the human says "I want to cancel a scheduled task", you should produce the output: {"Semantics":"cancelScheduledGoal()","Input Type":"INSTRUCT","Confidence":"100"}
+#
 ##
 
 Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with the Output json as shown in the examples. The new input you are tasked with translating is:

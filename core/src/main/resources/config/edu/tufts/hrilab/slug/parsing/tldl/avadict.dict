@@ -450,6 +450,11 @@ cancel pending goals; VERBI; cancelAllPendingGoals
 cancel all pending goals; VERBI; cancelAllPendingGoals
 cancel all active goals; VERBI; cancelAllActiveGoals
 cancel all goals; VERBI; cancelAllCurrentGoals
+cancel all scheduled goals; VERBI; cancelAllScheduledGoals
+cancel all scheduled tasks; VERBI; cancelAllScheduledGoals
+cancel a scheduled goal; VERBI; cancelScheduledGoal
+cancel a scheduled task; VERBI; cancelScheduledGoal
+
 
 the path name is; VAL/LIT*; #x.pathName($x)
 

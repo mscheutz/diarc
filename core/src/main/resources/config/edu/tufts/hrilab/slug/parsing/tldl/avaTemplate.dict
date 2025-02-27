@@ -468,8 +468,8 @@ the next step of ; ((QUERYABLE/AGENT)/FOR)/C ; #x #y #z.describe(stepOf(next,$x,
 teach;(((S\AGENT)/INF)/HOW)/AGENT; #l#h#a#t.teach($t,$l,$a)
 
 %tell; ((C/INF)/AGENT)\AGENT ; #x#y#z.directAddress($x,tell($y,$z))
-tell; C/C; #x.tell(?ADDRESSEE,$x)
-tell; (C\AGENT)/C; #x#a.tell($a,$x)
+%tell; C/C; #x.tell(?ADDRESSEE,$x)
+%tell; (C\AGENT)/C; #x#a.tell($a,$x)
 
 thank you; G ; thank_you
 thanks ; G ; thank_you
@@ -542,8 +542,8 @@ used; (PROP/AFFORDANCE)/FOR ; #x #y.usedFor($y)
 
 walk; VERBTD ; move
 
-want; (S/ INF)\ AGENT, (S/REF)\ AGENT, ; #x#y. want($x,$y)
-want; ((S/ INF)/AGENT)\ AGENT ; #x#y#z.want($x,$y,$z)
+%want; (S/ INF)\ AGENT, (S/REF)\ AGENT, ; #x#y. want($x,$y)
+%want; ((S/ INF)/AGENT)\ AGENT ; #x#y#z.want($x,$y,$z)
 
 %what are your goals, what are shafer's goals
 what are; (Q/QUERYABLE)/AGENT; #a#q.whatAre($a,$q)

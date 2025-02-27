@@ -507,3 +507,32 @@ import edu.tufts.hrilab.action.justification.Justification;
     act:goToLocation(?location);
     act:generateResponse("taking(photo(at(?location)))");
 }
+
+() = cancelAllScheduledGoals() {
+    List !scheduledGoalIds;
+    Integer !numGoals;
+    Predicate !goalPred;
+    Long !gid;
+
+    !scheduledGoalIds = tsc:getScheduledGoalIds();
+    !numGoals = op:invokeMethod(!scheduledGoalIds, "size");
+    if (op:isEmpty(!scheduledGoalIds)) {
+        act:generateResponseFromString("There are no scheduled tasks");
+    } else {
+        foreach (!gid : !scheduledGoalIds) {
+            act:cancelGoal(!gid);
+        }
+        act:generateResponseFromString("cancelled all scheduled tasks");
+    }
+}
+
+() = cancelScheduledGoal() {
+    Predicate !scheduledGoalPred;
+    Long !goalId;
+
+    op:log("info", "[modifyScheduledGoal] in method");
+    !scheduledGoalPred = act:selectScheduledGoal();
+    !goalId = tsc:getGoalId(!scheduledGoalPred);
+    act:cancelGoal(!goalId);
+    act:generateResponseFromString("the scheduled task has been canceled");
+}
