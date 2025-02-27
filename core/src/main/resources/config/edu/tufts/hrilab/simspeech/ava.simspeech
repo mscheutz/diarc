@@ -4,68 +4,56 @@ this location is desk alpha
 this location is desk beta
 stop following
 ---------
+go to desk alpha
+go to the coffee maker
+pause
+what is your current task
+resume
+stop
+what is your current task
+go to the coffee maker
+go to desk alpha
+---------
 i will teach you a new task
-task greet
+the task name is greet people
 go to the front door
 stand
 say hello!
 i am done teaching
+greet people
 ---------
-add a new patrol path lab patrol
+sit down
+go to the dock
+---------
+where are you right now
+what locations do you have saved
+what patrol paths do you have saved
+---------
+add a new patrol path demo path
 coffee maker
 desk alpha
-desk beta
-dock
-that is all
----------
-add a new patrol path office patrol
-front door
-back door
-dock
 that is all
 ----------
-perform lab patrol with wifi evaluation
-report the wifi quality for lab patrol
+perform demo path patrol with wifi evaluation
+report the wifi quality for demo path
+what is the wifi quality at the coffee maker
+what is the wifi quality at desk beta
 ---------
 add a new scheduled task
-the task is perform lab patrol with wifi evaluation
-in 10 minutes
+the task is perform demo path patrol with wifi evaluation
+in 30 minutes
 yes
-every 1 hour
----------
-add a new scheduled task
-the task is perform office patrol with wifi evaluation
-in 5 minutes
-yes
-every 30 minutes
+every 2 hours
 ---------
 modify a scheduled task
-task 1
-the interval
-every 30 minutes
+the first execution
+in 10 seconds
 --------
-what are your scheduled tasks
+cancel all tasks
 --------
-go to elevator
-go to arena
-go to dock
-go to bullpen
-go to coffee maker
-go to evans office
-go to exit
-go to back door
-go to crameear
-
-go to test
-
+escort marcio from the coffee maker to the waiting area
+--------
+deliver coffee to the coffee maker
+--------
 go home
-end session
-stop
-
-battery level
-find person
-
-go to elaines office
-go to milods office
-go to the conference room
-go to the back elevator
+--------
