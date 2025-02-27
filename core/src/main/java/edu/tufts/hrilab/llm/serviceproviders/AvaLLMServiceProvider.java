@@ -497,4 +497,26 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         log.warn("[getServiceForAgent] could not find service {} for agent {}", serviceName, agentName);
         return null;
     }
+
+    @TRADEService
+    @Action
+    public boolean ignoreTentativeAccept(Predicate goalPred){
+        log.info("[ignoreTentativeAccept] goalPred: "+goalPred);
+        if(goalPred != null) {
+            switch (goalPred.getName()) {
+                case "listScheduledGoals":
+                case "describeCurrentLocation":
+                case "describePendingGoals":
+                case "describeAllKnownLocations":
+                case "describeAllKnownPatrolPaths":
+                case "describeAllLocationsOnPatrolPath":
+                case "repeatLastQuestion":
+                case "describeCurrentGoal":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        return false;
+    }
 }
