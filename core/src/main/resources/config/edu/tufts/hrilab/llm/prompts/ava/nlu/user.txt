@@ -27,6 +27,10 @@ if the human says "I want to teach you a new patrol path", you should produce th
 #
 if the human says "perform lab patrol with wifi evaluation", you should produce the output: {"Semantics":"patrol(lab patrol,wifiEvaluation)","Input Type":"INSTRUCT","Confidence":"100"}
 ##
+if the human says "perform lab patrol with wi-fi evaluation", you should produce the output: {"Semantics":"patrol(lab patrol,wifiEvaluation)","Input Type":"INSTRUCT","Confidence":"100"}
+##
+if the human says "perform lab Patrol with wi-Fi evaluation", you should produce the output: {"Semantics":"patrol(lab patrol,wifiEvaluation)","Input Type":"INSTRUCT","Confidence":"100"}
+##
 if the human says "check the wifi near the exit", you should produce the output: {"Semantics":"wifiEvaluation(exit)","Input Type":"INSTRUCT","Confidence":"80"}
 ##
 if the human says "evaluate the wifi at the coffee maker", you should produce the output: {"Semantics":"wifiEvaluation(coffee maker)","Input Type":"INSTRUCT","Confidence":"80"}
