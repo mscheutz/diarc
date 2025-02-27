@@ -367,7 +367,8 @@ import edu.tufts.hrilab.action.justification.Justification;
   Long !goalID;
   String !goalStr;
   Predicate !goalPred;
-  java.lang.Boolean !containsSelfGoal;
+  java.lang.Boolean !isSelfGoal;
+  java.lang.Boolean !isResetGoal;
   Predicate !workloadBeliefsPredicate;
   Predicate !workloadPlayerOnePredicate;
   Predicate !workloadPlayerTwoPredicate;
@@ -384,9 +385,14 @@ import edu.tufts.hrilab.action.justification.Justification;
   } else {
     foreach (!currGoal : !currentGoals) {
       !goalStr = op:invokeMethod(!currGoal, "toString");
-      !containsSelfGoal = op:invokeMethod(!goalStr, "contains", "endTrial(");
-      if (op:==(!containsSelfGoal, true)) {
-        op:log("debug", "Skipping goal: !goalStr");
+      !isSelfGoal = op:invokeMethod(!goalStr, "contains", "endTrial(");
+      !isResetGoal = op:invokeMethod(!goalStr, "contains", "resetTrial(");
+      if (op:==(!isSelfGoal, true)) {
+        op:log("debug", "Not canceling goal: !goalStr");
+      } elseif (op:==(!isResetGoal, true)) {
+        // this case is a hack to deal with endTrial canceling resetTrial in some cases bc of async goal submission
+        // and simply waiting for endTrial to finish can cause a deadlock bc of how msgs are received from unity
+        op:log("debug", "Not canceling goal: !goalStr");
       } else {
         !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !goalStr);
         op:log("info", "Cancelling goal: !goalStr");

@@ -112,11 +112,7 @@ public class UnityPR2Component extends UnityAgentComponent implements UnityPR2In
     String predicateStr = "endTrial(" + robotName + ")";
     Predicate goal = Factory.createPredicate(predicateStr);
     try {
-      // submit endTrial goal
-      Long goalId = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class)).call(Long.class, goal);
-
-      // wait for endTrial goal to terminate for returning. This prevents overlap issues when running multiple trials in the same diarc instance
-      TRADE.getAvailableService(new TRADEServiceConstraints().name("joinOnGoal").argTypes(Long.class)).call(GoalStatus.class, goalId);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class)).call(Long.class, goal);
     } catch (TRADEException e) {
       log.error("Error ending trial", e);
     }
