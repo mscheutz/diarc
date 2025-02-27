@@ -87,7 +87,7 @@ public interface MoveBaseInterface {
 //      observable = {"at(?actor,?desiredLocation)"},
 //      infer = {"not(at(?actor,?initialLocation))"}
 //  )
-//  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   Justification goToLocation(Symbol desiredLocation, Symbol initialLocation);
 
   /**
