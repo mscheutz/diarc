@@ -1875,7 +1875,7 @@ public class ExecutionManager implements GoalListener {
     Set<Symbol> relevantAgents = getRelevantAgents(actor);
     for (Symbol relevantAgent : relevantAgents) {
       AgentTeam relevantAgentTeam = getAgentTeam(relevantAgent);
-      if (relevantAgentTeam.getLearningStatus() == ActionLearningStatus.ACTIVE) {
+      if (!relevantAgent.getName().equals(relevantAgentTeam.getName().getName()) && relevantAgentTeam.getLearningStatus() == ActionLearningStatus.ACTIVE) {
         log.error("[learnAction] Trying to start learning for an actor which already has an ancestor or child actively learning. New: {} Current: {}", actor, relevantAgent);
         return false;
       }
