@@ -3,6 +3,7 @@ import logging
 import sys
 import time
 
+from pytrade.wrapper import TRADEWrapper
 import matplotlib.pyplot as plt
 import numpy as np
 import rclpy
@@ -24,10 +25,10 @@ from bound_mpc_msg.srv import MPCParams, Trajectory, UpdateConstraints
 from control_msgs.action import GripperCommand
 from edu.tufts.hrilab.interfaces import PlannerInterface
 from jpype import JImplements, JOverride, JString
-from pytrade.wrapper import TRADEWrapper
 from rclpy.action import ActionClient
 from rclpy.node import Node
 from scipy.spatial.transform import Rotation as R
+from std_srvs.srv import Empty
 
 # Initialize Logging
 formatter = logging.Formatter(
@@ -47,6 +48,7 @@ class DiarcWrapper:
         self.positions = []
         self.orientations = []
         self.received_pose = False
+        self.stop = False
 
         p_cup_side = np.array([0.4, 0.45, 0.07])
         r_cup_side = R.from_euler("XYZ", [0, 0, np.pi / 2]).as_matrix()
@@ -55,7 +57,7 @@ class DiarcWrapper:
         self.positions.append(p_cup_side)
         self.orientations.append(r_cup_side)
 
-        p_cup_top = p_cup_side + np.array([-0.04, 0.0, 0.05])
+        p_cup_top = p_cup_side + np.array([-0.04, 0.0, 0.015])
         r_cup_top = R.from_euler("XYZ", [0, np.pi / 2, 0]).as_matrix()
         r_cup_top = R.from_euler("XYZ", [0, 0, np.pi / 2]).as_matrix() @ r_cup_top
         self.positions.append(p_cup_top)
@@ -96,6 +98,7 @@ class DiarcWrapper:
             if split_instr[1] == "MUG_DEFAULT)":
                 self.go_to_pose(0)
             else:
+                # self.stop = True
                 self.go_to_pose(1)
         return "s"
 
@@ -109,15 +112,16 @@ class ExperimentRunner(Node):
         self.traj_srv = self.create_client(Trajectory, "/mpc/set_trajectory")
         self.params_srv = self.create_client(MPCParams, "/mpc/set_params")
         self.con_srv = self.create_client(UpdateConstraints, "/mpc/update_constraints")
+        self.stop_srv = self.create_client(Empty, "/mpc/stop")
 
         self.params = MPCParams.Request()
         self.params.n = 15
         self.params.dt = 0.1
         weights = get_default_weights()
-        weights[7] *= 0.5
+        # weights[7] *= 0.5
         self.params.weights = weights.tolist()
-        self.params.build = True
-        self.params.simulate = False
+        self.params.build = False
+        self.params.simulate = True
         self.params.experiment = False
         self.params.real_time = False
         self.params.nr_segs = 4
@@ -132,7 +136,7 @@ class ExperimentRunner(Node):
         self.q0[6] = np.pi / 2
 
         # Define obstacles as boxes by limits (-x, -y, -z, x, y, z)
-        p1 = np.array([0.4, 0.45, 0.07])
+        p1 = np.array([0.4, 0.45, 0.04])
         self.obstacles = [
             [
                 0.2,
@@ -143,12 +147,12 @@ class ExperimentRunner(Node):
                 0.0,
             ],
             [
-                p1[0] - 0.03,
-                p1[1] - 0.03,
-                p1[2] - 0.05,
-                p1[0] + 0.03,
-                p1[1] + 0.03,
-                p1[2] + 0.05,
+                p1[0] - 0.045,
+                p1[1] - 0.025,
+                p1[2] - 0.04,
+                p1[0] + 0.045,
+                p1[1] + 0.045,
+                p1[2] + 0.06,
             ],
             # [
             #     0.0,
@@ -226,9 +230,16 @@ class ExperimentRunner(Node):
         logger.info("Opening gripper ...")
         msg = GripperCommand.Goal()
         msg.command.position = position
-        msg.command.max_effort = 100.0
+        msg.command.max_effort = 1.0
         self.gripper_client.wait_for_server()
         future = self.gripper_client.send_goal_async(msg)
+        rclpy.spin_until_future_complete(self, future)
+
+    def stop(self):
+        while not self.stop_srv.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Stop service not available, waiting again...")
+        msg = Empty.Request()
+        future = self.stop_srv.call_async(msg)
         rclpy.spin_until_future_complete(self, future)
 
     def send_params(self):
@@ -245,9 +256,10 @@ class ExperimentRunner(Node):
         future = self.con_srv.call_async(msg)
         rclpy.spin_until_future_complete(self, future)
 
-    def plan_path(self, p0, p1, r0, r1, q0, p_horizon=[]):
-        grasp_dir = r1[:, 0]
-        p1 = p1 - 0.1 * grasp_dir
+    def plan_path(self, p0, p1, r0, r1, q0, p_horizon=[], grasp_set=True):
+        if grasp_set:
+            grasp_dir = r1[:, 0]
+            p1 = p1 - 0.1 * grasp_dir
         update = True if p_horizon != [] else False
         start = time.time()
         (
@@ -259,18 +271,24 @@ class ExperimentRunner(Node):
             p0, p1, r0, r1, replanning=update, p_horizon=p_horizon
         )
         (
-            p_via,
-            r_via,
-            bp1_list,
-            sets_via,
-        ) = append_grasp_set(p_via, r_via, bp1_list, sets_via, grasp_dir)
-        (
             _,
             _,
             _,
             br1_list,
             e_r_bound,
         ) = get_default_path(p0, r0, len(p_via))
+        if grasp_set:
+            (
+                p_via,
+                r_via,
+                bp1_list,
+                sets_via,
+            ) = append_grasp_set(
+                p_via, r_via, bp1_list, sets_via, grasp_dir, size=0.03
+            )
+            self.planner.publish_sets(sets_via)
+            br1_list.append(br1_list[-1])
+            e_r_bound.append(np.array([15, 15, 15, -15, -15, -15]) * np.pi / 180)
         stop = time.time()
         logger.info(f"Path planning took {stop - start:.2f}s")
 
@@ -321,8 +339,9 @@ def main(diarc_wrapper):
         init = True
         while (
             logger_mpc.phi_max - logger_mpc.phi > 0.01
-            or np.linalg.norm(logger_mpc.dq_traj[-1]) > 0.01
+            or np.linalg.norm(logger_mpc.v_traj[-1]) > 0.005
             or logger_mpc.phi_max == 0.0
+            # or np.linalg.norm(logger_mpc.p_traj[-1][:3] - diarc_wrapper.positions[1]) > 0.01
         ):
             # while True:
             # if init:
@@ -337,7 +356,11 @@ def main(diarc_wrapper):
             # if logger.i == 30 and new_obs:
             #     diarc_wrapper.add_obstacles(0)
             #     new_obs = False
-
+            if diarc_wrapper.stop:
+                logger.info("Stopping")
+                node.stop()
+                time.sleep(2.5)
+                diarc_wrapper.stop = False
             if diarc_wrapper.received_pose:
                 logger.info("Received pose")
                 diarc_wrapper.received_pose = False

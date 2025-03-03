@@ -31,9 +31,7 @@ logger.info("Starting ASR Service...")
 # model_path = (
 #     "/home/toeleric/research/boundmpc_speech/src/diarc/vosk-model-small-en-us-0.15"
 # )
-model_path = (
-    "/home/toeleric/research/boundmpc_speech/src/diarc/vosk-model-en-us-0.22"
-)
+model_path = "/home/toeleric/research/boundmpc_speech/src/diarc/vosk-model-en-us-0.22"
 if not os.path.exists(model_path):
     logging.error("Please download and unzip the Vosk model first.")
     sys.exit()
@@ -58,7 +56,6 @@ class ASRComponent:
         self.last_text = ""
         self.rec = vosk.KaldiRecognizer(model, samplerate)
 
-
         # ✅ Define the action mapping dictionary inside the class
         self.ACTION_MAP = {
             # Grasp mug by a specific part
@@ -80,26 +77,23 @@ class ASRComponent:
             r"INSTRUCT\(speaker,listener,graspObject\(listener,mug\),\{on\(mug,table\)\}\)": "GRASP(MUG_ON_TABLE)",
             # Greeting messages
             r"^GREETING\(.*\)": "SAY(GREETING)",
-
             # Pass the mug while keeping it upright
             r"INSTRUCT\(speaker,listener,and\(pass\(listener,mug\),keep\(listener,upright\)\),\{\}\)": "PASS(MUG,MANNER(UPRIGHT))",
-
             # Pass the cup while keeping it upright
             r"INSTRUCT\(speaker,listener,and\(pass\(listener,cup\),keep\(listener,upright\)\),\{\}\)": "PASS(CUP,MANNER(UPRIGHT))",
-
             # Pass the bottle while keeping it upright
             r"INSTRUCT\(speaker,listener,and\(pass\(listener,bottle\),keep\(listener,upright\)\),\{\}\)": "PASS(BOTTLE,MANNER(UPRIGHT))",
-
             # Pass the mug while avoiding the laptop
             r"INSTRUCT\(speaker,listener,and\(pass\(listener,mug\),avoid\(listener,laptop\)\),\{\}\)": "PASS(MUG, AVOID(AGENT, LAPTOP))",
-
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,cup\),avoid\(listener,laptop\)\),\{\}\)": "PASS(MUG, AVOID(AGENT, LAPTOP))",
+            r"INSTRUCT\(speaker,listener,and\(keep\(listener,upright\),pass\(listener,mug\),avoid\(listener,laptop\)\),\{\}\)": "PASS(MUG, AVOID(AGENT, LAPTOP))",
+            r"INSTRUCT\(speaker,listener,and\(keep\(listener,upright\),avoid\(listener,laptop\),pass\(listener,mug\)\),\{\}\)": "PASS(MUG, AVOID(AGENT, LAPTOP))",
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,mug\),keep\(listener,upright\),avoid\(listener,laptop\)\),\{\}\)": "PASS(MUG, AVOID(AGENT, LAPTOP))",
             # Pass the screwdriver while going faster
-            r"INSTRUCT\(speaker,listener,and\(pass\(listener,mug\),go\(listener,faster\)\),\{\}\)": "PASS(SCREWDRIVER, GO(AGENT, FASTER))"
-
+            r"INSTRUCT\(speaker,listener,and\(pass\(listener,screwdriver\),go\(listener,faster\)\),\{\}\)": "PASS(SCREWDRIVER, GO(AGENT, FASTER))",
         }
 
-
-def action_mapper(self, parsed_text):
+    def action_mapper(self, parsed_text):
         """Map parsed text to a robot action using regex pattern matching."""
         import re  # ✅ Import regex module
 
@@ -137,6 +131,42 @@ def action_mapper(self, parsed_text):
                     self.last_text = final_text
                     logger.info(f"[ASR] Final: {final_text}")
                     # print(f"Recognized Text (Python): {final_text}")
+                    if len(final_text) <= 4:
+                        final_text = "No speech recognized"
+                    if "said" in final_text or "reset" in final_text:
+                        final_text = "reset"
+                    if "upright" in final_text:
+                        final_text = "but keep it upright"
+                    elif "avoid" in final_text or "avoiding" in final_text:
+                        final_text = "but avoid the laptop"
+                    elif "laptop" in final_text:
+                        final_text = "but avoid the laptop"
+                    elif "faster" in final_text:
+                        final_text = "but go faster"
+                    elif " top" in final_text or " tub" in final_text:
+                        final_text = "by the top"
+                    else:
+                        final_text = final_text.replace("the pass", "pass")
+                        final_text = final_text.replace("the past", "pass")
+                        final_text = final_text.replace("thepassa", "pass")
+                        final_text = final_text.replace("past", "pass")
+                        final_text = final_text.replace("passa", "pass")
+                        final_text = final_text.replace("cub", "cup")
+
+                        final_text = final_text.replace("the reset", "reset")
+
+                        final_text = final_text.replace("the grab", "grab")
+                        final_text = final_text.replace("the grabbed", "grab")
+                        final_text = final_text.replace("grabbed", "grab")
+                        final_text = final_text.replace("muck", "mug")
+                        final_text = final_text.replace("mark", "mug")
+                        final_text = final_text.replace("maga", "mug")
+                        final_text = final_text.replace("mic", "mug")
+
+                        final_text = final_text.replace("hand me", "pass")
+
+
+                    logger.info(f"[ASR] Final after replacing: {final_text}")
 
                     # java_string = JString(final_text)  # Convert to a proper Java String
                     # logger.info(f"Returning to Java as JString: {java_string}")

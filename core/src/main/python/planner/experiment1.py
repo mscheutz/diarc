@@ -47,18 +47,22 @@ class DiarcWrapper:
         self.positions = []
         self.orientations = []
         self.received_pose = False
+        self.grasp = True
+        self.grasps = []
 
-        p_cup_side = np.array([0.4, 0.4, 0.07])
+        p_cup_side = np.array([0.4, 0.45, 0.07])
         r_cup_side = R.from_euler("XYZ", [0, 0, np.pi / 2]).as_matrix()
         # p_cup_side = np.array([0.4, -0.4, 0.27])
         # r_cup_side = R.from_euler("XYZ", [0, 0, -np.pi / 2]).as_matrix()
         self.positions.append(p_cup_side)
         self.orientations.append(r_cup_side)
+        self.grasps.append(True)
 
         p_cup_ho = np.array([0.0, -0.6, 0.6])
         r_cup_ho = R.from_euler("XYZ", [0, 0, -np.pi / 2.1]).as_matrix()
         self.positions.append(p_cup_ho)
         self.orientations.append(r_cup_ho)
+        self.grasps.append(False)
 
         self.e_r_bound = None
         self.add_obs = None
@@ -67,7 +71,7 @@ class DiarcWrapper:
                 0.2,
                 -0.3,
                 0.0,
-                0.5,
+                1.5,
                 -0.1,
                 1.2,
             ],
@@ -77,6 +81,7 @@ class DiarcWrapper:
         self.received_pose = True
         self.p_des = self.positions[pose_id]
         self.r_des = self.orientations[pose_id]
+        self.grasp = self.grasps[pose_id]
 
     def set_constraint(self):
         e_r_bound = np.array([3, 90, 3, -3, -90, -3]) * np.pi / 180
@@ -90,13 +95,16 @@ class DiarcWrapper:
         logger.info(f"(Planner) Instruction received {instruction}")
         split_instr = str(instruction).split("(")
         logger.info(f"(Planner) Split instruction{split_instr}")
-        if split_instr[0] == "PASS":
+        if split_instr[0] == "GRASP" or split_instr[0] == "PASS":
             logger.info(f"(Planner) Passing instruction {split_instr[1]}")
-            if split_instr[1] == "CUP)":
+            if split_instr[1] == "CUP_DEFAULT)" or split_instr[1] == "MUG_DEFAULT)":
+                print("Going to default cup pose")
                 self.go_to_pose(0)
-            elif split_instr[1] == "CUP, MANNER(UPRIGHT))":
+            elif split_instr[1] == "CUP,MANNER" or split_instr[1] == "MUG,MANNER":
+                print("Setting constraint")
                 self.set_constraint()
             else:
+                print("Adding laptop avoidance")
                 self.add_obstacles(0)
         return "s"
 
@@ -125,6 +133,7 @@ class ExperimentRunner(Node):
         self.update = False
         self.p_horizon = []
         self.robot_model = RobotModel()
+        self.updated_bounds = False
 
         self.q0 = np.zeros(7)
         # q0[0] = np.pi / 1.2
@@ -133,26 +142,20 @@ class ExperimentRunner(Node):
         self.q0[6] = np.pi / 2
 
         # Define obstacles as boxes by limits (-x, -y, -z, x, y, z)
-        p1 = np.array([0.4, 0.4, 0.07])
+        p1 = np.array([0.4, 0.45, 0.07])
         self.obstacles = [
-            [0.2, -1.0, -0.1, 1.0, 1.0, 0.0],
-            # [
-            #     p1[0] - 0.03,
-            #     p1[1] - 0.03,
-            #     p1[2] - 0.05,
-            #     p1[0] + 0.03,
-            #     p1[1] + 0.03,
-            #     p1[2] + 0.05,
-            # ],
-            [-0.07, -0.07, 0.0, 0.07, 0.07, 0.35],
             [
-                0.2,
-                -0.3,
-                0.0,
-                0.5,
-                -0.1,
-                0.10,
+                p1[0] - 0.045,
+                p1[1] - 0.025,
+                p1[2] - 0.04,
+                p1[0] + 0.045,
+                p1[1] + 0.045,
+                p1[2] + 0.06,
             ],
+            [0.2, -1.0, -0.1, 1.0, 1.0, 0.01],
+            [-0.07, -0.07, 0.0, 0.07, 0.07, 0.35],
+            [0.2, -0.35, 0.0, 0.5, -0.1, 0.10],
+            # [0.2, -0.35, 0.0, 0.5, -0.33, 0.25],
         ]
 
         # Plan a path to the final pose
@@ -193,7 +196,7 @@ class ExperimentRunner(Node):
             e_r_bound,
             p0fk,
             self.q0,
-            self.obstacles,
+            self.obstacles[1:],
             sets_via,
         )
         self.traj_srv.wait_for_service()
@@ -224,9 +227,12 @@ class ExperimentRunner(Node):
         future = self.con_srv.call_async(msg)
         rclpy.spin_until_future_complete(self, future)
 
-    def plan_path(self, p0, p1, r0, r1, q0, p_horizon=[], new_obs=False):
-        grasp_dir = r1[:, 0]
-        p1 = p1 - 0.1 * grasp_dir
+    def plan_path(
+        self, p0, p1, r0, r1, q0, p_horizon=[], new_obs=False, grasp_set=True
+    ):
+        if grasp_set:
+            grasp_dir = r1[:, 0]
+            p1 = p1 - 0.1 * grasp_dir
         update = True if p_horizon != [] else False
         start = time.time()
         (
@@ -244,20 +250,24 @@ class ExperimentRunner(Node):
             new_obs=new_obs,
         )
         (
-            p_via,
-            r_via,
-            bp1_list,
-            sets_via,
-        ) = append_grasp_set(p_via, r_via, bp1_list, sets_via, grasp_dir)
-        (
             _,
             _,
             _,
             br1_list,
             e_r_bound,
         ) = get_default_path(p0, r0, len(p_via))
+        if grasp_set:
+            (
+                p_via,
+                r_via,
+                bp1_list,
+                sets_via,
+            ) = append_grasp_set(p_via, r_via, bp1_list, sets_via, grasp_dir, size=0.02)
+            self.planner.publish_sets(sets_via)
+            br1_list.append(br1_list[-1])
+            e_r_bound.append(np.array([10, 10, 10, -10, -10, -10]) * np.pi / 180)
         br1_list = [np.array([1.0, 0.0, 0.0])] * (len(p_via) - 1)
-        if new_obs:
+        if self.updated_bounds or new_obs:
             e_r_bound = [np.array([3, 90, 3, -3, -90, -3]) * np.pi / 180] * (
                 len(p_via) - 1
             )
@@ -274,7 +284,7 @@ class ExperimentRunner(Node):
             e_r_bound,
             p0fk,
             q0,
-            self.obstacles,
+            self.obstacles[1:],
             sets_via,
             update=update,
         )
@@ -306,30 +316,43 @@ def main(diarc_wrapper):
 
     try:
         replan = True
-        new_bounds = True
-        new_obs = True
+        new_bounds = False
+        new_obs = False
         new_obs_bounds = new_obs
         init = True
         at_end = False
+        gripper_open = True
         if new_bounds:
             tail = "scen1_upright"
         elif new_obs:
             tail = "scen1_avoid"
         else:
             tail = "scen1_no_avoid"
-        while True:
+        while (
+            logger_mpc.phi_max - logger_mpc.phi > 0.01
+            or np.linalg.norm(logger_mpc.dq_traj[-1]) > 0.01
+            or logger_mpc.phi_max == 0.0
+            or np.linalg.norm(logger_mpc.p_traj[-1][:3] - diarc_wrapper.positions[1])
+            > 0.01
+        ):
             if (
                 logger_mpc.phi_max - logger_mpc.phi < 0.01
                 and logger_mpc.dq_norm < 0.12
                 and logger_mpc.phi_max > 0.001
             ):
                 at_end = True
+                # Close the gripper in the real experiment
+                if gripper_open:
+                    if node.params.simulate:
+                        node.command_gripper(position=1.0)
+                    gripper_open = False
+            if at_end and replan:
+                diarc_wrapper.go_to_pose(1)
+                replan = False
+
             # if init:
             #     diarc_wrapper.go_to_pose(0)
             #     init = False
-            # if at_end and replan:
-            #     diarc_wrapper.go_to_pose(1)
-            #     replan = False
             # if logger_mpc.i_seg == 14 and new_obs and not replan:
             #     diarc_wrapper.add_obstacles(0)
             #     new_obs = False
@@ -350,12 +373,31 @@ def main(diarc_wrapper):
                 p1 = diarc_wrapper.p_des
                 r1 = diarc_wrapper.r_des
 
+                if at_end:
+                    node.planner.adapted_obs = node.planner.adapted_obs[1:]
+                    node.planner.obs = node.planner.obs[1:]
+                    node.planner.obs_points = node.planner.obs_points[1:]
+                    node.planner.obs_points_sets = node.planner.obs_points_sets[1:]
+                    node.planner.obs_sets = node.planner.obs_sets[1:]
+                    node.planner.set_finder.obs_sets = node.planner.obs_sets.copy()
+                    node.planner.set_finder.obs_points_sets = (
+                        node.planner.obs_points_sets.copy()
+                    )
+
                 print(
                     f"(Replanning) t = {logger_mpc.i* node.params.dt}s at phi = {logger_mpc.phi:.3f}m"
                 )
                 print(f"(Replanning) p0 = {p0}")
                 print(f"(Replanning) p1 = {p1}")
-                node.plan_path(p0, p1, r0, r1, q0, p_horizon=node.p_horizon)
+                node.plan_path(
+                    p0,
+                    p1,
+                    r0,
+                    r1,
+                    q0,
+                    p_horizon=node.p_horizon,
+                    grasp_set=diarc_wrapper.grasp,
+                )
                 logger_mpc.i_seg = 0
             if diarc_wrapper.add_obs is not None:
                 print("(Replanning) New obstacles triggering replanning")
@@ -368,14 +410,16 @@ def main(diarc_wrapper):
                 r1 = diarc_wrapper.r_des
                 node.planner.add_obstacle_reps(diarc_wrapper.add_obs, True)
                 node.plan_path(
-                    p0, p1, r0, r1, q0, p_horizon=node.p_horizon, new_obs=True
+                    p0, p1, r0, r1, q0, p_horizon=node.p_horizon, new_obs=True, grasp_set=False
                 )
                 diarc_wrapper.add_obs = None
                 logger_mpc.i_seg = 0
 
             if diarc_wrapper.e_r_bound is not None:
                 print("(BoundsUpdate) Updating MPC bounds")
-                node.send_constraints(diarc_wrapper.e_r_bound)
+                if not replan:
+                    node.send_constraints(diarc_wrapper.e_r_bound)
+                node.updated_bounds = True
                 diarc_wrapper.e_r_bound = None
 
             rclpy.spin_once(logger_mpc, timeout_sec=0.001)
@@ -385,10 +429,6 @@ def main(diarc_wrapper):
     except KeyboardInterrupt:
         logger.info("Caught KeyboardInterrupt")
         pass
-
-    # Close the gripper in the real experiment
-    if node.params.simulate:
-        node.command_gripper(position=1.0)
 
     # Stop the logging thread
     logger_mpc.stop()

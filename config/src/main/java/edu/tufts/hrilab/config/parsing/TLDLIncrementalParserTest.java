@@ -63,15 +63,17 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
 
                 log.info("Raw TRADE response: {}", recognizedText);
 
-                if (recognizedText == null || recognizedText.isEmpty()) {
+                if (recognizedText.equals("No speech recognized") || recognizedText.isEmpty()) {
                     log.warn("No recognized text received from ASR.");
                     continue;
                 }
+                else
+                {
+                  log.info("Received ASR text from Python: '{}'", recognizedText);
+                  // Add recognized text to queue for processing
+                  recognizedTextQueue.add(recognizedText);
+                }
 
-                log.info("Received ASR text from Python: '{}'", recognizedText);
-
-                // Add recognized text to queue for processing
-                recognizedTextQueue.add(recognizedText);
             } catch (TRADEException e) {
                 log.error("Error retrieving recognized text from ASR", e);
                 log.warn("Resetting ASR system to allow retry...");
@@ -166,7 +168,9 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         wrapper.start();
 
         // String file_planner = "planner.experiment0";
-        String file_planner = "planner.experiment1";
+        // String file_planner = "planner.experiment1";
+        // String file_planner = "planner.experiment2";
+        String file_planner = "planner.experiment3";
         wrapper_planner = new PythonWrapper(file_planner, true);
         wrapper_planner.start();
 
