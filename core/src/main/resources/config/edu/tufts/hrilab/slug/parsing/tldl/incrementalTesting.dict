@@ -102,7 +102,7 @@ blue; RN/RN; #x.blue($x) ; MOD
 
 bottle; THING
 
-box; THING
+%%box; THING
 
 brad; ADDRESSABLE ; brad
 
@@ -784,7 +784,7 @@ walkrite; C/VAL; #x.move(right,$x)
 
 %I want the object in the box
 want; (C/RELATION)\AGENT; #x#y.want($x,$y)
-in the box; RELATION\REF; #x.at($x,box)
+%%in the box; RELATION\REF; #x.at($x,box)
 
 open; PROP ;open
 now; PROP/PROP ;#x.$x
@@ -896,7 +896,9 @@ in; (?ADDRESSEE)/NN; #y#x.in($x,$y); MOD
 on; (REF\REF)/REF; #x#y.on($x,$y); MOD
 on; REF/REF ; #x.$x
 on; PP ; on
-in; PP; in
+in; (REF\REF)/REF; #x#y.in($x,$y); MOD
+in; REF/REF ; #x.$x
+in; PP ; in
 %%table; THING
 %%mug; THING
 
@@ -907,7 +909,7 @@ in; PP; in
 %%put; (C/REF)/PP; #x#y.put($x,$y)
 %%on; REF/REF ; #x.$x
 
-in; REF/REF ; #x.$x
+%%in; REF/REF ; #x.$x
 
 on; NN/NN ; #x.$x
 on; PP ; on
@@ -930,10 +932,11 @@ cup; NN; cup
 %%%%%%%%%%%%% NEW ENTRIES %%%%%%%%%%%%%%%%%%%%%%%%
 by; (NN\NN)/NN; #y#x.by($x,$y); MOD
 from; (NN\NN)/NN; #y#x.from($x,$y); MOD
-in; (NN\NN)/NN; #y#x.in($x,$y); MOD
+%%in; (NN\NN)/NN; #y#x.in($x,$y); MOD
 
 
 on; (NN\NN)/NN; #y#x.on($x,$x); MOD
+in; (NN\NN)/NN; #y#x.in($x,$x); MOD
 by; (NN\NN)/NN; #x#y.$x,$y; MOD
 by; (PP/NN); #x.by($x)
 by; (PP/NN); #x.near($x)

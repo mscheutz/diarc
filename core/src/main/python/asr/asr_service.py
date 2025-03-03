@@ -91,6 +91,12 @@ class ASRComponent:
             r"INSTRUCT\(speaker,listener,and\(pass\(listener,mug\),keep\(listener,upright\),avoid\(listener,laptop\)\),\{\}\)": "PASS(MUG, AVOID(AGENT, LAPTOP))",
             # Pass the screwdriver while going faster
             r"INSTRUCT\(speaker,listener,and\(pass\(listener,screwdriver\),go\(listener,faster\)\),\{\}\)": "PASS(SCREWDRIVER, GO(AGENT, FASTER))",
+
+            # Put the apple on the towel in the box
+            r"INSTRUCT(speaker,listener,placeObject(listener,apple),{in(towel,box),on(apple,towel)})": "PUT(APPLE, ON(APPLE, TOWEL), IN(APPLE,BOX))",
+
+            # Put the apple on the towel in the box
+            r"INSTRUCT(speaker,listener,placeObject(listener,apple),{on(apple,towel)})": "PUT(APPLE, ON(APPLE, TOWEL))"
         }
 
     def action_mapper(self, parsed_text):
