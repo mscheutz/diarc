@@ -27,3 +27,8 @@ vision/bin/
 /node_modules/
 **/.venv/
 /core/src/main/python/spot/spot_phi.yaml
+/vosk**
+.direnv/
+.envrc
+COLCON_IGNORE
+__pycache__
