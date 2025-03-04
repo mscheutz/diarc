@@ -109,7 +109,7 @@ public class UnityComponent extends DiarcComponent {
           try {
             log.debug("Adding response msg to queue: {}", msg);
             queue.add(msg);
-            queueCondition.notifyAll();
+            queueCondition.signalAll();
           } finally {
             queueLock.unlock();
           }
