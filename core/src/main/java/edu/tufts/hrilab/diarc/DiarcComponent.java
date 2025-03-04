@@ -109,7 +109,7 @@ abstract public class DiarcComponent {
    */
   void startExecutionLoop() {
     loopExecutor = Executors.newScheduledThreadPool(1);
-    loopExecutor.scheduleAtFixedRate(() -> {
+    loopExecutor.scheduleWithFixedDelay(() -> {
       try {
         executionLoop();
       } catch (Throwable t) {  // Catch Throwable rather than Exception (a subclass).
