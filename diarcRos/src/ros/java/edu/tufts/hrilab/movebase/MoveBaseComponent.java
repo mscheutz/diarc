@@ -250,6 +250,10 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
    */
   @Override
   public Justification goToLocation(Symbol location, boolean wait) {
+    if (location == null) {
+      return new ConditionJustification(false);
+    }
+
     // TODO: make these command line args?
     double padding = 1.0;
     boolean canOpenDoors = false;
@@ -258,8 +262,7 @@ public class MoveBaseComponent extends DiarcComponent implements MoveBaseInterfa
     try {
       path = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPath")).call(List.class, Convert.convertToMatrix4d(getPose()), location, padding, canOpenDoors);
     } catch (TRADEException e) {
-      log.error("Error trying to get path for location: " + location);
-      log.error("ERROR", e);
+      log.error("Error trying to get path for location: " + location, e);
       return new ConditionJustification(false, Factory.createPredicate("path_to", location.getName(), "known"));
     }
 
