@@ -246,6 +246,8 @@ import edu.tufts.hrilab.action.justification.Justification;
         !nextMsgTime = op:invokeStaticMethod("java.lang.Long", "sum", !currTime, !repeatMsgTime);
         act:generateResponseFromString(!messageString);
         op:log("info", "Cannot repair !area !side !number because tube is not off (belief,unity)");
+
+        op:sleep(1000); // sleep before checking tube info again
       }
     } else {
       !isTubeOff = op:newObject("java.lang.Boolean", true);
