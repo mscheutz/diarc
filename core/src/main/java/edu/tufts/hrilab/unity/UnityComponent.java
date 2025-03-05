@@ -90,6 +90,7 @@ public class UnityComponent extends DiarcComponent {
   protected void executionLoop() {
     Message msg = null;
     msgStr = this.socketClient.waitedResponse();
+    log.debug("[executionLoop] waitedResponse returned with {}", msgStr);
     if (msgStr != null) {
       try {
         msg = parseMessage(msgStr);
