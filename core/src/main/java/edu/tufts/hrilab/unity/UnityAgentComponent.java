@@ -7,9 +7,11 @@ package edu.tufts.hrilab.unity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.fol.Variable;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -138,9 +140,16 @@ public class UnityAgentComponent extends DiarcComponent {
     Term workloadRetraction = Factory.createPredicate("workload", player, "X");
     Term workloadBelief = Factory.createPredicate("workload", player, level);
     try {
+      log.info("Querying workload beliefs: {}", workloadRetraction);
+      List<Map<Variable, Symbol>> bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Term.class))
+                .call(List.class, workloadRetraction);
+      log.info("Current workload beliefs. Size: {} Bindings: {}", bindings.size(), bindings);
+
+      log.info("Retracting old workload for {}", player);
       TRADE.getAvailableService(new TRADEServiceConstraints().name("retractBelief").argTypes(Term.class)).call(void.class, workloadRetraction);
+      log.info("Asserting new workload for {}", player);
       TRADE.getAvailableService(new TRADEServiceConstraints().name("assertBelief").argTypes(Term.class)).call(void.class, workloadBelief);
-      log.debug("Set workload for " + player + " to " + level);
+      log.info("Set workload for " + player + " to " + level);
     } catch (TRADEException ex) {
       log.error("Error retracting or asserting workload belief", ex);
     }
