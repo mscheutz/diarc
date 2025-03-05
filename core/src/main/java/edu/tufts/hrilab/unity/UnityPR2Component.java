@@ -87,6 +87,10 @@ public class UnityPR2Component extends UnityAgentComponent implements UnityPR2In
 
   @Override
   public synchronized boolean stopPR2Repair(Symbol target) {
+    if (target == null) {
+      log.warn("[stopPR2Repair] called with null target.");
+      return false;
+    }
     return stopRepair(target.toString());
   }
 
