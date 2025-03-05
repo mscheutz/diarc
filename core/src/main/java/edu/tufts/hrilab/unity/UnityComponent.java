@@ -7,6 +7,8 @@ package edu.tufts.hrilab.unity;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -48,6 +50,8 @@ public class UnityComponent extends DiarcComponent {
   private final Lock queueLock = new ReentrantLock();
   private final Condition queueCondition = queueLock.newCondition();
 
+  private final ExecutorService onRecieveExecutor = Executors.newSingleThreadExecutor();
+
   public UnityComponent() {
     super();
     this.shouldRunExecutionLoop = true;
@@ -88,10 +92,10 @@ public class UnityComponent extends DiarcComponent {
 
   @Override
   protected void executionLoop() {
-    Message msg = null;
     msgStr = this.socketClient.waitedResponse();
     log.debug("[executionLoop] waitedResponse returned");
     if (msgStr != null) {
+      Message msg = null;
       try {
         msg = parseMessage(msgStr);
       } catch (Exception e) {
@@ -102,7 +106,8 @@ public class UnityComponent extends DiarcComponent {
         if (msg.response == null) {
           // new msg originating from unity
           log.debug("New unity msg received: {}", msg);
-          onReceive(msg);
+          Message finalMsg = msg;
+          onRecieveExecutor.submit(() -> onReceive(finalMsg));
         } else {
           // response msg for msg send from diarc
           log.debug("Response msg from unity received: {}", msg);
