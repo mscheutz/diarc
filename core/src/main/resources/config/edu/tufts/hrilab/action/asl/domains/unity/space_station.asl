@@ -290,6 +290,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   }
   effects : {
     success infer : not(propertyOf(tube(?area,?side,?number),damaged(X)));
+    always infer : not(repairing(?actor,?area,?side,?number));
   }
 
   act:generateResponseFromString(!repairingMessageString);
@@ -313,7 +314,6 @@ import edu.tufts.hrilab.action.justification.Justification;
 
   act:stopPR2Repair(!fullTube);
 
-  act:retractBelief(!repairBeliefPredicate);
   op:log("info", "Repair complete");
 }
 
