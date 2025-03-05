@@ -272,6 +272,9 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 () = repairTubeAction(Symbol ?area, Symbol ?side, Symbol ?number) {
+  onInterrupt : {
+      cancel: act:stopPR2Repair(tube(?area,?side,?number));
+  }
   Symbol !fullTube;
   Integer !waitTime = 100;
   Boolean !done = false;
@@ -302,6 +305,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   act:assertBelief(!repairBeliefPredicate);
 
   op:log("info", "Repairing started");
+
 
   while (op:equals(!done, false)) {
     !isTubeDamaged = act:getSpaceStationTubeDamaged(!fullTube);
