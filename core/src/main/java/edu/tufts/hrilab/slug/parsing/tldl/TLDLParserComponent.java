@@ -66,13 +66,10 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
   // Completed nodes (can inlude fragments and phrases) and full sentences
   public Map<Node, Utterance> completedNodes = new HashMap<>();
 
-
   //chart
   public List<Node>[][] chart;
   public boolean isChartInitialized = false;
   public int currentChartSize = 0;
-
-
 
   // ADDED FOR GUI
   private boolean usingGUI = false;
@@ -212,7 +209,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     List<Utterance> candidateParses = getParsesFromChartCell(0, currentChartSize - 1, speaker, addressee);
     List<Utterance> validParses = pruneParsesWithBelief(candidateParses);
 
-
 // Finally, return only the best parse's utterance
     return endOfChartUtterance;
 
@@ -224,12 +220,9 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     // Example end-of-utterance condition or reasoning step//
     // resetChart();
 
-
     // Perform incremental parsing
     return parseIncrementally(input);
   }
-
-
 
   public void doChartParsingWithDP(Utterance input) {
     List<Pair<String, List<Entry>>> tokens = dictionary.tokenize(input.getWords());
@@ -300,8 +293,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     }
   }
 
-
-
   @Override
   protected void shutdownComponent() {
     deregisterDictionary();
@@ -330,7 +321,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       addHomophone(homophone.getLeft(), homophone.getRight());
     }
   }
-
 
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
@@ -367,15 +357,15 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
       List<Map<Variable, Symbol>> beliefResults = new ArrayList<>();
 
-      try {
-        // Query the belief system with a single parse (using Predicate)
-        beliefResults = TRADE.getAvailableService(
-                new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)
-        ).call(List.class, query);
-      } catch (TRADEException e) {
-        log.warn("Could not query beliefs for parse: {}", parse, e);
-        continue;
-      }
+      // try {
+      //   // Query the belief system with a single parse (using Predicate)
+      //   beliefResults = TRADE.getAvailableService(
+      //           new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)
+      //   ).call(List.class, query);
+      // } catch (TRADEException e) {
+      //   log.warn("Could not query beliefs for parse: {}", parse, e);
+      //   continue;
+      // }
 
       // Apply reasoning to determine if the parse should be kept
       if (isValidParse(parse, beliefResults)) {
@@ -388,8 +378,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     log.info("[pruneParsesWithBelief] Returning {} filtered parses.", filteredParses.size());
     return filteredParses;
   }
-
-
 
   /**
    * Converts an Utterance into a Prolog query Predicate.
@@ -437,10 +425,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
     return false;
   }
-
-
-
-
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
@@ -561,7 +545,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     return updateSpeakerNamesHelper(groundedSemantics, new Variable("?INTERACTOR"), speaker);
   }
 
-
   /**
    * First step of Utterance Processing, updates address history and passes utterance to
    * addWords. This allows for parallelization across incoming utterances, while still preserving
@@ -631,7 +614,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         }
       }
 
-
       //TODO:brad: do we actually want this behavior?
       //utterance ends in the middle of tokens
       //if the utterance ends in the middle of tokens, we want to send it on the complete utterance,
@@ -692,8 +674,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
       log.debug("parse tree reset");
     }
 
-
-
     return output;
   }
 
@@ -751,10 +731,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     return utterance.build();
   }
 
-
-
-
-
   //Create an utterance
   public Utterance createUtterance(Node finalNode, Symbol interactor, Symbol listener) {
     //NLPacket nlPacketTest = null;
@@ -786,7 +762,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         }
         log.debug("Bindings: " + POWERSemanticsTest);
 
-
         Utterance utteranceTest = new Utterance.Builder()
                 .setSpeaker(interactor)
                 // .addListener(addressHistory.get(Pair.of(interactor, listener)))
@@ -805,7 +780,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     }
     return null;
   }
-
 
   //Collect utterances
   public List<Utterance> collectUtterances(Node finalNode, Utterance utterance, Symbol interactor, Symbol listener) {
@@ -829,8 +803,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     }
     return null;
   }
-
-
 
   //Pass along new utterance with updated semantics to another NLPComponent
   private Utterance createParsedUtterance(Node possibleSemantics, Symbol speaker, Symbol addressee) {
@@ -873,7 +845,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
         builder.setTierAssignments(DIARCSemantics.getRight());
         builder.setIsInputUtterance(true);
         builder.setWords(Arrays.asList(rule.morpheme.split(" ")));
-
 
         Utterance utterance = builder.build();
         log.debug("utterance generated: " + utterance);
@@ -942,7 +913,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
                       Symbol sp = addressHistory.keySet().iterator().next();
                       Utterance nodeUtterance = createUtterance(combinedNodeCopy, input.getSpeaker(), input.getAddressee());
                       completedNodes.put(combinedNodeCopy, nodeUtterance);
-
 
                       // Add the combined node to the chart
                       if (chart[start][end] == null) {
@@ -1037,8 +1007,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
     return parses;
   }
 
-
-
   private List<Utterance> doChartParsing(Utterance utterance) {
     log.debug("[doChartParsing] utterance: {}", utterance);
 
@@ -1086,7 +1054,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
               //List<NodeEntry> validcombinationsTest = null;
               try {
                 List<NodeEntry> validcombinationsTest = left.combineTest(right);
-
 
                 if (!validcombinationsTest.isEmpty()) {
                   // Create a new combined node
@@ -1146,7 +1113,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
     }
 
-
     // grab --> (the mug)
     // ArrayList<NodeEntry> themuglist = masterNodeEntry.get(0);
     // Node n1 = new Node(this, partner, validCombinations);
@@ -1167,7 +1133,6 @@ public class TLDLParserComponent extends DiarcComponent implements NLUInterface 
 
     List<Node> lastList = cellrow[cellrow.length - 1]; // Accessing the last list in the array
     Node lastElement = lastList.get(lastList.size() - 1);
-
 
     for (Node endParse : lastList) {
       Utterance utTest = createUtterance(endParse, utterance.getSpeaker(), utterance.getAddressee());

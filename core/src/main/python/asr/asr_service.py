@@ -93,10 +93,15 @@ class ASRComponent:
             r"INSTRUCT\(speaker,listener,and\(pass\(listener,screwdriver\),go\(listener,faster\)\),\{\}\)": "PASS(SCREWDRIVER, GO(AGENT, FASTER))",
 
             # Put the apple on the towel in the box
-            r"INSTRUCT(speaker,listener,placeObject(listener,apple),{in(towel,box),on(apple,towel)})": "PUT(APPLE, ON(APPLE, TOWEL), IN(APPLE,BOX))",
+            r"INSTRUCT\(speaker,listener,placeObject\(listener,apple\),\{on\(towel,box\),on\(apple,towel\)\}\)": "PUT(APPLE, ON(APPLE,TOWEL), IN(APPLE,BOX))",
+            r"INSTRUCT\(speaker,listener,placeObject\(listener,apple\),\{in\(towel,box\),on\(apple,towel\)\}\)": "PUT(APPLE, ON(APPLE,TOWEL), IN(APPLE,BOX))",
+            r"INSTRUCT\(speaker,listener,put\(listener,on\(box,towel\),apple\),\{\}\)": "PUT(APPLE, ON(APPLE,TOWEL), IN(APPLE,BOX))",
 
-            # Put the apple on the towel in the box
-            r"INSTRUCT(speaker,listener,placeObject(listener,apple),{on(apple,towel)})": "PUT(APPLE, ON(APPLE, TOWEL))"
+            # Put the apple on the towel
+            r"INSTRUCT\(speaker,listener,placeObject\(listener,apple\),\{on\(apple,towel\)\}\)": "PUT(APPLE, ON(APPLE, TOWEL))",
+
+            # Put the apple
+            r"INSTRUCT\(speaker,listener,placeObject\(listener,apple\),\{\}\)": "GRASP(APPLE)"
         }
 
     def action_mapper(self, parsed_text):
@@ -170,6 +175,13 @@ class ASRComponent:
                         final_text = final_text.replace("mic", "mug")
 
                         final_text = final_text.replace("hand me", "pass")
+
+                        final_text = final_text.replace("the put", "put")
+                        final_text = final_text.replace("tower", "towel")
+                        final_text = final_text.replace("abu", "apple")
+                        final_text = final_text.replace("apo", "apple")
+                        final_text = final_text.replace("epo", "apple")
+                        final_text = final_text.replace("ipo", "apple")
 
 
                     logger.info(f"[ASR] Final after replacing: {final_text}")

@@ -411,7 +411,7 @@ class SemanticRule implements Cloneable {
     if ( result ==null || argClone == null) {
       log.error("semantic rule couldn't be cloned, returning null");
     } else if (result.unsetArgs.isEmpty()) {
-      log.error("no remaining args cannot apply: " + argClone.getSemantics() + " to: " + result.getSemantics());
+      // log.error("no remaining args cannot apply: " + argClone.getSemantics() + " to: " + result.getSemantics());
       result = null;
     } else {
       log.trace("setting arg " + result.unsetArgs.size());
