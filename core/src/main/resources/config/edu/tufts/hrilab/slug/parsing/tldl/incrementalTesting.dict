@@ -279,34 +279,34 @@ how do; (QWH/C)/AGENT ; #a#c.how($a,$c)
 
 %%%%%%%%%%%  I  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-is; (S/DESC)\REF; #x#y.instanceOf($x,$y)
+%%is; (S/DESC)\REF; #x#y.instanceOf($x,$y)
 %is; (S / DESC) \ REF; # x #y. definitionOf($x,$y)
 
-is; (((S / NP)  / OF) / COMPOSED)\ REF; #x#c#o#y.composed$o($x,$y)
-is; (S / PROP) \ REF; # x #z. propertyOf($x,$z)
+%%is; (((S / NP)  / OF) / COMPOSED)\ REF; #x#c#o#y.composed$o($x,$y)
+%%is; (S / PROP) \ REF; # x #z. propertyOf($x,$z)
 would have been; (S/PROP)\REF; #x #z. past(propertyOf($x,$z))
-is; (S /DESC)\REF[ACT]  ; #x #y.instanceOf($x,$y)
+%%is; (S /DESC)\REF[ACT]  ; #x #y.instanceOf($x,$y)
 %%%%%%%%%%% not changing not(is()) stuff to prop
-is; (S / DESC[not]) \ REF ; # x #y. notDefinitionOf($x,$y)
-is; (S / PROP[not]) \ REF; # x #z. notPropertyOf($x,$z)
-is; (S/VP[how])\N ; #x#y.is($x,$y)
-is; IS; is
+%%is; (S / DESC[not]) \ REF ; # x #y. notDefinitionOf($x,$y)
+%%is; (S / PROP[not]) \ REF; # x #z. notPropertyOf($x,$z)
+%%is; (S/VP[how])\N ; #x#y.is($x,$y)
+%%is; IS; is
 
-is like; (ADV/C)\C ; #x#y.like($x,$y)
+%is like; (ADV/C)\C ; #x#y.like($x,$y)
 
-i; AGENT ; ?INTERACTOR
+%i; AGENT ; ?INTERACTOR
 
-in ; PPadv/C; #x.$x
+%in ; PPadv/C; #x.$x
 
-in front of; Prep/AGENT; #a.inFrontOf($a)
+%in front of; Prep/AGENT; #a.inFrontOf($a)
 
-is; ((EFFECT/REF)/V)\AGENT ; #a#v#r.$v($a,$r)
+%is; ((EFFECT/REF)/V)\AGENT ; #a#v#r.$v($a,$r)
 
-is there open space; QYN/Prep; #p.openspace($p)
+%is there open space; QYN/Prep; #p.openspace($p)
 
-is trusted; S\AGENT ; #a.trusted($a)
-is a novice; S\AGENT; #a.novice($a)
-is in; (S/PLACE)\AGENT; #a#p.isIn($a,$p)
+%is trusted; S\AGENT ; #a.trusted($a)
+%is a novice; S\AGENT; #a.novice($a)
+%is in; (S/PLACE)\AGENT; #a#p.isIn($a,$p)
 
 %%it; REF ; it ; INFOCUS
 
@@ -463,7 +463,7 @@ raised; POSE; raised
 
 ravenna; ADDRESSABLE ; ravenna
 
-red; RN/RN; #x.red($x) ; MOD
+%%RN/RN; #x.red($x) ; MOD
 
 release; VERBT; releaseObject
 
@@ -573,12 +573,12 @@ tell; (C\AGENT)/C; #x#a.tell($a,$x)
 thank you; G ; thank_you
 thanks ; G ; thank_you
 
-that; C ; that ; ACTIVATED
-that; REF ; ACTIVATED
-that; REF/RN ; #x.$x ; FAMILIAR
-that; LREF/LN ; x.$x ; FAMILIAR
+%%C ; that ; ACTIVATED
+%%that; REF ; ACTIVATED
+%%that; REF/RN ; #x.$x ; FAMILIAR
+%%that; LREF/LN ; x.$x ; FAMILIAR
 %that is how you
-that; (((S/C)/AGENT)/HOW)/IS ; #i#h#a#c.endTeaching($a,$c)
+%that; (((S/C)/AGENT)/HOW)/IS ; #i#h#a#c.endTeaching($a,$c)
 
 %%the; REF/RN ; #x.$x ; DEFINITE
 %%the; LREF/LN ; #x.$x ; DEFINITE
@@ -797,6 +797,17 @@ now; PROP/PROP ;#x.$x
 
 grab; C/NN ; #x.graspObject(?ADDRESSEE,$x)
 put; C/NN ; #x.placeObject(?ADDRESSEE,$x)
+%%put; (C/NN)/THAT/IS/RED   ;#x.placeObject(?ADDRESSEE,$x)
+
+%%put; (C/NN)   ;#x.placeObject(?ADDRESSEE,$x)
+
+%is; IS; is; MOD
+%that; THAT; that; MOD
+%red; RED; red; MOD
+%is; IS; is;
+%that; THAT; that;
+%red; RED; red;
+
 pass; C/NN ; #x.pass(?ADDRESSEE,$x)
 but; (C/C)\C ; #x#y.and($x,$y)
 %% avoid the laptop
@@ -818,45 +829,50 @@ upright; ADV; upright
 faster; ADV; faster
 
 % 3 arguments
-put; (C/NN)/NN ; #y#x.put(?ADDRESSEE, $x, $y)
-put; ((C/NN)/NN)/NN ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
-put; (((C/NN)/NN)/NN)/NN ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
+%%put; (C/NN)/NN ; #y#x.put(?ADDRESSEE, $x, $y)
+%%put; ((C/NN)/NN)/NN ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
+%%put; (((C/NN)/NN)/NN)/NN ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
 
-put; (C/NN)/NN ; #y#x.put(?ADDRESSEE, $x, $y)
-put; ((C/NN)/PP)/PP ; #y#x.put(?ADDRESSEE, $x, $y)
-put; ((C/NN)/PP)/PP ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
-put; ((C/NN)/PP)/PP ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
 
-put; (C/NN)\NN ; #y#x.put(?ADDRESSEE, $x, $y)
-put; ((C/NN)/NN)\NN ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
-put; (((C/NN)/NN)/NN)\NN ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
 
-put; (C/NN)\NN ; #y#x.put(?ADDRESSEE, $x, $y)
-put; ((C/NN)/PP)\PP ; #y#x.put(?ADDRESSEE, $x, $y)
-put; ((C/NN)/PP)\PP ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
-put; ((C/NN)/PP)\PP ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
+%put; (C/NN)/NN ; #y#x.put(?ADDRESSEE, $x, $y)
+%put; ((C/NN)/PP)/PP ; #y#x.put(?ADDRESSEE, $x, $y)
+%put; ((C/NN)/PP)/PP ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
+%put; ((C/NN)/PP)/PP ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
+
+%put; (C/NN)\NN ; #y#x.put(?ADDRESSEE, $x, $y)
+%put; ((C/NN)/NN)\NN ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
+%put; (((C/NN)/NN)/NN)\NN ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
+
+%put; (C/NN)\NN ; #y#x.put(?ADDRESSEE, $x, $y)
+%put; ((C/NN)/PP)\PP ; #y#x.put(?ADDRESSEE, $x, $y)
+%put; ((C/NN)/PP)\PP ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
+%put; ((C/NN)/PP)\PP ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
 
 on; (NN/NN)/NN ; #y#x.on($x, $y)
 in; (NN/NN)/NN ; #y#x.in($x, $y)
 
-on; PP/NN ; #x.on($x)
-in; PP/NN ; #x.in($x)
+that; (NN/NN)/NN ; #y#x.that($x, $y)
+is; NN/NN ; #x.$x
 
-on; (NN/NN)\NN ; #y#x.on($x, $y)
-in; (NN/NN)\NN ; #y#x.in($x, $y)
 
-on; NN\NN ; #y#x.on($x, $y)
-in; NN\NN ; #y#x.in($x, $y)
+%on; PP/NN ; #x.on($x)
+%in; PP/NN ; #x.in($x)
 
-on; (NN/NN)\NN ; #x.on($x)
-in; (NN/NN)\NN ; #x.in($x)
+%on; (NN/NN)\NN ; #y#x.on($x, $y)
+%in; (NN/NN)\NN ; #y#x.in($x, $y)
 
-on; NN\NN ; #x.on($x)
-in; NN\NN ; #x.in($x)
+%on; NN\NN ; #y#x.on($x, $y)
+%in; NN\NN ; #y#x.in($x, $y)
 
-on; PP\NN ; #x.on($x)
-in; PP\NN ; #x.in($x)
+%on; (NN/NN)\NN ; #x.on($x)
+%in; (NN/NN)\NN ; #x.in($x)
 
+%on; NN\NN ; #x.on($x)
+%in; NN\NN ; #x.in($x)
+
+%on; PP\NN ; #x.on($x)
+%in; PP\NN ; #x.in($x)
 
 
 
@@ -878,6 +894,10 @@ in; PP\NN ; #x.in($x)
 %%grab; (((C/REF)/PP)/REF)\AGENT ; ; #x.graspObject(?ADDRESSEE,$x)
 on; (NN\NN)/NN; #y#x.on($x,$y); MOD
 on; (?ADDRESSEE)/NN; #y#x.on($x,$y); MOD
+
+that; (NN\NN)/NN; #y#x.is($x,$y); MOD
+that; (?ADDRESSEE)/NN; #y#x.is($x,$y); MOD
+
 in; (NN\NN)/NN; #y#x.in($x,$y); MOD
 in; (?ADDRESSEE)/NN; #y#x.in($x,$y); MOD
 
@@ -910,11 +930,13 @@ in; PP ; in
 %%on; REF/REF ; #x.$x
 
 %%in; REF/REF ; #x.$x
+that; NN/NN ; #x.$x
 
 on; NN/NN ; #x.$x
 on; PP ; on
 in; NN/NN ; #x.$x
 in; PP ; in
+that; (NN/NN)/NN ; #x.$x
 on; (NN/NN)/NN ; #x.$x
 on; PP/NN ; on
 in; (NN/NN)/NN ; #x.$x
@@ -928,6 +950,7 @@ box; NN; box
 mat; NN; mat
 towel; NN; towel
 cup; NN; cup
+red; NN; red
 
 %%%%%%%%%%%%% NEW ENTRIES %%%%%%%%%%%%%%%%%%%%%%%%
 by; (NN\NN)/NN; #y#x.by($x,$y); MOD
