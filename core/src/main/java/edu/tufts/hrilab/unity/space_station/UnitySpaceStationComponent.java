@@ -17,12 +17,6 @@ import edu.tufts.hrilab.unity.message.*;
 
 public class UnitySpaceStationComponent extends UnityAgentComponent implements UnitySpaceStationInterface {
 
-  static private Logger log = LoggerFactory.getLogger(UnitySpaceStationComponent.class);
-
-  public UnitySpaceStationComponent() {
-    super();
-  }
-
   /**
    * Sends a health or tubeHealth message to Unity and
    * awaits the response.
