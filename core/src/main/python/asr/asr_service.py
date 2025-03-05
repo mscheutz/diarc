@@ -101,7 +101,10 @@ class ASRComponent:
             r"INSTRUCT\(speaker,listener,placeObject\(listener,apple\),\{on\(apple,towel\)\}\)": "PUT(APPLE, ON(APPLE, TOWEL))",
 
             # Put the apple
-            r"INSTRUCT\(speaker,listener,placeObject\(listener,apple\),\{\}\)": "GRASP(APPLE)"
+            r"INSTRUCT\(speaker,listener,placeObject\(listener,apple\),\{\}\)": "GRASP(APPLE)",
+
+            # Put the apple on the towel in the box that is red
+            r"INSTRUCT\(speaker,listener,placeObject\(listener,apple\),\{is\(box,red\),in\(towel,box\),on\(apple,towel\)\}\)": "PUT(APPLE, ON(APPLE, TOWEL), IN(APPLE,BOX), IS(BOX, RED))"
         }
 
     def action_mapper(self, parsed_text):

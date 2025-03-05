@@ -71,7 +71,7 @@ public class TLDLParserComponentTestIncremental {
 
         // Define the input phrases
         //String[] phrases = {"put the apple", "on the towel", "on the box"};
-        String[] phrases = {"put the apple", "on the towel", "in the box"};
+        String[] phrases = {"put the apple", "on the towel", "in the box", "that is red"};
 
         // Set up speaker and listener
         Symbol speaker = Factory.createSymbol("speaker");
