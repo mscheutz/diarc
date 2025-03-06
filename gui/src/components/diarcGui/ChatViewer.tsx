@@ -9,11 +9,9 @@ import {
     MessageList,
     Message,
     MessageInput,
-    Conversation,
     ConversationHeader,
     Sidebar,
     Avatar,
-    ConversationList,
     MessageSeparator
 } from "@chatscope/chat-ui-kit-react";
 import { ReadyState, SendMessage } from 'react-use-websocket';
@@ -21,6 +19,10 @@ import { ReadyState, SendMessage } from 'react-use-websocket';
 // Internal imports
 import ConnectionIndicator from './util/ConnectionIndicator';
 import "./util/StyleOverrides.css"
+import {Button} from "../Button";
+import {CHAT_PRESET_KEY} from "./util/constants";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 
 // UTILITY //
 type MessageProps = {
@@ -82,6 +84,35 @@ type Props = {
     readyState: ReadyState
 };
 
+const NoChatsPanel: React.FC = () => {
+    return (
+        <div className="flex flex-col w-full min-h-0 basis-0 grow border
+                        border-1 border-[#d1dbe3] justify-between shadow-md
+                        rounded-md p-3 gap-3 md:p-5 md:gap-5">
+            <div className="flex flex-col space-y-5 fixed
+                                top-1/2 left-1/2 translate-x-[-50%]
+                                translate-y-[-50%] items-center">
+                <div className="flex flex-row justify-center
+                                    justify-items-center">
+                    <FontAwesomeIcon
+                        icon={faTriangleExclamation} size="10x"
+                        color={"#f0a900"}
+                    />
+                </div>
+                <div className="text-4xl text-center">
+                    Unavailable
+                </div>
+                <div className="text-center">
+                    No chat-available agents found.
+                </div>
+                <Button onClick={() => window.location.reload()}>
+                    Reload
+                </Button>
+            </div>
+        </div>
+    )
+};
+
 /**
  * ChatViewer. Defines a chat interface component for issuing commands and
  * receiving feedback through DIARC.
@@ -89,21 +120,21 @@ type Props = {
  * @version 1.0
  */
 const ChatViewer: React.FC<Props> = ({
-    path, lastMessage, sendMessage, readyState
-}) => {
+                                         path, lastMessage, sendMessage, readyState
+                                     }) => {
     // SET UP MOBILE NAVIGATION //
     // Adapted from "Toggle conversation list using the back button" example at
     // https://chatscope.io/storybook/react/?path=/docs/components-maincontainer--docs
-    const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
+    const [sidebarVisible, setSidebarVisible] = useState<boolean>(false);
     const [sidebarStyle, setSidebarStyle] = useState<object>({});
     const [chatContainerStyle, setChatContainerStyle] = useState<object>({});
 
-    const handleBackClick = useCallback(() => {
-        setSidebarVisible(true);
-    }, [setSidebarVisible]);
+    const handleBackClick = () => setSidebarVisible(!sidebarVisible);
     const handleConversationClick = useCallback(() => {
-        setSidebarVisible(false);
-    }, [setSidebarVisible]);
+        if(sidebarVisible) {
+            setSidebarVisible(false);
+        }
+    }, [sidebarVisible, setSidebarVisible]);
 
     useEffect(() => {
         if (sidebarVisible) {
@@ -122,36 +153,8 @@ const ChatViewer: React.FC<Props> = ({
         setChatContainerStyle])
 
     // COMPONENT CREATION METHODS //
-    const createConversation = (chat: Chat, index: number) => {
-        return (
-            <Conversation
-                key={index}
-                onClick={() => {
-                    chat.focusThisChat(index);
-                    handleConversationClick();
-                }}
-            >
-                <Avatar
-                    name={chat.robotName}
-                    src={chat.profileImagePath}
-                    className='marginRightImportant'
-                />
-                <Conversation.Content
-                    name={chat.robotName}
-                    lastSenderName={chat.messageList.length > 0 ?
-                        chat.messageList.slice(-1)[0].sender
-                        : null}
-                    info={chat.messageList.length > 0 ?
-                        chat.messageList.slice(-1)[0].message
-                        : "No messages yet"}
-                    className="displayFlexImportant"
-                />
-            </Conversation>
-        );
-    };
-
-    const createConversationHeader = (chat: Chat) => {
-        return (
+    const createConversationHeader = (chat: Chat | null) => {
+        return (chat &&
             <ConversationHeader>
                 <ConversationHeader.Back onClick={() => handleBackClick()} />
                 <Avatar
@@ -171,7 +174,7 @@ const ChatViewer: React.FC<Props> = ({
     }) => {
         return (
             <>
-                {sender !== chats[currentChat].robotName
+                {sender !== currentChatObj?.robotName
                     && <div
                         key={"sentby" + index}
                         className="text-right"
@@ -189,7 +192,7 @@ const ChatViewer: React.FC<Props> = ({
     }
 
     // SET UP STATE //
-    const [currentChat, setCurrentChat] = useState<number>(0);
+    const [currentChatObj, setCurrentChatObj] = useState<Chat | null>(null);
 
     const [chats, setChats] = useState<Chat[]>([
         {
@@ -200,13 +203,9 @@ const ChatViewer: React.FC<Props> = ({
         }
     ]);
 
-    const [conversations, setConversations] = useState(
-        <ConversationList>
-            {chats.map((chat, index) => createConversation(chat, index))}
-        </ConversationList>
-    );
-
     const [username, setUsername] = useState<string>("evan");
+
+    const [messageInputValue, setMessageInputValue] = useState<string>("");
 
     useEffect(() => {
         if (!lastMessage) return;
@@ -214,7 +213,7 @@ const ChatViewer: React.FC<Props> = ({
         if (!data.path || data.path !== path) return;
 
         let newChats: Chat[];
-        if (!chats[0].robotName)
+        if (!chats || chats.length < 1 || !chats[0].robotName)
             newChats = chats.slice(1);
         else
             newChats = chats.slice();
@@ -236,13 +235,15 @@ const ChatViewer: React.FC<Props> = ({
                     robotName: name,
                     profileImagePath: "/heroimage.svg",
                     messageList: [],
-                    focusThisChat: setCurrentChat
+                    focusThisChat: setCurrentChatObj
                 });
             }
         }
 
+        let currChat: Chat;
         for (const chat of newChats) {
             if (chat.robotName === data.sender) {
+                currChat = chat;
                 chat.messageList = [
                     ...chat.messageList,
                     {
@@ -254,6 +255,7 @@ const ChatViewer: React.FC<Props> = ({
                 ];
                 break;
             } else if (chat.robotName === data.recipient) {
+                currChat = chat;
                 chat.messageList = [
                     ...chat.messageList,
                     {
@@ -267,11 +269,11 @@ const ChatViewer: React.FC<Props> = ({
             }
         }
         setChats(newChats);
-        setConversations(
-            <ConversationList>
-                {newChats.map((chat, index) => createConversation(chat, index))}
-            </ConversationList>
-        );
+
+        if (!currChat && newChats && newChats.length >= 1) {
+            currChat = newChats[0];
+        }
+        setCurrentChatObj(currChat);
     },
         // we use chats.toString() to make sure the value is changing
         [lastMessage, chats.toString()]);
@@ -290,21 +292,51 @@ const ChatViewer: React.FC<Props> = ({
             path: path,
             message: clean(message),
             sender: clean(username),
-            recipient: chats[currentChat].robotName
+            recipient: currentChatObj?.robotName
         }));
-        setConversations(
-            <ConversationList>
-                {chats.map((chat, index) => createConversation(chat, index))}
-            </ConversationList>
-        );
+        setMessageInputValue("");
     };
+
+    // For chat presets
+    const [presetsJSON, setPresetsJSON] = useState<string>("[]");
+    useEffect(() => {
+        setPresetsJSON(localStorage.getItem(CHAT_PRESET_KEY) ?? "[]");
+    }, []);
+    const presets: string[] = JSON.parse(presetsJSON);
+
+    //@ts-ignore
+    const addCallback = () => {
+        const messageContents = clean(messageInputValue.trim());
+        if(presets.indexOf(messageContents) !== -1) return;
+        const newPresets: string[] = [...presets, messageContents];
+        const newJSON = JSON.stringify(newPresets);
+        localStorage.setItem(CHAT_PRESET_KEY, newJSON);
+        setPresetsJSON(newJSON);
+    }
+    //@ts-ignore
+    const submitCallback = (e: MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        handleSendMessage(e.target.id.slice(1)); // get rid of the starting 'c' char
+    }
+    //@ts-ignore
+    const deleteCallback = (e: MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        const toDelete: string = e.target.id.slice(1); // get rid of starting 'd' char
+        const newPresets: string[] = presets.filter((str) => str !== toDelete);
+        const newJSON = JSON.stringify(newPresets);
+        localStorage.setItem(CHAT_PRESET_KEY, newJSON);
+        setPresetsJSON(newJSON);
+    }
+    //@ts-ignore
+    const clearCallback = () => {
+        localStorage.setItem(CHAT_PRESET_KEY, "[]");
+        setPresetsJSON("[]");
+    }
 
     let chatContainer = (
         <ChatContainer className='w-3/4' style={chatContainerStyle}>
-            {createConversationHeader(chats[currentChat])}
+            {createConversationHeader(currentChatObj)}
 
             <MessageList>
-                {chats[currentChat].messageList.map((message, index) =>
+                {currentChatObj?.messageList.map((message, index) =>
                     <ExtendedMessage
                         {...message}
                         index={index}
@@ -315,13 +347,19 @@ const ChatViewer: React.FC<Props> = ({
 
             <MessageInput
                 autoFocus
-                placeholder={"Talk with " + chats[currentChat].robotName
+                placeholder={"Talk with " + currentChatObj?.robotName
                     + "..."}
                 attachButton={false}
                 onSend={(message) => handleSendMessage(message)}
+                value={messageInputValue}
+                onChange={(textContent) => {setMessageInputValue(textContent)}}
             />
         </ChatContainer>
     );
+
+    if(!chats || chats.length < 1 || chats[0].robotName === "") {
+        return <NoChatsPanel />;
+    }
 
     // DOM //
     return (
@@ -332,11 +370,48 @@ const ChatViewer: React.FC<Props> = ({
 
             <MainContainer className='rounded-md shadow-md' responsive>
                 <Sidebar position="left" style={sidebarStyle}>
-                    <div className="flex flex-col justify-between h-full">
+                    <div className="flex flex-col justify-between h-full p-3 gap-3">
+                        {/* Agent selection */}
+                        <label>
+                            Select DIARC agent<br />
+                            <select
+                                className="px-2 p-1"
+                                value={currentChatObj?.robotName}
+                                onChange={(e) => {
+                                    setCurrentChatObj(chats.find(chat => chat.robotName === e.target.value)
+                                                      ?? null);
+                                    handleConversationClick();
+                                }}
+                            >
+                                {chats.map(chat =>
+                                    <option value={chat.robotName}>{chat.robotName}</option>
+                                )}
+                            </select>
+                        </label>
 
-                        <div className="flex flex-col space-y-1 md:space-y-2
-                                        p-1 md:p-2">
-                            {conversations}
+                        {/* Chat preset toolbox */}
+                        <div className="w-full h-full flex flex-col gap-1">
+                            <p>Chat presets</p>
+                            <Button type="button" onClick={addCallback}>Add Preset</Button>
+                            <Button type="button" onClick={clearCallback}>Clear Presets</Button>
+                            <div className="w-full h-full flex flex-col gap-1 p-1
+                                            rounded-md border border-1 border-[#d1dbe3] grow
+                                            overflow-x-auto">
+                                {presets.map((value, index) =>
+                                    <div className="flex flex-row gap-1 items-center justify-between"
+                                         key={index}>
+                                        <p>{value}</p>
+                                        <div className="flex flex-row gap-1 items-center">
+                                            <Button id={"c" + value} onClick={submitCallback}>
+                                                Send
+                                            </Button>
+                                            <Button id={"d" + value} onClick={deleteCallback}>
+                                                Delete
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </Sidebar>
