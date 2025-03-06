@@ -274,6 +274,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 () = repairTubeAction(Symbol ?area, Symbol ?side, Symbol ?number) {
   onInterrupt : {
       cancel: act:stopPR2Repair(!fullTube);
+      suspend: act:stopPR2Repair(!fullTube);
   }
   Symbol !fullTube;
   Integer !waitTime = 100;
