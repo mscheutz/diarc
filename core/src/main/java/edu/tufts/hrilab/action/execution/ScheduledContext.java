@@ -63,9 +63,14 @@ public class ScheduledContext extends Context {
     //True if the scheduled task is currently executing. False while sleeping before scheduled time and after execution.
     boolean scheduledTaskExecuting = false;
     private long timerStart = -1;
+    private long timerScheduledDuration = -1;
     //*Should only be set if the child of a persistent goal*
     private boolean firstExecutionImmediate = false;
     private boolean firstExecution = true;
+    //Better way to handle this?
+    private boolean tempNextExecutionTiming;
+    private long nextExecutionDelay = -1;
+    private Date nextExecutionDate = null;
 
     public ScheduledContext(Context c, StateMachine sm, Predicate goalPred, long delay, TimeUnit timeUnit) {
         super(c, sm, "scheduled");
@@ -114,7 +119,53 @@ public class ScheduledContext extends Context {
         };
     }
 
-    //Should there be different methods for updateScheduledDelay/time and updateCurrentDelay/Time?
+    private void cancelTask() {
+        scheduledTaskTimer.cancel();
+        scheduledTask.cancel();
+        createScheduledTask();
+    }
+
+    private void scheduleTask(long delay, TimeUnit timeUnit) {
+        timerScheduledDuration = timeUnit.toMillis(delay);
+        scheduledTaskTimer.schedule(scheduledTask, timerScheduledDuration);
+        timerStart = System.currentTimeMillis();
+    }
+
+    private void scheduleTask(Date date) {
+        if (System.currentTimeMillis() > date.getTime()) {
+            //if the scheduled time is in the past, schedule it for the next day
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+            cal.add(Calendar.DATE, 1);
+            date = cal.getTime();
+        }
+        scheduledTaskTimer.schedule(scheduledTask, date);
+        timerScheduledDuration = date.getTime() - System.currentTimeMillis();
+        timerStart = System.currentTimeMillis();
+    }
+
+    public boolean updateNextScheduledTime(long delay, TimeUnit timeUnit) {
+        if (!scheduledTaskExecuting && !doStepLock.tryLock()) {
+            cancelTask();
+            scheduleTask(delay,timeUnit);
+        } else {
+            tempNextExecutionTiming = true;
+            nextExecutionDelay = timeUnit.toMillis(delay);
+        }
+        return true;
+    }
+
+    public boolean updateNextScheduledTime(Date date) {
+        if (!scheduledTaskExecuting && !doStepLock.tryLock()) {
+            cancelTask();
+            scheduleTask(date);
+        } else {
+            tempNextExecutionTiming = true;
+            nextExecutionDate = date;
+        }
+        return true;
+    }
+
     /**
      * Updates the scheduled delay of this context. If the action is currently executing, updates the delay for potential
      * future executions if this is a child of a persistent context and otherwise does nothing. If that action has not
@@ -127,13 +178,13 @@ public class ScheduledContext extends Context {
         this.timeUnit = timeUnit;
 
         //If the task has not started execution yet, schedule the next execution to occur on this new delay
-        if (!scheduledTaskExecuting && !doStepLock.tryLock()) {
-            scheduledTaskTimer.cancel();
-            scheduledTask.cancel();
-            createScheduledTask();
-            //TODO: should be handled elsewhere probably, also how do we want this to work?
-            //      If updating inner interval e.g. "every 30 minutes" should be relative time?
-            //      But if updating outer scheduled time e.g. "in 20 seconds" should be absolute time?
+        if (!scheduledTaskExecuting && !doStepLock.tryLock() && !tempNextExecutionTiming) {
+            cancelTask();
+            //Chosen to work according to the following rules based on the language which would be used to instruct it:
+            //  If updating the inner interval (i.e. child of a persistent context) e.g. "every 30 minutes" -> "every 10
+            //      minutes", then set the timing of the next scheduled execution relative to the last one. If more time
+            //      has elapsed than the newly supplied interval, schedule for the next valid time on that interval.
+            //  If updating the outer scheduled time, e.g. "in 20 seconds", then just schedule on that absolute delay
             if (caller != null && caller instanceof PersistentContext) {
                 if (timerStart == -1) {
                     log.warn("[updateScheduledDelay] encountered unexpected state, task executing but timer start not set");
@@ -149,12 +200,10 @@ public class ScheduledContext extends Context {
                 while (newScheduledTime < System.currentTimeMillis()) {
                     newScheduledTime += delayMillis;
                 }
-                long newScheduledDelay = newScheduledTime - System.currentTimeMillis();
-                scheduledTaskTimer.schedule(scheduledTask, newScheduledDelay);
+                scheduleTask(newScheduledTime - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
             } else {
-                scheduledTaskTimer.schedule(scheduledTask, timeUnit.toMillis(delay));
+                scheduleTask(delay, timeUnit);
             }
-            timerStart = System.currentTimeMillis();
         }
     }
 
@@ -167,35 +216,49 @@ public class ScheduledContext extends Context {
         relative = false;
         this.time = time;
 
-        if (!scheduledTaskExecuting && !doStepLock.tryLock()) {
-            scheduledTaskTimer.cancel();
-            scheduledTask.cancel();
-            createScheduledTask();
-            //TODO: Are we expecting the day to be passed in correctly or just a time of day? Do we need to check if the time is in the past?
-            scheduledTaskTimer.schedule(scheduledTask, time);
-            timerStart = System.currentTimeMillis();
+        if (!scheduledTaskExecuting && !doStepLock.tryLock() && !tempNextExecutionTiming) {
+            cancelTask();
+            scheduleTask(time);
         }
     }
 
-    public void resetTask(Predicate newPredicate) {
-        scheduledGoalPred = newPredicate;
-        if (!scheduledTaskExecuting && !doStepLock.tryLock()) {
-            scheduledTaskTimer.cancel();
-            scheduledTask.cancel();
-            createScheduledTask();
-            long timeLeft;
-            if (relative) {
-                timeLeft = delay -  (System.currentTimeMillis() - timerStart);
+    //TODO: how to format this for NLG? do externally? Expose method returning String with best representation?
+    public long getTimeUntilNextExecution() {
+        if (!scheduledTaskExecuting) {
+            return timerScheduledDuration;
+        } else {
+            if (tempNextExecutionTiming) {
+                if (nextExecutionDelay != -1) {
+                    return nextExecutionDelay;
+                } else {
+                    return nextExecutionDate.getTime() - System.currentTimeMillis();
+                }
             } else {
-                timeLeft = time.getTime() - System.currentTimeMillis();
+                //Do anything special in this case? Or just give interval?
+                if (relative) {
+                    return timeUnit.toMillis(delay);
+                } else {
+                    return TimeUnit.DAYS.toMillis(1);
+                }
             }
+        }
+    }
+
+    //See other notes. Probably should be removed - assumes Scheduled Persistent Scheduled goal case.
+    public boolean updateScheduledGoalPredicate(Predicate newPredicate) {
+        if (firstExecution && !scheduledTaskExecuting && !doStepLock.tryLock()) {
+            scheduledGoalPred = newPredicate;
+            cancelTask();
+            long timeLeft = timerScheduledDuration - (System.currentTimeMillis() - timerStart);
             if (timeLeft < 0) {
                 log.warn("[resetTask] remaining delay detected to be negative");
                 timeLeft = 0;
             }
             scheduledTaskTimer.schedule(scheduledTask, timeLeft);
-            //timerStart = System.currentTimeMillis();
+            return true;
         }
+        log.error("[updateScheduledGoalPredicate] inner goal has already been submitted");
+        return false;
     }
 
     @Override
@@ -215,19 +278,28 @@ public class ScheduledContext extends Context {
                             setStatus(ActionStatus.FAIL);
                         }
                     } else {
-                        //Schedule inner goal to be submitted at the appropriate time
-                        if (relative) {
-                            timerStart = System.currentTimeMillis();
-                            if (firstExecutionImmediate && firstExecution) {
-                                scheduledTaskTimer.schedule(scheduledTask, 0);
-                                firstExecution = false;
+                        if (tempNextExecutionTiming) {
+                            if (nextExecutionDelay != -1) {
+                                scheduleTask(nextExecutionDelay, TimeUnit.MILLISECONDS);
+                                nextExecutionDelay = -1;
                             } else {
-                                scheduledTaskTimer.schedule(scheduledTask, timeUnit.toMillis(delay));
+                                scheduleTask(nextExecutionDate);
+                                nextExecutionDate = null;
                             }
+                            tempNextExecutionTiming = false;
                         } else {
-                            scheduledTaskTimer.schedule(scheduledTask, time);
+                            //Schedule inner goal to be submitted at the appropriate time
+                            if (relative) {
+                                if (firstExecutionImmediate && firstExecution) {
+                                    scheduleTask(0,TimeUnit.MILLISECONDS);
+                                    firstExecution = false;
+                                } else {
+                                    scheduleTask(delay,timeUnit);
+                                }
+                            } else {
+                                scheduleTask(time);
+                            }
                         }
-                        timerStart = System.currentTimeMillis();
                     }
                     //Wait on goal to complete execution - signal in scheduled task after joinOnGoal returns
                     taskLock.lock();
@@ -267,6 +339,7 @@ public class ScheduledContext extends Context {
     protected void resetConcreteContext() {
         scheduledTaskExecuting = false;
         timerStart = -1;
+        timerScheduledDuration = -1;
         if (!firstExecution && !relative && System.currentTimeMillis() > time.getTime()) {
             //TODO: is this desired? Want it to work this way if wrapped in a persistent goal
             //If the task is scheduled for a Date which has already passed, advance the day

@@ -265,7 +265,6 @@ import java.util.StringTokenizer;
 (Symbol ?currentLocation) = getCurrentLocation() {
     List !bindings;
     Map !binding;
-    Symbol !startLoc = "unknown";
     Predicate !queryPred;
     Variable !x = X;
 

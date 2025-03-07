@@ -372,14 +372,14 @@ room 481 b; LREF; 481b phd student offices; DEFINITE
 % (I think this case might actually not have expected behavior right now. First execution doesn't happen at noon, but 10 seconds after noon)
 %test; C; scheduled(?ADDRESSEE,persistent(?ADDRESSEE,scheduled(init(?ADDRESSEE),10,SECONDS)),12-00-00)
 
-noon; VAL; time(12-00-00)
+noon; VAL; absoluteTime(12-00-00)
 
-minute; VAL\NUM ; #x.time($x,MINUTES)
-minutes; VAL\NUM ; #x.time($x,MINUTES)
-second; VAL\NUM ; #x.time($x,SECONDS)
-seconds; VAL\NUM ; #x.time($x,SECONDS)
-hour; VAL\NUM ; #x.time($x,HOURS)
-hours; VAL\NUM ; #x.time($x,HOURS)
+minute; VAL\NUM ; #x.relativeTime($x,MINUTES)
+minutes; VAL\NUM ; #x.relativeTime($x,MINUTES)
+second; VAL\NUM ; #x.relativeTime($x,SECONDS)
+seconds; VAL\NUM ; #x.relativeTime($x,SECONDS)
+hour; VAL\NUM ; #x.relativeTime($x,HOURS)
+hours; VAL\NUM ; #x.relativeTime($x,HOURS)
 
 the task is; VAL/C; #x.taskPredicate($x)
 the task is; VAL/VERBT; #x.taskPredicate($x)
@@ -388,8 +388,8 @@ add a new scheduled task; C; scheduleGoal(?ADDRESSEE)
 
 every; PP/LREF; #x.$x
 
-a.m.; VAL\NUM; #x.time($x, am)
-p.m.; VAL\NUM; #x.time($x, pm)
+a.m.; VAL\NUM; #x.absoluteTime($x, am)
+p.m.; VAL\NUM; #x.absoluteTime($x, pm)
 
 testtest; C; testtest(?ADDRESSEE)
 

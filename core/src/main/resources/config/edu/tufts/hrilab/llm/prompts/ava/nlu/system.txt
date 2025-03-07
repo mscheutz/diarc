@@ -146,8 +146,11 @@ Description: The user is responding to a question asking for a specific location
 taskPredicate(?actionPredicate)
 Description: The user is giving an answer by referencing valid action semantics ?actionPredicate. A user instructing this may look very similar to a user simply instructing a certain action, but the conversation history between the robot and the user can inform whether the chosen semantic type are action semantics or the reply semantics shown here. In this case, the inner ?actionPredicate should be a fully populated form of one of the action semantics listed above.
 #
-time(?number, ?type)
-Description: The user is answering a question by supplying either a specific clock time, or time interval. In the case of clock time, ?number will be a time in the form of HH:MM and ?type will either be am or pm. For example "3:30 p.m." should parse to time(3:30,pm). In the case of a time interval, ?number will be any positive whole number and ?type will be one of SECONDS, MINUTES, HOURS, or DAYS. For example, "fifteen minutes" should parse to time(15,MINUTES).
+relativeTime(?number, ?type)
+Description: The user is answering a question by supplying a time interval. ?number will be any positive whole number and ?type will be one of SECONDS, MINUTES, HOURS, or DAYS. For example, "fifteen minutes" should parse to relativeTime(15,MINUTES).
+#
+absoluteTime(?number, ?type)
+Description: The user is answering a question by supplying a specific clock time. ?number will be a time in the form of HH:MM and ?type will either be am or pm. For example "3:30 p.m." should parse to absoluteTime(3:30,pm).
 #
 timingOf(?timingType)
 Description: The user is responding to a question asking about which timing aspect of a scheduled goal they want to modify. The only two valid values for ?timingType are interval or execution. Interval is the delay at which a repeating scheduled goal should be repeated. Execution is the timing of the first execution of that goal before subsequently executing on an interval.

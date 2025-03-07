@@ -4180,27 +4180,27 @@ public class TLDLParserComponentTest {
         String speaker = "brad";
 
         assertTrue(testUtterance("noon",
-                "REPLY(brad,self,time(12-00-00),{})",
+                "REPLY(brad,self,absoluteTime(12-00-00),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("10 minutes",
-                "REPLY(brad,self,val(10,MINUTES),{})",
+                "REPLY(brad,self,relativeTime(10,MINUTES),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("10 minute",
-                "REPLY(brad,self,val(10,MINUTES),{})",
+                "REPLY(brad,self,relativeTime(10,MINUTES),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("10 seconds",
-                "REPLY(brad,self,val(10,SECONDS),{})",
+                "REPLY(brad,self,relativeTime(10,SECONDS),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("1 second",
-                "REPLY(brad,self,val(1,SECONDS),{})",
+                "REPLY(brad,self,relativeTime(1,SECONDS),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("in 1 second",
-                "REPLY(brad,self,val(1,SECONDS),{})",
+                "REPLY(brad,self,relativeTime(1,SECONDS),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("add a new scheduled task",
@@ -4212,19 +4212,19 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
         assertTrue(testUtterance("every 1 hour",
-                "REPLY(brad,self,val(1,HOURS),{})",
+                "REPLY(brad,self,relativeTime(1,HOURS),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("1 p.m. ",
-                "REPLY(brad,self,val(1,pm),{})",
+                "REPLY(brad,self,absoluteTime(1,pm),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("at 1 p.m. ",
-                "REPLY(brad,self,val(1,pm),{})",
+                "REPLY(brad,self,absoluteTime(1,pm),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("at 1 a.m. ",
-                "REPLY(brad,self,val(1,am),{})",
+                "REPLY(brad,self,absoluteTime(1,am),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("the task is go to the back door",

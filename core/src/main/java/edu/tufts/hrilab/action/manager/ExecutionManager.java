@@ -1380,7 +1380,9 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
-   * Get a copied list of all scheduled goals yet to be executed or currently being executed under the scope of a persistent context
+   * Get a copied list of all scheduled goals which have either yet to be submitted, or are currently executing under
+   * the scope of a persistent context. Any non-persistent scheduled goals which have begun execution are simply
+   * considered activegoals.
    */
   public List<Goal> getScheduledGoals() {
     List<Goal> scheduledGoals = new ArrayList<>();
@@ -1412,39 +1414,110 @@ public class ExecutionManager implements GoalListener {
     return scheduledGoals;
   }
 
-  public boolean updateScheduledGoalTime(Long goalId, Symbol timeSymbol, boolean modifyInnerGoal) {
-    return updateScheduledGoalTime(goalId, timeSymbol, null, modifyInnerGoal);
-  }
-
-  public boolean updateScheduledGoalTime(Long goalId, Symbol timeSymbol, Symbol timeUnitSymbol, boolean modifyInnerGoal) {
-    Goal goal = getGoal(goalId);
-    if (goal == null) {
-      log.warn("[updateScheduledGoalTime] goal not found for gid: {}", goalId);
-      return false;
-    }
-
-    String timeString = timeSymbol.toString();
-    if (timeUnitSymbol == null) {
+  /**
+   * Helper function to convert a date String to a Date object. Expects a string in the format of "HH-mm-ss"
+   */
+  private Date parseDateString(String dateString) {
       //TODO: allow date specifying month/day/year
       SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
-      Date date = null;
+      Date date;
       try {
-        date = formatter.parse(timeString);
+        date = formatter.parse(dateString);
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, date.getHours());
         calendar.set(Calendar.MINUTE, date.getMinutes());
         calendar.set(Calendar.SECOND, date.getSeconds());
         date = calendar.getTime();
-        if (modifyInnerGoal) {
-          //TODO: should check if the goal has already executed?
-          //TODO: should maybe achieve this through cancel/resubmit of a new goal rather than what I'm doing here
-          goal.updateScheduledGoalDate(timeSymbol);
-          return true;
+        return date;
+      } catch (ParseException e) {
+        log.error("[parseDateString] supplied time symbol doesn't match expected date format", e);
+        return null;
+      }
+  }
+
+
+  /**
+   * {@link #updateScheduledGoalNextExecution(Long, Symbol, Symbol)}
+   */
+  public boolean updateScheduledGoalNextExecution(Long goalId, Symbol dateSymbol) {
+    return updateScheduledGoalNextExecution(goalId, dateSymbol, null);
+  }
+
+  /**
+   * Update the timing of the next execution of this scheduled goal:
+   * Scheduled goals: Modifies the scheduled execution time
+   * Persistent Scheduled Goals: Only temporarily modifies the delay until the next execution of this goal without
+   *  affecting the regular interval. This method can be used to shift execution timing without affecting the interval.
+   *
+   * This method fails if the supplied timing arguments cannot be parsed or the goal is not a scheduled goal.
+   */
+  public boolean updateScheduledGoalNextExecution(Long goalId, Symbol timeSymbol, Symbol timeUnitSymbol) {
+    Goal goal = getGoal(goalId);
+    if (goal == null) {
+      log.warn("[updateScheduledGoalNextExecution] goal not found for gid: {}", goalId);
+      return false;
+    }
+    if (!goal.isScheduled()) {
+      log.warn("[updateScheduledGoalNextExecution] goal found for gid {} isn't set as a scheduled goal", goalId);
+      return false;
+    }
+
+    if (timeUnitSymbol == null) {
+      Date date = parseDateString(timeSymbol.toString());
+      if (date != null) {
+        if (goal.isPersistent()) {
+          return goal.updateNextScheduledTime(date);
         } else {
           return goal.setScheduledDate(date);
         }
-      } catch (ParseException e) {
-        log.error("[updateScheduledGoalTime] supplied time symbol doesn't match expected date format", e);
+      } else {
+        return false;
+      }
+    }
+
+    try {
+      long delay = Long.parseLong(timeSymbol.toString());
+      TimeUnit timeUnit = TimeUnit.valueOf(timeUnitSymbol.toString());
+      if (goal.isPersistent()) {
+        return goal.updateNextScheduledTime(delay, timeUnit);
+      } else {
+        return goal.setScheduledDelay(delay, timeUnit);
+      }
+    } catch (Exception e) {
+      log.error("[updateScheduledGoalNextExecution] cannot parse supplied delay or timeunit", e);
+      return false;
+    }
+  }
+
+  /**
+   * {@link #updateScheduledGoalNextExecution(Long, Symbol, Symbol)}
+   */
+  public boolean updatePersistentGoalScheduledInterval(long goalId, Symbol timeSymbol) {
+    return updatePersistentGoalScheduledInterval(goalId, timeSymbol, null);
+  }
+
+  /**
+   * Modify the interval at which Persistent Scheduled Goals are scheduled to execute. Fails if the supplied timing
+   * arguments cannot be parsed or the goal is not persistent and scheduled.
+   */
+  public boolean updatePersistentGoalScheduledInterval(long goalId, Symbol timeSymbol, Symbol timeUnitSymbol) {
+    Goal goal = getGoal(goalId);
+    if (goal == null) {
+      log.warn("[updatePersistentGoalScheduledInterval] goal not found for gid: {}", goalId);
+      return false;
+    }
+
+    if (!goal.isScheduled() && !goal.isPersistent()) {
+      log.warn("[updatePersistentGoalScheduledInterval] goal found for gid {} isn't persistently scheduled, cannot update scheduled interval", goalId);
+      return false;
+    }
+
+    String timeString = timeSymbol.toString();
+    if (timeUnitSymbol == null) {
+      Date date = parseDateString(timeString);
+      if (date != null) {
+        return goal.setScheduledDate(date);
+      } else {
         return false;
       }
     }
@@ -1452,20 +1525,83 @@ public class ExecutionManager implements GoalListener {
     try {
       long delay = Long.parseLong(timeString);
       TimeUnit timeUnit = TimeUnit.valueOf(timeUnitSymbol.toString());
-      if (modifyInnerGoal) {
-        //TODO: should check if the goal has already executed?
-        //TODO: should maybe achieve this through cancel/resubmit of a new goal rather than what I'm doing here
-        goal.updateScheduledGoalDelay(timeSymbol,timeUnitSymbol);
-        return true;
-      } else {
-        return goal.setScheduledDelay(delay, timeUnit);
-      }
+      return goal.setScheduledDelay(delay, timeUnit);
     } catch (Exception e) {
       log.error("[updateScheduledGoalTime] cannot parse supplied delay or timeunit", e);
       return false;
     }
   }
 
+  //See notes in GoalManagerComponent - these methods probably shouldn't exist
+  /**
+   * {@link #updateScheduledGoalNextExecution(Long, Symbol, Symbol)}
+   */
+  public boolean updateScheduledInnerGoalTiming(long goalId, Symbol dateSymbol) {
+    return updateScheduledInnerGoalTiming(goalId, dateSymbol, null);
+  }
+  /**
+   * Update the scheduled interval of a "Scheduled Persistently Scheduled Goal" before it has begun its persistent
+   * scheduling cycle.
+   *
+   * Fails if the supplied timing arguments cannot be parsed or this goal is not an instance of a scheduled persistent
+   * scheduled goal (e.g. "do X starting at T1 and then every T2 afterwards").
+   *
+   */
+  public boolean updateScheduledInnerGoalTiming(long goalId, Symbol timeSymbol, Symbol timeUnitSymbol) {
+    Goal goal = getGoal(goalId);
+    if (goal == null) {
+      log.warn("[updateScheduledInnerGoalTiming] goal not found for gid: {}", goalId);
+      return false;
+    }
+
+    if (!goal.isScheduled()) {
+      log.warn("[updateScheduledInnerGoalTiming] goal found for gid {} isn't scheduled, cannot update inner timing", goalId);
+      return false;
+    }
+
+    String timeString = timeSymbol.toString();
+    if (timeUnitSymbol == null) {
+      Date date = parseDateString(timeString);
+      if (date != null) {
+        return goal.updateScheduledGoalTimings(timeSymbol, null);
+      } else {
+        return false;
+      }
+    }
+
+    try {
+      long delay = Long.parseLong(timeString);
+      TimeUnit timeUnit = TimeUnit.valueOf(timeUnitSymbol.toString());
+      return goal.updateScheduledGoalTimings(timeSymbol, timeUnitSymbol);
+    } catch (Exception e) {
+      log.error("[updateScheduledGoalTime] cannot parse supplied delay or timeunit", e);
+      return false;
+    }
+  }
+
+  /**
+   *  Get the duration in milliseconds until this goal's next scheduled execution
+   *
+   * @param goalId the goal id
+   * @return the duration until the goal's next scheduled execution. Returns -1 if the goal is not a scheduled goal
+   */
+  public long getScheduledGoalsNextDelay(long goalId) {
+    Goal goal = getGoal(goalId);
+    if (goal == null) {
+      log.warn("[getScheduledGoalsNextDelay] goal not found for gid: {}", goalId);
+      return -1;
+    }
+    if (!goal.isScheduled()) {
+      log.warn("[getScheduledGoalsNextDelay] goal found for gid {} isn't set as a scheduled goal", goalId);
+      return -1;
+    }
+
+    return goal.getTimeUntilScheduledExecution();
+  }
+
+  /**
+   * Cancel all goals currently found in the pendingGoals collection
+   */
   public void cancelAllPendingGoals() {
     log.debug("[cancelAllPendingGoals] in method");
     synchronized (pendingGoalsLock) {
@@ -1482,6 +1618,9 @@ public class ExecutionManager implements GoalListener {
     log.trace("[cancelAllPendingGoals] released pendingGoalsLock");
   }
 
+  /**
+   * Cancel all goals currently found in either the pending or active Goals collections
+   */
   public void cancelAllCurrentGoals() {
     log.debug("[cancelAllCurrentGoals] in method");
     synchronized (pendingGoalsLock) {
@@ -1496,6 +1635,11 @@ public class ExecutionManager implements GoalListener {
   }
 
   //TODO: do we want to make equivalent methods for all of these which ignores all persistent goals?
+  //      Same with scheduled goals?
+
+  /**
+   * Cancel all goals currently found in the activeGoals colection
+   */
   public void cancelAllActiveGoals() {
     synchronized (goalsLock) {
       Set<Goal> goalsToCancel = new HashSet<>();
@@ -1512,6 +1656,9 @@ public class ExecutionManager implements GoalListener {
     }
   }
 
+  /**
+   * Get a list of the corresponding predicate representations of all goals currently found in the pending collection
+   */
   public List<Predicate> getPendingGoalsPredicates() {
     log.trace("[getPendingGoalsPredicates] in method");
     List<Predicate> goalPreds = new ArrayList<>();
@@ -1527,10 +1674,18 @@ public class ExecutionManager implements GoalListener {
     return goalPreds;
   }
 
+  //Is there a reason this is named "system" rather than "active"?
+  /**
+   * Get a list of the corresponding predicate representations of all goals currently found in the active collection
+   */
   public List<Predicate> getSystemGoalsPredicates() {
     return getSystemGoalsPredicates(rootAgent);
   }
 
+  /**
+   * Get a list of the corresponding predicate representations of all goals currently found in the active collection
+   *  with the supplied actor
+   */
   public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
     log.trace("[getSystemGoalsPredicates] {}", actor);
     return getSystemGoalsPredicatesHelper(actor.toUntyped(), new ArrayList<>());
@@ -1553,6 +1708,9 @@ public class ExecutionManager implements GoalListener {
     return goalPreds;
   }
 
+  /**
+   * Get the predicate corresponding to the goal with the highest priority found in the pending collection
+   */
   public Predicate getNextGoalPredicate() {
     log.trace("[getNextGoalPredicate] in method");
     synchronized (pendingGoalsLock) {
@@ -1568,6 +1726,10 @@ public class ExecutionManager implements GoalListener {
     }
   }
 
+  /**
+   * Get the predicate corresponding to the goal with the highest priority for the supplied agent found in the
+   * pending collection
+   */
   public Predicate getNextGoalPredicate(Symbol agent) {
     log.trace("[getNextGoalPredicate] {}", agent);
     agent = agent.toUntyped();

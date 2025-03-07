@@ -745,8 +745,13 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return pg;
   }
 
+  //TODO: Q: should interactions with active goals exclude scheduled goals?
   /**
-   * Get all scheduled goals which are either yet to be executed, or are currently executing under the scope of a persistent context
+   * Get all scheduled goals which have either yet to be submitted, or are currently executing under the scope of a
+   * persistent context. Any non-persistent scheduled goals which have begun execution are simply considered active
+   * goals.
+   *
+   * @return a list of predicates representing the goal
    */
   @TRADEService
   public List<Predicate> getScheduledGoals() {
@@ -756,6 +761,14 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     }
     return result;
   }
+
+  /**
+   * Get the goal ids of scheduled goals which have either yet to be submitted, or are currently executing under the
+   * scope of a persistent context. Any non-persistent scheduled goals which have begun execution are simply considered
+   * active goals.
+   *
+   * @return a list of scheduled goals' ids
+   */
   @TRADEService
   public List<Long> getScheduledGoalIds() {
     List<Long> result = new ArrayList<>();
@@ -766,7 +779,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
-   * Get all scheduled goals for a specific actor which are either yet to be executed, or are currently executing under the scope of a persistent context
+   * Get all scheduled goals for a specific actor which have either yet to be submitted, or are currently executing
+   * under the scope of a persistent context. Any non-persistent scheduled goals which have begun execution are simply
+   * considered active goals.
+   *
+   * @param actor the actor to filter the scheduled goals list by
+   * @return a list of predicates representing the goal
    */
   @TRADEService
   @Action
@@ -779,6 +797,15 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     }
     return pg;
   }
+
+  /**
+   * Get the goal ids of scheduled goals for a specific actor which have either yet to be submitted, or are currently
+   * executing under the scope of a persistent context. Any non-persistent scheduled goals which have begun execution
+   * are simply considered active goals.
+   *
+   * @param actor the actor to filter the scheduled goals list by
+   * @return a list of scheduled goals' ids
+   */
   @TRADEService
   @Action
   public List<Long> getScheduledGoalIds(Symbol actor) {
@@ -791,25 +818,143 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return pg;
   }
 
+  //Do we still need this/do we want to move this if so? Used at one point for scheduled goal NLG.
+  /**
+   * Utility function to get the re-wrapped predicate this goal was originally submitted with.
+   * Practically, this method will return the base goal predicate and optionally 'persistent' and 'scheduled' wrappers
+   * along with any scheduled timing information if applicable.
+   *
+   * @param goalId
+   * @return fully wrapped goal predicate corresponding to goalId
+   */
   @TRADEService
-  public Predicate getWrappedScheduledGoalPredicate(Long goalid) {
-    Goal g = getGoal(goalid);
+  public Predicate getWrappedScheduledGoalPredicate(Long goalId) {
+    Goal g = getGoal(goalId);
     if (g != null) {
       return g.getWrappedGoalPredicate();
     } else {
-      log.error("[getWrappedScheduledGoalPredicate] goal not found for id {}", goalid);
+      log.error("[getWrappedScheduledGoalPredicate] goal not found for id {}", goalId);
       return null;
     }
   }
 
+  /**
+   * Update the timing of the next execution of this scheduled goal:
+   * Scheduled goals: Modifies the scheduled execution time
+   * Persistent Scheduled Goals: Only temporarily modifies the delay until the next execution of this goal without
+   *  affecting the regular interval. This method can be used to shift execution timing without affecting the interval.
+   *
+   * This method fails if the supplied timing arguments cannot be parsed or the goal is not a scheduled goal.
+   *
+   * @param goalId id of the goal to modify
+   * @param date Symbol representing the Date of the next scheduled execution of this goal
+   * @return whether the timing was successfully updated
+   */
   @TRADEService
-  public boolean updateScheduledGoalTime(long goalId, Symbol time, boolean modifyInnerGoal) {
-    return em.updateScheduledGoalTime(goalId,time,modifyInnerGoal);
+  public boolean updateScheduledGoalNextExecution(long goalId, Symbol date) {
+    return em.updateScheduledGoalNextExecution(goalId,date);
   }
 
+  /**
+   * Update the timing of the next execution of this scheduled goal:
+   * Scheduled goals: Modifies the scheduled execution time
+   * Persistent Scheduled Goals: Only temporarily modifies the delay until the next execution of this goal without
+   *  affecting the regular interval. This method can be used to shift execution timing without affecting the interval.
+   *
+   * This method fails if the supplied timing arguments cannot be parsed or the goal is not a scheduled goal.
+   *
+   * @param goalId id of the goal to modify
+   * @param delay Symbol representing the absolute duration until next scheduled execution of this goal
+   * @param timeUnit Symbol representing the timeUnit of delay
+   * @return whether the timing was successfully updated
+   */
   @TRADEService
-  public boolean updateScheduledGoalTime(long goalId, Symbol delay, Symbol timeUnit, boolean modifyInnerGoal) {
-    return em.updateScheduledGoalTime(goalId,delay,timeUnit,modifyInnerGoal);
+  public boolean updateScheduledGoalNextExecution(long goalId, Symbol delay, Symbol timeUnit) {
+    return em.updateScheduledGoalNextExecution(goalId,delay,timeUnit);
+  }
+
+  /**
+   * Modify the interval at which Persistent Scheduled Goals are scheduled to execute. Fails if the supplied timing
+   * arguments cannot be parsed or the goal is not persistent and scheduled.
+   *
+   * @param goalId id of the goal to modify
+   * @param delay Symbol representing the duration between scheduled executions of this goal
+   * @param timeUnit Symbol representing the timeUnit of delay
+   * @return whether the scheduled interval was successfully updated
+   */
+  @TRADEService
+  public boolean updatePersistentGoalScheduledInterval(long goalId, Symbol delay, Symbol timeUnit) {
+    return em.updatePersistentGoalScheduledInterval(goalId,delay,timeUnit);
+  }
+
+  //TODO: should this method just not exist or be renamed?
+  // This method mainly exists in this form to allow the following language pattern when modifying a scheduled goal:
+  //    Q: "How frequently should this task be executed?"
+  //    A: "every day at 5:00 p.m.:
+  /**
+   * Modify a Persistent Scheduled Goal to execute daily starting at the supplied date. Fails if the supplied timing
+   * arguments cannot be parsed or the goal is not persistent and scheduled.
+   *
+   * This method overwrites both the next execution time and forces the scheduling interval to be daily.
+   *
+   * @param goalId id of the goal to modify
+   * @param date Symbol representing the Date of the scheduled execution of this goal, to be repeated every following
+   *            day at the contained time
+   * @return whether the scheduled interval was successfully updated
+   */
+  @TRADEService
+  public boolean updatePersistentGoalScheduledInterval(long goalId, Symbol date) {
+    return em.updatePersistentGoalScheduledInterval(goalId,date);
+  }
+
+  //TODO: These two methods should eventually be removed. Updating the timing of a "scheduled persistent scheduled" goal's
+  //  inner persistent goal's timing should be handled by an external action script and through cancellation/resubmition
+  //  of the goal. Currently modifying the goal's predicate after creation before the inner goal is submitted - not sure
+  //  if that is safe at all.
+  /**
+   * Update the scheduled interval of a "Scheduled Persistently Scheduled Goal" before it has begun its persistent
+   * scheduling cycle.
+   *
+   * Fails if the supplied timing arguments cannot be parsed or this goal is not an instance of a scheduled persistent
+   * scheduled goal (e.g. "do X starting at T1 and then every T2 afterwards").
+   *
+   * @param goalId the scheduled persistent scheduled goal to modify
+   * @param delay Symbol representing the duration between scheduled executions of this goal
+   * @param timeUnit Symbol representing the timeUnit of delay
+   * @return whether the internal scheduled interval was successfully updated
+   */
+  @TRADEService
+  public boolean updateScheduledInnerGoalTiming(long goalId, Symbol delay, Symbol timeUnit) {
+    return em.updateScheduledInnerGoalTiming(goalId, delay, timeUnit);
+  }
+  //TODO: independent of the above comment, do we want to allow people to do things like
+  //      "at T1 schedule X to occur every day at T2"?
+  /**
+   * Update the scheduled interval of a "Scheduled Persistently Scheduled Goal" before it has begun its persistent
+   * scheduling cycle.
+   *
+   * Fails if the supplied timing arguments cannot be parsed or this goal is not an instance of a scheduled persistent
+   * scheduled goal (e.g. "do X starting at T1 and then every T2 afterward").
+   *
+   * @param goalId the scheduled persistent scheduled goal to modify
+   * @param date Symbol representing the Date of the scheduled execution of the inner goal, to be repeated every following
+   *            day at the contained time
+   * @return whether the internal scheduled interval was successfully updated
+   */
+  @TRADEService
+  public boolean updateScheduledInnerGoalTiming(long goalId, Symbol date) {
+    return em.updateScheduledInnerGoalTiming(goalId, date);
+  }
+
+  /**
+   *  Get the duration in milliseconds until this goal's next scheduled execution
+   *
+   * @param goalId the goal id
+   * @return the duration until the goal's next scheduled execution. Returns -1 if the goal is not a scheduled goal
+   */
+  @TRADEService
+  public long getScheduledGoalsNextDelay(long goalId) {
+    return em.getScheduledGoalsNextDelay(goalId);
   }
 
   /**

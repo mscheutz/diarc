@@ -93,4 +93,68 @@ public class GoalInfo implements Serializable {
     this.scheduledDelayTimeUnit = other.scheduledDelayTimeUnit;
     this.scheduledDate = other.scheduledDate;
   }
+
+  public Predicate getGoal() {
+    return goal;
+  }
+
+  public Symbol getUnboundGoal() {
+    return unboundGoal;
+  }
+
+  public long getGid() {
+    return gid;
+  }
+
+  public Justification getFailConditions() {
+    return failConditions;
+  }
+
+  public long getStart() {
+    return start;
+  }
+
+  public long getEnd() {
+    return end;
+  }
+
+  public GoalStatus getStatus() {
+    return status;
+  }
+
+  public Symbol getActor() {
+    return actor;
+  }
+
+  public boolean isAction() {
+    return isAction;
+  }
+
+  public Predicate getMetric() {
+    return metric;
+  }
+
+  public boolean isPersistent() {
+    return persistent;
+  }
+
+  public long getPriority() {
+    return priority;
+  }
+
+  public boolean isScheduled() {
+    return scheduled;
+  }
+
+  public Long getScheduledDelay() {
+    return scheduledDelay;
+  }
+
+  public TimeUnit getScheduledDelayTimeUnit() {
+    return scheduledDelayTimeUnit;
+  }
+
+  public Date getScheduledDate() {
+    return scheduledDate;
+  }
 }

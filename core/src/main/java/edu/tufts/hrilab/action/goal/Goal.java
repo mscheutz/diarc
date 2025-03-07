@@ -74,192 +74,192 @@ public class Goal {
   private PriorityTier priorityTier = PriorityTier.NORMAL;
 
 
-    /**
-     * Construct goal that defines the actor to achieve the goal, and the desired goal/action. This is the main method
-     * used when using the GoalManager submitGoal method.
-     *
-     * @param goalState
-     */
-    public Goal(Predicate goalState) {
-        info = new GoalInfo(idGenerator.getNext());
+  /**
+   * Construct goal that defines the actor to achieve the goal, and the desired goal/action. This is the main method
+   * used when using the GoalManager submitGoal method.
+   *
+   * @param goalState
+   */
+  public Goal(Predicate goalState) {
+    info = new GoalInfo(idGenerator.getNext());
 
-        // check for certain special forms first bc other goal predicate forms could be nested inside
-        Predicate unwrappedGoalState = unwrapGoalPredicate(goalState, true);
-        if (unwrappedGoalState != null) {
-            goalState = unwrappedGoalState;
-        }
-
-        // handle special goal predicate forms
-        switch (goalState.getName()) {
-            case "sti":
-            case "did":
-                log.error("Goal form is no longer supported: " + goalState);
-                break;
-            case "obs":
-            case "observe":
-                observable = Observable.TRUE;
-                // fall through
-            case "goal":
-                info.unboundGoal = goalState.get(1);
-                break;
-            default: // default case is an explicit action to execute
-                info.isAction = true;
-                info.unboundGoal = goalState;
-        }
-
-        // actor is always first arg
-        info.actor = goalState.get(0);
+    // check for certain special forms first bc other goal predicate forms could be nested inside
+    Predicate unwrappedGoalState = unwrapGoalPredicate(goalState, true);
+    if (unwrappedGoalState != null) {
+      goalState = unwrappedGoalState;
     }
 
-    /**
-     * Construct goal with explicit actor. This is primarily used for creating goal instance from ASL
-     *
-     * @param actor
-     * @param goalState
-     */
-    public Goal(Symbol actor, Symbol goalState) {
-        this(actor, goalState, Observable.FALSE);
-
-        // handle special cases
-        switch (goalState.getName()) {
-            case "obs":
-            case "observe":
-                info.unboundGoal = ((Predicate)goalState).get(0);
-                this.observable = Observable.TRUE;
-        }
+    // handle special goal predicate forms
+    switch (goalState.getName()) {
+      case "sti":
+      case "did":
+        log.error("Goal form is no longer supported: " + goalState);
+        break;
+      case "obs":
+      case "observe":
+        observable = Observable.TRUE;
+        // fall through
+      case "goal":
+        info.unboundGoal = goalState.get(1);
+        break;
+      default: // default case is an explicit action to execute
+        info.isAction = true;
+        info.unboundGoal = goalState;
     }
 
-    /**
-     * Goal constructor used to explicitly mark goal as an observation. It's possible to
-     * have an observation goal without the OBS(actor, state) predicate form. This is almost
-     * always the case for observations from conditions and effects checks.
-     *
-     * @param actor      the actor doing the observing (can be null, if it can be inferred from predicate)
-     * @param goalState  the goal predicate
-     * @param observable enum specifying if goal is observable, and if so what type (true/false/default)
-     */
-    public Goal(Symbol actor, Symbol goalState, Observable observable) {
-        info = new GoalInfo(idGenerator.getNext());
-        this.observable = observable;
-        info.actor = actor;
+    // actor is always first arg
+    info.actor = goalState.get(0);
+  }
 
-        if (actor == null) {
-            log.error("Invalid null actor for goal: " + goalState);
-            return;
-        }
+  /**
+   * Construct goal with explicit actor. This is primarily used for creating goal instance from ASL
+   *
+   * @param actor
+   * @param goalState
+   */
+  public Goal(Symbol actor, Symbol goalState) {
+    this(actor, goalState, Observable.FALSE);
 
-        if (goalState.isVariable()) {
-            info.unboundGoal = goalState;
-        } else if (goalState.isPredicate()) {
-            // should be a predicate
-            Predicate predicate = (Predicate) goalState;
+    // handle special cases
+    switch (goalState.getName()) {
+      case "obs":
+      case "observe":
+        info.unboundGoal = ((Predicate)goalState).get(0);
+        this.observable = Observable.TRUE;
+    }
+  }
 
-            predicate = unwrapGoalPredicate(predicate, false);
-            if (predicate == null) {
-                return;
-            }
+  /**
+   * Goal constructor used to explicitly mark goal as an observation. It's possible to
+   * have an observation goal without the OBS(actor, state) predicate form. This is almost
+   * always the case for observations from conditions and effects checks.
+   *
+   * @param actor      the actor doing the observing (can be null, if it can be inferred from predicate)
+   * @param goalState  the goal predicate
+   * @param observable enum specifying if goal is observable, and if so what type (true/false/default)
+   */
+  public Goal(Symbol actor, Symbol goalState, Observable observable) {
+    info = new GoalInfo(idGenerator.getNext());
+    this.observable = observable;
+    info.actor = actor;
 
-            // error messages for deprecated special predicate forms
-            switch (goalState.getName()) {
-                case "sti":
-                case "did":
-                    log.error("Goal form is no longer supported: " + predicate);
-            }
-
-            info.unboundGoal = predicate;
-        } else {
-            log.error("Goal state is not a Variable or Predicate: " + goalState);
-        }
+    if (actor == null) {
+      log.error("Invalid null actor for goal: " + goalState);
+      return;
     }
 
-    /**
-     * Check for special goal forms on submission (Currently 'scheduled' and 'persistent'). Unwraps the predicate to
-     * submit while populating class variables with values based on wrapper names and arguments.
-     */
-    private Predicate unwrapGoalPredicate(Predicate goalState, boolean actorIncluded) {
-        if (goalState.getName().equals("persistent")) {
-            if (actorIncluded) {
-                if (goalState.size() != 2) {  // illegal structure
-                    log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
-                    return null;
-                }
-                goalState = (Predicate) goalState.get(1);
-            } else {
-                if (goalState.size() != 1) {
-                    log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
-                    return null;
-                }
-                goalState = (Predicate) goalState.get(0);
-            }
-            info.persistent = true;
+    if (goalState.isVariable()) {
+      info.unboundGoal = goalState;
+    } else if (goalState.isPredicate()) {
+      // should be a predicate
+      Predicate predicate = (Predicate) goalState;
 
-            return unwrapGoalPredicate(goalState, true);
-        } else if (goalState.getName().equals("scheduled")) {
-            int formatType = 0;
-            String dateString = "";
-            String delayString = "";
-            String timeUnitString = "";
-            if (actorIncluded) {
-                if (goalState.size() == 3) {
-                    dateString = goalState.get(2).toString();
-                    formatType = 2;
-                } else if (goalState.size() == 4) {
-                    delayString = goalState.get(2).toString();
-                    timeUnitString = goalState.get(3).toString();
-                    formatType = 1;
-                }
-                goalState = (Predicate) goalState.get(1);
-            } else {
-                if (goalState.size() == 2) {
-                    dateString = goalState.get(1).toString();
-                    formatType = 2;
-                } else if (goalState.size() == 3) {
-                    delayString = goalState.get(1).toString();
-                    timeUnitString = goalState.get(2).toString();
-                    formatType = 1;
-                }
-                goalState = (Predicate) goalState.get(0);
-            }
-            try {
-                if (formatType == 0) {
-                    log.error("[Goal] illegal predicate structure for scheduled goal: " + goalState);
-                    return null;
-                } else if (formatType == 1) {
-                    info.scheduledDelay = Long.parseLong(delayString);
-                    info.scheduledDelayTimeUnit = TimeUnit.valueOf(timeUnitString);
-                } else if (formatType == 2) {
-                    SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
-                    Date date = null;
-                    //TODO: what date format do we expect? Is only the LLM able to target this flexibly?
-                    try {
-                        date = formatter.parse(dateString);
-                        Calendar calendar = Calendar.getInstance();
-                        calendar.set(Calendar.HOUR_OF_DAY,date.getHours());
-                        calendar.set(Calendar.MINUTE,date.getMinutes());
-                        calendar.set(Calendar.SECOND,date.getSeconds());
-                        date = calendar.getTime();
-                    } catch (ParseException ignored) {}
-                    if (date == null) {
-                        formatter = new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH);
-                        date = formatter.parse(dateString);
-                    }
-                    info.scheduledDate = date;
-                }
-            } catch (Exception e) {
-                log.error("[Goal] exception while parsing arguments for scheduled goal: " + goalState, e);
-            }
-            info.scheduled = true;
+      predicate = unwrapGoalPredicate(predicate, false);
+      if (predicate == null) {
+        return;
+      }
 
-            //Modified Impl:
-            //With current implementation of disjoint goal submission due to needing to adhere to resource constraints
-            // of inner goal while allowing this goal to be active, need to cut off here to allow for 'scheduled persistent goals'
-            // or 'scheduled persistent scheduled  to be possible.
-            //return unwrapGoalPredicate(goalState, false);
-            return goalState;
-        }
+      // error messages for deprecated special predicate forms
+      switch (goalState.getName()) {
+        case "sti":
+        case "did":
+          log.error("Goal form is no longer supported: " + predicate);
+      }
 
-        return goalState;
+      info.unboundGoal = predicate;
+    } else {
+      log.error("Goal state is not a Variable or Predicate: " + goalState);
     }
+  }
+
+  /**
+   * Check for special goal forms on submission (Currently 'scheduled' and 'persistent'). Unwraps the predicate to
+   * submit while populating class variables with values based on wrapper names and arguments.
+   */
+  private Predicate unwrapGoalPredicate(Predicate goalState, boolean actorIncluded) {
+    if (goalState.getName().equals("persistent")) {
+      if (actorIncluded) {
+        if (goalState.size() != 2) {  // illegal structure
+          log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
+          return null;
+        }
+        goalState = (Predicate) goalState.get(1);
+      } else {
+        if (goalState.size() != 1) {
+          log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
+          return null;
+        }
+        goalState = (Predicate) goalState.get(0);
+      }
+      info.persistent = true;
+
+      return unwrapGoalPredicate(goalState, true);
+    } else if (goalState.getName().equals("scheduled")) {
+      int formatType = 0;
+      String dateString = "";
+      String delayString = "";
+      String timeUnitString = "";
+      if (actorIncluded) {
+        if (goalState.size() == 3) {
+          dateString = goalState.get(2).toString();
+          formatType = 2;
+        } else if (goalState.size() == 4) {
+          delayString = goalState.get(2).toString();
+          timeUnitString = goalState.get(3).toString();
+          formatType = 1;
+        }
+        goalState = (Predicate) goalState.get(1);
+      } else {
+        if (goalState.size() == 2) {
+          dateString = goalState.get(1).toString();
+          formatType = 2;
+        } else if (goalState.size() == 3) {
+          delayString = goalState.get(1).toString();
+          timeUnitString = goalState.get(2).toString();
+          formatType = 1;
+        }
+        goalState = (Predicate) goalState.get(0);
+      }
+      try {
+        if (formatType == 0) {
+          log.error("[Goal] illegal predicate structure for scheduled goal: " + goalState);
+          return null;
+        } else if (formatType == 1) {
+          info.scheduledDelay = Long.parseLong(delayString);
+          info.scheduledDelayTimeUnit = TimeUnit.valueOf(timeUnitString);
+        } else if (formatType == 2) {
+          SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
+          Date date = null;
+          //TODO: what date format do we expect? Is only the LLM able to target this flexibly?
+          try {
+            date = formatter.parse(dateString);
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.HOUR_OF_DAY,date.getHours());
+            calendar.set(Calendar.MINUTE,date.getMinutes());
+            calendar.set(Calendar.SECOND,date.getSeconds());
+            date = calendar.getTime();
+          } catch (ParseException ignored) {}
+          if (date == null) {
+            formatter = new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH);
+            date = formatter.parse(dateString);
+          }
+          info.scheduledDate = date;
+        }
+      } catch (Exception e) {
+        log.error("[Goal] exception while parsing arguments for scheduled goal: " + goalState, e);
+      }
+      info.scheduled = true;
+
+      //Modified Impl:
+      //With current implementation of disjoint goal submission due to needing to adhere to resource constraints
+      // of inner goal while allowing this goal to be active, need to cut off here to allow for 'scheduled persistent goals'
+      // or 'scheduled persistent scheduled  to be possible.
+      //return unwrapGoalPredicate(goalState, false);
+      return goalState;
+    }
+
+    return goalState;
+  }
 
   /**
    * Get the goal predicate. This can contain free variables, and it can also become bound
@@ -335,86 +335,140 @@ public class Goal {
     return info.scheduledDelay;
   }
 
-  //TODO: remove these two functions
-  public boolean updateScheduledGoalDate(Symbol dateSymbol) {
-      Predicate unboundGoal = (Predicate)info.unboundGoal;
-      if (unboundGoal != null && unboundGoal.getName().equals("persistent")) {
-          Predicate innerScheduledGoal = (Predicate)unboundGoal.get(1);
-          if (innerScheduledGoal.getName().equals("scheduled")) {
-              Predicate newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), dateSymbol);
-              info.unboundGoal = Factory.createPredicate("persistent", unboundGoal.get(0), newScheduledPred);
-              Predicate boundGoal = info.goal;
-              if (boundGoal != null) {
-                  innerScheduledGoal = (Predicate) boundGoal.get(1);
-                  newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), dateSymbol);
-                  info.goal = Factory.createPredicate("persistent", boundGoal.get(0), newScheduledPred);
-              }
-              if (isScheduled()) {
-                  ScheduledContext scheduledContext = getScheduledContext();
-                  if (scheduledContext != null) {
-                      scheduledContext.resetTask(getPredicate());
-                  }
-              }
-              return true;
-          }
-      }
-      return false;
-  }
-  public boolean updateScheduledGoalDelay(Symbol delaySymbol, Symbol timeUnitSymbol) {
-      Predicate unboundGoal = (Predicate)info.unboundGoal;
-      if (unboundGoal != null && unboundGoal.getName().equals("persistent")) {
-          Predicate innerScheduledGoal = (Predicate)unboundGoal.get(1);
-          if (innerScheduledGoal.getName().equals("scheduled")) {
-              Predicate newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), delaySymbol, timeUnitSymbol);
-              info.unboundGoal = Factory.createPredicate("persistent", unboundGoal.get(0), newScheduledPred);
-              Predicate boundGoal = info.goal;
-              if (boundGoal != null) {
-                  innerScheduledGoal = (Predicate) boundGoal.get(1);
-                  newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), delaySymbol, timeUnitSymbol);
-                  info.goal = Factory.createPredicate("persistent", boundGoal.get(0), newScheduledPred);
-              }
-              if (isScheduled()) {
-                  ScheduledContext scheduledContext = getScheduledContext();
-                  if (scheduledContext != null) {
-                      scheduledContext.resetTask(getPredicate());
-                  }
-              }
-              return true;
-          }
-      }
-      return false;
-  }
+  //TODO: See notes in GoalManager, probably want to remove this function
 
-  public boolean setScheduledDelay(Long delay, TimeUnit timeUnit) {
-      if (isScheduled()) {
+  /**
+   * Only applicable to "scheduled persistently scheduled" goals, modifies the timing details of the inner persistent scheduling.
+   */
+  public boolean updateScheduledGoalTimings(Symbol timeSymbol, Symbol timeUnitSymbol) {
+    Predicate unboundGoal = (Predicate)info.unboundGoal;
+    if (unboundGoal != null && unboundGoal.getName().equals("persistent")) {
+      Predicate innerScheduledGoal = (Predicate)unboundGoal.get(1);
+      if (innerScheduledGoal.getName().equals("scheduled")) {
+        Predicate newScheduledPred;
+        if (timeUnitSymbol == null) {
+          newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), timeSymbol);
+        } else {
+          newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), timeSymbol, timeUnitSymbol);
+        }
+        info.unboundGoal = Factory.createPredicate("persistent", unboundGoal.get(0), newScheduledPred);
+        Predicate boundGoal = info.goal;
+        if (boundGoal != null) {
+          innerScheduledGoal = (Predicate) boundGoal.get(1);
+          if (timeUnitSymbol == null) {
+            newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), timeSymbol);
+          } else {
+            newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), timeSymbol, timeUnitSymbol);
+          }
+          info.goal = Factory.createPredicate("persistent", boundGoal.get(0), newScheduledPred);
+        }
+        if (isScheduled()) {
           ScheduledContext scheduledContext = getScheduledContext();
           if (scheduledContext != null) {
-              scheduledContext.updateScheduledDelay(delay, timeUnit);
-              info.scheduledDelay = delay;
-              info.scheduledDelayTimeUnit = timeUnit;
-              info.scheduledDate = null;
-              return true;
+            return scheduledContext.updateScheduledGoalPredicate(getPredicate());
+          } else {
+            log.error("[updateScheduledGoalDate] cannot find scheduled context for goal");
           }
+        } else {
+          log.error("[updateScheduledGoalDate] goal is not scheduled");
+        }
+        return true;
+      } else {
+        log.error("[updateScheduledGoalDate] inner goal predicate does not have scheduled wrapper");
+      }
+    } else {
+      log.error("[updateScheduledGoalDate] inner goal predicate does not have persistent wrapper");
+    }
+    return false;
+  }
+
+  /**
+   * Only applicable to Persistently Scheduled goals; Temporarily modifies the delay until the next execution of this
+   * goal without affecting the regular interval. This method can be used to shift execution timing without affecting
+   * the interval.
+   */
+  public boolean updateNextScheduledTime(long delay, TimeUnit timeUnit) {
+    if (isScheduled() && isPersistent()) {
+      ScheduledContext scheduledContext = getScheduledContext();
+      if (scheduledContext != null) {
+        return scheduledContext.updateNextScheduledTime(delay, timeUnit);
       }
       return false;
+    }
+    log.error("[updateNextScheduledTime] goal is not persistently scheduled, cannot update next execution time");
+    return false;
+  }
+
+  /**
+   * Only applicable to Persistently Scheduled goals; Temporarily modifies the delay until the next execution of this
+   * goal without affecting the regular interval. This method can be used to shift execution timing without affecting
+   * the interval.
+   */
+  public boolean updateNextScheduledTime(Date date) {
+    if (isScheduled() && isPersistent()) {
+      ScheduledContext scheduledContext = getScheduledContext();
+      if (scheduledContext != null) {
+        return scheduledContext.updateNextScheduledTime(date);
+      }
+      return false;
+    }
+    log.error("[updateNextScheduledTime] goal is not persistently scheduled, cannot update next execution time");
+    return false;
+  }
+
+  /**
+   * Updates the scheduled delay of this goal. If this goal is persistently scheduled, the supplied delay will
+   * be the interval at which this task now executes
+   */
+  public boolean setScheduledDelay(Long delay, TimeUnit timeUnit) {
+    if (isScheduled()) {
+      ScheduledContext scheduledContext = getScheduledContext();
+      if (scheduledContext != null) {
+        scheduledContext.updateScheduledDelay(delay, timeUnit);
+        info.scheduledDelay = delay;
+        info.scheduledDelayTimeUnit = timeUnit;
+        info.scheduledDate = null;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Updates the scheduled date of this goal. If this goal is persistently scheduled, the supplied date will
+   * contain the time of day this task executes every day.
+   */
+  public boolean setScheduledDate(Date scheduledDate) {
+    if (isScheduled()) {
+      ScheduledContext scheduledContext = getScheduledContext();
+      if (scheduledContext != null) {
+        scheduledContext.updateScheduledTime(scheduledDate);
+        info.scheduledDate = scheduledDate;
+        info.scheduledDelay = null;
+        info.scheduledDelayTimeUnit = null;
+        return true;
+      }
+    }
+    return false;
   }
 
   private ScheduledContext getScheduledContext() {
-      contextLock.lock();
-      try {
-          Context c = rootContext;
-          while (c != null && !c.getChildContexts().isEmpty()) {
-              Context child = c.getChildContexts().get(0);
-              if (child instanceof ScheduledContext) {
-                  return (ScheduledContext) child;
-              } else if (child instanceof PersistentContext) {
-                  c = child;
-              }
-          }
-      } finally {
-          contextLock.unlock();
+    contextLock.lock();
+    try {
+      Context c = rootContext;
+      while (c != null && !c.getChildContexts().isEmpty()) {
+        Context child = c.getChildContexts().get(0);
+        if (child instanceof ScheduledContext) {
+          return (ScheduledContext) child;
+        } else if (child instanceof PersistentContext) {
+          c = child;
+        }
       }
-      return null;
+    } finally {
+      contextLock.unlock();
+    }
+    log.warn("[getScheduledContext] cannot find scheduled context for goal {}", info.gid);
+    return null;
   }
 
   public TimeUnit getScheduledDelayTimeUnit() {
@@ -425,38 +479,43 @@ public class Goal {
     return info.scheduledDate;
   }
 
-  public Predicate getWrappedGoalPredicate() {
-      Predicate goalPred = info.goal.clone();
-      if (info.scheduled) {
-          if (info.scheduledDelay != null) {
-              Symbol delaySymbol = Factory.createSymbol(info.scheduledDelay.toString());
-              Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledDelayTimeUnit.toString());
-              goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,delaySymbol,timeUnitSymbol);
-          } else {
-              String pattern = "HH-mm-ss";
-              DateFormat df = new SimpleDateFormat(pattern);
-              Symbol dateSymbol = Factory.createSymbol(df.format(info.scheduledDate));
-              goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,dateSymbol);
-          }
-      }
-      if (info.persistent) {
-          goalPred = Factory.createPredicate("persistent",info.actor, goalPred);
-      }
-      return goalPred;
+  /**
+   *  Get the duration in milliseconds until this goal's next scheduled execution.
+   *  Returns -1 if the goal is not a scheduled goal.
+   */
+  public long getTimeUntilScheduledExecution() {
+    ScheduledContext scheduledContext = getScheduledContext();
+    if (scheduledContext == null) {
+      log.warn("[getTimeUntilScheduledExecution] no ScheduledContext found in tree");
+      return -1;
+    }
+
+    return scheduledContext.getTimeUntilNextExecution();
   }
 
-  public boolean setScheduledDate(Date scheduledDate) {
-      if (isScheduled()) {
-          ScheduledContext scheduledContext = getScheduledContext();
-          if (scheduledContext != null) {
-              scheduledContext.updateScheduledTime(scheduledDate);
-              info.scheduledDate = scheduledDate;
-              info.scheduledDelay = null;
-              info.scheduledDelayTimeUnit = null;
-              return true;
-          }
+  /**
+   * Utility function to get the re-wrapped predicate this goal was originally submitted with.
+   * Practically, this method will return the base goal predicate and optionally 'persistent' and 'scheduled' wrappers
+   * along with any scheduled timing information if applicable.
+   */
+  public Predicate getWrappedGoalPredicate() {
+    Predicate goalPred = info.goal.clone();
+    if (info.scheduled) {
+      if (info.scheduledDelay != null) {
+        Symbol delaySymbol = Factory.createSymbol(info.scheduledDelay.toString());
+        Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledDelayTimeUnit.toString());
+        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,delaySymbol,timeUnitSymbol);
+      } else {
+        String pattern = "HH-mm-ss";
+        DateFormat df = new SimpleDateFormat(pattern);
+        Symbol dateSymbol = Factory.createSymbol(df.format(info.scheduledDate));
+        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,dateSymbol);
       }
-      return false;
+    }
+    if (info.persistent) {
+      goalPred = Factory.createPredicate("persistent",info.actor, goalPred);
+    }
+    return goalPred;
   }
 
   public Symbol getActor() {

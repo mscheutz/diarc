@@ -18,18 +18,20 @@ import edu.tufts.hrilab.action.justification.Justification;
     Predicate !goalPredicate;
     Predicate !scheduledGoal;
     Predicate !confirmation;
-    Symbol !interval;
     Symbol !time;
     Symbol !addl;
+    Symbol !interval;
     Symbol !intervalUnits;
-    Symbol !timeSymbol = "none";
     java.util.List !responseFormList;
     Predicate !responseForm;
+    java.lang.Boolean !relativeTime = false;
 
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "time(X)");
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "absoluteTime(X)");
     op:add(!responseFormList,!responseForm);
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "time(X,Y)");
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "absoluteTime(X,Y)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "relativeTime(X,Y)");
     op:add(!responseFormList,!responseForm);
 
 
@@ -39,10 +41,6 @@ import edu.tufts.hrilab.action.justification.Justification;
     }
     !goalPredicate = op:get(!bindings, !x);
     op:log(debug, "[scheduleGoal] goal !goalPredicate");
-
-    //!bindings = act:askQuestionFromString(?actor, "When should I perform this goal?", time(X));
-    //!time = op:get(!bindings, !x);
-    //op:log(debug, "[scheduleGoal] time !time");
 
     !bindings = act:askQuestionFromString(?actor, "When should this task be scheduled for?", !responseFormList);
     if (op:invokeMethod(!bindings,"isEmpty")) {
@@ -54,10 +52,9 @@ import edu.tufts.hrilab.action.justification.Justification;
     if (~op:isNull(!addl)) {
         if (op:equalsValue(!addl, pm) || op:equalsValue(!addl, am)) {
             !time = act:parseTime(!time, !addl);
-            !timeSymbol = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "notNone"); //this is a bad way to do this!
+        } else {
+            !relativeTime = op:newObject("java.lang.Boolean", true);
         }
-    } else {
-        !timeSymbol = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "notNone"); //this is a bad way to do this!
     }
     op:log(debug, "[scheduleGoal] time/units: !time/!addl");
 
@@ -67,42 +64,25 @@ import edu.tufts.hrilab.action.justification.Justification;
     }
     !confirmation = op:get(!bindings, !x);
 
-    //TODO: clean this up
     if (op:equalsValue(!confirmation, yes())) {
-      !bindings = act:askQuestionFromString(?actor, "How often?", !responseFormList);
+      //Only allowing relativeTime(X,Y) response form here for code simplicity.
+      !bindings = act:askQuestionFromString(?actor, "How often?", !responseForm);
       if (op:invokeMethod(!bindings,"isEmpty")) {
           exit(FAIL,not(wasAnswered(myQuestion)));
       }
       !interval = op:get(!bindings, !x);
       !intervalUnits = op:get(!bindings, !y);
-      if (op:equalsValue(!timeSymbol, "none")) {
-          if (op:isNull(!intervalUnits)) {
-            !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval)), !time, !addl)");
-          } else {
-            if (op:equalsValue(!intervalUnits, pm) || op:equalsValue(!intervalUnits, am)) {
-                !interval = act:parseTime(!interval, !intervalUnits);
-                !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval)), !time, !addl)");
-            } else {
-                !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time, !addl)");
-            }
-          }
-      } else  {
-          if (op:isNull(!intervalUnits)) {
-            !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval)), !time)");
-          } else {
-            if (op:equalsValue(!intervalUnits, pm) || op:equalsValue(!intervalUnits, am)) {
-                !interval = act:parseTime(!interval, !intervalUnits);
-                !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval)), !time)");
-            } else {
-                !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time)");
-            }
-          }
+
+      if (op:equals(!relativeTime,true)) {
+        !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time, !addl)");
+      } else {
+        !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time)");
       }
     } else {
-      if (op:equalsValue(!timeSymbol, "none")) {
-          !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, !goalPredicate, !time, !addl)");
+      if (op:equals(!relativeTime,true)) {
+        !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, !goalPredicate, !time, !addl)");
       } else {
-          !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, !goalPredicate, !time)");
+        !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, !goalPredicate, !time)");
       }
     }
     op:log(info, "[scheduleGoal] scheduledGoal: !scheduledGoal");
@@ -128,71 +108,124 @@ import edu.tufts.hrilab.action.justification.Justification;
     java.lang.Integer !numArgs;
     java.util.List !responseFormList;
     Predicate !responseForm;
+    edu.tufts.hrilab.action.goal.GoalInfo !goalInfo;
+    java.lang.Boolean !isPersistent;
+    java.lang.Integer !goalType = 1; //1 == scheduled, 2 == persistent scheduled, 3 == scheduled persistent scheduled
+    java.lang.Boolean !modifyInterval = false; //true == modify next execution time
+    java.lang.Long !timeMillis;
+    java.lang.Boolean !relativeTime = false;
 
-    op:log("info", "[modifyScheduledGoal] in method");
+    op:log("debug", "[modifyScheduledGoal] in method");
+
     !scheduledGoalPred = act:selectScheduledGoal();
     !goalId = tsc:getGoalId(!scheduledGoalPred);
-    op:log("info", "[modifyScheduledGoal] have goal !scheduledGoalPred with id !goalId");
+    !goalInfo = tsc:getGoalInfo(!goalId);
+    if (op:invokeMethod(!goalInfo,"isPersistent")) {
+        !goalType = op:newObject("java.lang.Integer", 2);
+    } else {
+        !goalPredName = op:invokeMethod(!scheduledGoalPred, "getName");
+        if (op:equals(!goalPredName,"persistent")) {
+            !innerGoalPred = op:invokeMethod(!scheduledGoalPred,"get",1);
+            !innerGoalPredName = op:invokeMethod(!innerGoalPred, "getName");
+            if (op:equals(!innerGoalPredName,"scheduled")) {
+                !goalType = op:newObject("java.lang.Integer", 3);
+            }
+        }
+    }
+    op:log("info", "[modifyScheduledGoal] have goal !scheduledGoalPred with id !goalId and type !goalType");
 
-    //TODO: theoretically could have endlessly nested scheduled/persistent goals, not sure how to handle that generally other than canceling/resubmitting with entire new specification
-    !goalPredName = op:invokeMethod(!scheduledGoalPred, "getName");
-    if (op:equals(!goalPredName,"persistent")) {
-        !innerGoalPred = op:invokeMethod(!scheduledGoalPred,"get",1);
-        !innerGoalPredName = op:invokeMethod(!innerGoalPred, "getName");
-        if (op:equals(!innerGoalPredName,"scheduled")) {
-            //Ask to modify either inner or outer timing
+    //Scheduled Persistent Scheduled or Persistent Scheduled cases
+    if (~op:equals(!goalType,1)) {
+        //Ask to modify either inner or outer timing
+        if (op:equals(!goalType,2)) {
+            !bindings = act:askQuestionFromString(?actor, "Would you like to shift the timing of executions, or the interval at which they are executed?", timingOf(X));
+        } else {
             !bindings = act:askQuestionFromString(?actor, "Would you like to modify the timing of the first execution, or the interval at which it is executed?", timingOf(X));
-            if (~op:invokeMethod(!bindings,"isEmpty")) {
-                !response = op:get(!bindings,!x);
-                if (op:equalsValue(!response,execution)) {
-                    op:log("info", "[modifyScheduledGoal] got response to modify first execution");
-                } elseif (op:equalsValue(!response,interval)) {
-                    op:log("info", "[modifyScheduledGoal] got response to modify scheduled goal interval");
+        }
+        if (~op:invokeMethod(!bindings,"isEmpty")) {
+            !response = op:get(!bindings,!x);
+            if (op:equalsValue(!response,execution)) {
+                op:log("debug", "[modifyScheduledGoal] got response to modify first execution");
+            } elseif (op:equalsValue(!response,interval)) {
+                op:log("debug", "[modifyScheduledGoal] got response to modify scheduled goal interval");
+                !modifyInterval = op:newObject("java.lang.Boolean", true);
+                if (op:equals(!goalType,3)) {
                     !modifyInnerGoal = op:newObject("java.lang.Boolean", true);
-                } else {
-                    exit(FAIL,not(understand(?actor,whatToModify)));
                 }
             } else {
                 exit(FAIL,not(understand(?actor,whatToModify)));
             }
+        } else {
+            exit(FAIL,not(understand(?actor,whatToModify)));
         }
     }
 
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "time(X)");
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "absoluteTime(X)");
     op:add(!responseFormList,!responseForm);
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "time(X,Y)");
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "absoluteTime(X,Y)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString(?actor, "When would you like to schedule this task instead?", !responseFormList);
+    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "relativeTime(X,Y)");
+    op:add(!responseFormList,!responseForm);
+    if (op:equals(!modifyInterval,true)) {
+        //Scheduled Persistent Scheduled or Persistent Scheduled Interval
+        !bindings = act:askQuestionFromString(?actor, "How frequently would you like to schedule this task instead?", !responseFormList);
+    } else {
+        if (op:equals(!goalType,2)) {
+            //Persistent Scheduled Next Execution
+            !bindings = act:askQuestionFromString(?actor, "When should this task's next execution occur?", !responseFormList);
+        } else {
+            //Scheduled or Scheduled Persistent Scheduled First Execution
+            !bindings = act:askQuestionFromString(?actor, "When would you like to schedule this task instead?", !responseFormList);
+        }
+    }
+
     if (~op:invokeMethod(!bindings,"isEmpty")) {
         !response = op:get(!bindings,!x);
         !yResponse = op:get(!bindings,!y);
-        op:log("debug", "!response");
-        op:log("debug", "!yResponse");
-        if (op:isNull(!yResponse)) {
-            !success = tsc:updateScheduledGoalTime(!goalId, !response, !modifyInnerGoal);
-        } else {
+        if (~op:isNull(!yResponse)) {
             if (op:equalsValue(!yResponse, pm) || op:equalsValue(!yResponse, am)) {
                 !response = act:parseTime(!response, !yResponse);
-                !success = tsc:updateScheduledGoalTime(!goalId, !response, !modifyInnerGoal);
             } else {
-                !success = tsc:updateScheduledGoalTime(!goalId, !response, !yResponse, !modifyInnerGoal);
+                !relativeTime = op:newObject("java.lang.Boolean", true);
             }
         }
-        if (op:equals(!success,True)) {
-            act:generateResponseFromString("Ok");
-            return;
+
+        if (op:equals(!modifyInterval,true)) {
+            if (op:equals(!goalType,3)) {
+                if (op:equals(!relativeTime,true)) {
+                    !success = tsc:updateScheduledInnerGoalTiming(!goalId, !response, !yResponse);
+                } else {
+                    !success = tsc:updateScheduledInnerGoalTiming(!goalId, !response);
+                }
+            } elseif (op:equals(!goalType,2)) {
+                if (op:equals(!relativeTime,true)) {
+                    !success = tsc:updatePersistentGoalScheduledInterval(!goalId, !response, !yResponse);
+                } else {
+                    !success = tsc:updatePersistentGoalScheduledInterval(!goalId, !response);
+                }
+            }
         } else {
-            exit(FAIL,cannot(parse(?actor,theSuppliedTime)));
+            if (op:equals(!relativeTime,true)) {
+                !success = tsc:updateScheduledGoalNextExecution(!goalId, !response, !yResponse);
+            } else {
+                !success = tsc:updateScheduledGoalNextExecution(!goalId, !response);
+            }
         }
+    } else {
+        exit(FAIL,not(supplied(timing)));
     }
-    exit(FAIL,not(supplied(timing)));
 
-    ////todo: remove this hack. should query for actual goals and actual semantics
-    //act:sayText("There is one goal scheduled");
-    //act:sayText("Scheduled goal #1 is:");
-    //act:sayText("Perform lab patrol with wifi evaluation at 12:00 p.m.");
-
+    if (op:equals(!success,true)) {
+        act:generateResponseFromString("Ok");
+        //TODO: report updated schedule?
+        //if (op:equals(!modifyInnerGoal,true) || op:equals(!isPersistent,true)) {
+        //    !timeMillis = tsc:getScheduledGoalsNextDelay(!goalId);
+        //}
+        return;
+    } else {
+      exit(FAIL);
+    }
 }
 
 (Predicate ?scheduledGoalPred) = selectScheduledGoal() {
@@ -259,7 +292,6 @@ import edu.tufts.hrilab.action.justification.Justification;
     Integer !numGoals;
     Predicate !goalPred;
     Long !gid;
-    edu.tufts.hrilab.action.goal.GoalInfo !goalInfo;
     java.lang.Boolean !isPersistent;
     java.lang.Boolean !isScheduled;
 
