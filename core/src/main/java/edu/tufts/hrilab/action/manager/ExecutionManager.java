@@ -1329,6 +1329,7 @@ public class ExecutionManager implements GoalListener {
         log.trace("[getCurrentGoals] have goalsLock");
         currentGoals = getActiveGoals();
         currentGoals.addAll(getPendingGoals());
+        currentGoals.addAll(getScheduledGoals());
       }
     }
     log.trace("[getCurrentGoals] released locks");
@@ -1345,19 +1346,24 @@ public class ExecutionManager implements GoalListener {
     log.trace("[getActiveGoals] in method");
     synchronized (goalsLock) {
       log.trace("[getActiveGoals] have goalsLock");
-      getActiveGoalsHelper(rootAgent, activeGoals);
+      getActiveGoalsHelper(rootAgent, activeGoals,false);
     }
     log.trace("[getActiveGoals] released goalsLock");
     return new ArrayList<>(activeGoals);
   }
 
+  //TODO: Further divide here by getting persistent goals separately?
   //Add current goals of the supplied agent/team and all children
   //If an agent can be a member of multiple teams, this implementation is invalid
-  private void getActiveGoalsHelper(Symbol agent, Set<Goal> goals) {
+  private void getActiveGoalsHelper(Symbol agent, Set<Goal> goals, boolean includeScheduled) {
     AgentTeam agentTeam = getAgentTeam(agent);
-    goals.addAll(agentTeam.getActiveGoals());
+    Set<Goal> agentTeamGoals = agentTeam.getActiveGoals();
+    if (!includeScheduled) {
+      agentTeamGoals = agentTeamGoals.stream().filter(g -> !g.isScheduled()).collect(Collectors.toSet());
+    }
+    goals.addAll(agentTeamGoals);
     for (Symbol member : agentTeam.getMemberNames()) {
-      getActiveGoalsHelper(member, goals);
+      getActiveGoalsHelper(member, goals, includeScheduled);
     }
   }
 
@@ -1387,7 +1393,9 @@ public class ExecutionManager implements GoalListener {
   public List<Goal> getScheduledGoals() {
     List<Goal> scheduledGoals = new ArrayList<>();
     synchronized (goalsLock) {
-      for (Goal goal : getActiveGoals()) {
+      Set<Goal> activeGoals = new HashSet<>();
+      getActiveGoalsHelper(rootAgent, activeGoals,true);
+      for (Goal goal : activeGoals) {
         if (goal.isScheduled()) {
           //If persistent, always add because will always execute again
           if (goal.isPersistent()) {
