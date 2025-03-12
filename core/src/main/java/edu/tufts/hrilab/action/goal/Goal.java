@@ -172,26 +172,44 @@ public class Goal {
     }
   }
 
+  // handles persistent(), scheduled(persistent()), persistent(scheduled()), and scheduled(persistent(scheduled())).
   /**
    * Check for special goal forms on submission (Currently 'scheduled' and 'persistent'). Unwraps the predicate to
    * submit while populating class variables with values based on wrapper names and arguments.
+   *
+   * Currently handles up to "scheduled persistent scheduled" goals elegantly.
    */
   private Predicate unwrapGoalPredicate(Predicate goalState, boolean actorIncluded) {
     if (goalState.getName().equals("persistent")) {
+      Predicate innerState;
       if (actorIncluded) {
-        if (goalState.size() != 2) {  // illegal structure
+        if (goalState.size() != 2) {
           log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
           return null;
         }
-        goalState = (Predicate) goalState.get(1);
+        innerState = (Predicate) goalState.get(1);
       } else {
         if (goalState.size() != 1) {
           log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
           return null;
         }
-        goalState = (Predicate) goalState.get(0);
+        innerState = (Predicate) goalState.get(0);
       }
-      info.persistent = true;
+      if (info.goalType == GoalType.STANDARD) {
+        info.goalType = GoalType.PERSISTENT;
+      } else if (info.goalType == GoalType.SCHEDULED) {
+        if (!innerState.getName().equals("scheduled")) {
+          //A scheduled persistent goal must be submitted just as a scheduled goal with a persistent predicate. Return
+          //  immediately if that is the case.
+          //A bit confusing, but a scheduled persistent scheduled goal on the other hand can be represented as a
+          //  persistent scheduled goal with a one-time modified delay. Allow to continue unwrapping.
+          return goalState;
+        }
+      } else {
+        log.warn("[unwrapGoalPredicate] unhandled special predicate structure detected. type {} with inner predicate {}", info.goalType, goalState);
+        return null;
+      }
+      goalState = innerState;
 
       return unwrapGoalPredicate(goalState, true);
     } else if (goalState.getName().equals("scheduled")) {
@@ -220,13 +238,39 @@ public class Goal {
         }
         goalState = (Predicate) goalState.get(0);
       }
+
+      if (info.goalType == GoalType.STANDARD && !goalState.getName().equals("scheduled")) {
+        //Explicitly disallowing scheduled(scheduled()) so logic for checking for scheduled(persistent(scheduled())) works.
+        info.goalType = GoalType.SCHEDULED;
+      } else if (info.goalType == GoalType.PERSISTENT) {
+        info.goalType = GoalType.PERSISTENTSCHEDULED;
+      } else if (info.goalType == GoalType.SCHEDULED) {
+        //Technically SCHEDULEDPERSISTENT goalType if reaching here, that alone is not a valid goalType though
+        info.goalType = GoalType.SCHEDULEDPERSISTENTSCHEDULED;
+        //Scheduled Persistent Scheduled case -> inner scheduled predicate contains the regular interval timing,
+        // outer predicate contains the first time execution timing. Transfer the previously set timings to the correct
+        // info members.
+        if (info.scheduledDate != null) {
+          info.scheduledSubmissionDate = info.scheduledDate;
+          info.scheduledDate = null;
+        } else {
+          info.scheduledSubmissionDelay = info.scheduledDelay;
+          info.scheduledSubmissionDelayTimeUnit = info.scheduledDelayTimeUnit;
+          info.scheduledDelayTimeUnit = null;
+          info.scheduledDelay = null;
+        }
+      } else {
+        log.warn("[unwrapGoalPredicate] unhandled special predicate structure detected. type {} with inner predicate {}", info.goalType, goalState);
+        return null;
+      }
+
       try {
         if (formatType == 0) {
           log.error("[Goal] illegal predicate structure for scheduled goal: " + goalState);
           return null;
         } else if (formatType == 1) {
-          info.scheduledDelay = Long.parseLong(delayString);
-          info.scheduledDelayTimeUnit = TimeUnit.valueOf(timeUnitString);
+            info.scheduledDelay = Long.parseLong(delayString);
+            info.scheduledDelayTimeUnit = TimeUnit.valueOf(timeUnitString);
         } else if (formatType == 2) {
           SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
           Date date = null;
@@ -246,16 +290,11 @@ public class Goal {
           info.scheduledDate = date;
         }
       } catch (Exception e) {
-        log.error("[Goal] exception while parsing arguments for scheduled goal: " + goalState, e);
+        log.error("[unwrapGoalPredicate] exception while parsing arguments for scheduled goal: " + goalState, e);
+        return null;
       }
-      info.scheduled = true;
 
-      //Modified Impl:
-      //With current implementation of disjoint goal submission due to needing to adhere to resource constraints
-      // of inner goal while allowing this goal to be active, need to cut off here to allow for 'scheduled persistent goals'
-      // or 'scheduled persistent scheduled  to be possible.
-      //return unwrapGoalPredicate(goalState, false);
-      return goalState;
+      return unwrapGoalPredicate(goalState, true);
     }
 
     return goalState;
@@ -324,62 +363,19 @@ public class Goal {
   }
 
   public boolean isPersistent() {
-    return info.persistent;
+    return info.isPersistent();
   }
 
   public boolean isScheduled() {
-    return info.scheduled;
+    return info.isScheduled();
   }
 
   public long getScheduledDelay() {
     return info.scheduledDelay;
   }
 
-  //TODO: See notes in GoalManager, probably want to remove this function
-
-  /**
-   * Only applicable to "scheduled persistently scheduled" goals, modifies the timing details of the inner persistent scheduling.
-   */
-  public boolean updateScheduledGoalTimings(Symbol timeSymbol, Symbol timeUnitSymbol) {
-    Predicate unboundGoal = (Predicate)info.unboundGoal;
-    if (unboundGoal != null && unboundGoal.getName().equals("persistent")) {
-      Predicate innerScheduledGoal = (Predicate)unboundGoal.get(1);
-      if (innerScheduledGoal.getName().equals("scheduled")) {
-        Predicate newScheduledPred;
-        if (timeUnitSymbol == null) {
-          newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), timeSymbol);
-        } else {
-          newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), timeSymbol, timeUnitSymbol);
-        }
-        info.unboundGoal = Factory.createPredicate("persistent", unboundGoal.get(0), newScheduledPred);
-        Predicate boundGoal = info.goal;
-        if (boundGoal != null) {
-          innerScheduledGoal = (Predicate) boundGoal.get(1);
-          if (timeUnitSymbol == null) {
-            newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), timeSymbol);
-          } else {
-            newScheduledPred = Factory.createPredicate("scheduled", innerScheduledGoal.get(0), innerScheduledGoal.get(1), timeSymbol, timeUnitSymbol);
-          }
-          info.goal = Factory.createPredicate("persistent", boundGoal.get(0), newScheduledPred);
-        }
-        if (isScheduled()) {
-          ScheduledContext scheduledContext = getScheduledContext();
-          if (scheduledContext != null) {
-            return scheduledContext.updateScheduledGoalPredicate(getPredicate());
-          } else {
-            log.error("[updateScheduledGoalDate] cannot find scheduled context for goal");
-          }
-        } else {
-          log.error("[updateScheduledGoalDate] goal is not scheduled");
-        }
-        return true;
-      } else {
-        log.error("[updateScheduledGoalDate] inner goal predicate does not have scheduled wrapper");
-      }
-    } else {
-      log.error("[updateScheduledGoalDate] inner goal predicate does not have persistent wrapper");
-    }
-    return false;
+  public GoalType getGoalType() {
+    return info.goalType;
   }
 
   /**
@@ -493,14 +489,29 @@ public class Goal {
     return scheduledContext.getTimeUntilNextExecution();
   }
 
+  public Date getNextScheduledExecutionDate() {
+    ScheduledContext scheduledContext = getScheduledContext();
+    if (scheduledContext == null) {
+      log.warn("[getNextScheduledExecutionDate] no ScheduledContext found in tree");
+      return null;
+    }
+
+    return scheduledContext.getDateOfNextExecution();
+  }
+
   /**
    * Utility function to get the re-wrapped predicate this goal was originally submitted with.
    * Practically, this method will return the base goal predicate and optionally 'persistent' and 'scheduled' wrappers
    * along with any scheduled timing information if applicable.
    */
-  public Predicate getWrappedGoalPredicate() {
-    Predicate goalPred = info.goal.clone();
-    if (info.scheduled) {
+  public Predicate getWrappedGoalSubmissionPredicate() {
+    Predicate goalPred;
+    if (info.goal == null) {
+      goalPred = ((Predicate) info.getUnboundGoal()).clone();
+    } else {
+      goalPred = info.goal.clone();
+    }
+    if (info.isScheduled()) {
       if (info.scheduledDelay != null) {
         Symbol delaySymbol = Factory.createSymbol(info.scheduledDelay.toString());
         Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledDelayTimeUnit.toString());
@@ -512,9 +523,71 @@ public class Goal {
         goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,dateSymbol);
       }
     }
-    if (info.persistent) {
+    if (info.isPersistent()) {
       goalPred = Factory.createPredicate("persistent",info.actor, goalPred);
     }
+    if (info.goalType == GoalType.SCHEDULEDPERSISTENTSCHEDULED) {
+      if (info.getScheduledSubmissionDelay() != null) {
+        Symbol delaySymbol = Factory.createSymbol(info.scheduledSubmissionDelay.toString());
+        Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledSubmissionDelayTimeUnit.toString());
+        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,delaySymbol,timeUnitSymbol);
+      } else {
+        String pattern = "HH-mm-ss";
+        DateFormat df = new SimpleDateFormat(pattern);
+        Symbol dateSymbol = Factory.createSymbol(df.format(info.scheduledSubmissionDate));
+        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,dateSymbol);
+      }
+    }
+    return goalPred;
+  }
+
+  /**
+   * Utility function to get a wrapped predicate for this goal including all current scheduling information. Behaves
+   * like {@link #getWrappedGoalSubmissionPredicate()} except that any timing information is relative to now
+   * rather than submission
+   */
+  public Predicate getWrappedGoalPredicate() {
+    Predicate goalPred;
+    if (info.status == GoalStatus.PENDING || info.status == GoalStatus.UNKNOWN || info.status.isTerminated()) {
+      log.warn("[getWrappedGoalPredicate] not sure how to handle goal status {}, returning submission predicate", info.status);
+      return getWrappedGoalSubmissionPredicate();
+    }
+    if (info.goal == null) {
+      goalPred = ((Predicate) info.getUnboundGoal()).clone();
+    } else {
+      goalPred = info.goal.clone();
+    }
+    if (info.isScheduled() && info.isPersistent()) {
+      if (info.scheduledDelay != null) {
+        Symbol delaySymbol = Factory.createSymbol(info.scheduledDelay.toString());
+        Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledDelayTimeUnit.toString());
+        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,delaySymbol,timeUnitSymbol);
+      } else {
+        String pattern = "HH-mm-ss";
+        DateFormat df = new SimpleDateFormat(pattern);
+        Symbol dateSymbol = Factory.createSymbol(df.format(info.scheduledDate));
+        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,dateSymbol);
+      }
+    }
+    if (info.isPersistent()) {
+      goalPred = Factory.createPredicate("persistent",info.actor, goalPred);
+    }
+    //TODO: should this always be a date or should logic be written to get the "best" representation of delay
+    //  duration and timeunit from a general time.
+    if (info.isScheduled()) {
+      ScheduledContext scheduledContext = getScheduledContext();
+      if (scheduledContext != null) {
+        if (isPersistent() && scheduledContext.scheduledByDate() && !scheduledContext.hasOffsetSchedule() && !scheduledContext.nextScheduleIntervalOffset()) {
+          return goalPred;
+        }
+        Date date = scheduledContext.getDateOfNextExecution();
+        String pattern = "HH-mm-ss";
+        DateFormat df = new SimpleDateFormat(pattern);
+        Symbol dateSymbol = Factory.createSymbol(df.format(date));
+        goalPred = Factory.createPredicate("scheduled", info.actor, goalPred, dateSymbol);
+      }
+    }
+
     return goalPred;
   }
 

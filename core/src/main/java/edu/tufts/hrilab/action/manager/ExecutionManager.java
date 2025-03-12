@@ -1532,53 +1532,6 @@ public class ExecutionManager implements GoalListener {
     }
   }
 
-  //See notes in GoalManagerComponent - these methods probably shouldn't exist
-  /**
-   * {@link #updateScheduledGoalNextExecution(Long, Symbol, Symbol)}
-   */
-  public boolean updateScheduledInnerGoalTiming(long goalId, Symbol dateSymbol) {
-    return updateScheduledInnerGoalTiming(goalId, dateSymbol, null);
-  }
-  /**
-   * Update the scheduled interval of a "Scheduled Persistently Scheduled Goal" before it has begun its persistent
-   * scheduling cycle.
-   *
-   * Fails if the supplied timing arguments cannot be parsed or this goal is not an instance of a scheduled persistent
-   * scheduled goal (e.g. "do X starting at T1 and then every T2 afterwards").
-   *
-   */
-  public boolean updateScheduledInnerGoalTiming(long goalId, Symbol timeSymbol, Symbol timeUnitSymbol) {
-    Goal goal = getGoal(goalId);
-    if (goal == null) {
-      log.warn("[updateScheduledInnerGoalTiming] goal not found for gid: {}", goalId);
-      return false;
-    }
-
-    if (!goal.isScheduled()) {
-      log.warn("[updateScheduledInnerGoalTiming] goal found for gid {} isn't scheduled, cannot update inner timing", goalId);
-      return false;
-    }
-
-    String timeString = timeSymbol.toString();
-    if (timeUnitSymbol == null) {
-      Date date = parseDateString(timeString);
-      if (date != null) {
-        return goal.updateScheduledGoalTimings(timeSymbol, null);
-      } else {
-        return false;
-      }
-    }
-
-    try {
-      long delay = Long.parseLong(timeString);
-      TimeUnit timeUnit = TimeUnit.valueOf(timeUnitSymbol.toString());
-      return goal.updateScheduledGoalTimings(timeSymbol, timeUnitSymbol);
-    } catch (Exception e) {
-      log.error("[updateScheduledGoalTime] cannot parse supplied delay or timeunit", e);
-      return false;
-    }
-  }
-
   /**
    *  Get the duration in milliseconds until this goal's next scheduled execution
    *

@@ -8,6 +8,7 @@ import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.ParameterizedAction;
+import edu.tufts.hrilab.action.goal.GoalType;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.execution.util.ContextUtils;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
@@ -135,21 +136,29 @@ public class GoalContext extends ArgumentBasedContext {
     }
 
     Context caller = this;
+    Context child;
+    GoalType goalType = goal.getGoalType();
     //Offsetting creation of persistent context and setting of child. Previous implementation had an issue where both
     //  this context and its child had their notion of 'caller' be this goal context. Causes issues when propagating
     //  terminal status up the tree (e.g. on cancel)
-    if (goal.isPersistent()) {
+    if (goalType.isPersistent()) {
       caller = new PersistentContext(this, stateMachine, null);
     }
 
-    Context child;
-    if (goal.isScheduled()) {
+    if (goalType.isScheduled()) {
       if (goal.getScheduledDate() != null) {
         child = new ScheduledContext(caller, stateMachine, goal.getPredicate(), goal.getScheduledDate());
       } else {
         child = new ScheduledContext(caller, stateMachine, goal.getPredicate(), goal.getScheduledDelay(), goal.getScheduledDelayTimeUnit());
-        if (goal.isPersistent()) {
-          ((ScheduledContext)child).setFirstExecutionImmediate();
+        if (goalType == GoalType.PERSISTENTSCHEDULED) {
+          ((ScheduledContext) child).setFirstExecutionImmediate();
+        }
+      }
+      if (goalType == GoalType.SCHEDULEDPERSISTENTSCHEDULED) {
+        if (goal.getInfo().getScheduledSubmissionDate() != null) {
+          ((ScheduledContext) child).updateNextScheduledTime(goal.getInfo().getScheduledSubmissionDate());
+        } else {
+          ((ScheduledContext) child).updateNextScheduledTime(goal.getInfo().getScheduledSubmissionDelay(), goal.getInfo().getScheduledSubmissionDelayTimeUnit());
         }
       }
     } else if (goal.isObservation()) {

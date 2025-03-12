@@ -104,14 +104,13 @@ import edu.tufts.hrilab.action.justification.Justification;
     Symbol !response;
     Symbol !yResponse;
     java.lang.Boolean !success;
-    java.lang.Boolean !modifyInnerGoal = false;
     java.lang.Integer !numArgs;
     java.util.List !responseFormList;
     Predicate !responseForm;
     edu.tufts.hrilab.action.goal.GoalInfo !goalInfo;
     java.lang.Boolean !isPersistent;
-    java.lang.Integer !goalType = 1; //1 == scheduled, 2 == persistent scheduled, 3 == scheduled persistent scheduled
     java.lang.Boolean !modifyInterval = false; //true == modify next execution time
+    edu.tufts.hrilab.action.goal.GoalType !goalType;
     java.lang.Long !timeMillis;
     java.lang.Boolean !relativeTime = false;
 
@@ -120,28 +119,13 @@ import edu.tufts.hrilab.action.justification.Justification;
     !scheduledGoalPred = act:selectScheduledGoal();
     !goalId = tsc:getGoalId(!scheduledGoalPred);
     !goalInfo = tsc:getGoalInfo(!goalId);
-    if (op:invokeMethod(!goalInfo,"isPersistent")) {
-        !goalType = op:newObject("java.lang.Integer", 2);
-    } else {
-        !goalPredName = op:invokeMethod(!scheduledGoalPred, "getName");
-        if (op:equals(!goalPredName,"persistent")) {
-            !innerGoalPred = op:invokeMethod(!scheduledGoalPred,"get",1);
-            !innerGoalPredName = op:invokeMethod(!innerGoalPred, "getName");
-            if (op:equals(!innerGoalPredName,"scheduled")) {
-                !goalType = op:newObject("java.lang.Integer", 3);
-            }
-        }
-    }
+    !goalType = op:invokeMethod(!goalInfo,"getGoalType");
     op:log("info", "[modifyScheduledGoal] have goal !scheduledGoalPred with id !goalId and type !goalType");
 
     //Scheduled Persistent Scheduled or Persistent Scheduled cases
-    if (~op:equals(!goalType,1)) {
+    if (~op:equalsValue(!goalType,"SCHEDULED")) {
         //Ask to modify either inner or outer timing
-        if (op:equals(!goalType,2)) {
-            !bindings = act:askQuestionFromString(?actor, "Would you like to shift the timing of executions, or the interval at which they are executed?", timingOf(X));
-        } else {
-            !bindings = act:askQuestionFromString(?actor, "Would you like to modify the timing of the first execution, or the interval at which it is executed?", timingOf(X));
-        }
+        !bindings = act:askQuestionFromString(?actor, "Would you like to shift the timing of executions, or the interval at which they are executed?", timingOf(X));
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
             if (op:equalsValue(!response,execution)) {
@@ -149,9 +133,6 @@ import edu.tufts.hrilab.action.justification.Justification;
             } elseif (op:equalsValue(!response,interval)) {
                 op:log("debug", "[modifyScheduledGoal] got response to modify scheduled goal interval");
                 !modifyInterval = op:newObject("java.lang.Boolean", true);
-                if (op:equals(!goalType,3)) {
-                    !modifyInnerGoal = op:newObject("java.lang.Boolean", true);
-                }
             } else {
                 exit(FAIL,not(understand(?actor,whatToModify)));
             }
@@ -171,12 +152,10 @@ import edu.tufts.hrilab.action.justification.Justification;
         //Scheduled Persistent Scheduled or Persistent Scheduled Interval
         !bindings = act:askQuestionFromString(?actor, "How frequently would you like to schedule this task instead?", !responseFormList);
     } else {
-        if (op:equals(!goalType,2)) {
-            //Persistent Scheduled Next Execution
-            !bindings = act:askQuestionFromString(?actor, "When should this task's next execution occur?", !responseFormList);
-        } else {
-            //Scheduled or Scheduled Persistent Scheduled First Execution
+        if (op:equalsValue(!goalType,"SCHEDULED")) {
             !bindings = act:askQuestionFromString(?actor, "When would you like to schedule this task instead?", !responseFormList);
+        } else {
+            !bindings = act:askQuestionFromString(?actor, "When should this task's next execution occur?", !responseFormList);
         }
     }
 
@@ -192,18 +171,10 @@ import edu.tufts.hrilab.action.justification.Justification;
         }
 
         if (op:equals(!modifyInterval,true)) {
-            if (op:equals(!goalType,3)) {
-                if (op:equals(!relativeTime,true)) {
-                    !success = tsc:updateScheduledInnerGoalTiming(!goalId, !response, !yResponse);
-                } else {
-                    !success = tsc:updateScheduledInnerGoalTiming(!goalId, !response);
-                }
-            } elseif (op:equals(!goalType,2)) {
-                if (op:equals(!relativeTime,true)) {
-                    !success = tsc:updatePersistentGoalScheduledInterval(!goalId, !response, !yResponse);
-                } else {
-                    !success = tsc:updatePersistentGoalScheduledInterval(!goalId, !response);
-                }
+            if (op:equals(!relativeTime,true)) {
+                !success = tsc:updatePersistentGoalScheduledInterval(!goalId, !response, !yResponse);
+            } else {
+                !success = tsc:updatePersistentGoalScheduledInterval(!goalId, !response);
             }
         } else {
             if (op:equals(!relativeTime,true)) {
@@ -218,12 +189,11 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     if (op:equals(!success,true)) {
         act:generateResponseFromString("Ok");
-        //TODO: report updated schedule?
-        //if (op:equals(!modifyInnerGoal,true) || op:equals(!isPersistent,true)) {
-        //    !timeMillis = tsc:getScheduledGoalsNextDelay(!goalId);
-        //}
+        //TODO: report updated scheduling details? maybe easiest to implement as a tsc for 'getScheduledStateString(gid)'
         return;
     } else {
+      //TODO: Would be hard, but nice, to differentiate between failure reasons and return some justification. Difficult
+      //    to get the specific failure case generally from inner java code though.
       exit(FAIL);
     }
 }
@@ -254,7 +224,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     } elseif (op:equals(!numGoals,1)) {
         ?scheduledGoalPred = op:get(!scheduledGoals,0);
         !gid = tsc:getGoalId(?scheduledGoalPred);
-        !goalPredExtended = tsc:getWrappedScheduledGoalPredicate(!gid);
+        //TODO: should this function use submitted pred or 'current state' pred
+        !goalPredExtended = tsc:getWrappedScheduledGoalSubmissionPredicate(!gid);
         act:generateResponseFromString("There is currently one scheduled task");
         act:generateResponse(!goalPredExtended);
         return;
@@ -264,7 +235,7 @@ import edu.tufts.hrilab.action.justification.Justification;
             !goalPred = op:get(!scheduledGoals,!goalIndex);
             !spokenIndex = op:++(!goalIndex);
             !gid = tsc:getGoalId(!goalPred);
-            !goalPredExtended = tsc:getWrappedScheduledGoalPredicate(!gid);
+            !goalPredExtended = tsc:getWrappedScheduledGoalSubmissionPredicate(!gid);
             act:generateResponseFromString("Task !spokenIndex");
             act:generateResponse(!goalPredExtended);
         }
@@ -302,7 +273,8 @@ import edu.tufts.hrilab.action.justification.Justification;
         act:generateResponseFromString("There are no scheduled tasks");
     } else {
         foreach (!gid : !scheduledGoalIds) {
-            !goalPred = tsc:getWrappedScheduledGoalPredicate(!gid);
+            //TODO: should this be submitted pred or 'current state' pred
+            !goalPred = tsc:getWrappedScheduledGoalSubmissionPredicate(!gid);
             act:generateResponse(!goalPred);
         }
     }

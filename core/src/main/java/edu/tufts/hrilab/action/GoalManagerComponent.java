@@ -818,11 +818,30 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return pg;
   }
 
-  //Do we still need this/do we want to move this if so? Used at one point for scheduled goal NLG.
   /**
    * Utility function to get the re-wrapped predicate this goal was originally submitted with.
    * Practically, this method will return the base goal predicate and optionally 'persistent' and 'scheduled' wrappers
-   * along with any scheduled timing information if applicable.
+   * along with any original scheduled timing information if applicable.
+   *
+   * @param goalId
+   * @return fully wrapped goal predicate corresponding to goalId
+   */
+  @TRADEService
+  public Predicate getWrappedScheduledGoalSubmissionPredicate(Long goalId) {
+    Goal g = getGoal(goalId);
+    if (g != null) {
+      return g.getWrappedGoalSubmissionPredicate();
+    } else {
+      log.error("[getWrappedScheduledGoalPredicate] goal not found for id {}", goalId);
+      return null;
+    }
+  }
+
+  /**
+   * Utility function to get a wrapped predicate representing the current state of this goal w.r.t special forms.
+   * Practically, this method will return the base goal predicate and optionally 'persistent' and 'scheduled' wrappers
+   * containing information reflecting the current state of the goal. (i.e. reflects actual time until next execution
+   * rather than absolute interval)
    *
    * @param goalId
    * @return fully wrapped goal predicate corresponding to goalId
@@ -905,45 +924,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   public boolean updatePersistentGoalScheduledInterval(long goalId, Symbol date) {
     return em.updatePersistentGoalScheduledInterval(goalId,date);
-  }
-
-  //TODO: These two methods should eventually be removed. Updating the timing of a "scheduled persistent scheduled" goal's
-  //  inner persistent goal's timing should be handled by an external action script and through cancellation/resubmition
-  //  of the goal. Currently modifying the goal's predicate after creation before the inner goal is submitted - not sure
-  //  if that is safe at all.
-  /**
-   * Update the scheduled interval of a "Scheduled Persistently Scheduled Goal" before it has begun its persistent
-   * scheduling cycle.
-   *
-   * Fails if the supplied timing arguments cannot be parsed or this goal is not an instance of a scheduled persistent
-   * scheduled goal (e.g. "do X starting at T1 and then every T2 afterwards").
-   *
-   * @param goalId the scheduled persistent scheduled goal to modify
-   * @param delay Symbol representing the duration between scheduled executions of this goal
-   * @param timeUnit Symbol representing the timeUnit of delay
-   * @return whether the internal scheduled interval was successfully updated
-   */
-  @TRADEService
-  public boolean updateScheduledInnerGoalTiming(long goalId, Symbol delay, Symbol timeUnit) {
-    return em.updateScheduledInnerGoalTiming(goalId, delay, timeUnit);
-  }
-  //TODO: independent of the above comment, do we want to allow people to do things like
-  //      "at T1 schedule X to occur every day at T2"?
-  /**
-   * Update the scheduled interval of a "Scheduled Persistently Scheduled Goal" before it has begun its persistent
-   * scheduling cycle.
-   *
-   * Fails if the supplied timing arguments cannot be parsed or this goal is not an instance of a scheduled persistent
-   * scheduled goal (e.g. "do X starting at T1 and then every T2 afterward").
-   *
-   * @param goalId the scheduled persistent scheduled goal to modify
-   * @param date Symbol representing the Date of the scheduled execution of the inner goal, to be repeated every following
-   *            day at the contained time
-   * @return whether the internal scheduled interval was successfully updated
-   */
-  @TRADEService
-  public boolean updateScheduledInnerGoalTiming(long goalId, Symbol date) {
-    return em.updateScheduledInnerGoalTiming(goalId, date);
   }
 
   /**
