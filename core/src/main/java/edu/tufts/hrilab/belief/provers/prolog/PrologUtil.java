@@ -60,7 +60,7 @@ public class PrologUtil {
           symName = symName.replace("\"","\\34\\");
           symName = symName.replace("'","\\39\\");
           symName = "\"" + symName + "\"";
-          safeName.append(prefix).append(new Symbol(symName ));
+          safeName.append(prefix).append(Factory.createSymbol(symName,""));
         } else if (symName.startsWith("\"") && symName.endsWith("\"")) {
           //TODO: if this turns out to work, do in a better way
           //replace all internal ' " with code

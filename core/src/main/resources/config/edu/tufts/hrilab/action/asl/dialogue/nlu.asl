@@ -60,6 +60,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
     // for LLM parses -- get human validation
     Predicate !querySemantics;
     java.lang.String !utteranceString;
+    Symbol !utteranceSymbol;
     Predicate !response;
     java.util.Map !bindings;
     edu.tufts.hrilab.fol.Variable !x = "X";
@@ -70,9 +71,10 @@ import edu.tufts.hrilab.slug.common.Utterance;
       act:updateDialogueHistory(?utterance);
       if (tsc:usingLLMNLG()) {
         //EW SpotPickAndPlace: changed predicate format to pass to LLM to perform NLG
-        //  ^was this mainly to include supplemental semantics for refs?
+        //  ^wanted to include supplemental semantics, ghTiers, and utterance type for better NLG
         !utteranceString = op:invokeMethod(?utterance,"toString");
-        !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "doYouMean(!speaker, !utteranceString)");
+        !utteranceSymbol = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !utteranceString,"");
+        !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "doYouMean",!speaker,!utteranceSymbol);
       } else {
         !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "mean(!speaker, !semantics)");
       }
