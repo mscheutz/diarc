@@ -55,6 +55,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
 () = getCurrGoals["get list of current goals and assert it to belief"]() {
     java.util.List !allGoals;
+    Predicate !currGoal;
     java.util.List !filteredGoals;
     Predicate !currentGoals;
     Predicate !oldGoals;
@@ -70,7 +71,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     op:log("debug", "start get current goals");
 
     // get current goals for ?actor
-    !allGoals = act:getCurrentGoals();
+    !allGoals = tsc:getCurrentGoals();
 
     // remove handling nlp goal and getting currgoals from the goal list
     !filteredGoals = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
@@ -409,14 +410,14 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
       //      Additional issue is that if the sayText immediately terminates, whether because it fails or isn't
       //      implemented in a mock setup, then this index will be incorrect
         ?goals = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-        !goal = act:getCurrentGoal(?actor, 1);
+        !goal = tsc:getCurrentGoal(?actor, 1);
         if (~op:isNull(!goal)) {
             op:add(?goals,!goal);
         }
     } else {
       // find matching goal
       !queryGoal = op:newObject("edu.tufts.hrilab.action.goal.Goal", ?goalPredicate);
-      ?goals = act:getCurrentGoals(!queryGoal);
+      ?goals = tsc:getCurrentGoals(!queryGoal);
     }
 
     // check if goal was found

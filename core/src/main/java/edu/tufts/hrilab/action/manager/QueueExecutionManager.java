@@ -240,7 +240,7 @@ public class QueueExecutionManager extends ExecutionManager {
   private List<Predicate> getSystemGoalsPredicatesHelper(Symbol actor, List<Predicate> goalPreds) {
     Goal g = agentGoals.get(actor);
     if (g != null && !g.getStatus().isTerminated()) {
-      goalPreds.add(Factory.createPredicate(g.getStatus().toString(), g.getPredicate()));
+      goalPreds.add(Factory.createPredicate(g.getStatus().toString().toLowerCase(), g.getPredicate()));
     }
 
     AgentTeam agentTeam  = agentTeams.get(actor);

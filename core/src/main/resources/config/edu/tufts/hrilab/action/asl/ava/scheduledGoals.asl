@@ -212,7 +212,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     Predicate !goalPredExtended;
     Long !gid;
 
-    !scheduledGoals = act:getScheduledGoals();
+    !scheduledGoals = tsc:getScheduledGoals();
     op:log(debug, "[modifyScheduledGoal] current scheduled goals: !scheduledGoals");
     !numGoals = op:invokeMethod(!scheduledGoals, "size");
 

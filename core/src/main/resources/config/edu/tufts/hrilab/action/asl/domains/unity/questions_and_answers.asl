@@ -361,12 +361,12 @@ import edu.tufts.hrilab.fol.Predicate;
   act:assertBelief(!generatedResponse);
   !answered = op:newObject("java.lang.Boolean", false);
   !beliefAnswer = op:invokeStaticMethod("edu.tufts.hrilab.util.Util", "createPredicate", "answerYN(X, Y)");
-  !goals = act:getCurrentGoals(?actor);
+  !goals = tsc:getCurrentGoals(?actor);
   !initialGoalSize = op:invokeMethod(!goals, "size");
 
   // While the question is not answered or there is still time left on the timeout
   while (~op:==(!answered, true) && op:le(!timeElapsed, ?waitTime)) {
-    !goals = act:getCurrentGoals(?actor);
+    !goals = tsc:getCurrentGoals(?actor);
     !goalSize = op:invokeMethod(!goals, "size");
     // op:log("info", "This is the goal size in a listen's loop without other stuff going on: !goalSize");
     // This number represents one more than the number of goals when a question action is called during newAutonomy

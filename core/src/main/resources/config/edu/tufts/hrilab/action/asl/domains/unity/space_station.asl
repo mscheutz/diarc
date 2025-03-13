@@ -941,7 +941,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   java.lang.Boolean !hasActor = false;
   String !goalStr;
 
-  !goals = act:getCurrentGoals();
+  !goals = tsc:getCurrentGoals();
   op:log("debug", "?actor: goals during monitoring are: !goals");
   foreach(!goal : !goals) {
     op:log("debug", "filterActiveGoals: ?actor: !goalStr");
@@ -1411,7 +1411,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "idle(?actor)");
     (!status, !sinceStart, !sinceEnd) = act:testRecency(!queryPred);
     //op:log("info", "!status, !sinceStart, !sinceEnd");
-    !goals = act:getCurrentGoals();
+    !goals = tsc:getCurrentGoals();
     //op:log("info", !goals);
     // No action found for event getCurrentGoals !goals
     !goalSize = op:invokeMethod(!goals, "size");
@@ -1535,7 +1535,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
   observes : num(goals, one);
 
-  !goalPreds = act:getCurrentGoals();
+  !goalPreds = tsc:getCurrentGoals();
   op:log("debug", "?actor: initial goals: !goalPreds");
   foreach(!pred : !goalPreds) {
     !predString = op:newObject("java.lang.String", "");
@@ -1661,7 +1661,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     }
   }
 
-  !goals = act:getCurrentGoals();
+  !goals = tsc:getCurrentGoals();
   !goalSize = op:invokeMethod(!goals, "size");
   op:log("debug", "?actor: starting autonomy");
 

@@ -665,7 +665,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return a list of predicates representing the goal
    */
   @TRADEService
-  @Action
   public List<Predicate> getCurrentGoals(Symbol actor) {
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getCurrentGoals()) {
@@ -682,7 +681,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * TODO: remove this method, or at least make it not a trade service
    */
   @TRADEService
-  @Action
   public List<Goal> getCurrentGoals() {
     return em.getCurrentGoals();
   }
@@ -694,7 +692,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
-  @Action
   @TRADEService
   public List<Goal> getCurrentGoals(Goal queryGoal) {
     return em.getCurrentGoals();
@@ -734,7 +731,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return a list of predicates representing the goal
    */
   @TRADEService
-  @Action
   public List<Predicate> getActiveGoals(Symbol actor) {
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getActiveGoals()) {
@@ -787,7 +783,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return a list of predicates representing the goal
    */
   @TRADEService
-  @Action
   public List<Predicate> getScheduledGoals(Symbol actor) {
     List<Predicate> pg = new ArrayList<>();
     for (Goal g : em.getScheduledGoals()) {
@@ -807,7 +802,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return a list of scheduled goals' ids
    */
   @TRADEService
-  @Action
   public List<Long> getScheduledGoalIds(Symbol actor) {
     List<Long> pg = new ArrayList<>();
     for (Goal g : em.getScheduledGoals()) {
@@ -1055,7 +1049,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   @TRADEService
-  @Action
   public Goal getCurrentGoal(Symbol actorToCheck, int index) {
     return em.getCurrentGoal(actorToCheck, index);
   }

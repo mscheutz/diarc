@@ -64,7 +64,7 @@
   java.lang.Boolean !hasRepairTube;
   java.util.List !goalPreds;
 
-  (!goalPreds) = act:getCurrentGoals(?actorToCheck);
+  (!goalPreds) = tsc:getCurrentGoals(?actorToCheck);
   op:log("info", "?actorToCheck: initial goals: !goalPreds");
   ?repairing = op:newObject("java.lang.Boolean", False);
   foreach(!pred : !goalPreds) {

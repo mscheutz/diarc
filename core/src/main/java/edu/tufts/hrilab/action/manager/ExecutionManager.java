@@ -1659,7 +1659,7 @@ public class ExecutionManager implements GoalListener {
     }
 
     for (Goal g : agentTeam.getActiveGoals()) {
-      goalPreds.add(Factory.createPredicate(g.getStatus().toString(), g.getPredicate()));
+      goalPreds.add(Factory.createPredicate(g.getStatus().toString().toLowerCase(), g.getPredicate()));
     }
 
     for (Symbol member : agentTeam.getMemberNames()) {
