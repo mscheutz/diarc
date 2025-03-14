@@ -50,6 +50,9 @@ public class RecoveryTest {
      * Helper method for shouldAttemptRecoverytest to check if the desired recovery policy was in fact executed
      */
     private void checkRecovery(Predicate goalPred, String recoveryActionName, ActionStatus desiredStatus) {
+        if (goalPred.getName().equals("goal")) {
+            goalPred = (Predicate) goalPred.get(1);
+        }
         Long goalId = component.getGoalId(goalPred);
         Goal goal = component.getGoal(goalId);
         Context recoveryActionContext = goal.getCurrentContext().getParentContext();
@@ -179,6 +182,7 @@ public class RecoveryTest {
         //Submit state based goal for holding, recovery should cause goal to succeed
         Predicate goalPredicate = Factory.createPredicate("goal(self:agent,holding(self:agent))");
         executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+        goalPredicate = (Predicate) goalPredicate.get(1);
         Long goalId = component.getGoalId(goalPredicate);
         Goal goal = component.getGoal(goalId);
 
@@ -331,6 +335,7 @@ public class RecoveryTest {
         //Submit holding goal, should succeed due to recovery
         Predicate goalPredicate = Factory.createPredicate("goal(self:agent,holding(self:agent))");
         executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+        goalPredicate = (Predicate) goalPredicate.get(1);
         Long goalId = component.getGoalId(goalPredicate);
         Goal goal = component.getGoal(goalId);
 
@@ -593,6 +598,7 @@ public class RecoveryTest {
         //Submit holding goal, should succeed due to recovery
         Predicate goalPredicate = Factory.createPredicate("goal(self:agent,holding(self:agent))");
         executeAndCheckGoal(goalPredicate, GoalStatus.SUCCEEDED);
+        goalPredicate = (Predicate) goalPredicate.get(1);
         Long goalId = component.getGoalId(goalPredicate);
         Goal goal = component.getGoal(goalId);
 

@@ -654,10 +654,10 @@ public class QueueExecutionManagerTest {
     assertEquals(em.getPendingGoalsPredicates(), pendingList);
 
     List<Predicate> systemList = new ArrayList<>();
-    systemList.add(Factory.createPredicate("ACTIVE",goalPred2));
+    systemList.add(Factory.createPredicate("active",goalPred2));
     assertEquals(em.getSystemGoalsPredicates(Factory.createSymbol("agent3:agent")), systemList);
 
-    systemList.add(Factory.createPredicate("ACTIVE",goalPred));
+    systemList.add(Factory.createPredicate("active",goalPred));
     assertEquals(em.getSystemGoalsPredicates(Factory.createSymbol("self:agent")), systemList);
 
     assertSame(em.getNextGoalPredicate(), goalPred3);

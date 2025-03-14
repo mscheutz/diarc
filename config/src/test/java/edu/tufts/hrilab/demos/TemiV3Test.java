@@ -34,7 +34,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
   static DiarcConfigTester tester;
   TemiV3Mock config;
-  private final static Pattern alphaNumericPattern = Pattern.compile("\\w+");
+  private final static Pattern alphaNumericPattern = Pattern.compile("[\\w ]+");
   private Map<Variable, Symbol> ackResponseBindings = new HashMap();
   private Map<Variable, Symbol> freezeResponseBindings = new HashMap();
 
@@ -159,7 +159,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
       return null;
     }
     Matcher matcher = alphaNumericPattern.matcher(desc);
-    if (!matcher.matches() || desc.contains(" ")) {
+    if (!matcher.matches()) {// || desc.contains(" ")) {
       return "\"" + desc + "\"";
     }
     return desc;
