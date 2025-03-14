@@ -31,25 +31,25 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_0:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "okay", "true" ]
@@ -91,25 +91,25 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[serving box(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_1:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "okay", "true" ]
@@ -213,36 +213,36 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{X:item=item_0:item}", "1.0", "[\"southwest bowl\"(X:item)]", "true" ]
+      "serviceArgs" : [ "{X:item=item_0:item}", "1.0", "[southwest bowl(X:item)]", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[serving box(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_2:physobj}", "1.0", "[serving box(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Okay. How do I prepare a \"southwest bowl\" ?", "true" ]
+      "serviceArgs" : [ "Okay. How do I prepare a southwest bowl ?", "true" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "okay", "true" ]
@@ -250,28 +250,28 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_3:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "okay", "true" ]
@@ -367,25 +367,25 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[chipotle sauce(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[chipotle sauce(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[chipotle sauce(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[chipotle sauce(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[chipotle sauce(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[chipotle sauce(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "false" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_6:physobj}", "1.0", "[chipotle sauce(VAR0:physobj)]", "false" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "okay", "true" ]
@@ -401,10 +401,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_7:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_7:physobj}", "1.0", "[serving box(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_8:physobj}", "1.0", "[\"bell pepper\"(VAR0:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_8:physobj}", "1.0", "[bell pepper(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_9:physobj}", "1.0", "[corn(VAR0:physobj)]", "true" ]
@@ -413,7 +413,7 @@
       "serviceArgs" : [ "{VAR0:physobj=physobj_10:physobj}", "1.0", "[carrot(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_11:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_11:physobj}", "1.0", "[chipotle sauce(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "perceiveEntityFromSymbol",
       "serviceArgs" : [ "physobj_7:physobj", "true" ]
@@ -458,7 +458,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Could you please bring a \"bell pepper\" from the \"pantry\" to the \"prep area\"", "true" ]
+      "serviceArgs" : [ "Could you please bring a bell pepper from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -553,7 +553,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Could you please bring a corn from the \"pantry\" to the \"prep area\"", "true" ]
+      "serviceArgs" : [ "Could you please bring a corn from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -648,7 +648,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Could you please bring a carrot from the \"pantry\" to the \"prep area\"", "true" ]
+      "serviceArgs" : [ "Could you please bring a carrot from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -785,7 +785,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "\"southwest bowl\" is Complete", "true" ]
+      "serviceArgs" : [ "southwest bowl is Complete", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -905,10 +905,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "SUSPENDED task:", "true" ]
+      "serviceArgs" : [ "suspended task:", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I define Item By Analogy \"puerto rican bowl\"", "true" ]
+      "serviceArgs" : [ "I define Item By Analogy puerto rican bowl", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -958,13 +958,13 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_15:physobj}", "1.0", "[\"serving box\"(VAR0:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_15:physobj}", "1.0", "[serving box(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR0:physobj=physobj_16:physobj}", "1.0", "[corn(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{VAR0:physobj=physobj_17:physobj}", "1.0", "[\"chipotle sauce\"(VAR0:physobj)]", "true" ]
+      "serviceArgs" : [ "{VAR0:physobj=physobj_17:physobj}", "1.0", "[chipotle sauce(VAR0:physobj)]", "true" ]
     }, {
       "serviceName" : "assertProperties",
       "serviceArgs" : [ "{VAR1:physobj=physobj_18:physobj}", "1.0", "[chicken(VAR1:physobj)]", "true" ]
@@ -1021,7 +1021,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Could you please bring a corn from the \"pantry\" to the \"prep area\"", "true" ]
+      "serviceArgs" : [ "Could you please bring a corn from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -1116,7 +1116,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Could you please bring a chicken from the \"pantry\" to the \"prep area\"", "true" ]
+      "serviceArgs" : [ "Could you please bring a chicken from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -1211,7 +1211,7 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Could you please bring a plantain from the \"pantry\" to the \"prep area\"", "true" ]
+      "serviceArgs" : [ "Could you please bring a plantain from the pantry to the prep area", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -1300,12 +1300,12 @@
       "serviceArgs" : [ "noRapidError()", "[{}]" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "\"puerto rican bowl\" is Complete", "true" ]
+      "serviceArgs" : [ "puerto rican bowl is Complete", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I can not go To the \"prep area\" because you are not me supervisor", "true" ]
+      "serviceArgs" : [ "I can not go To the prep area because you are not me supervisor", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -1326,7 +1326,7 @@
   }, {
     "serviceCalls" : [ {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "I can not define Item \"puerto rican bowl\" because defining Item \"puerto rican bowl\" is admin Goal", "true" ]
+      "serviceArgs" : [ "I can not define Item puerto rican bowl because defining Item puerto rican bowl is admin Goal", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -1339,10 +1339,10 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "assertProperties",
-      "serviceArgs" : [ "{X:item=item_1:item}", "1.0", "[\"puerto rican bowl\"(X:item)]", "true" ]
+      "serviceArgs" : [ "{X:item=item_1:item}", "1.0", "[puerto rican bowl(X:item)]", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "Okay. How do I prepare a \"puerto rican bowl\" ?", "true" ]
+      "serviceArgs" : [ "Okay. How do I prepare a puerto rican bowl ?", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
