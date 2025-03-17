@@ -101,7 +101,7 @@ public class AvaDemo extends DiarcConfiguration {
       String llmComponentArgs = String.format("-service %s -model %s -temperature 0.6", service, model);
       if (usePrivateEndpoint) {
         //llmComponentArgs += " -endpoint https://z6xvb4wfqwn59s1r.us-east-1.aws.endpoints.huggingface.cloud";
-        llmComponentArgs += " -endpoint https://jga7qt1d6bvlqb4g.us-east-1.aws.endpoints.huggingface.cloud";
+        llmComponentArgs += " -endpoint https://yz9rcl3hkr2vkvhj.us-east-1.aws.endpoints.huggingface.cloud";
       }
       createInstance(edu.tufts.hrilab.llm.LLMComponent.class, llmComponentArgs);
     }
