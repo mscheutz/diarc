@@ -47,7 +47,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "SUSPENDED task:", "true" ]
+      "serviceArgs" : [ "suspended task:", "true" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I define Item \"southwest bowl\"", "true" ]

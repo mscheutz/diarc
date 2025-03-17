@@ -905,7 +905,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "sayText",
-      "serviceArgs" : [ "SUSPENDED task:", "true" ]
+      "serviceArgs" : [ "suspended task:", "true" ]
     }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "I define Item By Analogy \"puerto rican bowl\"", "true" ]
