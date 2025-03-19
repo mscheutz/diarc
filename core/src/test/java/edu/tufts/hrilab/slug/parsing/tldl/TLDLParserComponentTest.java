@@ -4127,16 +4127,16 @@ public class TLDLParserComponentTest {
                 "INSTRUCT(brad,self,goToLocation(self,VAR0),{bathroom(VAR0),DEFINITE(VAR0)})",
                 speaker, "self"));
 
-        assertTrue(testUtterance("andy is near the elevator",
-                "STATEMENT(brad,self,at(andy,VAR0),{elevator(VAR0),DEFINITE(VAR0)})",
+        assertTrue(testUtterance("andy is near the back elevator",
+                "STATEMENT(brad,self,at(andy,VAR0),{back elevator(VAR0),DEFINITE(VAR0)})",
                 speaker, "self"));
 
         assertTrue(testUtterance("matt is in the hri lab",
                 "STATEMENT(brad,self,at(matt,VAR0),{481b hri lab(VAR0),DEFINITE(VAR0)})",
                 speaker, "self"));
 
-        assertTrue(testUtterance("bring andy from the elevator to the hri lab",
-                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0,VAR1),{elevator(VAR0),481b hri lab(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+        assertTrue(testUtterance("bring andy from the back elevator to the hri lab",
+                "INSTRUCT(brad,self,escortToLocation(self,andy,VAR0,VAR1),{back elevator(VAR0),481b hri lab(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 speaker, "self"));
 
         assertTrue(testUtterance("bring andy to the kitchen",
@@ -4207,8 +4207,8 @@ public class TLDLParserComponentTest {
                 "INSTRUCT(brad,self,scheduleGoal(self),{})",
                 speaker, "self"));
 
-        assertTrue(testUtterance("the task is go to the coffee maker",
-                "REPLY(brad,self,val(goToLocation(self,VAR0)),{coffee maker(VAR0),DEFINITE(VAR0)})",
+        assertTrue(testUtterance("the task is go to the kitchenette",
+                "REPLY(brad,self,taskPredicate(goToLocation(self,VAR0)),{430 kitchenette(VAR0),DEFINITE(VAR0)})",
                 speaker, "self"));
 
         assertTrue(testUtterance("every 1 hour",
@@ -4227,25 +4227,17 @@ public class TLDLParserComponentTest {
                 "REPLY(brad,self,absoluteTime(1,am),{})",
                 speaker, "self"));
 
-        assertTrue(testUtterance("the task is go to the back door",
-                "REPLY(brad,self,val(goToLocation(self,VAR0)),{back door(VAR0),DEFINITE(VAR0)})",
+        assertTrue(testUtterance("the task is go to the back stairs",
+                "REPLY(brad,self,taskPredicate(goToLocation(self,VAR0)),{stair b(VAR0),DEFINITE(VAR0)})",
                 speaker, "self"));
 
 
         assertTrue(testUtterance("perform lab patrol with wifi evaluation",
-                "INSTRUCT(brad,self,patrol(self,lab,wifiEvaluation),{})",
+                "INSTRUCT(brad,self,patrol(self,lab patrol,wifiEvaluation),{})",
                 speaker, "self"));
 
-        assertTrue(testUtterance("add a new patrol path",
-                "INSTRUCT(brad,self,addPatrolPath(self),{})",
-                speaker, "self"));
-
-        assertTrue(testUtterance("the name is lab patrol",
-                "REPLY(brad,self,val(\"lab patrol\"),{})",
-                speaker, "self"));
-
-        assertTrue(testUtterance("i will teach you how to dance",
-                "REPLY(brad,self,val(\"lab patrol\"),{})",
+        assertTrue(testUtterance("add a new patrol path demo path",
+                "INSTRUCT(brad,self,definePatrolPath(self,\"demo path\"),{})",
                 speaker, "self"));
     }
 }
