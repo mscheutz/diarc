@@ -277,7 +277,7 @@ public class Pddl {
     }
 
     private String sanitize(String input) {
-      return input.replaceAll("\"", "QUOTE").replaceAll("\s", "_");
+      return input.replaceAll("\"", "QUOTE").replaceAll(" ", "SPACE");
     }
 
   }

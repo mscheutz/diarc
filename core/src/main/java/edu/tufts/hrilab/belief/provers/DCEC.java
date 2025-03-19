@@ -200,6 +200,11 @@ public class DCEC implements Prover {
     return null;
   }
 
+  @Override
+  public Symbol unsanitize(Term term) {
+    return null;
+  }
+
   /**
    * Knowledge database in DCEC syntax
    */

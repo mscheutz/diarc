@@ -372,6 +372,11 @@ public class Prolog implements Prover {
     return sanitized;
   }
 
+  @Override
+  public Symbol unsanitize(Term term) {
+    return PrologUtil.undoMakePrologSafe(term);
+  }
+
   /**
    * Generate semantic type map () for Term.
    * @param term
