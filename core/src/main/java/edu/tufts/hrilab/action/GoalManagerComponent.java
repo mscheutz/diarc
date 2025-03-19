@@ -693,8 +693,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
   @TRADEService
-  public List<Goal> getCurrentGoals(Goal queryGoal) {
-    return em.getCurrentGoals();
+  public List<Goal> getCurrentGoals(Predicate queryGoal) {
+    return em.getCurrentGoals(queryGoal);
   }
 
   /**
@@ -1029,7 +1029,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   @TRADEService
   public List<Long> getGoalIds(Predicate goal) {
-    //Goal queryGoal = new Goal(goal);
     List<Goal> goals = em.getAllGoals(goal);
     return goals.stream().map(Goal::getId).collect(Collectors.toList());
   }

@@ -480,6 +480,51 @@ import edu.tufts.hrilab.action.justification.Justification;
     }
 }
 
+() = checkKnowsActiveGoals["describes ?actor's current active task(s)"](){
+
+    effects : {
+      success : knows(?actor,currentGoals(are(?actor,!currentGoalsPred)));
+    }
+
+    java.util.List !goalPreds;
+    java.lang.Integer !resultsSize=0;
+    java.util.List !currentGoalsPreds = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    Predicate !currentGoalPred;
+    Predicate !currentGoalsPred;
+    java.lang.String !status;
+    Predicate !goalPred;
+    java.lang.Integer !goalsSize;
+    Variable !tmpVar;
+    Predicate !oldGoalsPred;
+
+    op:log("info","[checkKnowsActiveGoals]");
+
+    // construct and retract a generic predicate from belief to clear previous entries
+    !tmpVar = op:newObject("edu.tufts.hrilab.fol.Variable", "X");
+    !oldGoalsPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?actor,currentGoals(are(?actor,!tmpVar)))");
+    act:retractBelief(!oldGoalsPred);
+
+    !goalPreds = act:getSystemGoalsPredicates();
+    !resultsSize = op:size(!goalPreds);
+    if(op:gt(!resultsSize,0)){
+        foreach(!goalPred: !goalPreds){
+            !status= op:getName(!goalPred);
+            !goalPred= op:getArg(!goalPred,0);
+            !currentGoalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate",!status,!goalPred);
+            op:add(!currentGoalsPreds,!currentGoalPred);
+        }
+        !goalsSize = op:invokeMethod(!currentGoalsPreds, "size");
+        if (op:gt(!goalsSize,1)) {
+            !currentGoalsPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","and",!currentGoalsPreds);
+        } else {
+            !currentGoalsPred = op:invokeMethod(!currentGoalsPreds,"get",0);
+        }
+    } else {
+        !currentGoalsPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","doing(nothing)");
+    }
+    op:log("info","[checkKnowsActiveGoals] !currentGoalsPred");
+}
+
 () = describePendingGoals["describes ?actor's pending goals task"](){
     java.util.List !goalPreds;
     java.lang.Integer !resultsSize=0;

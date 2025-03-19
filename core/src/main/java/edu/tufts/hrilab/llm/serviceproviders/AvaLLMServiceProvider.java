@@ -117,6 +117,16 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     }
 
     private boolean correctCommonNLUMistakes(Utterance utterance) {
+        ////TODO: this needs to be caught earlier in the pipeline than here, just copying here to maintain awareness of
+        //      the issue without hacking code in the asr app or parser itself.
+        //incoming.setWords(incoming.getWords().stream().map(word -> {
+        //  word = word.toLowerCase();
+        //  if (word.equals("wi-fi")) {
+        //    word = "wifi";
+        //  }
+        //  return word;
+        //}).collect(Collectors.toList()));
+
         String actorName = utterance.getAddressee().getName();
         try {
             String command = utterance.getSemantics().getName();
@@ -161,6 +171,11 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 }
                 Symbol argSymbol;
                 String descriptorType = getDescriptorType(actor,argString);
+                //String descriptorType = "";
+                ////TODO: remove this - make LLM add types itself. Right now any conflicting literal will be processed as a ref
+                //if (!semantics.getName().endsWith("Name")) {
+                //    getDescriptorType(actor, argString);
+                //}
                 if (descriptorType.isEmpty()) {
                     argSymbol = Factory.createFOL(argString);
                 } else {

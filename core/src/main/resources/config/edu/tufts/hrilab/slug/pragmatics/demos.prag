@@ -30,6 +30,7 @@ INSTRUCT(A,B,forgetThat(notPropertyOf(X,solid)),Z) := want(A,forgetThat(B,A,not(
 # what are/is you/shafer doing, what are your goals
 QUESTION(A,B,whatAre(C,goals),Z) := itk(A,currently(is(C,WHAT)))
 QUESTION(A,B,whatAre(C,doing),Z) := itk(A,currently(is(C,WHAT)))
+QUESTION(A,B,whatAre(C,currentGoals),Z) := itk(A,currentGoals(are(C,WHAT)))
 
 #TODO: remove this in favor of more direct "go to start pose" instruction
 INSTRUCT(A,B,startOver(),Z) := want(A, goToPose(start))

@@ -416,8 +416,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
         }
     } else {
       // find matching goal
-      !queryGoal = op:newObject("edu.tufts.hrilab.action.goal.Goal", ?goalPredicate);
-      ?goals = tsc:getCurrentGoals(!queryGoal);
+      ?goals = tsc:getCurrentGoals(?goalPredicate);
     }
 
     // check if goal was found

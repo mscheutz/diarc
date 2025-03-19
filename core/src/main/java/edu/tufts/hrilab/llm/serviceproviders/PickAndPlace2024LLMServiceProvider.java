@@ -9,6 +9,8 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 //import edu.tufts.hrilab.action.goal.GoalInfo;
 //import edu.tufts.hrilab.action.notification.NotificationType;
+import edu.tufts.hrilab.action.goal.GoalInfo;
+import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.llm.Chat;
 import edu.tufts.hrilab.llm.Completion;
@@ -620,18 +622,15 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     @TRADEService
     //public void registerForNotifications(TRADEServiceInfo notificationHandler) {
     public void registerForNotifications() {
-        log.warn("[registerForNotifications] Comment back in post-merge");
-        registeredForNewActions = true;
-
-        //try {
-        //    TRADEServiceInfo registerService = TRADE.getAvailableService(new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
-        //    TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseAddition").argTypes(ActionDBEntry.class));
-        //    registerService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
-        //    registeredForNewActions = true;
-        //    log.info("[registerForNotifications] successfully registered for database additions");
-        //} catch (TRADEException e) {
-        //    log.debug("[registerForNotifications] error registering for actionDB notifications", e);
-        //}
+        try {
+            TRADEServiceInfo registerService = TRADE.getAvailableService(new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
+            TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseAddition").argTypes(ActionDBEntry.class));
+            registerService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
+            registeredForNewActions = true;
+            log.info("[registerForNotifications] successfully registered for database additions");
+        } catch (TRADEException e) {
+            log.debug("[registerForNotifications] error registering for actionDB notifications", e);
+        }
     }
 
     @TRADEService
@@ -646,14 +645,13 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     @Override
     public void shutdownComponent() {
         super.shutdownComponent();
-        log.warn("[shutdownComponent] comment back in notification unregister post-merge");
-        //try {
-        //    TRADEServiceInfo unregisterService = TRADE.getAvailableService(new TRADEServiceConstraints().name("unregisterGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
-        //    TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleGoalNotification").argTypes(GoalInfo.class));
-        //    unregisterService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
-        //} catch (TRADEException e) {
-        //    throw new RuntimeException(e);
-        //}
+        try {
+            TRADEServiceInfo unregisterService = TRADE.getAvailableService(new TRADEServiceConstraints().name("unregisterGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
+            TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleGoalNotification").argTypes(GoalInfo.class));
+            unregisterService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
+        } catch (TRADEException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     TRADEServiceInfo getServiceForAgent(String agentName, String serviceName, Class<?>... argTypes) {

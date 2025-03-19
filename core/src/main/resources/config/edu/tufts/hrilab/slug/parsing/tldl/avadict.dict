@@ -438,13 +438,13 @@ greet; C; greet(?ADDRESSEE)
 
 option; VAL/NUM; #x.option($x)
 
-what is your current task; VERBI; describeCurrentGoal
+tell me your current task; VERBI; describeCurrentGoal
 what are your pending tasks; VERBI; describePendingGoals
 cancel pending tasks; VERBI; cancelAllPendingGoals
 cancel all pending tasks; VERBI; cancelAllPendingGoals
 cancel all active tasks; VERBI; cancelAllActiveGoals
 cancel all tasks; VERBI; cancelAllCurrentGoals
-what is your current goal; VERBI; describeCurrentGoal
+tell me your current goal; VERBI; describeCurrentGoal
 what are your pending goals; VERBI; describePendingGoals
 cancel pending goals; VERBI; cancelAllPendingGoals
 cancel all pending goals; VERBI; cancelAllPendingGoals
@@ -462,3 +462,8 @@ what did you ask me; VERBI; repeatLastQuestion
 
 what locations do you have saved; VERBI; describeAllKnownLocations
 what patrol paths do you have saved; VERBI; describeAllKnownPatrolPaths
+
+%Start of itk ('correct') versions of describe actions
+what is your current task; Q; whatAre(?ADDRESSEE,currentGoals)
+what is your current goal; Q; whatAre(?ADDRESSEE,currentGoals)
+%what are you doing;  Q; whatAre(?ADDRESSEE,goals)
