@@ -1403,7 +1403,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Save this location as waiting room",
-                "INSTRUCT(brad,self,saveLocation(self,\"waiting room\"),{})",
+                "INSTRUCT(brad,self,saveLocation(self,waiting room),{})",
                 "brad",
                 "self"
         ));
@@ -1413,18 +1413,18 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
-        component.injectDictionaryEntry("waiting room", "LOC", "\"waiting room\"", "DEFINITE");
+        component.injectDictionaryEntry("waiting room", "LOC", "waiting room", "DEFINITE");
         component.injectDictionaryEntry("reception", "LOC", "reception", "DEFINITE");
 
         assertTrue(testUtterance("go to location the waiting room",
 //        "INSTRUCT(brad,self,goToLocation(waiting-room),{})",
-                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{\"waiting room\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{waiting room(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("come to the waiting room",
-                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{\"waiting room\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{waiting room(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
@@ -1444,22 +1444,22 @@ public class TLDLParserComponentTest {
 //        ));
 
 
-        component.injectDictionaryEntry("treatment chair three", "LOC", "\"treatment chair three\"", "DEFINITE");
+        component.injectDictionaryEntry("treatment chair three", "LOC", "treatment chair three", "DEFINITE");
 
         assertTrue(testUtterance("Escort the patient to the treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR0,patient),{\"treatment chair three\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,escort(self,VAR0,patient),{treatment chair three(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort Alex to the treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR0,alex),{\"treatment chair three\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,escort(self,VAR0,alex),{treatment chair three(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort Alex from the waiting room to the treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR1,alex,VAR0),{\"waiting room\"(VAR0),\"treatment chair three\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,alex,VAR0),{waiting room(VAR0),treatment chair three(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
@@ -1472,9 +1472,9 @@ public class TLDLParserComponentTest {
                 "self"
         ));
 
-        component.injectDictionaryEntry("treatment chair three", "LOC", "\"treatment chair three\"", "DEFINITE");
-        component.injectDictionaryEntry("chair one", "LOC", "\"chair one\"", "DEFINITE");
-        component.injectDictionaryEntry("chair four", "LOC", "\"chair four\"", "DEFINITE");
+        component.injectDictionaryEntry("treatment chair three", "LOC", "treatment chair three", "DEFINITE");
+        component.injectDictionaryEntry("chair one", "LOC", "chair one", "DEFINITE");
+        component.injectDictionaryEntry("chair four", "LOC", "chair four", "DEFINITE");
 
         assertTrue(testUtterance("Escort",
                 "UNKNOWN(brad,self,error(self,doNotKnowWhat(self,escort,means)),{})",
@@ -1513,55 +1513,55 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Escort to chair one",
-                "INSTRUCT(brad,self,escort(self,VAR0,patient),{\"chair one\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,escort(self,VAR0,patient),{chair one(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort the patient to chair one",
-                "INSTRUCT(brad,self,escort(self,VAR0,patient),{\"chair one\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,escort(self,VAR0,patient),{chair one(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort Alex to chair one",
-                "INSTRUCT(brad,self,escort(self,VAR0,alex),{\"chair one\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,escort(self,VAR0,alex),{chair one(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort from chair one to chair four",
-                "INSTRUCT(brad,self,escort(self,VAR1,patient,VAR0),{\"chair one\"(VAR0),\"chair four\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,patient,VAR0),{chair one(VAR0),chair four(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort the patient from chair one to chair four",
-                "INSTRUCT(brad,self,escort(self,VAR1,patient,VAR0),{\"chair one\"(VAR0),\"chair four\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,patient,VAR0),{chair one(VAR0),chair four(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort Alex from chair one to chair four",
-                "INSTRUCT(brad,self,escort(self,VAR1,alex,VAR0),{\"chair one\"(VAR0),\"chair four\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,alex,VAR0),{chair one(VAR0),chair four(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort the patient to treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR0,patient),{\"treatment chair three\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,escort(self,VAR0,patient),{treatment chair three(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort Alex to treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR0,alex),{\"treatment chair three\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,escort(self,VAR0,alex),{treatment chair three(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort Alex from the waiting room to treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR1,alex,VAR0),{\"waiting room\"(VAR0),\"treatment chair three\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,alex,VAR0),{waiting room(VAR0),treatment chair three(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
@@ -1592,13 +1592,13 @@ public class TLDLParserComponentTest {
 
         //Video 3
         assertTrue(testUtterance("Say hello and welcome to the orthodontist",
-                "INSTRUCT(brad,self,generateResponseFromString(self,\"hello and welcome to the orthodontist\"),{})",
+                "INSTRUCT(brad,self,generateResponseFromString(self,hello and welcome to the orthodontist),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Display message always remember to floss",
-                "INSTRUCT(brad,self,display(self,\"always remember to floss\"),{})",
+                "INSTRUCT(brad,self,display(self,always remember to floss),{})",
                 "brad",
                 "self"
         ));
@@ -1614,7 +1614,7 @@ public class TLDLParserComponentTest {
 //    ));
 
         assertTrue(testUtterance("Save this location as waiting room",
-                "INSTRUCT(brad,self,saveLocation(self,\"waiting room\"),{})",
+                "INSTRUCT(brad,self,saveLocation(self,waiting room),{})",
                 "brad",
                 "self"
         ));
@@ -1632,7 +1632,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("go to the waiting room",
-                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{\"waiting room\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{waiting room(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
@@ -1640,7 +1640,7 @@ public class TLDLParserComponentTest {
         //Video 4
 
         assertTrue(testUtterance("fetch me a goody bag",
-                "INSTRUCT(brad,self,fetch(self,\"a goody bag\"),{})",
+                "INSTRUCT(brad,self,fetch(self,a goody bag),{})",
                 "brad",
                 "self"
         ));
@@ -1655,16 +1655,16 @@ public class TLDLParserComponentTest {
 //    locations = new ArrayList<>();
 //    locations.add("supply room");
 //    component.addLocations(locations);
-        component.injectDictionaryEntry("supply room", "LOC", "\"supply room\"", "DEFINITE");
+        component.injectDictionaryEntry("supply room", "LOC", "supply room", "DEFINITE");
 
         assertTrue(testUtterance("supplies are stored in the supply room",
-                "INSTRUCT(brad,self,setStorageArea(self,VAR0),{\"supply room\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,setStorageArea(self,VAR0),{supply room(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("fetch me a goody bag from the supply room",
-                "INSTRUCT(brad,self,fetch(self,\"a goody bag\",VAR0),{\"supply room\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,fetch(self,a goody bag,VAR0),{supply room(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
@@ -1678,20 +1678,20 @@ public class TLDLParserComponentTest {
 //    locations = new ArrayList<>();
 //    locations.add("treatment room");
 //    component.addLocations(locations);
-        component.injectDictionaryEntry("treatment room", "LOC", "\"treatment room\"", "DEFINITE");
+        component.injectDictionaryEntry("treatment room", "LOC", "treatment room", "DEFINITE");
 
         assertTrue(testUtterance("first go to the treatment room",
-                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{\"treatment room\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{treatment room(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("then display message this is the treatment room",
-                "INSTRUCT(brad,self,display(self,\"this is the treatment room\"),{})",
+                "INSTRUCT(brad,self,display(self,this is the treatment room),{})",
                 "brad",
                 "self"
         ));
         assertTrue(testUtterance("then say this is the treatment room where we help straighten your teeth",
-                "INSTRUCT(brad,self,generateResponseFromString(self,\"this is the treatment room where we help straighten your teeth\"),{})",
+                "INSTRUCT(brad,self,generateResponseFromString(self,this is the treatment room where we help straighten your teeth),{})",
                 "brad",
                 "self"
         ));
@@ -1703,13 +1703,13 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("delete location the waiting room",
-                "INSTRUCT(brad,self,deleteLocation(self,VAR0),{\"waiting room\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,deleteLocation(self,VAR0),{waiting room(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("go to location the waiting room then say this is a test",
-                "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,\"this is a test\")),{\"waiting room\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,this is a test)),{waiting room(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
@@ -1786,7 +1786,7 @@ public class TLDLParserComponentTest {
 
 
         assertTrue(testUtterance("save this location as chair 2",
-                "INSTRUCT(brad,self,saveLocation(self,\"chair 2\"),{})",
+                "INSTRUCT(brad,self,saveLocation(self,chair 2),{})",
                 "brad",
                 "self"
         ));
@@ -1806,14 +1806,14 @@ public class TLDLParserComponentTest {
 //      component.addLocations(locations,null);
 
       assertTrue(testUtterance("escort kate to chair two ",
-        "INSTRUCT(brad,self,escort(self,VAR0,kate),{\"chair 2\"(VAR0),DEFINITE(VAR0)})",
+        "INSTRUCT(brad,self,escort(self,VAR0,kate),{chair 2(VAR0),DEFINITE(VAR0)})",
         "brad",
         "self"
       ));
 
 
       assertTrue(testUtterance("escort kate to chair to",
-        "INSTRUCT(brad,self,escort(self,VAR0,kate),{\"chair 2\"(VAR0),DEFINITE(VAR0)})",
+        "INSTRUCT(brad,self,escort(self,VAR0,kate),{chair 2(VAR0),DEFINITE(VAR0)})",
         "brad",
         "self"
       ));
@@ -1829,7 +1829,7 @@ public class TLDLParserComponentTest {
 //    locations.add("chair three");
 //    component.addLocations(locations);
 
-        component.injectDictionaryEntry("chair three", "LOC", "\"chair three\"", "DEFINITE");
+        component.injectDictionaryEntry("chair three", "LOC", "chair three", "DEFINITE");
 
 //brad: keeping this as a reference about how the homophone stuff works
 //      assertTrue(testUtterance("escort kate 2 chair 3",
@@ -1839,31 +1839,31 @@ public class TLDLParserComponentTest {
 //      ));
 
         assertTrue(testUtterance("Escort Alex from the chair to to the waiting room",
-                "INSTRUCT(brad,self,escort(self,VAR1,alex,VAR0),{\"chair 2\"(VAR0),\"waiting room\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,alex,VAR0),{chair 2(VAR0),waiting room(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort Alex from the reception to the waiting room",
-                "INSTRUCT(brad,self,escort(self,VAR1,alex,VAR0),{reception(VAR0),\"waiting room\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,alex,VAR0),{reception(VAR0),waiting room(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("go to the chair two",
-                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{\"chair 2\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{chair 2(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("go to the chair to",
-                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{\"chair 2\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,goToLocation(self,VAR0,true),{chair 2(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort the patient from the reception to the waiting room",
-                "INSTRUCT(brad,self,escort(self,VAR1,patient,VAR0),{reception(VAR0),\"waiting room\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,patient,VAR0),{reception(VAR0),waiting room(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
@@ -1918,7 +1918,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Escort will from the waiting room to the treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR1,will,VAR0),{\"waiting room\"(VAR0),\"treatment chair three\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,will,VAR0),{waiting room(VAR0),treatment chair three(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
@@ -1947,26 +1947,26 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Escort brad and will from the waiting room to  treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR1,\"brad and will\",VAR0),{\"waiting room\"(VAR0),\"treatment chair three\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,brad and will,VAR0),{waiting room(VAR0),treatment chair three(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
 
         //TODO:brad we also need to find the relevant changes for thse
         assertTrue(testUtterance("Escort from the waiting room to treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR1,patient,VAR0),{\"waiting room\"(VAR0),\"treatment chair three\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,patient,VAR0),{waiting room(VAR0),treatment chair three(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort  from the waiting room to treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR1,patient,VAR0),{\"waiting room\"(VAR0),\"treatment chair three\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,patient,VAR0),{waiting room(VAR0),treatment chair three(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort    TEST  from the waiting room to treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR1,test,VAR0),{\"waiting room\"(VAR0),\"treatment chair three\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,test,VAR0),{waiting room(VAR0),treatment chair three(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
@@ -1978,7 +1978,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Fetch a goody bag   from the lab",
-                "INSTRUCT(brad,self,fetch(self,\"a goody bag\",VAR0),{lab(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,fetch(self,a goody bag,VAR0),{lab(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
@@ -1996,13 +1996,13 @@ public class TLDLParserComponentTest {
 //        ));
 
       assertTrue(testUtterance("Escort DR. BRAD and DR. BRAD  from the waiting room to treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR1,\"dr. brad and dr. brad\",VAR0),{\"waiting room\"(VAR0),\"treatment chair three\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,\"dr. brad and dr. brad\",VAR0),{waiting room(VAR0),treatment chair three(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
 
       assertTrue(testUtterance("Escort brad will from the waiting room to treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR1,\"brad will\",VAR0),{\"waiting room\"(VAR0),\"treatment chair three\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,brad will,VAR0),{waiting room(VAR0),treatment chair three(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
@@ -2037,7 +2037,7 @@ public class TLDLParserComponentTest {
         ));
 
       assertTrue(testUtterance("go to the office then say Escort me please",
-              "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,\"escort me please\")),{office(VAR0),DEFINITE(VAR0)})",
+              "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,escort me please)),{office(VAR0),DEFINITE(VAR0)})",
               "brad",
               "self"
       ));
@@ -2056,25 +2056,25 @@ public class TLDLParserComponentTest {
         component.injectDictionaryEntry("temp", "LOC", "temp", "DEFINITE");
 
        assertTrue(testUtterance("go to temp and say get me food from the pantry",
-               "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,\"get me food from the pantry\")),{temp(VAR0),DEFINITE(VAR0)})",
+               "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,get me food from the pantry)),{temp(VAR0),DEFINITE(VAR0)})",
                "brad",
                "self"
        ));
 
       assertTrue(testUtterance("go to temp and say I want to be able to say this sentence",
-               "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,\"i want to be able to say this sentence\")),{temp(VAR0),DEFINITE(VAR0)})",
+               "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,i want to be able to say this sentence)),{temp(VAR0),DEFINITE(VAR0)})",
                "brad",
                "self"
        ));
 
       assertTrue(testUtterance("go to temp and say I know how to fetch and escort and do so many things I want to ",
-               "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,\"i know how to fetch and escort and do so many things i want to\")),{temp(VAR0),DEFINITE(VAR0)})",
+               "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,i know how to fetch and escort and do so many things i want to)),{temp(VAR0),DEFINITE(VAR0)})",
                "brad",
                "self"
        ));
 
       assertTrue(testUtterance("go to temp and say I know how to do so many things ",
-               "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,\"i know how to do so many things\")),{temp(VAR0),DEFINITE(VAR0)})",
+               "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,i know how to do so many things)),{temp(VAR0),DEFINITE(VAR0)})",
                "brad",
                "self"
        ));
@@ -2093,7 +2093,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("go to the temp and say I know how to do so many things ",
-                "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,\"i know how to do so many things\")),{temp(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,then(self,goToLocation(self,VAR0,true),generateResponseFromString(self,i know how to do so many things)),{temp(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
@@ -2169,7 +2169,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("say I am capitalized",
-                "INSTRUCT(brad,self,generateResponseFromString(self,\"i am capitalized\"),{})",
+                "INSTRUCT(brad,self,generateResponseFromString(self,i am capitalized),{})",
                 "brad",
                 "self"
         ));
@@ -2197,43 +2197,43 @@ public class TLDLParserComponentTest {
 
         //TODO: update to pass/fail correctly
         assertTrue(testUtterance("Escort Alex,s test from the waiting room to treatment chair three",
-                "INSTRUCT(brad,self,escort(self,VAR1,\"alex,s test\",VAR0),{\"waiting room\"(VAR0),\"treatment chair three\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,\"alex,s test\",VAR0),{waiting room(VAR0),treatment chair three(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort pro.,ble:matictext! from chair one to chair one",
-                "INSTRUCT(brad,self,escort(self,VAR1,\"pro.,ble:matictext!\",VAR0),{\"chair one\"(VAR0),\"chair one\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,\"pro.,ble:matictext!\",VAR0),{chair one(VAR0),chair one(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("fetch test1.5 from chair one",
-                "INSTRUCT(brad,self,fetch(self,\"test1.5\",VAR0),{\"chair one\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,fetch(self,\"test1.5\",VAR0),{chair one(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("fetch test 1.5 from chair one",
-                "INSTRUCT(brad,self,fetch(self,\"test 1.5\",VAR0),{\"chair one\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,fetch(self,\"test 1.5\",VAR0),{chair one(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("fetch test one point five from chair one",
-                "INSTRUCT(brad,self,fetch(self,\"test one point five\",VAR0),{\"chair one\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,fetch(self,test one point five,VAR0),{chair one(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("fetch t3st from chair one",
-                "INSTRUCT(brad,self,fetch(self,t3st,VAR0),{\"chair one\"(VAR0),DEFINITE(VAR0)})",
+                "INSTRUCT(brad,self,fetch(self,t3st,VAR0),{chair one(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Escort t3st from chair one to chair four",
-                "INSTRUCT(brad,self,escort(self,VAR1,t3st,VAR0),{\"chair one\"(VAR0),\"chair four\"(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escort(self,VAR1,t3st,VAR0),{chair one(VAR0),chair four(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
@@ -2342,7 +2342,7 @@ public class TLDLParserComponentTest {
                 "self"
         ));
         assertTrue(testUtterance("Then say please open this",
-                "INSTRUCT(brad,self,generateResponseFromString(self,\"please open this\"),{})",
+                "INSTRUCT(brad,self,generateResponseFromString(self,please open this),{})",
                 "brad",
                 "self"
         ));
@@ -2419,34 +2419,34 @@ public class TLDLParserComponentTest {
 
 //        H:save this location as loading area
         assertTrue(testUtterance("save this location as loading area",
-                "INSTRUCT(medic,robotTwo,saveLocation(robotTwo,\"loading area\"),{})",
+                "INSTRUCT(medic,robotTwo,saveLocation(robotTwo,loading area),{})",
                 "medic",
                 "robotTwo"
         ));
 
-        component.injectDictionaryEntry("loading area", "LOC", "\"loading area\"", "DEFINITE");
+        component.injectDictionaryEntry("loading area", "LOC", "loading area", "DEFINITE");
 
         //TODO:brad: should self be the actor here?
 //        H: "Save this pose as drop off"
                 assertTrue(testUtterance("save this pose as drop off",
-                "INSTRUCT(medic,self,recordEEPose(self,\"drop off\"),{})",
+                "INSTRUCT(medic,self,recordEEPose(self,drop off),{})",
                 "medic",
                 "self"
         ));
 
-        component.injectDictionaryEntry("drop off", "POSE", "\"drop off\"", "DEFINITE");
+        component.injectDictionaryEntry("drop off", "POSE", "drop off", "DEFINITE");
 
        //TODO:brad: actual pose consultant? for UR 5
 //        H(via tts on mobile app): "it is above loading area"
         assertTrue(testUtterance("it is above loading area",
-                "INSTRUCT(medic,self,bindPose(self,VAR0,VAR1),{it(VAR0),\"loading area\"(VAR1),INFOCUS(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(medic,self,bindPose(self,VAR0,VAR1),{it(VAR0),loading area(VAR1),INFOCUS(VAR0),DEFINITE(VAR1)})",
                 "medic",
                 "self"
         ));
 
         // H: "Save this pose as "conveyor pick up"
         assertTrue(testUtterance("save this pose as conveyor pickup",
-                "INSTRUCT(medic,self,recordEEPose(self,\"conveyor pickup\"),{})",
+                "INSTRUCT(medic,self,recordEEPose(self,conveyor pickup),{})",
                 "medic",
                 "self"
         ));
@@ -2483,7 +2483,7 @@ public class TLDLParserComponentTest {
 
         //TODO:brad: can we get a way with underscores here?
         assertTrue(testUtterance("send message there is a wounded person at alpha",
-                "INSTRUCT(searcher,robotOne,sendMessage(robotOne,\"there is a wounded person at alpha\"),{})",
+                "INSTRUCT(searcher,robotOne,sendMessage(robotOne,there is a wounded person at alpha),{})",
                 "searcher",
                 "robotOne"
         ));
@@ -2498,7 +2498,7 @@ public class TLDLParserComponentTest {
         //TODO:brad:can we also get away with underscores here?
 //        Medic(via web app):robot one, say, searcher, help is on the way, you can continue searching
         assertTrue(testUtterance("say searcher help is on the way you can continue searching",
-                "INSTRUCT(medic,robotOne,generateResponseFromString(robotOne,\"searcher help is on the way you can continue searching\"),{})",
+                "INSTRUCT(medic,robotOne,generateResponseFromString(robotOne,searcher help is on the way you can continue searching),{})",
                 "medic",
                 "robotOne"
         ));
@@ -2572,13 +2572,13 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Save this pose as work area",
-                "INSTRUCT(brad,self,recordCameraPoseAsk(self,\"work area\"),{})",
+                "INSTRUCT(brad,self,recordCameraPoseAsk(self,work area),{})",
                 "brad",
                 "self"
         ));
 
-        component.injectDictionaryEntry("work area", "RN", "\"work area\"", "VAR");
-        component.injectDictionaryEntry("work area", "REF", "\"work area\"", "DEFINITE");
+        component.injectDictionaryEntry("work area", "RN", "work area", "VAR");
+        component.injectDictionaryEntry("work area", "REF", "work area", "DEFINITE");
 
         assertTrue(testUtterance("5 mm",
                 "REPLY(brad,self,val(5,mm),{})",
@@ -2587,13 +2587,13 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Save this pose as screw feeder",
-                "INSTRUCT(brad,self,recordCameraPoseAsk(self,\"screw feeder\"),{})",
+                "INSTRUCT(brad,self,recordCameraPoseAsk(self,screw feeder),{})",
                 "brad",
                 "self"
         ));
 
-        component.injectDictionaryEntry("screw feeder", "RN", "\"screw feeder\"", "VAR");
-        component.injectDictionaryEntry("screw feeder", "REF", "\"screw feeder\"", "DEFINITE");
+        component.injectDictionaryEntry("screw feeder", "RN", "screw feeder", "VAR");
+        component.injectDictionaryEntry("screw feeder", "REF", "screw feeder", "DEFINITE");
 
         assertTrue(testUtterance("10 mm",
                 "REPLY(brad,self,val(10,mm),{})",
@@ -2602,7 +2602,7 @@ public class TLDLParserComponentTest {
         ));
 
         //TODO:brad: does the consultant work like this?
-        component.injectDictionaryEntry("screw feeder", "POSE", "\"screw feeder\"", "VAR");
+        component.injectDictionaryEntry("screw feeder", "POSE", "screw feeder", "VAR");
 
 
         //VIDEO A.2
@@ -2635,7 +2635,7 @@ public class TLDLParserComponentTest {
         //at which pose can I find m3 screws?
 
         assertTrue(testUtterance("pose screw feeder",
-                "REPLY(brad,self,pose(VAR0),{\"screw feeder\"(VAR0),DEFINITE(VAR0)})",
+                "REPLY(brad,self,pose(VAR0),{screw feeder(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
@@ -2793,7 +2793,7 @@ public class TLDLParserComponentTest {
 //        ));
 
         assertTrue(testUtterance("Then get it on the work area",
-                "INSTRUCT(brad,self,getOn(self,VAR0,VAR1),{it(VAR0),\"work area\"(VAR1),INFOCUS(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,getOn(self,VAR0,VAR1),{it(VAR0),work area(VAR1),INFOCUS(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
@@ -3219,7 +3219,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Define new kit repair kit",
-                "INSTRUCT(brad,self,defineRecipe(self,\"repair kit\"),{})",
+                "INSTRUCT(brad,self,defineRecipe(self,repair kit),{})",
                 "brad",
                 "self"
         ));
@@ -3366,37 +3366,37 @@ public class TLDLParserComponentTest {
         ));
 
 
-        component.injectDictionaryEntry("work area", "RN", "\"work area\":pose", "VAR");
-        component.injectDictionaryEntry("work area", "REF", "\"work area\":pose", "DEFINITE");
+        component.injectDictionaryEntry("work area", "RN", "work area:pose", "VAR");
+        component.injectDictionaryEntry("work area", "REF", "work area:pose", "DEFINITE");
 
-        component.injectDictionaryEntry("box a", "RN", "\"box a\":pose", "VAR");
-        component.injectDictionaryEntry("box a", "REF", "\"box a\":pose", "DEFINITE");
+        component.injectDictionaryEntry("box a", "RN", "box a:pose", "VAR");
+        component.injectDictionaryEntry("box a", "REF", "box a:pose", "DEFINITE");
 
-        component.injectDictionaryEntry("box b", "RN", "\"box b\":pose", "VAR");
-        component.injectDictionaryEntry("box b", "REF", "\"box b\":pose", "DEFINITE");
+        component.injectDictionaryEntry("box b", "RN", "box b:pose", "VAR");
+        component.injectDictionaryEntry("box b", "REF", "box b:pose", "DEFINITE");
 
         //TODO:brad: semantic type for it?
         assertTrue(testUtterance("Then get it on the work area",
-                "INSTRUCT(brad,self,getOn(self,VAR0,VAR1:pose),{it(VAR0),\"work area\"(VAR1:pose),INFOCUS(VAR0),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,getOn(self,VAR0,VAR1:pose),{it(VAR0),work area(VAR1:pose),INFOCUS(VAR0),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Then get the pill bottle on the work area",
-                "INSTRUCT(brad,self,getOn(self,VAR0:physobj,VAR1:pose),{pillBottle(VAR0:physobj),\"work area\"(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "INSTRUCT(brad,self,getOn(self,VAR0:physobj,VAR1:pose),{pillBottle(VAR0:physobj),work area(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
 
 
         assertTrue(testUtterance("If the scale reads over 100 grams then get the pill bottle in box a",
-                "STATEMENT(brad,self,if(itemWeightGreaterThan(self,100),then(getOn(self,VAR0:physobj,VAR1:pose))),{pillBottle(VAR0:physobj),\"box a\"(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "STATEMENT(brad,self,if(itemWeightGreaterThan(self,100),then(getOn(self,VAR0:physobj,VAR1:pose))),{pillBottle(VAR0:physobj),box a(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Otherwise put the pill bottle in box b",
-                "STATEMENT(brad,self,else(getOn(self,VAR0:physobj,VAR1:pose)),{pillBottle(VAR0:physobj),\"box b\"(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "STATEMENT(brad,self,else(getOn(self,VAR0:physobj,VAR1:pose)),{pillBottle(VAR0:physobj),box b(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
@@ -3476,11 +3476,11 @@ public class TLDLParserComponentTest {
         component.injectDictionaryEntry("conveyor", "RN", "conveyor:pose", "VAR");
         component.injectDictionaryEntry("conveyor", "REF", "conveyor:pose", "DEFINITE");
 
-        component.injectDictionaryEntry("table a", "RN", "\"table a\":pose", "VAR");
-        component.injectDictionaryEntry("table a", "REF", "\"table a\":pose", "DEFINITE");
+        component.injectDictionaryEntry("table a", "RN", "table a:pose", "VAR");
+        component.injectDictionaryEntry("table a", "REF", "table a:pose", "DEFINITE");
 
-        component.injectDictionaryEntry("table b", "RN", "\"table b\":pose", "VAR");
-        component.injectDictionaryEntry("table b", "REF", "\"table b\":pose", "DEFINITE");
+        component.injectDictionaryEntry("table b", "RN", "table b:pose", "VAR");
+        component.injectDictionaryEntry("table b", "REF", "table b:pose", "DEFINITE");
 
         assertTrue(testUtterance("go to pose conveyor",
                 "INSTRUCT(brad,self,gotopose(self,VAR0:pose),{conveyor(VAR0:pose),DEFINITE(VAR0:pose)})",
@@ -3504,13 +3504,13 @@ public class TLDLParserComponentTest {
 
 
         assertTrue(testUtterance("If the part is longer than 75 mm then get the part on table a",
-                "STATEMENT(brad,self,if(partLengthGreaterThan(self,75),then(getOn(self,VAR0:physobj,VAR1:pose))),{part(VAR0:physobj),\"table a\"(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "STATEMENT(brad,self,if(partLengthGreaterThan(self,75),then(getOn(self,VAR0:physobj,VAR1:pose))),{part(VAR0:physobj),table a(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("Otherwise put the part in table b",
-                "STATEMENT(brad,self,else(getOn(self,VAR0:physobj,VAR1:pose)),{part(VAR0:physobj),\"table b\"(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+                "STATEMENT(brad,self,else(getOn(self,VAR0:physobj,VAR1:pose)),{part(VAR0:physobj),table b(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
                 "brad",
                 "self"
         ));
@@ -3582,13 +3582,13 @@ public class TLDLParserComponentTest {
         component.injectDictionaryEntry("conveyor", "RN", "conveyor", "VAR");
         component.injectDictionaryEntry("conveyor", "REF", "conveyor", "DEFINITE");
 
-        component.injectDictionaryEntry("work area", "RN", "\"work area\"", "VAR");
-        component.injectDictionaryEntry("conveyor", "REF", "\"work area\"", "DEFINITE");
+        component.injectDictionaryEntry("work area", "RN", "work area", "VAR");
+        component.injectDictionaryEntry("conveyor", "REF", "work area", "DEFINITE");
 
-        component.injectDictionaryEntry("screw feeder", "RN", "\"screw feeder\"", "VAR");
-        component.injectDictionaryEntry("screw feeder", "REF", "\"screw feeder\"", "DEFINITE");
+        component.injectDictionaryEntry("screw feeder", "RN", "screw feeder", "VAR");
+        component.injectDictionaryEntry("screw feeder", "REF", "screw feeder", "DEFINITE");
 
-        component.injectDictionaryEntry("screw feeder", "POSE", "\"screw feeder\"", "VAR");
+        component.injectDictionaryEntry("screw feeder", "POSE", "screw feeder", "VAR");
 
         assertTrue(testUtterance("define new screw type M3",
                 "INSTRUCT(brad,self,defineScrewType(self,m3),{})",
@@ -3620,7 +3620,7 @@ public class TLDLParserComponentTest {
 
         //Where can I find m3 screws?
         assertTrue(testUtterance("pose screw feeder",
-                "REPLY(brad,self,pose(VAR0),{\"screw feeder\"(VAR0),DEFINITE(VAR0)})",
+                "REPLY(brad,self,pose(VAR0),{screw feeder(VAR0),DEFINITE(VAR0)})",
                 "brad",
                 "self"
         ));
@@ -3675,7 +3675,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("Then get it on the work area",
-                "INSTRUCT(brad,self,getOn(self,VAR0,VAR1),{it(VAR0),\"work area\"(VAR1),INFOCUS(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,getOn(self,VAR0,VAR1),{it(VAR0),work area(VAR1),INFOCUS(VAR0),DEFINITE(VAR1)})",
                 "brad",
                 "self"
         ));
@@ -3739,25 +3739,25 @@ public class TLDLParserComponentTest {
 //        Basic NL commands
 
         assertTrue(testUtterance("right arm go to prep area",
-                "INSTRUCT(brad,rightArm:yumi,goTo(rightArm:yumi,VAR0:area),{\"prep area\"(VAR0:area),DEFINITE(VAR0:area)})",
+                "INSTRUCT(brad,rightArm:yumi,goTo(rightArm:yumi,VAR0:area),{prep area(VAR0:area),DEFINITE(VAR0:area)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("right arm do you see a bell pepper",
-                "INSTRUCT(brad,rightArm:yumi,doYouSee(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,doYouSee(rightArm:yumi,VAR0:physobj),{bell pepper(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("right arm look for a bell pepper",
-                "INSTRUCT(brad,rightArm:yumi,lookFor(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,lookFor(rightArm:yumi,VAR0:physobj),{bell pepper(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("right arm pick up the bell pepper",
-                "INSTRUCT(brad,rightArm:yumi,pickUp(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,pickUp(rightArm:yumi,VAR0:physobj),{bell pepper(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
@@ -3770,13 +3770,13 @@ public class TLDLParserComponentTest {
 //
 //        H: then go to cook top
         assertTrue(testUtterance("right arm go to cook top",
-                "INSTRUCT(brad,rightArm:yumi,goTo(rightArm:yumi,VAR0:area),{\"cook top\"(VAR0:area),DEFINITE(VAR0:area)})",
+                "INSTRUCT(brad,rightArm:yumi,goTo(rightArm:yumi,VAR0:area),{cook top(VAR0:area),DEFINITE(VAR0:area)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("then right arm put down the bell pepper",
-                "INSTRUCT(brad,rightArm:yumi,putDown(rightArm:yumi,VAR0:physobj),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,putDown(rightArm:yumi,VAR0:physobj),{bell pepper(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
@@ -3813,25 +3813,25 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("define new item southwest bowl",
-                "INSTRUCT(brad,self,defineItem(self,\"southwest bowl\"),{})",
+                "INSTRUCT(brad,self,defineItem(self,southwest bowl),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("then get a bell pepper to the cook top",
-                "INSTRUCT(brad,self,getTo(self,VAR0:physobj,VAR1:area),{\"bell pepper\"(VAR0:physobj),\"cook top\"(VAR1:area),DEFINITE(VAR0:physobj),DEFINITE(VAR1:area)})",
+                "INSTRUCT(brad,self,getTo(self,VAR0:physobj,VAR1:area),{bell pepper(VAR0:physobj),cook top(VAR1:area),DEFINITE(VAR0:physobj),DEFINITE(VAR1:area)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("then right arm saute the bell pepper for 20 seconds ",
-                "INSTRUCT(brad,rightArm:yumi,saute(rightArm:yumi,VAR0:physobj,val(20,seconds)),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,rightArm:yumi,saute(rightArm:yumi,VAR0:physobj,val(20,seconds)),{bell pepper(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("the get a bell pepper in the serving box",
-                "INSTRUCT(brad,self,getOn(self,VAR0:physobj,VAR1:physobj),{\"bell pepper\"(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+                "INSTRUCT(brad,self,getOn(self,VAR0:physobj,VAR1:physobj),{bell pepper(VAR0:physobj),serving box(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
                 "brad",
                 "self"
         ));
@@ -3849,43 +3849,43 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("then left arm drizzle on chipotle sauce",
-                "INSTRUCT(brad,leftArm:yumi,drizzle(leftArm:yumi,VAR0:physobj),{\"chipotle sauce\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "INSTRUCT(brad,leftArm:yumi,drizzle(leftArm:yumi,VAR0:physobj),{chipotle sauce(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("that is how you prepare a southwest bowl",
-                "INSTRUCT(brad,self,endItemDefinition(self,prepare\"southwest bowl\"(self,\"southwest bowl\")),{})",
+                "INSTRUCT(brad,self,endItemDefinition(self,preparesouthwest bowl(self,southwest bowl)),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("prepare a southwest bowl",
-                "INSTRUCT(brad,self,prepare\"southwest bowl\"(self),{})",
+                "INSTRUCT(brad,self,preparesouthwest bowl(self),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("describe how to prepare a southwest bowl",
-                "INSTRUCT(brad,self,describe(self,how(to(prepare\"southwest bowl\"(self)))),{})",
+                "INSTRUCT(brad,self,describe(self,how(to(preparesouthwest bowl(self)))),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("define new item by analogy puerto rican bowl",
-                "INSTRUCT(brad,self,defineItemByAnalogy(self,\"puerto rican bowl\"),{})",
+                "INSTRUCT(brad,self,defineItemByAnalogy(self,puerto rican bowl),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("item southwest bowl",
-                "REPLY(brad,self,item(\"southwest bowl\"),{})",
+                "REPLY(brad,self,item(southwest bowl),{})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("southwest bowl",
-                "REPLY(brad,self,item(\"southwest bowl\"),{})",
+                "REPLY(brad,self,item(southwest bowl),{})",
                 "brad",
                 "self"
         ));
@@ -3897,13 +3897,13 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("remove the bell pepper",
-                "REPLY(brad,self,mod(removeLocalVar(VAR0:physobj),none()),{\"bell pepper\"(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+                "REPLY(brad,self,mod(removeLocalVar(VAR0:physobj),none()),{bell pepper(VAR0:physobj),DEFINITE(VAR0:physobj)})",
                 "brad",
                 "self"
         ));
 
         assertTrue(testUtterance("add get a plantain in the serving box after get the chicken in the serving box",
-                "REPLY(brad,self,mod(insert(getOn(self,VAR0:physobj,VAR1:physobj)),after(getOn(self,VAR2:physobj,VAR3:physobj))),{plantain(VAR0:physobj),\"serving box\"(VAR1:physobj),chicken(VAR2:physobj),\"serving box\"(VAR3:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj),DEFINITE(VAR2:physobj),DEFINITE(VAR3:physobj)})",
+                "REPLY(brad,self,mod(insert(getOn(self,VAR0:physobj,VAR1:physobj)),after(getOn(self,VAR2:physobj,VAR3:physobj))),{plantain(VAR0:physobj),serving box(VAR1:physobj),chicken(VAR2:physobj),serving box(VAR3:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj),DEFINITE(VAR2:physobj),DEFINITE(VAR3:physobj)})",
                 "brad",
                 "self"
         ));
@@ -3949,7 +3949,7 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("prepare a puerto rican bowl",
-                "INSTRUCT(brad,self,prepare\"puerto rican bowl\"(self),{})",
+                "INSTRUCT(brad,self,preparepuerto rican bowl(self),{})",
                 "brad",
                 "self"
         ));
@@ -3967,21 +3967,21 @@ public class TLDLParserComponentTest {
         ));
 
         assertTrue(testUtterance("do you know how to get the carrot in the serving box",
-                "QUESTION(brad,self,knowHow(self,to(getOn(self,VAR0:physobj,VAR1:physobj))),{carrot(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+                "QUESTION(brad,self,knowHow(self,to(getOn(self,VAR0:physobj,VAR1:physobj))),{carrot(VAR0:physobj),serving box(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
                 "brad",
                 "self"
         ));
 
         //TODO:brad: this seems to not work, but do you know how does?
         assertTrue(testUtterance("can you get the carrot in the serving box",
-                "QUESTION(brad,self,capableOf(self,getOn(self,VAR0:physobj,VAR1:physobj)),{carrot(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+                "QUESTION(brad,self,capableOf(self,getOn(self,VAR0:physobj,VAR1:physobj)),{carrot(VAR0:physobj),serving box(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
                 "brad",
                 "self"
         ));
 
         //TODO:brad: only describes act specs
         assertTrue(testUtterance("describe how to get the corn in the serving box",
-                "INSTRUCT(brad,self,describe(self,how(to(getOn(self,VAR0:physobj,VAR1:physobj)))),{corn(VAR0:physobj),\"serving box\"(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+                "INSTRUCT(brad,self,describe(self,how(to(getOn(self,VAR0:physobj,VAR1:physobj)))),{corn(VAR0:physobj),serving box(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
                 "brad",
                 "self"
         ));
@@ -4208,7 +4208,7 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
         assertTrue(testUtterance("the task is go to the coffee maker",
-                "REPLY(brad,self,val(goToLocation(self,VAR0)),{coffee maker(VAR0),DEFINITE(VAR0)})",
+                "REPLY(brad,self,taskPredicate(goToLocation(self,VAR0)),{coffee maker(VAR0),DEFINITE(VAR0)})",
                 speaker, "self"));
 
         assertTrue(testUtterance("every 1 hour",
@@ -4228,24 +4228,13 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
         assertTrue(testUtterance("the task is go to the back door",
-                "REPLY(brad,self,val(goToLocation(self,VAR0)),{back door(VAR0),DEFINITE(VAR0)})",
+                "REPLY(brad,self,taskPredicate(goToLocation(self,VAR0)),{back door(VAR0),DEFINITE(VAR0)})",
                 speaker, "self"));
 
 
         assertTrue(testUtterance("perform lab patrol with wifi evaluation",
-                "INSTRUCT(brad,self,patrol(self,lab,wifiEvaluation),{})",
+                "INSTRUCT(brad,self,patrol(self,lab patrol,wifiEvaluation),{})",
                 speaker, "self"));
 
-        assertTrue(testUtterance("add a new patrol path",
-                "INSTRUCT(brad,self,addPatrolPath(self),{})",
-                speaker, "self"));
-
-        assertTrue(testUtterance("the name is lab patrol",
-                "REPLY(brad,self,val(\"lab patrol\"),{})",
-                speaker, "self"));
-
-        assertTrue(testUtterance("i will teach you how to dance",
-                "REPLY(brad,self,val(\"lab patrol\"),{})",
-                speaker, "self"));
     }
 }

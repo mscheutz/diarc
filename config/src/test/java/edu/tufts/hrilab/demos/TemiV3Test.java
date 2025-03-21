@@ -1521,7 +1521,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             "save this location as ambiguous\",\"locname",
             new Object[][]{
                     {"sayText", "okay", null},
-                    {"sayText", "I can not save Location \"ambiguous\" \"locname\" because I do not know how to save Location ambiguous locname", null}
+                    {"sayText", "I can not save Location \"ambiguous\" \"locname\" because I do not know how to save Location \"ambiguous\" \"locname\"", null}
             }
     );
 
@@ -1529,7 +1529,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             "save this location as this is my \", \", te,\" st\",,\"\" location,",
             new Object[][]{
                     {"sayText", "okay", null},
-                    {"sayText", "I can not save Location \"this is my \", \" te \" st\",\"\" location,\" because I do not know how to save Location \"this is my \\34\\, \" te \" st\\34\\,\\34\\\\34\\ location,\"", null}
+                    {"sayText", "I can not save Location \"this is my \", \" te \" st\",\"\" location,\" because I do not know how to save Location \"this is my \", \" te \" st\",\"\" location,\"", null}
             }
     );
 
