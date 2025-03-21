@@ -4237,7 +4237,7 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
         assertTrue(testUtterance("add a new patrol path demo path",
-                "INSTRUCT(brad,self,definePatrolPath(self,\"demo path\"),{})",
+                "INSTRUCT(brad,self,definePatrolPath(self,demo path),{})",
                 speaker, "self"));
 
     }
