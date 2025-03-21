@@ -177,13 +177,13 @@ public class YumiFoodOrderingTest extends GenerativeDiarcIntegrationTest {
     addUserInput("now define new ingredient plantain");
     evaluateResults();
 
-    addUserInput("pantry");
+    addUserInput("area pantry");
     evaluateResults();
 
     addUserInput("detect plantain");
     evaluateResults();
 
-    addUserInput("prep area");
+    addUserInput("area prep area");
     evaluateResults();
 
     setSingleTestTimeout(10, TimeUnit.SECONDS);

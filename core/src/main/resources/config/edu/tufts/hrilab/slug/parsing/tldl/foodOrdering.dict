@@ -439,7 +439,7 @@ conveyor end; LOC; conveyor_end
 send message; C/LIT* ; #x.sendMessage(?ADDRESSEE,$x)
 
 %%%% poc4 + screwing specific %%%%%%%
-prep area; VAL; location("prep area":location);
+%prep area; VAL; location(prep area:location);
 
 %TODO:brad: the semantic type here is a super messy shortcut to have this be a question answer
 job; VAL/JOB; #j.job($j)

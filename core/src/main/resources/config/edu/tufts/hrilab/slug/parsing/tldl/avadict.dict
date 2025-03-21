@@ -233,6 +233,9 @@ professor shorts lab; LREF; 472 aabl
 robotics lab; LOC; 435 robotics lab
 
 bathroom; LOC; bathroom
+elevator; LOC; elevator
+coffee maker; LOC; coffee maker
+back door; LOC; back door
 restroom; LOC; bathroom
 loo; LOC; bathroom
 admin office; LOC; 420 cs admin office

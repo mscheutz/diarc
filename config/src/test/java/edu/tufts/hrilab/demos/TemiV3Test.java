@@ -34,7 +34,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
 
   static DiarcConfigTester tester;
   TemiV3Mock config;
-  private final static Pattern alphaNumericPattern = Pattern.compile("\\w+");
+  private final static Pattern alphaNumericPattern = Pattern.compile("[\\w ]+");
   private Map<Variable, Symbol> ackResponseBindings = new HashMap();
   private Map<Variable, Symbol> freezeResponseBindings = new HashMap();
 
@@ -159,7 +159,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
       return null;
     }
     Matcher matcher = alphaNumericPattern.matcher(desc);
-    if (!matcher.matches() || desc.contains(" ")) {
+    if (!matcher.matches()) {// || desc.contains(" ")) {
       return "\"" + desc + "\"";
     }
     return desc;
@@ -1521,7 +1521,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             "save this location as ambiguous\",\"locname",
             new Object[][]{
                     {"sayText", "okay", null},
-                    {"sayText", "I can not save Location \"ambiguous\" \"locname\" because I do not know how to save Location ambiguous locname", null}
+                    {"sayText", "I can not save Location \"ambiguous\" \"locname\" because I do not know how to save Location \"ambiguous\" \"locname\"", null}
             }
     );
 
@@ -1529,7 +1529,7 @@ public class TemiV3Test extends HardCodedDiarcIntegrationTest {
             "save this location as this is my \", \", te,\" st\",,\"\" location,",
             new Object[][]{
                     {"sayText", "okay", null},
-                    {"sayText", "I can not save Location \"this is my \", \" te \" st\",\"\" location,\" because I do not know how to save Location \"this is my \\34\\, \" te \" st\\34\\,\\34\\\\34\\ location,\"", null}
+                    {"sayText", "I can not save Location \"this is my \", \" te \" st\",\"\" location,\" because I do not know how to save Location \"this is my \", \" te \" st\",\"\" location,\"", null}
             }
     );
 
