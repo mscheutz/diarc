@@ -27,3 +27,4 @@ vision/bin/
 /node_modules/
 **/.venv/
 /core/src/main/python/spot/spot_phi.yaml
+**/__pycache__/
