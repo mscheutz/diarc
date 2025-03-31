@@ -83,7 +83,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
       act:updateDialogueHistory(?utterance);
       // Create fully populated output utterance to pass to askQuestionFromUtterance so that any given NLG component can
       // use all available information. <- Looks like SimpleNLG was never set up to handle these semantics
-      !queryUtterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !speaker);
+      !queryUtterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", !addressee, !speaker);
       !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "QUESTION");
       op:invokeMethod(!queryUtterance, "setType", !type);
       !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "mean(!speaker, !semantics)");
