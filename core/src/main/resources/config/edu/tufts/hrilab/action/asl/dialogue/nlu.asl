@@ -151,7 +151,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
     op:log("debug", "[handleDialogueInput] entering action script for actor: ?actor");
 
     if (op:invokeMethod(?utterance, "needsValidation")) {
-      act:updateDialogueHistoryUtterance(?utterance);
+      act:updateDialogueHistory(?utterance,false);
     } else {
       act:updateDialogueHistory(?utterance);
     }

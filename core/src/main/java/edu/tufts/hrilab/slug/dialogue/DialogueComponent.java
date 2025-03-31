@@ -159,21 +159,18 @@ public class DialogueComponent extends DiarcComponent {
   @TRADEService
   @Action
   public void updateDialogueHistory(Utterance utt) {
-    diaLog.addHistory(utt);
-    notifyDialogueHistorySubscribers(utt);
+    updateDialogueHistory(utt,true);
   }
 
-  //TODO: Need way to handle interaction of incoming utterances and potential validation questions. The original pipeline
-  //  caused validation questions to hit DiaLog before the utterance itself which prompted it. Causes history to be out of
-  //  order. Pushing to dialogue history early in cases of needsValidation utterances solves temporal issue, but that
-  //  utterance won't be fully populated (won't have hit RR or Prag yet). Can push and update utterances separately, but
-  //  then would need to update subscribers to be able to handle both addition and udpate notifications.
-  //Should this use Dialog NLInputs and have separate notifier? Still wouldn't solve the issue of dialogue history being out of order though
   @TRADEService
   @Action
-  public void updateDialogueHistoryUtterance(Utterance utt) {
-    diaLog.updateHistory(utt);
-    //notifyDialogueHistorySubscribers(utt,true);
+  public void updateDialogueHistory(Utterance utt, boolean newUtterance) {
+    if (newUtterance) {
+      diaLog.addHistory(utt);
+    } else {
+      diaLog.updateHistory(utt);
+    }
+    notifyDialogueHistorySubscribers(utt, newUtterance);
   }
 
   @TRADEService
@@ -181,11 +178,11 @@ public class DialogueComponent extends DiarcComponent {
     return diaLog.getDialogueHistory();
   }
 
-  private void notifyDialogueHistorySubscribers(Utterance utt) {
+  private void notifyDialogueHistorySubscribers(Utterance utt, boolean newUtterance) {
     List<TRADEServiceInfo> servicesToRemove = new ArrayList<>();
     for (TRADEServiceInfo subscriber : dialogueHistorySubscribers) {
       try {
-        subscriber.call(void.class, utt);
+        subscriber.call(void.class, utt, newUtterance);
       } catch (Exception e) {
         log.error("Could not make callback to: " + subscriber, e);
         //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?

@@ -131,7 +131,7 @@ public class AvaDisplayComponent extends DiarcComponent {
    */
   @TRADEService
   public void registerDialogueCallback(TRADEServiceInfo service) {
-    TRADEServiceInfo myService = this.getMyService("avaDisplayDialogueCallback", Utterance.class);
+    TRADEServiceInfo myService = this.getMyService("avaDisplayDialogueCallback", Utterance.class, Boolean.class);
     try {
       service.call(void.class, myService);
     } catch (TRADEException e) {
@@ -252,12 +252,14 @@ public class AvaDisplayComponent extends DiarcComponent {
    * @param utterance object from dialogue history
    */
   @TRADEService
-  public void avaDisplayDialogueCallback(Utterance utterance) {
-    log.debug(utterance.toString());
-    String speaker = utterance.getSpeaker().toString();
-    String words = utterance.getWordsAsString();
-    dialogueManager.addMessage(words, speaker);
-    unsetIdle();
+  public void avaDisplayDialogueCallback(Utterance utterance, boolean newAddition) {
+    if (newAddition) {
+      log.debug(utterance.toString());
+      String speaker = utterance.getSpeaker().toString();
+      String words = utterance.getWordsAsString();
+      dialogueManager.addMessage(words, speaker);
+      unsetIdle();
+    }
   }
 
   /**

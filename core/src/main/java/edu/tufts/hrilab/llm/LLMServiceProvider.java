@@ -96,7 +96,7 @@ public abstract class LLMServiceProvider extends DiarcComponent {
     protected void executionLoop() {
         if (!registeredForDialogueNotifications) {
             try {
-                TRADEServiceInfo updateHistoryService = getMyService("updateLLMConversationHistory", Utterance.class);
+                TRADEServiceInfo updateHistoryService = getMyService("updateLLMConversationHistory", Utterance.class, Boolean.class);
                 TRADE.getAvailableService(new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications")).call(void.class, updateHistoryService);
                 registeredForDialogueNotifications = true;
             } catch (TRADEException e) {
@@ -201,7 +201,10 @@ public abstract class LLMServiceProvider extends DiarcComponent {
     }
 
     @TRADEService
-    public void updateLLMConversationHistory(Utterance utterance) {
+    public void updateLLMConversationHistory(Utterance utterance, boolean newUtterance) {
+        if (!newUtterance) {
+            return;
+        }
         Symbol user;
         Symbol agentTeam;
         Symbol speaker = getUntypedSymbol(utterance.getSpeaker());

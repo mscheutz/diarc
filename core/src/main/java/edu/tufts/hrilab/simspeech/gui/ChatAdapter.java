@@ -137,7 +137,7 @@ public class ChatAdapter extends GuiAdapter {
 
     // register to be notified of dialogue changes
     TRADEServiceInfo sendUtteranceService = TRADE.getAvailableService(
-            new TRADEServiceConstraints().name("sendUtterance").argTypes(Utterance.class)
+            new TRADEServiceConstraints().name("sendUtterance").argTypes(Utterance.class,Boolean.class)
     );
     service.call(void.class, sendUtteranceService);
     log.debug("Dialogue registered");
@@ -149,7 +149,10 @@ public class ChatAdapter extends GuiAdapter {
    * @param utterance what the robot is saying.
    */
   @TRADEService
-  public void sendUtterance(Utterance utterance) {
+  public void sendUtterance(Utterance utterance, boolean newUtterance) {
+    if (!newUtterance) {
+      return;
+    }
     // send to client
     try {
       JsonObject json = new JsonObject();
@@ -174,7 +177,7 @@ public class ChatAdapter extends GuiAdapter {
   }
 
   private void sendDialogueHistory(List<Utterance> dialogueHistory) {
-    dialogueHistory.forEach(utterance -> sendUtterance(utterance));
+    dialogueHistory.forEach(utterance -> sendUtterance(utterance,true));
   }
 
   //==========================================================================
