@@ -204,10 +204,4 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
         super.shutdownComponent();
         executor.shutdownNow();
     }
-
-    //Get rid of this
-    @TRADEService
-    public boolean usingLLMNLG() {
-        return useLLM;
-    }
 }

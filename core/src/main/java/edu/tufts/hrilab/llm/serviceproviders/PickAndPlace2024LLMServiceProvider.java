@@ -282,24 +282,28 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
 
         //Intercept Validation Question and use specific validation prompt
         String userMessage;
-        Predicate semantics = (Predicate) utterance.getSemantics();
+        Predicate semantics;
+        List<Term> boundSemantics = utterance.getBoundSemantics();
+        if (boundSemantics.isEmpty()) {
+            semantics = (Predicate) utterance.getSemantics();
+        } else {
+            semantics = (Predicate) boundSemantics.get(0);
+        }
         List<String> objectsEnglish = getObjects(utterance.getSpeaker().getName(),true);
         List<String> objectsJapanese = getObjects(utterance.getSpeaker().getName(),false);
         List<String> englishPoses = getPoses(utterance.getSpeaker().getName(),true);
         List<String> japanesePoses = getPoses(utterance.getSpeaker().getName(),false);
 
         Map<String,String> promptVars = new LinkedHashMap<>();
-        if (semantics.getName().equals("doYouMean")) {
-            promptVars.put("%utterance", utterance.toString());
-            promptVars = populatePromptVarsWithProperties(promptVars, objectsEnglish, objectsJapanese, englishPoses, japanesePoses);
+        utterance = new Utterance.Builder(utterance).build();
+        //Doesn't include suppSemantics
+        semantics = replaceReferencesInSemantics(semantics);
+        utterance.setSemantics(semantics);
+        promptVars.put("%utterance", utterance.toString());
+        populatePromptVarsWithProperties(promptVars, objectsEnglish, objectsJapanese, englishPoses, japanesePoses);
+        if (semantics.getName().equals("mean")) {
             userMessage = validationPrompt.apply(promptVars);
         } else {
-            utterance = new Utterance.Builder(utterance).build();
-            //Doesn't include suppSemantics
-            semantics = replaceReferencesInSemantics(semantics);
-            utterance.setSemantics(semantics);
-            promptVars.put("%utterance", utterance.toString());
-            promptVars = populatePromptVarsWithProperties(promptVars, objectsEnglish, objectsJapanese, englishPoses, japanesePoses);
             userMessage = nlgUserPrompt.apply(promptVars);
         }
         
@@ -313,7 +317,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         chat.setSystem(nlgSystemPrompt.apply(promptVars));
         chat.addUserMessage(userMessage);
 
-        log.info("generateNLGChat called for: {}", utterance.toString());
+        log.info("generateNLGChat called for: {}", utterance);
 
         return chat;
     }
