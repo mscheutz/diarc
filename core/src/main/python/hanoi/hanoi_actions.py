@@ -17,7 +17,7 @@ def get_all_pos():
     token_map = {}
     for token in tokens:
         loc = token.getLocation()
-        token_map[token.getTokenId()] = [loc.x, loc.y, loc.z]
+        token_map[token.getTypeId()] = [loc.x, loc.y, loc.z]
 
     return token_map
 
