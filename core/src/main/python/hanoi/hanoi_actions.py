@@ -11,7 +11,6 @@ wrapper = TRADEWrapper()
 from javax.vecmath import Point3d
 from javax.vecmath import Quat4d
 
-
 def get_all_pos():
     tokens = wrapper.call_trade("getTokens", [])
     token_map = {}
