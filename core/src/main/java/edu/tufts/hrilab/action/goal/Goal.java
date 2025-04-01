@@ -42,6 +42,12 @@ public class Goal {
 
   private static final Logger log = LoggerFactory.getLogger(Goal.class);
 
+  public static Goal createGoal(Predicate goalState) {
+    if (goalState.getName().equals("scheduled")) {
+      return new ScheduledGoal();
+    }
+  }
+
   /**
    * Goal predicate. This predicate can toggle between bound and unbound forms, depending on if the goal execution
    * has been started. If the initial goal predicate has unbound variables, this predicate will contain unbound
@@ -50,7 +56,7 @@ public class Goal {
    */
 
   private Set<GoalListener> listeners = new HashSet<>();
-  private GoalInfo info;
+  protected GoalInfo info;
   private Observable observable = Observable.FALSE;
   private static final IdGenerator idGenerator = new IdGenerator();
   private Set<Resource> requiredResources = null;
@@ -83,10 +89,14 @@ public class Goal {
   public Goal(Predicate goalState) {
     info = new GoalInfo(idGenerator.getNext());
 
-    // check for certain special forms first bc other goal predicate forms could be nested inside
-    Predicate unwrappedGoalState = unwrapGoalPredicate(goalState, true);
-    if (unwrappedGoalState != null) {
-      goalState = unwrappedGoalState;
+    // check persistent first bc other goal predicate forms could be nested inside
+    if (goalState.getName().equals("persistent")) {             // persistent goal
+      if (goalState.size() != 2) {  // illegal structure
+        log.error("[Goal] illegal predicate structure: " + goalState);
+        return;
+      }
+      goalState = (Predicate) goalState.get(1);
+      info.persistent = true;
     }
 
     // handle special goal predicate forms
@@ -154,10 +164,16 @@ public class Goal {
       // should be a predicate
       Predicate predicate = (Predicate) goalState;
 
-      predicate = unwrapGoalPredicate(predicate, false);
-      if (predicate == null) {
-        return;
+      // check persistent first bc other goal predicate forms could be nested inside
+      if (predicate.getName().equals("persistent")) {             // persistent goal
+        if (predicate.size() != 1) {  // illegal structure
+          log.error("[Goal] illegal predicate structure: " + predicate);
+          return;
+        }
+        predicate = (Predicate) predicate.get(0);
+        info.persistent = true;
       }
+
 
       // error messages for deprecated special predicate forms
       switch (goalState.getName()) {
@@ -363,233 +379,13 @@ public class Goal {
   }
 
   public boolean isPersistent() {
-    return info.isPersistent();
+    return info.persistent;
   }
 
   public boolean isScheduled() {
-    return info.isScheduled();
-  }
-
-  public long getScheduledDelay() {
-    return info.scheduledDelay;
-  }
-
-  public GoalType getGoalType() {
-    return info.goalType;
-  }
-
-  /**
-   * Only applicable to Persistently Scheduled goals; Temporarily modifies the delay until the next execution of this
-   * goal without affecting the regular interval. This method can be used to shift execution timing without affecting
-   * the interval.
-   */
-  public boolean updateNextScheduledTime(long delay, TimeUnit timeUnit) {
-    if (isScheduled() && isPersistent()) {
-      ScheduledContext scheduledContext = getScheduledContext();
-      if (scheduledContext != null) {
-        return scheduledContext.updateNextScheduledTime(delay, timeUnit);
-      }
-      return false;
-    }
-    log.error("[updateNextScheduledTime] goal is not persistently scheduled, cannot update next execution time");
     return false;
   }
 
-  /**
-   * Only applicable to Persistently Scheduled goals; Temporarily modifies the delay until the next execution of this
-   * goal without affecting the regular interval. This method can be used to shift execution timing without affecting
-   * the interval.
-   */
-  public boolean updateNextScheduledTime(Date date) {
-    if (isScheduled() && isPersistent()) {
-      ScheduledContext scheduledContext = getScheduledContext();
-      if (scheduledContext != null) {
-        return scheduledContext.updateNextScheduledTime(date);
-      }
-      return false;
-    }
-    log.error("[updateNextScheduledTime] goal is not persistently scheduled, cannot update next execution time");
-    return false;
-  }
-
-  /**
-   * Updates the scheduled delay of this goal. If this goal is persistently scheduled, the supplied delay will
-   * be the interval at which this task now executes
-   */
-  public boolean setScheduledDelay(Long delay, TimeUnit timeUnit) {
-    if (isScheduled()) {
-      ScheduledContext scheduledContext = getScheduledContext();
-      if (scheduledContext != null) {
-        scheduledContext.updateScheduledDelay(delay, timeUnit);
-        info.scheduledDelay = delay;
-        info.scheduledDelayTimeUnit = timeUnit;
-        info.scheduledDate = null;
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Updates the scheduled date of this goal. If this goal is persistently scheduled, the supplied date will
-   * contain the time of day this task executes every day.
-   */
-  public boolean setScheduledDate(Date scheduledDate) {
-    if (isScheduled()) {
-      ScheduledContext scheduledContext = getScheduledContext();
-      if (scheduledContext != null) {
-        scheduledContext.updateScheduledTime(scheduledDate);
-        info.scheduledDate = scheduledDate;
-        info.scheduledDelay = null;
-        info.scheduledDelayTimeUnit = null;
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private ScheduledContext getScheduledContext() {
-    contextLock.lock();
-    try {
-      Context c = rootContext;
-      while (c != null && !c.getChildContexts().isEmpty()) {
-        Context child = c.getChildContexts().get(0);
-        if (child instanceof ScheduledContext) {
-          return (ScheduledContext) child;
-        } else if (child instanceof PersistentContext) {
-          c = child;
-        }
-      }
-    } finally {
-      contextLock.unlock();
-    }
-    log.warn("[getScheduledContext] cannot find scheduled context for goal {}", info.gid);
-    return null;
-  }
-
-  public TimeUnit getScheduledDelayTimeUnit() {
-    return info.scheduledDelayTimeUnit;
-  }
-
-  public Date getScheduledDate() {
-    return info.scheduledDate;
-  }
-
-  /**
-   *  Get the duration in milliseconds until this goal's next scheduled execution.
-   *  Returns -1 if the goal is not a scheduled goal.
-   */
-  public long getTimeUntilScheduledExecution() {
-    ScheduledContext scheduledContext = getScheduledContext();
-    if (scheduledContext == null) {
-      log.warn("[getTimeUntilScheduledExecution] no ScheduledContext found in tree");
-      return -1;
-    }
-
-    return scheduledContext.getTimeUntilNextExecution();
-  }
-
-  public Date getNextScheduledExecutionDate() {
-    ScheduledContext scheduledContext = getScheduledContext();
-    if (scheduledContext == null) {
-      log.warn("[getNextScheduledExecutionDate] no ScheduledContext found in tree");
-      return null;
-    }
-
-    return scheduledContext.getDateOfNextExecution();
-  }
-
-  /**
-   * Utility function to get the re-wrapped predicate this goal was originally submitted with.
-   * Practically, this method will return the base goal predicate and optionally 'persistent' and 'scheduled' wrappers
-   * along with any scheduled timing information if applicable.
-   */
-  public Predicate getWrappedGoalSubmissionPredicate() {
-    Predicate goalPred;
-    if (info.goal == null) {
-      goalPred = ((Predicate) info.getUnboundGoal()).clone();
-    } else {
-      goalPred = info.goal.clone();
-    }
-    if (info.isScheduled()) {
-      if (info.scheduledDelay != null) {
-        Symbol delaySymbol = Factory.createSymbol(info.scheduledDelay.toString());
-        Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledDelayTimeUnit.toString());
-        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,delaySymbol,timeUnitSymbol);
-      } else {
-        String pattern = "HH-mm-ss";
-        DateFormat df = new SimpleDateFormat(pattern);
-        Symbol dateSymbol = Factory.createSymbol(df.format(info.scheduledDate));
-        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,dateSymbol);
-      }
-    }
-    if (info.isPersistent()) {
-      goalPred = Factory.createPredicate("persistent",info.actor, goalPred);
-    }
-    if (info.goalType == GoalType.SCHEDULEDPERSISTENTSCHEDULED) {
-      if (info.getScheduledSubmissionDelay() != null) {
-        Symbol delaySymbol = Factory.createSymbol(info.scheduledSubmissionDelay.toString());
-        Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledSubmissionDelayTimeUnit.toString());
-        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,delaySymbol,timeUnitSymbol);
-      } else {
-        String pattern = "HH-mm-ss";
-        DateFormat df = new SimpleDateFormat(pattern);
-        Symbol dateSymbol = Factory.createSymbol(df.format(info.scheduledSubmissionDate));
-        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,dateSymbol);
-      }
-    }
-    return goalPred;
-  }
-
-  /**
-   * Utility function to get a wrapped predicate for this goal including all current scheduling information. Behaves
-   * like {@link #getWrappedGoalSubmissionPredicate()} except that any timing information is relative to now
-   * rather than submission
-   */
-  public Predicate getWrappedGoalPredicate() {
-    Predicate goalPred;
-    if (info.status == GoalStatus.PENDING || info.status == GoalStatus.UNKNOWN || info.status.isTerminated()) {
-      log.warn("[getWrappedGoalPredicate] not sure how to handle goal status {}, returning submission predicate", info.status);
-      return getWrappedGoalSubmissionPredicate();
-    }
-    if (info.goal == null) {
-      goalPred = ((Predicate) info.getUnboundGoal()).clone();
-    } else {
-      goalPred = info.goal.clone();
-    }
-    if (info.isScheduled() && info.isPersistent()) {
-      if (info.scheduledDelay != null) {
-        Symbol delaySymbol = Factory.createSymbol(info.scheduledDelay.toString());
-        Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledDelayTimeUnit.toString());
-        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,delaySymbol,timeUnitSymbol);
-      } else {
-        String pattern = "HH-mm-ss";
-        DateFormat df = new SimpleDateFormat(pattern);
-        Symbol dateSymbol = Factory.createSymbol(df.format(info.scheduledDate));
-        goalPred = Factory.createPredicate("scheduled",info.actor,goalPred,dateSymbol);
-      }
-    }
-    if (info.isPersistent()) {
-      goalPred = Factory.createPredicate("persistent",info.actor, goalPred);
-    }
-    //TODO: should this always be a date or should logic be written to get the "best" representation of delay
-    //  duration and timeunit from a general time.
-    if (info.isScheduled()) {
-      ScheduledContext scheduledContext = getScheduledContext();
-      if (scheduledContext != null) {
-        if (isPersistent() && scheduledContext.scheduledByDate() && !scheduledContext.hasOffsetSchedule() && !scheduledContext.nextScheduleIntervalOffset()) {
-          return goalPred;
-        }
-        Date date = scheduledContext.getDateOfNextExecution();
-        String pattern = "HH-mm-ss";
-        DateFormat df = new SimpleDateFormat(pattern);
-        Symbol dateSymbol = Factory.createSymbol(df.format(date));
-        goalPred = Factory.createPredicate("scheduled", info.actor, goalPred, dateSymbol);
-      }
-    }
-
-    return goalPred;
-  }
 
   public Symbol getActor() {
     return info.actor;
@@ -816,13 +612,11 @@ public class Goal {
    * on the ActionInterpreter which will set the status of this goal once execution has fully suspended.
    */
   public boolean suspend() {
-    // set status to suspend which can be overwritten by AI
-    info.status = GoalStatus.SUSPENDED;
-
     if (ai != null) {
       // the AI will set the SUSPENDED status once it has been suspended
       return ai.suspend();
     } else {
+      setStatus(GoalStatus.SUSPENDED);
       return true;
     }
   }
@@ -836,7 +630,7 @@ public class Goal {
       // the AI will set the ACTIVE status once it has resumed
       return ai.resume();
     } else {
-      return true;
+      return false;
     }
   }
 

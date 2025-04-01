@@ -8,7 +8,6 @@ import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.ParameterizedAction;
-import edu.tufts.hrilab.action.goal.GoalType;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.execution.util.ContextUtils;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
@@ -135,34 +134,9 @@ public class GoalContext extends ArgumentBasedContext {
       }
     }
 
-    Context caller = this;
     Context child;
-    GoalType goalType = goal.getGoalType();
-    //Offsetting creation of persistent context and setting of child. Previous implementation had an issue where both
-    //  this context and its child had their notion of 'caller' be this goal context. Causes issues when propagating
-    //  terminal status up the tree (e.g. on cancel)
-    if (goalType.isPersistent()) {
-      caller = new PersistentContext(this, stateMachine, null);
-    }
-
-    if (goalType.isScheduled()) {
-      if (goal.getScheduledDate() != null) {
-        child = new ScheduledContext(caller, stateMachine, goal.getPredicate(), goal.getScheduledDate());
-      } else {
-        child = new ScheduledContext(caller, stateMachine, goal.getPredicate(), goal.getScheduledDelay(), goal.getScheduledDelayTimeUnit());
-        if (goalType == GoalType.PERSISTENTSCHEDULED) {
-          ((ScheduledContext) child).setFirstExecutionImmediate();
-        }
-      }
-      if (goalType == GoalType.SCHEDULEDPERSISTENTSCHEDULED) {
-        if (goal.getInfo().getScheduledSubmissionDate() != null) {
-          ((ScheduledContext) child).updateNextScheduledTime(goal.getInfo().getScheduledSubmissionDate());
-        } else {
-          ((ScheduledContext) child).updateNextScheduledTime(goal.getInfo().getScheduledSubmissionDelay(), goal.getInfo().getScheduledSubmissionDelayTimeUnit());
-        }
-      }
-    } else if (goal.isObservation()) {
-      child = new ObservationContext(caller, stateMachine, goal.getPredicate(), goal.getActor(), Observable.TRUE);
+    if (goal.isObservation()) {
+      child = new ObservationContext(this, stateMachine, goal.getPredicate(), goal.getActor(), Observable.TRUE);
     } else {
       // perform action selection
       ParameterizedAction action = recovery.selectNextAction(goal, constraints, stateMachine);
@@ -176,17 +150,15 @@ public class GoalContext extends ArgumentBasedContext {
       } else {
         Symbol actor = (Symbol) getArgumentValue("?actor");
 //        child = new NormCheckingActionContext(this, stateMachine, action.getEntry(), action.getBindings(), executionType, actor);
-        //TODO: pass on recovery type
-        child = new ActionContext(caller, stateMachine, action.getEntry(), action.getBindings(), executionType, actor);
+        child = new ActionContext(this, stateMachine, action.getEntry(), action.getBindings(), executionType, actor);
       }
     }
 
     if (goal.isPersistent() && !child.isFailure()) {
-      ((PersistentContext)caller).setChild(child);
-      childContexts.add(caller);
-    } else {
-      childContexts.add(child);
+      child = new PersistentContext(this, stateMachine, child);
     }
+
+    childContexts.add(child);
   }
 
   @Override

@@ -5,8 +5,6 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 
 import java.io.Serializable;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 public class GoalInfo implements Serializable {
   /**
@@ -54,49 +52,14 @@ public class GoalInfo implements Serializable {
    * Optional metric for task planning.
    */
   public Predicate metric;
-
+  /**
+   * If true, this goal is wrapped as a persistent goal (i.e., while loop) and executed until failure or cancellation/suspension.
+   */
+  public boolean persistent = false;
   /**
    * Goal priority. Used by the ExecutionManager to determine what goals to execute.
    */
   public long priority = 1;
-
-  /**
-   * The delay (scheduled) or interval (persistent scheduled) length this goal will wait for before executing. Only one
-   * of this or scheduledDelay should be non-null.
-   */
-  public Long scheduledDelay = null;
-
-  /**
-   * The TimeUnit relating to scheduledDelay
-   */
-  public TimeUnit scheduledDelayTimeUnit = null;
-
-  /**
-   * The date at which this goal will execute (scheduled) or repeat every day (persistent scheduled). Only one of this
-   * or scheduledDelay should be non-null.
-   */
-  public Date scheduledDate = null;
-
-  /**
-   * The delay length this goal will wait until next scheduled execution. This timing applies only to a single
-   * scheduling instance, then scheduledDelay or scheduledDate will take over. This field is to allow for scheduled
-   * persistent scheduled goals to be submitted without creating more disjoint goals.
-   */
-  public Long scheduledSubmissionDelay = null;
-
-  /**
-   * The TimeUnit relating to scheduledSubmissionDelay
-   */
-  public TimeUnit scheduledSubmissionDelayTimeUnit = null;
-
-  /**
-   * The date for this goal's next scheduled execution. This timing applies only to a single scheduling instance, then
-   * scheduledDelay or scheduledDate will take over. This field is to allow for scheduled persistent
-   * scheduled goals to be submitted without creating more disjoint goals.
-   */
-  public Date scheduledSubmissionDate = null;
-
-  public GoalType goalType = GoalType.STANDARD;
 
   public GoalInfo(long gid) {
     this.gid = gid;
@@ -113,93 +76,7 @@ public class GoalInfo implements Serializable {
     this.actor = other.actor;
     this.isAction = other.isAction;
     this.metric = other.metric;
+    this.persistent = other.persistent;
     this.priority = other.priority;
-    this.scheduledDelay = other.scheduledDelay;
-    this.scheduledDelayTimeUnit = other.scheduledDelayTimeUnit;
-    this.scheduledDate = other.scheduledDate;
-    this.scheduledSubmissionDelay = other.scheduledSubmissionDelay;
-    this.scheduledSubmissionDelayTimeUnit = other.scheduledSubmissionDelayTimeUnit;
-    this.scheduledSubmissionDate = other.scheduledSubmissionDate;
-    this.goalType = other.goalType;
-  }
-
-  public Predicate getGoal() {
-    return goal;
-  }
-
-  public Symbol getUnboundGoal() {
-    return unboundGoal;
-  }
-
-  public long getGid() {
-    return gid;
-  }
-
-  public Justification getFailConditions() {
-    return failConditions;
-  }
-
-  public long getStart() {
-    return start;
-  }
-
-  public long getEnd() {
-    return end;
-  }
-
-  public GoalStatus getStatus() {
-    return status;
-  }
-
-  public Symbol getActor() {
-    return actor;
-  }
-
-  public boolean isAction() {
-    return isAction;
-  }
-
-  public Predicate getMetric() {
-    return metric;
-  }
-
-  public boolean isPersistent() {
-    return goalType.isPersistent();
-  }
-
-  public long getPriority() {
-    return priority;
-  }
-
-  public boolean isScheduled() {
-    return goalType.isScheduled();
-  }
-
-  public Long getScheduledDelay() {
-    return scheduledDelay;
-  }
-
-  public TimeUnit getScheduledDelayTimeUnit() {
-    return scheduledDelayTimeUnit;
-  }
-
-  public Date getScheduledDate() {
-    return scheduledDate;
-  }
-
-  public Long getScheduledSubmissionDelay() {
-    return scheduledSubmissionDelay;
-  }
-
-  public TimeUnit getScheduledSubmissionDelayTimeUnit() {
-    return scheduledSubmissionDelayTimeUnit;
-  }
-
-  public Date getScheduledSubmissionDate(){
-    return scheduledSubmissionDate;
-  }
-
-  public GoalType getGoalType() {
-    return goalType;
   }
 }

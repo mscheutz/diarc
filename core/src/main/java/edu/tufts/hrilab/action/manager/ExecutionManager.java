@@ -61,7 +61,11 @@ public class ExecutionManager implements GoalListener {
   /**
    * Memory management thread scheduler that executes pruning mechanism.
    */
-  private final ScheduledExecutorService memoryManager = Executors.newScheduledThreadPool(1);
+  private final ScheduledExecutorService memoryManager = Executors.newSingleThreadScheduledExecutor();
+
+  private final ScheduledExecutorService scheduledGoalManager = Executors.newSingleThreadScheduledExecutor();
+  private final Set<Goal> scheduledGoals = new HashSet<>();
+
 
   /**
    * Dummy interface in order to pass comparison method as a lambda
@@ -125,7 +129,7 @@ public class ExecutionManager implements GoalListener {
   /**
    * A list of past goals.
    */
-  private final Set<Goal> pastGoals = Collections.synchronizedSet(new HashSet());
+  private final Set<Goal> pastGoals = Collections.synchronizedSet(new HashSet<>());
 
   /**
    * Handles thread(s) that execute ActionInterpreters.
@@ -261,7 +265,7 @@ public class ExecutionManager implements GoalListener {
   /**
    * Returns the set of AgentTeam(names) whose execution may be affected by a
    * change in task for the supplied AgentTeam. Practically, this returns the
-   * supplied agentTeam, its children, and all direct ancestors in the hierarchy
+   * supplied agentTeam, its children, and all direct ancestors in the hierarchy'
    */
   protected Set<Symbol> getRelevantAgents(Symbol agentTeam) {
     agentTeam = agentTeam.toUntyped();
@@ -640,6 +644,16 @@ public class ExecutionManager implements GoalListener {
     //If actor or ancestor AgentTeam currently learning, hand off to relevant ActionLearning instance.
     if (handOffToLearning(g, execType)) {
       return g;
+    }
+
+    if (g.isScheduled()) {
+      ScheduledGoal scheduledGoal = (ScheduledGoal) g;
+      scheduledGoals.add(scheduledGoal);
+      if (scheduledGoal.isPeriodic()) {
+        scheduledGoalManager.scheduleAtFixedRate(() -> this.submitGoal(scheduledGoal.getNextGoalToExecute()), g.getScheduledDelay(), g.getScheduledPeriod(), g.getScheduledDelayTimeUnit());
+      } else {
+        scheduledGoalManager.schedule(() -> this.submitGoal(scheduledGoal.getNextGoalToExecute()), g.getScheduledDelay(), g.getScheduledDelayTimeUnit());
+      }
     }
 
     addPendingGoal(new PendingGoal(g, execType));
