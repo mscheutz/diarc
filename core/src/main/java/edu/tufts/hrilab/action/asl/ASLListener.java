@@ -508,15 +508,15 @@ public interface ASLListener extends ParseTreeListener {
 	 */
 	void exitActionRecoveryDetails(ASLParser.ActionRecoveryDetailsContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link ASLParser#actionRecoveryName}.
+	 * Enter a parse tree produced by {@link ASLParser#actionRecoveryCatchingActions}.
 	 * @param ctx the parse tree
 	 */
-	void enterActionRecoveryName(ASLParser.ActionRecoveryNameContext ctx);
+	void enterActionRecoveryCatchingActions(ASLParser.ActionRecoveryCatchingActionsContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link ASLParser#actionRecoveryName}.
+	 * Exit a parse tree produced by {@link ASLParser#actionRecoveryCatchingActions}.
 	 * @param ctx the parse tree
 	 */
-	void exitActionRecoveryName(ASLParser.ActionRecoveryNameContext ctx);
+	void exitActionRecoveryCatchingActions(ASLParser.ActionRecoveryCatchingActionsContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ASLParser#postActionRecoveryBehavior}.
 	 * @param ctx the parse tree

@@ -18,7 +18,7 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 () = openGripperActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : opengripper(X)
+            catchingActions : {opengripper(X)}
             postRecovery : postrecovery_success
         }
         goals : {holding(?actor)}
@@ -32,7 +32,7 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 () = pickUpOpengripperActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUp(X)
+            catchingActions : {pickUp(X)}
             postRecovery : postrecovery_success
         }
         excludedGoals : {pickUpFailV2(X)}
@@ -93,7 +93,7 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 () = pickupParentRetryActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUpV2(X)
+            catchingActions : {pickUpV2(X)}
             postRecovery : postrecovery_parent_retry
         }
         goals : {pickUpFailV2(X,parentretry)}
@@ -108,7 +108,7 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 () = pickupParentSuccessActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUpV2(X)
+            catchingActions : {pickUpV2(X)}
             postRecovery : postrecovery_parent_success
         }
         goals : {pickUpFailV2(X,parentsuccess)}
@@ -122,7 +122,7 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 (PostRecoveryExecutionType ?postRecoveryType) = overridePostRecoveryPolicy(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUpV2(X)
+            catchingActions : {pickUpV2(X)}
             postRecovery : postrecovery_retry
         }
         goals : {pickUpFailV2(X,override)}
@@ -134,7 +134,7 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 () = multipleAttemptsRecoveryPolicy(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUpV2(X)
+            catchingActions : {pickUpV2(X)}
             postRecovery : postrecovery_retry
         }
         goals : {pickUpFailV2(X,multiple)}

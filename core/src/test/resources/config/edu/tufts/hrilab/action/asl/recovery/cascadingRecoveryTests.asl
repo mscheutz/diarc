@@ -15,7 +15,7 @@ import java.util.List;
 () = openGripperActionRecoveryFail(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : opengripper(X)
+            catchingActions : {opengripper(X)}
             postRecovery : postrecovery_success
         }
         goals : {holding(?actor)}

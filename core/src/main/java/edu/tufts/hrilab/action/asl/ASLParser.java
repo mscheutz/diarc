@@ -1,7 +1,3 @@
-/*
- * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
- */
-
 // Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.atn.*;
@@ -47,7 +43,7 @@ public class ASLParser extends Parser {
 		RULE_alwaysEffect = 37, RULE_successEffect = 38, RULE_failureEffect = 39, 
 		RULE_nonperfEffect = 40, RULE_observes = 41, RULE_interrupts = 42, RULE_onCancel = 43, 
 		RULE_onSuspend = 44, RULE_onResume = 45, RULE_interruptSpec = 46, RULE_interruptSpecType = 47, 
-		RULE_recovery = 48, RULE_actionRecoveryDetails = 49, RULE_actionRecoveryName = 50, 
+		RULE_recovery = 48, RULE_actionRecoveryDetails = 49, RULE_actionRecoveryCatchingActions = 50, 
 		RULE_postActionRecoveryBehavior = 51, RULE_postActionRecoveryType = 52, 
 		RULE_recoveryGoals = 53, RULE_recoveryExcludedGoals = 54, RULE_recoveryFailedActions = 55, 
 		RULE_recoveryExcludedFailedActions = 56, RULE_recoveryFailureReasons = 57, 
@@ -73,17 +69,18 @@ public class ASLParser extends Parser {
 			"inputTail", "outputList", "output", "outputTail", "effects", "alwaysEffect", 
 			"successEffect", "failureEffect", "nonperfEffect", "observes", "interrupts", 
 			"onCancel", "onSuspend", "onResume", "interruptSpec", "interruptSpecType", 
-			"recovery", "actionRecoveryDetails", "actionRecoveryName", "postActionRecoveryBehavior", 
-			"postActionRecoveryType", "recoveryGoals", "recoveryExcludedGoals", "recoveryFailedActions", 
-			"recoveryExcludedFailedActions", "recoveryFailureReasons", "recoveryExcludedFailureReasons", 
-			"recoveryActionStatuses", "recoveryMaximumAttempts", "locks", "spec", 
-			"specReturn", "singleArgReturn", "specFunction", "specType", "function", 
-			"operation", "control", "ifStatement", "booleanExpression", "orExpression", 
-			"andExpression", "primaryExpression", "controlContent", "elifStatement", 
-			"elseStatement", "whileStatement", "forStatement", "forInitial", "forCondition", 
-			"forUpdate", "forEachStatement", "exitStatement", "tryStatement", "catchStatement", 
-			"catchParameter", "finallyStatement", "returnStatement", "asyncStatement", 
-			"joinStatement", "noInterruptStatement"
+			"recovery", "actionRecoveryDetails", "actionRecoveryCatchingActions", 
+			"postActionRecoveryBehavior", "postActionRecoveryType", "recoveryGoals", 
+			"recoveryExcludedGoals", "recoveryFailedActions", "recoveryExcludedFailedActions", 
+			"recoveryFailureReasons", "recoveryExcludedFailureReasons", "recoveryActionStatuses", 
+			"recoveryMaximumAttempts", "locks", "spec", "specReturn", "singleArgReturn", 
+			"specFunction", "specType", "function", "operation", "control", "ifStatement", 
+			"booleanExpression", "orExpression", "andExpression", "primaryExpression", 
+			"controlContent", "elifStatement", "elseStatement", "whileStatement", 
+			"forStatement", "forInitial", "forCondition", "forUpdate", "forEachStatement", 
+			"exitStatement", "tryStatement", "catchStatement", "catchParameter", 
+			"finallyStatement", "returnStatement", "asyncStatement", "joinStatement", 
+			"noInterruptStatement"
 		};
 	}
 	public static final String[] ruleNames = makeRuleNames();
@@ -91,18 +88,19 @@ public class ASLParser extends Parser {
 	private static String[] makeLiteralNames() {
 		return new String[] {
 			null, "';'", "'='", "'['", "']'", "'('", "')'", "','", "'.'", "'<'", 
-			"'>'", "':'", "'{'", "'}'", "'actionRecovery'", "'catchingAction'", "'postRecovery'", 
-			"'postrecovery_parent_retry'", "'postrecovery_retry'", "'postrecovery_success'", 
-			"'postrecovery_parent_success'", "'goals'", "'excludedGoals'", "'failedActions'", 
-			"'excludedFailedActions'", "'failureReasons'", "'excludedFailureReasons'", 
-			"'actionStatuses'", "'maximumAttempts'", null, null, null, "'import'", 
-			"'as'", "'act'", "'op'", "'obs'", "'goal'", "'tsc'", "'infer'", "'var'", 
-			"'setting'", "'or'", "'pre'", "'post'", "'overall'", "'obligation'", 
-			"'effects'", "'always'", "'success'", "'failure'", "'nonperf'", "'observes'", 
-			"'recovery'", "'locks'", "'conditions'", "'if'", "'elseif'", "'else'", 
-			"'while'", "'for'", "'foreach'", "'true'", "'false'", "'exit'", "'try'", 
-			"'catch'", "'finally'", "'~'", "'return'", "'async'", "'join'", "'onInterrupt'", 
-			"'suspend'", "'cancel'", "'resume'", "'noInterrupt'", null, "'||'", "'&&'"
+			"'>'", "':'", "'{'", "'}'", "'actionRecovery'", "'catchingActions'", 
+			"'postRecovery'", "'postrecovery_parent_retry'", "'postrecovery_retry'", 
+			"'postrecovery_success'", "'postrecovery_parent_success'", "'goals'", 
+			"'excludedGoals'", "'failedActions'", "'excludedFailedActions'", "'failureReasons'", 
+			"'excludedFailureReasons'", "'actionStatuses'", "'maximumAttempts'", 
+			null, null, null, "'import'", "'as'", "'act'", "'op'", "'obs'", "'goal'", 
+			"'tsc'", "'infer'", "'var'", "'setting'", "'or'", "'pre'", "'post'", 
+			"'overall'", "'obligation'", "'effects'", "'always'", "'success'", "'failure'", 
+			"'nonperf'", "'observes'", "'recovery'", "'locks'", "'conditions'", "'if'", 
+			"'elseif'", "'else'", "'while'", "'for'", "'foreach'", "'true'", "'false'", 
+			"'exit'", "'try'", "'catch'", "'finally'", "'~'", "'return'", "'async'", 
+			"'join'", "'onInterrupt'", "'suspend'", "'cancel'", "'resume'", "'noInterrupt'", 
+			null, "'||'", "'&&'"
 		};
 	}
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
@@ -4042,8 +4040,8 @@ public class ASLParser extends Parser {
 		public PostActionRecoveryBehaviorContext postActionRecoveryBehavior() {
 			return getRuleContext(PostActionRecoveryBehaviorContext.class,0);
 		}
-		public ActionRecoveryNameContext actionRecoveryName() {
-			return getRuleContext(ActionRecoveryNameContext.class,0);
+		public ActionRecoveryCatchingActionsContext actionRecoveryCatchingActions() {
+			return getRuleContext(ActionRecoveryCatchingActionsContext.class,0);
 		}
 		public ActionRecoveryDetailsContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -4083,7 +4081,7 @@ public class ASLParser extends Parser {
 			if (_la==T__14) {
 				{
 				setState(593);
-				actionRecoveryName();
+				actionRecoveryCatchingActions();
 				}
 			}
 
@@ -4105,32 +4103,32 @@ public class ASLParser extends Parser {
 	}
 
 	@SuppressWarnings("CheckReturnValue")
-	public static class ActionRecoveryNameContext extends ParserRuleContext {
-		public PredicateContext predicate() {
-			return getRuleContext(PredicateContext.class,0);
+	public static class ActionRecoveryCatchingActionsContext extends ParserRuleContext {
+		public PredicateListContext predicateList() {
+			return getRuleContext(PredicateListContext.class,0);
 		}
-		public ActionRecoveryNameContext(ParserRuleContext parent, int invokingState) {
+		public ActionRecoveryCatchingActionsContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
-		@Override public int getRuleIndex() { return RULE_actionRecoveryName; }
+		@Override public int getRuleIndex() { return RULE_actionRecoveryCatchingActions; }
 		@Override
 		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ASLListener ) ((ASLListener)listener).enterActionRecoveryName(this);
+			if ( listener instanceof ASLListener ) ((ASLListener)listener).enterActionRecoveryCatchingActions(this);
 		}
 		@Override
 		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ASLListener ) ((ASLListener)listener).exitActionRecoveryName(this);
+			if ( listener instanceof ASLListener ) ((ASLListener)listener).exitActionRecoveryCatchingActions(this);
 		}
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof ASLVisitor ) return ((ASLVisitor<? extends T>)visitor).visitActionRecoveryName(this);
+			if ( visitor instanceof ASLVisitor ) return ((ASLVisitor<? extends T>)visitor).visitActionRecoveryCatchingActions(this);
 			else return visitor.visitChildren(this);
 		}
 	}
 
-	public final ActionRecoveryNameContext actionRecoveryName() throws RecognitionException {
-		ActionRecoveryNameContext _localctx = new ActionRecoveryNameContext(_ctx, getState());
-		enterRule(_localctx, 100, RULE_actionRecoveryName);
+	public final ActionRecoveryCatchingActionsContext actionRecoveryCatchingActions() throws RecognitionException {
+		ActionRecoveryCatchingActionsContext _localctx = new ActionRecoveryCatchingActionsContext(_ctx, getState());
+		enterRule(_localctx, 100, RULE_actionRecoveryCatchingActions);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
@@ -4139,7 +4137,7 @@ public class ASLParser extends Parser {
 			setState(600);
 			match(T__10);
 			setState(601);
-			predicate();
+			predicateList();
 			}
 		}
 		catch (RecognitionException re) {
@@ -7392,7 +7390,7 @@ public class ASLParser extends Parser {
 		"\u0000\u0000\u0000\u0253\u0254\u0001\u0000\u0000\u0000\u0254\u0255\u0003"+
 		"f3\u0000\u0255\u0256\u0005\r\u0000\u0000\u0256c\u0001\u0000\u0000\u0000"+
 		"\u0257\u0258\u0005\u000f\u0000\u0000\u0258\u0259\u0005\u000b\u0000\u0000"+
-		"\u0259\u025a\u00038\u001c\u0000\u025ae\u0001\u0000\u0000\u0000\u025b\u025c"+
+		"\u0259\u025a\u0003:\u001d\u0000\u025ae\u0001\u0000\u0000\u0000\u025b\u025c"+
 		"\u0005\u0010\u0000\u0000\u025c\u025d\u0005\u000b\u0000\u0000\u025d\u025e"+
 		"\u0003h4\u0000\u025eg\u0001\u0000\u0000\u0000\u025f\u0260\u0007\u0003"+
 		"\u0000\u0000\u0260i\u0001\u0000\u0000\u0000\u0261\u0262\u0005\u0015\u0000"+

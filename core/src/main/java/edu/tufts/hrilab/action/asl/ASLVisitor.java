@@ -311,11 +311,11 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitActionRecoveryDetails(ASLParser.ActionRecoveryDetailsContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link ASLParser#actionRecoveryName}.
+	 * Visit a parse tree produced by {@link ASLParser#actionRecoveryCatchingActions}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitActionRecoveryName(ASLParser.ActionRecoveryNameContext ctx);
+	T visitActionRecoveryCatchingActions(ASLParser.ActionRecoveryCatchingActionsContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ASLParser#postActionRecoveryBehavior}.
 	 * @param ctx the parse tree

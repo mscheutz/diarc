@@ -403,8 +403,8 @@ public class ActionScriptLanguageParser {
           log.warn("[enterRecovery] Multiple actionRecovery fields detected, only using first");
         }
         policyConstraints.recoveryType = RecoveryType.ACTION;
-        if (ctx.actionRecoveryDetails(0).actionRecoveryName() != null) {
-          policyConstraints.catchingAction = Factory.createPredicate(ctx.actionRecoveryDetails(0).actionRecoveryName().predicate().getText());
+        if (ctx.actionRecoveryDetails(0).actionRecoveryCatchingActions() != null) {
+          ctx.actionRecoveryDetails(0).actionRecoveryCatchingActions().predicateList().predicate().forEach(pred -> policyConstraints.catchingActions.add(Factory.createPredicate(pred.getText())));
         }
         policyConstraints.postRecoveryExecutionType = PostRecoveryExecutionType.fromString(ctx.actionRecoveryDetails(0).postActionRecoveryBehavior().postActionRecoveryType().getText());
       }

@@ -617,13 +617,13 @@ public class ASLBaseListener implements ASLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterActionRecoveryName(ASLParser.ActionRecoveryNameContext ctx) { }
+	@Override public void enterActionRecoveryCatchingActions(ASLParser.ActionRecoveryCatchingActionsContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitActionRecoveryName(ASLParser.ActionRecoveryNameContext ctx) { }
+	@Override public void exitActionRecoveryCatchingActions(ASLParser.ActionRecoveryCatchingActionsContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

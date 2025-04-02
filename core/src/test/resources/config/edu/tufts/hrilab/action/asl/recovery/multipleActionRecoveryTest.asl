@@ -30,7 +30,7 @@ import java.util.List;
 () = pickupActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickupv2(X)
+            catchingActions : {pickupv2(X)}
             postRecovery : postrecovery_success
         }
     }
@@ -44,7 +44,7 @@ import java.util.List;
 () = openGripperActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : opengripper(X)
+            catchingActions : {opengripper(X)}
             postRecovery : postrecovery_success
         }
     }
@@ -74,7 +74,7 @@ import java.util.List;
 () = closeGripperActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : closeGripperThrice(X)
+            catchingActions : {closeGripperThrice(X)}
             postRecovery : postrecovery_retry
         }
     }
@@ -96,7 +96,7 @@ import java.util.List;
 () = testActionSequenceActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : testActionSequence(X,once)
+            catchingActions : {testActionSequence(X,once)}
             postRecovery : postrecovery_parent_retry
         }
     }
@@ -110,7 +110,7 @@ import java.util.List;
 () = testActionSequenceTwoAttemptsActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : testActionSequence(X,twice)
+            catchingActions : {testActionSequence(X,twice)}
             postRecovery : postrecovery_parent_retry
         }
         maximumAttempts: 2

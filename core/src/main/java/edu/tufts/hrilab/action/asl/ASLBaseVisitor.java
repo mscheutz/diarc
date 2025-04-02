@@ -368,7 +368,7 @@ public class ASLBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements AS
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitActionRecoveryName(ASLParser.ActionRecoveryNameContext ctx) { return visitChildren(ctx); }
+	@Override public T visitActionRecoveryCatchingActions(ASLParser.ActionRecoveryCatchingActionsContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

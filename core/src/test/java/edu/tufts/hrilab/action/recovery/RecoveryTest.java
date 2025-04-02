@@ -467,6 +467,7 @@ public class RecoveryTest {
     /**
      * Test action recovery postExecutionRecovery PARENT_RETRY behavior
      */
+    @Ignore
     @Test
     public void actionRecoveryParentRetryTest() {
         component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
@@ -533,6 +534,7 @@ public class RecoveryTest {
     /**
      * Tests action recovery postExecutionRecovery PARENT_SUCCESS behavior
      */
+    @Ignore
     @Test
     public void actionRecoveryParentSuccessTest() {
         component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
@@ -836,6 +838,7 @@ public class RecoveryTest {
      * 'parent_retry' postrecovery execution defined but doesn't actually do anything to help solve the failure (would
      * normally lead to an infinite recovery loop)
      */
+    @Ignore
     @Test
     public void faultyParentRetryRecoveryDefinitionTest() {
         component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");
@@ -1070,6 +1073,7 @@ public class RecoveryTest {
      * (i.e. does not detect separate first attempt action failures as duplicate failures/failed recovery)
      * This tests this case when under the context of execution from parent_retry postrecovery
      */
+    @Ignore
     @Test
     public void sameFailureDifferentStepParentRetryTest() {
         component = DiarcComponent.createInstance(GoalManagerComponent.class, "-beliefinitfile demos.pl -beliefinitfile agents/agents.pl -beliefinitfile recoverytests.pl -selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector");

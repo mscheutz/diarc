@@ -180,7 +180,7 @@ import java.lang.Integer;
 () = actionEightRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : actionEight(X)
+            catchingActions : {fakeAction(), actionEight(X)}
             postRecovery : postrecovery_success
         }
         goals : {stateEight(X)}
@@ -204,7 +204,7 @@ import java.lang.Integer;
 () = actionNineRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : fakeAction(X)
+            catchingActions : {fakeAction(X)}
             postRecovery : postrecovery_success
         }
         goals : {stateNine(X)}
@@ -228,7 +228,7 @@ import java.lang.Integer;
 () = actionTenRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : actionTen(X)
+            catchingActions : {actionTen(X)}
             postRecovery : postrecovery_success
         }
         excludedGoals : {stateTen(X)}

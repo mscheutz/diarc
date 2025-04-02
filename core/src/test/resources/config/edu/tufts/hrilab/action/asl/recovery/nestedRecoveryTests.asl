@@ -16,7 +16,7 @@ import java.util.List;
 () = pickupNestedRecoverySuccess(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUp(X,success)
+            catchingActions : {pickUp(X,success)}
             postRecovery : postrecovery_retry
         }
         failedActions : {pickup(X)}
@@ -77,7 +77,7 @@ import java.util.List;
 () = pickupNestedRecoveryFaulty(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUpV2(X,Y)
+            catchingActions : {pickUpV2(X,Y)}
             postRecovery : postrecovery_retry
         }
         goals : {pickUpV2(?actor,child)}
@@ -90,7 +90,7 @@ import java.util.List;
 () = pickupNestedParentRecoveryFaulty(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUpV2(X,Y)
+            catchingActions : {pickUpV2(X,Y)}
             postRecovery : postrecovery_parent_retry
         }
         goals : {pickUpV2(?actor,parent)}

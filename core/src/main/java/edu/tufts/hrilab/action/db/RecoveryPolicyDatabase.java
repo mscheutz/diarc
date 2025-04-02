@@ -62,7 +62,7 @@ public class RecoveryPolicyDatabase {
         for (PolicyConstraints constraints : action.getPolicyConstraints()) {
           if ((constraints.postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_RETRY ||
                   constraints.postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_SUCCESS)
-                  && constraints.catchingAction == null) {
+                  && constraints.catchingActions.isEmpty()) {
             log.warn("[addRecoveryPolicyToDB] cannot define action recovery policy with a PARENT postRecoveryExecutionType" +
                     " and no defined catchingAction. Not adding {} as a recovery policy", action.getName());
             return;

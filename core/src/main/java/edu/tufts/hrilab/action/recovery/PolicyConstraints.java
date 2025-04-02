@@ -76,10 +76,10 @@ public class PolicyConstraints {
    * (Action Recovery Only)
    * The corresponding recovery policy will defer matching to failure reasons
    * until/unless the failure propagates to an action context whose signature
-   * matches this field.
+   * matches one of the entries in this field.
    * Can be empty (i.e. applies to the direct parent of the failed context regardless of signature)
    */
-  public Predicate catchingAction = null;
+  public Set<Predicate> catchingActions = new HashSet<>();
 
   /**
    * Maximum number of times this recovery policy can be executed for the same failure reasons under the same context

@@ -58,8 +58,8 @@ public class FailureInformation {
     //Additional action recovery only checks
     if (constraints.recoveryType == RecoveryType.ACTION) {
       //If an explicit catching action signature is defined, this context must match it
-      if (constraints.catchingAction != null) {
-        if (catchingContext != null && catchingContext.instanceOf(constraints.catchingAction)) {
+      if (!constraints.catchingActions.isEmpty()) {
+        if (catchingContext != null && constraints.catchingActions.stream().anyMatch(a -> catchingContext.instanceOf(a))) {
           ++matches;
         } else {
           return 0;
