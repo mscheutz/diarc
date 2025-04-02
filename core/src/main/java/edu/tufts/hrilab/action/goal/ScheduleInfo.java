@@ -19,5 +19,5 @@ public class ScheduleInfo {
   /**
    * The TimeUnit relating to both initialDelay and period timings.
    */
-  public TimeUnit scheduleTimeUnit = null;
+  public TimeUnit timeUnit = null;
 }

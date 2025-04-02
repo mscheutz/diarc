@@ -291,7 +291,7 @@ public class ScheduledGoalTest {
     date = calendar.getTime();
     dateString = formatter.format(date);
     long expectedExecutionTime = date.getTime();
-    gm.updateScheduledGoalNextExecution(gid,Factory.createSymbol(dateString));
+    gm.updateScheduledGoalNextExecution(gid,Factory.createPredicate("start", dateString));
     assertEquals(GoalStatus.ACTIVE,gm.joinOnGoal(gid,2000));
     assertEquals(GoalStatus.SUCCEEDED,gm.joinOnGoal(gid,3000));
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
@@ -307,7 +307,7 @@ public class ScheduledGoalTest {
     Predicate goalPred = Factory.createPredicate("scheduled(self:agent,test(self:agent),10,SECONDS)");
     long gid = gm.submitGoal(goalPred, ExecutionType.ACT);
     Thread.sleep(500);
-    gm.updateScheduledGoalNextExecution(gid,Factory.createSymbol("2"), Factory.createSymbol("SECONDS"));
+    gm.updateScheduledGoalNextExecution(gid,Factory.createPredicate("start", "2", "SECONDS"));
     long expectedExecutionTime = System.currentTimeMillis() + 2000;
     assertEquals(GoalStatus.SUCCEEDED,gm.joinOnGoal(gid,3000));
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
@@ -328,7 +328,7 @@ public class ScheduledGoalTest {
     Predicate goalPred = Factory.createPredicate("scheduled(self:agent,test(self:agent),"+dateString+")");
     long gid = gm.submitGoal(goalPred, ExecutionType.ACT);
     Thread.sleep(500);
-    gm.updateScheduledGoalNextExecution(gid,Factory.createSymbol("3"), Factory.createSymbol("SECONDS"));
+    gm.updateScheduledGoalNextExecution(gid, Factory.createPredicate("start", "3", "SECONDS"));
     long expectedExecutionTime = System.currentTimeMillis() + 3000;
     assertEquals(GoalStatus.SUCCEEDED,gm.joinOnGoal(gid,4000));
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
@@ -350,7 +350,7 @@ public class ScheduledGoalTest {
     SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
     String dateString = formatter.format(date);
     long expectedExecutionTime = date.getTime();
-    gm.updateScheduledGoalNextExecution(gid,Factory.createSymbol(dateString));
+    gm.updateScheduledGoalNextExecution(gid,Factory.createPredicate("start", dateString));
     assertEquals(GoalStatus.ACTIVE,gm.joinOnGoal(gid,1000));
     assertEquals(GoalStatus.SUCCEEDED,gm.joinOnGoal(gid,2000));
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
@@ -380,7 +380,7 @@ public class ScheduledGoalTest {
     calendar.add(Calendar.HOUR, 2);
     date = calendar.getTime();
     dateString = formatter.format(date);
-    gm.updatePersistentGoalScheduledInterval(gid,Factory.createSymbol(dateString));
+    gm.updateScheduledGoalPeriod(gid,Factory.createPredicate("period", dateString));
     assertEquals(goal.getNextScheduledExecutionDate().getTime(),calendar.getTime().getTime(), 1000);
   }
 
@@ -404,7 +404,7 @@ public class ScheduledGoalTest {
     assertTrue(goal.isPersistent());
     Thread.sleep(2500);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
-    gm.updatePersistentGoalScheduledInterval(gid,Factory.createSymbol("2"), Factory.createSymbol("SECONDS"));
+    gm.updateScheduledGoalPeriod(gid,Factory.createSymbol("2"), Factory.createSymbol("SECONDS"));
     expectedExecutionTime += 2000;
     Thread.sleep(2500);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
@@ -435,7 +435,7 @@ public class ScheduledGoalTest {
     assertTrue(goal.isPersistent());
     Thread.sleep(3500);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
-    gm.updatePersistentGoalScheduledInterval(gid,Factory.createSymbol("2"), Factory.createSymbol("SECONDS"));
+    gm.updateScheduledGoalPeriod(gid,Factory.createSymbol("2"), Factory.createSymbol("SECONDS"));
     expectedExecutionTime += 4000;
     Thread.sleep(3000);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
@@ -463,7 +463,7 @@ public class ScheduledGoalTest {
     Thread.sleep(3000);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
 
-    gm.updatePersistentGoalScheduledInterval(gid,Factory.createSymbol("2"), Factory.createSymbol("SECONDS"));
+    gm.updateScheduledGoalPeriod(gid,Factory.createSymbol("2"), Factory.createSymbol("SECONDS"));
     expectedExecutionTime += 2000;
     Thread.sleep(1500);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
@@ -493,7 +493,7 @@ public class ScheduledGoalTest {
     Thread.sleep(5000);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
 
-    gm.updatePersistentGoalScheduledInterval(gid,Factory.createSymbol("2"), Factory.createSymbol("SECONDS"));
+    gm.updateScheduledGoalPeriod(gid,Factory.createSymbol("2"), Factory.createSymbol("SECONDS"));
     expectedExecutionTime += 4000;
     Thread.sleep(2000);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
@@ -524,7 +524,7 @@ public class ScheduledGoalTest {
     Date date = calendar.getTime();
     SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
     String dateString = formatter.format(date);
-    gm.updatePersistentGoalScheduledInterval(gid,Factory.createSymbol(dateString));
+    gm.updateScheduledGoalPeriod(gid,Factory.createPredicate("period", dateString));
     expectedExecutionTime = calendar.getTime().getTime();
     Thread.sleep(1500);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
@@ -556,7 +556,7 @@ public class ScheduledGoalTest {
     calendar.add(Calendar.HOUR, 2);
     date = calendar.getTime();
     dateString = formatter.format(date);
-    gm.updateScheduledGoalNextExecution(gid,Factory.createSymbol(dateString));
+    gm.updateScheduledGoalNextExecution(gid,Factory.createPredicate("start", dateString));
     assertEquals(goal.getNextScheduledExecutionDate().getTime(),calendar.getTime().getTime(), 1000);
   }
 
@@ -639,7 +639,7 @@ public class ScheduledGoalTest {
     Date date = calendar.getTime();
     SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
     String dateString = formatter.format(date);
-    gm.updateScheduledGoalNextExecution(gid,Factory.createSymbol(dateString));
+    gm.updateScheduledGoalNextExecution(gid,Factory.createPredicate("start", dateString));
     expectedExecutionTime = calendar.getTime().getTime();
     Thread.sleep(3500);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
@@ -691,7 +691,7 @@ public class ScheduledGoalTest {
     long expectedExecutionTime = date.getTime();
     SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
     String dateString = formatter.format(date);
-    gm.updateScheduledGoalNextExecution(gid,Factory.createSymbol(dateString));
+    gm.updateScheduledGoalNextExecution(gid,Factory.createPredicate("start", dateString));
     Goal goal = gm.getGoal(gid);
     assertTrue(goal.isScheduled());
     assertTrue(goal.isPersistent());
@@ -784,7 +784,7 @@ public class ScheduledGoalTest {
     long gid = gm.submitGoal(goalPred, ExecutionType.ACT);
     long expectedExecutionTime = System.currentTimeMillis() + 2000;
     Thread.sleep(500);
-    gm.updatePersistentGoalScheduledInterval(gid,Factory.createSymbol("2"), Factory.createSymbol("SECONDS"));
+    gm.updateScheduledGoalPeriod(gid,Factory.createSymbol("2"), Factory.createSymbol("SECONDS"));
     Goal goal = gm.getGoal(gid);
     assertTrue(goal.isScheduled());
     assertTrue(goal.isPersistent());
@@ -814,7 +814,7 @@ public class ScheduledGoalTest {
     Date date = calendar.getTime();
     SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
     String dateString = formatter.format(date);
-    gm.updatePersistentGoalScheduledInterval(gid,Factory.createSymbol(dateString));
+    gm.updateScheduledGoalPeriod(gid,Factory.createPredicate("period", dateString));
     Goal goal = gm.getGoal(gid);
     assertTrue(goal.isScheduled());
     assertTrue(goal.isPersistent());
@@ -852,7 +852,7 @@ public class ScheduledGoalTest {
     Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent),"+dateString2+")),"+dateString+")");
     long gid = gm.submitGoal(goalPred, ExecutionType.ACT);
     Thread.sleep(500);
-    gm.updatePersistentGoalScheduledInterval(gid,Factory.createSymbol(dateString1));
+    gm.updateScheduledGoalPeriod(gid,Factory.createSymbol(dateString1));
     Goal goal = gm.getGoal(gid);
     assertTrue(goal.isScheduled());
     assertTrue(goal.isPersistent());
@@ -882,7 +882,7 @@ public class ScheduledGoalTest {
     Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent),"+dateString2+")),"+dateString+")");
     long gid = gm.submitGoal(goalPred, ExecutionType.ACT);
     Thread.sleep(500);
-    gm.updatePersistentGoalScheduledInterval(gid,Factory.createSymbol("2"),Factory.createSymbol("SECONDS"));
+    gm.updateScheduledGoalPeriod(gid,Factory.createSymbol("2"),Factory.createSymbol("SECONDS"));
     Goal goal = gm.getGoal(gid);
     assertTrue(goal.isScheduled());
     assertTrue(goal.isPersistent());

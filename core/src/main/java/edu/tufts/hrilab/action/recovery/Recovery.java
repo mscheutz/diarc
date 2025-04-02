@@ -169,9 +169,13 @@ public class Recovery {
         if (actionStatus.isFailure() && actionStatus != ActionStatus.FAIL) {
             switch (actionStatus) {
                 case EXIT_RECOVERY:
-                case FAIL_RECOVERY:
                     recoveryStatus = RecoveryStatus.EXIT;
                     return false;
+                case FAIL_RECOVERY:
+                    // TODO: investigate if this is what we want for action recovery, and exactly what the difference is
+                    //       between EXIT_RECOVERY (explicit exit from asl?) and FAIL_RECOVERY
+                    recoveryStatus = RecoveryStatus.PLAN;
+                    return true;
                 case FAIL_POSTCONDITIONS:
                     // bring agent belief in line with world state (i.e., discrepancies)
                     Set<Predicate> failureReasons = new HashSet<>(justification.getFailureReason());

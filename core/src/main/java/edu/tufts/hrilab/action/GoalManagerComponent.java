@@ -561,7 +561,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     goal.addListener(this.notifier);
     goal.setPriority(priority);
     goal.setPriorityTier(priorityTier);
-    goal = em.submitGoal(goal, type);
+    goal.setExecutionType(type);
+    goal = em.submitGoal(goal);
     if (goal != null) {
       return goal.getId();
     }
@@ -586,7 +587,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     goal.setPriorityTier(priorityTier);
     goal.setPriority(priority);
     goal.setMetric(metric);
-    goal = em.submitGoal(goal, ExecutionType.ACT);
+    goal = em.submitGoal(goal);
     if (goal != null) {
       return goal.getId();
     }
@@ -860,44 +861,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * This method fails if the supplied timing arguments cannot be parsed or the goal is not a scheduled goal.
    *
    * @param goalId id of the goal to modify
-   * @param date Symbol representing the Date of the next scheduled execution of this goal
+   * @param start Symbol representing the next scheduled execution of this goal (date or delay from now)
    * @return whether the timing was successfully updated
    */
   @TRADEService
-  public boolean updateScheduledGoalNextExecution(long goalId, Symbol date) {
-    return em.updateScheduledGoalNextExecution(goalId,date);
-  }
-
-  /**
-   * Update the timing of the next execution of this scheduled goal:
-   * Scheduled goals: Modifies the scheduled execution time
-   * Persistent Scheduled Goals: Only temporarily modifies the delay until the next execution of this goal without
-   *  affecting the regular interval. This method can be used to shift execution timing without affecting the interval.
-   *
-   * This method fails if the supplied timing arguments cannot be parsed or the goal is not a scheduled goal.
-   *
-   * @param goalId id of the goal to modify
-   * @param delay Symbol representing the absolute duration until next scheduled execution of this goal
-   * @param timeUnit Symbol representing the timeUnit of delay
-   * @return whether the timing was successfully updated
-   */
-  @TRADEService
-  public boolean updateScheduledGoalNextExecution(long goalId, Symbol delay, Symbol timeUnit) {
-    return em.updateScheduledGoalNextExecution(goalId,delay,timeUnit);
-  }
-
-  /**
-   * Modify the interval at which Persistent Scheduled Goals are scheduled to execute. Fails if the supplied timing
-   * arguments cannot be parsed or the goal is not persistent and scheduled.
-   *
-   * @param goalId id of the goal to modify
-   * @param delay Symbol representing the duration between scheduled executions of this goal
-   * @param timeUnit Symbol representing the timeUnit of delay
-   * @return whether the scheduled interval was successfully updated
-   */
-  @TRADEService
-  public boolean updatePersistentGoalScheduledInterval(long goalId, Symbol delay, Symbol timeUnit) {
-    return em.updatePersistentGoalScheduledInterval(goalId,delay,timeUnit);
+  public boolean updateScheduledGoalNextExecution(long goalId, Predicate start) {
+    return em.updateScheduledGoalNextExecution(goalId, start);
   }
 
   //TODO: should this method just not exist or be renamed?
@@ -911,13 +880,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * This method overwrites both the next execution time and forces the scheduling interval to be daily.
    *
    * @param goalId id of the goal to modify
-   * @param date Symbol representing the Date of the scheduled execution of this goal, to be repeated every following
-   *            day at the contained time
+   * @param period Symbol representing the periodicity of the scheduled goal
    * @return whether the scheduled interval was successfully updated
    */
   @TRADEService
-  public boolean updatePersistentGoalScheduledInterval(long goalId, Symbol date) {
-    return em.updatePersistentGoalScheduledInterval(goalId,date);
+  public boolean updateScheduledGoalPeriod(long goalId, Predicate period) {
+    return em.updateScheduledGoalPeriod(goalId, period);
   }
 
   /**

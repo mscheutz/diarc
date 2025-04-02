@@ -8,6 +8,7 @@ import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.description.ContextDescription;
 import edu.tufts.hrilab.action.execution.ArgumentBasedContext;
+import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.execution.PersistentContext;
 import edu.tufts.hrilab.action.execution.ScheduledContext;
 import edu.tufts.hrilab.action.listener.GoalListener;
@@ -44,7 +45,9 @@ public class Goal {
 
   public static Goal createGoal(Predicate goalState) {
     if (goalState.getName().equals("scheduled")) {
-      return new ScheduledGoal();
+      return new ScheduledGoal(goalState);
+    } else {
+      return new Goal(goalState);
     }
   }
 
@@ -78,6 +81,11 @@ public class Goal {
   private Lock contextLock = new ReentrantLock();
 
   private PriorityTier priorityTier = PriorityTier.NORMAL;
+
+  /**
+   * Execution type, defaults to ACT.
+   */
+  private ExecutionType executionType = ExecutionType.ACT;
 
 
   /**
@@ -188,134 +196,6 @@ public class Goal {
     }
   }
 
-  // handles persistent(), scheduled(persistent()), persistent(scheduled()), and scheduled(persistent(scheduled())).
-  /**
-   * Check for special goal forms on submission (Currently 'scheduled' and 'persistent'). Unwraps the predicate to
-   * submit while populating class variables with values based on wrapper names and arguments.
-   *
-   * Currently handles up to "scheduled persistent scheduled" goals elegantly.
-   */
-  private Predicate unwrapGoalPredicate(Predicate goalState, boolean actorIncluded) {
-    if (goalState.getName().equals("persistent")) {
-      Predicate innerState;
-      if (actorIncluded) {
-        if (goalState.size() != 2) {
-          log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
-          return null;
-        }
-        innerState = (Predicate) goalState.get(1);
-      } else {
-        if (goalState.size() != 1) {
-          log.error("[Goal] illegal predicate structure for persistent goal: " + goalState);
-          return null;
-        }
-        innerState = (Predicate) goalState.get(0);
-      }
-      if (info.goalType == GoalType.STANDARD) {
-        info.goalType = GoalType.PERSISTENT;
-      } else if (info.goalType == GoalType.SCHEDULED) {
-        if (!innerState.getName().equals("scheduled")) {
-          //A scheduled persistent goal must be submitted just as a scheduled goal with a persistent predicate. Return
-          //  immediately if that is the case.
-          //A bit confusing, but a scheduled persistent scheduled goal on the other hand can be represented as a
-          //  persistent scheduled goal with a one-time modified delay. Allow to continue unwrapping.
-          return goalState;
-        }
-      } else {
-        log.warn("[unwrapGoalPredicate] unhandled special predicate structure detected. type {} with inner predicate {}", info.goalType, goalState);
-        return null;
-      }
-      goalState = innerState;
-
-      return unwrapGoalPredicate(goalState, true);
-    } else if (goalState.getName().equals("scheduled")) {
-      int formatType = 0;
-      String dateString = "";
-      String delayString = "";
-      String timeUnitString = "";
-      if (actorIncluded) {
-        if (goalState.size() == 3) {
-          dateString = goalState.get(2).toString();
-          formatType = 2;
-        } else if (goalState.size() == 4) {
-          delayString = goalState.get(2).toString();
-          timeUnitString = goalState.get(3).toString();
-          formatType = 1;
-        }
-        goalState = (Predicate) goalState.get(1);
-      } else {
-        if (goalState.size() == 2) {
-          dateString = goalState.get(1).toString();
-          formatType = 2;
-        } else if (goalState.size() == 3) {
-          delayString = goalState.get(1).toString();
-          timeUnitString = goalState.get(2).toString();
-          formatType = 1;
-        }
-        goalState = (Predicate) goalState.get(0);
-      }
-
-      if (info.goalType == GoalType.STANDARD && !goalState.getName().equals("scheduled")) {
-        //Explicitly disallowing scheduled(scheduled()) so logic for checking for scheduled(persistent(scheduled())) works.
-        info.goalType = GoalType.SCHEDULED;
-      } else if (info.goalType == GoalType.PERSISTENT) {
-        info.goalType = GoalType.PERSISTENTSCHEDULED;
-      } else if (info.goalType == GoalType.SCHEDULED) {
-        //Technically SCHEDULEDPERSISTENT goalType if reaching here, that alone is not a valid goalType though
-        info.goalType = GoalType.SCHEDULEDPERSISTENTSCHEDULED;
-        //Scheduled Persistent Scheduled case -> inner scheduled predicate contains the regular interval timing,
-        // outer predicate contains the first time execution timing. Transfer the previously set timings to the correct
-        // info members.
-        if (info.scheduledDate != null) {
-          info.scheduledSubmissionDate = info.scheduledDate;
-          info.scheduledDate = null;
-        } else {
-          info.scheduledSubmissionDelay = info.scheduledDelay;
-          info.scheduledSubmissionDelayTimeUnit = info.scheduledDelayTimeUnit;
-          info.scheduledDelayTimeUnit = null;
-          info.scheduledDelay = null;
-        }
-      } else {
-        log.warn("[unwrapGoalPredicate] unhandled special predicate structure detected. type {} with inner predicate {}", info.goalType, goalState);
-        return null;
-      }
-
-      try {
-        if (formatType == 0) {
-          log.error("[Goal] illegal predicate structure for scheduled goal: " + goalState);
-          return null;
-        } else if (formatType == 1) {
-            info.scheduledDelay = Long.parseLong(delayString);
-            info.scheduledDelayTimeUnit = TimeUnit.valueOf(timeUnitString);
-        } else if (formatType == 2) {
-          SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
-          Date date = null;
-          //TODO: what date format do we expect? Is only the LLM able to target this flexibly?
-          try {
-            date = formatter.parse(dateString);
-            Calendar calendar = Calendar.getInstance();
-            calendar.set(Calendar.HOUR_OF_DAY,date.getHours());
-            calendar.set(Calendar.MINUTE,date.getMinutes());
-            calendar.set(Calendar.SECOND,date.getSeconds());
-            date = calendar.getTime();
-          } catch (ParseException ignored) {}
-          if (date == null) {
-            formatter = new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH);
-            date = formatter.parse(dateString);
-          }
-          info.scheduledDate = date;
-        }
-      } catch (Exception e) {
-        log.error("[unwrapGoalPredicate] exception while parsing arguments for scheduled goal: " + goalState, e);
-        return null;
-      }
-
-      return unwrapGoalPredicate(goalState, true);
-    }
-
-    return goalState;
-  }
-
   /**
    * Get the goal predicate. This can contain free variables, and it can also become bound
    * depending on where in the goal execution process this method is called.
@@ -385,7 +265,6 @@ public class Goal {
   public boolean isScheduled() {
     return false;
   }
-
 
   public Symbol getActor() {
     return info.actor;
@@ -682,4 +561,11 @@ public class Goal {
     listeners.remove(listener);
   }
 
+  public ExecutionType getExecutionType() {
+    return executionType;
+  }
+
+  public void setExecutionType(ExecutionType executionType) {
+    this.executionType = executionType;
+  }
 }

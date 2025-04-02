@@ -114,7 +114,7 @@ public class ActionLearning {
             //Temporarily add to ignore set so it is executed and we don't get stuck in a loop here
             ignoreActionSet.add(g.getPredicate());
             g.setIsLearningGoal(true);
-            g = executionManager.submitGoal(g, ExecutionType.ACT);
+            g = executionManager.submitGoal(g);
             GoalStatus goalStatus = executionManager.joinOnGoal(g.getId());
             ignoreActionSet.remove(g.getPredicate());
 

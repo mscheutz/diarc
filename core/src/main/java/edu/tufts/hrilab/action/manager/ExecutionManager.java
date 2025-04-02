@@ -31,8 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
@@ -41,31 +39,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 public class ExecutionManager implements GoalListener {
-  private static final Logger log = LoggerFactory.getLogger(ExecutionManager.class);
-
-  /**
-   * How often the memory pruning thread should execute pruning mechanism (in milliseconds).
-   */
-  private final long pruneCycleTime = 60000;
-
-  /**
-   * Length of time to keep pastGoals, terminated context trees, and state (in milliseconds).
-   */
-  private long historyLength = 60000;
-
-  /**
-   * Enables the goal manager use pruning mechanism
-   */
-  private boolean useMemoryManager = true;
-
-  /**
-   * Memory management thread scheduler that executes pruning mechanism.
-   */
-  private final ScheduledExecutorService memoryManager = Executors.newSingleThreadScheduledExecutor();
-
-  private final ScheduledExecutorService scheduledGoalManager = Executors.newSingleThreadScheduledExecutor();
-  private final Set<Goal> scheduledGoals = new HashSet<>();
-
 
   /**
    * Dummy interface in order to pass comparison method as a lambda
@@ -92,6 +65,28 @@ public class ExecutionManager implements GoalListener {
     }
     return val;
   };
+
+  private static final Logger log = LoggerFactory.getLogger(ExecutionManager.class);
+
+  /**
+   * How often the memory pruning thread should execute pruning mechanism (in milliseconds).
+   */
+  private final long pruneCycleTime = 60000;
+
+  /**
+   * Length of time to keep pastGoals, terminated context trees, and state (in milliseconds).
+   */
+  private long historyLength = 60000;
+
+  /**
+   * Enables the goal manager use pruning mechanism
+   */
+  private boolean useMemoryManager = true;
+
+  /**
+   * Memory management thread scheduler that executes pruning mechanism.
+   */
+  private final ScheduledExecutorService memoryManager = Executors.newSingleThreadScheduledExecutor();
 
   /**
    * Team/Agent hierarchy information (transitive)
@@ -136,6 +131,10 @@ public class ExecutionManager implements GoalListener {
    */
   private final ExecutorService executor = Executors.newCachedThreadPool();
 
+  private final ScheduledExecutorService scheduledGoalManager = Executors.newSingleThreadScheduledExecutor();
+  private final Map<ScheduledGoal,Future> scheduledGoals = new HashMap<>();
+  private final Set<ScheduledGoal> pastScheduledGoals = new HashSet<>();
+
   /**
    * The goal manager starts with a rootContext that is the root of all execution.
    * All Contexts will be a child of this one (or child of a new one).
@@ -154,9 +153,6 @@ public class ExecutionManager implements GoalListener {
   private List<ActionListener> aiListeners = new ArrayList<>();
 
   private boolean displayActionLearningGui = false;
-
-  public ExecutionManager() {
-  }
 
   protected void init(StateMachine sm, RootContext rootContext, Collection<String> groups) {
     this.sm = sm;
@@ -620,8 +616,8 @@ public class ExecutionManager implements GoalListener {
    * @param g the goal to be added
    * @return The duplicate goal if present, otherwise the newly submitted goal
    */
-  public Goal submitGoal(Goal g, ExecutionType execType) {
-    log.info("[submitGoal] submitting goal {} with exec type {}, priority {}, tier {}", g, execType, g.getPriority(), g.getPriorityTier());
+  public Goal submitGoal(Goal g) {
+    log.info("[submitGoal] submitting goal {} with exec type {}, priority {}, tier {}", g, g.getExecutionType(), g.getPriority(), g.getPriorityTier());
 
     // register "this" as a goal listener to be notified when goal status changes
     g.addListener(this);
@@ -642,22 +638,30 @@ public class ExecutionManager implements GoalListener {
     //TODO: handle the above mentioned resource conflict by asking the user. Prevent unintentional state changes which
     //      would break learning if executing while learning.
     //If actor or ancestor AgentTeam currently learning, hand off to relevant ActionLearning instance.
-    if (handOffToLearning(g, execType)) {
+    if (handOffToLearning(g)) {
       return g;
     }
 
+    // check if goal is a scheduled goal, and handle
     if (g.isScheduled()) {
-      ScheduledGoal scheduledGoal = (ScheduledGoal) g;
-      scheduledGoals.add(scheduledGoal);
-      if (scheduledGoal.isPeriodic()) {
-        scheduledGoalManager.scheduleAtFixedRate(() -> this.submitGoal(scheduledGoal.getNextGoalToExecute()), g.getScheduledDelay(), g.getScheduledPeriod(), g.getScheduledDelayTimeUnit());
-      } else {
-        scheduledGoalManager.schedule(() -> this.submitGoal(scheduledGoal.getNextGoalToExecute()), g.getScheduledDelay(), g.getScheduledDelayTimeUnit());
-      }
+      executeScheduledGoal((ScheduledGoal) g);
+      return g;
     }
 
-    addPendingGoal(new PendingGoal(g, execType));
+    // else, a "normal" goal submission
+    addPendingGoal(new PendingGoal(g));
     return g;
+  }
+
+  private void executeScheduledGoal(ScheduledGoal goal) {
+    Future future;
+    if (goal.isPeriodic()) {
+      future = scheduledGoalManager.scheduleAtFixedRate(() -> this.submitGoal(goal.getNextGoalToSubmit()), goal.getScheduledDelay(), goal.getScheduledPeriod(), goal.getScheduledTimeUnit());
+    } else {
+      future = scheduledGoalManager.schedule(() -> this.submitGoal(goal.getNextGoalToSubmit()), goal.getScheduledDelay(), goal.getScheduledTimeUnit());
+    }
+
+    scheduledGoals.put(goal, future);
   }
 
   /**
@@ -827,7 +831,7 @@ public class ExecutionManager implements GoalListener {
         int i = 0;
         for (Goal activeGoal : activeGoals) {
           log.debug("[supersedeGoals] returning superseded goal to pending {}", activeGoal);
-          PendingGoal pg = new PendingGoal(activeGoal, ExecutionType.ACT);
+          PendingGoal pg = new PendingGoal(activeGoal);
           pg.setPreviousAIFuture(aiFutures.get(i));
           pg.setPreviousStatus(goalStatuses.get(i));
           addPendingGoal(pg);
@@ -881,7 +885,7 @@ public class ExecutionManager implements GoalListener {
       }
 
       //Attempt to begin execution of this goal and notify the PendingGoal condition
-      executeGoal(goal, pg.getExecutionType());
+      executeGoal(goal);
       pg.notifyOfNoLongerPending();
     }
   }
@@ -962,14 +966,14 @@ public class ExecutionManager implements GoalListener {
    * Attempts to create an ActionInterpreter and begin execution of the supplied goal, checking action/state constraints
    *
    * @param goal          the goal
-   * @param executionType goal type (act, simulation, ...)
    * @return true if goal was added
    */
-  protected boolean executeGoal(Goal goal, ExecutionType executionType) {
-    log.debug("[executeGoal] Adding goal " + goal + " (" + executionType + ")");
+  protected boolean executeGoal(Goal goal) {
+    log.debug("[executeGoal] Adding goal " + goal + " (" + goal.getExecutionType() + ")");
 
     RootContext root;
     StateMachine stateMachine;
+    ExecutionType executionType = goal.getExecutionType();
 
     // Branch off main state machine if simulation
     stateMachine = (executionType == ExecutionType.ACT) ? sm : new StateMachine(sm, false);
@@ -1399,6 +1403,12 @@ public class ExecutionManager implements GoalListener {
     return new ArrayList<>(pastGoals);
   }
 
+
+  public ScheduledGoal getScheduledGoal(long goalId) {
+    ScheduledGoal scheduledGoal = scheduledGoals.keySet().stream().filter(goal -> goal.getInfo().gid == goalId).findFirst().orElse(null);
+    return scheduledGoal;
+  }
+
   /**
    * Get a copied list of all scheduled goals which have either yet to be submitted, or are currently executing under
    * the scope of a persistent context. Any non-persistent scheduled goals which have begun execution are simply
@@ -1436,142 +1446,32 @@ public class ExecutionManager implements GoalListener {
     return scheduledGoals;
   }
 
-  /**
-   * Helper function to convert a date String to a Date object. Expects a string in the format of "HH-mm-ss"
-   */
-  private Date parseDateString(String dateString) {
-      //TODO: allow date specifying month/day/year
-      SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
-      Date date;
-      try {
-        date = formatter.parse(dateString);
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, date.getHours());
-        calendar.set(Calendar.MINUTE, date.getMinutes());
-        calendar.set(Calendar.SECOND, date.getSeconds());
-        date = calendar.getTime();
-        return date;
-      } catch (ParseException e) {
-        log.error("[parseDateString] supplied time symbol doesn't match expected date format", e);
-        return null;
-      }
-  }
-
-
-  /**
-   * {@link #updateScheduledGoalNextExecution(Long, Symbol, Symbol)}
-   */
-  public boolean updateScheduledGoalNextExecution(Long goalId, Symbol dateSymbol) {
-    return updateScheduledGoalNextExecution(goalId, dateSymbol, null);
-  }
-
-  /**
-   * Update the timing of the next execution of this scheduled goal:
-   * Scheduled goals: Modifies the scheduled execution time
-   * Persistent Scheduled Goals: Only temporarily modifies the delay until the next execution of this goal without
-   *  affecting the regular interval. This method can be used to shift execution timing without affecting the interval.
-   *
-   * This method fails if the supplied timing arguments cannot be parsed or the goal is not a scheduled goal.
-   */
-  public boolean updateScheduledGoalNextExecution(Long goalId, Symbol timeSymbol, Symbol timeUnitSymbol) {
-    Goal goal = getGoal(goalId);
+  public boolean updateScheduledGoalNextExecution(long goalId, Predicate start) {
+    ScheduledGoal goal = getScheduledGoal(goalId);
     if (goal == null) {
-      log.warn("[updateScheduledGoalNextExecution] goal not found for gid: {}", goalId);
-      return false;
-    }
-    if (!goal.isScheduled()) {
-      log.warn("[updateScheduledGoalNextExecution] goal found for gid {} isn't set as a scheduled goal", goalId);
       return false;
     }
 
-    if (timeUnitSymbol == null) {
-      Date date = parseDateString(timeSymbol.toString());
-      if (date != null) {
-        if (goal.isPersistent()) {
-          return goal.updateNextScheduledTime(date);
-        } else {
-          return goal.setScheduledDate(date);
-        }
-      } else {
-        return false;
-      }
-    }
-
-    try {
-      long delay = Long.parseLong(timeSymbol.toString());
-      TimeUnit timeUnit = TimeUnit.valueOf(timeUnitSymbol.toString());
-      if (goal.isPersistent()) {
-        return goal.updateNextScheduledTime(delay, timeUnit);
-      } else {
-        return goal.setScheduledDelay(delay, timeUnit);
-      }
-    } catch (Exception e) {
-      log.error("[updateScheduledGoalNextExecution] cannot parse supplied delay or timeunit", e);
-      return false;
-    }
+    // cancel current schedule, update goal schedule info, and then resubmit
+    Future future = scheduledGoals.get(goal);
+    future.cancel(false);
+    goal.updateStartTime(start);
+    executeScheduledGoal(goal);
+    return true;
   }
 
-  /**
-   * {@link #updateScheduledGoalNextExecution(Long, Symbol, Symbol)}
-   */
-  public boolean updatePersistentGoalScheduledInterval(long goalId, Symbol timeSymbol) {
-    return updatePersistentGoalScheduledInterval(goalId, timeSymbol, null);
-  }
-
-  /**
-   * Modify the interval at which Persistent Scheduled Goals are scheduled to execute. Fails if the supplied timing
-   * arguments cannot be parsed or the goal is not persistent and scheduled.
-   */
-  public boolean updatePersistentGoalScheduledInterval(long goalId, Symbol timeSymbol, Symbol timeUnitSymbol) {
-    Goal goal = getGoal(goalId);
+  public boolean updateScheduledGoalPeriod(long goalId, Predicate period) {
+    ScheduledGoal goal = getScheduledGoal(goalId);
     if (goal == null) {
-      log.warn("[updatePersistentGoalScheduledInterval] goal not found for gid: {}", goalId);
       return false;
     }
 
-    if (!goal.isScheduled() && !goal.isPersistent()) {
-      log.warn("[updatePersistentGoalScheduledInterval] goal found for gid {} isn't persistently scheduled, cannot update scheduled interval", goalId);
-      return false;
-    }
-
-    String timeString = timeSymbol.toString();
-    if (timeUnitSymbol == null) {
-      Date date = parseDateString(timeString);
-      if (date != null) {
-        return goal.setScheduledDate(date);
-      } else {
-        return false;
-      }
-    }
-
-    try {
-      long delay = Long.parseLong(timeString);
-      TimeUnit timeUnit = TimeUnit.valueOf(timeUnitSymbol.toString());
-      return goal.setScheduledDelay(delay, timeUnit);
-    } catch (Exception e) {
-      log.error("[updateScheduledGoalTime] cannot parse supplied delay or timeunit", e);
-      return false;
-    }
-  }
-
-  /**
-   *  Get the duration in milliseconds until this goal's next scheduled execution
-   *
-   * @param goalId the goal id
-   * @return the duration until the goal's next scheduled execution. Returns -1 if the goal is not a scheduled goal
-   */
-  public long getScheduledGoalsNextDelay(long goalId) {
-    Goal goal = getGoal(goalId);
-    if (goal == null) {
-      log.warn("[getScheduledGoalsNextDelay] goal not found for gid: {}", goalId);
-      return -1;
-    }
-    if (!goal.isScheduled()) {
-      log.warn("[getScheduledGoalsNextDelay] goal found for gid {} isn't set as a scheduled goal", goalId);
-      return -1;
-    }
-
-    return goal.getTimeUntilScheduledExecution();
+    // cancel current schedule, update goal schedule info, and then resubmit
+    Future future = scheduledGoals.get(goal);
+    future.cancel(false);
+    goal.updatePeriod(period);
+    executeScheduledGoal(goal);
+    return true;
   }
 
   /**
@@ -2190,7 +2090,7 @@ public class ExecutionManager implements GoalListener {
    * Returns true if the supplied goal should be intercepted by Action Learning.
    * Checks the actor of the supplied goal and any of its ancestors for matching criteria
    */
-  private boolean handOffToLearning(Goal g, ExecutionType executionType) {
+  private boolean handOffToLearning(Goal g) {
     AgentTeam originalAgentTeam = getAgentTeam(g.getActor());
     if (originalAgentTeam.shouldIgnore(g)) {
       return false;

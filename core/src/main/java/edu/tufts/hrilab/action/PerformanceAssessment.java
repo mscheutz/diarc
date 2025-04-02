@@ -194,7 +194,9 @@ public class PerformanceAssessment {
    */
   private static Pair<Goal, Goal> generateGoalPlan(Predicate goalPred, StateMachine simStateMachine) {
     // simulate goal to get plan
-    Goal goal = executionManager.submitGoal(new Goal(goalPred), ExecutionType.SIMULATE_PERFORMANCE);
+    Goal simGoal = new Goal(goalPred);
+    simGoal.setExecutionType(ExecutionType.SIMULATE_PERFORMANCE);
+    Goal goal = executionManager.submitGoal(simGoal);
     executionManager.joinOnGoal(goal.getId());
     // clone simulated goal and root context node
     Goal clonedGoal = new Goal(goal.getPredicate().clone());

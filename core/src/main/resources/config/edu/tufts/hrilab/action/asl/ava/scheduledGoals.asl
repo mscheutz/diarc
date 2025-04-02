@@ -172,9 +172,9 @@ import edu.tufts.hrilab.action.justification.Justification;
 
         if (op:equals(!modifyInterval,true)) {
             if (op:equals(!relativeTime,true)) {
-                !success = tsc:updatePersistentGoalScheduledInterval(!goalId, !response, !yResponse);
+                !success = tsc:updateScheduledGoalPeriod(!goalId, !response, !yResponse);
             } else {
-                !success = tsc:updatePersistentGoalScheduledInterval(!goalId, !response);
+                !success = tsc:updateScheduledGoalPeriod(!goalId, !response);
             }
         } else {
             if (op:equals(!relativeTime,true)) {

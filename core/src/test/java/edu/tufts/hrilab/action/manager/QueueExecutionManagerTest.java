@@ -121,7 +121,7 @@ public class QueueExecutionManagerTest {
     g.setPriorityTier(priorityTier);
     g.setPriority(priority);
 
-    g = em.submitGoal(g, ExecutionType.ACT);
+    g = em.submitGoal(g);
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
@@ -134,7 +134,8 @@ public class QueueExecutionManagerTest {
     Goal g = new Goal(goalPred);
     g.setPriority(priority);
     g.setPriorityTier(priorityTier);
-    em.submitGoal(g, executionType);
+    g.setExecutionType(executionType);
+    em.submitGoal(g);
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
