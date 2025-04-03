@@ -26,8 +26,7 @@ import edu.tufts.hrilab.action.learning.ActionLearningStatus;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
+import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,7 +135,7 @@ public class ExecutionManager implements GoalListener {
 
   private Scheduler goalScheduler;
   private final ScheduledExecutorService scheduledGoalManager = Executors.newSingleThreadScheduledExecutor();
-  private final Map<ScheduledGoal, Future<?>> scheduledGoals = new HashMap<>();
+  private final Map<ScheduledGoal, TriggerKey> scheduledGoals = new HashMap<>();
   private final Set<ScheduledGoal> pastScheduledGoals = new HashSet<>();
 
   /**
@@ -669,31 +668,55 @@ public class ExecutionManager implements GoalListener {
     // set to active goal status
     goal.setStatus(GoalStatus.ACTIVE);
 
-    Future<?> future;
+    JobBuilder jobBuilder = JobBuilder.newJob(ScheduledGoalJob.class).withIdentity(Long.toString(goal.getInfo().gid), "scheduledGoals");
+    TriggerBuilder<Trigger> triggerBuilder = TriggerBuilder.newTrigger();
     if (goal.isPeriodic()) {
       // schedule periodic goal
-      future = scheduledGoalManager.scheduleAtFixedRate(
-              () -> this.submitGoal(goal.getNextGoalToSubmit()),
-              goal.getScheduledDelay(),
-              goal.getScheduledPeriod(),
-              goal.getScheduledTimeUnit());
+      jobBuilder.setJobData(new JobDataMap(Map.of(ScheduledGoalJob.RUNNABLE_KEY,
+                      (Runnable) () -> this.submitGoal(goal.getNextGoalToSubmit())))
+      );
+
+      // set periodic schedule
+      triggerBuilder.withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInMilliseconds(goal.getScheduledPeriod()));
     } else {
       // schedule one-time goal
-      future = scheduledGoalManager.schedule(
-              () -> {
-                this.submitGoal(goal.getNextGoalToSubmit());
-                scheduledGoals.remove(goal);
-                pastScheduledGoals.add(goal);
-                // TODO: how to handle scheduledGoal goalStatus in this case? ideally it should depend on the one-time goal status
-                goal.setStatus(GoalStatus.SUCCEEDED);
-              },
-              goal.getScheduledDelay(),
-              goal.getScheduledTimeUnit());
+      jobBuilder.setJobData(new JobDataMap(Map.of(ScheduledGoalJob.RUNNABLE_KEY,
+                      (Runnable) () -> {
+                        this.submitGoal(goal.getNextGoalToSubmit());
+
+                        // TODO: can this be done with a quartz listener?
+                        scheduledGoals.remove(goal);
+                        pastScheduledGoals.add(goal);
+                        // TODO: how to handle scheduledGoal goalStatus in this case? ideally it should depend on the one-time goal status
+                        goal.setStatus(GoalStatus.SUCCEEDED);
+                      })));
     }
 
+    // set start time
+    if (goal.getStartTime() >= 0) {
+      triggerBuilder.startAt(goal.getStartDate());
+    }
+
+    // set end time
+    if (goal.getEndTime() > 0) {
+      triggerBuilder.endAt(goal.getEndDate());
+
+      // TODO: add hook to move goal to past goals and set goal status
+      // can quartz listener be used here?
+    }
+
+    // schedule the goal
+    JobDetail jobDetail = jobBuilder.build();
+    triggerBuilder.forJob(jobDetail);
+    Trigger trigger = triggerBuilder.build();
+    try {
+      goalScheduler.scheduleJob(jobDetail, trigger);
+    } catch (SchedulerException e) {
+      log.error("Error scheduling goal: {}", goal, e);
+    }
 
     // add scheduled goals
-    scheduledGoals.put(goal, future);
+    scheduledGoals.put(goal, trigger.getKey());
 
     // handle end time if specified
     if (goal.getEndTime() > 0) {
@@ -1020,7 +1043,7 @@ public class ExecutionManager implements GoalListener {
   /**
    * Attempts to create an ActionInterpreter and begin execution of the supplied goal, checking action/state constraints
    *
-   * @param goal          the goal
+   * @param goal the goal
    * @return true if goal was added
    */
   protected boolean executeGoal(Goal goal) {
@@ -1446,7 +1469,7 @@ public class ExecutionManager implements GoalListener {
     log.trace("[getActiveGoals] in method");
     synchronized (goalsLock) {
       log.trace("[getActiveGoals] have goalsLock");
-      getActiveGoalsHelper(rootAgent, activeGoals,false);
+      getActiveGoalsHelper(rootAgent, activeGoals, false);
     }
     log.trace("[getActiveGoals] released goalsLock");
     return new ArrayList<>(activeGoals);
@@ -1599,6 +1622,7 @@ public class ExecutionManager implements GoalListener {
   }
 
   //Is there a reason this is named "system" rather than "active"?
+
   /**
    * Get a list of the corresponding predicate representations of all goals currently found in the active collection
    */
@@ -1608,7 +1632,7 @@ public class ExecutionManager implements GoalListener {
 
   /**
    * Get a list of the corresponding predicate representations of all goals currently found in the active collection
-   *  with the supplied actor
+   * with the supplied actor
    */
   public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
     log.trace("[getSystemGoalsPredicates] {}", actor);
@@ -1935,7 +1959,7 @@ public class ExecutionManager implements GoalListener {
     return matchingGoals;
   }
 
-  ////////// Action Learning //////////
+  /// /////// Action Learning //////////
   @Action
   @TRADEService
   public void waitForActionLearningStart(Symbol actor, Predicate newAction) {
@@ -2048,7 +2072,7 @@ public class ExecutionManager implements GoalListener {
       return false;
     }
 
-    return resumeActionLearning(actor,activeSignature);
+    return resumeActionLearning(actor, activeSignature);
   }
 
   @Action
@@ -2067,7 +2091,7 @@ public class ExecutionManager implements GoalListener {
       return false;
     }
 
-    return endActionLearning(actor,activeSignature);
+    return endActionLearning(actor, activeSignature);
   }
 
   @Action
@@ -2085,7 +2109,7 @@ public class ExecutionManager implements GoalListener {
       return false;
     }
 
-    return pauseActionLearning(actor,activeSignature);
+    return pauseActionLearning(actor, activeSignature);
   }
 
   @Action
@@ -2103,7 +2127,7 @@ public class ExecutionManager implements GoalListener {
       return false;
     }
 
-    return cancelActionLearning(actor,activeSignature);
+    return cancelActionLearning(actor, activeSignature);
   }
 
   @TRADEService
@@ -2273,7 +2297,9 @@ public class ExecutionManager implements GoalListener {
 
     for (TRADEServiceInfo tsi : tsis) {
       try {
-        if (tsi.call(Boolean.class, goalPred)) return true;
+        if (tsi.call(Boolean.class, goalPred)) {
+          return true;
+        }
       } catch (TRADEException e) {
         log.error("[checkIgnoreTentativeAccept] error calling ignoreTentativeAccept", e);
       }
@@ -2353,7 +2379,7 @@ public class ExecutionManager implements GoalListener {
   /**
    * Get main state machine.
    * NOTE: the @TRADEService should be removed once there's a cleaner way to get a plan for a goal
-   *       without submitting a goal for execution. This is used in asl in a few places.
+   * without submitting a goal for execution. This is used in asl in a few places.
    *
    * @return
    */
@@ -2369,6 +2395,7 @@ public class ExecutionManager implements GoalListener {
   public void setActionLearningGuiFlag(boolean flag) {
     displayActionLearningGui = flag;
   }
+
   public boolean getActionLearningGuiFlag() {
     return displayActionLearningGui;
   }
