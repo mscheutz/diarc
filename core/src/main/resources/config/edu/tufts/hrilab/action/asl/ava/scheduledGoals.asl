@@ -223,21 +223,17 @@ import edu.tufts.hrilab.action.justification.Justification;
         //return;
     } elseif (op:equals(!numGoals,1)) {
         ?scheduledGoalPred = op:get(!scheduledGoals,0);
-        !gid = tsc:getGoalId(?scheduledGoalPred);
         //TODO: should this function use submitted pred or 'current state' pred
-        !goalPredExtended = tsc:getWrappedScheduledGoalSubmissionPredicate(!gid);
         act:generateResponseFromString("There is currently one scheduled task");
-        act:generateResponse(!goalPredExtended);
+        act:generateResponse(!scheduledGoalPred);
         return;
     } else {
         act:generateResponseFromString("There are multiple currently scheduled tasks");
         for (!goalIndex=0; !goalIndex lt !numGoals; !goalIndex ++) {
             !goalPred = op:get(!scheduledGoals,!goalIndex);
             !spokenIndex = op:++(!goalIndex);
-            !gid = tsc:getGoalId(!goalPred);
-            !goalPredExtended = tsc:getWrappedScheduledGoalSubmissionPredicate(!gid);
             act:generateResponseFromString("Task !spokenIndex");
-            act:generateResponse(!goalPredExtended);
+            act:generateResponse(!goalPred);
         }
         act:suspendWaitForResponse(option(X),?actor,false);
         !bindings = act:askQuestionFromString(?actor, "Which task did you want to modify?", option(X));
@@ -259,22 +255,16 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 () = listScheduledGoals() {
-    List !scheduledGoalIds;
+    List !scheduledGoals;
     Integer !numGoals;
     Predicate !goalPred;
-    Long !gid;
-    java.lang.Boolean !isPersistent;
-    java.lang.Boolean !isScheduled;
 
-    !scheduledGoalIds = tsc:getScheduledGoalIds();
+    !scheduledGoals = tsc:getScheduledGoals();
     //op:log(debug, "[listScheduledGoals] current scheduled goals: !scheduledGoals");
-    !numGoals = op:invokeMethod(!scheduledGoalIds, "size");
-    if (op:isEmpty(!scheduledGoalIds)) {
+    if (op:isEmpty(!scheduledGoals)) {
         act:generateResponseFromString("There are no scheduled tasks");
     } else {
-        foreach (!gid : !scheduledGoalIds) {
-            //TODO: should this be submitted pred or 'current state' pred
-            !goalPred = tsc:getWrappedScheduledGoalSubmissionPredicate(!gid);
+        foreach (!goalPred : !scheduledGoals) {
             act:generateResponse(!goalPred);
         }
     }

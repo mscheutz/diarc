@@ -205,6 +205,7 @@ dependencies {
   //action
   implementation("org.antlr:antlr4-runtime:4.13.1")
   implementation("com.github.pellierd:pddl4j:3.8.3")
+  implementation("org.quartz-scheduler:quartz:2.5.0")
 
   //scala for rr
   implementation("org.scala-lang:scala-compiler:2.12.4")

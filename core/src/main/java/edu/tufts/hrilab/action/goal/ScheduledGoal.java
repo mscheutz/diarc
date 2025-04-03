@@ -10,7 +10,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class ScheduledGoal extends Goal {
@@ -23,9 +22,17 @@ public class ScheduledGoal extends Goal {
   /**
    * Schedule information, extracted from the start, period, and end predicates.
    */
-  private ScheduleInfo scheduleInfo = new ScheduleInfo();
+  private final ScheduleInfo scheduleInfo = new ScheduleInfo();
 
-  private List<Goal> submittedGoals = new ArrayList<>();
+  public List<Goal> getSubmittedGoals() {
+    return submittedGoals;
+  }
+
+  public ScheduleInfo getScheduleInfo() {
+    return scheduleInfo;
+  }
+
+  private final List<Goal> submittedGoals = new ArrayList<>();
 
   /**
    * Scheduled goal form: scheduled(goalPred, startPred, periodPred, endPred)
@@ -33,31 +40,18 @@ public class ScheduledGoal extends Goal {
    * - no startTime means start right away
    * - endPred only valid if periodPred is specified
    * - startPred forms: start(number, timeunit), start(date-format)
-   * - periodPred forms: period(number,timeunit)
+   * - periodPred forms: period(number,timeunit), period(date-format)
    * - endPred forms: end(number, timeunit), end(date-format)
    *
-   * @param goalState
+   * @param goalState scheduled goal predicate: scheduled(goalPred, [startPred], [periodPred], [endPred])
    */
   protected ScheduledGoal(Predicate goalState) {
     super((Predicate) goalState.get(0));
 
     // parse scheduled goal args
-    Predicate start = null;
-    Predicate period = null;
-    Predicate end = null;
     for (int i = 1; i < goalState.size(); ++i) {
       Predicate arg = (Predicate) goalState.get(i);
-      switch (arg.getName()) {
-        case "start":
-          start = arg;
-          break;
-        case "period":
-          period = arg;
-        case "end":
-          end = arg;
-        default:
-          log.error("Invalid argument in scheduled goal predicate: {}", arg);
-      }
+      update(arg);
     }
 
     // Error checks
@@ -66,27 +60,6 @@ public class ScheduledGoal extends Goal {
     }
     if (end != null && period == null) {
       log.error("Invalid scheduled goal predicate. End time only valid with periodic goals. Goal: {}", goalState);
-    }
-
-    setScheduleInfo(start, period, end);
-  }
-
-  private void setScheduleInfo(Predicate start, Predicate period, Predicate end) {
-    this.start = start;
-    this.period = period;
-    this.end = end;
-
-    // TODO: set scheduleInfo
-    if (start != null) {
-      scheduleInfo.initialDelay = 10;
-    }
-
-    if (period != null) {
-      scheduleInfo.period = 100;
-    }
-
-    if (end != null) {
-      scheduleInfo.endTime = 1000;
     }
   }
 
@@ -134,16 +107,46 @@ public class ScheduledGoal extends Goal {
     return scheduleInfo.timeUnit;
   }
 
-  public void updateStartTime(Predicate start) {
-
+  public boolean update(Predicate update) {
+    return switch (update.getName()) {
+      case "start" -> updateStartTime(update);
+      case "period" -> updatePeriod(update);
+      case "end" -> updateEndTime(update);
+      default -> {
+        log.error("Invalid scheduled goal predicate: {}", update);
+        yield false;
+      }
+    };
   }
 
-  public void updatePeriod(Predicate period) {
+  private boolean updateStartTime(Predicate start) {
+    if (start == null) {
+      return false;
+    }
 
+    this.start = start;
+    scheduleInfo.initialDelay = 10;
+    return true;
   }
 
-  public void updateEndTime(Predicate end) {
+  private boolean updatePeriod(Predicate period) {
+    if (period == null) {
+      return false;
+    }
 
+    this.period = period;
+    scheduleInfo.period = 100;
+    return true;
+  }
+
+  private boolean updateEndTime(Predicate end) {
+    if (end == null) {
+      return false;
+    }
+
+    this.end = end;
+    scheduleInfo.endTime = 1000;
+    return true;
   }
 
   public static Date parseDateString(String dateString) {
@@ -173,108 +176,9 @@ public class ScheduledGoal extends Goal {
     return date;
   }
 
-  public Date getScheduledDate() {
-  }
-
-  /**
-   * Get the duration in milliseconds until this goal's next scheduled execution.
-   * Returns -1 if the goal is not a scheduled goal.
-   */
-  public long getTimeUntilScheduledExecution() {
-  }
-
   public Date getNextScheduledExecutionDate() {
+    // TODO: implement this !!
+    return new Date();
   }
 
-  /**
-   * Utility function to get the re-wrapped predicate this goal was originally submitted with.
-   * Practically, this method will return the base goal predicate and optionally 'persistent' and 'scheduled' wrappers
-   * along with any scheduled timing information if applicable.
-   */
-  public Predicate getWrappedGoalSubmissionPredicate() {
-    Predicate goalPred;
-    if (info.goal == null) {
-      goalPred = ((Predicate) info.getUnboundGoal()).clone();
-    } else {
-      goalPred = info.goal.clone();
-    }
-    if (info.isScheduled()) {
-      if (info.scheduledDelay != null) {
-        Symbol delaySymbol = Factory.createSymbol(info.scheduledDelay.toString());
-        Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledDelayTimeUnit.toString());
-        goalPred = Factory.createPredicate("scheduled", info.actor, goalPred, delaySymbol, timeUnitSymbol);
-      } else {
-        String pattern = "HH-mm-ss";
-        DateFormat df = new SimpleDateFormat(pattern);
-        Symbol dateSymbol = Factory.createSymbol(df.format(info.scheduledDate));
-        goalPred = Factory.createPredicate("scheduled", info.actor, goalPred, dateSymbol);
-      }
-    }
-    if (info.isPersistent()) {
-      goalPred = Factory.createPredicate("persistent", info.actor, goalPred);
-    }
-    if (info.goalType == GoalType.SCHEDULEDPERSISTENTSCHEDULED) {
-      if (info.getScheduledSubmissionDelay() != null) {
-        Symbol delaySymbol = Factory.createSymbol(info.scheduledSubmissionDelay.toString());
-        Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledSubmissionDelayTimeUnit.toString());
-        goalPred = Factory.createPredicate("scheduled", info.actor, goalPred, delaySymbol, timeUnitSymbol);
-      } else {
-        String pattern = "HH-mm-ss";
-        DateFormat df = new SimpleDateFormat(pattern);
-        Symbol dateSymbol = Factory.createSymbol(df.format(info.scheduledSubmissionDate));
-        goalPred = Factory.createPredicate("scheduled", info.actor, goalPred, dateSymbol);
-      }
-    }
-    return goalPred;
-  }
-
-  /**
-   * Utility function to get a wrapped predicate for this goal including all current scheduling information. Behaves
-   * like {@link #getWrappedGoalSubmissionPredicate()} except that any timing information is relative to now
-   * rather than submission
-   */
-  public Predicate getWrappedGoalPredicate() {
-    Predicate goalPred;
-    if (info.status == GoalStatus.PENDING || info.status == GoalStatus.UNKNOWN || info.status.isTerminated()) {
-      log.warn("[getWrappedGoalPredicate] not sure how to handle goal status {}, returning submission predicate", info.status);
-      return getWrappedGoalSubmissionPredicate();
-    }
-    if (info.goal == null) {
-      goalPred = ((Predicate) info.getUnboundGoal()).clone();
-    } else {
-      goalPred = info.goal.clone();
-    }
-    if (info.isScheduled() && info.isPersistent()) {
-      if (info.scheduledDelay != null) {
-        Symbol delaySymbol = Factory.createSymbol(info.scheduledDelay.toString());
-        Symbol timeUnitSymbol = Factory.createSymbol(info.scheduledDelayTimeUnit.toString());
-        goalPred = Factory.createPredicate("scheduled", info.actor, goalPred, delaySymbol, timeUnitSymbol);
-      } else {
-        String pattern = "HH-mm-ss";
-        DateFormat df = new SimpleDateFormat(pattern);
-        Symbol dateSymbol = Factory.createSymbol(df.format(info.scheduledDate));
-        goalPred = Factory.createPredicate("scheduled", info.actor, goalPred, dateSymbol);
-      }
-    }
-    if (info.isPersistent()) {
-      goalPred = Factory.createPredicate("persistent", info.actor, goalPred);
-    }
-    //TODO: should this always be a date or should logic be written to get the "best" representation of delay
-    //  duration and timeunit from a general time.
-    if (info.isScheduled()) {
-      ScheduledContext scheduledContext = getScheduledContext();
-      if (scheduledContext != null) {
-        if (isPersistent() && scheduledContext.scheduledByDate() && !scheduledContext.hasOffsetSchedule() && !scheduledContext.nextScheduleIntervalOffset()) {
-          return goalPred;
-        }
-        Date date = scheduledContext.getDateOfNextExecution();
-        String pattern = "HH-mm-ss";
-        DateFormat df = new SimpleDateFormat(pattern);
-        Symbol dateSymbol = Factory.createSymbol(df.format(date));
-        goalPred = Factory.createPredicate("scheduled", info.actor, goalPred, dateSymbol);
-      }
-    }
-
-    return goalPred;
-  }
 }

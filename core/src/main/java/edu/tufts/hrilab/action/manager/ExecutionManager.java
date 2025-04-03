@@ -26,6 +26,9 @@ import edu.tufts.hrilab.action.learning.ActionLearningStatus;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -131,8 +134,9 @@ public class ExecutionManager implements GoalListener {
    */
   private final ExecutorService executor = Executors.newCachedThreadPool();
 
+  private Scheduler goalScheduler;
   private final ScheduledExecutorService scheduledGoalManager = Executors.newSingleThreadScheduledExecutor();
-  private final Map<ScheduledGoal,Future> scheduledGoals = new HashMap<>();
+  private final Map<ScheduledGoal, Future<?>> scheduledGoals = new HashMap<>();
   private final Set<ScheduledGoal> pastScheduledGoals = new HashSet<>();
 
   /**
@@ -150,13 +154,21 @@ public class ExecutionManager implements GoalListener {
   /**
    * External components to be notified of action execution step progress
    */
-  private List<ActionListener> aiListeners = new ArrayList<>();
+  private final List<ActionListener> aiListeners = new ArrayList<>();
 
   private boolean displayActionLearningGui = false;
 
   protected void init(StateMachine sm, RootContext rootContext, Collection<String> groups) {
     this.sm = sm;
     this.rootContext = rootContext;
+
+    // instantiate and start scheduled goal manager
+    try {
+      goalScheduler = StdSchedulerFactory.getDefaultScheduler();
+      goalScheduler.start();
+    } catch (SchedulerException e) {
+      log.error("Error getting goal scheduler. Scheduled goals not available at this time.");
+    }
 
     //TODO:brad: prune based on context size not time
     //start memory management thread to prune every N seconds
@@ -654,14 +666,57 @@ public class ExecutionManager implements GoalListener {
   }
 
   private void executeScheduledGoal(ScheduledGoal goal) {
-    Future future;
+    // set to active goal status
+    goal.setStatus(GoalStatus.ACTIVE);
+
+    Future<?> future;
     if (goal.isPeriodic()) {
-      future = scheduledGoalManager.scheduleAtFixedRate(() -> this.submitGoal(goal.getNextGoalToSubmit()), goal.getScheduledDelay(), goal.getScheduledPeriod(), goal.getScheduledTimeUnit());
+      // schedule periodic goal
+      future = scheduledGoalManager.scheduleAtFixedRate(
+              () -> this.submitGoal(goal.getNextGoalToSubmit()),
+              goal.getScheduledDelay(),
+              goal.getScheduledPeriod(),
+              goal.getScheduledTimeUnit());
     } else {
-      future = scheduledGoalManager.schedule(() -> this.submitGoal(goal.getNextGoalToSubmit()), goal.getScheduledDelay(), goal.getScheduledTimeUnit());
+      // schedule one-time goal
+      future = scheduledGoalManager.schedule(
+              () -> {
+                this.submitGoal(goal.getNextGoalToSubmit());
+                scheduledGoals.remove(goal);
+                pastScheduledGoals.add(goal);
+                // TODO: how to handle scheduledGoal goalStatus in this case? ideally it should depend on the one-time goal status
+                goal.setStatus(GoalStatus.SUCCEEDED);
+              },
+              goal.getScheduledDelay(),
+              goal.getScheduledTimeUnit());
     }
 
+
+    // add scheduled goals
     scheduledGoals.put(goal, future);
+
+    // handle end time if specified
+    if (goal.getEndTime() > 0) {
+      Runnable canceller = () -> {
+        if (future.isDone()) {
+          // must have been cancelled or updated/restarted with new future
+          return;
+        }
+
+        // stop scheduling more tasks for this goal
+        future.cancel(false);
+
+        // remove scheduled goal and add to past scheduled goals
+        scheduledGoals.remove(goal);
+        pastScheduledGoals.add(goal);
+
+        // assume succeeded -- end time can only be specified for periodic goals, so can't be based on single
+        // "normal" goal status (e.g., what to do if 2 out of 5 failed)
+        goal.setStatus(GoalStatus.SUCCEEDED);
+      };
+
+      scheduledGoalManager.schedule(canceller, goal.getEndTime(), goal.getScheduledTimeUnit());
+    }
   }
 
   /**
@@ -1235,11 +1290,38 @@ public class ExecutionManager implements GoalListener {
     // if goal doesn't have an AI, remove it from goals list and add to pastGoals
     // if goal does have an AI, the actionComplete method will be called to
     // take care of that
-    boolean hasAI = goal.getActionInterpreter() == null ? false : true;
+    boolean hasAI = goal.getActionInterpreter() != null;
     if (!hasAI) {
       transferGoalToPastGoals(goal);
     }
     return retVal;
+  }
+
+  public boolean cancelScheduledGoal(long gid) {
+    ScheduledGoal goal = getScheduledGoal(gid);
+    if (goal == null) {
+      return false;
+    }
+
+    // cancel scheduling more tasks for this goal
+    Future future = scheduledGoals.get(goal);
+    if (!future.cancel(false)) {
+      return false;
+    }
+
+    // cancel goals that have been submitted as part of scheduled goal
+    for (Goal submittedGoal : goal.getSubmittedGoals()) {
+      if (!submittedGoal.getStatus().isTerminated()) {
+        cancelGoal(submittedGoal.getId());
+      }
+    }
+
+    // remove scheduled goal and add to past scheduled goals
+    scheduledGoals.remove(goal);
+    pastScheduledGoals.add(goal);
+
+    goal.setStatus(GoalStatus.CANCELED);
+    return true;
   }
 
   /**
@@ -1405,71 +1487,38 @@ public class ExecutionManager implements GoalListener {
 
 
   public ScheduledGoal getScheduledGoal(long goalId) {
-    ScheduledGoal scheduledGoal = scheduledGoals.keySet().stream().filter(goal -> goal.getInfo().gid == goalId).findFirst().orElse(null);
-    return scheduledGoal;
+    return scheduledGoals.keySet().stream()
+            .filter(goal -> goal.getInfo().gid == goalId)
+            .findFirst()
+            .orElse(null);
   }
 
   /**
-   * Get a copied list of all scheduled goals which have either yet to be submitted, or are currently executing under
-   * the scope of a persistent context. Any non-persistent scheduled goals which have begun execution are simply
-   * considered activegoals.
+   * Get a copied list of all scheduled goals which have either yet to be submitted, or are currently executing.
+   * Any one-time scheduled goals which have begun execution are considered active goals.
+   *
+   * @return shallow copy of scheduled goals
    */
   public List<Goal> getScheduledGoals() {
-    List<Goal> scheduledGoals = new ArrayList<>();
     synchronized (goalsLock) {
-      Set<Goal> activeGoals = new HashSet<>();
-      getActiveGoalsHelper(rootAgent, activeGoals,true);
-      for (Goal goal : activeGoals) {
-        if (goal.isScheduled()) {
-          //If persistent, always add because will always execute again
-          if (goal.isPersistent()) {
-            scheduledGoals.add(goal);
-          } else {
-            Date date = goal.getScheduledDate();
-            if (date != null) {
-              if (date.after(new Date())) {
-                //If scheduled for an absolute time which has yet to occur, add
-                scheduledGoals.add(goal);
-              }
-            } else {
-              //If scheduled on a delay which has not fully passed yet, add
-              long delay = goal.getScheduledDelay();
-              TimeUnit timeunit = goal.getScheduledDelayTimeUnit();
-              if (System.currentTimeMillis() - goal.getStartTime() < timeunit.toMillis(delay)) {
-                scheduledGoals.add(goal);
-              }
-            }
-          }
-        }
-      }
+      return new ArrayList<>(scheduledGoals.keySet());
     }
-    return scheduledGoals;
   }
 
-  public boolean updateScheduledGoalNextExecution(long goalId, Predicate start) {
+  public boolean updateScheduledGoal(long goalId, Predicate update) {
     ScheduledGoal goal = getScheduledGoal(goalId);
     if (goal == null) {
       return false;
     }
 
     // cancel current schedule, update goal schedule info, and then resubmit
-    Future future = scheduledGoals.get(goal);
+    Future<?> future = scheduledGoals.get(goal);
     future.cancel(false);
-    goal.updateStartTime(start);
-    executeScheduledGoal(goal);
-    return true;
-  }
 
-  public boolean updateScheduledGoalPeriod(long goalId, Predicate period) {
-    ScheduledGoal goal = getScheduledGoal(goalId);
-    if (goal == null) {
+    if (!goal.update(update)) {
       return false;
     }
 
-    // cancel current schedule, update goal schedule info, and then resubmit
-    Future future = scheduledGoals.get(goal);
-    future.cancel(false);
-    goal.updatePeriod(period);
     executeScheduledGoal(goal);
     return true;
   }
@@ -1644,6 +1693,10 @@ public class ExecutionManager implements GoalListener {
     if (g == null) {
       log.trace("[getGoal] {} is past goal", gid);
       g = getPastGoal(gid);
+    }
+    if (g == null) {
+      log.trace("[getGoal] {} is scheduled goal", gid);
+      g = getScheduledGoal(gid);
     }
     return g;
   }

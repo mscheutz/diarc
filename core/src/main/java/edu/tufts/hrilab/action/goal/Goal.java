@@ -9,8 +9,6 @@ import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.description.ContextDescription;
 import edu.tufts.hrilab.action.execution.ArgumentBasedContext;
 import edu.tufts.hrilab.action.execution.ExecutionType;
-import edu.tufts.hrilab.action.execution.PersistentContext;
-import edu.tufts.hrilab.action.execution.ScheduledContext;
 import edu.tufts.hrilab.action.listener.GoalListener;
 import edu.tufts.hrilab.action.manager.Resource;
 import edu.tufts.hrilab.fol.Factory;
@@ -23,15 +21,8 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.action.execution.Context;
 import edu.tufts.hrilab.action.justification.Justification;
 
-import java.text.DateFormat;
 import java.util.HashSet;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 

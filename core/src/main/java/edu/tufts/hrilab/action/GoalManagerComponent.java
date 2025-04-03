@@ -814,89 +814,19 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
-   * Utility function to get the re-wrapped predicate this goal was originally submitted with.
-   * Practically, this method will return the base goal predicate and optionally 'persistent' and 'scheduled' wrappers
-   * along with any original scheduled timing information if applicable.
-   *
-   * @param goalId
-   * @return fully wrapped goal predicate corresponding to goalId
-   */
-  @TRADEService
-  public Predicate getWrappedScheduledGoalSubmissionPredicate(Long goalId) {
-    Goal g = getGoal(goalId);
-    if (g != null) {
-      return g.getWrappedGoalSubmissionPredicate();
-    } else {
-      log.error("[getWrappedScheduledGoalPredicate] goal not found for id {}", goalId);
-      return null;
-    }
-  }
-
-  /**
-   * Utility function to get a wrapped predicate representing the current state of this goal w.r.t special forms.
-   * Practically, this method will return the base goal predicate and optionally 'persistent' and 'scheduled' wrappers
-   * containing information reflecting the current state of the goal. (i.e. reflects actual time until next execution
-   * rather than absolute interval)
-   *
-   * @param goalId
-   * @return fully wrapped goal predicate corresponding to goalId
-   */
-  @TRADEService
-  public Predicate getWrappedScheduledGoalPredicate(Long goalId) {
-    Goal g = getGoal(goalId);
-    if (g != null) {
-      return g.getWrappedGoalPredicate();
-    } else {
-      log.error("[getWrappedScheduledGoalPredicate] goal not found for id {}", goalId);
-      return null;
-    }
-  }
-
-  /**
-   * Update the timing of the next execution of this scheduled goal:
-   * Scheduled goals: Modifies the scheduled execution time
-   * Persistent Scheduled Goals: Only temporarily modifies the delay until the next execution of this goal without
-   *  affecting the regular interval. This method can be used to shift execution timing without affecting the interval.
+   * Update the scheduled goal specified by the goal ID. The update predicate can
+   * specify the next execution/start time (e.g., start(dateString), set a new periodicity (e.g., period(1, hour),
+   * or specify a new end time (e.g., end(datString). See the ScheduledGoal class for all update predicate options.
    *
    * This method fails if the supplied timing arguments cannot be parsed or the goal is not a scheduled goal.
    *
    * @param goalId id of the goal to modify
-   * @param start Symbol representing the next scheduled execution of this goal (date or delay from now)
-   * @return whether the timing was successfully updated
+   * @param update Predicate representing how to update the scheduled goal
+   * @return whether the goal was successfully updated
    */
   @TRADEService
-  public boolean updateScheduledGoalNextExecution(long goalId, Predicate start) {
-    return em.updateScheduledGoalNextExecution(goalId, start);
-  }
-
-  //TODO: should this method just not exist or be renamed?
-  // This method mainly exists in this form to allow the following language pattern when modifying a scheduled goal:
-  //    Q: "How frequently should this task be executed?"
-  //    A: "every day at 5:00 p.m.:
-  /**
-   * Modify a Persistent Scheduled Goal to execute daily starting at the supplied date. Fails if the supplied timing
-   * arguments cannot be parsed or the goal is not persistent and scheduled.
-   *
-   * This method overwrites both the next execution time and forces the scheduling interval to be daily.
-   *
-   * @param goalId id of the goal to modify
-   * @param period Symbol representing the periodicity of the scheduled goal
-   * @return whether the scheduled interval was successfully updated
-   */
-  @TRADEService
-  public boolean updateScheduledGoalPeriod(long goalId, Predicate period) {
-    return em.updateScheduledGoalPeriod(goalId, period);
-  }
-
-  /**
-   *  Get the duration in milliseconds until this goal's next scheduled execution
-   *
-   * @param goalId the goal id
-   * @return the duration until the goal's next scheduled execution. Returns -1 if the goal is not a scheduled goal
-   */
-  @TRADEService
-  public long getScheduledGoalsNextDelay(long goalId) {
-    return em.getScheduledGoalsNextDelay(goalId);
+  public boolean updateScheduledGoal(long goalId, Predicate update) {
+    return em.updateScheduledGoal(goalId, update);
   }
 
   /**
