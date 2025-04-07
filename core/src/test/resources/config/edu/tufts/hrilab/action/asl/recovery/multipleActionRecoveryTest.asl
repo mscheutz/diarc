@@ -31,8 +31,9 @@ import java.util.List;
     recovery : {
         actionRecovery : {
             catchingActions : {pickupv2(X)}
-            postRecovery : postrecovery_success
+            postRecovery : postrecovery_continue
         }
+        failureReasons : {found(self:agent,fakeAction(self:agent))}
     }
     effects : {
         success : holding(?actor);
@@ -45,8 +46,9 @@ import java.util.List;
     recovery : {
         actionRecovery : {
             catchingActions : {opengripper(X)}
-            postRecovery : postrecovery_success
+            postRecovery : postrecovery_continue
         }
+        failureReasons : {found(self:agent,fakeAction(self:agent))}
     }
     effects : {
         success : gripperOpen(?actor);
@@ -74,9 +76,11 @@ import java.util.List;
 () = closeGripperActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingActions : {closeGripperThrice(X)}
+            //catchingActions : {closeGripperThrice(X)}
+            catchingActions : {closeGripper(X)}
             postRecovery : postrecovery_retry
         }
+        excludedGoals : {testActionSequence(X,Y)}
     }
     effects : {
         success : gripperOpen(?actor);
@@ -97,7 +101,7 @@ import java.util.List;
     recovery : {
         actionRecovery : {
             catchingActions : {testActionSequence(X,once)}
-            postRecovery : postrecovery_parent_retry
+            postRecovery : postrecovery_retry
         }
     }
     effects : {
@@ -111,7 +115,7 @@ import java.util.List;
     recovery : {
         actionRecovery : {
             catchingActions : {testActionSequence(X,twice)}
-            postRecovery : postrecovery_parent_retry
+            postRecovery : postrecovery_retry
         }
         maximumAttempts: 2
     }
@@ -120,4 +124,45 @@ import java.util.List;
     }
 
     op:log("info", "[testActionSequenceActionRecovery] asserting gripperOpen(?actor)");
+}
+
+
+() = actionone() {
+    conditions: {
+        pre : not(blockingCondition(?actor));
+    }
+    effects : {
+        success: achievedGoal(?actor);
+    }
+
+    op:log("info", "[actionone]");
+    act:failAction();
+}
+
+() = failAction() {
+    conditions : {
+        pre : impossibleToSatisfy(?actor);
+    }
+
+    op:log("info","[failAction]");
+}
+
+() = failActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        goals : {achievedGoal(X)}
+        failedActions : {actionone(X)}
+    }
+    effects : {
+        success : blockingCondition(?actor);
+    }
+
+    op:log("info","[failActionRecovery]");
+}
+
+() = unblockcondition() {
+    effects : {
+        success : not(blockingCondition(?actor));
+    }
+
+    op:log("info","[unblockCondition]");
 }

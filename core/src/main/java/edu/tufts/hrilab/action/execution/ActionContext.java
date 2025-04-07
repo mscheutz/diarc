@@ -556,7 +556,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
         return;
       } else if (recovery.getStatus() == RecoveryStatus.RECOVER) {
         // Previous attempt/child failed -- attempt to execute recovery policy
-        ParameterizedAction recoveryPolicy = recovery.selectRecoveryPolicy(this);
+        ParameterizedAction recoveryPolicy = recovery.getSelectedRecoveryPolicy(this);
 
         if (recoveryPolicy != null) {
           // Add recovery policy as child rather than null or next parser step
@@ -595,13 +595,6 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    */
   private void handleRecoverySuccess(PostRecoveryExecutionType executionType) {
     switch (executionType) {
-      case PARENT_RETRY:
-        // Reset parser such that subsequent execution is from beginning of the script (while maintaining history)
-        // Branch will be execution trace up until failure -> recovery context -> new execution trace
-        setStatus(ActionStatus.PROGRESS);
-        parser = new ScriptParser(getDBE().getEventSpecs());
-        setupStepFromParser();
-        break;
       case RETRY:
         //Get the failed action which caused recovery and add a reinitialized copy as the next child
         setStatus(ActionStatus.PROGRESS);
@@ -609,14 +602,10 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
         copiedChildContext.resetContext();
         childContexts.add(copiedChildContext);
         break;
-      case SUCCESS:
+      case CONTINUE:
         //Proceed with execution as previously planned
         setStatus(ActionStatus.PROGRESS);
         setupStepFromParser();
-        break;
-      case PARENT_SUCCESS:
-        //Set status to success so execution terminates and finishStep is called
-        setStatus(ActionStatus.SUCCESS);
         break;
     }
   }

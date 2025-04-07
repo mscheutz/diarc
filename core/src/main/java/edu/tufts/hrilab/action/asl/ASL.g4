@@ -205,7 +205,7 @@ actionRecoveryCatchingActions : 'catchingActions' ':' predicateList;
 
 postActionRecoveryBehavior : 'postRecovery' ':' postActionRecoveryType;
 
-postActionRecoveryType : 'postrecovery_parent_retry' | 'postrecovery_retry' | 'postrecovery_success' | 'postrecovery_parent_success';
+postActionRecoveryType :'postrecovery_retry' | 'postrecovery_continue';
 
 recoveryGoals : 'goals' ':' predicateList;
 

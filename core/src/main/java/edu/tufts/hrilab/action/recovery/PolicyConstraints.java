@@ -15,6 +15,12 @@ import java.util.Set;
  */
 public class PolicyConstraints {
 
+
+  /**
+   * The DBEntry name of the action relating to this recovery policy
+   */
+  public String name = "";
+
   /**
    * Type of recovery policy - one of Action or Goal.
    * The corresponding recovery policy can be caught in and applied under contexts of this type.
@@ -84,7 +90,6 @@ public class PolicyConstraints {
   /**
    * Maximum number of times this recovery policy can be executed for the same failure reasons under the same context
    * ActionRecovery RETRY: Attempt count resets when the reattempted action succeeds
-   * ActionRecovery PARENT_RETRY: Attempt count only increments when no progress is made on a reattempt
    * GaolRecovery: Attempt count always increments and never resets. TODO if also want to check for progress (see notes in Recovery.java)
    */
   public int maximumAttempts = 1;

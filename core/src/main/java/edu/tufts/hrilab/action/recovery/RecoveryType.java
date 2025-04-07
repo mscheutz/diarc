@@ -8,8 +8,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public enum RecoveryType {
-    ACTION,
-    GOAL;
+    ACTION(true,false),
+    GOAL(false,true),
+    EITHER(true,true);
+
+    private boolean isAction;
+    private boolean isGoal;
+
+    RecoveryType(boolean isAction, boolean isGoal) {
+        this.isAction = isAction;
+        this.isGoal = isGoal;
+    }
+    public boolean isAction() {
+        return isAction;
+    }
+
+    public boolean isGoal() {
+        return isGoal;
+    }
+
+    public boolean matches(RecoveryType other) {
+        return isAction && other.isAction() || isGoal && other.isGoal();
+    }
 
     private static Logger log = LoggerFactory.getLogger(RecoveryType.class);
 

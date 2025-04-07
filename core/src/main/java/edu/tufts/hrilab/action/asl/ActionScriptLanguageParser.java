@@ -481,6 +481,14 @@ public class ActionScriptLanguageParser {
         }
       }
 
+      //safe? Necessary to exclude specific policies from matching after exhausting its max number of attempts
+      ParserRuleContext root = ctx.getParent().getParent().getParent();
+      if (root instanceof ASLParser.DefinitionContext) {
+        if (root.getChild(0) instanceof ASLParser.OutputParameterContext) {
+          policyConstraints.name = root.getChild(2).getText();
+        }
+      }
+
       curr_dbe_builder.addRecoveryPolicyConstraint(policyConstraints);
     }
 

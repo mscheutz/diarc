@@ -24,6 +24,7 @@ public class FailureInformation {
   public List<Predicate> failedActions;
   public List<Predicate> failureReasons;
   public ActionStatus actionStatus;
+  public List<String> excludedPolicies;
 
   /**
    * Checks if the recovery policy constraints are applicable to this failure information.
@@ -43,8 +44,13 @@ public class FailureInformation {
       return 0;
     }
 
+    //If supplied policy is present in the excludedList (has exhausted its attempt count without success), do not match again
+    if (excludedPolicies.contains(constraints.name)) {
+      return 0;
+    }
+
     //Recovery policy type and catching context type need to match (action vs goal)
-    if (constraints.recoveryType != contextType) {
+    if (contextType == RecoveryType.ACTION && constraints.recoveryType != contextType) {
       return 0;
     }
 
@@ -53,10 +59,8 @@ public class FailureInformation {
       return 0;
     }
 
-
-
     //Additional action recovery only checks
-    if (constraints.recoveryType == RecoveryType.ACTION) {
+    if (constraints.recoveryType.isAction()) {
       //If an explicit catching action signature is defined, this context must match it
       if (!constraints.catchingActions.isEmpty()) {
         if (catchingContext != null && constraints.catchingActions.stream().anyMatch(a -> catchingContext.instanceOf(a))) {
