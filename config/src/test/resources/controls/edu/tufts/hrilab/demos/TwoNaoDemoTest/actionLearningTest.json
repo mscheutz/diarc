@@ -30,7 +30,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "learnAction(dempster:agent,nod(dempster:agent))", "ACT", "SKIPPENDING", "1706196362905" ]
+      "serviceArgs" : [ "learnAction(dempster,nod(dempster))", "ACT", "NORMAL", "1706196362905" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -38,7 +38,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "changeLearningExecution(dempster:agent,execute)", "ACT", "SKIPPENDING", "1706196367905" ]
+      "serviceArgs" : [ "changeLearningExecution(dempster,execute)", "ACT", "SKIPPENDING", "1706196367905" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196367905", "SUCCEEDED" ]
@@ -49,7 +49,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "look(dempster:agent,up)", "ACT", "NORMAL", "1706196372905" ]
+      "serviceArgs" : [ "look(dempster,up)", "ACT", "NORMAL", "1706196372905" ]
     },{
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196372905", "SUCCEEDED" ]
@@ -60,7 +60,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "look(dempster:agent,down)", "ACT", "NORMAL", "1706196377904" ]
+      "serviceArgs" : [ "look(dempster,down)", "ACT", "NORMAL", "1706196377904" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196377904", "SUCCEEDED" ]
@@ -71,7 +71,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "look(dempster:agent,up)", "ACT", "NORMAL", "1706196382901" ]
+      "serviceArgs" : [ "look(dempster,up)", "ACT", "NORMAL", "1706196382901" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196382901", "SUCCEEDED" ]
@@ -82,7 +82,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "look(dempster:agent,down)", "ACT", "NORMAL", "1706196387903" ]
+      "serviceArgs" : [ "look(dempster,down)", "ACT", "NORMAL", "1706196387903" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196387903", "SUCCEEDED" ]
@@ -93,7 +93,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "endActionLearning(dempster:agent,nod(dempster:agent))", "ACT", "NORMAL", "1706196392906" ]
+      "serviceArgs" : [ "endActionLearning(dempster,nod(dempster))", "ACT", "SKIPPENDING", "1706196392906" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196392906", "SUCCEEDED" ]
@@ -118,7 +118,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "nod(dempster:agent)", "ACT", "NORMAL", "1706196402915" ]
+      "serviceArgs" : [ "nod(dempster)", "ACT", "NORMAL", "1706196402915" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1706196402915", "SUCCEEDED" ]

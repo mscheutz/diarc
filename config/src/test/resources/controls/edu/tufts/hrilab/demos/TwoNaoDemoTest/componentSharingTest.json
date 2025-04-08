@@ -9,7 +9,7 @@
       "serviceArgs" : [ "tell(shafer,stand(dempster))", "ACT", "NORMAL", "1704827087239" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "stand(dempster)", "ACT", "NORMAL", "1704827087241" ]
+      "serviceArgs" : [ "stand(dempster)", "1704827087241" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704827087239", "SUCCEEDED" ]
@@ -28,7 +28,7 @@
       "serviceArgs" : [ "tell(shafer,move(dempster,forward))", "ACT", "NORMAL", "1704827097071" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "move(dempster,forward)", "ACT", "NORMAL", "1704827097072" ]
+      "serviceArgs" : [ "move(dempster,forward)", "1704827097072" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704827097071", "FAILED" ]

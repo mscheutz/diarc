@@ -85,7 +85,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "forgetThat(dempster,ravenna,propertyOf(behind(area,agent),safe))", "ACT", "NORMAL", "1704824715621" ]
+      "serviceArgs" : [ "forgetThat(dempster,ravenna,propertyOf(behind(area,dempster),safe))", "ACT", "NORMAL", "1704824715621" ]
     }, {
       "serviceName" : "retractBelief",
       "serviceArgs" : [ "believes(self:agent,propertyOf(behind(area,dempster),safe))", "null" ]

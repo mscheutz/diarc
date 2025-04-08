@@ -58,7 +58,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "NORMAL", "1704824658043" ]
+      "serviceArgs" : [ "cancelGoal(dempster)", "ACT", "SKIPPENDING", "1704824658043" ]
     }, {
       "serviceName" : "joinOnGoal",
       "serviceArgs" : [ "1704824658043", "SUCCEEDED" ]
