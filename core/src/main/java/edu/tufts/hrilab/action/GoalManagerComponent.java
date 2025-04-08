@@ -557,7 +557,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   public long submitGoal(Predicate g, ExecutionType type, PriorityTier priorityTier, long priority) {
     log.debug("[submitGoal]: " + g + " with execution type: " + type + ", priority: " + priority + ", and priority tier: " + priorityTier);
 
-    Goal goal = new Goal(g);
+    Goal goal = Goal.createGoal(g);
     goal.addListener(this.notifier);
     goal.setPriority(priority);
     goal.setPriorityTier(priorityTier);
@@ -582,7 +582,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     log.debug("[submitGoal]: " + g);
     PriorityTier priorityTier = getPriorityTierForGoal(g);
     long priority = getPriorityForGoal(g);
-    Goal goal = new Goal(g);
+    Goal goal = Goal.createGoal(g);
     goal.addListener(this.notifier);
     goal.setPriorityTier(priorityTier);
     goal.setPriority(priority);
@@ -827,6 +827,10 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   public boolean updateScheduledGoal(long goalId, Predicate update) {
     return em.updateScheduledGoal(goalId, update);
+  }
+
+  public Date getNextScheduledExecutionDate(long goalId) {
+    return em.getNextScheduledExecutionDate(goalId);
   }
 
   /**

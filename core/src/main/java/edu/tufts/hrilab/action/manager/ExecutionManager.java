@@ -28,6 +28,7 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.listeners.SchedulerListenerSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,9 +135,7 @@ public class ExecutionManager implements GoalListener {
   private final ExecutorService executor = Executors.newCachedThreadPool();
 
   private Scheduler goalScheduler;
-  private final ScheduledExecutorService scheduledGoalManager = Executors.newSingleThreadScheduledExecutor();
-  private final Map<ScheduledGoal, TriggerKey> scheduledGoals = new HashMap<>();
-  private final Set<ScheduledGoal> pastScheduledGoals = new HashSet<>();
+  private final Map<ScheduledGoal, JobKey> scheduledGoals = new HashMap<>();
 
   /**
    * The goal manager starts with a rootContext that is the root of all execution.
@@ -164,6 +163,7 @@ public class ExecutionManager implements GoalListener {
     // instantiate and start scheduled goal manager
     try {
       goalScheduler = StdSchedulerFactory.getDefaultScheduler();
+      goalScheduler.getListenerManager().addSchedulerListener(new ScheduledGoalListener(this));
       goalScheduler.start();
     } catch (SchedulerException e) {
       log.error("Error getting goal scheduler. Scheduled goals not available at this time.");
@@ -668,47 +668,14 @@ public class ExecutionManager implements GoalListener {
     // set to active goal status
     goal.setStatus(GoalStatus.ACTIVE);
 
-    JobBuilder jobBuilder = JobBuilder.newJob(ScheduledGoalJob.class).withIdentity(Long.toString(goal.getInfo().gid), "scheduledGoals");
-    TriggerBuilder<Trigger> triggerBuilder = TriggerBuilder.newTrigger();
-    if (goal.isPeriodic()) {
-      // schedule periodic goal
-      jobBuilder.setJobData(new JobDataMap(Map.of(ScheduledGoalJob.RUNNABLE_KEY,
-                      (Runnable) () -> this.submitGoal(goal.getNextGoalToSubmit())))
-      );
-
-      // set periodic schedule
-      triggerBuilder.withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInMilliseconds(goal.getScheduledPeriod()));
-    } else {
-      // schedule one-time goal
-      jobBuilder.setJobData(new JobDataMap(Map.of(ScheduledGoalJob.RUNNABLE_KEY,
-                      (Runnable) () -> {
-                        this.submitGoal(goal.getNextGoalToSubmit());
-
-                        // TODO: can this be done with a quartz listener?
-                        scheduledGoals.remove(goal);
-                        pastScheduledGoals.add(goal);
-                        // TODO: how to handle scheduledGoal goalStatus in this case? ideally it should depend on the one-time goal status
-                        goal.setStatus(GoalStatus.SUCCEEDED);
-                      })));
-    }
-
-    // set start time
-    if (goal.getStartTime() >= 0) {
-      triggerBuilder.startAt(goal.getStartDate());
-    }
-
-    // set end time
-    if (goal.getEndTime() > 0) {
-      triggerBuilder.endAt(goal.getEndDate());
-
-      // TODO: add hook to move goal to past goals and set goal status
-      // can quartz listener be used here?
-    }
+    JobBuilder jobBuilder = JobBuilder.newJob(ScheduledGoalJob.class)
+            .withIdentity(Long.toString(goal.getInfo().gid), "scheduledGoals")
+            .setJobData(new JobDataMap(Map.of(ScheduledGoalJob.RUNNABLE_KEY,
+            (Runnable) () -> this.submitGoal(goal.getNextGoalToSubmit()))));
 
     // schedule the goal
     JobDetail jobDetail = jobBuilder.build();
-    triggerBuilder.forJob(jobDetail);
-    Trigger trigger = triggerBuilder.build();
+    Trigger trigger = createTrigger(goal, jobDetail.getKey());
     try {
       goalScheduler.scheduleJob(jobDetail, trigger);
     } catch (SchedulerException e) {
@@ -716,30 +683,55 @@ public class ExecutionManager implements GoalListener {
     }
 
     // add scheduled goals
-    scheduledGoals.put(goal, trigger.getKey());
+    scheduledGoals.put(goal, jobDetail.getKey());
+  }
 
-    // handle end time if specified
-    if (goal.getEndTime() > 0) {
-      Runnable canceller = () -> {
-        if (future.isDone()) {
-          // must have been cancelled or updated/restarted with new future
-          return;
-        }
+  private Trigger createTrigger(ScheduledGoal goal, JobKey jobKey) {
+    TriggerBuilder<Trigger> triggerBuilder = TriggerBuilder.newTrigger();
 
-        // stop scheduling more tasks for this goal
-        future.cancel(false);
-
-        // remove scheduled goal and add to past scheduled goals
-        scheduledGoals.remove(goal);
-        pastScheduledGoals.add(goal);
-
-        // assume succeeded -- end time can only be specified for periodic goals, so can't be based on single
-        // "normal" goal status (e.g., what to do if 2 out of 5 failed)
-        goal.setStatus(GoalStatus.SUCCEEDED);
-      };
-
-      scheduledGoalManager.schedule(canceller, goal.getEndTime(), goal.getScheduledTimeUnit());
+    // set periodic schedule
+    if (goal.isPeriodic()) {
+      triggerBuilder.withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInMilliseconds(goal.getScheduledPeriod()));
     }
+
+    // set start time
+    if (goal.hasStartDate()) {
+      triggerBuilder.startAt(goal.getStartDate());
+    }
+
+    // set end time
+    if (goal.hasEndDate()) {
+      triggerBuilder.endAt(goal.getEndDate());
+    }
+
+    triggerBuilder.forJob(jobKey);
+    return triggerBuilder.build();
+  }
+
+  public Date getNextScheduledExecutionDate(long goalId) {
+    ScheduledGoal goal = getScheduledGoal(goalId);
+    if (goal == null) {
+      return null;
+    }
+
+    // get goal's jobKey
+    JobKey jobKey = scheduledGoals.get(goal);
+    if (jobKey == null) {
+      return null;
+    }
+
+    // get goal's triggers
+    List<? extends Trigger> triggers = null;
+    try {
+      triggers = goalScheduler.getTriggersOfJob(jobKey);
+    } catch (SchedulerException e) {
+      log.error("Error looking up goal trigger. Goal: {}", goal.getPredicate());
+    }
+    if (triggers == null || triggers.size() != 1) {
+      return null;
+    }
+    Trigger trigger = triggers.get(0);
+    return trigger.getNextFireTime();
   }
 
   /**
@@ -766,6 +758,10 @@ public class ExecutionManager implements GoalListener {
     if (agent == null) {
       log.error("[joinOnGoal] encountered goal with actor not in the agent hierarchy: {}", goal.getActor());
       return GoalStatus.UNKNOWN;
+    }
+
+    if (goal.isScheduled()) {
+      return joinOnScheduledGoal(gid);
     }
 
     Future goalFuture = agent.getGoalFuture(goal);
@@ -1149,6 +1145,13 @@ public class ExecutionManager implements GoalListener {
       }
     }
 
+    if (goal.isScheduled()) {
+      synchronized (scheduledGoals) {
+        scheduledGoals.remove((ScheduledGoal) goal);
+        pastGoals.add(goal);
+      }
+    }
+
     log.debug("[transferGoalToPastGoals] No matching pending or active goal could be found for: {}", goal);
   }
 
@@ -1183,6 +1186,22 @@ public class ExecutionManager implements GoalListener {
     }
 
     return true; // true == goal not pending
+  }
+
+  private boolean joinOnScheduledGoal(long gid) {
+    JobKey jobKey = scheduledGoals.get(getScheduledGoal(gid));
+    SchedulerListenerSupport listener = new SchedulerListenerSupport() {
+      @Override
+      public void triggerFinalized(Trigger trigger) {
+
+      }
+    };
+
+    return true;
+  }
+
+  private boolean joinOnScheduledGoal(long gid, long millis) {
+
   }
 
   /**
@@ -1327,8 +1346,13 @@ public class ExecutionManager implements GoalListener {
     }
 
     // cancel scheduling more tasks for this goal
-    Future future = scheduledGoals.get(goal);
-    if (!future.cancel(false)) {
+    JobKey key = scheduledGoals.get(goal);
+    try {
+      if (!goalScheduler.deleteJob(key)) {
+        return false;
+      }
+    } catch (SchedulerException e) {
+      log.error("Error looking up scheduled goal: {}", goal);
       return false;
     }
 
@@ -1338,10 +1362,6 @@ public class ExecutionManager implements GoalListener {
         cancelGoal(submittedGoal.getId());
       }
     }
-
-    // remove scheduled goal and add to past scheduled goals
-    scheduledGoals.remove(goal);
-    pastScheduledGoals.add(goal);
 
     goal.setStatus(GoalStatus.CANCELED);
     return true;
@@ -1534,15 +1554,27 @@ public class ExecutionManager implements GoalListener {
       return false;
     }
 
-    // cancel current schedule, update goal schedule info, and then resubmit
-    Future<?> future = scheduledGoals.get(goal);
-    future.cancel(false);
-
     if (!goal.update(update)) {
       return false;
     }
 
-    executeScheduledGoal(goal);
+    // reschedule goal with new trigger
+    JobKey jobKey = scheduledGoals.get(goal);
+    Trigger newTrigger = createTrigger(goal, jobKey);
+    try {
+      // get trigger key for job (should be one for our use cases)
+      List<? extends Trigger> jobTriggers = goalScheduler.getTriggersOfJob(jobKey);
+      if (jobTriggers == null || jobTriggers.size() != 1) {
+        log.error("Expecting exactly one trigger per job.");
+        return false;
+      }
+
+      goalScheduler.rescheduleJob(jobTriggers.get(0).getKey(), newTrigger);
+    } catch (SchedulerException e) {
+      log.error("Error getting triggers for job key: {}", jobKey);
+      return false;
+    }
+
     return true;
   }
 
@@ -1580,9 +1612,6 @@ public class ExecutionManager implements GoalListener {
     }
     log.trace("[cancelAllCurrentGoals] released locks");
   }
-
-  //TODO: do we want to make equivalent methods for all of these which ignores all persistent goals?
-  //      Same with scheduled goals?
 
   /**
    * Cancel all goals currently found in the activeGoals colection

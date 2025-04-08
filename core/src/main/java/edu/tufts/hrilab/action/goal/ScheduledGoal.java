@@ -17,6 +17,7 @@ public class ScheduledGoal extends Goal {
   private Predicate start;
   private Predicate period;
   private Predicate end;
+  private final long instantiatedTime = System.currentTimeMillis();
 
   /**
    * Schedule information, extracted from the start, period, and end predicates.
@@ -94,23 +95,31 @@ public class ScheduledGoal extends Goal {
     return scheduleInfo.period >= 0;
   }
 
-  public long getScheduledDelay() {
-    return scheduleInfo.initialDelay;
-  }
-
   public long getScheduledPeriod() {
     return scheduleInfo.period;
   }
 
-  public TimeUnit getScheduledTimeUnit() {
-    return scheduleInfo.timeUnit;
+  public boolean hasStartDate() {
+    return scheduleInfo.startTime != null;
+  }
+
+  public Date getStartDate() {
+    return scheduleInfo.startTime;
+  }
+
+  public boolean hasEndDate() {
+    return scheduleInfo.endTime != null;
+  }
+
+  public Date getEndDate() {
+    return scheduleInfo.endTime;
   }
 
   public boolean update(Predicate update) {
     return switch (update.getName()) {
-      case "start" -> updateStartTime(update);
+      case "start" -> updateStartDate(update);
       case "period" -> updatePeriod(update);
-      case "end" -> updateEndTime(update);
+      case "end" -> updateEndDate(update);
       default -> {
         log.error("Invalid scheduled goal predicate: {}", update);
         yield false;
@@ -118,13 +127,25 @@ public class ScheduledGoal extends Goal {
     };
   }
 
-  private boolean updateStartTime(Predicate start) {
+  private boolean updateStartDate(Predicate start) {
     if (start == null) {
       return false;
     }
 
+    if (start.size() == 1) {
+      // "start(date-string)"
+      scheduleInfo.startTime = parseDateString(start.get(0).toString());
+    } else if (start.size() == 2) {
+      // "start(num, time-unit)"
+      long delay = Long.parseLong(start.get(0).toString());
+      long millis = TimeUnit.valueOf(start.get(1).toString().toUpperCase()).toMillis(delay);
+      scheduleInfo.startTime = new Date(instantiatedTime + millis);
+    } else {
+      log.error("Invalid start date predicate: {}", start);
+      return false;
+    }
+
     this.start = start;
-    scheduleInfo.initialDelay = 10;
     return true;
   }
 
@@ -133,18 +154,37 @@ public class ScheduledGoal extends Goal {
       return false;
     }
 
+    if (period.size() == 2) {
+      // "period(num, time-unit)"
+      long delay = Long.parseLong(period.get(0).toString());
+      scheduleInfo.period = TimeUnit.valueOf(period.get(1).toString().toUpperCase()).toMillis(delay);
+    } else {
+      log.error("Invalid periodicity predicate: {}", period);
+      return false;
+    }
+
     this.period = period;
-    scheduleInfo.period = 100;
     return true;
   }
 
-  private boolean updateEndTime(Predicate end) {
+  private boolean updateEndDate(Predicate end) {
     if (end == null) {
       return false;
     }
 
     this.end = end;
-    scheduleInfo.endTime = 1000;
+    if (end.size() == 1) {
+      // "end(date-string)"
+      scheduleInfo.endTime = parseDateString(end.get(0).toString());
+    } else if (start.size() == 2) {
+      // "end(num, time-unit)"
+      long delay = Long.parseLong(end.get(0).toString());
+      long millis = TimeUnit.valueOf(end.get(1).toString().toUpperCase()).toMillis(delay);
+      scheduleInfo.endTime = new Date(instantiatedTime + millis);
+    } else {
+      log.error("Invalid end date predicate: {}", end);
+      return false;
+    }
     return true;
   }
 
