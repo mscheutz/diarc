@@ -81,14 +81,16 @@ public class QueueExecutionManager extends ExecutionManager {
       for (Symbol agent : getDescendants(goal.getActor())) {
         //If the goal skips the queue, it has no resource dependencies.
         if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
-          //If it is a learning goal, only requires the agent-wide lock to be available.
-          if (goal.isLearningGoal()) {
-            resourceSet.add(agentTeams.get(agent).getResource(agent));
+          if (!goal.isLearningGoal()) {
+            //If it is a not learning goal, requires the learning lock to be available.
+            resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
           }
-          //Otherwise it requires both the learning and agent-wide lock to be available
-          else {
-            resourceSet.addAll(agentTeams.get(agent).getResources());
-          }
+          //Requires placeholder agent-wide lock to be available
+          resourceSet.add(agentTeams.get(agent).getResource(agent));
+          //TODO: are skippending goals allowed for frozen agents? Needs to be some sort of exception at least in order
+          //      to command the agent to unfreeze
+          //Always requires the agent to be unfrozen
+          resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("freeze")));
         }
       }
       //Store required resources in goal to prevent constantly recomputing set
@@ -108,18 +110,20 @@ public class QueueExecutionManager extends ExecutionManager {
       for (Symbol agent : getDescendants(goal.getActor())) {
         //If the goal skips the queue, it holds no resources
         if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
-          //Exception to the rule - action learning itself takes only the learning lock
-          if (goal.getPredicate().getName().equals("learnAction")) {
-            resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
+          if (!goal.isLearningGoal()) {
+            //TODO: Not sure if we want to ever teach teaching or teach freeze? If not, get rid of above conditional block
+            if (goal.getPredicate().getName().equals("learnAction")) {
+              //Action learning itself takes the learning lock - prevents non-learning goals from being submitted
+              resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
+              continue;
+            } else if (goal.getPredicate().getName().equals("freeze")) {
+              //Freeze itself takes the freeze lock - prevents everything else from being submitted
+              resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("freeze")));
+              continue;
+            }
           }
-          //If it is a learning goal, takes just the agent-wide lock.
-          if (goal.isLearningGoal()) {
-            resourceSet.add(agentTeams.get(agent).getResource(agent));
-          }
-          //Otherwise it takes both the learning and agent-wide lock
-          else {
-            resourceSet.addAll(agentTeams.get(agent).getResources());
-          }
+          //In all other cases, add agent resource so multiple goals cannot overlap
+          resourceSet.add(agentTeams.get(agent).getResource(agent));
         }
       }
       //Store required resources in goal to prevent constantly recomputing set

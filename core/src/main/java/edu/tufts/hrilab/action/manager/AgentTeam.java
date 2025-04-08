@@ -43,6 +43,8 @@ public class AgentTeam {
         resources.put(name, new Resource(this, name));
         Symbol learningResource = Factory.createSymbol("learning");
         resources.put(learningResource, new Resource(this,learningResource));
+        Symbol freezeResource = Factory.createSymbol("freeze");
+        resources.put(freezeResource, new Resource(this,freezeResource));
         actionLearning = new ActionLearning(em, em.getActionLearningGuiFlag());
     }
 
@@ -131,7 +133,7 @@ public class AgentTeam {
     public Set<Goal> getActiveGoals() {
         try {
             goalsLock.lock();
-            return activeGoals.keySet();
+            return new HashSet<>(activeGoals.keySet());
         } finally {
             goalsLock.unlock();
         }

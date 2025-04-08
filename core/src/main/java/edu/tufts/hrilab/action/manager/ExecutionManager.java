@@ -449,6 +449,8 @@ public class ExecutionManager implements GoalListener {
           if (!goal.isLearningGoal()) {
             resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
           }
+          //Always requires the agent to be unfrozen
+          resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("freeze")));
         }
       }
       goal.setRequiredResources(resourceSet);
@@ -468,8 +470,13 @@ public class ExecutionManager implements GoalListener {
 
       for (Symbol agent : getDescendants(goal.getActor())) {
         if (goal.getPriorityTier() != PriorityTier.SKIPPENDING) {
-          if (goal.getPredicate().getName().equals("learnAction")) {
-            resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
+          if (!goal.isLearningGoal()) {
+            //TODO: Not sure if we want to ever teach teaching or teach freeze? If not, get rid of above conditional block
+            if (goal.getPredicate().getName().equals("learnAction")) {
+              resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("learning")));
+            } else if (goal.getPredicate().getName().equals("freeze")) {
+              resourceSet.add(agentTeams.get(agent).getResource(Factory.createSymbol("freeze")));
+            }
           }
         }
       }
