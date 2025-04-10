@@ -15,6 +15,9 @@ import edu.tufts.hrilab.action.listener.ActionListener;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.listener.GoalListener;
+import edu.tufts.hrilab.action.scheduler.JoinOnGoalListener;
+import edu.tufts.hrilab.action.scheduler.ScheduledGoalJob;
+import edu.tufts.hrilab.action.scheduler.ScheduledGoalListener;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.execution.Context;
@@ -691,7 +694,7 @@ public class ExecutionManager implements GoalListener {
 
     // set periodic schedule
     if (goal.isPeriodic()) {
-      triggerBuilder.withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInMilliseconds(goal.getScheduledPeriod()));
+      triggerBuilder.withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInMilliseconds(goal.getScheduledPeriod()).repeatForever());
     }
 
     // set start time
@@ -810,6 +813,10 @@ public class ExecutionManager implements GoalListener {
     if (agent == null) {
       log.error("[joinOnGoal] encountered goal with actor not in the agent hierarchy: {}", goal.getActor());
       return GoalStatus.UNKNOWN;
+    }
+
+    if (goal.isScheduled()) {
+      return joinOnScheduledGoal(gid, millis);
     }
 
     Future goalFuture = agent.getGoalFuture(goal);
@@ -1188,20 +1195,42 @@ public class ExecutionManager implements GoalListener {
     return true; // true == goal not pending
   }
 
-  private boolean joinOnScheduledGoal(long gid) {
-    JobKey jobKey = scheduledGoals.get(getScheduledGoal(gid));
-    SchedulerListenerSupport listener = new SchedulerListenerSupport() {
-      @Override
-      public void triggerFinalized(Trigger trigger) {
-
+  private GoalStatus joinOnScheduledGoal(long gid) {
+    ScheduledGoal goal = getScheduledGoal(gid);
+    JobKey jobKey = scheduledGoals.get(goal);
+    JoinOnGoalListener listener = new JoinOnGoalListener(jobKey);
+    try {
+      goalScheduler.getListenerManager().addSchedulerListener(listener);
+      if (listener.joinOnGoal()) {
+        Goal lastGoal = goal.getLastSubmittedGoal();
+        joinOnGoal(lastGoal.getId());
       }
-    };
+      goalScheduler.getListenerManager().removeSchedulerListener(listener);
+    } catch (SchedulerException e) {
+      log.error("Error trying to register new scheduler listener.");
+    }
 
-    return true;
+    return goal.getStatus();
   }
 
-  private boolean joinOnScheduledGoal(long gid, long millis) {
+  private GoalStatus joinOnScheduledGoal(long gid, long millis) {
+    ScheduledGoal goal = getScheduledGoal(gid);
+    JobKey jobKey = scheduledGoals.get(goal);
+    JoinOnGoalListener listener = new JoinOnGoalListener(jobKey);
+    try {
+      goalScheduler.getListenerManager().addSchedulerListener(listener);
+      long startTime = System.currentTimeMillis();
+      if (listener.joinOnGoal(millis)) {
+        millis = millis - (System.currentTimeMillis() - startTime);
+        Goal lastGoal = goal.getLastSubmittedGoal();
+        joinOnGoal(lastGoal.getId(), millis);
+      }
+      goalScheduler.getListenerManager().removeSchedulerListener(listener);
+    } catch (SchedulerException e) {
+      log.error("Error trying to register new scheduler listener.");
+    }
 
+    return goal.getStatus();
   }
 
   /**

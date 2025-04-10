@@ -10,6 +10,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ScheduledGoal extends Goal {
 
@@ -86,6 +87,10 @@ public class ScheduledGoal extends Goal {
     return nextGoal;
   }
 
+  public Goal getLastSubmittedGoal() {
+    return submittedGoals.get(submittedGoals.size()-1);
+  }
+
   @Override
   public boolean isScheduled() {
     return true;
@@ -117,6 +122,11 @@ public class ScheduledGoal extends Goal {
 
   public boolean update(Predicate update) {
     return switch (update.getName()) {
+      case "and" -> {
+        AtomicBoolean result = new AtomicBoolean(true);
+        update.getArgs().forEach(u -> result.set(result.get() & update((Predicate) u)));
+        yield result.get();
+      }
       case "start" -> updateStartDate(update);
       case "period" -> updatePeriod(update);
       case "end" -> updateEndDate(update);
@@ -139,7 +149,7 @@ public class ScheduledGoal extends Goal {
       // "start(num, time-unit)"
       long delay = Long.parseLong(start.get(0).toString());
       long millis = TimeUnit.valueOf(start.get(1).toString().toUpperCase()).toMillis(delay);
-      scheduleInfo.startTime = new Date(instantiatedTime + millis);
+      scheduleInfo.startTime = new Date(System.currentTimeMillis() + millis);
     } else {
       log.error("Invalid start date predicate: {}", start);
       return false;
@@ -180,7 +190,7 @@ public class ScheduledGoal extends Goal {
       // "end(num, time-unit)"
       long delay = Long.parseLong(end.get(0).toString());
       long millis = TimeUnit.valueOf(end.get(1).toString().toUpperCase()).toMillis(delay);
-      scheduleInfo.endTime = new Date(instantiatedTime + millis);
+      scheduleInfo.endTime = new Date(System.currentTimeMillis() + millis);
     } else {
       log.error("Invalid end date predicate: {}", end);
       return false;

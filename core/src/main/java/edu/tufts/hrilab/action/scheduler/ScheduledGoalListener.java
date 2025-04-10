@@ -1,5 +1,7 @@
-package edu.tufts.hrilab.action.goal;
+package edu.tufts.hrilab.action.scheduler;
 
+import edu.tufts.hrilab.action.goal.GoalStatus;
+import edu.tufts.hrilab.action.goal.ScheduledGoal;
 import edu.tufts.hrilab.action.manager.ExecutionManager;
 import org.quartz.*;
 import org.slf4j.Logger;

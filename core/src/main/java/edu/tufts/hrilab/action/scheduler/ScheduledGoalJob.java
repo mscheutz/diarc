@@ -1,4 +1,4 @@
-package edu.tufts.hrilab.action.goal;
+package edu.tufts.hrilab.action.scheduler;
 
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
