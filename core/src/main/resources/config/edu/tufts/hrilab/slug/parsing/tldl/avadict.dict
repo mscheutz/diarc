@@ -422,7 +422,7 @@ what are your scheduled tasks; C; listScheduledGoals(?ADDRESSEE)
 %task 3; VAL; number(3)
 
 stop; C; cancelSystemGoals(?ADDRESSEE)
-pause; C; suspendSystemGoals(?ADDRESSEE)
+pause; C; suspendSystemGoalsBlocking(?ADDRESSEE)
 resume; C; resumeSystemGoals(?ADDRESSEE)
 nevermind; VAL; abort(question)
 

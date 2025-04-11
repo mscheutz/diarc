@@ -240,6 +240,16 @@ import java.util.Map;
     }
 }
 
+() = repeatLastQuestion() {
+    java.lang.String !questionString;
+    !questionString = tsc:getLastQuestion(?actor);
+    if (op:invokeMethod(!questionString,"isEmpty")) {
+        act:generateResponseFromString("I have no currently pending questions");
+    } else {
+        act:generateResponseFromString(!questionString);
+    }
+}
+
 /**
   * Generate a "because" predicate based on the provided Justification.
   */

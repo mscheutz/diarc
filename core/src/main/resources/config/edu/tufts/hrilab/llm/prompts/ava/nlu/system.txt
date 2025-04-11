@@ -86,11 +86,11 @@ Description: The robot will tell the user its current list of scheduled goals wh
 cancelSystemGoals()
 Description: The user is instructing the robot to stop whatever its currently doing. If stopping this way, it will completely discard any notion of what it was doing. It cannot be later resumed.
 #
-suspendSystemGoals()
+suspendSystemGoalsBlocking()
 Description: The user is instructing the robot to pause whatever its currently doing. If stopping this way, it will stay in a state where ths paused action can later be resumed and other actions will not begin until this one is resumed or fully canceled.
 #
 resumeSystemGoals()
-Description: The user is instructing the robot to resume its current task which was paused through suspendSystemGoals(). If there are no currently paused task, this action will do nothing.
+Description: The user is instructing the robot to resume its current task which was paused through suspendSystemGoalsBlocking(). If there are no currently paused task, this action will do nothing.
 #
 cancelAllScheduledGoals()
 Description: The user is instructing the robot to cancel all currently scheduled goals which have yet to begin execution.

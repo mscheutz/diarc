@@ -816,15 +816,12 @@ public class Goal {
    * on the ActionInterpreter which will set the status of this goal once execution has fully suspended.
    */
   public boolean suspend() {
-    // set status to suspend which can be overwritten by AI
-    info.status = GoalStatus.SUSPENDED;
-
-    if (ai != null) {
-      // the AI will set the SUSPENDED status once it has been suspended
-      return ai.suspend();
-    } else {
-      return true;
+    if (ai != null && !ai.suspend()) {
+      return false;
     }
+
+    info.status = GoalStatus.SUSPENDED;
+    return true;
   }
 
   /**

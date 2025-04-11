@@ -149,6 +149,15 @@ public class ExecutionManager implements GoalListener {
    */
   private List<ActionListener> aiListeners = new ArrayList<>();
 
+  /**
+   * Lock for waitForGoalStatus method.
+   */
+  private final Lock goalStatusUpdateLock = new ReentrantLock();
+  /**
+   * Lock condition for waitForGoalStatus method.
+   */
+  private final Condition goalStatusUpdateCondition = goalStatusUpdateLock.newCondition();
+
   private boolean displayActionLearningGui = false;
 
   public ExecutionManager() {
@@ -804,7 +813,10 @@ public class ExecutionManager implements GoalListener {
           goalStatuses.add(activeGoal.getStatus());
           if (activeGoal.getStatus() == GoalStatus.ACTIVE) {
             log.trace("[supersedeGoals] suspending active goal {}", activeGoal);
-            suspendGoal(activeGoal.getId());
+            if (suspendActiveGoal(activeGoal)) {
+              // wait for goal to be suspended
+              waitForGoalStatus(activeGoal, GoalStatus.SUSPENDED);
+            }
           }
           log.debug("[supersedeGoals] unlocking resources and removing active goal {}", activeGoal);
           unlockResources(activeGoal);
@@ -1006,6 +1018,59 @@ public class ExecutionManager implements GoalListener {
     //updatePriorities();
   }
 
+  public GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout) {
+    Goal goal = getGoal(gid);
+    if (goal == null || goal.getStatus().isTerminated()) {
+      return null;
+    }
+    return waitForNextGoalStatusUpdate(goal,timeout);
+  }
+
+  /**
+   * Wait until a particular goal has its goal status updated to any new value.
+   *
+   * @param goal
+   * @param timeout
+   * @return The GoalStatus after the soonest update occurred or the timeout duration elapsed without an update
+   */
+  protected GoalStatus waitForNextGoalStatusUpdate(Goal goal, long timeout) {
+    goalStatusUpdateLock.lock();
+    try {
+      if (timeout == 0) {
+        goalStatusUpdateCondition.await();
+      } else {
+        if (!goalStatusUpdateCondition.await(timeout, TimeUnit.SECONDS)) {
+          return null;
+        }
+      }
+    } catch (InterruptedException e) {
+      log.error("Error waiting on new status for goal {}", goal);
+    } finally {
+      goalStatusUpdateLock.unlock();
+    }
+    return goal.getStatus();
+  }
+
+  /**
+   * Convenience method to wait until a particular goal has a particular goal status. This
+   * relies on the GoalListener callback.
+   *
+   * @param goal
+   * @param status
+   */
+  protected void waitForGoalStatus(Goal goal, GoalStatus status) {
+    goalStatusUpdateLock.lock();
+    try {
+      while (goal.getStatus() != status) {
+        goalStatusUpdateCondition.await();
+      }
+    } catch (InterruptedException e) {
+      log.error("Error waiting for goal {} with status {}", goal, status);
+    } finally {
+      goalStatusUpdateLock.unlock();
+    }
+  }
+
   /**
    * Notify EM of goal status changes, so goal can be properly managed (e.g., moved to past goals).
    *
@@ -1015,6 +1080,15 @@ public class ExecutionManager implements GoalListener {
   public void goalStatusChanged(GoalInfo info) {
     log.debug("[goalStatusChanged] goal: {} status: {}", info.goal, info.status);
 
+    // notify everyone waiting on goal status notifications
+    goalStatusUpdateLock.lock();
+    try {
+      goalStatusUpdateCondition.signalAll();
+    } finally {
+      goalStatusUpdateLock.unlock();
+    }
+
+    // transfer terminated goals to past goals
     if (info.status.isTerminated()) {
       Goal goal = getGoal(info.gid);
       if (goal == null) {
@@ -1278,6 +1352,41 @@ public class ExecutionManager implements GoalListener {
     return false;
   }
 
+  public List<Long> suspendSystemGoals() {
+    return suspendSystemGoals(rootAgent);
+  }
+
+  /**
+   * Suspends a subset of an agentTeam's active goals. This method ignores goals with PriorityTier SKIPPENDING and
+   * scheduled goals. In order to accommodate some practical agent configurations with input methods' addressees,
+   * this method can act on the supplied agent or a single descendant which has an active goal. If multiple team members
+   * have disjoint active goals, this method will fail and return null.
+   * @param agentTeam
+   * @return the suspended goals' ids or null.
+   */
+  public List<Long> suspendSystemGoals(Symbol agentTeam) {
+    log.debug("[suspendSystemGoals] in method");
+    List<Long> suspendedIds = new ArrayList<>();
+    Set<Goal> activeGoals;
+    synchronized (goalsLock) {
+      activeGoals = getActiveGoalsHelper(agentTeam, false, false);
+    }
+
+    if (activeGoals == null) {
+      return null;
+    }
+
+    activeGoals = activeGoals.stream().filter(g -> g.getPriorityTier() != PriorityTier.SKIPPENDING).collect(Collectors.toSet());
+
+    for (Goal g: activeGoals) {
+      if (suspendGoal(g.getId())) {
+        suspendedIds.add(g.getId());
+      }
+    }
+
+    return suspendedIds;
+  }
+
   /**
    * Search all goal collections and resume the goal with the supplied goal id if found
    *
@@ -1324,6 +1433,41 @@ public class ExecutionManager implements GoalListener {
     return false;
   }
 
+  public List<Long> resumeSystemGoals() {
+    return resumeSystemGoals(rootAgent);
+  }
+
+  /**
+   * Resumes a subset of suspended goals for the supplied agentTeam and all of its children. This method ignores goals
+   * with PriorityTier SKIPPENDING and scheduled goals. In order to accommodate some practical agent configurations with
+   * input methods' addressees, this method can act on the supplied agent or a single descendant which has an active
+   * goal. If multiple team members have disjoint active goals, this method will fail.
+   * @param agentTeam
+   * @return the resumed goals' ids
+   */
+  public List<Long> resumeSystemGoals(Symbol agentTeam) {
+    log.debug("[resumeSystemGoals] in method");
+    List<Long> resumedIds = new ArrayList<>();
+    Set<Goal> activeGoals;
+    synchronized (goalsLock) {
+      activeGoals = getActiveGoalsHelper(agentTeam, false, false);
+    }
+
+    if (activeGoals == null) {
+      return null;
+    }
+
+    activeGoals = activeGoals.stream().filter(g -> g.getPriorityTier() != PriorityTier.SKIPPENDING).collect(Collectors.toSet());
+
+    for (Goal g: activeGoals) {
+      if (resumeGoal(g.getId())) {
+        resumedIds.add(g.getId());
+      }
+    }
+
+    return resumedIds;
+  }
+
   /**
    * @return A copied list of all current pending and active goals
    */
@@ -1349,29 +1493,58 @@ public class ExecutionManager implements GoalListener {
    * @return list of Goals
    */
   public List<Goal> getActiveGoals() {
-    Set<Goal> activeGoals = new HashSet<>();
+    Set<Goal> activeGoals;
     log.trace("[getActiveGoals] in method");
     synchronized (goalsLock) {
       log.trace("[getActiveGoals] have goalsLock");
-      getActiveGoalsHelper(rootAgent, activeGoals,false);
+      activeGoals = getActiveGoalsHelper(rootAgent,false, true);
     }
     log.trace("[getActiveGoals] released goalsLock");
     return new ArrayList<>(activeGoals);
   }
 
   //TODO: Further divide here by getting persistent goals separately?
-  //Add current goals of the supplied agent/team and all children
   //If an agent can be a member of multiple teams, this implementation is invalid
-  private void getActiveGoalsHelper(Symbol agent, Set<Goal> goals, boolean includeScheduled) {
+  /**
+   * Get the current goals of the supplied agentTeam
+   * @param agent the root agent to gather goals of
+   * @param includeScheduled include scheduled goals
+   * @param allMembers Add goals of descendents. If true, adds all goals of the supplied agent and all members. If false,
+   *                   returns only the goals of the supplied agent or a single member. If multiple members have disjoint
+   *                   goals, returns null.
+   */
+  private Set<Goal> getActiveGoalsHelper(Symbol agent, boolean includeScheduled, boolean allMembers) {
     AgentTeam agentTeam = getAgentTeam(agent);
     Set<Goal> agentTeamGoals = agentTeam.getActiveGoals();
     if (!includeScheduled) {
       agentTeamGoals = agentTeamGoals.stream().filter(g -> !g.isScheduled()).collect(Collectors.toSet());
     }
-    goals.addAll(agentTeamGoals);
-    for (Symbol member : agentTeam.getMemberNames()) {
-      getActiveGoalsHelper(member, goals, includeScheduled);
+    Set<Goal> goals = new HashSet<>(agentTeamGoals);
+
+    if (!goals.isEmpty() && !allMembers) {
+      return goals;
     }
+
+    boolean foundGoal = false;
+    Set<Goal> membersGoals = new HashSet<>();
+    for (Symbol member : agentTeam.getMemberNames()) {
+      Set<Goal> memberGoals = getActiveGoalsHelper(member, includeScheduled, allMembers);
+      if (memberGoals == null) {
+        return null;
+      }
+      if (!allMembers) {
+        if (!memberGoals.isEmpty()) {
+          if (foundGoal) {
+            return null;
+          } else {
+            foundGoal = true;
+          }
+        }
+      }
+      membersGoals.addAll(memberGoals);
+    }
+    goals.addAll(membersGoals);
+    return goals;
   }
 
   /**
@@ -1400,8 +1573,7 @@ public class ExecutionManager implements GoalListener {
   public List<Goal> getScheduledGoals() {
     List<Goal> scheduledGoals = new ArrayList<>();
     synchronized (goalsLock) {
-      Set<Goal> activeGoals = new HashSet<>();
-      getActiveGoalsHelper(rootAgent, activeGoals,true);
+      Set<Goal> activeGoals = getActiveGoalsHelper(rootAgent,true, true);
       for (Goal goal : activeGoals) {
         if (goal.isScheduled()) {
           //If persistent, always add because will always execute again
@@ -1624,6 +1796,41 @@ public class ExecutionManager implements GoalListener {
     }
   }
 
+  public List<Long> cancelSystemGoals() {
+    return cancelSystemGoals(rootAgent);
+  }
+
+  /**
+   * Cancels a subset of active goals for the supplied agentTeam and all of its children. This method ignores goals with
+   * PriorityTier SKIPPENDING and scheduled goals. In order to accommodate some practical agent configurations with
+   * input methods' addressees, this method can act on the supplied agent or a single descendant which has an active
+   * goal. If multiple team members have disjoint active goals, this method will fail.
+   * @param agentTeam
+   * @return the canceled goals' ids
+   */
+  public List<Long> cancelSystemGoals(Symbol agentTeam) {
+    log.debug("[cancelSystemGoals] in method");
+    List<Long> canceledIds = new ArrayList<>();
+    Set<Goal> activeGoals;
+    synchronized (goalsLock) {
+      activeGoals = getActiveGoalsHelper(agentTeam, false, false);
+    }
+
+    if (activeGoals == null) {
+      return null;
+    }
+
+    activeGoals = activeGoals.stream().filter(g -> g.getPriorityTier() != PriorityTier.SKIPPENDING).collect(Collectors.toSet());
+
+    for (Goal g: activeGoals) {
+      if (cancelGoal(g.getId())) {
+        canceledIds.add(g.getId());
+      }
+    }
+
+    return canceledIds;
+  }
+
   /**
    * Get a list of the corresponding predicate representations of all goals currently found in the pending collection
    */
@@ -1642,17 +1849,17 @@ public class ExecutionManager implements GoalListener {
     return goalPreds;
   }
 
-  //Is there a reason this is named "system" rather than "active"?
   /**
-   * Get a list of the corresponding predicate representations of all goals currently found in the active collection
+   * Get a list of the corresponding predicate representations of all goals currently found in the active collection,
+   *  wrapped in a predicate with the goal's status as its name
    */
   public List<Predicate> getSystemGoalsPredicates() {
     return getSystemGoalsPredicates(rootAgent);
   }
 
   /**
-   * Get a list of the corresponding predicate representations of all goals currently found in the active collection
-   *  with the supplied actor
+   * Get a list of the corresponding predicate representations of all goals currently found in the active collection,
+   * wrapped in a predicate with the goal's status as its name, for the supplied actor
    */
   public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
     log.trace("[getSystemGoalsPredicates] {}", actor);
@@ -1666,7 +1873,9 @@ public class ExecutionManager implements GoalListener {
     }
 
     for (Goal g : agentTeam.getActiveGoals()) {
-      goalPreds.add(Factory.createPredicate(g.getStatus().toString().toLowerCase(), g.getPredicate()));
+      if (g.getPriorityTier() != PriorityTier.SKIPPENDING) {
+        goalPreds.add(Factory.createPredicate(g.getStatus().toString().toLowerCase(), g.getPredicate()));
+      }
     }
 
     for (Symbol member : agentTeam.getMemberNames()) {

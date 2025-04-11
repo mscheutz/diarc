@@ -546,8 +546,18 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         log.warn("[suspend] AI for goal has already terminated: {}", goal.getPredicate());
         return false;
       } else if (currentStep.isTerminated()) {
-        // setting suspended flag will set nextStep to suspended in the mainLoop before it's executed
-        suspended.set(true);
+        if (shouldUpdate.get()) {
+          // setting suspended flag will set nextStep to suspended in the mainLoop before it's executed
+          suspended.set(true);
+        } else {
+          //If the script is complete except for waiting on async AIs, suspend the async AIs or else this action
+          //  may continue to block indefinitely (will not hit halt and therefore not affect async AIs).
+          for (ActionInterpreter ai : asyncAIs.values()) {
+            if (ai.isRunning) {
+              ai.suspend();
+            }
+          }
+        }
       } else {
         suspended.set(true);
         // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
@@ -589,8 +599,18 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           currentStep.setStatus(ActionStatus.RESUME);
         }
       } else {
-        log.warn("[resume] trying to resume an ActionInterpreter that wasn't paused.");
-        return false;
+        if (shouldUpdate.get()) {
+          log.warn("[resume] trying to resume an ActionInterpreter that wasn't paused.");
+          return false;
+        } else {
+        //If only async AIs had been suspended, need to explicitly resume them here
+          for (ActionInterpreter ai : asyncAIs.values()) {
+            if (ai.isRunning) {
+              ai.resume();
+            }
+          }
+          return true;
+        }
       }
     } finally {
       currentStepLock.unlock();
@@ -665,7 +685,6 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           // setting cancel flag will set nextStep to cancel in the mainLoop before it's executed
           canceled.set(true);
         } else {
-          //TODO: Should writing blocking async AIs be considered bad practice and forbidden, or should this logic exist? (or the answer to both is yes)
           //If the script is complete except for waiting on async AIs, cancel the async AIs or else this action
           //  will continue to block indefinitely
           this.goal.setStatus(GoalStatus.CANCELED);
@@ -707,18 +726,6 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   private void halt() {
     if (!shouldUpdate.get()) {
       log.error("[halt] halt has already been called: {}", goal.getPredicate());
-      return;
-    }
-
-    //PickAndPlace2024
-    //If a noInterrupt block reaches the end of an action script, but the user instructed suspend somewhere inside that block,
-    // then previously we would terminate the AI and then potentially begin execution of a next goal without ever actually suspending.
-    // This way we get a suspension by delaying halt() until a resume or cancel is called.
-    if (suspended.get()) {
-      //Root step and context trace of the goal will still have the original terminal status and prevent any further
-      //  execution of this AI on resume or cancel (two warn logs will occur).
-      goal.setStatus(GoalStatus.SUSPENDED);
-      shouldUpdate.set(false);
       return;
     }
 

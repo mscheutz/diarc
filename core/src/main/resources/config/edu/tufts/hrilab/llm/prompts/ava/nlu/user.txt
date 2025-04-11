@@ -61,9 +61,9 @@ if the human says "what are your pending goals", you should produce the output: 
 #
 if the human says "what are your next goals", you should produce the output: {"Semantics":"describePendingGoals()","Input Type":"QUESTION","Confidence":"80"}
 #
-if the human says "suspend current task", you should produce the output: {"Semantics":"suspendSystemGoals()","Input Type":"INSTRUCT","Confidence":"100"}
+if the human says "suspend current task", you should produce the output: {"Semantics":"suspendSystemGoalsBlocking()","Input Type":"INSTRUCT","Confidence":"100"}
 #
-if the human says "stop", you should produce the output: {"Semantics":"suspendSystemGoals()","Input Type":"INSTRUCT","Confidence":"70"}
+if the human says "stop", you should produce the output: {"Semantics":"suspendSystemGoalsBlocking()","Input Type":"INSTRUCT","Confidence":"70"}
 #
 if the human says "resume current task", you should produce the output: {"Semantics":"resumeSystemGoals()","Input Type":"INSTRUCT","Confidence":"100"}
 #

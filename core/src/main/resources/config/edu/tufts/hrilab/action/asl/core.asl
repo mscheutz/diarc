@@ -381,6 +381,35 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
      }
 }
 
+() = suspendGoalBlocking(Predicate ?goalPredicate = goal(mostRecent)) {
+    java.util.List !goals;
+    Goal !goal;
+    java.lang.Long !goalId;
+    java.lang.Boolean !suspended;
+    GoalStatus !status;
+
+    !goals = act:getGoal(?goalPredicate);
+    if (~op:isEmpty(!goals)) {
+        !goal = op:get(!goals,0);
+        op:log("debug", "[suspendGoal] suspending goal: !goal.");
+        !goalId =  op:invokeMethod(!goal, "getId");
+        !suspended = act:suspendGoal(!goalId);
+        if (op:equals(!suspended,true)) {
+            !status = tsc:waitForNextGoalStatusUpdate(!goalId);
+            if (op:isNull(!status) || ~op:equalsValue(!status,SUSPENDED)) {
+                exit(FAIL,alreadyComplete(goalToSuspend));
+            }
+            //else report success?
+        } else {
+             op:log("warn", "[suspendGoalBlocking] ?goalPredicate found but could not be suspended");
+             exit(FAIL,not(isActive(goalToSuspend)));
+        }
+    } else {
+         op:log("warn", "[suspendGoalBlocking] No goal found for predicate: ?goalPredicate.");
+         exit(FAIL,not(found(goalToSuspend)));
+     }
+}
+
 () = resumeGoal(Predicate ?goalPredicate = goal(mostRecent)) {
     java.util.List !goals;
     Goal !goal;

@@ -270,44 +270,6 @@ import java.lang.Integer;
   act:generateResponseFromString("okay");
 }
 
-() = describeCurrentGoal["describes ?actor's current active task(s)"](){
-
-    java.util.List !goalPreds;
-    java.lang.Integer !resultsSize=0;
-    java.lang.String !status;
-    Predicate !goalPred;
-
-    !goalPreds = act:getSystemGoalsPredicates();
-    !resultsSize = op:size(!goalPreds);
-    if(op:gt(!resultsSize,0)){
-        foreach(!goalPred: !goalPreds){
-            !status= op:getName(!goalPred);
-            !goalPred= op:getArg(!goalPred,0);
-            act:generateResponseFromString("!status task: ");
-            act:generateResponse(!goalPred);
-        }
-    } else {
-        act:generateResponseFromString("no current task");
-    }
-}
-
-() = describePendingGoals["describes ?actor's pending goals task"](){
-    java.util.List !goalPreds;
-    java.lang.Integer !resultsSize=0;
-
-    !goalPreds = act:getPendingGoals();
-    !resultsSize = op:size(!goalPreds);
-
-    if(op:gt(!resultsSize,0)){
-       foreach(!goalPred: !goalPreds){
-           act:generateResponse(!goalPred);
-       }
-    } else{
-       act:generateResponseFromString("no pending tasks");
-    }
-
-}
-
 () = resetDomain(){
     Predicate !queryPred;// = at(?actor,X);
 
@@ -329,3 +291,39 @@ import java.lang.Integer;
          }
     }
 }
+
+//Example of Script which would have to be used if allowing language like "do X now" alongside freeze functionality.
+//Currently using that language, but we have implemented a more comprehensive suspend which prevents need for freeze.
+//() = submitWithUrgentPriority(Predicate ?goalPredicate) {
+//    java.util.List !goalPreds;
+//    java.lang.Integer !resultsSize=0;
+//    Predicate !goalPred;
+//    java.lang.String !name;
+//    java.lang.Boolean !isFrozen = false;
+//    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+//    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = URGENT;
+
+//    op:log("info","[submitWithUrgentPriority] ?goalPredicate");
+
+//    !goalPreds = tsc:getSystemGoalsPredicates();
+//    op:log("info","[submitWithUrgentPriority] !goalPreds");
+//    !resultsSize = op:size(!goalPreds);
+//    if(op:gt(!resultsSize,0)){
+//        foreach(!goalPred: !goalPreds){
+//            !goalPred= op:getArg(!goalPred,0);
+//            !name = op:getName(!goalPred);
+//            op:log("info","[submitWithUrgentPriority] !name");
+//            if (op:equalsValue(!name,"freeze")) {
+//                !isFrozen = op:newObject("java.lang.Boolean", "true");
+//            }
+//        }
+//    }
+
+      //TODO: what to do here? Ask to unfreeze? Report status as frozen and say submitted with high priority?
+//    if (op:equals(!isFrozen,true)) {
+//        op:log("info","[submitWithUrgentPriority] ending freeze so goal can be executed immediately");
+//        act:endFreeze();
+//    }
+
+//    act:submitGoal(?goalPredicate,!execType,!priorityTier);
+//}

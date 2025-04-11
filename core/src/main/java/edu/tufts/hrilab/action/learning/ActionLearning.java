@@ -98,6 +98,7 @@ public class ActionLearning {
 
     ignoreActionSet.add(Factory.createPredicate("cancelSystemGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("suspendSystemGoals(?actor)"));
+    ignoreActionSet.add(Factory.createPredicate("suspendSystemGoalsBlocking(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("resumeSystemGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllCurrentGoals(?actor)"));
     ignoreActionSet.add(Factory.createPredicate("cancelAllPendingGoals(?actor)"));

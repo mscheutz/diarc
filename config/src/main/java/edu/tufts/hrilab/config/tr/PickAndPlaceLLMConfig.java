@@ -96,6 +96,7 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
                         + "-asl dialogue/nlg.asl "
                         + "-asl dialogue/nlu.asl "
                         + "-asl dialogue/handleSemantics.asl "
+                        + "-asl demos/queueEM.asl "
                         + "-asl demos/foodOrdering/prepareFood.asl "
                         + "-asl demos/foodOrdering/prepareFoodPerception.asl "
                         + "-asl demos/foodOrdering/cookingActions.asl "

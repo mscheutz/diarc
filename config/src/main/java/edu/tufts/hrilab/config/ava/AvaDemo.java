@@ -134,7 +134,7 @@ public class AvaDemo extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
       "-goal listen(self) monitorBattery(ava) -beliefinitfile demos.pl agents/ava.pl"
-        + " -dbfile core.asl manipulation.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl vision.asl ava/ava.asl ava/scheduledGoals.asl"
+        + " -dbfile core.asl manipulation.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl vision.asl ava/ava.asl ava/scheduledGoals.asl demos/queueEM.asl"
         + " -priorityFile default.json avaPriority.json"
         + (useQueueEM ? " -executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager" : ""));
 

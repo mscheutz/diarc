@@ -441,8 +441,7 @@ public class QueueExecutionManagerTest {
     Goal lookGoal = submitGoalAndWait(goalPred);
     assertSame(driveGoal.getStatus(), GoalStatus.PENDING);
     assertSame(lookGoal.getStatus(), GoalStatus.PENDING);
-    Goal cancelGoal = submitGoalAndWait(Factory.createPredicate("cancelSystemGoals", "self:agent"));
-    em.joinOnGoal(cancelGoal.getId());
+    em.cancelSystemGoals();
     em.joinOnGoal(freezeGoal.getId());
     assertSame(freezeGoal.getStatus(), GoalStatus.CANCELED);
     em.joinOnGoal(driveGoal.getId());
@@ -694,6 +693,9 @@ public class QueueExecutionManagerTest {
     cancelAllGoals();
   }
 
+  //Changed how this works. If you want this functionality, you should just use Freeze. Otherwise, could
+  //  write a 'suspendAllSystemGoals' variation
+  @Ignore
   @Test
   public void testSuspendresumeSystemGoals() {
     Predicate goalPred = Factory.createPredicate("freeze", "agent1:agent");
