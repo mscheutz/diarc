@@ -396,7 +396,9 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
         !suspended = act:suspendGoal(!goalId);
         if (op:equals(!suspended,true)) {
             !status = tsc:waitForNextGoalStatusUpdate(!goalId);
-            if (op:isNull(!status) || ~op:equalsValue(!status,SUSPENDED)) {
+            if (op:isNull(!status)) {
+                exit(FAIL,alreadyComplete(goalToSuspend));
+            } elseif (~op:equalsValue(!status,SUSPENDED)) {
                 exit(FAIL,alreadyComplete(goalToSuspend));
             }
             //else report success?
@@ -445,7 +447,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
         }
     } else {
       // find matching goal
-      ?goals = tsc:getCurrentGoals(?goalPredicate);
+      ?goals = tsc:getMatchingCurrentGoals(?goalPredicate);
     }
 
     // check if goal was found

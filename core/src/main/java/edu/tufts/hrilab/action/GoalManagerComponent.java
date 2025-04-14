@@ -768,13 +768,10 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
 
   /**
    * Get a list of all current pending and/or active goals matching the goalPredicate query.
-   *
-   * TODO: remove this method, or at least make it not a trade service
-   *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
   @TRADEService
-  public List<Goal> getCurrentGoals(Predicate queryGoal) {
+  public List<Goal> getMatchingCurrentGoals(Predicate queryGoal) {
     return em.getCurrentGoals(queryGoal);
   }
 
@@ -1038,6 +1035,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return goals;
   }
 
+  //TODO: remove these two methods and force usages to get status separately?
   /**
    * Get a list of predicates of all active goals for all agentTeams, wrapped in their current status. This method
    * does not include PriorityTier.SKIPPENDING goals
@@ -1045,7 +1043,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   @Action
   public List<Predicate> getSystemGoalsPredicates() {
-    return em.getSystemGoalsPredicates();
+    return em.getSystemGoalsPredicates(true);
   }
 
   /**
@@ -1055,8 +1053,27 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   @Action
   public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
-    return em.getSystemGoalsPredicates(actor);
+    return em.getSystemGoalsPredicates(actor,true);
   }
+
+  /**
+   * Get a list of predicates of all active goals for all agentTeams. This method does not include
+   * PriorityTier.SKIPPENDING goals
+   */
+  @TRADEService
+  public List<Predicate> getSystemGoals() {
+    return em.getSystemGoalsPredicates(false);
+  }
+
+  /**
+   * Get a list of predicates of all active goals for the supplied agentTeam and all members. This method does not
+   * include PriorityTier.SKIPPENDING goals
+   */
+  @TRADEService
+  public List<Predicate> getSystemGoals(Symbol agentTeam) {
+    return em.getSystemGoalsPredicates(agentTeam,false);
+  }
+
 
   /**
    * Get a list of predicates of all pending goals

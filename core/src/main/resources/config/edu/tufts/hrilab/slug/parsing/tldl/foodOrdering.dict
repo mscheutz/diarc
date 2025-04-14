@@ -604,3 +604,4 @@ test; C; scheduled(?ADDRESSEE,persistent(?ADDRESSEE,init(?ADDRESSEE)),10,SECONDS
 % (I think this case might actually not have expected behavior right now. First execution doesn't happen at noon, but 10 seconds after noon)
 %test3; C; scheduled(?ADDRESSEE,persistent(?ADDRESSEE,scheduled(?ADDRESSEE,init(?ADDRESSEE),10,SECONDS)),18-15-00)
 
+nevermind; VAL; abort(question)
