@@ -27,11 +27,11 @@ import edu.tufts.hrilab.action.justification.Justification;
     java.lang.Boolean !relativeTime = false;
 
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "absoluteTime(X)");
+    !responseForm = op:createPredicate("absoluteTime(X)");
     op:add(!responseFormList,!responseForm);
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "absoluteTime(X,Y)");
+    !responseForm = op:createPredicate("absoluteTime(X,Y)");
     op:add(!responseFormList,!responseForm);
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "relativeTime(X,Y)");
+    !responseForm = op:createPredicate("relativeTime(X,Y)");
     op:add(!responseFormList,!responseForm);
 
 
@@ -74,15 +74,15 @@ import edu.tufts.hrilab.action.justification.Justification;
       !intervalUnits = op:get(!bindings, !y);
 
       if (op:equals(!relativeTime,true)) {
-        !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time, !addl)");
+        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, period(!interval, !intervalUnits), start(!time, !addl))"); // TODO: EAK: is this right?
       } else {
-        !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, persistent(?actor, scheduled(?actor, !goalPredicate, !interval, !intervalUnits)), !time)");
+        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, period(!interval, !intervalUnits), start(!time))"); // TODO: EAK: is this right?
       }
     } else {
       if (op:equals(!relativeTime,true)) {
-        !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, !goalPredicate, !time, !addl)");
+        !scheduledGoal = op:createPredicate("scheduled(?actor, !goalPredicate, start(!time, !addl))"); // TODO: EAK: is this right?
       } else {
-        !scheduledGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "scheduled(?actor, !goalPredicate, !time)");
+        !scheduledGoal = op:createPredicate("scheduled(?actor, !goalPredicate, start(!time))"); // TODO: EAK: is this right?
       }
     }
     op:log(info, "[scheduleGoal] scheduledGoal: !scheduledGoal");
@@ -142,11 +142,11 @@ import edu.tufts.hrilab.action.justification.Justification;
     }
 
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "absoluteTime(X)");
+    !responseForm = op:createPredicate("absoluteTime(X)");
     op:add(!responseFormList,!responseForm);
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "absoluteTime(X,Y)");
+    !responseForm = op:createPredicate("absoluteTime(X,Y)");
     op:add(!responseFormList,!responseForm);
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "relativeTime(X,Y)");
+    !responseForm = op:createPredicate("relativeTime(X,Y)");
     op:add(!responseFormList,!responseForm);
     if (op:equals(!modifyInterval,true)) {
         //Scheduled Persistent Scheduled or Persistent Scheduled Interval
@@ -172,15 +172,19 @@ import edu.tufts.hrilab.action.justification.Justification;
 
         if (op:equals(!modifyInterval,true)) {
             if (op:equals(!relativeTime,true)) {
-                !success = tsc:updateScheduledGoalPeriod(!goalId, !response, !yResponse);
+                !updatePred = op:createPredicate("period", !response, !yResponse); // TODO: EAK: is this right?
+                !success = tsc:updateScheduledGoal(!goalId, !updatePred);
             } else {
-                !success = tsc:updateScheduledGoalPeriod(!goalId, !response);
+                !updatePred = op:createPredicate("period", !response); // TODO: EAK: is this right?
+                !success = tsc:updateScheduledGoal(!goalId, !!updatePred);
             }
         } else {
             if (op:equals(!relativeTime,true)) {
-                !success = tsc:updateScheduledGoalNextExecution(!goalId, !response, !yResponse);
+                !updatePred = op:createPredicate("start", !response, !yResponse); // TODO: EAK: is this right?
+                !success = tsc:updateScheduledGoal(!goalId, !updatePred);
             } else {
-                !success = tsc:updateScheduledGoalNextExecution(!goalId, !response);
+                !updatePred = op:createPredicate("start", !response); // TODO: EAK: is this right?
+                !success = tsc:updateScheduledGoal(!goalId, !updatePred);
             }
         }
     } else {
@@ -281,7 +285,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     !args = op:invokeMethod(?collection, "getArgs");
     foreach (!arg : !args) {
-        !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?actionName(?actor, !arg)");
+        !goalPred = op:createPredicate("?actionName(?actor, !arg)");
         !gid = act:submitGoal(!goalPred);
         !goalStatus = act:joinOnGoal(!gid);
         if (op:invokeMethod(!goalStatus, "isFailure")) {
@@ -303,9 +307,9 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     //Doing this as a kind of failsafe, not sure if we want such similar semantics at all though
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "pathName(X)");
+    !responseForm = op:createPredicate("pathName(X)");
     op:add(!responseFormList,!responseForm);
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "taskName(X)");
+    !responseForm = op:createPredicate("taskName(X)");
     op:add(!responseFormList,!responseForm);
 
     !bindings = act:askQuestionFromString(?actor,"What is the name of the path?", !responseFormList);
@@ -338,7 +342,7 @@ import edu.tufts.hrilab.action.justification.Justification;
         exit(FAIL,not(wasSupplied(anyLocation)));
     }
     !tmpString = op:invokeMethod(!locationId, "getName");
-    !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !tmpString);
+    !tmp = op:createSymbol(!tmpString);
     op:log(debug, "location: !tmp");
 
     while(~op:equalsValue(!locationId,"none()")){
@@ -349,14 +353,14 @@ import edu.tufts.hrilab.action.justification.Justification;
         }
         !locationId = op:get(!bindings, !x);
         !tmpString = op:invokeMethod(!locationId, "getName");
-        !tmp = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !tmpString);
+        !tmp = op:createSymbol(!tmpString);
         op:log(debug, "location: !locationId");
     }
     act:generateResponseFromString("Added new patrol path ?name");
-    !locationsPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and", !locations);
-    !collectionDefinition = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?name, X)");
+    !locationsPredicate = op:createPredicate("and", !locations);
+    !collectionDefinition = op:createPredicate("collection(?name, X)");
     act:retractBelief(!collectionDefinition);
-    !collectionDefinition = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?name, !locationsPredicate)");
+    !collectionDefinition = op:createPredicate("collection(?name, !locationsPredicate)");
     op:log(debug, "[definePatrolPath] collection definition: !collectionDefinition");
     act:assertBelief(!collectionDefinition);
 
@@ -372,7 +376,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   List !bindings;
   Predicate !goalPred;
 
-  !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?collectionName,X)");
+  !queryPred = op:createPredicate("collection(?collectionName,X)");
   !bindings = act:queryBelief(!queryPred);
   if (~op:isEmpty(!bindings)) {
      !elem = op:get(!bindings, 0);
@@ -382,7 +386,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   } else {
     exit(FAIL, not(known(patrol, ?collectionName)));
   }
-  !goalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "sayFinishedPatrol(?actor, ?collectionName, ?actionName)");
+  !goalPred = op:createPredicate("sayFinishedPatrol(?actor, ?collectionName, ?actionName)");
   act:submitGoal(!goalPred);
 }
 
@@ -412,7 +416,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   Symbol !result;
   Predicate !resultPredicate;
 
-  !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "wifi(?location,X)");
+  !queryPred = op:createPredicate("wifi(?location,X)");
   !bindings = act:queryBelief(!queryPred);
   if (~op:isEmpty(!bindings)) {
     !elem = op:get(!bindings, 0);
@@ -433,7 +437,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   Predicate !resultPredicate;
   Symbol !location;
 
-  !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "collection(?collectionName,X)");
+  !queryPred = op:createPredicate("collection(?collectionName,X)");
   !bindings = act:queryBelief(!queryPred);
   if (~op:isEmpty(!bindings)) {
      !elem = op:get(!bindings, 0);
@@ -491,7 +495,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 
     // construct and retract a generic predicate from belief to clear previous entries
     !tmpVar = op:newObject("edu.tufts.hrilab.fol.Variable", "X");
-    !oldGoalsPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?actor,currentGoals(are(?actor,!tmpVar)))");
+    !oldGoalsPred = op:createPredicate("knows(?actor,currentGoals(are(?actor,!tmpVar)))");
     act:retractBelief(!oldGoalsPred);
 
     !goalPreds = act:getSystemGoalsPredicates();

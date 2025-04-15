@@ -674,7 +674,12 @@ public class ExecutionManager implements GoalListener {
     JobBuilder jobBuilder = JobBuilder.newJob(ScheduledGoalJob.class)
             .withIdentity(Long.toString(goal.getInfo().gid), "scheduledGoals")
             .setJobData(new JobDataMap(Map.of(ScheduledGoalJob.RUNNABLE_KEY,
-            (Runnable) () -> this.submitGoal(goal.getNextGoalToSubmit()))));
+            (Runnable) () -> {
+              Goal newGoal = goal.getNextGoalToSubmit();
+              if (newGoal != null) {
+                this.submitGoal(newGoal);
+              }
+            })));
 
     // schedule the goal
     JobDetail jobDetail = jobBuilder.build();
@@ -764,7 +769,8 @@ public class ExecutionManager implements GoalListener {
     }
 
     if (goal.isScheduled()) {
-      return joinOnScheduledGoal(gid);
+      joinOnScheduledGoal(gid);
+      return goal.getStatus();
     }
 
     Future goalFuture = agent.getGoalFuture(goal);
@@ -816,7 +822,8 @@ public class ExecutionManager implements GoalListener {
     }
 
     if (goal.isScheduled()) {
-      return joinOnScheduledGoal(gid, millis);
+      joinOnScheduledGoal(gid, millis);
+      return goal.getStatus();
     }
 
     Future goalFuture = agent.getGoalFuture(goal);
@@ -1195,7 +1202,7 @@ public class ExecutionManager implements GoalListener {
     return true; // true == goal not pending
   }
 
-  private GoalStatus joinOnScheduledGoal(long gid) {
+  private boolean joinOnScheduledGoal(long gid) {
     ScheduledGoal goal = getScheduledGoal(gid);
     JobKey jobKey = scheduledGoals.get(goal);
     JoinOnGoalListener listener = new JoinOnGoalListener(jobKey);
@@ -1210,11 +1217,15 @@ public class ExecutionManager implements GoalListener {
       log.error("Error trying to register new scheduler listener.");
     }
 
-    return goal.getStatus();
+    return true;
   }
 
-  private GoalStatus joinOnScheduledGoal(long gid, long millis) {
+  private boolean joinOnScheduledGoal(long gid, long millis) {
     ScheduledGoal goal = getScheduledGoal(gid);
+    if (goal == null) {
+      // must be past goal now
+      return true;
+    }
     JobKey jobKey = scheduledGoals.get(goal);
     JoinOnGoalListener listener = new JoinOnGoalListener(jobKey);
     try {
@@ -1230,7 +1241,7 @@ public class ExecutionManager implements GoalListener {
       log.error("Error trying to register new scheduler listener.");
     }
 
-    return goal.getStatus();
+    return true;
   }
 
   /**
@@ -1303,6 +1314,12 @@ public class ExecutionManager implements GoalListener {
       return cancelActiveGoal(goal);
     }
 
+    ScheduledGoal scheduledGoal = getScheduledGoal(gid);
+    if (scheduledGoal != null) {
+      log.debug("[cancelGoal] {} canceling scheduled goal {}", gid, goal);
+      return cancelScheduledGoal(scheduledGoal);
+    }
+
     log.warn("[cancelGoal] cannot find current goal for gid {}", gid);
     return false;
   }
@@ -1368,12 +1385,7 @@ public class ExecutionManager implements GoalListener {
     return retVal;
   }
 
-  public boolean cancelScheduledGoal(long gid) {
-    ScheduledGoal goal = getScheduledGoal(gid);
-    if (goal == null) {
-      return false;
-    }
-
+  public boolean cancelScheduledGoal(ScheduledGoal goal) {
     // cancel scheduling more tasks for this goal
     JobKey key = scheduledGoals.get(goal);
     try {

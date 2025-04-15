@@ -82,6 +82,14 @@ public class ScheduledGoal extends Goal {
   }
 
   public Goal getNextGoalToSubmit() {
+    // if last goal is not terminated yet, return null so overlapping goals aren't submitted
+    if (!submittedGoals.isEmpty()) {
+      Goal lastGoal = submittedGoals.get(submittedGoals.size()-1);
+      if (!lastGoal.getStatus().isTerminated()) {
+        return null;
+      }
+    }
+
     Goal nextGoal = createGoal(super.getPredicate());
     submittedGoals.add(nextGoal);
     return nextGoal;

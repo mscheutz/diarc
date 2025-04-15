@@ -61,6 +61,8 @@ public class ScheduledGoalTest {
     } catch (TRADEException e) {
       log.error("Error registering with TRADE.", e);
     }
+
+    testExecutedTime = -1;
   }
 
   @After
@@ -527,7 +529,7 @@ public class ScheduledGoalTest {
   @Test
   public void testPersistentlyScheduledExecutionModificationDelayByDelay() throws InterruptedException {
     log.info("[testPersistentlyScheduledExecutionModificationDelayByDelay]");
-    Predicate goalPred = Factory.createPredicate("persistent(self:agent,scheduled(self:agent,test(self:agent),3,SECONDS))");
+    Predicate goalPred = Factory.createPredicate("scheduled(test(self:agent),period(3,seconds))");
     long gid = gm.submitGoal(goalPred);
     long expectedExecutionTime = System.currentTimeMillis();
     Goal goal = gm.getGoal(gid);
@@ -538,7 +540,7 @@ public class ScheduledGoalTest {
     Thread.sleep(3000);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
 
-    gm.updateScheduledGoal(gid, Factory.createPredicate("period", "2", "SECONDS"));
+    gm.updateScheduledGoal(gid, Factory.createPredicate("start", "2", "seconds"));
     expectedExecutionTime = System.currentTimeMillis() + 2000;
     Thread.sleep(2500);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
@@ -554,7 +556,7 @@ public class ScheduledGoalTest {
   @Test
   public void testPersistentlyScheduledExecutionModificationDelayByDate() throws InterruptedException {
     log.info("[testPersistentlyScheduledExecutionModificationDelayByDate]");
-    Predicate goalPred = Factory.createPredicate("persistent(self:agent,scheduled(self:agent,test(self:agent),2,SECONDS))");
+    Predicate goalPred = Factory.createPredicate("scheduled(test(self:agent),period(2,SECONDS))");
     long gid = gm.submitGoal(goalPred);
     long expectedExecutionTime = System.currentTimeMillis();
     Goal goal = gm.getGoal(gid);
@@ -588,10 +590,10 @@ public class ScheduledGoalTest {
   @Test
   public void testScheduledPersistentlyScheduledFirstExecutionModificationDelay() throws InterruptedException {
     log.info("[testScheduledPersistentlyScheduledFirstExecutionModificationDelay]");
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent),2,SECONDS)),5,SECONDS)");
+    Predicate goalPred = Factory.createPredicate("scheduled(test(self:agent),period(2,SECONDS),start(5,SECONDS))");
     long gid = gm.submitGoal(goalPred);
     Thread.sleep(500);
-    gm.updateScheduledGoal(gid, Factory.createPredicate("period", "3", "SECONDS"));
+    gm.updateScheduledGoal(gid, Factory.createPredicate("start", "3", "SECONDS"));
     long expectedExecutionTime = System.currentTimeMillis() + 3000;
     Goal goal = gm.getGoal(gid);
     assertTrue(goal.isScheduled());
@@ -612,7 +614,7 @@ public class ScheduledGoalTest {
   @Test
   public void testScheduledPersistentlyScheduledFirstExecutionModificationDelayToDate() throws InterruptedException {
     log.info("[testScheduledPersistentlyScheduledFirstExecutionModificationDelayToDate]");
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent),2,SECONDS)),5,SECONDS)");
+    Predicate goalPred = Factory.createPredicate("scheduled(test(self:agent),period(2,SECONDS),start(5,SECONDS))");
     long gid = gm.submitGoal(goalPred);
     Thread.sleep(500);
     Calendar calendar = Calendar.getInstance();
@@ -634,73 +636,6 @@ public class ScheduledGoalTest {
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
   }
 
-  //Should this case ever be reached either?
-
-  /**
-   * Tests modifying the first execution of a scheduled persistently scheduled goal.
-   * Update the first execution date.
-   */
-  @Test
-  public void testScheduledPersistentlyScheduledFirstExecutionModificationDate() throws InterruptedException {
-    log.info("[testScheduledPersistentlyScheduledFirstExecutionModificationDate]");
-    Calendar calendar = Calendar.getInstance();
-    calendar.add(Calendar.SECOND, 2);
-    Date date = calendar.getTime();
-    SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
-    String dateString = formatter.format(date);
-    calendar.add(Calendar.SECOND, 2);
-    date = calendar.getTime();
-    long expectedExecutionTime = date.getTime();
-    String dateString1 = formatter.format(date);
-    calendar.add(Calendar.SECOND, 3);
-    date = calendar.getTime();
-    long expectedExecutionTime2 = date.getTime();
-    String dateString2 = formatter.format(date);
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent)," + dateString2 + "))," + dateString + ")");
-    long gid = gm.submitGoal(goalPred);
-    Thread.sleep(500);
-    gm.updateScheduledGoal(gid, Factory.createPredicate("start", dateString1));
-    Goal goal = gm.getGoal(gid);
-    assertTrue(goal.isScheduled());
-    Thread.sleep(4500);
-    assertEquals(expectedExecutionTime, testExecutedTime, 1000);
-    Thread.sleep(3000);
-    assertEquals(expectedExecutionTime2, testExecutedTime, 1000);
-    calendar.add(Calendar.DAY_OF_MONTH, 1);
-    assertEquals(gm.getNextScheduledExecutionDate(gid).getTime(), calendar.getTimeInMillis(), 1000);
-  }
-
-  /**
-   * Tests modifying the first execution of a scheduled persistently scheduled goal.
-   * Replace original first execution date with a delay.
-   */
-  @Test
-  public void testScheduledPersistentlyScheduledFirstExecutionModificationDateToDelay() throws InterruptedException {
-    log.info("[testScheduledPersistentlyScheduledFirstExecutionModificationDateToDelay]");
-    Calendar calendar = Calendar.getInstance();
-    calendar.add(Calendar.SECOND, 2);
-    Date date = calendar.getTime();
-    SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
-    String dateString = formatter.format(date);
-    calendar.add(Calendar.SECOND, 4);
-    date = calendar.getTime();
-    long expectedExecutionTime2 = date.getTime();
-    String dateString2 = formatter.format(date);
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent)," + dateString2 + "))," + dateString + ")");
-    long gid = gm.submitGoal(goalPred);
-    Thread.sleep(500);
-    gm.updateScheduledGoal(gid, Factory.createPredicate("start", "3", "SECONDS"));
-    long expectedExecutionTime = System.currentTimeMillis() + 3000;
-    Goal goal = gm.getGoal(gid);
-    assertTrue(goal.isScheduled());
-    Thread.sleep(3500);
-    assertEquals(expectedExecutionTime, testExecutedTime, 1000);
-    Thread.sleep(3000);
-    assertEquals(expectedExecutionTime2, testExecutedTime, 1000);
-    calendar.add(Calendar.DAY_OF_MONTH, 1);
-    assertEquals(gm.getNextScheduledExecutionDate(gid).getTime(), calendar.getTimeInMillis(), 1000);
-  }
-
   /**
    * Tests modifying the interval of a inner persistently scheduled goal within a scheduled persistently scheduled goal.
    * Update the interval delay.
@@ -708,7 +643,7 @@ public class ScheduledGoalTest {
   @Test
   public void testScheduledPersistentlyScheduledIntervalModificationDelay() throws InterruptedException {
     log.info("[testScheduledPersistentlyScheduledIntervalModificationDelay]");
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent),3,SECONDS)),2,SECONDS)");
+    Predicate goalPred = Factory.createPredicate("scheduled(test(self:agent),period(3,SECONDS),start(2,SECONDS))");
     long gid = gm.submitGoal(goalPred);
     long expectedExecutionTime = System.currentTimeMillis() + 2000;
     Thread.sleep(500);
@@ -723,101 +658,6 @@ public class ScheduledGoalTest {
     expectedExecutionTime += 2000;
     Thread.sleep(2000);
     assertEquals(expectedExecutionTime, testExecutedTime, 999);
-  }
-
-  /**
-   * Tests modifying the interval of an inner persistently scheduled goal within a scheduled persistently scheduled goal.
-   * Replace the interval delay with a scheduled date
-   */
-  @Test
-  public void testScheduledPersistentlyScheduledIntervalModificationDelayToDate() throws InterruptedException {
-    log.info("[testScheduledPersistentlyScheduledIntervalModificationDelayToDate]");
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent),3,SECONDS)),2,SECONDS)");
-    long gid = gm.submitGoal(goalPred);
-    long expectedExecutionTime = System.currentTimeMillis() + 2000;
-    Thread.sleep(500);
-    Calendar calendar = Calendar.getInstance();
-    calendar.add(Calendar.SECOND, 3);
-    Date date = calendar.getTime();
-    SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
-    String dateString = formatter.format(date);
-    gm.updateScheduledGoal(gid, Factory.createPredicate("period", dateString));
-    Goal goal = gm.getGoal(gid);
-    assertTrue(goal.isScheduled());
-    Thread.sleep(2000);
-    assertEquals(expectedExecutionTime, testExecutedTime, 999);
-    expectedExecutionTime = date.getTime();
-    Thread.sleep(3000);
-    assertEquals(expectedExecutionTime, testExecutedTime, 999);
-    calendar.add(Calendar.DAY_OF_MONTH, 1);
-    assertEquals(gm.getNextScheduledExecutionDate(gid).getTime(), calendar.getTimeInMillis(), 1000);
-  }
-
-  /**
-   * Tests modifying the interval of an inner persistently scheduled goal within a scheduled persistently scheduled goal.
-   * Update the persistently scheduled date
-   */
-  @Test
-  public void testScheduledPersistentlyScheduledIntervalModificationDate() throws InterruptedException {
-    log.info("[testScheduledPersistentlyScheduledIntervalModificationDate]");
-    Calendar calendar = Calendar.getInstance();
-    calendar.add(Calendar.SECOND, 2);
-    Date date = calendar.getTime();
-    long expectedExecutionTime = date.getTime();
-    SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
-    String dateString = formatter.format(date);
-    calendar.add(Calendar.SECOND, 2);
-    date = calendar.getTime();
-    long expectedExecutionTime2 = date.getTime();
-    String dateString1 = formatter.format(date);
-    calendar.add(Calendar.DAY_OF_MONTH, 1);
-    Date expectedNextExecutionDate = calendar.getTime();
-    calendar.add(Calendar.SECOND, 4);
-    date = calendar.getTime();
-    String dateString2 = formatter.format(date);
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent)," + dateString2 + "))," + dateString + ")");
-    long gid = gm.submitGoal(goalPred);
-    Thread.sleep(500);
-    gm.updateScheduledGoal(gid, Factory.createPredicate("period", dateString1));
-    Goal goal = gm.getGoal(gid);
-    assertTrue(goal.isScheduled());
-    Thread.sleep(2000);
-    assertEquals(expectedExecutionTime, testExecutedTime, 1000);
-    Thread.sleep(3000);
-    assertEquals(expectedExecutionTime2, testExecutedTime, 1000);
-    assertEquals(gm.getNextScheduledExecutionDate(gid).getTime(), expectedNextExecutionDate.getTime(), 1000);
-  }
-
-  /**
-   * Tests modifying the interval of an inner persistently scheduled goal within a scheduled persistently scheduled goal.
-   * Replace the persistently scheduled date with a delay
-   */
-  @Test
-  public void testScheduledPersistentlyScheduledIntervalModificationDateToDelay() throws InterruptedException {
-    log.info("[testScheduledPersistentlyScheduledIntervalModificationDateToDelay]");
-    Calendar calendar = Calendar.getInstance();
-    calendar.add(Calendar.SECOND, 3);
-    Date date = calendar.getTime();
-    long expectedExecutionTime = date.getTime();
-    SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
-    String dateString = formatter.format(date);
-    calendar.add(Calendar.SECOND, 7);
-    date = calendar.getTime();
-    String dateString2 = formatter.format(date);
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent)," + dateString2 + "))," + dateString + ")");
-    long gid = gm.submitGoal(goalPred);
-    Thread.sleep(500);
-    gm.updateScheduledGoal(gid, Factory.createPredicate("period", "2", "SECONDS"));
-    Goal goal = gm.getGoal(gid);
-    assertTrue(goal.isScheduled());
-    Thread.sleep(3000);
-    assertEquals(expectedExecutionTime, testExecutedTime, 1000);
-    expectedExecutionTime += 2000;
-    Thread.sleep(2000);
-    assertEquals(expectedExecutionTime, testExecutedTime, 1000);
-    expectedExecutionTime += 2000;
-    Thread.sleep(2000);
-    assertEquals(expectedExecutionTime, testExecutedTime, 1000);
   }
 
 //  /**
@@ -902,7 +742,7 @@ public class ScheduledGoalTest {
   public void testCancelScheduled() throws InterruptedException {
     log.info("[testCancelScheduled]");
     String dateString = getDateString(2, Calendar.SECOND);
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,test(self:agent)," + dateString + ")");
+    Predicate goalPred = Factory.createPredicate("scheduled(test(self:agent), start(" + dateString + "))");
     long gid = gm.submitGoal(goalPred);
     Thread.sleep(500);
     gm.cancelGoal(gid);
@@ -922,7 +762,7 @@ public class ScheduledGoalTest {
     Date date = calendar.getTime();
     SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
     String dateString = formatter.format(date);
-    Predicate goalPred = Factory.createPredicate("persistent(self:agent,scheduled(self:agent,test(self:agent)," + dateString + "))");
+    Predicate goalPred = Factory.createPredicate("scheduled(test(self:agent),start(" + dateString + "), period(1,days))");
     long gid = gm.submitGoal(goalPred);
     Thread.sleep(500);
     gm.cancelGoal(gid);
@@ -937,7 +777,7 @@ public class ScheduledGoalTest {
   @Test
   public void testCancelScheduledPersistentlyScheduled() throws InterruptedException {
     log.info("[testCancelScheduledPersistentlyScheduled]");
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent),3,SECONDS)),2,SECONDS)");
+    Predicate goalPred = Factory.createPredicate("scheduled(test(self:agent),start(3,SECONDS),period(2,SECONDS))");
     long gid = gm.submitGoal(goalPred);
     Thread.sleep(500);
     gm.cancelGoal(gid);
@@ -952,7 +792,7 @@ public class ScheduledGoalTest {
   @Test
   public void testCancelScheduledPersistentlyScheduledV2() throws InterruptedException {
     log.info("[testCancelScheduledPersistentlyScheduledV2]");
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,persistent(self:agent,scheduled(self:agent,test(self:agent),3,SECONDS)),2,SECONDS)");
+    Predicate goalPred = Factory.createPredicate("scheduled(test(self:agent),period(3,SECONDS),start(2,SECONDS))");
     long gid = gm.submitGoal(goalPred);
     long expectedExecutionTime = System.currentTimeMillis() + 2000;
     Goal goal = gm.getGoal(gid);
@@ -972,7 +812,7 @@ public class ScheduledGoalTest {
   public void testCancelInterruptibleScheduled() throws InterruptedException {
     log.info("[testCancelInterruptibleScheduled]");
     String dateString = getDateString(1, Calendar.SECOND);
-    Predicate goalPred = Factory.createPredicate("scheduled(self:agent,test(self:agent)," + dateString + ")");
+    Predicate goalPred = Factory.createPredicate("scheduled(test(self:agent),start(" + dateString + "))");
     sleepTime = 3000;
     long gid = gm.submitGoal(goalPred);
     Thread.sleep(1500);
@@ -991,7 +831,7 @@ public class ScheduledGoalTest {
   @Test
   public void testExecutionDurationLongerThanScheduledDelay() throws InterruptedException {
     log.info("[testExecutionDurationLongerThanScheduledDelay]");
-    Predicate goalPred = Factory.createPredicate("persistent(self:agent,scheduled(self:agent,test(self:agent),2,SECONDS))");
+    Predicate goalPred = Factory.createPredicate("scheduled(test(self:agent),period(2,SECONDS))");
     sleepTime = 3000;
     gm.submitGoal(goalPred);
     long expectedExecutionTime = System.currentTimeMillis();
