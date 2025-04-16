@@ -57,8 +57,20 @@ import edu.tufts.hrilab.slug.common.Utterance;
       return;
     }
 
+    // perform reference resolution
+    op:log("debug", "calling rr ...");
+    ?utterance = act:resolveReferences(?utterance);
+    op:log("debug", "rr results: ?utterance");
+
     // for LLM parses -- get human validation
+    Utterance !queryUtterance;
     Predicate !querySemantics;
+    java.util.List !querySuppSemantics;
+    java.util.List !queryBindings;
+    java.util.Map !queryTierAssignments;
+    edu.tufts.hrilab.slug.common.UtteranceType !type;
+    java.lang.String !language;
+    java.util.List !boundSemantics;
     java.lang.String !utteranceString;
     Symbol !utteranceSymbol;
     Predicate !response;
@@ -69,21 +81,27 @@ import edu.tufts.hrilab.slug.common.Utterance;
       !addressee = op:invokeMethod(?utterance, "getAddressee");
       !speaker = op:invokeMethod(?utterance, "getSpeaker");
       act:updateDialogueHistory(?utterance);
-      if (tsc:usingLLMNLG()) {
-        //EW SpotPickAndPlace: changed predicate format to pass to LLM to perform NLG
-        //  ^wanted to include supplemental semantics, ghTiers, and utterance type for better NLG
-        !utteranceString = op:invokeMethod(?utterance,"toString");
-        !utteranceSymbol = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", !utteranceString,"");
-        !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "doYouMean",!speaker,!utteranceSymbol);
-      } else {
-        !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "mean(!speaker, !semantics)");
-      }
+      // Create fully populated output utterance to pass to askQuestionFromUtterance so that any given NLG component can
+      // use all available information. <- Looks like SimpleNLG was never set up to handle these semantics
+      !queryUtterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", !addressee, !speaker);
+      !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "QUESTION");
+      op:invokeMethod(!queryUtterance, "setType", !type);
+      !querySemantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "mean(!speaker, !semantics)");
+      op:invokeMethod(!queryUtterance,"setSemantics",!querySemantics);
+      !querySuppSemantics = op:invokeMethod(?utterance,"getSupplementalSemantics");
+      op:invokeMethod(!queryUtterance,"setSupplementalSemantics",!querySuppSemantics);
+      !queryBindings = op:invokeMethod(?utterance,"getBindings");
+      op:invokeMethod(!queryUtterance,"setBindings",!queryBindings);
+      !queryTierAssignments = op:invokeMethod(?utterance,"getTierAssignments");
+      op:invokeMethod(!queryUtterance,"setTierAssignments",!queryTierAssignments);
+      !language = op:invokeMethod(?utterance,"getLanguage");
+      op:invokeMethod(!queryUtterance,"setLanguage",!language);
 
       //Wrapping question in suspend/resume for val(X) in case of validation of a yes/no answer. Only potential awkwardness
       //  arises if the goal prompting the original question is canceled, then answering the validation question will cause
       //  the validated response to hit nothing.
       act:suspendWaitForResponse(val(X),!addressee,false);
-      !bindings = !addressee.act:askQuestion(!speaker, !querySemantics, val(X),1,-1);
+      !bindings = !addressee.act:askQuestionFromUtterance(!queryUtterance, val(X),1,-1);
       !response = op:get(!bindings, !x);
       act:resumeWaitForResponse(val(X),!addressee);
 
@@ -104,11 +122,6 @@ import edu.tufts.hrilab.slug.common.Utterance;
         return;
       }
     }
-
-    // perform reference resolution
-    op:log("debug", "calling rr ...");
-    ?utterance = act:resolveReferences(?utterance);
-    op:log("debug", "rr results: ?utterance");
 
     // perform pragmatic inference
     op:log("debug", "calling prag ...");
@@ -138,7 +151,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
     op:log("debug", "[handleDialogueInput] entering action script for actor: ?actor");
 
     if (op:invokeMethod(?utterance, "needsValidation")) {
-      act:updateDialogueHistoryUtterance(?utterance);
+      act:updateDialogueHistory(?utterance,false);
     } else {
       act:updateDialogueHistory(?utterance);
     }

@@ -199,13 +199,13 @@ interruptSpecType : TSC | ACTION | GOAL | name '.' TSC | name '.' ACTION  | name
 
 recovery : RECOVERY ':' '{' (actionRecoveryDetails | recoveryGoals | recoveryExcludedGoals | recoveryFailedActions | recoveryExcludedFailedActions | recoveryFailureReasons | recoveryExcludedFailureReasons | recoveryActionStatuses | recoveryMaximumAttempts)* '}';
 
-actionRecoveryDetails : 'actionRecovery' ':' '{' actionRecoveryName? postActionRecoveryBehavior '}';
+actionRecoveryDetails : 'actionRecovery' ':' '{' actionRecoveryCatchingActions? postActionRecoveryBehavior '}';
 
-actionRecoveryName : 'catchingAction' ':' predicate;
+actionRecoveryCatchingActions : 'catchingActions' ':' predicateList;
 
 postActionRecoveryBehavior : 'postRecovery' ':' postActionRecoveryType;
 
-postActionRecoveryType : 'postrecovery_parent_retry' | 'postrecovery_retry' | 'postrecovery_success' | 'postrecovery_parent_success';
+postActionRecoveryType :'postrecovery_retry' | 'postrecovery_continue';
 
 recoveryGoals : 'goals' ':' predicateList;
 

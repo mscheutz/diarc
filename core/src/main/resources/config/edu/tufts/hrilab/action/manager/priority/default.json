@@ -32,6 +32,10 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "submitWithUrgentPriority": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "cancelAllActiveGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -60,11 +64,19 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "suspendGoalBlocking": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "cancelSystemGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
   "suspendSystemGoals": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "suspendSystemGoalsBlocking": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

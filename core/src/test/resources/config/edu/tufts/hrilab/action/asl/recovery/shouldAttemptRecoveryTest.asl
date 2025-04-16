@@ -180,8 +180,8 @@ import java.lang.Integer;
 () = actionEightRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : actionEight(X)
-            postRecovery : postrecovery_success
+            catchingActions : {fakeAction(), actionEight(X)}
+            postRecovery : postrecovery_continue
         }
         goals : {stateEight(X)}
     }
@@ -204,8 +204,8 @@ import java.lang.Integer;
 () = actionNineRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : fakeAction(X)
-            postRecovery : postrecovery_success
+            catchingActions : {fakeAction(X)}
+            postRecovery : postrecovery_continue
         }
         goals : {stateNine(X)}
     }
@@ -228,8 +228,8 @@ import java.lang.Integer;
 () = actionTenRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : actionTen(X)
-            postRecovery : postrecovery_success
+            catchingActions : {actionTen(X)}
+            postRecovery : postrecovery_continue
         }
         excludedGoals : {stateTen(X)}
     }
@@ -252,7 +252,7 @@ import java.lang.Integer;
 () = actionElevenRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            postRecovery : postrecovery_success
+            postRecovery : postrecovery_continue
         }
         goals : {stateEleven(X)}
         failedActions : {emptyActionFail(X)}
@@ -308,7 +308,7 @@ import java.lang.Integer;
 () = actionThirteenRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            postRecovery : postrecovery_success
+            postRecovery : postrecovery_continue
         }
     }
     effects : {
@@ -367,7 +367,7 @@ import java.lang.Integer;
 () = testActionSuccessRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            postRecovery : postrecovery_success
+            postRecovery : postrecovery_continue
         }
         failedActions : {testActionSuccess(X)}
     }

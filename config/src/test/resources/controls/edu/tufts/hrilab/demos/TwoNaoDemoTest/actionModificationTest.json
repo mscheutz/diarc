@@ -11,7 +11,7 @@
       "serviceArgs" : [ "okay", "true" ]
     }, {
       "serviceName" : "submitGoal",
-      "serviceArgs" : [ "learnAction(dempster,doasquat(dempster))", "ACT", "SKIPPENDING", "1704824810652" ]
+      "serviceArgs" : [ "learnAction(dempster,doasquat(dempster))", "ACT", "NORMAL", "1704824810652" ]
     } ]
   }, {
     "serviceCalls" : [ {

@@ -12,6 +12,7 @@ import java.util.*;
 import java.io.Serializable;
 
 import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.util.IdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +81,12 @@ public final class Utterance implements Serializable {
   private Map<String,String> translations = new HashMap<>();
 
   /**
+   * Unique utterance ID
+   */
+  public final long uid;
+  private static final IdGenerator idGenerator = new IdGenerator();
+
+  /**
    * Convenience method for instantiating Utterance from ASL.
    * @param speaker
    * @param addressee
@@ -105,6 +112,7 @@ public final class Utterance implements Serializable {
     this.words = words;
     this.type = type;
     this.isInputUtterance = isInput;
+    this.uid = idGenerator.getNext();
   }
 
   /**
@@ -140,6 +148,7 @@ public final class Utterance implements Serializable {
     this.tierAssignments = tierAssignments;
     this.language = language;
     this.translations = translations;
+    this.uid = idGenerator.getNext();
   }
 
   public static class Builder {
@@ -706,6 +715,14 @@ public final class Utterance implements Serializable {
    */
   public String getLanguage(){
     return language;
+  }
+
+  /**
+   * Get the unique identifier associated with this Utterance
+   * @return
+   */
+  public long getUid() {
+    return uid;
   }
 
   //TODO:brad:is this sufficient?

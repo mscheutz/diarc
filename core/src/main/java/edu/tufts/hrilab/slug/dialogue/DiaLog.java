@@ -96,7 +96,7 @@ public class DiaLog {
 
   public void updateHistory(Utterance u) {
     for (int i = dialogueHistory.size()-1; i >= 0; i--) {
-      if (dialogueHistory.get(i).getWordsAsString().equals(u.getWordsAsString())) {
+      if (dialogueHistory.get(i).getUid() == u.getUid()) {
         dialogueHistory.set(i,u);
         return;
       }

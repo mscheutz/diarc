@@ -159,7 +159,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     !sm = tsc:getStateMachine();
 
     // pick action, and get event specs from selected action
-    !goal = op:newObject("edu.tufts.hrilab.action.goal.Goal", ?goalPred);
+    !goal = op:invokeStaticMethod("edu.tufts.hrilab.action.goal.Goal", "createGoal", ?goalPred);
     !ac = op:newObject("edu.tufts.hrilab.action.ActionConstraints");
     !actionSelector = op:invokeStaticMethod("edu.tufts.hrilab.action.selector.ActionSelector", "getInstance");
     !parameterizedAction = op:invokeMethod(!actionSelector, "selectActionForGoal", !goal, !ac, !sm);
@@ -381,6 +381,37 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
      }
 }
 
+() = suspendGoalBlocking(Predicate ?goalPredicate = goal(mostRecent)) {
+    java.util.List !goals;
+    Goal !goal;
+    java.lang.Long !goalId;
+    java.lang.Boolean !suspended;
+    GoalStatus !status;
+
+    !goals = act:getGoal(?goalPredicate);
+    if (~op:isEmpty(!goals)) {
+        !goal = op:get(!goals,0);
+        op:log("debug", "[suspendGoal] suspending goal: !goal.");
+        !goalId =  op:invokeMethod(!goal, "getId");
+        !suspended = act:suspendGoal(!goalId);
+        if (op:equals(!suspended,true)) {
+            !status = tsc:waitForNextGoalStatusUpdate(!goalId);
+            if (op:isNull(!status)) {
+                exit(FAIL,alreadyComplete(goalToSuspend));
+            } elseif (~op:equalsValue(!status,SUSPENDED)) {
+                exit(FAIL,alreadyComplete(goalToSuspend));
+            }
+            //else report success?
+        } else {
+             op:log("warn", "[suspendGoalBlocking] ?goalPredicate found but could not be suspended");
+             exit(FAIL,not(isActive(goalToSuspend)));
+        }
+    } else {
+         op:log("warn", "[suspendGoalBlocking] No goal found for predicate: ?goalPredicate.");
+         exit(FAIL,not(found(goalToSuspend)));
+     }
+}
+
 () = resumeGoal(Predicate ?goalPredicate = goal(mostRecent)) {
     java.util.List !goals;
     Goal !goal;
@@ -416,7 +447,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
         }
     } else {
       // find matching goal
-      ?goals = tsc:getCurrentGoals(?goalPredicate);
+      ?goals = tsc:getMatchingCurrentGoals(?goalPredicate);
     }
 
     // check if goal was found

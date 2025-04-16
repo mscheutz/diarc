@@ -62,11 +62,13 @@ public class GoalContext extends ArgumentBasedContext {
       // e.g., it's unlikely that more explorations should be done if an exploration was successful
       recovery.updateRecoveryStatus(this);
 
-      if (recovery.getStatus() == RecoveryStatus.SUCCESS) {
-        //Special case: action recovery with postrecovery_success executed on root goal context
+      if (recovery.getStatus() == RecoveryStatus.SUCCESS && goal.isAction()) {
+        //Special cases: action recovery with postrecovery_continue executed directly under root goal context. If goal is
+        //  direct action submission, then consider terminated. Other SUCCESS case below will still validate postconditions of goal
+        //  and potentially replan.
         setStatus(ActionStatus.SUCCESS);
         recovery.resetState();
-      } else if (recovery.getStatus() == RecoveryStatus.PLAN) {
+      } else if (recovery.getStatus() == RecoveryStatus.PLAN || recovery.getStatus() == RecoveryStatus.SUCCESS) {
         // make plan to achieve goal state
         selectAction();
 
@@ -75,7 +77,7 @@ public class GoalContext extends ArgumentBasedContext {
         recovery.resetState();
       } else if (recovery.getStatus() == RecoveryStatus.RECOVER) {
         // previous attempt/child failed -- attempt to execute recovery policy
-        ParameterizedAction recoveryPolicy = recovery.selectRecoveryPolicy(this);
+        ParameterizedAction recoveryPolicy = recovery.getSelectedRecoveryPolicy(this);
 
         // add recovery policy
         if (recoveryPolicy != null) {

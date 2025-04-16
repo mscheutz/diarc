@@ -70,7 +70,7 @@ public class ScheduledGoal extends Goal {
     }
     if (end != null) {
       // the end pred could be a relative time, so always return as a non-relative date string
-      args.add(Factory.createPredicate("start", scheduleInfo.endTime.toString()));
+      args.add(Factory.createPredicate("end", scheduleInfo.endTime.toString()));
     }
 
     return Factory.createPredicate("scheduled", args);

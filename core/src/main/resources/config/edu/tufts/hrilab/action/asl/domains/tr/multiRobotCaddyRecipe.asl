@@ -415,7 +415,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     if (op:isNull(!actionSelector)) {
         op:log(error, "[generateRecoveryPlanAndAssess] action selector is null!");
     }
-    !goal = op:newObject("edu.tufts.hrilab.action.goal.Goal", !goalPred);
+    !goal = op:invokeStaticMethod("edu.tufts.hrilab.action.goal.Goal", "createGoal", !goalPred);
     !parameterizedAction = op:invokeMethod(!actionSelector, "selectActionForGoal", !goal, !ac, !sm);
     //check if there was a valid plan using diarc agents. otherwise add "brad" as an actor to the domain and resubmit, then remove brad from the domain
     if (~op:isNull(!parameterizedAction)) {

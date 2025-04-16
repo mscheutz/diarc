@@ -21,7 +21,7 @@ public class DefaultRecovery extends Recovery {
     }
 
     @Override
-    public ParameterizedAction selectRecoveryPolicy(Context context) {
+    public ParameterizedAction getSelectedRecoveryPolicy(Context context) {
         return null;
     }
 

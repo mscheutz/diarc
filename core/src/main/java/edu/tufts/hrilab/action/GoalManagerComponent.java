@@ -613,12 +613,39 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
+   * Cancels a subset of all active goals. This method ignores goals with PriorityTier SKIPPENDING and scheduled goals.
+   *  This method ignores goals with PriorityTier SKIPPENDING and scheduled goals. In order to accommodate some
+   *  practical agent configurations with input methods' addressees, this method can act on the root agent or a
+   *  single descendant which has an active goal. If multiple team members have disjoint active goals, this method will
+   *  fail.
+   * @return the canceled goals' ids
+   */
+  @TRADEService
+  @Action
+  public List<Long> cancelSystemGoals() {
+    return em.cancelSystemGoals();
+  }
+
+  /**
    * Cancels all active goals (other than the listen goal)
    */
   @TRADEService
   @Action
   public void cancelAllActiveGoals() {
     em.cancelAllActiveGoals();
+  }
+  /**
+   * Cancels a subset of active goals for the supplied agentTeam and all of its children. This method ignores goals with
+   * PriorityTier SKIPPENDING and scheduled goals. In order to accommodate some practical agent configurations with
+   * input methods' addressees, this method can act on the supplied agent or a single descendant which has an active
+   * goal. If multiple team members have disjoint active goals, this method will fail.
+   * @param agentTeam
+   * @return the canceled goals' ids
+   */
+  @TRADEService
+  @Action
+  public List<Long> cancelSystemGoals(Symbol agentTeam) {
+    return em.cancelSystemGoals(agentTeam);
   }
 
   /**
@@ -650,12 +677,66 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
+   * Suspends a subset of the root agentTeam's active goals. This method ignores goals with PriorityTier SKIPPENDING and
+   * scheduled goals. In order to accommodate some practical agent configurations with input methods' addressees,
+   * this method can act on the root agent or a single descendant which has an active goal. If multiple team members
+   * have disjoint active goals, this method will fail.
+   * @return the suspended goals' ids
+   */
+  @Action
+  @TRADEService
+  public List<Long> suspendSystemGoals() {
+    return em.suspendSystemGoals();
+  }
+
+  /**
+   * Suspends a subset of an agentTeam's active goals. This method ignores goals with PriorityTier SKIPPENDING and
+   * scheduled goals. In order to accommodate some practical agent configurations with input methods' addressees,
+   * this method can act on the supplied agent or a single descendant which has an active goal. If multiple team members
+   * have disjoint active goals, this method will fail.
+   * @param agentTeam
+   * @return the suspended goals' ids
+   */
+  @Action
+  @TRADEService
+  public List<Long> suspendSystemGoals(Symbol agentTeam) {
+    return em.suspendSystemGoals(agentTeam);
+  }
+
+  /**
    * Searches pending and active goals to resume the goal corresponding to the supplied goalId
    */
   @TRADEService
   @Action
   public boolean resumeGoal(long gid) {
     return em.resumeGoal(gid);
+  }
+
+  /**
+   * Resumes a subset of all root agentTeam's active goals. This method ignores goals with PriorityTier SKIPPENDING
+   * and scheduled goals. In order to accommodate some practical agent configurations with input methods'
+   * addressees, this method can act on the root agent or a single descendant which has an active goal. If multiple
+   * team members have disjoint active goals, this method will fail.
+   * @return the resumed goals' ids
+   */
+  @Action
+  @TRADEService
+  public List<Long> resumeSystemGoals() {
+    return em.resumeSystemGoals();
+  }
+
+  /**
+   * Resumes a subset of suspended goals for the supplied agentTeam. This method ignores goals with PriorityTier
+   * SKIPPENDING and scheduled goals. In order to accommodate some practical agent configurations with input methods'
+   * addressees, this method can act on the supplied agent or a single descendant which has an active goal. If multiple
+   * team members have disjoint active goals, this method will fail.
+   * @param agentTeam
+   * @return the resumed goals' ids
+   */
+  @Action
+  @TRADEService
+  public List<Long> resumeSystemGoals(Symbol agentTeam) {
+    return em.resumeSystemGoals(agentTeam);
   }
 
   /**
@@ -688,13 +769,10 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
 
   /**
    * Get a list of all current pending and/or active goals matching the goalPredicate query.
-   *
-   * TODO: remove this method, or at least make it not a trade service
-   *
    * @return goals with matching goalPredicate, or null if no matching goal found
    */
   @TRADEService
-  public List<Goal> getCurrentGoals(Predicate queryGoal) {
+  public List<Goal> getMatchingCurrentGoals(Predicate queryGoal) {
     return em.getCurrentGoals(queryGoal);
   }
 
@@ -860,23 +938,45 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return goals;
   }
 
+  //TODO: remove these two methods and force usages to get status separately?
   /**
-   * Get a list of predicates of all active goals for all agentTeams
+   * Get a list of predicates of all active goals for all agentTeams, wrapped in their current status. This method
+   * does not include PriorityTier.SKIPPENDING goals
    */
   @TRADEService
   @Action
   public List<Predicate> getSystemGoalsPredicates() {
-    return em.getSystemGoalsPredicates();
+    return em.getSystemGoalsPredicates(true);
   }
 
   /**
-   * Get a list of predicates of all active goals for the supplied agentTeam and all members
+   * Get a list of predicates of all active goals for the supplied agentTeam and all members, wrapped in their current
+   * status. This method does not include PriorityTier.SKIPPENDING goals.
    */
   @TRADEService
   @Action
   public List<Predicate> getSystemGoalsPredicates(Symbol actor) {
-    return em.getSystemGoalsPredicates(actor);
+    return em.getSystemGoalsPredicates(actor,true);
   }
+
+  /**
+   * Get a list of predicates of all active goals for all agentTeams. This method does not include
+   * PriorityTier.SKIPPENDING goals
+   */
+  @TRADEService
+  public List<Predicate> getSystemGoals() {
+    return em.getSystemGoalsPredicates(false);
+  }
+
+  /**
+   * Get a list of predicates of all active goals for the supplied agentTeam and all members. This method does not
+   * include PriorityTier.SKIPPENDING goals
+   */
+  @TRADEService
+  public List<Predicate> getSystemGoals(Symbol agentTeam) {
+    return em.getSystemGoalsPredicates(agentTeam,false);
+  }
+
 
   /**
    * Get a list of predicates of all pending goals
@@ -965,6 +1065,31 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Action
   public GoalStatus getGoalStatus(long gid) {
     return em.getGoalStatus(gid);
+  }
+
+  /**
+   * Wait until a particular goal has its goal status updated to any new value.
+   *
+   * @param gid the goal id to check on
+   * @return The GoalStatus after the soonest update occurred. Returns null if the goal is not found or is
+   *          already terminated
+   */
+  @TRADEService
+  public GoalStatus waitForNextGoalStatusUpdate(long gid) {
+    return waitForNextGoalStatusUpdate(gid,0);
+  }
+
+  /**
+   * Wait until a particular goal has its goal status updated to any new value.
+   *
+   * @param gid the goal id to check on
+   * @param timeout max amount of time to wait. 0 == indefinite
+   * @return The GoalStatus after the soonest update occurred. Returns null if the goal is not found, the goal is
+   *          already terminated, or if the timeout duration elapses without an updated
+   */
+  @TRADEService
+  protected GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout) {
+    return em.waitForNextGoalStatusUpdate(gid,timeout);
   }
 
   /**

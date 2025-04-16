@@ -113,6 +113,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     edu.tufts.hrilab.action.goal.GoalType !goalType;
     java.lang.Long !timeMillis;
     java.lang.Boolean !relativeTime = false;
+    Predicate !updatePred;
 
     op:log("debug", "[modifyScheduledGoal] in method");
 
@@ -272,6 +273,35 @@ import edu.tufts.hrilab.action.justification.Justification;
             act:generateResponse(!goalPred);
         }
     }
+}
+
+() = cancelAllScheduledGoals() {
+    List !scheduledGoalIds;
+    Integer !numGoals;
+    Predicate !goalPred;
+    Long !gid;
+
+    !scheduledGoalIds = tsc:getScheduledGoalIds();
+    !numGoals = op:invokeMethod(!scheduledGoalIds, "size");
+    if (op:isEmpty(!scheduledGoalIds)) {
+        act:generateResponseFromString("There are no scheduled tasks");
+    } else {
+        foreach (!gid : !scheduledGoalIds) {
+            act:cancelGoal(!gid);
+        }
+        act:generateResponseFromString("cancelled all scheduled tasks");
+    }
+}
+
+() = cancelScheduledGoal() {
+    Predicate !scheduledGoalPred;
+    Long !goalId;
+
+    op:log("info", "[modifyScheduledGoal] in method");
+    !scheduledGoalPred = act:selectScheduledGoal();
+    !goalId = tsc:getGoalId(!scheduledGoalPred);
+    act:cancelGoal(!goalId);
+    act:generateResponseFromString("the scheduled task has been canceled");
 }
 
 () = forEach(Predicate ?collection, Symbol ?actionName) {
@@ -451,131 +481,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   }
 }
 
-
-//TODO: these can probably just be moved to a core asl script (though is
-() = describeCurrentGoal["describes ?actor's current active task(s)"](){
-
-    java.util.List !goalPreds;
-    java.lang.Integer !resultsSize=0;
-    java.lang.String !status;
-    Predicate !goalPred;
-
-    !goalPreds = act:getSystemGoalsPredicates();
-    !resultsSize = op:size(!goalPreds);
-    if(op:gt(!resultsSize,0)){
-        foreach(!goalPred: !goalPreds){
-            !status= op:getName(!goalPred);
-            !goalPred= op:getArg(!goalPred,0);
-            act:generateResponseFromString("!status task: ");
-            act:generateResponse(!goalPred);
-        }
-    } else {
-        act:generateResponseFromString("no current task");
-    }
-}
-
-() = checkKnowsActiveGoals["describes ?actor's current active task(s)"](){
-
-    effects : {
-      success : knows(?actor,currentGoals(are(?actor,!currentGoalsPred)));
-    }
-
-    java.util.List !goalPreds;
-    java.lang.Integer !resultsSize=0;
-    java.util.List !currentGoalsPreds = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-    Predicate !currentGoalPred;
-    Predicate !currentGoalsPred;
-    java.lang.String !status;
-    Predicate !goalPred;
-    java.lang.Integer !goalsSize;
-    Variable !tmpVar;
-    Predicate !oldGoalsPred;
-
-    op:log("info","[checkKnowsActiveGoals]");
-
-    // construct and retract a generic predicate from belief to clear previous entries
-    !tmpVar = op:newObject("edu.tufts.hrilab.fol.Variable", "X");
-    !oldGoalsPred = op:createPredicate("knows(?actor,currentGoals(are(?actor,!tmpVar)))");
-    act:retractBelief(!oldGoalsPred);
-
-    !goalPreds = act:getSystemGoalsPredicates();
-    !resultsSize = op:size(!goalPreds);
-    if(op:gt(!resultsSize,0)){
-        foreach(!goalPred: !goalPreds){
-            !status= op:getName(!goalPred);
-            !goalPred= op:getArg(!goalPred,0);
-            !currentGoalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate",!status,!goalPred);
-            op:add(!currentGoalsPreds,!currentGoalPred);
-        }
-        !goalsSize = op:invokeMethod(!currentGoalsPreds, "size");
-        if (op:gt(!goalsSize,1)) {
-            !currentGoalsPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","and",!currentGoalsPreds);
-        } else {
-            !currentGoalsPred = op:invokeMethod(!currentGoalsPreds,"get",0);
-        }
-    } else {
-        !currentGoalsPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","doing(nothing)");
-    }
-    op:log("info","[checkKnowsActiveGoals] !currentGoalsPred");
-}
-
-() = describePendingGoals["describes ?actor's pending goals task"](){
-    java.util.List !goalPreds;
-    java.lang.Integer !resultsSize=0;
-
-    !goalPreds = act:getPendingGoals();
-    !resultsSize = op:size(!goalPreds);
-
-    if(op:gt(!resultsSize,0)){
-       foreach(!goalPred: !goalPreds){
-           act:generateResponse(!goalPred);
-       }
-    } else{
-       act:generateResponseFromString("no pending tasks");
-    }
-
-}
-
-() = repeatLastQuestion() {
-    java.lang.String !questionString;
-    !questionString = tsc:getLastQuestion(?actor);
-    if (op:invokeMethod(!questionString,"isEmpty")) {
-        act:generateResponseFromString("I have no currently pending questions");
-    } else {
-        act:generateResponseFromString(!questionString);
-    }
-}
-
 () = takePhoto(Symbol ?location:location) {
     act:goToLocation(?location);
     act:generateResponse("taking(photo(at(?location)))");
-}
-
-() = cancelAllScheduledGoals() {
-    List !scheduledGoalIds;
-    Integer !numGoals;
-    Predicate !goalPred;
-    Long !gid;
-
-    !scheduledGoalIds = tsc:getScheduledGoalIds();
-    !numGoals = op:invokeMethod(!scheduledGoalIds, "size");
-    if (op:isEmpty(!scheduledGoalIds)) {
-        act:generateResponseFromString("There are no scheduled tasks");
-    } else {
-        foreach (!gid : !scheduledGoalIds) {
-            act:cancelGoal(!gid);
-        }
-        act:generateResponseFromString("cancelled all scheduled tasks");
-    }
-}
-
-() = cancelScheduledGoal() {
-    Predicate !scheduledGoalPred;
-    Long !goalId;
-
-    op:log("info", "[modifyScheduledGoal] in method");
-    !scheduledGoalPred = act:selectScheduledGoal();
-    !goalId = tsc:getGoalId(!scheduledGoalPred);
-    act:cancelGoal(!goalId);
-    act:generateResponseFromString("the scheduled task has been canceled");
 }

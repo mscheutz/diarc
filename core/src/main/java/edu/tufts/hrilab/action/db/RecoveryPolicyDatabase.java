@@ -60,13 +60,6 @@ public class RecoveryPolicyDatabase {
         }
 
         for (PolicyConstraints constraints : action.getPolicyConstraints()) {
-          if ((constraints.postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_RETRY ||
-                  constraints.postRecoveryExecutionType == PostRecoveryExecutionType.PARENT_SUCCESS)
-                  && constraints.catchingAction == null) {
-            log.warn("[addRecoveryPolicyToDB] cannot define action recovery policy with a PARENT postRecoveryExecutionType" +
-                    " and no defined catchingAction. Not adding {} as a recovery policy", action.getName());
-            return;
-          }
           log.debug("Adding recovery policy to DB: " + action);
 
           List<ActionDBEntry> policies = recoveryPolicyDB.get(constraints);
@@ -132,8 +125,8 @@ public class RecoveryPolicyDatabase {
     Map<PolicyConstraints,Integer> applicableConstraintsScores = new HashMap<>();
 
     recoveryPolicyDB.forEach((constraints, policies) -> {
-      if (failureInformation.isApplicable(constraints)) {
-        Integer score = failureInformation.getNumberOfConstraintMatches(constraints);
+      int score = failureInformation.getNumberOfConstraintMatches(constraints);
+      if (score > 0) {
         applicableConstraintsScores.put(constraints, score);
       }
     });

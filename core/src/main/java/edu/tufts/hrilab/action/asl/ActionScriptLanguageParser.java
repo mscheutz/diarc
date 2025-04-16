@@ -403,8 +403,8 @@ public class ActionScriptLanguageParser {
           log.warn("[enterRecovery] Multiple actionRecovery fields detected, only using first");
         }
         policyConstraints.recoveryType = RecoveryType.ACTION;
-        if (ctx.actionRecoveryDetails(0).actionRecoveryName() != null) {
-          policyConstraints.catchingAction = Factory.createPredicate(ctx.actionRecoveryDetails(0).actionRecoveryName().predicate().getText());
+        if (ctx.actionRecoveryDetails(0).actionRecoveryCatchingActions() != null) {
+          ctx.actionRecoveryDetails(0).actionRecoveryCatchingActions().predicateList().predicate().forEach(pred -> policyConstraints.catchingActions.add(Factory.createPredicate(pred.getText())));
         }
         policyConstraints.postRecoveryExecutionType = PostRecoveryExecutionType.fromString(ctx.actionRecoveryDetails(0).postActionRecoveryBehavior().postActionRecoveryType().getText());
       }
@@ -478,6 +478,14 @@ public class ActionScriptLanguageParser {
           log.warn("[enterRecovery] invalid maximumAttempts value encountered {}, not using field", number);
         } else {
           policyConstraints.maximumAttempts = number;
+        }
+      }
+
+      //safe? Necessary to exclude specific policies from matching after exhausting its max number of attempts
+      ParserRuleContext root = ctx.getParent().getParent().getParent();
+      if (root instanceof ASLParser.DefinitionContext) {
+        if (root.getChild(0) instanceof ASLParser.OutputParameterContext) {
+          policyConstraints.name = root.getChild(2).getText();
         }
       }
 

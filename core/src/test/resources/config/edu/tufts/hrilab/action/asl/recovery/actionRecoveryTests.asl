@@ -15,12 +15,15 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
     op:log("info","[pickUpFail] complete");
 }
 
+//TODO: example of case where we can't do this definition as nicely as we could previously - can't constrain recovery
+//  for fakeAction failure specifically to opengripper (do we ever actually want this though?)
 () = openGripperActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : opengripper(X)
-            postRecovery : postrecovery_success
+            //catchingActions : {opengripper(X)}
+            postRecovery : postrecovery_continue
         }
+        failureReasons : {found(self:agent,fakeAction(self:agent))}
         goals : {holding(?actor)}
     }
     effects : {
@@ -32,8 +35,9 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 () = pickUpOpengripperActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUp(X)
-            postRecovery : postrecovery_success
+            //catchingActions : {pickUp(X)}
+            catchingActions : {opengripper(X)}
+            postRecovery : postrecovery_continue
         }
         excludedGoals : {pickUpFailV2(X)}
         failedActions : {opengripper(X)}
@@ -93,8 +97,8 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 () = pickupParentRetryActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUpV2(X)
-            postRecovery : postrecovery_parent_retry
+            catchingActions : {pickUpV2(X)}
+            postRecovery : postrecovery_retry
         }
         goals : {pickUpFailV2(X,parentretry)}
     }
@@ -108,8 +112,8 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 () = pickupParentSuccessActionRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUpV2(X)
-            postRecovery : postrecovery_parent_success
+            catchingActions : {pickUpV2(X)}
+            postRecovery : postrecovery_continue
         }
         goals : {pickUpFailV2(X,parentsuccess)}
     }
@@ -122,21 +126,23 @@ import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 (PostRecoveryExecutionType ?postRecoveryType) = overridePostRecoveryPolicy(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUpV2(X)
+            //catchingActions : {pickUpV2(X)}
+            catchingActions : {openGripperV2(X)}
             postRecovery : postrecovery_retry
         }
         goals : {pickUpFailV2(X,override)}
     }
     op:log("info","[overridePostRecoveryPolicy]");
-    ?postRecoveryType = op:invokeStaticMethod("edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType", "fromString", "SUCCESS");
+    ?postRecoveryType = op:invokeStaticMethod("edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType", "fromString", "CONTINUE");
 }
 
 () = multipleAttemptsRecoveryPolicy(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUpV2(X)
+            //catchingActions : {pickUpV2(X)}
             postRecovery : postrecovery_retry
         }
+        failureReasons : {not(holdingV2(self:agent))}
         goals : {pickUpFailV2(X,multiple)}
         maximumAttempts : 3
     }

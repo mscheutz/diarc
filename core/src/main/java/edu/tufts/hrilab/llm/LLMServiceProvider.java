@@ -24,15 +24,13 @@ public abstract class LLMServiceProvider extends DiarcComponent {
     //Set of specific user/agent back and forths to get to the bottom of a single NLU attempt
     Map<Pair<Symbol,Symbol>,Chat> currentChats = new HashMap<>();
 
+    //TODO: Check if direct address interacts with this appropriately
+    //REVISIT: How much do we want to constrain supplied histories? Correct answer might be specific to the domain...
+    //      e.g. do this (split by external user and agentTeam) vs only split by external speaker vs complete dialogue history
     //Set of existing 'conversations' between sets of users and system agents
-    //Currently don't have a way of determining whether dialogue is happening as part of the same or a different interaction
-    //  so will simply be a rolling window of the dialogue history (maybe this is all we want anyway)
-    //Currently going to split dialogue histories between specific speaker/AgentTeam pairs. Generally could be any set
-    //  of speakers and any set of AgentTeams.
     Map<Symbol,Set<Integer>> conversationMappings = new HashMap<>();
     Map<Integer,List<Utterance>> currentConversations = new HashMap<>();
     AtomicInteger counter = new AtomicInteger();
-    //TODO: be conscious of maxToken limit on each Chat
 
     private Map<Symbol,Set<Symbol>> agentHierarchy;
 
@@ -98,7 +96,7 @@ public abstract class LLMServiceProvider extends DiarcComponent {
     protected void executionLoop() {
         if (!registeredForDialogueNotifications) {
             try {
-                TRADEServiceInfo updateHistoryService = getMyService("updateLLMConversationHistory", Utterance.class);
+                TRADEServiceInfo updateHistoryService = getMyService("updateLLMConversationHistory", Utterance.class, Boolean.class);
                 TRADE.getAvailableService(new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications")).call(void.class, updateHistoryService);
                 registeredForDialogueNotifications = true;
             } catch (TRADEException e) {
@@ -203,7 +201,10 @@ public abstract class LLMServiceProvider extends DiarcComponent {
     }
 
     @TRADEService
-    public void updateLLMConversationHistory(Utterance utterance) {
+    public void updateLLMConversationHistory(Utterance utterance, boolean newUtterance) {
+        if (!newUtterance) {
+            return;
+        }
         Symbol user;
         Symbol agentTeam;
         Symbol speaker = getUntypedSymbol(utterance.getSpeaker());

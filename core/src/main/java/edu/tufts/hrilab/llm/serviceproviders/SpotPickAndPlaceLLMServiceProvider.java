@@ -161,7 +161,7 @@ public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
         }
         Map<String,String> promptVars = new HashMap<>();
         promptVars.put("%utterance", utterance.toString());
-        if (semantics.getName().equals("doYouMean")) {
+        if (semantics.getName().equals("mean")) {
             userMessage = validationPrompt.apply(promptVars);
         } else {
             userMessage = nlgUserPrompt.apply(promptVars);

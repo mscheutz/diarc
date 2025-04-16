@@ -16,10 +16,12 @@ import java.util.List;
 () = pickupNestedRecoverySuccess(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUp(X,success)
+            //catchingActions : {pickUp(X,success)}
+            catchingActions : {pickup(X)}
             postRecovery : postrecovery_retry
         }
-        failedActions : {pickup(X)}
+        //failedActions : {pickup(X)}
+        goals : {pickUp(X,success)}
     }
     effects : {
         success : gripperOpen(?actor);
@@ -74,10 +76,14 @@ import java.util.List;
     op:log("info","[pickupv2]");
 }
 
+//TODO - does catchingAction still mean what we want it to? I think it's the way we discussed, but
+//  then how do you constrain catching the failures only to a specific parent context? Right now,
+//  saying pickUpV2 as the catching action makes you redo pickUpV2 from the parent. How about if
+//  you want to retry pickupv2 in the context of only pickUpV2?
 () = pickupNestedRecoveryFaulty(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : pickUpV2(X,Y)
+            //catchingActions : {pickUpV2(X,Y)}
             postRecovery : postrecovery_retry
         }
         goals : {pickUpV2(?actor,child)}
@@ -87,15 +93,15 @@ import java.util.List;
     op:log("info","[pickupNestedRecoveryFaulty] not actually recovering");
 }
 
-() = pickupNestedParentRecoveryFaulty(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
-    recovery : {
-        actionRecovery : {
-            catchingAction : pickUpV2(X,Y)
-            postRecovery : postrecovery_parent_retry
-        }
-        goals : {pickUpV2(?actor,parent)}
-        failedActions : {pickupv2(X)}
-    }
-
-    op:log("info","[pickupNestedRecoveryFaulty] not actually recovering");
-}
+//() = pickupNestedParentRecoveryFaulty(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+//    recovery : {
+//        actionRecovery : {
+//            catchingActions : {pickUpV2(X,Y)}
+//            postRecovery : postrecovery_parent_retry
+//        }
+//        goals : {pickUpV2(?actor,parent)}
+//        failedActions : {pickupv2(X)}
+//    }
+//
+//    op:log("info","[pickupNestedRecoveryFaulty] not actually recovering");
+//}

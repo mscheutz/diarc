@@ -243,22 +243,26 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
 
         //Intercept Validation Question and use specific validation prompt
         String userMessage;
-        Predicate semantics = (Predicate) utterance.getSemantics();
+        Predicate semantics;
+        List<Term> boundSemantics = utterance.getBoundSemantics();
+        if (boundSemantics.isEmpty()) {
+            semantics = (Predicate) utterance.getSemantics();
+        } else {
+            semantics = (Predicate) boundSemantics.get(0);
+        }
         List<String> locations = getLocations("self", true);
         List<String> patrolPaths = getPatrolPaths();
 
         Map<String,String> promptVars = new LinkedHashMap<>();
-        if (semantics.getName().equals("doYouMean")) {
-            promptVars.put("%utterance", utterance.toString());
-            promptVars = populatePromptVarsWithProperties(promptVars, locations);
+        utterance = new Utterance.Builder(utterance).build();
+        //Doesn't include suppSemantics
+        semantics = replaceReferencesInSemantics(semantics);
+        utterance.setSemantics(semantics);
+        promptVars.put("%utterance", utterance.toString());
+        populatePromptVarsWithProperties(promptVars, locations);
+        if (semantics.getName().equals("mean")) {
             userMessage = validationPrompt.apply(promptVars);
         } else {
-            utterance = new Utterance.Builder(utterance).build();
-            //Doesn't include suppSemantics
-            semantics = replaceReferencesInSemantics(semantics);
-            utterance.setSemantics(semantics);
-            promptVars.put("%utterance", utterance.toString());
-            promptVars = populatePromptVarsWithProperties(promptVars, locations);
             userMessage = nlgUserPrompt.apply(promptVars);
         }
 
@@ -270,7 +274,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         chat.setSystem(nlgSystemPrompt.apply(promptVars));
         chat.addUserMessage(userMessage);
 
-        log.info("generateNLGChat called for: {}", utterance.toString());
+        log.info("generateNLGChat called for: {}", utterance);
 
         return chat;
     }
