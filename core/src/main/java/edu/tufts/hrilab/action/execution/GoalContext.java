@@ -248,7 +248,7 @@ public class GoalContext extends ArgumentBasedContext {
    */
   @Override
   public GoalContext copy(Context newParent) {
-    Goal newGoal = new Goal(goal.getActor(), goal.getPredicate().clone());
+    Goal newGoal = Goal.createGoal(goal.getActor(), goal.getPredicate().clone());
     // TODO: probably change the following so that it has the proper execution type
     GoalContext newGoalContext = new GoalContext(newParent, newParent.stateMachine, newGoal, newParent.getExecType());
     copyInternal(newGoalContext);

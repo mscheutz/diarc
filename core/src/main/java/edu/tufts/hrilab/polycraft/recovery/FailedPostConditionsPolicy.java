@@ -79,7 +79,7 @@ public class FailedPostConditionsPolicy {
     // create action builder that will get populated with fixed post-conditions
     AndJustification justification = new AndJustification();
     ActionDBEntry.Builder fixedActionBuilder = new ActionDBEntry.Builder(brokenAction);
-    ParameterizedAction parameterizedBrokenAction = new ParameterizedAction(brokenAction, new Goal(actor, brokenActionSignature));
+    ParameterizedAction parameterizedBrokenAction = new ParameterizedAction(brokenAction, Goal.createGoal(actor, brokenActionSignature));
 
     Set<Predicate> novelties = new HashSet<>();
 
@@ -194,7 +194,7 @@ public class FailedPostConditionsPolicy {
           if (beliefState.getName().equals("fluent_equals")) {
             ActionDBEntry fixedAction = fixedActionBuilder.build(true);
             Predicate fixedActionPredicate = Factory.createPredicate(fixedAction.getName(), brokenActionSignature.getArgs());
-            ParameterizedAction parameterizedFixedAction = new ParameterizedAction(fixedAction, new Goal(actor, fixedActionPredicate));
+            ParameterizedAction parameterizedFixedAction = new ParameterizedAction(fixedAction, Goal.createGoal(actor, fixedActionPredicate));
 
             Effect fixedEffect = ExploreUtils.generateNewPostCondition(parameterizedFixedAction, discrepancy);
             Predicate existingEffectPred = fixedEffect.getPredicate();

@@ -1,5 +1,6 @@
-package edu.tufts.hrilab.action.goal;
+package edu.tufts.hrilab.action.goal.schedule;
 
+import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -25,14 +26,6 @@ public class ScheduledGoal extends Goal {
    */
   private final ScheduleInfo scheduleInfo = new ScheduleInfo();
 
-  public List<Goal> getSubmittedGoals() {
-    return submittedGoals;
-  }
-
-  public ScheduleInfo getScheduleInfo() {
-    return scheduleInfo;
-  }
-
   private final List<Goal> submittedGoals = new ArrayList<>();
 
   /**
@@ -46,7 +39,7 @@ public class ScheduledGoal extends Goal {
    *
    * @param goalState scheduled goal predicate: scheduled(goalPred, [startPred], [periodPred], [endPred])
    */
-  protected ScheduledGoal(Predicate goalState) {
+  public ScheduledGoal(Predicate goalState) {
     super((Predicate) goalState.get(0));
 
     // parse scheduled goal args
@@ -69,22 +62,37 @@ public class ScheduledGoal extends Goal {
     List<Symbol> args = new ArrayList<>();
     args.add(super.getPredicate()); // goal state
     if (start != null) {
-      args.add(start);
+      // the start pred could be a relative time, so always return as a non-relative date string
+      args.add(Factory.createPredicate("start", scheduleInfo.startTime.toString()));
     }
     if (period != null) {
       args.add(period);
     }
     if (end != null) {
-      args.add(end);
+      // the end pred could be a relative time, so always return as a non-relative date string
+      args.add(Factory.createPredicate("start", scheduleInfo.endTime.toString()));
     }
 
     return Factory.createPredicate("scheduled", args);
   }
 
+  /**
+   * Get shallow copy of the submitted goals for this scheduled goal.
+   * @return
+   */
+  public List<Goal> getSubmittedGoals() {
+    return new ArrayList<>(submittedGoals);
+  }
+
+  /**
+   * Generate and return a new Goal instance to execute.
+   *
+   * @return
+   */
   public Goal getNextGoalToSubmit() {
     // if last goal is not terminated yet, return null so overlapping goals aren't submitted
     if (!submittedGoals.isEmpty()) {
-      Goal lastGoal = submittedGoals.get(submittedGoals.size()-1);
+      Goal lastGoal = submittedGoals.get(submittedGoals.size() - 1);
       if (!lastGoal.getStatus().isTerminated()) {
         return null;
       }
@@ -95,39 +103,85 @@ public class ScheduledGoal extends Goal {
     return nextGoal;
   }
 
+  /**
+   * Get the last submitted Goal instance from this scheduled goal.
+   *
+   * @return
+   */
   public Goal getLastSubmittedGoal() {
-    return submittedGoals.get(submittedGoals.size()-1);
+    return submittedGoals.get(submittedGoals.size() - 1);
   }
 
+  /**
+   * This class represents scheduled goals, so this always returns true.
+   *
+   * @return
+   */
   @Override
-  public boolean isScheduled() {
+  final public boolean isScheduled() {
     return true;
   }
 
+  /**
+   * If this goal is periodic.
+   *
+   * @return
+   */
   public boolean isPeriodic() {
     return scheduleInfo.period >= 0;
   }
 
+  /**
+   * Get periodicity in milliseconds
+   *
+   * @return
+   */
   public long getScheduledPeriod() {
     return scheduleInfo.period;
   }
 
+  /**
+   * If this goal has a specified start time.
+   *
+   * @return
+   */
   public boolean hasStartDate() {
     return scheduleInfo.startTime != null;
   }
 
+  /**
+   * Get start time specified in Date format.
+   *
+   * @return
+   */
   public Date getStartDate() {
     return scheduleInfo.startTime;
   }
 
+  /**
+   * If this goal has a specified end time.
+   *
+   * @return
+   */
   public boolean hasEndDate() {
     return scheduleInfo.endTime != null;
   }
 
+  /**
+   * Get end time specified in Date format.
+   *
+   * @return
+   */
   public Date getEndDate() {
     return scheduleInfo.endTime;
   }
 
+  /**
+   * Update this goal's schedule.
+   *
+   * @param update predicate specifying update details
+   * @return if update was successful
+   */
   public boolean update(Predicate update) {
     return switch (update.getName()) {
       case "and" -> {
@@ -145,6 +199,12 @@ public class ScheduledGoal extends Goal {
     };
   }
 
+  /**
+   * Update start time.
+   *
+   * @param start
+   * @return if update was successful
+   */
   private boolean updateStartDate(Predicate start) {
     if (start == null) {
       return false;
@@ -167,6 +227,12 @@ public class ScheduledGoal extends Goal {
     return true;
   }
 
+  /**
+   * Update periodicity. Only applies to periodic goals.
+   *
+   * @param period
+   * @return if update was successful
+   */
   private boolean updatePeriod(Predicate period) {
     if (period == null) {
       return false;
@@ -185,6 +251,12 @@ public class ScheduledGoal extends Goal {
     return true;
   }
 
+  /**
+   * Update end time. Only applies to periodic goals.
+   *
+   * @param end
+   * @return if update was successful
+   */
   private boolean updateEndDate(Predicate end) {
     if (end == null) {
       return false;
@@ -231,11 +303,6 @@ public class ScheduledGoal extends Goal {
     }
 
     return date;
-  }
-
-  public Date getNextScheduledExecutionDate() {
-    // TODO: implement this !!
-    return new Date();
   }
 
 }

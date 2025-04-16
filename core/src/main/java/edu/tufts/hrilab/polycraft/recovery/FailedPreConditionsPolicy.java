@@ -64,7 +64,7 @@ public class FailedPreConditionsPolicy {
 
     for (Predicate failure : failureReasons) {
       // get failed pre-condition from failed action
-      ParameterizedAction parameterizedAction = new ParameterizedAction(brokenAction, new Goal(actor, brokenActionSignature));
+      ParameterizedAction parameterizedAction = new ParameterizedAction(brokenAction, Goal.createGoal(actor, brokenActionSignature));
       Condition failedCondition = ExploreUtils.getExistingCondition(parameterizedAction, failure);
       if (failedCondition == null) {
         log.warn("Could not find failed Condition.");

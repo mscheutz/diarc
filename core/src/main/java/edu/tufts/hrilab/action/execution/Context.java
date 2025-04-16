@@ -988,7 +988,7 @@ public abstract class Context {
         } else {
           goalState = Factory.createPredicate(command, inputArgs.toArray(new String[inputArgs.size()]));
         }
-        Goal goal = new Goal(actor, goalState);
+        Goal goal = Goal.createGoal(actor, goalState);
         c = new GoalContext(this, this.stateMachine, goal, this.execType);
         break;
 

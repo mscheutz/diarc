@@ -80,7 +80,7 @@ public class ActionInterpreterTest {
     //ActionDBEntry adb = ActionDatabase.createDatabaseFromFile("com/action/asl/actioncore.xml", false);
     //assertTrue(adb != null);
     //assertNotNull(ActionDatabase.lookupPost(Factory.createPredicate("handLifted(?mover, ?hand)")));
-    goal = new Goal(actor, Factory.createPredicate("located(ball)"));
+    goal = Goal.createGoal(actor, Factory.createPredicate("located(ball)"));
     EventSpec eventSpec = new EventSpec(EventSpec.EventType.ACTION, "lookfor(self, home, ball)");
     instance = ActionInterpreter.createInterpreterFromEventSpec(goal, root, eventSpec);
     assertNotNull(instance);
@@ -93,7 +93,7 @@ public class ActionInterpreterTest {
   @Test
   public void testInstantiationGoal() {
     
-    goal = new Goal(actor, Factory.createPredicate("located(ball)"));
+    goal = Goal.createGoal(actor, Factory.createPredicate("located(ball)"));
 	instance = aiForGoal(goal);
 
     assertNotNull(instance);
@@ -134,7 +134,7 @@ public class ActionInterpreterTest {
   @Test
   public void testgetActionCost() {
     String goalString = "located(ball)";
-    goal = new Goal(actor, Factory.createPredicate(goalString));
+    goal = Goal.createGoal(actor, Factory.createPredicate(goalString));
     instance = aiForGoal(goal);
     instance.call(); // run goal
     Context goalContext = instance.getRoot();
@@ -145,7 +145,7 @@ public class ActionInterpreterTest {
   @Test
   public void testPriorities() {
     String goalString = "located(ball)";
-    goal = new Goal(actor, Factory.createPredicate(goalString));
+    goal = Goal.createGoal(actor, Factory.createPredicate(goalString));
     instance = aiForGoal(goal);
 
     instance.updatePriority(new LinearPriorityCalculator());
@@ -165,14 +165,14 @@ public class ActionInterpreterTest {
   @Test
   public void testLocks() {
     String goalString = "located(ball)";
-    goal = new Goal(actor, Factory.createPredicate(goalString));
+    goal = Goal.createGoal(actor, Factory.createPredicate(goalString));
     instance = aiForGoal(goal);
   }
 
   @Test
   public void testRun() {
     Predicate goalState = Factory.createPredicate("located(ball)");
-    goal = new Goal(actor, goalState);
+    goal = Goal.createGoal(actor, goalState);
 
     instance = aiForGoal(goal);
     
@@ -188,7 +188,7 @@ public class ActionInterpreterTest {
     log.debug("testRunPreFail");
     
     String goalString = "movedTo(ball)";
-    goal = new Goal(actor, Factory.createPredicate(goalString));
+    goal = Goal.createGoal(actor, Factory.createPredicate(goalString));
 
     instance = aiForGoal(goal);
     
@@ -203,7 +203,7 @@ public class ActionInterpreterTest {
   public void testRunActionWithPre() {
     Symbol actor = Factory.createSymbol("self:agent");
     Predicate goalState = Factory.createPredicate("located(ball)");
-    goal = new Goal(actor, goalState);
+    goal = Goal.createGoal(actor, goalState);
 
     instance = aiForGoal(goal);
     instance.call();
@@ -214,7 +214,7 @@ public class ActionInterpreterTest {
     // now we see if the next action preconditions pass
 
     goalState = Factory.createPredicate("movedTo(ball)");
-    goal = new Goal(actor, goalState);
+    goal = Goal.createGoal(actor, goalState);
     
     instance = aiForGoal(goal);
     instance.call();
@@ -224,7 +224,7 @@ public class ActionInterpreterTest {
 
   @Test
   public void testNoActionSelected() {
-    goal = new Goal(actor, Factory.createPredicate("locatd(ball)"));  // Intentional misspelling
+    goal = Goal.createGoal(actor, Factory.createPredicate("locatd(ball)"));  // Intentional misspelling
     instance = aiForGoal(goal);
     instance.call(); // run goal
     Context goalContext = instance.getRoot();
@@ -240,7 +240,7 @@ public class ActionInterpreterTest {
     log.debug("testObservationExecution");
     
     Predicate p = Factory.createPredicate("located(home, ball)");
-    goal = new Goal(actor, p);
+    goal = Goal.createGoal(actor, p);
 
     instance = aiForGoal(goal);
     

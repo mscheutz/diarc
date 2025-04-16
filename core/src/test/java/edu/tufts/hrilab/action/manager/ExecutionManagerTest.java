@@ -118,14 +118,14 @@ public class ExecutionManagerTest {
   @Test
   public void testSubmitActionGoal() {
     Predicate goalPred = Factory.createPredicate("lookfor(self:agent,kitchen,ball)");
-    Goal goal = em.submitGoal(new Goal(goalPred));
+    Goal goal = em.submitGoal(Goal.createGoal(goalPred));
     assertNotNull(goal);
   }
 
   @Test
   public void testSubmitStateGoal() {
     Predicate goalPred = Factory.createPredicate("goal(self:agent,located(ball))");
-    Goal goal = em.submitGoal(new Goal(goalPred));
+    Goal goal = em.submitGoal(Goal.createGoal(goalPred));
     assertNotNull(goal);
   }
 
@@ -136,7 +136,7 @@ public class ExecutionManagerTest {
   public void testSubmitGoalNoActionFound() {
     log.warn("[testSubmitGoalNoActionFound] start");
     Predicate goalPred = Factory.createPredicate("goal(self:agent,locatd(ball))"); // intentionally misspelled
-    Goal goal = em.submitGoal(new Goal(goalPred));
+    Goal goal = em.submitGoal(Goal.createGoal(goalPred));
     em.joinOnGoal(goal.getId());
     assertTrue(goal.getStatus() == GoalStatus.FAILED);
     assertTrue(em.getActionStatus(goal.getId()) == ActionStatus.FAIL_NOTFOUND);
@@ -147,7 +147,7 @@ public class ExecutionManagerTest {
   public void testSubmitDone() {
     log.warn("[testSubmitDone] start");
     Predicate goalPred = Factory.createPredicate("goal(self:agent,done(ball, ball))");
-    Goal goal = em.submitGoal(new Goal(goalPred));
+    Goal goal = em.submitGoal(Goal.createGoal(goalPred));
     em.joinOnGoal(goal.getId());
     long gid = goal.getId();
     assertTrue(gid >= 0);
@@ -227,7 +227,7 @@ public class ExecutionManagerTest {
     } else if (goalPred.getName().equals("endActionLearning")) {
       priorityTier = PriorityTier.SKIPPENDING;
     }
-    Goal g = new Goal(goalPred);
+    Goal g = Goal.createGoal(goalPred);
     g.setPriorityTier(priorityTier);
     g.setPriority(priority);
 
@@ -241,7 +241,7 @@ public class ExecutionManagerTest {
   }
 
   private Goal submitGoalAndWait(Predicate goalPred, ExecutionType executionType, long priority, PriorityTier priorityTier) {
-    Goal g = new Goal(goalPred);
+    Goal g = Goal.createGoal(goalPred);
     g.setPriority(priority);
     g.setPriorityTier(priorityTier);
     g.setExecutionType(executionType);

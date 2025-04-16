@@ -121,7 +121,7 @@ public class Effect implements Serializable {
             }
           }
         }
-        Goal obs = new Goal(actor, predicate, observable);
+        Goal obs = Goal.createGoal(actor, predicate, observable);
         ActionInterpreter observer = ActionInterpreter.createInterpreterFromContext(obs, observationContext);
         log.debug("Starting observer goal: " + observer.getGoal());
         observer.call();

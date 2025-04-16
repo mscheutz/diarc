@@ -1,4 +1,4 @@
-package edu.tufts.hrilab.action.goal;
+package edu.tufts.hrilab.action.goal.schedule;
 
 
 import java.util.Date;

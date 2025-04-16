@@ -147,7 +147,7 @@ public class FailedReturnValuePolicy {
 
         // check if broken action already has holding(self, X) pre-condition
         Predicate holdingConditionPred = Factory.createPredicate("holding", actor, Factory.createVariable("H"));
-        ParameterizedAction parameterizedAction = new ParameterizedAction(brokenAction, new Goal(actor, brokenActionSignature));
+        ParameterizedAction parameterizedAction = new ParameterizedAction(brokenAction, Goal.createGoal(actor, brokenActionSignature));
         if (ExploreUtils.getExistingCondition(parameterizedAction, holdingConditionPred) != null) {
           // broken action already has holding(self, novelObject) pre-condition, don't need to try that
           continue;

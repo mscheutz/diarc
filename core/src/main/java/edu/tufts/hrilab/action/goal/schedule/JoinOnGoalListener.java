@@ -1,7 +1,6 @@
-package edu.tufts.hrilab.action.scheduler;
+package edu.tufts.hrilab.action.goal.schedule;
 
 import org.quartz.JobKey;
-import org.quartz.Trigger;
 import org.quartz.listeners.SchedulerListenerSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +9,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * This is a helper class to enable waiting for a scheduled goal to finish.
+ */
 public class JoinOnGoalListener extends SchedulerListenerSupport {
   private Logger log = LoggerFactory.getLogger(JoinOnGoalListener.class);
   private JobKey jobKey;
@@ -58,17 +60,4 @@ public class JoinOnGoalListener extends SchedulerListenerSupport {
       }
     }
   }
-
-//  @Override
-//  public void triggerFinalized(Trigger trigger) {
-//    log.info("Trigger finalized. Job key: {}", trigger.getJobKey());
-//    if (jobKey.equals(trigger.getJobKey())) {
-//      lock.lock();
-//      try {
-//        condition.signalAll();
-//      } finally {
-//        lock.unlock();
-//      }
-//    }
-//  }
 }

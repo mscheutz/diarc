@@ -47,7 +47,7 @@ public class UtilitarianActionSelectorTest {
     ActionConstraints constraints = new ActionConstraints();
     ActionSelector actionSelector = new UtilitarianActionSelector();
 
-    ParameterizedAction action = actionSelector.selectActionForGoal(new edu.tufts.hrilab.action.goal.Goal(predicate), constraints, sm);
+    ParameterizedAction action = actionSelector.selectActionForGoal(Goal.createGoal(predicate), constraints, sm);
 
     assertNotNull(action);
     assertNotNull(action.getEntry());
@@ -62,7 +62,7 @@ public class UtilitarianActionSelectorTest {
     ActionConstraints constraints = new ActionConstraints();
     ActionSelector actionSelector = new UtilitarianActionSelector();
 
-    ParameterizedAction action = actionSelector.selectActionForGoal(new Goal(predicate), constraints, sm);
+    ParameterizedAction action = actionSelector.selectActionForGoal(Goal.createGoal(predicate), constraints, sm);
 
     assertNotNull(action);
     assertNotNull(action.getEntry());

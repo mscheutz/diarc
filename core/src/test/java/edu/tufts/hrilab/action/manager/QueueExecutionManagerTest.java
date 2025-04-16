@@ -117,7 +117,7 @@ public class QueueExecutionManagerTest {
     } else if (goalPred.getName().equals("endActionLearning")) {
       priorityTier = PriorityTier.SKIPPENDING;
     }
-    Goal g = new Goal(goalPred);
+    Goal g = Goal.createGoal(goalPred);
     g.setPriorityTier(priorityTier);
     g.setPriority(priority);
 
@@ -131,7 +131,7 @@ public class QueueExecutionManagerTest {
   }
 
   private Goal submitGoalAndWait(Predicate goalPred, ExecutionType executionType, long priority, PriorityTier priorityTier) {
-    Goal g = new Goal(goalPred);
+    Goal g = Goal.createGoal(goalPred);
     g.setPriority(priority);
     g.setPriorityTier(priorityTier);
     g.setExecutionType(executionType);

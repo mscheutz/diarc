@@ -1083,7 +1083,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
     //  active contexts, and warning logs due to these facts (does not break any current functionality, can cause issues
     //  for introspection and any behavior relying on that to be fully accurate at these times).
     Predicate interruptGoalPredicate = Factory.createPredicate("interrupt", Factory.createFOL(interruptEvent.getActor()), interruptEvent.getPredicateForm());
-    Goal interruptGoal = new Goal(interruptGoalPredicate);
+    Goal interruptGoal = Goal.createGoal(interruptGoalPredicate);
     ActionInterpreter ai = ActionInterpreter.createInterpreterFromEventSpec(interruptGoal, this, interruptEvent);
     //Increment child context counter so getNextStep doesn't return the terminated context added by the above line and
     //  executed separately in the line below.

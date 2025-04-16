@@ -744,9 +744,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
 
   //TODO: Q: should interactions with active goals exclude scheduled goals?
   /**
-   * Get all scheduled goals which have either yet to be submitted, or are currently executing under the scope of a
-   * persistent context. Any non-persistent scheduled goals which have begun execution are simply considered active
-   * goals.
+   * Get all scheduled goals which have either yet to be submitted, or are currently executing.
    *
    * @return a list of predicates representing the goal
    */
@@ -760,25 +758,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
-   * Get the goal ids of scheduled goals which have either yet to be submitted, or are currently executing under the
-   * scope of a persistent context. Any non-persistent scheduled goals which have begun execution are simply considered
-   * active goals.
-   *
-   * @return a list of scheduled goals' ids
-   */
-  @TRADEService
-  public List<Long> getScheduledGoalIds() {
-    List<Long> result = new ArrayList<>();
-    for (Goal g : em.getScheduledGoals()) {
-      result.add(g.getId());
-    }
-    return result;
-  }
-
-  /**
-   * Get all scheduled goals for a specific actor which have either yet to be submitted, or are currently executing
-   * under the scope of a persistent context. Any non-persistent scheduled goals which have begun execution are simply
-   * considered active goals.
+   * Get all scheduled goals for a specific actor which have either yet to be submitted, or are currently executing.
    *
    * @param actor the actor to filter the scheduled goals list by
    * @return a list of predicates representing the goal
@@ -795,9 +775,21 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
-   * Get the goal ids of scheduled goals for a specific actor which have either yet to be submitted, or are currently
-   * executing under the scope of a persistent context. Any non-persistent scheduled goals which have begun execution
-   * are simply considered active goals.
+   * Get the goal ids of scheduled goals which have either yet to be submitted, or are currently executing.
+   *
+   * @return a list of scheduled goals' ids
+   */
+  @TRADEService
+  public List<Long> getScheduledGoalIds() {
+    List<Long> result = new ArrayList<>();
+    for (Goal g : em.getScheduledGoals()) {
+      result.add(g.getId());
+    }
+    return result;
+  }
+
+  /**
+   * Get the goal ids of scheduled goals for a specific actor which have either yet to be submitted, or are currently.
    *
    * @param actor the actor to filter the scheduled goals list by
    * @return a list of scheduled goals' ids
@@ -816,7 +808,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /**
    * Update the scheduled goal specified by the goal ID. The update predicate can
    * specify the next execution/start time (e.g., start(dateString), set a new periodicity (e.g., period(1, hour),
-   * or specify a new end time (e.g., end(datString). See the ScheduledGoal class for all update predicate options.
+   * specify a new end time (e.g., end(datString), or any combination using an "and" predicate.
+   * See the ScheduledGoal class for all update predicate options.
    *
    * This method fails if the supplied timing arguments cannot be parsed or the goal is not a scheduled goal.
    *
@@ -829,6 +822,14 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return em.updateScheduledGoal(goalId, update);
   }
 
+  /**
+   * Get Date of next scheduled goal execution. Returns null if goalId is
+   * for a non-scheduled goal, or if scheduled goal will not execute again.
+   *
+   * @param goalId scheduled goal ID
+   * @return Date or null
+   */
+  @TRADEService
   public Date getNextScheduledExecutionDate(long goalId) {
     return em.getNextScheduledExecutionDate(goalId);
   }

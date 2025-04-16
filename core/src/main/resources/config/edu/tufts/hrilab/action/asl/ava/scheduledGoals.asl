@@ -80,9 +80,9 @@ import edu.tufts.hrilab.action.justification.Justification;
       }
     } else {
       if (op:equals(!relativeTime,true)) {
-        !scheduledGoal = op:createPredicate("scheduled(?actor, !goalPredicate, start(!time, !addl))"); // TODO: EAK: is this right?
+        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, start(!time, !addl))"); // TODO: EAK: is this right?
       } else {
-        !scheduledGoal = op:createPredicate("scheduled(?actor, !goalPredicate, start(!time))"); // TODO: EAK: is this right?
+        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, start(!time))"); // TODO: EAK: is this right?
       }
     }
     op:log(info, "[scheduleGoal] scheduledGoal: !scheduledGoal");

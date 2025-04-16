@@ -171,7 +171,7 @@ public abstract class ActionSelector {
 
   public ActionDBEntry selectActionForCommand(Symbol actor, String command, List<String> inputArguments, ActionConstraints constraints, StateMachine stateMachine){
 
-    return selectActionForGoal(new Goal(actor, Factory.createPredicate(command,inputArguments.toArray(new String[0]))),constraints,stateMachine).getEntry();
+    return selectActionForGoal(Goal.createGoal(actor, Factory.createPredicate(command,inputArguments.toArray(new String[0]))),constraints,stateMachine).getEntry();
 
   }
 }

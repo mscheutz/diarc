@@ -15,7 +15,7 @@ public class RecoveryGoalContext extends GoalContext {
   private ParameterizedAction recoveryAction;
 
   public RecoveryGoalContext(Context caller, StateMachine sm, ParameterizedAction recoveryAction, ExecutionType executionType, Recovery recovery) {
-    super(caller, sm, new Goal(recoveryAction.getBoundActionSignature()), executionType, recovery);
+    super(caller, sm, Goal.createGoal(recoveryAction.getBoundActionSignature()), executionType, recovery);
     this.recoveryAction = recoveryAction;
   }
 

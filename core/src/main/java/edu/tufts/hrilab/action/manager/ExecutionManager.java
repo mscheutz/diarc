@@ -11,13 +11,11 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.goal.*;
+import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
 import edu.tufts.hrilab.action.listener.ActionListener;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.listener.GoalListener;
-import edu.tufts.hrilab.action.scheduler.JoinOnGoalListener;
-import edu.tufts.hrilab.action.scheduler.ScheduledGoalJob;
-import edu.tufts.hrilab.action.scheduler.ScheduledGoalListener;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.execution.Context;
@@ -29,9 +27,6 @@ import edu.tufts.hrilab.action.learning.ActionLearningStatus;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
-import org.quartz.*;
-import org.quartz.impl.StdSchedulerFactory;
-import org.quartz.listeners.SchedulerListenerSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,7 +85,7 @@ public class ExecutionManager implements GoalListener {
   private boolean useMemoryManager = true;
 
   /**
-   * Memory management thread scheduler that executes pruning mechanism.
+   * Memory management thread schedule that executes pruning mechanism.
    */
   private final ScheduledExecutorService memoryManager = Executors.newSingleThreadScheduledExecutor();
 
@@ -136,9 +131,7 @@ public class ExecutionManager implements GoalListener {
    * Handles thread(s) that execute ActionInterpreters.
    */
   private final ExecutorService executor = Executors.newCachedThreadPool();
-
-  private Scheduler goalScheduler;
-  private final Map<ScheduledGoal, JobKey> scheduledGoals = new HashMap<>();
+  private ScheduledGoalManager scheduledGoalManager;
 
   /**
    * The goal manager starts with a rootContext that is the root of all execution.
@@ -162,15 +155,8 @@ public class ExecutionManager implements GoalListener {
   protected void init(StateMachine sm, RootContext rootContext, Collection<String> groups) {
     this.sm = sm;
     this.rootContext = rootContext;
+    this.scheduledGoalManager = new ScheduledGoalManager(this);
 
-    // instantiate and start scheduled goal manager
-    try {
-      goalScheduler = StdSchedulerFactory.getDefaultScheduler();
-      goalScheduler.getListenerManager().addSchedulerListener(new ScheduledGoalListener(this));
-      goalScheduler.start();
-    } catch (SchedulerException e) {
-      log.error("Error getting goal scheduler. Scheduled goals not available at this time.");
-    }
 
     //TODO:brad: prune based on context size not time
     //start memory management thread to prune every N seconds
@@ -658,7 +644,7 @@ public class ExecutionManager implements GoalListener {
 
     // check if goal is a scheduled goal, and handle
     if (g.isScheduled()) {
-      executeScheduledGoal((ScheduledGoal) g);
+      scheduledGoalManager.executeScheduledGoal((ScheduledGoal) g);
       return g;
     }
 
@@ -667,79 +653,15 @@ public class ExecutionManager implements GoalListener {
     return g;
   }
 
-  private void executeScheduledGoal(ScheduledGoal goal) {
-    // set to active goal status
-    goal.setStatus(GoalStatus.ACTIVE);
-
-    JobBuilder jobBuilder = JobBuilder.newJob(ScheduledGoalJob.class)
-            .withIdentity(Long.toString(goal.getInfo().gid), "scheduledGoals")
-            .setJobData(new JobDataMap(Map.of(ScheduledGoalJob.RUNNABLE_KEY,
-            (Runnable) () -> {
-              Goal newGoal = goal.getNextGoalToSubmit();
-              if (newGoal != null) {
-                this.submitGoal(newGoal);
-              }
-            })));
-
-    // schedule the goal
-    JobDetail jobDetail = jobBuilder.build();
-    Trigger trigger = createTrigger(goal, jobDetail.getKey());
-    try {
-      goalScheduler.scheduleJob(jobDetail, trigger);
-    } catch (SchedulerException e) {
-      log.error("Error scheduling goal: {}", goal, e);
-    }
-
-    // add scheduled goals
-    scheduledGoals.put(goal, jobDetail.getKey());
-  }
-
-  private Trigger createTrigger(ScheduledGoal goal, JobKey jobKey) {
-    TriggerBuilder<Trigger> triggerBuilder = TriggerBuilder.newTrigger();
-
-    // set periodic schedule
-    if (goal.isPeriodic()) {
-      triggerBuilder.withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInMilliseconds(goal.getScheduledPeriod()).repeatForever());
-    }
-
-    // set start time
-    if (goal.hasStartDate()) {
-      triggerBuilder.startAt(goal.getStartDate());
-    }
-
-    // set end time
-    if (goal.hasEndDate()) {
-      triggerBuilder.endAt(goal.getEndDate());
-    }
-
-    triggerBuilder.forJob(jobKey);
-    return triggerBuilder.build();
-  }
-
+  /**
+   * Get Date of next scheduled goal execution. Returns null if goalId is
+   * for a non-scheduled goal, or if scheduled goal will not execute again.
+   *
+   * @param goalId scheduled goal ID
+   * @return Date or null
+   */
   public Date getNextScheduledExecutionDate(long goalId) {
-    ScheduledGoal goal = getScheduledGoal(goalId);
-    if (goal == null) {
-      return null;
-    }
-
-    // get goal's jobKey
-    JobKey jobKey = scheduledGoals.get(goal);
-    if (jobKey == null) {
-      return null;
-    }
-
-    // get goal's triggers
-    List<? extends Trigger> triggers = null;
-    try {
-      triggers = goalScheduler.getTriggersOfJob(jobKey);
-    } catch (SchedulerException e) {
-      log.error("Error looking up goal trigger. Goal: {}", goal.getPredicate());
-    }
-    if (triggers == null || triggers.size() != 1) {
-      return null;
-    }
-    Trigger trigger = triggers.get(0);
-    return trigger.getNextFireTime();
+    return scheduledGoalManager.getNextScheduledExecutionDate(goalId);
   }
 
   /**
@@ -769,7 +691,7 @@ public class ExecutionManager implements GoalListener {
     }
 
     if (goal.isScheduled()) {
-      joinOnScheduledGoal(gid);
+      scheduledGoalManager.joinOnScheduledGoal(gid);
       return goal.getStatus();
     }
 
@@ -822,7 +744,7 @@ public class ExecutionManager implements GoalListener {
     }
 
     if (goal.isScheduled()) {
-      joinOnScheduledGoal(gid, millis);
+      scheduledGoalManager.joinOnScheduledGoal(gid, millis);
       return goal.getStatus();
     }
 
@@ -1160,8 +1082,7 @@ public class ExecutionManager implements GoalListener {
     }
 
     if (goal.isScheduled()) {
-      synchronized (scheduledGoals) {
-        scheduledGoals.remove((ScheduledGoal) goal);
+      if (scheduledGoalManager.removeGoal((ScheduledGoal) goal)) {
         pastGoals.add(goal);
       }
     }
@@ -1200,48 +1121,6 @@ public class ExecutionManager implements GoalListener {
     }
 
     return true; // true == goal not pending
-  }
-
-  private boolean joinOnScheduledGoal(long gid) {
-    ScheduledGoal goal = getScheduledGoal(gid);
-    JobKey jobKey = scheduledGoals.get(goal);
-    JoinOnGoalListener listener = new JoinOnGoalListener(jobKey);
-    try {
-      goalScheduler.getListenerManager().addSchedulerListener(listener);
-      if (listener.joinOnGoal()) {
-        Goal lastGoal = goal.getLastSubmittedGoal();
-        joinOnGoal(lastGoal.getId());
-      }
-      goalScheduler.getListenerManager().removeSchedulerListener(listener);
-    } catch (SchedulerException e) {
-      log.error("Error trying to register new scheduler listener.");
-    }
-
-    return true;
-  }
-
-  private boolean joinOnScheduledGoal(long gid, long millis) {
-    ScheduledGoal goal = getScheduledGoal(gid);
-    if (goal == null) {
-      // must be past goal now
-      return true;
-    }
-    JobKey jobKey = scheduledGoals.get(goal);
-    JoinOnGoalListener listener = new JoinOnGoalListener(jobKey);
-    try {
-      goalScheduler.getListenerManager().addSchedulerListener(listener);
-      long startTime = System.currentTimeMillis();
-      if (listener.joinOnGoal(millis)) {
-        millis = millis - (System.currentTimeMillis() - startTime);
-        Goal lastGoal = goal.getLastSubmittedGoal();
-        joinOnGoal(lastGoal.getId(), millis);
-      }
-      goalScheduler.getListenerManager().removeSchedulerListener(listener);
-    } catch (SchedulerException e) {
-      log.error("Error trying to register new scheduler listener.");
-    }
-
-    return true;
   }
 
   /**
@@ -1314,10 +1193,11 @@ public class ExecutionManager implements GoalListener {
       return cancelActiveGoal(goal);
     }
 
-    ScheduledGoal scheduledGoal = getScheduledGoal(gid);
+    // if goal is scheduled goal
+    ScheduledGoal scheduledGoal = scheduledGoalManager.getScheduledGoal(gid);
     if (scheduledGoal != null) {
       log.debug("[cancelGoal] {} canceling scheduled goal {}", gid, goal);
-      return cancelScheduledGoal(scheduledGoal);
+      return scheduledGoalManager.cancelScheduledGoal(scheduledGoal);
     }
 
     log.warn("[cancelGoal] cannot find current goal for gid {}", gid);
@@ -1383,29 +1263,6 @@ public class ExecutionManager implements GoalListener {
       transferGoalToPastGoals(goal);
     }
     return retVal;
-  }
-
-  public boolean cancelScheduledGoal(ScheduledGoal goal) {
-    // cancel scheduling more tasks for this goal
-    JobKey key = scheduledGoals.get(goal);
-    try {
-      if (!goalScheduler.deleteJob(key)) {
-        return false;
-      }
-    } catch (SchedulerException e) {
-      log.error("Error looking up scheduled goal: {}", goal);
-      return false;
-    }
-
-    // cancel goals that have been submitted as part of scheduled goal
-    for (Goal submittedGoal : goal.getSubmittedGoals()) {
-      if (!submittedGoal.getStatus().isTerminated()) {
-        cancelGoal(submittedGoal.getId());
-      }
-    }
-
-    goal.setStatus(GoalStatus.CANCELED);
-    return true;
   }
 
   /**
@@ -1502,7 +1359,7 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
-   * @return A copied list of all current pending and active goals
+   * @return A copied list of all current, pending, active, and scheduled goals
    */
   public List<Goal> getCurrentGoals() {
     List<Goal> currentGoals;
@@ -1513,7 +1370,7 @@ public class ExecutionManager implements GoalListener {
         log.trace("[getCurrentGoals] have goalsLock");
         currentGoals = getActiveGoals();
         currentGoals.addAll(getPendingGoals());
-        currentGoals.addAll(getScheduledGoals());
+        currentGoals.addAll(scheduledGoalManager.getScheduledGoals());
       }
     }
     log.trace("[getCurrentGoals] released locks");
@@ -1569,56 +1426,6 @@ public class ExecutionManager implements GoalListener {
     return new ArrayList<>(pastGoals);
   }
 
-
-  public ScheduledGoal getScheduledGoal(long goalId) {
-    return scheduledGoals.keySet().stream()
-            .filter(goal -> goal.getInfo().gid == goalId)
-            .findFirst()
-            .orElse(null);
-  }
-
-  /**
-   * Get a copied list of all scheduled goals which have either yet to be submitted, or are currently executing.
-   * Any one-time scheduled goals which have begun execution are considered active goals.
-   *
-   * @return shallow copy of scheduled goals
-   */
-  public List<Goal> getScheduledGoals() {
-    synchronized (goalsLock) {
-      return new ArrayList<>(scheduledGoals.keySet());
-    }
-  }
-
-  public boolean updateScheduledGoal(long goalId, Predicate update) {
-    ScheduledGoal goal = getScheduledGoal(goalId);
-    if (goal == null) {
-      return false;
-    }
-
-    if (!goal.update(update)) {
-      return false;
-    }
-
-    // reschedule goal with new trigger
-    JobKey jobKey = scheduledGoals.get(goal);
-    Trigger newTrigger = createTrigger(goal, jobKey);
-    try {
-      // get trigger key for job (should be one for our use cases)
-      List<? extends Trigger> jobTriggers = goalScheduler.getTriggersOfJob(jobKey);
-      if (jobTriggers == null || jobTriggers.size() != 1) {
-        log.error("Expecting exactly one trigger per job.");
-        return false;
-      }
-
-      goalScheduler.rescheduleJob(jobTriggers.get(0).getKey(), newTrigger);
-    } catch (SchedulerException e) {
-      log.error("Error getting triggers for job key: {}", jobKey);
-      return false;
-    }
-
-    return true;
-  }
-
   /**
    * Cancel all goals currently found in the pendingGoals collection
    */
@@ -1647,6 +1454,7 @@ public class ExecutionManager implements GoalListener {
       log.trace("[cancelAllCurrentGoals] have pendingGoalsLock");
       synchronized (goalsLock) {
         log.trace("[cancelAllCurrentGoals] have goalsLock");
+        scheduledGoalManager.cancelAllScheduledGoals();
         cancelAllPendingGoals();
         cancelAllActiveGoals();
       }
@@ -1790,7 +1598,7 @@ public class ExecutionManager implements GoalListener {
     }
     if (g == null) {
       log.trace("[getGoal] {} is scheduled goal", gid);
-      g = getScheduledGoal(gid);
+      g = scheduledGoalManager.getScheduledGoal(gid);
     }
     return g;
   }
@@ -1865,6 +1673,25 @@ public class ExecutionManager implements GoalListener {
     }
     log.trace("[getPendingGoal] {} released pendingGoalsLock", gid);
     return null;
+  }
+
+  /**
+   * Get a copied list of all scheduled goals which have either yet to be submitted, or are currently executing.
+   *
+   * @return shallow copy of scheduled goals
+   */
+  public List<ScheduledGoal> getScheduledGoals() {
+    return scheduledGoalManager.getScheduledGoals();
+  }
+
+  /**
+   * Get ScheduledGoal instance with goal ID.
+   *
+   * @param goalId scheduled goal ID
+   * @return ScheduledGoal or null
+   */
+  public ScheduledGoal getScheduledGoal(long goalId) {
+    return scheduledGoalManager.getScheduledGoal(goalId);
   }
 
   /**
@@ -1991,6 +1818,17 @@ public class ExecutionManager implements GoalListener {
     } else {
       return new ConditionJustification(true, Factory.createPredicate("reason(unknown)"));
     }
+  }
+
+  /**
+   * Modify existing scheduled goal based on update predicate.
+   *
+   * @param goalId ID of scheduled goal
+   * @param update update predicate
+   * @return if update was successful
+   */
+  public boolean updateScheduledGoal(long goalId, Predicate update) {
+    return scheduledGoalManager.updateScheduledGoal(goalId, update);
   }
 
   private Goal getGoalHelper(List<Goal> currGoals, Symbol actor, int index) {

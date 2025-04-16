@@ -30,7 +30,7 @@ public class AvaWebsocketAPI implements AvaAPIInterface {
   public AvaWebsocketAPI(URI avaUri, String token, String mapNameString) {
     Map<String, String> httpHeaders = new HashMap<String, String>();
     httpHeaders.put("Authorization", "Basic " + token);
-    httpHeaders.put("Sec-WebSocket-Protocol", "irobot-bcr-scheduler");
+    httpHeaders.put("Sec-WebSocket-Protocol", "irobot-bcr-schedule");
     mapName = mapNameString;
 
     AvaWebsocketAPI.client = new AvaWebsocketClient(avaUri, httpHeaders);

@@ -63,6 +63,8 @@ public class ScheduledGoalTest {
     }
 
     testExecutedTime = -1;
+    sleepTime = 100;
+    testCanceled = false;
   }
 
   @After

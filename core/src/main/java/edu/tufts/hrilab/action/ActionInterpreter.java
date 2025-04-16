@@ -290,7 +290,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       // TODO: it's a bit awkward to create a Goal here, but AIs currently need a goal instance.
       //  Consider getting rid of this requirement?
       Symbol actor = (Symbol) currentStep.getArgumentValue("?actor");
-      Goal goal = new Goal(actor, currentStep.getSignatureInPredicateForm());
+      Goal goal = Goal.createGoal(actor, currentStep.getSignatureInPredicateForm());
       ActionInterpreter ai = ActionInterpreter.createInterpreterFromContext(goal, currentStep);
       Future<ActionStatus> asyncFuture = asyncExecutor.submit(ai);
       asyncFutures.put(currentStep.getId(), asyncFuture);

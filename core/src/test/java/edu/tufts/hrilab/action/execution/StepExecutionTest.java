@@ -77,7 +77,7 @@ public class StepExecutionTest {
     System.out.println("testing canDoStep");
     
     String goalString = "located(ball)";
-    goal = new Goal(actor, Factory.createPredicate(goalString));
+    goal = Goal.createGoal(actor, Factory.createPredicate(goalString));
 
     instance = aiForGoal(goal);
     Justification just = stepExecution.canDoStep(instance.getRoot());
@@ -89,7 +89,7 @@ public class StepExecutionTest {
     System.out.println("testing doStep");
 
     String goalString = "located(ball)";
-    goal = new Goal(actor, Factory.createPredicate(goalString));
+    goal = Goal.createGoal(actor, Factory.createPredicate(goalString));
 
     instance = aiForGoal(goal);
     Justification just = stepExecution.canDoStep(instance.getRoot());
@@ -100,7 +100,7 @@ public class StepExecutionTest {
   @Test
   public void testFinishStep() throws NoSuchMethodException {
     String goalString = "located(ball)";
-    goal = new Goal(actor, Factory.createPredicate(goalString));
+    goal = Goal.createGoal(actor, Factory.createPredicate(goalString));
 
     instance = aiForGoal(goal);
 
@@ -126,7 +126,7 @@ public class StepExecutionTest {
   @Test
   public void testCanDoStepPreFail() throws NoSuchMethodException {
     String goalString = "movedTo(ball)";
-    goal = new Goal(actor, Factory.createPredicate(goalString));
+    goal = Goal.createGoal(actor, Factory.createPredicate(goalString));
 
     instance = aiForGoal(goal);
     Context goalContext = instance.getRoot();

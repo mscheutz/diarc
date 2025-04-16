@@ -245,9 +245,8 @@ public class SimulationBasedPlanning extends DiarcComponent {
                 Context current = getCurrentContext(goalContext);
                 Context newCurrent = current.createSimulatedEquivalent(false);
 //                Predicate goalPred = getSignatureInPredicateForm();
-//                Goal rolloutGoal = new Goal(getActor("?actor"), goalPred, Observable.FALSE);
-                Goal rolloutGoal = new Goal(Factory.createSymbol("agent0:agent"), new Predicate("blah", new String[0]),
-                        Observable.FALSE);
+//                Goal rolloutGoal = Goal.createGoal(getActor("?actor"), goalPred, Observable.FALSE);
+                Goal rolloutGoal = Goal.createGoal(Factory.createSymbol("agent0:agent"), new Predicate("blah", new String[0]));
 
                 //todo: this is our eval function. we need a cost associated w it (currently -1, 0)
                 //-1 not plannable, 0 plannable?

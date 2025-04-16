@@ -118,7 +118,7 @@ public class ActionContextTest {
   }
 
   private Context setupActionContext(Predicate goalPredicate) {
-    Goal g = new Goal(actor, goalPredicate);
+    Goal g = Goal.createGoal(actor, goalPredicate);
     Context goalContext = root.addEvent(g, sm);
     goalContext.setupNextStep(); // perform action selection for goal
     Context actionContext = goalContext.getChildContexts().get(0);
@@ -212,7 +212,7 @@ public class ActionContextTest {
   public void testResourceLocks() {
     Context lookforContext = setupActionContext(Factory.createPredicate("located(ball)"));
 
-    Goal g = new Goal(actor, Factory.createPredicate("located(ball)"));
+    Goal g = Goal.createGoal(actor, Factory.createPredicate("located(ball)"));
     ActionInterpreter ai = ActionInterpreter.createInterpreterFromGoal(g, root, sm, ExecutionType.ACT);
     assertNotNull(ai);
     assertTrue(lookforContext.acquireLocks(ai, true));

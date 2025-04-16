@@ -97,7 +97,7 @@ public class PolycraftRLComponent extends DiarcComponent {
     log.info("TRADE Service for submitGoal found. Starting game loop.");
 
     // create dummy goal in order to create PDDL domain and problem (only care about the domain here)
-    Goal dummyGoal = new Goal(Factory.createSymbol("self"), Factory.createPredicate("plan()"), Observable.DEFAULT);
+    Goal dummyGoal = Goal.createGoal(Factory.createSymbol("self"), Factory.createPredicate("plan()"));
     List<Term> facts;
     try {
       facts = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFacts")).call(List.class);
