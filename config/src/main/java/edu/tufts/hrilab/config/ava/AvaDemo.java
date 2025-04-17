@@ -19,7 +19,7 @@ public class AvaDemo extends DiarcConfiguration {
   boolean useLLMParser = true;
   boolean useLLMNLG = true;
   String service = "llamahf";
-  String model = "Meta-Llama-3.1-70B-Instruct";
+  String model = "Llama-3.3-70B-Instruct";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
 
   @Override

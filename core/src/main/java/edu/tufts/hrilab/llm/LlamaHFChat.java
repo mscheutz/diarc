@@ -73,7 +73,7 @@ public class LlamaHFChat extends Chat {
                 sb.append("</s>");
             }
             return sb.toString().trim();
-        } else if (model.startsWith("Meta-Llama-3")) {
+        } else if (model.startsWith("Meta-Llama-3") || model.startsWith("Llama-3")) {
             //TODO: add system message with 'first'
             if (position == 0 || singleMessage) {
                 sb.append("<|begin_of_text|>");

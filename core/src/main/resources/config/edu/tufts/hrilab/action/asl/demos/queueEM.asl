@@ -55,7 +55,7 @@ import edu.tufts.hrilab.action.justification.Justification;
                     //More than one goal started execution as a result, freeze and ask if desired to remain frozen
                     !freezeGoal = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "freeze",?actor,?actor);
                     act:submitGoal(!freezeGoal);
-jo                    !bindings = act:askQuestionFromString(?actor,"I have frozen execution because I could not suspend the desired task in time and multiple other tasks have started. Would you like me to keep execution frozen?", val(X));
+                    !bindings = act:askQuestionFromString(?actor,"I have frozen execution because I could not suspend the desired task in time and multiple other tasks have started. Would you like me to keep execution frozen?", val(X));
                     if (op:invokeMethod(!bindings,"isEmpty")) {
                         //Question ignored, just end freeze and fail
                         act:endFreeze(?actor);
