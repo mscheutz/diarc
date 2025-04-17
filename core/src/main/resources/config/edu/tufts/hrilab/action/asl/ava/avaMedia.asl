@@ -1,0 +1,13 @@
+import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Symbol;
+import edu.tufts.hrilab.fol.Variable;
+import java.lang.Boolean;
+import java.lang.Long;
+import java.lang.Integer;
+import java.lang.String;
+import java.util.List;
+import java.util.Map;
+
+() = showVideo() {
+    tsc:displayVideo("/home/pete/tmp.mp4");
+}

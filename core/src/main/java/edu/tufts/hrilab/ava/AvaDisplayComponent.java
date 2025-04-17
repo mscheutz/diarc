@@ -14,17 +14,15 @@ import edu.tufts.hrilab.util.resource.Resources;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import uk.co.caprica.vlcj.player.base.MediaPlayer;
+import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
+import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
-import java.awt.Color;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Toolkit;
-import java.awt.Dimension;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.awt.Cursor;
-import java.awt.Point;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.imageio.ImageIO;
 import java.io.*;
 import java.util.ArrayList;
@@ -50,37 +48,44 @@ public class AvaDisplayComponent extends DiarcComponent {
   private long idleTimer = -1;
   private boolean idle = false;
 
+  private EmbeddedMediaPlayerComponent mediaPlayerComponent;
+
   private final ScheduledExecutorService refreshExecutor = Executors.newScheduledThreadPool(1);
 
   private TRADEServiceInfo isWakeWordEnabledService = null;
   private TRADEServiceInfo getWakeWordsService = null;
 
   private String suggestedInput = null;
+  private boolean useWakeWord = false;
+  private CardLayout cardLayout;
+  private JPanel cardPanel;
 
   @Override
   protected void init() {
     initializeFrame();
-    displayImage("hrilab_logo.jpg", 10 * 1000);
-    refreshExecutor.scheduleAtFixedRate(() -> {
-      try {
-        refreshMonitor();
-      } catch (TRADEException e) {
-        log.error("TRADE Exception while refreshing display.", e);
-      } catch (Exception e) {
-        log.error("Exception while refreshing display.", e);
-      }
-    }, 0, 100, TimeUnit.MILLISECONDS); // 10 fps
+    displayImage("trLogo.png", 10 * 1000);
+//    refreshExecutor.scheduleAtFixedRate(() -> EventQuee.invokeLater(() -> {
+//      try {
+//        refreshMonitor();
+//      } catch (
+//              TRADEException e) {
+//        log.error("TRADE Exception while refreshing display.", e);
+//      } catch (
+//              Exception e) {
+//        log.error("Exception while refreshing display.", e);
+//      }
+//    }), 0, 300, TimeUnit.MILLISECONDS); // 10 fps
   }
 
-  @Override
-  protected void postRegistrationInit() {
-    // register to get notified of "registerForDialogueHistoryNotifications" service
-    try {
-      TRADE.registerNotificationNowOrWhenJoined(this, new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications").argTypes(TRADEServiceInfo.class), "registerDialogueCallback");
-    } catch (TRADEException e) {
-      log.error("Error trying to register for registerForDialogueHistoryNotifications service.", e);
-    }
-  }
+//  @Override
+//  protected void postRegistrationInit() {
+//    // register to get notified of "registerForDialogueHistoryNotifications" service
+//    try {
+//      TRADE.registerNotificationNowOrWhenJoined(this, new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications").argTypes(TRADEServiceInfo.class), "registerDialogueCallback");
+//    } catch (TRADEException e) {
+//      log.error("Error trying to register for registerForDialogueHistoryNotifications service.", e);
+//    }
+//  }
 
   /**
    * Sets up the display. This includes initializing the display environment, configuring the screen.
@@ -96,15 +101,45 @@ public class AvaDisplayComponent extends DiarcComponent {
     canvas.setDialogueManager(dialogueManager);
     dialogueManager.setUseChat(useChat);
 
-    JPanel panel = new JPanel();
-    panel.add(canvas);
-    panel.setPreferredSize(new Dimension((int) screenWidth, (int) screenHeight));
-    panel.setBackground(new Color(0, 0, 0));
+    cardPanel = new JPanel();
+    cardLayout = new CardLayout();
+    cardPanel.setLayout(cardLayout);
+
+    JPanel imagePanel = new JPanel();
+     imagePanel.add(canvas);
+     imagePanel.setPreferredSize(new Dimension((int) screenWidth, (int) screenHeight));
+     imagePanel.setBackground(new Color(0, 0, 0));
 
     JFrame frame = new JFrame("DIARC");
     frame.setBackground(new Color(0, 0, 0));
-    frame.setContentPane(panel);
+    frame.setContentPane(cardPanel);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+    cardPanel.add(imagePanel);
+
+    frame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        mediaPlayerComponent.release();
+        frame.setVisible(false);
+        frame.dispose();
+        System.exit(0);
+      }
+    });
+
+    mediaPlayerComponent = new EmbeddedMediaPlayerComponent() {
+      @Override
+      public void finished(MediaPlayer mediaPlayer) {
+        SwingUtilities.invokeLater(() -> {
+                  cardLayout.previous(cardPanel);
+                  displayImage("trLogo.png", 10 * 1000);
+                  canvas.repaint();
+                }
+        );
+      }
+    };
+
+    cardPanel.add(mediaPlayerComponent);
 
     if (isFullscreen) {
       frame.setUndecorated(true);
@@ -154,30 +189,32 @@ public class AvaDisplayComponent extends DiarcComponent {
       setIdle();
     }
 
-    boolean isWakeWordEnabled = false;
-    if (isWakeWordEnabledService == null) {
-      isWakeWordEnabledService = TRADE.getAvailableService(new TRADEServiceConstraints().name("isWakeWordEnabled").argTypes());
-    }
-    if (isWakeWordEnabledService != null) {
-      isWakeWordEnabled = isWakeWordEnabledService.call(boolean.class);
-    }
-
-    List<String> wakeWords = null;
-    if (getWakeWordsService == null) {
-      getWakeWordsService = TRADE.getAvailableService(new TRADEServiceConstraints().name("getWakeWords").argTypes());
-    }
-    if (getWakeWordsService != null) {
-      wakeWords = getWakeWordsService.call(List.class);
-    }
-
-    if (suggestedInput != null) {
-      String wakeWord = "";
-      if (isWakeWordEnabled && wakeWords != null && !wakeWords.isEmpty()) {
-        wakeWord = wakeWords.get(0) + ", ";
+    if (useWakeWord) {
+      boolean isWakeWordEnabled = false;
+      if (isWakeWordEnabledService == null) {
+        isWakeWordEnabledService = TRADE.getAvailableService(new TRADEServiceConstraints().name("isWakeWordEnabled").argTypes());
       }
-      displayText("Try: " + wakeWord + suggestedInput);
-    } else {
-      clearText();
+      if (isWakeWordEnabledService != null) {
+        isWakeWordEnabled = isWakeWordEnabledService.call(boolean.class);
+      }
+
+      List<String> wakeWords = null;
+      if (getWakeWordsService == null) {
+        getWakeWordsService = TRADE.getAvailableService(new TRADEServiceConstraints().name("getWakeWords").argTypes());
+      }
+      if (getWakeWordsService != null) {
+        wakeWords = getWakeWordsService.call(List.class);
+      }
+
+      if (suggestedInput != null) {
+        String wakeWord = "";
+        if (isWakeWordEnabled && wakeWords != null && !wakeWords.isEmpty()) {
+          wakeWord = wakeWords.get(0) + ", ";
+        }
+        displayText("Try: " + wakeWord + suggestedInput);
+      } else {
+        clearText();
+      }
     }
 
     canvas.repaint();
@@ -190,7 +227,7 @@ public class AvaDisplayComponent extends DiarcComponent {
    */
   private void displayImage(String imageName, long timeout) {
     log.debug("displayImage(" + imageName + ")");
-    String displayDirectoryPath = "config/edu/tufts/hrilab/ava/display";
+    String displayDirectoryPath = "config/edu/tufts/hrilab/ava";
     String imageFullPath = Resources.createFilepath(displayDirectoryPath, imageName);
     BufferedImage image = null;
     try {
@@ -205,6 +242,19 @@ public class AvaDisplayComponent extends DiarcComponent {
     }
     unsetIdle();
     canvas.setImage(image, timeout);
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        canvas.repaint();
+      }
+    });
+  }
+
+
+  @TRADEService
+  public void displayVideo(String path) {
+    cardLayout.next(cardPanel);
+    mediaPlayerComponent.mediaPlayer().media().play(path);
   }
 
   /**
@@ -235,14 +285,6 @@ public class AvaDisplayComponent extends DiarcComponent {
     log.debug("displayText(" + text + ")");
     unsetIdle();
     canvas.setText(text, textTimeout);
-  }
-
-  /**
-   * Displays the robot background in place of the HRI lab logo.
-   */
-  @TRADEService
-  public void displayRobot() {
-    displayImage("robot_emoji.jpg", -1);
   }
 
   /**

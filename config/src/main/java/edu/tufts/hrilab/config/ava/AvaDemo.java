@@ -5,6 +5,9 @@ import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
+import javax.swing.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -21,6 +24,7 @@ public class AvaDemo extends DiarcConfiguration {
   String service = "llamahf";
   String model = "Llama-3.3-70B-Instruct";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
+
 
   @Override
   protected List<Option> additionalUsageInfo() {
@@ -125,7 +129,7 @@ public class AvaDemo extends DiarcConfiguration {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture ava.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls"));
 //    }
 
-//    createInstance(edu.tufts.hrilab.ava.avautil.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat");
+    createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat");
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);
     } else {
@@ -134,7 +138,17 @@ public class AvaDemo extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
       "-goal listen(self) monitorBattery(ava) -beliefinitfile demos.pl agents/ava.pl"
-        + " -dbfile core.asl manipulation.asl dialogue/nlg.asl dialogue/nlu.asl dialogue/handleSemantics.asl vision.asl ava/ava.asl ava/scheduledGoals.asl demos/queueEM.asl"
+        + " -dbfile " +
+              "core.asl " +
+              "manipulation.asl " +
+              "dialogue/nlg.asl " +
+              "dialogue/nlu.asl " +
+              "dialogue/handleSemantics.asl " +
+              "vision.asl " +
+              "ava/ava.asl " +
+              "ava/scheduledGoals.asl " +
+              "ava/avaMedia.asl " +
+              "demos/queueEM.asl"
         + " -priorityFile default.json avaPriority.json"
         + (useQueueEM ? " -executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager" : ""));
 

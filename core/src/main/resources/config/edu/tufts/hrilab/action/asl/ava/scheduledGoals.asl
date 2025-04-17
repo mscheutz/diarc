@@ -110,7 +110,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     edu.tufts.hrilab.action.goal.GoalInfo !goalInfo;
     java.lang.Boolean !isPersistent;
     java.lang.Boolean !modifyInterval = false; //true == modify next execution time
-    edu.tufts.hrilab.action.goal.GoalType !goalType;
+//    edu.tufts.hrilab.action.goal.GoalType !goalType;
     java.lang.Long !timeMillis;
     java.lang.Boolean !relativeTime = false;
     Predicate !updatePred;
@@ -177,7 +177,7 @@ import edu.tufts.hrilab.action.justification.Justification;
                 !success = tsc:updateScheduledGoal(!goalId, !updatePred);
             } else {
                 !updatePred = op:createPredicate("period", !response); // TODO: EAK: is this right?
-                !success = tsc:updateScheduledGoal(!goalId, !!updatePred);
+                !success = tsc:updateScheduledGoal(!goalId, !updatePred);
             }
         } else {
             if (op:equals(!relativeTime,true)) {

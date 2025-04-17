@@ -278,6 +278,11 @@ dependencies {
   //gui
   implementation("org.apache.commons:commons-imaging:1.0-alpha3") // MapAdapter
 
+
+  //todo: unsafe to include? vlc wrapper library for playing videos
+  implementation("uk.co.caprica:vlcj:4.10.1")
+
+
 }
 
 //TODO:brad: this is potentially no longer needed for mtracs, tbd if it is necessary for the Temi. Those were the two main use cases,
