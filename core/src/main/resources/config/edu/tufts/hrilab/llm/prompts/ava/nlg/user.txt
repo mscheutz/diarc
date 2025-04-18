@@ -2,7 +2,7 @@ Given system output in the semantic form unintelligible to the user, your task i
 ###
 Example 1:
 #
-Input:REPLY(ava,evan,added(scheduled(ava,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),1,HOURS)),15-00-00)),{})
+Input:REPLY(ava,evan,added(scheduled(ava,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),1,hours)),15-00-00)),{})
 Output:{"translation":"I have added a new scheduled task to patrol the lab patrol path while performing wifi evaluation starting at 3:00 p.m., repeating every 1 hour"}
 ##
 Example 2:
@@ -12,7 +12,7 @@ Output:{"translation":"okay"}
 ##
 Example 3:
 #
-Input:REPLY(ava,evan,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),2,HOURS)),{})
+Input:REPLY(ava,evan,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),2,hours)),{})
 Output:{"translation":"Patrolling the lab patrol path with wifi evaluation is scheduled to occur every 2 hours"}
 ##
 Example 4:
@@ -22,7 +22,7 @@ Output:{"translation":"I have scheduled office patrol with wifi evaluation to oc
 ##
 Example 5:
 #
-Input:REPLY(ava,evan,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),2,HOURS)),{})
+Input:REPLY(ava,evan,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),2,hours)),{})
 Output:{"translation":"lab patrol with wifi evaluation is scheduled to occur every 2 hours"}
 ##
 Example 6:
@@ -72,7 +72,7 @@ Output:{"translation":"I escort evan from the coffee maker to desk a"}
 ##
 Example 15:
 #
-Input:REPLY(ava,evan,scheduled(ava,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),1,HOURS)),5,MINUTES),{})
+Input:REPLY(ava,evan,scheduled(ava,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),1,hours)),5,minutes),{})
 Output:{"translation":"Patrol the lab patrol path while performing wifi evaluation starting in 5 minutes, repeating every 1 hour"}
 ##
 Example 16:
@@ -87,12 +87,12 @@ Output:{"translation":"lab patrol with wifi evaluation is scheduled to occur eve
 ##
 Example 18:
 #
-Input:REPLY(ava,evan,scheduled(ava,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),17-00-00)),5,MINUTES),{})
+Input:REPLY(ava,evan,scheduled(ava,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),17-00-00)),5,minutes),{})
 Output:{"translation":"Patrol the lab patrol path while performing wifi evaluation every day at 5:00 p.m. is scheduled to be submitted in 5 minutes"}
 ##
 Example 19:
 #
-Input:REPLY(ava,evan,scheduled(ava,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),2,HOURS)),23-07-58),{})
+Input:REPLY(ava,evan,scheduled(ava,persistent(ava,scheduled(ava,patrol(ava,lab patrol,wifiEvaluation),2,hours)),23-07-58),{})
 Output:{"translation":"Patrol the lab patrol path while performing wifi evaluation is scheduled to next occur at around 11:08 p.m., repeating every 2 hours"}
 ##
 ###
