@@ -41,6 +41,8 @@ if the human says "sit down", you should produce the output: {"Semantics":"sit()
 ##
 if the human says "get up", you should produce the output: {"Semantics":"stand()","Input Type":"INSTRUCT","Confidence":"75"}
 #
+if the human says "play a video", you should produce the output: {"Semantics":"showVideo()","Input Type":"INSTRUCT","Confidence":"90"}
+#
 if the human says "bring the mug to evans office", you should produce the output: {"Semantics":"deliver(mug,evans office)","Input Type":"INSTRUCT","Confidence":"90"}
 #
 if the human says "go back to your charging station", you should produce the output: {"Semantics":"goHome()","Input Type":"INSTRUCT","Confidence":"80"}

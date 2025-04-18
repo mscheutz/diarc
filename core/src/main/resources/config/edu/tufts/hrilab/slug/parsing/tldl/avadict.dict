@@ -473,4 +473,4 @@ what is your current goal; Q; whatAre(?ADDRESSEE,currentGoals)
 
 show demo video; VERBI; showVideo
 enable microphone; VERBI; enableMic
-disable microphone; VERBI; diableMic
+disable microphone; VERBI; disableMic

@@ -30,6 +30,9 @@ Description: The robot will use its speaker to say the given words out loud.
 stopFollow()
 Description: Related to the follow() action, the robot will stop following the user.
 #
+showVideo()
+Description: Play a video on the robot's display.
+#
 escortToLocation(?name, ?destination:location)
 Description: The robot will immediately ask ?name to acknowledge that they should follow it from where it is currently located, then travels to ?destination once receiving confirmation.
 #
