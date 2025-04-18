@@ -9,5 +9,5 @@ import java.util.List;
 import java.util.Map;
 
 () = showVideo() {
-    tsc:displayVideo("/home/pete/tmp.mp4");
+    tsc:displayNextVideo();
 }

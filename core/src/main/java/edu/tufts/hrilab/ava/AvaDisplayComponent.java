@@ -25,6 +25,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.*;
 import javax.imageio.ImageIO;
 import java.io.*;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -59,22 +60,31 @@ public class AvaDisplayComponent extends DiarcComponent {
   private boolean useWakeWord = false;
   private CardLayout cardLayout;
   private JPanel cardPanel;
+  private String videoDir = "";
+  private List<String> videos = new ArrayList<>();
+  private int currentVideo = -1;
+  private int videoVolume;
 
   @Override
   protected void init() {
     initializeFrame();
     displayImage("trLogo.png", 10 * 1000);
-//    refreshExecutor.scheduleAtFixedRate(() -> EventQuee.invokeLater(() -> {
-//      try {
-//        refreshMonitor();
-//      } catch (
-//              TRADEException e) {
-//        log.error("TRADE Exception while refreshing display.", e);
-//      } catch (
-//              Exception e) {
-//        log.error("Exception while refreshing display.", e);
-//      }
-//    }), 0, 300, TimeUnit.MILLISECONDS); // 10 fps
+    if (!videoDir.equals("")) {
+      getVideoPaths(videoDir);
+    }
+  }
+
+  private void getVideoPaths(String videoDir) {
+    String homeDir = System.getProperty("user.home");
+    String diarcDirPath = Paths.get(homeDir, ".diarc").toString();
+    String videoDirPath = Paths.get(diarcDirPath, videoDir).toString();
+    File dir = new File(videoDirPath);
+    File[] files = dir.listFiles((dir1, name) -> name.toLowerCase().endsWith(".mp4"));
+    if (files != null) {
+      List<File> fileList = List.of(files);
+      videos = fileList.stream().map(x -> x.getAbsolutePath()).toList();
+      currentVideo = 0;
+    }
   }
 
 //  @Override
@@ -136,6 +146,12 @@ public class AvaDisplayComponent extends DiarcComponent {
                   canvas.repaint();
                 }
         );
+      }
+
+      @Override
+      public void playing(MediaPlayer mediaPlayer) {
+        mediaPlayer.audio().setVolume(videoVolume);
+        mediaPlayer.controls().play();
       }
     };
 
@@ -252,9 +268,19 @@ public class AvaDisplayComponent extends DiarcComponent {
 
 
   @TRADEService
-  public void displayVideo(String path) {
+  public void displayNextVideo() {
+    if (currentVideo == -1) {
+      log.error("[displayNextVideo] no valid videos to display");
+      return;
+    }
     cardLayout.next(cardPanel);
-    mediaPlayerComponent.mediaPlayer().media().play(path);
+    mediaPlayerComponent.mediaPlayer().media().startPaused(videos.get(currentVideo));
+    log.info("[displayNextVideo] displaying video: " + videos.get(currentVideo));
+    if (currentVideo >= (videos.size() - 1)) {
+      currentVideo = 0;
+    } else {
+      currentVideo++;
+    }
   }
 
   /**
@@ -326,6 +352,8 @@ public class AvaDisplayComponent extends DiarcComponent {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("chat").argName("boolean").desc("switch dialogue to chat format").build());
     options.add(Option.builder("fullscreen").argName("boolean").desc("make the display full screen or not").build());
+    options.add(Option.builder("videoDir").hasArg().desc("name of directory for videos in .diarc dir").build());
+    options.add(Option.builder("videoVolume").hasArg().desc("volume for video playback").build());
     return options;
   }
 
@@ -336,6 +364,12 @@ public class AvaDisplayComponent extends DiarcComponent {
     }
     if (cmdLine.hasOption("fullscreen")) {
       isFullscreen = true;
+    }
+    if (cmdLine.hasOption("videoDir")) {
+      videoDir = cmdLine.getOptionValue("videoDir");
+    }
+    if (cmdLine.hasOption("videoVolume")) {
+      videoVolume = Integer.parseInt(cmdLine.getOptionValue("videoVolume"));
     }
   }
 

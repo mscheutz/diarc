@@ -117,11 +117,11 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -male -volume 10.0 -showMixers -matchMixer ALC256 Analog" + ((useMicrophone) ? " -muteMics" : ""));
     //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://92.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
+//      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");
     if (useMicrophone) {
-      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");
-//      createInstance(edu.tufts.hrilab.asr.whisper.WhisperComponent.class, "-model small.en -speaker patient -addressee self -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -showMixers -threshold 200.0");
+      createInstance(edu.tufts.hrilab.asr.whisper.WhisperComponent.class, "-model small.en -speaker patient -addressee self -matchMixer Direct Audio Device: C922 Pro Stream Webcam, USB Audio, USB Audio -showMixers -threshold 200.0");
+      //createInstance(edu.tufts.hrilab.slug.http.HTTPListenerComponent.class, "-speaker patient -addressee self");
     }
-    //createInstance(edu.tufts.hrilab.slug.http.HTTPListenerComponent.class, "-speaker patient -addressee self");
 
     createInstance(edu.tufts.hrilab.map.MapComponent.class, "-refs refs/avaLabRefs.json");
 
@@ -129,7 +129,7 @@ public class AvaDemo extends DiarcConfiguration {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture ava.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls"));
 //    }
 
-    createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat");
+    createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -videoDir videos -videoVolume 100");
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);
     } else {
@@ -137,7 +137,7 @@ public class AvaDemo extends DiarcConfiguration {
     }
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
-      "-goal listen(self) monitorBattery(ava) -beliefinitfile demos.pl agents/ava.pl"
+      "-goal listen(self) monitorBattery(ava) disableMic(ava) -beliefinitfile demos.pl agents/ava.pl"
         + " -dbfile " +
               "core.asl " +
               "manipulation.asl " +
@@ -148,6 +148,7 @@ public class AvaDemo extends DiarcConfiguration {
               "ava/ava.asl " +
               "ava/scheduledGoals.asl " +
               "ava/avaMedia.asl " +
+              "ava/avaASR.asl " +
               "demos/queueEM.asl"
         + " -priorityFile default.json avaPriority.json"
         + (useQueueEM ? " -executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager" : ""));
