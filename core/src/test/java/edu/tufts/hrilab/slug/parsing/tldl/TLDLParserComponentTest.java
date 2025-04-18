@@ -4192,15 +4192,15 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
         assertTrue(testUtterance("10 seconds",
-                "REPLY(brad,self,relativeTime(10,SECONDS),{})",
+                "REPLY(brad,self,relativeTime(10,seconds),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("1 second",
-                "REPLY(brad,self,relativeTime(1,SECONDS),{})",
+                "REPLY(brad,self,relativeTime(1,seconds),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("in 1 second",
-                "REPLY(brad,self,relativeTime(1,SECONDS),{})",
+                "REPLY(brad,self,relativeTime(1,seconds),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("add a new scheduled task",

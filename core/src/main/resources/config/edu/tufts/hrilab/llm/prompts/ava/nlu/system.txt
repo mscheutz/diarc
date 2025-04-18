@@ -147,7 +147,7 @@ taskPredicate(?actionPredicate)
 Description: The user is giving an answer by referencing valid action semantics ?actionPredicate. A user instructing this may look very similar to a user simply instructing a certain action, but the conversation history between the robot and the user can inform whether the chosen semantic type are action semantics or the reply semantics shown here. In this case, the inner ?actionPredicate should be a fully populated form of one of the action semantics listed above.
 #
 relativeTime(?number, ?type)
-Description: The user is answering a question by supplying a time interval. ?number will be any positive whole number and ?type will be one of SECONDS, MINUTES, HOURS, or DAYS. For example, "fifteen minutes" should parse to relativeTime(15,MINUTES).
+Description: The user is answering a question by supplying a time interval. ?number will be any positive whole number and ?type will be one of seconds, minutes, hours, or days. For example, "fifteen minutes" should parse to relativeTime(15,minutes).
 #
 absoluteTime(?number, ?type)
 Description: The user is answering a question by supplying a specific clock time. ?number will be a time in the form of HH:MM and ?type will either be am or pm. For example "3:30 p.m." should parse to absoluteTime(3:30,pm).

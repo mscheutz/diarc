@@ -110,21 +110,26 @@ import edu.tufts.hrilab.action.justification.Justification;
     edu.tufts.hrilab.action.goal.GoalInfo !goalInfo;
     java.lang.Boolean !isPersistent;
     java.lang.Boolean !modifyInterval = false; //true == modify next execution time
-    edu.tufts.hrilab.action.goal.GoalType !goalType;
     java.lang.Long !timeMillis;
     java.lang.Boolean !relativeTime = false;
     Predicate !updatePred;
+
+    Predicate !startPred;
+    Predicate !endPred;
+    Predicate !periodPred;
 
     op:log("debug", "[modifyScheduledGoal] in method");
 
     !scheduledGoalPred = act:selectScheduledGoal();
     !goalId = tsc:getGoalId(!scheduledGoalPred);
     !goalInfo = tsc:getGoalInfo(!goalId);
-    !goalType = op:invokeMethod(!goalInfo,"getGoalType");
-    op:log("info", "[modifyScheduledGoal] have goal !scheduledGoalPred with id !goalId and type !goalType");
+    op:log("info", "[modifyScheduledGoal] have goal !scheduledGoalPred with id !goalId");
+    !startPred = act:getScheduledGoalProperty(!scheduledGoalPred, start);
+    !endPred = act:getScheduledGoalProperty(!scheduledGoalPred, end);
+    !periodPred = act:getScheduledGoalProperty(!scheduledGoalPred, period);
 
     //Scheduled Persistent Scheduled or Persistent Scheduled cases
-    if (~op:equalsValue(!goalType,"SCHEDULED")) {
+    if (~op:equalsValue(!startPred, none()) && ~op:equalsValue(!periodPred, none())) {
         //Ask to modify either inner or outer timing
         !bindings = act:askQuestionFromString(?actor, "Would you like to shift the timing of executions, or the interval at which they are executed?", timingOf(X));
         if (~op:invokeMethod(!bindings,"isEmpty")) {
@@ -153,7 +158,7 @@ import edu.tufts.hrilab.action.justification.Justification;
         //Scheduled Persistent Scheduled or Persistent Scheduled Interval
         !bindings = act:askQuestionFromString(?actor, "How frequently would you like to schedule this task instead?", !responseFormList);
     } else {
-        if (op:equalsValue(!goalType,"SCHEDULED")) {
+        if (~op:equalsValue(periodPred,none())) {
             !bindings = act:askQuestionFromString(?actor, "When would you like to schedule this task instead?", !responseFormList);
         } else {
             !bindings = act:askQuestionFromString(?actor, "When should this task's next execution occur?", !responseFormList);
@@ -163,6 +168,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     if (~op:invokeMethod(!bindings,"isEmpty")) {
         !response = op:get(!bindings,!x);
         !yResponse = op:get(!bindings,!y);
+        op:log(debug, "!response");
+        op:log(debug, "!yResponse");
         if (~op:isNull(!yResponse)) {
             if (op:equalsValue(!yResponse, pm) || op:equalsValue(!yResponse, am)) {
                 !response = act:parseTime(!response, !yResponse);
@@ -177,14 +184,16 @@ import edu.tufts.hrilab.action.justification.Justification;
                 !success = tsc:updateScheduledGoal(!goalId, !updatePred);
             } else {
                 !updatePred = op:createPredicate("period", !response); // TODO: EAK: is this right?
-                !success = tsc:updateScheduledGoal(!goalId, !!updatePred);
+                !success = tsc:updateScheduledGoal(!goalId, !updatePred);
             }
         } else {
             if (op:equals(!relativeTime,true)) {
-                !updatePred = op:createPredicate("start", !response, !yResponse); // TODO: EAK: is this right?
+                op:log(debug, "calling createPredicate with response: !response yResponse: !yResponse");
+                !updatePred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "start(!response, !yResponse)"); // TODO: EAK: is this right?
                 !success = tsc:updateScheduledGoal(!goalId, !updatePred);
             } else {
-                !updatePred = op:createPredicate("start", !response); // TODO: EAK: is this right?
+                op:log(debug, "calling createPredicate with response: !response");
+                !updatePred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "start(!response)"); // TODO: EAK: is this right?
                 !success = tsc:updateScheduledGoal(!goalId, !updatePred);
             }
         }
@@ -484,4 +493,25 @@ import edu.tufts.hrilab.action.justification.Justification;
 () = takePhoto(Symbol ?location:location) {
     act:goToLocation(?location);
     act:generateResponse("taking(photo(at(?location)))");
+}
+
+(Predicate ?propertyPred) = getScheduledGoalProperty(Predicate ?goal, Symbol ?propertyName) {
+    List !args;
+    String !name;
+    String !targetName;
+
+    ?propertyPred = op:createPredicate("none()");
+
+    op:log(debug, "[getScheduledGoalProperty] processing goal ?goal for property ?propertyName");
+
+    !targetName = op:invokeMethod(?propertyName, "getName");
+    !args = op:invokeMethod(?goal, "getArgs");
+
+    foreach(!arg : !args) {
+        !name = op:invokeMethod(!arg, "getName");
+        if (op:equals(!name, !targetName)) {
+            ?propertyPred = op:createPredicate("!arg");
+            return;
+        }
+    }
 }

@@ -95,11 +95,11 @@ if the human says "at 4:30 p.m.", you should produce the output: {"Semantics":"a
 #
 if the human says "half past noon", you should produce the output: {"Semantics":"absoluteTime(12:30,pm)","Input Type":"REPLY","Confidence":"100"}
 #
-if the human says "in two hours", you should produce the output: {"Semantics":"relativeTime(2,HOURS)","Input Type":"REPLY","Confidence":"100"}
+if the human says "in two hours", you should produce the output: {"Semantics":"relativeTime(2,hours)","Input Type":"REPLY","Confidence":"100"}
 #
-if the human says "every half hour", you should produce the output: {"Semantics":"relativeTime(30,MINUTES)","Input Type":"REPLY","Confidence":"80"}
+if the human says "every half hour", you should produce the output: {"Semantics":"relativeTime(30,minutes)","Input Type":"REPLY","Confidence":"80"}
 #
-if the human says "in 30 minutes", you should produce the output: {"Semantics":"relativeTime(30,MINUTES)","Input Type":"REPLY","Confidence":"80"}
+if the human says "in 30 minutes", you should produce the output: {"Semantics":"relativeTime(30,minutes)","Input Type":"REPLY","Confidence":"80"}
 #
 if the human says "1 hour from now", you should produce the output: {"Semantics":"relativeTime(1,HOUR)","Input Type":"REPLY","Confidence":"80"}
 #
