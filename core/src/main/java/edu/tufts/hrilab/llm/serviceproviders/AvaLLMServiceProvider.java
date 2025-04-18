@@ -140,12 +140,12 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 //Not currently prompted to do this
                 if (utterance.getSemantics().hasArgs()) {
                     Symbol innerArg = ((Term)utterance.getSemantics()).get(0);
+                    List<Symbol> argsWithActor = new ArrayList<>();
+                    argsWithActor.add(Factory.createSymbol("ava"));
                     if (innerArg.isTerm()) {
-                        List<Symbol> argsWithActor = new ArrayList<>();
-                        argsWithActor.add(Factory.createSymbol("ava"));
                         argsWithActor.addAll(((Term) ((Term) utterance.getSemantics()).get(0)).getArgs());
-                        utterance.setSemantics(Factory.createPredicate("taskPredicate", Factory.createPredicate(((Term) utterance.getSemantics()).get(0).getName(), argsWithActor)));
                     }
+                    utterance.setSemantics(Factory.createPredicate("taskPredicate", Factory.createPredicate(innerArg.getName(), argsWithActor)));
                 }
             }
         } catch (Exception e) {
