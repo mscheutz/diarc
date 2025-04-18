@@ -9,5 +9,11 @@ import java.util.List;
 import java.util.Map;
 
 () = showVideo() {
+    onInterrupt :{
+        cancel: tsc:cancelVideoPlayback();
+    }
     tsc:displayNextVideo();
+    while(tsc:isMediaPlaying()) {
+        op:sleep(500);
+    }
 }

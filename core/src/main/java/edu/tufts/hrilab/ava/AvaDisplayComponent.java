@@ -64,6 +64,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   private List<String> videos = new ArrayList<>();
   private int currentVideo = -1;
   private int videoVolume;
+  private boolean videoPlaying = false;
 
   @Override
   protected void init() {
@@ -146,6 +147,7 @@ public class AvaDisplayComponent extends DiarcComponent {
                   canvas.repaint();
                 }
         );
+        videoPlaying = false;
       }
 
       @Override
@@ -153,6 +155,12 @@ public class AvaDisplayComponent extends DiarcComponent {
         mediaPlayer.audio().setVolume(videoVolume);
         mediaPlayer.controls().play();
       }
+
+      @Override
+      public void stopped(MediaPlayer mediaPlayer) {
+        finished(mediaPlayer);
+      }
+
     };
 
     cardPanel.add(mediaPlayerComponent);
@@ -275,12 +283,23 @@ public class AvaDisplayComponent extends DiarcComponent {
     }
     cardLayout.next(cardPanel);
     mediaPlayerComponent.mediaPlayer().media().startPaused(videos.get(currentVideo));
+    videoPlaying = true;
     log.info("[displayNextVideo] displaying video: " + videos.get(currentVideo));
     if (currentVideo >= (videos.size() - 1)) {
       currentVideo = 0;
     } else {
       currentVideo++;
     }
+  }
+
+  @TRADEService
+  public boolean isMediaPlaying() {
+    return videoPlaying;
+  }
+
+  @TRADEService
+  public void cancelVideoPlayback() {
+    mediaPlayerComponent.mediaPlayer().controls().stop();
   }
 
   /**
