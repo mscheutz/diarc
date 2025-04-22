@@ -1058,6 +1058,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
         Justification originalFailureJustification = recovery.getOriginalFailureJustification();
         return super.setStatus(originalFailureStatus, originalFailureJustification);
       } else {
+        // this is an action script, always call onInterrupt if status is set
         boolean ret = super.setStatus(eStatus, justification);
         if (ret) {
           handleInterrupt(eStatus);
@@ -1065,16 +1066,19 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
         return ret;
       }
     } else {
+      // this is a primitive action
       ActionStatus originalStatus = getStatus();
       boolean ret = super.setStatus(eStatus, justification);
       if (ret) {
         try {
+          // TODO: should onInterrupt also be called if it's not blocking, like in the script case?
           //Q: is there any other way to do this?
           //If a primitive was suspended, doStepLock will not be held. Still want to call resume behavior in this case though
           if (originalStatus == ActionStatus.SUSPEND && eStatus == ActionStatus.RESUME) {
             handleInterrupt(eStatus);
           }
 
+          // call onInterrupt until it's no longer blocking
           long timeout = 0;
           while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
             // lock NOT acquired (doStep is executing)

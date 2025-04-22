@@ -1,3 +1,7 @@
+/**
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
 package edu.tufts.hrilab.action.manager;
 
 import edu.tufts.hrilab.action.goal.Goal;
@@ -15,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 public class ScheduledGoalManager {
-  private Logger log = LoggerFactory.getLogger(ScheduledGoalManager.class);
+  private final Logger log = LoggerFactory.getLogger(ScheduledGoalManager.class);
 
   /**
    * Instance of quartz schedule for managing execution of scheduled goals.
@@ -30,7 +34,7 @@ public class ScheduledGoalManager {
    */
   private final Map<ScheduledGoal, JobKey> scheduledGoals = new HashMap<>();
 
-  private ExecutionManager em;
+  private final ExecutionManager em;
 
   public ScheduledGoalManager(ExecutionManager executionManager) {
     this.em = executionManager;
@@ -289,7 +293,7 @@ public class ScheduledGoalManager {
       goals = new HashSet<>(scheduledGoals.keySet());
     }
 
-    goals.forEach(g -> cancelScheduledGoal(g));
+    goals.forEach(this::cancelScheduledGoal);
   }
 
   /**
@@ -301,7 +305,7 @@ public class ScheduledGoalManager {
    */
   public boolean removeGoal(ScheduledGoal goal) {
     synchronized (scheduledGoals) {
-      return (scheduledGoals.remove(goal) == null) ? false : true;
+      return scheduledGoals.remove(goal) != null;
     }
   }
 }
