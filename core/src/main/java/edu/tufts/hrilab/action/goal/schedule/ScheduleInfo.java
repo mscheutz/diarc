@@ -1,5 +1,8 @@
-package edu.tufts.hrilab.action.goal.schedule;
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
 
+package edu.tufts.hrilab.action.goal.schedule;
 
 import java.util.Date;
 
