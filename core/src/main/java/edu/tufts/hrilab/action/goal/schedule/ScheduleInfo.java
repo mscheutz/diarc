@@ -9,12 +9,12 @@ public class ScheduleInfo {
    */
   public Date startTime = null;
   /**
-   * Milliseconds. For repeated/period goals. Value < 0 indicated no repetition (i.e., just do it once).
+   * Milliseconds. For repeated/period goals. Value less than 0 indicated no repetition (i.e., just do it once).
    */
   public long period = -1;
   /**
    * Time to stop executing this goal. null indicates no end time (i.e., run forever).
-   * This only applies for repeated goals (i.e., period > 0).
+   * This only applies for repeated goals (i.e., period greater than 0).
    */
   public Date endTime = null;
 }

@@ -1022,7 +1022,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       return;
     }
 
-    // create interruption context and add it xdto interruptionContexts
+    // create interruption context and add it to interruptionContexts
     Predicate interruptGoalPredicate = Factory.createPredicate("interrupt", Factory.createFOL(interruptEvent.getActor()), interruptEvent.getPredicateForm());
     Goal interruptGoal = Goal.createGoal(interruptGoalPredicate);
     Context interruptionContext = this.createContext(interruptEvent);
