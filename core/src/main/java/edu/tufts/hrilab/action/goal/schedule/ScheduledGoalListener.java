@@ -24,7 +24,8 @@ public class ScheduledGoalListener extends SchedulerListenerSupport {
    */
   @Override
   public void triggerFinalized(Trigger trigger) {
-    log.info("Trigger finalized. Job key: {}", trigger.getJobKey());
+    log.debug("Trigger finalized. Job key: {}", trigger.getJobKey());
+
     long goalId = Long.parseLong(trigger.getJobKey().getName()); // jobKey name should always be the goal ID
     ScheduledGoal goal = em.getScheduledGoal(goalId);
 

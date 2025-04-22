@@ -50,7 +50,8 @@ public class JoinOnGoalListener extends SchedulerListenerSupport {
 
   @Override
   public void jobDeleted(JobKey jobKey) {
-    log.info("Job deleted. Job key: {}", jobKey);
+    log.debug("Job deleted. Job key: {}", jobKey);
+
     if (jobKey.equals(this.jobKey)) {
       lock.lock();
       try {
