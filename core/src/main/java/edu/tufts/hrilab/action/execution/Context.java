@@ -190,25 +190,6 @@ public abstract class Context {
     return id;
   }
 
-  /**
-   * Acquire all locks for this context
-   *
-   * @param actionInt The AI that needs the lock
-   * @param greedy    if not greedy, then release the locks if all can't be acquired
-   * @return true is all locks acquired, false otherwise
-   */
-  public boolean acquireLocks(ActionInterpreter actionInt, boolean greedy) {
-    return true;
-  }
-
-  /**
-   * Release all locks for this context
-   *
-   * @param actionInt The AI that needs the lock
-   */
-  public void releaseLocks(ActionInterpreter actionInt) {
-  }
-
   public ActionStatus getStatus() {
     try {
       statusLock.lock();
@@ -928,6 +909,22 @@ public abstract class Context {
    * @param eSpec the event to be executed
    */
   public Context addEvent(EventSpec eSpec) {
+    Context child = createContext(eSpec);
+
+    //add new child context to childContexts
+    childContexts.add(child);
+    return child;
+  }
+
+  /**
+   * Create new context instance with "this" as the parent, but does NOT add the new Context as a child
+   * to "this". This is useful for attaching "child" contexts to other non-childContexts data structures
+   * (e.g.,  interruption contexts, effect/condition contexts, etc.).
+   *
+   * @param eSpec
+   * @return
+   */
+  public Context createContext(EventSpec eSpec) {
     if (log.isDebugEnabled()) {
       log.debug("Adding event according to specification: " + eSpec.toString() + " exec: " + this.execType);
     }
@@ -1019,8 +1016,6 @@ public abstract class Context {
         break;
     }
 
-    //add new child context to childContexts
-    childContexts.add(c);
     return c;
   }
 

@@ -7,8 +7,6 @@ import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.listener.ActionListener;
-import edu.tufts.hrilab.action.listener.GoalListener;
-import edu.tufts.hrilab.action.lock.ActionResourceLock;
 
 import edu.tufts.hrilab.action.priority.PriorityCalculator;
 import edu.tufts.hrilab.action.state.StateMachine;
@@ -482,7 +480,6 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       }
 
       // goal termination
-      ActionResourceLock.deepReleaseAll(this);
       isRunning = false;
       return rootStep.getStatus();
     } catch (Exception e) {

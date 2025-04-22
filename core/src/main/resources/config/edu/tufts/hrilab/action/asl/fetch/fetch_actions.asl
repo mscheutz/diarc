@@ -1,6 +1,5 @@
 () = look["?actor looks in ?direction"](edu.tufts.hrilab.fol.Symbol ?direction) {
     javax.vecmath.Point3d !location;
-    locks : motionLock;
 
     op:log("debug", "In look(?direction) script for PR2.");
 
