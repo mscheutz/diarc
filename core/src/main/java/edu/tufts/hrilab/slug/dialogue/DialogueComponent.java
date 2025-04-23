@@ -41,7 +41,7 @@ public class DialogueComponent extends DiarcComponent {
   private final DiaLog diaLog = new DiaLog();
 
   private DialogueConsultant consultant;
-  private Set<TRADEServiceInfo> dialogueHistorySubscribers = new HashSet<>();
+  private List<TRADEServiceInfo> dialogueHistorySubscribers = new ArrayList<>();
   //I believe this should live at the level of AgentTeams.
   private ConcurrentHashMap<Symbol,Set<Question>> questionsPerAgent = new ConcurrentHashMap<>();
   private Map<Symbol,Set<Symbol>> agentHierarchy = new HashMap<>();
@@ -202,11 +202,7 @@ public class DialogueComponent extends DiarcComponent {
 
   @TRADEService
   public void registerForDialogueHistoryNotifications(TRADEServiceInfo callback) {
-    if (dialogueHistorySubscribers.stream().anyMatch(c-> c.matches(callback))) {
-      log.warn("[registerForDialogueHistoryNotifications] attempt to register duplicate callback, not adding");
-    } else {
-      dialogueHistorySubscribers.add(callback);
-    }
+    dialogueHistorySubscribers.add(callback);
   }
 
   @TRADEService
