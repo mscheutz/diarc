@@ -1,3 +1,7 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
 package edu.tufts.hrilab.action.goal.schedule;
 
 import edu.tufts.hrilab.action.goal.Goal;

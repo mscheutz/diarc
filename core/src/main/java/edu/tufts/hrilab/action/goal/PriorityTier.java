@@ -15,7 +15,7 @@ public enum PriorityTier {
     URGENT,
     SKIPPENDING; //Placeholder for functionality hopefully resolved by implemented lower level resource constraints
 
-    private static Logger log = LoggerFactory.getLogger(PriorityTier.class);
+    private static final Logger log = LoggerFactory.getLogger(PriorityTier.class);
 
     public static PriorityTier fromString(String typeStr) {
         if (typeStr != null) {

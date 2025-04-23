@@ -16,11 +16,9 @@ import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalInfo;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.goal.PriorityTier;
-import edu.tufts.hrilab.action.gui.ActionProgrammerAdapter;
 import edu.tufts.hrilab.action.gui.GoalManagerAdapter;
 import edu.tufts.hrilab.action.gui.GoalViewerAdapter;
 import edu.tufts.hrilab.action.justification.Justification;
-import edu.tufts.hrilab.action.lock.ActionResourceLockLinear;
 import edu.tufts.hrilab.action.manager.ExecutionManager;
 import edu.tufts.hrilab.action.manager.PriorityInfo;
 import edu.tufts.hrilab.action.notification.GoalManagerNotifier;
@@ -308,13 +306,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   private void initializeDB() {
-    // Setup the action database to be used by this component
-    // This should be done at the component level because this is a
-    // component-wide databse, and not simply used by the ExecutionManager
-    // Eventually, each component will be responsible for loading its action db
-    //
-    //TDOD:brad: I don't think the above is still the plan?
-    ActionResourceLockLinear.initResources();
 
     // Add ASL files to database
     Database.getInstance().loadDatabaseFiles(dbFileDir, dbFiles);

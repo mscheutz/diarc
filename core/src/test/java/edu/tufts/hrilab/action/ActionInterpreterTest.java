@@ -44,7 +44,6 @@ public class ActionInterpreterTest {
 
   @BeforeClass
   public static void setUpClass() {
-//    ActionResourceLock.motionLock = new ActionResourceLockLinear("motionLock");
     StateMachine sm = StateMachine.createTestStateMachine(new HashSet<>());
     edu.tufts.hrilab.action.ActionBuilderRepo.buildLookforAction();
     edu.tufts.hrilab.action.ActionBuilderRepo.buildMoveToObjectAction();

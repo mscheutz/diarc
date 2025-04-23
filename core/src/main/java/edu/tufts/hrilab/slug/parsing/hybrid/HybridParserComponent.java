@@ -337,16 +337,6 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
   }
 
-  @TRADEService
-  public boolean activatePattern(String patternName) {
-    if (usePMP) {
-      return ((PatternMatchingParser) patternMatchingParser).activatePattern(patternName);
-    } else {
-      log.warn("[activatePattern] trying to activate parsing pattern when not using pattern matching parser");
-      return false;
-    }
-  }
-
   @Override
   protected void shutdownComponent() {
     super.shutdownComponent();

@@ -270,19 +270,6 @@ public class DialogueComponent extends DiarcComponent {
       return new HashMap<>();
     }
 
-    for (Term responseForm : responseForms) {
-      //TODO:brad: make this safer
-      if (responseForm.getName().equals("pattern")) {
-          responseForm = (Predicate) responseForm.get(0);
-
-          try {
-              TRADE.getAvailableService(new TRADEServiceConstraints().name("activatePattern").argTypes(String.class)).call(Boolean.class, responseForm.getName());
-          } catch (TRADEException e) {
-              log.error("[waitForResponse]", e);
-          }
-      }
-    }
-
     speaker = speaker.toUntyped();
     Question question = new Question(questionString, responseForms);
     Set<Question> currentQuestions = questionsPerAgent.get(speaker);
