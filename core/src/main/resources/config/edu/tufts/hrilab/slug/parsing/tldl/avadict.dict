@@ -470,3 +470,6 @@ what patrol paths do you have saved; VERBI; describeAllKnownPatrolPaths
 what is your current task; Q; whatAre(?ADDRESSEE,currentGoals)
 what is your current goal; Q; whatAre(?ADDRESSEE,currentGoals)
 %what are you doing;  Q; whatAre(?ADDRESSEE,goals)
+
+now; C/C; #x.urgentPriority(?ADDRESSEE,$x)
+right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
