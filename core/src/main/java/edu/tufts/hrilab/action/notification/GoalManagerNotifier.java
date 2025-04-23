@@ -35,10 +35,16 @@ public class GoalManagerNotifier implements DatabaseListener, GoalListener {
   private final Set<TRADEServiceInfo> goalStatusCallbacks = Collections.synchronizedSet(new HashSet<>());
 
   public void registerNotification(TRADEServiceInfo callback, NotificationType type) {
+    Set<TRADEServiceInfo> callbacks = new HashSet<>();
     switch (type) {
-      case GOAL_STATUS_CHANGE -> goalStatusCallbacks.add(callback);
-      case DATABASE_ADDITION -> dbAdditionCallbacks.add(callback);
-      case DATABASE_REMOVAL -> dbRemovalCallbacks.add(callback);
+      case GOAL_STATUS_CHANGE -> callbacks = goalStatusCallbacks;
+      case DATABASE_ADDITION -> callbacks = dbAdditionCallbacks;
+      case DATABASE_REMOVAL -> callbacks = dbRemovalCallbacks;
+    }
+    if (callbacks.stream().anyMatch(c -> c.matches(callback))) {
+      log.warn("[registerNotification] attempt to register duplicate callback, not adding");
+    } else {
+      callbacks.add(callback);
     }
   }
 

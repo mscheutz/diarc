@@ -482,7 +482,11 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
    */
   @Override
   public void registerForNewPropertyNotification(TRADEServiceInfo callback) {
-    propertyNotificationSubscribers.add(callback);
+    if (propertyNotificationSubscribers.stream().anyMatch(c -> c.matches(callback))) {
+      log.warn("[registerForNewPropertyNotification] attempt to register duplicate callback, not adding");
+    } else {
+      propertyNotificationSubscribers.add(callback);
+    }
   }
 
   /**
