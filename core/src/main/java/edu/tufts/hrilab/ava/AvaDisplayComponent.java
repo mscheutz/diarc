@@ -117,9 +117,9 @@ public class AvaDisplayComponent extends DiarcComponent {
     cardPanel.setLayout(cardLayout);
 
     JPanel imagePanel = new JPanel();
-     imagePanel.add(canvas);
-     imagePanel.setPreferredSize(new Dimension((int) screenWidth, (int) screenHeight));
-     imagePanel.setBackground(new Color(0, 0, 0));
+    imagePanel.add(canvas);
+    imagePanel.setPreferredSize(new Dimension((int) screenWidth, (int) screenHeight));
+    imagePanel.setBackground(new Color(0, 0, 0));
 
     JFrame frame = new JFrame("DIARC");
     frame.setBackground(new Color(0, 0, 0));

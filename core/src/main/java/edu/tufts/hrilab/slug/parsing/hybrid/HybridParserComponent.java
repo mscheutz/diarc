@@ -324,7 +324,11 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   @Action
   public void cacheParse(Utterance utterance) {
     log.debug("[cacheParse] Caching parsed utterance");
-    cacheParser.addEntryToCache(utterance);
+    if (useCache) {
+      cacheParser.addEntryToCache(utterance);
+    } else {
+      log.warn("[cacheParse] attempting to add utterance to cache but parser cache is disabled");
+    }
   }
 
   @TRADEService

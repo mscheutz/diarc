@@ -47,7 +47,7 @@ public class WhisperComponent extends DiarcComponent implements ASRInterface {
 
   // Microphone config
   private ConfigurableMicrophone microphone;
-  final private float samplesPerSec = 16000.0f; // 16k samples/second
+  final private float samplesPerSec = 48000.0f; // 16k samples/second
   final private int sampleSize = 16; // 16 bits (2 bytes)
   final private int sampleSizeInBytes = sampleSize/8;
   final private boolean isBigEndian = false;
@@ -378,8 +378,8 @@ public class WhisperComponent extends DiarcComponent implements ASRInterface {
       params.grammar = grammar;
       params.grammarPenalty = grammarPenalty;
     }
-    if (samples.length < 16000 * 2) {
-      float[] padded = new float[16000 * 2];
+    if (samples.length < samplesPerSec * 2) {
+      float[] padded = new float[(int) samplesPerSec * 2];
       System.arraycopy(samples, 0, padded, 0, samples.length);
       samples = padded;
     }
@@ -412,8 +412,8 @@ public class WhisperComponent extends DiarcComponent implements ASRInterface {
   public void transcribeAndReportSpeech (float[] samples) {
     if (useDisplay) {
       try {
-        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class, Boolean.class));
-        service.call(void.class,"Understanding speech", false);
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
+        service.call(void.class,"Understanding speech");
       } catch (TRADEException e) {
         log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
       }
@@ -524,7 +524,7 @@ public class WhisperComponent extends DiarcComponent implements ASRInterface {
       return;
     }
     tempFilePath = tempFile.getPath();
-    writeFloatArrayToWav(samples, tempFilePath, 16000);
+    writeFloatArrayToWav(samples, tempFilePath, (int) samplesPerSec);
     log.debug("Wrote " + String.valueOf(samples.length) + " sample" + (samples.length == 1 ? "" : "s") + " to " + tempFilePath);
   }
 }

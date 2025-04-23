@@ -127,9 +127,9 @@ public class PoseConsultant extends Consultant<PoseReference> {
                       ref.getPosition(), ref.getOrientation())
       );
 
-      //todo: (pete) it would really be better to not store refIds in the JSON file. encourages bad behavior (hardcoded refIds in scripts, etc).
-      this.refNumber = ++maxRefNumber;
     }
+    //todo: (pete) it would really be better to not store refIds in the JSON file. encourages bad behavior (hardcoded refIds in scripts, etc).
+    this.refNumber = ++maxRefNumber;
   }
 
   /**

@@ -407,7 +407,7 @@ that is all; VAL; location(none)
 modify a scheduled task; C; modifyScheduledGoal(?ADDRESSEE)
 the interval; VAL; timingOf(interval)
 
-location; VAL/REF; #x.location($x)
+%location; VAL/REF; #x.location($x)
 
 execution; VAL; timingOf(execution)
 first execution; VAL; timingOf(execution)

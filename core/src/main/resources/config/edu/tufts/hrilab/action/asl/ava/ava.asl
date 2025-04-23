@@ -227,6 +227,18 @@ import java.util.StringTokenizer;
     tsc:setZLift(90.0);
 }
 
+() = recoverGoToLocation(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+
+    recovery : {
+        actionRecovery : {
+            postRecovery : postrecovery_continue
+        }
+        failedActions: {goToLocation(X)}
+    }
+
+    act:goToLocation(X);
+}
+
 () = goToLocation(Symbol ?location) {
     Symbol !current;
 

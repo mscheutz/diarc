@@ -8,9 +8,12 @@ import java.lang.String;
 import java.util.List;
 import java.util.Map;
 
-() = showVideo() {
+() = showVideo(Symbol ?location = none) {
     onInterrupt :{
         cancel: tsc:cancelVideoPlayback();
+    }
+    if (~op:equalsValue(?location, "none")) {
+        act:goToLocation(?location);
     }
     tsc:displayNextVideo();
     while(tsc:isMediaPlaying()) {

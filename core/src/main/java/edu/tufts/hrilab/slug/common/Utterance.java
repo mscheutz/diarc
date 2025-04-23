@@ -531,7 +531,25 @@ public final class Utterance implements Serializable {
   }
 
   public void addBinding(Map<Variable, Symbol> binding) {
-    bindings.add(binding);
+    //todo: this is inefficient and we should be using a different data structure. if we run rr a second time we can duplicate bindings accidentally
+    boolean novel = false;
+    if (!bindings.isEmpty()) {
+      for (Map<Variable, Symbol> existingBinding : bindings) {
+        for (Variable var : existingBinding.keySet()) {
+          Symbol existingValue = existingBinding.get(var);
+          Symbol newValue = binding.get(var);
+          if (!existingValue.equals(newValue)) {
+            novel = true;
+            break;
+          }
+        }
+      }
+    } else {
+      novel = true;
+    }
+    if (novel) {
+      bindings.add(binding);
+    }
     this.boundSemantics = null;
   }
 

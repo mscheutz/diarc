@@ -110,7 +110,6 @@ import edu.tufts.hrilab.action.justification.Justification;
     edu.tufts.hrilab.action.goal.GoalInfo !goalInfo;
     java.lang.Boolean !isPersistent;
     java.lang.Boolean !modifyInterval = false; //true == modify next execution time
-    edu.tufts.hrilab.action.goal.GoalType !goalType;
     java.lang.Long !timeMillis;
     java.lang.Boolean !relativeTime = false;
     Predicate !updatePred;
@@ -421,7 +420,7 @@ import edu.tufts.hrilab.action.justification.Justification;
   if (~op:isEmpty(!bindings)) {
      !elem = op:get(!bindings, 0);
      !locations = op:get(!elem,!x);
-     act:generateResponseFromString("Starting patrol on path ?collectionName with ?actionName");
+     act:generateResponse("starting(patrol(?actor, ?collectionName, ?actionName))");
      act:forEach(!locations, ?actionName);
   } else {
     exit(FAIL, not(known(patrol, ?collectionName)));
@@ -431,7 +430,7 @@ import edu.tufts.hrilab.action.justification.Justification;
 }
 
 () = sayFinishedPatrol(Symbol ?collectionName, Symbol ?actionName) {
-  act:generateResponseFromString("Finished patrol on path ?collectionName with ?actionName");
+ act:generateResponse("finished(patrol(?actor, ?collectionName, ?actionName))");
 }
 
 () = wifiEvaluation(Symbol ?locationId) {
