@@ -500,12 +500,23 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
    */
   @Override
   public void notifyNewPropertySubscribers() {
+    List<TRADEServiceInfo> servicesToRemove = new ArrayList<>();
     for (TRADEServiceInfo subscriber : propertyNotificationSubscribers) {
       try {
         subscriber.call(void.class);
       } catch (TRADEException e) {
         log.error("Could not make callback to: " + subscriber, e);
+        //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
+        if (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null")) {
+          servicesToRemove.add(subscriber);
+        }
       }
+    }
+    //If a remote container has gone down without unregistering for notifications,
+    // then remove the service rather than continuously log errors.
+    for (TRADEServiceInfo service: servicesToRemove) {
+      log.info("[notifyDialogueHistorySubscribers] unregistering unavailable service from dialogue history notifications ");
+      unregisterForNewPropertyNotification(service);
     }
   }
 

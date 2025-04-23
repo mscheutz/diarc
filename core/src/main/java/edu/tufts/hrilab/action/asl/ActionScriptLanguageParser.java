@@ -493,11 +493,6 @@ public class ActionScriptLanguageParser {
     }
 
     @Override
-    public void enterLocks(ASLParser.LocksContext ctx) {
-      curr_dbe_builder.addResourceLock(ctx.name().getText());
-    }
-
-    @Override
     public void enterSpecFunction(ASLParser.SpecFunctionContext ctx) {
       EventSpec.Builder esBuilder = new EventSpec.Builder(getEventType(ctx.specType()));
 

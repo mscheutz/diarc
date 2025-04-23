@@ -12,7 +12,6 @@ import edu.tufts.hrilab.action.*;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
 import edu.tufts.hrilab.action.execution.control.ControlFactory.Control;
 import edu.tufts.hrilab.action.util.Utilities;
-import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +65,6 @@ public class ActionScriptLanguageWriter {
     writeEffects(entry);
     writeInterrupts(entry);
     writeObserves(entry);
-    writeLocks(entry);
     writeMainSpecs(entry);
     closeBlock();
 
@@ -222,9 +220,6 @@ public class ActionScriptLanguageWriter {
       }
       closeBlock();
     }
-  }
-  private void writeLocks(ActionDBEntry entry) {
-    entry.getResourceLockNames().forEach(s -> cat("locks : " + s + ";"));
   }
 
   private void writeMainSpecs(ActionDBEntry entry) {

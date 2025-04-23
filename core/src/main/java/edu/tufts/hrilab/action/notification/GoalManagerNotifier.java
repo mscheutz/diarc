@@ -81,14 +81,25 @@ public class GoalManagerNotifier implements DatabaseListener, GoalListener {
   @Override
   public void goalStatusChanged(GoalInfo info) {
     // must synchronize explicitly while iterating over synchronizedSet
+    List<TRADEServiceInfo> servicesToRemove = new ArrayList<>();
     synchronized (goalStatusCallbacks) {
       for (TRADEServiceInfo callback : goalStatusCallbacks) {
         try {
           callback.call(void.class, info);
         } catch (TRADEException | NullPointerException e) {
           log.error("Exception sending goalStatusChanged notification.", e);
+          //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
+          if (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null")) {
+            servicesToRemove.add(callback);
+          }
         }
       }
+    }
+    //If a remote container has gone down without unregistering for notifications,
+    // then remove the service rather than continuously log errors.
+    for (TRADEServiceInfo service: servicesToRemove) {
+      log.info("[notifyDialogueHistorySubscribers] unregistering unavailable service from dialogue history notifications ");
+      unregisterNotification(service,NotificationType.GOAL_STATUS_CHANGE);
     }
   }
 }

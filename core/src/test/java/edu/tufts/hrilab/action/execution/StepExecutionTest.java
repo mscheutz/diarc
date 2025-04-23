@@ -12,8 +12,6 @@ import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.db.Database;
-import edu.tufts.hrilab.action.lock.ActionResourceLock;
-import edu.tufts.hrilab.action.lock.ActionResourceLockLinear;
 import edu.tufts.hrilab.action.justification.Justification;
 
 import java.util.HashSet;
@@ -45,7 +43,6 @@ public class StepExecutionTest {
 
   @BeforeClass
   public static void setUpClass() {
-    ActionResourceLock.motionLock = new ActionResourceLockLinear("motionLock");
     ActionBuilderRepo.buildLookforAction();
     ActionBuilderRepo.buildMoveToObjectAction();
     //ActionBuilderRepo.buildGraspObjectAction();

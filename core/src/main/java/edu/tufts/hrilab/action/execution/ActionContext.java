@@ -9,7 +9,6 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.*;
 import edu.tufts.hrilab.action.Observable;
 import edu.tufts.hrilab.action.goal.Goal;
-import edu.tufts.hrilab.action.lock.ResourceUnavailableException;
 import edu.tufts.hrilab.action.recovery.PostRecoveryExecutionType;
 import edu.tufts.hrilab.action.recovery.Recovery;
 import edu.tufts.hrilab.action.recovery.RecoveryStatus;
@@ -17,7 +16,6 @@ import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.action.db.performanceMeasures.PerformanceMeasures;
 import edu.tufts.hrilab.action.description.ActionContextDescription;
 import edu.tufts.hrilab.action.description.ContextDescription;
-import edu.tufts.hrilab.action.util.Utilities;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -29,7 +27,6 @@ import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.justification.AndJustification;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
-import edu.tufts.hrilab.action.lock.ActionResourceLock;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -52,15 +49,15 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   /**
    * Map of observations for Effects. These need to be kept track of separately from children for normal execution.
    */
-  private Map<Effect, ObservationContext> effectObservers = new HashMap<>();
+  private final Map<Effect, ObservationContext> effectObservers = new HashMap<>();
   /**
    * Map of observations for Conditions. These need to be kept track of separately from children for normal execution.
    */
-  private Map<Condition, Map<Predicate, ObservationContext>> conditionObservers = new HashMap<>();
-
-  private List<ActionResourceLock> heldLocks;
-  private String lockOwnerDescription;
-
+  private final Map<Condition, Map<Predicate, ObservationContext>> conditionObservers = new HashMap<>();
+  /**
+   * Interruption contexts. These need to be kept track of separately from children for normal execution.
+   */
+  private final List<Context> interruptionContexts = new ArrayList<>();
   /**
    * Thread manager for concurrent overall conditions.
    */
@@ -70,7 +67,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
    */
   private Future overallConditionFuture = null;
 
-  private Lock doStepLock = new ReentrantLock();
+  private final Lock doStepLock = new ReentrantLock();
 
   /**
    * @param caller
@@ -109,45 +106,6 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   private void initialize() {
     parser = new ScriptParser(getDBE().getEventSpecs());
     setTimeout();
-  }
-
-  /**
-   * Acquire all locks registered for this action
-   *
-   * @param actionInt The AI that needs the lock
-   * @param greedy    if not greedy, then release the locks if all can't be
-   *                  acquired
-   * @return true is all locks acquired, false otherwise
-   */
-  @Override
-  public boolean acquireLocks(ActionInterpreter actionInt, boolean greedy) {
-    try {
-      heldLocks = getDBE().acquireResourceLocks(actionInt, greedy);
-    } catch (ResourceUnavailableException e) {
-      lockOwnerDescription = e.getMessage();
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Release all locks registered for this action
-   *
-   * @param actionInt The AI that needs the lock
-   */
-  @Override
-  public void releaseLocks(ActionInterpreter actionInt) {
-    if (heldLocks == null) {
-      // FIXME heldLocks is always null because we never call acquireLocks on any action
-      log.debug("heldLocks is null. This should not be the case. Initializing and returning for now.");
-      heldLocks = new ArrayList<>();
-      return;
-    }
-    for (ActionResourceLock lock : heldLocks) {
-      lock.release(actionInt);
-    }
-    heldLocks.clear();
   }
 
   public double getCost() {
@@ -1064,19 +1022,15 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
       return;
     }
 
-    //EW: Alternate version of code removed on 3/24 - can reference past commit if desired.
-    //  TODO: Internal discussion landed at two-prong solution
-    //    1. Place suspend/resume/cancel contexts into a special collection similar to observation contexts
-    //    2. Add some sort of status update history/tracking
-    // Currently, this may result in incorrect current child indices, terminated contexts existing as future siblings of
-    //  active contexts, and warning logs due to these facts (does not break any current functionality, can cause issues
-    //  for introspection and any behavior relying on that to be fully accurate at these times).
+    // create interruption context and add it to interruptionContexts
     Predicate interruptGoalPredicate = Factory.createPredicate("interrupt", Factory.createFOL(interruptEvent.getActor()), interruptEvent.getPredicateForm());
     Goal interruptGoal = Goal.createGoal(interruptGoalPredicate);
-    ActionInterpreter ai = ActionInterpreter.createInterpreterFromEventSpec(interruptGoal, this, interruptEvent);
-    //Increment child context counter so getNextStep doesn't return the terminated context added by the above line and
-    //  executed separately in the line below.
-    childContexts.getNextAndIncrement();
+    Context interruptionContext = this.createContext(interruptEvent);
+    interruptionContexts.add(interruptionContext);
+
+    // execute interruption context
+    // NOTE: this will block until the interruption is terminated
+    ActionInterpreter ai = ActionInterpreter.createInterpreterFromContext(interruptGoal, interruptionContext);
     ai.call(); //Call interruption event
   }
 
@@ -1104,6 +1058,7 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
         Justification originalFailureJustification = recovery.getOriginalFailureJustification();
         return super.setStatus(originalFailureStatus, originalFailureJustification);
       } else {
+        // this is an action script, always call onInterrupt if status is set
         boolean ret = super.setStatus(eStatus, justification);
         if (ret) {
           handleInterrupt(eStatus);
@@ -1111,16 +1066,19 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
         return ret;
       }
     } else {
+      // this is a primitive action
       ActionStatus originalStatus = getStatus();
       boolean ret = super.setStatus(eStatus, justification);
       if (ret) {
         try {
+          // TODO: should onInterrupt also be called if it's not blocking, like in the script case?
           //Q: is there any other way to do this?
           //If a primitive was suspended, doStepLock will not be held. Still want to call resume behavior in this case though
           if (originalStatus == ActionStatus.SUSPEND && eStatus == ActionStatus.RESUME) {
             handleInterrupt(eStatus);
           }
 
+          // call onInterrupt until it's no longer blocking
           long timeout = 0;
           while (!doStepLock.tryLock(timeout, TimeUnit.SECONDS)) {
             // lock NOT acquired (doStep is executing)

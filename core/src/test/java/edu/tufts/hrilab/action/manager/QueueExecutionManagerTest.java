@@ -64,23 +64,16 @@ public class QueueExecutionManagerTest {
       throw new RuntimeException(e);
     }
 
-    //TODO: Update actions to use new resources when integrated.
-//    ActionResourceLock.motionLock = new ActionResourceLockLinear("motionLock");
-
     ActionDBEntry.Builder driveBuilder = new ActionDBEntry.Builder("drive");
-    //driveBuilder.addResourceLock("driveLock");
     driveBuilder.build(true);
 
     ActionDBEntry.Builder lookBuilder = new ActionDBEntry.Builder("look");
-    //lookBuilder.addResourceLock("visionLock");
     lookBuilder.build(true);
 
     ActionDBEntry.Builder speakBuilder = new ActionDBEntry.Builder("speak");
-    //speakBuilder.addResourceLock("speakerLock");
     speakBuilder.build(true);
 
     ActionDBEntry.Builder grabBuilder = new ActionDBEntry.Builder("grab");
-    //grabBuilder.addResourceLock("armLock");
     grabBuilder.build(true);
 
     ActionDBEntry.Builder updateSettingsBuilder = new ActionDBEntry.Builder("updateSettings");

@@ -19,7 +19,6 @@ public class ActionBuilderRepo {
     ActionDBEntry.Builder lookforBuilder = new ActionDBEntry.Builder("lookfor");
     lookforBuilder.addRole(new ActionBinding.Builder("?loc", Symbol.class).build());
     lookforBuilder.addRole(new ActionBinding.Builder("?obj", Symbol.class).build());
-//    lookforBuilder.addResourceLock("motionLock"); //put back in once locks are re-implemented
     lookforBuilder.setTimeout(1L);
     lookforBuilder.setCost("0.23");
     lookforBuilder.setBenefit("0.79");
@@ -34,7 +33,6 @@ public class ActionBuilderRepo {
   public static ActionDBEntry buildGraspAction() {
     ActionDBEntry.Builder graspBuilder = new ActionDBEntry.Builder("grasp");
     graspBuilder.addRole(new ActionBinding.Builder("?obj", Symbol.class).build());
-//    graspBuilder.addResourceLock("motionLock");  //put back in once locks are re-implemented
     graspBuilder.setTimeout(1L);
     graspBuilder.setCost("9.23");
     graspBuilder.setBenefit("0.79");
@@ -50,7 +48,6 @@ public class ActionBuilderRepo {
   public static ActionDBEntry buildMoveToObjectAction() {
     ActionDBEntry.Builder moveToObjBuilder = new ActionDBEntry.Builder("moveToObject");
     moveToObjBuilder.addRole(new ActionBinding.Builder("?obj", Symbol.class).build());
-//    moveToObjBuilder.addResourceLock("motionLock");  //put back in once locks are re-implemented
     moveToObjBuilder.setTimeout(1L);
     moveToObjBuilder.setCost("8.23");
     moveToObjBuilder.setBenefit("19.79");
@@ -69,7 +66,6 @@ public class ActionBuilderRepo {
     touchingObsBuilder.addRole(new ActionBinding.Builder("!x", edu.tufts.hrilab.fol.Symbol.class).setIsLocal(true).build());
     touchingObsBuilder.addRole(new ActionBinding.Builder("!y", edu.tufts.hrilab.fol.Symbol.class).setIsLocal(true).build());
     touchingObsBuilder.addRole(new ActionBinding.Builder("ret", java.util.List.class).setIsReturn(true).build());
-//    touchingObsBuilder.addResourceLock("motionLock");  //put back in once locks are re-implemented
     touchingObsBuilder.setTimeout(1L);
     touchingObsBuilder.setCost("8.23");
     touchingObsBuilder.setBenefit("19.79");
