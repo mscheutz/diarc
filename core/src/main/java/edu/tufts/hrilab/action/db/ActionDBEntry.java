@@ -4,7 +4,6 @@
 package edu.tufts.hrilab.action.db;
 
 import edu.tufts.hrilab.action.ActionBinding;
-import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.Condition;
 import edu.tufts.hrilab.action.ConditionType;
@@ -12,11 +11,9 @@ import edu.tufts.hrilab.action.Effect;
 import edu.tufts.hrilab.action.EffectType;
 import edu.tufts.hrilab.action.EventSpec;
 import edu.tufts.hrilab.action.Observable;
-import edu.tufts.hrilab.action.lock.ResourceUnavailableException;
 import edu.tufts.hrilab.action.recovery.PolicyConstraints;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
-import edu.tufts.hrilab.action.lock.ActionResourceLock;
 import edu.tufts.hrilab.fol.Constant;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
@@ -91,11 +88,6 @@ public class ActionDBEntry extends DBEntry {
    */
   private final List<Symbol> agents;
 
-  /**
-   * A list of resources required for this action.
-   */
-  private final List<ActionResourceLock> resourceLocks;
-
   private final double posAff;
   private final double negAff;
   private final double cost;
@@ -140,7 +132,6 @@ public class ActionDBEntry extends DBEntry {
     private EventSpec onSuspendEvent = null;
     private EventSpec onResumeEvent = null;
     private boolean isVarArgs = false;
-    private List<ActionResourceLock> resourceLocks = new ArrayList<>();
     private double posAff = 0.0;
     private double negAff = 0.0;
     private double cost = 0.0;
@@ -177,7 +168,6 @@ public class ActionDBEntry extends DBEntry {
       this.onCancelEvent = entryToCopy.onCancelEvent;
       this.onSuspendEvent = entryToCopy.onSuspendEvent;
       this.onResumeEvent = entryToCopy.onResumeEvent;
-      this.resourceLocks = new ArrayList<>(entryToCopy.resourceLocks);
       this.posAff = entryToCopy.posAff;
       this.negAff = entryToCopy.negAff;
       this.cost = entryToCopy.cost;
@@ -554,15 +544,6 @@ public class ActionDBEntry extends DBEntry {
       return roles.stream().anyMatch(role -> role.name.equals(roleName));
     }
 
-    public Builder addResourceLock(String name) {
-      if (ActionResourceLock.getLock(name) == null) {
-        log.error("[addResourceLock] not a valid lock name: " + name + " Not adding lock to action: " + type);
-      } else {
-        resourceLocks.add(ActionResourceLock.getLock(name));
-      }
-      return this;
-    }
-
     // TODO: Never used?
     public Builder setPosAffect(String val) {
       posAff = Double.parseDouble(val);
@@ -704,7 +685,6 @@ public class ActionDBEntry extends DBEntry {
     onResumeEvent = builder.onResumeEvent;
     policyConstraints = builder.policyConstraints;
     agents = builder.agents;
-    resourceLocks = builder.resourceLocks;
     posAff = builder.posAff;
     negAff = builder.negAff;
     cost = builder.cost;
@@ -912,55 +892,6 @@ public class ActionDBEntry extends DBEntry {
 
   public boolean hasTimeout() {
     return hasTimeout;
-  }
-
-  /**
-   * Get the names of all resource locks. Useful mainly for writing to XML.
-   *
-   * @return list of all resource lock names
-   */
-  public List<String> getResourceLockNames() {
-    List<String> lockNames = new ArrayList<>();
-    for (ActionResourceLock each_lock : resourceLocks) {
-      if (each_lock != null) {
-        lockNames.add(each_lock.getLockName());
-      }
-    }
-    return lockNames;
-  }
-
-  /**
-   * Acquire all locks registered for this action
-   *
-   * @param actionInt The AI that needs the lock
-   * @param greedy    If true then hold whatever locks can be acquired
-   * @return the list of resources acquired
-   */
-  public List<ActionResourceLock> acquireResourceLocks(ActionInterpreter actionInt, boolean greedy)
-          throws ResourceUnavailableException {
-    ArrayList<ActionResourceLock> heldLocks = new ArrayList<>();
-
-    for (ActionResourceLock lock : resourceLocks) {
-      if (!lock.nonBlockingAcquire(actionInt)) {
-        ActionInterpreter owner = lock.getOwner();
-        String descr;
-        if (owner != null) {
-          descr = owner.getGoal().toString();
-        } else {
-          descr = "unknown";
-        }
-        if (!greedy) {
-          // since we could not acquire all the locks, let's not greedily
-          // hold onto all of them
-          for (ActionResourceLock held : heldLocks) {
-            held.release(actionInt);
-          }
-        }
-        throw new ResourceUnavailableException(lock.getLockName(), descr);
-      }
-      heldLocks.add(lock);
-    }
-    return heldLocks;
   }
 
   /**
@@ -1440,9 +1371,6 @@ public class ActionDBEntry extends DBEntry {
     if (!Objects.equals(other.agents, this.agents)) {
       return false;
     }
-    if (!Objects.equals(other.resourceLocks, this.resourceLocks)) {
-      return false;
-    }
     if (other.posAff != this.posAff) {
       return false;
     }
@@ -1489,7 +1417,6 @@ public class ActionDBEntry extends DBEntry {
     result = 31 * result + Objects.hashCode(observations);
     result = 31 * result + Objects.hashCode(policyConstraints);
     result = 31 * result + Objects.hashCode(agents);
-    result = 31 * result + Objects.hashCode(resourceLocks);
     result = 31 * result + (int) Double.doubleToLongBits(posAff);
     result = 31 * result + (int) Double.doubleToLongBits(negAff);
     result = 31 * result + (int) Double.doubleToLongBits(cost);

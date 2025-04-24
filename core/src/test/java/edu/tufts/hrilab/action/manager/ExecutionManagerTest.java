@@ -63,12 +63,9 @@ public class ExecutionManagerTest {
     RootContext rootContext = new RootContext(new ActionConstraints(), sm);
     em = ExecutionManager.createInstance(ExecutionManager.class, sm, rootContext, new ArrayList<>());
 
-//    ActionResourceLock.motionLock = new ActionResourceLockLinear("motionLock");
-
     ActionDBEntry.Builder lookforBuilder = new ActionDBEntry.Builder("lookfor");
     lookforBuilder.addRole(new ActionBinding.Builder("?loc", Symbol.class).build());
     lookforBuilder.addRole(new ActionBinding.Builder("?obj", Symbol.class).build());
-//    lookforBuilder.addResourceLock("motionLock");
     lookforBuilder.setTimeout(1L);
     lookforBuilder.setCost("0.23");
     Predicate pc = Factory.createPredicate("located(?obj)");
@@ -81,7 +78,6 @@ public class ExecutionManagerTest {
     doneBuilder.addRole(new ActionBinding.Builder("!value", Double.class).setIsLocal(true).build());
     doneBuilder.addRole(new ActionBinding.Builder("!theta", Double.class).setIsLocal(true).build());
     doneBuilder.addRole(new ActionBinding.Builder("!phi", Double.class).setIsLocal(true).build());
-//    doneBuilder.addResourceLock("motionLock");
     doneBuilder.setCost("0.5");
     Predicate pc2 = Factory.createPredicate("done(?actor, ?partner)");
     Effect ef2 = new Effect(pc2, EffectType.ALWAYS);
@@ -91,19 +87,15 @@ public class ExecutionManagerTest {
     //TODO: Update actions to use new resources when integrated.
 
     ActionDBEntry.Builder driveBuilder = new ActionDBEntry.Builder("drive");
-    //driveBuilder.addResourceLock("driveLock");
     driveBuilder.build(true);
 
     ActionDBEntry.Builder lookBuilder = new ActionDBEntry.Builder("look");
-    //lookBuilder.addResourceLock("visionLock");
     lookBuilder.build(true);
 
     ActionDBEntry.Builder speakBuilder = new ActionDBEntry.Builder("speak");
-    //speakBuilder.addResourceLock("speakerLock");
     speakBuilder.build(true);
 
     ActionDBEntry.Builder grabBuilder = new ActionDBEntry.Builder("grab");
-    //grabBuilder.addResourceLock("armLock");
     grabBuilder.build(true);
 
     ActionDBEntry.Builder updateSettingsBuilder = new ActionDBEntry.Builder("updateSettings");

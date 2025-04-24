@@ -155,6 +155,6 @@ public interface Prover {
    * @param term
    * @return
    */
-  Symbol unsanitize(Term f);
+  Symbol unsanitize(Term term);
 
 }

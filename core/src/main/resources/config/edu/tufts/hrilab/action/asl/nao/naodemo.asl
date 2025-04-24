@@ -20,8 +20,6 @@
         }
     }
 
-    locks : motionLock;
-
     act:setTV(0.25);
 
     op:log("debug", "?actor is moving forward...");
@@ -66,8 +64,6 @@
 
 () = move["?actor moves ?direction"](edu.tufts.hrilab.fol.Symbol ?direction) {
     edu.tufts.hrilab.fol.Predicate !failCond;
-
-    locks : motionLock;
 
     try {
       if (op:equalsValue(?direction, straight) || op:equalsValue(?direction, forward)) {
@@ -114,8 +110,6 @@
       }
     }
 
-    locks : motionLock;
-
     act:setTV(-0.25);
 
     op:sleep(300);
@@ -132,8 +126,6 @@
 
 () = look["?actor looks in ?direction"](edu.tufts.hrilab.fol.Symbol ?direction) {
     edu.tufts.hrilab.fol.Predicate !failCond;
-
-    locks : motionLock;
 
     op:log("debug", "In look(?direction) script for NAO.");
     if (op:equalsValue(?direction, straight) || op:equalsValue(?direction, forward)) {

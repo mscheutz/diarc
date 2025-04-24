@@ -1,3 +1,7 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
 package edu.tufts.hrilab.action.goal.schedule;
 
 import edu.tufts.hrilab.action.goal.GoalStatus;
@@ -24,7 +28,8 @@ public class ScheduledGoalListener extends SchedulerListenerSupport {
    */
   @Override
   public void triggerFinalized(Trigger trigger) {
-    log.info("Trigger finalized. Job key: {}", trigger.getJobKey());
+    log.debug("Trigger finalized. Job key: {}", trigger.getJobKey());
+
     long goalId = Long.parseLong(trigger.getJobKey().getName()); // jobKey name should always be the goal ID
     ScheduledGoal goal = em.getScheduledGoal(goalId);
 

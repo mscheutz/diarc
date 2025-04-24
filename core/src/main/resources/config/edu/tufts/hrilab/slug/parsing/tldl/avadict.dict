@@ -474,3 +474,6 @@ what is your current goal; Q; whatAre(?ADDRESSEE,currentGoals)
 show demo video; VERBI; showVideo
 enable microphone; VERBI; enableMic
 disable microphone; VERBI; disableMic
+
+now; C/C; #x.urgentPriority(?ADDRESSEE,$x)
+right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)

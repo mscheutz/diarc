@@ -104,8 +104,6 @@ public class Goal {
   private Context rootContext;
   private Lock contextLock = new ReentrantLock();
 
-  private PriorityTier priorityTier = PriorityTier.NORMAL;
-
   /**
    * Execution type, defaults to ACT.
    */
@@ -437,11 +435,11 @@ public class Goal {
   }
 
   public void setPriorityTier(PriorityTier priorityTier) {
-    this.priorityTier = priorityTier;
+    info.priorityTier = priorityTier;
   }
 
   public PriorityTier getPriorityTier() {
-    return priorityTier;
+    return info.priorityTier;
   }
 
   /**

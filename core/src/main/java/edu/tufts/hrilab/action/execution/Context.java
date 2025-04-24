@@ -2,11 +2,6 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-/**
- * @author willie
- * @author luca
- * @author tyler frasca
- */
 package edu.tufts.hrilab.action.execution;
 
 import edu.tufts.hrilab.action.ActionBinding;
@@ -14,10 +9,8 @@ import edu.tufts.hrilab.action.ActionConstraints;
 import edu.tufts.hrilab.action.ScriptParser;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.description.ContextDescription;
-import edu.tufts.hrilab.action.ActionInterpreter;
 import edu.tufts.hrilab.action.ActionStatus;
 import edu.tufts.hrilab.action.EventSpec;
-import edu.tufts.hrilab.action.execution.control.AsynchronousContext;
 import edu.tufts.hrilab.action.execution.control.NoInterruptContext;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.Observable;
@@ -46,13 +39,16 @@ import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 
+/**
+ * Base class for action execution nodes that make up the execution tree.
+ */
 public abstract class Context {
 
   protected final Logger log;
   /**
    * Used to assign unique IDs so each Context instance.
    */
-  private static AtomicLong nextId = new AtomicLong(0);
+  private static final AtomicLong nextId = new AtomicLong(0);
 
   /**
    * Each Context has a parent context from which the context is generated.
@@ -188,25 +184,6 @@ public abstract class Context {
    */
   public Long getId() {
     return id;
-  }
-
-  /**
-   * Acquire all locks for this context
-   *
-   * @param actionInt The AI that needs the lock
-   * @param greedy    if not greedy, then release the locks if all can't be acquired
-   * @return true is all locks acquired, false otherwise
-   */
-  public boolean acquireLocks(ActionInterpreter actionInt, boolean greedy) {
-    return true;
-  }
-
-  /**
-   * Release all locks for this context
-   *
-   * @param actionInt The AI that needs the lock
-   */
-  public void releaseLocks(ActionInterpreter actionInt) {
   }
 
   public ActionStatus getStatus() {
@@ -923,11 +900,29 @@ public abstract class Context {
   }
 
   /**
-   * Instantiate the event specified in the event specification
+   * Instantiate the event specified in the event specification as a new Context instance. The new Context
+   * is automatically added as a child to this Context.
    *
    * @param eSpec the event to be executed
+   * @return the new Context
    */
   public Context addEvent(EventSpec eSpec) {
+    Context child = createContext(eSpec);
+
+    //add new child context to childContexts
+    childContexts.add(child);
+    return child;
+  }
+
+  /**
+   * Create new context instance with "this" as the parent, but does NOT add the new Context as a child
+   * to "this". This is useful for attaching "child" contexts to other non-childContexts data structures
+   * (e.g.,  interruption contexts, effect/condition contexts, etc.).
+   *
+   * @param eSpec
+   * @return
+   */
+  public Context createContext(EventSpec eSpec) {
     if (log.isDebugEnabled()) {
       log.debug("Adding event according to specification: " + eSpec.toString() + " exec: " + this.execType);
     }
@@ -1019,8 +1014,6 @@ public abstract class Context {
         break;
     }
 
-    //add new child context to childContexts
-    childContexts.add(c);
     return c;
   }
 

@@ -34,7 +34,6 @@ FAILURE : 'failure';
 NONPERF : 'nonperf';
 OBSERVES : 'observes';
 RECOVERY : 'recovery';
-LOCKS : 'locks';
 CONDITION : 'conditions';
 IF : 'if';
 ELIF : 'elseif';
@@ -94,7 +93,7 @@ alias : AS javaType;
 definitions : definition+;
 
 reserved : TSC | ACTION | OPERATOR | GOAL | OBSERVATION | VAR | SET | OR | PRE | POST | OVERALL | OBLIGATION | EFFECT
-        | ALWAYS | SUCCESS | FAILURE | NONPERF | OBSERVES | INTERRUPT| SUSPEND | CANCEL | RESUME | LOCKS | CONDITION | RECOVERY | IF | ELIF | ELSE | WHILE
+        | ALWAYS | SUCCESS | FAILURE | NONPERF | OBSERVES | INTERRUPT| SUSPEND | CANCEL | RESUME | CONDITION | RECOVERY | IF | ELIF | ELSE | WHILE
         | FOR | FOREACH | TRUE | FALSE | EXIT | TRY | CATCH | FINALLY | NOT | RETURN | ASYNC | JOIN;
 
 // TODO: cleanup usage of name vs NAME
@@ -136,7 +135,6 @@ content : (
         | observes
         | interrupts
         | recovery
-        | locks
         | spec
         | control
         )*;
@@ -223,8 +221,6 @@ recoveryExcludedFailureReasons : 'excludedFailureReasons' ':' predicateList;
 recoveryActionStatuses : 'actionStatuses' ':' '{' NAME (',' NAME)* '}';
 
 recoveryMaximumAttempts : 'maximumAttempts' ':' NUMBER;
-
-locks : LOCKS ':' name ';';
 
 spec : specFunction ';';
 

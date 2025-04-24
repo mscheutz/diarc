@@ -6,6 +6,7 @@ package edu.tufts.hrilab.action.manager;
 
 import edu.tufts.hrilab.action.execution.RootContext;
 import edu.tufts.hrilab.action.goal.Goal;
+import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.action.state.StateMachine;
 import edu.tufts.hrilab.fol.Factory;
@@ -29,6 +30,12 @@ public class QueueExecutionManager extends ExecutionManager {
   @Override
   protected void handleConflictingLowerPriorityGoal(Goal g) {
     //QueueEM: Simply leave in the pending queue rather than rejecting
+    //This goal should already have PENDING status (unless it was superseded), but setting status explicitly here in
+    // order to trigger goalStatusUpdate listeners. Otherwise, listeners would have no idea a goal was submitted but
+    // blocking in the queue.
+    if (g.getStatus() == GoalStatus.PENDING) {
+      g.setStatus(GoalStatus.PENDING);
+    }
   }
 
   //TODO: extend definition of resources past just whole agents/teams

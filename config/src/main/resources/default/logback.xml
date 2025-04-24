@@ -14,4 +14,7 @@
   <root level="info">
     <appender-ref ref="Console"/>
   </root>
+
+  <!--  Turn off INFO level logging for quartz scheduler library-->
+  <logger name="org.quartz" level="WARN"/>
 </configuration>

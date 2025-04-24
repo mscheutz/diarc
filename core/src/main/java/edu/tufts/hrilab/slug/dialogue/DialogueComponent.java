@@ -41,7 +41,7 @@ public class DialogueComponent extends DiarcComponent {
   private final DiaLog diaLog = new DiaLog();
 
   private DialogueConsultant consultant;
-  private List<TRADEServiceInfo> dialogueHistorySubscribers = new ArrayList<>();
+  private Set<TRADEServiceInfo> dialogueHistorySubscribers = new HashSet<>();
   //I believe this should live at the level of AgentTeams.
   private ConcurrentHashMap<Symbol,Set<Question>> questionsPerAgent = new ConcurrentHashMap<>();
   private Map<Symbol,Set<Symbol>> agentHierarchy = new HashMap<>();
@@ -202,7 +202,11 @@ public class DialogueComponent extends DiarcComponent {
 
   @TRADEService
   public void registerForDialogueHistoryNotifications(TRADEServiceInfo callback) {
-    dialogueHistorySubscribers.add(callback);
+    if (dialogueHistorySubscribers.stream().anyMatch(c-> c.matches(callback))) {
+      log.warn("[registerForDialogueHistoryNotifications] attempt to register duplicate callback, not adding");
+    } else {
+      dialogueHistorySubscribers.add(callback);
+    }
   }
 
   @TRADEService
@@ -264,19 +268,6 @@ public class DialogueComponent extends DiarcComponent {
     if (responseForms.isEmpty()) {
       log.warn("[waitForOneOfResponses] empty form list supplied");
       return new HashMap<>();
-    }
-
-    for (Term responseForm : responseForms) {
-      //TODO:brad: make this safer
-      if (responseForm.getName().equals("pattern")) {
-          responseForm = (Predicate) responseForm.get(0);
-
-          try {
-              TRADE.getAvailableService(new TRADEServiceConstraints().name("activatePattern").argTypes(String.class)).call(Boolean.class, responseForm.getName());
-          } catch (TRADEException e) {
-              log.error("[waitForResponse]", e);
-          }
-      }
     }
 
     speaker = speaker.toUntyped();

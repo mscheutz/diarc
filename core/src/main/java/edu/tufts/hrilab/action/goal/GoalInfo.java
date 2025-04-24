@@ -1,3 +1,7 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
 package edu.tufts.hrilab.action.goal;
 
 import edu.tufts.hrilab.action.justification.Justification;
@@ -61,6 +65,13 @@ public class GoalInfo implements Serializable {
    */
   public long priority = 1;
 
+  /**
+   * Goal priority tier. Priority tiers are stronger than priority values themselves. Used by the ExecutionManager to
+   * determine what goals to execute.
+   */
+  public PriorityTier priorityTier = PriorityTier.NORMAL;
+
+
   public GoalInfo(long gid) {
     this.gid = gid;
   }
@@ -78,5 +89,6 @@ public class GoalInfo implements Serializable {
     this.metric = other.metric;
     this.persistent = other.persistent;
     this.priority = other.priority;
+    this.priorityTier = other.priorityTier;
   }
 }

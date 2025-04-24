@@ -58,7 +58,7 @@ public class FailedReturnValuePolicy {
    * often with no failure semantics.
    *
    * @param actor
-   * @param brokenActionSignature
+   * @param brokenActionSignatures
    * @param failureReasons
    * @param goal
    * @return
