@@ -72,7 +72,6 @@ public class ChatAdapter extends GuiAdapter {
    *
    * @param service the <code>getDiarcAgents()</code> TRADE service, provided
    *                by the notifier.
-   * @throws TRADEException if the TRADE service call fails.
    */
   @TRADEService
   public void populateDiarcAgents(TRADEServiceInfo service) {

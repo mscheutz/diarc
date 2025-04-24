@@ -179,7 +179,9 @@ public class MapAdapter extends GuiAdapter {
    *
    * @param pgmPathStr The path string of the PGM file to convert.
    * @return The filename of the converted PNG image.
-   * @throws ImageReadException, ImageWriteException, IOException Throws if reading from or writing to the file system fails.
+   * @throws ImageReadException
+   * @throws ImageWriteException
+   * @throws IOException
    */
   public String convertPGMtoPNG(String pgmPathStr) throws ImageReadException, ImageWriteException, IOException {
     Path pgmPath = Paths.get(pgmPathStr);
