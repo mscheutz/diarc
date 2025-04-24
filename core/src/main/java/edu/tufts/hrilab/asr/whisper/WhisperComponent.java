@@ -47,7 +47,7 @@ public class WhisperComponent extends DiarcComponent implements ASRInterface {
 
   // Microphone config
   private ConfigurableMicrophone microphone;
-  final private float samplesPerSec = 48000.0f; // 16k samples/second
+  final private float samplesPerSec = 16000.0f; // 16k samples/second
   final private int sampleSize = 16; // 16 bits (2 bytes)
   final private int sampleSizeInBytes = sampleSize/8;
   final private boolean isBigEndian = false;
@@ -226,6 +226,13 @@ public class WhisperComponent extends DiarcComponent implements ASRInterface {
       recordingThread.submit(new RecordingRunnable());
       processingThread.submit(new ProcessingRunnable());
     }
+  }
+
+  @Override
+  public void shutdownComponent() {
+    recordingThread.shutdownNow();
+    processingThread.shutdownNow();
+    microphone.close();
   }
 
   private class RecordingRunnable implements Runnable {

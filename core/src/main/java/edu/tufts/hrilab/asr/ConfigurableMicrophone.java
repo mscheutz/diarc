@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.asr;
 
+import java.io.IOException;
 import java.io.InputStream;
 import javax.sound.sampled.*;
 
@@ -48,6 +49,16 @@ public class ConfigurableMicrophone {
 
   public int read (byte[] buffer, int i) {
     return line.read(buffer, i, buffer.length);
+  }
+
+  public void close() {
+    try {
+      this.inputStream.close();
+    } catch (IOException e) {
+      log.error("[close] error closing mic inputStream", e);
+    }
+
+    this.line.close();
   }
 
   public static void showMixers () {
