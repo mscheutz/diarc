@@ -86,5 +86,13 @@
   "describeAllLocationsOnPatrolPath":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "showVideo":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "listScheduledGoals":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

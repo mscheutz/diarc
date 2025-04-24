@@ -11,6 +11,8 @@ import java.util.Map;
 () = showVideo(Symbol ?location = none) {
     onInterrupt :{
         cancel: tsc:cancelVideoPlayback();
+        suspend: tsc:pauseVideoPlayback();
+        resume: tsc:resumeVideoPlayback();
     }
     if (~op:equalsValue(?location, "none")) {
         act:goToLocation(?location);

@@ -25,6 +25,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.*;
 import javax.imageio.ImageIO;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -140,17 +141,6 @@ public class AvaDisplayComponent extends DiarcComponent {
 
     mediaPlayerComponent = new EmbeddedMediaPlayerComponent() {
       @Override
-      public void finished(MediaPlayer mediaPlayer) {
-        SwingUtilities.invokeLater(() -> {
-                  cardLayout.previous(cardPanel);
-                  displayImage("trLogo.png", 10 * 1000);
-                  canvas.repaint();
-                }
-        );
-        videoPlaying = false;
-      }
-
-      @Override
       public void playing(MediaPlayer mediaPlayer) {
         mediaPlayer.audio().setVolume(videoVolume);
         mediaPlayer.controls().play();
@@ -158,7 +148,16 @@ public class AvaDisplayComponent extends DiarcComponent {
 
       @Override
       public void stopped(MediaPlayer mediaPlayer) {
-        finished(mediaPlayer);
+        try {
+          SwingUtilities.invokeAndWait(() -> {
+                    cardLayout.previous(cardPanel);
+                    displayImage("trLogo.png", 10 * 1000);
+                  }
+          );
+        } catch (InterruptedException | InvocationTargetException e) {
+          log.error("error switching back to logo", e);
+        }
+        videoPlaying = false;
       }
 
     };
@@ -241,7 +240,6 @@ public class AvaDisplayComponent extends DiarcComponent {
       }
     }
 
-    canvas.repaint();
   }
 
   /**
@@ -266,12 +264,6 @@ public class AvaDisplayComponent extends DiarcComponent {
     }
     unsetIdle();
     canvas.setImage(image, timeout);
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        canvas.repaint();
-      }
-    });
   }
 
 
@@ -281,7 +273,14 @@ public class AvaDisplayComponent extends DiarcComponent {
       log.error("[displayNextVideo] no valid videos to display");
       return;
     }
-    cardLayout.next(cardPanel);
+    try {
+      SwingUtilities.invokeAndWait(() -> {
+                cardLayout.next(cardPanel);
+              }
+      );
+    } catch (InterruptedException | InvocationTargetException e) {
+      log.error("error switching back to logo", e);
+    }
     mediaPlayerComponent.mediaPlayer().media().startPaused(videos.get(currentVideo));
     videoPlaying = true;
     log.info("[displayNextVideo] displaying video: " + videos.get(currentVideo));
@@ -300,6 +299,16 @@ public class AvaDisplayComponent extends DiarcComponent {
   @TRADEService
   public void cancelVideoPlayback() {
     mediaPlayerComponent.mediaPlayer().controls().stop();
+  }
+
+  @TRADEService
+  public void pauseVideoPlayback() {
+    mediaPlayerComponent.mediaPlayer().controls().pause();
+  }
+
+  @TRADEService
+  public void resumeVideoPlayback() {
+    mediaPlayerComponent.mediaPlayer().controls().play();
   }
 
   /**

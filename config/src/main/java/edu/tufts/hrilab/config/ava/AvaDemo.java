@@ -121,7 +121,7 @@ public class AvaDemo extends DiarcConfiguration {
       //createInstance(edu.tufts.hrilab.slug.http.HTTPListenerComponent.class, "-speaker patient -addressee self");
     }
 
-    createInstance(edu.tufts.hrilab.map.MapComponent.class, "-refs refs/locations.json");
+    createInstance(edu.tufts.hrilab.map.MapComponent.class, "-refs refs/avaLabRefs.json");
 
 //    if (useVision) {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture ava.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls"));
