@@ -166,6 +166,9 @@ public class ExecutionManager implements GoalListener {
 
   private boolean displayActionLearningGui = false;
 
+  //TODO: remove this
+  private Set<Long> interruptWaitForStatusUpdateGids = new HashSet<>();
+
   protected void init(StateMachine sm, RootContext rootContext, Collection<String> groups) {
     this.sm = sm;
     this.rootContext = rootContext;
@@ -1051,6 +1054,18 @@ public class ExecutionManager implements GoalListener {
     //updatePriorities();
   }
 
+  //TODO: reimplement this, was in a rush
+  //Needs to be more specific to each call
+  public void interruptWaitForNextGoalStatusUpdate(long gid) {
+    interruptWaitForStatusUpdateGids.add(gid);
+    goalStatusUpdateLock.lock();
+    try {
+      goalStatusUpdateCondition.signalAll();
+    } finally {
+      goalStatusUpdateLock.unlock();
+    }
+  }
+
   /**
    * Wait until a particular goal has its goal status updated to any new value.
    *
@@ -1076,12 +1091,21 @@ public class ExecutionManager implements GoalListener {
    */
   protected GoalStatus waitForNextGoalStatusUpdate(Goal goal, long timeout) {
     goalStatusUpdateLock.lock();
+    long startTime = System.currentTimeMillis();
+    GoalStatus startStatus = goal.getStatus();
     try {
-      if (timeout == 0) {
-        goalStatusUpdateCondition.await();
-      } else {
-        if (!goalStatusUpdateCondition.await(timeout, TimeUnit.SECONDS)) {
+      while (goal.getStatus() == startStatus && (timeout == 0 || (System.currentTimeMillis() - startTime < timeout))) {
+        //TODO: even with this impl, doesn't handle if there are multiple listeners on the same goal
+        if (interruptWaitForStatusUpdateGids.contains(goal.getId())) {
+          interruptWaitForStatusUpdateGids.remove(goal.getId());
           return null;
+        }
+        if (timeout == 0) {
+          goalStatusUpdateCondition.await();
+        } else {
+          if (!goalStatusUpdateCondition.await(timeout - (System.currentTimeMillis() - startTime), TimeUnit.SECONDS)) {
+            return null;
+          }
         }
       }
     } catch (InterruptedException e) {

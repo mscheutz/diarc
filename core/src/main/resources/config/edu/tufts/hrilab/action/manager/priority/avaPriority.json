@@ -43,14 +43,6 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "definePatrolPath": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
-  "patrol": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
   "endActionLearning": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -84,10 +76,6 @@
     "priorityTier": "SKIPPENDING"
   },
   "describeAllLocationsOnPatrolPath":  {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
-  "showVideo":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },

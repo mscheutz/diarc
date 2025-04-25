@@ -4,12 +4,17 @@
 
 package edu.tufts.hrilab.action.manager;
 
+import ai.thinkingrobots.trade.TRADE;
+import ai.thinkingrobots.trade.TRADEException;
+import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
+import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
 import edu.tufts.hrilab.action.goal.schedule.JoinOnGoalListener;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoalJob;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoalListener;
+import edu.tufts.hrilab.action.notification.GoalManagerNotifier;
 import edu.tufts.hrilab.fol.Predicate;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
@@ -65,6 +70,18 @@ public class ScheduledGoalManager {
                     (Runnable) () -> {
                       Goal newGoal = goal.getNextGoalToSubmit();
                       if (newGoal != null) {
+                        //TODO: issue with submitting goals through the EM directly rather than the GM. Skips attaching
+                        // goalStatus listeners, all priority calculations, etc.
+                        try {
+                          PriorityTier priorityTier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityTierForGoal").argTypes(Predicate.class)).call(PriorityTier.class, newGoal.getPredicate());
+                          long priority  = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityForGoal").argTypes(Predicate.class)).call(long.class, newGoal.getPredicate());
+                          GoalManagerNotifier notifier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalManagerNotifier")).call(GoalManagerNotifier.class);
+                          newGoal.addListener(notifier);
+                          newGoal.setPriority(priority);
+                          newGoal.setPriorityTier(priorityTier);
+                        } catch (TRADEException e) {
+                          log.error("[executeScheduledGoal] could not set appropriate information in scheduled goal to be submitted",e);
+                        }
                         em.submitGoal(newGoal);
                       }
                     })));
