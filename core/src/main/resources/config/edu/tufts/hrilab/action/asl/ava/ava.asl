@@ -123,9 +123,9 @@ import java.util.StringTokenizer;
 () = monitorBattery() {
     int !sleepTime = 30000; // 30s How often to check the battery
     double !currBatteryLevel;
-    double !lowChargeLevel = 10; // Threshold to finish tasks and then go home and charge
-    double !veryLowChargeLevel = 20; // Threshold to suspend tasks and go home and charge immediately
-    double !enoughChargeLevel = 30; // Threshold to stop charging
+    double !lowChargeLevel = 20; // Threshold to finish tasks and then go home and charge
+    double !veryLowChargeLevel = 40; // Threshold to suspend tasks and go home and charge immediately
+    double !enoughChargeLevel = 50; // Threshold to stop charging
     boolean !sentGoalHome = false;
     boolean !sentUrgentGoalHome = false;
     Predicate !goHomeGoalPred = op:createPredicate("goHomeAndCharge(?actor, !enoughChargeLevel)");

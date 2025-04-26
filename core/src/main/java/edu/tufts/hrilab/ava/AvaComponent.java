@@ -227,7 +227,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       api = new AvaHTTPAPI(avaUri, mapName);
     }
 
-    loadMapMetadata();
+    try {
+      loadMapMetadata();
+    } catch (Exception e) {
+      log.error("[init] unable to connect to Ava robot API");
+      System.exit(1);
+    }
     keepAlive();
     stopGoingHomeOnTheHour();
 

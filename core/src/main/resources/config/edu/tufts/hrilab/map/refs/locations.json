@@ -1,3 +1,130 @@
 {
-  "poseReferences": [ ]
+  "poseReferences": [
+    {
+      "refId": "location_5:location",
+      "variable": "X",
+      "properties": [
+        "pavilion(X)"
+      ],
+      "position": [
+        -11.18724261629185,
+        27.61151947479249,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.6834727665441203,
+        0.7299760115185474
+      ]
+    },
+    {
+      "refId": "location_6:location",
+      "variable": "X",
+      "properties": [
+        "reception(X)"
+      ],
+      "position": [
+        12.88084955794281,
+        19.87099289479456,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.9310006541413233,
+        0.36501750915322967
+      ]
+    },
+    {
+      "refId": "location_1:location",
+      "variable": "X",
+      "properties": [
+        "piano(X)"
+      ],
+      "position": [
+        1.217363209235113,
+        7.37897844243856,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.9257948673517076,
+        0.3780262736705403
+      ]
+    },
+    {
+      "refId": "location_2:location",
+      "variable": "X",
+      "properties": [
+        "elevator(X)"
+      ],
+      "position": [
+        4.063428802307318,
+        25.86920699298959,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.34922184378669463,
+        0.9370400758890847
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "X",
+      "properties": [
+        "emergency(X)"
+      ],
+      "position": [
+        -3.07194596799594,
+        62.36638395279972,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.24029802526468255,
+        0.9706991599120164
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "X",
+      "properties": [
+        "tv(X)"
+      ],
+      "position": [
+        -5.439381631399662,
+        13.19210666960811,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.20850832190326446,
+        0.9780205926753713
+      ]
+    },
+    {
+      "refId": "location_0:location",
+      "variable": "X",
+      "properties": [
+        "dock(X)"
+      ],
+      "position": [
+        -0.03108685160904845,
+        0.4334189255226744,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.7370096243454343,
+        0.6758822483407905
+      ]
+    }
+  ]
 }
