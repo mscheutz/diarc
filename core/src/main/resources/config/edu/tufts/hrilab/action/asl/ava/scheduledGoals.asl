@@ -313,20 +313,60 @@ import edu.tufts.hrilab.action.justification.Justification;
     act:generateResponseFromString("the scheduled task has been canceled");
 }
 
+() = forEachOnInterrupt(Long ?currentGid, Symbol ?interruptionType) {
+    if (op:equals(?currentGid,-1)) {
+        op:log("debug", "[forEachOnInterrupt] no current goal found");
+        return;
+    }
+
+    if (op:equalsValue(?interruptionType,suspend)) {
+        op:log("debug", "[forEachOnInterrupt] suspending inner goal");
+        act:suspendGoal(?currentGid);
+    } elseif (op:equalsValue(?interruptionType,cancel)) {
+        op:log("debug", "[forEachOnInterrupt] canceling inner goal");
+        act:cancelGoal(?currentGid);
+    } elseif (op:equalsValue(?interruptionType,resume)) {
+        op:log("debug", "[forEachOnInterrupt] resuming inner goal");
+        act:resumeGoal(?currentGid);
+    } else {
+        op:log("warn","[forEachOnInterrupt] unknown interruption type ?interruptionType");
+    }
+
+}
+
 () = forEach(Predicate ?collection, Symbol ?actionName) {
+    onInterrupt :{
+        suspend: act:forEachOnInterrupt(!gid,suspend);
+        resume: act:forEachOnInterrupt(!gid,resume);
+        cancel: act:forEachOnInterrupt(!gid,cancel);
+    }
     Predicate !goalPred;
     List !args;
     Symbol !arg;
-    Long !gid;
+    Long !gid = -1;
     GoalStatus !goalStatus;
     Justification !failureJustification;
     List !failureReasons;
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = SKIPPENDING;
+    Boolean !isTerminated = false;
 
     !args = op:invokeMethod(?collection, "getArgs");
     foreach (!arg : !args) {
         !goalPred = op:createPredicate("?actionName(?actor, !arg)");
-        !gid = act:submitGoal(!goalPred);
-        !goalStatus = act:joinOnGoal(!gid);
+        !gid = act:submitGoal(!goalPred, !execType, !priorityTier);
+        !isTerminated = op:newObject("java.lang.Boolean", "false");
+        while (op:equals(!isTerminated,false)) {
+            op:log("debug", "[forEach] waiting for goal update for gid !gid");
+            !goalStatus = act:waitForNextGoalStatusUpdate(!gid);
+            op:log("debug", "[forEach] out waiting for goal update for gid !gid with goal status !goalStatus");
+            if (op:isNull(!goalStatus)) {
+                !isTerminated = op:newObject("java.lang.Boolean", "true");
+            } else {
+                !isTerminated = op:invokeMethod(!goalStatus,"isTerminated");
+            }
+        }
+        //!goalStatus = act:joinOnGoal(!gid);
         if (op:invokeMethod(!goalStatus, "isFailure")) {
           !failureJustification = act:getGoalFailConditions(!gid);
           exit(FAIL, !failureJustification);

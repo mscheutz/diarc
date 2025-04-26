@@ -10,6 +10,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.execution.*;
 import edu.tufts.hrilab.action.goal.Goal;
@@ -1066,6 +1067,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    *          already terminated
    */
   @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)", onSuspendServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)")
   public GoalStatus waitForNextGoalStatusUpdate(long gid) {
     return waitForNextGoalStatusUpdate(gid,0);
   }
@@ -1079,8 +1082,15 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    *          already terminated, or if the timeout duration elapses without an updated
    */
   @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)", onSuspendServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)")
   protected GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout) {
     return em.waitForNextGoalStatusUpdate(gid,timeout);
+  }
+
+  @TRADEService
+  public void interruptWaitForNextGoalStatusUpdate(long gid) {
+    em.interruptWaitForNextGoalStatusUpdate(gid);
   }
 
   /**
@@ -1153,6 +1163,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   public void unregisterGoalManagerNotification(TRADEServiceInfo callback, NotificationType type) {
     notifier.unregisterNotification(callback, type);
+  }
+
+  //TODO: Look at issue in ScheduledGoalManager executeScheduledGoal - solve differently and remove this
+  @TRADEService
+  public GoalManagerNotifier getGoalManagerNotifier() {
+    return notifier;
   }
 
   /**

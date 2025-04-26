@@ -317,5 +317,9 @@
   "setStorageArea": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "cancelScheduledGoal": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }
