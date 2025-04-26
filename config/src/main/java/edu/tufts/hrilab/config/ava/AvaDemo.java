@@ -110,7 +110,7 @@ public class AvaDemo extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker evan -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -male -volume 0.5 -showMixers -matchMixer Direct Audio Device: USB Audio Device, USB Audio, USB Audio" + ((useMicrophone) ? " -muteMics" : ""));
+    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.5 -showMixers -matchMixer Direct Audio Device: USB Audio Device, USB Audio, USB Audio" + ((useMicrophone) ? " -muteMics" : ""));
     //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://92.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
 //      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");
