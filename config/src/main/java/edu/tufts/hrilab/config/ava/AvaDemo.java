@@ -147,6 +147,7 @@ public class AvaDemo extends DiarcConfiguration {
               "ava/scheduledGoals.asl " +
               "ava/avaMedia.asl " +
               "ava/avaASR.asl " +
+              "ava/avaTMCDemo.asl " +
               "demos/queueEM.asl"
         + " -priorityFile default.json avaPriority.json"
         + (useQueueEM ? " -executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager" : ""));

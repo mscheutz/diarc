@@ -7,6 +7,7 @@ import java.lang.String;
 import java.lang.Long;
 import java.lang.Integer;
 import java.lang.Double;
+import java.lang.Boolean;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.justification.Justification;
 

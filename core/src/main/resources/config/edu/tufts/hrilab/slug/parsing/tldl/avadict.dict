@@ -489,3 +489,6 @@ disable microphone; VERBI; disableMic
 
 now; C/C; #x.urgentPriority(?ADDRESSEE,$x)
 right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
+
+start demo; VERBI; startDemo
+stop demo; VERBI; stopDemo

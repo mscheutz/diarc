@@ -103,4 +103,8 @@ public final class Misc {
   public static Object setNull() {
     return null;
   }
+
+  public static long parseLong(String s) {
+    return Long.parseLong(s);
+  }
 }
