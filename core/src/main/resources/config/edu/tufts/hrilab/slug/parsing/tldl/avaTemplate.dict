@@ -186,9 +186,10 @@ fourth; NUM; fourth
 
 fridge ; THING
 
-from ; PPadv/C ; #x.from($x)
-from; LOC/LOC; #x.$x
+%from ; PPadv/C ; #x.from($x)
+%from; LOC/LOC; #x.$x
 from; REF/REF; #x.$x
+from; RN/RN; #x.$x
 
 %%%%%%%%%%%  G  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -508,15 +509,16 @@ this; LREF/LN ; #x.$x ; REFACTIVATED
 %this; REF ; ACTIVATED
 
 %TODO;brad; what is the to for, do we need it?
-to; PPadv/C; #x.$x
-to; PP/AGENT ; #x.$x
-to; INF/C; #x.to($x)
+%to; PPadv/C; #x.$x
+%to; PP/AGENT ; #x.$x
+%to; INF/C; #x.to($x)
 to; REF/REF; #x.$x
-to; PP/LREF; #x.$x
+to; RN/RN; #x.$x
+%to; PP/LREF; #x.$x
 
 
 
-to; (C\AGENT)/(C\AGENT); #x.to($x)
+%to; (C\AGENT)/(C\AGENT); #x.to($x)
 
 tomato; THING
 

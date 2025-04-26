@@ -1,0 +1,16 @@
+the elevator; RN; elevator; VAR
+the elevator; REF; elevator; DEFINITE
+the elevator; DESC; elevator:property
+the elevator; DN; elevator:property
+the dock; RN; dock; VAR
+the dock; REF; dock; DEFINITE
+the dock; DESC; dock:property
+the dock; DN; dock:property
+the coffee maker; RN; coffee maker; VAR
+the coffee maker; REF; coffee maker; DEFINITE
+the coffee maker; DESC; coffee maker:property
+the coffee maker; DN; coffee maker:property
+the back door; RN; back door; VAR
+the back door; REF; back door; DEFINITE
+the back door; DESC; back door:property
+the back door; DN; back door:property

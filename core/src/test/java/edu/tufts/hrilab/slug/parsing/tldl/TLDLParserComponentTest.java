@@ -4176,6 +4176,7 @@ public class TLDLParserComponentTest {
     public void avaDemoTest() {
         component.addDictionary("avaTemplate.dict");
         component.addDictionary("avadict.dict");
+        component.addDictionary("avaGenerated.dict");
 
         String speaker = "brad";
 
@@ -4184,11 +4185,11 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
         assertTrue(testUtterance("10 minutes",
-                "REPLY(brad,self,relativeTime(10,MINUTES),{})",
+                "REPLY(brad,self,relativeTime(10,minutes),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("10 minute",
-                "REPLY(brad,self,relativeTime(10,MINUTES),{})",
+                "REPLY(brad,self,relativeTime(10,minutes),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("10 seconds",
@@ -4212,7 +4213,7 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
         assertTrue(testUtterance("every 1 hour",
-                "REPLY(brad,self,relativeTime(1,HOURS),{})",
+                "REPLY(brad,self,relativeTime(1,hours),{})",
                 speaker, "self"));
 
         assertTrue(testUtterance("1 p.m. ",
@@ -4240,5 +4241,20 @@ public class TLDLParserComponentTest {
                 "INSTRUCT(brad,self,definePatrolPath(self,demo path),{})",
                 speaker, "self"));
 
+        assertTrue(testUtterance("escort mark from the dock to the elevator",
+                "INSTRUCT(brad,self,escortFromToLocation(self,mark,VAR0,VAR1),{dock(VAR0),elevator(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("escort mark to the elevator",
+                "INSTRUCT(brad,self,escortToLocation(self,mark,VAR0),{elevator(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("take mark from the dock to the elevator",
+                "INSTRUCT(brad,self,escortFromToLocation(self,mark,VAR0,VAR1),{dock(VAR0),elevator(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                speaker, "self"));
+
+        assertTrue(testUtterance("take mark to the elevator",
+                "INSTRUCT(brad,self,escortToLocation(self,mark,VAR0),{elevator(VAR0),DEFINITE(VAR0)})",
+                speaker, "self"));
     }
 }

@@ -20,6 +20,8 @@ import java.util.StringTokenizer;
 () = escortToLocation(Symbol ?escortee, Symbol ?dstLoc) {
     String !locName = tsc:getMapReferenceName(?dstLoc);
 
+    op:log(debug, "[escortToLocation] escorting to location named !locName");
+
     act:say("Hello ?escortee. Please come with me, I will show you to !locName");
 
     act:goToLocation(?dstLoc);
