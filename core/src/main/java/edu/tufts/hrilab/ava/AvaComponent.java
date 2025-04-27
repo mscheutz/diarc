@@ -482,7 +482,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       ds = getDriveStatus();
       if (ds == DriveStatus.FAILED_DRIVE_WAYPOINT) {
         log.warn("[goToArbitrary] Failed to reach goal position: " + goalPosition + " theta: " + goalTheta);
-//        return new ConditionJustification(false, Factory.createPredicate("reachable", "location"));
+        return new ConditionJustification(false, Factory.createPredicate("reachable", "location"));
       }
 
       // Stop the robot if the DIARC is set to stop the robot

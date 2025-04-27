@@ -219,18 +219,18 @@ import java.util.StringTokenizer;
     tsc:setZLift(90.0);
 }
 
-//() = recoverGoToLocation(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
-//
-//    recovery : {
-//        actionRecovery : {
-//            postRecovery : postrecovery_continue
-//        }
-//        failedActions: {goToLocation(X)}
-//    }
-//
+() = recoverGoToLocation(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+
+    recovery : {
+        actionRecovery : {
+            postRecovery : postrecovery_retry
+        }
+        failedActions: {goToLocation(X,Y)}
+    }
+
 //    act:goToLocation(X);
-//    op:log("[recoveryGoToLocation] re-attempting goToLocation(X)")
-//}
+    op:log(warn, "[recoveryGoToLocation] re-attempting goToLocation(X)");
+}
 
 () = goToLocation(Symbol ?location) {
     Symbol !current;
