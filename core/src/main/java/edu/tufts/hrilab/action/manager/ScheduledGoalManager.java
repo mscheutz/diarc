@@ -74,6 +74,10 @@ public class ScheduledGoalManager {
                         // goalStatus listeners, all priority calculations, etc.
                         try {
                           PriorityTier priorityTier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityTierForGoal").argTypes(Predicate.class)).call(PriorityTier.class, newGoal.getPredicate());
+                          //TODO: discussion to be had about whether we want this to be something standard, configurable, at all, ...
+                          if (priorityTier != PriorityTier.SKIPPENDING && goal.isPeriodic()) {
+                            priorityTier = PriorityTier.LOW;
+                          }
                           long priority  = TRADE.getAvailableService(new TRADEServiceConstraints().name("getPriorityForGoal").argTypes(Predicate.class)).call(long.class, newGoal.getPredicate());
                           GoalManagerNotifier notifier = TRADE.getAvailableService(new TRADEServiceConstraints().name("getGoalManagerNotifier")).call(GoalManagerNotifier.class);
                           newGoal.addListener(notifier);
