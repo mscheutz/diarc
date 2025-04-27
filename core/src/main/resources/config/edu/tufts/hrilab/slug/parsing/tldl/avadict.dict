@@ -127,7 +127,7 @@ move; VERBT; goToLocation
 
 follow; C; follow(?ADDRESSEE)
 follow me; C; follow(?ADDRESSEE)
-stop following; C; stopFollow(?ADDRESSEE/
+stop following; C; stopFollow(?ADDRESSEE)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ESCORTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

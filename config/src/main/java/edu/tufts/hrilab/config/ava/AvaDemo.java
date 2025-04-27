@@ -20,6 +20,8 @@ public class AvaDemo extends DiarcConfiguration {
   String service = "llamahf";
   String model = "Llama-3.3-70B-Instruct";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
+  private String locationRefs = "refs/locations.json";
+  private String speakerId = "Direct Audio Device: USB Audio Device, USB Audio, USB Audio";
 
 
   @Override
@@ -34,6 +36,8 @@ public class AvaDemo extends DiarcConfiguration {
     options.add(Option.builder("map").hasArg().desc("set map file").build());
     options.add(Option.builder("mock").desc("use mock ava component").build());
     options.add(Option.builder("privateEndpoint").desc("run using privately hosted endpoint rather than free serverless endpoint").build());
+    options.add(Option.builder("locationRefs").hasArg().desc("set location references file").build());
+    options.add(Option.builder("speakerId").hasArg().desc("name of speaker to route local tts through").build());
     return options;
   }
 
@@ -62,6 +66,12 @@ public class AvaDemo extends DiarcConfiguration {
     }
     if (cmdLine.hasOption("map")) {
       avaArgs += " -map " + cmdLine.getOptionValue("map");
+    }
+    if (cmdLine.hasOption("locationRefs")) {
+      locationRefs = cmdLine.getOptionValue("locationRefs");
+    }
+    if (cmdLine.hasOption("speakerId")) {
+      speakerId = cmdLine.getOptionValue("speakerId");
     }
     if (cmdLine.hasOption("privateEndpoint")) {
       log.warn("You have configured the system to use the privately hosted HuggingFace endpoint.");// THIS COSTS MONEY AND SHOULD NOT BE USED FOR FRIVOLOUS TESTING. If you are doing this intentionally, please enter 1 into the console");
@@ -110,7 +120,7 @@ public class AvaDemo extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker evan -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.5 -showMixers -matchMixer Direct Audio Device: USB Audio Device, USB Audio, USB Audio" + ((useMicrophone) ? " -muteMics" : ""));
+    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.5 -showMixers -matchMixer " + speakerId + " " + ((useMicrophone) ? " -muteMics" : ""));
     //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://92.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
 //      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");
@@ -121,7 +131,8 @@ public class AvaDemo extends DiarcConfiguration {
       //createInstance(edu.tufts.hrilab.slug.http.HTTPListenerComponent.class, "-speaker patient -addressee self");
     }
 
-    createInstance(edu.tufts.hrilab.map.MapComponent.class, "-refs refs/locations.json");
+
+    createInstance(edu.tufts.hrilab.map.MapComponent.class, "-refs " + locationRefs);
 
 //    if (useVision) {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture ava.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls"));

@@ -1,165 +1,93 @@
 {
   "poseReferences": [
     {
-      "refId": "location_5:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "coffee maker(VAR0:location)"
-      ],
-      "position": [
-        1.575684409921422,
-        1.435805793554873,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.96146058623948,
-        0.2749427960649912
-      ]
-    },
-    {
-      "refId": "location_6:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "evans office(VAR0:location)"
-      ],
-      "position": [
-        5.481004269086903,
-        -1.598694306869579,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.8951060374347273,
-        0.4458533186462796
-      ]
-    },
-    {
-      "refId": "location_26:location",
+      "refId": "location_1:location",
       "variable": "X",
       "properties": [
-        "waiting room(X)"
+        "spot(X)"
       ],
       "position": [
-        -9.644844213025198,
-        2.137309188044539,
+        0.5930774679167791,
+        4.765040743330316,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.43048014682621627,
-        0.9026000460826928
+        -0.8692320717678387,
+        0.49440429347871906
       ]
     },
     {
-      "refId": "location_21:location",
+      "refId": "location_2:location",
       "variable": "X",
       "properties": [
-        "back door(X)"
+        "fetch(X)"
       ],
       "position": [
-        -5.353174761016407,
-        2.457457928365445,
+        -3.82839785532903,
+        6.127327781219208,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        0.9999988018356653,
-        0.0015480075044605752
+        -0.7156756020914111,
+        0.6984328404156667
+      ]
+    },
+    {
+      "refId": "location_3:location",
+      "variable": "X",
+      "properties": [
+        "back desk(X)"
+      ],
+      "position": [
+        -3.588877078438104,
+        9.681683158043134,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.5061439919515802,
+        0.8624489894546336
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "X",
+      "properties": [
+        "control room(X)"
+      ],
+      "position": [
+        -10.80632285834037,
+        1.31833200796242,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.19301648569312063,
+        0.9811955137742311
       ]
     },
     {
       "refId": "location_0:location",
-      "variable": "VAR0:location",
-      "properties": [
-        "dock(VAR0:location)"
-      ],
-      "position": [
-        -0.03652259308689226,
-        0.7643826170636434,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.7686020288902752,
-        0.6397272240461186
-      ]
-    },
-    {
-      "refId": "location_16:location",
       "variable": "X",
       "properties": [
-        "desk alpha(X)"
+        "dock(X)"
       ],
       "position": [
-        -1.705873875472754,
-        6.396160000561477,
+        0.01844189890799627,
+        0.8192509848405358,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.9991964626183498,
-        0.04008028307006579
-      ]
-    },
-    {
-      "refId": "location_27:location",
-      "variable": "X",
-      "properties": [
-        "testing room(X)"
-      ],
-      "position": [
-        4.973053777207316,
-        0.5523088395310972,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        -0.9995849834405365,
-        0.028807306020910008
-      ]
-    },
-    {
-      "refId": "location_19:location",
-      "variable": "X",
-      "properties": [
-        "front door(X)"
-      ],
-      "position": [
-        7.700203610616325,
-        0.7229843443616943,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.0626067662668593,
-        0.9980382722208637
-      ]
-    },
-    {
-      "refId": "location_18:location",
-      "variable": "X",
-      "properties": [
-        "desk beta(X)"
-      ],
-      "position": [
-        -0.2362372624813392,
-        7.152629239280007,
-        0.0
-      ],
-      "orientation": [
-        0.0,
-        0.0,
-        0.21924316902627175,
-        0.9756702480015047
+        0.7211023729570372,
+        0.6928285269211496
       ]
     }
   ]

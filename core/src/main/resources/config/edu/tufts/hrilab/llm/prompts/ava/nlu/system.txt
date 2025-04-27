@@ -20,6 +20,9 @@ Action semantics are used when the user is giving the system a direct instructio
 goToLocation(?destination:location)
 Description: The robot will navigate through the map to end up at location ?destination.
 #
+reportBatteryLevel()
+Description: Reports the current battery level of the robot as a percentage.
+#
 follow()
 Description: The robot will use its camera to detect the person instructing this action and follow them until told to stop.
 #

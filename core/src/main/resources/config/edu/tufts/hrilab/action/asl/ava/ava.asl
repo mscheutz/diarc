@@ -125,8 +125,8 @@ import java.util.StringTokenizer;
 () = monitorBattery() {
     int !sleepTime = 30000; // 30s How often to check the battery
     double !currBatteryLevel;
-    double !lowChargeLevel = 20; // Threshold to finish tasks and then go home and charge
-    double !veryLowChargeLevel = 40; // Threshold to suspend tasks and go home and charge immediately
+    double !lowChargeLevel = 30;
+    double !veryLowChargeLevel = 15; // Threshold to suspend tasks and go home and charge immediately
     double !enoughChargeLevel = 50; // Threshold to stop charging
     boolean !sentGoalHome = false;
     boolean !sentUrgentGoalHome = false;
@@ -189,23 +189,13 @@ import java.util.StringTokenizer;
 }
 
 // is this  used?
-() = evaluateBatteryLevel () {
-    double !batteryThreshold = 99.0; //90 %
-    double !runtimeThreshold = 1000.0; //1000 seconds
+() = reportBatteryLevel() {
     double !batteryLevel; //percentage
-    double !runtime; //seconds
-    int !batterySleep = 3000;
-    String !message = "I am going home to recharge. Goodbye.";
+    Predicate !responsePredicate;
 
     !batteryLevel = act:getBatteryLevel();
-    !runtime = act:getRuntime();
-
-    if (op:lt(!batteryLevel, !batteryThreshold) || op:lt(!runtime, !runtimeThreshold)) {
-        op:sleep(!batterySleep);
-        act:generateResponseFromString(!message);
-        op:sleep(!batterySleep);
-        act:goHome();
-    }
+    !responsePredicate = op:createPredicate("batteryLevel(!batteryLevel)");
+    act:generateResponse(!responsePredicate);
 }
 
 () = saveLocation(Symbol ?location) {
@@ -229,17 +219,18 @@ import java.util.StringTokenizer;
     tsc:setZLift(90.0);
 }
 
-() = recoverGoToLocation(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
-
-    recovery : {
-        actionRecovery : {
-            postRecovery : postrecovery_continue
-        }
-        failedActions: {goToLocation(X)}
-    }
-
-    act:goToLocation(X);
-}
+//() = recoverGoToLocation(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+//
+//    recovery : {
+//        actionRecovery : {
+//            postRecovery : postrecovery_continue
+//        }
+//        failedActions: {goToLocation(X)}
+//    }
+//
+//    act:goToLocation(X);
+//    op:log("[recoveryGoToLocation] re-attempting goToLocation(X)")
+//}
 
 () = goToLocation(Symbol ?location) {
     Symbol !current;

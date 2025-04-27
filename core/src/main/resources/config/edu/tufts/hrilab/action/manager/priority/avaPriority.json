@@ -11,18 +11,6 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "longDemo": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
-  "longDrivingDemo": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
-  "driveEverywhereDemo": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
   "avaListen": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -82,5 +70,9 @@
   "listScheduledGoals":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "patrol":  {
+    "priority": 1,
+    "priorityTier": "LOW"
   }
 }
