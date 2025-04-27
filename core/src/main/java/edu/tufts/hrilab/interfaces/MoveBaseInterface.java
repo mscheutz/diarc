@@ -173,6 +173,6 @@ public interface MoveBaseInterface {
    * @return observation result
    */
   @TRADEService
-//  @Observes({"at(?actor,?location)"})
+  @Observes({"at(?actor,?location)"})
   List<Map<Variable, Symbol>> checkAt(Term locationTerm);
 }
