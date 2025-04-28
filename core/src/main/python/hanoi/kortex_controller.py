@@ -17,6 +17,7 @@ import os
 import time
 import threading
 
+import numpy as np
 from kortex_api.autogen.client_stubs.BaseClientRpc import BaseClient
 from kortex_api.autogen.client_stubs.BaseCyclicClientRpc import BaseCyclicClient
 
@@ -44,35 +45,27 @@ def check_for_end_or_abort(e):
 
     return check
 
-def twist_command(action, base):
 
+def twist_command(base, action):
     command = Base_pb2.TwistCommand()
 
     command.reference_frame = Base_pb2.CARTESIAN_REFERENCE_FRAME_TOOL
-    command.duration = 0
+    command.duration = 10
 
     twist = command.twist
     twist.linear_x = action[0]
     twist.linear_y = action[1]
-    twist.linear_z =action[2]
-    # Todo: Convert from quat
+    twist.linear_z = action[2]
     twist.angular_x = 0
     twist.angular_y = 0
-    twist.angular_z = 5
+    twist.angular_z = 0
 
-    print ("Sending the twist command for 5 seconds...")
     base.SendTwistCommand(command)
-
-    # Let time for twist to be executed
-    time.sleep(5)
-
-    print ("Stopping the robot...")
-    base.Stop()
-    time.sleep(1)
-
+    time.sleep(0.01)
     return True
 
-def cartesian_movement(pose, base, base_cyclic):
+
+def cartesian_movement(base, base_cyclic, pose):
     print("Starting Cartesian action movement ...")
     action = Base_pb2.Action()
     action.name = "Example Cartesian action movement"
@@ -81,12 +74,13 @@ def cartesian_movement(pose, base, base_cyclic):
     feedback = base_cyclic.RefreshFeedback()
 
     cartesian_pose = action.reach_pose.target_pose
-    cartesian_pose.x = feedback.base.tool_pose_x  # (meters)
-    cartesian_pose.y = feedback.base.tool_pose_y - 0.1  # (meters)
-    cartesian_pose.z = feedback.base.tool_pose_z - 0.2  # (meters)
-    cartesian_pose.theta_x = feedback.base.tool_pose_theta_x  # (degrees)
-    cartesian_pose.theta_y = feedback.base.tool_pose_theta_y  # (degrees)
-    cartesian_pose.theta_z = feedback.base.tool_pose_theta_z  # (degrees)
+    cartesian_pose.x = pose[0]
+    cartesian_pose.y = pose[1]
+    cartesian_pose.z = pose[2]
+    if len(pose) == 6:
+        cartesian_pose.theta_x = pose[3]
+        cartesian_pose.theta_y = pose[4]
+        cartesian_pose.theta_z = pose[5]
 
     e = threading.Event()
     notification_handle = base.OnNotificationActionTopic(
@@ -106,3 +100,28 @@ def cartesian_movement(pose, base, base_cyclic):
     else:
         print("Timeout on action notification wait")
     return finished
+
+def compute_twist(pos_initial, pos_final, total_time=0.1):
+    pos_initial = np.array(pos_initial)
+    pos_final = np.array(pos_final)
+    twist = (pos_final - pos_initial) / total_time
+    return twist
+
+
+def go_to(base, base_cyclic, action):
+    init_pos = get_current_pos(base_cyclic)
+    twist = compute_twist(init_pos, action)
+    twist_command(base, twist)
+    time.sleep(0.1)
+
+def get_current_pos(base_cyclic: BaseCyclicClient):
+    feedback = base_cyclic.RefreshFeedback()
+    cartesian_pose = [0] * 3
+    cartesian_pose[0] = feedback.base.tool_pose_x  # (meters)
+    cartesian_pose[1] = feedback.base.tool_pose_y  # (meters)
+    cartesian_pose[2] = feedback.base.tool_pose_z  # (meters)
+    # cartesian_pose[3] = feedback.base.tool_pose_theta_x  # (degrees)
+    # cartesian_pose[4] = feedback.base.tool_pose_theta_y  # (degrees)
+    # cartesian_pose[5] = feedback.base.tool_pose_theta_z  # (degrees)
+    return cartesian_pose
+
