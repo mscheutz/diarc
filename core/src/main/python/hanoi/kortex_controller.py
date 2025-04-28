@@ -16,6 +16,7 @@ import sys
 import os
 import time
 import threading
+import atexit
 
 import numpy as np
 from kortex_api.autogen.client_stubs.BaseClientRpc import BaseClient
@@ -26,6 +27,19 @@ from kortex_api.autogen.messages import Base_pb2, BaseCyclic_pb2, Common_pb2
 # Maximum allowed waiting time during actions (in seconds)
 TIMEOUT_DURATION = 20
 
+
+# Import the utilities helper module
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from . import utilities
+
+# Parse arguments
+# Fixme: This is because we want it to connect on import. Should technically be safe but definitely not ideal.
+args = utilities.parseConnectionArguments()
+router = utilities.DeviceConnection.createTcpConnection(args).__enter__()
+atexit.register(lambda: router and router.__exit__())
+# Create required services
+base = BaseClient(router)
+base_cyclic = BaseCyclicClient(router)
 
 # Create closure to set an event after an END or an ABORT
 def check_for_end_or_abort(e):
@@ -46,7 +60,7 @@ def check_for_end_or_abort(e):
     return check
 
 
-def twist_command(base, action):
+def twist_command(action):
     command = Base_pb2.TwistCommand()
 
     command.reference_frame = Base_pb2.CARTESIAN_REFERENCE_FRAME_TOOL
@@ -65,7 +79,7 @@ def twist_command(base, action):
     return True
 
 
-def cartesian_movement(base, base_cyclic, pose):
+def cartesian_movement(pose):
     print("Starting Cartesian action movement ...")
     action = Base_pb2.Action()
     action.name = "Example Cartesian action movement"
@@ -108,13 +122,13 @@ def compute_twist(pos_initial, pos_final, total_time=0.1):
     return twist
 
 
-def go_to(base, base_cyclic, action):
-    init_pos = get_current_pos(base_cyclic)
+def go_to(action):
+    init_pos = get_current_pos()
     twist = compute_twist(init_pos, action)
     twist_command(base, twist)
     time.sleep(0.1)
 
-def get_current_pos(base_cyclic: BaseCyclicClient):
+def get_current_pos():
     feedback = base_cyclic.RefreshFeedback()
     cartesian_pose = [0] * 3
     cartesian_pose[0] = feedback.base.tool_pose_x  # (meters)

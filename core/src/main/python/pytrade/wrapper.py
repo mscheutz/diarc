@@ -1,9 +1,8 @@
 import logging
 import sys
 import warnings
-import threading
 import os
-import time
+import argparse
 
 import jpype.imports
 from jpype import JObject
@@ -17,7 +16,12 @@ logging.info("Starting PyTRADE")
 try:
     current_file_dir = os.path.dirname(os.path.abspath(__file__))
     jars_dir = os.path.join(current_file_dir, 'jars/*')
-    jpype.startJVM(classpath=[jars_dir, sys.argv[1]])
+    logging.info("Pytrade parsing")
+    parser = argparse.ArgumentParser(description="Setup the JVM classpath")
+    parser.add_argument('--classpath')
+    args, unknown = parser.parse_known_args()
+
+    jpype.startJVM(classpath=[jars_dir, args.classpath])
     from ai.thinkingrobots.trade import TRADE, TRADEServiceConstraints, TRADEServiceInfo, TRADEException
 
 except Exception as e:

@@ -24,7 +24,7 @@ public class PythonWrapper {
         // Create the ProcessBuilder and start the process
         String classpath = System.getProperty("java.class.path");
         ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command("python3", "-m", file, classpath);
+        processBuilder.command("python3", "-m", file, "--classpath", classpath);
         processBuilder.inheritIO();
         if(spoke) {
           setSpoke(processBuilder);
