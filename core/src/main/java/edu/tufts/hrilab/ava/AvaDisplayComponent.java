@@ -66,27 +66,41 @@ public class AvaDisplayComponent extends DiarcComponent {
   private int currentVideo = -1;
   private int videoVolume;
   private boolean videoPlaying = false;
+  private List<String> images = new ArrayList<>();
+  private int currentImage = -1;
+  private int trLogoIndex = 0;
 
   @Override
   protected void init() {
-    initializeFrame();
-    displayImage("trLogo.png", 10 * 1000);
     if (!videoDir.equals("")) {
-      getVideoPaths(videoDir);
+      videos = getMediaFromDir(videoDir, ".mp4");
+      images = getMediaFromDir(videoDir, ".png");
+      currentVideo = 0;
+      currentImage = 0;
+      int index = 0;
+      for (String img : images) {
+        if (img.contains("trLogo")) {
+          trLogoIndex = index;
+          currentImage = trLogoIndex;
+        }
+        index++;
+      }
     }
+    initializeFrame();
   }
 
-  private void getVideoPaths(String videoDir) {
+  private List<String> getMediaFromDir(String videoDir, String fileType) {
     String homeDir = System.getProperty("user.home");
     String diarcDirPath = Paths.get(homeDir, ".diarc").toString();
     String videoDirPath = Paths.get(diarcDirPath, videoDir).toString();
     File dir = new File(videoDirPath);
-    File[] files = dir.listFiles((dir1, name) -> name.toLowerCase().endsWith(".mp4"));
+    File[] files = dir.listFiles((dir1, name) -> name.toLowerCase().endsWith(fileType));
+    List<String> toReturn = List.of();
     if (files != null) {
       List<File> fileList = List.of(files);
-      videos = fileList.stream().map(x -> x.getAbsolutePath()).toList();
-      currentVideo = 0;
+      toReturn = fileList.stream().map(x -> x.getAbsolutePath()).toList();
     }
+    return toReturn;
   }
 
 //  @Override
@@ -151,7 +165,7 @@ public class AvaDisplayComponent extends DiarcComponent {
         try {
           SwingUtilities.invokeAndWait(() -> {
                     cardLayout.previous(cardPanel);
-                    displayImage("trLogo.png", 10 * 1000);
+                    displayImage(images.get(trLogoIndex), 10 * 1000);
                   }
           );
         } catch (InterruptedException | InvocationTargetException e) {
@@ -182,6 +196,34 @@ public class AvaDisplayComponent extends DiarcComponent {
       frame.setVisible(true);
     }
 
+    Runnable cycleImageTask = () -> {
+      if (!videoPlaying) {
+        try {
+          SwingUtilities.invokeAndWait(() -> {
+                    displayImage(images.get(currentImage), 10 * 1000);
+                  }
+          );
+        } catch (InterruptedException | InvocationTargetException e) {
+          log.error("error switching back to logo", e);
+        }
+        if (currentImage >= (images.size() - 1)) {
+          currentImage = 0;
+        } else {
+          currentImage++;
+        }
+      }
+    };
+
+    try {
+      SwingUtilities.invokeAndWait(() -> {
+                displayImage(images.get(trLogoIndex), 10 * 1000);
+              }
+      );
+    } catch (InterruptedException | InvocationTargetException e) {
+      log.error("error switching back to logo", e);
+    }
+
+    refreshExecutor.scheduleAtFixedRate(cycleImageTask, 0, 15, TimeUnit.SECONDS);
   }
 
   /**
@@ -249,11 +291,9 @@ public class AvaDisplayComponent extends DiarcComponent {
    */
   private void displayImage(String imageName, long timeout) {
     log.debug("displayImage(" + imageName + ")");
-    String displayDirectoryPath = "config/edu/tufts/hrilab/ava";
-    String imageFullPath = Resources.createFilepath(displayDirectoryPath, imageName);
     BufferedImage image = null;
     try {
-      image = ImageIO.read(AvaDisplayComponent.class.getResourceAsStream(imageFullPath));
+      image = ImageIO.read(new File(imageName));
     } catch (IOException ex) {
       log.error("Error getting image " + imageName, ex);
     } catch (Exception ex) {

@@ -26,6 +26,7 @@ import java.util.StringTokenizer;
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
+    act:goHome();
 }
 
 () = escortFromToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
@@ -36,6 +37,7 @@ import java.util.StringTokenizer;
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
+    act:goHome();
 }
 
 /**

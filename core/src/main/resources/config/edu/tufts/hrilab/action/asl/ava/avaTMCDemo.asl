@@ -14,7 +14,7 @@ import java.util.Map;
     Predicate !toAssert;
     Long !gid;
 
-    !goalPredicate = op:createPredicate("scheduled(showVideo(ava, location_4:location), start(1, minutes), period(1, hours))");
+    !goalPredicate = op:createPredicate("scheduled(demoAction(ava), start(1, seconds), period(1, hours))");
     !gid = act:submitGoal(!goalPredicate);
     !toAssert = op:createPredicate("demoGoalId(!gid)");
     act:assertBelief(!toAssert);
@@ -44,4 +44,9 @@ import java.util.Map;
         op:log(info, "[stopDemo] successfully stopped the demo");
     }
     act:retractBelief(!query);
+}
+
+() = demoAction() {
+    act:showVideo(location_4:location);
+    act:goHome();
 }

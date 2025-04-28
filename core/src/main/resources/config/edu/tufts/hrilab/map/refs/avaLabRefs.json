@@ -37,6 +37,42 @@
       ]
     },
     {
+      "refId": "location_7:location",
+      "variable": "X",
+      "properties": [
+        "hall door(X)"
+      ],
+      "position": [
+        -9.862335615892137,
+        0.06918162964362193,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.9237599657125468,
+        0.3829719647007525
+      ]
+    },
+    {
+      "refId": "location_8:location",
+      "variable": "X",
+      "properties": [
+        "front door(X)"
+      ],
+      "position": [
+        10.2817123065347,
+        -2.355298922811134,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.8042602956933788,
+        0.5942771884997766
+      ]
+    },
+    {
       "refId": "location_1:location",
       "variable": "X",
       "properties": [
@@ -124,6 +160,24 @@
         0.0,
         0.7211023729570372,
         0.6928285269211496
+      ]
+    },
+    {
+      "refId": "location_9:location",
+      "variable": "X",
+      "properties": [
+        "petes desk(X)"
+      ],
+      "position": [
+        -3.35464590363716,
+        3.316396572676445,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.969613786346868,
+        0.24464076791510095
       ]
     }
   ]
