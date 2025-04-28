@@ -313,6 +313,24 @@ public class AvaDisplayComponent extends DiarcComponent {
       log.error("[displayNextVideo] no valid videos to display");
       return;
     }
+    displayVideo(videos.get(currentVideo));
+    if (currentVideo >= (videos.size() - 1)) {
+      currentVideo = 0;
+    } else {
+      currentVideo++;
+    }
+  }
+
+  @TRADEService
+  public void displayVideoMatching(String match) {
+    for (String video : videos) {
+      if (video.contains(match)) {
+        displayVideo(video);
+      }
+    }
+  }
+
+  public void displayVideo(String path) {
     try {
       SwingUtilities.invokeAndWait(() -> {
                 cardLayout.next(cardPanel);
@@ -321,14 +339,9 @@ public class AvaDisplayComponent extends DiarcComponent {
     } catch (InterruptedException | InvocationTargetException e) {
       log.error("error switching back to logo", e);
     }
-    mediaPlayerComponent.mediaPlayer().media().startPaused(videos.get(currentVideo));
+    mediaPlayerComponent.mediaPlayer().media().startPaused(path);
     videoPlaying = true;
-    log.info("[displayNextVideo] displaying video: " + videos.get(currentVideo));
-    if (currentVideo >= (videos.size() - 1)) {
-      currentVideo = 0;
-    } else {
-      currentVideo++;
-    }
+    log.info("[displayNextVideo] displaying video: " + path);
   }
 
   @TRADEService
@@ -344,10 +357,28 @@ public class AvaDisplayComponent extends DiarcComponent {
   @TRADEService
   public void pauseVideoPlayback() {
     mediaPlayerComponent.mediaPlayer().controls().pause();
+    try {
+      SwingUtilities.invokeAndWait(() -> {
+                cardLayout.previous(cardPanel);
+              }
+      );
+    } catch (InterruptedException | InvocationTargetException e) {
+      log.error("error switching back to logo", e);
+    }
+    videoPlaying = false;
   }
 
   @TRADEService
   public void resumeVideoPlayback() {
+    try {
+      SwingUtilities.invokeAndWait(() -> {
+                cardLayout.next(cardPanel);
+              }
+      );
+    } catch (InterruptedException | InvocationTargetException e) {
+      log.error("error switching back to logo", e);
+    }
+    videoPlaying = true;
     mediaPlayerComponent.mediaPlayer().controls().play();
   }
 

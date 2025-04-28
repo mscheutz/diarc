@@ -47,6 +47,8 @@ import java.util.Map;
 }
 
 () = demoAction() {
-    act:showVideo(location_4:location);
+    String !matchString = "We are";
+    act:goToLocation(location_4:location);
+    act:showVideoMatching(!matchString);
     act:goHome();
 }

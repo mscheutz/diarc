@@ -22,3 +22,15 @@ import java.util.Map;
         op:sleep(500);
     }
 }
+
+() = showVideoMatching(String ?matchString) {
+    onInterrupt :{
+        cancel: tsc:cancelVideoPlayback();
+        suspend: tsc:pauseVideoPlayback();
+        resume: tsc:resumeVideoPlayback();
+    }
+    tsc:displayVideoMatching(?matchString);
+    while(tsc:isMediaPlaying()) {
+        op:sleep(500);
+    }
+}
