@@ -233,7 +233,7 @@ if __name__ == '__main__':
         TRADE.registerAllServices(nadia_wrapper, "")
         TRADE.registerAllServices(nadia_wrapper.consultant, nadia_wrapper.kb_name)
         nadia_wrapper.consultant.loadReferencesFromFile(
-            "/home/mfawn/code/diarc/diarc/core/src/main/python/ihmc/ihmcRefs.json")
+            "/config/edu/tufts/hrilab/map/refs/ihmcRefs.json") # relative path from resources classpath
 
         time.sleep(2)
 

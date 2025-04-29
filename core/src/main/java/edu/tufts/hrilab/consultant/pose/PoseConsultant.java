@@ -17,7 +17,12 @@ import edu.tufts.hrilab.vision.stm.Grasp;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Writer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -92,12 +97,8 @@ public class PoseConsultant extends Consultant<PoseReference> {
   public void loadReferencesFromFile(String filename) {
     InputStream stream = PoseConsultant.class.getResourceAsStream(filename);
     if (stream == null) {
-      try { // Fixme: Temporary hack for python
-        stream = new FileInputStream(filename);
-      } catch (FileNotFoundException e) {
-        log.error("Resource not found: " + filename);
-        return;
-      }
+      log.error("Resource not found: " + filename);
+      return;
     }
 
     BufferedReader reader = new BufferedReader((new InputStreamReader(stream)));
