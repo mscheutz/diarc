@@ -27,12 +27,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static java.lang.System.getProperty;
 
 public class MockAvaComponent extends DiarcComponent implements AvaInterface {
 
   boolean toggle = false;
+
+  private final Lock chargingLock = new ReentrantLock();
+  private final Condition chargingTerminatedCondition = chargingLock.newCondition();
 
   @Override
   public void init() {
@@ -259,6 +265,27 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     } else {
       return 75;
     }
+  }
+
+  @Override
+  public void blockToCharge() {
+    log.info("[blockToCharge] blocking on chargingTerminatedCondition");
+    try {
+      chargingLock.lock();
+      chargingTerminatedCondition.await();
+    } catch (InterruptedException e) {
+      log.error("[blockToCharge] condition await interrupted", e);
+    } finally {
+      chargingLock.unlock();
+    }
+  }
+
+  @Override
+  public void interruptChargingBlock() {
+    log.info("[interruptChargingBlock] signaling chargingTerminatedCondition");
+    chargingLock.lock();
+    chargingTerminatedCondition.signal();
+    chargingLock.unlock();
   }
 }
 

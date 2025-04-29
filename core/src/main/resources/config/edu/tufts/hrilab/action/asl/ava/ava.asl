@@ -132,8 +132,8 @@ import java.util.StringTokenizer;
     double !enoughChargeLevel = 50; // Threshold to stop charging
     boolean !sentGoalHome = false;
     boolean !sentUrgentGoalHome = false;
-    Predicate !goHomeGoalPred = op:createPredicate("goHomeAndCharge(?actor, !enoughChargeLevel)");
-    Predicate !urgentGoHomeGoalPred = op:createPredicate("urgentGoHomeAndCharge(?actor, !enoughChargeLevel)");
+    Predicate !goHomeGoalPred = op:createPredicate("goHomeAndChargeToPercent(?actor, !enoughChargeLevel)");
+    Predicate !urgentGoHomeGoalPred = op:createPredicate("urgentGoHomeAndChargeToPercent(?actor, !enoughChargeLevel)");
     Long !goHomeGoalID = -1;
 
     // TODO;daniel; try catch the failure of going home or cancels
@@ -171,13 +171,13 @@ import java.util.StringTokenizer;
     }
 }
 
-// Wraps goHomeAndCharge but is marked with SKIPPENDING/URGENT bypassing the queue
-() = urgentGoHomeAndCharge(double ?enoughChargeLevel) {
-    act:goHomeAndCharge(?enoughChargeLevel);
+// Wraps goHomeAndChargeToPercent but is marked with SKIPPENDING/URGENT bypassing the queue
+() = urgentGoHomeAndChargeToPercent(double ?enoughChargeLevel) {
+    act:goHomeAndChargeToPercent(?enoughChargeLevel);
 }
 
 // Persistent goal until charged to certain threshold
-() = goHomeAndCharge(double ?enoughChargeLevel) {
+() = goHomeAndChargeToPercent(double ?enoughChargeLevel) {
     int !sleepTime = 30000;
     double !currBatteryLevel;
     !currBatteryLevel = act:getBatteryLevel();
@@ -188,6 +188,12 @@ import java.util.StringTokenizer;
         !currBatteryLevel = act:getBatteryLevel();
         op:sleep(!sleepTime);
     }
+}
+
+//Indefinitely blocking, but interruptible version of goHomeAndCharge. Used for Kiosk action
+() = goHomeAndCharge() {
+    act:goHome();
+    act:blockToCharge();
 }
 
 // is this  used?

@@ -492,3 +492,6 @@ right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
 
 start demo; VERBI; startDemo
 stop demo; VERBI; stopDemo
+
+%enable kiosk mode; C; setKioskModeEnabled(?ADDRESSEE,false)
+%disable kiosk mode; C; setKioskModeEnabled(?ADDRESSEE,true)

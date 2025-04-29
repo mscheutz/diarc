@@ -152,4 +152,15 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
   @Action
   public Integer getWifiSignalStrength();
 
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptChargingBlock()", onSuspendServiceCall = "interruptChargingBlock()")
+  public void blockToCharge();
+
+  @TRADEService
+  @Action
+  public void interruptChargingBlock();
+
+
+
 }

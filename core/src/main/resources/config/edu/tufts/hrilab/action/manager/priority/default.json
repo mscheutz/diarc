@@ -321,5 +321,9 @@
   "cancelScheduledGoal": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "setKioskModeEnabled": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

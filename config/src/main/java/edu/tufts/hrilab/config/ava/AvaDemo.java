@@ -22,6 +22,7 @@ public class AvaDemo extends DiarcConfiguration {
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "Direct Audio Device: USB Audio Device, USB Audio, USB Audio";
+  private boolean initKiosk = false;
 
 
   @Override
@@ -38,6 +39,7 @@ public class AvaDemo extends DiarcConfiguration {
     options.add(Option.builder("privateEndpoint").desc("run using privately hosted endpoint rather than free serverless endpoint").build());
     options.add(Option.builder("locationRefs").hasArg().desc("set location references file").build());
     options.add(Option.builder("speakerId").hasArg().desc("name of speaker to route local tts through").build());
+    options.add(Option.builder("kiosk").hasArg().desc("start the demo with kiosk mode enabled").build());
     return options;
   }
 
@@ -85,6 +87,9 @@ public class AvaDemo extends DiarcConfiguration {
       //} else {
       //  log.warn("not using private endpoint");
       //}
+    }
+    if (cmdLine.hasOption("kiosk")) {
+      initKiosk = true;
     }
   }
   public void runConfiguration() {
@@ -145,6 +150,11 @@ public class AvaDemo extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.ava.AvaComponent.class, avaArgs); //Ava_SomervilleHQ_Master_12262023_G
     }
 
+    String kioskArgs = "";
+    if (initKiosk) {
+      kioskArgs += " -enabled";
+    }
+
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
       "-goal listen(self) monitorBattery(ava) disableMic(ava) -beliefinitfile demos.pl agents/ava.pl"
         + " -dbfile " +
@@ -162,6 +172,8 @@ public class AvaDemo extends DiarcConfiguration {
               "demos/queueEM.asl"
         + " -priorityFile default.json avaPriority.json"
         + (useQueueEM ? " -executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager" : ""));
+
+    createInstance(edu.tufts.hrilab.action.manager.KioskGoalManager.class, kioskArgs);
 
     log.info("Finished Ava Demo Config");
   }

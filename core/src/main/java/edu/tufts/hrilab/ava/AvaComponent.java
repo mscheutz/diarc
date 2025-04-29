@@ -45,6 +45,9 @@ import java.lang.Math;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
@@ -101,6 +104,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private final ScheduledExecutorService keepAliveExecutor = Executors.newScheduledThreadPool(1);
   private final ScheduledExecutorService stopGoingHomeExecutor = Executors.newScheduledThreadPool(1);
+
+  private final Lock chargingLock = new ReentrantLock();
+  private final Condition chargingTerminatedCondition = chargingLock.newCondition();
 
   public AvaComponent() {
     super();
@@ -1039,5 +1045,26 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       throw new RuntimeException(e);
     }
     return -1;
+  }
+
+  @Override
+  public void blockToCharge() {
+    log.info("[blockToCharge] blocking on chargingTerminatedCondition");
+    try {
+      chargingLock.lock();
+      chargingTerminatedCondition.await();
+    } catch (InterruptedException e) {
+      log.error("[blockToCharge] condition await interrupted", e);
+    } finally {
+      chargingLock.unlock();
+    }
+  }
+
+  @Override
+  public void interruptChargingBlock() {
+    log.info("[interruptChargingBlock] signaling chargingTerminatedCondition");
+    chargingLock.lock();
+    chargingTerminatedCondition.signal();
+    chargingLock.unlock();
   }
 }

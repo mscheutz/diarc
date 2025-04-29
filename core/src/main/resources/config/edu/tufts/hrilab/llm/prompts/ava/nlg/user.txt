@@ -100,7 +100,7 @@ Example 20:
 Input:REPLY(ava,evan,batteryLevel(50),{})
 Output:{"translation":"My battery level is at 50 percent"}
 #
-Input:REPLY(ava,evan,[currentGoals(are(ava,active(goHomeAndCharge(ava,50.0))))],{})
+Input:REPLY(ava,evan,[currentGoals(are(ava,active(goHomeAndChargeToPercent(ava,50.0))))],{})
 Output:{"translation":"My current goal is to go home and charge until my battery has reached 50 percent"}
 ##
 ###

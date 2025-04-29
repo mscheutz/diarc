@@ -42,6 +42,7 @@ public class DialogueComponent extends DiarcComponent {
 
   private DialogueConsultant consultant;
   private Set<TRADEServiceInfo> dialogueHistorySubscribers = new HashSet<>();
+  private Set<TRADEServiceInfo> questionAskingSubscribers = new HashSet<>();
   //I believe this should live at the level of AgentTeams.
   private ConcurrentHashMap<Symbol,Set<Question>> questionsPerAgent = new ConcurrentHashMap<>();
   private Map<Symbol,Set<Symbol>> agentHierarchy = new HashMap<>();
@@ -200,6 +201,7 @@ public class DialogueComponent extends DiarcComponent {
     }
   }
 
+  //TODO: temp: Added for kioskGoalManager functionality - can remove if reimplemented
   @TRADEService
   public void registerForDialogueHistoryNotifications(TRADEServiceInfo callback) {
     if (dialogueHistorySubscribers.stream().anyMatch(c-> c.matches(callback))) {
@@ -212,6 +214,42 @@ public class DialogueComponent extends DiarcComponent {
   @TRADEService
   public void unregisterForDialogueHistoryNotifications(TRADEServiceInfo callback) {
     dialogueHistorySubscribers.remove(callback);
+  }
+
+  private void notifyQuestionAskingSubscribers(Symbol agent, boolean active) {
+    List<TRADEServiceInfo> servicesToRemove = new ArrayList<>();
+    for (TRADEServiceInfo subscriber : questionAskingSubscribers) {
+      try {
+        subscriber.call(void.class, agent, active);
+      } catch (Exception e) {
+        log.error("Could not make callback to: " + subscriber, e);
+        //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
+        if (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null")) {
+          servicesToRemove.add(subscriber);
+        }
+      }
+    }
+
+    //If a remote container has gone down without unregistering for notifications,
+    // then remove the service rather than continuously log errors.
+    for (TRADEServiceInfo service: servicesToRemove) {
+      log.info("[notifyQuestionAskingSubscribers] unregistering unavailable service from question asking notifications ");
+      unregisterForQuestionAskingNotifications(service);
+    }
+  }
+
+  @TRADEService
+  public void registerForQuestionAskingNotifications(TRADEServiceInfo callback) {
+    if (questionAskingSubscribers.stream().anyMatch(c-> c.matches(callback))) {
+      log.warn("[registerForQuestionAskingNotifications] attempt to register duplicate callback, not adding");
+    } else {
+      questionAskingSubscribers.add(callback);
+    }
+  }
+
+  @TRADEService
+  public void unregisterForQuestionAskingNotifications(TRADEServiceInfo callback) {
+    questionAskingSubscribers.remove(callback);
   }
 
   @TRADEService
@@ -281,8 +319,10 @@ public class DialogueComponent extends DiarcComponent {
       currentQuestions.add(question);
     }
 
+    notifyQuestionAskingSubscribers(speaker,true);
     Map<Variable,Symbol> bindings = question.waitForResponse(waitDuration);
     currentQuestions.remove(question);
+    notifyQuestionAskingSubscribers(speaker,false);
     return bindings;
   }
 

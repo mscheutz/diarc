@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 public enum PriorityTier {
     UNINITIALIZED,
+    KIOSK,
     LOW,
     NORMAL,
     HIGH,

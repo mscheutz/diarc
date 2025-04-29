@@ -1,5 +1,5 @@
 {
-  "urgentGoHomeAndCharge": {
+  "urgentGoHomeAndChargeToPercent": {
     "priority": 1,
     "priorityTier": "URGENT"
   },

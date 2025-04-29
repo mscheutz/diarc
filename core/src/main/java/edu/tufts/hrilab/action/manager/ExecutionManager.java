@@ -837,26 +837,49 @@ public class ExecutionManager implements GoalListener {
    */
   protected void supersedeGoals(Goal newGoal, Set<Goal> activeGoals) {
     log.info("[supersedeGoals] {} superseding {}", newGoal, activeGoals);
+    //TODO: wary about concurrency here. Can't lock on both collections around suspension of goals because deadlock can
+    //  occur if onInterrupt methods do anything involving interruption of other/subgoals. If this is only called through
+    //  onPendingGoalUpdated, are we safe here without worrying about new goals coming in? If interruption behaviors
+    //  act on pending goals (which shouldn't really ever happen?), are we still in trouble?
     //Send active goals back to pending
     synchronized (pendingGoalsLock) {
       log.trace("[supersedeGoals] have pendingGoalsLock");
       synchronized (goalsLock) {
         log.trace("[supersedeGoals] have goalsLock");
         //Suspend and remove active goals back to pending first
+        List<Goal> supersededGoals = new ArrayList<>();
         List<Future> aiFutures = new ArrayList<>();
         List<GoalStatus> goalStatuses = new ArrayList<>(); //track original status to know whether to resume when returned to active
+        //TODO: should to-be-superseded goal interruption occur in parallel threads?
         for (Goal activeGoal : activeGoals) {
-          goalStatuses.add(activeGoal.getStatus());
-          if (activeGoal.getStatus() == GoalStatus.ACTIVE) {
-            log.trace("[supersedeGoals] suspending active goal {}", activeGoal);
-            if (suspendActiveGoal(activeGoal)) {
-              // wait for goal to be suspended
-              waitForGoalStatus(activeGoal, GoalStatus.SUSPENDED);
+          if (!activeGoal.getStatus().isTerminated()) {
+            GoalStatus currentStatus = activeGoal.getStatus();
+            if (activeGoal.getPriorityTier() == PriorityTier.KIOSK) {
+              //superseded kiosk goals can be canceled and discarded rather than suspended and added to pending
+              if (cancelActiveGoal(activeGoal)) {
+                waitForGoalStatus(activeGoal, GoalStatus.CANCELED);
+                unlockResources(activeGoal); //TODO: get rid of this when concurrency issues with supersede are fixed
+              }
+            } else {
+              if (currentStatus == GoalStatus.ACTIVE) {
+                log.debug("[supersedeGoals] suspending active goal {}", activeGoal);
+                if (suspendActiveGoal(activeGoal)) {
+                  // wait for goal to be suspended
+                  waitForGoalStatus(activeGoal, GoalStatus.SUSPENDED);
+                }
+              }
+              log.debug("[supersedeGoals] unlocking resources and removing active goal {}", activeGoal);
+              unlockResources(activeGoal);
+              Future aiFuture = removeActiveGoal(activeGoal);
+              if (aiFuture == null) {
+                log.warn("[supersedeGoals] goal to supersede may have terminated on its own...");
+              } else {
+                supersededGoals.add(activeGoal);
+                goalStatuses.add(currentStatus);
+                aiFutures.add(aiFuture);
+              }
             }
           }
-          log.debug("[supersedeGoals] unlocking resources and removing active goal {}", activeGoal);
-          unlockResources(activeGoal);
-          aiFutures.add(removeActiveGoal(activeGoal));
         }
 
         //Set new Goal as active
@@ -866,7 +889,7 @@ public class ExecutionManager implements GoalListener {
 
         //Add superseded goals back to pending
         int i = 0;
-        for (Goal activeGoal : activeGoals) {
+        for (Goal activeGoal : supersededGoals) {
           log.debug("[supersedeGoals] returning superseded goal to pending {}", activeGoal);
           PendingGoal pg = new PendingGoal(activeGoal);
           pg.setPreviousAIFuture(aiFutures.get(i));
@@ -1346,6 +1369,7 @@ public class ExecutionManager implements GoalListener {
    */
   public boolean cancelPendingGoalByIndex(int index) {
     log.debug("[cancelPendingGoalByIndex] removing pending goal with index: " + index);
+    PendingGoal entry;
     synchronized (pendingGoalsLock) {
       if (index < pendingGoals.size()) {
         Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.iterator();
@@ -1354,14 +1378,14 @@ public class ExecutionManager implements GoalListener {
           pendingGoalsIterator.next();
           i++;
         }
-        PendingGoal entry = pendingGoalsIterator.next();
-        cancelPendingGoal(entry);
-        return true;
+        entry = pendingGoalsIterator.next();
+      } else {
+        log.warn("[cancelPendingGoalByIndex] Queue is of length: " + pendingGoals.size() + ", cannot remove goal with index: " + index);
+        return false;
       }
-      log.warn("[cancelPendingGoalByIndex] Queue is of length: " + pendingGoals.size() + ", cannot remove goal with index: " + index);
     }
-
-    return false;
+    cancelPendingGoal(entry);
+    return true;
   }
 
   /**
@@ -1657,18 +1681,26 @@ public class ExecutionManager implements GoalListener {
    */
   public void cancelAllPendingGoals() {
     log.debug("[cancelAllPendingGoals] in method");
+    List<Long> goalIds = new ArrayList<>();
     synchronized (pendingGoalsLock) {
       log.trace("[cancelAllPendingGoals] have pendingGoalsLock");
-      while (!pendingGoals.isEmpty()) {
-        int size = pendingGoals.size();
-        cancelPendingGoalByIndex(size - 1);
-        if (pendingGoals.size() == size) {
-          log.error("[cancelPendingGoals] canceled goal which was not removed from the collection, exiting loop");
-          return;
-        }
+      //while (!pendingGoals.isEmpty()) {
+      //  int size = pendingGoals.size();
+      //  cancelPendingGoalByIndex(size - 1);
+        //if (pendingGoals.size() == size) {
+        //  log.error("[cancelPendingGoals] canceled goal which was not removed from the collection, exiting loop");
+        //  return;
+        //}
+      //}
+      for (PendingGoal pg : pendingGoals) {
+        goalIds.add(pg.getGoal().getId());
       }
     }
-    log.trace("[cancelAllPendingGoals] released pendingGoalsLock");
+    log.trace("[cancelAllPendingGoals] released pendingGoalsLock, canceling all gather goals");
+    for (Long gid : goalIds) {
+      log.trace("[cancelAllPendingGoals] canceling {}", gid);
+      cancelGoal(gid);
+    }
   }
 
   /**
@@ -1676,24 +1708,24 @@ public class ExecutionManager implements GoalListener {
    */
   public void cancelAllCurrentGoals() {
     log.debug("[cancelAllCurrentGoals] in method");
-    synchronized (pendingGoalsLock) {
-      log.trace("[cancelAllCurrentGoals] have pendingGoalsLock");
-      synchronized (goalsLock) {
-        log.trace("[cancelAllCurrentGoals] have goalsLock");
+    //synchronized (pendingGoalsLock) {
+    //  log.trace("[cancelAllCurrentGoals] have pendingGoalsLock");
+    //  synchronized (goalsLock) {
+    //    log.trace("[cancelAllCurrentGoals] have goalsLock");
         scheduledGoalManager.cancelAllScheduledGoals();
         cancelAllPendingGoals();
         cancelAllActiveGoals();
-      }
-    }
-    log.trace("[cancelAllCurrentGoals] released locks");
+    //  }
+    //}
+    //log.trace("[cancelAllCurrentGoals] released locks");
   }
 
   /**
    * Cancel all goals currently found in the activeGoals colection
    */
   public void cancelAllActiveGoals() {
+    Set<Goal> goalsToCancel = new HashSet<>();
     synchronized (goalsLock) {
-      Set<Goal> goalsToCancel = new HashSet<>();
       for (Symbol agentTeam : agentTeams.keySet()) {
         for (Goal g : agentTeams.get(agentTeam).getActiveGoals()) {
           if (!g.getPredicate().getName().equals("listen")) {
@@ -1701,9 +1733,9 @@ public class ExecutionManager implements GoalListener {
           }
         }
       }
-      for (Goal g : goalsToCancel) {
-        cancelActiveGoal(g);
-      }
+    }
+    for (Goal g : goalsToCancel) {
+      cancelActiveGoal(g);
     }
   }
 
