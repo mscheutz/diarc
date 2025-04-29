@@ -26,7 +26,6 @@ import java.util.StringTokenizer;
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
-    act:goHome();
 }
 
 () = escortFromToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
@@ -37,7 +36,7 @@ import java.util.StringTokenizer;
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
-    act:goHome();
+    act:goToLocation(location_8:location);
 }
 
 /**
@@ -56,56 +55,56 @@ import java.util.StringTokenizer;
  * This is a recovery policy executed when a parameter to a function doesn't have a known location.
  * It attempts to find the location of the thing.
  */
-() = unknownLocationRecoveryPolicy(List ?failedActionSignature, List ?failureReasons, Predicate ?failedGoal) {
-    Symbol !thing;
-
-    recovery : {
-        failedActions: {escortToLocation(X,Y,Z), lookForPerson(X,Y)}
-        failureReasons: {at(X,Y), alwaysAt(X,Y)}
-        actionStatuses: {FAIL_PRECONDITIONS}
-    }
-
-    // Get the !thing from ?failureReasons [at(!thing,!thingLoc)]
-    String !failureReasonName;
-    Predicate !failureReason;
-    List !failureReasonArgs;
-    int !failureReasonArgsSize;
-    foreach (!failureReason : ?failureReasons) {
-        !failureReasonName = op:invokeMethod(!failureReason, "getName");
-        // Check if the name is "at"
-        if (op:invokeMethod(!failureReasonName, "equals", "at")) {
-            !failureReasonArgs = op:invokeMethod(!failureReason, "getArgs");
-            !failureReasonArgsSize = op:invokeMethod(!failureReasonArgs, "size");
-            // Ensure it has the args to check for the first argument
-            if (op:gt(!failureReasonArgsSize,0)) {
-                !thing = op:invokeMethod(!failureReasonArgs, "get", 0);
-            }
-        }
-    }
-
-    // TODO;daniel; this doesn't deal with weird responses (he is at the elevator, the elevator, yes, no, i don't know!!!)
-    Variable !y = "Y";
-    Predicate !atResponseForm = op:createPredicate("wantBel(X,self,at(!thing,!y))");
-
-    // check if you understand that question
-    // check for understanding in the ask question method lolll
-    boolean !understood = false;
-    Predicate !answerSemantics;
-    Predicate !confirmationSemantics;
-    Predicate !yesSemantics = op:createPredicate("val(yes)");
-    while (op:equals(!understood, false)) {
-//        tsc:setSuggestedInput("!thing is at the kitchen");
-        !answerSemantics = act:askQuestionFromString(patient, "Do you know where is !thing?", !atResponseForm);
-        tsc:displayText("yes or no");
-        !confirmationSemantics = act:askQuestionFromString(patient, "Did I understand that correctly?", "val(X)");
-        !understood = op:equals(!confirmationSemantics, !yesSemantics);
-    }
-
-    Map !bindings = op:invokeMethod(!answerSemantics, "getBindings", !atResponseForm);
-    Symbol !thingLoc = op:get(!bindings, !y);
-    Predicate !assertPred = op:createPredicate("at(!thing,!thingLoc)");
-    act:assertBelief(!assertPred);
-}
+//() = unknownLocationRecoveryPolicy(List ?failedActionSignature, List ?failureReasons, Predicate ?failedGoal) {
+//    Symbol !thing;
+//
+//    recovery : {
+//        failedActions: {escortToLocation(X,Y,Z), lookForPerson(X,Y)}
+//        failureReasons: {at(X,Y), alwaysAt(X,Y)}
+//        actionStatuses: {FAIL_PRECONDITIONS}
+//    }
+//
+//    // Get the !thing from ?failureReasons [at(!thing,!thingLoc)]
+//    String !failureReasonName;
+//    Predicate !failureReason;
+//    List !failureReasonArgs;
+//    int !failureReasonArgsSize;
+//    foreach (!failureReason : ?failureReasons) {
+//        !failureReasonName = op:invokeMethod(!failureReason, "getName");
+//        // Check if the name is "at"
+//        if (op:invokeMethod(!failureReasonName, "equals", "at")) {
+//            !failureReasonArgs = op:invokeMethod(!failureReason, "getArgs");
+//            !failureReasonArgsSize = op:invokeMethod(!failureReasonArgs, "size");
+//            // Ensure it has the args to check for the first argument
+//            if (op:gt(!failureReasonArgsSize,0)) {
+//                !thing = op:invokeMethod(!failureReasonArgs, "get", 0);
+//            }
+//        }
+//    }
+//
+//    // TODO;daniel; this doesn't deal with weird responses (he is at the elevator, the elevator, yes, no, i don't know!!!)
+//    Variable !y = "Y";
+//    Predicate !atResponseForm = op:createPredicate("wantBel(X,self,at(!thing,!y))");
+//
+//    // check if you understand that question
+//    // check for understanding in the ask question method lolll
+//    boolean !understood = false;
+//    Predicate !answerSemantics;
+//    Predicate !confirmationSemantics;
+//    Predicate !yesSemantics = op:createPredicate("val(yes)");
+//    while (op:equals(!understood, false)) {
+////        tsc:setSuggestedInput("!thing is at the kitchen");
+//        !answerSemantics = act:askQuestionFromString(patient, "Do you know where is !thing?", !atResponseForm);
+//        tsc:displayText("yes or no");
+//        !confirmationSemantics = act:askQuestionFromString(patient, "Did I understand that correctly?", "val(X)");
+//        !understood = op:equals(!confirmationSemantics, !yesSemantics);
+//    }
+//
+//    Map !bindings = op:invokeMethod(!answerSemantics, "getBindings", !atResponseForm);
+//    Symbol !thingLoc = op:get(!bindings, !y);
+//    Predicate !assertPred = op:createPredicate("at(!thing,!thingLoc)");
+//    act:assertBelief(!assertPred);
+//}
 
 //() = unconfirmedLocationRecoveryPolicy(Predicate ?failedActionSignature, List ?failureReasons, Predicate ?failedGoal) {
 //    recovery : {
@@ -221,28 +220,28 @@ import java.util.StringTokenizer;
     tsc:setZLift(90.0);
 }
 
-() = recoverGoToLocation(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
-    recovery : {
-        actionRecovery : {
-            catchingActions : {goToLocation(X,Y)} //don't think this line practically matters
-            postRecovery : postrecovery_retry
-        }
-        failedActions: {goToLocation(X,Y,Z)}
-        maximumAttempts : 2
-        excludedGoals : {recoverGoToLocation(X,Y,Z,A)} //If you want 0 recovery of recovery (80% sure failing the recovery goTo will exit in a way that the initial failed goTo does not retry) //TODO: requiring this feels like indication of a bug - maxAttempts > 1 with failed action involved in recovery of itself
-        //excludedGoals : {recoverGoToLocation(X,Y,Z,recoverGoToLocation(X,A,B,C))} //If you want 1 layer of recovery for recovery
-    }
-    Predicate !failedActionPredicate;
-    Symbol !fromLocation;
-
-    op:log(info, "[recoveryGoToLocation] ?failedActionPredicates, ?failureReasons, ?failedGoal");
-    //Can make this unpacking safer (check null/size) if possible to hit this from other contexts. Don't think you can though
-    !failedActionPredicate = op:get(?failedActionPredicates,0);
-    !fromLocation = op:invokeMethod(!failedActionPredicate,"get",2);
-    op:log(debug, "[recoveryGoToLocation] Going back to !fromLocation first");
-    act:goToLocation(!fromLocation);
-    op:log(warn, "[recoveryGoToLocation] re-attempting goToLocation(X)");
-}
+//() = recoverGoToLocation(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+//    recovery : {
+//        actionRecovery : {
+//            catchingActions : {goToLocation(X,Y)} //don't think this line practically matters
+//            postRecovery : postrecovery_retry
+//        }
+//        failedActions: {goToLocation(X,Y,Z)}
+//        maximumAttempts : 2
+//        excludedGoals : {recoverGoToLocation(X,Y,Z,A)} //If you want 0 recovery of recovery (80% sure failing the recovery goTo will exit in a way that the initial failed goTo does not retry) //TODO: requiring this feels like indication of a bug - maxAttempts > 1 with failed action involved in recovery of itself
+//        //excludedGoals : {recoverGoToLocation(X,Y,Z,recoverGoToLocation(X,A,B,C))} //If you want 1 layer of recovery for recovery
+//    }
+//    Predicate !failedActionPredicate;
+//    Symbol !fromLocation;
+//
+//    op:log(info, "[recoveryGoToLocation] ?failedActionPredicates, ?failureReasons, ?failedGoal");
+//    //Can make this unpacking safer (check null/size) if possible to hit this from other contexts. Don't think you can though
+//    !failedActionPredicate = op:get(?failedActionPredicates,0);
+//    !fromLocation = op:invokeMethod(!failedActionPredicate,"get",2);
+//    op:log(debug, "[recoveryGoToLocation] Going back to !fromLocation first");
+//    act:goToLocation(!fromLocation);
+//    op:log(warn, "[recoveryGoToLocation] re-attempting goToLocation(X)");
+//}
 
 () = goToLocation(Symbol ?location) {
     Symbol !current;

@@ -22,6 +22,8 @@ public class AvaDemo extends DiarcConfiguration {
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "Direct Audio Device: USB Audio Device, USB Audio, USB Audio";
+  private String mediaDir = "videos";
+  private boolean useDisplay = true;
 
 
   @Override
@@ -38,6 +40,8 @@ public class AvaDemo extends DiarcConfiguration {
     options.add(Option.builder("privateEndpoint").desc("run using privately hosted endpoint rather than free serverless endpoint").build());
     options.add(Option.builder("locationRefs").hasArg().desc("set location references file").build());
     options.add(Option.builder("speakerId").hasArg().desc("name of speaker to route local tts through").build());
+    options.add(Option.builder("mediaDir").hasArg().desc("name of directory in $HOME/.diarc where media files are stored").build());
+    options.add(Option.builder("disableDisplay").desc("add to run without a display").build());
     return options;
   }
 
@@ -73,6 +77,9 @@ public class AvaDemo extends DiarcConfiguration {
     if (cmdLine.hasOption("speakerId")) {
       speakerId = cmdLine.getOptionValue("speakerId");
     }
+    if (cmdLine.hasOption("mediaDir")) {
+      mediaDir = cmdLine.getOptionValue("mediaDir");
+    }
     if (cmdLine.hasOption("privateEndpoint")) {
       log.warn("You have configured the system to use the privately hosted HuggingFace endpoint.");// THIS COSTS MONEY AND SHOULD NOT BE USED FOR FRIVOLOUS TESTING. If you are doing this intentionally, please enter 1 into the console");
       usePrivateEndpoint = true;
@@ -85,6 +92,8 @@ public class AvaDemo extends DiarcConfiguration {
       //} else {
       //  log.warn("not using private endpoint");
       //}
+    } if (cmdLine.hasOption("disableDisplay")) {
+      useDisplay = false;
     }
   }
   public void runConfiguration() {
@@ -138,7 +147,9 @@ public class AvaDemo extends DiarcConfiguration {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture ava.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls"));
 //    }
 
-    createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -videoDir videos -videoVolume 100");
+    if (useDisplay) {
+      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -videoDir " + mediaDir + " -videoVolume 10");
+    }
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);
     } else {
