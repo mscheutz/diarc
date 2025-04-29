@@ -8,8 +8,7 @@ from jpype import JImplements, JOverride, JClass
 from spot_wrapper.wrapper import SpotWrapper
 from pyTRADE.core.wrapper import TRADEWrapper
 
-from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface
-from edu.tufts.hrilab.spot import SpotInterface
+from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface
 from javax.vecmath import Point3d, Matrix4d, Vector3d, Quat4d
 from edu.tufts.hrilab.action.justification import ConditionJustification
 
