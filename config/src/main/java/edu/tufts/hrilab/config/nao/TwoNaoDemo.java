@@ -19,7 +19,7 @@ public class TwoNaoDemo extends DiarcConfiguration {
   /**
    * Set to true to use gui for speech input
    */
-  public boolean simSpeech = true;
+  public boolean simSpeech = false;
   /**
    * Set
    */

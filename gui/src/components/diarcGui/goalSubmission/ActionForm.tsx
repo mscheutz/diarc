@@ -1,5 +1,5 @@
 // IMPORTS //
-import React, { useContext } from "react";
+import React, {SetStateAction, useCallback, useContext} from "react";
 
 // NPM packages
 import { useForm } from "react-hook-form";
@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 // Internal imports
 import ActionFormContext from "./ActionFormContext";
 import { SendMessage } from "react-use-websocket";
+import {LOCAL_STORAGE_KEY} from "../util/constants";
 
 // CONSTANTS //
 const textBoxClassName = "block box-border w-full rounded mt-1 mb-2 text-sm "
@@ -26,7 +27,9 @@ const submitClassName = "bg-slate-900 text-white hover:bg-slate-800 "
 
 type Props = {
     sendMessage: SendMessage,
-    path: string
+    path: string,
+    setLastGoalSubmitted: React.Dispatch<SetStateAction<string>>,
+    setSubmissionStatus: React.Dispatch<SetStateAction<string>>
 };
 
 /**
@@ -38,12 +41,34 @@ type Props = {
 * @version 1.0
 */
 const ActionForm: React.FC<Props> = ({
-    sendMessage, path
+    sendMessage, path, setLastGoalSubmitted, setSubmissionStatus
 }) => {
     // HOOKS & CALLBACKS //
+    const addToStorage = (action: string) => {
+        const current = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+        if(!current) {
+            const stored = [action];
+            window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stored));
+            return;
+        }
+        let stored: string[] = JSON.parse(current);
+        if(stored.includes(action)) return;
+
+        stored.push(action);
+        window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stored));
+    }
+
     const custom = useForm();
+    const onSaveCustom = useCallback(() => {
+        const action: string = custom.getValues("custom");
+        addToStorage(action);
+        window.dispatchEvent(new Event("localStorage"));
+    }, [custom]);
     const onSubmitCustom = (data: any) => {
-        custom.reset();
+        const goal: string = data.custom;
+        const goalName: string = goal.slice(0, goal.indexOf("("));
+        setLastGoalSubmitted(goalName);
+        setSubmissionStatus("wait");
         sendMessage(JSON.stringify(
             {
                 type: "custom",
@@ -61,23 +86,29 @@ const ActionForm: React.FC<Props> = ({
                 actionFormContext.slice(1).map((param, index) => {
                     return (
                         <div key={index}>
-                            <label className="font-mono">{param}</label>
-                            <input type="text" {...generated.register(param)}
-                                className={textBoxClassName} required />
+                            <label className="font-mono">
+                                {param}<span className="text-red-600">*</span>
+                                <input type="text" {...generated.register(param)}
+                                       className={textBoxClassName} required/>
+                            </label>
                         </div>
                     );
                 })
                 : <div className="py-2">No action selected.</div>
         );
     };
+    const onSaveGenerated = (data: any) => {
+        let action: string = actionFormContext[0] + "(";
+        for(let i = 1; i < actionFormContext.length - 1; i++)
+            action += data[actionFormContext[i]] + ",";
+        action += data[actionFormContext[actionFormContext.length - 1]] + ")";
+        addToStorage(action);
+        window.dispatchEvent(new Event("localStorage"));
+    }
     const onSubmitGenerated = (data: any) => {
-        generated.reset();
-        for (let [key, value] of Object.entries(data)) {
-            if (!actionFormContext.includes(key) || value === "") {
-                delete data[key];
-            }
-        }
+        setLastGoalSubmitted(actionFormContext[0]);
 
+        setSubmissionStatus("wait");
         let array: string[] = [actionFormContext[0]]
         for (let i = 1; i < actionFormContext.length; i++) {
             array.push(data[actionFormContext[i]]);
@@ -93,21 +124,31 @@ const ActionForm: React.FC<Props> = ({
 
     // DOM //
     return (
-        <div className="flex flex-col gap-1 w-full h-full border border-[#d1dbe3]
+        <div className="flex flex-col gap-1 w-full border border-[#d1dbe3]
                         rounded-md shadow-md p-3">
             {/* Custom action form */}
             <form
                 onSubmit={custom.handleSubmit(onSubmitCustom)}
                 className="flex flex-col">
 
-                <label className="text-lg">Custom Action</label>
-                <textarea {...custom.register("custom")}
-                    className={textBoxClassName} required />
+                <label className="text-lg">
+                    Custom Action<span className="text-red-600">*</span>
+                    <textarea {...custom.register("custom")}
+                              className={textBoxClassName} required/>
+                </label>
 
-                <input
-                    type="submit" value="Submit"
-                    className={submitClassName}
-                />
+                <div className="flex flex-row gap-2">
+                    <button
+                        type="button"
+                        className={submitClassName + " grow"}
+                        onClick={onSaveCustom}>
+                        Save preset
+                    </button>
+                    <input
+                        type="submit" value="Submit"
+                        className={submitClassName + " grow"}
+                    />
+                </div>
             </form>
 
             <div className="separator text-slate-500 text-center italic my-4">
@@ -117,7 +158,7 @@ const ActionForm: React.FC<Props> = ({
             {/* Generated form */}
             <form
                 onSubmit={generated.handleSubmit(onSubmitGenerated)}
-                className="flex flex-col"
+                className="flex flex-col gap-1"
             >
                 <label className="text-lg">
                     Selected Action
@@ -136,15 +177,19 @@ const ActionForm: React.FC<Props> = ({
                 {generateForm()}
 
                 {actionFormContext.length > 0
-                    && <>
-                        <label className="text-sm pt-2 pb-2">
-                            All fields are required.
-                        </label>
+                    && <div className="flex flex-row gap-2">
+                        <button
+                            type="button"
+                            className={submitClassName + " grow"}
+                            onClick={generated.handleSubmit(onSaveGenerated)}>
+                            Save preset
+                        </button>
                         <input type="submit" value="Submit"
                             // From Button.tsx
-                            className={submitClassName}
+                            className={submitClassName + " grow"}
                         />
-                    </>}
+                    </div>
+                }
             </form>
         </div>
     );

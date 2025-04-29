@@ -1,5 +1,5 @@
 // IMPORTS //
-import React from "react";
+import React, { SetStateAction } from "react";
 
 // NPM packages
 import { useForm } from "react-hook-form";
@@ -21,7 +21,9 @@ const submitClassName = "bg-slate-900 text-white hover:bg-slate-800 "
 
 type Props = {
     sendMessage: SendMessage,
-    path: string
+    path: string,
+    setLastGoalSubmitted: React.Dispatch<SetStateAction<string>>,
+    setSubmissionStatus: React.Dispatch<SetStateAction<string>>
 };
 
 /**
@@ -30,12 +32,15 @@ type Props = {
  * @version 1.0
  */
 const GoalForm: React.FC<Props> = ({
-    sendMessage, path
+    sendMessage, path, setLastGoalSubmitted, setSubmissionStatus
 }) => {
     // HOOKS & CALLBACKS //
-    const { register, handleSubmit, reset } = useForm();
+    const { register, handleSubmit } = useForm();
     const onSubmitGoal = (data: any) => {
-        reset();
+        const goal: string = data.goal;
+        setLastGoalSubmitted(goal);
+
+        setSubmissionStatus("wait");
         sendMessage(JSON.stringify(
             {
                 type: "goal",
@@ -52,21 +57,21 @@ const GoalForm: React.FC<Props> = ({
             className="flex flex-col gap-1 w-full h-full border border-[#d1dbe3]
             rounded-md shadow-md p-3">
 
-            <label>Agent</label>
-            <input type="text" defaultValue="self" {...register("agent")}
-                className={textBoxClassName} required />
+            <label>
+                Agent<span className="text-red-600">*</span>
+                <input type="text" defaultValue="self" {...register("agent")}
+                       className={textBoxClassName} required/>
+            </label>
 
-            <label>Goal</label>
-            <input type="text" {...register("goal")}
-                className={textBoxClassName} required />
-
-            <label className="text-sm pt-2 pb-2">
-                All fields are required.
+            <label>
+                Goal<span className="text-red-600">*</span>
+                <input type="text" {...register("goal")}
+                       className={textBoxClassName} required/>
             </label>
 
             <input type="submit" value="Submit"
                 // From Button.tsx
-                className={submitClassName}
+                   className={submitClassName}
             />
         </form>
     );

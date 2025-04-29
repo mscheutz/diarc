@@ -20,3 +20,10 @@ elevator_lab_test/
 /gui/yarn.lock
 /gui/build/
 /gui/node_modules/
+config/bin/
+core/bin/
+diarcRos/bin/
+vision/bin/
+/node_modules/
+**/.venv/
+/core/src/main/python/spot/spot_phi.yaml

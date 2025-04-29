@@ -21,7 +21,7 @@ import java.util.*;
  *
  * @author Lucien Bao
  * @version 1.0
- * @see edu.tufts.hrilab.action.GoalManagerComponent GoalManagerImpl (the
+ * @see edu.tufts.hrilab.action.GoalManagerComponent GoalManagerComponent (the
  * <code>GuiProvider</code> for this adapter)
  */
 public class GoalViewerAdapter extends GuiAdapter {
@@ -98,7 +98,6 @@ public class GoalViewerAdapter extends GuiAdapter {
    * <ul>
    *     <li><code>name: string</code></li>
    *     <li><code>actor: string</code></li>
-   *     <li><code>currentAction: string</code></li>
    *     <li><code>status: string</code></li>
    *     <li><code>start: string</code></li>
    *     <li><code>end: string</code></li>
@@ -120,12 +119,13 @@ public class GoalViewerAdapter extends GuiAdapter {
       JsonObject goalJson = new JsonObject();
       goalJson.addProperty("name", info.unboundGoal.toString());
       goalJson.addProperty("actor", info.actor.getName());
-//      goalJson.addProperty("currentAction", "");
       goalJson.addProperty("status", info.status.toString().toLowerCase());
       goalJson.addProperty("start", simpleDateFormat.format(new Date(info.start)));
       goalJson.addProperty("end", (info.end == -1) ? "" : simpleDateFormat.format(new Date(info.end)));
       goalJson.addProperty("priority", info.priority);
       goalJson.addProperty("id", info.gid);
+      if(info.failConditions != null)
+        goalJson.addProperty("failureReason", info.failConditions.getFailureReason().toString());
       result.add(goalJson);
     }
     return result;

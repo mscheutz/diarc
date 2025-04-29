@@ -23,7 +23,6 @@ import edu.tufts.hrilab.vision.webgui.VisionAdapter;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
-import javax.annotation.Nonnull;
 import javax.vecmath.Matrix4d;
 import java.awt.*;
 import java.io.IOException;
@@ -1098,7 +1097,6 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
    * {@inheritDoc}
    * @return {@inheritDoc}
    */
-  @Nonnull
   @Override
   public String[] getAdapterClassNames() {
     return new String[]{

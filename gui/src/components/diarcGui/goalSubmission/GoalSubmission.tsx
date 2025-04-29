@@ -14,6 +14,8 @@ import GoalForm from "./GoalForm";
 import ActionFormContext from "./ActionFormContext";
 import ConnectionIndicator from "../util/ConnectionIndicator";
 import ActionDatabase from "./ActionDatabase";
+import ManagePresets from "./ManagePresets";
+import SubmissionStatusIndicator from "./SubmissionStatusIndicator";
 
 type Props = {
     path: string,
@@ -25,13 +27,12 @@ type Props = {
 /**
  * @author Lucien Bao
  * @version 1.0
- * GoalManager. Provides a GUI to browse Action Script Language (.asl) files,
- * browse available actions, learn new actions, and submit actions and goals.
+ * GoalSubmission. Provides a GUI to browse available actions and submit actions and goals.
  * 
  * Action filtering logic adapted from the example at
  * https://dgreene1.github.io/react-accessible-treeview/docs/examples-Filtering.
  */
-const GoalManager: React.FC<Props> = ({
+const GoalSubmission: React.FC<Props> = ({
     path, lastMessage, sendMessage, readyState
 }) => {
     // STATE //
@@ -72,6 +73,9 @@ const GoalManager: React.FC<Props> = ({
 
     // Export button
     const [exportStatus, setExportStatus] = useState<string>("");
+    // Submit buttons
+    const [lastGoalSubmitted, setLastGoalSubmitted] = useState<string>("");
+    const [submissionStatus, setSubmissionStatus] = useState<string>("");
 
     const handleExport = () => {
         setExportStatus("wait");
@@ -102,7 +106,10 @@ const GoalManager: React.FC<Props> = ({
             }));
         }
         if (data.export) {
-            setExportStatus("successful")
+            setExportStatus("successful");
+        }
+        if (data.submit) {
+            setSubmissionStatus("successful");
         }
     },
         [lastMessage, path]);
@@ -131,21 +138,34 @@ const GoalManager: React.FC<Props> = ({
                         <Tab>Submit Goal</Tab>
                     </TabList>
 
-                    <TabPanel className="hidden flex-col min-h-0 grow">
-                        <ActionDatabase
-                            actionList={actionList}
-                            setActionFormContext={setActionFormContext}
-                            setSelectedIds={setSelectedIds}
-                            filterNodes={filterNodes}
-                            handleExport={handleExport}
-                            exportStatus={exportStatus}
-                        />
+                    <TabPanel className="hidden flex-col min-h-0 grow gap-5">
+                        <div className="basis-2/3 min-h-0">
+                            <ActionDatabase
+                                actionList={actionList}
+                                setActionFormContext={setActionFormContext}
+                                setSelectedIds={setSelectedIds}
+                                filterNodes={filterNodes}
+                                handleExport={handleExport}
+                                exportStatus={exportStatus}
+                            />
+                        </div>
+                        <div className="basis-1/3 min-h-0 overflow-y-auto border border-1 border-[#d1dbe3] rounded-md
+                                        shadow-md">
+                            <ManagePresets
+                                sendMessage={sendMessage}
+                                path={path}
+                                setLastGoalSubmitted={setLastGoalSubmitted}
+                                setSubmissionStatus={setSubmissionStatus}
+                            />
+                        </div>
                     </TabPanel>
                     <TabPanel className="hidden flex-col min-h-0 grow">
                         <div className="w-full h-full overflow-y-auto">
                             <ActionForm
                                 sendMessage={sendMessage}
                                 path={path}
+                                setLastGoalSubmitted={setLastGoalSubmitted}
+                                setSubmissionStatus={setSubmissionStatus}
                             />
                         </div>
                     </TabPanel>
@@ -154,6 +174,8 @@ const GoalManager: React.FC<Props> = ({
                             <GoalForm
                                 sendMessage={sendMessage}
                                 path={path}
+                                setLastGoalSubmitted={setLastGoalSubmitted}
+                                setSubmissionStatus={setSubmissionStatus}
                             />
                         </div>
                     </TabPanel>
@@ -172,14 +194,38 @@ const GoalManager: React.FC<Props> = ({
                         preferredSize={"50%"}
                         minSize={350}
                         className="flex flex-col">
-                        <ActionDatabase
-                            actionList={actionList}
-                            setActionFormContext={setActionFormContext}
-                            setSelectedIds={setSelectedIds}
-                            filterNodes={filterNodes}
-                            handleExport={handleExport}
-                            exportStatus={exportStatus}
-                        />
+                        <Allotment
+                            className="h-full overflow-scroll border border-1 md:block
+                               border-[#d1dbe3] shadow-md rounded-md hidden"
+                            minSize={150}
+                            vertical={true}
+                            snap>
+                            <Allotment.Pane
+                                preferredSize={"65%"}
+                                minSize={350}
+                                className="flex flex-col">
+                                <ActionDatabase
+                                    actionList={actionList}
+                                    setActionFormContext={setActionFormContext}
+                                    setSelectedIds={setSelectedIds}
+                                    filterNodes={filterNodes}
+                                    handleExport={handleExport}
+                                    exportStatus={exportStatus}
+                                />
+                            </Allotment.Pane>
+                            <Allotment.Pane
+                                preferredSize={"35%"}
+                                minSize={150}
+                                className="flex flex-col">
+                                <p className="p-2 text-lg border-b border-[#d1dbe3]">Manage Presets</p>
+                                <ManagePresets
+                                    sendMessage={sendMessage}
+                                    path={path}
+                                    setLastGoalSubmitted={setLastGoalSubmitted}
+                                    setSubmissionStatus={setSubmissionStatus}
+                                />
+                            </Allotment.Pane>
+                        </Allotment>
                     </Allotment.Pane>
 
                     {/* Right pane */}
@@ -194,10 +240,12 @@ const GoalManager: React.FC<Props> = ({
                                     <Tab>Submit Goal</Tab>
                                 </TabList>
 
-                                <TabPanel className="hidden flex-col min-h-0 grow">
+                                <TabPanel className="hidden flex-col min-h-0 grow overflow-y-auto">
                                     <ActionForm
                                         sendMessage={sendMessage}
                                         path={path}
+                                        setLastGoalSubmitted={setLastGoalSubmitted}
+                                        setSubmissionStatus={setSubmissionStatus}
                                     />
                                 </TabPanel>
 
@@ -205,6 +253,8 @@ const GoalManager: React.FC<Props> = ({
                                     <GoalForm
                                         sendMessage={sendMessage}
                                         path={path}
+                                        setLastGoalSubmitted={setLastGoalSubmitted}
+                                        setSubmissionStatus={setSubmissionStatus}
                                     />
                                 </TabPanel>
                             </Tabs>
@@ -212,10 +262,13 @@ const GoalManager: React.FC<Props> = ({
                     </Allotment.Pane>
                 </Allotment>
 
-                <ConnectionIndicator readyState={readyState} />
+                <div className="w-full flex flex-row justify-stretch gap-5">
+                    <ConnectionIndicator readyState={readyState} />
+                    <SubmissionStatusIndicator goal={lastGoalSubmitted} submissionStatus={submissionStatus} />
+                </div>
             </div>
         </ActionFormContext.Provider>
     );
 };
 
-export default GoalManager;
+export default GoalSubmission;

@@ -1,8 +1,4 @@
-/*
- * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
- */
-
-// Generated from /home/evan/code/diarc/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
+// Generated from /home/evan/code/diarc/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.2
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -338,6 +334,13 @@ public class ASLBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements AS
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
 	@Override public T visitOnResume(ASLParser.OnResumeContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitResumeResetSpec(ASLParser.ResumeResetSpecContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
