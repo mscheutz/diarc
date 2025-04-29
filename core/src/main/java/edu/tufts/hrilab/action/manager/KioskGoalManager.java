@@ -78,11 +78,9 @@ public class KioskGoalManager extends DiarcComponent {
     }
   }
 
-  //TODO: add kiosk annotation to display in App. Add setting to App
   //TODO: CLI args
   private void mockInit() {
     //kioskModeEnabled = true;
-    //TODO: better way to make goHomeAndCharge block indefinitely, but also have sane argument for display
     kioskGoalPredicate = Factory.createPredicate("goHomeAndCharge","ava");
     kioskTimeout = 60;
   }
@@ -131,10 +129,10 @@ public class KioskGoalManager extends DiarcComponent {
   private void cancelKioskTimer() {
     log.debug("[cancelKioskTimer] in method");
     synchronized (kioskGoalAccessLock) {
-      //TODO: does this need to worry about the kiosk task starting concurrently?
+      //does this need to worry about the kiosk task starting concurrently?
       if (kioskTimerTask != null && kioskTimer != null) {
         log.debug("[cancelKioskTimer] canceling timer and task");
-        //TODO: do we need to cancel the timer or the task, or both? what's the difference?
+        //do we need to cancel the timer or the task, or both? what's the difference?
         //  does canceling the task and then resubmitting it allow it to still be executed?
         kioskTimerTask.cancel();
         kioskTimer.cancel();
@@ -172,8 +170,6 @@ public class KioskGoalManager extends DiarcComponent {
               log.error("[KioskTimerTask] Issue submitting kiosk goal", e);
             }
           }
-          //Do we care about joining on goal here?
-          //joinOnGoalDialogue(gid);
         }
       };
 
@@ -217,7 +213,7 @@ public class KioskGoalManager extends DiarcComponent {
       if (enabled) {
         resetKioskTimer();
       } else {
-        //TODO: cancel kiosk goal as well?
+        // Do we want to cancel kiosk goal as well?
         cancelKioskTimer();
       }
     }
