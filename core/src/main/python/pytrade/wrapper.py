@@ -3,6 +3,7 @@ import sys
 import warnings
 import os
 import argparse
+from typing import List, Optional
 
 import jpype.imports
 from jpype import JObject
@@ -12,11 +13,13 @@ from pytrade.java_util import to_java_class, convert_to_java_object
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.info("Starting PyTRADE")
 
-# Todo: Should we still allow user specified jars?
 try:
+    # Todo: Should we still allow user specified jars?
+    # Handle custom jars
     current_file_dir = os.path.dirname(os.path.abspath(__file__))
     jars_dir = os.path.join(current_file_dir, 'jars/*')
-    logging.info("Pytrade parsing")
+
+    # Parse any args passed in from the main command. We only handle "classpath" here, for now.
     parser = argparse.ArgumentParser(description="Setup the JVM classpath")
     parser.add_argument('--classpath')
     args, unknown = parser.parse_known_args()
@@ -33,7 +36,7 @@ else:
 
 class TRADEWrapper:
 
-    def call_trade(self, name: str, groups: list[str] = None, *args) -> JObject:
+    def call_trade(self, name: str, groups: Optional[List[str]] = None, *args) -> JObject:
         if groups is None:
             groups = []
         """

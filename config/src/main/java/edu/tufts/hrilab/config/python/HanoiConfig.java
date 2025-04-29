@@ -27,8 +27,8 @@ public class HanoiConfig extends DiarcConfiguration {
 
     createInstance(GoalManagerComponent.class, "-beliefinitfile agents/agents.pl -asl kinova/kinova_examples.asl ");
 
-//    String file = "hanoi.hanoi_actions"; // Todo: Make this entry point for experiments
-    String file = "fast_neurosym_il.experiments_diffusion_diarc"; // Todo: Make this entry point for experiments
+    String file = "hanoi.hanoi_actions"; // Todo: Make this entry point for experiments
+//    String file = "fast_neurosym_il.experiments_diffusion_diarc"; // Todo: Make this entry point for experiments
     PythonWrapper wrapper = new PythonWrapper(file, true); // Declare the wrapper as a TRADE spoke
     wrapper.start(); // Start the wrapper
 

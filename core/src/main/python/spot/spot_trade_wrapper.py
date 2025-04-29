@@ -27,6 +27,11 @@ logger = logging.getLogger(__name__)
 
 
 def handle_return(func):
+    """
+    Convenience method for wrapping boolean returns in condition justifications.
+    :param func: Function to wrap the return of
+    :return:
+    """
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         ret = func(self, *args, **kwargs)
@@ -416,15 +421,24 @@ class SpotTRADEWrapper:
         return self.spot.spot_arm.hand_pose(0.818, -0.003, 0.523, -0.000, 0.389, -0.004, 0.921)
 
     def start_mapping(self):
+        """
+        Puts the system in recording mode, which will allow the create of new waypoints with create_waypoint(...)
+        :return:
+        """
         if self._mapping:
             logging.info("Already mapping")
             return
-        recording_client = self.spot._robot.ensure_client(
-            GraphNavRecordingServiceClient.default_service_name)
+        recording_client = self.spot._robot.ensure_client(GraphNavRecordingServiceClient.default_service_name)
         recording_client.start_recording()
         self._mapping = True
 
     def create_waypoint(self, name):
+        """
+        Creates a waypoint at the robot's current location. Requires start_mapping(...) to have been called.
+        Note that this doesn't merge this waypoint until finish_mapping(...) is called.
+        :param name: Human-readable name of the waypoint
+        :return:
+        """
         # todo: add to consultant here
         if not self._mapping:
             logging.info("Not mapping")
@@ -433,6 +447,11 @@ class SpotTRADEWrapper:
         logging.info(f"New waypoint ID: {record_resp.created_waypoint}")
 
     def finish_mapping(self):
+        """
+        Turns off recording mode and merges any new waypoints into the current graph.
+        TODO: There may be some anchor optimization that could happen here. If you see weird nav behaviors, I would check that out first.
+        :return:
+        """
         if not self._mapping:
             logging.info("Not mapping")
             return
@@ -452,6 +471,7 @@ class SpotTRADEWrapper:
         spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
 
 
+# This main is largely used for testing behaviors
 if __name__ == '__main__':
     with open('/home/mfawn/code/diarc/diarc/core/src/main/python/spot/spot_phi.yaml', 'r') as file:
         config = yaml.safe_load(file)
@@ -470,7 +490,7 @@ if __name__ == '__main__':
     spot_wrapper.spot.spot_graph_nav.set_initial_localization_fiducial()
 
     # spot_wrapper.undock()
-    pts = spot_wrapper.spot.spot_graph_nav.list_graph() # Have to call this to update map
+    pts = spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
     logging.info(spot_wrapper.spot.spot_graph_nav._current_annotation_name_to_wp_id["test_two"])
 
     # spot_wrapper.dock(520)

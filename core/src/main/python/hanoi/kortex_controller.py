@@ -17,6 +17,7 @@ import os
 import time
 import threading
 import atexit
+import logging
 
 import numpy as np
 from kortex_api.autogen.client_stubs.BaseClientRpc import BaseClient
@@ -27,6 +28,7 @@ from kortex_api.autogen.messages import Base_pb2, BaseCyclic_pb2, Common_pb2
 # Maximum allowed waiting time during actions (in seconds)
 TIMEOUT_DURATION = 20
 
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 # Import the utilities helper module
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -51,7 +53,7 @@ def check_for_end_or_abort(e):
     """
 
     def check(notification, e=e):
-        print("EVENT : " + \
+        logging.info("EVENT : " + \
               Base_pb2.ActionEvent.Name(notification.action_event))
         if notification.action_event == Base_pb2.ACTION_END \
                 or notification.action_event == Base_pb2.ACTION_ABORT:
@@ -80,7 +82,7 @@ def twist_command(action):
 
 
 def cartesian_movement(pose):
-    print("Starting Cartesian action movement ...")
+    logging.info("Starting Cartesian action movement ...")
     action = Base_pb2.Action()
     action.name = "Example Cartesian action movement"
     action.application_data = ""
@@ -102,17 +104,17 @@ def cartesian_movement(pose):
         Base_pb2.NotificationOptions()
     )
 
-    print("Executing action")
+    logging.info("Executing action")
     base.ExecuteAction(action)
 
-    print("Waiting for movement to finish ...")
+    logging.info("Waiting for movement to finish ...")
     finished = e.wait(TIMEOUT_DURATION)
     base.Unsubscribe(notification_handle)
 
     if finished:
-        print("Cartesian movement completed")
+        logging.info("Cartesian movement completed")
     else:
-        print("Timeout on action notification wait")
+        logging.info("Timeout on action notification wait")
     return finished
 
 def compute_twist(pos_initial, pos_final, total_time=0.1):
@@ -122,10 +124,10 @@ def compute_twist(pos_initial, pos_final, total_time=0.1):
     return twist
 
 
-def go_to(action):
+def go_to_relative(action):
     init_pos = get_current_pos()
     twist = compute_twist(init_pos, action)
-    twist_command(base, twist)
+    twist_command(twist)
     time.sleep(0.1)
 
 def get_current_pos():

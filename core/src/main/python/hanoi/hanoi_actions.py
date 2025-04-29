@@ -3,7 +3,7 @@ import logging
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-# from . import kortex_controller
+from . import kortex_controller
 from pytrade.wrapper import TRADEWrapper
 
 wrapper = TRADEWrapper()
@@ -28,9 +28,8 @@ def check_gripping():
     return True, True
 
 def main():
-    logging.info("Hanoi_actions main")
-    # init_pos = [0.7, 0, 0.5]
-    # kortex_controller.cartesian_movement(init_pos)  # Go to home pos
+    relative_move = [0.2, 0, 0.2]
+    kortex_controller.go_to_relative(relative_move)  # Go to home pos
 
 
 if __name__ == "__main__":
