@@ -220,6 +220,23 @@ import java.util.StringTokenizer;
     tsc:setZLift(90.0);
 }
 
+//() = fallbackRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+//    recovery : {
+//        actionRecovery : {
+//            catchingActions : {goToLocation(X,Y)} //don't think this line practically matters
+//            postRecovery : postrecovery_retry
+//        }
+//        failedActions: {goToLocation(X,Y,Z)}
+//        maximumAttempts : 1
+////        excludedGoals : {recoverGoToLocation(X,Y,Z,A)} //If you want 0 recovery of recovery (80% sure failing the recovery goTo will exit in a way that the initial failed goTo does not retry) //TODO: requiring this feels like indication of a bug - maxAttempts > 1 with failed action involved in recovery of itself
+//        excludedGoals : {goToLocation(X,Y),recoverGoToLocation(X,Y,Z,recoverGoToLocation(X,A,B,C))} //If you want 1 layer of recovery for recovery
+//    }
+//
+//    op:log(warn, "[fallbackRecovery] executing fallback recovery for goToLocation")
+//    act:generateResponseFromString("Saying excuse me on robot");
+//    act:say("Excuse me");
+//}
+
 () = recoverGoToLocation(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
@@ -232,14 +249,14 @@ import java.util.StringTokenizer;
         //excludedGoals : {recoverGoToLocation(X,Y,Z,recoverGoToLocation(X,A,B,C))} //If you want 1 layer of recovery for recovery
     }
     Predicate !failedActionPredicate;
-    Symbol !fromLocation;
+    Symbol !toLocation;
 
     op:log(info, "[recoveryGoToLocation] ?failedActionPredicates, ?failureReasons, ?failedGoal");
     //Can make this unpacking safer (check null/size) if possible to hit this from other contexts. Don't think you can though
     !failedActionPredicate = op:get(?failedActionPredicates,0);
-    !fromLocation = op:invokeMethod(!failedActionPredicate,"get",2);
-    op:log(debug, "[recoveryGoToLocation] Going back to !fromLocation first");
-    act:goToLocation(!fromLocation);
+    !toLocation = op:invokeMethod(!failedActionPredicate,"get",1);
+    String !locName = tsc:getMapReferenceName(!toLocation);
+    act:generateResponseFromString("I had an issue going to location !locName. Trying again.");
     op:log(warn, "[recoveryGoToLocation] re-attempting goToLocation(X)");
 }
 
