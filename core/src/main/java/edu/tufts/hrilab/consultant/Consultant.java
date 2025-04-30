@@ -390,7 +390,6 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
    * @param refId unique reference ID
    * @return Reference of type T
    */
-  @TRADEService
   public final T getReference(Symbol refId) {
     if (refId.hasType()) {
       return references.get(refId);

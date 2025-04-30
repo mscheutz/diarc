@@ -88,3 +88,6 @@ export type { Option };
 
 const LOCAL_STORAGE_KEY: string = "goalSubmissionPresets";
 export {LOCAL_STORAGE_KEY};
+
+const CHAT_PRESET_KEY: string = "chatViewerPresets";
+export {CHAT_PRESET_KEY};

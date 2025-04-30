@@ -31,7 +31,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.Pair;
 
-import javax.annotation.Nonnull;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
@@ -694,7 +693,6 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
    * {@inheritDoc}
    * @return {@inheritDoc}
    */
-  @Nonnull
   @Override
   public String[] getAdapterClassNames() {
     log.info("getting classname from map");
