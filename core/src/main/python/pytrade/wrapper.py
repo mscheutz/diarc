@@ -24,11 +24,13 @@ try:
     parser.add_argument('--classpath')
     args, unknown = parser.parse_known_args()
 
+    sys.argv = [sys.argv[0]] + unknown # Remove pytrade args from argv
+
     jpype.startJVM(classpath=[jars_dir, args.classpath])
     from ai.thinkingrobots.trade import TRADE, TRADEServiceConstraints, TRADEServiceInfo, TRADEException
 
 except Exception as e:
-    warnings.warn("Failure starting JVM. Did you publish DIARC to your local maven?")
+    warnings.warn("Failure starting JVM.")
     print(e)
 else:
     print("JVM started. You can now start using DIARC through TRADE.")
@@ -87,23 +89,15 @@ class TRADEWrapper:
         """
         warnings.warn("Not yet implemented.")
 
-    def check_state(self, obs):
-        """
-        WIP, do not use.
-        :param obs:
-        :return:
-        """
-        warnings.warn("Not yet implemented.")
-        return self.call_trade("checkState", obs)
 
-    def parse_goal(self, goal: str):
-        return [goal]
-
-
-def exit_test():
+def cleanup():
+    """
+    Called when the wrapper is closed. For use in cleaning up resources.
+    :return:
+    """
     logging.info("Exiting wrapper")
 
 
 import atexit
 
-atexit.register(exit_test)
+atexit.register(cleanup)

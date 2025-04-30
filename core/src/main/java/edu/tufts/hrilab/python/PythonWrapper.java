@@ -2,6 +2,10 @@ package edu.tufts.hrilab.python;
 
 import java.io.*;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class PythonWrapper {
 
@@ -24,13 +28,16 @@ public class PythonWrapper {
    * - Starts a shutdown hook to end the python process when the JVM is shut down
 
    */
-  public void start() {
+  // Todo: Add python arguments as args to this func
+  public void start(String... pythonArgs) {
     Thread processThread = new Thread(() -> {
       try {
         // Create the ProcessBuilder and start the process
         String classpath = System.getProperty("java.class.path");
         ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command("python3", "-m", file, "--classpath", classpath);
+        List<String> commandArgs = new ArrayList<>(Arrays.asList("python3", "-m", file, "--classpath", classpath));
+        commandArgs.addAll(Arrays.asList(pythonArgs));
+        processBuilder.command(commandArgs);
         processBuilder.inheritIO();
 
         // Launches the python process as a TRADE spoke
