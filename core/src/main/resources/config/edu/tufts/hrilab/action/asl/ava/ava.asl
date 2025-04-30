@@ -220,28 +220,28 @@ import java.util.StringTokenizer;
     tsc:setZLift(90.0);
 }
 
-//() = recoverGoToLocation(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
-//    recovery : {
-//        actionRecovery : {
-//            catchingActions : {goToLocation(X,Y)} //don't think this line practically matters
-//            postRecovery : postrecovery_retry
-//        }
-//        failedActions: {goToLocation(X,Y,Z)}
-//        maximumAttempts : 2
-//        excludedGoals : {recoverGoToLocation(X,Y,Z,A)} //If you want 0 recovery of recovery (80% sure failing the recovery goTo will exit in a way that the initial failed goTo does not retry) //TODO: requiring this feels like indication of a bug - maxAttempts > 1 with failed action involved in recovery of itself
-//        //excludedGoals : {recoverGoToLocation(X,Y,Z,recoverGoToLocation(X,A,B,C))} //If you want 1 layer of recovery for recovery
-//    }
-//    Predicate !failedActionPredicate;
-//    Symbol !fromLocation;
-//
-//    op:log(info, "[recoveryGoToLocation] ?failedActionPredicates, ?failureReasons, ?failedGoal");
-//    //Can make this unpacking safer (check null/size) if possible to hit this from other contexts. Don't think you can though
-//    !failedActionPredicate = op:get(?failedActionPredicates,0);
-//    !fromLocation = op:invokeMethod(!failedActionPredicate,"get",2);
-//    op:log(debug, "[recoveryGoToLocation] Going back to !fromLocation first");
-//    act:goToLocation(!fromLocation);
-//    op:log(warn, "[recoveryGoToLocation] re-attempting goToLocation(X)");
-//}
+() = recoverGoToLocation(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            catchingActions : {goToLocation(X,Y)} //don't think this line practically matters
+            postRecovery : postrecovery_retry
+        }
+        failedActions: {goToLocation(X,Y,Z)}
+        maximumAttempts : 2
+        excludedGoals : {recoverGoToLocation(X,Y,Z,A)} //If you want 0 recovery of recovery (80% sure failing the recovery goTo will exit in a way that the initial failed goTo does not retry) //TODO: requiring this feels like indication of a bug - maxAttempts > 1 with failed action involved in recovery of itself
+        //excludedGoals : {recoverGoToLocation(X,Y,Z,recoverGoToLocation(X,A,B,C))} //If you want 1 layer of recovery for recovery
+    }
+    Predicate !failedActionPredicate;
+    Symbol !fromLocation;
+
+    op:log(info, "[recoveryGoToLocation] ?failedActionPredicates, ?failureReasons, ?failedGoal");
+    //Can make this unpacking safer (check null/size) if possible to hit this from other contexts. Don't think you can though
+    !failedActionPredicate = op:get(?failedActionPredicates,0);
+    !fromLocation = op:invokeMethod(!failedActionPredicate,"get",2);
+    op:log(debug, "[recoveryGoToLocation] Going back to !fromLocation first");
+    act:goToLocation(!fromLocation);
+    op:log(warn, "[recoveryGoToLocation] re-attempting goToLocation(X)");
+}
 
 () = goToLocation(Symbol ?location) {
     Symbol !current;
