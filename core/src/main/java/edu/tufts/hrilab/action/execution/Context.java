@@ -749,20 +749,6 @@ public abstract class Context {
   }
 
   /**
-   * @return true if this context can have its execution interrupted immediately on setting SUSPEND ActionStatus
-   */
-  public boolean canSuspendInterruptibly() {
-    return false;
-  }
-
-  /**
-   * @return true if this context can have its execution interrupted immediately on setting CANCEL ActionStatus
-   */
-  public boolean canCancelInterruptibly() {
-    return false;
-  }
-
-  /**
    * Get parent context.
    *
    * @return

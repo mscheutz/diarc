@@ -77,6 +77,10 @@ public class AgentTeam {
         return getMembers().keySet();
     }
 
+    public boolean isMember(Symbol agent) {
+        return members.containsKey(agent.toUntyped());
+    }
+
     public AgentTeam getMember(Symbol memberName) {
         return members.get(memberName);
     }

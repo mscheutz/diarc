@@ -130,11 +130,6 @@ import java.lang.Integer;
 
 //Item definition
 () = defineItem[""](edu.tufts.hrilab.fol.Symbol ?itemName){
-    //TODO: implement methods that actually clean up various learning processes correctly
-    onInterrupt :{
-        suspend: tsc:pauseActionLearning(?actor,!scriptID);
-        resume: tsc:resumeActionLearning(?actor,!scriptID);
-    }
 
     java.lang.Integer !i =0;
     java.lang.Integer !optionIndex =0;

@@ -1572,8 +1572,12 @@ public class ExecutionManager implements GoalListener {
    *                   goals, returns null.
    */
   private Set<Goal> getActiveGoalsHelper(Symbol agent, int filterLevel, boolean allMembers) {
+    // add all agent's goals
     AgentTeam agentTeam = getAgentTeam(agent);
     Set<Goal> agentTeamGoals = agentTeam.getActiveGoals();
+    agentTeamGoals.addAll(getScheduledGoals().stream().filter(g -> agentTeam.isMember(g.getActor())).toList()); // add agent's scheduled goals
+
+    // filter goals
     if (filterLevel == 1) {
       agentTeamGoals = agentTeamGoals.stream().filter(g -> !g.isScheduled()).collect(Collectors.toSet());
     } else if (filterLevel == 2) {

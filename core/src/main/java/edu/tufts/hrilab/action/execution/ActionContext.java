@@ -1103,14 +1103,4 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
   public Recovery getRecovery() {
     return recovery;
   }
-
-  @Override
-  public boolean canSuspendInterruptibly() {
-    return isInterruptible() && getDBE().hasOnSuspendEvent();
-  }
-
-  @Override
-  public boolean canCancelInterruptibly() {
-    return isInterruptible() && getDBE().hasOnCancelEvent();
-  }
 }

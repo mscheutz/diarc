@@ -509,7 +509,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       // the cancel/suspend is set on the nextStep and propagated up/down the context tree
       if (suspended.get() && nextStep != null && nextStep.getStatus() != ActionStatus.SUSPEND && nextStep.isInterruptible()) {
         nextStep.setStatus(ActionStatus.PARENT_SUSPENDED);
-      }  else if (canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL && nextStep.isInterruptible()) {
+      } else if (canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL && nextStep.isInterruptible()) {
         nextStep.setStatus(ActionStatus.PARENT_CANCELED);
       }
 
@@ -543,23 +543,13 @@ public class ActionInterpreter implements Callable<ActionStatus> {
         log.warn("[suspend] AI for goal has already terminated: {}", goal.getPredicate());
         return false;
       } else if (currentStep.isTerminated()) {
-        if (shouldUpdate.get()) {
-          // setting suspended flag will set nextStep to suspended in the mainLoop before it's executed
-          suspended.set(true);
-        } else {
-          //If the script is complete except for waiting on async AIs, suspend the async AIs or else this action
-          //  may continue to block indefinitely (will not hit halt and therefore not affect async AIs).
-          for (ActionInterpreter ai : asyncAIs.values()) {
-            if (ai.isRunning) {
-              ai.suspend();
-            }
-          }
-        }
+        // setting suspended flag will set nextStep to suspended in the mainLoop before it's executed
+        suspended.set(true);
       } else {
         suspended.set(true);
         // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
         // have the next step's status be updated.
-        if (currentStep.canSuspendInterruptibly()) { // TODO: EAK: this seems bad. Shouldn't this be currentStep.isInterruptible() ?
+        if (currentStep.isInterruptible()) {
           currentStep.setStatus(ActionStatus.SUSPEND);
         }
       }
@@ -595,19 +585,16 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           log.debug("Resuming from partially suspended goal: {}", goal);
           currentStep.setStatus(ActionStatus.RESUME);
         }
-      } else {
-        if (shouldUpdate.get()) {
-          log.warn("[resume] trying to resume an ActionInterpreter that wasn't paused.");
-          return false;
-        } else {
-        //If only async AIs had been suspended, need to explicitly resume them here
-          for (ActionInterpreter ai : asyncAIs.values()) {
-            if (ai.isRunning) {
-              ai.resume();
-            }
+
+        // if async AIs had been suspended, need to explicitly resume them here
+        for (ActionInterpreter ai : asyncAIs.values()) {
+          if (ai.suspended.get()) {
+            ai.resume();
           }
-          return true;
         }
+      } else {
+        log.warn("[resume] trying to resume an ActionInterpreter that wasn't paused.");
+        return false;
       }
     } finally {
       currentStepLock.unlock();
@@ -632,71 +619,20 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       if (currentStep == null) {
         // update the goal status if canceling from a suspend state
         if (suspended.get()) {
-          //PickAndPlace2024 - Discussion to have in general, but needed for implementation of this domain
-          //  Want to execute onCancel behaviors even from a suspended state. E.g. if the suspend behavior caches some
-          //  relevant state but cancel needs to clear it, or if suspend is allowed in some subsymbolic intermediate state
-          //  but cancel needs to terminate in a 'safe' state.
-          Context c = rootStep;
-          Context leafToSet = null;
-          boolean suspended = true;
-          //Push suspended trace onto callStack so all relevant contexts' status can be set to CANCEL (and call relevant
-          //  interruption behaviors) in stepExecution finishStep status propagation.
-          while (c != null) {
-            if (c.getStatus() == ActionStatus.SUSPEND) {
-              callStack.before(c);
-              leafToSet = c;
-            } else if (c.getStatus() == ActionStatus.PARENT_SUSPENDED) {
-              callStack.before(c);
-              leafToSet = c;
-              suspended = false;
-              break;
-            }
-            c = c.getChildContexts().getCurrent();
-          }
-          //Don't want leaf on stack, will be current step
-          callStack.next();
-
-          if (leafToSet == null) {
-            //Q: If there are no contexts which are suspended, this means we suspended after the last step of the goal. In this
-            //    case the "suspended state" is just a formality to prevent the next action from starting. Canceling at this
-            //    point should just allow the goal to terminate as it would've? Makes no sense to set canceled status and not
-            //    assert success effects or failure justifications at this point.
-            // This block can be removed if we are allowing suspend/cancel primitives to instead just fail in this case
-            resume();
-            return true;
-          } else {
-            if (suspended) {
-              leafToSet.setStatus(ActionStatus.CANCEL);
-            } else {
-              leafToSet.setStatus(ActionStatus.PARENT_CANCELED);
-            }
-            setCurrentStep(leafToSet);
-            shouldUpdate.set(true);
-          }
+          this.goal.setStatus(GoalStatus.CANCELED);
         } else {
           log.warn("[cancel] goal has already terminated: {}", goal.getPredicate());
           return false;
         }
       } else if (currentStep.isTerminated()) {
-        if (shouldUpdate.get()) {
-          // setting cancel flag will set nextStep to cancel in the mainLoop before it's executed
-          canceled.set(true);
-        } else {
-          //If the script is complete except for waiting on async AIs, cancel the async AIs or else this action
-          //  will continue to block indefinitely
-          this.goal.setStatus(GoalStatus.CANCELED);
-          for (ActionInterpreter ai : asyncAIs.values()) {
-            if (ai.isRunning) {
-              ai.cancel();
-            }
-          }
-        }
+        // setting cancel flag will set nextStep to cancel in the mainLoop before it's executed
+        canceled.set(true);
       } else {
         // in normal operation
         canceled.set(true);
         // only update current step's status if it can actually be interrupted. Otherwise, allow it to finish and
         // have the next step's status be updated.
-        if (currentStep.canCancelInterruptibly()) { // TODO: EAK: this seems bad. Shouldn't this be currentStep.isInterruptible() ?
+        if (currentStep.isInterruptible()) {
           currentStep.setStatus(ActionStatus.CANCEL);
         }
       }
@@ -727,12 +663,25 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     }
 
     // TODO: can suspended be replaced with (rootStep.getStatus() == ActionStatus.SUSPEND)
+    // TODO: EAK: what case is this for?
     if (rootStep.getStatus() == ActionStatus.SUSPEND) {
       suspended.set(true);
     }
 
     // Stop execution mainExecutionLoop()
     shouldUpdate.set(false);
+
+    // cancel/suspend sub-AIs
+    if (rootStep.getStatus() == ActionStatus.SUSPEND || rootStep.getStatus() == ActionStatus.CANCEL) {
+      for (ActionInterpreter ai : asyncAIs.values()) {
+        if (ai.isRunning) {
+          switch (rootStep.getStatus()) {
+            case SUSPEND -> ai.suspend();
+            case CANCEL -> ai.cancel();
+          }
+        }
+      }
+    }
 
     // wait for sub-AIs to finish
     // sub-AIs stay alive during suspend, so they can be resumed

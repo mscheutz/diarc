@@ -153,8 +153,8 @@ public class ActionLearning {
    * @param status
    */
   private void setLearningStatus(ActionLearningStatus status) {
+    statusLock.lock();
     try {
-      statusLock.lock();
       learningStatus = status;
       statusCondition.signalAll();
     } finally {
@@ -163,8 +163,8 @@ public class ActionLearning {
   }
 
   public void waitForActionLearningStart(Predicate newAction) {
+    statusLock.lock();
     try {
-      statusLock.lock();
       while (learningStatus != ActionLearningStatus.ACTIVE && currentLearningState != null && !newAction.getName().equalsIgnoreCase(currentLearningState.getName())) {
         try {
           statusCondition.await();
@@ -203,19 +203,19 @@ public class ActionLearning {
     setLearningStatus(ActionLearningStatus.ACTIVE);
     startQueuingGoals();
 
-     //to keep the learning goal active while learning, wait here until status is no longer active
-      try {
-        statusLock.lock();
-        while (learningStatus == ActionLearningStatus.ACTIVE) {
-          try {
-            statusCondition.await();
-          } catch (InterruptedException e) {
-            log.warn("Interrupted while waiting for learning to finish.", e);
-          }
+    //to keep the learning goal active while learning, wait here until status is no longer active
+    statusLock.lock();
+    try {
+      while (learningStatus == ActionLearningStatus.ACTIVE) {
+        try {
+          statusCondition.await();
+        } catch (InterruptedException e) {
+          log.warn("Interrupted while waiting for learning to finish.", e);
         }
-      } finally {
-        statusLock.unlock();
       }
+    } finally {
+      statusLock.unlock();
+    }
 
     return true;
   }
