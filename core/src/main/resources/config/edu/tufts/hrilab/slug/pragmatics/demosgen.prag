@@ -74,7 +74,7 @@ RULES
 REPLY(A,B,ahead(X,Y),Z) := REPLY(A,B,is(ahead(X,Y)),Z)
 REPLY(A,B,isAdminGoal(X),Z) := REPLY(A,B,is(gerund(X),adminGoal),Z)
 REPLY(A,B,found(C,Y),Z) := REPLY(A,B,know(C,how(Y)),Z)
-REPLY(A,B,propertyOf(X,Y),Z) := REPLY(A,B,is(X,Y),Z)
+#REPLY(A,B,propertyOf(X,Y),Z) := REPLY(A,B,is(X,Y),Z)
 REPLY(A,B,bel(X,Y),Z) := REPLY(A,B,know(X,Y),Z)
 REPLY(A,B,unknown(X),Z) := REPLY(A,B,is(there,unknown(X)),Z)
 REPLY(A,B,getActDesc(C,Y),Z) := REPLY(A,B,describe(C,how(Y)),Z)

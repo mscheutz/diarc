@@ -11,11 +11,6 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "scheduled": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
-
   "describeCurrentGoal": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"

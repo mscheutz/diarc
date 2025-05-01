@@ -5,6 +5,9 @@
 package edu.tufts.hrilab.config.unity;
 
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.unity.UnityAgentComponent;
+import edu.tufts.hrilab.unity.UnityPR2Component;
+import edu.tufts.hrilab.unity.space_station.UnitySpaceStationComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +37,9 @@ public class UnityDIARCSpaceStationExample {
     }
 
     DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityComponent.class, "-unityip " + unityIP  + " -unityport " + unityPort);
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.space_station.UnitySpaceStation.class, "-agent spacestation");
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityAgent.class, "-agent rover");
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityPR2.class, "-agent robot1");
-    DiarcComponent.createInstance(edu.tufts.hrilab.unity.UnityPR2.class, "-agent robot2");
+    DiarcComponent.createInstance(UnitySpaceStationComponent.class, "-agent spacestation");
+    DiarcComponent.createInstance(UnityAgentComponent.class, "-agent rover");
+    DiarcComponent.createInstance(UnityPR2Component.class, "-agent robot1");
+    DiarcComponent.createInstance(UnityPR2Component.class, "-agent robot2");
   }
 }

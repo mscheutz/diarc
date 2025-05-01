@@ -23,7 +23,9 @@ import java.util.Map;
       // utterance has semantics that needs to be converted to words
       op:log("debug", "submitting dialogue goal");
       ?utterance = act:applyPragmaticMeaning(?utterance);
+      op:log("debug", "prag results: ?utterance");
       ?utterance = act:convertSemanticsToText(?utterance);
+      op:log("debug", "nlg results: ?utterance");
     }
 
     // update dialogue bookkeeping

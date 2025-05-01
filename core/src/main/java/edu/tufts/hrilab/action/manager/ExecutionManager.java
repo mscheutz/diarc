@@ -1373,7 +1373,7 @@ public class ExecutionManager implements GoalListener {
       log.warn("[suspendGoal] goal is null.");
       return false;
     }
-    if (g.getStatus().equals(GoalStatus.PENDING)) {
+    if (g.getStatus() == GoalStatus.PENDING) {
       log.warn("[suspendGoal] attempting to suspend a pending goal");
       return false;
     } else if (g.getStatus().isTerminated()) {
@@ -1557,7 +1557,6 @@ public class ExecutionManager implements GoalListener {
     return new ArrayList<>(activeGoals);
   }
 
-  //TODO: Further divide here by getting persistent goals separately?
   //If an agent can be a member of multiple teams, this implementation is invalid
   /**
    * Get the current goals of the supplied agentTeam

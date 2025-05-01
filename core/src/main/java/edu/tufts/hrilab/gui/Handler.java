@@ -16,7 +16,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -189,7 +188,7 @@ public class Handler extends TextWebSocketHandler {
    * @throws Exception ignored.
    */
   @Override
-  public void afterConnectionEstablished(@Nonnull WebSocketSession session)
+  public void afterConnectionEstablished(WebSocketSession session)
           throws Exception {
     super.afterConnectionEstablished(session);
     this.session = session;
@@ -204,8 +203,8 @@ public class Handler extends TextWebSocketHandler {
    * @throws Exception ignored.
    */
   @Override
-  protected void handleTextMessage(@Nonnull WebSocketSession session,
-                                   @Nonnull TextMessage message)
+  protected void handleTextMessage(WebSocketSession session,
+                                   TextMessage message)
           throws Exception {
     super.handleTextMessage(session, message);
     JsonElement jelem = new Gson().fromJson(message.getPayload(), JsonElement.class);
@@ -229,8 +228,8 @@ public class Handler extends TextWebSocketHandler {
    * @throws Exception ignored.
    */
   @Override
-  public void afterConnectionClosed(@Nonnull WebSocketSession session,
-                                    @Nonnull CloseStatus status)
+  public void afterConnectionClosed(WebSocketSession session,
+                                    CloseStatus status)
           throws Exception {
     super.afterConnectionClosed(session, status);
     this.session = null;

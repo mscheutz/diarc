@@ -64,7 +64,6 @@ public class ConfigurationHolder {
     /**
      * Logs the initial configuration state upon class initialization.
      */
-//    @PostConstruct
     private void init() {
         logger.info("Base URL Set: {}", BASE_URL);
         logger.info("CORS Origins Set: {}", CORS_ORIGIN);

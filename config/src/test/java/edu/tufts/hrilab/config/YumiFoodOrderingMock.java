@@ -81,7 +81,7 @@ public class YumiFoodOrderingMock extends DiarcConfiguration {
       log.error("error registering location consultant in DIARC config" + e);
     }
 
-    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl foodOrdering.dict -tldl yumiFoodOrderingHomophones.dict -tldlNoUpdateAddressee -patternMatching");
+    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl foodOrdering.dict -tldl yumiFoodOrderingHomophones.dict -noUpdateAddressee -patternMatching");
 
     createInstance(ReferenceResolutionComponent.class);
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");

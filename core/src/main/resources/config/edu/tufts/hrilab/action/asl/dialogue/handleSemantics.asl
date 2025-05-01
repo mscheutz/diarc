@@ -55,7 +55,7 @@ import java.lang.Integer;
         //      remove the if else and have it  just be the one state spec
         if (op:invokeMethod(!matchingQuestions,"isEmpty")) {
           goal:handled(?actor, ?addressee, !currSemantics, ?semanticType);
-        } else {
+        } else{
             op:log("debug", "have matching questions, !matchingQuestions");
             !matchingQuestion = act:selectQuestionToAnswer(!matchingQuestions);
             if (op:isNull(!matchingQuestion)) {
@@ -127,11 +127,6 @@ import java.lang.Integer;
 }
 
 () = handleITK["reply to itk semantics"](Symbol ?speaker, Symbol ?addressee, Predicate ?query, Symbol  ?semanticType) {
-    Predicate !defaultResponse;
-    java.util.List !beliefs;
-    java.lang.Boolean !retVal;
-    java.util.Map !firstBinding;
-    java.util.Set !queryVariables;
     Predicate !knowsQuery;
     Symbol !queryActor;
 
@@ -143,39 +138,48 @@ import java.lang.Integer;
       // try to get into a state of knowing about ?query.
       !queryActor = act:getActorFromQuery(?query);
 
-      // TODO: Issue here is that 'knows' and 'observes' goals don't adhere to potential constraints set by the ExecutionManager.
-      //    In the PickAndPlace domain we first did relevant belief queries and reported the system's current belief to the user.
-      //    Then asked the user if they wanted the system to go verify its beliefs. If the user said yes but there was a
-      //    resource constraint violation with an active goal, then the system denied to verify and reported the conflict.
-      //    Do we want something similar here in general? Conditional behavior based on EM subclass and underlying actions
-      //    resource requirements could be tricky. Would need to extract the selected action and expose a method indicating
-      //    if it causes a resource conflict or not.
       // form goal for ?actor to know ?query, so results can be relayed back to ?speaker
-      if (goal:knows(?actor,?query)) {
+     // attempt to perform action or observation (to populate belief) before looking up answer in belief
+      try {
+        goal:knows(?actor,?query);
         op:log("debug", "handleITK: knows goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?actor,?query)");
-        //return;
-      } elseif (goal:observe(?query)) {
+        act:generateITKResponse(?speaker, ?query, !knowsQuery);
+        return;
+      } catch (FAIL_NOTFOUND) {
+        op:log("debug", "handleITK: no knows() action found.");
+      }
+
+      try {
+        goal:observe(?query);
         op:log("debug", "handleITK: observation goal succeeded.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
-      } elseif (~op:isNull(!queryActor)) {
-        //TODO: change back this block of code when fixed. Bug somewhere causes askAbout to be called even if !queryActor is null
-        //      (&& not short circuiting but written as if it should)
-        op:log("debug", "handleITK: askAbout goal enter. !queryActor");
-        if (act:askAbout(!queryActor, ?query, !knowsQuery)) {
-            op:log("debug", "handleITK: askAbout goal succeeded.");
-        } else {
-            op:log("debug", "handleITK: knows and obs goal failed, just looking in belief.");
-            !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
-        }
+        act:generateITKResponse(?speaker, ?query, !knowsQuery);
+        return;
+      } catch (FAIL_NOTFOUND) {
+        op:log("debug", "handleITK: no observer found.");
       }
-      else {
+
+      // attempt to ask another diarc agent about the query, else just look up in belier
+      if (~op:isNull(!queryActor) && act:askAbout(!queryActor, ?query, !knowsQuery)) {
+        op:log("debug", "handleITK: askAbout goal succeeded.");
+      } else {
         op:log("debug", "handleITK: knows and obs goal failed, just looking in belief.");
         !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
       }
 
+      act:generateITKResponse(?speaker, ?query, !knowsQuery);
+    }
+}
+
+() = generateITKResponse(Symbol ?speaker, Predicate ?query, Predicate ?knowsQuery) {
+    Predicate !defaultResponse;
+    java.util.List !beliefs;
+    java.util.Map !firstBinding;
+    java.util.Set !queryVariables;
+
       // query belief for results
-      !beliefs = act:queryBelief(!knowsQuery);
+  !beliefs = act:queryBelief(?knowsQuery);
       op:log("debug", "Queried for ?query; result: !beliefs");
 
       if (op:invokeMethod(!beliefs, "isEmpty")) {
@@ -390,8 +394,6 @@ import java.lang.Integer;
     Predicate !becausePredicate;
     java.lang.Boolean !madeTentativeAccept = false;
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
-    java.lang.Boolean !waitingForResponse;
-    Predicate !responsePredicate;
 
     conditions : {
       or : {

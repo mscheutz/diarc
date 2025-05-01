@@ -11,6 +11,7 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.consultant.Reference;
 import edu.tufts.hrilab.consultant.pose.PoseConsultant;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.diarc.DiarcComponent;
@@ -507,5 +508,26 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     return new String[]{
             MapAdapter.class.getName()
     };
+  }
+
+  /**
+   * TODO: HACK: remove this. This is only for the space station, and should be replaced with a more general mechanism,
+   * or at least moved into a subclass.
+   *
+   * @param property
+   * @return
+   */
+  @TRADEService
+  @Action
+  public Symbol getSpaceStationReference(Symbol property) {
+    Reference reference = consultant.getAllReferences().stream()
+            .filter(ref -> ref.properties.stream().anyMatch(prop -> prop.getName().equals(property.getName())))
+            .findFirst().orElse(null);
+
+    if (reference != null) {
+      return reference.refId;
+    } else {
+      return null;
+    }
   }
 }

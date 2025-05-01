@@ -189,7 +189,9 @@ onCancel : CANCEL ':' interruptSpec;
 
 onSuspend : SUSPEND ':' interruptSpec;
 
-onResume : RESUME ':' interruptSpec;
+onResume : RESUME ':' ( interruptSpec | resumeResetSpec );
+
+resumeResetSpec : 'reset' ';';
 
 interruptSpec : interruptSpecType ':' function ';';
 

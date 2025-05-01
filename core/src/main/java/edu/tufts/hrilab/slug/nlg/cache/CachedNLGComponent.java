@@ -1,14 +1,10 @@
-/*
- * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
- */
-
 package edu.tufts.hrilab.slug.nlg.cache;
 
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.interfaces.NLGInterface;
-import edu.tufts.hrilab.slug.cache.CacheDatabase;
 import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.cache.CacheDatabase;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 

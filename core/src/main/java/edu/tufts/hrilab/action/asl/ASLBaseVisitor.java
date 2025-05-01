@@ -1,4 +1,4 @@
-// Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
+// Generated from /home/evan/code/diarc/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.2
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -340,6 +340,13 @@ public class ASLBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements AS
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitResumeResetSpec(ASLParser.ResumeResetSpecContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitInterruptSpec(ASLParser.InterruptSpecContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
@@ -439,13 +446,6 @@ public class ASLBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements AS
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
 	@Override public T visitRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx) { return visitChildren(ctx); }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.</p>
-	 */
-	@Override public T visitLocks(ASLParser.LocksContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

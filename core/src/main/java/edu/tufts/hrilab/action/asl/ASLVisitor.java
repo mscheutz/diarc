@@ -1,4 +1,4 @@
-// Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
+// Generated from /home/evan/code/diarc/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.2
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -287,6 +287,12 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitOnResume(ASLParser.OnResumeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link ASLParser#resumeResetSpec}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitResumeResetSpec(ASLParser.ResumeResetSpecContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link ASLParser#interruptSpec}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -376,12 +382,6 @@ public interface ASLVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ASLParser#locks}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitLocks(ASLParser.LocksContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ASLParser#spec}.
 	 * @param ctx the parse tree

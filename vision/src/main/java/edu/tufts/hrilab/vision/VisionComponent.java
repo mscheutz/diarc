@@ -1098,7 +1098,6 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
    * {@inheritDoc}
    * @return {@inheritDoc}
    */
-  @Nonnull
   @Override
   public String[] getAdapterClassNames() {
     return new String[]{

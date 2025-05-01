@@ -348,7 +348,7 @@ public class TRADEServicePanel extends JPanel {
             args[i] = Float.parseFloat(argStr);
           } else if (paramStr.equalsIgnoreCase("double")) {
             args[i] = Double.parseDouble(argStr);
-          } else if (paramStr.equalsIgnoreCase("int")) {
+          } else if (paramStr.equalsIgnoreCase("int") || paramStr.equalsIgnoreCase("integer")) {
             args[i] = Integer.parseInt(argStr);
           } else if (paramStr.equalsIgnoreCase("long")) {
             args[i] = Long.parseLong(argStr);

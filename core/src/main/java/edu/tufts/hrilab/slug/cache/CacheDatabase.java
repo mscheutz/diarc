@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.slug.cache;
 
+import edu.tufts.hrilab.slug.nlg.cache.ReverseCachedUtterance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
@@ -15,13 +16,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.Connection;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.HashMap;
 import java.util.Map;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +27,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.StringJoiner;
 
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
@@ -43,7 +40,7 @@ import edu.tufts.hrilab.slug.common.UtteranceType;
 
 public class CacheDatabase {
   static private Logger log = LoggerFactory.getLogger(CacheDatabase.class);
-  static private String cacheDirectoryPath = "config/edu/tufts/hrilab/slug/parsing/cache";
+  static private String cacheDirectoryPath = "/";
   private String tableName = "cache";
   private String defaultCacheName = "diarc-parser-cache";
   private String defaultReverseCacheName = "diarc-parser-cache-reverse";
@@ -57,7 +54,7 @@ public class CacheDatabase {
 
   private String language;
 
-  public CacheDatabase (String name, String[] loadPaths, boolean persist, boolean reverseCache, String language) {
+  public CacheDatabase(String name, String[] loadPaths, boolean persist, boolean reverseCache, String language) {
     this.reverseCache = reverseCache;
     this.language = language;
     String homeDirPath;
@@ -72,11 +69,11 @@ public class CacheDatabase {
         return;
       }
 
-      if (name!= null) {
-        if(reverseCache && name.equals(defaultReverseCacheName)) {
+      if (name != null) {
+        if (reverseCache && name.equals(defaultReverseCacheName)) {
           log.warn("The cache name \"" + defaultReverseCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
         } else if (name.equals(defaultCacheName)) {
-          log.warn("The cache name \"" + defaultCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
+        log.warn("The cache name \"" + defaultCacheName + "\" matches is the default cache name. This may overwrite existing cache data.");
         }
       }
 
@@ -86,9 +83,9 @@ public class CacheDatabase {
         if (reverseCache) {
           file = Paths.get(homeDirPath, defaultReverseCacheName + ".sqlite").toString();
         } else {
-          file = Paths.get(homeDirPath, defaultCacheName + ".sqlite").toString();
-        }
+        file = Paths.get(homeDirPath, defaultCacheName + ".sqlite").toString();
       }
+    }
     }
 
     initializeDatabase();
@@ -299,10 +296,16 @@ public class CacheDatabase {
     List<Term> indirectSemantics = entry.getIndirectSemantics();
     List<Map<Variable, Symbol>> bindings = entry.getBindings();
     String words = entry.getWordsAsString();
-    //Making reverse cache structure the same as for parsing for code reusability and ease of impl. Indexing by utterance
-    //  so we don't want to include the words when storing (because that will be the "words" field now). Can change.
-    List<String> wordsList = new ArrayList<>();
-    CachedUtterance cached = new CachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments(), language);
+    List<String> wordsList;
+    CachedUtterance cached;
+    if (reverseCache) {
+      //Making reverse cache structure the same as that for parsing for code reusability and ease of impl. Indexing by utterance
+      //  so we don't want to include the words when storing (because that will be the "words" field now). Can change.
+      cached = new ReverseCachedUtterance(type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments(), language);
+    } else {
+      wordsList = entry.getWords();
+      cached = new CachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, entry.getSupplementalSemantics(), entry.getTierAssignments());
+    }
 
     try {
       insertStatement.setString(1, words);
@@ -330,12 +333,13 @@ public class CacheDatabase {
     String getStatementString;
     String words = incoming.getWordsAsString();
     if (reverseCache) {
-      List<String> wordsList = new ArrayList<>();
-      UtteranceType type = incoming.getType();
-      Symbol semantics = incoming.getSemantics();
-      List<Term> indirectSemantics = incoming.getIndirectSemantics();
-      List<Map<Variable, Symbol>> bindings = incoming.getBindings();
-      CachedUtterance cached = new CachedUtterance(wordsList, type, semantics, indirectSemantics, bindings, incoming.getSupplementalSemantics(), incoming.getTierAssignments(), language);
+      CachedUtterance cached = new ReverseCachedUtterance(incoming.getType(),
+              incoming.getSemantics(),
+              incoming.getIndirectSemantics(),
+              incoming.getBindings(),
+              incoming.getSupplementalSemantics(),
+              incoming.getTierAssignments(),
+              language);
       getStatementString = cached.toJSON();
     } else {
       getStatementString = words;
@@ -357,8 +361,28 @@ public class CacheDatabase {
         if (reverseCache) {
           String cachedWords = results.getString("words");
           if (cachedWords != null) {
-            incoming.setWords(cachedWords);
-            return incoming;
+
+            StringJoiner joiner = new StringJoiner(" and ");
+            if (incoming.getBindings().isEmpty()) {
+              // no bindings to apply --> use cached words directly
+              joiner.add(cachedWords);
+            } else {
+              // apply bindings to output words with free-variables
+              // e.g., tube ALPHA SIDE NUM is broken --> tube beta left four is broken
+              for (Map<Variable, Symbol> bindingOption : incoming.getBindings()) {
+                String cachedWordsCopy = new String(cachedWords);
+                for (Map.Entry<Variable, Symbol> entry : bindingOption.entrySet()) {
+                  cachedWordsCopy = cachedWordsCopy.replaceAll(entry.getKey().toString(), entry.getValue().toString());
+                }
+                joiner.add(cachedWordsCopy);
+              }
+            }
+
+            Utterance.Builder output = new Utterance.Builder(incoming);
+            output.setWords(joiner.toString());
+            return output.build();
+          } else {
+            return null;
           }
         }
         json = results.getString("utterance");
@@ -369,24 +393,18 @@ public class CacheDatabase {
       log.error("[get] Couldn't get utterance from ResultSet", ex);
     }
 
+    Utterance.Builder output = new Utterance.Builder();
     if (cachedUtterance != null) {
-      incoming.setType(cachedUtterance.getType());
+      output.setUtteranceType(cachedUtterance.getType());
       semantics = cachedUtterance.getSemantics();
-      //EW: In the case of any other utterance type, we cannot blindly overwrite the first argument with an actor
-      if (cachedUtterance.getType() == UtteranceType.INSTRUCT) {
-        if (semantics != null && semantics.size() > 0) {
-          semantics.set(0, incoming.getAddressee());
-        } else {
-          log.warn("[get] cached utterance semantics possibly invalid {}", cachedUtterance.getSemantics());
-        }
-      }
-      incoming.setSemantics(semantics);
-      incoming.setIndirectSemantics(cachedUtterance.getIndirectSemantics());
-      incoming.setBindings(cachedUtterance.getBindings());
-      incoming.setSupplementalSemantics(cachedUtterance.getSupplementalSemantics());
-      incoming.setTierAssignments(cachedUtterance.getTierAssignments());
+      semantics.set(0, incoming.getAddressee());
+      output.setSemantics(semantics);
+      output.setIndirectSemantics(cachedUtterance.getIndirectSemantics());
+      output.setBindings(cachedUtterance.getBindings());
+      output.setSupplementalSemantics(cachedUtterance.getSupplementalSemantics());
+      output.setTierAssignments(cachedUtterance.getTierAssignments());
     }
 
-    return incoming;
+    return output.build();
   }
 }

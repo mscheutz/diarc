@@ -1,4 +1,4 @@
-// Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
+// Generated from /home/evan/code/diarc/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.2
 package edu.tufts.hrilab.action.asl;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -569,6 +569,18 @@ public class ASLBaseListener implements ASLListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterResumeResetSpec(ASLParser.ResumeResetSpecContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitResumeResetSpec(ASLParser.ResumeResetSpecContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterInterruptSpec(ASLParser.InterruptSpecContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -744,18 +756,6 @@ public class ASLBaseListener implements ASLListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterLocks(ASLParser.LocksContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitLocks(ASLParser.LocksContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

@@ -28,7 +28,7 @@ import java.util.*;
 
 public class MockMoveBaseComponent extends DiarcComponent implements MoveBaseInterface {
   boolean shouldSimExecTime = false; // should the primitive actions simulate execution times
-  long simExecTimeout = 1000; // timeout to simulate execution time
+  long simExecTimeout = 3000; // timeout to simulate execution time
 
   //used to manage the previous and current location, since checkAt doesn't have outside information to handle this. important since checkAt observes facts used in preconditions and effects of asl actions as well
   private Symbol currentLocation = Factory.createSymbol("location_0", "location");

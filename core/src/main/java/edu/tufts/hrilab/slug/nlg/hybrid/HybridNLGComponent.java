@@ -1,7 +1,3 @@
-/*
- * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
- */
-
 package edu.tufts.hrilab.slug.nlg.hybrid;
 
 import ai.thinkingrobots.trade.TRADEService;
@@ -14,6 +10,8 @@ import edu.tufts.hrilab.slug.nlg.cache.CachedNLGComponent;
 import edu.tufts.hrilab.slug.nlg.llm.LLMNLGComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +68,7 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
         }
         if (useCache && cmdLine.hasOption("cacheLoad")) {
             cacheLoads = cmdLine.getOptionValues("cacheLoad");
-            log.debug("Loading pre-existing cache" + ( cacheLoads.length == 1 ? "" : "s" ) + ": " + String.join(", ", cacheLoads) );
+            log.debug("Loading pre-existing cache" + (cacheLoads.length == 1 ? "" : "s") + ": " + String.join(", ", cacheLoads));
         }
         if (useCache && cmdLine.hasOption("cachePersist")) {
             cachePersist = true;
@@ -96,22 +94,22 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
 
         // init CachedNLGComponent
         if (useCache) {
-            String cacheArgs = "reverse";
-            if (cacheName != null) {
-                cacheArgs += " -name " + cacheName;
+          StringBuilder cacheArgs = new StringBuilder("reverse");
+        if (cacheName != null) {
+            cacheArgs.append(" -name ").append(cacheName);
+        }
+        if (cacheLoads != null) {
+            for (String cacheLoad : cacheLoads) {
+                cacheArgs.append(" -load ").append(cacheLoad);
             }
-            if (cacheLoads != null) {
-                for (String cacheLoad : cacheLoads) {
-                    cacheArgs += " -load " + cacheLoad;
-                }
-            }
-            if (cachePersist) {
-                cacheArgs += " -persist";
-            }
-            cacheNLG = createInstance(CachedNLGComponent.class, cacheArgs, false);
+        }
+        if (cachePersist) {
+            cacheArgs.append(" -persist ");
+        }
+            cacheNLG = createInstance(CachedNLGComponent.class, cacheArgs.toString(), false);
         }
     }
-    
+
     @Override
     public Utterance convertSemanticsToText(Utterance incoming) {
         log.debug("[convertSemanticsToText] hit with utterance: " + incoming);
@@ -137,11 +135,11 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
 
         //Check cache first
         if (cachedFuture != null) {
-            try {
+        try {
                 cachedOutput = cachedFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
                 log.error("[convertSemanticsToText] Error getting cached NLG results.", e);
-            }
+        }
 
             if (cachedOutput != null && !cachedOutput.getWordsAsString().isEmpty()) {
                 log.debug("[convertSemanticsToText] Using cached NLG response: " + cachedOutput);
@@ -149,21 +147,21 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
                 return cachedOutput;
             }
         }
-        
+
         //Try LLMParser, return if not empty
         if (llmFuture != null) {
-            try {
+        try {
                 llmOutput = llmFuture.get();
             } catch (InterruptedException | ExecutionException e) {
                 log.error("[convertSemanticsToText] Error getting llm NLG results.", e);
-            }
+                }
 
             if (llmOutput != null && !llmOutput.getWordsAsString().isEmpty()){
                 log.debug("[convertSemanticsToText] Using llm NLG response");
                 output = llmOutput;
                 if (useCache) {
                     cacheNLGOutput(output);
-                }
+            }
                 return output;
             }
         }
@@ -172,9 +170,9 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
         if (simpleNLGFuture != null) {
             try {
                 simpleNLGOutput = simpleNLGFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
                 log.error("[convertSemanticsToText] Error getting SimpleNLG results.", e);
-            }
+        }
 
             if (simpleNLGOutput != null && !simpleNLGOutput.getWordsAsString().isEmpty()) {
                 log.debug("[convertSemanticsToText] Using SimpleNLG response");
@@ -188,8 +186,6 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
         return output;
     }
 
-    @TRADEService
-    @Action
     public void cacheNLGOutput(Utterance utterance) {
         if (useCache) {
             log.debug("[cacheNLGOutput] Caching parsed utterance");

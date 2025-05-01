@@ -751,7 +751,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /**
    * Get a list of all pending and active goals.
    *
-   * TODO: remove this method, or at least make it not a trade service
+   * TODO: remove this method. No Goal instances should be passed in TRADE services.
    */
   @TRADEService
   public List<Goal> getCurrentGoals() {
@@ -761,6 +761,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   /**
    * Get a list of all current pending and/or active goals matching the goalPredicate query.
    * @return goals with matching goalPredicate, or null if no matching goal found
+   *
+   * TODO: remove this method. No Goal instances should be passed in TRADE services.
    */
   @TRADEService
   public List<Goal> getMatchingCurrentGoals(Predicate queryGoal) {
@@ -1136,7 +1138,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * Register to be notified of the specified NotificationType.
    *
    * @param callback TRADE service callback
-   * @param type     NotificationType
+   * @param type NotificationType
    * @see edu.tufts.hrilab.action.notification.GoalManagerNotifier for details on expected callback signatures.
    */
   @TRADEService
@@ -1148,7 +1150,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * Unregister to be notified of the specified NotificationType.
    *
    * @param callback TRADE service callback
-   * @param type     NotificationType
+   * @param type NotificationType
    */
   @TRADEService
   public void unregisterGoalManagerNotification(TRADEServiceInfo callback, NotificationType type) {
@@ -1173,7 +1175,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       List<Goal> activeGoals = em.getActiveGoals();
       activeGoals.forEach(goal -> em.cancelGoal(goal.getId()));
       activeGoals.forEach(goal -> em.joinOnGoal(goal.getId()));
-
 
       try {
         TRADE.deregister(contextConsultant);

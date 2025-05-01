@@ -17,7 +17,6 @@ import ai.thinkingrobots.trade.TRADEService;
  *
  * <pre>
  * {@code
- * @Nonnull
  * @Override
  * String[] getAdapterClassNames() {
  *     return new String[] {

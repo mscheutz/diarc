@@ -103,4 +103,13 @@ public final class Misc {
   public static Object setNull() {
     return null;
   }
+
+  /**
+   * Binds local variables in a string to a string.
+   * @param input String with variables to bind
+   * @retrun Bound string
+   */
+  public static String bind (String input) {
+    return input + "";
+  }
 }
