@@ -165,16 +165,21 @@ public class ActionScriptsComponentTest {
     executeAndCheckGoal(goalPredicate, GoalStatus.FAILED);
 
     // create goal and execute
-    goalPredicate = Factory.createPredicate("finallyTest5(self:agent)");
     TestHelper helper = new TestHelper();
     try {
       TRADE.registerAllServices(helper, new ArrayList<>());
     } catch (TRADEException e) {
       log.error("Error registering TestHelper with TRADE.", e);
     }
+    goalPredicate = Factory.createPredicate("finallyTest5(self:agent)");
     Long goalId = component.submitGoal(goalPredicate);
     component.joinOnGoal(goalId);
     Assert.assertTrue(helper.testStrings.contains("finallyTest5"));
+
+    goalPredicate = Factory.createPredicate("tryCatchReturnTest(self:agent)");
+    goalId = component.submitGoal(goalPredicate);
+    component.joinOnGoal(goalId);
+    Assert.assertTrue(helper.testStrings.contains("tryCatchReturnTest"));
 
     try {
       TRADE.deregister(helper);

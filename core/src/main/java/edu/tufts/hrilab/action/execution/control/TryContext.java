@@ -91,7 +91,7 @@ public class TryContext extends Context {
    */
   @Override
   public boolean setStatus(ActionStatus eStatus, Justification justification) {
-    if (!eStatus.isTerminated()) {
+    if (!eStatus.isTerminated() && eStatus != ActionStatus.RETURN) {
       return super.setStatus(eStatus, justification);
     } else if (tryState == TryContextState.NORMAL && canCatch(eStatus, justification)) {
       tryState = TryContextState.SHOULD_CATCH;

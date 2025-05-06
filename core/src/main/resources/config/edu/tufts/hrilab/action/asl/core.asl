@@ -16,10 +16,6 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     if (tsc:actionExists(?goal)) {
       !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "capableOf(?goal)");
       act:assertBelief(!toAssert);
-    } else {
-      // TODO: this shouldn't actually fail, but is currently needed to handle the inconsistent
-      //       way that ITKs are handled
-      exit(FAIL);
     }
 }
 
