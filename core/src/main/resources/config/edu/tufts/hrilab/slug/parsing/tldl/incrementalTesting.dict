@@ -849,8 +849,8 @@ faster; ADV; faster
 %put; ((C/NN)/PP)\PP ; #z#y#x.put(?ADDRESSEE, $x, $y, $z)
 %put; ((C/NN)/PP)\PP ; #w#z#y#x.put(?ADDRESSEE, $x, $y, $z, $w)
 
-on; (NN/NN)/NN ; #y#x.on($x, $y)
-in; (NN/NN)/NN ; #y#x.in($x, $y)
+%%on; (NN/NN)/NN ; #y#x.on($x, $y)
+%%in; (NN/NN)/NN ; #y#x.in($x, $y)
 
 that; (NN/NN)/NN ; #y#x.that($x, $y)
 is; NN/NN ; #x.$x
@@ -913,9 +913,9 @@ in; (?ADDRESSEE)/NN; #y#x.in($x,$y); MOD
 %%grab; (C/REF)\AGENT ; #x.graspObject($x)
 %%grab; C/REF ; #x.graspObject(?ADDRESSEE,$x)
 %%grab; ((C/REF)/PP)/REF ; #x#y#z.graspObject(?ADDRESSEE, $x,$y,$z)
-on; (REF\REF)/REF; #x#y.on($x,$y); MOD
-on; REF/REF ; #x.$x
-on; PP ; on
+%%on; (REF\REF)/REF; #x#y.on($x,$y); MOD
+%%on; REF/REF ; #x.$x
+%%on; PP ; on
 in; (REF\REF)/REF; #x#y.in($x,$y); MOD
 in; REF/REF ; #x.$x
 in; PP ; in
@@ -932,15 +932,14 @@ in; PP ; in
 %%in; REF/REF ; #x.$x
 that; NN/NN ; #x.$x
 
-on; NN/NN ; #x.$x
-on; PP ; on
-in; NN/NN ; #x.$x
-in; PP ; in
-that; (NN/NN)/NN ; #x.$x
-on; (NN/NN)/NN ; #x.$x
-on; PP/NN ; on
-in; (NN/NN)/NN ; #x.$x
-in; PP/NN ; in
+%%on; NN/NN ; #x.$x
+%%on; PP ; on
+%%in; NN/NN ; #x.$x
+%%in; PP ; in
+%%on; (NN/NN)/NN ; #x.$x
+%%on; PP/NN ; on
+%%in; (NN/NN)/NN ; #x.$x
+%%in; PP/NN ; in
 table; NN; table
 mug; NN; mug
 mouse; NN; mouse

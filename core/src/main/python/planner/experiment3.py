@@ -40,6 +40,7 @@ logger = logging.getLogger("Logger")
 logger.addHandler(handler)
 logger.info("Starting Planner Service...")
 
+@JImplements(PlannerInterface)
 class DiarcWrapper:
     def __init__(self):
         self.positions = []
@@ -47,8 +48,10 @@ class DiarcWrapper:
         self.grasps = []
         self.received_pose = False
         self.grasp = True
+        self.on_towel = False
+        self.in_box = False
 
-        p_box = np.array([0.42, -0.5, 0.15])
+        p_box = np.array([0.45, -0.48, 0.07])
         r_pickup = R.from_euler("XYZ", [0, np.pi / 2, 0]).as_matrix()
         r_pickup2 = R.from_euler("XYZ", [0, np.pi / 2, 0]).as_matrix()
         r_pickup = R.from_euler("XYZ", [0, 0, np.pi / 2]).as_matrix() @ r_pickup
@@ -56,13 +59,23 @@ class DiarcWrapper:
         self.orientations.append(np.copy(r_pickup))
         self.grasps.append(False)
 
-        p_apple1 = np.array([0.5, -0.2, 0.07])
+        p_apple1 = np.array([0.5, -0.2, 0.04])
         self.positions.append(p_apple1)
         self.orientations.append(np.copy(r_pickup))
         self.grasps.append(True)
 
-        p_apple2 = np.array([0.4, 0.25, 0.07])
+        p_apple2 = np.array([0.4, 0.25, 0.03])
         self.positions.append(p_apple2)
+        self.orientations.append(np.copy(r_pickup2))
+        self.grasps.append(True)
+
+        p_box2 = np.array([0.15, -0.48, 0.1])
+        self.positions.append(p_box2)
+        self.orientations.append(np.copy(r_pickup))
+        self.grasps.append(True)
+
+        p_box2 = np.array([0.6, -0.2, 0.035])
+        self.positions.append(p_box2)
         self.orientations.append(np.copy(r_pickup2))
         self.grasps.append(True)
 
@@ -97,6 +110,25 @@ class DiarcWrapper:
         speeds = [0.5, 5.0, 10.0]
         self.w_speed = speeds[speed_id]
 
+    @JOverride
+    def send_to_planner(self, instruction):
+        logger.info(f"(Planner) Instruction received {instruction}")
+        if "GRASP" in instruction:
+            logger.info("Grasping apple")
+            self.go_to_pose(1)
+        if "PUT" in instruction:
+            if "BOX" in instruction and "TOWEL" in instruction:
+                logger.info("Putting apple in box")
+                self.in_box = True
+                self.on_towel = False
+                self.go_to_pose(1)
+            elif "TOWEL" in instruction:
+                logger.info("Putting apple on towel")
+                self.on_towel = True
+                self.in_box = False
+                self.go_to_pose(2)
+        return "s"
+
 
 class ExperimentRunner(Node):
     def __init__(self):
@@ -107,6 +139,7 @@ class ExperimentRunner(Node):
         self.traj_srv = self.create_client(Trajectory, "/mpc/set_trajectory")
         self.params_srv = self.create_client(MPCParams, "/mpc/set_params")
         self.con_srv = self.create_client(UpdateConstraints, "/mpc/update_constraints")
+        self.first_sample = None
 
         self.params = MPCParams.Request()
         self.params.n = 15
@@ -114,8 +147,8 @@ class ExperimentRunner(Node):
         weights = get_default_weights()
         # weights[7] *= 0.3
         self.params.weights = weights.tolist()
-        self.params.build = True
-        self.params.simulate = False
+        self.params.build = False
+        self.params.simulate = True
         self.params.experiment = False
         self.params.real_time = False
         self.params.nr_segs = 4
@@ -130,13 +163,51 @@ class ExperimentRunner(Node):
 
         # Define obstacles as boxes by limits (-x, -y, -z, x, y, z)
         size = 0.04
+        s_box = 0.12
+        w_boxx = 0.06
+        w_boxy = 0.05
+        p_box = [0.45, -0.48, 0.05]
+        h_box = 0.18
         self.obstacles = [
+            [
+                p_box[0] + s_box - w_boxx,
+                p_box[1] - s_box,
+                0.0,
+                p_box[0] + s_box,
+                p_box[1] + s_box,
+                p_box[2] + h_box,
+            ],
+            [
+                p_box[0] - s_box,
+                p_box[1] - s_box,
+                0.0,
+                p_box[0] - s_box + w_boxx,
+                p_box[1] + s_box,
+                p_box[2] + h_box,
+            ],
+            [
+                p_box[0] - s_box,
+                p_box[1] - s_box - w_boxy,
+                0.0,
+                p_box[0] + s_box,
+                p_box[1] - s_box,
+                p_box[2] + h_box,
+            ],
+            [
+                p_box[0] - s_box,
+                p_box[1] + s_box,
+                0.0,
+                p_box[0] + s_box,
+                p_box[1] + s_box + w_boxy,
+                p_box[2] + h_box,
+            ],
             [0.2, -1.0, -0.1, 1.0, 1.0, 0.0],
-            [0.35, -0.55, 0.0, 0.55, -0.35, 0.12],
-            [-0.3, -1.0, 0.5, 0.35, -0.35, 1.0],
+            # [0.6, -1.0, -0.1, 1.0, 1.0, 0.15],
+            [-0.3, -1.0, 0.53, 0.2, -0.35, 1.0],
             [-0.2, -1.0, 0.0, -0.14, 1.0, 1.0],
             [-1.0, 0.38, 0.0, 1.0, 0.5, 1.0],
             [0.4, -0.05, 0.0, 0.5, 0.05, 0.15],
+            [0.1, -0.55, 0.0, 0.3, -0.35, 0.07],
             [
                 0.5 - size,
                 -0.2 - size,
@@ -158,9 +229,9 @@ class ExperimentRunner(Node):
         # Plan a path to the final pose
         self.planner = ConvexSetPlanner(
             e_p_max=0.5,
-            obs_size_increase=0.01,
+            obs_size_increase=0.05,
             obstacles=copy.deepcopy(self.obstacles),
-            workspace_max=[1.0, 0.38, 1.2],
+            workspace_max=[1.0, 0.38, 1.0],
             workspace_min=[-0.14, -1.0, 0.0],
         )
 
@@ -239,7 +310,8 @@ class ExperimentRunner(Node):
             bp1_list,
             sets_via,
         ) = self.planner.plan_convex_set_path(
-            p0, p1, r0, r1, replanning=update, p_horizon=p_horizon
+            p0, p1, r0, r1, replanning=update, p_horizon=p_horizon,
+            first_sample=self.first_sample,
         )
         (
             _,
@@ -258,6 +330,7 @@ class ExperimentRunner(Node):
             self.planner.publish_sets(sets_via)
             br1_list.append(br1_list[-1])
             e_r_bound.append(np.array([10, 10, 10, -10, -10, -10]) * np.pi / 180)
+            self.first_sample = copy.deepcopy(p_via[-2])
         stop = time.time()
         print(f"Path planning took {stop - start:.2f}s")
 
@@ -281,8 +354,7 @@ class ExperimentRunner(Node):
         resp = future.result()
 
 
-def main():
-    replan = True
+def main(diarc_wrapper):
     rclpy.init()
     node = ExperimentRunner()
     # Listener to actual robot data
@@ -293,7 +365,6 @@ def main():
     logger_mpc.start()
     while logger_mpc.i < 1:
         rclpy.spin_once(logger_mpc)
-    diarc_wrapper = DiarcWrapper()
 
     # wrapper = TRADEWrapper()
     # wrapper.spin()
@@ -315,6 +386,8 @@ def main():
 
     try:
         replan = True
+        replan2 = True
+        replan3 = True
         box_replan = True
         new_speed = True
         init = True
@@ -323,26 +396,47 @@ def main():
             logger_mpc.phi_max - logger_mpc.phi > 0.01
             or logger_mpc.dq_norm > 0.15
             or logger_mpc.phi_max < 0.001
-            or np.linalg.norm(logger_mpc.p_traj[-1][:3] - diarc_wrapper.positions[0]) > 0.01
+            or (np.linalg.norm(logger_mpc.p_traj[-1][:3] - diarc_wrapper.positions[0]) > 0.01
+            and np.linalg.norm(logger_mpc.p_traj[-1][:3] - diarc_wrapper.positions[4]) > 0.01)
         ):
             if (
-                logger_mpc.phi_max - logger_mpc.phi < 0.01
-                and logger_mpc.dq_norm < 0.15
+                logger_mpc.phi_max - logger_mpc.phi < 0.002
+                and logger_mpc.dq_norm < 0.1
                 and logger_mpc.phi_max > 0.001
             ):
                 at_end = True
-            if init:
-                diarc_wrapper.go_to_pose(1)
-                init = False
-            if logger_mpc.i_seg == 15 and replan:
-                diarc_wrapper.go_to_pose(2)
-                replan = False
+            else:
+                at_end = False
+            # if init:
+            #     diarc_wrapper.go_to_pose(1)
+            #     init = False
+            # if logger_mpc.i_seg == 15 and not box_replan and replan3:
+            #     diarc_wrapper.go_to_pose(3)
+            #     replan3 = False
+            # if logger_mpc.i_seg == 15 and replan2 and not replan:
+            #     diarc_wrapper.go_to_pose(1)
+            #     diarc_wrapper.in_box = True
+            #     diarc_wrapper.on_towel = False
+            #     replan2 = False
+            # if logger_mpc.i_seg == 10 and replan:
+            #     diarc_wrapper.go_to_pose(2)
+            #     diarc_wrapper.on_towel = True
+            #     diarc_wrapper.in_box = False
+            #     replan = False
             if box_replan and at_end:
                 # Close the gripper in the real experiment
-                if node.params.simulate:
-                    node.command_gripper(position=1.0)
-                diarc_wrapper.go_to_pose(0)
-                box_replan = False
+                if diarc_wrapper.on_towel:
+                    if node.params.simulate:
+                        node.command_gripper(position=1.0)
+                        time.sleep(0.5)
+                    diarc_wrapper.go_to_pose(4)
+                    box_replan = False
+                if diarc_wrapper.in_box:
+                    if node.params.simulate:
+                        node.command_gripper(position=1.0)
+                        time.sleep(0.5)
+                    diarc_wrapper.go_to_pose(0)
+                    box_replan = False
 
             if diarc_wrapper.received_pose:
                 diarc_wrapper.received_pose = False
@@ -368,37 +462,6 @@ def main():
                     grasp_set=diarc_wrapper.grasp,
                 )
                 logger_mpc.i_seg = 0
-            if diarc_wrapper.add_obs is not None:
-                print("(Replanning) New obstacles triggering replanning")
-                if logger_mpc.i > 0:
-                    node.p_horizon = [x[-1][:3] for x in logger_mpc.p_traj_horizon[1:]]
-                    p0 = node.p_horizon[0]
-                    r0 = R.from_rotvec(logger_mpc.p_traj[-1][3:]).as_matrix()
-                p1 = diarc_wrapper.p_des
-                r1 = diarc_wrapper.r_des
-                node.planner.add_obstacle_reps(diarc_wrapper.add_obs, True)
-                node.plan_path(
-                    p0,
-                    p1,
-                    r0,
-                    r1,
-                    q0,
-                    p_horizon=node.p_horizon,
-                    grasp_set=diarc_wrapper.grasp,
-                )
-                diarc_wrapper.add_obs = None
-                logger_mpc.i_seg = 0
-
-            if diarc_wrapper.e_r_bound is not None:
-                print("(BoundsUpdate) Updating MPC bounds")
-                node.send_constraints(diarc_wrapper.e_r_bound)
-                diarc_wrapper.e_r_bound = None
-
-            if diarc_wrapper.w_speed is not None:
-                print("(Speed update) Updating speed")
-                node.params.weights[7] *= diarc_wrapper.w_speed
-                node.send_params()
-                diarc_wrapper.w_speed = None
 
             rclpy.spin_once(logger_mpc, timeout_sec=0.001)
             if node.params.simulate:
@@ -438,4 +501,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    wrapper = TRADEWrapper()
+    planner_component = DiarcWrapper()
+    TRADE.registerAllServices(planner_component, "")
+
+    logger.info("Planner Service registered with TRADE.")
+    main(planner_component)
