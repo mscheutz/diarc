@@ -257,6 +257,7 @@ import java.util.StringTokenizer;
     !toLocation = op:invokeMethod(!failedActionPredicate,"get",1);
     String !locName = tsc:getMapReferenceName(!toLocation);
     act:generateResponseFromString("I had an issue going to location !locName. Trying again.");
+//    act:say("Excuse me");
     op:log(warn, "[recoveryGoToLocation] re-attempting goToLocation(X)");
 }
 
