@@ -25,6 +25,7 @@ import edu.tufts.hrilab.fol.Symbol;
 
 import edu.tufts.hrilab.llm.openai.OpenaiClient;
 import edu.tufts.hrilab.llm.llama.LlamaClient;
+import edu.tufts.hrilab.llm.openai.response.OpenaiChatCompletionResponse;
 
 public class LLMComponent extends DiarcComponent {
   static private Logger log = LoggerFactory.getLogger(LLMComponent.class);
@@ -88,6 +89,11 @@ public class LLMComponent extends DiarcComponent {
     tokenizer.setEncoding(service, model);
   }
 
+  @TRADEService
+  public boolean hasOpenAIKey() {
+    return openai.hasApiKey();
+  }
+
   /**
    * Sets the LLM service to the given value.
    *
@@ -126,6 +132,12 @@ public class LLMComponent extends DiarcComponent {
     }
   }
 
+  @TRADEService
+  @Action
+  public String pingLLM() {
+    return "LLMComponent is up with service=" + service + " and model=" + model;
+  }
+
   /**
    * Sets the language model to use for the language learning model service.
    *
@@ -145,6 +157,9 @@ public class LLMComponent extends DiarcComponent {
     }
     model = modelStr;
   }
+
+
+
 
   /**
    * Sets the stop words for the LLM to terminate token stream.
@@ -249,21 +264,20 @@ public class LLMComponent extends DiarcComponent {
   public Completion chatCompletion (Symbol prompt) {
     return chatCompletion(prompt.toString());
   }
+
   @TRADEService
-  public Completion chatCompletion (String prompt) {
-    switch (service) {
-      case "openai" :
-        return new Completion(openai.chatCompletion(prompt));
-      case "llama" :
-        return new Completion(llama.chatCompletion(prompt));
-      case "llamahf":
-        return new Completion(hf.llamaHFChatCompletion(prompt));
-      default :
-        log.error("Service " + service + " not implemented.");
-        return null;
+  public Completion chatCompletion(String prompt) {
+    try {
+      log.info("chatCompletion called with prompt: {}", prompt);
+      OpenaiChatCompletionResponse response = openai.chatCompletion(prompt);
+      log.info("OpenAI responded: {}", response); // or stringify response.getChoices() if needed
+      return new Completion(response);
+    } catch (Exception e) {
+      log.error("Exception in chatCompletion(String):", e);
+      // return a fallback Completion object with a dummy response (e.g., empty choices list)
+      return new Completion(new OpenaiChatCompletionResponse()); // or however your fallback works
     }
   }
-
  /**
   *  Returns a Completion object for chat-based completions, based on the specified prompt and model 
   *  using the set service.

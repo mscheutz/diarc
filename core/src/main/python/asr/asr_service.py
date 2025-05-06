@@ -27,11 +27,13 @@ handler.setFormatter(formatter)
 logger = logging.getLogger("Logger")
 logger.addHandler(handler)
 logger.info("Starting ASR Service...")
+time.sleep(4)
 
 # model_path = (
 #     "/home/toeleric/research/boundmpc_speech/src/diarc/vosk-model-small-en-us-0.15"
 # )
-model_path = "/home/toeleric/research/boundmpc_speech/src/diarc/vosk-model-en-us-0.22"
+model_path = "/Users/mitchellabrams/vosk-model-small-en-us-0.15"
+#vosk-model-small-en-us-0.15
 if not os.path.exists(model_path):
     logging.error("Please download and unzip the Vosk model first.")
     sys.exit()
@@ -242,8 +244,14 @@ if __name__ == "__main__":
     TRADE.registerAllServices(asr_component, "")
 
     logger.info("ASR Service registered with TRADE.")
-    # asr_component.startRecognition()
+    #asr_component.startRecognition()
+
+
+    #asr_component.startRecognition()
+
+    # Allow time for ASR to process
+
     while True:
-        time.sleep(10)
-    # wrapper.call_trade("getLastRecognizedText")
-    # wrapper.call_trade("stopRecognition")
+        time.sleep(5)
+    #wrapper.call_trade("getLastRecognizedText")
+    #wrapper.call_trade("stopRecognition")

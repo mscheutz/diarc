@@ -7,6 +7,8 @@ package edu.tufts.hrilab.demos;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.*;
 import java.util.Collection;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
@@ -15,6 +17,8 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.belief.BeliefComponent;
+import edu.tufts.hrilab.llm.LLMComponent;
+import edu.tufts.hrilab.llm.Message;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fol.Factory;
@@ -32,6 +36,13 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
+import edu.tufts.hrilab.llm.Completion;
+import edu.tufts.hrilab.llm.Chat;
+import edu.tufts.hrilab.llm.Prompts;
+import edu.tufts.hrilab.llm.Prompt;
+import edu.tufts.hrilab.util.resource.Resources;
+
+
 
 
 
@@ -42,6 +53,7 @@ public class TLDLParserComponentTestIncremental {
     protected Logger log = LoggerFactory.getLogger(this.getClass());
     private TLDLParserComponent component;
     private BeliefComponent beliefComponent;
+    private LLMComponent llmcomponent;
 
 
 
@@ -58,6 +70,43 @@ public class TLDLParserComponentTestIncremental {
     public TLDLParserComponentTestIncremental() {
         component = DiarcComponent.createInstance(TLDLParserComponent.class, "");
         beliefComponent = DiarcComponent.createInstance(BeliefComponent.class, "-initfile demos.pl -initfile agents/agents.pl");
+        llmcomponent = DiarcComponent.createInstance(edu.tufts.hrilab.llm.LLMComponent.class, "");
+
+        if (llmcomponent == null) {
+            throw new IllegalStateException("LLMComponent could not be created.");
+        }
+
+        try {
+            boolean keyPresent = TRADE.getAvailableService(
+                    new TRADEServiceConstraints().name("hasOpenAIKey")
+            ).call(Boolean.class);
+            log.info("✅ OpenAI key present? " + keyPresent);
+        } catch (TRADEException e) {
+            log.error("Failed to retrieve OpenAI key presence via TRADE", e);
+        }
+
+        try {
+            String result = TRADE.getAvailableService(
+                    new TRADEServiceConstraints().name("pingLLM")
+            ).call(String.class);
+            log.info("Ping test: " + result);
+        } catch (TRADEException e) {
+            log.error("Ping failed", e);
+        }
+
+        Completion response = null;
+
+        try {
+            response = TRADE.getAvailableService(
+                    new TRADEServiceConstraints().name("chatCompletion").argTypes(String.class)
+            ).call(Completion.class, "print a random word!");
+            log.info("LLM response: {}", response.getText());
+        } catch (TRADEException e) {
+            log.error("OpenAI test failed", e);
+        }
+
+
+
 
     }
 
@@ -92,6 +141,47 @@ public class TLDLParserComponentTestIncremental {
             assertTrue("Chart should not be empty after parsing a phrase.", component.isChartInitialized());
         }
 
+        // Add LLM component example here
+        // get prompt to interact with incremental parser
+
+
+
+
+        //Prompt IncrementalPrompt = Prompts.getPrompt("incrementalParsing");
+        //Chat chat = new Chat(IncrementalPrompt);
+        StringBuilder promptString= new StringBuilder();
+        promptString.append("generate an AMR for the utterance: \"");
+        //promptString.append(humanInput);
+        promptString.append("\".");
+
+
+        log.debug("AMR Prompt:");
+        log.debug(promptString.toString());
+
+        String result="";
+        try{
+            Completion completion = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion")).call(Completion.class, promptString.toString());
+
+            String simplifiedUtterance="";
+            if(completion != null) {
+                result=completion.getText();
+            }
+        } catch (TRADEException e) {
+            log.error("[generate]",e);
+        }
+
+
+
+
+
+        //chat.setMessages(chatInput);
+
+
+
+
+
+
+
         // ✅ After parsing all phrases, check final chart state
         int finalChartSize = component.getCurrentChartSize();
         log.info("📝 Final chart size before reset: {}", finalChartSize);
@@ -109,6 +199,7 @@ public class TLDLParserComponentTestIncremental {
 
         Utterance finalResult = component.parseUtterance(finalUtterance);
         log.info("🚀 Final result after reset: {}", finalResult);
+        // TODO add LLM check here for an example
 
         assertTrue("Final parse should produce a valid utterance.", finalResult != null);
     }

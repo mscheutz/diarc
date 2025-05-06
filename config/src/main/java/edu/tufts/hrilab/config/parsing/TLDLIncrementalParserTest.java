@@ -13,14 +13,17 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
+import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.python.PythonWrapper;
+import edu.tufts.hrilab.llm.LLMComponent;
 
 public class TLDLIncrementalParserTest extends DiarcConfiguration {
     private TLDLParserComponent component;
+    private LLMComponent LLMcomponent;
     private PythonWrapper wrapper;
     private PythonWrapper wrapper_planner;
     private final Queue<String> recognizedTextQueue = new ConcurrentLinkedQueue<>();
@@ -37,6 +40,11 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         // Initialize TLDL Parser Component
         component = new TLDLParserComponent();
         component.addDictionary("incrementalTesting.dict");
+
+        // Initialize LLM Component
+        //DiarcComponent.createInstance(edu.tufts.hrilab.llm.LLMComponent.class, "");
+        LLMcomponent = new LLMComponent();
+
 
         // Start Python ASR Service
         initializePythonWrapper();
@@ -57,6 +65,14 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
     private void fetchAsrText() {
         while (!Thread.currentThread().isInterrupted()) { // Allows graceful stopping
             log.info("🔊 START SPEAKING NOW"); // Prompt user
+
+            // Sleep briefly to prevent excessive polling
+            try {
+                Thread.sleep(8000);
+            } catch (InterruptedException e) {
+                log.error("ASR listening thread interrupted", e);
+                Thread.currentThread().interrupt(); // Allow graceful exit
+            }
 
             try {
                 String recognizedText = TRADE.getAvailableService(new TRADEServiceConstraints().name("startRecognition")).call(String.class);
@@ -82,7 +98,7 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
 
             // Sleep briefly to prevent excessive polling
             try {
-                Thread.sleep(50);
+                Thread.sleep(3000);
             } catch (InterruptedException e) {
                 log.error("ASR listening thread interrupted", e);
                 Thread.currentThread().interrupt(); // Allow graceful exit
@@ -170,12 +186,12 @@ public class TLDLIncrementalParserTest extends DiarcConfiguration {
         // String file_planner = "planner.experiment0";
         // String file_planner = "planner.experiment1";
         // String file_planner = "planner.experiment2";
-        String file_planner = "planner.experiment3";
-        wrapper_planner = new PythonWrapper(file_planner, true);
-        wrapper_planner.start();
+        //String file_planner = "planner.experiment3";
+       // wrapper_planner = new PythonWrapper(file_planner, true);
+        //wrapper_planner.start();
 
         try {
-            Thread.sleep(5000); // Allow time for PyTRADE to initialize
+            Thread.sleep(8000); // Allow time for PyTRADE to initialize
         } catch (InterruptedException e) {
             log.error("PythonWrapper initialization interrupted", e);
         }
