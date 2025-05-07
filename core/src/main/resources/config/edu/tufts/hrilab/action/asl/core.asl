@@ -6,20 +6,18 @@ import edu.tufts.hrilab.action.goal.Goal;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 
 () = checkCapableOf["checks if post condition is capable of bing reached by ?actor"](Predicate ?goal) {
-    Term !toAssert;
+    Term !capableOf;
     Term !otherActor;
 
     effects : {
-      success : knows(?actor,capableOf(?goal));
+      success : knowsIf(?actor,capableOf(?goal));
     }
 
+    !capableOf = op:createPredicate("capableOf(?goal)");
     if (tsc:actionExists(?goal)) {
-      !toAssert = op:createPredicate("capableOf(?goal)");
-      act:assertBelief(!toAssert);
+      act:assertBelief(!capableOf);
     } else {
-      // TODO: this shouldn't actually fail, but is currently needed to handle the inconsistent
-      //       way that ITKs are handled
-      exit(FAIL);
+      act:retractBelief(!capableOf);
     }
 }
 

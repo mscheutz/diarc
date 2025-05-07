@@ -42,12 +42,13 @@ public class CachedParserComponentTest {
         component = DiarcComponent.createInstance(CachedParserComponent.class, "-name cached-parser-test");
     }
 
-    private boolean testUtterance(String utterance, String desired, String speaker, String listener) {
-        Utterance incoming = new Utterance(Factory.createSymbol(speaker),
-            Factory.createSymbol(listener),
-            Arrays.asList(utterance.split(" ")),
-            UtteranceType.UNKNOWN,
-            true);
+    private boolean testUtterance(String words, String desired, String speaker, String addressee) {
+        Utterance incoming = new Utterance.Builder()
+                .setSpeaker(Factory.createSymbol(speaker))
+                .setAddressee(Factory.createSymbol(addressee))
+                .setWords(words)
+                .setUtteranceType(UtteranceType.UNKNOWN)
+                .setIsInputUtterance(true).build();
         Utterance parseResult = tldl.parseUtterance(incoming);
         component.addEntryToCache(parseResult);
         Utterance cacheResult = component.parseUtterance(incoming);

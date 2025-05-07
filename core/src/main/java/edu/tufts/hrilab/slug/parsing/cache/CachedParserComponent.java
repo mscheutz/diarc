@@ -61,6 +61,7 @@ public class CachedParserComponent extends DiarcComponent implements NLUInterfac
       incoming.setSemantics(outgoing.getSemantics());
       incoming.setIndirectSemantics(outgoing.getIndirectSemantics());
       incoming.setBindings(outgoing.getBindings());
+      incoming.setType(outgoing.getType());
     }
     return incoming;
   }

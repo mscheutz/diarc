@@ -18,6 +18,9 @@
     } ]
   }, {
     "serviceCalls" : [ {
+      "serviceName" : "retractBelief",
+      "serviceArgs" : [ "capableOf(doasquat(dempster))", "null" ]
+    }, {
       "serviceName" : "sayText",
       "serviceArgs" : [ "no", "true" ]
     }, {

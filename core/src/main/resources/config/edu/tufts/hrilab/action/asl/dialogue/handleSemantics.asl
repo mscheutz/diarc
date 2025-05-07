@@ -137,23 +137,34 @@ import java.lang.Integer;
     if (op:equals(?addressee, ?actor)) {
       // try to get into a state of knowing about ?query.
       !queryActor = act:getActorFromQuery(?query);
+      !knowsQuery = op:createPredicate("?query");
 
-      // form goal for ?actor to know ?query, so results can be relayed back to ?speaker
-     // attempt to perform action or observation (to populate belief) before looking up answer in belief
+      // attempt to perform action or observation (to populate belief) before looking up answer in belief
+
+      // form goal for ?actor to "know" ?query, so results can be relayed back to ?speaker
       try {
         goal:knows(?actor,?query);
         op:log("debug", "handleITK: knows goal succeeded.");
-        !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?actor,?query)");
+        !knowsQuery = op:createPredicate("knows(?actor,?query)");
         act:generateITKResponse(?speaker, ?query, !knowsQuery);
         return;
       } catch (FAIL_NOTFOUND) {
         op:log("debug", "handleITK: no knows() action found.");
       }
 
+      // form goal for ?actor to "knowIf" ?query, so results can be relayed back to ?speaker
+      try {
+        goal:knowsIf(?actor,?query);
+        op:log("debug", "handleITK: knowsIf goal succeeded.");
+        act:generateITKResponse(?speaker, ?query, !knowsQuery);
+        return;
+      } catch (FAIL_NOTFOUND) {
+        op:log("debug", "handleITK: no knowsIf() action found.");
+      }
+
       try {
         goal:observe(?query);
         op:log("debug", "handleITK: observation goal succeeded.");
-        !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
         act:generateITKResponse(?speaker, ?query, !knowsQuery);
         return;
       } catch (FAIL_NOTFOUND) {
@@ -165,7 +176,6 @@ import java.lang.Integer;
         op:log("debug", "handleITK: askAbout goal succeeded.");
       } else {
         op:log("debug", "handleITK: knows and obs goal failed, just looking in belief.");
-        !knowsQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
       }
 
       act:generateITKResponse(?speaker, ?query, !knowsQuery);
@@ -205,7 +215,6 @@ import java.lang.Integer;
           act:generateResponse(?speaker, !defaultResponse, direct);
         } else {
           act:generateResponse(?speaker, ?query, !beliefs, direct);
-        }
       }
     }
 }

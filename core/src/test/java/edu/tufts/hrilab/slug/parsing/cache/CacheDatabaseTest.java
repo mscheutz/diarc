@@ -6,14 +6,12 @@
 package edu.tufts.hrilab.slug.parsing.cache;
 
 import java.util.Arrays;
-import java.util.List;
 
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.util.Utilities;
+import edu.tufts.hrilab.slug.cache.CacheDatabase;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
-import edu.tufts.hrilab.slug.parsing.cache.CacheDatabase;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;

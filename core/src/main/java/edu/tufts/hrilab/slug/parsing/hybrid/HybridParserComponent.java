@@ -54,7 +54,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private String llm = null;
   private String prompt = null;
   private Symbol unknownListener = Factory.createSymbol("unknown");
-  private Class matcherclass = null;
+  private Class matcherclass = PatternMatchingParser.class;
 
   // we have four parsers for now
   private String[] sequence;
@@ -164,7 +164,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       if (!updateAddressee) {
         pmArgs += " -noUpdateAddressee";
       }
-      patternMatchingParser = createInstance((matcherclass == null) ? PatternMatchingParser.class : matcherclass, pmArgs, false);
+      patternMatchingParser = (NLUInterface) createInstance(matcherclass, pmArgs, false);
     }
 
     // init CachedParserComponent
