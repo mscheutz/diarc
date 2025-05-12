@@ -144,7 +144,13 @@ public class PoseConsultant extends Consultant<PoseReference> {
 
       PoseRefJson jsonClass = new PoseRefJson();
       jsonClass.poseReferences = new ArrayList<>();
-      jsonClass.poseReferences.addAll(getAllReferences().stream().map(PoseReferenceJson::new).collect(Collectors.toList()));
+      for (PoseReference ref : getAllReferences()) {
+        try {
+          jsonClass.poseReferences.add(new PoseReferenceJson(ref));
+        } catch (Exception e) {
+          log.error("[writeReferencesToFile] issue writing reference " + ref + " to file. Skipping");
+        }
+      }
       gson.toJson(jsonClass, writer);
       writer.flush();
     } catch (IOException e) {
