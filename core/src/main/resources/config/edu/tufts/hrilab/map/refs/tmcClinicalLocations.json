@@ -1,21 +1,21 @@
 {
   "poseReferences": [
     {
-      "refId": "location_1:location",
+      "refId": "location_6:location",
       "variable": "X",
       "properties": [
         "atrium 5 check in(X)"
       ],
       "position": [
-        -9.853784734707258,
-        2.551343808630696,
+        -10.85448694918045,
+        2.25064637298957,
         0.0
       ],
       "orientation": [
         0.0,
         0.0,
-        -0.48443039192244036,
-        0.8748298093811566
+        -0.5454052720523453,
+        0.8381724698518243
       ]
     },
     {
