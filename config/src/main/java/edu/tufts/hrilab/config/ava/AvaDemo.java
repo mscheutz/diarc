@@ -126,7 +126,7 @@ public class AvaDemo extends DiarcConfiguration {
     }
 
     if (useGUI) {
-      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker evan -addressee ava");
+      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker user1 -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
     createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.5 -showMixers -matchMixer " + speakerId + " " + ((useMicrophone) ? " -muteMics" : ""));
