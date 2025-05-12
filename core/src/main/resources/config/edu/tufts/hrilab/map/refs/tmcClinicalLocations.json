@@ -37,6 +37,42 @@
       ]
     },
     {
+      "refId": "location_3:location",
+      "variable": "X",
+      "properties": [
+        "south 5 check in(X)"
+      ],
+      "position": [
+        88.36323672900366,
+        -17.76485851969133,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.9520135227552601,
+        0.30605596300532995
+      ]
+    },
+    {
+      "refId": "location_4:location",
+      "variable": "X",
+      "properties": [
+        "south elevators(X)"
+      ],
+      "position": [
+        88.458887570224,
+        -10.63023114302162,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        -0.9998221572257066,
+        0.018858788946656463
+      ]
+    },
+    {
       "refId": "location_0:location",
       "variable": "X",
       "properties": [
