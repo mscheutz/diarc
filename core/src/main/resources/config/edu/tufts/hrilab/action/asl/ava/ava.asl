@@ -22,9 +22,11 @@ import java.util.StringTokenizer;
 
     op:log(debug, "[escortToLocation] escorting to location named !locName");
 
+    op:sleep(60000);
     act:say("Hello ?escortee. Please come with me, I will show you to !locName");
 
     act:goToLocation(?dstLoc);
+    op:sleep(90000);
     act:say("Arrived at !locName");
 }
 
@@ -32,11 +34,13 @@ import java.util.StringTokenizer;
     String !locName = tsc:getMapReferenceName(?dstLoc);
 
     act:goToLocation(?escorteeLoc);
+    op:sleep(90000);
     act:say("Hello ?escortee. Please come with me, I will show you to !locName");
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
-    act:goToLocation(location_8:location);
+    op:sleep(90000);
+    act:goToLocation(?escorteeLoc);
 }
 
 /**

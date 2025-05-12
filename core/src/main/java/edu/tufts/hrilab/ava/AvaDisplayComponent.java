@@ -225,7 +225,7 @@ public class AvaDisplayComponent extends DiarcComponent {
       log.error("error switching back to logo", e);
     }
 
-    refreshExecutor.scheduleAtFixedRate(cycleImageTask, 0, 15, TimeUnit.SECONDS);
+    refreshExecutor.scheduleAtFixedRate(cycleImageTask, 0, 30, TimeUnit.SECONDS);
   }
 
   /**
