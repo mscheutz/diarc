@@ -28,8 +28,6 @@ public class IHMCConfig extends DiarcConfiguration {
     createInstance(SimSpeechProductionComponent.class, "");
 //    createInstance(MaryTTSComponent.class, "");
 
-//
-
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
                     "-beliefinitfile agents/agents.pl "
