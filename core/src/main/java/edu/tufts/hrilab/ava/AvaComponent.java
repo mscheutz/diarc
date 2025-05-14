@@ -70,8 +70,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private boolean polling = false;
 
   private AvaAPIInterface api;
-  private double pointDistThresh = .75; //meters
-  private double orientationThresh = .55; //radians
+  private double pointDistThresh = 2; //meters
+  private double orientationThresh = 1; //radians
   private double zLiftThresh = .05; //meters
   private double cameraTiltThresh = 0.2;
   private double cameraHeight = 1.350; //meters
@@ -728,7 +728,6 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   public Justification goHomePrimitive() {
     log.debug("Starting [goHome]");
     currentMoveGoal.setGoHomeGoal();
-    Symbol home = Factory.createSymbol(dockLocation);
     Justification ret;
     if (!stopped) {
       ret = goToDock();
