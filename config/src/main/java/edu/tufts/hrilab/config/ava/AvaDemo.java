@@ -41,7 +41,7 @@ public class AvaDemo extends DiarcConfiguration {
     options.add(Option.builder("privateEndpoint").desc("run using privately hosted endpoint rather than free serverless endpoint").build());
     options.add(Option.builder("locationRefs").hasArg().desc("set location references file").build());
     options.add(Option.builder("speakerId").hasArg().desc("name of speaker to route local tts through").build());
-    options.add(Option.builder("kiosk").hasArg().desc("start the demo with kiosk mode enabled").build());
+    options.add(Option.builder("kiosk").desc("start the demo with kiosk mode enabled").build());
     options.add(Option.builder("mediaDir").hasArg().desc("name of directory in $HOME/.diarc where media files are stored").build());
     options.add(Option.builder("disableDisplay").desc("add to run without a display").build());
     return options;
@@ -163,7 +163,7 @@ public class AvaDemo extends DiarcConfiguration {
 
     String kioskArgs = "";
     if (initKiosk) {
-      kioskArgs += " -enabled";
+      kioskArgs += " -enabled -timeout 120";
     }
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
