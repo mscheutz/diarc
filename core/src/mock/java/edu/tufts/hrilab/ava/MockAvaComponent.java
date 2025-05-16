@@ -287,5 +287,10 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     chargingTerminatedCondition.signal();
     chargingLock.unlock();
   }
+
+  @Override
+  public Symbol getDockRefId() {
+    return Factory.createSymbol("location_0:location");
+  }
 }
 

@@ -294,11 +294,12 @@ import java.util.StringTokenizer;
 }
 
 () = goHome() {
-    Symbol !homeLocation = location_0:location;
+    Symbol !homeLocation;
     onInterrupt : {
         cancel : act:stop();
         suspend : act:stop();
     }
+    !homeLocation = act:getDockRefId();
     //todo: this should not be hardcoded here.
     act:goToLocation(!homeLocation);
     act:goHomePrimitive();

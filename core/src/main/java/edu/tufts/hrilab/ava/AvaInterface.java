@@ -161,6 +161,9 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
   @Action
   public void interruptChargingBlock();
 
+  @TRADEService
+  @Action
+  public Symbol getDockRefId();
 
 
 }

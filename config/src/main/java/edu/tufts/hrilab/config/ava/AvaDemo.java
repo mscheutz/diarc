@@ -146,7 +146,11 @@ public class AvaDemo extends DiarcConfiguration {
     }
 
 
-    createInstance(edu.tufts.hrilab.map.MapComponent.class, "-refs " + locationRefs);
+    String mapArgs = "";
+    if (useMockAva) {
+      mapArgs += "-refs " + locationRefs;
+    }
+    createInstance(edu.tufts.hrilab.map.MapComponent.class);
 
 //    if (useVision) {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture ava.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls"));
