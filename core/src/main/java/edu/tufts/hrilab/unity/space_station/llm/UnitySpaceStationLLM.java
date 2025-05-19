@@ -239,7 +239,7 @@ public class UnitySpaceStationLLM extends DiarcComponent {
   @Action
   public void stylizeUnitySpeak (Symbol original) {
     Prompt prompt = Prompts.getPrompt("spaceStationSpeechStyle");
-    Symbol model = Factory.createSymbol("gpt-3.5-turbo");
+    String model = "gpt-3.5-turbo";
     Symbol actor = Factory.createSymbol("robot1");
     Chat chat = new Chat(prompt);
     Completion oResponse = null;
@@ -247,7 +247,7 @@ public class UnitySpaceStationLLM extends DiarcComponent {
     chat.addUserMessage(original.toString());
 
     try {
-      oResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Symbol.class,Chat.class)).call(Completion.class, model, chat);
+      oResponse = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Symbol.class,Chat.class)).call(Completion.class, chat, model);
     } catch (TRADEException e) {
       log.error("Error getting a completion.", e);
     }

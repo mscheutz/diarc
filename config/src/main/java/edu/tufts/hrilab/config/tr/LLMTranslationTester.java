@@ -157,7 +157,7 @@ public class LLMTranslationTester {
             if (service.equals("t5hf")) {
                 completion = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(String.class)).call(Completion.class,userMessage);
             } else if (service.equals("llamahf")) {
-                completion = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Symbol.class, Chat.class)).call(Completion.class, Factory.createSymbol(model), chat);
+                completion = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Symbol.class, Chat.class)).call(Completion.class, chat, model);
             } else if (service.equals("openai")) {
                 completion = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(List.class)).call(Completion.class,chatInput);
             } else {

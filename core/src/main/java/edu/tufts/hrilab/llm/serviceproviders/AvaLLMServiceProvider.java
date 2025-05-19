@@ -54,7 +54,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             Pattern semanticsPattern = Pattern.compile(".*\"?Semantics\"?\\s*:\\s*\"?(.*)\"?,\\s*\"?Input Type\"?:.*", Pattern.DOTALL);
             Matcher m = semanticsPattern.matcher(responseString);
             if (!m.matches()) {
-                log.error("[spotPickAndPlaceLLMParser] cannot find Semantics result in LLM response");
+                log.error("[AvaLLMServiceProvider] cannot find Semantics or input type result in LLM response");
                 return incomingUtterance;
             }
             Predicate semantics = Factory.createPredicate(m.group(m.groupCount()));
@@ -62,21 +62,21 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             Pattern typePattern = Pattern.compile(".*\"?Input Type\"?\\s*:\\s*\"?(.*?)\"?,\\s*\"?Confidence\"?:.*", Pattern.DOTALL);
             m = typePattern.matcher(responseString);
             if (!m.matches()) {
-                log.error("[spotPickAndPlaceLLMParser] cannot find Input Type result in LLM response");
+                log.error("[AvaLLMServiceProvider] cannot find Input Type result in LLM response");
                 return incomingUtterance;
             }
             UtteranceType utteranceType;
             try {
                 utteranceType = UtteranceType.valueOf(m.group(m.groupCount()).trim());
             } catch (IllegalArgumentException e) {
-                log.error("[spotPickAndPlaceLLMParser] generated Input Type {} invalid", m.group(m.groupCount()));
+                log.error("[AvaLLMServiceProvider] generated Input Type {} invalid", m.group(m.groupCount()));
                 return incomingUtterance;
             }
 
             Pattern confidencePattern = Pattern.compile(".*\"?Confidence\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL);
             m = confidencePattern.matcher(responseString);
             if (!m.matches()) {
-                log.error("[spotPickAndPlaceLLMParser] cannot find Confidence result in LLM response");
+                log.error("[AvaLLMServiceProvider] cannot find Confidence result in LLM response");
                 return incomingUtterance;
             }
             String confidenceString = m.group(m.groupCount()).trim();

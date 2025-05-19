@@ -7,6 +7,7 @@ package edu.tufts.hrilab.llm;
 import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import edu.tufts.hrilab.llm.azure.AzureClient;
 import edu.tufts.hrilab.llm.hf.HFClient;
 
 import java.awt.*;
@@ -33,17 +34,7 @@ public class LLMComponent extends DiarcComponent {
   public String model = "gpt-4o";
   public float temperature = 0.5f;
 
-  private Tokenizer tokenizer = new Tokenizer();
-  private OpenaiClient openai = new OpenaiClient();
-  private LlamaClient llama = new LlamaClient();
-  private HFClient hf= new HFClient();
-
-  /**
-   * LLaMA (llama.cpp server)
-   */
-
-  private String llamaCompletionEndpoint      = "http://localhost:8080/completion";
-  private String llamaChatCompletionEndpoint  = "http://localhost:8080/v1/chat/completions";
+  private LLMClient client;
 
   public LLMComponent() {
     super();
@@ -66,6 +57,7 @@ public class LLMComponent extends DiarcComponent {
       service = cmdLine.getOptionValue("service").toLowerCase();
       log.debug("Using service: " + service);
     }
+    setLLMService(service);
 
     if (cmdLine.hasOption("endpoint")) {
       setLLMEndpoint(cmdLine.getOptionValue("endpoint"));
@@ -83,9 +75,6 @@ public class LLMComponent extends DiarcComponent {
     if (cmdLine.hasOption("temperature")) {
       setLLMTemperature(Float.parseFloat(cmdLine.getOptionValue("temperature")));
     }
-
-    log.info("LLMComponent using " + service + " services with the " + model + " model.");
-    tokenizer.setEncoding(service, model);
   }
 
   /**
@@ -106,6 +95,19 @@ public class LLMComponent extends DiarcComponent {
   @TRADEService
   public void setLLMService (String serviceStr) {
     service = serviceStr;
+    if (service.equals("azure")) {
+      client = new AzureClient();
+    } else if (service.equals("openai")) {
+      client = new OpenaiClient();
+    } else if (service.equals("hf")) {
+      client = new HFClient();
+    } else if (service.equals("llama")) {
+      client = new LlamaClient();
+    } else {
+      log.warn("Service {} not supported. Defaulting to openai", service);
+      service = "openai";
+      client = new OpenaiClient();
+    }
   }
   /**
    * Sets the LLM endpoint (URL).
@@ -119,13 +121,7 @@ public class LLMComponent extends DiarcComponent {
   }
   @TRADEService
   public void setLLMEndpoint (String endpoint) {
-    if (service.equals("llama")) {
-      llama.setEndpoint(endpoint);
-    } else if (service.equals("openai")) {
-      openai.setEndpoint(endpoint);
-    } else if (service.equals("llamahf")) {
-      hf.setEndpoint(endpoint);
-    }
+    client.setEndpoint(endpoint);
   }
 
   /**
@@ -140,12 +136,11 @@ public class LLMComponent extends DiarcComponent {
   }
   @TRADEService
   public void setLLMModel (String modelStr) {
-    if (service.equals("openai")) {
-      openai.setModel(modelStr);
-    } else if (service.equals("llamahf") || service.equals("t5hf")) {
-      hf.setModel(service, modelStr);
+    if (service.equals("llamahf") || service.equals("t5hf")) {
+      ((HFClient)client).setModel(service, modelStr);
+    } else {
+      client.setModel(modelStr);
     }
-    model = modelStr;
   }
 
   /**
@@ -154,11 +149,7 @@ public class LLMComponent extends DiarcComponent {
    * @param stopWords - An array of stop words to set.
    */
   public void setLLMStopWords (String[] stopWords) {
-    if (service.equals("llama")) {
-      llama.setStopWords(stopWords);
-    } else if (service.equals("openai")) {
-      log.warn("OpenAI API does not support stop words");
-    }
+    client.setStopWords(stopWords);
   }
 
   /**
@@ -167,13 +158,7 @@ public class LLMComponent extends DiarcComponent {
    * @param temperatureFloat - The temperature value to set
    */
   public void setLLMTemperature (float temperatureFloat) {
-    if (service.equals("llama")) {
-      llama.setTemperature(temperatureFloat);
-    } else if (service.equals("llamahf")) {
-      hf.setTemperature(temperatureFloat);
-    } else {
-      log.warn("Service {} does not support temperature", service);
-    }
+    client.setTemperature(temperatureFloat);
   }
 
   /**
@@ -182,59 +167,38 @@ public class LLMComponent extends DiarcComponent {
 
   /**
    * Returns a Completion object for the provided prompt based on the specified service.
-   * @param prompt the prompt to generate completion for
+   * @param userPrompt the user prompt to generate completion for
    * @return a Completion object for the provided prompt
    **/
   @TRADEService
   @Action
-  public Completion completion (Prompt prompt) {
-    return completion(prompt.toString());
-  }
-  @TRADEService
-  public Completion completion (String prompt) {
-    switch (service.toLowerCase()) {
-      case "openai" :
-        return new Completion(openai.completion(prompt));
-      case "llama" :
-        return new Completion(llama.completion(prompt));
-      case "t5hf":
-        return new Completion(hf.t5BaseCompletion(prompt));
-      default :
-        log.error("Service " + service + " not implemented");
-        return null;
-    }
+  public Completion completion (String userPrompt) {
+    return client.completion(userPrompt);
   }
 
   /**
    * Returns a Completion object for the provided prompt based on the specified service
    * and model.
+   * @param userPrompt the user prompt to generate completion for
    * @param model the model to use when generating a completion
-   * @param prompt the prompt to generate completion for
    * @return a Completion object for the provided prompt
    **/
+  @TRADEService
+  public Completion completion (String userPrompt, String model) {
+    return client.completion(userPrompt, model);
+  }
 
+  /**
+   * Returns a Completion object for the provided prompt based on the specified service
+   * and model.
+   * @param userPrompt the user prompt to generate completion for
+   * @param model the model to use when generating a completion
+   * @param systemPrompt the system prompt to generate completion for
+   * @return a Completion object for the provided prompt
+   **/
   @TRADEService
-  public Completion completion (String model, Prompt prompt) {
-    return completion(model, prompt.toString());
-  }
-  @TRADEService
-  public Completion completion (Symbol model, Prompt prompt) {
-    return completion(model.toString(), prompt.toString());
-  }
-  @TRADEService
-  public Completion completion (String model, String prompt) {
-    switch (service) {
-      case "openai" :
-        return new Completion(openai.completion(model, prompt));
-      case "llama" :
-        log.warn("llama.cpp server cannot change model to " + model);
-        return new Completion(llama.completion(prompt));
-      case "t5hf":
-        return new Completion(hf.t5BaseCompletion(prompt, model));
-      default :
-        log.error("Service " + service + " not implemented");
-        return null;
-    }
+  public Completion completion (String userPrompt, String model, String systemPrompt) {
+    return client.completion(userPrompt,model,systemPrompt);
   }
 
   /**
@@ -243,55 +207,36 @@ public class LLMComponent extends DiarcComponent {
 
  /**
   *  Returns a Completion object for chat-based completions, based on the specified prompt and set service.
-  *  @param prompt the prompt to be used for the chat completion
+  *  @param userPrompt the user prompt to be used for the chat completion
   *  @return a Completion object containing the completed text and any additional data returned by the API
   **/
   @TRADEService
-  @Action
-  public Completion chatCompletion (Symbol prompt) {
-    return chatCompletion(prompt.toString());
-  }
-  @TRADEService
-  public Completion chatCompletion (String prompt) {
-    switch (service) {
-      case "openai" :
-        return new Completion(openai.chatCompletion(prompt));
-      case "llama" :
-        return new Completion(llama.chatCompletion(prompt));
-      case "llamahf":
-        return new Completion(hf.llamaHFChatCompletion(prompt));
-      default :
-        log.error("Service " + service + " not implemented.");
-        return null;
-    }
+  public Completion chatCompletion (String userPrompt) {
+    return client.chatCompletion(userPrompt);
   }
 
  /**
   *  Returns a Completion object for chat-based completions, based on the specified prompt and model 
   *  using the set service.
   *  @param model the model to use for the chat completion request
-  *  @param prompt the prompt to be used for the chat completion
+  *  @param userPrompt the user prompt to be used for the chat completion
   *  @return a Completion object containing the chat completion response
   **/
   @TRADEService
-  @Action
-  public Completion chatCompletion (Symbol model, Symbol prompt) {
-    return chatCompletion(model.toString(), prompt.toString());
+  public Completion chatCompletion (String userPrompt, String model) {
+    return client.chatCompletion(userPrompt, model);
   }
-  
+
+  /**
+   * Returns a Completion object for chat-based completion, based on the specified prompts and model.
+   * @param userPrompt the user prompt to generate completion for
+   * @param model the model to use when generating a completion
+   * @param systemPrompt the system prompt to generate completion for
+   * @return a Completion object for the provided prompt
+   **/
   @TRADEService
-  public Completion chatCompletion (String model, String prompt) {
-    switch (service) {
-      case "openai" :
-        return new Completion(openai.chatCompletion(model, prompt));
-      case "llama" :
-        return new Completion(llama.chatCompletion(prompt));
-      case "llamahf" :
-        return new Completion(hf.llamaHFChatCompletion(prompt, model));
-      default :
-        log.error("Service " + service + " not implemented");
-        return null;
-    }
+  public Completion chatCompletion (String userPrompt, String model, String systemPrompt) {
+    return client.chatCompletion(userPrompt, model, systemPrompt);
   }
 
  /**
@@ -302,17 +247,7 @@ public class LLMComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Completion chatCompletion (List<Message> messages) {
-    switch (service) {
-      case "openai" :
-        return new Completion(openai.chatCompletion(messages));
-      case "llama" :
-        return new Completion(llama.chatCompletion(messages));
-      case "llamahf" :
-        return new Completion(hf.llamaHFChatCompletion(messages));
-      default :
-        log.error("Service " + service + " not implemented");
-        return null;
-    }
+    return client.chatCompletion(messages);
   }
 
   /**
@@ -324,17 +259,7 @@ public class LLMComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Completion chatCompletion (Chat chat) {
-    switch (service) {
-      case "openai" :
-        return new Completion(openai.chatCompletion(chat));
-      case "llama" :
-        return new Completion(llama.chatCompletion(chat));
-       case "llamahf" :
-        return new Completion(hf.llamaHFChatCompletion(chat));
-      default :
-        log.error("Service " + service + " not implemented");
-        return null;
-    }
+    return client.chatCompletion(chat);
   }
 
   /**
@@ -346,19 +271,8 @@ public class LLMComponent extends DiarcComponent {
    **/
   @TRADEService
   @Action
-  public Completion chatCompletion (Symbol model, Chat chat) {
-    switch (service) {
-      case "openai" :
-        return new Completion(openai.chatCompletion(model, chat));
-      case "llama" :
-        log.warn("llama.cpp server cannot change model to " + model);
-        return new Completion(llama.chatCompletion(chat));
-      case "llamahf" :
-        return new Completion(hf.llamaHFChatCompletion(chat, model));
-      default :
-        log.error("Service " + service + " not implemented");
-        return null;
-    }
+  public Completion chatCompletion (Chat chat, String model) {
+    return client.chatCompletion(chat, model);
   }
 
   @TRADEService
@@ -380,7 +294,7 @@ public class LLMComponent extends DiarcComponent {
   public Completion visionCompletion (List <VisionMessage> vmessages) {
     switch (service) {
       case "openai" :
-        return new Completion(openai.visionCompletion(vmessages));
+        return new Completion(((OpenaiClient)client).visionCompletion(vmessages));
       default :
         log.error("Service " + service + " not implemented");
         return null;

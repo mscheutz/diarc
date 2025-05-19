@@ -24,7 +24,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 import com.google.gson.Gson;
 
-public class HFClient{
+public class HFClient implements LLMClient {
     static private Logger log = LoggerFactory.getLogger(HFClient.class);
 
     //Llama HuggingFace free inference endpoints ('free' with Pro account)
@@ -71,28 +71,113 @@ public class HFClient{
         model = modelStr;
     }
 
+    @Override
     public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
     }
 
-    public T5BaseCompletionResponse t5BaseCompletion(String prompt) {
-        return t5BaseCompletion(prompt, model);
+    @Override
+    public void setModel(String model) {
+        log.error("[setModel] please use the setModel method supplying a service string instead. Not updating model");
     }
 
-    public T5BaseCompletionResponse t5BaseCompletion(String prompt, String model) {
-        T5BaseCompletionRequestBody requestBody = new T5BaseCompletionRequestBody(prompt);
-        return t5BaseCompletion(requestBody, model);
+    @Override
+    public void setStopWords(String[] stopWords) {
+        log.warn("HFClient does not support stop words");
     }
 
-    public T5BaseCompletionResponse t5BaseCompletion (T5BaseCompletionRequestBody requestBody) {
-        return t5BaseCompletion(requestBody, model);
-    }
     /**
-    * Sends a Llama completion request with the given model and request body, and returns the completion response.
-    * https://github.com/ggerganov/llama.cpp/tree/master/examples/server
-    * @param requestBody the request body containing the prompt and other parameters for the completion request
-    * @return the completion response from the TextSynth API
-    **/
+     * Sets the temperature of the model.
+     *
+     * @param temperatureFloat - The temperature value to set
+     */
+    @Override
+    public void setTemperature (float temperatureFloat) {
+        temperature = temperatureFloat;
+        log.info(String.format("Using temperature: %s", temperature));
+    }
+
+    /**
+     * Sets the max number of tokens included in the response (Not including the provided prompt)
+     *
+     * @param maxNewTokens - The number of tokens to set
+     */
+    public void setMaxNewTokens(int maxNewTokens) {
+        this.maxNewTokens = maxNewTokens;
+        log.info(String.format("Setting maxNewTokens: %s", maxNewTokens));
+    }
+
+    @Override
+    public Completion completion(String userPrompt) {
+        return completion(userPrompt, model, defaultSystemPrompt);
+    }
+
+    @Override
+    public Completion completion(String userPrompt, String model) {
+        return completion(userPrompt, model, defaultSystemPrompt);
+    }
+
+    @Override
+    public Completion completion(String userPrompt, String model, String systemPrompt) {
+        return chatCompletion(userPrompt, model, systemPrompt);
+    }
+
+    @Override
+    public Completion chatCompletion(String userPrompt) {
+        return chatCompletion(userPrompt, model, defaultSystemPrompt);
+    }
+
+    @Override
+    public Completion chatCompletion(String userPrompt, String model) {
+        return chatCompletion(userPrompt, model, defaultSystemPrompt);
+    }
+
+    @Override
+    public Completion chatCompletion(String userPrompt, String model, String systemPrompt) {
+        List<Message> messages = new ArrayList<>();
+        messages.add(new Message("user", userPrompt));
+        if (!systemPrompt.isEmpty()) {
+            messages.add(new Message("system", systemPrompt));
+        }
+        return chatCompletion(new Chat(messages), model);
+    }
+
+    @Override
+    public Completion chatCompletion(List<Message> messages) {
+        return chatCompletion(new Chat(messages));
+    }
+
+    @Override
+    public Completion chatCompletion(Chat chat) {
+        return chatCompletion(chat, model);
+    }
+
+    @Override
+    public Completion chatCompletion(Chat chat, String model) {
+        if (service.equals("llamahf")) {
+            LlamaHFChat llamaHFChat = new LlamaHFChat(chat);
+            llamaHFChat.setModel(model);
+            llamaHFChat.setService(service);
+            LlamaHFCompletionRequestBody requestBody = new LlamaHFCompletionRequestBody(llamaHFChat);
+            requestBody.setTemperature(temperature);
+            requestBody.setMax_new_tokens(maxNewTokens);
+            return new Completion(llamaHFChatCompletion(requestBody, model));
+        } else if (service.equals("t5hf")) {
+            if (chat.messages.size() > 1) {
+                log.warn("t5hf service not set up to handle multiple messages");
+            }
+            StringBuilder promptString = new StringBuilder();
+            for (Message message : chat.messages) {
+                promptString.append(message.content);
+            }
+            T5BaseCompletionRequestBody requestBody = new T5BaseCompletionRequestBody(promptString.toString());
+            return new Completion(t5BaseCompletion(requestBody, model));
+        } else {
+            log.error("HF Client does not support service: {}", service);
+            return null;
+        }
+    }
+
     public T5BaseCompletionResponse t5BaseCompletion (T5BaseCompletionRequestBody requestBody, String model) {
         String endpoint = String.format(t5CompletionEndpointTemplate, model);
         Map<String, String> headers = new HashMap<>();
@@ -110,85 +195,6 @@ public class HFClient{
         }
     }
 
-    /**
-     * Sets the temperature of the model.
-     *
-     * @param temperatureFloat - The temperature value to set
-     */
-    public void setTemperature (float temperatureFloat) {
-        temperature = temperatureFloat;
-        log.info(String.format("Using temperature: %s", temperature));
-    }
-    /**
-     * Sets the max number of tokens included in the response (Not including the provided prompt)
-     *
-     * @param maxNewTokens - The number of tokens to set
-     */
-    public void setMaxNewTokens(int maxNewTokens) {
-        maxNewTokens = this.maxNewTokens;
-        log.info(String.format("Setting maxNewTokens: %s", maxNewTokens));
-    }
-
-    /**
-    * Generates a chat completion using the LLaMA HuggingFace Inference Endpoint and a prompt string.
-    * @param userPrompt the prompt string provided by the user
-    * @return the LlamaHFChatCompletionResponse containing the completed chat.
-    **/
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Symbol userPrompt) {
-        return llamaHFChatCompletion(userPrompt.toString(), defaultSystemPrompt);
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Symbol userPrompt, Symbol systemPrompt) {
-        return llamaHFChatCompletion(userPrompt.toString(), systemPrompt.toString(), model);
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Symbol userPrompt, Symbol systemPrompt, String model) {
-        return llamaHFChatCompletion(userPrompt.toString(), systemPrompt.toString(), model);
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (String userPrompt) {
-        return llamaHFChatCompletion(userPrompt, defaultSystemPrompt);
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (String userPrompt, String systemPrompt) {
-        return llamaHFChatCompletion(userPrompt, systemPrompt, model);
-    }
-
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (String userPrompt, String systemPrompt, String model) {
-        List<Message> messages = new ArrayList<>();
-        messages.add(new Message("user", userPrompt));
-        if (!systemPrompt.isEmpty()) {
-            messages.add(new Message("system", systemPrompt));
-        }
-        return llamaHFChatCompletion(new LlamaHFChat(messages, systemPrompt), model);
-    }
-
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion(List<Message> messages) {
-        Chat chat = new Chat(messages);
-        return llamaHFChatCompletion(chat);
-    }
-
-    /**
-    * Performs a chat completion using LLaMA with the set model and the given chat messages.
-    * @param chat the chat containing the messages to use for the completion
-    * @return an LlamaHFChatCompletionResponse object representing the response from LLaMA
-    **/
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Chat chat) {
-        return llamaHFChatCompletion(chat, model);
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Chat chat, Symbol model) {
-        return llamaHFChatCompletion(chat, model.toString());
-    }
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (Chat chat, String model) {
-        LlamaHFChat llamaHFChat = new LlamaHFChat(chat);
-        llamaHFChat.setModel(model);
-        llamaHFChat.setService(service);
-        LlamaHFCompletionRequestBody requestBody = new LlamaHFCompletionRequestBody(llamaHFChat);
-        requestBody.setTemperature(temperature);
-        requestBody.setMax_new_tokens(maxNewTokens);
-        return llamaHFChatCompletion(requestBody,model);
-    }
-
-
-    public LlamaHFChatCompletionResponse llamaHFChatCompletion (LlamaHFCompletionRequestBody requestBody) {
-        return llamaHFChatCompletion(requestBody, model);
-    }
     public LlamaHFChatCompletionResponse llamaHFChatCompletion (LlamaHFCompletionRequestBody requestBody, String model) {
         Map<String, String> headers = new HashMap<>();
         headers.put("Authorization", "Bearer " + apiKey);
