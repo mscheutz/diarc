@@ -99,7 +99,7 @@ public class LLMComponent extends DiarcComponent {
       client = new AzureClient();
     } else if (service.equals("openai")) {
       client = new OpenaiClient();
-    } else if (service.equals("hf")) {
+    } else if (service.endsWith("hf")) {
       client = new HFClient();
     } else if (service.equals("llama")) {
       client = new LlamaClient();
