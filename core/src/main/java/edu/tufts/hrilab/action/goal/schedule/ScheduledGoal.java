@@ -59,6 +59,8 @@ public class ScheduledGoal extends Goal {
     if (end != null && period == null) {
       log.error("Invalid scheduled goal predicate. End time only valid with periodic goals. Goal: {}", goalState);
     }
+
+    info.schedulingInfo = scheduleInfo;
   }
 
   @Override

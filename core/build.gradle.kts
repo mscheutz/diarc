@@ -85,7 +85,8 @@ sourceSets {
           "edu/tufts/hrilab/action/notification/NotificationType.java",
           "edu/tufts/hrilab/action/goal/GoalStatus.java",
           "edu/tufts/hrilab/action/goal/GoalInfo.java",
-          "edu/tufts/hrilab/action/goal/PriorityTier.java"
+          "edu/tufts/hrilab/action/goal/PriorityTier.java",
+          "edu/tufts/hrilab/action/goal/schedule/ScheduleInfo.java"
         )
       )
       exclude(listOf("edu/tufts/hrilab/slug/common/UtteranceUtil.java"))

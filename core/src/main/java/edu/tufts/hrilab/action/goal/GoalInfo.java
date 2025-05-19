@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.action.goal;
 
+import edu.tufts.hrilab.action.goal.schedule.ScheduleInfo;
 import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -71,6 +72,11 @@ public class GoalInfo implements Serializable {
    */
   public PriorityTier priorityTier = PriorityTier.NORMAL;
 
+  /**
+   * Parameters defining timing of this goal, if scheduled. Will be null otherwise
+   */
+  public ScheduleInfo schedulingInfo = null;
+
 
   public GoalInfo(long gid) {
     this.gid = gid;
@@ -90,5 +96,6 @@ public class GoalInfo implements Serializable {
     this.persistent = other.persistent;
     this.priority = other.priority;
     this.priorityTier = other.priorityTier;
+    this.schedulingInfo = other.schedulingInfo;
   }
 }
