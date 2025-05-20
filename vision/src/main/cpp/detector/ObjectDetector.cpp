@@ -19,6 +19,7 @@
 #include "FoodDetectorByHSV.hpp"
 #include "MotionDetector.hpp"
 #include "ArucoDetector.hpp"
+#include "FastSamDetector.hpp"
 
 #ifdef OPENCV3_DNN
 #include "NeuralDetector.hpp"
@@ -123,6 +124,8 @@ ObjectDetector::Ptr ObjectDetector::get(const DetectorType type, const long long
       return FoodDetectorByHSV::Ptr(new FoodDetectorByHSV(processorId, imgWidth, imgHeight));
     case MOTION:
       return MotionDetector::Ptr(new MotionDetector(processorId, imgWidth, imgHeight));
+    case FASTSAM:
+      return FastSamDetector::Ptr(new FastSamDetector(processorId, imgWidth, imgHeight));
     case BUTTONDETECTOR:
 
 #if defined(OPENCV_DNN)

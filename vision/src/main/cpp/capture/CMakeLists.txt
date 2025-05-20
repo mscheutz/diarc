@@ -67,7 +67,7 @@ IF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUN
 	                      ${tf_LIBRARIES}
 	                      ${pcl_ros_LIBRARIES})
 ENDIF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf_FOUND AND pcl_ros_FOUND)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${LOG4CXX_LIBRARIES})
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} display common calibration point_clouds)
 if(OPENNI_FOUND)
 	TARGET_LINK_LIBRARIES(${PROJECT_NAME}  ${OPENNI_LIBRARY})

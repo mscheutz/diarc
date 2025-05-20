@@ -9,6 +9,7 @@ SET(SOURCES
 	ClusterDetector2D.cpp
 	ColorBasedDetector.cpp
 	FaceDetector.cpp
+	FastSamDetector.cpp
 	FoodDetectorByHSV.cpp
 	HoughDetector.cpp
 	MotionDetector.cpp
@@ -124,6 +125,8 @@ ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
 # link libraries
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} common stm visionproc display capture imgproc shape_match stdc++fs)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${PCL_LIBRARIES} ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES} ${JSONCPP_LIBRARY})
+#TARGET_LINK_LIBRARIES(${PROJECT_NAME} pybind11::embed)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Python3_LIBRARIES} Boost::python Boost::thread Boost::numpy)
 if (V4R_V0_FOUND)
   TARGET_LINK_LIBRARIES(${PROJECT_NAME} v4rSurfaceSegmenter)
 endif (V4R_V0_FOUND)

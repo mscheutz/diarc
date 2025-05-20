@@ -41,7 +41,7 @@ public class PipelineVisualization extends JPanel {
     private Point corner = new Point(this.getWidth(), this.getHeight());
     private boolean nodeClicked = false;
     private boolean nodeDragged = false;
-    private Long deps = new Long(-1);
+    private Long deps = -1L;
     Logger log = LoggerFactory.getLogger(this.getClass());
     private DefaultListModel<SearchManager> availManagers;
 

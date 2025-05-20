@@ -68,6 +68,11 @@ FIND_PACKAGE( SWIG 3.0 REQUIRED COMPONENTS java )
 FIND_PACKAGE( OpenCV REQUIRED )
 INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
 
+# PyBind11 (required)
+#FIND_PACKAGE(pybind11 REQUIRED)  # or `add_subdirectory(pybind11)`
+FIND_PACKAGE (Python3 COMPONENTS Interpreter Development)
+INCLUDE_DIRECTORIES(${Python3_INCLUDE_DIRS})
+
 # check for dnn module
 FIND_PACKAGE( OpenCV 3.4 QUIET OPTIONAL_COMPONENTS dnn)
 if(OpenCV3_dnn_FOUND)
@@ -120,7 +125,8 @@ if(OPENNI2_FOUND)
 endif(OPENNI2_FOUND)
 
 # Boost (required) -- this is only needed to patch the bug in PCLConfig.cmake that leaves out the "thread" component
-find_package(Boost COMPONENTS system filesystem date_time iostreams thread)
+find_package(Boost COMPONENTS system filesystem date_time iostreams thread python numpy)
+include_directories(${Boost_INCLUDE_DIRS})
 
 # SWIG (required)
 FIND_PACKAGE(SWIG REQUIRED)
