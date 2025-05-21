@@ -5,8 +5,6 @@
 #ifndef FASTSAMDETECTOR_HPP
 #define FASTSAMDETECTOR_HPP
 
-#include <boost/python/numpy.hpp>
-
 #include "ObjectDetector.hpp"
 #include "stm/MemoryObject.hpp"
 
@@ -31,8 +29,8 @@ private:
   // boost::python::object convertCvMatToPyMat(cv::Mat& cvMat);
   // cv::Mat convertPyMatToCvMat(boost::python::object& pyMat);
 
-  boost::python::numpy::ndarray convertMatToNDArray(const cv::Mat& mat);
-  cv::Mat convertNDArrayToMat(const boost::python::numpy::ndarray& ndarr);
+  //pybind11::array_t<uint8_t> convertMatToNDArray(const cv::Mat& mat);
+  //cv::Mat convertNDArrayToMat(const pybind11::array_t<uint8_t>& ndarr);
 };
 
 #endif  //FASTSAMDETECTOR_HPP
