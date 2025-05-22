@@ -8,6 +8,9 @@
 #include "ObjectDetector.hpp"
 #include "stm/MemoryObject.hpp"
 
+#include <pybind11/pytypes.h>
+#include <pybind11/numpy.h>
+
 
 class FastSamDetector : public ObjectDetector {
 public:
@@ -26,11 +29,10 @@ protected:
 
 private:
   cv::Mat salmap;
-  // boost::python::object convertCvMatToPyMat(cv::Mat& cvMat);
-  // cv::Mat convertPyMatToCvMat(boost::python::object& pyMat);
+  pybind11::object segmenter;
 
-  //pybind11::array_t<uint8_t> convertMatToNDArray(const cv::Mat& mat);
-  //cv::Mat convertNDArrayToMat(const pybind11::array_t<uint8_t>& ndarr);
+  pybind11::array_t<uchar> convertMatToNumpy(const cv::Mat& mat);
+  cv::Mat convertNumpyToMat(const pybind11::array_t<uchar>& array);
 };
 
 #endif  //FASTSAMDETECTOR_HPP
