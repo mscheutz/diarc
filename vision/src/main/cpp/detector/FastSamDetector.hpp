@@ -29,6 +29,7 @@ protected:
 
 private:
   cv::Mat salmap;
+  pybind11::object Sam2DSegmenter;
   pybind11::object segmenter;
 
   pybind11::array_t<uchar> convertMatToNumpy(const cv::Mat& mat);
