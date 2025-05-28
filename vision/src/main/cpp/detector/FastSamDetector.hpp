@@ -1,6 +1,6 @@
 /*
  Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
- */
+*/
 
 #ifndef FASTSAMDETECTOR_HPP
 #define FASTSAMDETECTOR_HPP
@@ -9,7 +9,6 @@
 #include "stm/MemoryObject.hpp"
 
 #include <pybind11/pytypes.h>
-#include <pybind11/numpy.h>
 
 
 class FastSamDetector : public ObjectDetector {
@@ -31,9 +30,6 @@ private:
   cv::Mat salmap;
   pybind11::object Sam2DSegmenter;
   pybind11::object segmenter;
-
-  pybind11::array_t<uchar> convertMatToNumpy(const cv::Mat& mat);
-  cv::Mat convertNumpyToMat(const pybind11::array_t<uchar>& array);
 };
 
 #endif  //FASTSAMDETECTOR_HPP

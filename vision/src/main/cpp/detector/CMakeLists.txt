@@ -122,7 +122,7 @@ endif(ZBAR_FOUND)
 ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
 
 # link libraries
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} common stm visionproc display capture imgproc shape_match stdc++fs)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} common stm visionproc display capture imgproc pyvis shape_match stdc++fs)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${PCL_LIBRARIES} ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES} ${JSONCPP_LIBRARY} Boost::thread)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} pybind11::embed)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Python3_LIBRARIES})
