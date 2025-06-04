@@ -33,7 +33,7 @@ ADD_DEFINITIONS(-DBOOST_FILESYSTEM_DEPRECATED)
 # turn no return-value warnings into errors
 ADD_DEFINITIONS(-Werror=return-type)
 
-# set explciit cmake policies
+# set explicit cmake policies
 CMAKE_POLICY(SET CMP0012 NEW)
 if(CMAKE_VERSION VERSION_LESS "3.13")
   message("Please consider upgrading CMake to 3.13 or newer")

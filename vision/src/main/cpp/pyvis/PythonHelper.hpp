@@ -10,7 +10,7 @@ Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
 #include <pybind11/pybind11.h>
 #include <log4cxx/logger.h>
 
-class PythonHelper {
+class PYBIND11_EXPORT PythonHelper {
 public:
     static PythonHelper* getInstance();
     ~PythonHelper();
@@ -19,13 +19,21 @@ public:
     PythonHelper(const PythonHelper&) = delete;
     PythonHelper& operator=(const PythonHelper&) = delete;
 
+    void acquireGIL();
+    void releaseGIL();
+
     void initializePython();
-    void importModule(const std::string& moduleName);
+    void finalizePython();
+    pybind11::module_ importModule(const std::string& moduleName);
 
 private:
     PythonHelper();
     static PythonHelper* instance;
-    static std::mutex mutex;
+    static std::mutex instanceMuutex;
+
+    std::recursive_mutex mutex;
+
+    PyGILState_STATE gstate;
 
     log4cxx::LoggerPtr logger;
     bool initialized = false;
