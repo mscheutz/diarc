@@ -25,6 +25,7 @@ import edu.tufts.hrilab.fol.Variable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -36,6 +37,8 @@ import java.util.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.util.RotationHelpers;
 import edu.tufts.hrilab.util.Convert;
 import org.apache.commons.cli.CommandLine;
@@ -1066,5 +1069,84 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     chargingLock.lock();
     chargingTerminatedCondition.signal();
     chargingLock.unlock();
+  }
+
+  @Override
+  public void listenForWWandASR() {
+    //TODO: Configure paths/get resources better
+    ProcessBuilder processBuilder = new ProcessBuilder("/home/eric/python/asr/venv/bin/python3.9", "/home/eric/code/diarc/core/src/main/resources/config/edu/tufts/hrilab/ava/run_ww_and_asr.py");
+    processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
+    try {
+      Process process = processBuilder.start();
+      InputStream is = process.getInputStream();
+      String result = "";
+      while (true) {
+        while (result.isEmpty()) {
+          //Wait for WW detection
+          log.info("waiting for wakeword");
+          while (is.available() == 0) {
+            Thread.sleep(100);
+          }
+          //Clear stream buffer of message indicating WW detection
+          StringBuilder s = new StringBuilder();
+          while (is.available() != 0) {
+            s.append((char) is.read());
+          }
+          log.info(s.toString());
+          //Display on screen that we are listening
+          try {
+            TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
+            service.call(void.class,"Understanding speech");
+          } catch (TRADEException e) {
+            log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+          }
+
+          //Wait for ASR result:
+          log.info("waiting for ASR result");
+          while (is.available() == 0) {
+            Thread.sleep(100);
+          }
+          //Clear listening text from screen (or could write understood results)
+          try {
+            TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+            service.call(void.class);
+          } catch (TRADEException e) {
+            log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+          }
+          //Get ASR result (using <unk> to signal ASR timed out before any results were detected)
+          s.setLength(0);
+          while (is.available() != 0) {
+            s.append((char) is.read());
+          }
+          result = s.toString();
+          //If ASR timed out, loop back to WW detection
+          if (result.equals("<unk>\n")) {
+            result = "";
+          }
+        }
+        result = result.trim().toLowerCase();
+        result = result.replaceAll("\\p{Punct}", "");
+        Utterance utterance = new Utterance.Builder()
+                .setSpeaker(Factory.createSymbol("user"))
+                .setAddressee(Factory.createSymbol("ava"))
+                .setWords(Arrays.asList(result.trim().split(" ")))
+                .setUtteranceType(UtteranceType.UNKNOWN)
+                .setIsInputUtterance(true)
+                .build();
+        try {
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
+          log.info("Reported utterance \"" + result + "\"");
+        } catch (TRADEException ex) {
+          log.warn("Failed to report speech \"" + result + "\"");
+        }
+        result = "";
+      }
+      //String result = new String(is.readAllBytes());
+      //int exitCode = process.waitFor();
+      //log.info(String.valueOf(exitCode));
+      //log.info(result);
+    } catch (IOException | InterruptedException e) {
+      log.error("error running process",e);
+    }
   }
 }

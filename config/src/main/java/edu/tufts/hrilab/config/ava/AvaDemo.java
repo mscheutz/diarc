@@ -159,7 +159,8 @@ public class AvaDemo extends DiarcConfiguration {
     }
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
-      "-goal listen(self) monitorBattery(ava) disableMic(ava) -beliefinitfile demos.pl agents/ava.pl"
+//            "-goal listen(self) monitorBattery(ava) disableMic(ava) -beliefinitfile demos.pl agents/ava.pl"
+            "-goal listen(self) monitorBattery(ava) listenForWWandASR(ava) -beliefinitfile demos.pl agents/ava.pl"
         + " -dbfile " +
               "core.asl " +
               "manipulation.asl " +
