@@ -296,7 +296,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   public void listenForWWandASR() {
     //TODO: Configure paths/get resources better
     //args:--whisper_model, --ww_model_path, --ww_detection_thresh
-    ProcessBuilder processBuilder = new ProcessBuilder("/home/eric/python/asr/venv/bin/python3.9", "/home/eric/code/diarc/core/src/main/resources/config/edu/tufts/hrilab/ava/run_ww_and_asr.py");
+    String home = System.getProperty("user.home");
+    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py");
     processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
     try {
       Process process = processBuilder.start();

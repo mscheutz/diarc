@@ -15,6 +15,10 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "listenForWWandASR": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "testDialogueComponent": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
