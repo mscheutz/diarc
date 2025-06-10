@@ -157,16 +157,17 @@ namespace diarc {
 
       switch (mode_) {
         case STEREO:
-          delete sync_;
           delete image_sub_;
           delete image2_sub_;
+          delete sync_;
           break;
         case RGB_AND_DEPTH:
-          delete sync_;
           delete image_sub_;
           delete depth_sub_;
+          delete sync_;
           break;
       }
+
       delete it_;
       delete spinner_;
       delete n_;

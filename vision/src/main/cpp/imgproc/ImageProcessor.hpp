@@ -27,7 +27,8 @@ enum ImageProcessorType {
   SHAPEVALIDATOR, // shape validation
   SPATIALRELATIONVALIDATOR, // spatial relation between object parts (e.g., near, on, etc)
   SURFACEMARKINGVALIDATOR, // surface shape/texture/marking validation
-  SIZEVALIDATOR // global size validation (e.g., small, medium, large)
+  SIZEVALIDATOR, // global size validation (e.g., small, medium, large)
+  COMPONENTVALIDATOR // component validation (#components, shape of components, ...)
 };
 
 class ImageProcessor : public VisionProcess {

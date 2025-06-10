@@ -12,10 +12,7 @@ namespace diarc {
     namespace util {
 
       CAM_MODE stringToCAM_MODE(const std::string& str) {
-        if (str == "MONO_FW") return MONO_FW;
-        else if (str == "STEREO_FW") return STEREO_FW;
-        else if (str == "STEREO_SYNC") return STEREO_SYNC;
-        else if (str == "MONO_V4L2") return MONO_V4L2;
+        if (str == "MONO_V4L2") return MONO_V4L2;
         else if (str == "STEREO_V4L2") return STEREO_V4L2;
         else if (str == "MONO_AVI") return MONO_AVI;
         else if (str == "MONO_FILE") return MONO_FILE;
@@ -30,9 +27,8 @@ namespace diarc {
         else if (str == "SIM_PC1") return SIM_PC1;
         else if (str == "SIM_PC2") return SIM_PC2;
         else if (str == "PCD") return SIM_PC2;
-        else if (str == "KINECT_PLUS") return KINECT_PLUS;
-        else if (str == "DRONE") return DRONE;
         else if (str == "ROS") return ROS;
+        else if (str == "ROS2") return ROS2;
         else if (str == "NAO") return NAO;
         else if (str == "GSTREAMER") return GSTREAMER;
         else if (str == "MULTISENSE") return MULTISENSE;
@@ -241,10 +237,11 @@ namespace diarc {
 
       cv::Vec3d calcDirection(const int camIndex, const int x, const int y) {
         CameraParameters::ConstPtr camParams = Cameras::getInstance()->getCameraParameters(camIndex);
-        float f_x = camParams->M.at<float>(0,0); //f_x
-        float c_x = camParams->M.at<float>(0,2); //c_x
-        float c_y = camParams->M.at<float>(1,2); //c_y
-        cv::Vec3d direction(x - c_x, y - c_y, f_x);
+        float f_x = camParams->M.at<float>(0,0);
+        float f_y = camParams->M.at<float>(1,1);
+        float c_x = camParams->M.at<float>(0,2);
+        float c_y = camParams->M.at<float>(1,2);
+        cv::Vec3d direction((x - c_x)/f_x, (y - c_y)/f_y, 1);
 
         // make unit vector
         double normValue = 1.0 / cv::norm(direction);
@@ -361,12 +358,8 @@ namespace diarc {
           for (int yy = 0; yy < imgHeight; yy++) {
             float z_ir = dataDepth[xx + imgWidth * yy];
             float x_ir, y_ir;
-#ifdef FREENECT
-            if (z_ir >= 0.4)
-#else
-            if (z_ir > 0)
-#endif
-            {
+
+            if (z_ir > 0) {
               x_ir = ((xx - cx) / fx) * z_ir;
               y_ir = ((yy - cy) / fy) * z_ir;
             } else {
