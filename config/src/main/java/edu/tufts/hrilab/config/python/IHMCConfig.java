@@ -17,16 +17,18 @@ public class IHMCConfig extends DiarcConfiguration {
   public void runConfiguration() {
 
     createInstance(ListenerComponent.class);
-    createInstance(TLDLParserComponent.class, "" +
+    createInstance(TLDLParserComponent.class,
 //            "-dict templatedict.dict " +
             "-dict mfawn/ihmc.dict"
     );
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(ReferenceResolutionComponent.class);
-    createInstance(DialogueComponent.class, "");
-    createInstance(SimpleNLGComponent.class, "");
-    createInstance(SimSpeechProductionComponent.class, "");
-//    createInstance(MaryTTSComponent.class, "");
+    createInstance(DialogueComponent.class);
+    createInstance(SimpleNLGComponent.class);
+    createInstance(SimSpeechProductionComponent.class);
+//    createInstance(MaryTTSComponent.class);
+
+//    createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture nadia_ros2.xml -cameraFrame ros2_left_optical");
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
@@ -44,9 +46,11 @@ public class IHMCConfig extends DiarcConfiguration {
 
 //    createInstance(SimSpeechRecognitionComponent.class, "-speaker marlow -config ihmc.simspeech");
 
-    String file = "ihmc.ihmc_wrapper";
-    PythonWrapper wrapper = new PythonWrapper(file);
-    wrapper.start();
+    PythonWrapper ihmc_wrapper = new PythonWrapper("ihmc.ihmc_wrapper");
+    ihmc_wrapper.start();
+
+    PythonWrapper ros2_tf2_wrapper = new PythonWrapper("ros2_tf2.ros2_tf2_wrapper");
+    ros2_tf2_wrapper.start();
 
   }
 }
