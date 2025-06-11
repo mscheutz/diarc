@@ -3,16 +3,17 @@ import time
 import sys
 import threading
 
+from pytrade.wrapper import TRADEWrapper
+from ai.thinkingrobots.trade import TRADE
+from jpype import JImplements, JOverride, JClass, JString
+
 import rclpy
 from pytrade.java_util import to_java_object, to_java_object_from_class
-from pytrade.wrapper import TRADEWrapper
 
-from ai.thinkingrobots.trade import TRADE
 from edu.tufts.hrilab.interfaces import IHMCInterface
 from edu.tufts.hrilab.fol import Factory, Symbol, Predicate
 from edu.tufts.hrilab.action.justification import ConditionJustification, Justification
 from edu.tufts.hrilab.consultant.pose import PoseConsultant, PoseReference
-from jpype import JImplements, JOverride, JClass, JString
 from geometry_msgs.msg import Point, Quaternion, Pose
 from ihmc_common_msgs.msg import PoseListMessage
 from behavior_msgs.msg import AI2RCommandMessage, AI2RStatusMessage
@@ -28,7 +29,7 @@ class NadiaWrapper:
         self._executing = False
         self._behavior_status = ""
         self.trade_wrapper = trade_wrapper
-        self.node = rclpy.create_node('diarc_node')
+        self.node = rclpy.create_node('diarc_nadia_node')
         self._qos_profile = QoSProfile(
             reliability=QoSReliabilityPolicy.BEST_EFFORT,
             history=QoSHistoryPolicy.KEEP_LAST,

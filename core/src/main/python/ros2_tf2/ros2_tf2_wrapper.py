@@ -24,10 +24,10 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 @JImplements(CoordinateFramesInterface)
 class TF2Wrapper:
     def __init__(self, trade_wrapper: TRADEWrapper):
-        self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
-        self.trade_wrapper = trade_wrapper
         self.node = rclpy.create_node('diarc_tf2_node')
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self.node)
+        self.trade_wrapper = trade_wrapper
 
     def _get_transform(self, target_frame, source_frame):
         try:

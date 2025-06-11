@@ -1,10 +1,13 @@
 package edu.tufts.hrilab.python;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
-import java.net.UnknownHostException;
 
 public class PythonWrapper {
 
+  private Logger log = LoggerFactory.getLogger(PythonWrapper.class);
   private final String file;
   private Process process;
   private boolean spoke = false;
@@ -33,14 +36,14 @@ public class PythonWrapper {
 
         process.waitFor();
       } catch (IOException | InterruptedException e) {
-        System.err.println("Error while launching or monitoring the process: " + e.getMessage());
+        log.error("Error while launching or monitoring the process: " + e.getMessage());
       }
     });
 
     // Register a shutdown hook to terminate the process if it is still running
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       if (process != null && process.isAlive()) {
-        System.out.println("Forcing process termination...");
+        log.info("Forcing process termination...");
         process.destroy();
       }
     }));
@@ -69,8 +72,6 @@ public class PythonWrapper {
       }
       processBuilder.environment().put("TRADE_PROPERTIES_PATH", tempFile.getAbsolutePath());
 
-    } catch (UnknownHostException e) {
-      System.out.println("Unable to get IP Address: " + e.getMessage());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

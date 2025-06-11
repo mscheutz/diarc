@@ -190,10 +190,44 @@ IF(USE_ROS)
 	ENDIF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf_FOUND AND pcl_ros_FOUND)
 ENDIF(USE_ROS)
 
-# TODO: FREENECT
-if(FREENECT_FOUND)
-ADD_DEFINITIONS(-DUSE_KINECT)
-endif(FREENECT_FOUND)
+
+# ROS 2
+OPTION(USE_ROS2 "Turn on/off integration with ROS2." ON)
+IF(USE_ROS2)
+	FIND_PACKAGE(rclcpp)
+	FIND_PACKAGE(rcl_interfaces)
+	FIND_PACKAGE(sensor_msgs)
+	FIND_PACKAGE(stereo_msgs)
+	FIND_PACKAGE(image_transport)
+	FIND_PACKAGE(cv_bridge)
+	FIND_PACKAGE(tf2)
+	FIND_PACKAGE(pcl_conversions)
+	IF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf2_FOUND AND pcl_conversions_FOUND)
+#		message("FOUND ALL THE ROS2 DEPENDENCIES!")
+		INCLUDE_DIRECTORIES(${rclcpp_INCLUDE_DIRS})
+#		message("rclcpp_INCLUDE_DIRS:${rrcl_interfaces_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${rcl_interfaces_INCLUDE_DIRS})
+#		message("rclcpp_INCLUDE_DIRS:${rclcpp_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${sensor_msgs_INCLUDE_DIRS})
+#		message("sensor_msgs_INCLUDE_DIRS:${sensor_msgs_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${stereo_msgs_INCLUDE_DIRS})
+#		message("stereo_msgs_INCLUDE_DIRS:${stereo_msgs_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${image_transport_INCLUDE_DIRS})
+#		message("image_transport_INCLUDE_DIRS:${image_transport_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${cv_bridge_INCLUDE_DIRS})
+#		message("cv_bridge_INCLUDE_DIRS:${cv_bridge_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${tf2_INCLUDE_DIRS})
+#		message("tf2_INCLUDE_DIRS:${tf2_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${pcl_conversions_INCLUDE_DIRS})
+#		message("pcl_conversions_INCLUDE_DIRS:${pcl_conversions_INCLUDE_DIRS}")
+
+		# TODO: why isn't this included automatically?
+		INCLUDE_DIRECTORIES("/opt/ros/humble/include/image_transport")
+		INCLUDE_DIRECTORIES("/opt/ros/humble/include/cv_bridge")
+
+		ADD_DEFINITIONS(-DUSE_ROS2_VISION)
+	ENDIF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf2_FOUND AND pcl_conversions_FOUND)
+ENDIF(USE_ROS2)
 
 # V4R (OLD version)
 #FIND_PACKAGE(v4r) #TODO: write proper FindV4R cmake module
