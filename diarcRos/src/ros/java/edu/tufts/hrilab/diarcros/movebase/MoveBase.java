@@ -2,7 +2,7 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-package edu.tufts.hrilab.diarcros.common;
+package edu.tufts.hrilab.diarcros.movebase;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -10,6 +10,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import edu.tufts.hrilab.diarcros.common.RosConfiguration;
 import org.ros.actionlib.ActionSpec;
 import org.ros.actionlib.client.SimpleActionClient;
 import org.ros.actionlib.state.SimpleClientGoalState;

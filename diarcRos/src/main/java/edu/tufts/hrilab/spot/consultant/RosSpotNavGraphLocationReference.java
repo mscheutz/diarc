@@ -11,16 +11,16 @@ import edu.tufts.hrilab.fol.Variable;
 
 import java.util.List;
 
-public class SpotNavGraphLocationReference extends Reference {
+public class RosSpotNavGraphLocationReference extends Reference {
 
     protected String nodeName;
     protected String graphId;
 
-    public SpotNavGraphLocationReference(Symbol ref, Variable variable) {
+    public RosSpotNavGraphLocationReference(Symbol ref, Variable variable) {
         super(ref, variable);
     }
 
-    public SpotNavGraphLocationReference(Symbol ref, Variable variable, List<Term> properties, String nodeName, String graphId) {
+    public RosSpotNavGraphLocationReference(Symbol ref, Variable variable, List<Term> properties, String nodeName, String graphId) {
         super(ref,variable,properties);
         this.nodeName = nodeName;
         this.graphId = graphId;

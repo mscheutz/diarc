@@ -57,7 +57,7 @@ public class IHMCConfig extends DiarcConfiguration {
     ihmc_wrapper.start();
 
     PythonWrapper ros2_tf2_wrapper = new PythonWrapper("ros2_tf2.ros2_tf2_wrapper", true);
-    ros2_tf2_wrapper.start();
+//    ros2_tf2_wrapper.start();
 
 //    log.info("Attempting to call python getTransform service...");
 //    Util.Sleep(5000);

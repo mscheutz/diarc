@@ -1,0 +1,39 @@
+Given system output in the semantic form unintelligible to the user, your task is to produce the equivalent natural speech in English for the user to understand. Examples of this task being performed correctly are as follows:
+###
+Input: FAILURE(cannot(did(goTo(self:agent,"prep area")),because(and(cannot(findPath(self:agent,"prep area"))))))
+Output: I could not get to the "prep area" because I could not find a path to it.
+#
+Input:  QUESTION(self:agent,user,what(cognexJob,detect(box)))
+Output: Which cognex job is used to detect the box?
+#
+Input: ACK(okay)
+Output: Okay.
+#
+Input: FAILURE(cannot(did(fetch(self:agent,braces,office)),because(not(go(self:agent,office)))))
+Output: I could not fetch braces from the office because I did not make it there.
+#
+Input: QUESTION(self:agent,user,which(container))
+Output: Which container do you mean?
+#
+Input: QUESTION(self:agent,user,more(differences))
+Output: Are there any more differences?
+#
+Input: REPLY(self:agent,user,is(behind(self:agent,ledge)))
+Output: There is a ledge behind me.
+#
+Input: REPLY(self:agent,user,ACK(okay)))
+Output: Okay.
+#
+Input: DESC(DEFINITE,table,and(color(brown),shape(square),cover(none)))
+Output: The table is brown, bare, and the top is shaped like a square.
+#
+Input: DESC(INDEFINITE,dog,and(type(mammal),legs(four),size(or(small,medium,large)),cover(fur)))
+Output: A dog is a furry mammal with four legs and vary between small, medium, or large size.
+#
+Input: QUESTION(self:agent,user,itk(self:agent,mean(user,or(want(user,goTo(self:agent,location_6:location)),want(user,goTo(self:agent,location_9:location)),want(user,goTo(self:agent,location_7:location)),want(user,goTo(self:agent,location_8:location)),want(user,goTo(self:agent,location_5:location)))),suppSemantics(semantics(office(location_6:location),bathroom(location_9:location),reception(location_7:location),pantry(location_8:location),office(location_5:location)))),{})
+Output: I can't tell if you want me to go to office 6, the bathroom, reception, the pantry, or office 5
+#
+Input: QUESTION(self:agent,user,itk(self:agent,mean(user,or(want(user,deliver(self:agent,physobj_6:physobj,location_1:location)),want(user,deliver(self:agent,physobj_9:physobj,location_1:location)),want(user,deliver(self:agent,physobj_7:physobj,location_1:location)),want(user,deliver(self:agent,physobj_8:physobj,location_1:location)),want(user,deliver(self:agent,physobj_5:physobj,location_1:location)))),suppSemantics(semantics(bottle(physobj_6:physobj),bottle(physobj_9:physobj),bottle(physobj_7:physobj),bottle(physobj_8:physobj),bottle(physobj_5:physobj)),semantics(table(location_1:location),table(location_1:location),table(location_1:location),table(location_1:location),table(location_1:location)))),{})
+Output: I'm not sure which bottle you want me to deliver to the table
+###
+Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with your results as shown in the examples. If "unknown" appears in the input, make sure to use it when describing the object. Be detailed, specifically by using all of the supplied semantics. In your answer, make sure to include everything you know about unknown objects. Use all semantics, including suppSemantics. The new input you are tasked with translating is:%utterance

@@ -17,16 +17,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class SpotNavGraphLocationConsultant extends Consultant<SpotNavGraphLocationReference> {
+public class RosSpotNavGraphLocationConsultant extends Consultant<RosSpotNavGraphLocationReference> {
 
 
     private static Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().serializeSpecialFloatingPointValues().create();
 
-    public SpotNavGraphLocationConsultant(Class<SpotNavGraphLocationReference> refClass, String kbName) {
+    public RosSpotNavGraphLocationConsultant(Class<RosSpotNavGraphLocationReference> refClass, String kbName) {
         super(refClass, kbName);
     }
 
-    public SpotNavGraphLocationConsultant(Class<SpotNavGraphLocationReference> refClass, String kbName, List<String> properties) {
+    public RosSpotNavGraphLocationConsultant(Class<RosSpotNavGraphLocationReference> refClass, String kbName, List<String> properties) {
         super(refClass, kbName, properties);
     }
 
@@ -54,7 +54,7 @@ public class SpotNavGraphLocationConsultant extends Consultant<SpotNavGraphLocat
         String filepath = Resources.createFilepath(dir, filename);
         try {
             Reader reader = new BufferedReader((new InputStreamReader(
-                    Objects.requireNonNull(SpotNavGraphLocationConsultant.class.getResourceAsStream(filepath)))));
+                    Objects.requireNonNull(RosSpotNavGraphLocationConsultant.class.getResourceAsStream(filepath)))));
             SpotMissionLocationRefJson loadedPoseRefs = gson.fromJson(reader, SpotMissionLocationRefJson.class);
             log.debug("Parsed pose references from json:\n" + gson.toJson(loadedPoseRefs));
 
@@ -63,7 +63,7 @@ public class SpotNavGraphLocationConsultant extends Consultant<SpotNavGraphLocat
             for (SpotNavGraphLocationReferenceJson ref : loadedPoseRefs.references) {
                 //get the variables from each of the properties, extract for the constructor, ang ensure they're all the same
                 addReference(
-                        new SpotNavGraphLocationReference(
+                        new RosSpotNavGraphLocationReference(
                                 getNextReferenceId(),
                                 Factory.createVariable(ref.getVariable()),
                                 ref.getProperties().stream().map(Factory::createPredicate).collect(Collectors.toList()),

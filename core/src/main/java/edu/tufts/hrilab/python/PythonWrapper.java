@@ -4,6 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class PythonWrapper {
 
@@ -21,26 +25,38 @@ public class PythonWrapper {
     this.spoke = spoke;
   }
 
-  public void start() {
+  /**
+   * Starts the python process. Some important side effects:
+   * - Passes in the "--classpath" arg to python. As a result, Python modules that use argparse will need to use parse_known_args
+   * - Starts a shutdown hook to end the python process when the JVM is shut down
+
+   */
+  // Todo: Add python arguments as args to this func
+  public void start(String... pythonArgs) {
     Thread processThread = new Thread(() -> {
       try {
         // Create the ProcessBuilder and start the process
         String classpath = System.getProperty("java.class.path");
         ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command("python3", "-m", file, classpath);
+        List<String> commandArgs = new ArrayList<>(Arrays.asList("python3", "-m", file, "--classpath", classpath));
+        commandArgs.addAll(Arrays.asList(pythonArgs));
+        processBuilder.command(commandArgs);
         processBuilder.inheritIO();
+
+        // Launches the python process as a TRADE spoke
         if(spoke) {
           setSpoke(processBuilder);
         }
+
         process = processBuilder.start();
 
         process.waitFor();
       } catch (IOException | InterruptedException e) {
-        log.error("Error while launching or monitoring the process: " + e.getMessage());
+        log.error("Error while launching or monitoring the process.", e);
       }
     });
 
-    // Register a shutdown hook to terminate the process if it is still running
+    // Shutdown hook to make sure python process ends when JVM ends
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       if (process != null && process.isAlive()) {
         log.info("Forcing process termination...");
@@ -48,17 +64,16 @@ public class PythonWrapper {
       }
     }));
 
-    // Start the thread to monitor the process
     processThread.start();
   }
 
   private void setSpoke(ProcessBuilder processBuilder) {
     try {
-      // Create a temporary file
+      // Create a temporary spoke file
       File tempFile = File.createTempFile("trade_spoke", ".properties");
       tempFile.deleteOnExit(); // Ensure deletion on program exit
 
-      // Define properties content
+      // Define TRADE config
       String content = "STARTBROADCAST=false\n" +
               "STARTDISCOVERY=false\n" +
               "STARTACCEPTINGCONNECTIONS=false\n" +
@@ -66,10 +81,11 @@ public class PythonWrapper {
               "SCANFORSERVER=\n" +
               "CONNECTCONTAINERS="+ "127.0.0.1@10002";
 
-      // Write content to file
       try (BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
         writer.write(content);
       }
+
+      //Set env var to spoke
       processBuilder.environment().put("TRADE_PROPERTIES_PATH", tempFile.getAbsolutePath());
 
     } catch (IOException e) {
