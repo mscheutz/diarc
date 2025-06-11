@@ -37,6 +37,24 @@
       ]
     },
     {
+      "refId": "location_8:location",
+      "variable": "X",
+      "properties": [
+        "visitors center(X)"
+      ],
+      "position": [
+        -3.19331271277244,
+        4.581656121880486,
+        0.0
+      ],
+      "orientation": [
+        0.0,
+        0.0,
+        0.229511849841993,
+        0.9733058670233661
+      ]
+    },
+    {
       "refId": "location_1:location",
       "variable": "X",
       "properties": [
@@ -86,8 +104,8 @@
       "orientation": [
         0.0,
         0.0,
-        0.24029802526468255,
-        0.9706991599120164
+        0.2402980252646825,
+        0.9706991599120162
       ]
     },
     {

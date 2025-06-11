@@ -376,6 +376,7 @@ public class Recovery {
         if (childContext.isAction()) {
             List<Predicate> childFailedActionsList = ((ActionContext)childContext).getRecovery().failedActionsList;
             if (childFailedActionsList != null) {
+                failedChildContext = (ActionContext) childContext;
                 failedActionsList = new ArrayList<>(childFailedActionsList);
                 failedActionsList.add(childContext.getSignatureInPredicateForm());
                 return failedActionsList;

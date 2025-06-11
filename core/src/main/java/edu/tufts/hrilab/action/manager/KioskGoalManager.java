@@ -16,11 +16,10 @@ import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 //Temporary Solution - not sure where this should live or how it should be implemented in the end.
 //TODO: currently only implemented with the QueueEM in mind
@@ -54,14 +53,13 @@ public class KioskGoalManager extends DiarcComponent {
 
   @Override
   protected void init() {
-    kioskModeEnabled = false;
-    kioskGoalPredicate = null;
-    kioskTimeout = 60;
     kioskTimer = null;
     kioskTimerTask = null;
     kioskGoalGid = -1;
     currentGids = new HashSet<>();
     agentsWithQuestions = new HashSet<>();
+    //todo: generalize
+    kioskGoalPredicate = Factory.createPredicate("goHomeAndCharge","ava");
   }
 
   //TODO: Change so this isn't required to be instantiated after dialogue and GM
@@ -72,17 +70,32 @@ public class KioskGoalManager extends DiarcComponent {
     registerGoalStatusListener();
     registerQuestionAskingListener();
 
-    mockInit();
     if (kioskModeEnabled) {
       resetKioskTimer();
     }
   }
 
-  //TODO: CLI args
-  private void mockInit() {
-    //kioskModeEnabled = true;
-    kioskGoalPredicate = Factory.createPredicate("goHomeAndCharge","ava");
-    kioskTimeout = 60;
+
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("enabled").desc("whether kiosk mode should start enabled").build());
+    options.add(Option.builder("goal").hasArg().desc("kiosk goal predicate").build());
+    options.add(Option.builder("timeout").hasArg().desc("timeout for kiosk mode (seconds)").build());
+    return options;
+  }
+
+  @Override
+  protected void parseArgs(CommandLine cmdLine) {
+    if (cmdLine.hasOption("enabled")) {
+      kioskModeEnabled = true;
+    }
+    if (cmdLine.hasOption("goal")) {
+      kioskGoalPredicate = Factory.createPredicate(cmdLine.getOptionValue("goal"));
+    }
+    if (cmdLine.hasOption("timeout")) {
+      kioskTimeout = Integer.parseInt(cmdLine.getOptionValue("timeout"));
+    }
   }
 
   //private void getAgentList() {}

@@ -373,5 +373,10 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
       log.error("error running process",e);
     }
   }
+
+  @Override
+  public Symbol getDockRefId() {
+    return Factory.createSymbol("location_0:location");
+  }
 }
 

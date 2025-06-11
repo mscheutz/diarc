@@ -202,6 +202,18 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
     }
   }
 
+  @TRADEService
+  public void addReferencesDirectly(Map<String, Pair<Point3d, Quat4d>> mapLocations) {
+    Variable var = Factory.createVariable("VAR0");
+    for (String name : mapLocations.keySet()) {
+      Pair<Point3d, Quat4d> pose = mapLocations.get(name);
+      List<Term> properties = new ArrayList<>();
+      properties.add(Factory.createPredicate(name, var));
+      PoseReference ref = consultant.createReference(var, properties);
+      ref.setPose(pose.getLeft(), pose.getRight());
+    }
+  }
+
   /**
    * switches the state information to match the new floor
    *
