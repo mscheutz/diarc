@@ -47,8 +47,16 @@ void PythonHelper::initializePython() {
     if (!initialized) {
         // TODO: how to handle this in general?
         // When you load a NumPy-dependent plugin, do the following just before that.
-        dlopen("libpython3.8.so", RTLD_LAZY | RTLD_GLOBAL);
-        //dlopen("libpython3.10.so", RTLD_LAZY | RTLD_GLOBAL);
+        void *handle = dlopen("libpython3.8.so", RTLD_LAZY | RTLD_GLOBAL);
+        if (!handle) {
+          handle = dlopen("libpython3.10.so", RTLD_LAZY | RTLD_GLOBAL);
+        }
+        if (!handle) {
+          handle = dlopen("libpython3.12.so", RTLD_LAZY | RTLD_GLOBAL);
+        }
+        if (!handle) {
+            LOG4CXX_ERROR(logger, "Failed to load python library. 3.8.x, 3.10.x, 3.12.x versions supported.");
+        }
         py::initialize_interpreter();
         initialized = true;
     }
