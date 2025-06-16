@@ -11,7 +11,7 @@ if the human says "can you please navigate to location one", you should produce 
 #
 If the human says "follow me", you should produce the output: {"Semantics":"follow()","Input Type":"INSTRUCT","Confidence":"100"}
 #
-If the human says "stop following me", you should produce the output: {"Semantics":"stopFollow()","Input Type":"QUESTION","Confidence":"100"}
+If the human says "stop following me", you should produce the output: {"Semantics":"stopFollow()","Input Type":"INSTRUCT","Confidence":"100"}
 #
 If the human says "bring Owen to the coffee machine", you should produce the output: {"Semantics":"escortToLocation(owen,coffee maker)","Input Type":"INSTRUCT","Confidence":"80"}
 #
@@ -57,11 +57,11 @@ if the human says "what are your upcoming goals", you should produce the output:
 #
 if the human says "could you repeat that", you should produce the output: {"Semantics":"repeatLastQuestion()","Input Type":"INSTRUCT","Confidence":"60"}
 #
-if the human says "what is your current goal", you should produce the output: {"Semantics":"describeCurrentGoal()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "what is your current goal", you should produce the output: {"Semantics":"describeCurrentGoal()","Input Type":"INSTRUCT","Confidence":"100"}
 #
-if the human says "what are your pending goals", you should produce the output: {"Semantics":"describePendingGoals()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "what are your pending goals", you should produce the output: {"Semantics":"describePendingGoals()","Input Type":"INSTRUCT","Confidence":"100"}
 #
-if the human says "what are your next goals", you should produce the output: {"Semantics":"describePendingGoals()","Input Type":"QUESTION","Confidence":"80"}
+if the human says "what are your next goals", you should produce the output: {"Semantics":"describePendingGoals()","Input Type":"INSTRUCT","Confidence":"80"}
 #
 if the human says "suspend current task", you should produce the output: {"Semantics":"suspendSystemGoalsBlocking()","Input Type":"INSTRUCT","Confidence":"100"}
 #
@@ -83,7 +83,7 @@ if the human says "the dock", you should produce the output: {"Semantics":"locat
 #
 if the human says "the green block", you should produce the output: {"Semantics":"objectType(green block)","Input Type":"REPLY","Confidence":"100"}
 #
-if the human says "what objects can you detect", you should produce the output: {"Semantics":"describeDetectableObjectNames()","Input Type":"QUESTION","Confidence":"100"}
+if the human says "what objects can you detect", you should produce the output: {"Semantics":"describeDetectableObjectNames()","Input Type":"INSTRUCT","Confidence":"100"}
 #
 if the human says "i will teach you a new task", you should produce the output: {"Semantics":"learnNewTask()","Input Type":"INSTRUCT","Confidence":"100"}
 #
