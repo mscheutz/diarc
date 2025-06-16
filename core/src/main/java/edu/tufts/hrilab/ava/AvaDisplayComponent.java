@@ -400,6 +400,14 @@ public class AvaDisplayComponent extends DiarcComponent {
   public void clearText() {
     log.debug("clearText()");
     canvas.clearText();
+    try {
+      SwingUtilities.invokeAndWait(() -> {
+                displayImage(images.get(trLogoIndex), 10 * 1000);
+              }
+      );
+    } catch (InterruptedException | InvocationTargetException e) {
+      log.error("error switching back to logo", e);
+    }
   }
 
   /**

@@ -396,9 +396,9 @@ import java.util.StringTokenizer;
 }
 
 () = say(String ?literal) {
-    act:toggleVoiceOn();
+//    act:toggleVoiceOn();
     act:sayText(?literal);
-    act:toggleVoiceOff();
+//    act:toggleVoiceOff();
 }
 
 () = describeAllKnownLocations() {

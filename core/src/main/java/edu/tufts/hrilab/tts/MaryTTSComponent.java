@@ -262,7 +262,7 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
     if (v.equalsIgnoreCase("male")) {
       vc = "cmu-rms-hsmm";
     } else if (v.equalsIgnoreCase("female")) {
-      vc = "cmu-slt-hsmm";
+      vc = "cmu-slt";
     }
 
     voice = Voice.getVoice(vc);
@@ -282,9 +282,9 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
 
   @Override
   public boolean sayText(String text) {
-    if (this.enabled) {
-      sayText(text, true);
-    }
+//    if (this.enabled) {
+    sayText(text, true);
+//    }
       return true;
   }
 
