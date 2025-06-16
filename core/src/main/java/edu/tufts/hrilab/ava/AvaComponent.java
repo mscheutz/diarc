@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.ava;
 
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.ava.message.AvaMoveGoal;
 import edu.tufts.hrilab.ava.message.response.*;
 import edu.tufts.hrilab.ava.util.Utilities;
@@ -23,9 +24,13 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.URL;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -51,6 +56,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
@@ -110,6 +120,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private final Lock chargingLock = new ReentrantLock();
   private final Condition chargingTerminatedCondition = chargingLock.newCondition();
+
+  private OutputStream ww_process_os = null;
+  private boolean shouldDing = true;
 
   public AvaComponent() {
     super();
@@ -1071,22 +1084,42 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     chargingLock.unlock();
   }
 
+  @TRADEService
+  @Action
+  public void triggerWW() {
+    if (ww_process_os == null) {
+      log.debug("[triggerWW] python subprocess input stream is null");
+      return;
+    }
+    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
+    //TODO: prevent ding from playing when triggered this way
+    //TODO: hook up to QA where desired
+    log.info("[triggerWW] in method");
+    shouldDing = false;
+    try {
+      writer.write("hello\n");
+      writer.flush();
+    } catch (IOException e) {
+      log.error("[triggerWW] error signalling WW trigger");
+    }
+  }
+
   @Override
   public void listenForWWandASR() {
     //TODO: Configure paths/get resources better
     //args:--whisper_model, --ww_model_path, --ww_detection_thresh
     String home = System.getProperty("user.home");
-    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py");
+    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py");
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
     processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
     try {
       Process process = processBuilder.start();
       InputStream is = process.getInputStream();
+      ww_process_os = process.getOutputStream();
       String result = "";
       while (true) {
         while (result.isEmpty()) {
           //Wait for WW detection
-          log.info("waiting for wakeword");
           while (is.available() == 0) {
             Thread.sleep(100);
           }
@@ -1102,6 +1135,24 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             service.call(void.class,"Understanding speech");
           } catch (TRADEException e) {
             log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+          }
+          if (shouldDing) {
+            try {
+              URL audioFile = getClass().getClassLoader().getResource("config/edu/tufts/hrilab/ava/ding.wav");
+              AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+              AudioFormat format = audioStream.getFormat();
+              DataLine.Info info = new DataLine.Info(Clip.class, format);
+              Clip audioClip = (Clip) AudioSystem.getLine(info);
+              audioClip.open(audioStream);
+              audioClip.start();
+              Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
+              audioClip.close();
+              audioStream.close();
+            } catch (Exception e) {
+              log.error("[listenForWWandASR] error playing ww detection audio clip", e);
+            }
+          } else {
+            shouldDing = true;
           }
 
           //Wait for ASR result:
