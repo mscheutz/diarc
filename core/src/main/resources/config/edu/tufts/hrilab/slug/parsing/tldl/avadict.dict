@@ -495,3 +495,5 @@ stop demo; VERBI; stopDemo
 
 %enable kiosk mode; C; setKioskModeEnabled(?ADDRESSEE,false)
 %disable kiosk mode; C; setKioskModeEnabled(?ADDRESSEE,true)
+
+ww; VERBI; triggerWW
