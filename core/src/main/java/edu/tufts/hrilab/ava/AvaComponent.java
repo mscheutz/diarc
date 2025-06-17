@@ -25,6 +25,7 @@ import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -123,6 +124,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private OutputStream ww_process_os = null;
   private boolean shouldDing = true;
+  private BufferedImage mapImage;
 
   public AvaComponent() {
     super();
@@ -734,12 +736,13 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
    * Get the scale and dimensions of the current map.
    * Store metadata in class properties.
    */
-  private void loadMapMetadata() {
+  private void loadMapData() {
     RMSMapMetadataResponse res = api.getMapMetadata();
     mapScaleX = remote ? res.response.mapScale : res.response.mapScaleX;
     mapScaleY = remote ? res.response.mapScale : res.response.mapScaleY;
     mapWidth = res.response.width;
     mapHeight = res.response.height;
+    mapImage = api.getMap();
     log.info("Map size = " + mapWidth + "x" + mapHeight + ", mapScaleX = " + mapScaleX + ", mapScaleY = " + mapScaleY);
   }
 
