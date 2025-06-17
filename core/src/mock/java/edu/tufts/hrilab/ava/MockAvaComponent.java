@@ -310,7 +310,6 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
       return;
     }
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
-    //TODO: prevent ding from playing when triggered this way
     //TODO: hook up to QA where desired
     log.info("[triggerWW] in method");
     shouldDing = false;
@@ -322,6 +321,22 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     }
   }
 
+  private void playAudioClip(String resourcePath) {
+    try {
+      URL audioFile = getClass().getClassLoader().getResource(resourcePath);
+      AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+      AudioFormat format = audioStream.getFormat();
+      DataLine.Info info = new DataLine.Info(Clip.class, format);
+      Clip audioClip = (Clip) AudioSystem.getLine(info);
+      audioClip.open(audioStream);
+      audioClip.start();
+      Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
+      audioClip.close();
+      audioStream.close();
+    } catch (Exception e) {
+      log.error("[listenForWWandASR] error playing ww detection audio clip", e);
+    }
+  }
   @Override
   public void listenForWWandASR() {
     //TODO: Configure paths/get resources better
@@ -355,20 +370,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
           }
           if (shouldDing) {
-            try {
-              URL audioFile = getClass().getClassLoader().getResource("config/edu/tufts/hrilab/ava/ding.wav");
-              AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
-              AudioFormat format = audioStream.getFormat();
-              DataLine.Info info = new DataLine.Info(Clip.class, format);
-              Clip audioClip = (Clip) AudioSystem.getLine(info);
-              audioClip.open(audioStream);
-              audioClip.start();
-              Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
-              audioClip.close();
-              audioStream.close();
-            } catch (Exception e) {
-              log.error("[listenForWWandASR] error playing ww detection audio clip", e);
-            }
+            playAudioClip("config/edu/tufts/hrilab/ava/ding.wav");
           } else {
             shouldDing = true;
           }
@@ -378,13 +380,6 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           while (is.available() == 0) {
             Thread.sleep(100);
           }
-          //Clear listening text from screen (or could write understood results)
-          try {
-            TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
-            service.call(void.class);
-          } catch (TRADEException e) {
-            log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
-          }
           //Get ASR result (using <unk> to signal ASR timed out before any results were detected)
           s.setLength(0);
           while (is.available() != 0) {
@@ -393,7 +388,35 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           result = s.toString();
           //If ASR timed out, loop back to WW detection
           if (result.equals("<unk>\n")) {
+            playAudioClip("config/edu/tufts/hrilab/ava/negativeASRResult.wav");
             result = "";
+            try {
+              TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+              service.call(void.class);
+            } catch (TRADEException e) {
+              log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+            }
+          } else {
+            playAudioClip("config/edu/tufts/hrilab/ava/positiveASRResult.wav");
+            try {
+              TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
+              service.call(void.class,"Recognized Speech: " + result);
+            } catch (TRADEException e) {
+              log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+            }
+            new Thread(() -> {
+              try {
+                Thread.sleep(2000);
+              } catch (InterruptedException e) {
+                log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
+              }
+              try {
+                TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+                service.call(void.class);
+              } catch (TRADEException e) {
+                log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+              }
+            }).start();
           }
         }
         result = result.trim().toLowerCase();
