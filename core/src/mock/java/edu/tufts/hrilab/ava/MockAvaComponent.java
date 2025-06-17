@@ -20,11 +20,7 @@ import edu.tufts.hrilab.util.Util;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.DataLine;
+import javax.sound.sampled.*;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
 import java.io.BufferedWriter;
@@ -362,6 +358,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
               DataLine.Info info = new DataLine.Info(Clip.class, format);
               Clip audioClip = (Clip) AudioSystem.getLine(info);
               audioClip.open(audioStream);
+              FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+              control.setValue(-12f);
               audioClip.start();
               Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
               audioClip.close();
@@ -399,7 +397,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
         result = result.trim().toLowerCase();
         result = result.replaceAll("\\p{Punct}", "");
         Utterance utterance = new Utterance.Builder()
-                .setSpeaker(Factory.createSymbol("user"))
+                .setSpeaker(Factory.createSymbol("evan"))
                 .setAddressee(Factory.createSymbol("ava"))
                 .setWords(Arrays.asList(result.trim().split(" ")))
                 .setUtteranceType(UtteranceType.UNKNOWN)

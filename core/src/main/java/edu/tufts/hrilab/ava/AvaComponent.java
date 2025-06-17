@@ -58,11 +58,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.DataLine;
+import javax.sound.sampled.*;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
@@ -1239,6 +1235,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
               AudioFormat format = audioStream.getFormat();
               DataLine.Info info = new DataLine.Info(Clip.class, format);
               Clip audioClip = (Clip) AudioSystem.getLine(info);
+              FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+              control.setValue(-12f);
               audioClip.open(audioStream);
               audioClip.start();
               Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
