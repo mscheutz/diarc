@@ -179,7 +179,7 @@ private:
   bool processEccentricity(const cv::Mat& semMat, const int semPredIdx);                                  
   cv::Mat applySigmoidToMatrix(const cv::Mat& semMatrix);
   std::string generateFullDescription(std::vector<bool> foundPredicatesVector);
-  void populateMemoryObjectDescription(std::vector<bool> foundPredicatesVector, ade::stm::MemoryObject::Ptr mo);
+  void populateMemoryObjectDescription(std::vector<bool> foundPredicatesVector, diarc::stm::MemoryObject::Ptr mo);
   
 };
 
