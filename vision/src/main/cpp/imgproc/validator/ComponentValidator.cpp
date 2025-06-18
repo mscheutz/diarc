@@ -39,7 +39,7 @@
 #include <pcl/surface/convex_hull.h>
 
 
-using namespace ade::stm;
+using namespace diarc::stm;
 namespace fs = std::experimental::filesystem;
 
 
@@ -153,7 +153,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
     // get depth image from object point cloud
     cv::Mat objectDepthImage(denoisedCloud->height, denoisedCloud->width, CV_32FC1);
-    ade::pc::util::pointCloudToDepth(objectDepthImage, denoisedCloud);
+    diarc::pc::util::pointCloudToDepth(objectDepthImage, denoisedCloud);
 
     // align object point cloud with superellipsoid coordinate system
     pcl::PointCloud<pcl::PointXYZ>::Ptr objectCloud = denoisedCloud;
