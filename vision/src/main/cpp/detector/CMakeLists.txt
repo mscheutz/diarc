@@ -53,7 +53,7 @@ if (OpenCV3_dnn_FOUND OR OpenCV_dnn_FOUND)
 		message("Downloading YOLOv5 model ${YOLO5_MODEL_URL}")
 		file(DOWNLOAD "${YOLO5_MODEL_URL}" "${YOLO5_MODEL_PATH}")
 	endif(NOT EXISTS "${YOLO5_MODEL_PATH}")
-endif(OpenCV3_dnn_FOUND)
+endif (OpenCV3_dnn_FOUND OR OpenCV_dnn_FOUND)
 
 if (OpenCV_dnn_FOUND)
 	SET(SOURCES ${SOURCES}
