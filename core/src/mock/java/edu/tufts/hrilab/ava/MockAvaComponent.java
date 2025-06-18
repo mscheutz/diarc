@@ -325,6 +325,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
       DataLine.Info info = new DataLine.Info(Clip.class, format);
       Clip audioClip = (Clip) AudioSystem.getLine(info);
       audioClip.open(audioStream);
+      FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+      control.setValue(-12f);
       audioClip.start();
       Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
       audioClip.close();

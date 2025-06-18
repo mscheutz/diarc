@@ -736,7 +736,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
    * Get the scale and dimensions of the current map.
    * Store metadata in class properties.
    */
-  private void loadMapData() {
+  private void loadMapMetadata() {
     RMSMapMetadataResponse res = api.getMapMetadata();
     mapScaleX = remote ? res.response.mapScale : res.response.mapScaleX;
     mapScaleY = remote ? res.response.mapScale : res.response.mapScaleY;
@@ -1206,6 +1206,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       DataLine.Info info = new DataLine.Info(Clip.class, format);
       Clip audioClip = (Clip) AudioSystem.getLine(info);
       audioClip.open(audioStream);
+      FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+      control.setValue(-12f);
       audioClip.start();
       Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
       audioClip.close();
