@@ -12,29 +12,8 @@ Required:
 
 Optional:
 	any additional fields the particular camera mode might need
-
-
-CAM_MODE options:
-      MONO_FW,
-      STEREO_FW,
-      STEREO_SYNC,
-      MONO_V4L2,
-      STEREO_V4L2,
-      MONO_AVI,
-      MONO_FILE,
-      MULTI_FILE_LOG,
-      KINECT (or XTION),
-      KINECT_ONI, //from oni file
-      SIM_PC1, //simulate kinect version 1 (rgb and disparity separately)
-      SIM_PC2 (or PCD), //simulate kinect version w (pcd files)
-      KINECT_PLUS, //kinect plus another rgb camera (mainly for calibration of robot system with multiple sensors)
-      DRONE, //ar drone
-      ROS,
-      NAO,
-      GSTREAMER, // H264-encoded stream via GStreamer
-
-
 -->
+
 <capture>
     <camMode>ROS</camMode>
     <imageWidth>320</imageWidth>

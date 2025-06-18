@@ -1,9 +1,9 @@
 import logging
 import sys
 import warnings
-import threading
 import os
-import time
+import argparse
+from typing import List, Optional
 
 import jpype.imports
 from jpype import JObject
@@ -13,15 +13,23 @@ from pytrade.java_util import to_java_class, convert_to_java_object
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.info("Starting PyTRADE")
 
-# Todo: Should we still allow user specified jars?
 try:
-    current_file_dir = os.path.dirname(os.path.abspath(__file__))
-    jars_dir = os.path.join(current_file_dir, 'jars/*')
-    jpype.startJVM(classpath=[jars_dir, sys.argv[1]])
+    # Parse any args passed in from the main command. We only handle "classpath" here, for now.
+    parser = argparse.ArgumentParser(description="Setup the JVM classpath")
+    parser.add_argument('--classpath')
+    args, unknown = parser.parse_known_args()
+
+    sys.argv = [sys.argv[0]] + unknown # Remove pytrade args from argv
+
+    jpype.startJVM(classpath=[args.classpath])
+
+    jpype_cp = jpype.java.lang.System.getProperty('java.class.path')
+    logging.info("jpype_cp: {}".format(jpype_cp))
+
     from ai.thinkingrobots.trade import TRADE, TRADEServiceConstraints, TRADEServiceInfo, TRADEException
 
 except Exception as e:
-    warnings.warn("Failure starting JVM. Did you publish DIARC to your local maven?")
+    warnings.warn("Failure starting JVM.")
     print(e)
 else:
     print("JVM started. You can now start using DIARC through TRADE.")
@@ -29,7 +37,7 @@ else:
 
 class TRADEWrapper:
 
-    def call_trade(self, name: str, groups: list[str] = None, *args) -> JObject:
+    def call_trade(self, name: str, groups: Optional[List[str]] = None, *args) -> JObject:
         if groups is None:
             groups = []
         """
@@ -80,23 +88,15 @@ class TRADEWrapper:
         """
         warnings.warn("Not yet implemented.")
 
-    def check_state(self, obs):
-        """
-        WIP, do not use.
-        :param obs:
-        :return:
-        """
-        warnings.warn("Not yet implemented.")
-        return self.call_trade("checkState", obs)
 
-    def parse_goal(self, goal: str):
-        return [goal]
-
-
-def exit_test():
+def cleanup():
+    """
+    Called when the wrapper is closed. For use in cleaning up resources.
+    :return:
+    """
     logging.info("Exiting wrapper")
 
 
 import atexit
 
-atexit.register(exit_test)
+atexit.register(cleanup)

@@ -15,7 +15,7 @@ import java.util.*;
 public class RealVisionConsultant extends VisionConsultant {
 
   public RealVisionConsultant(VisionInterface visionComponent, String kbName) {
-    super(visionComponent,kbName);
+    super(visionComponent, kbName);
   }
 
   @Override
@@ -39,7 +39,7 @@ public class RealVisionConsultant extends VisionConsultant {
   @Override
   public Map<Symbol, Double> getActivatedEntities() {
     // get all tokens in STM
-    List<MemoryObject> tokens = ShortTermMemoryInterface.getTokens();
+    List<MemoryObject> tokens = visionComponent.getTokens();
 
     // get/generate the objectRefs
     Map<Symbol, Double> activatedEntities = new HashMap<>();
@@ -50,16 +50,20 @@ public class RealVisionConsultant extends VisionConsultant {
         // first search based on tokenId
         for (VisionReference visionRef : visionTypes.get(token.getTypeId())) {
           if (visionRef.tokenIds.contains(token.getTokenId())) {
+            visionRef.properties.clear();
+            visionRef.properties.addAll(MemoryObjectUtil.getSceneGraphDescriptors(token));
             objectRef = visionRef.refId;
           }
         }
 
-         // TODO: this is a HUGE assumption that only one object exists for a given set of properties
-         // if objectRef wasn't found by tokenId -- search by typeId and properties
-         if (objectRef == null) {
-           for (VisionReference visionRef : visionTypes.get(token.getTypeId())) {
-             if (edu.tufts.hrilab.fol.util.Utilities.containsAllPredicates(new ArrayList<>(MemoryObjectUtil.getSceneGraphDescriptors(token)),
-                     visionRef.properties)) {
+        // TODO: this is a HUGE assumption that only one object exists for a given set of properties
+        // if objectRef wasn't found by tokenId -- search by typeId and properties
+        if (objectRef == null) {
+          for (VisionReference visionRef : visionTypes.get(token.getTypeId())) {
+            if (edu.tufts.hrilab.fol.util.Utilities.containsAllPredicates(new ArrayList<>(MemoryObjectUtil.getSceneGraphDescriptors(token)),
+                    visionRef.properties)) {
+              visionRef.properties.clear();
+              visionRef.properties.addAll(MemoryObjectUtil.getSceneGraphDescriptors(token));
               objectRef = visionRef.refId;
              }
            }
@@ -124,7 +128,7 @@ public class RealVisionConsultant extends VisionConsultant {
           // new search is already started by call to getTypeId
           long startTime = System.currentTimeMillis();
           long maxWaitTime = 5000;
-          while (ShortTermMemoryInterface.getTokens(visionRef.typeId).isEmpty()) {
+          while (visionComponent.getTokens(visionRef.typeId).isEmpty()) {
             if ((System.currentTimeMillis() - startTime) > maxWaitTime) {
               log.warn("[assertProperties] new search did not detect object within allotted timeframe.");
               break;

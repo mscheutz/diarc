@@ -2,11 +2,13 @@
  * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-package edu.tufts.hrilab.diarcros.common;
+package edu.tufts.hrilab.diarcros.movebase;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import edu.tufts.hrilab.diarcros.common.RosConfiguration;
 import geometry_msgs.Twist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

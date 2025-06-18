@@ -24,8 +24,11 @@ SET(SOURCES
 SET(USER_HOME_DIR $ENV{HOME})
 SET(MODEL_DIR "${USER_HOME_DIR}/.diarc/vision/detectors/")
 
-SET(YOLO_MODEL_PATH "${MODEL_DIR}yolo/yolov3-tiny.weights")
+SET(YOLO_MODEL_PATH "${MODEL_DIR}yolov3/yolov3-tiny.weights")
 SET(YOLO_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/yolo/yolov3-tiny.weights")
+
+SET(YOLO_MODEL_PATH "${MODEL_DIR}yolov5/yolov5m.onnx")
+SET(YOLO_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/yolov5/yolov5m.onnx")
 
 SET(BUTTONDETECTOR_MODEL_PATH "${MODEL_DIR}/buttondetector/buttonModelS320.onnx")
 SET(BUTTONDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/buttondetector/buttonModelS320.onnx")
@@ -40,7 +43,6 @@ SET(ELEVATORDOORDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models
 if (OpenCV3_dnn_FOUND)
 	SET(SOURCES ${SOURCES}
 			NeuralDetector.cpp
-			YoloDetector.cpp
 		)
 	if (NOT EXISTS "${YOLO_MODEL_PATH}")
 		message("Downloading YOLOv3 model ${YOLO_MODEL_URL}")
@@ -51,7 +53,6 @@ endif(OpenCV3_dnn_FOUND)
 if (OpenCV_dnn_FOUND)
 	SET(SOURCES ${SOURCES}
 			NeuralDetector.cpp
-			YoloDetector.cpp
 			ButtonDetector.cpp
 			ElevatorDoorDetector.cpp
 			PersonDetector.cpp

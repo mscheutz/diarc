@@ -1,0 +1,30 @@
+init
+----
+deliver a bottle to the person
+get the bottle to the dropoff
+get the bottle to the table
+----
+i am holding it
+----
+pick up the bottle
+put down the bottle
+----
+what do you see
+----
+go to the conference room
+go to the dock
+go to the table
+go to the dropoff
+go to the person
+----
+stow arm
+unstow arm
+carry mode
+open gripper
+close gripper
+stand
+sit
+dock
+undock
+----
+shut down
