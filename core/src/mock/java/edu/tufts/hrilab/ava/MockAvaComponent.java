@@ -312,7 +312,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
     //TODO: hook up to QA where desired
     log.info("[triggerWW] in method");
-    shouldDing = false;
+    //shouldDing = false;
     try {
       writer.write("hello\n");
       writer.flush();

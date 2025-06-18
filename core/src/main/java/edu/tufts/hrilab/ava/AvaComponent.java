@@ -1092,9 +1092,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       return;
     }
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ww_process_os));
-    //TODO: hook up to QA where desired
+    //TODO: Should this still trigger the WW ding?
+    //TODO: Also should this have a longer ASR timeout than if triggered by voice?
     log.info("[triggerWW] in method");
-    shouldDing = false;
+    //shouldDing = false;
     try {
       writer.write("hello\n");
       writer.flush();
