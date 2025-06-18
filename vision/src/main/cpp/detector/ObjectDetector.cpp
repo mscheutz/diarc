@@ -22,7 +22,6 @@
 
 #ifdef OPENCV3_DNN
 #include "NeuralDetector.hpp"
-#include "YoloDetector.hpp"
 #endif //OPENCV_DNN
 
 #ifdef OPENCV_DNN
@@ -30,7 +29,6 @@
 #include "ButtonDetector.hpp"
 #include "ElevatorDoorDetector.hpp"
 #include "PersonDetector.hpp"
-#include "YoloDetector.hpp"
 #endif //OPENCV_DNN
 
 #ifdef USE_V4R_V0
@@ -70,13 +68,6 @@ ObjectDetector::Ptr ObjectDetector::get(const DetectorType type, const long long
       return SiftDetector::Ptr(new SiftDetector(processorId, imgWidth, imgHeight));
     case HAAR:
       return FaceDetector::Ptr(new FaceDetector(processorId, imgWidth, imgHeight));
-    case YOLO:
-#if defined(OPENCV_DNN) || defined(OPENCV3_DNN)
-      return YoloDetector::Ptr(new YoloDetector(processorId, imgWidth, imgHeight));
-#else
-    LOG4CXX_ERROR(factoryLogger, "YoloDetetor not available. Did you have the OpenCV DNN module installed?");
-#endif
-    break;
     case HOUGH:
       return HoughDetector::Ptr(new HoughDetector(processorId, imgWidth, imgHeight));
     case BLOB:
@@ -123,6 +114,12 @@ ObjectDetector::Ptr ObjectDetector::get(const DetectorType type, const long long
       return FoodDetectorByHSV::Ptr(new FoodDetectorByHSV(processorId, imgWidth, imgHeight));
     case MOTION:
       return MotionDetector::Ptr(new MotionDetector(processorId, imgWidth, imgHeight));
+    case DNN:
+      #if defined(OPENCV_DNN)
+            return NeuralDetector::Ptr(new NeuralDetector(processorId, imgWidth, imgHeight));
+      #else
+          LOG4CXX_ERROR(factoryLogger, "NeuralDetector not available. This require OpenCV DNN module 4.5+.");
+      #endif
     case BUTTONDETECTOR:
 
 #if defined(OPENCV_DNN)

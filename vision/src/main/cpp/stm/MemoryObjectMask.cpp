@@ -254,8 +254,8 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
     loc.z /= locIndices;
     setLocation(loc); //also sets direction
   } else {
-    direction_ = diarc::capture::util::calcDirection(0, boundingBox_.x + (boundingBox_.width) / 2.0,
-                                                   boundingBox_.y + (boundingBox_.height) / 2.0);
+    setDirection(diarc::capture::util::calcDirection(0, boundingBox_.x + (boundingBox_.width) / 2.0,
+                                                   boundingBox_.y + (boundingBox_.height) / 2.0));
   }
 
 }
@@ -366,7 +366,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const s
     // loc.x = (max_point_AABB.x + min_point_AABB.x)/2.0;
     // loc.y = (max_point_AABB.y + min_point_AABB.y)/2.0;
     // loc.z = (max_point_AABB.z + min_point_AABB.z)/2.0;
-    setLocation(loc); //also sets direction
+    // setLocation(loc); //also sets direction
   }
 
   //set direction and location
@@ -517,7 +517,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     loc.z /= indicesMask_.size();
     setLocation(loc); //also sets direction
   } else {
-    direction_ = diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
+    setDirection(diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0));
   }
 
   //set bounding box
@@ -656,7 +656,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     loc.z /= indicesMask_.size();
     setLocation(loc); //also sets direction
   } else {
-    direction_ = diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
+    setDirection(diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0));
   }
 
   //set bounding box
@@ -947,6 +947,8 @@ void MemoryObjectMask::setDirection(const double &x, const double &y, const doub
   direction_[0] *= normValue;
   direction_[1] *= normValue;
   direction_[2] *= normValue;
+
+  LOG4CXX_DEBUG(logger, boost::format("[setDirection] normalized (x,y,z) = (%d,%d,%d).") % direction_[0] % direction_[1] % direction_[2]);
 }
 
 void MemoryObjectMask::setDirection(const cv::Vec3d &dir) {

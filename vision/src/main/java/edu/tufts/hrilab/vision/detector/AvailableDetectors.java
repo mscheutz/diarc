@@ -13,11 +13,9 @@ import edu.tufts.hrilab.vision.imgproc.swig.ImageProcessorType;
 import edu.tufts.hrilab.vision.stm.SearchManager;
 import edu.tufts.hrilab.vision.tracker.swig.NativeTracker.TrackerType;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Term;
@@ -27,8 +25,6 @@ import edu.tufts.hrilab.vision.util.NonEDTListModel;
 
 import java.awt.EventQueue;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 import javax.swing.DefaultComboBoxModel;
 
 import edu.tufts.hrilab.vision.visionproc.Requirement;
@@ -53,7 +49,7 @@ public class AvailableDetectors {
   //instantiated Detectors
   //private HashMap<DetectorType, HashSet<Detector>> instantiatedDetectors = new HashMap();
   private Map<DetectorType, DefaultComboBoxModel> instantiatedDetectors = new HashMap();
-  private final Map<Detector, HashSet<Object>> instantiatedDetectorClients = new HashMap();
+  private final Map<Detector, Set<Object>> instantiatedDetectorClients = new HashMap();
   //info needed to instantiate detectors of a certain Predicate
   //(e.g., face(X) = functorname(X,descriptor))
   //hashed by descriptor in outermost map, and then functorname
@@ -138,9 +134,6 @@ public class AvailableDetectors {
             continue;
           }
 
-          //get config file secifying supported predicates
-          detectorConfigFile = singleDetectorType.string("config");
-
           //add to available types if doesn't exist
           if (!typesDetail.containsKey(detectorType)) {
             DetectorDetail newDetectorDetail = new DetectorDetail(detectorType, imgWidth, imgHeight);
@@ -156,16 +149,17 @@ public class AvailableDetectors {
                 }
               }
             } catch (Exception e) {
-              log.error(String.format("Problem parsing info for \"%s\" detector type. All such detector types will not be loaded.", detectorType), e);
+              log.error("Problem parsing info for {} detector type. All such detector types will not be loaded.", detectorType, e);
               continue;
             }
             typesDetail.put(detectorType, newDetectorDetail);
           } else {
-            log.warn(String.format("\"%s\" detector type has already been loaded. Ignoring duplicate request.", detectorType));
+            log.warn("{} detector type has already been loaded. Ignoring duplicate request.", detectorType);
             continue;
           }
 
           //parse Detector's config file to get info for each predicate option
+          detectorConfigFile = singleDetectorType.string("config");
           try {
             if (detectorConfigFile != null && !detectorConfigFile.isEmpty()) {
 
@@ -178,7 +172,7 @@ public class AvailableDetectors {
                 log.error("Invalid detector config file format. Must be XML or JSON. File: " + detectorConfigFile);
               }
             }
-          } catch (Exception e) {
+          } catch (FileNotFoundException e) {
             log.error(String.format("Error parsing config file: %s.", detectorConfigFile), e);
           }
         }
@@ -188,68 +182,56 @@ public class AvailableDetectors {
     }
   }
 
-  private void parseDetectorFileJson(String detectorConfigFile, DetectorType detectorType) {
+  private void parseDetectorFileJson(String detectorConfigFile, DetectorType detectorType) throws FileNotFoundException {
     Predicate advertisement;
-    String predicateType;
-    int arity;
     String predicateName;
 
-    try {
-      JsonParser parser = new JsonParser();
-      JsonObject root = parser.parse(new FileReader(detectorConfigFile)).getAsJsonObject();
-      predicateType = root.getAsJsonObject("processor").get("type").getAsString();
-      arity = root.getAsJsonObject("processor").get("arity").getAsInt();
+    JsonParser parser = new JsonParser();
+    JsonObject root = parser.parse(new FileReader(detectorConfigFile)).getAsJsonObject();
+    String predicateType = root.getAsJsonObject("processor").get("type").getAsString();
+    int arity = root.getAsJsonObject("processor").get("arity").getAsInt();
 
-      Iterator<JsonElement> predicateItr = root.getAsJsonArray("predicates").iterator();
-      while (predicateItr.hasNext()) {
-        JsonObject predicateObj = predicateItr.next().getAsJsonObject();
+    Iterator<JsonElement> predicateItr = root.getAsJsonArray("predicates").iterator();
+    while (predicateItr.hasNext()) {
+      JsonObject predicateObj = predicateItr.next().getAsJsonObject();
 
-        predicateName = predicateObj.get("name").getAsString();
-        if (arity == 1) {
-          advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
-        } else if (arity == 2) {
-          advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
-        } else {
-          log.error("Predicate arity not supported: {}", arity);
-          continue;
-        }
-
-        //add Detector option
-        addDetectorOption(advertisement, detectorType, detectorConfigFile);
+      predicateName = predicateObj.get("name").getAsString();
+      if (arity == 1) {
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
+      } else if (arity == 2) {
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
+      } else {
+        log.error("Can't handle Predicates with arity: {}.", arity);
+        return;
       }
-    } catch (Exception e) {
-      log.error(String.format("Error parsing config file: %s.", detectorConfigFile), e);
+
+      //add Detector option
+      addDetectorOption(advertisement, detectorType, detectorConfigFile);
     }
   }
 
-  private void parseDetectorFileXml(String detectorConfigFile, DetectorType detectorType) {
+  private void parseDetectorFileXml(String detectorConfigFile, DetectorType detectorType) throws FileNotFoundException {
     Predicate advertisement;
-    String predicateType;
-    int arity;
     String predicateName;
 
-    try {
-      Xml processor = new Xml(detectorConfigFile, "processor");
-      predicateType = processor.string("type");
-      arity = processor.numInt("arity");
+    Xml processor = new Xml(detectorConfigFile, "processor");
+    String predicateType = processor.string("type");
+    int arity = processor.numInt("arity");
 
-      for (Xml predicate : processor.children("predicate")) {
+    for (Xml predicate : processor.children("predicate")) {
 
-        predicateName = predicate.string("name");
-        if (arity == 1) {
-          advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
-        } else if (arity == 2) {
-          advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
-        } else {
-          log.error(String.format("Can't handle Predicates with arity: %d.", arity));
-          continue;
-        }
-
-        //add Detector option
-        addDetectorOption(advertisement, detectorType, detectorConfigFile);
+      predicateName = predicate.string("name");
+      if (arity == 1) {
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType));
+      } else if (arity == 2) {
+        advertisement = new Predicate(predicateName, new Variable("X", PredicateHelper.varType), new Variable("Y", PredicateHelper.varType));
+      } else {
+        log.error(String.format("Can't handle Predicates with arity: %d.", arity));
+        return;
       }
-    } catch (Exception e) {
-      log.error(String.format("Error parsing config file: %s.", detectorConfigFile), e);
+
+      //add Detector option
+      addDetectorOption(advertisement, detectorType, detectorConfigFile);
     }
   }
 
@@ -427,7 +409,7 @@ public class AvailableDetectors {
 
   //helper function to add getInstance caller to client list
   private void addClient(final Object client, final Detector detector) {
-    HashSet<Object> clientList = instantiatedDetectorClients.get(detector);
+    Set<Object> clientList = instantiatedDetectorClients.get(detector);
     if (clientList == null) {
       clientList = new HashSet();
       instantiatedDetectorClients.put(detector, clientList);
@@ -448,7 +430,7 @@ public class AvailableDetectors {
    * instance, so that Detectors can be properly managed and garbage collected.
    */
   public synchronized void release(final Object client, final Detector detector) {
-    HashSet<Object> clientList = instantiatedDetectorClients.get(detector);
+    Set<Object> clientList = instantiatedDetectorClients.get(detector);
     if (clientList == null || !clientList.contains(client)) {
       log.warn(String.format("[release] Calling object (%s) is not a client of the Detector: %s.",
               client.toString(), detector.toString()));

@@ -18,9 +18,6 @@ namespace diarc {
     // IMPORTANT: any additions to this enum list must be accompanied by additions to the stringToCAM_MODE method
     // int CaptureUtilities.hpp/cpp
     enum CAM_MODE {
-      MONO_FW,
-      STEREO_FW,
-      STEREO_SYNC,
       MONO_V4L2,
       STEREO_V4L2,
       MONO_AVI,
@@ -31,9 +28,8 @@ namespace diarc {
       OPENNI2,//kinect or xtion using openni2
       SIM_PC1, //simulate kinect version 1 (rgb and disparity separately)
       SIM_PC2, //simulate kinect version w (pcd files)
-      KINECT_PLUS, //kinect plus another rgb camera (mainly for calibration of robot system with multiple sensors)
-      DRONE, //ar drone
       ROS,
+      ROS2,
       NAO,
       GSTREAMER, // H264-encoded stream via GStreamer
       MULTISENSE,
