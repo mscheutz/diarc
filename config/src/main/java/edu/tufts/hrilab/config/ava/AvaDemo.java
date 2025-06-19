@@ -128,7 +128,7 @@ public class AvaDemo extends DiarcConfiguration {
           llmComponentArgs += " -endpoint https://yz9rcl3hkr2vkvhj.us-east-1.aws.endpoints.huggingface.cloud";
         }
       } else if (service.equals("azure")) {
-        llmComponentArgs += " -endpoint https://tracs-southcentralus-nnvxw.southcentralus.inference.ml.azure.com/score";
+        llmComponentArgs += " -endpoint https://tracs-southcentralus-lezah.southcentralus.inference.ml.azure.com/score";
       }
       createInstance(edu.tufts.hrilab.llm.LLMComponent.class, llmComponentArgs);
     }
