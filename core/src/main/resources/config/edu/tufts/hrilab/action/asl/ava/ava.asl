@@ -409,7 +409,7 @@ import java.util.StringTokenizer;
     if (op:isEmpty(!locationNames)) {
         act:generateResponseFromString("There are no saved locations");
     } else {
-        act:generateResponseFromString("I know the following locations");
+        act:generateResponseFromString("My saved locations are");
         foreach(!locationName : !locationNames) {
             act:generateResponseFromString(!locationName);
         }

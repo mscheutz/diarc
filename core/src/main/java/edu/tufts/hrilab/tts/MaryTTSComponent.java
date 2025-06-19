@@ -262,7 +262,7 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
     if (v.equalsIgnoreCase("male")) {
       vc = "cmu-rms-hsmm";
     } else if (v.equalsIgnoreCase("female")) {
-      vc = "cmu-slt";
+      vc = "cmu-slt-hsmm";
     }
 
     voice = Voice.getVoice(vc);
@@ -423,7 +423,7 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
         playbackClip.start();
 
         while (wait && !isDone.get()) {
-          Util.Sleep(1);
+          Util.Sleep(100);
         }
       }
       log.debug("Exiting textToSpeech");
@@ -692,6 +692,9 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
    * @return true or false
    */
   private boolean isAllUppercase(String s) {
+    if (s.length() <= 1) {
+      return false;
+    }
     boolean allUpper = true;
     for (int i = 0; i < s.length(); i++) {
       if (Character.isLowerCase(s.charAt(i))) {

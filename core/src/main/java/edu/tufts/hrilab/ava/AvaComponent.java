@@ -320,7 +320,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       log.error("Error registering for displayRobot service notification.", e);
     }
 
-    setZLift(0);
+//    setZLift(0);
     getCameraHeightMax();
   }
 
