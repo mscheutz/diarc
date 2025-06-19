@@ -81,7 +81,8 @@ public class ChatAdapter extends GuiAdapter {
       @SuppressWarnings("unchecked")
       Set<Symbol> agents = diarcAgentsService.call(Set.class);
       Set<String> diarcAgents = new HashSet<>();
-      agents.forEach(agent -> diarcAgents.add(agent.getName()));
+      agents.forEach(agent -> {if (!agent.getName().equals("self")) {diarcAgents.add(agent.getName());}});
+      //agents.forEach(agent -> diarcAgents.add(agent.getName()));
       sendDiarcAgents(diarcAgents);
       log.debug("DIARC agents received");
     } catch (TRADEException e) {
