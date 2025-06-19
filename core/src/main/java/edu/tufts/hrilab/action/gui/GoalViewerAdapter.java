@@ -9,6 +9,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import edu.tufts.hrilab.action.goal.GoalInfo;
+import edu.tufts.hrilab.action.goal.PriorityTier;
+import edu.tufts.hrilab.action.goal.schedule.ScheduleInfo;
 import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.gui.GuiAdapter;
 
@@ -114,16 +116,40 @@ public class GoalViewerAdapter extends GuiAdapter {
    */
   private JsonArray toJson(List<GoalInfo> goals) {
     JsonArray result = new JsonArray();
-    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("hh:mm:ss");
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
     for (GoalInfo info : goals) {
+      //AVA Specific Change - temp
+      if (info.priorityTier == PriorityTier.SKIPPENDING && info.schedulingInfo == null) {
+        continue;
+      }
       JsonObject goalJson = new JsonObject();
       goalJson.addProperty("name", info.unboundGoal.toString());
       goalJson.addProperty("actor", info.actor.getName());
       goalJson.addProperty("status", info.status.toString().toLowerCase());
-      goalJson.addProperty("start", simpleDateFormat.format(new Date(info.start)));
+      goalJson.addProperty("start", info.start == -1 ? "" : simpleDateFormat.format(new Date(info.start)));
       goalJson.addProperty("end", (info.end == -1) ? "" : simpleDateFormat.format(new Date(info.end)));
       goalJson.addProperty("priority", info.priority);
       goalJson.addProperty("id", info.gid);
+      if (info.schedulingInfo != null) {
+        goalJson.addProperty("scheduled", true);
+        ScheduleInfo scheduleInfo = info.schedulingInfo;
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+        goalJson.addProperty("start", timeFormat.format(scheduleInfo.startTime));
+        goalJson.addProperty("end", scheduleInfo.endTime == null ? "Forever" : timeFormat.format(scheduleInfo.endTime));
+        String intervalString = "N/A";
+        if (scheduleInfo.period != -1) {
+          if (scheduleInfo.period <= 60000) {
+            intervalString = scheduleInfo.period / 1000 + " seconds";
+          } else if (scheduleInfo.period <= 3600000) {
+            intervalString = scheduleInfo.period / 60000 + " minutes";
+          } else {
+            intervalString = scheduleInfo.period / 3600000 + " hours";
+          }
+        }
+        goalJson.addProperty("interval", intervalString);
+      } else {
+        goalJson.addProperty("scheduled", false);
+      }
       if(info.failConditions != null) {
         goalJson.addProperty("failureReason", info.failConditions.getFailureReason().toString());
       }

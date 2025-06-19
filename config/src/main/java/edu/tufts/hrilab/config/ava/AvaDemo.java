@@ -194,6 +194,8 @@ public class AvaDemo extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.action.manager.KioskGoalManager.class, kioskArgs);
 
+    createInstance(edu.tufts.hrilab.ava.gui.AvaGuiProvider.class);
+
     log.info("Finished Ava Demo Config");
   }
 

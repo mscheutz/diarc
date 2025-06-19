@@ -924,7 +924,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   public List<GoalInfo> getAllGoals() {
     List<GoalInfo> goals = new ArrayList<>();
-    em.getActiveGoals().forEach(g -> goals.add(g.getInfo()));
     em.getCurrentGoals().forEach(g -> goals.add(g.getInfo()));
     em.getPastGoals().forEach(g -> goals.add(g.getInfo()));
     return goals;
