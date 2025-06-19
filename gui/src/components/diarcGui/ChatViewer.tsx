@@ -206,7 +206,7 @@ const ChatViewer: React.FC<Props> = ({
         </ConversationList>
     );
 
-    const [username, setUsername] = useState<string>("user");
+    const [username, setUsername] = useState<string>("user1");
 
     useEffect(() => {
         if (!lastMessage) return;
