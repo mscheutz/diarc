@@ -14,7 +14,7 @@ function App() {
     if (location.includes("#"))
         location = location.slice(0, location.indexOf("#"))
     const url: URL = new URL(location);
-    url.port = "8080";
+    url.port = "8000";
     url.protocol = "ws";
     const wsBaseUrl = url.toString();
 

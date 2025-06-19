@@ -161,7 +161,7 @@ const ServicesForm: React.FC<ServicesFormProps> = ({ serviceEntries }) => {
          * - this is required because the backend does not have parentheses in the POST request
         */
        const url =
-            "http://localhost:8080/invoke-service?serviceName=" +
+            "http://localhost:8000/invoke-service?serviceName=" +
             service.replace(/\([^()]*\)/g, "");
 
         const fetchOptions: RequestInit = {

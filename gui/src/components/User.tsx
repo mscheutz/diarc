@@ -7,7 +7,7 @@ const User = () => {
 
   // Initialize WebSocket connection
   const connect = () => {
-    const websocket = new WebSocket('ws://localhost:8080/user');
+    const websocket = new WebSocket('ws://localhost:8000/user');
     websocket.onmessage = (event) => {
       setMessages((prevMessages) => [...prevMessages, event.data]);
     };
