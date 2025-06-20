@@ -116,7 +116,7 @@ public class AvaDemo extends DiarcConfiguration {
       String llmComponentArgs = String.format("-service %s -model %s -temperature 0.6", service, model);
       if (service.equals("llamahf")) {
         if (usePrivateEndpoint) {
-          llmComponentArgs += " -endpoint https://yz9rcl3hkr2vkvhj.us-east-1.aws.endpoints.huggingface.cloud";
+          llmComponentArgs += " -endpoint https://wwil02mugudnd3ky.us-east-1.aws.endpoints.huggingface.cloud";
         }
       } else if (service.equals("azure")) {
         llmComponentArgs += " -endpoint https://tracs-southcentralus-lezah.southcentralus.inference.ml.azure.com/score";
