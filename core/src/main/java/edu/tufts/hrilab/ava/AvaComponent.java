@@ -1201,7 +1201,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
   }
 
-  private void playAudioClip(String resourcePath) {
+  @TRADEService
+  public void playAudioClip(String resourcePath) {
     try {
       URL audioFile = getClass().getClassLoader().getResource(resourcePath);
       AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
@@ -1288,7 +1289,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             }
             new Thread(() -> {
               try {
-                Thread.sleep(2000);
+                Thread.sleep(5000);
               } catch (InterruptedException e) {
                 log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
               }

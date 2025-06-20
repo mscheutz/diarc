@@ -345,6 +345,35 @@ public class GoalViewerAdapter extends GuiAdapter {
     return true;
   }
 
+  private void signalAvaExternalCommandReceived() {
+    try {
+      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
+      service.call(void.class,"Received External Command...");
+    } catch (TRADEException e) {
+      log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+    }
+    new Thread(() -> {
+      try {
+        Thread.sleep(5000);
+      } catch (InterruptedException e) {
+        log.error("[handleMessage] exception sleeping in clearDisplay thread");
+      }
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+        service.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[handleMessage] Exception displaying text", e);
+      }
+    }).start();
+
+    try {
+      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class));
+      service.call(void.class,"config/edu/tufts/hrilab/ava/ding.wav");
+    } catch (TRADEException e) {
+      log.warn("[handleMessage] exception playing audio clip on Ava", e);
+    }
+  }
+
   /**
    * {@inheritDoc}
    *
@@ -353,13 +382,20 @@ public class GoalViewerAdapter extends GuiAdapter {
   @Override
   protected void handleMessage(JsonObject message) {
     switch (message.get("method").getAsString()) {
-      case "cancel" -> applyChangeToGoals(message.getAsJsonArray("ids"),
-              cancelGoal);
-      case "suspend" -> applyChangeToGoals(message.getAsJsonArray("ids"),
-              suspendGoal);
-      case "resume" -> applyChangeToGoals(message.getAsJsonArray("ids"),
-              resumeGoal);
-      case "startup" -> onConnect();
+      case "cancel":
+        applyChangeToGoals(message.getAsJsonArray("ids"), cancelGoal);
+        signalAvaExternalCommandReceived();
+        break;
+      case "suspend":
+        applyChangeToGoals(message.getAsJsonArray("ids"), suspendGoal);
+        signalAvaExternalCommandReceived();
+        break;
+      case "resume":
+        applyChangeToGoals(message.getAsJsonArray("ids"),resumeGoal);
+        signalAvaExternalCommandReceived();
+        break;
+      case "startup":
+        onConnect();
     }
   }
 

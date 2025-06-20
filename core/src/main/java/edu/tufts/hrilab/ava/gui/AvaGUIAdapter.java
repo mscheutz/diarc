@@ -33,8 +33,38 @@ public class AvaGUIAdapter extends GuiAdapter {
     return false;
   }
 
+  private void signalAvaExternalCommandReceived() {
+    try {
+      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
+      service.call(void.class,"Received External Command...");
+    } catch (TRADEException e) {
+      log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+    }
+    new Thread(() -> {
+      try {
+        Thread.sleep(5000);
+      } catch (InterruptedException e) {
+        log.error("[handleMessage] exception sleeping in clearDisplay thread");
+      }
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+        service.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[handleMessage] Exception displaying text", e);
+      }
+    }).start();
+
+    try {
+      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class));
+      service.call(void.class,"config/edu/tufts/hrilab/ava/ding.wav");
+    } catch (TRADEException e) {
+      log.warn("[handleMessage] exception playing audio clip on Ava", e);
+    }
+  }
+
   @Override
   protected void handleMessage(JsonObject message) {
+    signalAvaExternalCommandReceived();
     String input = message.get("input").getAsString();
     String speaker = message.get("speaker").getAsString();
     String addressee = message.get("addressee").getAsString();
