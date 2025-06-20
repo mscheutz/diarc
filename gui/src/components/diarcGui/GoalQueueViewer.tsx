@@ -8,7 +8,7 @@ import Select from "react-select"
 // Internal imports
 import ConnectionIndicator from "./util/ConnectionIndicator";
 import { Button } from "../Button";
-import { columns, scheduledColumns, Option, sortCriteria, statuses } from "./util/constants";
+import { columns, scheduledColumns, pastColumns, Option, sortCriteria, statuses } from "./util/constants";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircleInfo} from "@fortawesome/free-solid-svg-icons";
 
@@ -23,21 +23,24 @@ const ChangeStatus: React.FC<ChangeStatusProps> = ({
     handleSuspend, handleResume, handleCancel
 }) => {
     return (
-        <div className="flex flex-col gap-2 shadow-md border border-1
+        <div className="flex flex-row gap-2 shadow-md border border-1
                         border-[#d1dbe3] rounded-md p-3">
-            <label className="text-lg">Change status</label>
-            <div className="flex flex-col justify-center gap-2">
+            <label className="self-center text-lg">Change status:</label>
+            <div className="grow flex flex-row gap-2 overflow-scroll">
                 <Button
+                    className="grow"
                     title="Suspend the selected goals"
                     onClick={handleSuspend}>
                     Suspend
                 </Button>
                 <Button
+                    className="grow"
                     title="Resume the selected goals"
                     onClick={handleResume}>
                     Resume
                 </Button>
                 <Button
+                    className="grow"
                     title="Cancel the selected goals"
                     onClick={handleCancel}>
                     Cancel
@@ -143,19 +146,25 @@ type Entry = {
 const toArray = (e: Entry) => {
     return [
         e.name,
-        e.actor,
         e.status,
         e.start,
-        e.end,
         //e.priority,
         //e.id
+    ];
+};
+
+const toPastArray = (e: Entry) => {
+    return [
+        e.name,
+        e.status,
+        e.start,
+        e.end
     ];
 };
 
 const toScheduledArray = (e: Entry) => {
     return [
         e.name,
-        e.actor,
         e.start,
         e.interval,
         e.end
@@ -172,7 +181,11 @@ type GoalTableProps = {
 const GoalTable: React.FC<GoalTableProps> = (
     { data, handleSelect, filteredActor, selectedStatuses }
 ) => {
+    let activeGoals = [], pastGoals = []
+    data.forEach((g) => (g.status === "active" || g.status === "suspended" || g.status === "pending" ? activeGoals : pastGoals).push(g));
     return (
+        <div className="grow flex flex-col min-h-0 basis-0">
+        <p className="text-lg pt-5">Current Goals</p>
         <table className="border border-[#d1dbe3]">
             <caption className="hidden">Goal table</caption>
             <thead>
@@ -190,7 +203,7 @@ const GoalTable: React.FC<GoalTableProps> = (
             </thead>
 
             <tbody>
-                {data.map((row, index) =>
+                {activeGoals.map((row, index) =>
                 (selectedStatuses.find((element) =>
                     element === row.status) !== undefined
                     && row.actor.includes(filteredActor)
@@ -222,6 +235,46 @@ const GoalTable: React.FC<GoalTableProps> = (
                 )}
             </tbody>
         </table>
+
+        <p className="text-lg pt-5">Past Goals</p>
+        <table className="border border-[#d1dbe3]">
+            <caption className="hidden">Past Goal table</caption>
+            <thead>
+                <tr className="bg-sky-100">
+                    {pastColumns.map((col, index) =>
+                        <th className="border border-[#d1dbe3] p-1"
+                            key={index}>
+                            {col}
+                        </th>
+                    )}
+                </tr>
+            </thead>
+
+            <tbody>
+                {pastGoals.map((row, index) =>
+                (selectedStatuses.find((element) =>
+                    element === row.status) !== undefined
+                    && row.actor.includes(filteredActor)
+                    && <tr
+                        className="even:bg-slate-100"
+                        key={index}>
+                        {toPastArray(row).map((prop, index) =>
+                            <td className="border border-[#d1dbe3] px-1"
+                                key={index}>
+                                <label
+                                    htmlFor={row.id + ""}
+                                    className="cursor-pointer"
+                                    title={prop === "failed" ? "Reason: " + row.failureReason : ""}>
+                                    {prop + ""}&nbsp;
+                                    {prop === "failed" ? <FontAwesomeIcon icon={faCircleInfo}/> : null}
+                                </label>
+                            </td>
+                        )}
+                    </tr>)
+                )}
+            </tbody>
+        </table>
+        </div>
     );
 };
 
@@ -327,6 +380,10 @@ const GoalViewer: React.FC<Props> = ({
             "method": "cancel",
             "ids": selectedIds
         }))
+        selectedIds.forEach(id => {
+            document.getElementById(id).checked = false;
+        })
+        setSelectedIds([])
     };
 
     const handleRadioSelect = (e) => {
@@ -361,7 +418,7 @@ const GoalViewer: React.FC<Props> = ({
 
                 if (entry0["status"] === "pending") {
                     if (entry1["status"] === "pending") {
-                        if (entry0["gid"] > entry1["gid"]) {
+                        if (entry0["id"] < entry1["id"]) {
                             return 1;
                         }
                     }
@@ -370,7 +427,7 @@ const GoalViewer: React.FC<Props> = ({
 
                 if (entry0["status"] === "succeeded" || entry0["status"] === "failed" || entry0["status"] === "canceled") {
                     if (entry1["status"] === "succeeded" || entry1["status"] === "failed" || entry1["status"] === "canceled") {
-                        if (entry0["start"] < entry1["start"]) {
+                        if (entry0["end"] > entry1["end"]) {
                             return -1;
                         }
                     }
@@ -410,8 +467,9 @@ const GoalViewer: React.FC<Props> = ({
         if (lastMessage === null) return;
         const newData = JSON.parse(lastMessage.data);
         if (!newData.path || newData.path !== path) return;
-        console.log(newData)
 
+        console.log(lastMessage.data)
+        console.log(newData)
         const newScheduledGoals = newData.goals.filter(e => e.scheduled)
         const newGoals = newData.goals.filter(e => !e.scheduled)
 
@@ -450,19 +508,18 @@ const GoalViewer: React.FC<Props> = ({
 
                 <div className="flex flex-row gap-5 grow min-h-0 basis-0">
                     {/* Filter menu */}
+                    {/*
                     <div className="flex flex-col gap-5 overflow-y-auto grow
                                     w-1/4">
                         <ChangeStatus handleSuspend={handleSuspend}
                             handleCancel={handleCancel} handleResume={handleResume} />
 
-                        {/*
                         <SortGoals
                             sortCriterion={sortCriterion}
                             setSortCriterion={setSortCriterion}
                             sortAscending={sortAscending}
                             handleRadioSelect={handleRadioSelect}
                         />
-                        */}
 
                         <FilterGoals
                             filteredActor={filteredActor}
@@ -471,6 +528,7 @@ const GoalViewer: React.FC<Props> = ({
                             onSelectStatus={handleStatusSelect}
                         />
                     </div>
+                    */}
 
                     {/* Table */}
                     <div className="shadow-md border border-1 border-[#d1dbe3]
@@ -478,14 +536,13 @@ const GoalViewer: React.FC<Props> = ({
                                     rounded-md grow overflow-auto w-3/4">
                         <div className="grow flex flex-col min-h-0
                                         basis-0">
-                        <p className="text-lg">Scheduled Goals</p>
+                            <p className="text-lg">Scheduled Goals</p>
                             <ScheduledGoalTable
                                 scheduledData={scheduledData}
                                 handleSelect={handleGoalSelect}
                                 filteredActor={filteredActor}
                             />
 
-                        <p className="text-lg pt-10">Goals</p>
                             <GoalTable
                                 data={data}
                                 handleSelect={handleGoalSelect}
@@ -493,11 +550,15 @@ const GoalViewer: React.FC<Props> = ({
                                 selectedStatuses={selectedStatuses}
                             />
                         </div>
+
                     </div>
                 </div>
             </div>
 
-            <ConnectionIndicator readyState={readyState} />
+            <ChangeStatus handleSuspend={handleSuspend}
+                handleCancel={handleCancel} handleResume={handleResume} />
+
+            {/*}<ConnectionIndicator readyState={readyState} />*/}
         </div>
     )
 }

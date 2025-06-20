@@ -374,7 +374,14 @@ import java.util.StringTokenizer;
 }
 
 () = say(String ?literal) {
+    Symbol !listener = person; // TODO: how to set this in general?
+    edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !listener);
+    edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+    op:invokeMethod(!utterance, "setType", !type);
+    op:invokeMethod(!utterance, "setWords", ?literal);
+
     act:toggleVoiceOn();
+    act:updateDialogueHistory(!utterance);
     act:sayText(?literal);
     act:toggleVoiceOff();
 }

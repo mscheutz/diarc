@@ -11,17 +11,17 @@ import AvaBehaviorTab from "../AvaBehaviorTab"
 
 const handlerRoots: string[] =
     //["actionProgrammer", "belief", "chat", "goalViewer", "goalManager", "map", "vision", "tradeService"];
-    ["actionProgrammer", "chat", "goalViewer", "goalQueueViewer", "map", "vision", "tradeService", "avaBehaviors"];
+    ["actionProgrammer", "chat", "goalViewer", "goalQueueViewer", "vision", "tradeService", "avaBehaviors"];
 
 const handlers = {
     "actionProgrammer": {
         tabName: "Action Programmer",
         component: ActionProgrammer
     },
-//     "belief": {
-//         tabName: "Belief Viewer",
-//         component: BeliefViewer
-//     },
+    "belief": {
+        tabName: "Belief Viewer",
+        component: BeliefViewer
+    },
     "chat": {
         tabName: "Chat Viewer",
         component: ChatViewer
@@ -31,10 +31,10 @@ const handlers = {
 //         component: GoalViewer
         component: GoalQueueViewer
     },
-//     "goalManager": {
-//         tabName: "Goal Submission",
-//         component: GoalSubmission
-//     },
+    "goalManager": {
+        tabName: "Goal Submission",
+        component: GoalSubmission
+    },
     "map": {
         tabName: "Map Viewer",
         component: MapViewer
@@ -57,17 +57,21 @@ export { handlerRoots, handlers };
 
 const columns = [
     "Goal",
-    "Actor",
     "Status",
     "Start time",
-    "End time",
 //     "Priority",
 //     "ID",
 ];
 
+const pastColumns = [
+    "Goal",
+    "Status",
+    "Start time",
+    "End time",
+];
+
 const scheduledColumns = [
     "Goal",
-    "Actor",
     "Scheduled Time",
     "Repeat Interval",
     "Repeat Until"
@@ -98,7 +102,7 @@ const statuses: string[] = [
     "failed"
 ]
 
-export {columns, scheduledColumns, sortCriteria, statuses};
+export {columns, pastColumns, scheduledColumns, sortCriteria, statuses};
 export type { Option };
 
 const LOCAL_STORAGE_KEY: string = "goalSubmissionPresets";

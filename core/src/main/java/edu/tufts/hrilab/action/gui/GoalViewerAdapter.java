@@ -12,6 +12,9 @@ import edu.tufts.hrilab.action.goal.GoalInfo;
 import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.action.goal.schedule.ScheduleInfo;
 import edu.tufts.hrilab.action.notification.NotificationType;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.gui.GuiAdapter;
 
 import java.text.SimpleDateFormat;
@@ -85,12 +88,136 @@ public class GoalViewerAdapter extends GuiAdapter {
 
   @TRADEService
   public void handleGoalNotification(GoalInfo info) throws TRADEException {
+    if (info.isLearningGoal) {
+      //TODO: probably care about executeWhileLearning
+      return;
+    }
     JsonObject json = new JsonObject();
     List<GoalInfo> updatedGoals = new ArrayList<>();
     updatedGoals.add(info);
     json.add("goals", toJson(updatedGoals));
     json.addProperty("path", getPath());
     sendMessage(json);
+  }
+
+  private String convertGoalToReadableString(GoalInfo info) {
+    Predicate goalPred = info.goal == null ? (Predicate) info.unboundGoal : info.goal;
+    String predString = goalPred.toString();
+    String[] splitRes = predString.split("[(),](?=[^\"][^\"(),]*[^\"][(),]|\".*\"(?![^,()]))");
+    try {
+      //Trim end parens from last arg - sloppy, do this better
+      int resLen = splitRes.length;
+      while (splitRes[resLen-1].endsWith(")")) {
+        splitRes[resLen-1] = splitRes[resLen-1].substring(0,splitRes[resLen-1].length()-1);
+      }
+
+      String funcName = splitRes[0];
+      switch (funcName) {
+        case "followMe":
+        case "followMeBlocking":
+        case "follow":
+          return "Follow";
+        case "goToLocation":
+          return String.format("Go to location '%s'", getLocationNameFromReference(Factory.createSymbol(splitRes[2])));
+        case "saveLocation":
+          return String.format("Save location '%s'", splitRes[2]);
+        case "deleteLocation":
+          return String.format("Delete location '%s'", getLocationNameFromReference(Factory.createSymbol(splitRes[2])));
+        case "display":
+          return String.format("Display message '%s'", splitRes[2]);
+        case "sayText":
+          return String.format("Say message '%s'", splitRes[2]);
+        case "playVideo":
+          return String.format("Play video '%s'", splitRes[2]);
+        case "escort":
+          if (splitRes.length == 6) {
+            return String.format("Escort %s from %s to %s", splitRes[3], getLocationNameFromReference(Factory.createSymbol(splitRes[4])), getLocationNameFromReference(Factory.createSymbol(splitRes[2])));
+          } else {
+            return String.format("Escort %s from current location to %s", splitRes[3], getLocationNameFromReference(Factory.createSymbol(splitRes[2])));
+          }
+        case "escortToLocation":
+          return String.format("Escort %s to %s", splitRes[2], getLocationNameFromReference(Factory.createSymbol(splitRes[3])));
+        case "escortFromToLocation":
+          return String.format("Escort %s from %s to %s", splitRes[2], getLocationNameFromReference(Factory.createSymbol(splitRes[3])), getLocationNameFromReference(Factory.createSymbol(splitRes[4])));
+        case "fetch":
+          if (splitRes.length == 5) {
+            return String.format("Fetch %s from %s", splitRes[2], getLocationNameFromReference(Factory.createSymbol(splitRes[3])));
+          } else {
+            return String.format("Fetch %s", splitRes[2]);
+          }
+        case "greet":
+          return "Greet in " + splitRes[2];
+        case "tour":
+          return "Tour";
+        case "clearScreen":
+          return "Clear screen";
+        case "displayFace":
+          return "Display face";
+        case "chargeTemi":
+          return "Charging";
+        case "goToThenSay":
+          return String.format("Go to %s then say message", getLocationNameFromReference(Factory.createSymbol(splitRes[2])));
+        case "goToThenDisplay":
+          return String.format("Go to %s then display message", getLocationNameFromReference(Factory.createSymbol(splitRes[2])));
+        case "goToThenPlay":
+          return String.format("Go to %s then play video %s", getLocationNameFromReference(Factory.createSymbol(splitRes[2])), splitRes[3]);
+        case "setVolume":
+          return String.format("Set volume to %s", splitRes[2]);
+        case "displayQRCode":
+          return "Display Website QR";
+        case "relocalize":
+          return "Reposition";
+        case "checkInKiosk":
+          return String.format("Check in patients at location %s", getLocationNameFromReference(Factory.createSymbol(splitRes[2])));
+        case "say":
+          return String.format("Say " + splitRes[2]);
+        case "startDemo":
+          return "Start Demo";
+        case "stopDemo":
+          return "Stop Demo";
+        case "reportBatteryLevel":
+          return "Report batter level";
+        case "sit":
+          return "Sit";
+        case "stand":
+          return "Stand";
+        case "goHome":
+          return "Go to charging dock";
+        case "learnNewTask":
+          return "Learn a new action";
+        case "goHomeAndCharge":
+          return "Return to dock and charge";
+        case "scheduleGoal":
+          return "Schedule a new task";
+        case "modifyScheduledGoal":
+          return "Modify a scheduled task";
+        case "definePatrolPath":
+          return "Learn a new patrol path";
+        case "patrol":
+          return String.format("Patrol along %s while performing %s", splitRes[2], splitRes[3]);
+        case "showVideo":
+          return String.format("Show a video at location %s",getLocationNameFromReference(Factory.createSymbol(splitRes[2])));
+        default:
+          return predString;
+      }
+    } catch (Exception e) {
+
+    }
+    return predString;
+  }
+
+  private String getLocationNameFromReference(Symbol ref) {
+    String name = null;
+    try {
+      name = (String) TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReferenceName").argTypes(Symbol.class)).call(String.class, ref);
+    } catch (TRADEException e) {
+      log.error("[getLocationNameFromReference] error getting location name from MapComponent for ref {}", ref, e);
+    }
+    if (name == null) {
+      return ref.getName();
+    } else {
+      return name;
+    }
   }
 
   /**
@@ -123,7 +250,7 @@ public class GoalViewerAdapter extends GuiAdapter {
         continue;
       }
       JsonObject goalJson = new JsonObject();
-      goalJson.addProperty("name", info.unboundGoal.toString());
+      goalJson.addProperty("name", convertGoalToReadableString(info));
       goalJson.addProperty("actor", info.actor.getName());
       goalJson.addProperty("status", info.status.toString().toLowerCase());
       goalJson.addProperty("start", info.start == -1 ? "" : simpleDateFormat.format(new Date(info.start)));

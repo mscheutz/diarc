@@ -63,6 +63,10 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "describeCurrentLocation":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "describeAllKnownPatrolPaths":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -78,5 +82,9 @@
   "patrol":  {
     "priority": 1,
     "priorityTier": "LOW"
+  },
+  "interruptWaitForReadyAck": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

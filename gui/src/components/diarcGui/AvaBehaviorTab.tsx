@@ -102,14 +102,46 @@ const MyNewComponent: React.FC<Props> = ({
                 <div className="flex flex-row rounded-md shadow-md border border-1
                                 p-2 border-[#d1dbe3] gap-5 items-center
                                 justify-evenly">
-                    <label className="w-1/2 text-center">
-                        Follow Me
+                    <label className="text-center w-1/2">
+                        Pause Current Task
                     </label>
                     <Button
                         type="button"
                         className="w-1/2"
                         title="Submit Action"
-                        onClick={() => handleSubmit("follow me")}
+                        onClick={() => handleSubmit("pause")}
+                    >
+                        Submit
+                    </Button>
+                </div>
+
+                <div className="flex flex-row rounded-md shadow-md border border-1
+                                p-2 border-[#d1dbe3] gap-5 items-center
+                                justify-evenly">
+                    <label className="w-1/2 text-center">
+                        Resume Current Task
+                    </label>
+                    <Button
+                        type="button"
+                        className="w-1/2"
+                        title="Submit Action"
+                        onClick={() => handleSubmit("resume")}
+                    >
+                        Submit
+                    </Button>
+                </div>
+
+                <div className="flex flex-row rounded-md shadow-md border border-1
+                                p-2 border-[#d1dbe3] gap-5 items-center
+                                justify-evenly">
+                    <label className="w-1/2 text-center">
+                        Cancel Current Task
+                    </label>
+                    <Button
+                        type="button"
+                        className="w-1/2"
+                        title="Submit Action"
+                        onClick={() => handleSubmit("stop")}
                     >
                         Submit
                     </Button>
@@ -166,14 +198,14 @@ const MyNewComponent: React.FC<Props> = ({
                 <div className="flex flex-row rounded-md shadow-md border border-1
                                 p-2 border-[#d1dbe3] gap-5 items-center
                                 justify-evenly">
-                    <label className="text-center w-1/2">
-                        Pause Current Task
+                    <label className="w-1/2 text-center">
+                        Begin Scheduling a Task
                     </label>
                     <Button
                         type="button"
                         className="w-1/2"
                         title="Submit Action"
-                        onClick={() => handleSubmit("pause")}
+                        onClick={() => handleSubmit("add a new scheduled task")}
                     >
                         Submit
                     </Button>
@@ -183,13 +215,13 @@ const MyNewComponent: React.FC<Props> = ({
                                 p-2 border-[#d1dbe3] gap-5 items-center
                                 justify-evenly">
                     <label className="w-1/2 text-center">
-                        Resume Current Task
+                        Begin Modifying a Scheduled Task
                     </label>
                     <Button
                         type="button"
                         className="w-1/2"
                         title="Submit Action"
-                        onClick={() => handleSubmit("resume")}
+                        onClick={() => handleSubmit("modify a scheduled task")}
                     >
                         Submit
                     </Button>
@@ -199,13 +231,13 @@ const MyNewComponent: React.FC<Props> = ({
                                 p-2 border-[#d1dbe3] gap-5 items-center
                                 justify-evenly">
                     <label className="w-1/2 text-center">
-                        Cancel Current Task
+                        Begin Teaching a New Action
                     </label>
                     <Button
                         type="button"
                         className="w-1/2"
                         title="Submit Action"
-                        onClick={() => handleSubmit("stop")}
+                        onClick={() => handleSubmit("i will teach you a new task")}
                     >
                         Submit
                     </Button>

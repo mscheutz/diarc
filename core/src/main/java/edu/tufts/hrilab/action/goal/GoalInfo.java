@@ -77,6 +77,12 @@ public class GoalInfo implements Serializable {
    */
   public ScheduleInfo schedulingInfo = null;
 
+  //TODO: Do we also care about knowing whether 'executeWhileLearning' was toggled on during this goal?
+  /**
+   * Whether this goal was instructed as a step during teaching of a task
+   */
+  public boolean isLearningGoal = false;
+
 
   public GoalInfo(long gid) {
     this.gid = gid;
@@ -97,5 +103,6 @@ public class GoalInfo implements Serializable {
     this.priority = other.priority;
     this.priorityTier = other.priorityTier;
     this.schedulingInfo = other.schedulingInfo;
+    this.isLearningGoal = other.isLearningGoal;
   }
 }
