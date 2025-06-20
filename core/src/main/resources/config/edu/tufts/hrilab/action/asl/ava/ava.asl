@@ -22,24 +22,28 @@ import java.util.StringTokenizer;
 
     op:log(debug, "[escortToLocation] escorting to location named !locName");
 
-    op:sleep(60000);
-    act:say("Hello ?escortee. Please come with me, I will show you to !locName");
+    async {
+        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
+    }
+    act:waitForReadyAck();
 
     act:goToLocation(?dstLoc);
-    op:sleep(90000);
     act:say("Arrived at !locName");
+    act:goHome();
 }
 
 () = escortFromToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
     String !locName = tsc:getMapReferenceName(?dstLoc);
 
     act:goToLocation(?escorteeLoc);
-    op:sleep(90000);
-    act:say("Hello ?escortee. Please come with me, I will show you to !locName");
+    async {
+        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
+    }
+    act:waitForReadyAck();
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
-    op:sleep(90000);
+    op:sleep(45000);
     act:goToLocation(?escorteeLoc);
 }
 
@@ -396,9 +400,16 @@ import java.util.StringTokenizer;
 }
 
 () = say(String ?literal) {
-//    act:toggleVoiceOn();
+    Symbol !listener = person; // TODO: how to set this in general?
+    edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !listener);
+    edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+    op:invokeMethod(!utterance, "setType", !type);
+    op:invokeMethod(!utterance, "setWords", ?literal);
+
+    act:toggleVoiceOn();
+    act:updateDialogueHistory(!utterance);
     act:sayText(?literal);
-//    act:toggleVoiceOff();
+    act:toggleVoiceOff();
 }
 
 () = describeAllKnownLocations() {
@@ -409,7 +420,7 @@ import java.util.StringTokenizer;
     if (op:isEmpty(!locationNames)) {
         act:generateResponseFromString("There are no saved locations");
     } else {
-        act:generateResponseFromString("My saved locations are");
+        act:generateResponseFromString("I know the following locations");
         foreach(!locationName : !locationNames) {
             act:generateResponseFromString(!locationName);
         }

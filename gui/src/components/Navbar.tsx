@@ -12,12 +12,12 @@ const Navbar = () => {
             <div className="w-auto flex align-center">
                 <Button variant="link" className="text-white dark:text-black">
                     {" "}
-                    Tufts University HRI-LAB
+                    Thinking Robots | Ava Robotics
                 </Button>
             </div>
-            <div className="w-auto h-auto">
+            {/*<div className="w-auto h-auto">
                 <ThemeToggle />
-            </div>
+            </div>*/}
         </div>
     );
 };

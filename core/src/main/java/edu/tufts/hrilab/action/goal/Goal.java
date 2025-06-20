@@ -88,7 +88,6 @@ public class Goal {
   private static final IdGenerator idGenerator = new IdGenerator();
   private Set<Resource> requiredResources = null;
   private Set<Resource> heldResources = null;
-  private boolean isLearningGoal = false;
 
   /**
    * The ActionInterpreter currently executing this Goal. Can be null if this Goal isn't currently being executed.
@@ -483,14 +482,14 @@ public class Goal {
    * ExecutionManager about whether the goal conflicts with active learning.
    */
   public void setIsLearningGoal(boolean isLearningGoal) {
-    this.isLearningGoal = isLearningGoal;
+    info.isLearningGoal = isLearningGoal;
   }
 
   /**
    * Returns true if this goal was submitted as part of an action learning process
    */
   public boolean isLearningGoal() {
-    return isLearningGoal;
+    return info.isLearningGoal;
   }
 
   /**

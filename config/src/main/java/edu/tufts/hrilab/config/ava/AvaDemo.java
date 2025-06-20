@@ -17,8 +17,8 @@ public class AvaDemo extends DiarcConfiguration {
   String avaArgs = "";
   boolean useLLMParser = true;
   boolean useLLMNLG = true;
-  String service = "llamahf";
-  String model = "Llama-3.3-70B-Instruct";
+  String service = "azure";
+  String model = "Llama-3.1-8B-Instruct"; //70B
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "";
@@ -125,7 +125,7 @@ public class AvaDemo extends DiarcConfiguration {
       String llmComponentArgs = String.format("-service %s -model %s -temperature 0.6", service, model);
       if (service.equals("llamahf")) {
         if (usePrivateEndpoint) {
-          llmComponentArgs += " -endpoint https://yz9rcl3hkr2vkvhj.us-east-1.aws.endpoints.huggingface.cloud";
+          llmComponentArgs += " -endpoint https://wwil02mugudnd3ky.us-east-1.aws.endpoints.huggingface.cloud";
         }
       } else if (service.equals("azure")) {
         llmComponentArgs += " -endpoint https://tracs-southcentralus-lezah.southcentralus.inference.ml.azure.com/score";
@@ -175,7 +175,8 @@ public class AvaDemo extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
 //            "-goal listen(self) monitorBattery(ava) disableMic(ava) -beliefinitfile demos.pl agents/ava.pl"
-            "-goal listen(self) monitorBattery(ava) " + //listenForWWandASR(ava) " +
+            "-historylength 3600000 "
+        +   "-goal listen(self) monitorBattery(ava) " + //listenForWWandASR(ava) " +
                     "-beliefinitfile demos.pl agents/ava.pl"
         + " -dbfile " +
               "core.asl " +

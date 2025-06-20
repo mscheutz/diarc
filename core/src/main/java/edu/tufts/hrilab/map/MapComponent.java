@@ -484,7 +484,7 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
         return ref.properties.get(0).getName();
       }
     }
-    return "location";
+    return refId.getName();
   }
 
   @TRADEService

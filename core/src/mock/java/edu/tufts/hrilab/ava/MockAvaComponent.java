@@ -49,6 +49,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private final Condition chargingTerminatedCondition = chargingLock.newCondition();
   private OutputStream ww_process_os = null;
   private boolean shouldDing = true;
+  private OutputStream ready_process_os = null;
+  private boolean shouldDingReady = true;
 
   @Override
   public void init() {
@@ -420,7 +422,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
         result = result.trim().toLowerCase();
         result = result.replaceAll("\\p{Punct}", "");
         Utterance utterance = new Utterance.Builder()
-                .setSpeaker(Factory.createSymbol("evan"))
+                .setSpeaker(Factory.createSymbol("user"))
                 .setAddressee(Factory.createSymbol("ava"))
                 .setWords(Arrays.asList(result.trim().split(" ")))
                 .setUtteranceType(UtteranceType.UNKNOWN)
@@ -446,6 +448,62 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   @Override
   public Symbol getDockRefId() {
     return Factory.createSymbol("location_0:location");
+  }
+  @Override
+  public void waitForReadyAck() {
+    String home = System.getProperty("user.home");
+    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", "-u", home+"/.diarc/python/ww/run_ready_ww.py");
+    processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
+    try {
+      Process process = processBuilder.start();
+      InputStream is = process.getInputStream();
+      ready_process_os = process.getOutputStream();
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
+        service.call(void.class, "Please say \"ready\" when you are ready to go");
+      } catch (TRADEException e) {
+        log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+      }
+      //Wait for WW detection
+      while (is.available() == 0) {
+        Thread.sleep(100);
+      }
+      //Clear stream buffer of message indicating WW detection
+      StringBuilder s = new StringBuilder();
+      while (is.available() != 0) {
+        s.append((char) is.read());
+      }
+      if (shouldDingReady) {
+        playAudioClip("config/edu/tufts/hrilab/ava/positiveASRResult.wav");
+      }
+      shouldDingReady = true;
+
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+        service.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+      }
+    } catch (IOException | InterruptedException e) {
+      log.error("error running process", e);
+    }
+    ready_process_os = null;
+  }
+
+  @Override
+  public void interruptWaitForReadyAck() {
+    shouldDingReady = false;
+    if (ready_process_os == null) {
+      log.debug("[interruptWaitForReadyAck] python subprocess input stream is null");
+      return;
+    }
+    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(ready_process_os));
+    try {
+      writer.write("hello\n");
+      writer.flush();
+    } catch (IOException e) {
+      log.error("[interruptWaitForReadyAck] error signalling WW trigger");
+    }
   }
 }
 

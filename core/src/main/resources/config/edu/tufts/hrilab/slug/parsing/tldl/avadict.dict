@@ -497,3 +497,4 @@ stop demo; VERBI; stopDemo
 %disable kiosk mode; C; setKioskModeEnabled(?ADDRESSEE,true)
 
 ww; VERBI; triggerWW
+ready; VERBI; interruptWaitForReadyAck

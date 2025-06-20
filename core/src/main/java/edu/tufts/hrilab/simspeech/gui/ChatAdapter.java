@@ -32,6 +32,8 @@ public class ChatAdapter extends GuiAdapter {
 
   private TRADEServiceInfo dialogueHistoryService;
 
+  private Set<String> diarcAgents = new HashSet<>();
+
 
   //==========================================================================
   // Constructor
@@ -80,7 +82,8 @@ public class ChatAdapter extends GuiAdapter {
     try {
       @SuppressWarnings("unchecked")
       Set<Symbol> agents = diarcAgentsService.call(Set.class);
-      Set<String> diarcAgents = new HashSet<>();
+      //Set<String> diarcAgents = new HashSet<>();
+      diarcAgents.clear();
       agents.forEach(agent -> {if (!agent.getName().equals("self")) {diarcAgents.add(agent.getName());}});
       //agents.forEach(agent -> diarcAgents.add(agent.getName()));
       sendDiarcAgents(diarcAgents);
@@ -219,6 +222,10 @@ public class ChatAdapter extends GuiAdapter {
       populateDiarcAgents(diarcAgentsService);
     }
 
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException ignored) {}
+
     // send existing dialogue history
     if (dialogueHistoryService != null) {
       populateDialogueHistory(dialogueHistoryService);
@@ -234,6 +241,9 @@ public class ChatAdapter extends GuiAdapter {
   protected void handleMessage(JsonObject message) {
     if (message.has("method") && message.get("method").getAsString().equals("startup")) {
       onConnect();
+      return;
+    } else if (message.has("method") && message.get("method").getAsString().equals("sendAgents")) {
+      sendDiarcAgents(diarcAgents);
       return;
     }
 
