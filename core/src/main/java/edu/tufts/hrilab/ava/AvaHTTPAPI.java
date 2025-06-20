@@ -525,6 +525,25 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     return Http.sendGetImage(uri);
   }
 
+  public RMSListTagsResponse getAllTags() {
+    String uri = baseUrl + "/robot/annotation/tags/" + mapName;
+    String res = null;
+    log.debug("Sending get tags request");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+    }
+    if (res == null) {
+      return null;
+    }
+    Gson gson = new Gson();
+    RMSListTagsResponse resObj = new RMSListTagsResponse();
+    resObj.response = gson.fromJson(res, ListTagsResponse.class);
+    return resObj;
+  }
+
   /**
    * Gets drive status
    *

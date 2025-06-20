@@ -28,6 +28,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -75,11 +76,12 @@ public class AvaDisplayComponent extends DiarcComponent {
     if (!videoDir.equals("")) {
       videos = getMediaFromDir(videoDir, ".mp4");
       images = getMediaFromDir(videoDir, ".png");
+      images = images.stream().sorted().toList();
       currentVideo = 0;
       currentImage = 0;
       int index = 0;
       for (String img : images) {
-        if (img.contains("trLogo")) {
+        if (img.contains("(1)")) {
           trLogoIndex = index;
           currentImage = trLogoIndex;
         }
@@ -223,7 +225,7 @@ public class AvaDisplayComponent extends DiarcComponent {
       log.error("error switching back to logo", e);
     }
 
-    refreshExecutor.scheduleAtFixedRate(cycleImageTask, 0, 15, TimeUnit.SECONDS);
+    refreshExecutor.scheduleAtFixedRate(cycleImageTask, 0, 30, TimeUnit.SECONDS);
   }
 
   /**
@@ -398,6 +400,14 @@ public class AvaDisplayComponent extends DiarcComponent {
   public void clearText() {
     log.debug("clearText()");
     canvas.clearText();
+    try {
+      SwingUtilities.invokeAndWait(() -> {
+                displayImage(images.get(trLogoIndex), 10 * 1000);
+              }
+      );
+    } catch (InterruptedException | InvocationTargetException e) {
+      log.error("error switching back to logo", e);
+    }
   }
 
   /**

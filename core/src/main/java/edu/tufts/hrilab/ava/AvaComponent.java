@@ -24,6 +24,8 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -50,17 +52,14 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 import java.lang.Math;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.DataLine;
+import javax.sound.sampled.*;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
@@ -71,6 +70,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import static java.lang.Double.parseDouble;
 import static java.lang.System.getProperty;
 
 /**
@@ -82,9 +82,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private boolean polling = false;
 
-  private AvaAPIInterface api;
-  private double pointDistThresh = .75; //meters
-  private double orientationThresh = .55; //radians
+  private AvaHTTPAPI api;
+  private double pointDistThresh = 2; //meters
+  private double orientationThresh = 1; //radians
   private double zLiftThresh = .05; //meters
   private double cameraTiltThresh = 0.2;
   private double cameraHeight = 1.350; //meters
@@ -98,11 +98,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private double mapScaleY = 1.0;
   private int mapWidth = 0;
   private int mapHeight = 0;
+
   /**
    * HACK: assumes location_0 reference in MapComponent consultant is the dock.
    * TODO: expose new RR service to get reference for a set of properties.
    */
-  private String dockLocation = "location_0:location";
+  private Symbol dockLocation;
 
   private final int dockingTimeout = 90; //30 seconds
 
@@ -123,6 +124,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private OutputStream ww_process_os = null;
   private boolean shouldDing = true;
+  private BufferedImage mapImage;
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
 
@@ -244,12 +246,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
     log.info("Connecting to " + (remote ? "remote RMS server " : "local HTTP server ") + uriString + " with map " + mapName);
 
-    if (remote) {
-      api = new AvaWebsocketAPI(avaUri, token, mapName);
-      token = null;
-    } else {
+    //todo: don't just comment this out
+//    if (remote) {
+//      api = new AvaWebsocketAPI(avaUri, token, mapName);
+//      token = null;
       api = new AvaHTTPAPI(avaUri, mapName);
-    }
 
     try {
       loadMapMetadata();
@@ -257,6 +258,60 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       log.error("[init] unable to connect to Ava robot API");
       System.exit(1);
     }
+
+    List<String> dockNames = getDockTags();
+
+    //reach out and add references to the map component
+    //todo: (pete) this stinks. we shouldn't have to be reaching out like this. can we just share the api with a specialized map component instead?
+    TRADEServiceInfo addReferenceToMapService;
+    try {
+      addReferenceToMapService = TRADE.getAvailableService(new TRADEServiceConstraints().name("addReferencesDirectly").argTypes(Map.class));
+    } catch (TRADEException e) {
+      log.error("Error getting addReferencesDirectly service", e);
+      return;
+    }
+
+    Map<String, Pair<Point3d, Quat4d>> tags = getAllTags();
+    adjustDockTags(tags, dockNames);
+    try {
+      addReferenceToMapService.call(void.class, tags);
+    } catch (TRADEException e) {
+      log.error("[init] error calling addReferencesDirectly");
+    }
+
+    //todo: (pete) should go in a consultant? assumes unique names? can only handle one dock?
+    //todo: (pete) it really feels like the "dock-ness" of a location should be a property?
+    if (dockNames.size() > 1) {
+      log.error("[init] multiple tags labeled as dock in the map. only one dock currently supported");
+    } else if (dockNames.isEmpty()) {
+      log.error("[init] no dock marked in map! a dock is required.");
+    } else {
+
+      TRADEServiceInfo getReferencesService;
+      try {
+        getReferencesService = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReferences").argTypes());
+      } catch (TRADEException e) {
+        log.error("[init] error getting getMapReferences service ", e);
+        return;
+      }
+
+      Map<Symbol, PoseReference> poseReferences = new HashMap<>();
+      try {
+        poseReferences = getReferencesService.call(Map.class);
+      } catch (TRADEException e) {
+        log.error("[init] error calling getMapReferences");
+      }
+
+      String dockName = dockNames.get(0);
+      for (Symbol refId : poseReferences.keySet()) {
+        //abosultely shouldn't be blind indexing into the ref to get the name!!!!!!!
+        if (poseReferences.get(refId).properties.get(0).getName().equals(dockName)) {
+          dockLocation = refId;
+        }
+      }
+    }
+
+
     keepAlive();
     stopGoingHomeOnTheHour();
 
@@ -267,10 +322,29 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       log.error("Error registering for displayRobot service notification.", e);
     }
 
-//    displayText("CONNECTED");
-    setZLift(0);
+//    setZLift(0);
     getCameraHeightMax();
   }
+
+  private void adjustDockTags(Map<String, Pair<Point3d, Quat4d>> allTags, List<String> dockTags) {
+    for (String name : dockTags) {
+      Pair<Point3d, Quat4d> pose = allTags.get(name);
+      Vector3d orientationVec = RotationHelpers.quaternionToNormVect(pose.getRight());
+      Point3d position = pose.getLeft();
+      log.info("adjusting dock tag " + name + " with position " + pose.getLeft());
+      position.add(orientationVec);
+      Pair<Point3d, Quat4d> newPose = new MutablePair<>(position, pose.getRight());
+      log.info("new position for " + name + " is " + newPose.getLeft());
+      allTags.put(name, newPose);
+    }
+  }
+
+  @Override
+  public Symbol getDockRefId() {
+    return dockLocation;
+  }
+
+  //todo: these should be core movebase
 
   /**
    * Calls the displayRobot TRADE service on the AvaDisplayComponent if available.
@@ -670,6 +744,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     mapScaleY = remote ? res.response.mapScale : res.response.mapScaleY;
     mapWidth = res.response.width;
     mapHeight = res.response.height;
+    mapImage = api.getMap();
     log.info("Map size = " + mapWidth + "x" + mapHeight + ", mapScaleX = " + mapScaleX + ", mapScaleY = " + mapScaleY);
   }
 
@@ -746,7 +821,6 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   public Justification goHomePrimitive() {
     log.debug("Starting [goHome]");
     currentMoveGoal.setGoHomeGoal();
-    Symbol home = Factory.createSymbol(dockLocation);
     Justification ret;
     if (!stopped) {
       ret = goToDock();
@@ -936,6 +1010,27 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     return new ConditionJustification(true);
   }
 
+  private Map<String, Pair<Point3d, Quat4d>> getAllTags() {
+    RMSListTagsResponse res = api.getAllTags();
+    Map<String, Pair<Point3d, Quat4d>> toReturn = new HashMap<>();
+    for (Tag tag : res.response.tags.values()) {
+      Point3d point = new Point3d(parseDouble(tag.position.x), parseDouble(tag.position.y),0);
+      Quat4d quat4d = Convert.convertToQuat4d(parseDouble(tag.position.theta), 0, 0);
+      toReturn.put(tag.name , new MutablePair<>(point, quat4d));
+    }
+    return toReturn;
+  }
+
+  private List<String> getDockTags() {
+    RMSListTagsResponse res = api.getAllTags();
+    List<String> toReturn = new ArrayList<>();
+    for (Tag tag : res.response.tags.values()) {
+      if ("Dock".equals(tag.attributes.get("TagType"))) {
+        toReturn.add(tag.name);
+      }
+    }
+    return toReturn;
+  }
 
   @Override
   public Justification stopFollow() {
@@ -1114,6 +1209,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       DataLine.Info info = new DataLine.Info(Clip.class, format);
       Clip audioClip = (Clip) AudioSystem.getLine(info);
       audioClip.open(audioStream);
+      FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+      control.setValue(-12f);
       audioClip.start();
       Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
       audioClip.close();
@@ -1128,7 +1225,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     //args:--whisper_model, --ww_model_path, --ww_detection_thresh
     String home = System.getProperty("user.home");
     ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py");
-    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
+//    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
     processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
     try {
       Process process = processBuilder.start();
@@ -1207,7 +1304,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
         result = result.trim().toLowerCase();
         result = result.replaceAll("\\p{Punct}", "");
         Utterance utterance = new Utterance.Builder()
-                .setSpeaker(Factory.createSymbol("user"))
+                .setSpeaker(Factory.createSymbol("evan"))
                 .setAddressee(Factory.createSymbol("ava"))
                 .setWords(Arrays.asList(result.trim().split(" ")))
                 .setUtteranceType(UtteranceType.UNKNOWN)

@@ -167,6 +167,11 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
 
   @TRADEService
   @Action
+  public Symbol getDockRefId();
+
+
+  @TRADEService
+  @Action
   @OnInterrupt(onCancelServiceCall = "interruptWaitForReadyAck()", onSuspendServiceCall = "interruptWaitForReadyAck()")
   public void waitForReadyAck();
   @TRADEService

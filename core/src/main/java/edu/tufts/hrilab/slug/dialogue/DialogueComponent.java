@@ -187,7 +187,7 @@ public class DialogueComponent extends DiarcComponent {
       } catch (Exception e) {
         log.error("Could not make callback to: " + subscriber, e);
         //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
-        if (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null")) {
+        if (e.getMessage() == null || e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null")) {
           servicesToRemove.add(subscriber);
         }
       }

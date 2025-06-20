@@ -21,8 +21,10 @@ public class AvaDemo extends DiarcConfiguration {
   String model = "Llama-3.1-8B-Instruct"; //70B
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
-  private String speakerId = "Direct Audio Device: USB Audio Device, USB Audio, USB Audio";
+  private String speakerId = "";
   private boolean initKiosk = false;
+  private String mediaDir = "videos";
+  private boolean useDisplay = true;
 
 
   @Override
@@ -39,7 +41,9 @@ public class AvaDemo extends DiarcConfiguration {
     options.add(Option.builder("privateEndpoint").desc("run using privately hosted endpoint rather than free serverless endpoint").build());
     options.add(Option.builder("locationRefs").hasArg().desc("set location references file").build());
     options.add(Option.builder("speakerId").hasArg().desc("name of speaker to route local tts through").build());
-    options.add(Option.builder("kiosk").hasArg().desc("start the demo with kiosk mode enabled").build());
+    options.add(Option.builder("kiosk").desc("start the demo with kiosk mode enabled").build());
+    options.add(Option.builder("mediaDir").hasArg().desc("name of directory in $HOME/.diarc where media files are stored").build());
+    options.add(Option.builder("disableDisplay").desc("add to run without a display").build());
     return options;
   }
 
@@ -75,6 +79,9 @@ public class AvaDemo extends DiarcConfiguration {
     if (cmdLine.hasOption("speakerId")) {
       speakerId = cmdLine.getOptionValue("speakerId");
     }
+    if (cmdLine.hasOption("mediaDir")) {
+      mediaDir = cmdLine.getOptionValue("mediaDir");
+    }
     if (cmdLine.hasOption("privateEndpoint")) {
       log.warn("You have configured the system to use the privately hosted HuggingFace endpoint.");// THIS COSTS MONEY AND SHOULD NOT BE USED FOR FRIVOLOUS TESTING. If you are doing this intentionally, please enter 1 into the console");
       usePrivateEndpoint = true;
@@ -87,6 +94,8 @@ public class AvaDemo extends DiarcConfiguration {
       //} else {
       //  log.warn("not using private endpoint");
       //}
+    } if (cmdLine.hasOption("disableDisplay")) {
+      useDisplay = false;
     }
     if (cmdLine.hasOption("kiosk")) {
       initKiosk = true;
@@ -125,10 +134,10 @@ public class AvaDemo extends DiarcConfiguration {
     }
 
     if (useGUI) {
-      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker evan -addressee ava");
+      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker user1 -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.5 -showMixers -matchMixer " + speakerId + " " + ((useMicrophone) ? " -muteMics" : ""));
+    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.5 -showMixers" + " " + ((useMicrophone) ? " -muteMics" : ""));
     //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://92.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
 //      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");
@@ -140,13 +149,19 @@ public class AvaDemo extends DiarcConfiguration {
     }
 
 
-    createInstance(edu.tufts.hrilab.map.MapComponent.class, "-refs " + locationRefs);
+    String mapArgs = "";
+    if (useMockAva) {
+      mapArgs += "-refs " + locationRefs;
+    }
+    createInstance(edu.tufts.hrilab.map.MapComponent.class);
 
 //    if (useVision) {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture ava.xml -refs refs/towerRefs.json " + (useGUI ? "" : "-hideControls"));
 //    }
 
-    createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -videoDir videos -videoVolume 100");
+    if (useDisplay) {
+      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -videoDir " + mediaDir + " -videoVolume 10");
+    }
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);
     } else {
@@ -155,13 +170,14 @@ public class AvaDemo extends DiarcConfiguration {
 
     String kioskArgs = "";
     if (initKiosk) {
-      kioskArgs += " -enabled";
+      kioskArgs += " -enabled -timeout 120";
     }
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
 //            "-goal listen(self) monitorBattery(ava) disableMic(ava) -beliefinitfile demos.pl agents/ava.pl"
             "-historylength 3600000 "
-        +   "-goal listen(self) monitorBattery(ava) listenForWWandASR(ava) -beliefinitfile demos.pl agents/ava.pl"
+        +   "-goal listen(self) monitorBattery(ava) " + //listenForWWandASR(ava) " +
+                    "-beliefinitfile demos.pl agents/ava.pl"
         + " -dbfile " +
               "core.asl " +
               "manipulation.asl " +
