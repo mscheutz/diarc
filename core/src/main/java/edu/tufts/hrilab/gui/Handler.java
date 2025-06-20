@@ -19,6 +19,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +48,7 @@ public class Handler extends TextWebSocketHandler {
   /**
    * The current session.
    */
-  private WebSocketSession session;
+  private ArrayList<WebSocketSession> sessions;
 
   /**
    * Maps adapter paths to their references.
@@ -67,7 +68,7 @@ public class Handler extends TextWebSocketHandler {
    * Constructor. Private so as to force use of the factory method.
    */
   private Handler() {
-    session = null;
+    sessions = new ArrayList<>();
     adapterMap = new HashMap<>();
   }
 
@@ -130,7 +131,7 @@ public class Handler extends TextWebSocketHandler {
         log.error("Could not instantiate {}", name, e);
       }
     }
-    sendAdapterUpdate();
+    sendAdapterUpdate(sessions);
   }
 
   /**
@@ -140,14 +141,20 @@ public class Handler extends TextWebSocketHandler {
    */
   @TRADEService
   public synchronized void sendMessage(String message) throws IOException {
-    if (session == null) return;
-    session.sendMessage(new TextMessage(message));
+    sendMessage(message, sessions);
+  }
+
+  private synchronized void sendMessage(String message, ArrayList<WebSocketSession> sessions) throws IOException {
+    if (sessions.isEmpty()) return;
+    for (WebSocketSession session : sessions) {
+      session.sendMessage(new TextMessage(message));
+    }
   }
 
   /**
    * Send the client an update on which adapters are available.
    */
-  private void sendAdapterUpdate() {
+  private void sendAdapterUpdate(ArrayList<WebSocketSession> sessions) {
     JsonArray paths = new JsonArray();
     synchronized (adapterLock) {
       for (String path : adapterMap.keySet()) {
@@ -158,7 +165,7 @@ public class Handler extends TextWebSocketHandler {
     JsonObject object = new JsonObject();
     object.add("paths", paths);
     try {
-      sendMessage(object.toString());
+      sendMessage(object.toString(), sessions);
     } catch (IOException e) {
       log.error("Could not send adapter update", e);
     }
@@ -192,8 +199,12 @@ public class Handler extends TextWebSocketHandler {
   public void afterConnectionEstablished(@Nonnull WebSocketSession session)
           throws Exception {
     super.afterConnectionEstablished(session);
-    this.session = session;
-    sendAdapterUpdate();
+    if (!this.sessions.contains(session)) {
+      this.sessions.add(session);
+    }
+    ArrayList<WebSocketSession> sessions = new ArrayList<>();
+    sessions.add(session);
+    sendAdapterUpdate(sessions);
   }
 
   /**
@@ -233,6 +244,6 @@ public class Handler extends TextWebSocketHandler {
                                     @Nonnull CloseStatus status)
           throws Exception {
     super.afterConnectionClosed(session, status);
-    this.session = null;
+    this.sessions.remove(session);
   }
 }
