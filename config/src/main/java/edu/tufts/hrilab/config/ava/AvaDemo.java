@@ -137,16 +137,16 @@ public class AvaDemo extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker user1 -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.0 -showMixers" + " " + ((useMicrophone) ? " -muteMics" : ""));
+    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.2 -showMixers" + " " + ((useMicrophone) ? " -muteMics" : ""));
     //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://92.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
 //      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");
-    if (useMicrophone) {
+//    if (useMicrophone) {
 //      createInstance(edu.tufts.hrilab.asr.whisper.WhisperComponent.class, "-model small.en -speaker patient -addressee self -matchMixer Direct Audio Device: C922 Pro Stream Webcam, USB Audio, USB Audio -showMixers -threshold 600.0 -useDisplay");
 //      createInstance(edu.tufts.hrilab.asr.whisper.WhisperComponent.class, "-model small.en -speaker patient -addressee self -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -showMixers -threshold 200.0");
-      createInstance(edu.tufts.hrilab.asr.whisper.WhisperComponent.class, "-model small.en -speaker patient -addressee self -matchMixer Direct Audio Device: UHAUTCA, USB Audio, USB Audio -showMixers -threshold 200.0 -mixer 19 -useDisplay");
+//      createInstance(edu.tufts.hrilab.asr.whisper.WhisperComponent.class, "-model small.en -speaker patient -addressee self -matchMixer Direct Audio Device: UHAUTCA, USB Audio, USB Audio -showMixers -threshold 200.0 -mixer 19 -useDisplay");
       //createInstance(edu.tufts.hrilab.slug.http.HTTPListenerComponent.class, "-speaker patient -addressee self");
-    }
+//    }
 
 
     String mapArgs = "";
@@ -176,7 +176,7 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
 //            "-goal listen(self) monitorBattery(ava) disableMic(ava) -beliefinitfile demos.pl agents/ava.pl"
             "-historylength 3600000 "
-        +   "-goal listen(self) monitorBattery(ava) " + //listenForWWandASR(ava) " +
+        +   "-goal listen(self) monitorBattery(ava) listenForWWandASR(ava) " +
                     "-beliefinitfile demos.pl agents/ava.pl"
         + " -dbfile " +
               "core.asl " +
