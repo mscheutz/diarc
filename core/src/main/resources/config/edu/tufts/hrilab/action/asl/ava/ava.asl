@@ -43,7 +43,7 @@ import java.util.StringTokenizer;
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
-    op:sleep(45000);
+    op:sleep(10000);
     act:goToLocation(?escorteeLoc);
 }
 
