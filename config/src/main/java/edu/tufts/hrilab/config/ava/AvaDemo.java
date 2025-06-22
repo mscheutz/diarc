@@ -22,7 +22,7 @@ public class AvaDemo extends DiarcConfiguration {
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "";
-  private boolean initKiosk = false;
+  private boolean initKiosk = true;
   private String mediaDir = "videos";
   private boolean useDisplay = true;
 
@@ -33,10 +33,7 @@ public class AvaDemo extends DiarcConfiguration {
     options.add(Option.builder("showGuis").desc("show guis").build());
     options.add(Option.builder("useMic").desc("turn on on board speech recognition").build());
     options.add(Option.builder("useVision").desc("instantiate vision component").build());
-    options.add(Option.builder("username").hasArg().desc("set ava username").build());
-    options.add(Option.builder("password").hasArg().desc("set ava password").build());
     options.add(Option.builder("uri").hasArg().desc("set ava uri").build());
-    options.add(Option.builder("map").hasArg().desc("set map file").build());
     options.add(Option.builder("mock").desc("use mock ava component").build());
     options.add(Option.builder("privateEndpoint").desc("run using privately hosted endpoint rather than free serverless endpoint").build());
     options.add(Option.builder("locationRefs").hasArg().desc("set location references file").build());
@@ -61,17 +58,8 @@ public class AvaDemo extends DiarcConfiguration {
     if (cmdLine.hasOption("useVision")) {
       useVision = true;
     }
-    if (cmdLine.hasOption("username")) {
-      avaArgs += " -username " + cmdLine.getOptionValue("username");
-    }
-    if (cmdLine.hasOption("password")) {
-      avaArgs += "-password " + cmdLine.getOptionValue("password");
-    }
     if (cmdLine.hasOption("uri")) {
       avaArgs += " -uri " + cmdLine.getOptionValue("uri");
-    }
-    if (cmdLine.hasOption("map")) {
-      avaArgs += " -map " + cmdLine.getOptionValue("map");
     }
     if (cmdLine.hasOption("locationRefs")) {
       locationRefs = cmdLine.getOptionValue("locationRefs");
@@ -137,7 +125,7 @@ public class AvaDemo extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker user1 -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.2 -showMixers" + " " + ((useMicrophone) ? " -muteMics" : ""));
+    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.0 -showMixers" + " " + ((useMicrophone) ? " -muteMics" : ""));
     //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://92.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
 //      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");
@@ -170,11 +158,10 @@ public class AvaDemo extends DiarcConfiguration {
 
     String kioskArgs = "";
     if (initKiosk) {
-      kioskArgs += " -enabled -timeout 120";
+      kioskArgs += " -enabled -timeout 60";
     }
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
-//            "-goal listen(self) monitorBattery(ava) disableMic(ava) -beliefinitfile demos.pl agents/ava.pl"
             "-historylength 3600000 "
         +   "-goal listen(self) monitorBattery(ava) listenForWWandASR(ava) " +
                     "-beliefinitfile demos.pl agents/ava.pl"

@@ -90,12 +90,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private double cameraHeight = 1.350; //meters
   private double cameraHeightMax = 0.0;
 
-  private boolean remote = true;
-  private String uriString = "ws://localhost:8080/client";
-  private String token = null;
-  private String mapName = "Building-10-1";
-  private double mapScaleX = 1.0;
-  private double mapScaleY = 1.0;
+  private String uriString = "http://172.18.0.1";
   private int mapWidth = 0;
   private int mapHeight = 0;
 
@@ -136,9 +131,6 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("uri").hasArg().argName("uri").desc("Set the URI of the Ava Robotics RMS (default: " + uriString + " )").build());
-    options.add(Option.builder("username").hasArg().argName("username").desc("Username of Ava Robotics RMS account (required for RMS as argument or in ENV)").build());
-    options.add(Option.builder("password").hasArg().argName("password").desc("Password of Ava Robotics RMS account (required for RMS as argument or in ENV)").build());
-    options.add(Option.builder("map").hasArg().argName("map").desc("Set the map to use (default: " + mapName + ")").build());
     options.add(Option.builder("point_dist_thresh").hasArg().argName("point_distance_threshold").desc("Set the point distance threshold in meters (default: " + pointDistThresh + ")").build());
     options.add(Option.builder("orientation_thresh").hasArg().argName("orientation_threshold").desc("Set the rotation orientation threshold in radians (default: " + orientationThresh + ")").build());
     options.add(Option.builder("z_lift_thresh").hasArg().argName("z_lift_threshold").desc("Set the Z lift threshold in meters (default: " + zLiftThresh + ")").build());
@@ -149,21 +141,14 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
-    String envUsername = null;
-    String envPassword = null;
     String envURI = null;
-    String envMap = null;
     try {
       Dotenv dotenv = Dotenv.load();
 
-      envUsername = dotenv.get("AVA_USERNAME");
-      envPassword = dotenv.get("AVA_PASSWORD");
       envURI = dotenv.get("AVA_URI");
-      envMap = dotenv.get("AVA_MAP");
-
       log.debug("Loaded .env file with environment variables");
     } catch (Exception ex) {
-      //log.error("Exception caught during AvaComponent parseArgs.", ex);
+      log.error("Exception caught during AvaComponent parseArgs.", ex);
     }
 
     if (cmdLine.hasOption("uri")) {
@@ -171,44 +156,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     } else if (envURI != null) {
       uriString = envURI;
     } else {
-      log.debug("Using default URI for mock server: " + uriString);
-    }
-
-    if (uriString.startsWith("ws")) {
-      remote = true;
-      log.debug("Connecting to remote RMS server");
-    } else if (uriString.startsWith("ht")) {
-      remote = false;
-      log.debug("Connecting to local HTTP server");
-    }
-
-    if (remote) {
-      String username = null;
-      String password = null;
-
-      if (cmdLine.hasOption("username")) {
-        username = cmdLine.getOptionValue("username");
-      } else if (envUsername != null) {
-        username = envUsername;
-      }
-
-      if (cmdLine.hasOption("password")) {
-        password = cmdLine.getOptionValue("password");
-      } else if (envPassword != null) {
-        password = envPassword;
-      }
-
-      if (username == null || password == null) {
-        log.error("Username and password required. Add to ENVIRONMENT or .env file using AVA_USERNAME and AVA_PASSWORD or use -username and -password CLI arguments.");
-      } else {
-        token = Utilities.createAuthToken(username, password);
-      }
-    }
-
-    if (cmdLine.hasOption("map")) {
-      mapName = cmdLine.getOptionValue("map");
-    } else if (envMap != null) {
-      mapName = envMap;
+      log.debug("[parseArgs] Using default URI: " + uriString);
     }
 
     if (cmdLine.hasOption("point_dist_thresh")) {
@@ -244,13 +192,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       log.error(ex.toString());
       return;
     }
-    log.info("Connecting to " + (remote ? "remote RMS server " : "local HTTP server ") + uriString + " with map " + mapName);
+    log.info("Connecting to local HTTP server " + uriString);
 
-    //todo: don't just comment this out
-//    if (remote) {
-//      api = new AvaWebsocketAPI(avaUri, token, mapName);
-//      token = null;
-      api = new AvaHTTPAPI(avaUri, mapName);
+    api = new AvaHTTPAPI(avaUri);
 
     try {
       loadMapMetadata();
@@ -344,8 +288,6 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     return dockLocation;
   }
 
-  //todo: these should be core movebase
-
   /**
    * Calls the displayRobot TRADE service on the AvaDisplayComponent if available.
    */
@@ -388,8 +330,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @TRADEService
   public Point3d getPosition() {
     RMSPositionResponse res = api.getPosition();
-    double positionX = remote ? Utilities.fromMapPixelScale(Double.valueOf(res.response.x), mapScaleX) : Double.valueOf(res.response.x);
-    double positionY = remote ? Utilities.fromMapPixelScale(Double.valueOf(res.response.y), mapScaleY) : Double.valueOf(res.response.y);
+    double positionX = Double.valueOf(res.response.x);
+    double positionY = Double.valueOf(res.response.y);
     return new Point3d(positionX, positionY, 0);
   }
 
@@ -416,8 +358,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @Override
   public Pair<Point3d, Quat4d> getPose() {
     RMSPositionResponse res = api.getPosition();
-    double positionX = remote ? Utilities.fromMapPixelScale(Double.valueOf(res.response.x), mapScaleX) : Double.valueOf(res.response.x);
-    double positionY = remote ? Utilities.fromMapPixelScale(Double.valueOf(res.response.y), mapScaleY) : Double.valueOf(res.response.y);
+    double positionX = Double.valueOf(res.response.x);
+    double positionY = Double.valueOf(res.response.y);
     log.debug("[getPose] " + positionX + ", " + positionY + " theta " + res.response.theta);
     Quat4d quat4d = Convert.convertToQuat4d(Double.valueOf(res.response.theta), 0, 0);
     return new MutablePair<>(new Point3d(positionX, positionY, 0), quat4d);
@@ -430,8 +372,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
    */
   public Matrix4d getPoseGlobalMatrix4d() {
     RMSPositionResponse res = api.getPosition();
-    double positionX = remote ? Utilities.fromMapPixelScale(Double.valueOf(res.response.x), mapScaleX) : Double.valueOf(res.response.x);
-    double positionY = remote ? Utilities.fromMapPixelScale(Double.valueOf(res.response.y), mapScaleY) : Double.valueOf(res.response.y);
+    double positionX = Double.valueOf(res.response.x);
+    double positionY = Double.valueOf(res.response.y);
     log.debug("[getPoseGlobalMatrix4d] x " + res.response.x + " y " + res.response.y + " theta " + res.response.theta);
 
     Point3d currentPosition = new Point3d(positionX, positionY, 0);
@@ -527,8 +469,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     double goalTheta = angles[Convert.YAW];
 
     log.debug("[goToArbitrary()] " + poseTransform);
-    double positionX = remote ? Utilities.toMapPixelScale(goalPosition.x, mapScaleX) : goalPosition.x;
-    double positionY = remote ? Utilities.toMapPixelScale(goalPosition.y, mapScaleY) : goalPosition.y;
+    double positionX = goalPosition.x;
+    double positionY = goalPosition.y;
 
     stopped = false;
     polling = true;
@@ -595,7 +537,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       }
 
       if (apiFailures >= 4) {
-        return new ConditionJustification(false, Factory.createPredicate(remote ? "websocket_server" : "http_server", "connected"));
+        return new ConditionJustification(false, Factory.createPredicate("http_server", "connected"));
       }
     }
     polling = false;
@@ -740,12 +682,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
    */
   private void loadMapMetadata() {
     RMSMapMetadataResponse res = api.getMapMetadata();
-    mapScaleX = remote ? res.response.mapScale : res.response.mapScaleX;
-    mapScaleY = remote ? res.response.mapScale : res.response.mapScaleY;
     mapWidth = res.response.width;
     mapHeight = res.response.height;
     mapImage = api.getMap();
-    log.info("Map size = " + mapWidth + "x" + mapHeight + ", mapScaleX = " + mapScaleX + ", mapScaleY = " + mapScaleY);
+    log.info("Map size = " + mapWidth + "x" + mapHeight);
   }
 
   /**
@@ -1211,7 +1151,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       Clip audioClip = (Clip) AudioSystem.getLine(info);
       audioClip.open(audioStream);
       FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
-      control.setValue(-12f);
+      control.setValue(-16f);
       audioClip.start();
       Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
       audioClip.close();

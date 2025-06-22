@@ -15,12 +15,11 @@ import org.slf4j.LoggerFactory;
 public class AvaHTTPAPI implements AvaAPIInterface {
   private Logger log = LoggerFactory.getLogger(AvaHTTPAPI.class);
   private String mapName = "1";
-  private String baseUrl = "http://172.18.0.1";
+  private final String baseUrl;
   private Map<String, String> headers = null;
 
-  public AvaHTTPAPI(URI avaUri, String mapName) {
+  public AvaHTTPAPI(URI avaUri) {
     baseUrl = avaUri.toString();
-    this.mapName = mapName;
   }
 
   /**
