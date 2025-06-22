@@ -2,7 +2,7 @@
 // curl -X POST "http://localhost:8080/invoke-service?serviceName=getCurrFloor" \
 //      -H "Content-Type: application/json"
 
-const url = "http://localhost:8080/invoke-service?serviceName=createReferences";
+const url = `http://${process.env.REACT_APP_SERVER_ADDR}:8080/invoke-service?serviceName=createReferences`;
 
 const queryBackend = async () => {
     const fetchOptions = {

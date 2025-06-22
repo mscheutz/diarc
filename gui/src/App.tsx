@@ -10,7 +10,7 @@ function App() {
 
 
     // WEBSOCKET //
-    let location = "http://172.16.0.3:8000";
+    let location = `http://${process.env.REACT_APP_SERVER_ADDR}:8000`;
     if (location.includes("#"))
         location = location.slice(0, location.indexOf("#"))
     const url: URL = new URL(location);

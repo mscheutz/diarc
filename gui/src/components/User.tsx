@@ -7,7 +7,7 @@ const User = () => {
 
   // Initialize WebSocket connection
   const connect = () => {
-    const websocket = new WebSocket('ws://172.16.0.3:8000/user');
+    const websocket = new WebSocket('ws://${process.env.REACT_APP_SERVER_ADDR}:8000/user');
     websocket.onmessage = (event) => {
       setMessages((prevMessages) => [...prevMessages, event.data]);
     };
