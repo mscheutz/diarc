@@ -153,7 +153,7 @@ public class AvaDemo extends DiarcConfiguration {
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);
     } else {
-      createInstance(edu.tufts.hrilab.ava.AvaComponent.class, avaArgs); //Ava_SomervilleHQ_Master_12262023_G
+      createInstance(edu.tufts.hrilab.ava.AvaComponent.class, avaArgs);
     }
 
     String kioskArgs = "";

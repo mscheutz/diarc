@@ -473,6 +473,27 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
   }
 
   @TRADEService
+  public Map<Symbol, Point3d> getLocationsOnMap() {
+    Map<Symbol, Point3d> locs = new HashMap<>();
+    consultant.getAllReferences().forEach(ref -> locs.put(ref.refId, ref.getPosition()));
+    return locs;
+  }
+
+  @TRADEService
+  public Map<Symbol, String> getLocationNames(List<Symbol> refIds) {
+    Map<Symbol, String> namesMap = new HashMap<>();
+    for (Symbol refId : refIds) {
+      PoseReference ref = consultant.getReference(refId);
+      if (ref != null) {
+        if (!ref.properties.isEmpty()) {
+          namesMap.put(refId, ref.properties.get(0).getName());
+        }
+      }
+    }
+    return namesMap;
+  }
+
+  @TRADEService
   public PoseReference getMapReference(Symbol refId) {
     return consultant.getReference(refId);
   }

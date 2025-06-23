@@ -26,12 +26,7 @@ import edu.tufts.hrilab.fol.Variable;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.URL;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -59,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.imageio.ImageIO;
 import javax.sound.sampled.*;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
@@ -94,10 +90,6 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private List<BufferedImage> mapImages = new ArrayList<>();
   private List<RMSMapMetadataResponse> mapMetadatas = new ArrayList<>();
 
-  /**
-   * HACK: assumes location_0 reference in MapComponent consultant is the dock.
-   * TODO: expose new RR service to get reference for a set of properties.
-   */
   private Symbol dockLocation;
 
   private final int dockingTimeout = 90; //30 seconds
@@ -685,8 +677,18 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @TRADEService
-  public List<BufferedImage> getMapImages() {
-    return mapImages;
+  public List<byte[]> getMapImages() {
+    List<byte[]> toReturn = new ArrayList<>();
+    for (BufferedImage image : mapImages) {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try {
+        ImageIO.write(image, "png", baos); // Choose your desired format
+      } catch (IOException e) {
+        log.error("[getMapImages] exception writing map image to serializable format");
+      }
+      toReturn.add(baos.toByteArray());
+    }
+    return toReturn;
   }
 
   @TRADEService

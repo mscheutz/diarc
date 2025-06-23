@@ -6,7 +6,9 @@
 package edu.tufts.hrilab.ava.message.response;
 
 
-public class MapMetadataResponse {
+import java.io.Serializable;
+
+public class MapMetadataResponse implements Serializable {
   public String name;
   public String format;
   public long lastModified;
