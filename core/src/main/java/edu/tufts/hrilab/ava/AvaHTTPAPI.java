@@ -6,6 +6,8 @@ import edu.tufts.hrilab.util.Http;
 
 import java.awt.image.BufferedImage;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
@@ -524,10 +526,11 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     return Http.sendGetImage(uri);
   }
 
-  public RMSListTagsResponse getAllTags() {
-    String uri = baseUrl + "/robot/annotation/tags/" + mapName;
+  public List<RMSListTagsResponse> getAllTags() {
+    //todo: replace with query to size of map info once it's here. avoiding conflicts.
+    String uri = baseUrl + "/robot/mapping/maps";
     String res = null;
-    log.debug("Sending get tags request");
+    log.debug("Sending getMapMetadata request");
     try {
       Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
       res = httpResponse == null ? null : httpResponse.responseString;
@@ -538,9 +541,32 @@ public class AvaHTTPAPI implements AvaAPIInterface {
       return null;
     }
     Gson gson = new Gson();
-    RMSListTagsResponse resObj = new RMSListTagsResponse();
-    resObj.response = gson.fromJson(res, ListTagsResponse.class);
-    return resObj;
+    HTTPMapsResponse mapsResponse = gson.fromJson(res, HTTPMapsResponse.class);
+    RMSMapMetadataResponse metadataResponse = new RMSMapMetadataResponse();
+    int numMaps = mapsResponse.maps.entrySet().size();
+    //end stuff that needs to be replaced
+
+    List<RMSListTagsResponse> tagList = new ArrayList<>();
+    for (int i = 1; i <= numMaps; i++) {
+      uri = baseUrl + "/robot/annotation/tags/" + i;
+      log.debug("uri: " + uri);
+      res = null;
+      log.debug("Sending get tags request");
+      try {
+        Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+        res = httpResponse == null ? null : httpResponse.responseString;
+      } catch (Exception ex) {
+        log.error("Error making request to " + uri, ex);
+      }
+      if (res == null) {
+        return null;
+      }
+      gson = new Gson();
+      RMSListTagsResponse resObj = new RMSListTagsResponse();
+      resObj.response = gson.fromJson(res, ListTagsResponse.class);
+      tagList.add(resObj);
+    }
+    return tagList;
   }
 
   /**

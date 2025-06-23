@@ -951,22 +951,26 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   private Map<String, Pair<Point3d, Quat4d>> getAllTags() {
-    RMSListTagsResponse res = api.getAllTags();
+    List<RMSListTagsResponse> resList = api.getAllTags();
     Map<String, Pair<Point3d, Quat4d>> toReturn = new HashMap<>();
-    for (Tag tag : res.response.tags.values()) {
-      Point3d point = new Point3d(parseDouble(tag.position.x), parseDouble(tag.position.y),0);
-      Quat4d quat4d = Convert.convertToQuat4d(parseDouble(tag.position.theta), 0, 0);
-      toReturn.put(tag.name , new MutablePair<>(point, quat4d));
+    for (RMSListTagsResponse res : resList) {
+      for (Tag tag : res.response.tags.values()) {
+        Point3d point = new Point3d(parseDouble(tag.position.x), parseDouble(tag.position.y), 0);
+        Quat4d quat4d = Convert.convertToQuat4d(parseDouble(tag.position.theta), 0, 0);
+        toReturn.put(tag.name, new MutablePair<>(point, quat4d));
+      }
     }
     return toReturn;
   }
 
   private List<String> getDockTags() {
-    RMSListTagsResponse res = api.getAllTags();
+    List<RMSListTagsResponse> resList = api.getAllTags();
     List<String> toReturn = new ArrayList<>();
-    for (Tag tag : res.response.tags.values()) {
-      if ("Dock".equals(tag.attributes.get("TagType"))) {
-        toReturn.add(tag.name);
+    for (RMSListTagsResponse res : resList) {
+      for (Tag tag : res.response.tags.values()) {
+        if ("Dock".equals(tag.attributes.get("TagType"))) {
+          toReturn.add(tag.name);
+        }
       }
     }
     return toReturn;
