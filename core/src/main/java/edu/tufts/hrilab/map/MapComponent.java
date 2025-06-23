@@ -16,6 +16,7 @@ import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.*;
 import edu.tufts.hrilab.gui.GuiProvider;
+import edu.tufts.hrilab.map.gui.AvaMapAdapter;
 import edu.tufts.hrilab.map.gui.MapAdapter;
 import edu.tufts.hrilab.util.Convert;
 import edu.tufts.hrilab.util.RosPackPathHelper;
@@ -517,7 +518,8 @@ public class MapComponent extends DiarcComponent implements GuiProvider {
   public String[] getAdapterClassNames() {
     log.info("getting classname from map");
     return new String[]{
-            MapAdapter.class.getName()
+            //MapAdapter.class.getName()
+            AvaMapAdapter.class.getName()
     };
   }
 }

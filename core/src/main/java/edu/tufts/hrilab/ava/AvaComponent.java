@@ -91,8 +91,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private double cameraHeightMax = 0.0;
 
   private String uriString = "http://172.18.0.1";
-  private int mapWidth = 0;
-  private int mapHeight = 0;
+  private List<BufferedImage> mapImages = new ArrayList<>();
+  private List<RMSMapMetadataResponse> mapMetadatas = new ArrayList<>();
 
   /**
    * HACK: assumes location_0 reference in MapComponent consultant is the dock.
@@ -119,7 +119,6 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
   private OutputStream ww_process_os = null;
   private boolean shouldDing = true;
-  private BufferedImage mapImage;
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
 
@@ -681,11 +680,18 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
    * Store metadata in class properties.
    */
   private void loadMapMetadata() {
-    RMSMapMetadataResponse res = api.getMapMetadata();
-    mapWidth = res.response.width;
-    mapHeight = res.response.height;
-    mapImage = api.getMap();
-    log.info("Map size = " + mapWidth + "x" + mapHeight);
+    mapMetadatas = api.getMapMetadatas();
+    mapImages = api.getMaps();
+  }
+
+  @TRADEService
+  public List<BufferedImage> getMapImages() {
+    return mapImages;
+  }
+
+  @TRADEService
+  public List<RMSMapMetadataResponse> getMapMetadatas() {
+    return mapMetadatas;
   }
 
   /**

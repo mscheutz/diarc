@@ -5,20 +5,23 @@ import edu.tufts.hrilab.ava.message.response.*;
 import edu.tufts.hrilab.util.Http;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
+
 public class AvaHTTPAPI implements AvaAPIInterface {
   private Logger log = LoggerFactory.getLogger(AvaHTTPAPI.class);
-  private String mapName = "1";
   private final String baseUrl;
   private Map<String, String> headers = null;
+  private int numMaps = 0;
 
   public AvaHTTPAPI(URI avaUri) {
     baseUrl = avaUri.toString();
@@ -40,7 +43,12 @@ public class AvaHTTPAPI implements AvaAPIInterface {
    */
   @Override
   public RMSMapMetadataResponse getMapMetadata() {
-    String uri = baseUrl + "/robot/mapping/maps";
+    ArrayList<RMSMapMetadataResponse> metadatas = getMapMetadatas();
+    return metadatas == null ? null : metadatas.get(0);
+  }
+  @Override
+  public RMSMapMetadataResponse getMapMetadata(String mapName) {
+    String uri = baseUrl + "/robot/mapping/maps/";
     String res = null;
     log.debug("Sending getMapMetadata request");
     try {
@@ -55,6 +63,7 @@ public class AvaHTTPAPI implements AvaAPIInterface {
     Gson gson = new Gson();
     HTTPMapsResponse mapsResponse = gson.fromJson(res, HTTPMapsResponse.class);
     RMSMapMetadataResponse metadataResponse = new RMSMapMetadataResponse();
+    numMaps = mapsResponse.maps.size();
     for (var entry : mapsResponse.maps.entrySet()) {
       if (entry.getKey().equals(mapName)) {
         metadataResponse.response = new MapMetadataResponse();
@@ -65,11 +74,47 @@ public class AvaHTTPAPI implements AvaAPIInterface {
         double mapScaleY = m.dimensions.height / m.dimensions.rows;
         metadataResponse.response.mapScaleX = mapScaleX;
         metadataResponse.response.mapScaleY = mapScaleY;
-        break;
+        return metadataResponse;
       }
     }
 
-    return metadataResponse;
+    log.warn("[getMapMetadata] no matching map found for name {}", mapName);
+    return null;
+  }
+  @Override
+  public ArrayList<RMSMapMetadataResponse> getMapMetadatas() {
+    String uri = baseUrl + "/robot/mapping/maps";
+    String res = null;
+    log.debug("Sending getMapMetadata request");
+    try {
+      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
+      res = httpResponse == null ? null : httpResponse.responseString;
+    } catch (Exception ex) {
+      log.error("Error making request to " + uri, ex);
+    }
+    if (res == null) {
+      return null;
+    }
+    ArrayList<RMSMapMetadataResponse> metadataResponses = new ArrayList<>();
+    Gson gson = new Gson();
+    HTTPMapsResponse mapsResponse = gson.fromJson(res, HTTPMapsResponse.class);
+    numMaps = mapsResponse.maps.size();
+    for (var entry : mapsResponse.maps.entrySet()) {
+      RMSMapMetadataResponse metadataResponse = new RMSMapMetadataResponse();
+      metadataResponse.response = new MapMetadataResponse();
+      HTTPMapResponse m = entry.getValue();
+      metadataResponse.response.width = m.dimensions.cols;
+      metadataResponse.response.height = m.dimensions.rows;
+      double mapScaleX = m.dimensions.width / m.dimensions.cols;
+      double mapScaleY = m.dimensions.height / m.dimensions.rows;
+      metadataResponse.response.mapScaleX = mapScaleX;
+      metadataResponse.response.mapScaleY = mapScaleY;
+      metadataResponse.response.originX = m.position.x;
+      metadataResponse.response.originY = m.position.y;
+      metadataResponses.add(metadataResponse);
+    }
+
+    return metadataResponses;
   }
 
   @Override
@@ -520,37 +565,30 @@ public class AvaHTTPAPI implements AvaAPIInterface {
    *
    * @return map data as image
    */
-  public BufferedImage getMap() {
+  public BufferedImage getMap(String mapName) {
     String uri = baseUrl + "/robot/mapping/map/" + mapName;
-    log.debug("Sending getMap request");
     return Http.sendGetImage(uri);
   }
 
-  public List<RMSListTagsResponse> getAllTags() {
-    //todo: replace with query to size of map info once it's here. avoiding conflicts.
-    String uri = baseUrl + "/robot/mapping/maps";
-    String res = null;
-    log.debug("Sending getMapMetadata request");
-    try {
-      Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
-      res = httpResponse == null ? null : httpResponse.responseString;
-    } catch (Exception ex) {
-      log.error("Error making request to " + uri, ex);
+  public ArrayList<BufferedImage> getMaps() {
+    ArrayList<BufferedImage> mapImages = new ArrayList<>();
+    for (int i=1; i<=numMaps; i++) {
+      String uri = baseUrl + "/robot/mapping/map/" + String.valueOf(i);
+      mapImages.add(Http.sendGetImage(uri));
     }
-    if (res == null) {
+    if (mapImages.isEmpty()) {
+      log.warn("[getMap] unable to get maps, make sure getMapMetadata has been called");
       return null;
     }
-    Gson gson = new Gson();
-    HTTPMapsResponse mapsResponse = gson.fromJson(res, HTTPMapsResponse.class);
-    RMSMapMetadataResponse metadataResponse = new RMSMapMetadataResponse();
-    int numMaps = mapsResponse.maps.entrySet().size();
-    //end stuff that needs to be replaced
+    log.debug("Sending getMap request");
+    return mapImages;
+  }
 
-    List<RMSListTagsResponse> tagList = new ArrayList<>();
-    for (int i = 1; i <= numMaps; i++) {
-      uri = baseUrl + "/robot/annotation/tags/" + i;
-      log.debug("uri: " + uri);
-      res = null;
+  public ArrayList<RMSListTagsResponse> getAllTags() {
+    ArrayList<RMSListTagsResponse> listTagsResponses = new ArrayList<>();
+    for (int i=1; i<=numMaps; i++) {
+      String uri = baseUrl + "/robot/annotation/tags/" + String.valueOf(i);
+      String res = null;
       log.debug("Sending get tags request");
       try {
         Http.HTTPRequestResponse httpResponse = Http.sendGetRequest(uri, null);
@@ -561,12 +599,17 @@ public class AvaHTTPAPI implements AvaAPIInterface {
       if (res == null) {
         return null;
       }
-      gson = new Gson();
+      Gson gson = new Gson();
       RMSListTagsResponse resObj = new RMSListTagsResponse();
       resObj.response = gson.fromJson(res, ListTagsResponse.class);
-      tagList.add(resObj);
+      listTagsResponses.add(resObj);
     }
-    return tagList;
+
+    if (listTagsResponses.isEmpty()) {
+      log.warn("[getAllTags] unable to get maps, make sure getMapMetadata has been called");
+      return null;
+    }
+    return listTagsResponses;
   }
 
   /**

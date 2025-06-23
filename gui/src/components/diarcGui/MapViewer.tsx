@@ -38,7 +38,7 @@ const Locations2Elements = (Locations: Locations, tailwindClass: string): JSX.El
 
     return sortedKeys.map(key => (
         <p key={key} className={`${tailwindClass}`}>
-            <strong>{key}</strong><br />
+            <strong>{parseInt(key.substring(key.lastIndexOf('_') + 1), 10)}: </strong>
             {Locations[key].description ? Locations[key].description : ''}
         </p>
     ));
@@ -84,7 +84,7 @@ const drawDot = (context, x, y, radius, color) => {
 
 const drawText = (context, text, x, y, scale, color) => {
     context.fillStyle = color;
-    context.font = `${10 * scale}px Arial`;
+    context.font = `${15 * scale}px Arial`;
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     context.fillText(text, x, y);
@@ -130,18 +130,15 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
 
         if (data.mapImageUrl) {
             setMapImageUrl(data.mapImageUrl);
-            console.log(data.mapImageUrl)
         }
         if (data.position && data.orientation) {
             setPoseData({ position: data.position, orientation: data.orientation, robotPixelPosition: data.robotPixelPosition });
         }
         if (data.keyLocations) {
             setKeyLocations(data.keyLocations);
-            console.log("keyLocations", data.keyLocations)
         }
         if (data.pastLocations) {
             setPastLocations(data.pastLocations);
-            console.log("pastLocations", data.pastLocations)
         }
         if (data.message) {
             setResponseMsg(`${data.success ? 'Success: ' : 'Failure: '} ${data.message}`);
@@ -207,34 +204,40 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
         const clickX = event.clientX - rect.left;
         const clickY = event.clientY - rect.top;
 
-        // Ensure all references are valid
-        if (imageRef.current && xPadRef.current !== undefined && yPadRef.current !== undefined && scaleRef.current !== undefined) {
-            const { current: image } = imageRef;
-            const { current: xPad } = xPadRef;
-            const { current: yPad } = yPadRef;
-            const { current: scale } = scaleRef;
-
-            const imageCoordinates = mapCoordinates(clickX, clickY, rect, xPad, yPad, canvasRef.current, image, scale);
-
-            console.log(`Image Coordinates: X=${imageCoordinates.imgX}, Y=${imageCoordinates.imgY}`);
-
-            sendWebSocketRequest('navigateToPoint', {
-                x: imageCoordinates.imgX,
-                y: imageCoordinates.imgY,
-                quatX: 0,   // Assume defaults for orientation
-                quatY: 0,
-                quatZ: 0,
-                quatW: 1
-            }, path);
-
-            console.log(`Navigating to Image Coordinates: X=${imageCoordinates.imgX}, Y=${imageCoordinates.imgY}`);
-        }
+        //// Ensure all references are valid
+        //if (imageRef.current && xPadRef.current !== undefined && yPadRef.current !== undefined && scaleRef.current !== undefined) {
+        //    const { current: image } = imageRef;
+        //    const { current: xPad } = xPadRef;
+        //    const { current: yPad } = yPadRef;
+        //    const { current: scale } = scaleRef;
+//
+        //    const imageCoordinates = mapCoordinates(clickX, clickY, rect, xPad, yPad, canvasRef.current, image, scale);
+//
+        //    console.log(`Image Coordinates: X=${imageCoordinates.imgX}, Y=${imageCoordinates.imgY}`);
+//
+        //    sendWebSocketRequest('navigateToPoint', {
+        //        x: imageCoordinates.imgX,
+        //        y: imageCoordinates.imgY,
+        //        quatX: 0,   // Assume defaults for orientation
+        //        quatY: 0,
+        //        quatZ: 0,
+        //        quatW: 1
+        //    }, path);
+//
+        //    console.log(`Navigating to Image Coordinates: X=${imageCoordinates.imgX}, Y=${imageCoordinates.imgY}`);
+        //}
     }, [sendWebSocketRequest, path]);
 
     // Drawing on the canvas
     useEffect(() => {
         const canvas = canvasRef.current!;
         const context = canvas.getContext("2d")!;
+
+        const viewportTransform = {
+          x: 0,
+          y: 0,
+          scale: 1
+        }
 
         canvas.width = 1920;
         canvas.height = 1080;
@@ -246,56 +249,125 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
         context.strokeStyle = "#d1dbe3";
         context.strokeRect(1, 1, canvas.width - 1, canvas.height - 1);
 
-        if (!mapImageUrl) {
-            context.fillStyle = "#000000";
-            context.textBaseline = "middle";
-            context.textAlign = "center";
-            context.font = "40px Ubuntu";
-            context.fillText("Map not loaded", canvas.width / 2, canvas.height / 2);
-        } else {
-            const image = new Image();
-            image.src = mapImageUrl;
-            image.onload = () => {
-                // Image scaling logic
-                const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
-                const xPad = (canvas.width / 2) - (image.width / 2) * scale;
-                const yPad = (canvas.height / 2) - (image.height / 2) * scale;
+        const render = () => {
+            if (!mapImageUrl) {
+                context.fillStyle = "#000000";
+                context.textBaseline = "middle";
+                context.textAlign = "center";
+                context.font = "40px Ubuntu";
+                //context.fillText("Map not loaded", canvas.width / 2, canvas.height / 2);
+            } else {
+                const image = new Image();
+                image.src = mapImageUrl;
+                image.onload = () => {
+                    // Image scaling logic
+                    const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
+                    const xPad = (canvas.width / 2) - (image.width / 2) * scale;
+                    const yPad = (canvas.height / 2) - (image.height / 2) * scale;
 
-                context.drawImage(image, xPad, yPad, image.width * scale, image.height * scale);
+                    context.setTransform(1, 0, 0, 1, 0, 0);
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    context.setTransform(viewportTransform.scale, 0, 0, viewportTransform.scale, viewportTransform.x, viewportTransform.y);
+                    context.drawImage(image, xPad, yPad, image.width * scale, image.height * scale);
 
-                // Update refs
-                xPadRef.current = xPad;
-                yPadRef.current = yPad;
-                scaleRef.current = scale;
-                imageRef.current = image;
+                    // Update refs
+                    xPadRef.current = xPad;
+                    yPadRef.current = yPad;
+                    scaleRef.current = scale;
+                    imageRef.current = image;
 
-                // Draw the robot position if it exists
-                if (poseData) {
-                    const robotX = xPad + poseData.robotPixelPosition.x * scale;
-                    const robotY = yPad + poseData.robotPixelPosition.y * scale;
-                    drawDot(context, robotX, robotY, 7 * scale, 'red');
+                    // Draw the robot position if it exists
+                    if (poseData) {
+                        const robotX = xPad + poseData.robotPixelPosition.x * scale;
+                        const robotY = yPad + poseData.robotPixelPosition.y * scale;
+                        drawDot(context, robotX, robotY, 15 * scale, 'red');
+                    }
+
+                    // Draw Key Locations
+                    Object.entries(keyLocations).forEach(([key, location]) => {
+                        const locX = xPad + location.x * scale;
+                        const locY = yPad + location.y * scale;
+                        drawDot(context, locX, locY, 15 * scale, 'green');
+                        drawText(context, extractLocationNumber(key), locX, locY, scale, 'black');
+                    });
+
+                    // Draw Past Locations
+                    Object.entries(pastLocations).forEach(([key, location]) => {
+                        const locX = xPad + location.x * scale;
+                        const locY = yPad + location.y * scale;
+                        drawDot(context, locX, locY, 5 * scale, 'orange');
+                        drawText(context, extractLocationNumber(key), locX, locY, scale, 'white');
+                    });
                 }
-
-                // Draw Key Locations
-                Object.entries(keyLocations).forEach(([key, location]) => {
-                    const locX = xPad + location.x * scale;
-                    const locY = yPad + location.y * scale;
-                    drawDot(context, locX, locY, 5 * scale, 'green');
-                    drawText(context, extractLocationNumber(key), locX, locY, scale, 'black');
-                });
-
-                // Draw Past Locations
-                Object.entries(pastLocations).forEach(([key, location]) => {
-                    const locX = xPad + location.x * scale;
-                    const locY = yPad + location.y * scale;
-                    drawDot(context, locX, locY, 5 * scale, 'orange');
-                    drawText(context, extractLocationNumber(key), locX, locY, scale, 'white');
-                });
             }
         }
+
+        let previousX = 0, previousY = 0;
+
+        const updatePanning = (e) => {
+          const localX = e.clientX;
+          const localY = e.clientY;
+
+          viewportTransform.x += (localX - previousX)*3;
+          viewportTransform.y += (localY - previousY)*3;
+
+          previousX = localX;
+          previousY = localY;
+        }
+
+         const updateZooming = (e) => {
+          const oldScale = viewportTransform.scale;
+          const oldX = viewportTransform.x;
+          const oldY = viewportTransform.y;
+
+          const localX = e.clientX;
+          const localY = e.clientY;
+
+          const previousScale = viewportTransform.scale;
+
+          const newScale = viewportTransform.scale += e.deltaY * -0.001;
+
+          const newX = localX - (localX - oldX) * (newScale / previousScale);
+          const newY = localY - (localY - oldY) * (newScale / previousScale);
+
+          viewportTransform.x = newX;
+          viewportTransform.y = newY;
+          viewportTransform.scale = newScale;
+        }
+
+        const onMouseMove = (e) => {
+          updatePanning(e)
+          render()
+        }
+
+        canvas.addEventListener("mousedown", (e) => {
+          previousX = e.clientX;
+          previousY = e.clientY;
+
+          canvas.addEventListener("mousemove", onMouseMove);
+        })
+
+        canvas.addEventListener("mouseup", (e) => {
+          canvas.removeEventListener("mousemove", onMouseMove);
+        })
+
+        const onMouseWheel = (e) => {
+          updateZooming(e)
+
+          render()
+        }
+
+        canvas.addEventListener("wheel", onMouseWheel);
+
+        render()
+
     },
         [mapImageUrl, poseData, keyLocations, pastLocations]
     );
+
+    useEffect(() => {
+        sendWebSocketRequest('startup', {}, path);
+    }, [path, sendMessage]);
 
     return (
         <div className="map-container h-full w-full flex flex-col gap-5 outline
@@ -304,16 +376,13 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
             <div className="flex flex-row justify-center gap-2 items-center w-full relative">
                 <div className="flex flex-row gap-2">
                     <Button onClick={() => sendWebSocketRequest('fetchMapData', {}, path)}>
-                        Fetch Map Data
+                        Refresh Map
                     </Button>
-                    <Button className="hidden" onClick={handleNavigateToPoint}>
-                        Navigate To Point
-                    </Button>
-                    <Button onClick={handleGoToLocation}>
+                    {/*}<Button onClick={handleGoToLocation}>
                         Go To Location
-                    </Button>
+                    </Button>*/}
                     <Button onClick={() => sendWebSocketRequest('fetchRobotPose', {}, path)}>
-                        Show/Update Robot Pose
+                        Update Robot Pose
                     </Button>
                     <Button className="hidden" onClick={() => sendWebSocketRequest('fetchKeyLocations', {}, path)}>
                         Fetch Key Locations
@@ -322,11 +391,13 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
                         Fetch Past Locations
                     </Button>
                 </div>
+                {/*
                 {responseMsg && (
                     <div className={`font-bold absolute right-0 top-1/2 transform -translate-y-1/2 transition-colors duration-2000 ${isChanged ? 'text-red-500' : 'text-black'}`}>
                         {responseMsg}
                     </div>
                 )}
+                */}
             </div>
 
             <div className="flex flex-row justify-center gap-5 h-full">
@@ -334,11 +405,12 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
 
                 <div className="flex flex-col gap-2 overflow-y-auto max-h-full w-3/12">
                     <div className="pose-data">
-                        <div dangerouslySetInnerHTML={{ __html: position2String(poseData) }}></div>
-                        <div dangerouslySetInnerHTML={{ __html: orientation2String(poseData) }}></div>
+                        {/*<div dangerouslySetInnerHTML={{ __html: position2String(poseData) }}></div>
+                        <div dangerouslySetInnerHTML={{ __html: orientation2String(poseData) }}></div>*/}
                     </div>
 
                     <div className="key-locations">
+                        <div className="w-full font-bold">Location Key:</div>
                         {Locations2Elements(keyLocations, 'text-black')}
                     </div>
                 </div>
