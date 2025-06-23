@@ -250,7 +250,11 @@ public class GoalViewerAdapter extends GuiAdapter {
         continue;
       }
       JsonObject goalJson = new JsonObject();
-      goalJson.addProperty("name", convertGoalToReadableString(info));
+      String goalString = convertGoalToReadableString(info);
+      if (info.priorityTier == PriorityTier.KIOSK) {
+        goalString = "(Kiosk) " + goalString;
+      }
+      goalJson.addProperty("name", goalString);
       goalJson.addProperty("actor", info.actor.getName());
       goalJson.addProperty("status", info.status.toString().toLowerCase());
       goalJson.addProperty("start", info.start == -1 ? "" : simpleDateFormat.format(new Date(info.start)));

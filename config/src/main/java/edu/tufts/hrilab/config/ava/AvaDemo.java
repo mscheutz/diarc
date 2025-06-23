@@ -158,7 +158,7 @@ public class AvaDemo extends DiarcConfiguration {
 
     String kioskArgs = "";
     if (initKiosk) {
-      kioskArgs += " -enabled -timeout 60";
+      kioskArgs += " -enabled -timeout 2700";
     }
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,

@@ -11,7 +11,7 @@ import AvaBehaviorTab from "../AvaBehaviorTab"
 
 const handlerRoots: string[] =
     //["actionProgrammer", "belief", "chat", "goalViewer", "goalManager", "map", "vision", "tradeService"];
-    ["actionProgrammer", "chat", "goalViewer", "goalQueueViewer", "vision", "tradeService", "avaBehaviors"];
+    ["actionProgrammer", "chat", "goalViewer", "goalQueueViewer", "vision", "tradeService", "avaBehaviors", "map"];
 
 const handlers = {
     "actionProgrammer": {

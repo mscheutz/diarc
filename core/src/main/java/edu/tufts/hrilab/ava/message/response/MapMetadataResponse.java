@@ -19,4 +19,6 @@ public class MapMetadataResponse {
   public String company;
   public String building;
   public String floor;
+  public double originX;
+  public double originY;
 }
