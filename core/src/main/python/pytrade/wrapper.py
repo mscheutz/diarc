@@ -23,8 +23,8 @@ try:
 
     jpype.startJVM(classpath=[args.classpath])
 
-    jpype_cp = jpype.java.lang.System.getProperty('java.class.path')
-    logging.info("jpype_cp: {}".format(jpype_cp))
+    # jpype_cp = jpype.java.lang.System.getProperty('java.class.path')
+    # logging.info("jpype_cp: {}".format(jpype_cp))
 
     from ai.thinkingrobots.trade import TRADE, TRADEServiceConstraints, TRADEServiceInfo, TRADEException
 

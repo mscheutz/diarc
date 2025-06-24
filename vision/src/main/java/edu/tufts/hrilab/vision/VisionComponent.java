@@ -68,6 +68,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
   private double rotX = -Math.PI / 4.0;    //rotation of vision coordinates around x-axis (using vision coordinate system)
   private double transHeight = 1.5;    //distance of vision sensor from ground (meters)
   private String cameraCoordinateFrame = "Camera";
+  private String baseFrame = "base_link";
 
   // flags for making TRADE service calls
   private boolean useCoordinateFrames = false;
@@ -246,13 +247,13 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
       TRADEServiceConstraints additionalConstraints = this.getMyGroupConstraints();
       try {
         // TODO: replace this with a notify call
-        TRADEServiceInfo getTransformService = TRADE.getAvailableService(additionalConstraints.name("getTransform").argTypes(String.class));
+        TRADEServiceInfo getTransformService = TRADE.getAvailableService(additionalConstraints.name("getTransform").argTypes(String.class, String.class));
         if (!shouldLogTransformMsg) {
           shouldLogTransformMsg = true;
           log.warn("getTransform service is now available.");
         }
         try {
-          Matrix4d tmpTransform = getTransformService.call(Matrix4d.class, cameraCoordinateFrame);
+          Matrix4d tmpTransform = getTransformService.call(Matrix4d.class, baseFrame, cameraCoordinateFrame);
           if (tmpTransform != null) {
             currVisionTransform = tmpTransform;
           } else {
@@ -369,6 +370,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
     options.add(Option.builder("rotX").hasArg().argName("x").desc("degrees to rotate vision coordinates around x-axis (neg to \"look down\", default: -45)").build());
     options.add(Option.builder("height").hasArg().argName("x").desc("distance of vision coordinates above ground (meters)").build());
     options.add(Option.builder("cameraFrame").hasArg().argName("frame").desc("set name of camera coordinate frame and use CoordinateFramesComponent for coord transform").build());
+    options.add(Option.builder("baseFrame").hasArg().argName("frame").desc("set name of base coordinate frame (default: base_link)").build());
     options.add(Option.builder("publishPointCloud").hasArgs().argName("groups").optionalArg(true).desc("send point cloud data to another componen to be published to ROS").build());
     options.add(Option.builder("belief").hasArgs().argName("groups").optionalArg(true).desc("egister for notifications from com.belief.BeliefComponent").build());
     options.add(Option.builder("i").longOpt("introspection").desc("turn on vision introspection").build());
@@ -385,6 +387,9 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
     if (cmdLine.hasOption("cameraFrame")) {
       useCoordinateFrames = true;
       cameraCoordinateFrame = cmdLine.getOptionValue("cameraFrame");
+    }
+    if (cmdLine.hasOption("baseFrame")) {
+      baseFrame = cmdLine.getOptionValue("baseFrame");
     }
     if (cmdLine.hasOption("publishPointCloud")) {
       publishPointCloud = true;

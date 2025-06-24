@@ -11,10 +11,6 @@ import javax.vecmath.Matrix4d;
 import java.util.List;
 
 public class MockTFComponent extends DiarcComponent implements CoordinateFramesInterface {
-  @Override
-  public Matrix4d getTransform(String dstFrame) {
-    return null;
-  }
 
   @Override
   public Matrix4d getTransform(String srcFrame, String dstFrame) {

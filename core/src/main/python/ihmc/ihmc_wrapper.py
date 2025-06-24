@@ -17,7 +17,7 @@ from edu.tufts.hrilab.consultant.pose import PoseConsultant, PoseReference
 from geometry_msgs.msg import Point, Quaternion, Pose
 from ihmc_common_msgs.msg import PoseListMessage
 from behavior_msgs.msg import AI2RCommandMessage, AI2RStatusMessage
-from behavior_msgs.msg import ContinuousWalkingCommandMessage
+from behavior_msgs.msg import ContinuousHikingCommandMessage
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
@@ -36,8 +36,8 @@ class NadiaWrapper:
             depth=1
         )
         self._walk_timer = None
-        self._walk_publisher = self.node.create_publisher(ContinuousWalkingCommandMessage,
-                                                          '/ihmc/continuous_walking/command',
+        self._walk_publisher = self.node.create_publisher(ContinuousHikingCommandMessage,
+                                                          '/ihmc/continuous_hiking/command',
                                                           qos_profile=self._qos_profile)
         self._command_publisher = self.node.create_publisher(AI2RCommandMessage,
                                                              '/ihmc/behavior_tree/ai2r_command',
@@ -69,10 +69,11 @@ class NadiaWrapper:
     @JOverride
     def walk(self):
         logging.info("[walk]")
-        command = ContinuousWalkingCommandMessage()
-        command.publish_to_controller = True
-        command.enable_continuous_walking = True
+        command = ContinuousHikingCommandMessage()
+        command.enable_continuous_hiking = True
+        command.use_astar_footstep_planner = True
         self._walk_publisher.publish(command)
+        logging.info("[walk] end")
 
     @JOverride
     def push_door_primitive(self) -> Justification:

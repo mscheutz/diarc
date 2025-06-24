@@ -243,7 +243,6 @@ namespace diarc {
           return;
         }
 
-        //using "default" kinect params
         const int imgWidth = depth.cols;
         const int imgHeight = depth.rows;
 

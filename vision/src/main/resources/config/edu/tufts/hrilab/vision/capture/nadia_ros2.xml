@@ -1,0 +1,31 @@
+<!--
+Set the runtime camera capture configuration for the vision system.
+
+Required:
+	camMode: camera mode - see options below
+	imageWidth: image width in pixels
+	imageHeight: image height in pixels
+	hasStereo: is capture mode stereo
+	hasDepth: does capture mode produce depth info
+
+Optional:
+	any additional fields the particular camera mode might need
+
+NOTE: use this config with:
+
+	 ros2 launch realsense2_camera rs_align_depth_launch.py"
+-->
+
+<capture>
+    <camMode>ROS2</camMode>
+    <imageWidth>320</imageWidth>
+    <imageHeight>240</imageHeight>
+    <hasStereo>false</hasStereo>
+    <hasDepth>true</hasDepth>
+    <imageTopic>/zed/color/image</imageTopic>
+    <depthTopic>/zed/depth/image</depthTopic>
+    <cameraInfoTopic>/zed/color/camera_info</cameraInfoTopic>
+    <depthInfoTopic>/zed/depth/camera_info</depthInfoTopic>
+    <convertToRGB>true</convertToRGB>
+    <convertToMeters>false</convertToMeters>
+</capture>

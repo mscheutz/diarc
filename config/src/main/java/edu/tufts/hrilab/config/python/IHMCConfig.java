@@ -6,6 +6,8 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.python.PythonWrapper;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
@@ -35,7 +37,7 @@ public class IHMCConfig extends DiarcConfiguration {
     createInstance(SimSpeechProductionComponent.class);
 //    createInstance(MaryTTSComponent.class);
 
-//    createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture nadia_ros2.xml -cameraFrame ros2_left_optical");
+    createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture nadia_ros2.xml -cameraFrame ros2_left_optical");
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
@@ -57,15 +59,26 @@ public class IHMCConfig extends DiarcConfiguration {
     ihmc_wrapper.start();
 
     PythonWrapper ros2_tf2_wrapper = new PythonWrapper("ros2_tf2.ros2_tf2_wrapper", true);
-//    ros2_tf2_wrapper.start();
+    ros2_tf2_wrapper.start();
+
+    Util.Sleep(10000);
+
+
+    try {
+      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class));
+      service.call(Long.class, Factory.createPredicate("push_door_primitive(self)"));
+    } catch (TRADEException e) {
+      throw new RuntimeException(e);
+    }
 
 //    log.info("Attempting to call python getTransform service...");
-//    Util.Sleep(5000);
 //    try {
 //      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTransform").argTypes(String.class, String.class));
 //      Matrix4d transform = service.call(Matrix4d.class, "ros2_left_optical", "base_link");
 //      log.info("TF2 transform: {}", transform);
 //    } catch (TRADEException e) {
+//      log.error("getTransform exception", e);
+//    } catch (Exception e) {
 //      log.error("getTransform exception", e);
 //    }
 
