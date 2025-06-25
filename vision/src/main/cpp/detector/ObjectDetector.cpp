@@ -16,7 +16,6 @@
 #include "SiftDetector.hpp"
 #include "SpatialRelationDetector.hpp"
 #include "SurfaceMarkingDetector.hpp"
-#include "FoodDetectorByHSV.hpp"
 #include "MotionDetector.hpp"
 #include "ArucoDetector.hpp"
 
@@ -34,10 +33,6 @@
 #ifdef USE_V4R_V0
 #include "ClusterDetectorAdvanced.hpp"
 #endif //USE_V4R_V0
-
-#ifdef USE_PCL_PEOPLE
-#include "PeopleDetector.hpp"
-#endif  //USE_PCL_PEOPLE
 
 #ifdef USE_OPENPOSE
 #include "OpPoseDetector.hpp"
@@ -110,8 +105,6 @@ ObjectDetector::Ptr ObjectDetector::get(const DetectorType type, const long long
     LOG4CXX_ERROR(factoryLogger, "BarCodeDetector not available. Did you compile vision with ZBAR?");
 #endif
       break;
-    case HSVFOODDETECT:
-      return FoodDetectorByHSV::Ptr(new FoodDetectorByHSV(processorId, imgWidth, imgHeight));
     case MOTION:
       return MotionDetector::Ptr(new MotionDetector(processorId, imgWidth, imgHeight));
     case DNN:

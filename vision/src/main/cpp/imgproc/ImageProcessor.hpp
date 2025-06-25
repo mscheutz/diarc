@@ -24,7 +24,6 @@ enum ImageProcessorType {
   COLORVALIDATOR, // color validation
   DEFINITIONVALIDATOR, // relabels scene graph according to definition (partOf(orange,knife) --> handle)
   GLOBALFEATUREVALIDATOR, // surface shape/texture/marking validation
-  SHAPEVALIDATOR, // shape validation
   SPATIALRELATIONVALIDATOR, // spatial relation between object parts (e.g., near, on, etc)
   SURFACEMARKINGVALIDATOR, // surface shape/texture/marking validation
   SIZEVALIDATOR, // global size validation (e.g., small, medium, large)

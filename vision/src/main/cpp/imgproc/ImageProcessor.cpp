@@ -38,7 +38,6 @@
 #include "saliency/LocationSaliencyProcessor.hpp"
 #include "saliency/OrientationProcessor.hpp"
 #include "saliency/MasterSaliencyProcessor.hpp"
-#include "validator/ShapeValidator.hpp"
 #include "validator/SurfaceMarkingValidator.hpp"
 #endif //USE_V4R_V0
 
@@ -132,13 +131,6 @@ ImageProcessor::Ptr ImageProcessor::get(const ImageProcessorType type, const lon
       LOG4CXX_ERROR(factoryLogger, "ComponentValidator not available. This require OpenCV DNN module 4.5+.");
       break;
 #endif
-    case SHAPEVALIDATOR:
-#ifdef USE_V4R_V0
-      return ShapeValidator::Ptr(new ShapeValidator(processorId, imgWidth, imgHeight, isStereo));
-#else
-      LOG4CXX_ERROR(factoryLogger, "ShapeValidator not available. Did you compile vision with V4R?");
-#endif
-      break;
     case SPATIALRELATIONVALIDATOR:
       return SpatialRelationValidator::Ptr(new SpatialRelationValidator(processorId, imgWidth, imgHeight, isStereo));
     case SURFACEMARKINGVALIDATOR:

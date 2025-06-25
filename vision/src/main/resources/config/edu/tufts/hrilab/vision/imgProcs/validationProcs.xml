@@ -31,7 +31,6 @@ all processors must be enclosed within the <processors> tag
 	<processor type="definitionvalidator" config="definition/definitions.xml"/>
 	<!--<processor type="globalfeaturevalidator" config="global_feature/global_features.xml" required="depth"/>-->
 	<!--<processor type="globalfeaturevalidator" config="global_feature/global_features_unnamed.xml" required="depth"/>-->
-	<!--<processor type="shapevalidator" config="shape/shapes.xml" required="depth"/>-->
 	<processor type="spatialrelationvalidator" config="spatial_relation/spatial_relations.xml" required="depth"/>
 	<processor type="surfacemarkingvalidator" config="surface_marking/surfacemarkings.xml"/>
 	<processor type="componentvalidator" config="componentvalidator/components.json" required="depth"/>
