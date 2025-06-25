@@ -28,7 +28,6 @@ public:
     OPENPOSE,
     V4R,
     BARCODE,
-    HSVFOODDETECT,
     MOTION,
     DNN,
     BUTTONDETECTOR,

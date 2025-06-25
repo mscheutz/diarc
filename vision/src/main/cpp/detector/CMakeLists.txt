@@ -9,7 +9,6 @@ SET(SOURCES
 	ClusterDetector2D.cpp
 	ColorBasedDetector.cpp
 	FaceDetector.cpp
-	FoodDetectorByHSV.cpp
 	HoughDetector.cpp
 	MotionDetector.cpp
 	ObjectDetector.cpp
@@ -79,26 +78,11 @@ if (OpenCV_dnn_FOUND)
 
 endif(OpenCV_dnn_FOUND)
 
-#if (PCL_GPU_PEOPLE_FOUND)
-if (USE_PCL_PEOPLE AND PCL_GPU_PEOPLE_FOUND)
-	message(PCL_GPU_PEOPLE_FOUND)
-	SET(SOURCES ${SOURCES}
-		PeopleDetector.cpp
-	)
-endif (USE_PCL_PEOPLE AND PCL_GPU_PEOPLE_FOUND)
-#endif(PCL_GPU_PEOPLE_FOUND)
-
 if (V4R_V0_FOUND)
 	SET(SOURCES ${SOURCES}
 		ClusterDetectorAdvanced.cpp
 	)
 endif(V4R_V0_FOUND)
-
-if (NITE_FOUND)
-	SET(SOURCES ${SOURCES}
-		people_openni/PeopleDetector.cpp
-	)
-endif(NITE_FOUND)
 
 if (OpenPose_FOUND)
 	SET(SOURCES ${SOURCES}
@@ -117,8 +101,6 @@ if (ZBAR_FOUND)
 			BarCodeDetector.cpp
 			)
 endif(ZBAR_FOUND)
-
-
 
 ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
 
