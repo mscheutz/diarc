@@ -60,6 +60,7 @@ public class AvaMapAdapter extends GuiAdapter {
   //==========================================================================
   public AvaMapAdapter(Collection<String> groups) {
     super(groups);
+    startRobotPosThread();
   }
 
   //======================================================================
@@ -77,7 +78,6 @@ public class AvaMapAdapter extends GuiAdapter {
 
     switch (message.get("action").getAsString()) {
       case "startup":
-        //startRobotPosThread();
       case "fetchMapData":
         fetchMapData();
         fetchKnownLocations();
@@ -122,18 +122,18 @@ public class AvaMapAdapter extends GuiAdapter {
   //======================================================================
 
   //TODO: need to update map tsx to handle live updates gracefully
-  //private void startRobotPosThread() {
-  //  new Thread(() -> {
-  //    while (runRobotPosThread) {
-  //      try {
-  //        Thread.sleep(5000);
-  //        fetchRobotPose();
-  //      } catch (InterruptedException e) {
-  //        log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
-  //      }
-  //    }
-  //  }).start();
-  //}
+  private void startRobotPosThread() {
+    new Thread(() -> {
+      while (runRobotPosThread) {
+        try {
+          Thread.sleep(5000);
+          fetchRobotPose();
+        } catch (InterruptedException e) {
+          log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
+        }
+      }
+    }).start();
+  }
 
   /**
    * Update local current FloorMap and current floor number.

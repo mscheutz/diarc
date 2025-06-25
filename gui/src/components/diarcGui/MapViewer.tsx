@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useReducer } from 'react';
 import { Button } from "../Button";
 import { ReadyState, SendMessage } from 'react-use-websocket';
 import ConnectionIndicator from './util/ConnectionIndicator';
+import "./util/StyleOverrides.css";
 
 type Position = { x: number, y: number, z: number };
 type Orientation = { x: number, y: number, z: number, w: number };
@@ -99,6 +100,14 @@ type Props = {
     readyState: ReadyState
 };
 
+const useState2 = initVal => {
+  const setter = useRef((__, next) => ({ val: next })).current
+  const [wrapper, dispatch] = useReducer(setter, { val: initVal })
+  const state = wrapper.val
+  const setState = dispatch
+  return [state, setState]
+}
+
 const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState }) => {
     // State //
     const [poseData, setPoseData] = useState<Pose | null>(null);
@@ -107,9 +116,17 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
     const [keyLocations, setKeyLocations] = useState<Locations>({});
     const [pastLocations, setPastLocations] = useState<Locations>({});
     const [mapImageUrl, setMapImageUrl] = useState<string>("");
+    const [refresh, setRefresh] = useState<number>(0);
+    const [viewportTransform, setViewportTransform] =  useState<Array>(null);
+    const [init, setInit] = useState(false);
+    const [mouseDownListener, setMouseDownListener] = useState2(null);
+    const [mouseUpListener, setMouseUpListener] = useState2(null);
+    const [mouseWheelListener, setMouseWheelListener] = useState2(null);
 
     // State for drawing calculations
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const locationsCanvasRef = useRef<HTMLCanvasElement>(null);
+    const robotCanvasRef = useRef<HTMLCanvasElement>(null);
     const xPadRef = useRef<number>(0);
     const yPadRef = useRef<number>(0);
     const scaleRef = useRef<number>(1);
@@ -130,6 +147,7 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
 
         if (data.mapImageUrl) {
             setMapImageUrl(data.mapImageUrl);
+            setRefresh(refresh + 1);
         }
         if (data.position && data.orientation) {
             setPoseData({ position: data.position, orientation: data.orientation, robotPixelPosition: data.robotPixelPosition });
@@ -210,11 +228,11 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
         //    const { current: xPad } = xPadRef;
         //    const { current: yPad } = yPadRef;
         //    const { current: scale } = scaleRef;
-//
+
         //    const imageCoordinates = mapCoordinates(clickX, clickY, rect, xPad, yPad, canvasRef.current, image, scale);
-//
+
         //    console.log(`Image Coordinates: X=${imageCoordinates.imgX}, Y=${imageCoordinates.imgY}`);
-//
+
         //    sendWebSocketRequest('navigateToPoint', {
         //        x: imageCoordinates.imgX,
         //        y: imageCoordinates.imgY,
@@ -223,146 +241,192 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
         //        quatZ: 0,
         //        quatW: 1
         //    }, path);
-//
+
         //    console.log(`Navigating to Image Coordinates: X=${imageCoordinates.imgX}, Y=${imageCoordinates.imgY}`);
         //}
     }, [sendWebSocketRequest, path]);
 
-    // Drawing on the canvas
+    //TODO: This can't be the correct way to do this. Was trying things until something worked...
     useEffect(() => {
+        if (init) {
+            const canvas = canvasRef.current!;
+            const context = canvas.getContext("2d")!;
+            const robotCv = robotCanvasRef.current;
+            const robotCtx = robotCv.getContext("2d")!;
+            const locationsCv = locationsCanvasRef.current;
+            const locationsCtx = locationsCv.getContext("2d")!;
+
+            const internalViewportT = [0,0,1]
+            canvas.width = 1920;
+            canvas.height = 1080;
+            robotCv.width = 1920;
+            robotCv.height = 1080;
+            locationsCv.width = 1920;
+            locationsCv.height = 1080;
+
+            let previousX = 0, previousY = 0;
+
+            const updatePanning = (e) => {
+              const localX = e.clientX;
+              const localY = e.clientY;
+
+              internalViewportT[0] += (localX - previousX)*3;
+              internalViewportT[1] += (localY - previousY)*3;
+
+              previousX = localX;
+              previousY = localY;
+
+              var temp = internalViewportT.slice()
+              setViewportTransform(temp);
+            }
+
+             const updateZooming = (e) => {
+              const localX = e.clientX;
+              const localY = e.clientY;
+
+              const previousScale = internalViewportT[2];
+
+              const newScale = internalViewportT[2] += e.deltaY * -0.001;
+
+              const newX = localX - (localX - internalViewportT[0]) * (newScale / previousScale);
+              const newY = localY - (localY - internalViewportT[1]) * (newScale / previousScale);
+
+              internalViewportT[0] = newX;
+              internalViewportT[1] = newY;
+              internalViewportT[2] = newScale;
+              var temp = internalViewportT.slice()
+              setViewportTransform(temp);
+            }
+
+            const onMouseMove = (e) => {
+              updatePanning(e)
+            }
+
+            const onMouseDown = (e) => {
+                previousX = e.clientX;
+                previousY = e.clientY;
+
+                robotCv.addEventListener("mousemove", onMouseMove);
+            };
+            const onMouseUp = (e) => {
+                robotCv.removeEventListener("mousemove", onMouseMove);
+            };
+            const onMouseWheel = (e) => {
+                updateZooming(e)
+            }
+
+            if (mouseDownListener !== null) {
+                robotCv.removeEventListener("mousedown", mouseDownListener);
+                robotCv.removeEventListener("mouseup", mouseUpListener);
+                robotCv.removeEventListener("wheel", mouseWheelListener);
+            }
+
+            robotCv.addEventListener("mousedown", onMouseDown);
+            robotCv.addEventListener("mouseup", onMouseUp);
+            robotCv.addEventListener("wheel", onMouseWheel);
+            setMouseDownListener(onMouseDown);
+            setMouseUpListener(onMouseUp);
+            setMouseWheelListener(onMouseWheel);
+            setViewportTransform([0,0,1]);
+        }
+    },
+        [init, refresh]
+    );
+
+    useEffect(() => {
+        setInit(true)
         const canvas = canvasRef.current!;
         const context = canvas.getContext("2d")!;
 
-        const viewportTransform = {
-          x: 0,
-          y: 0,
-          scale: 1
+        if (!mapImageUrl || !init) {
+            context.clearRect(0, 0, 1920, 1080);
+            context.fillStyle = "#000000";
+            context.textBaseline = "middle";
+            context.textAlign = "center";
+            context.font = "40px Ubuntu";
+            context.fillText("Map not loaded", canvas.width / 2, canvas.height / 2);
+        } else {
+            const image = new Image();
+            image.src = mapImageUrl;
+            image.onload = () => {
+                // Image scaling logic
+                const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
+                const xPad = (canvas.width / 2) - (image.width / 2) * scale;
+                const yPad = (canvas.height / 2) - (image.height / 2) * scale;
+                var temp = viewportTransform.slice()
+
+                context.clearRect(0, 0, 1920, 1080);
+                context.setTransform(temp[2], 0, 0, temp[2], temp[0], temp[1]);
+                context.drawImage(image, xPad, yPad, image.width * scale, image.height * scale);
+
+                // Update refs
+                xPadRef.current = xPad;
+                yPadRef.current = yPad;
+                scaleRef.current = scale;
+                imageRef.current = image;
+            }
         }
+    },
+        [mapImageUrl, viewportTransform, init]
+    );
 
-        canvas.width = 1920;
-        canvas.height = 1080;
 
-        // Clear existing context
-        context.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Background
-        context.strokeStyle = "#d1dbe3";
-        context.strokeRect(1, 1, canvas.width - 1, canvas.height - 1);
-
-        const render = () => {
-            if (!mapImageUrl) {
-                context.fillStyle = "#000000";
-                context.textBaseline = "middle";
-                context.textAlign = "center";
-                context.font = "40px Ubuntu";
-                //context.fillText("Map not loaded", canvas.width / 2, canvas.height / 2);
+    //Robot position
+    useEffect(() => {
+        const robotCv = robotCanvasRef.current;
+        if (robotCv != null) {
+            const robotCtx = robotCv.getContext("2d")!;
+            if (!mapImageUrl || !init) {
+                return
             } else {
-                const image = new Image();
-                image.src = mapImageUrl;
-                image.onload = () => {
-                    // Image scaling logic
-                    const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
-                    const xPad = (canvas.width / 2) - (image.width / 2) * scale;
-                    const yPad = (canvas.height / 2) - (image.height / 2) * scale;
-
-                    context.setTransform(1, 0, 0, 1, 0, 0);
-                    context.clearRect(0, 0, canvas.width, canvas.height);
-                    context.setTransform(viewportTransform.scale, 0, 0, viewportTransform.scale, viewportTransform.x, viewportTransform.y);
-                    context.drawImage(image, xPad, yPad, image.width * scale, image.height * scale);
-
-                    // Update refs
-                    xPadRef.current = xPad;
-                    yPadRef.current = yPad;
-                    scaleRef.current = scale;
-                    imageRef.current = image;
-
-                    // Draw the robot position if it exists
-                    if (poseData) {
-                        const robotX = xPad + poseData.robotPixelPosition.x * scale;
-                        const robotY = yPad + poseData.robotPixelPosition.y * scale;
-                        drawDot(context, robotX, robotY, 15 * scale, 'red');
-                    }
-
-                    // Draw Key Locations
-                    Object.entries(keyLocations).forEach(([key, location]) => {
-                        const locX = xPad + location.x * scale;
-                        const locY = yPad + location.y * scale;
-                        drawDot(context, locX, locY, 15 * scale, 'green');
-                        drawText(context, extractLocationNumber(key), locX, locY, scale, 'black');
-                    });
-
-                    // Draw Past Locations
-                    Object.entries(pastLocations).forEach(([key, location]) => {
-                        const locX = xPad + location.x * scale;
-                        const locY = yPad + location.y * scale;
-                        drawDot(context, locX, locY, 5 * scale, 'orange');
-                        drawText(context, extractLocationNumber(key), locX, locY, scale, 'white');
-                    });
+                // Draw the robot position if it exists
+                if (poseData) {
+                    robotCtx.clearRect(0,0,1920,1080)
+                    var temp = viewportTransform.slice()
+                    robotCtx.setTransform(temp[2], 0, 0, temp[2], temp[0], temp[1]);
+                    const robotX = xPadRef.current + poseData.robotPixelPosition.x * scaleRef.current;
+                    const robotY = yPadRef.current + poseData.robotPixelPosition.y * scaleRef.current;
+                    drawDot(robotCtx, robotX, robotY, 15 * scaleRef.current, 'red');
                 }
             }
         }
-
-        let previousX = 0, previousY = 0;
-
-        const updatePanning = (e) => {
-          const localX = e.clientX;
-          const localY = e.clientY;
-
-          viewportTransform.x += (localX - previousX)*3;
-          viewportTransform.y += (localY - previousY)*3;
-
-          previousX = localX;
-          previousY = localY;
-        }
-
-         const updateZooming = (e) => {
-          const oldScale = viewportTransform.scale;
-          const oldX = viewportTransform.x;
-          const oldY = viewportTransform.y;
-
-          const localX = e.clientX;
-          const localY = e.clientY;
-
-          const previousScale = viewportTransform.scale;
-
-          const newScale = viewportTransform.scale += e.deltaY * -0.001;
-
-          const newX = localX - (localX - oldX) * (newScale / previousScale);
-          const newY = localY - (localY - oldY) * (newScale / previousScale);
-
-          viewportTransform.x = newX;
-          viewportTransform.y = newY;
-          viewportTransform.scale = newScale;
-        }
-
-        const onMouseMove = (e) => {
-          updatePanning(e)
-          render()
-        }
-
-        canvas.addEventListener("mousedown", (e) => {
-          previousX = e.clientX;
-          previousY = e.clientY;
-
-          canvas.addEventListener("mousemove", onMouseMove);
-        })
-
-        canvas.addEventListener("mouseup", (e) => {
-          canvas.removeEventListener("mousemove", onMouseMove);
-        })
-
-        const onMouseWheel = (e) => {
-          updateZooming(e)
-
-          render()
-        }
-
-        canvas.addEventListener("wheel", onMouseWheel);
-
-        render()
-
     },
-        [mapImageUrl, poseData, keyLocations, pastLocations]
+        [poseData, viewportTransform, init]
+    );
+
+    //Locations
+    useEffect(() => {
+        //Swap to location canvas
+        //use viewportTransform in useEffect
+        const locationsCv = locationsCanvasRef.current;
+        if (locationsCv != null) {
+            const locationsCtx = locationsCv.getContext("2d")!;
+
+            if (!mapImageUrl || !init) {
+                return
+            } else {
+                locationsCtx.clearRect(0,0,1920,1080)
+                var temp = viewportTransform.slice()
+                locationsCtx.setTransform(temp[2], 0, 0, temp[2], temp[0], temp[1]);
+                // Draw Key Locations
+                Object.entries(keyLocations).forEach(([key, location]) => {
+                    const locX = xPadRef.current + location.x * scaleRef.current;
+                    const locY = yPadRef.current + location.y * scaleRef.current;
+                    drawDot(locationsCtx, locX, locY, 15 * scaleRef.current, 'green');
+                    drawText(locationsCtx, extractLocationNumber(key), locX, locY, scaleRef.current, 'black');
+                });
+
+                // Draw Past Locations
+                Object.entries(pastLocations).forEach(([key, location]) => {
+                    const locX = xPadRef.current + location.x * scaleRef.current;
+                    const locY = yPadRef.current + location.y * scaleRef.current;
+                    drawDot(locationsCtx, locX, locY, 5 * scaleRef.current, 'orange');
+                    drawText(locationsCtx, extractLocationNumber(key), locX, locY, scaleRef.current, 'white');
+                });
+            }
+        }
+    },
+        [keyLocations, pastLocations, viewportTransform, init]
     );
 
     useEffect(() => {
@@ -400,8 +464,18 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
                 */}
             </div>
 
-            <div className="flex flex-row justify-center gap-5 h-full">
-                <canvas ref={canvasRef} className="Map w-9/12" onClick={handleCanvasClick} />
+            <div className="flex flex-row justify-center gap-5 h-full w-full">
+                <div className="Map w-9/12 parent">
+                    <div className="w-full h-full z-2">
+                    <canvas ref={canvasRef} className="w-full h-full" onClick={handleCanvasClick} />
+                    </div>
+                    <div className="w-full h-full z-1">
+                    <canvas ref={locationsCanvasRef} className="w-full h-full"/>
+                    </div>
+                    <div className="w-full h-full z-0">
+                    <canvas ref={robotCanvasRef} className="w-full h-full"/>
+                    </div>
+                </div>
 
                 <div className="flex flex-col gap-2 overflow-y-auto max-h-full w-3/12">
                     <div className="pose-data">
