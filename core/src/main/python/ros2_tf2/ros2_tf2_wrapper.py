@@ -29,10 +29,10 @@ class TF2Wrapper(Node):
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.trade_wrapper = trade_wrapper
 
-    def _get_transform(self, target_frame, source_frame):
+    def _get_transform(self, source_frame, target_frame):
         try:
             transform = self.tf_buffer.lookup_transform(
-                target_frame, source_frame,
+                source_frame, target_frame,
                 rclpy.time.Time()
             )
             return transform
@@ -48,7 +48,7 @@ class TF2Wrapper(Node):
 
     @JOverride
     def getTransform(self, source_frame, target_frame):
-        tf = self._get_transform(str(target_frame), str(source_frame))
+        tf = self._get_transform(str(source_frame), str(target_frame))
 
         if tf is None:
             return None

@@ -27,5 +27,5 @@ NOTE: use this config with:
     <cameraInfoTopic>/zed/color/camera_info</cameraInfoTopic>
     <depthInfoTopic>/zed/depth/camera_info</depthInfoTopic>
     <convertToRGB>true</convertToRGB>
-    <convertToMeters>false</convertToMeters>
+    <convertToMeters>true</convertToMeters>
 </capture>

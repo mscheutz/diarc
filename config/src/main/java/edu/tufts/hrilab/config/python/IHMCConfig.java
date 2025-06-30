@@ -37,7 +37,7 @@ public class IHMCConfig extends DiarcConfiguration {
     createInstance(SimSpeechProductionComponent.class);
 //    createInstance(MaryTTSComponent.class);
 
-    createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture nadia_ros2.xml -cameraFrame ros2_left_optical");
+    createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture nadia_ros2.xml -cameraFrame ros2_left_optical -baseFrame base_footprint");
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
