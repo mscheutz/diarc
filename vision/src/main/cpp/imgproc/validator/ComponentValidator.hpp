@@ -2,13 +2,6 @@
  Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-/*
- * File:   OrientationValidator.hpp
- * Author: evan
- *
- * Created on March 27, 2014, 5:23 PM
- */
-
 #ifndef COMPONENTVALIDATOR_HPP
 #define	COMPONENTVALIDATOR_HPP
 

@@ -41,7 +41,6 @@ Optional fields:
   <detector type="openpose" trackers="generic"  config="openpose/openpose.xml" required="openpose"/>
   <detector type="v4r" trackers="v4r"  config="v4r/v4r.xml" required="depth,v4r"/>
   <detector type="barcode" trackers="kcf,cmt"  config="barcode/barcodes.xml" required="zbar"/>
-  <detector type="hsvfooddetect" trackers="kcf,cmt" config="hsvfooddetect/hsvfooddetect.xml"/>
   <detector type="dnn" trackers="kcf, cmt" config="yolov5/yolov5.json"/>
   <!--  <detector type="dnn" trackers="kcf,cmt" config="yolov3/yolov3.json"/>-->
   <detector type="buttondetector" trackers="kcf, cmt" config="buttondetector/buttondetector.json"/>

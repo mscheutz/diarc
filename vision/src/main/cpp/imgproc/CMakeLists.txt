@@ -63,9 +63,7 @@ if (V4R_V0_FOUND)
 		saliency/LocationSaliencyProcessor.cpp
 		saliency/SymmetryProcessor.cpp
 		saliency/OrientationProcessor.cpp
-		validator/ShapeValidator.cpp
 		validator/SurfaceMarkingValidator.cpp
-		validator/OrientationValidator.cpp
 	)
 endif(V4R_V0_FOUND)
 
