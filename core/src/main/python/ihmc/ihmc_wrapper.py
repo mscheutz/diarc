@@ -16,7 +16,7 @@ from edu.tufts.hrilab.action.justification import ConditionJustification, Justif
 from edu.tufts.hrilab.consultant.pose import PoseConsultant, PoseReference
 from geometry_msgs.msg import Point, Quaternion, Pose
 from ihmc_common_msgs.msg import PoseListMessage
-from behavior_msgs.msg import AI2RCommandMessage, AI2RStatusMessage
+from behavior_msgs.msg import AI2RCommandMessage, AI2RStatusMessage, AI2RNavigationMessage, AI2RPickUpObjectMessage
 from behavior_msgs.msg import ContinuousHikingCommandMessage
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 
@@ -31,7 +31,7 @@ class NadiaWrapper:
         self.trade_wrapper = trade_wrapper
         self.node = rclpy.create_node('diarc_nadia_node')
         self._qos_profile = QoSProfile(
-            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            reliability=QoSReliabilityPolicy.RELIABLE,
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=1
         )
@@ -59,12 +59,20 @@ class NadiaWrapper:
             orientation = obj.object_pose_in_world.orientation
             # todo: update pose in consultant
         if self._executing:
-            if msg.completed_behavior != '':
+            if msg.completed_behavior != '-':
+                logging.info("[behavior_callback] success")
                 self._behavior_status = "success"
-            elif msg.failed_behavior != '':
+            elif msg.failed_behavior != '-':
+                logging.info("[behavior_callback] failure")
                 self._behavior_status = "failure"
             else:
+                logging.info("[behavior_callback] progress...")
                 self._behavior_status = "progress"
+
+    def _diarc_to_ihmc_str(self, diarc_str):
+        ihmc_str = str(diarc_str)
+        ihmc_str = ihmc_str[0].upper() + ihmc_str[1:]
+        return ihmc_str
 
     @JOverride
     def walk(self):
@@ -74,6 +82,77 @@ class NadiaWrapper:
         command.use_astar_footstep_planner = True
         self._walk_publisher.publish(command)
         logging.info("[walk] end")
+
+    @JOverride
+    def goto_primitive(self, target_location) -> Justification:
+        ihmc_target_str = self._diarc_to_ihmc_str(target_location)
+        logging.info("[goto] " + ihmc_target_str)
+
+
+        command = AI2RCommandMessage()
+        command.behavior_to_execute = "GOTO"
+        command.adapting_behavior = True
+
+        goto_behavior = AI2RNavigationMessage()
+
+        # Set the reference frame name - can copy from scene_objects.obj_name
+        goto_behavior.target_object = ihmc_target_str
+        # Set the distance to the object
+        goto_behavior.distance_to_object = 0.8
+        goto_behavior.pov_object = ""
+        goto_behavior.spatial_relation = AI2RNavigationMessage.DEFAULT
+        if goto_behavior.spatial_relation == AI2RNavigationMessage.DEFAULT or goto_behavior.pov_object == "":
+            goto_behavior.pov_object = "walkingFrame"
+
+        command.navigation = goto_behavior
+        self._command_publisher.publish(command)
+        self._executing = True
+
+        while self._behavior_status == "progress" or self._behavior_status == "":
+            logging.info("in progress...")
+            time.sleep(1)
+
+        if self._behavior_status == "success":
+            ret = self._handle_return(True)
+        elif self._behavior_status == "failure":
+            ret = self._handle_return(False)
+        else:
+            ret = self._handle_return(False)
+
+        self._behavior_status = ""
+        self._executing = False
+        return ret
+
+    @JOverride
+    def pickup_primitive(self, target_object) -> Justification:
+        ihmc_target_str = self._diarc_to_ihmc_str(target_object)
+        logging.info("[pickup] " + ihmc_target_str)
+
+        command = AI2RCommandMessage()
+        command.behavior_to_execute = "PICK UP OBJECT"
+        command.adapting_behavior = True
+
+        pickup_behavior = AI2RPickUpObjectMessage()
+        pickup_behavior.object_name = ihmc_target_str
+        command.pickup_object = pickup_behavior
+
+        self._command_publisher.publish(command)
+        self._executing = True
+
+        while self._behavior_status == "progress" or self._behavior_status == "":
+            logging.info("in progress...")
+            time.sleep(1)
+
+        if self._behavior_status == "success":
+            ret = self._handle_return(True)
+        elif self._behavior_status == "failure":
+            ret = self._handle_return(False)
+        else:
+            ret = self._handle_return(False)
+
+        self._behavior_status = ""
+        self._executing = False
+        return ret
 
     @JOverride
     def push_door_primitive(self) -> Justification:

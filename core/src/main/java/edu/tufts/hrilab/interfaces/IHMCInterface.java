@@ -11,6 +11,14 @@ public interface IHMCInterface extends MoveBaseInterface {
 
   @TRADEService
   @Action
+  Justification goto_primitive(String target_location);
+
+  @TRADEService
+  @Action
+  Justification pickup_primitive(String target_object);
+
+  @TRADEService
+  @Action
   Justification push_door_primitive();
 
   @TRADEService

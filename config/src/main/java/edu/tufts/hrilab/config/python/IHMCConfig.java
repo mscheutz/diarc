@@ -64,12 +64,12 @@ public class IHMCConfig extends DiarcConfiguration {
     Util.Sleep(10000);
 
 
-    try {
-      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class));
-      service.call(Long.class, Factory.createPredicate("push_door_primitive(self)"));
-    } catch (TRADEException e) {
-      throw new RuntimeException(e);
-    }
+//    try {
+//      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class));
+//      service.call(Long.class, Factory.createPredicate("goto_primitive(self, Table1)"));
+//    } catch (TRADEException e) {
+//      throw new RuntimeException(e);
+//    }
 
 //    log.info("Attempting to call python getTransform service...");
 //    try {
