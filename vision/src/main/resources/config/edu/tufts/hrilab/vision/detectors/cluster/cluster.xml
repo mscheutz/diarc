@@ -20,8 +20,8 @@ Fields (required unless noted otherwise):
 
 <processor type="object" arity="1">
   <config>
-    <object_cluster_tolerance>0.02</object_cluster_tolerance>
-    <object_cluster_min_size>500</object_cluster_min_size>
+    <object_cluster_tolerance>0.06</object_cluster_tolerance>
+    <object_cluster_min_size>50</object_cluster_min_size>
   </config>
 
   <predicate name="object"/>

@@ -4,7 +4,7 @@ import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.Justification;
 
-public interface IHMCInterface extends MoveBaseInterface {
+public interface IHMCInterface {
   @TRADEService
   @Action
   void walk();

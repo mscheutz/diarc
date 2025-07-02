@@ -47,3 +47,8 @@ import java.util.List;
     op:log(info, "Pushing door");
     act:push_door_primitive();
 }
+
+() = goto(Symbol ?location) {
+    act:goToLocation(?location);
+    act:generateResponseFromString("I'm here");
+}

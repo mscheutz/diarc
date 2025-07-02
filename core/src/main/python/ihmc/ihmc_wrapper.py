@@ -231,65 +231,11 @@ class NadiaWrapper:
 
         # self.get_logger().info(f'Publishing {command}')
 
-    @JOverride
-    def getPoseGlobalQuat(self):
-        pass
-
-    @JOverride
-    def setPoseGlobal(self, x, y, theta):
-        pass
-
-    @JOverride
-    def goToLocation(self, location: Symbol, wait: bool) -> Justification:
-        logging.info(f"[goToLocation] {location}, {wait}")
-        return self._handle_return(True)
-
-    @JOverride
-    def goToLocation(self, desiredLocation: Symbol, initialLocation: Symbol) -> Justification:
-        logging.info(f"[checkAt] {desiredLocation}, {initialLocation}")
-        return self._handle_return(True)
-
-    @JOverride
-    def goToLocation(self, xdest, ydest, quat_x, quat_y, quat_z, quat_w, wait) -> Justification:
-        logging.info(f"[checkAt] {xdest}")
-        return self._handle_return(True)
-
-    @JOverride
-    def approachLocation(self, location) -> Justification:
-        return self._handle_return(True)
-
-    @JOverride
-    def approachLocation(self, desiredLocation, initialLocation) -> Justification:
-        return self._handle_return(True)
-
-    @JOverride
-    def stop(self):
-        logging.info("[stop]")
-        # command = ContinuousWalkingCommandMessage()
-        # command.publish_to_controller = True
-        # command.enable_continuous_walking = False
-        # self._walk_publisher.publish(command)
-        # return self._handle_return(True)
-
-    @JOverride
-    def isMoving(self):
-        logging.info(f"[isMoving]")
-        return self._handle_return(True)
-
-    @JOverride
-    def checkAt(self, locationTerm):
-        logging.info(f"[checkAt] {locationTerm}")
-        # Todo: Return something
 
     def _handle_return(self, value: bool, reason: Predicate = None):
         if reason is None:
             return ConditionJustification(value)
         return ConditionJustification(value, reason)
-
-    @JOverride
-    def goToLocation(self, location):
-        logging.info(f"{location}")
-        return self._handle_return(True)
 
 
 def listen_for_input():
@@ -312,9 +258,9 @@ if __name__ == '__main__':
     try:
         nadia_wrapper = NadiaWrapper(trade_wrapper)
         TRADE.registerAllServices(nadia_wrapper, "")
-        TRADE.registerAllServices(nadia_wrapper.consultant, nadia_wrapper.kb_name)
-        nadia_wrapper.consultant.loadReferencesFromFile(
-            "/config/edu/tufts/hrilab/map/refs/ihmcRefs.json") # relative path from resources classpath
+        # TRADE.registerAllServices(nadia_wrapper.consultant, nadia_wrapper.kb_name)
+        # nadia_wrapper.consultant.loadReferencesFromFile(
+        #     "/config/edu/tufts/hrilab/map/refs/ihmcRefs.json") # relative path from resources classpath
 
         time.sleep(2)
 

@@ -1,43 +1,50 @@
 package edu.tufts.hrilab.config.python;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
-import edu.tufts.hrilab.fol.Factory;
-import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.ihmc.IHMCComponent;
+import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.python.PythonWrapper;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
 import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
-import edu.tufts.hrilab.slug.parsing.tldl.TLDLParserComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.util.Util;
 
-import javax.vecmath.Matrix4d;
-
 public class IHMCConfig extends DiarcConfiguration {
+
+  private boolean useLLM = true;
 
   @Override
   public void runConfiguration() {
 
+    // language pipeline components
     createInstance(ListenerComponent.class);
-    createInstance(TLDLParserComponent.class,
-//            "-dict templatedict.dict " +
-            "-dict mfawn/ihmc.dict"
-    );
     createInstance(PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(ReferenceResolutionComponent.class);
     createInstance(DialogueComponent.class);
-    createInstance(SimpleNLGComponent.class);
+
+    // nlu parser component(s)
+    String hybridParserArgs = "-tldl spot.dict templatedict.dict -cache -cacheName spotPickAndPlace -cachePersist true";
+    if (useLLM) {
+      createInstance(LLMComponent.class);
+      hybridParserArgs += " -llm -llmService spotPickAndPlace";
+    } else {
+      createInstance(SimpleNLGComponent.class);
+    }
+
+    createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, hybridParserArgs);
+
+    // tts component
     createInstance(SimSpeechProductionComponent.class);
 //    createInstance(MaryTTSComponent.class);
+    //////////////////////////////////////////
 
-    createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture nadia_ros2.xml -cameraFrame ros2_left_optical -baseFrame base_footprint");
+//    createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture nadia_ros2.xml -cameraFrame ros2_left_optical -baseFrame base_footprint");
+
+    createInstance(IHMCComponent.class);
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
@@ -53,15 +60,7 @@ public class IHMCConfig extends DiarcConfiguration {
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
     );
 
-//    createInstance(SimSpeechRecognitionComponent.class, "-speaker marlow -config ihmc.simspeech");
-
-    PythonWrapper ihmc_wrapper = new PythonWrapper("ihmc.ihmc_wrapper", true);
-    ihmc_wrapper.start();
-
-    PythonWrapper ros2_tf2_wrapper = new PythonWrapper("ros2_tf2.ros2_tf2_wrapper", true);
-    ros2_tf2_wrapper.start();
-
-    Util.Sleep(10000);
+//    Util.Sleep(10000);
 
 
 //    try {
