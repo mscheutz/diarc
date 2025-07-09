@@ -180,7 +180,7 @@ public class SpotPickAndPlaceLLMServiceProvider extends LLMServiceProvider {
         chat.setSystem(nlgSystemPrompt.apply(promptVars));
         chat.addUserMessage(userMessage);
 
-        log.info("generateNLGChat called for: {}", utterance.toString());
+        log.info("generateNLGChat called for: {}", utterance);
 
         return chat;
     }

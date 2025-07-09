@@ -46,9 +46,9 @@ void OpenCVTracker::haveNewImage(CaptureNotification::ConstPtr notification) {
     for (auto trackers_itr = trackers.begin(); trackers_itr != trackers.end(); ++trackers_itr) {
       // update tracker
       auto tracker = trackers_itr->second;
-      if (currFrame.cols != 320 || currFrame.rows != 240 || currFrame.type() != CV_8UC3) {
-        LOG4CXX_FATAL(logger, "[haveNewImage] currFrame is not expected dimensions/type!");
-      }
+//      if (currFrame.cols != 320 || currFrame.rows != 240 || currFrame.type() != CV_8UC3) {
+//        LOG4CXX_FATAL(logger, "[haveNewImage] currFrame is not expected dimensions/type!");
+//      }
       found = tracker->update(currFrame, bbox);
 
       //update MemoryObject info

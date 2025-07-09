@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,14 +14,38 @@ public class PythonWrapper {
   private final String file;
   private Process process;
   private boolean spoke = false;
+  private String hubContainerIpPort = "127.0.0.1@10002";
 
   public PythonWrapper(String file) {
     this.file = file;
   }
 
+  /**
+   * If running python module as a TRADE spoke (i.e., spoke == true), this constructor uses the
+   * default 127.0.0.1@10002 hub address and port.
+   *
+   * @param file python module to start
+   * @param spoke if true, connect to TRADE as a spoke (requires a TRADE hub to be running)
+   */
   public PythonWrapper(String file, boolean spoke) {
     this.file = file;
     this.spoke = spoke;
+  }
+
+  /**
+   * If running python module as a TRADE spoke (i.e., spoke == true), this constructor requires setting the
+   * TRADE hub address and port.
+   *
+   * @param file python module to start
+   * @param spoke if true, connect to TRADE as a spoke (requires a TRADE hub to be running)
+   * @param hubContainer TRADE hub to connect to of the form ip_adress@port (e.g., 127.0.0.1@10002)
+   */
+  public PythonWrapper(String file, boolean spoke, String hubContainer) {
+    this.file = file;
+    this.spoke = spoke;
+    if (hubContainer != null && !hubContainer.isEmpty()) {
+      this.hubContainerIpPort = hubContainer;
+    }
   }
 
   /**
@@ -79,7 +102,7 @@ public class PythonWrapper {
               "STARTACCEPTINGCONNECTIONS=false\n" +
               "SERVERIPS=\n" +
               "SCANFORSERVER=\n" +
-              "CONNECTCONTAINERS="+ "127.0.0.1@10002";
+              "CONNECTCONTAINERS="+ hubContainerIpPort;
 
       try (BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
         writer.write(content);
