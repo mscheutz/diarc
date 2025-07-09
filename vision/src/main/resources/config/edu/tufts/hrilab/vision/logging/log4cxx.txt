@@ -50,7 +50,7 @@ log4j.logger.diarc.tracker.OpenCVTracker=DEBUG
 
 # Validators
 #log4j.logger.diarc.imgproc.validator.ColorValidator=DEBUG
-log4j.logger.ade.imgproc.validator.ComponentValidator=DEBUG
+#log4j.logger.diarc.imgproc.validator.ComponentValidator=DEBUG
 #log4j.logger.diarc.imgproc.validator.GlobalFeatureValidator=DEBUG, file1
 #log4j.logger.diarc.imgproc.validator.ShapeValidator=DEBUG, file1
 #log4j.logger.diarc.imgproc.validator.SpatialRelationValidator=DEBUG, file1

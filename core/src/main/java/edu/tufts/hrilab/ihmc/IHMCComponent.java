@@ -15,20 +15,44 @@ import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.python.PythonWrapper;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class IHMCComponent extends DiarcComponent {
+  /**
+   * Consultant mapping diarc refs to ihmc simulator objects (e.g., loc_1 --> Drill1)
+   */
   private IHMCConsultant consultant;
+  /**
+   * ip@port of hub container that python spokes should connect to
+   */
+  private String hubContainer;
+
+
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("hubContainer").hasArg().argName("ip@port").desc("Set internal python modules to run as spoke with this hub").build());
+    return options;
+  }
+
+  @Override
+  protected void parseArgs(CommandLine cmdLine) {
+    if (cmdLine.hasOption("hubContainer")) {
+      hubContainer = cmdLine.getOptionValue("hubContainer");
+    }
+  }
 
   @Override
   public void init() {
-    PythonWrapper ihmc_wrapper = new PythonWrapper("ihmc.ihmc_wrapper", true);
+    PythonWrapper ihmc_wrapper = new PythonWrapper("ihmc.ihmc_wrapper", true, hubContainer);
     ihmc_wrapper.start();
 
-    PythonWrapper ros2_tf2_wrapper = new PythonWrapper("ros2_tf2.ros2_tf2_wrapper", true);
+    PythonWrapper ros2_tf2_wrapper = new PythonWrapper("ros2_tf2.ros2_tf2_wrapper", true, hubContainer);
     ros2_tf2_wrapper.start();
 
     consultant = new IHMCConsultant(IHMCReference.class, "location", new ArrayList<>());
@@ -60,12 +84,19 @@ public class IHMCComponent extends DiarcComponent {
     IHMCReference drillRef = consultant.createReference(Factory.createVariable("X:location"), properties);
     drillRef.setIHMCName("Drill1");
     consultant.addReference(drillRef);
+
+    // add Charge1
+    properties.clear();
+    properties.add(Factory.createPredicate("charge(X:location)"));
+    IHMCReference chargeRef = consultant.createReference(Factory.createVariable("X:location"), properties);
+    chargeRef.setIHMCName("Charge1");
+    consultant.addReference(chargeRef);
   }
 
   @Action
   @TRADEService
-  public Justification goToLocation(Symbol location) {
-    IHMCReference ref = consultant.getReference(location);
+  public Justification goToLocation(Symbol refId) {
+    IHMCReference ref = consultant.getReference(refId);
     String ihmcName = ref.getIHMCName();
 
     Justification justification = null;
@@ -74,6 +105,23 @@ public class IHMCComponent extends DiarcComponent {
               .call(Justification.class, ihmcName);
     } catch (TRADEException e) {
       log.error("Error calling python goto_primitive.", e);
+    }
+
+    return justification;
+  }
+
+  @Action
+  @TRADEService
+  public Justification pickUp(Symbol refId) {
+    // TODO: HACK: replace this with refId --> MemoryObject once IHMC supports more natural pickup actions
+    String ihmcName = "Drill1";
+
+    Justification justification = null;
+    try {
+      justification = TRADE.getAvailableService(new TRADEServiceConstraints().name("pickup_primitive").argTypes(String.class))
+              .call(Justification.class, ihmcName);
+    } catch (TRADEException e) {
+      log.error("Error calling python pickup_primitive.", e);
     }
 
     return justification;

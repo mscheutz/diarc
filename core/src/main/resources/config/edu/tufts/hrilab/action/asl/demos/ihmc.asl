@@ -52,3 +52,8 @@ import java.util.List;
     act:goToLocation(?location);
     act:generateResponseFromString("I'm here");
 }
+
+() = pickup(Symbol ?object) {
+    act:pickUp(?object);
+    act:generateResponseFromString("Done");
+}

@@ -4,22 +4,21 @@
     "arity": 1
   },
   "config": {
-    "model": "model_all_comp_epoch650",
+    "model1": "2comp_uc_rotation_650epochs_perturb",
+    "model2": "2comp_uc_rotation_650epochs_noise_perturb",
+    "model3": "3comp_uc_rotation_650epochs_noise_perturb",
     "type" : "onnx",
     "identify_shapes" : true,
-    "visualize_reconstruction" : true,
-    "dynamic_padding" : true,
-    "padding" : 80,
-    "kernel_size" : 13,
+    "visualize_reconstruction" : false,
+    "kernel_size" : 3,
     "edginess_similarity_threshold" : 0.005,
-    "shape_threshold" : 0.25,
-    "position_tolerance_front_behind" : 0.2,
-    "position_tolerance_left_right" : 0.4,
-    "position_tolerance_bottom_top" : 0.4,
+    "position_tolerance_front_behind" : 25,
+    "position_tolerance_left_right" : 3,
+    "position_tolerance_bottom_top" : 3,
     "existence_threshold" : 0.8,
     "volume_threshold" : 0.02,
-    "eccentricity_tolerance" : 0.25,
-    "width_compression_factor" : 1.0,  
+    "eccentricity_tolerance" : 2.0,
+    "width_compression_factor" : 1.0,
     "height_compression_factor" : 1.0
   },
   "predicates": [
@@ -55,164 +54,188 @@
       "index": 6
     },
     {
+      "name": "first_horizontal",
+      "index": 7
+    },
+    {
+      "name": "first_vertical",
+      "index": 8
+    },
+    {
       "name": "secondshape_rod",
       "shape": 0,
-      "index": 7
+      "index": 9
     },
     {
       "name": "secondshape_disk",
       "shape": 1,
-      "index": 8
+      "index": 10
     },
     {
       "name": "secondshape_other_part",
       "shape": 2,
-      "index": 9
+      "index": 11
     },
     {
       "name": "secondposition_in_front",
       "axis": 0,
-      "index": 10
+      "index": 12
     },
     {
       "name": "secondposition_behind",
       "axis": 1,
-      "index": 11
+      "index": 13
     },
     {
       "name": "secondposition_to_the_right",
       "axis": 2,
-      "index": 12
+      "index": 14
     },
     {
       "name": "secondposition_to_the_left",
       "axis": 3,
-      "index": 13
+      "index": 15
     },
     {
       "name": "secondposition_on_top",
       "axis": 4,
-      "index": 14
+      "index": 16
     },
     {
       "name": "secondposition_at_the_bottom",
       "axis": 5,
-      "index": 15
+      "index": 17
     },
     {
       "name": "secondposition_centered_along_the_depth_axis",
       "axis": 6,
-      "index": 16
+      "index": 18
     },
     {
       "name": "secondposition_horizontally_centered",
       "axis": 7,
-      "index": 17
+      "index": 19
     },
     {
       "name": "secondposition_vertically_centered",
       "axis": 8,
-      "index": 18
-    },
-    {
-      "name": "secondsize_larger",
-      "index": 19
-    },
-    {
-      "name": "secondsize_smaller",
       "index": 20
     },
     {
-      "name": "secondsize_similar_size",
+      "name": "secondsize_larger",
       "index": 21
     },
     {
-      "name": "secondsize_long",
+      "name": "secondsize_smaller",
       "index": 22
+    },
+    {
+      "name": "secondsize_similar_size",
+      "index": 23
+    },
+    {
+      "name": "secondsize_long",
+      "index": 24
+    },
+    {
+      "name": "second_horizontal",
+      "index": 25
+    },
+    {
+      "name": "second_vertical",
+      "index": 26
     },
     {
       "name": "thirdshape_rod",
       "shape": 0,
-      "index": 23
+      "index": 27
     },
     {
       "name": "thirdshape_disk",
       "shape": 1,
-      "index": 24
+      "index": 28
     },
     {
       "name": "thirdshape_other_part",
       "shape": 2,
-      "index": 25
+      "index": 29
     },
     {
       "name": "thirdposition_in_front",
       "axis": 0,
-      "index": 26
+      "index": 30
     },
     {
       "name": "thirdposition_behind",
       "axis": 1,
-      "index": 27
+      "index": 31
     },
     {
       "name": "thirdposition_to_the_right",
       "axis": 2,
-      "index": 28
+      "index": 32
     },
     {
       "name": "thirdposition_to_the_left",
       "axis": 3,
-      "index": 29
+      "index": 33
     },
     {
       "name": "thirdposition_on_top",
       "axis": 4,
-      "index": 30
+      "index": 34
     },
     {
       "name": "thirdposition_at_the_bottom",
       "axis": 5,
-      "index": 31
+      "index": 35
     },
     {
       "name": "thirdposition_centered_along_the_depth_axis",
       "axis": 6,
-      "index": 32
+      "index": 36
     },
     {
       "name": "thirdposition_horizontally_centered",
       "axis": 7,
-      "index": 33
+      "index": 37
     },
     {
       "name": "thirdposition_vertically_centered",
       "axis": 8,
-      "index": 34
-    },
-    {
-      "name": "thirdsize_larger",
-      "index": 35
-    },
-    {
-      "name": "thirdsize_smaller",
-      "index": 36
-    },
-    {
-      "name": "thirdsize_similar_size",
-      "index": 37
-    },
-    {
-      "name": "thirdsize_long",
       "index": 38
     },
     {
+      "name": "thirdsize_larger",
+      "index": 39
+    },
+    {
+      "name": "thirdsize_smaller",
+      "index": 40
+    },
+    {
+      "name": "thirdsize_similar_size",
+      "index": 41
+    },
+    {
+      "name": "thirdsize_long",
+      "index": 42
+    },
+    {
+      "name": "third_horizontal",
+      "index": 43
+    },
+    {
+      "name": "third_vertical",
+      "index": 44
+    },
+    {
       "name": "unknown",
-      "index": 36
+      "index": 45
     },
     {
       "name": "full_description",
-      "index": 37
+      "index": 46
     }
   ]
 }

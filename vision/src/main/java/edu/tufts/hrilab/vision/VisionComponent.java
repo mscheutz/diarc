@@ -372,7 +372,7 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
     options.add(Option.builder("cameraFrame").hasArg().argName("frame").desc("set name of camera coordinate frame and use CoordinateFramesComponent for coord transform").build());
     options.add(Option.builder("baseFrame").hasArg().argName("frame").desc("set name of base coordinate frame (default: base_link)").build());
     options.add(Option.builder("publishPointCloud").hasArgs().argName("groups").optionalArg(true).desc("send point cloud data to another componen to be published to ROS").build());
-    options.add(Option.builder("belief").hasArgs().argName("groups").optionalArg(true).desc("egister for notifications from com.belief.BeliefComponent").build());
+    options.add(Option.builder("belief").hasArgs().argName("groups").optionalArg(true).desc("register for notifications from BeliefComponent").build());
     options.add(Option.builder("i").longOpt("introspection").desc("turn on vision introspection").build());
     options.add(Option.builder("sandbox").desc("run testing sandbox method").build());
     options.add(Option.builder("show").hasArgs().argName("types").desc("display window of memory object type").build());

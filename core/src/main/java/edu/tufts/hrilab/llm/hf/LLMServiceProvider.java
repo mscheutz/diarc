@@ -152,22 +152,26 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
     @Override
     public Utterance convertSemanticsToText(Utterance u) {
         if (performNLG) {
-            try {
-                List<Term> supplementalSemantics = new ArrayList<>();
-                for(Map<Variable, Symbol> boundRef : u.getBindings()) {
-                    for(Symbol ref : boundRef.values()){
-                        Map<Variable, Symbol> bindings = new HashMap<>();
-                        List<Term> props = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAssertedProperties").argTypes(Symbol.class).inGroups("physobj")).call(List.class, ref);
-                        bindings.put(props.get(0).getVars().iterator().next(), ref);
-                        for(Term prop : props) {
-                            supplementalSemantics.add(prop.copyWithNewBindings(bindings));
+            List<Term> supplementalSemantics = new ArrayList<>();
+            for (Map<Variable, Symbol> binding : u.getBindings()) {
+                for (Symbol value : binding.values()) {
+                    if (value.getName().contains("_") && Character.isDigit(value.getName().charAt(value.getName().length() - 1))) {
+                        //  value is a refId
+                        try {
+                            Map<Symbol, List<Term>> props = TRADE.getAvailableService(new TRADEServiceConstraints().name("generateRE").argTypes(Symbol.class)).call(Map.class, value);
+                            if (props == null || props.isEmpty()) {
+                                log.warn("[convertSemanticsToText] no properties found for reference: {}", value);
+                            } else {
+                                log.info("[convertSemanticsToText] found properties for reference: {}. properties: {}", value, props);
+                                supplementalSemantics.addAll(props.get(value));
+                            }
+                        } catch (TRADEException e) {
+                            log.warn("[generateREG]", e);
                         }
                     }
                 }
-                u.setSupplementalSemantics(supplementalSemantics);
-            } catch (TRADEException e) {
-                log.error("Could not add supplemental semantics to prompt.");
             }
+            u.setSupplementalSemantics(supplementalSemantics);
             return llmGenerationService(u);
         } else {
             return nlg.convertSemanticsToText(u);
@@ -228,8 +232,8 @@ public abstract class LLMServiceProvider extends DiarcComponent implements NLGIn
 
         // TODO: remove these debug lines
         if (!parsing) {
-          log.info("NLG LLM chat prompt: {}", chat.toPromptString());
-          log.info("NLG LLM chat response: {}", response.getText());
+          log.debug("NLG LLM chat prompt: {}", chat.toPromptString());
+          log.debug("NLG LLM chat response: {}", response.getText());
         }
 
         //Add LLM's response to the chat //TODO: do we actually generally want this present in the chat in this way?
