@@ -2,13 +2,6 @@
  Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
  */
 
-/*
- * File:   OrientationValidator.hpp
- * Author: evan
- *
- * Created on March 27, 2014, 5:23 PM
- */
-
 #ifndef COMPONENTVALIDATOR_HPP
 #define	COMPONENTVALIDATOR_HPP
 
@@ -26,7 +19,8 @@ public:
   virtual void loadConfig(const std::string& configFile);
   
 protected:
-  cv::dnn::Net net;
+
+  std::vector<cv::dnn::Net> nets;
 
   // semantic parent type for this detector's descriptors (isA hierarchy)
   std::string parentType;
@@ -34,7 +28,7 @@ protected:
   std::unordered_map<int, std::string> idToClass;
 
   virtual void handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification);
-  virtual void initModel(const std::string& model_path);
+  virtual void initModels(const std::string &model_path1, const std::string &model_path2, const std::string &model_path3);
 
 private:
 
@@ -46,57 +40,51 @@ private:
   } PredicateFeatures;
 
   typedef struct {
-    float maxIoU;
     float minChamferDist;
-    int bestPadIdx;
-    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> bestIoUSuperellipsoids;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr bestProjectedObject;
-    cv::Mat bestSemMatrixSig;
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> bestSuperellipsoidsUnRot;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr objectUnRot;
+    cv::Mat bestSemMatrixSigUnRot;
+    int modelIdx;
   } BestDescription;
 
   const std::vector<std::vector<int>> superEllipsoidParamsIdcs = {
     {3, 4, 5, 6, 7},  // shape indices of base component 
-    {11, 12, 13, 14, 15},  // shape indices of side component 1
-    {19, 20, 21, 22, 23}  // shape indices of side component 2  
+    {13, 14, 15, 16, 17},  // shape indices of side component 1
+    {21, 22, 23, 24, 25}  // shape indices of side component 2
   };
 
   const std::vector<std::vector<int>> positionIdcs = {
     {0, 1, 2},  // position indices (x,y,z) of base component
-    {8, 9, 10},  // position indices (delta x, delta y, delta z) of side component 1
-    {16, 17, 18}  // position indices (delta x, delta y, delta z) of side component 2
+    {10, 11, 12},  // position indices (delta x, delta y, delta z) of side component 1
+    {18, 19, 20}  // position indices (delta x, delta y, delta z) of side component 2
   };
 
   std::vector<std::vector<int>> sizeIdcs = {
     {5, 6, 7},  // main axes (a_x, a_y, a_z) of base component
-    {13, 14, 15},  // main axes (a_x, a_y, a_z) of side component 1
-    {21, 22, 23}  // main axes (a_x, a_y, a_z) of side component 2
+    {15, 16, 17},  // main axes (a_x, a_y, a_z) of side component 1
+    {23, 24, 25}  // main axes (a_x, a_y, a_z) of side component 2
   };
 
   std::vector<std::vector<int>> sideCompIdcs = {
-    { 8, 9, 10, 11, 12, 13, 14, 15},
-    {16, 17, 18, 19, 20, 21, 22, 23}
+    {10, 11, 12, 13, 14, 15, 16, 17},
+    {18, 19, 20, 21, 22, 23, 24, 25}
   };
 
-  int paddingAmount = 10;
-  std::vector<std::vector<int>> paddingConfigs = {
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {paddingAmount, 0, 0, 0},              // Top only
-    {0, paddingAmount, 0, 0},              // Bottom only
-    {0, 0, paddingAmount, 0},              // Left only
-    {0, 0, 0, paddingAmount},              // Right only
-    {paddingAmount, 0, paddingAmount, 0},  // Top and left
-    {paddingAmount, 0, 0, paddingAmount},  // Top and right
-    {0, paddingAmount, paddingAmount, 0},  // Bottom and left
-    {0, paddingAmount, 0, paddingAmount},  // Bottom and right
+  std::vector<std::vector<int>> rotationIdcs = {
+    {8, 9},  // azimuth and elevation of base component
+    {26, 27},  // azimuth and elevation of side component 1
+    {28, 29}  // azimuth and elevation of side component 2
   };
+
+  int numRandomAngles = 9;  // Number of additional angles (not counting 0)
 
   // Constants for de-normalizing output values back to 3D space
   const float dfac = 1.2f;
-  const float EDGINESS_MIN = 0.0f;
+  const float EDGINESS_MIN = 0.01f;
   const float EDGINESS_MAX = 1.0f;
-  const float AXIS_SCALE_MIN = 2.0f;
-  const float AXIS_SCALE_MAX = 7.0f;
+  const float AXIS_UNIT_CUBE_MAX = 10;
+  const float ANGLE_MIN = 0.0f;
+  const float ANGLE_MAX = 89.0f;
 
   // Voxel size for IoU computation
   const float voxel_size = 0.35f;
@@ -104,14 +92,15 @@ private:
   // Constants for depth image preprocessing
   const int minNormValue = 0;
   const int maxNormValue = 255;
-  const int depthImageHeight = 192;
-  const int depthImageWidth = 256;
+  const int depthImageHeight = 250;
+  const int depthImageWidth = 250;
 
   // Adjustable parameters for depth image preprocessing
   bool identifyShapes = false;
   bool visualizeReconstruction = false;
-  bool dynamicPadding = false;
-  int padding = 0;
+  int paddingTopBottom = 65;  // Average of what training depthimages have
+  int paddingLeftRight = 65;  // Average of what training depthimages have
+
   int kernelSize = 19;
 
   // Thresholds to "discretize" the continuous semantic parameters into
@@ -124,23 +113,21 @@ private:
   double existenceThreshold = 0.8;
   double volumeThreshold = 0.02;
   double eccentricityTolerance = 0.4;
-  double widthCompressionFactor = 1.0;  
-  double heightCompressionFactor = 1.0; 
 
   std::vector<PredicateFeatures> semanticProperties;
   
   void denoiseAndUpsamplePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& inputCloud,
                                     pcl::PointCloud<pcl::PointXYZ>::Ptr& outputCloud);
   BestDescription findBestReconstruction(pcl::PointCloud<pcl::PointXYZ>::Ptr& objectCloud,
-                                                          cv::Mat& objectDepthImage,
-                                                          std::vector<std::vector<int>>& paddingConfigs);    
-  std::vector<std::vector<int>> calculateDynamicPadding(cv::Mat& objectDepthImage);                                                                                    
-  void visualizeSuperellipsoids(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clouds1,
-                           pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2, float IoU);
+                                                          cv::Mat& objectDepthImage);
+  std::pair<std::vector<float>, std::vector<float>> applyCNNandPostProcess(const cv::Mat& inputImage, float angle);
   std::vector<float> denormalizeSemanticParams(const cv::Mat& semMatrixSigValuesMat);
+  std::vector<float> unrotateSemanticParams(const cv::Mat& semMatrixSig, float rotationAngle);
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> createSuperellipsoidObject(const std::vector<float>& semMatrixSigValues);
   pcl::PointCloud<pcl::PointXYZ>::Ptr createSuperellipsoid(float a_x, float a_y, float a_z,
-                                                           float n_1, float n_2, int resolution,
+                                                           float n_1, float n_2,
+                                                           float azimuth, float elevation,
+                                                           int resolution,
                                                            const Eigen::Vector3f& translation);                                                      
   void sampleSuperellipsoidMontecarlo(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, 
                                       float a_x, float a_y, float a_z, 
@@ -154,18 +141,22 @@ private:
   pcl::PointCloud<pcl::PointXYZ>::Ptr combinePointClouds(const std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>& clouds);    
   Eigen::Vector4f computeBoundingBox(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);   
   Eigen::Vector4f computeCentroid(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);    
-  void scalePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float uniform_scale_factor);  
+  Eigen::Vector4f computeBoundingBoxCentroid(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+  void scalePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float uniform_scale_factor);
+  void scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float cubeHalfSize);
   void projectToYZPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected);  
   float computeIou(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2);
   void voxelizeCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);  
   float computeChamferDistance(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud1, const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud2);
   void saveCombinedSuperellipsoid(const std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>& clouds,
                                     const std::string& output_filename);  
-  void applyPaddingToImage(const cv::Mat &objectDepthImageNorm, cv::Mat &objectDepthImageNormDifPad, const std::vector<int>& extraPadding);                                          
+  void applyRotationToImage(const cv::Mat &objectDepthImageNorm, cv::Mat &objectDepthImageNormRot,
+                               const float angle);
   void createNaNMasks(const cv::Mat& objectDepthImage, cv::Mat& nanMask, cv::Mat& nanBackgroundMask, 
                       cv::Mat& nanInsideMask);
   void removeNansAndNoise(const cv::Mat &objectDepthImage, cv::Mat &objectDepthImageNorm);
   void centerObject(cv::Mat& objectDepthImageNorm, const cv::Mat& mask);
+  void cutOutObject(cv::Mat &objectDepthImageNorm, const cv::Mat &mask);
   void normalizeDepthImage(const cv::Mat& objectDepthImage, const cv::Mat& mask, cv::Mat& objectDepthImageNorm);
   bool calculateSemProperty(const cv::Mat& semMat, const int semPredShape, const int semPredAxis, 
                             const int semPredIdx);
@@ -176,7 +167,8 @@ private:
   bool isPart(const float n1, const float n2, const float ax, const float ay, const float az);
   bool processPosition(const int compIndex, const cv::Mat& semMat, const int semPredAxis);
   bool processSize(const int compIndex, const cv::Mat& semMat, const int semPredIdx); 
-  bool processEccentricity(const cv::Mat& semMat, const int semPredIdx);                                  
+  bool processEccentricity(const cv::Mat& semMat, const int semPredIdx);
+  bool processOrientation(const int compIndex, const cv::Mat &semMat, const int semPredIdx);
   cv::Mat applySigmoidToMatrix(const cv::Mat& semMatrix);
   std::string generateFullDescription(std::vector<bool> foundPredicatesVector);
   void populateMemoryObjectDescription(std::vector<bool> foundPredicatesVector, diarc::stm::MemoryObject::Ptr mo);

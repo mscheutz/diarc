@@ -14,18 +14,6 @@ import ai.thinkingrobots.trade.TRADEService;
 public interface CoordinateFramesInterface {
 
   /**
-   * Get the current transform from the base of the robot to whichever frame you
-   * specify. This is just a convenience method for the more general
-   * getTransform(src,dest).
-   *
-   * @param dstFrame
-   * @return
-   *
-   */
-  @TRADEService
-  Matrix4d getTransform(String dstFrame);
-
-  /**
    * Get the current transform to convert from one local coordinate frame to a
    * different one.
    *

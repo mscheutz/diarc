@@ -19,7 +19,7 @@ log4j.appender.file1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
 #log4j.logger.diarc.detector.ColorBasedDetector=DEBUG, file1
 #log4j.logger.diarc.detector.ClusterDetectorAdvanced=DEBUG, file1
 #log4j.logger.diarc.detector.ClusterDetector2D=DEBUG, file1
-#log4j.logger.diarc.detector.ClusterDetector=TRACE
+#log4j.logger.diarc.detector.ClusterDetector=DEBUG
 #log4j.logger.diarc.detector.FaceDetector=TRACE, file1
 #log4j.logger.diarc.detector.FoodDetectorByHSV=DEBUG
 #log4j.logger.diarc.detector.GraspDetector=DEBUG
@@ -50,7 +50,7 @@ log4j.logger.diarc.tracker.OpenCVTracker=DEBUG
 
 # Validators
 #log4j.logger.diarc.imgproc.validator.ColorValidator=DEBUG
-log4j.logger.ade.imgproc.validator.ComponentValidator=DEBUG
+#log4j.logger.diarc.imgproc.validator.ComponentValidator=DEBUG
 #log4j.logger.diarc.imgproc.validator.GlobalFeatureValidator=DEBUG, file1
 #log4j.logger.diarc.imgproc.validator.ShapeValidator=DEBUG, file1
 #log4j.logger.diarc.imgproc.validator.SpatialRelationValidator=DEBUG, file1

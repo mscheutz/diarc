@@ -40,7 +40,6 @@ Optional fields:
   <detector type="fastsam" trackers="kcf,cmt" config="fastsam/fastsam.json"/>
   <detector type="haar" trackers="kcf,cmt" config="haar/haars.xml"/>
   <detector type="hough" trackers="kcf,cmt" config="hough/houghs.xml"/>
-  <detector type="hsvfooddetect" trackers="kcf,cmt" config="hsvfooddetect/hsvfooddetect.xml"/>
   <detector type="motion" trackers="generic" depends="opticalflow" config="motion/motion.xml"/>
   <detector type="openpose" trackers="generic"  config="openpose/openpose.xml" required="openpose"/>
   <detector type="persondetector" trackers="kcf, cmt" config="persondetector/persondetector.json"/>

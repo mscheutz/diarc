@@ -701,7 +701,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 //      }
       Matrix4d linkTransform = null;
       try {
-        TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTransform"));
+        TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTransform").argTypes(String.class, String.class));
         linkTransform = tsi.call(Matrix4d.class, moveItConfig.baseLinkString, linkName);
 
       } catch (TRADEException e) {

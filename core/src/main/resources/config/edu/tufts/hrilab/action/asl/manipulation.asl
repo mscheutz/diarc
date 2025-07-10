@@ -42,7 +42,7 @@ import edu.tufts.hrilab.fol.Predicate;
       !relativeLoc = op:newObject("javax.vecmath.Point3d", ?dist, 0, !negDist);
     } else {
       op:log("error", "moveToRelative can't handle ?direction. Exiting.");
-      !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "unknown(?direction)");
+      !failCond = op:createPredicate("unknown(?direction)");
       exit(FAIL, !failCond);
     }
 
@@ -102,7 +102,7 @@ import edu.tufts.hrilab.fol.Predicate;
       act:moveTo(?arm, !targetLoc, !targetOrient);
     } else {
       op:log("error", "moveObject can't handle ?relation. Exiting.");
-      !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "unknown(?relation)");
+      !failCond = op:createPredicate("unknown(?relation)");
       exit(FAIL, !failCond);
     }
 
@@ -248,7 +248,7 @@ import edu.tufts.hrilab.fol.Predicate;
     } else {
       op:log("debug", "failed to point to ?objectRef");
       act:resumeCapture();
-      !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(find(?actor, path))");
+      !failCond = op:createPredicate("not(find(?actor, path))");
       exit(FAIL, !failCond);
     }
 }

@@ -22,18 +22,17 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 @JImplements(CoordinateFramesInterface)
-class TF2Wrapper:
+class TF2Wrapper(Node):
     def __init__(self, trade_wrapper: TRADEWrapper):
-        self.node = rclpy.create_node('diarc_tf2_node')
+        super().__init__('diarc_tf2_node')
         self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self.node)
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.trade_wrapper = trade_wrapper
 
-    def _get_transform(self, target_frame, source_frame):
+    def _get_transform(self, source_frame, target_frame):
         try:
             transform = self.tf_buffer.lookup_transform(
-                target_frame,
-                source_frame,
+                source_frame, target_frame,
                 rclpy.time.Time()
             )
             return transform
@@ -49,21 +48,19 @@ class TF2Wrapper:
 
     @JOverride
     def getTransform(self, source_frame, target_frame):
-        logging.info("[getTransform]")
-        tf = self._get_transform(target_frame, source_frame)
+        tf = self._get_transform(str(source_frame), str(target_frame))
 
-        tmp = Matrix4d()
-        tmp.setIdentity()
+        if tf is None:
+            return None
 
         translation = tf.transform.translation
         rotation = tf.transform.rotation
-        tmp.setRotation(Quat4d(rotation.x.rotation.y, rotation.z, rotation.w))
+
+        tmp = Matrix4d()
+        tmp.setIdentity()
+        tmp.setRotation(Quat4d(rotation.x, rotation.y, rotation.z, rotation.w))
         tmp.setTranslation(Vector3d(translation.x, translation.y, translation.z))
         return tmp
-
-    @JOverride
-    def getTransform(self, target_frame):
-        return self.getTransform("base_link", target_frame)
 
     @JOverride
     def getCoordinateFrames(self):
@@ -86,10 +83,8 @@ if __name__ == '__main__':
 
         time.sleep(2)
 
-        ros_thread = threading.Thread(target=rclpy.spin, args=(tf2_wrapper.node,))
+        ros_thread = threading.Thread(target=rclpy.spin, args=(tf2_wrapper,))
         ros_thread.start()
-        # input_thread = threading.Thread(target=listen_for_input, daemon=True)
-        # input_thread.start()
 
         # todo: fail at push panel
         # todo: change to push failing
