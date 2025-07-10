@@ -17,8 +17,8 @@ public class AvaDemo extends DiarcConfiguration {
   String avaArgs = "";
   boolean useLLMParser = true;
   boolean useLLMNLG = true;
-  String service = "llamahf";
-  String model = "Llama-3.3-70B-Instruct";
+  String service = "azure";
+  String model = "Llama-3.1-8B-Instruct";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "";
@@ -102,7 +102,7 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
 //    createInstance(edu.tufts.hrilab.slug.nlg.SimpleNLGComponent.class);
     String nlgArgs = "-simpleNLG -cache -cacheName ava-reverse -cachePersist";
-    if (useLLMNLG) {
+    it (useLLMNLG) {
       nlgArgs += " -llm";
     }
     DiarcComponent.createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
@@ -116,7 +116,7 @@ public class AvaDemo extends DiarcConfiguration {
           llmComponentArgs += " -endpoint https://wwil02mugudnd3ky.us-east-1.aws.endpoints.huggingface.cloud";
         }
       } else if (service.equals("azure")) {
-        llmComponentArgs += " -endpoint https://tracs-southcentralus-lezah.southcentralus.inference.ml.azure.com/score";
+        llmComponentArgs += " -endpoint https://tracs-southcentralus-cjavc.southcentralus.inference.ml.azure.com/score";
       }
       createInstance(edu.tufts.hrilab.llm.LLMComponent.class, llmComponentArgs);
     }
@@ -125,7 +125,7 @@ public class AvaDemo extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker user1 -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.0 -showMixers" + " " + ((useMicrophone) ? " -muteMics" : ""));
+    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.0 -showMixers");
     //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://92.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
 //      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");

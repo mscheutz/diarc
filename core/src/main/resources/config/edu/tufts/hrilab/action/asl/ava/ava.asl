@@ -22,10 +22,11 @@ import java.util.StringTokenizer;
 
     op:log(debug, "[escortToLocation] escorting to location named !locName");
 
-    async {
-        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
-    }
-    act:waitForReadyAck();
+    act:say("Hello ?escortee. Please come with me, I will show you to !locName");
+//    async {
+//        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
+//    }
+//    act:waitForReadyAck();
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
@@ -36,10 +37,10 @@ import java.util.StringTokenizer;
     String !locName = tsc:getMapReferenceName(?dstLoc);
 
     act:goToLocation(?escorteeLoc);
-    async {
-        act:say("Hello ?escortee. Please come with me, I will show you to !locName. Please say Ready when you are ready to go");
-    }
-    act:waitForReadyAck();
+//    async {
+        act:say("Hello ?escortee. Please come with me, I will show you to !locName."); // Please say Ready when you are ready to go");
+//    }
+//    act:waitForReadyAck();
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");

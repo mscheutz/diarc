@@ -167,38 +167,6 @@ const MyNewComponent: React.FC<Props> = ({
                                 p-2 border-[#d1dbe3] gap-5 items-center
                                 justify-evenly">
                     <label className="w-1/2 text-center">
-                        Stand
-                    </label>
-                    <Button
-                        type="button"
-                        className="w-1/2"
-                        title="Submit Action"
-                        onClick={() => handleSubmit("stand")}
-                    >
-                        Submit
-                    </Button>
-                </div>
-
-                <div className="flex flex-row rounded-md shadow-md border border-1
-                                p-2 border-[#d1dbe3] gap-5 items-center
-                                justify-evenly">
-                    <label className="w-1/2 text-center">
-                        Sit
-                    </label>
-                    <Button
-                        type="button"
-                        className="w-1/2"
-                        title="Submit Action"
-                        onClick={() => handleSubmit("sit")}
-                    >
-                        Submit
-                    </Button>
-                </div>
-
-                <div className="flex flex-row rounded-md shadow-md border border-1
-                                p-2 border-[#d1dbe3] gap-5 items-center
-                                justify-evenly">
-                    <label className="w-1/2 text-center">
                         Begin Scheduling a Task
                     </label>
                     <Button

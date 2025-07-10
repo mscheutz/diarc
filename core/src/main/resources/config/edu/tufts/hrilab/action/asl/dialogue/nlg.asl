@@ -217,7 +217,7 @@ import java.util.Map;
       async {
         act:communicateUtterance(?utterance);
         //TODO: Specific to domains which contain a wakeword (currently Ava domain) Think about how to allow this behavior to be generally configurable
-        act:triggerWW();
+//        act:triggerWW();
       }
       !tracker = op:newObject("java.lang.Integer", 1);
     }
