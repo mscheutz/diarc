@@ -17,7 +17,7 @@ public class AvaDemo extends DiarcConfiguration {
   String avaArgs = "";
   boolean useLLMParser = true;
   boolean useLLMNLG = true;
-  String service = "azure";
+  String service = "llamahf";
   String model = "Llama-3.1-8B-Instruct";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
@@ -102,7 +102,7 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
 //    createInstance(edu.tufts.hrilab.slug.nlg.SimpleNLGComponent.class);
     String nlgArgs = "-simpleNLG -cache -cacheName ava-reverse -cachePersist";
-    it (useLLMNLG) {
+    if (useLLMNLG) {
       nlgArgs += " -llm";
     }
     DiarcComponent.createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);

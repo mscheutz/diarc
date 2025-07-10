@@ -6,11 +6,13 @@ package edu.tufts.hrilab.llm.hf;
 
 import com.google.gson.reflect.TypeToken;
 import edu.tufts.hrilab.llm.*;
+import edu.tufts.hrilab.llm.hf.request.LlamaHFCompletionRequestBodyV1;
 import edu.tufts.hrilab.llm.hf.request.LlamaHFCompletionRequestBody;
+import edu.tufts.hrilab.llm.hf.request.LlamaHFCompletionRequestBodyV2;
 import edu.tufts.hrilab.llm.hf.request.T5BaseCompletionRequestBody;
 import edu.tufts.hrilab.llm.hf.response.LlamaHFChatCompletionResponse;
+import edu.tufts.hrilab.llm.hf.response.LlamaHFChatCompletionResponseV2;
 import edu.tufts.hrilab.llm.hf.response.T5BaseCompletionResponse;
-import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.util.Http;
 
 import java.lang.reflect.Type;
@@ -28,6 +30,10 @@ public class HFClient implements LLMClient {
     static private Logger log = LoggerFactory.getLogger(HFClient.class);
 
     //Llama HuggingFace free inference endpoints ('free' with Pro account)
+    //Unclear if the other endpoint set is just down temporarily or they completely overhauled the API and got rid of
+    //  the model specific endppoints
+    private boolean routerEndpoint = true;
+    private String hfCompletionEndpoint = "https://router.huggingface.co/v1/chat/completions";
     private String llamaHFCompletionEndpointTemplate = "https://api-inference.huggingface.co/models/meta-llama/%s";
 
     private String t5CompletionEndpointTemplate = "https://api-inference.huggingface.co/models/%s";
@@ -64,8 +70,11 @@ public class HFClient implements LLMClient {
 
     public void setModel (String serviceStr, String modelStr) {
         if (!((serviceStr.equals("llamahf") && llamaHFCompletionModels.contains(modelStr)) || (serviceStr.equals("t5hf") && t5CompletionModels.contains(modelStr)))) {
-            log.error("HFClient does not support service/model pair {}/{}: ", serviceStr, modelStr);
+            log.error("HFClient does not support service/model pair {} and {}: ", serviceStr, modelStr);
             return;
+        }
+        if (routerEndpoint && !modelStr.startsWith("meta-llama")) {
+            modelStr = "meta-llama/" + modelStr;
         }
         service = serviceStr;
         model = modelStr;
@@ -158,7 +167,12 @@ public class HFClient implements LLMClient {
             LlamaHFChat llamaHFChat = new LlamaHFChat(chat);
             llamaHFChat.setModel(model);
             llamaHFChat.setService(service);
-            LlamaHFCompletionRequestBody requestBody = new LlamaHFCompletionRequestBody(llamaHFChat);
+            LlamaHFCompletionRequestBody requestBody;
+            if (routerEndpoint) {
+                requestBody = new LlamaHFCompletionRequestBodyV2(llamaHFChat, model);
+            } else {
+                requestBody = new LlamaHFCompletionRequestBodyV1(llamaHFChat);
+            }
             requestBody.setTemperature(temperature);
             requestBody.setMax_new_tokens(maxNewTokens);
             return new Completion(llamaHFChatCompletion(requestBody, model));
@@ -201,7 +215,11 @@ public class HFClient implements LLMClient {
         Gson gson = new Gson();
         String targetEndpoint;
         if (endpoint == null) {
-            targetEndpoint = String.format(llamaHFCompletionEndpointTemplate, model);
+            if (routerEndpoint) {
+                targetEndpoint = hfCompletionEndpoint;
+            } else {
+                targetEndpoint = String.format(llamaHFCompletionEndpointTemplate, model);
+            }
         } else {
             targetEndpoint = endpoint;
         }
@@ -215,7 +233,11 @@ public class HFClient implements LLMClient {
             //TODO: sayText to report coldstart period?
             //Try using free endpoint temporarily
             log.debug("[llamaHFChatCompletion] attempting using serverless endpoint...");
-            targetEndpoint = String.format(llamaHFCompletionEndpointTemplate, model);
+            if (routerEndpoint) {
+                targetEndpoint = hfCompletionEndpoint;
+            } else {
+                targetEndpoint = String.format(llamaHFCompletionEndpointTemplate, model);
+            }
             httpResponse = Http.sendPostRequest(targetEndpoint, requestBody, headers);
             responseCode = httpResponse == null ? -1 : httpResponse.responseCode;
             response = httpResponse == null ? null : httpResponse.responseString;
@@ -231,27 +253,34 @@ public class HFClient implements LLMClient {
             response = httpResponse == null ? null : httpResponse.responseString;
             log.debug("Response attempt 2: " + response);
         }
-        Type t = new TypeToken<List<LlamaHFChatCompletionResponse>>() {}.getType();
-        List<LlamaHFChatCompletionResponse> results = gson.fromJson(response, t);
-        LlamaHFChatCompletionResponse resp;
-        if (response == null) {
-            resp = new LlamaHFChatCompletionResponse();
-        } else {
-            resp = results.get(0);
-            Matcher unicodeMatcher = UNICODE_PATTERN.matcher(resp.generated_text);
-            if (unicodeMatcher.find()) {
-                try {
-                    log.warn("[lamaHFChatCompletion] found escaped unicode strings in response. Attempting to convert to unicode characters.");
-                    unicodeMatcher.reset(resp.generated_text);
-                    String original = resp.generated_text;
-                    resp.generated_text = unicodeMatcher.replaceAll(match -> {
-                        char c = (char) Integer.parseInt(match.group(1), 16);
-                        return Character.toString(c);
-                    });
-                    log.warn("[llamaHFChatCompletion] original: " + original + "\n corrected: " + resp.generated_text);
-                } catch (Exception e) {
-                    log.error("llamaHFChatCompletion] error attempting to convert escaped unicode literals to valid characters in response " + resp);
-                    resp = new LlamaHFChatCompletionResponse();
+
+        LlamaHFChatCompletionResponse resp = new LlamaHFChatCompletionResponse();
+        if (response != null) {
+            if (routerEndpoint) {
+                Type t = new TypeToken<LlamaHFChatCompletionResponseV2>() {}.getType();
+                LlamaHFChatCompletionResponseV2 result = gson.fromJson(response, t);
+                if (result != null && !result.choices.isEmpty()) {
+                    resp.generated_text = result.choices.get(0).message.get("content");
+                }
+            } else {
+                Type t = new TypeToken<List<LlamaHFChatCompletionResponse>>() {}.getType();
+                List<LlamaHFChatCompletionResponse> results = gson.fromJson(response, t);
+                resp = results.get(0);
+                Matcher unicodeMatcher = UNICODE_PATTERN.matcher(resp.generated_text);
+                if (unicodeMatcher.find()) {
+                    try {
+                        log.warn("[lamaHFChatCompletion] found escaped unicode strings in response. Attempting to convert to unicode characters.");
+                        unicodeMatcher.reset(resp.generated_text);
+                        String original = resp.generated_text;
+                        resp.generated_text = unicodeMatcher.replaceAll(match -> {
+                            char c = (char) Integer.parseInt(match.group(1), 16);
+                            return Character.toString(c);
+                        });
+                        log.warn("[llamaHFChatCompletion] original: " + original + "\n corrected: " + resp.generated_text);
+                    } catch (Exception e) {
+                        log.error("llamaHFChatCompletion] error attempting to convert escaped unicode literals to valid characters in response " + resp);
+                        resp = new LlamaHFChatCompletionResponse();
+                    }
                 }
             }
         }
