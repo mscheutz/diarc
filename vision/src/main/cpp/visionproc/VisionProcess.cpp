@@ -684,6 +684,11 @@ void VisionProcess::resetHasLearned() {
   // intentionally empty
 }
 
+bool VisionProcess::handleLearningNotification(const std::string&  notification) {
+  LOG4CXX_WARN(logger, "[handleLearningNotification] not handled.");
+  return false;
+}
+
 void
 VisionProcess::displayMemoryObject(diarc::stm::MemoryObject::Ptr &mo, const std::string &variableName, bool binaryMask,
                                    bool combine) {

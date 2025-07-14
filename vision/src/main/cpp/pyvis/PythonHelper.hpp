@@ -19,12 +19,14 @@ public:
     PythonHelper(const PythonHelper&) = delete;
     PythonHelper& operator=(const PythonHelper&) = delete;
 
+    void initializePython();
+    void finalizePython();
+
     void acquireGIL();
     void releaseGIL();
 
-    void initializePython();
-    void finalizePython();
     pybind11::module_ importModule(const std::string& moduleName);
+    pybind11::object importFromModule(const std::string& moduleName, const std::string& objectName);
 
 private:
     PythonHelper();
@@ -33,12 +35,13 @@ private:
 
     std::recursive_mutex mutex;
 
-    PyGILState_STATE gstate;
+    PyThreadState *_save;
 
     log4cxx::LoggerPtr logger;
     bool initialized = false;
 
-    std::map<std::string, pybind11::module> importedModules;
+    std::map<std::string, pybind11::module_> importedModules;
+    std::map<std::string, pybind11::object> importedObjects;
 
 };
 

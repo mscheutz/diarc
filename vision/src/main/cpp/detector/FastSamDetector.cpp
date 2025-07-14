@@ -34,23 +34,23 @@ void FastSamDetector::init() {
   LOG4CXX_DEBUG(logger, "[init]");
 
   PythonHelper* pyInstance = PythonHelper::getInstance();
+
+  LOG4CXX_DEBUG(logger, "initializing python...");
   pyInstance->initializePython(); // this holds the GIL after returning
-  // _save = PyEval_SaveThread();
+  LOG4CXX_DEBUG(logger, "done initializing python.");
 
-  LOG4CXX_DEBUG(logger, boost::format("GIL held: %d") % PyGILState_Check());
   try {
-
     LOG4CXX_DEBUG(logger, "[init] waiting on GIL...");
     pyInstance->acquireGIL();
     LOG4CXX_DEBUG(logger, "[init] GIL acquired.");
 
-    LOG4CXX_DEBUG(logger, "[init] 2");
-    py::module_ module = pyInstance->importModule("vector_perception.segmentation");
-    LOG4CXX_DEBUG(logger, "[init] 3");
+    // LOG4CXX_DEBUG(logger, "[init] 2");
+    // py::module_ module = pyInstance->importModule("vector_perception.segmentation");
+    // LOG4CXX_DEBUG(logger, "[init] 3");
     // Equivalent to "from vector_perception.segmentation import Sam2DSegmenter"
     // py::module_::import("vector_perception.segmentation");
-    Sam2DSegmenter = module.attr("Sam2DSegmenter");
-
+    // Sam2DSegmenter = module.attr("Sam2DSegmenter");
+    Sam2DSegmenter = pyInstance->importFromModule("vector_perception.segmentation", "Sam2DSegmenter");
     LOG4CXX_DEBUG(logger, "[init] 4");
     // Construct a Python object of class Sam2DSegmenter
     segmenter = Sam2DSegmenter(
@@ -71,13 +71,15 @@ void FastSamDetector::init() {
 }
 
 void FastSamDetector::cleanup() {
+  LOG4CXX_DEBUG(logger, "[cleanup]...");
   PythonHelper* pyInstance = PythonHelper::getInstance();
   pyInstance->acquireGIL();
 
-  Sam2DSegmenter.release();
-  segmenter.release();
+  Sam2DSegmenter = py::object();
+  segmenter = py::object();
 
   pyInstance->releaseGIL();
+  LOG4CXX_DEBUG(logger, "[cleanup] done");
 }
 
 void FastSamDetector::handleSaliencyNotification(SaliencyNotification::ConstPtr notification) {

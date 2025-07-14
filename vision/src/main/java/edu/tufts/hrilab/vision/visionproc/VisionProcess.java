@@ -436,6 +436,11 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
     processor.resetHasLearned();
   }
 
+  public synchronized boolean handleLearningNotification(Term learningPredicate) {
+    String learningStr = parsePredicate(learningPredicate);
+    return processor.handleLearningNotification(learningStr);
+  }
+
   /**
    * Get whether or not VisionProcess display flag is set.
    *

@@ -180,7 +180,7 @@ ENDIF(USE_ROS)
 
 
 # ROS 2
-OPTION(USE_ROS2 "Turn on/off integration with ROS2." ON)
+OPTION(USE_ROS2 "Turn on/off integration with ROS2." OFF)
 IF(USE_ROS2)
 	FIND_PACKAGE(rclcpp)
 	FIND_PACKAGE(rcl_interfaces)

@@ -17,7 +17,8 @@ public:
     const unsigned int imgHeight, const bool isStereo);
   virtual ~ComponentValidator();
   virtual void loadConfig(const std::string& configFile);
-  
+  virtual bool handleLearningNotification(const std::string& notification);
+
 protected:
 
   std::vector<cv::dnn::Net> nets;

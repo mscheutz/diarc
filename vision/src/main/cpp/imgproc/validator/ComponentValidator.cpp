@@ -372,6 +372,11 @@ void ComponentValidator::initModels(const std::string &model_path1, const std::s
 }
 
 
+bool ComponentValidator::handleLearningNotification(const std::string& notification) {
+  LOG4CXX_DEBUG(logger, boost::format("[ComponentValidation] learning: %s") % notification.c_str());
+  return true;
+}
+
 void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification) {
   LOG4CXX_TRACE(logger, "[ComponentValidation] method entered.");
 
