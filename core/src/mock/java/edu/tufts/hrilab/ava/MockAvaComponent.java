@@ -38,6 +38,7 @@ import javax.vecmath.Vector3d;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -45,7 +46,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.net.URL;
 import java.nio.file.Paths;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -396,9 +396,10 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @TRADEService
-  public void playAudioClip(String resourcePath) {
+  public void playAudioClip(String fileName) {
     try {
-      URL audioFile = getClass().getClassLoader().getResource(resourcePath);
+      String homeDir = System.getProperty("user.home");
+      File audioFile = new File(Paths.get(homeDir, ".diarc","ava",fileName).toString());
       AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
       AudioFormat format = audioStream.getFormat();
       DataLine.Info info = new DataLine.Info(Clip.class, format);
@@ -447,7 +448,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
           }
           if (shouldDing) {
-            playAudioClip("config/edu/tufts/hrilab/ava/ding.wav");
+            playAudioClip("ding.wav");
           } else {
             shouldDing = true;
           }
@@ -465,7 +466,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           result = s.toString();
           //If ASR timed out, loop back to WW detection
           if (result.equals("<unk>\n")) {
-            playAudioClip("config/edu/tufts/hrilab/ava/negativeASRResult.wav");
+            playAudioClip("negativeASRResult.wav");
             result = "";
             try {
               TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
@@ -474,7 +475,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
               log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
             }
           } else {
-            playAudioClip("config/edu/tufts/hrilab/ava/positiveASRResult.wav");
+            playAudioClip("positiveASRResult.wav");
             try {
               TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
               service.call(void.class,"Recognized Speech: " + result);
@@ -551,7 +552,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
         s.append((char) is.read());
       }
       if (shouldDingReady) {
-        playAudioClip("config/edu/tufts/hrilab/ava/positiveASRResult.wav");
+        playAudioClip("positiveASRResult.wav");
       }
       shouldDingReady = true;
 

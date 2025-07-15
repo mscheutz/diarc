@@ -7,7 +7,6 @@ package edu.tufts.hrilab.ava;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.ava.message.AvaMoveGoal;
 import edu.tufts.hrilab.ava.message.response.*;
-import edu.tufts.hrilab.ava.util.Utilities;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
 import edu.tufts.hrilab.map.PathAction;
 
@@ -24,7 +23,6 @@ import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -32,7 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.net.URL;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -1152,9 +1150,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @TRADEService
-  public void playAudioClip(String resourcePath) {
+  public void playAudioClip(String fileName) {
     try {
-      URL audioFile = getClass().getClassLoader().getResource(resourcePath);
+      String homeDir = System.getProperty("user.home");
+      File audioFile = new File(Paths.get(homeDir, ".diarc","ava",fileName).toString());
       AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
       AudioFormat format = audioStream.getFormat();
       DataLine.Info info = new DataLine.Info(Clip.class, format);
@@ -1203,7 +1202,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
           }
           if (shouldDing) {
-            playAudioClip("config/edu/tufts/hrilab/ava/ding.wav");
+            playAudioClip("ding.wav");
           } else {
             shouldDing = true;
           }
@@ -1221,7 +1220,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           result = s.toString();
           //If ASR timed out, loop back to WW detection
           if (result.equals("<unk>\n")) {
-            playAudioClip("config/edu/tufts/hrilab/ava/negativeASRResult.wav");
+            playAudioClip("negativeASRResult.wav");
             result = "";
             try {
               TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
@@ -1230,7 +1229,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
               log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
             }
           } else {
-            playAudioClip("config/edu/tufts/hrilab/ava/positiveASRResult.wav");
+            playAudioClip("positiveASRResult.wav");
             try {
               TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
               service.call(void.class,"Recognized Speech: " + result);
@@ -1303,7 +1302,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
         s.append((char) is.read());
       }
       if (shouldDingReady) {
-        playAudioClip("config/edu/tufts/hrilab/ava/positiveASRResult.wav");
+        playAudioClip("positiveASRResult.wav");
       }
       shouldDingReady = true;
 
