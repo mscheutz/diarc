@@ -96,7 +96,7 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${roscpp_LIBRARIES}
         "/opt/ros/humble/lib/libcv_bridge.so")
 ENDIF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf2_FOUND AND pcl_conversions_FOUND)
 
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES})
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${OpenCV_LIBS} ${Boost_LIBRARIES} ${LOG4CXX_LIBRARIES})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} display common calibration point_clouds)
 if(OPENNI_FOUND)
 	TARGET_LINK_LIBRARIES(${PROJECT_NAME}  ${OPENNI_LIBRARY})
