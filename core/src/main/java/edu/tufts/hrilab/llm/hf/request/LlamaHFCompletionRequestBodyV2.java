@@ -4,6 +4,7 @@
 
 package edu.tufts.hrilab.llm.hf.request;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,8 @@ public class LlamaHFCompletionRequestBodyV2 implements LlamaHFCompletionRequestB
     options = new HashMap<>();
     options.put("wait_for_model", false);
     options.put("use_cache", false);
+
+    messages = new ArrayList<>();
   }
 
   public LlamaHFCompletionRequestBodyV2 (String model) {
@@ -39,7 +42,8 @@ public class LlamaHFCompletionRequestBodyV2 implements LlamaHFCompletionRequestB
 
   public LlamaHFCompletionRequestBodyV2(LlamaHFChat chat, String model) {
     init();
-    messages = chat.getMessages();
+    messages.add(new Message("system", chat.getSystem()));
+    messages.addAll(chat.getMessages());
     this.model = model;
   }
 
