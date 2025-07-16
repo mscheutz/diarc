@@ -11,6 +11,7 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/foreach.hpp>
+#include <boost/process.hpp>
 #include <experimental/filesystem>
 
 #include <fstream>
@@ -29,6 +30,7 @@
 #include "common/notification/CaptureNotification.hpp"
 #include "stm/util/StmUtilities.hpp"
 #include "point_clouds/PointCloudUtilities.hpp"
+#include "pyvis/PythonHelper.hpp"
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -41,6 +43,9 @@
 #include <pcl/surface/convex_hull.h>
 #include <numeric> // for accumulate
 
+
+namespace py = pybind11;
+namespace bp = boost::process;
 
 using namespace diarc::stm;
 namespace fs = std::experimental::filesystem;
@@ -372,16 +377,94 @@ void ComponentValidator::initModels(const std::string &model_path1, const std::s
 }
 
 
+void ComponentValidator::init() {
+  LOG4CXX_DEBUG(logger, "[init] ComponentValidator::");
+
+  PythonHelper* pyInstance = PythonHelper::getInstance();
+  pyInstance->initializePython(); // this holds the GIL after returning
+  
+  LOG4CXX_DEBUG(logger, boost::format("GIL held: %d") % PyGILState_Check());
+  try {
+
+    LOG4CXX_DEBUG(logger, "[init] waiting on GIL...");
+    pyInstance->acquireGIL();
+    LOG4CXX_DEBUG(logger, "[init] GIL acquired.");
+    py::module_ trainmodule = pyInstance->importModule("train_encoder_bybind.train_supereggs");
+    trainerWrapper = trainmodule.attr("TrainerWrapper");
+    trainer = trainerWrapper("local");
+    LOG4CXX_DEBUG(logger, "[init] Training python code wrapper called.");
+  }
+  catch (py::error_already_set& e) {
+    LOG4CXX_ERROR(logger, boost::format("[init] %s") % e.what());
+  }
+
+  pyInstance->releaseGIL();
+  LOG4CXX_DEBUG(logger, "[init] done");
+
+}
+
+
+void ComponentValidator::cleanup() {
+  LOG4CXX_DEBUG(logger, "[cleanup]");
+  PythonHelper* pyInstance = PythonHelper::getInstance();
+  pyInstance->acquireGIL();
+
+  trainerWrapper.release();
+  trainer.release();
+
+  pyInstance->releaseGIL();
+  std::cout << "Cleaned up ComponentLearner" << std::endl;
+}
+
+
 bool ComponentValidator::handleLearningNotification(const std::string& notification) {
   LOG4CXX_DEBUG(logger, boost::format("[ComponentValidation] learning: %s") % notification.c_str());
   // NOTE: loadConfig and init might not have been called yet
+ 
+  std::vector<std::string> args = {
+    "--background",
+    "--python-use-system-env",
+    "--python",
+    "/home/schneiders/Documents/Documents/geometric-primitives-dataset/render_blender/render_supereggs_unit_cube_rotated.py",
+    "--",
+    "--number_of_samples", "10",
+    "--num_of_side_components", "2",
+    "--shape_type1", "firstshape_rod",
+    "--shape_type2", "secondshape_rod",
+    "--shape_type3", "thirdshape_rod",
+    "--position2", "secondposition_at_the_bottom", 
+    "--position3", "thirdposition_to_the_left",
+    "--size2", "secondsize_smaller",
+    "--size3", "thirdsize_larger",
+  };
+
+  // Launch Blender process
+  int ret = bp::system(
+    "/usr/bin/blender",    // Or simply "blender" if it's in PATH
+    bp::args(args)
+  );
+
+  if (ret != 0) {
+    LOG4CXX_ERROR(logger, boost::format("Rendering script returned with exit code != 0"));
+  }
+
+  PythonHelper* pyInstance = PythonHelper::getInstance();
+  {
+    LOG4CXX_DEBUG(logger, "Training is started.");
+    pyInstance->acquireGIL();
+    trainer.attr("run")();
+  }
+  LOG4CXX_DEBUG(logger, "Training finished.");
+  pyInstance->releaseGIL();
   
   return true;
+  
 }
+
 
 void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification) {
   LOG4CXX_TRACE(logger, "[ComponentValidation] method entered.");
-
+  /*
   MemoryObject::Ptr object = notification->object;
 
   // check if this typeId should currently be processed
@@ -542,7 +625,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
       }
     }
   }
-
+*/
 }
 
 
