@@ -1,6 +1,6 @@
 
 define new visual search; C; defineVisualSearch(?ADDRESSEE)
 
-one; NUM; one
-two; NUM; two
-three; NUM; three
+one; VAL; val(one)
+two; VAL; val(two)
+three; VAL; val(three)

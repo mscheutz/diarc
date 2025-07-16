@@ -290,5 +290,10 @@ public class AvailableLearners {
     // add learned thing to availableValidationProcessors
     Vision.availableValidationProcessors.addImageProcessorOption(nameToLearn, learnerDetail.getImageProcessorType());
 
+    // add nameToLearn to consultant so that it can be searched for
+    List<Term> properties = new ArrayList<>();
+    properties.add(nameToLearn);
+    Vision.consultant.addPropertiesHandled(properties);
+
   }
 }

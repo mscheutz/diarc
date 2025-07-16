@@ -19,8 +19,6 @@ public:
   virtual ~ComponentValidator();
   virtual void loadConfig(const std::string& configFile);
   virtual bool handleLearningNotification(const std::string& notification);
-  void init() override;
-  void cleanup() override;
 
 protected:
 
@@ -35,9 +33,6 @@ protected:
   virtual void initModels(const std::string &model_path1, const std::string &model_path2, const std::string &model_path3);
 
 private:
-
-  pybind11::object trainerWrapper;
-  pybind11::object trainer;
 
   typedef struct {
     std::string predicateKey;

@@ -376,47 +376,6 @@ void ComponentValidator::initModels(const std::string &model_path1, const std::s
   nets.push_back(cv::dnn::readNetFromONNX(model_path3 + ".onnx"));
 }
 
-
-void ComponentValidator::init() {
-  LOG4CXX_DEBUG(logger, "[init] ComponentValidator::");
-
-  PythonHelper* pyInstance = PythonHelper::getInstance();
-  pyInstance->initializePython(); // this holds the GIL after returning
-  
-  LOG4CXX_DEBUG(logger, boost::format("GIL held: %d") % PyGILState_Check());
-  try {
-
-    LOG4CXX_DEBUG(logger, "[init] waiting on GIL...");
-    pyInstance->acquireGIL();
-    LOG4CXX_DEBUG(logger, "[init] GIL acquired.");
-    py::module_ trainmodule = pyInstance->importModule("train_encoder_bybind.train_supereggs");
-    trainerWrapper = trainmodule.attr("TrainerWrapper");
-    trainer = trainerWrapper("local");
-    LOG4CXX_DEBUG(logger, "[init] Training python code wrapper called.");
-  }
-  catch (py::error_already_set& e) {
-    LOG4CXX_ERROR(logger, boost::format("[init] %s") % e.what());
-  }
-
-  pyInstance->releaseGIL();
-  LOG4CXX_DEBUG(logger, "[init] done");
-
-}
-
-
-void ComponentValidator::cleanup() {
-  LOG4CXX_DEBUG(logger, "[cleanup]");
-  PythonHelper* pyInstance = PythonHelper::getInstance();
-  pyInstance->acquireGIL();
-
-  trainerWrapper.release();
-  trainer.release();
-
-  pyInstance->releaseGIL();
-  std::cout << "Cleaned up ComponentLearner" << std::endl;
-}
-
-
 bool ComponentValidator::handleLearningNotification(const std::string& notification) {
   LOG4CXX_DEBUG(logger, boost::format("[ComponentValidation] learning: %s") % notification.c_str());
   // NOTE: loadConfig and init might not have been called yet
@@ -432,7 +391,7 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     "--shape_type1", "firstshape_rod",
     "--shape_type2", "secondshape_rod",
     "--shape_type3", "thirdshape_rod",
-    "--position2", "secondposition_at_the_bottom", 
+    "--position2", "secondposition_at_the_bottom",
     "--position3", "thirdposition_to_the_left",
     "--size2", "secondsize_smaller",
     "--size3", "thirdsize_larger",
@@ -449,14 +408,22 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
   }
 
   PythonHelper* pyInstance = PythonHelper::getInstance();
-  {
-    LOG4CXX_DEBUG(logger, "Training is started.");
+  pyInstance->initializePython();
+  LOG4CXX_DEBUG(logger, "Training is started.");
+  try {
+    LOG4CXX_DEBUG(logger, "[learn] waiting on GIL...");
     pyInstance->acquireGIL();
+    LOG4CXX_DEBUG(logger, "[learn] GIL acquired.");
+    py::module_ trainmodule = pyInstance->importModule("train_encoder_bybind.train_supereggs");
+    py::object trainerWrapper = trainmodule.attr("TrainerWrapper");
+    py::object trainer = trainerWrapper("local");
     trainer.attr("run")();
+    LOG4CXX_DEBUG(logger, "Training finished.");
+  } catch (py::error_already_set& e) {
+    LOG4CXX_ERROR(logger, boost::format("[init] %s") % e.what());
   }
-  LOG4CXX_DEBUG(logger, "Training finished.");
+
   pyInstance->releaseGIL();
-  
   return true;
   
 }
