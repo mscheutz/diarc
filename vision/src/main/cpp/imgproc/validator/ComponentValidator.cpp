@@ -379,8 +379,9 @@ void ComponentValidator::initModels(const std::string &model_path1, const std::s
 bool ComponentValidator::handleLearningNotification(const std::string& notification) {
   LOG4CXX_DEBUG(logger, boost::format("[ComponentValidation] learning: %s") % notification.c_str());
   // NOTE: loadConfig and init might not have been called yet
-  
-  /*
+
+  int number_of_samples = 6;  // How many objects should be rendered
+
   // blender OBJ exporter prints a lot of information, maybe log them in a file!?
   std::vector<std::string> args = {
     "--background", 
@@ -389,7 +390,7 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     // Assuming diarc is at ../diarc
     "../diarc/vision/src/main/python/superellipsoid_obj_gen/render_supereggs_unit_cube_rotated.py",
     "--",
-    "--number_of_samples", "6",
+    "--number_of_samples", std::to_string(number_of_samples),
     "--num_of_side_components", "2",
     "--shape_type1", "firstshape_rod",
     "--shape_type2", "secondshape_rod",
@@ -409,7 +410,7 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
   if (ret != 0) {
     LOG4CXX_ERROR(logger, boost::format("Rendering script returned with exit code != 0"));
   }
-  */
+  
   PythonHelper* pyInstance = PythonHelper::getInstance();
   pyInstance->initializePython();
   LOG4CXX_DEBUG(logger, "Training is started.");
@@ -419,7 +420,9 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     LOG4CXX_DEBUG(logger, "[learn] GIL acquired.");
     py::module_ trainmodule = pyInstance->importModule("superellipsoid_obj_training.train_supereggs");
     py::object trainerWrapper = trainmodule.attr("TrainerWrapper");
-    py::object trainer = trainerWrapper(6);  //number of samples
+    // 80% of objects (number_of_samples) are used for training, 20% for validation
+    // --> Make sure that there is a meaningful number of objects (i.e. not too low)?
+    py::object trainer = trainerWrapper(number_of_samples);  
     trainer.attr("run")();
     LOG4CXX_DEBUG(logger, "Training finished.");
   } catch (py::error_already_set& e) {
