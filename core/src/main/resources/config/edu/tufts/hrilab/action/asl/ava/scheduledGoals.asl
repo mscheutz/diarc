@@ -269,13 +269,13 @@ import edu.tufts.hrilab.action.justification.Justification;
     exit(FAIL,not(know(?actor,whichGoalYouWantToModify)));
 }
 
-() = listScheduledGoals() {
+() = describeScheduledGoals() {
     List !scheduledGoals;
     Integer !numGoals;
     Predicate !goalPred;
 
     !scheduledGoals = tsc:getScheduledGoals();
-    //op:log(debug, "[listScheduledGoals] current scheduled goals: !scheduledGoals");
+    //op:log(debug, "[describeScheduledGoals] current scheduled goals: !scheduledGoals");
     if (op:isEmpty(!scheduledGoals)) {
         act:generateResponseFromString("There are no scheduled tasks");
     } else {

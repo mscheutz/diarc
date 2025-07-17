@@ -32,7 +32,8 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     Prompt nluUserPrompt = Prompts.getPrompt("ava/nlu/user");
     Prompt nlgSystemPrompt = Prompts.getPrompt("ava/nlg/system");
     Prompt nlgUserPrompt = Prompts.getPrompt("ava/nlg/user");
-    Prompt validationPrompt = Prompts.getPrompt("ava/nlg/validation");
+    Prompt validationSystemPrompt = Prompts.getPrompt("ava/validation/system");
+    Prompt validationUserPrompt = Prompts.getPrompt("ava/validation/user");
     private boolean registeredForNewActions = false;
     private String learnedActionsString = "";
 
@@ -261,18 +262,22 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         promptVars.put("%utterance", utterance.toString());
         populatePromptVarsWithProperties(promptVars, locations);
         if (semantics.getName().equals("mean")) {
-            userMessage = validationPrompt.apply(promptVars);
+            userMessage = validationUserPrompt.apply(promptVars);
         } else {
             userMessage = nlgUserPrompt.apply(promptVars);
         }
+        chat.addUserMessage(userMessage);
 
         promptVars = new LinkedHashMap<>();
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
         promptVars.put("%language", language);
         promptVars.put("%patrolPathList", String.join("\n", patrolPaths));
         promptVars.put("%locationList", String.join("\n", locations));
-        chat.setSystem(nlgSystemPrompt.apply(promptVars));
-        chat.addUserMessage(userMessage);
+        if (semantics.getName().equals("mean")) {
+            chat.setSystem(validationSystemPrompt.apply(promptVars));
+        } else {
+            chat.setSystem(nlgSystemPrompt.apply(promptVars));
+        }
 
         log.info("generateNLGChat called for: {}", utterance);
 
@@ -314,12 +319,14 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         List<String> locations = getLocations("self", true);
         List<String> patrolPaths = getPatrolPaths();
         promptVars.put("%patrolPathList", String.join("\n", patrolPaths));
+        promptVars.put("%examplePath", patrolPaths.isEmpty() ? "test path" : patrolPaths.get(0));
         promptVars.put("%locationList", String.join("\n", locations));
+        promptVars.put("%exampleLocation", locations.isEmpty() ? "test location" : locations.get(0));
         promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
         promptVars.put("%learnedActions%",learnedActionsString);
-        currentChat.setSystem(nluSystemPrompt.apply(promptVars));
-        promptVars.clear();
         populatePromptVarsWithProperties(promptVars, locations);
+        currentChat.setSystem(nluSystemPrompt.apply(promptVars));
+        //promptVars.clear();
         promptVars.put("%input", utterance.getWordsAsString());
         currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
 
@@ -523,7 +530,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         log.info("[ignoreTentativeAccept] goalPred: "+goalPred);
         if(goalPred != null) {
             switch (goalPred.getName()) {
-                case "listScheduledGoals":
+                case "describeScheduledGoals":
                 case "describeCurrentLocation":
                 case "describePendingGoals":
                 case "describeAllKnownLocations":

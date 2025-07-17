@@ -279,7 +279,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private void preserveAddressee (Utterance parsedUtterance) {
     Symbol semantics = parsedUtterance.getSemantics();
     Symbol addressee = null;
-    if (semantics != null && semantics.isTerm()) {
+    if (semantics != null && semantics.isTerm() && semantics.hasArgs()) {
       log.debug("[preserveAddressee] addressee = " + parsedUtterance.getAddressee().toString());
       //addressee = parsedUtterance.getAddressee();
       //until TLDLParserComponent consistently sets listener check first argument in semantics

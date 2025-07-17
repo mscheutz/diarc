@@ -210,7 +210,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("what are your scheduled goals",
-              "INSTRUCT(eric,ava,listScheduledGoals(ava),{})"
+              "INSTRUCT(eric,ava,describeScheduledGoals(ava),{})"
               ,num_runs
       );
       count_total += num_runs;
@@ -385,7 +385,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("what do you have scheduled",
-              "INSTRUCT(eric,ava,listScheduledGoals(ava),{})"
+              "INSTRUCT(eric,ava,describeScheduledGoals(ava),{})"
               ,num_runs
       );
       count_total += num_runs;
@@ -560,7 +560,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("what are your daily tasks?",
-              "INSTRUCT(eric,ava,listScheduledGoals(ava),{})"
+              "INSTRUCT(eric,ava,describeScheduledGoals(ava),{})"
               ,num_runs
       );
       count_total += num_runs;
@@ -677,6 +677,19 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       log.info("HARD: {}/{}", count_correct, count_total);
     }
 
+    int count_correct = 0;
+    int count_total = 0;
+    count_correct += testUtterance("go to the atrium elevators",
+            "INSTRUCT(eric,ava,goToLocation(ava,VAR0:location),{atrium three elevators(VAR0:location),DEFINITE(VAR0:location)})"
+            ,num_runs
+    );
+    count_total += num_runs;
+    count_correct += testUtterance("go to the basement",
+            "INSTRUCT(eric,ava,goToLocation(ava,VAR0:location),{atrium 3 elevators(VAR0:location),DEFINITE(VAR0:location)})"
+            ,num_runs
+    );
+    count_total += num_runs;
+    log.info("CURRENT: {}/{}", count_correct, count_total);
     if (run_easy) {
       log.info("EASY: {}/{}", easy_count, 28*num_runs);
     }

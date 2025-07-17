@@ -425,7 +425,7 @@ execution; VAL; timingOf(execution)
 first execution; VAL; timingOf(execution)
 interval; VAL; timingOf(interval)
 
-what are your scheduled tasks; C; listScheduledGoals(?ADDRESSEE)
+what are your scheduled tasks; C; describeScheduledGoals(?ADDRESSEE)
 
 %num is special term
 %TODO: generalize
