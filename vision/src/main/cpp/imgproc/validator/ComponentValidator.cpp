@@ -379,14 +379,17 @@ void ComponentValidator::initModels(const std::string &model_path1, const std::s
 bool ComponentValidator::handleLearningNotification(const std::string& notification) {
   LOG4CXX_DEBUG(logger, boost::format("[ComponentValidation] learning: %s") % notification.c_str());
   // NOTE: loadConfig and init might not have been called yet
- 
+  
+  /*
+  // blender OBJ exporter prints a lot of information, maybe log them in a file!?
   std::vector<std::string> args = {
-    "--background",
+    "--background", 
     "--python-use-system-env",
     "--python",
-    "/home/schneiders/Documents/Documents/geometric-primitives-dataset/render_blender/render_supereggs_unit_cube_rotated.py",
+    // Assuming diarc is at ../diarc
+    "../diarc/vision/src/main/python/superellipsoid_obj_gen/render_supereggs_unit_cube_rotated.py",
     "--",
-    "--number_of_samples", "10",
+    "--number_of_samples", "6",
     "--num_of_side_components", "2",
     "--shape_type1", "firstshape_rod",
     "--shape_type2", "secondshape_rod",
@@ -406,7 +409,7 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
   if (ret != 0) {
     LOG4CXX_ERROR(logger, boost::format("Rendering script returned with exit code != 0"));
   }
-
+  */
   PythonHelper* pyInstance = PythonHelper::getInstance();
   pyInstance->initializePython();
   LOG4CXX_DEBUG(logger, "Training is started.");
@@ -414,9 +417,9 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     LOG4CXX_DEBUG(logger, "[learn] waiting on GIL...");
     pyInstance->acquireGIL();
     LOG4CXX_DEBUG(logger, "[learn] GIL acquired.");
-    py::module_ trainmodule = pyInstance->importModule("train_encoder_bybind.train_supereggs");
+    py::module_ trainmodule = pyInstance->importModule("superellipsoid_obj_training.train_supereggs");
     py::object trainerWrapper = trainmodule.attr("TrainerWrapper");
-    py::object trainer = trainerWrapper("local");
+    py::object trainer = trainerWrapper(6);  //number of samples
     trainer.attr("run")();
     LOG4CXX_DEBUG(logger, "Training finished.");
   } catch (py::error_already_set& e) {
@@ -424,6 +427,7 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
   }
 
   pyInstance->releaseGIL();
+  
   return true;
   
 }
