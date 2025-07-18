@@ -653,6 +653,7 @@ def generate_topdown_depth_image(ID_path, resolution=(1256, 1256)):
 
 def generate_blender_superegg_dataset(args):
 
+    object_ID = args.object_id
     number_of_samples = args.number_of_samples
     start_idx = START_IDX
     number_of_side_components = args.num_of_side_components
@@ -662,9 +663,9 @@ def generate_blender_superegg_dataset(args):
 
     safety_counter = 0
 
-    for object_ID in range(start_idx, start_idx + number_of_samples):
+    for object_idx in range(start_idx, start_idx + number_of_samples):
 
-        print('Object ID is ', object_ID, flush=True)
+        print('Current object number is ', object_idx, flush=True)
         
         successful_object_creation = False
         
@@ -674,7 +675,7 @@ def generate_blender_superegg_dataset(args):
             bpy.ops.object.select_all(action="SELECT")
             bpy.ops.object.delete(use_global=True)
 
-            ID_path = 'superellipsoid_learning/data_unit_cube_rotated_simprojc/objects/object_' + f'{object_ID}'
+            ID_path = 'superellipsoid_learning/data_unit_cube_rotated_simprojc/objects_' + object_ID + '/object_' + f'{object_idx}'
            
             # create object composed of base object and side object of height object height
             successful_object_creation = create_rotate_rescale_translate_objects(ID_path, 
@@ -736,6 +737,7 @@ def parse_arguments():
         script_args = []  # no custom arguments passed
     
     parser = argparse.ArgumentParser()
+    parser.add_argument('--object_id', type=str, required=True)
     parser.add_argument('--number_of_samples', type=int, required=True)
     parser.add_argument('--num_of_side_components', type=int, required=True)
     parser.add_argument('--shape_type1', type=str, default='firstshape_part', 

@@ -380,7 +380,17 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
   LOG4CXX_DEBUG(logger, boost::format("[ComponentValidation] learning: %s") % notification.c_str());
   // NOTE: loadConfig and init might not have been called yet
 
-  int number_of_samples = 6;  // How many objects should be rendered
+  int numberOfSamples = 6;  // How many objects should be rendered
+  std::string shape1 = "rod";
+  std::string shape2 = "rod";
+  std::string shape3 = "rod";
+  std::string position2 = "at_the_bottom";
+  std::string position3 = "to_the_left";
+  std::string size2 = "smaller";
+  std::string size3 = "larger";
+
+  std::string objectDescriptors = shape1 + "_" + shape2 + position2 + 
+                                  size2 + "_" + shape3 + position3 + size3;
 
   // blender OBJ exporter prints a lot of information, maybe log them in a file!?
   std::vector<std::string> args = {
@@ -390,27 +400,30 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     // Assuming diarc is at ../diarc
     "../diarc/vision/src/main/python/superellipsoid_obj_gen/render_supereggs_unit_cube_rotated.py",
     "--",
-    "--number_of_samples", std::to_string(number_of_samples),
+    "--object_id", objectDescriptors,
+    "--number_of_samples", std::to_string(numberOfSamples),
     "--num_of_side_components", "2",
-    "--shape_type1", "firstshape_rod",
-    "--shape_type2", "secondshape_rod",
-    "--shape_type3", "thirdshape_rod",
-    "--position2", "secondposition_at_the_bottom",
-    "--position3", "thirdposition_to_the_left",
-    "--size2", "secondsize_smaller",
-    "--size3", "thirdsize_larger",
+    "--shape_type1", "firstshape_" + shape1,
+    "--shape_type2", "secondshape_" + shape2,
+    "--shape_type3", "thirdshape_" + shape3,
+    "--position2", "secondposition_" + position2,
+    "--position3", "thirdposition_" + position3,
+    "--size2", "secondsize_" + size2,
+    "--size3", "thirdsize_"+ size3,
   };
-
+  /*
   // Launch Blender process
   int ret = bp::system(
-    "/usr/bin/blender",    // Or simply "blender" if it's in PATH
-    bp::args(args)
+    "/usr/bin/blender",
+    bp::args(args),
+    bp::std_out > "blender_output.log",
+    bp::std_err > "blender_error.log"
   );
 
   if (ret != 0) {
     LOG4CXX_ERROR(logger, boost::format("Rendering script returned with exit code != 0"));
   }
-  
+  */
   PythonHelper* pyInstance = PythonHelper::getInstance();
   pyInstance->initializePython();
   LOG4CXX_DEBUG(logger, "Training is started.");
@@ -418,11 +431,18 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     LOG4CXX_DEBUG(logger, "[learn] waiting on GIL...");
     pyInstance->acquireGIL();
     LOG4CXX_DEBUG(logger, "[learn] GIL acquired.");
+    py::module_ sys = py::module_::import("sys");
+    py::module_ io = py::module_::import("io");
+
+    // Create a Python file object that writes to a file
+    py::object file = io.attr("open")("superellipsoid_training.log", "a");
+    sys.attr("stdout") = file;
+    sys.attr("stderr") = file;
     py::module_ trainmodule = pyInstance->importModule("superellipsoid_obj_training.train_supereggs");
     py::object trainerWrapper = trainmodule.attr("TrainerWrapper");
     // 80% of objects (number_of_samples) are used for training, 20% for validation
     // --> Make sure that there is a meaningful number of objects (i.e. not too low)?
-    py::object trainer = trainerWrapper(number_of_samples);  
+    py::object trainer = trainerWrapper(objectDescriptors, numberOfSamples);  
     trainer.attr("run")();
     LOG4CXX_DEBUG(logger, "Training finished.");
   } catch (py::error_already_set& e) {
