@@ -318,7 +318,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("escort eric from the pavilion to reception",
-              "INSTRUCT(eric,ava,escortFromToLocation(ava,eric,VAR0:location,VAR1:location),{pavilion(VAR0:location),reception(VAR1:location),DEFINITE(VAR0:location),DEFINITE(VAR1:location)})"
+              "INSTRUCT(eric,ava,escortFromLocationToLocation(ava,eric,VAR0:location,VAR1:location),{pavilion(VAR0:location),reception(VAR1:location),DEFINITE(VAR0:location),DEFINITE(VAR1:location)})"
               ,num_runs
       );
       count_total += num_runs;
@@ -493,7 +493,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("bring eric to reception, he's at the pavilion",
-              "INSTRUCT(eric,ava,escortFromToLocation(ava,eric,VAR0:location,VAR1:location),{pavilion(VAR0:location),reception(VAR1:location),DEFINITE(VAR0:location),DEFINITE(VAR1:location)})"
+              "INSTRUCT(eric,ava,escortFromLocationToLocation(ava,eric,VAR0:location,VAR1:location),{pavilion(VAR0:location),reception(VAR1:location),DEFINITE(VAR0:location),DEFINITE(VAR1:location)})"
               ,num_runs
       );
       count_total += num_runs;
@@ -668,7 +668,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       count_total += num_runs;
 
       count_correct += testUtterance("can you find eric and show him to reception? i think he's by the pavilion.",
-              "INSTRUCT(eric,ava,escortFromToLocation(ava,eric,VAR0:location,VAR1:location),{pavilion(VAR0:location),reception(VAR1:location),DEFINITE(VAR0:location),DEFINITE(VAR1:location)})"
+              "INSTRUCT(eric,ava,escortFromLocationToLocation(ava,eric,VAR0:location,VAR1:location),{pavilion(VAR0:location),reception(VAR1:location),DEFINITE(VAR0:location),DEFINITE(VAR1:location)})"
               ,num_runs
       );
       count_total += num_runs;
@@ -685,7 +685,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
     );
     count_total += num_runs;
     count_correct += testUtterance("go to the basement",
-            "INSTRUCT(eric,ava,goToLocation(ava,VAR0:location),{atrium 3 elevators(VAR0:location),DEFINITE(VAR0:location)})"
+            "UNKNOWN(eric,ava,[go, to, the, basement],{})"
             ,num_runs
     );
     count_total += num_runs;

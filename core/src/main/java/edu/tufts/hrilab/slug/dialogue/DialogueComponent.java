@@ -488,4 +488,16 @@ public class DialogueComponent extends DiarcComponent {
       return mostRecentQuestion.getQuestionString();
     }
   }
+
+  @TRADEService
+  public List<Term> getLastQuestionResponseForm(Symbol agent) {
+    agent = agent.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(agent);
+    if (currentQuestions.isEmpty()) {
+      return new ArrayList<>();
+    } else {
+      Question mostRecentQuestion = currentQuestions.stream().max(Comparator.comparingLong(Question::getTimestamp)).get();
+      return mostRecentQuestion.getResponseForms();
+    }
+  }
 }

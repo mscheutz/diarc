@@ -138,9 +138,9 @@ to; RN/RN; #x.$x
 %escort the patient to; ESCORTTO
 %escort from; ESCORT
 %escort the patient from; ESCORT
-escort * from; (C/REF)/REF; #x#y.escortFromToLocation(?ADDRESSEE,*,$x,$y)
+escort * from; (C/REF)/REF; #x#y.escortFromLocationToLocation(?ADDRESSEE,*,$x,$y)
 escort * to; C/REF; #l.escortToLocation(?ADDRESSEE,*,$l)
-take * from; (C/REF)/REF; #x#y.escortFromToLocation(?ADDRESSEE,*,$x,$y)
+take * from; (C/REF)/REF; #x#y.escortFromLocationToLocation(?ADDRESSEE,*,$x,$y)
 take * to; C/REF; #l.escortToLocation(?ADDRESSEE,*,$l)
 
 %bring; VERBDT; escortToLocation
