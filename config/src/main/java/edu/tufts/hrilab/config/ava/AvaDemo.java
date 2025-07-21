@@ -18,7 +18,7 @@ public class AvaDemo extends DiarcConfiguration {
   boolean useLLMParser = true;
   boolean useLLMNLG = true;
   String service = "llamahf";
-  String model = "Llama-3.1-8B-Instruct";
+  String model = "Qwen/Qwen3-14B";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "";

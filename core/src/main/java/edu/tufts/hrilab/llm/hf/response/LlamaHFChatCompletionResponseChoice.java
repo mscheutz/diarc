@@ -7,5 +7,5 @@ public class LlamaHFChatCompletionResponseChoice {
     public String finish_reason;
     public int index;
     public Object logprobs;
-    public Map<String,String> message;
+    public Map<String,Object> message;
 }

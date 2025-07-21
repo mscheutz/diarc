@@ -34,7 +34,7 @@ Example Translation: "bring Owen to %exampleLocation" -> {"Semantics":"escortToL
 #
 escortFromLocationToLocation(?name, ?start:location, ?destination:location)
 Description: You escort ?name from location ?start:location to location ?destination:location
-Example Translation: "escort our guest from %exampleLocation to the dock" -> {"Semantics":"escortFromLocationToLocation(guest,%exampleLocation:location,dock:location)","Input Type":"INSTRUCT","Confidence":"10"}
+Example Translation: "bring our guest from %exampleLocation to the dock" -> {"Semantics":"escortFromLocationToLocation(guest,%exampleLocation:location,dock:location)","Input Type":"INSTRUCT","Confidence":"10"}
 #
 saveLocation(?name)
 Description: You save your current location under the name ?name
@@ -98,7 +98,7 @@ Example Translation: "I want to change the timing of an action" -> {"Semantics":
 #
 describeScheduledGoals()
 Description: You report what your currently scheduled goals are
-Example Translation: "what are your scheduled goals" -> {"Semantics":"describeScheduledGoals()","Input Type":"INSTRUCT","Confidence":"10"}
+Example Translation: "what are you scheduled to do" -> {"Semantics":"describeScheduledGoals()","Input Type":"INSTRUCT","Confidence":"10"}
 #
 describeCurrentGoal()
 Description: You report what your current task is
@@ -106,7 +106,7 @@ Example Translation: "what are you doing now" -> {"Semantics":"describeCurrentGo
 #
 describePendingGoals()
 Description: You report what your currently pending/upcoming tasks are
-Example Translation: "what are your next goals" -> {"Semantics":"describePendingGoals()","Input Type":"INSTRUCT","Confidence":"10"}
+Example Translation: "what are you doing after your current task" -> {"Semantics":"describePendingGoals()","Input Type":"INSTRUCT","Confidence":"10"}
 #
 cancelSystemGoals()
 Description: You stop and fully discard your current task
@@ -134,7 +134,7 @@ Example Translation: "i will teach you a new task" -> {"Semantics":"learnNewTask
 #
 endActionLearning()
 Description: You conclude learning the steps of a new instructable action
-Example Translation: "those are the steps of the task" -> {"Semantics":"endActionLearning
+Example Translation: "those are the steps of the task" -> {"Semantics":"endActionLearning()","Input Type":"INSTRUCT","Confidence":"10"}
 #
 describeCurrentLocation()
 Description: You report what location you believe you are currently at
@@ -168,7 +168,7 @@ Example Translation: "nah" -> {"Semantics":"val(no)","Input Type":"REPLY","Confi
 #
 location(?location:location)
 Description: Specification of a saved location called ?location:location
-Example Translation: "%exampleLocation" -> {"Semantics":"location(%exampleLocation:location)","Input Type":"REPLY","Confidence":"10"}
+Example Translation: "the %exampleLocation" -> {"Semantics":"location(%exampleLocation:location)","Input Type":"REPLY","Confidence":"10"}
 #
 location(none)
 Description: Conveyed intent that the speaker is finished specifying certain saved locations
@@ -206,7 +206,7 @@ Example Translation: "the path should be called path a" -> {"Semantics":"pathNam
 option(?number)
 Description: The specification of an option ?number from a list of options
 Example Translation: "the first one" -> {"Semantics":"option(1)","Input Type":"REPLY","Confidence":"10"}
-###TODO: make sure locationList and patrolPathList list TYPED entities (e.g. dock:location) and are newline + # separated
+###
 ENTITIES: Following are the list of locations and patrol paths known to the system.
 ##
 Locations:
@@ -223,24 +223,24 @@ There may only be one active task of the robot at a time. The current task of th
 #
 CURRENT TASK: %goals
 #
-The current outstanding questions which the system is expecting an answer to are:
+The current OUTSTANDING QUESTION and EXPECTED REPLY FORM are:
 #
 OUTSTANDING QUESTION: %questionList
 ###
 When performing your translations, there is a list of strategies you may employ to help provide an accurate response and a list of rules you must follow to generate a valid response.
 ##
 Strategies:
-1. Use the CURRENT TASK and it's status to disambiguate meaning of the supplied input. A phrase with an ambiguous target may be referencing an aspect of the current task.
-2. Reason about the amount of information and number of objects present in the input. This likely maps closely to the amount of variables present in the correct semantic form. If there are similar versions of the same semantic form, the more specific one is better to choose if all the information is present.
-3. Keep any OUTSTANDING QUESTION and EXPECTED REPLY FORM in mind when formulating a translation. If any exist and you get input which could possibly be parsed as an answer to such a question, it is more likely that the correct translation is a variation of the EXPECTED REPLY FORM.
+1. If there is any OUTSTANDING QUESTION and EXPECTED REPLY FORM and you get input which could possibly be parsed as an answer to such a question, it is more likely that the correct translation is a variation of the EXPECTED REPLY FORM. It is possible the user is not answering the question though.
+2. See if there is a CURRENT TASK and what its status is. This can also help to disambiguate meaning of the supplied input. A phrase with an ambiguous target may be referencing an aspect of or action on the current task.
+3. Reason about the amount of information and number of objects present in the input. This likely maps closely to the amount of variables present in the correct semantic form. The user may overspecify information in their input relative to the semantic translation, but will never underspecify. If there are similar versions of the same semantic form, the more specific one is better to choose if all the information is present.
 #
 Rules:
-1. Typed variables in your translations must only be replaced with values from the corresponding entities list. Any value supplied not present in that list should result in output with 0 confidence.
-Positive Example: "go to %exampleLocation" -> {"Semantics":"goToLocation(%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"10"}
-Negative Example: "go to the basement" -> {"Semantics":"goToLocation(?destination:location","Input Type":"INSTRUCT","Confidence":"0"}
-2. All variables in your output must have been replaced with values from the input. If there are any variables remaining in your translation, the output should have 0 confidence.
-Example: "Deliver to %exampleLocation" -> {"Semantics":"deliver(?objectName,%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"0"}
-3. The input type of your output must match the input type provided in the example translation of the chosen semantic form. For example, follow() must have input type INSTRUCT as shown and abort(question) must have input type REPLY.
+1. All variables in your output must have been replaced with values from the input. If there are any variables remaining in your translation (arguments preceded by a "%"), the output is invalid.
+Invalid Example: "Deliver to %exampleLocation" -> {"Semantics":"deliver(?objectName,%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"0"}
+2. Typed variables in your translations must only be replaced with values from the corresponding entities list. Any value supplied which is not present in that list is invalid.
+Valid Example: "go to %exampleLocation" -> {"Semantics":"goToLocation(%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"10"}
+Invalid Example: "go to the basement" -> {"Semantics":"goToLocation(?destination:location","Input Type":"INSTRUCT","Confidence":"0"}
+3. The input type of your output must match the input type provided in the example translation of the chosen semantic form. For example, follow() must have input type INSTRUCT as shown and abort(question) must have input type REPLY. You may change your generated translations' input type to follow the example and be valid.
 ###
 The confidence rating in your translations can take a value between 0-10. A confidence value below 6 will indicate to the user that you do not believe there is a matching valid parse of the user's input, or that the input is ambiguous enough that it could possibly mean multiple different things. Values increasing above 5 increasingly shows that you are confident in your result and don't believe there is any ambiguity. Examples of translations with variable confidence scores are:
 #
@@ -253,4 +253,4 @@ The confidence rating in your translations can take a value between 0-10. A conf
 "kick the ball over the fence" -> {"Semantics":"<unk>","Input Type":"INSTRUCT","Confidence":"0"}
 ###
 
- When supplied with an instruction, do your best with the outlined task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. First, attempt to use the strategies listed to produce an accurate translation. Then, double check that your translation follows all the supplied rules. If it does not, then set the confidence to 0. End your response with the output json as shown in the provided examples.
+ When supplied with an instruction, do your best with the outlined task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. First, attempt to use the strategies listed to produce an accurate translation. Then, repeat the task 2 more times, generating 3 different possible translations. Once this is done, go through the set of rules for each generated translation and cull any which violate a rule. Finally, choose the result which seems most relevant in the current context among the remaining valid translations and end your response by repeating it after the prefix "Chosen translation: ". The translation should be formatted as shown, json containing the fields: "Semantics", "Input Type", and "Confidence". If all translations violate any of the rules, your translation should simply be "<unk>".

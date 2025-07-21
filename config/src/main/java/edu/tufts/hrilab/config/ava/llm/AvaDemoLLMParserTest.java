@@ -30,7 +30,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
   boolean useQueueEM = true;
   String avaArgs = "";
   String service = "llamahf";
-  String model = "Llama-3.1-8B-Instruct";
+  String model = "Qwen/Qwen3-14B";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "";
@@ -147,7 +147,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
     boolean run_easy = true;
     boolean run_medium = true;
     boolean run_hard = true;
-    int num_runs = 5;
+    int num_runs = 1; //TODO: see if we can force clearing cached context. Seems to return the same result every time if senf in succession
     int easy_count = 0;
     int medium_count = 0;
     int hard_count = 0;
