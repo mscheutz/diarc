@@ -20,32 +20,43 @@ MODEL_PATH_CONFIG = {
     "onnx_build_path": Path("../vision/build/resources/main/config/edu/tufts/hrilab/vision/imgProcs/componentvalidator/")
 }
 
-def dataloading(object_directory, num_of_objects):
+def dataloading(object_directory, num_of_objects, batch_cap=16):
 
     # use 80% of objects training, 20% for validation
     train_ratio = 0.8
-
-    # calculate the split index
     num_of_train_objects = int(num_of_objects * train_ratio)
-    
-    b_s = 1  # use generic batch size of 1 for now 
-                    
-    dataset_train = dtldr.ExrDataset(root_dir=object_directory, 
-                              limit_lower=0, 
-                              limit_upper=num_of_train_objects)
-    
-    dataset_valid = dtldr.ExrDataset(root_dir=object_directory, 
-                              limit_lower=num_of_train_objects, 
-                              limit_upper=num_of_objects + 1)  
-   
-    train_loader = torch.utils.data.DataLoader(dataset_train,
-                                                batch_size=b_s,
-                                                shuffle=True)
-    
-    valid_loader = torch.utils.data.DataLoader(dataset_valid, 
-                                                batch_size=b_s, 
-                                                shuffle=True)
-     
+    num_of_valid_objects = num_of_objects - num_of_train_objects
+
+    # Dynamically set batch size: max is batch_cap, min is 1
+    train_bs = max(1, min(batch_cap, num_of_train_objects))
+    valid_bs = max(1, min(batch_cap, num_of_valid_objects))
+
+    # Load training dataset
+    dataset_train = dtldr.ExrDataset(
+        root_dir=object_directory,
+        limit_lower=0,
+        limit_upper=num_of_train_objects
+    )
+
+    # Load validation dataset
+    dataset_valid = dtldr.ExrDataset(
+        root_dir=object_directory,
+        limit_lower=num_of_train_objects,
+        limit_upper=num_of_objects
+    )
+
+    train_loader = torch.utils.data.DataLoader(
+        dataset_train,
+        batch_size=train_bs,
+        shuffle=True
+    )
+
+    valid_loader = torch.utils.data.DataLoader(
+        dataset_valid,
+        batch_size=valid_bs,
+        shuffle=True
+    )
+
     return train_loader, valid_loader
 
 
@@ -63,7 +74,7 @@ def train(object_id, num_of_objects):
 
     optimizer = torch.optim.Adam(E_img.parameters(), lr=tao, weight_decay=0.001)
     criterion = nn.MSELoss(reduction='mean')
-    criterion_separate = torch.nn.MSELoss(reduction='none')
+    criterion_separate = torch.nn.L1Loss(reduction='none')
     
     train_dataloader, valid_dataloader = dataloading(object_dir, num_of_objects)
 
@@ -110,10 +121,11 @@ def train(object_id, num_of_objects):
             loss.backward()
             optimizer.step()
             
-            loss_separate += np.mean(criterion_separate(z, 
-                                     gr_tr.to(device)).detach().cpu().numpy(), 
-                                     axis=0) * number_of_train_images
-
+            # get per-slot absolute errors for this batch
+            batch_loss_separate = criterion_separate(z, gr_tr).detach().cpu().numpy()
+            batch_loss_separate = np.mean(batch_loss_separate, axis=0)
+            loss_separate += batch_loss_separate
+            
             loss_avg_train += (loss.item() * number_of_train_images)
             
         print('train. loss is ', loss_avg_train / num_batches_train, flush=True)
@@ -143,11 +155,15 @@ def train(object_id, num_of_objects):
                 z = E_img(d_img.to(device))
                 z = torch.sigmoid(z)
                 
+                if i_batch == 0:
+                    print(f"Epoch {epoch}, first gr_tr:\n{gr_tr[0].detach().cpu().numpy()}", flush=True)
+                    print(f"first z:\n{z[0].detach().cpu().numpy()}", flush=True)
+                
                 loss = criterion(z, gr_tr.to(device)) 
                             
-                loss_separate += np.mean(criterion_separate(z, 
-                                     gr_tr.to(device)).detach().cpu().numpy(), 
-                                     axis=0) * number_of_valid_images
+                batch_loss_separate = criterion_separate(z, gr_tr).detach().cpu().numpy()
+                batch_loss_separate = np.mean(batch_loss_separate, axis=0)
+                loss_separate += batch_loss_separate
 
                 loss_avg_valid += (loss.item() * number_of_valid_images)
                 
@@ -204,7 +220,7 @@ class TrainerWrapper:
 
 if __name__ == '__main__':
 
-    trainer = TrainerWrapper('2rods_top_left', 5)
+    trainer = TrainerWrapper('2rods_top_left', 50)
     trainer.run()
 
     

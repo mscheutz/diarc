@@ -379,8 +379,8 @@ void ComponentValidator::initModels(const std::string &model_path1, const std::s
 bool ComponentValidator::handleLearningNotification(const std::string& notification) {
   LOG4CXX_DEBUG(logger, boost::format("[ComponentValidation] learning: %s") % notification.c_str());
   // NOTE: loadConfig and init might not have been called yet
-
-  int numberOfSamples = 6;  // How many objects should be rendered
+  
+  int numberOfSamples = 20;  // How many objects should be rendered
   std::string shape1 = "rod";
   std::string shape2 = "rod";
   std::string shape3 = "rod";
@@ -402,7 +402,7 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     "--",
     "--object_id", objectDescriptors,
     "--number_of_samples", std::to_string(numberOfSamples),
-    "--num_of_side_components", "2",
+    "--num_of_side_components", "1",
     "--shape_type1", "firstshape_" + shape1,
     "--shape_type2", "secondshape_" + shape2,
     "--shape_type3", "thirdshape_" + shape3,
@@ -411,7 +411,7 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     "--size2", "secondsize_" + size2,
     "--size3", "thirdsize_"+ size3,
   };
-  /*
+  
   // Launch Blender process
   int ret = bp::system(
     "/usr/bin/blender",
@@ -423,7 +423,7 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
   if (ret != 0) {
     LOG4CXX_ERROR(logger, boost::format("Rendering script returned with exit code != 0"));
   }
-  */
+  
   PythonHelper* pyInstance = PythonHelper::getInstance();
   pyInstance->initializePython();
   LOG4CXX_DEBUG(logger, "Training is started.");
