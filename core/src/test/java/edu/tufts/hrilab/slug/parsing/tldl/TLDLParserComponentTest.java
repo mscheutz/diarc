@@ -4242,7 +4242,7 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
         assertTrue(testUtterance("escort mark from the dock to the elevator",
-                "INSTRUCT(brad,self,escortFromToLocation(self,mark,VAR0,VAR1),{dock(VAR0),elevator(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escortFromLocationToLocation(self,mark,VAR0,VAR1),{dock(VAR0),elevator(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 speaker, "self"));
 
         assertTrue(testUtterance("escort mark to the elevator",
@@ -4250,7 +4250,7 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
         assertTrue(testUtterance("take mark from the dock to the elevator",
-                "INSTRUCT(brad,self,escortFromToLocation(self,mark,VAR0,VAR1),{dock(VAR0),elevator(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
+                "INSTRUCT(brad,self,escortFromLocationToLocation(self,mark,VAR0,VAR1),{dock(VAR0),elevator(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",
                 speaker, "self"));
 
         assertTrue(testUtterance("take mark to the elevator",

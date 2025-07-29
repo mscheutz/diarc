@@ -36,7 +36,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     op:add(!responseFormList,!responseForm);
 
 
-    !bindings = act:askQuestionFromString(?actor, "What would you like to do?", taskPredicate(X));
+    !bindings = act:askQuestionFromString(?actor, "What should the scheduled task be?", taskPredicate(X));
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -269,13 +269,13 @@ import edu.tufts.hrilab.action.justification.Justification;
     exit(FAIL,not(know(?actor,whichGoalYouWantToModify)));
 }
 
-() = listScheduledGoals() {
+() = describeScheduledGoals() {
     List !scheduledGoals;
     Integer !numGoals;
     Predicate !goalPred;
 
     !scheduledGoals = tsc:getScheduledGoals();
-    //op:log(debug, "[listScheduledGoals] current scheduled goals: !scheduledGoals");
+    //op:log(debug, "[describeScheduledGoals] current scheduled goals: !scheduledGoals");
     if (op:isEmpty(!scheduledGoals)) {
         act:generateResponseFromString("There are no scheduled tasks");
     } else {
@@ -385,11 +385,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     java.util.List !responseFormList;
     Predicate !responseForm;
 
-    //Doing this as a kind of failsafe, not sure if we want such similar semantics at all though
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     !responseForm = op:createPredicate("pathName(X)");
-    op:add(!responseFormList,!responseForm);
-    !responseForm = op:createPredicate("taskName(X)");
     op:add(!responseFormList,!responseForm);
 
     !bindings = act:askQuestionFromString(?actor,"What is the name of the path?", !responseFormList);

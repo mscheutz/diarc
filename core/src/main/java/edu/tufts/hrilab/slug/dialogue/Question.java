@@ -117,4 +117,8 @@ public class Question {
     public String getQuestionString() {
         return questionString;
     }
+
+    public List<Term> getResponseForms() {
+        return responseForms;
+    }
 }

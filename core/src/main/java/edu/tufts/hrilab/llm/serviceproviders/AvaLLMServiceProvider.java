@@ -32,7 +32,8 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     Prompt nluUserPrompt = Prompts.getPrompt("ava/nlu/user");
     Prompt nlgSystemPrompt = Prompts.getPrompt("ava/nlg/system");
     Prompt nlgUserPrompt = Prompts.getPrompt("ava/nlg/user");
-    Prompt validationPrompt = Prompts.getPrompt("ava/nlg/validation");
+    Prompt validationSystemPrompt = Prompts.getPrompt("ava/validation/system");
+    Prompt validationUserPrompt = Prompts.getPrompt("ava/validation/user");
     private boolean registeredForNewActions = false;
     private String learnedActionsString = "";
 
@@ -81,7 +82,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             }
             String confidenceString = m.group(m.groupCount()).trim();
             int confidence = Integer.parseInt(confidenceString);
-            if (confidence < 50) {
+            if (confidence < 5) {
                 log.info("[spotPickAndPlaceLLMServiceProvider] llm indicated parse result as low confidence ({})", confidence);
                 //TODO: start conversation and recovery dialogue?
                 //      Cache result so that script can be entered based on utterance/agent/something?
@@ -261,18 +262,23 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         promptVars.put("%utterance", utterance.toString());
         populatePromptVarsWithProperties(promptVars, locations);
         if (semantics.getName().equals("mean")) {
-            userMessage = validationPrompt.apply(promptVars);
+            userMessage = validationUserPrompt.apply(promptVars);
         } else {
             userMessage = nlgUserPrompt.apply(promptVars);
         }
+        chat.addUserMessage(userMessage);
 
         promptVars = new LinkedHashMap<>();
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
         promptVars.put("%language", language);
         promptVars.put("%patrolPathList", String.join("\n", patrolPaths));
         promptVars.put("%locationList", String.join("\n", locations));
-        chat.setSystem(nlgSystemPrompt.apply(promptVars));
-        chat.addUserMessage(userMessage);
+        promptVars.put("%addressee", utterance.getAddressee().getName());
+        if (semantics.getName().equals("mean")) {
+            chat.setSystem(validationSystemPrompt.apply(promptVars));
+        } else {
+            chat.setSystem(nlgSystemPrompt.apply(promptVars));
+        }
 
         log.info("generateNLGChat called for: {}", utterance);
 
@@ -313,14 +319,18 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
         List<String> locations = getLocations("self", true);
         List<String> patrolPaths = getPatrolPaths();
-        promptVars.put("%patrolPathList", String.join("\n", patrolPaths));
-        promptVars.put("%locationList", String.join("\n", locations));
+        promptVars.put("%patrolPathList", String.join(":path\n", patrolPaths));
+        promptVars.put("%examplePath", patrolPaths.isEmpty() ? "test path" : patrolPaths.get(0));
+        promptVars.put("%locationList", String.join(":location\n", locations));
+        promptVars.put("%exampleLocation", locations.isEmpty() ? "test location" : locations.get(0));
         promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
+        promptVars.put("%goals", getGoalString(utterance.getAddressee()));
+        promptVars.put("%questionList", getCurrentQuestionsString(utterance.getAddressee()));
         promptVars.put("%learnedActions%",learnedActionsString);
-        currentChat.setSystem(nluSystemPrompt.apply(promptVars));
-        promptVars.clear();
         populatePromptVarsWithProperties(promptVars, locations);
-        promptVars.put("%input", utterance.getWordsAsString());
+        currentChat.setSystem(nluSystemPrompt.apply(promptVars));
+        //promptVars.clear();
+        promptVars.put("%utterance", utterance.getWordsAsString());
         currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
 
         return currentChat;
@@ -422,11 +432,9 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     }
 
     private String getWorldStateString(Symbol agent) {
-        StringBuilder builder = new StringBuilder();
         Predicate query = Factory.createPredicate("at","X","Y");
         List<Map<Variable, Symbol>> bindings;
         String robotLocationString = "";
-        String holdingString = "";
         try {
             bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)).call(List.class,query);
             TRADEServiceInfo tsi = getServiceForAgent("self", "getMapReferences");
@@ -440,7 +448,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 PoseReference ref = refs.get(y);
                 if (ref != null) {
                     if (!ref.properties.isEmpty()) {
-                        robotLocationString = String.format("The robot is at %s. ", ref.properties.get(0).getName());
+                        robotLocationString = String.format("The robot is at the following location: %s.\n", ref.properties.get(0).getName());
                     }
                 }
             }
@@ -448,11 +456,44 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             log.error("[getWorldState] ", e);
             return "Nothing is known by the robot";
         }
-        if (robotLocationString.isEmpty()) {
+
+        String output = robotLocationString;
+        if (output.isEmpty()) {
             log.warn("[getWorldState] no matching beliefs found for agent {}", agent);
-            return "Nothing is known by the robot";
+            output = "<Nothing is known by the robot>";
         }
-        return robotLocationString + holdingString + builder;
+        return output;
+    }
+
+    private String getGoalString(Symbol agent) {
+        //TODO: also add pending and scheduled?
+        String currentGoalString = "<The robot has no current task>\n";
+        try {
+            List<Predicate> currentGoalPredicate = TRADE.getAvailableService(new TRADEServiceConstraints().name("getSystemGoalsPredicates").argTypes(Symbol.class)).call(List.class,agent);
+            if (!currentGoalPredicate.isEmpty()) {
+                currentGoalString = currentGoalPredicate.get(0).toString() + "\n";
+            }
+        } catch (TRADEException e) {
+            log.error("[getWorldStateString] error getting current goal for agent", e);
+        }
+        return currentGoalString;
+    }
+
+    private String getCurrentQuestionsString(Symbol agent) {
+        String output = "";
+        try {
+            String questionString = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestion").argTypes(Symbol.class)).call(String.class,agent);
+            List<Term> expectedResponseForms = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestionResponseForm").argTypes(Symbol.class)).call(List.class,agent);
+            if (!expectedResponseForms.isEmpty()) {
+                output = questionString + "\nEXPECTED REPLY FORM:\n" + String.join("\n",expectedResponseForms.stream().map(Term::toString).toList());
+            }
+        } catch (TRADEException e) {
+            log.error("[getCurrentQuestionsString] error getting last question for agent");
+        }
+        if (output.isEmpty()) {
+            output = "<There are no current outstanding questions>";
+        }
+        return output;
     }
 
     private String getDescriptorType(String agentName, String descriptor) {
@@ -523,7 +564,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         log.info("[ignoreTentativeAccept] goalPred: "+goalPred);
         if(goalPred != null) {
             switch (goalPred.getName()) {
-                case "listScheduledGoals":
+                case "describeScheduledGoals":
                 case "describeCurrentLocation":
                 case "describePendingGoals":
                 case "describeAllKnownLocations":

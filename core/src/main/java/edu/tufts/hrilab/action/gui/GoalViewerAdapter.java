@@ -137,7 +137,7 @@ public class GoalViewerAdapter extends GuiAdapter {
           }
         case "escortToLocation":
           return String.format("Escort %s to %s", splitRes[2], getLocationNameFromReference(Factory.createSymbol(splitRes[3])));
-        case "escortFromToLocation":
+        case "escortFromLocationToLocation":
           return String.format("Escort %s from %s to %s", splitRes[2], getLocationNameFromReference(Factory.createSymbol(splitRes[3])), getLocationNameFromReference(Factory.createSymbol(splitRes[4])));
         case "fetch":
           if (splitRes.length == 5) {

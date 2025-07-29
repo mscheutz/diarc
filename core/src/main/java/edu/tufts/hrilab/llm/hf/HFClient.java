@@ -43,7 +43,7 @@ public class HFClient implements LLMClient {
     private final Pattern UNICODE_PATTERN = Pattern.compile("(?<!\\\\)\\\\u(\\p{XDigit}{4})");
 
     //EW: Non-chat models I think are theoretically available to use, but have practically never finished loading for me
-    private List<String> llamaHFCompletionModels = Arrays.asList("Llama-2-7b-hf", "Llama-2-7b-chat-hf", "Llama-2-13b-hf", "Llama-2-13b-chat-hf", "Llama-2-70b-hf", "Llama-2-70b-chat-hf", "Meta-Llama-3-8B", "Meta-Llama-3-8B-Instruct", "Meta-Llama-3-70B", "Meta-Llama-3-70B-Instruct","Llama-3.1-8B", "Llama-3.1-8B-Instruct", "Llama-3.1-70B", "Llama-3.1-70B-Instruct","Llama-3.1-405B", "Llama-3.1-405B-Instruct","Llama-3.3-70B-Instruct");
+    private List<String> llamaHFCompletionModels = Arrays.asList("Llama-2-7b-hf", "Llama-2-7b-chat-hf", "Llama-2-13b-hf", "Llama-2-13b-chat-hf", "Llama-2-70b-hf", "Llama-2-70b-chat-hf", "Meta-Llama-3-8B", "Meta-Llama-3-8B-Instruct", "Meta-Llama-3-70B", "Meta-Llama-3-70B-Instruct","Llama-3.1-8B", "Llama-3.1-8B-Instruct", "Llama-3.1-70B", "Llama-3.1-70B-Instruct","Llama-3.1-405B", "Llama-3.1-405B-Instruct","Llama-3.3-70B-Instruct", "Qwen/Qwen3-14B");
     private List<String> t5CompletionModels = Arrays.asList("t5-small", "t5-base", "t5-large", "t5-3b", "t5-11b");
 
     private String defaultSystemPrompt = "";
@@ -69,11 +69,12 @@ public class HFClient implements LLMClient {
     }
 
     public void setModel (String serviceStr, String modelStr) {
+        //TODO: should clean up model/endpoint (type) configuration everywhere. Using HF endpoints should be be deprecated soon though...
         if (!((serviceStr.equals("llamahf") && llamaHFCompletionModels.contains(modelStr)) || (serviceStr.equals("t5hf") && t5CompletionModels.contains(modelStr)))) {
             log.error("HFClient does not support service/model pair {} and {}: ", serviceStr, modelStr);
             return;
         }
-        if (routerEndpoint && !modelStr.startsWith("meta-llama")) {
+        if (routerEndpoint && !modelStr.startsWith("meta-llama") && !modelStr.startsWith("Qwen")) {
             modelStr = "meta-llama/" + modelStr;
         }
         service = serviceStr;
@@ -257,10 +258,11 @@ public class HFClient implements LLMClient {
         LlamaHFChatCompletionResponse resp = new LlamaHFChatCompletionResponse();
         if (response != null) {
             if (routerEndpoint) {
-                Type t = new TypeToken<LlamaHFChatCompletionResponseV2>() {}.getType();
+                Type t = new TypeToken<LlamaHFChatCompletionResponseV2>() {
+                }.getType();
                 LlamaHFChatCompletionResponseV2 result = gson.fromJson(response, t);
                 if (result != null && !result.choices.isEmpty()) {
-                    resp.generated_text = result.choices.get(0).message.get("content");
+                    resp.generated_text = (String)result.choices.get(0).message.get("content");
                 }
             } else {
                 Type t = new TypeToken<List<LlamaHFChatCompletionResponse>>() {}.getType();

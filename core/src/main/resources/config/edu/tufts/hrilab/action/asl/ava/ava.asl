@@ -33,7 +33,7 @@ import java.util.StringTokenizer;
     act:goHome();
 }
 
-() = escortFromToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
+() = escortFromLocationToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
     String !locName = tsc:getMapReferenceName(?dstLoc);
 
     act:goToLocation(?escorteeLoc);
@@ -384,10 +384,7 @@ import java.util.StringTokenizer;
     java.util.List !responseFormList;
     Predicate !responseForm;
 
-    //Doing this as a kind of failsafe, not sure if we want such similar semantics at all though
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
-    !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "pathName(X)");
-    op:add(!responseFormList,!responseForm);
     !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "taskName(X)");
     op:add(!responseFormList,!responseForm);
 
