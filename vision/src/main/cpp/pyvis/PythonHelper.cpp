@@ -33,13 +33,12 @@ PythonHelper::PythonHelper()
 }
 
 void PythonHelper::acquireGIL() {
-    //mutex.lock();
-    PyEval_RestoreThread(_save);
-
+  //mutex.lock();
+  _state = PyGILState_Ensure(); // c++ thread
 }
 
 void PythonHelper::releaseGIL() {
-    _save = PyEval_SaveThread();
+    PyGILState_Release(_state); // c++ thread
     //mutex.unlock();
 }
 
@@ -62,8 +61,8 @@ void PythonHelper::initializePython() {
         }
         py::initialize_interpreter();
 
-        LOG4CXX_DEBUG(logger, "releaseGIL()...");
-        releaseGIL();
+        LOG4CXX_DEBUG(logger, "release GIL...");
+        _save = PyEval_SaveThread();
         LOG4CXX_DEBUG(logger, boost::format("GIL held: %d") % PyGILState_Check());
 
         initialized = true;
@@ -76,25 +75,25 @@ void PythonHelper::initializePython() {
 void PythonHelper::finalizePython() {
     std::lock_guard<std::recursive_mutex> lock(mutex);
 
-    LOG4CXX_INFO(logger, "[finalizePython] methode entered");
+    LOG4CXX_DEBUG(logger, "[finalizePython] methode entered");
 
     if (initialized) {
-    LOG4CXX_INFO(logger, "[finalizePython] 0");
-        // acquireGIL();
-    LOG4CXX_INFO(logger, "[finalizePython] 1");
+        LOG4CXX_DEBUG(logger, "[finalizePython] 0");
+        PyEval_RestoreThread(_save); // acquire GIL
+        LOG4CXX_DEBUG(logger, "[finalizePython] 1");
         py::finalize_interpreter();
-    LOG4CXX_INFO(logger, "[finalizePython] 2");
-        // releaseGIL();
-    LOG4CXX_INFO(logger, "[finalizePython] 3");
+        LOG4CXX_DEBUG(logger, "[finalizePython] 2");
         initialized = false;
     }
-    LOG4CXX_INFO(logger, "[finalizePython] done");
+    LOG4CXX_DEBUG(logger, "[finalizePython] done");
 }
 
 pybind11::module_ PythonHelper::importModule(const std::string& moduleName) {
     std::lock_guard<std::recursive_mutex> lock(mutex);
+
     if (!initialized) {
-        initializePython();
+        LOG4CXX_ERROR(logger, "[importModule] Python not initialized.");
+        return {};
     }
 
     if (importedModules.find(moduleName) != importedModules.end()) {
@@ -103,22 +102,5 @@ pybind11::module_ PythonHelper::importModule(const std::string& moduleName) {
         py::module_ module = py::module_::import(moduleName.c_str());
         importedModules[moduleName] = module;
         return module;
-    }
-}
-
-pybind11::object PythonHelper::importFromModule(const std::string& moduleName, const std::string& objectName) {
-    std::lock_guard<std::recursive_mutex> lock(mutex);
-
-    if (!initialized) {
-        initializePython();
-    }
-
-    if (importedObjects.find(objectName) != importedObjects.end()) {
-        return importedObjects[moduleName];
-    } else {
-        py::module_ module = importModule(moduleName);
-        py::object object = module.attr(objectName.c_str());
-        importedObjects[objectName] = object;
-        return object;
     }
 }

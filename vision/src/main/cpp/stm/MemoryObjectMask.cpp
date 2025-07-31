@@ -20,19 +20,10 @@ log4cxx::LoggerPtr MemoryObjectMask::logger(log4cxx::Logger::getLogger("edu.tuft
 
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const cv::Mat &mask)
         : captureData_(capture),
-          imageMask_(),
-          indicesMask_(),
-          boundingBox_(),
-          dimensions_(),
           location_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
                     std::numeric_limits<double>::quiet_NaN()),
           direction_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-                     std::numeric_limits<double>::quiet_NaN()),
-          objectCloud_(),
-          objectCloudRGB_(),
-          objectImage_(),
-          cloud_mutex_(),
-          image_mutex_() {
+                     std::numeric_limits<double>::quiet_NaN()) {
 
   LOG4CXX_DEBUG(logger, "[MemoryObjectMask] cvMat Mask constructor.");
 
@@ -140,19 +131,11 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
 
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const cv::Rect &boundingBoxMask)
         : captureData_(capture),
-          imageMask_(),
-          indicesMask_(),
           boundingBox_(boundingBoxMask),
-          dimensions_(),
           location_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
                     std::numeric_limits<double>::quiet_NaN()),
           direction_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-                     std::numeric_limits<double>::quiet_NaN()),
-          objectCloud_(),
-          objectCloudRGB_(),
-          objectImage_(),
-          cloud_mutex_(),
-          image_mutex_() {
+                     std::numeric_limits<double>::quiet_NaN())  {
 
   if (logger->isDebugEnabled()) {
     LOG4CXX_DEBUG(logger, boost::format("[MemoryObjectMask] rect constructor. Rect: (%d,%d,%d,%d)")
@@ -262,19 +245,11 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
 
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const std::vector<int> &imageIndicesMask)
         : captureData_(capture),
-          imageMask_(),
           indicesMask_(imageIndicesMask),
-          boundingBox_(),
-          dimensions_(),
           location_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
                     std::numeric_limits<double>::quiet_NaN()),
           direction_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-                     std::numeric_limits<double>::quiet_NaN()),
-          objectCloud_(),
-          objectCloudRGB_(),
-          objectImage_(),
-          cloud_mutex_(),
-          image_mutex_() {
+                     std::numeric_limits<double>::quiet_NaN()) {
 
   LOG4CXX_DEBUG(logger, "[MemoryObjectMask] imageIndicesMask constructor.");
   // initialize image mask to all zeros
@@ -394,19 +369,10 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const s
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
                                    const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloudMask)
         : captureData_(capture),
-          imageMask_(),
-          indicesMask_(),
-          boundingBox_(),
-          dimensions_(),
           location_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
                     std::numeric_limits<double>::quiet_NaN()),
           direction_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-                     std::numeric_limits<double>::quiet_NaN()),
-          objectCloud_(),
-          objectCloudRGB_(),
-          objectImage_(),
-          cloud_mutex_(),
-          image_mutex_() {
+                     std::numeric_limits<double>::quiet_NaN())  {
 
   LOG4CXX_DEBUG(logger, "[MemoryObjectMask] point cloud constructor.");
 
@@ -535,19 +501,10 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
                                    const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloudMask)
         : captureData_(capture),
-          imageMask_(),
-          indicesMask_(),
-          boundingBox_(),
-          dimensions_(),
           location_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
                     std::numeric_limits<double>::quiet_NaN()),
           direction_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-                     std::numeric_limits<double>::quiet_NaN()),
-          objectCloud_(),
-          objectCloudRGB_(),
-          objectImage_(),
-          cloud_mutex_(),
-          image_mutex_() {
+                     std::numeric_limits<double>::quiet_NaN()) {
 
   LOG4CXX_DEBUG(logger, "[MemoryObjectMask] RGB point cloud constructor.");
 

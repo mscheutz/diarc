@@ -6,9 +6,9 @@ import edu.tufts.hrilab.fol.Predicate;
     Variable !x = "X";
     Symbol !objectName = op:createSymbol("none");
 
-//    java.util.Map !bindings = act:askQuestionFromString(user, "How many parts does the object have?", val(X));
-//    Symbol !numParts = op:get(!bindings, !x);  //
-//    op:log("info", "Visual search has !numParts components.");
+    java.util.Map !bindings = act:askQuestionFromString(user, "How many parts does the object have?", val(X));
+    Symbol !numParts = op:get(!bindings, !x);  //
+    op:log("info", "Visual search has !numParts components.");
 
 //    // collect information about each component
 //    !numParts = op:invokeMethod(!partsPred, "get", 0);

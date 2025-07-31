@@ -26,22 +26,22 @@ public:
     void releaseGIL();
 
     pybind11::module_ importModule(const std::string& moduleName);
-    pybind11::object importFromModule(const std::string& moduleName, const std::string& objectName);
 
 private:
     PythonHelper();
+
     static PythonHelper* instance;
     static std::mutex instanceMuutex;
 
     std::recursive_mutex mutex;
 
     PyThreadState *_save;
+    PyGILState_STATE _state;
 
     log4cxx::LoggerPtr logger;
     bool initialized = false;
 
     std::map<std::string, pybind11::module_> importedModules;
-    std::map<std::string, pybind11::object> importedObjects;
 
 };
 

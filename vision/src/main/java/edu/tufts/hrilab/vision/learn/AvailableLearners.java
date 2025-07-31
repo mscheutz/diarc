@@ -280,12 +280,12 @@ public class AvailableLearners {
     learningProc.handleLearningNotification(learningTerm);
 
     // stop things once the learner has performed one iteration
-    Util.Sleep(2000);
-    while (!learningProc.hasLearned()) {
-      log.debug("Waiting on learner to learn...");
-      Util.Sleep(50);
-    }
-    learningProc.resetHasLearned();
+//    Util.Sleep(2000);
+//    while (!learningProc.hasLearned()) {
+//      log.debug("Waiting on learner to learn...");
+//      Util.Sleep(50);
+//    }
+//    learningProc.resetHasLearned();
 
     // add learned thing to availableValidationProcessors
     Vision.availableValidationProcessors.addImageProcessorOption(nameToLearn, learnerDetail.getImageProcessorType());

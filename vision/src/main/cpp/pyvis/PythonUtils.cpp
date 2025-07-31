@@ -38,14 +38,24 @@ py::array_t<uchar> PythonUtils::convertMatToNumpy(const cv::Mat& mat) {
 cv::Mat PythonUtils::convertNumpyToMat(const py::array_t<uchar>& array) {
   py::buffer_info buf = array.request();
 
-  // std::string message = "[convertNumpyToNumpy] format: " + buf.format + " ndims: " + std::to_string(buf.ndim);
-  // LOG4CXX_INFO(logger, message);
+  if (logger->isDebugEnabled()) {
+    std::string message = "[convertNumpyToMat] format: " + buf.format + " ndims: " + std::to_string(buf.ndim);
+    if (buf.ndim == 2) {
+      message += " shape: " + std::to_string(buf.shape[0]) + " " + std::to_string(buf.shape[1]);
+      message += " strides: " + std::to_string(buf.strides[0]) + " " + std::to_string(buf.strides[1]);
+    } else {
+      message += " shape: " + std::to_string(buf.shape[0]) + " " + std::to_string(buf.shape[1]) + " " + std::to_string(buf.shape[2]);
+      message += " strides: " + std::to_string(buf.strides[0]) + " " + std::to_string(buf.strides[1]) + " " + std::to_string(buf.strides[2]);
+    }
+    LOG4CXX_DEBUG(logger, message);
+  }
 
   int cvType = CV_8UC3;
   if (buf.ndim == 2) {
     cvType = CV_8UC1;
   }
 
-  cv::Mat mat(buf.shape[0], buf.shape[1], cvType, (uchar*)buf.ptr);
+  cv::Mat tmp(buf.shape[0], buf.shape[1], cvType, buf.ptr, buf.strides[0]);
+  cv::Mat mat = tmp.clone();
   return mat;
 }

@@ -410,9 +410,8 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
   if (ret != 0) {
     LOG4CXX_ERROR(logger, boost::format("Rendering script returned with exit code != 0"));
   }
-  
+
   PythonHelper* pyInstance = PythonHelper::getInstance();
-  pyInstance->initializePython();
   LOG4CXX_DEBUG(logger, "Training is started.");
   try {
     LOG4CXX_DEBUG(logger, "[learn] waiting on GIL...");

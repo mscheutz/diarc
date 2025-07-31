@@ -55,6 +55,9 @@
 #include "CaptureGStreamer.hpp"
 #endif
 
+#include "pyvis/PythonHelper.hpp"
+namespace py = pybind11;
+
 namespace diarc {
   namespace capture {
     ///////////// START: static member initialization ////////////////
@@ -305,6 +308,10 @@ namespace diarc {
         pub = nh->advertise<pcl::PointCloud<pcl::PointXYZ> >("/head_mount_kinect/depth_registered/points", 1);
       }
 #endif //USE_ROS_VISION
+
+      // initialize python for all vision threads
+      PythonHelper* pyInstance = PythonHelper::getInstance();
+      pyInstance->initializePython();
     }
 
     Capture::~Capture() {
@@ -312,6 +319,10 @@ namespace diarc {
       if (saveToAVIstarted) {
         stopAviWrite();
       }
+
+      // finalize python stuff
+      PythonHelper* pyInstance = PythonHelper::getInstance();
+      pyInstance->finalizePython();
     }
 
     bool Capture::capture(const double transform[]) {

@@ -24,13 +24,14 @@ public:
 
 protected:
   void handleCaptureNotification(CaptureNotification::ConstPtr notification) override;
-  void handleSaliencyNotification(SaliencyNotification::ConstPtr notification) override;
 
 private:
-  cv::Mat salmap;
+  void createSegmenter();
+  void destroySegmenter();
+
+  bool segmenter_initialized;
   pybind11::object Sam2DSegmenter;
   pybind11::object segmenter;
-  PyThreadState *_save;
 
   diarc::stm::MemoryObject::VecPtr createMemoryObjects(pybind11::list masks, pybind11::list confs, CaptureData::ConstPtr captureData);
 };
