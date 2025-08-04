@@ -167,7 +167,7 @@ public class Utilities {
   public final static <T extends DBEntry> List<T> findMatchingEntries(List<T> entries, List<Class<?>> inputRoleTypes) {
     Map<Integer, List<T>> matches = new TreeMap<>(Collections.reverseOrder());
 
-    for (T entry : entries) {
+    entryLoop : for (T entry : entries) {
       List<Class<?>> required = entry.getRequiredInputRolesTypes();
       List<Class<?>> optional = entry.getOptionalInputRolesTypes();
       List<Class<?>> tmpInputArgTypes;
@@ -189,7 +189,7 @@ public class Utilities {
         // check that all vararg input arg types can be assigned to entry's vararg type
         for (int i = required.size() - 1; i < inputRoleTypes.size(); ++i) {
           if (!isAssignable(inputRoleTypes.get(i), varArgComponentType)) {
-            continue;
+            continue entryLoop;
           }
         }
         tmpInputArgTypes.add(varArgType);

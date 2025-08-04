@@ -1,6 +1,27 @@
 
 define new visual search; C; defineVisualSearch(?ADDRESSEE)
 
-one; VAL; val(one)
-two; VAL; val(two)
-three; VAL; val(three)
+one; VAL; val(1)
+two; VAL; val(2)
+three; VAL; val(3)
+
+cylindrical; VAL; val(cylindrical)
+cylinder; VAL; val(cylindrical)
+it's cylindrical; VAL; val(cylindrical)
+it's a cylinder; VAL; val(cylindrical)
+yes it's cylindrical; VAL; val(cylindrical)
+yes it's a cylinder; VAL; val(cylindrical)
+
+spherical; VAL; val(spherical)
+sphere; VAL; val(spherical)
+it's spherical; VAL; val(spherical)
+it's a sphere; VAL; val(spherical)
+yes it's spherical; VAL; val(spherical)
+yes it's a sphere; VAL; val(spherical)
+
+disk; VAL; val(disk)
+it's a disk; VAL; val(disk)
+yes it's a disk; VAL; val(disk)
+
+type one; VAL; val(type1)
+type two; VAL; val(type2)
