@@ -38,6 +38,8 @@ public class OpenaiClient implements LLMClient {
   private int maxTokens;
   private String model = "gpt-4o";
 
+  private HashMap<String,Object> model_parameters = null;
+
   // https://platform.openai.com/docs/models
   // 2024-02-09
   public static Map<String, Integer> chatCompletionModels = Map.ofEntries(
@@ -81,12 +83,26 @@ public class OpenaiClient implements LLMClient {
 
   @Override
   public void setModel (String modelStr) {
-    if (chatCompletionModels.containsKey(model)) {
-      maxTokens = chatCompletionModels.get(model);
-      log.debug("Model context window: " + maxTokens);
+    if (canonical) {
+      if (chatCompletionModels.containsKey(model)) {
+        maxTokens = chatCompletionModels.get(model);
+        log.debug("Model context window: " + maxTokens);
+      } else {
+        log.error("OpenAI does not support chat completion model: " + model + ". If using a custom endpoint, please set it first");
+        return;
+      }
     } else {
-      log.error("OpenAI does not support chat completion model: " + model);
-      return;
+      if (modelStr.equals("Qwen/Qwen3-14B-AWQ")) {
+        //Non-Thinking Mode
+        model_parameters = new HashMap<>();
+        model_parameters.put("temperature", 0.7);
+        model_parameters.put("top_p", 0.8);
+        model_parameters.put("top_k", 20.0);
+        model_parameters.put("min_p", 0.0);
+        //max_tokens = 6000;
+        //HashMap<String,Object> chat_template_kwargs = new HashMap<>();
+        //chat_template_kwargs.put("enable_thinking", false);
+      }
     }
     model = modelStr;
   }
@@ -246,8 +262,19 @@ public class OpenaiClient implements LLMClient {
       log.warn("prompt contains: " + tokens + " tokens. Max tokens: " + maxTokens + " for model: " + model);
     }*/
     Map<String, String> headers = new HashMap<>();
-    if (canonical) {
+    if (apiKey != null) {
       headers.put("Authorization", "Bearer " + apiKey);
+    }
+    if (model_parameters != null) {
+      for (Map.Entry<String,Object> entry : model_parameters.entrySet()) {
+        try {
+          OpenaiChatRequestBody.class.getDeclaredField(entry.getKey()).set(requestBody,entry.getValue());
+        } catch (NoSuchFieldException e) {
+          log.error("[chatCompletion] Supplied model parameter  {} not present in OpenaiChatRequestBody class, please add it", entry.getKey(), e);
+        } catch (IllegalAccessException e) {
+          log.error("[chatCompletion] Please make the {} model parameter public", entry.getKey(), e);
+        }
+      }
     }
     Gson gson = new Gson();
     Http.HTTPRequestResponse httpResponse = Http.sendPostRequest(chatCompletionEndpoint, requestBody, headers);
@@ -271,7 +298,7 @@ public class OpenaiClient implements LLMClient {
       return null;
     }
     Map<String, String> headers = new HashMap<>();
-    if (canonical) {
+    if (apiKey != null) {
       headers.put("Authorization", "Bearer " + apiKey);
     }
     Gson gson = new Gson();

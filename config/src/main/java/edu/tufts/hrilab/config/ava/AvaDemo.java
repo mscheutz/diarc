@@ -17,8 +17,9 @@ public class AvaDemo extends DiarcConfiguration {
   String avaArgs = "";
   boolean useLLMParser = true;
   boolean useLLMNLG = true;
-  String service = "llamahf";
-  String model = "Qwen/Qwen3-14B";
+  String service = "openai";
+  String model = "Qwen/Qwen3-14B-AWQ";
+  String openaiEndpoint = "http://100.113.66.111:8000";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "";
@@ -117,6 +118,8 @@ public class AvaDemo extends DiarcConfiguration {
         }
       } else if (service.equals("azure")) {
         llmComponentArgs += " -endpoint https://tracs-southcentralus-lezah.southcentralus.inference.ml.azure.com/score";
+      } else if (service.equals("openai") && !openaiEndpoint.isEmpty()) {
+        llmComponentArgs += " -endpoint " + openaiEndpoint;
       }
       createInstance(edu.tufts.hrilab.llm.LLMComponent.class, llmComponentArgs);
     }
