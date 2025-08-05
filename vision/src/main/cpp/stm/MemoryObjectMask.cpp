@@ -44,7 +44,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
   } else if (mask.type() == CV_32F) {
     mask.copyTo(imageMask_);
   } else if (mask.type() == CV_8U) {
-    mask.convertTo(imageMask_, CV_32F, (1.0 / 255.0));
+    mask.convertTo(imageMask_, CV_32F, (1.0/255.0));
   } else {
     LOG4CXX_ERROR(logger, "Mask has invalid type. Must be CV_8U or CV_32F");
   }
@@ -113,10 +113,8 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
     pcl::PointXYZ min_point_AABB;
     pcl::PointXYZ max_point_AABB;
     feature_extractor.getAABB(min_point_AABB, max_point_AABB);
-    LOG4CXX_DEBUG(logger,
-                  boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
-    LOG4CXX_DEBUG(logger,
-                  boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
+    LOG4CXX_DEBUG(logger, boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
+    LOG4CXX_DEBUG(logger, boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
 
     dimensions_.x = max_point_AABB.x - min_point_AABB.x;
     dimensions_.y = max_point_AABB.y - min_point_AABB.y;
@@ -246,7 +244,6 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
 
   // set dimensions
   if (captureData_->hasCloudData()) {
-
     pcl::PointIndicesPtr indicesPtr(new pcl::PointIndices);
     indicesPtr->indices = indicesMask_;
 
@@ -257,10 +254,8 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
     pcl::PointXYZ min_point_AABB;
     pcl::PointXYZ max_point_AABB;
     feature_extractor.getAABB(min_point_AABB, max_point_AABB);
-    LOG4CXX_DEBUG(logger,
-                  boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
-    LOG4CXX_DEBUG(logger,
-                  boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
+    LOG4CXX_DEBUG(logger, boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
+    LOG4CXX_DEBUG(logger, boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
 
     dimensions_.x = max_point_AABB.x - min_point_AABB.x;
     dimensions_.y = max_point_AABB.y - min_point_AABB.y;
@@ -285,7 +280,6 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
     loc.y /= locIndices;
     loc.z /= locIndices;
     setLocation(loc); //also sets direction
-
   } else {
     direction_ = diarc::capture::util::calcDirection(0, boundingBox_.x + (boundingBox_.width) / 2.0,
                                                      boundingBox_.y + (boundingBox_.height) / 2.0);
@@ -389,11 +383,9 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const s
     feature_extractor.compute();
     pcl::PointXYZ min_point_AABB;
     pcl::PointXYZ max_point_AABB;
-    feature_extractor.getAABB(min_point_AABB, max_point_AABB);
-    LOG4CXX_DEBUG(logger,
-                  boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
-    LOG4CXX_DEBUG(logger,
-                  boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
+    feature_extractor.getAABB (min_point_AABB, max_point_AABB);
+    LOG4CXX_DEBUG(logger, boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
+    LOG4CXX_DEBUG(logger, boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
 
     dimensions_.x = max_point_AABB.x - min_point_AABB.x;
     dimensions_.y = max_point_AABB.y - min_point_AABB.y;
@@ -401,7 +393,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const s
     // loc.x = (max_point_AABB.x + min_point_AABB.x)/2.0;
     // loc.y = (max_point_AABB.y + min_point_AABB.y)/2.0;
     // loc.z = (max_point_AABB.z + min_point_AABB.z)/2.0;
-    setLocation(loc); //also sets direction
+    // setLocation(loc); //also sets direction
   }
 
   //set direction and location
@@ -421,9 +413,9 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const s
   boundingBox_.height = ymax - ymin;
 
   LOG4CXX_DEBUG(logger, boost::format("[MemoryObjectMask]  2D bb. (x,width,y,height) = (%d,%d,%d,%d).")
-                        % boundingBox_.x % boundingBox_.width % boundingBox_.y % boundingBox_.height);
+                    % boundingBox_.x % boundingBox_.width % boundingBox_.y % boundingBox_.height);
   LOG4CXX_DEBUG(logger, boost::format("[MemoryObjectMask]  dims (x,y,z)) = (%d,%d,%d).")
-                        % dimensions_.x % dimensions_.y % dimensions_.z);
+                  % dimensions_.x % dimensions_.y % dimensions_.z);
 }
 
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
@@ -531,11 +523,9 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     feature_extractor.compute();
     pcl::PointXYZ min_point_AABB;
     pcl::PointXYZ max_point_AABB;
-    feature_extractor.getAABB(min_point_AABB, max_point_AABB);
-    LOG4CXX_DEBUG(logger,
-                  boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
-    LOG4CXX_DEBUG(logger,
-                  boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
+    feature_extractor.getAABB (min_point_AABB, max_point_AABB);
+    LOG4CXX_DEBUG(logger, boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
+    LOG4CXX_DEBUG(logger, boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
 
     dimensions_.x = max_point_AABB.x - min_point_AABB.x;
     dimensions_.y = max_point_AABB.y - min_point_AABB.y;
@@ -553,7 +543,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     loc.z /= indicesMask_.size();
     setLocation(loc); //also sets direction
   } else {
-    direction_ = diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
+    setDirection(diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0));
   }
 
   //set bounding box
@@ -563,9 +553,9 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
   boundingBox_.height = ymax - ymin;
 
   LOG4CXX_DEBUG(logger, boost::format("[MemoryObjectMask]  2D bb. (x,width,y,height) = (%d,%d,%d,%d).")
-                        % boundingBox_.x % boundingBox_.width % boundingBox_.y % boundingBox_.height);
+                      % boundingBox_.x % boundingBox_.width % boundingBox_.y % boundingBox_.height);
   LOG4CXX_DEBUG(logger, boost::format("[MemoryObjectMask]  dims (x,y,z)) = (%d,%d,%d).")
-                        % dimensions_.x % dimensions_.y % dimensions_.z);
+                  % dimensions_.x % dimensions_.y % dimensions_.z);
 }
 
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
@@ -671,11 +661,9 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     feature_extractor.compute();
     pcl::PointXYZ min_point_AABB;
     pcl::PointXYZ max_point_AABB;
-    feature_extractor.getAABB(min_point_AABB, max_point_AABB);
-    LOG4CXX_DEBUG(logger,
-                  boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
-    LOG4CXX_DEBUG(logger,
-                  boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
+    feature_extractor.getAABB (min_point_AABB, max_point_AABB);
+    LOG4CXX_DEBUG(logger, boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
+    LOG4CXX_DEBUG(logger, boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
 
     dimensions_.x = max_point_AABB.x - min_point_AABB.x;
     dimensions_.y = max_point_AABB.y - min_point_AABB.y;
@@ -693,7 +681,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     loc.z /= indicesMask_.size();
     setLocation(loc); //also sets direction
   } else {
-    direction_ = diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
+    setDirection(diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0));
   }
 
   //set bounding box
@@ -984,6 +972,8 @@ void MemoryObjectMask::setDirection(const double &x, const double &y, const doub
   direction_[0] *= normValue;
   direction_[1] *= normValue;
   direction_[2] *= normValue;
+
+  LOG4CXX_DEBUG(logger, boost::format("[setDirection] normalized (x,y,z) = (%d,%d,%d).") % direction_[0] % direction_[1] % direction_[2]);
 }
 
 void MemoryObjectMask::setDirection(const cv::Vec3d &dir) {
@@ -996,7 +986,7 @@ void MemoryObjectMask::setDimensions(const cv::Point3d &dims) {
   dimensions_.z = dims.z;
 }
 
-void MemoryObjectMask::setDimensions(const double &x, const double &y, const double &z) {
+void MemoryObjectMask::setDimensions(const double& x, const double& y, const double& z) {
   dimensions_.x = x;
   dimensions_.y = y;
   dimensions_.z = z;

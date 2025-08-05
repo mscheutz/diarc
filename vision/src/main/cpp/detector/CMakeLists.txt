@@ -9,7 +9,6 @@ SET(SOURCES
 	ClusterDetector2D.cpp
 	ColorBasedDetector.cpp
 	FaceDetector.cpp
-	FoodDetectorByHSV.cpp
 	HoughDetector.cpp
 	MotionDetector.cpp
 	ObjectDetector.cpp
@@ -23,8 +22,11 @@ SET(SOURCES
 SET(USER_HOME_DIR $ENV{HOME})
 SET(MODEL_DIR "${USER_HOME_DIR}/.diarc/vision/detectors/")
 
-SET(YOLO_MODEL_PATH "${MODEL_DIR}yolo/yolov3-tiny.weights")
-SET(YOLO_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/yolo/yolov3-tiny.weights")
+SET(YOLO3_MODEL_PATH "${MODEL_DIR}yolov3/yolov3-tiny.weights")
+SET(YOLO3_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/yolo/yolov3-tiny.weights")
+
+SET(YOLO5_MODEL_PATH "${MODEL_DIR}yolov5/yolov5m.onnx")
+SET(YOLO5_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/yolov5/yolov5m.onnx")
 
 SET(BUTTONDETECTOR_MODEL_PATH "${MODEL_DIR}/buttondetector/buttonModelS320.onnx")
 SET(BUTTONDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/buttondetector/buttonModelS320.onnx")
@@ -36,30 +38,28 @@ SET(ELEVATORDOORDETECTOR_MODEL_PATH "${MODEL_DIR}/elevatordoordetector/elevatord
 SET(ELEVATORDOORDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/elevatordoordetector/elevatordoordetectorS320.onnx")
 
 # optional sources
-if (OpenCV3_dnn_FOUND)
+if (OpenCV3_dnn_FOUND OR OpenCV_dnn_FOUND)
 	SET(SOURCES ${SOURCES}
 			NeuralDetector.cpp
-			YoloDetector.cpp
 		)
-	if (NOT EXISTS "${YOLO_MODEL_PATH}")
-		message("Downloading YOLOv3 model ${YOLO_MODEL_URL}")
-		file(DOWNLOAD "${YOLO_MODEL_URL}" "${YOLO_MODEL_PATH}")
-	endif(NOT EXISTS "${YOLO_MODEL_PATH}")
-endif(OpenCV3_dnn_FOUND)
+
+	if (NOT EXISTS "${YOLO3_MODEL_PATH}")
+		message("Downloading YOLOv3 model ${YOLO3_MODEL_URL}")
+		file(DOWNLOAD "${YOLO3_MODEL_URL}" "${YOLO3_MODEL_PATH}")
+	endif(NOT EXISTS "${YOLO3_MODEL_PATH}")
+
+	if (NOT EXISTS "${YOLO5_MODEL_PATH}")
+		message("Downloading YOLOv5 model ${YOLO5_MODEL_URL}")
+		file(DOWNLOAD "${YOLO5_MODEL_URL}" "${YOLO5_MODEL_PATH}")
+	endif(NOT EXISTS "${YOLO5_MODEL_PATH}")
+endif (OpenCV3_dnn_FOUND OR OpenCV_dnn_FOUND)
 
 if (OpenCV_dnn_FOUND)
 	SET(SOURCES ${SOURCES}
-			NeuralDetector.cpp
-			YoloDetector.cpp
 			ButtonDetector.cpp
 			ElevatorDoorDetector.cpp
 			PersonDetector.cpp
 		)
-
-	if (NOT EXISTS "${YOLO_MODEL_PATH}")
-		message("Downloading YOLOv3 model ${YOLO_MODEL_URL}")
-		file(DOWNLOAD "${YOLO_MODEL_URL}" "${YOLO_MODEL_PATH}")
-	endif(NOT EXISTS "${YOLO_MODEL_PATH}")
 
 	if (NOT EXISTS "${BUTTONDETECTOR_MODEL_PATH}")
 		message("Downloading YOLOv5 Elevator Button Detector model ${BUTTONDETECTOR_MODEL_URL}")
@@ -78,26 +78,11 @@ if (OpenCV_dnn_FOUND)
 
 endif(OpenCV_dnn_FOUND)
 
-#if (PCL_GPU_PEOPLE_FOUND)
-if (USE_PCL_PEOPLE AND PCL_GPU_PEOPLE_FOUND)
-	message(PCL_GPU_PEOPLE_FOUND)
-	SET(SOURCES ${SOURCES}
-		PeopleDetector.cpp
-	)
-endif (USE_PCL_PEOPLE AND PCL_GPU_PEOPLE_FOUND)
-#endif(PCL_GPU_PEOPLE_FOUND)
-
 if (V4R_V0_FOUND)
 	SET(SOURCES ${SOURCES}
 		ClusterDetectorAdvanced.cpp
 	)
 endif(V4R_V0_FOUND)
-
-if (NITE_FOUND)
-	SET(SOURCES ${SOURCES}
-		people_openni/PeopleDetector.cpp
-	)
-endif(NITE_FOUND)
 
 if (OpenPose_FOUND)
 	SET(SOURCES ${SOURCES}
@@ -116,8 +101,6 @@ if (ZBAR_FOUND)
 			BarCodeDetector.cpp
 			)
 endif(ZBAR_FOUND)
-
-
 
 ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
 

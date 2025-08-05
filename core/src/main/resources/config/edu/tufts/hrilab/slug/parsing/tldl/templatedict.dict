@@ -643,6 +643,8 @@ what time it is; KNOWABLE; currentTime
 %when cutting a tomato ...
 when; ADV/C ; #x.$x
 
+where are you; Q; at(?ADDRESSEE,WHERE)
+
 where do; Q/C; #x.where($x)
 where would; Q/C; #x.where($x)
 

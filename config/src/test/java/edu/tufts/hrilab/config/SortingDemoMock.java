@@ -22,10 +22,6 @@ public class SortingDemoMock extends DiarcConfiguration {
     public ai.thinkingrobots.mtracs.interfaces.CR800ComponentInterface assista;
     public ai.thinkingrobots.mtracs.interfaces.PLCComponentInterface plc;
 
-    public SortingDemoMock() {
-
-    }
-
     @Override
     public void runConfiguration(){
         assista = createInstance(ai.thinkingrobots.mtracs.mock.MockCR800Component.class, "-config mtracs/assista.json");
@@ -70,11 +66,6 @@ public class SortingDemoMock extends DiarcConfiguration {
 //        simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker brad -config sortingDemo.simspeech");
         simspeech = createInstance(SimSpeechRecognitionComponent.class, "-nogui -speaker brad -config sortingDemo.simspeech");
 
-    }
-
-    public static void main(String[] args) {
-        SortingDemoMock config= new SortingDemoMock();
-        config.runConfiguration();
     }
 
 }

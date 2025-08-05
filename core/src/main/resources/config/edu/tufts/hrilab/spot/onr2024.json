@@ -1,0 +1,291 @@
+{
+  "references": [
+    {
+      "properties": ["home(X:location)", "dock(X:location)"],
+      "variable": "X:location",
+      "graphId": "drafty-snail-1rGkZd7nIhXONsmZobQWtw=="
+    },
+    {
+      "properties": ["dropoff(X:location)"],
+      "variable": "X:location",
+      "graphId": "rowdy-doe-1bKTV+8g3Stk..BC4aFXFA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "bowlegged-flea-RfAYNZ0gddECW1wme8mu2A=="
+    },
+    {
+      "properties": ["conference_room(X:location)"],
+      "variable": "X:location",
+      "graphId": "unseen-borzoi-TXyNU5MSMAw2eR.ucqGihQ=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "honied-ram-JIfFrqWLExpMxiGxTcersw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "messy-bedbug-8ee4mooWN1QpQGA+nvlSVA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "wizen-chick-yL5h4qANQoTZw4YMRpkKiw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "flukey-adder-k9hDmfo00o07g54RukHZ.A=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "sudden-dingo-eGUu3Crk8pNGrsNZmblADg=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "agreed-cuckoo-EXIuzJLg9xOXAbY6zbbODg=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "ritzy-merino-DRmxerxij3KmX+l9MrtO4A=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "focal-dayfly-ULq3E+hHLfr2YgaGdC5VdA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "hourly-nasua-3IGl0i4Axwwh4++3s03s6A=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "gummed-grub-bUjsHVeY2A8zdxV0TeLNKw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "riled-poodle-uAR1QdcO8u21BY5s3U5IVw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "stripy-ram-G5lAkFu8wQpTLDjhOdZQLA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "ocular-tarpan-CBU1lnXLdaC.1qx5uEvdmw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "jingly-cowrie-Ccwc.ElNUDH0Gh6y4mQfQQ=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "rhymed-biped-NUAkkK3sXn2mO+nRUccN5Q=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "fanned-mite-wyUQekcgyhGHM1ODAhVjRw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "cruddy-bedbug-dF7T2O3NgZxB78UwW+0hTw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "cuddly-chetah-iK5rHFWK3geAOE+kd39tdQ=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "punic-volvox-CKAd8YL25RXEEFCqIFULCA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "hick-porgy-FEWye5v7+7VttEugg7tweA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "bended-cougar-0D.1ut9hSULss12W+tU.kw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "aery-mako-YFkXrGu2G7kjiccEeZ8CZA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "foxy-hare-veN0XSeUIZuE1HiGRIINNw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "boggy-embryo-jKa+twGw6hgMlxKT+igDLA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "wound-fly-8E3h97GOLpdI6934rR7QpA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "amok-grouse-UI1f6A37pR4dvelAo9Rw4g=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "madcap-ibex-smsbkn5O0AU7vtgSpi+kAg=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "aslant-grouse-oWHwHtk4ryfPIO6bFTHXoQ=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "scarey-chimp-0orVLsDOEXu4tFDq3cTTuA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "prefab-finch-y7SZ+qVEV0H6nQeg9yVlPw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "palmy-coral-Qryl0tz.4jKXSRMuPy4MKQ=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "tasty-bear-sGyQezDxkPHB5OiFb6wSfQ=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "rainy-squid-KLuJoFfc+1bxindSEKxB5w=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "tubby-donkey-EMpq2svD9uBDsuw3m5MjHA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "seared-beagle-HHtM0YIOFzz5PQxZ+SD2FA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "trendy-gerbil-ICL1syvhfer3iAu46GFuOg=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "daft-foal-HddI99MpUcrnnjhFcTpCBg=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "cosy-chetah-pZD4o593h55v8mtoNMrasQ=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "roast-jaguar-LxrcQfo1WYfUL95n5qZ0Wg=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "scotch-lapdog-9+8cA1Bi4uZVZ7L67r7ynQ=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "weepy-narwal-NT54YtFZ19hNrXVFReGlVg=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "jangly-walrus-H4ZC3.huqy5VReGrXm8L9w=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "silky-coati-+F54SxDPrNKJSJdyTYeNUQ=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "above-dove-0uS4fkEyJbonWHKtJKKSbw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "dormie-aphid-xz+tdVy2VNvhiTZNtZFQbg=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "maniac-cougar-PQquJvMndD3WAOQjGI39CA=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "blonde-embryo-jB1U8N8KmaIyb+Gqx0aFMQ=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "eased-dog-NDFI2v77V6h31.ePwOiHBg=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "huge-tick-d.t1Zw.WfZr81p.lSq3dAw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "felted-squid-P8Fe0ORF7hAYsyuesgitzw=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "teal-lemur-FapMLGY2FcUhGMAO.mS4nQ=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "fused-boxer-SDpLVUzro3H.UZnrK0SgUg=="
+    },
+    {
+      "properties": [],
+      "variable": "X:location",
+      "graphId": "afire-cuscus-J1JWEF6IXtLlinYul4RdmA=="
+    }
+  ]
+}
+
+

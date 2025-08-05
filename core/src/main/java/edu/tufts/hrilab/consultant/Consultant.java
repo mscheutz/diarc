@@ -43,7 +43,7 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
   /**
    * All References hashed refId.
    */
-  private Map<Symbol, T> references;
+  protected Map<Symbol, T> references;
   /**
    * Knowledge base name.
    */
@@ -390,7 +390,6 @@ public abstract class Consultant<T extends Reference> implements ConsultantInter
    * @param refId unique reference ID
    * @return Reference of type T
    */
-  @TRADEService
   public final T getReference(Symbol refId) {
     if (refId.hasType()) {
       return references.get(refId);

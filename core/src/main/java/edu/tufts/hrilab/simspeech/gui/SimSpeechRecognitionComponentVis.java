@@ -14,6 +14,7 @@ import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 
 /**
  * GUI clicky speech interface to stand in for speech recognition for
@@ -25,13 +26,13 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
   public static boolean toLower = true;
   private Color textColor;
 
-  private JPanel SPanel;
-  private JPanel SCommandPanel;
-  private JButton SCommandButton;
+  private JPanel sPanel;
+  private JPanel sCommandPanel;
+  private JButton sCommandButton;
   private JButton setSpeakerButton;
   private JButton setAddresseeButton;
-  private JTextField SCommandText;
-  private JButton SUnkButton;
+  private JTextField sCommandText;
+  private JButton sUnkButton;
   private long prevClick = 0;
   private SimSpeechRecognitionComponent component;
 
@@ -47,34 +48,34 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
 
     // need to: get config file name, text color, useCommand, useUnk, etc.
     textColor = component.getTextColor();
-    String SConfig = component.getConfigFile();
+    List<String> sConfigs = component.getConfigFiles();
     boolean[] flags = component.getVisFlags();
     useCommand = flags[0];
     useUnk = flags[1];
     toLower = flags[2];
 
     // Create frame and panel
-    SPanel = new JPanel();
-    SPanel.setLayout(new BoxLayout(SPanel, BoxLayout.Y_AXIS));
+    sPanel = new JPanel();
+    sPanel.setLayout(new BoxLayout(sPanel, BoxLayout.Y_AXIS));
 
     // Add buttons from config file
-    parseConfigFile(SConfig);
+    sConfigs.forEach(config -> parseConfigFile(config));
 
     if (useCommand) {
       // Add text field and button
-      SCommandPanel = new JPanel();
-      SCommandPanel.setLayout(new BoxLayout(SCommandPanel, BoxLayout.Y_AXIS));
-      SCommandText = new JTextField(2);
-      SCommandText.addActionListener(new InputListener());
-      SCommandText.setMaximumSize(new Dimension(1000, 30));
-      SCommandText.setAlignmentX(Component.CENTER_ALIGNMENT);
-      SCommandPanel.add(SCommandText);
-      SCommandButton = new JButton("Command");
-      SCommandButton.setMaximumSize(new Dimension(1000, 60));
-      SCommandButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-      SCommandButton.setForeground(textColor);
-      SCommandButton.addActionListener(new InputListener());
-      SCommandButton.addMouseListener(new MouseInputListener());
+      sCommandPanel = new JPanel();
+      sCommandPanel.setLayout(new BoxLayout(sCommandPanel, BoxLayout.Y_AXIS));
+      sCommandText = new JTextField(2);
+      sCommandText.addActionListener(new InputListener());
+      sCommandText.setMaximumSize(new Dimension(1000, 30));
+      sCommandText.setAlignmentX(Component.CENTER_ALIGNMENT);
+      sCommandPanel.add(sCommandText);
+      sCommandButton = new JButton("Command");
+      sCommandButton.setMaximumSize(new Dimension(1000, 60));
+      sCommandButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+      sCommandButton.setForeground(textColor);
+      sCommandButton.addActionListener(new InputListener());
+      sCommandButton.addMouseListener(new MouseInputListener());
       setAddresseeButton = new JButton("setAddressee");
       setAddresseeButton.setMaximumSize(new Dimension(1000, 30));
       setAddresseeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -87,19 +88,19 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
       setSpeakerButton.setForeground(textColor);
       setSpeakerButton.addActionListener(new InputListener());
       setSpeakerButton.addMouseListener(new MouseInputListener());
-      SCommandPanel.add(SCommandButton);
+      sCommandPanel.add(sCommandButton);
 //      SCommandPanel.add(setListenerButton);
 //      SCommandPanel.add(setSpeakerButton);
     }
     if (useUnk) {
-      SUnkButton = new JButton("<unk>");
-      SUnkButton.addActionListener(new InputListener());
-      SUnkButton.addMouseListener(new MouseInputListener());
-      SPanel.add(SUnkButton);
+      sUnkButton = new JButton("<unk>");
+      sUnkButton.addActionListener(new InputListener());
+      sUnkButton.addMouseListener(new MouseInputListener());
+      sPanel.add(sUnkButton);
     }
 
     // add scroll bars
-    JScrollPane scrollPane = new JScrollPane(SPanel,
+    JScrollPane scrollPane = new JScrollPane(sPanel,
             ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setPreferredSize(new Dimension(600, 600));
@@ -109,11 +110,11 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
     setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
     this.add(scrollPane);
     if (useCommand) {
-      this.add(SCommandPanel);
+      this.add(sCommandPanel);
     }
 
-    int i = SConfig.lastIndexOf(File.separator);
-    this.setTitle(SConfig.substring(i + 1));
+    int i = sConfigs.get(0).lastIndexOf(File.separator);
+    this.setTitle(sConfigs.get(0).substring(i + 1));
     this.setSize(scrollPane.getPreferredSize());
     this.setVisible(true);
   }
@@ -167,17 +168,17 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
       long t0 = 0L, t1 = 0L, t2, t3;
       if (event.getActionCommand().equals("Command")) {
         // Text command
-        Command = SCommandText.getText();
-        SCommandText.setText("");
+        Command = sCommandText.getText();
+        sCommandText.setText("");
         log.debug("Text " + Command);
       } else if (event.getActionCommand().equals("setAddressee")) {
-        String listenerName = SCommandText.getText();
-        SCommandText.setText("");
+        String listenerName = sCommandText.getText();
+        sCommandText.setText("");
         component.setAddressee(Factory.createSymbol(listenerName));
         return;
       } else if (event.getActionCommand().equals("setSpeaker")) {
-        String speakerName = SCommandText.getText();
-        SCommandText.setText("");
+        String speakerName = sCommandText.getText();
+        sCommandText.setText("");
         component.setSpeaker(Factory.createSymbol(speakerName));
         return;
       } else if (event.getActionCommand().equals("<unk>")) {
@@ -213,7 +214,7 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
         log.debug("Button " + Command);
         t1 = System.currentTimeMillis();
         if (useCommand) {
-          SCommandText.setText("");
+          sCommandText.setText("");
         }
       }
       if (Command == null) {
@@ -257,7 +258,7 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
           TmpButton.setAlignmentX(Component.CENTER_ALIGNMENT);
           TmpButton.addActionListener(new InputListener());
           TmpButton.addMouseListener(new MouseInputListener());
-          SPanel.add(TmpButton);
+          sPanel.add(TmpButton);
         }
       }
     } catch (IOException ioe) {

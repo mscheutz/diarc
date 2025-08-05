@@ -129,8 +129,5 @@ public class MultiRobotCadddyDemo extends DiarcConfiguration {
         simSpeechRec = createInstance(SimSpeechRecognitionComponent.class,
                 "-config multiRobotCaddy.simspeech -speaker tyler");
     }
-    public static void main(String[] args) {
-        MultiRobotCadddyDemo demoConfig = new MultiRobotCadddyDemo();
-        demoConfig.runConfiguration();
-    }
+
 }

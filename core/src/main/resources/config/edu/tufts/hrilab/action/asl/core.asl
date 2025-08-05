@@ -14,7 +14,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     }
 
     if (tsc:actionExists(?goal)) {
-      !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "capableOf(?goal)");
+      !toAssert = op:createPredicate("capableOf(?goal)");
       act:assertBelief(!toAssert);
     } else {
       // TODO: this shouldn't actually fail, but is currently needed to handle the inconsistent
@@ -43,10 +43,10 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
     if (?otherActor.goal:knows(?otherActor,?query)) {
       op:log("debug", "askActor: knows goal succeeded.");
-      ?returnQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?otherActor,?query)");
+      ?returnQuery = op:createPredicate("knows(?otherActor,?query)");
     } elseif (?otherActor.goal:observe(?query)) {
       op:log("debug", "askActor: observation goal succeeded.");
-      ?returnQuery = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "?query");
+      ?returnQuery = op:createPredicate("?query");
     } else {
       op:log("debug", "askActor: knows and obs goal failed, ?otherActor doesn't know about query: ?query.");
       exit(FAIL);
@@ -83,7 +83,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
     // construct and retract a generic predicate from belief to clear previous entries
     !tmpVar = op:newObject("edu.tufts.hrilab.fol.Variable", "X");
-    !oldGoals = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?actor,currently(is(?actor,!tmpVar)))");
+    !oldGoals = op:createPredicate("knows(?actor,currently(is(?actor,!tmpVar)))");
     act:retractBelief(!oldGoals);
 
     // do null check for action
@@ -91,7 +91,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     if (op:gt(!goalSize, 1)) {
       !tmpPred = op:newObject("edu.tufts.hrilab.fol.Predicate", "and", !filteredGoals);
     } elseif (op:isEmpty(!filteredGoals)) {
-      !tmpPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "doing(nothing)");
+      !tmpPred = op:createPredicate("doing(nothing)");
     } else {
       !tmpPred = op:invokeMethod(!filteredGoals, "get", 0);
     }
@@ -112,15 +112,15 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     }
 
     // retract old time
-    !toAssert = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?actor,currentTime(HOUR,MIN))");
+    !toAssert = op:createPredicate("knows(?actor,currentTime(HOUR,MIN))");
     act:retractBelief(!toAssert);
 
     !time = op:invokeStaticMethod("java.time.LocalTime", "now");
     op:log("info", "time is !time");
     !hourInt = op:invokeMethod(!time, "getHour");
     !minInt = op:invokeMethod(!time, "getMinute");
-    !hour = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "!hourInt");
-    !min = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "!minInt");
+    !hour = op:createSymbol("!hourInt");
+    !min = op:createSymbol("!minInt");
 }
 
 (Predicate ?ret) = getActDesc["get step by step of action description and assert it to belief "](Predicate ?goalPred) {
@@ -151,7 +151,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     op:log("debug", "start get action description");
 
     // construct and retract a generic predicate from belief to clear previous entries
-    !oldDescription = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(?actor,actionDescription(?goalPred,Y))");
+    !oldDescription = op:createPredicate("knows(?actor,actionDescription(?goalPred,Y))");
     act:retractBelief(!oldDescription);
 
     // get StateMachine for use in action selection
@@ -165,7 +165,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
 
     // do null check for action
     if (op:isNull(!parameterizedAction)) {
-        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,how(?goalPred)))");
+        !failCond = op:createPredicate("not(know(?actor,how(?goalPred)))");
         exit(FAIL, !failCond);
     }
 
@@ -177,20 +177,20 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     !tmpVar = op:newObject("edu.tufts.hrilab.fol.Variable", "X");
     op:invokeMethod(!oldDescArgs, "add", ?goalPred);
     op:invokeMethod(!oldDescArgs, "add", !tmpVar);
-    !oldDescription = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "actionDescription", !oldDescArgs);
+    !oldDescription = op:createPredicate("actionDescription", !oldDescArgs);
     act:retractBelief(!oldDescription);
 
     // build and assert final predicate to belief
     !stepPredicate = op:invokeMethod(!parameterizedAction, "getStepsInPredicateForm");
     op:invokeMethod(!actDescArgs, "add", ?goalPred);
     op:invokeMethod(!actDescArgs, "add", !stepPredicate);
-    !actionDescription = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "actionDescription", !actDescArgs);
-    ?ret = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "actionDescription", !actDescArgs);
+    !actionDescription = op:createPredicate("actionDescription", !actDescArgs);
+    ?ret = op:createPredicate("actionDescription", !actDescArgs);
 
     act:assertBelief(!actionDescription);
 
     // retract a generic predicate from belief to clear previous entries
-    !oldDescription = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "probabilityOf", !oldDescArgs);
+    !oldDescription = op:createPredicate("probabilityOf", !oldDescArgs);
     act:retractBelief(!oldDescription);
 
     // get success probability and add it to belief
@@ -198,7 +198,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     //op:invokeStaticMethod("edu.tufts.hrilab.action.db.Database", "getSuccessProbability", !parameterizedAction, !sm, !prob);
     //op:log("debug", "action prob !prob");
     //op:invokeStaticMethod("java.lang.Double", "toString", !prob, !probstr);
-    //!tmpPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "probabilityOf(?goalPred,!probstr)");
+    //!tmpPred = op:createPredicate("probabilityOf(?goalPred,!probstr)");
     //act:assertBelief(!tmpPred);
     op:log("debug", "end get action description");
 }
@@ -221,7 +221,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     op:log("debug", "start get context description");
 
     // construct and retract a generic predicate from belief to clear previous entries
-    !oldDescription = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knows(A,contextDescription(X,Y))");
+    !oldDescription = op:createPredicate("knows(A,contextDescription(X,Y))");
     act:retractBelief(!oldDescription);
 
     // get Goal instance from goalPredicate
@@ -229,7 +229,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     if (op:==(!numLocArgs, 2)) {
       !goalPredicate = op:invokeMethod(?location, "get", 1);
     } else {
-      !goalPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goal(mostRecent)");
+      !goalPredicate = op:createPredicate("goal(mostRecent)");
     }
 
     // if asking about sub-goal (e.g., nod part of dance goal) then we will need to get current goal
@@ -239,7 +239,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
       !goals = act:getGoal(!goalPredicate);
       !goal = op:get(!goals,0);
     } catch(FAIL) {
-      !goalPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goal(mostRecent)");
+      !goalPredicate = op:createPredicate("goal(mostRecent)");
       !goals = act:getGoal(!goalPredicate);
       !goal = op:get(!goals,0);
     }
@@ -250,7 +250,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     // check if goal was found
     if (op:isNull(!contextDescription)) {
         op:log("debug", "[getContextDescription] no matching context description found.");
-        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(propertyOf(action,found))");
+        !failCond = op:createPredicate("not(propertyOf(action,found))");
         exit(FAIL, !failCond);
     }
 
@@ -275,36 +275,36 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     }
 
     // TODO: EAK: can't we just retract bel(X,?predicate) instead of having to iterate over all diarc agents?
-//      !belPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "believes(X,?predicate)");
+//      !belPred = op:createPredicate("believes(X,?predicate)");
 //      op:log("info", "forgetting !belPred");
 //      act:retractBelief(!belPred);
 
     // retract where X equals diarcAgent
-    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "diarcAgent(?actor)");
+    !queryPred = op:createPredicate("diarcAgent(?actor)");
 
     if (act:querySupport(!queryPred)) {
-      !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "diarcAgent(X)");
+      !queryPred = op:createPredicate("diarcAgent(X)");
       !bindings = act:queryBelief(!queryPred);
       foreach(!elem : !bindings) {
         !valueset = op:invokeMethod(!elem, "values");
         foreach(!agent : !valueset) {
-          !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "diarcAgent(!agent)");
+          !queryPred = op:createPredicate("diarcAgent(!agent)");
           if (act:querySupport(!queryPred)) {
-            !belPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "believes(!agent,?predicate)");
+            !belPred = op:createPredicate("believes(!agent,?predicate)");
             op:log("info", "forgetting !belPred");
             act:retractBelief(!belPred);
           }
         }
       }
     } else {
-      !belPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "believes(?actor,?predicate)");
+      !belPred = op:createPredicate("believes(?actor,?predicate)");
       op:log("info", "forgetting !belPred");
       act:retractBelief(!belPred);
     }
 
-    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "bel(?actor,?predicate)");
+    !queryPred = op:createPredicate("bel(?actor,?predicate)");
     if (act:querySupport(!queryPred)) {
-      !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "is(that,protectedInformation)");
+      !failCond = op:createPredicate("is(that,protectedInformation)");
       exit(FAIL, !failCond);
     }
 }
@@ -401,7 +401,7 @@ import edu.tufts.hrilab.action.goal.GoalStatus;
     Goal !queryGoal;
     Goal !goal;
 
-    !mostRecentGoalPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goal(mostRecent)");
+    !mostRecentGoalPred = op:createPredicate("goal(mostRecent)");
     if (op:equals(?goalPredicate, !mostRecentGoalPred)) {
       // find 3rd most recently submitted goal (this goal will be the most recent
       // goal that isn't this cancel goal or a dialogue goal)

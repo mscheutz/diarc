@@ -5,16 +5,7 @@
 package edu.tufts.hrilab.ros2;
 
 import edu.tufts.hrilab.diarc.DiarcComponent;
-import edu.tufts.hrilab.ros2.ros2jrosclient.generated.*;
-import id.jros2client.JRos2ClientFactory;
-import id.jrosmessages.Message;
-import id.jrosmessages.std_msgs.Int32Message;
 import id.jrosmessages.std_msgs.StringMessage;
-import pinorobotics.jros2actionlib.actionlib_msgs.Action2Definition;
-import pinorobotics.jros2actionlib.actionlib_msgs.Action2GoalMessage;
-import pinorobotics.jros2services.JRos2ServiceClientFactory;
-
-import java.util.concurrent.ExecutionException;
 
 public class TestGeneric extends DiarcComponent {
 

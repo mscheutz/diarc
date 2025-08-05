@@ -26,6 +26,8 @@ public class MultiRobotCaddySceneGenerator extends SceneGenerator {
         Variable y = Factory.createVariable("Y", "physobj");
         List<Term> knownProperties = Arrays.asList(
                 Factory.createPredicate("any", x),
+                Factory.createPredicate("all", x),
+                Factory.createPredicate("unknown", x),
                 Factory.createPredicate("person", x),
                 Factory.createPredicate("grasp_point", x),
                 Factory.createPredicate("on", x, y),

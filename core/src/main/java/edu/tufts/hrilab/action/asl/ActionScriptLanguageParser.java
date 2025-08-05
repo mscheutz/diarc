@@ -384,7 +384,13 @@ public class ActionScriptLanguageParser {
         log.error("More than one RESUME event defined. Ignoring: {}", ctx.getText());
         return;
       }
-      curr_dbe_builder.addOnResumeEvent(generateOnInterruptEventSpec(ctx.interruptSpec()));
+      if (ctx.interruptSpec() != null) {
+        curr_dbe_builder.addOnResumeEvent(generateOnInterruptEventSpec(ctx.interruptSpec()));
+      } else if (ctx.resumeResetSpec() != null) {
+        EventSpec.Builder eventSpec = new EventSpec.Builder(EventSpec.EventType.CONTROL);
+        eventSpec.setCommand("reset");
+        curr_dbe_builder.addOnResumeEvent(eventSpec.build());
+      }
     }
 
     @Override
@@ -831,7 +837,7 @@ public class ActionScriptLanguageParser {
       } else if (specType.TSC() != null) {
         return EventSpec.EventType.TSC;
       } else {
-        log.error("Unexpected EventType in even spec: " + specType.getText());
+        log.error("Unexpected EventType in event spec: " + specType.getText());
         return null;
       }
     }
@@ -850,7 +856,7 @@ public class ActionScriptLanguageParser {
       } else if (specType.TSC() != null) {
         return EventSpec.EventType.TSC;
       } else {
-        log.error("Unexpected EventType in even spec: " + specType.getText());
+        log.error("Unexpected EventType in event spec: " + specType.getText());
         return null;
       }
     }

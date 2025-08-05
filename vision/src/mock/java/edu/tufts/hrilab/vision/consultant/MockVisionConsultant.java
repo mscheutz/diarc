@@ -19,7 +19,7 @@ public class MockVisionConsultant extends VisionConsultant {
   private SceneCollection sceneCollection;
 
   public MockVisionConsultant(VisionInterface visionComponent, String kbName, SceneCollection sceneCollection) {
-    super(visionComponent,kbName);
+    super(visionComponent, kbName);
     this.sceneCollection = sceneCollection;
     addPropertiesHandled(this.sceneCollection.getProperties());
   }
@@ -37,7 +37,7 @@ public class MockVisionConsultant extends VisionConsultant {
     for (MemoryObject token : tokens) {
       for (Long typeId : visionComponent.getTypeIds()) {
         List<Term> descriptors = visionComponent.getDescriptors(typeId);
-        if (descriptors.size() == 1 && descriptors.get(0).getName().equals("any")) {
+        if (descriptors.size() == 1 && (descriptors.get(0).getName().equals("any") || descriptors.get(0).getName().equals("all"))) {
           // use all tokens in this case
           token.setTypeId(typeId);
           filteredTokens.add(token);
@@ -68,7 +68,7 @@ public class MockVisionConsultant extends VisionConsultant {
       if (objectRef == null) {
         objectRef = getNextReferenceId();
         List<Long> tokenIds = Arrays.asList(token.getTokenId());
-        VisionReference visionRef = new VisionReference(objectRef, token.getVariable(), token.getTypeId(), tokenIds, new ArrayList<>());
+        VisionReference visionRef = new VisionReference(objectRef, token.getVariable(), token.getTypeId(), tokenIds, token.getDescriptors());
         addReference(visionRef);
         if (visionTypes.containsKey(token.getTypeId())) {
           visionTypes.get(token.getTypeId()).add(visionRef);
@@ -85,7 +85,7 @@ public class MockVisionConsultant extends VisionConsultant {
       activatedEntities.put(objectRef, 10.0);
     }
 
-    log.debug("activated entities: "+activatedEntities);
+    log.debug("activated entities: " + activatedEntities);
     return activatedEntities;
   }
 
@@ -107,12 +107,12 @@ public class MockVisionConsultant extends VisionConsultant {
       token =  visionComponent.getToken(visionRef.tokenIds.get(0));
     }
 
-    log.debug("token: "+token);
+    log.debug("token: " + token);
     if (token == null) {
       //TODO:brad: convert to allMatch? anyMatch?
       if (visionRef != null && visionRef.properties.stream().filter(refProp -> edu.tufts.hrilab.fol.util.Utilities.predicatesMatch(refProp, constraint)).toArray().length > 0) {
         return 1.0;
-      }else {
+      } else {
         return 0.0;
       }
     }

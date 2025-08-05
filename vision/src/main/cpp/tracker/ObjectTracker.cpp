@@ -388,22 +388,24 @@ int ObjectTracker::mergeObject(MemoryObject::Ptr newlyDetectedObject) {
   int numAddedObjects = 0;
   bool matchFound = false;
 
-  //first find out what typeId(s) the object qualifies as
-  DescriptorsByTypeConstPtr descriptorsByType = getTypes();
-  DescriptorsByType::const_iterator descriptorsByType_iter = descriptorsByType->find(newlyDetectedObject->getTypeId());
-  bool shouldTrack = false;
-  LOG4CXX_TRACE(logger, boost::format("[mergeObject] typeId: %lld.") % newlyDetectedObject->getTypeId());
-  LOG4CXX_TRACE(logger, boost::format("[mergeObject] num descriptors: %d.") % descriptorsByType->size());
-  if (descriptorsByType_iter != descriptorsByType->end()
-      && newlyDetectedObject->getDetectionConfidence(descriptorsByType_iter->second) > 0.0) {
-    shouldTrack = true;
-  }
-
-  //if MemoryObject doesn't make the cut as any typeId, then don't track it
-  if (!shouldTrack) {
-    LOG4CXX_TRACE(logger, "[mergeObject] does not qualify as any typeId, not tracking object.");
-    return 0;
-  }
+  // TODO: EAK: is this still needed? the detection/validation pipeline should fileter out unqualified objects,
+  //    they shouldn't need to be filtered out here too.
+  // //first find out what typeId(s) the object qualifies as
+  // DescriptorsByTypeConstPtr descriptorsByType = getTypes();
+  // DescriptorsByType::const_iterator descriptorsByType_iter = descriptorsByType->find(newlyDetectedObject->getTypeId());
+  // bool shouldTrack = false;
+  // LOG4CXX_TRACE(logger, boost::format("[mergeObject] typeId: %lld.") % newlyDetectedObject->getTypeId());
+  // LOG4CXX_TRACE(logger, boost::format("[mergeObject] num descriptors: %d.") % descriptorsByType->size());
+  // if (descriptorsByType_iter != descriptorsByType->end()
+  //     && newlyDetectedObject->getDetectionConfidence(descriptorsByType_iter->second) > 0.0) {
+  //   shouldTrack = true;
+  // }
+  //
+  // //if MemoryObject doesn't make the cut as any typeId, then don't track it
+  // if (!shouldTrack) {
+  //   LOG4CXX_TRACE(logger, "[mergeObject] does not qualify as any typeId, not tracking object.");
+  //   return 0;
+  // }
 
   //for all types that newlyDetectedObject qualifies as, compare against all
   //tracked objects of those types

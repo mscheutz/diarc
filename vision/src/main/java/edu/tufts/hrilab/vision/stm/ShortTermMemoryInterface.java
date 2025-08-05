@@ -57,7 +57,7 @@ public class ShortTermMemoryInterface {
    */
   public static List<Long> getTokenIds() {
     log.trace("[getTokenIds] method entered.");
-    ArrayList<MemoryObject> resultMOs = ShortTermMemoryModule.getMemoryObjects();
+    List<MemoryObject> resultMOs = ShortTermMemoryModule.getMemoryObjects();
     log.trace("[getTokenIds] got tokenIds from native side.");
     ArrayList<Long> resultIds = new ArrayList();
 
@@ -143,7 +143,7 @@ public class ShortTermMemoryInterface {
    * @return
    */
   public static List<MemoryObject> getTokens(long typeId) {
-    ArrayList<MemoryObject> result = new ArrayList(ShortTermMemoryModule.getMemoryObjectsByTypeId(typeId));
+    List<MemoryObject> result = new ArrayList(ShortTermMemoryModule.getMemoryObjectsByTypeId(typeId));
 
     // apply any relevant definitions to memory object scene graph
     List<NamedDescription> definitions = Vision.availableSearchTypes.getDefinitions();
