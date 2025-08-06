@@ -2602,10 +2602,17 @@ public class ExecutionManager implements GoalListener {
     displayActionLearningGui = flag;
   }
 
+  public void setScheduledGoalsFile(String filename) {
+    scheduledGoalManager.setScheduledGoalsFile(filename);
+  }
+
   public boolean getActionLearningGuiFlag() {
     return displayActionLearningGui;
   }
 
+  public void writeScheduledGoalsToFile() {
+    scheduledGoalManager.writeScheduledGoalsToFile();
+  }
   /**
    * Shutdown this ExecutionManager. All currently managed goals are canceled, ending the ActionInterpreter.
    * Note: the goals are automagically moved to the pastGoals list by the ActionListener mechanism.

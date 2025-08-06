@@ -65,18 +65,31 @@ public class ScheduledGoal extends Goal {
 
   @Override
   public Predicate getPredicate() {
+    return getPredicate(false);
+  }
+
+  public Predicate getPredicate(boolean reformatDateString) {
     List<Symbol> args = new ArrayList<>();
     args.add(super.getPredicate()); // goal state
+    SimpleDateFormat formatter = new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH);
     if (start != null) {
       // the start pred could be a relative time, so always return as a non-relative date string
-      args.add(Factory.createPredicate("start", scheduleInfo.startTime.toString()));
+      if (reformatDateString) {
+        args.add(Factory.createPredicate("start", formatter.format(scheduleInfo.startTime)));
+      } else {
+        args.add(Factory.createPredicate("start", scheduleInfo.startTime.toString()));
+      }
     }
     if (period != null) {
       args.add(period);
     }
     if (end != null) {
       // the end pred could be a relative time, so always return as a non-relative date string
-      args.add(Factory.createPredicate("end", scheduleInfo.endTime.toString()));
+      if (reformatDateString) {
+        args.add(Factory.createPredicate("end", formatter.format(scheduleInfo.endTime)));
+      } else {
+        args.add(Factory.createPredicate("end", scheduleInfo.endTime.toString()));
+      }
     }
 
     return Factory.createPredicate("scheduled", args);
@@ -104,6 +117,10 @@ public class ScheduledGoal extends Goal {
       }
     }
 
+    //With submitted goals being cached across startups, limit history length
+    if (submittedGoals.size() >= 50) {
+      submittedGoals.remove(0);
+    }
     Goal nextGoal = createGoal(super.getPredicate());
     submittedGoals.add(nextGoal);
     return nextGoal;
@@ -285,24 +302,24 @@ public class ScheduledGoal extends Goal {
   }
 
   public static Date parseDateString(String dateString) {
-    SimpleDateFormat formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
+    SimpleDateFormat formatter = new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH);
     Date date = null;
-    //TODO: what date format do we expect? Is only the LLM able to target this flexibly?
     try {
       date = formatter.parse(dateString);
-      Calendar calendar = Calendar.getInstance();
-      calendar.set(Calendar.HOUR_OF_DAY, date.getHours());
-      calendar.set(Calendar.MINUTE, date.getMinutes());
-      calendar.set(Calendar.SECOND, date.getSeconds());
-      date = calendar.getTime();
     } catch (ParseException e) {
       // intentionally empty -- will try again with a different format
     }
 
+    //TODO: what date format do we expect? Is only the LLM able to target this flexibly?
     if (date == null) {
       try {
-        formatter = new SimpleDateFormat("MM-dd-yyyy HH-mm-ss", Locale.ENGLISH);
+        formatter = new SimpleDateFormat("HH-mm-ss", Locale.ENGLISH);
         date = formatter.parse(dateString);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, date.getHours());
+        calendar.set(Calendar.MINUTE, date.getMinutes());
+        calendar.set(Calendar.SECOND, date.getSeconds());
+        date = calendar.getTime();
       } catch (ParseException e) {
         log.error("Error while parsing date arguments for scheduled goal. Date: {}", dateString, e);
       }

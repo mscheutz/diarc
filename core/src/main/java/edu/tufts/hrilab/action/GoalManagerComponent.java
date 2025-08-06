@@ -36,7 +36,12 @@ import edu.tufts.hrilab.gui.GuiProvider;
 import edu.tufts.hrilab.util.Util;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -105,6 +110,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   private Map<String, PriorityInfo> goalPriorities = new HashMap<>();
   /**
+   * Path to the file containing the set of persisted scheduled goals to load from on startup and write to on shutdown
+   * (root will be user.home/.diarc)
+   */
+  private String scheduledGoalsFile = null;
+
+  /**
    * Action learning gui flag.
    */
   private boolean displayActionLearningGui = false;
@@ -157,6 +168,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     options.add(Option.builder("priorityFile").hasArgs().desc("goal priority information file(s)").build());
     options.add(Option.builder("nomemorymanager").desc("Do not utilize the memory manager in the goal manager to prune old goals").build());
     options.add(Option.builder("historylength").hasArg().argName("time").desc("How long to keep past goals").build());
+    options.add(Option.builder("scheduledGoalsFile").hasArg().argName("file").desc("File containing the set of persisted scheduled goals to load from on startup and write to on shutdown").build());
 
     // local belief component options
     options.add(Option.builder("beliefinitfile").hasArgs().argName("file").desc("load initialization file").build());
@@ -221,6 +233,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     }
     if (cmdLine.hasOption("historylength")) {
       historyLength = Long.parseLong(cmdLine.getOptionValue("historylength"));
+    }
+    if (cmdLine.hasOption("scheduledGoalsFile")) {
+      String filename = cmdLine.getOptionValue("scheduledGoalsFile");
+      String homeDir = System.getProperty("user.home");
+      String scheduledGoalsDir = Paths.get(homeDir, ".diarc","scheduledGoals").toString();
+      scheduledGoalsFile = scheduledGoalsDir + File.separator + filename;
     }
 
     /////////////////////////////////
@@ -289,6 +307,9 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     //TODO:brad: do we actually need to sleep?
     Util.Sleep(2000);
     submitInitGoals();
+    if (scheduledGoalsFile != null) {
+      loadScheduledGoals(scheduledGoalsFile);
+    }
   }
 
   // Methods calls during construction
@@ -304,6 +325,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     em = ExecutionManager.createInstance(executionManagerType, sm, rootContext, myGroups);
     em.configPruningMechanism(useMemoryManager, historyLength);
     em.setActionLearningGuiFlag(displayActionLearningGui);
+    em.setScheduledGoalsFile(scheduledGoalsFile);
   }
 
   private void initializeDB() {
@@ -348,6 +370,22 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   private void submitInitGoals() {
     // create goal for all command line goals
     initGoals.forEach(goal -> submitGoal(goal));
+  }
+
+  private void loadScheduledGoals(String filepath) {
+    File f = new File(filepath);
+    if (!f.exists()) {
+      log.warn("[loadScheduledGoals] file not found: " + filepath);
+      return;
+    }
+    try {
+      ObjectInputStream is = new ObjectInputStream(new FileInputStream(f));
+      List<Predicate> goalPredicates = (List<Predicate>) is.readObject();
+      goalPredicates.forEach(this::submitGoal);
+      is.close();
+    } catch (IOException | ClassNotFoundException e) {
+      log.error("[loadScheduledGoals] error loading cached scheduled goals on startup", e);
+    }
   }
 
   /**

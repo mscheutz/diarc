@@ -1,6 +1,5 @@
 package edu.tufts.hrilab.config.ava;
 
-import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -182,6 +181,7 @@ public class AvaDemo extends DiarcConfiguration {
               "ava/avaTMCDemo.asl " +
               "demos/queueEM.asl"
         + " -priorityFile default.json avaPriority.json"
+        + " -scheduledGoalsFile ava.ser"
         + (useQueueEM ? " -executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager" : ""));
 
     createInstance(edu.tufts.hrilab.action.manager.KioskGoalManager.class, kioskArgs);
