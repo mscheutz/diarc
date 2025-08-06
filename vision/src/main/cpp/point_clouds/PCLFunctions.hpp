@@ -454,7 +454,11 @@ bool SegmentRegionFromPoint(const typename pcl::PointCloud<T>::ConstPtr &cloud,
   for (auto cluster : all_cluster_indices) {
     if(std::find(cluster.indices.begin(), cluster.indices.end(), index) != cluster.indices.end()) {
       // cluster contains target index
-      out_indices = std::make_shared<pcl::PointIndices>(cluster);
+      #if PCL_VERSION_COMPARE(>=, 1, 12, 0)
+        out_indices = std::make_shared<pcl::PointIndices>(cluster);
+      #else
+        out_indices = boost::make_shared<pcl::PointIndices>(cluster);
+      #endif
       return true;
     }
   }
@@ -532,7 +536,7 @@ bool SegmentPlaneGivenCoeffs(const typename pcl::PointCloud<T>::ConstPtr &cloud,
     plane_indices->indices = clusters[largestIndex].indices;
 
     if (plane_indices->indices.empty()) {
-      fprintf(stderr, "[SegmentPlaneGivenCoeffs] Not enough points in the plane after clustering.\n");
+      fprintf(stderr, "[SegmentPlaneGivenCoeffs] Not enough points in the plane after clustering.");
       return false;
     }
 
@@ -562,6 +566,7 @@ bool SegmentPlaneGivenCoeffs(const typename pcl::PointCloud<T>::ConstPtr &cloud,
 
     if (!(objects_indices->indices.size())) {
       fprintf(stderr, "[SegmentPlaneGivenCoeffs] Not enough points outside the plane.\n");
+      return false;
     }
 
   } catch (...) {
@@ -604,7 +609,7 @@ bool SegmentPlane(const typename pcl::PointCloud<T>::ConstPtr& cloud,
 
     //(in meters) desired projected (onto plane) distance from sensor
     float desired_dist_from_orig = transform_data[11] - table_height;
-    fprintf(stderr, "[SegmentPlane] sensor height from floor: %f\n", transform_data[11]);
+    // fprintf(stderr, "[SegmentPlane] sensor height from floor: %f\n", transform_data[11]);
     if (transform_data[11] < table_height) {
       std::string msg = boost::str(
           boost::format("[SegmentPlane] Sensor height (%d m) below table height (%d m). Setting to find floors.\n")
@@ -612,7 +617,7 @@ bool SegmentPlane(const typename pcl::PointCloud<T>::ConstPtr& cloud,
       PCL_ERROR(msg.c_str());
       desired_dist_from_orig = transform_data[11];
     }
-//     fprintf(stderr, "[SegmentPlane] desired_dist_from_orig: %f\n", desired_dist_from_orig);
+    // fprintf(stderr, "[SegmentPlane] desired_dist_from_orig: %f\n", desired_dist_from_orig);
 
     //calc desired plane norm based on transform (4x4)
     // inverse (ie, transpose) rotation matrix from robot base coordinates to the camera coordinates
@@ -922,7 +927,7 @@ bool filterPointsOnPlane(const typename pcl::PointCloud<PointT>::ConstPtr& cloud
 
     // NOTE: uncomment this to view results -- this does not play nice with other displays as it doesn't
     // run on vision's display thread.
-//    visualizeResults<PointT>(cloud, indices_plane, indices_objects, indices_real_objects, cloud_hull);
+    // visualizeResults<PointT>(cloud, indices_plane, indices_objects, indices_real_objects, cloud_hull);
 
   } catch (...) {
     return (false);

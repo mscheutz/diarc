@@ -149,6 +149,7 @@ addRosSource("map", listOf(
 
 addRosSource("movebase", listOf(
     "edu/tufts/hrilab/movebase/**",
+    "edu/tufts/hrilab/diarcros/movebase/**",
 ), listOf("map"))
 
 addRosSource("kortex", listOf(
