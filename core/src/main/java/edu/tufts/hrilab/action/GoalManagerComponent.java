@@ -1182,13 +1182,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Override
   public void shutdownComponent() {
     if (this.em != null) {
-      // cancel all scheduled and pending and active goals and wait for them to terminate
-      em.getScheduledGoals().forEach(goal -> em.cancelGoal(goal.getId()));
-      em.getPendingGoals().forEach(goal -> em.cancelGoal(goal.getId()));
-      List<Goal> activeGoals = em.getActiveGoals();
-      activeGoals.forEach(goal -> em.cancelGoal(goal.getId()));
-      activeGoals.forEach(goal -> em.joinOnGoal(goal.getId()));
-
+      em.shutdown();
 
       try {
         TRADE.deregister(contextConsultant);
@@ -1196,7 +1190,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       } catch (Exception e) {
         log.error("[shutdown]", e);
       }
-      em.shutdown();
     }
     Database.destroyInstance();
     ActionSelector.destroyInstance();

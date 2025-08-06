@@ -2613,26 +2613,15 @@ public class ExecutionManager implements GoalListener {
   public void shutdown() {
     log.info("Shutting down and cancelling all goals...");
 
-    synchronized (pendingGoalsLock) {
-      log.trace("[shutdown] have pendingGoalsLock]");
-      synchronized (goalsLock) {
-        log.trace("[shutdown] have goalsLock]");
-        synchronized (resourceLock) {
-          log.trace("[shutdown] have resourceLock]");
-          List<Goal> pendingGoals = getPendingGoals();
-          for (Goal g : pendingGoals) {
-            cancelGoal(g.getId());
-          }
+    // cancel all scheduled and pending and active goals and wait for them to terminate
+    writeScheduledGoalsToFile();
+    getScheduledGoals().forEach(goal -> cancelGoal(goal.getId()));
+    getPendingGoals().forEach(goal -> cancelGoal(goal.getId()));
+    List<Goal> activeGoals = getActiveGoals();
+    activeGoals.forEach(goal -> cancelGoal(goal.getId()));
+    activeGoals.forEach(goal -> joinOnGoal(goal.getId()));
 
-          List<Goal> goals = getActiveGoals();
-          for (Goal g : goals) {
-            cancelGoal(g.getId());
-          }
-        }
-      }
-      log.trace("[shutdown] released all locks");
-    }
-
+    scheduledGoalManager.shutdown();
     memoryManager.shutdown();
     sm.shutdown();
     executor.shutdown();

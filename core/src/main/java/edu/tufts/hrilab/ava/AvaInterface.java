@@ -161,9 +161,12 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
   @Action
   public void interruptChargingBlock();
 
+  @OnInterrupt(onCancelServiceCall = "interruptListenForWWandASR()", onSuspendServiceCall = "interruptListenForWWandASR()")
   @TRADEService
   @Action
   public void listenForWWandASR();
+  @TRADEService
+  public void interruptListenForWWandASR();
 
   @TRADEService
   @Action
