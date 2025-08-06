@@ -66,7 +66,6 @@ abstract public class DiarcComponent {
 
   protected DiarcComponent() {
     log = LoggerFactory.getLogger(this.getClass());
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
   }
 
   /**
@@ -107,6 +106,13 @@ abstract public class DiarcComponent {
   protected void executionLoop() {
   }
 
+  /**
+   * Moved location where the shutdown hook is attached out of the default constructor. DiarcConfiguration attaches the
+   * same hook for all inner DiarcConponents, so this should only be attached internally for standalone components.
+   */
+  protected void attachShutdownHook() {
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
+  }
   /**
    * Method called to start the execution loop, if shouldRunExecutionLoop set to true.
    */
@@ -237,6 +243,9 @@ abstract public class DiarcComponent {
     return null;
   }
 
+  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String[] args, boolean registerWithTrade) {
+    return createInstance(clazz, args, registerWithTrade, false);
+  }
   /**
    * Factory method to create a DIARC component instance, parseArgs, init, and finally register as
    * with TRADE.
@@ -244,10 +253,11 @@ abstract public class DiarcComponent {
    * @param clazz             class to be instantiated (must extend DiarcComponent)
    * @param args              command line arguments
    * @param registerWithTrade true/false whether to register with TRADE
+   * @param fromConfig whether this class is being created from within a DiarcConfiguration
    * @param <T>
    * @return
    */
-  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String[] args, boolean registerWithTrade) {
+  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String[] args, boolean registerWithTrade, boolean fromConfig) {
     // find clazz default constructor
     Constructor<T> clazzConstructor;
     try {
@@ -271,6 +281,10 @@ abstract public class DiarcComponent {
     instance.collectAdditionalUsageInfo();
     instance.parseDiarcArgs(args);
     instance.init();
+
+    if (!fromConfig) {
+      instance.attachShutdownHook();
+    }
 
     // optionally register with TRADE
     if (registerWithTrade) {
@@ -327,6 +341,20 @@ abstract public class DiarcComponent {
    */
   static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args, boolean registerWithTrade) {
     return createInstance(clazz, args.split(" "), registerWithTrade);
+  }
+
+  /**
+   * Convenience method to pass all args as a single String, and optionally registers with TRADE.
+   *
+   * @param clazz             class to be instantiated (must extend DiarcComponent)
+   * @param args              command line arguments
+   * @param registerWithTrade true/false whether to register with TRADE
+   * @param fromConfig whether this class is being created from within a DiarcConfiguration
+   * @param <T>
+   * @return
+   */
+  static public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args, boolean registerWithTrade, boolean fromConfig) {
+    return createInstance(clazz, args.split(" "), registerWithTrade, fromConfig);
   }
 
   /**

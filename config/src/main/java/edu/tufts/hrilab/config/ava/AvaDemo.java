@@ -106,7 +106,7 @@ public class AvaDemo extends DiarcConfiguration {
     if (useLLMNLG) {
       nlgArgs += " -llm";
     }
-    DiarcComponent.createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
+    createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
     if (useLLMNLG || useLLMParser) {

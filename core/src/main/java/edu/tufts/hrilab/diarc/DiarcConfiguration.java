@@ -123,7 +123,7 @@ abstract public class DiarcConfiguration {
    * @return
    */
   public final <T extends DiarcComponent> T createInstance(Class<T> clazz) {
-    T component = DiarcComponent.createInstance(clazz, "", true);
+    T component = DiarcComponent.createInstance(clazz, "", true, true);
     diarcComponents.add(component);
     return component;
   }
@@ -137,7 +137,7 @@ abstract public class DiarcConfiguration {
    * @return
    */
   public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String[] args) {
-    T component = DiarcComponent.createInstance(clazz, args, true);
+    T component = DiarcComponent.createInstance(clazz, args, true, true);
     diarcComponents.add(component);
     return component;
   }
@@ -151,7 +151,7 @@ abstract public class DiarcConfiguration {
    * @return
    */
   public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args) {
-    T component = DiarcComponent.createInstance(clazz, args.split(" "), true);
+    T component = DiarcComponent.createInstance(clazz, args.split(" "), true, true);
     diarcComponents.add(component);
     return component;
   }
@@ -166,7 +166,7 @@ abstract public class DiarcConfiguration {
    * @return
    */
   public final <T extends DiarcComponent> T createInstance(Class<T> clazz, String args, boolean registerWithTrade) {
-    T component = DiarcComponent.createInstance(clazz, args.split(" "), registerWithTrade);
+    T component = DiarcComponent.createInstance(clazz, args.split(" "), registerWithTrade, true);
     diarcComponents.add(component);
     return component;
   }

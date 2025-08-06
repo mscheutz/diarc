@@ -72,7 +72,7 @@ public class PickAndPlaceLLMConfig extends DiarcConfiguration {
             log.error("error registering location consultant in DIARC config" + e);
         }
 
-        DiarcComponent.createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.6", service, model));
+        createInstance(LLMComponent.class, String.format("-service %s -model %s -temperature 0.6", service, model));
         createInstance(PickAndPlaceLLM.class, "-nluPrompt pickandplace/nlu/pickAndPlaceActionSemanticTranslationYumi -outputLanguage ja");
         createInstance(edu.tufts.hrilab.slug.parsing.llm.LLMParserComponent.class, "-service pickAndPlaceLLMParser");
         //createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, "-tldl foodOrdering.dict -tldl yumiFoodOrderingHomophones.dict -patternMatching -llm pickAndPlaceLLMParser");
