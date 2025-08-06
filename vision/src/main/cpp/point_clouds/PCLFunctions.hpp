@@ -454,7 +454,11 @@ bool SegmentRegionFromPoint(const typename pcl::PointCloud<T>::ConstPtr &cloud,
   for (auto cluster : all_cluster_indices) {
     if(std::find(cluster.indices.begin(), cluster.indices.end(), index) != cluster.indices.end()) {
       // cluster contains target index
-      out_indices = std::make_shared<pcl::PointIndices>(cluster);
+      #if PCL_VERSION_COMPARE(>=, 1, 12, 0)
+        out_indices = std::make_shared<pcl::PointIndices>(cluster);
+      #else
+        out_indices = boost::make_shared<pcl::PointIndices>(cluster);
+      #endif
       return true;
     }
   }
