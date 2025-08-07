@@ -110,7 +110,7 @@ public class AvaDemo extends DiarcConfiguration {
 
     if (useLLMNLG || useLLMParser) {
       createInstance(edu.tufts.hrilab.llm.serviceproviders.AvaLLMServiceProvider.class,"");
-      String llmComponentArgs = String.format("-service %s -model %s -temperature 0.6", service, model);
+      String llmComponentArgs = String.format("-service %s llamahf -model %s Qwen/Qwen3-14B -temperature 0.6 0.6", service, model);
       if (service.equals("llamahf")) {
         if (usePrivateEndpoint) {
           llmComponentArgs += " -endpoint https://wwil02mugudnd3ky.us-east-1.aws.endpoints.huggingface.cloud";
