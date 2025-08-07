@@ -35,6 +35,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     Prompt validationSystemPrompt = Prompts.getPrompt("ava/validation/system");
     Prompt validationUserPrompt = Prompts.getPrompt("ava/validation/user");
     private boolean registeredForNewActions = false;
+    private boolean retrievedLearnedActions = false;
     private String learnedActionsString = "";
 
     @Override
@@ -42,6 +43,9 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         super.executionLoop();
         if (!registeredForNewActions) {
             registerForNotifications();
+        }
+        if (!retrievedLearnedActions) {
+            initLearnedActions();
         }
     }
 
@@ -128,7 +132,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         //  return word;
         //}).collect(Collectors.toList()));
 
-        String actorName = utterance.getAddressee().getName();
+        Symbol actor = utterance.getAddressee();
         try {
             String command = utterance.getSemantics().getName();
             if (command.equals("location")) {
@@ -142,11 +146,22 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 if (utterance.getSemantics().hasArgs()) {
                     Symbol innerArg = ((Term)utterance.getSemantics()).get(0);
                     List<Symbol> argsWithActor = new ArrayList<>();
-                    argsWithActor.add(Factory.createSymbol("ava"));
+                    argsWithActor.add(actor);
                     if (innerArg.isTerm()) {
                         argsWithActor.addAll(((Term) ((Term) utterance.getSemantics()).get(0)).getArgs());
                     }
-                    utterance.setSemantics(Factory.createPredicate("taskPredicate", Factory.createPredicate(innerArg.getName(), argsWithActor)));
+                    utterance.setSemantics(Factory.createPredicate(command, Factory.createPredicate(innerArg.getName(), argsWithActor)));
+                }
+            } else if (command.equals("forgetLearnedAction")) {
+                //Not currently prompted to do this
+                if (utterance.getSemantics().hasArgs()) {
+                    Symbol innerArg = ((Term)utterance.getSemantics()).get(1);
+                    List<Symbol> argsWithActor = new ArrayList<>();
+                    argsWithActor.add(actor);
+                    if (innerArg.isTerm()) {
+                        argsWithActor.addAll(((Term) ((Term) utterance.getSemantics()).get(1)).getArgs());
+                    }
+                    utterance.setSemantics(Factory.createPredicate(command, actor, Factory.createPredicate(innerArg.getName(), argsWithActor)));
                 }
             }
         } catch (Exception e) {
@@ -516,6 +531,18 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             log.info("[registerForNotifications] successfully registered for database additions");
         } catch (TRADEException e) {
             log.debug("[registerForNotifications] error registering for actionDB notifications", e);
+        }
+    }
+
+    private void initLearnedActions() {
+        try {
+            List<Predicate> learnedActionPredicates = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLearnedActionPredicates")).call(List.class);
+            for (Predicate pred : learnedActionPredicates) {
+                learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n", pred, pred.getName());
+            }
+            retrievedLearnedActions = true;
+        } catch (TRADEException e) {
+            log.debug("[initLearnedActions] error getting taught actions from EM on startup");
         }
     }
 

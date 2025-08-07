@@ -182,6 +182,7 @@ public class AvaDemo extends DiarcConfiguration {
               "demos/queueEM.asl"
         + " -priorityFile default.json avaPriority.json"
         + " -scheduledGoalsFile ava.ser"
+        + " -learnedActionsFile avaDemo.asl"
         + (useQueueEM ? " -executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager" : ""));
 
     createInstance(edu.tufts.hrilab.action.manager.KioskGoalManager.class, kioskArgs);

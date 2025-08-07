@@ -157,6 +157,10 @@ Description: You repeat the last question you asked, which the human still needs
 Example Translation: "could you repeat that" -> {"Semantics":"repeatLastQuestion()","Input Type":"INSTRUCT","Confidence":"10"}
 #
 %learnedActions%
+#
+forgetLearnedAction(?actionPredicate)
+Description: You forget a previously taught action represented by ?actionPredicate. ?actionPredicate should be replaced by a populated instance of an INSTRUCT Semantics from the previous examples.
+Example Translation: "forget how to go to exampleLocation" -> {"Semantics":"forgetLearnedAction(goToLocation(%exampleLocation:location))","Input Type":"INSTRUCT","Confidence":"10"}
 ##
 val(yes)
 Description: Affirmative response to a yes/no question

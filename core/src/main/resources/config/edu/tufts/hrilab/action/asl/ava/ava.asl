@@ -345,6 +345,7 @@ import java.util.StringTokenizer;
     if (op:isNull(!taskName)) {
         exit(FAIL, not(supplied(taskName)));
     }
+    !taskName = op:invokeMethod(!taskName, "replaceAll", " +", "");
 
     !actionSignature = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !taskName);
     op:log(info,!actionSignature);
@@ -463,5 +464,17 @@ import java.util.StringTokenizer;
      act:generateResponse(!generateResponsePredicate);
     } else {
         act:generateResponseFromString("I don't have a patrol path saved under the name ?pathName");
+    }
+}
+
+() = forgetLearnedAction(Predicate ?actionSignature) {
+    edu.tufts.hrilab.action.justification.Justification !actionJustification;
+    op:log("debug","[forgetLearnedAction] forgetting ?actionSignature");
+
+    !actionJustification = tsc:forgetTaughtAction(?actionSignature);
+    if (op:invokeMethod(!actionJustification, "getValue")) {
+        op:log("debug","[forgetLearnedAction] success");
+    } else {
+        exit(FAIL, !actionJustification);
     }
 }

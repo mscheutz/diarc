@@ -498,3 +498,5 @@ stop demo; VERBI; stopDemo
 
 ww; VERBI; triggerWW
 ready; VERBI; interruptWaitForReadyAck
+
+forget how to; C/C; #x.forgetLearnedAction(?ADDRESSEE,$x)

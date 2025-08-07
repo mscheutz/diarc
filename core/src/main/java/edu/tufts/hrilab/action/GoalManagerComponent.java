@@ -114,6 +114,12 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    * (root will be user.home/.diarc)
    */
   private String scheduledGoalsFile = null;
+  /**
+   * Path to the file which will have asl for all newly taught actions written to it (can be loaded on startup
+   * separately for persistence of taught actions)
+   * (root will be user.home/.diarc)
+   */
+  private String learnedActionsFile = null;
 
   /**
    * Action learning gui flag.
@@ -169,6 +175,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     options.add(Option.builder("nomemorymanager").desc("Do not utilize the memory manager in the goal manager to prune old goals").build());
     options.add(Option.builder("historylength").hasArg().argName("time").desc("How long to keep past goals").build());
     options.add(Option.builder("scheduledGoalsFile").hasArg().argName("file").desc("File containing the set of persisted scheduled goals to load from on startup and write to on shutdown").build());
+    options.add(Option.builder("learnedActionsFile").hasArg().argName("file").desc("File to write newly learned asl scripts to").build());
 
     // local belief component options
     options.add(Option.builder("beliefinitfile").hasArgs().argName("file").desc("load initialization file").build());
@@ -239,6 +246,20 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       String homeDir = System.getProperty("user.home");
       String scheduledGoalsDir = Paths.get(homeDir, ".diarc","scheduledGoals").toString();
       scheduledGoalsFile = scheduledGoalsDir + File.separator + filename;
+    }
+    if (cmdLine.hasOption("learnedActionsFile")) {
+      String filename = cmdLine.getOptionValue("learnedActionsFile");
+      String homeDir = System.getProperty("user.home");
+      String learnedActionsDir = Paths.get(homeDir, ".diarc","learnedActions").toString();
+      learnedActionsFile = learnedActionsDir + File.separator + filename;
+      try {
+        File f = new File(learnedActionsFile);
+        f.getParentFile().mkdirs();
+        f.createNewFile();
+      } catch (IOException e) {
+        log.error("[GoalManagerComponent] couldn't create learned actions file in home directory");
+        learnedActionsFile = null;
+      }
     }
 
     /////////////////////////////////
@@ -326,12 +347,14 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     em.configPruningMechanism(useMemoryManager, historyLength);
     em.setActionLearningGuiFlag(displayActionLearningGui);
     em.setScheduledGoalsFile(scheduledGoalsFile);
+    em.setLearnedActionsFile(learnedActionsFile);
   }
 
   private void initializeDB() {
 
     // Add ASL files to database
     Database.getInstance().loadDatabaseFiles(dbFileDir, dbFiles);
+    em.loadLearnedActions(true);
 
     // Add PDDL model to action db and belief
     if (pddlFiles != null) {
