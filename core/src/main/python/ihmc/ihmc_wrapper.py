@@ -10,7 +10,7 @@ from jpype import JImplements, JOverride, JClass, JString
 import rclpy
 from pytrade.java_util import to_java_object, to_java_object_from_class
 
-from edu.tufts.hrilab.interfaces import IHMCInterface
+from edu.tufts.hrilab.interfaces import IHMCPythonInterface
 from edu.tufts.hrilab.fol import Factory, Symbol, Predicate
 from edu.tufts.hrilab.action.justification import ConditionJustification, Justification
 from edu.tufts.hrilab.consultant.pose import PoseConsultant, PoseReference
@@ -23,7 +23,7 @@ from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
-@JImplements(IHMCInterface)
+@JImplements(IHMCPythonInterface)
 class NadiaWrapper:
     def __init__(self, trade_wrapper: TRADEWrapper):
         self._executing = False

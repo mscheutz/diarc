@@ -1,13 +1,13 @@
-package edu.tufts.hrilab.config.python;
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
+package edu.tufts.hrilab.config.spot;
+
 import edu.tufts.hrilab.action.GoalManagerComponent;
-import edu.tufts.hrilab.arm.MockArmComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.flex.FlexComponent;
 import edu.tufts.hrilab.llm.LLMComponent;
-import edu.tufts.hrilab.movebase.MockMoveBaseComponent;
 import edu.tufts.hrilab.python.PythonWrapper;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
@@ -51,16 +51,18 @@ public class SpotConfig extends DiarcConfiguration {
       createInstance(MockVisionComponent.class, "-belief -sceneClass edu.tufts.hrilab.vision.scene.config.SpotSceneGenerator");
     }
 
-    String file = "spot.spot_trade_wrapper"; // Specify the python file you want to run, according to its package path
-    PythonWrapper wrapper = new PythonWrapper(file, true); // Declare the wrapper as a TRADE spoke
-    wrapper.start(); // Start the wrapper
+    edu.tufts.hrilab.flex.FlexComponent flexComponent = createInstance(edu.tufts.hrilab.flex.FlexComponent.class);
 
-    // Wait for PyTRADE to start
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+//    String file = "spot.spot_trade_wrapper"; // Specify the python file you want to run, according to its package path
+//    PythonWrapper wrapper = new PythonWrapper(file, true); // Declare the wrapper as a TRADE spoke
+//    wrapper.start(); // Start the wrapper
+//
+//    // Wait for PyTRADE to start
+//    try {
+//      Thread.sleep(2000);
+//    } catch (InterruptedException e) {
+//      throw new RuntimeException(e);
+//    }
 
     createInstance(GoalManagerComponent.class,
 //            "-beliefg " +
@@ -81,6 +83,8 @@ public class SpotConfig extends DiarcConfiguration {
     );
 
     createInstance(SimSpeechRecognitionComponent.class, "-speaker marlow -config spotDemo.simspeech");
+
+    flexComponent.openDoorTest();
   }
 
 }

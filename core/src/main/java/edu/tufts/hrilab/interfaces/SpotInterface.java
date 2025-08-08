@@ -8,83 +8,82 @@ import edu.tufts.hrilab.fol.Symbol;
 public interface SpotInterface {
   @Action
   @TRADEService
-  public void setInitialLocation(Symbol refId);
+  void setInitialLocation(Symbol refId);
 
   @Action
   @TRADEService
-  public Justification setLocationWithFiducial(Symbol refId);
+  Justification setLocationWithFiducial(Symbol refId);
 
   // Mostly just for testing! You should make a new action for the command you want
   @Action
   @TRADEService
-  public Justification command(String input);
+  Justification command(String input);
 
   @Action
   @TRADEService
-  public Justification claim();
+  Justification claim();
 
   @Action
   @TRADEService
-  public Justification release();
+  Justification release();
 
   @Action
   @TRADEService
-  public void bindLocationToCurrentPose(Symbol refId);
+  void bindLocationToCurrentPose(Symbol refId);
 
   @Action
   @TRADEService
-  public Justification powerOn();
+  Justification powerOn();
 
   @Action
   @TRADEService
-  public Justification powerOff();
-
-
-  @Action
-  @TRADEService
-  public Justification stand();
+  Justification powerOff();
 
   @Action
   @TRADEService
-  public Justification sit();
-
-  @TRADEService
-  @Action
-  public Justification stow();
-
-  @TRADEService
-  @Action
-  public Justification unstow();
+  Justification stand();
 
   @Action
   @TRADEService
-  public Justification carry();
-
-  @Action
-  @TRADEService
-  public Justification pickUpObject(Symbol refId);
+  Justification sit();
 
   @TRADEService
   @Action
-  public Justification closeGripper();
+  Justification stow();
 
   @TRADEService
   @Action
-  public Justification openGripper();
+  Justification unstow();
+
+  @Action
+  @TRADEService
+  Justification carry();
+
+  @Action
+  @TRADEService
+  Justification pickUpObject(Symbol refId);
 
   @TRADEService
   @Action
-  public Justification goToLocationUnsafe(Symbol location);
+  Justification closeGripper();
 
   @TRADEService
   @Action
-  public boolean hasBeenLocalized();
+  Justification openGripper();
 
   @TRADEService
   @Action
-  public Justification localize();
+  Justification goToLocationUnsafe(Symbol location);
 
   @TRADEService
   @Action
-  public Justification detectionPose();
+  boolean hasBeenLocalized();
+
+  @TRADEService
+  @Action
+  Justification localize();
+
+  @TRADEService
+  @Action
+  Justification detectionPose();
 }

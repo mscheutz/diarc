@@ -4,7 +4,10 @@ import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.Justification;
 
-public interface IHMCInterface {
+/**
+ * Interface to be implemented by a Python module, not a Java DIARC component.
+ */
+public interface IHMCPythonInterface {
   @TRADEService
   @Action
   void walk();

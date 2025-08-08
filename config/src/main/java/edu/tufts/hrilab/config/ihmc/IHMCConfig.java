@@ -1,4 +1,8 @@
-package edu.tufts.hrilab.config.python;
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
+package edu.tufts.hrilab.config.ihmc;
 
 import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
@@ -10,7 +14,6 @@ import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
-import edu.tufts.hrilab.vision.MockVisionComponent;
 
 public class IHMCConfig extends DiarcConfiguration {
 
