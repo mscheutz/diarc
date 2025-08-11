@@ -23,5 +23,9 @@ disk; VAL; val(disk)
 it's a disk; VAL; val(disk)
 yes it's a disk; VAL; val(disk)
 
+cuboid; VAL; val(cuboid)
+it's a cuboid; VAL; val(cuboid)
+yes it's a cuboid; VAL; val(cuboid)
+
 type one; VAL; val(type1)
 type two; VAL; val(type2)

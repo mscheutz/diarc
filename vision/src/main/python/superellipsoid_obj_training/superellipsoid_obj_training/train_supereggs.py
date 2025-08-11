@@ -67,12 +67,12 @@ def train(object_id, num_of_objects):
     device = torch.device("cpu")
    
     tao = 1e-6  # learning rate
-    epochs = 5  # this will depend on how much time the user has (5 for testing now)
+    epochs = 100  # this will depend on how much time the user has (5 for testing now)
     len_z = 30  # length of feature vector
     
     E_img = mdl.SemanticEncoderSuperEgg(n_c=1, n_z=len_z).to(device)
 
-    optimizer = torch.optim.Adam(E_img.parameters(), lr=tao, weight_decay=0.001)
+    optimizer = torch.optim.Adam(E_img.parameters(), lr=tao, weight_decay=1e-5)
     criterion = nn.MSELoss(reduction='mean')
     criterion_separate = torch.nn.L1Loss(reduction='none')
     
@@ -119,6 +119,7 @@ def train(object_id, num_of_objects):
             
             loss = criterion(z, gr_tr.to(device)) 
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(E_img.parameters(), max_norm=1.0)
             optimizer.step()
             
             # get per-slot absolute errors for this batch
@@ -183,11 +184,13 @@ def train(object_id, num_of_objects):
             )
      
     # once we've finished training, export model to onnx format
-    E_img.eval()       
+    E_img.eval()     
+    model = E_img.to(device)
+    input_tensor = d_img[0:1].to(device) # use very first image as dummy input tensor
     
     # save model to build and src in onnx format
-    torch.onnx.export(E_img,                      
-                      d_img,                      
+    torch.onnx.export(model,                      
+                      input_tensor,                       
                       MODEL_PATH_CONFIG["onnx_path"] / f"model_{object_id}.onnx",
                       export_params=True,         
                       opset_version=11,           
@@ -196,8 +199,8 @@ def train(object_id, num_of_objects):
                       output_names=['output']     
                      )
     
-    torch.onnx.export(E_img,                      
-                      d_img,                      
+    torch.onnx.export(model,                      
+                      input_tensor,                      
                       MODEL_PATH_CONFIG["onnx_build_path"] / f"model_{object_id}.onnx", 
                       export_params=True,         
                       opset_version=11,           

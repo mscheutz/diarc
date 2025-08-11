@@ -25,7 +25,7 @@ START_IDX = 0
 NUMBER_OF_SAMPLES = 1
 MAX_SIDELENGTH = 3
 MIN_SIDELENGTH = 1
-EDGINESS_MIN = 0.01
+EDGINESS_MIN = 0.12
 EDGINESS_MAX = 1
 ANGLE_MIN = 0
 ANGLE_MAX = 89
@@ -292,8 +292,8 @@ def scale_object_to_bbox(empty, target_bbox, bbox_info):
 
 
 def select_shape_parameters(ax_scale, ay_scale, az_scale, n1_ref, n2_ref, vol_A, size_type):
-    n1 = np.clip(n1_ref + np.random.normal(0, 0.2), 0.01, 1)
-    n2 = np.clip(n2_ref + np.random.normal(0, 0.2), 0.01, 1)
+    n1 = np.clip(n1_ref + np.random.normal(0, 0.2), EDGINESS_MIN, EDGINESS_MAX)
+    n2 = np.clip(n2_ref + np.random.normal(0, 0.2), EDGINESS_MIN, EDGINESS_MAX)
 
     axis_ref = np.random.uniform(MIN_SIDELENGTH, MAX_SIDELENGTH)
 
@@ -694,26 +694,26 @@ def generate_blender_superegg_dataset(args):
 
 def define_shape_parameters(shape_type):
     # n1, n2, ax, ay, az, max_angle
-    if "sphere" in shape_type:
-        return EDGINESS_MAX, EDGINESS_MAX, 1, 1, 1, ANGLE_MAX #?
+    if "spher" in shape_type:
+        return EDGINESS_MAX, EDGINESS_MAX, 1, 1, 1, ANGLE_MAX 
 
     elif "cube" in shape_type:
-        return EDGINESS_MIN, EDGINESS_MIN, 1, 1, 1, ANGLE_MAX #?
+        return EDGINESS_MIN, EDGINESS_MIN, 1, 1, 1, ANGLE_MAX 
 
-    elif "block" in shape_type:
+    elif "cuboid" in shape_type:
         return EDGINESS_MIN, EDGINESS_MIN, 1, 1, 3, ANGLE_MAX
 
-    elif "cylinder" in shape_type:
-        return EDGINESS_MIN, EDGINESS_MAX, 1, 1, 3, ANGLE_MAX*2
+    elif "cylind" in shape_type:
+        return EDGINESS_MIN, EDGINESS_MAX, 1, 1, 3, ANGLE_MAX
 
     elif "capsule" in shape_type:
         return EDGINESS_MAX, EDGINESS_MAX, 1, 1, 3, ANGLE_MAX
 
     elif "disk" in shape_type:
-        return EDGINESS_MIN, EDGINESS_MAX, 3, 3, 1, ANGLE_MAX*2
+        return EDGINESS_MIN, EDGINESS_MAX, 3, 3, 1, ANGLE_MAX
 
     elif "rod" in shape_type:
-        return EDGINESS_MIN, EDGINESS_MAX, 1, 1, 3, ANGLE_MAX*2
+        return EDGINESS_MIN, EDGINESS_MAX, 1, 1, 3, ANGLE_MAX
     
     elif "part" in shape_type:
         n1 = np.random.uniform(EDGINESS_MIN, EDGINESS_MAX)
@@ -741,10 +741,10 @@ def parse_arguments():
     parser.add_argument('--number_of_samples', type=int, required=True)
     parser.add_argument('--num_of_side_components', type=int, required=True)
     parser.add_argument('--shape_type1', type=str, default='firstshape_part', 
-                       choices=['firstshape_rod', 'firstshape_disk', 'firstshape_part'],
+                       choices=['firstshape_cylindrical', 'firstshape_cuboid', 'firstshape_spherical', 'firstshape_disk', 'firstshape_part'],
                        help='Type of shape parameters to use for the supereggs')
     parser.add_argument('--shape_type2', type=str, default='secondshape_other_part', 
-                       choices=['secondshape_rod', 'secondshape_disk', 'secondshape_other_part'],
+                       choices=['secondshape_cylindrical', 'secondshape_cuboid', 'secondshape_spherical', 'secondshape_disk', 'secondshape_part'],
                        help='Type of shape parameters to use for the supereggs')
     parser.add_argument(
         '--size2',
@@ -770,7 +770,7 @@ def parse_arguments():
         help='Position of the second component relative to the first'
     )
     parser.add_argument('--shape_type3', type=str, default='thirdshape_other_part', 
-                       choices=['thirdshape_rod', 'thirdshape_disk', 'thirdshape_other_part'],
+                       choices=['thirdshape_cylindrical', 'thirdshape_cuboid', 'thirdshape_spherical', 'thirdshape_disk', 'thirdshape_part'],
                        help='Type of shape parameters to use for the supereggs')
     parser.add_argument(
         '--position3',

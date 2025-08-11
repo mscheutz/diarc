@@ -29,7 +29,7 @@ AXIS_UNIT_CUBE_MAX = 10
 EDGINESS_MIN = 0.01
 EDGINESS_MAX = 1
 ANGLE_MIN = 0
-ANGLE_MAX = 180
+ANGLE_MAX = 89
 ORIGIN_SHIFT_MAX = 0
 
 
@@ -154,7 +154,6 @@ class ExrDataset(Dataset):
         # collect all depth images and corresponding GT files 
         for i in range(self.limit_lower, self.limit_upper):
             object_dir = os.path.join(self.root_dir, f'object_{int(i)}')
-
             for root, _, files in os.walk(object_dir):
                 for file in files:
                     if file.endswith('.tiff') and 'depth' in file:
@@ -230,15 +229,17 @@ class ExrDataset(Dataset):
         
         # initialize the ground truth matrix with zeros
         gt_matrix = np.zeros((1, 30))
-        
-        # extract and sort components based on y (ascending) and z (descending)
+            
+        center = np.array([0.0, 0.0, 0.0])
+
         components = sorted(
             zip(
-                params["all_translated_locations"],  # (x, y, z) positions
-                params["all_edginesses"],            # (n_1, n_2) edginess values
-                params["all_rescaled_main_axes"],    # (a_x, a_y, a_z) main axes values
-                params["all_rotations"]              # (azimuth, elevation)
-            ), key=lambda comp: (-comp[0][2], comp[0][1])
+            params["all_translated_locations"],  # (x, y, z) positions
+            params["all_edginesses"],            # (n_1, n_2) edginess values
+            params["all_rescaled_main_axes"],    # (a_x, a_y, a_z) main axes values
+            params["all_rotations"]              # (azimuth, elevation)
+            ),
+            key=lambda comp: (-comp[0][2], comp[0][1])  # ascending distance to center
         )
         
         # assign values to the gt_matrix for each component
@@ -255,9 +256,9 @@ class ExrDataset(Dataset):
 
             # normalize and store position values (x, y, z)
             gt_matrix[0][idx:idx+3] = [
-                self.normalize_values(x, -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX),
-                self.normalize_values(y, -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX),
-                self.normalize_values(z, -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX)
+                self.normalize_values(x, -AXIS_UNIT_CUBE_MAX/2, AXIS_UNIT_CUBE_MAX/2),
+                self.normalize_values(y, -AXIS_UNIT_CUBE_MAX/2, AXIS_UNIT_CUBE_MAX/2),
+                self.normalize_values(z, -AXIS_UNIT_CUBE_MAX/2, AXIS_UNIT_CUBE_MAX/2)
             ]
 
             # normalize and store edginess and main axes values

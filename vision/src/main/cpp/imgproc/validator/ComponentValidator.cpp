@@ -23,6 +23,8 @@
 #include <random>
 #include <vector>
 #include <chrono>
+#include <regex>
+#include <filesystem>
 
 #include "capture/calibration/Cameras.hpp"
 #include "display/Display.hpp"
@@ -50,7 +52,7 @@ namespace bp = boost::process;
 using namespace diarc::stm;
 namespace fs = std::experimental::filesystem;
 
-constexpr int SE_SIZE = 8; // Superellipsoid param count
+constexpr int SE_SIZE = 10; // Superellipsoid param count
 
 
 // Function to find orientation using PCA
@@ -102,68 +104,6 @@ bool compareSE(const std::vector<float>& data, int idx1, int idx2,
   return dist1 < dist2;  // ascending order: closer first
 }
 
-
-std::vector<float> weightedAverageSuperEllipParams(
-    const std::vector<std::vector<float>>& superEllipParams,
-    const std::vector<float>& chamferWeights,
-    size_t topK = 3,
-    float epsilon = 1e-6f,
-    float maxAbsDist = 10.0f)  // <-- Max allowed deviation per parameter
-{
-  if (superEllipParams.empty() || superEllipParams.size() != chamferWeights.size())
-    return {};
-
-  size_t n = superEllipParams.size();
-  size_t paramCount = superEllipParams[0].size();
-  topK = std::min(topK, n);  // Clamp to available size
-
-  // Sort indices by ascending Chamfer distance
-  std::vector<std::pair<size_t, float>> indexedWeights;
-  for (size_t i = 0; i < n; ++i)
-    indexedWeights.emplace_back(i, chamferWeights[i]);
-
-  std::sort(indexedWeights.begin(), indexedWeights.end(),
-    [](const auto& a, const auto& b) {
-      return a.second < b.second;
-  });
-
-  // Reference vector = top-1
-  const auto& topParams = superEllipParams[indexedWeights[0].first];
-
-  std::vector<float> weightedSum(paramCount, 0.0f);
-  std::vector<float> weightPerDim(paramCount, 0.0f);  // new!
-
-  // Loop through top-K vectors
-  for (size_t i = 0; i < topK; ++i) {
-    size_t idx = indexedWeights[i].first;
-    const auto& params = superEllipParams[idx];
-
-    float weight = 1.0f / (chamferWeights[idx] + epsilon);
-
-    for (size_t j = 0; j < paramCount; ++j) {
-      float diff = std::abs(params[j] - topParams[j]);
-      if (diff <= maxAbsDist) {
-        //std::cout << "Adding parameter " << j << " with value " << params[j]
-        //                << " and weight " << weight << std::endl;
-        weightedSum[j] += params[j] * weight;
-        weightPerDim[j] += weight;
-      }
-    }
-  }
-
-  // Normalize each dimension
-  std::vector<float> result(paramCount, 0.0f);
-  for (size_t j = 0; j < paramCount; ++j) {
-    if (weightPerDim[j] > 0.0f)
-      result[j] = weightedSum[j] / weightPerDim[j];
-    else
-      result[j] = 0.0f;  // or topParams[j] if fallback is preferred
-  }
-
-  return result;
-}
-
-
 void rotatePointInVector(std::vector<float>& vec, int idx, float angle_degrees, const Eigen::Vector3f& axis) {
   float angle_radians = angle_degrees * M_PI / 180.0f;
 
@@ -176,9 +116,20 @@ void rotatePointInVector(std::vector<float>& vec, int idx, float angle_degrees, 
   vec[idx + 2] = rotated.z();
 }
 
-
 void visualizePointClouds(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clouds1,
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clouds2) {
+
+  // Print min/max for first set of clouds
+  for (size_t i = 0; i < clouds1.size(); ++i) {
+    pcl::PointXYZ minPt, maxPt;
+    pcl::getMinMax3D(*clouds1[i], minPt, maxPt);
+  }
+
+  // Print min/max for second set of clouds
+  for (size_t i = 0; i < clouds2.size(); ++i) {
+    pcl::PointXYZ minPt, maxPt;
+    pcl::getMinMax3D(*clouds2[i], minPt, maxPt);
+  }
 
   float min_y = std::numeric_limits<float>::max(), max_y = std::numeric_limits<float>::lowest();
   float min_z = std::numeric_limits<float>::max(), max_z = std::numeric_limits<float>::lowest();
@@ -276,16 +227,13 @@ void visualizePointClouds(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloud
   cv::waitKey(0);
 }
 
-
 float sigmoid(float x) {
   return 1.0 / (1.0 + std::exp(-x));
 }
 
-
 float denormalize(float normalized_value, float min_value, float max_value) {
   return min_value + (normalized_value * (max_value - min_value));
 }
-
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr filterOrganizedCloud(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr filteredCloud(new pcl::PointCloud<pcl::PointXYZ>());
@@ -301,7 +249,6 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr filterOrganizedCloud(const pcl::PointCloud<p
   return filteredCloud;
 }
 
-
 ComponentValidator::ComponentValidator(const long long &processorId, const unsigned int imgWidth,
                                        const unsigned int imgHeight, const bool isStereo)
         : ObjectValidator(processorId, imgWidth, imgHeight, isStereo) {
@@ -309,20 +256,17 @@ ComponentValidator::ComponentValidator(const long long &processorId, const unsig
   logger = log4cxx::Logger::getLogger("diarc.imgproc.validator.ComponentValidator");
 }
 
-
 ComponentValidator::~ComponentValidator() {
 }
-
 
 void ComponentValidator::loadConfig(const std::string &configFile) {
   LOG4CXX_TRACE(logger, "[loadConfig] method entered.");
   //get directory
   unsigned found = configFile.find_last_of("/\\"); // check if config file is filename or path
   std::string dir = configFile.substr(0, found + 1);
-  std::string model_file1, model_file2, model_file3;
-  std::string backbone_file, head_file1, head_file2, head_file3;
   std::string type;
   std::string descriptorName;
+  std::string modelFile;
   int shape;
   int axis;
   int index;
@@ -351,15 +295,12 @@ void ComponentValidator::loadConfig(const std::string &configFile) {
   }
 
   Json::Value config = root["config"];
-  model_file1 = dir + config["model1"].asString();
-  model_file2 = dir + config["model2"].asString();
-  model_file3 = dir + config["model3"].asString();
 
-  ComponentValidator::initModels(model_file1, model_file2, model_file3);
+  modelFile = dir + config["model"].asString();
+  ComponentValidator::initModels(modelFile);
 
   identifyShapes = config["identify_shapes"].asBool();
   visualizeReconstruction = config["visualize_reconstruction"].asBool();
-  kernelSize = config["kernel_size"].asInt64();
   edginessSimilarityThreshold = config["edginess_similarity_threshold"].asDouble();
   positionToleranceDepth = config["position_tolerance_front_behind"].asDouble();
   positionToleranceHorizontal = config["position_tolerance_left_right"].asDouble();
@@ -369,48 +310,58 @@ void ComponentValidator::loadConfig(const std::string &configFile) {
   eccentricityTolerance = config["eccentricity_tolerance"].asDouble();
 }
 
-
-void ComponentValidator::initModels(const std::string &model_path1, const std::string &model_path2, const std::string &model_path3) {
-  nets.push_back(cv::dnn::readNetFromONNX(model_path1 + ".onnx"));
-  nets.push_back(cv::dnn::readNetFromONNX(model_path2 + ".onnx"));
-  nets.push_back(cv::dnn::readNetFromONNX(model_path3 + ".onnx"));
+void ComponentValidator::initModels(const std::string &model_path) {
+  nets.push_back(cv::dnn::readNetFromONNX(model_path + ".onnx"));
 }
 
 bool ComponentValidator::handleLearningNotification(const std::string& notification) {
   LOG4CXX_DEBUG(logger, boost::format("[ComponentValidation] learning: %s") % notification.c_str());
   // NOTE: loadConfig and init might not have been called yet
-  
-  int numberOfSamples = 20;  // How many objects should be rendered
-  std::string shape1 = "rod";
-  std::string shape2 = "rod";
-  std::string shape3 = "rod";
-  std::string position2 = "at_the_bottom";
-  std::string position3 = "to_the_left";
-  std::string size2 = "smaller";
-  std::string size3 = "larger";
 
-  std::string objectDescriptors = shape1 + "_" + shape2 + position2 + 
-                                  size2 + "_" + shape3 + position3 + size3;
+  int component_count = 0;
+  std::unordered_map<int, std::string> shapes;
+  parseComponentShapes(notification, component_count, shapes, objectType);
 
-  // blender OBJ exporter prints a lot of information, maybe log them in a file!?
+  // Generate args for Blender
+  int numberOfSamples = 10;
+  // Default to generic "part" if shapes are not explicitely given by user
+  std::string shape1 = shapes.count(1) ? shapes[1] : "part";
+  std::string shape2 = shapes.count(2) ? shapes[2] : "part";
+  std::string shape3 = shapes.count(3) ? shapes[3] : "part";
+
+  int numOfSideComponents = component_count > 1 ? component_count - 1 : 0;
+
+  // We do not use component positioning yet, but will probably add that later
   std::vector<std::string> args = {
     "--background", 
     "--python-use-system-env",
     "--python",
-    // Assuming diarc is at ../diarc
     "../diarc/vision/src/main/python/superellipsoid_obj_gen/render_supereggs_unit_cube_rotated.py",
     "--",
-    "--object_id", objectDescriptors,
+    "--object_id", objectType,
     "--number_of_samples", std::to_string(numberOfSamples),
-    "--num_of_side_components", "1",
-    "--shape_type1", "firstshape_" + shape1,
-    "--shape_type2", "secondshape_" + shape2,
-    "--shape_type3", "thirdshape_" + shape3,
-    "--position2", "secondposition_" + position2,
-    "--position3", "thirdposition_" + position3,
-    "--size2", "secondsize_" + size2,
-    "--size3", "thirdsize_"+ size3,
+    "--num_of_side_components", std::to_string(numOfSideComponents),
+    "--shape_type1", "firstshape_" + shape1
   };
+
+  if (component_count >= 2) {
+    args.push_back("--shape_type2");
+    args.push_back("secondshape_" + shape2);
+  }
+
+  if (component_count >= 3) {
+    args.push_back("--shape_type3");
+    args.push_back("thirdshape_" + shape3);
+  }
+
+  // Build the message string
+  std::ostringstream blenderArgs;
+  blenderArgs << "\nGenerated Blender args:\n";
+  for (const auto& arg : args) {
+    blenderArgs << arg << " ";
+  }
+  // Log with log4cxx
+  LOG4CXX_DEBUG(logger, boost::format("[ComponentValidation] blender call: %s") % blenderArgs.str());
   
   // Launch Blender process
   int ret = bp::system(
@@ -419,11 +370,11 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     bp::std_out > "blender_output.log",
     bp::std_err > "blender_error.log"
   );
-
+  
   if (ret != 0) {
     LOG4CXX_ERROR(logger, boost::format("Rendering script returned with exit code != 0"));
   }
-
+  
   PythonHelper* pyInstance = PythonHelper::getInstance();
   LOG4CXX_DEBUG(logger, "Training is started.");
   try {
@@ -441,7 +392,8 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     py::object trainerWrapper = trainmodule.attr("TrainerWrapper");
     // 80% of objects (number_of_samples) are used for training, 20% for validation
     // --> Make sure that there is a meaningful number of objects (i.e. not too low)?
-    py::object trainer = trainerWrapper(objectDescriptors, numberOfSamples);  
+    // 50 seem to work okay enough for now --> it depends on the complexity fo the object structure
+    py::object trainer = trainerWrapper(objectType, numberOfSamples);  
     trainer.attr("run")();
     LOG4CXX_DEBUG(logger, "Training finished.");
   } catch (py::error_already_set& e) {
@@ -449,15 +401,29 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
   }
 
   pyInstance->releaseGIL();
-  
+
+  std::string newModelFile =
+    std::string("../vision/src/main/resources/config/edu/tufts/hrilab/vision/imgProcs/componentvalidator/")
+    + "model_" + objectType;
+
+  std::string filePath = std::string("../vision/src/main/resources/config/edu/tufts/hrilab/vision/imgProcs/componentvalidator/")
+                         + "model_path.txt";
+
+  std::ofstream outFile(filePath);
+  if (!outFile) {
+    std::cerr << "Error: could not open file for writing\n";
+    return 1;
+  }
+
+  outFile << newModelFile << std::endl;
+
   return true;
   
 }
 
-
 void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification) {
   LOG4CXX_TRACE(logger, "[ComponentValidation] method entered.");
-  /*
+
   MemoryObject::Ptr object = notification->object;
 
   // check if this typeId should currently be processed
@@ -476,9 +442,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloudOrig = object->getDetectionMask()->getObjectPointCloud();
     pcl::PointCloud<pcl::PointXYZ>::Ptr denoisedCloud(new pcl::PointCloud<pcl::PointXYZ>());
     *denoisedCloud = *objectCloudOrig;
-
     scalePointCloudToUnitCube(denoisedCloud, AXIS_UNIT_CUBE_MAX);
-
     cv::Mat objectDepthImage(denoisedCloud->height, denoisedCloud->width, CV_32FC1);
     diarc::pc::util::pointCloudToDepthWithinReferenceCube(objectDepthImage, denoisedCloud,
                                                         AXIS_UNIT_CUBE_MAX);
@@ -524,38 +488,44 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
       foundPredicatesVector[predIdx] = calculateSemProperty(bestDescriptionCandidate.bestSemMatrixSigUnRot, predShape, predAxis, predIdx);
 
       // If side component 1 is not found, we do not need to go further
-      if (sideComp1IsPresent == false && predIdx >= 9) {
+      if (sideComp1IsPresent == false && predIdx >= 10) {
         foundPredicatesVector[0] = true;
         break;
       }
 
       // If side component 2 is not found, we do not need to go further
-      if (sideComp2IsPresent == false && predIdx >= 27) {
+      if (sideComp2IsPresent == false && predIdx >= 29) {
         foundPredicatesVector[1] = true;
         break;
       }
 
       // set shape to part if we couldn't assign a shape to the existing component
       if (identifyShapes) {
-        if (predIdx == 5) {
-          if (foundPredicatesVector[3] == false && foundPredicatesVector[4] == false) {
-            foundPredicatesVector[5] = true;
+        if (predIdx == 6) {
+          if (foundPredicatesVector[3] == false 
+              && foundPredicatesVector[4] == false
+              && foundPredicatesVector[5] == false) {
+            foundPredicatesVector[6] = true;
           }
         }
-        if (sideComp1IsPresent == true && predIdx == 11) {
-          if (foundPredicatesVector[9] == false && foundPredicatesVector[10] == false)
+        if (sideComp1IsPresent == true && predIdx == 13) {
+          if (foundPredicatesVector[10] == false 
+              && foundPredicatesVector[11] == false
+              && foundPredicatesVector[12] == false)
           {
-            foundPredicatesVector[11] = true;
+            foundPredicatesVector[13] = true;
           }
         }
-        if (sideComp2IsPresent == true && predIdx == 29) {
-          if (foundPredicatesVector[27] == false && foundPredicatesVector[28] == false)
+        if (sideComp2IsPresent == true && predIdx == 32) {
+          if (foundPredicatesVector[29] == false 
+              && foundPredicatesVector[30] == false
+              && foundPredicatesVector[31] == false)
           {
-            foundPredicatesVector[29] = true;
+            foundPredicatesVector[32] = true;
           }
         }
       } else {
-        std::vector<int> shapeIndices = {3, 4, 5, 9, 10, 11, 27, 28, 29};
+        std::vector<int> shapeIndices = {3, 4, 5, 6, 9, 10, 11, 12, 13, 29, 30, 31, 32};
         for (int idx: shapeIndices) {
           foundPredicatesVector[idx] = false;
         }
@@ -591,7 +561,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
         object->addValidationResult(confidence, PredicateHelper(
                                     fullTextDescription + "(" + descriptors_itr->getArg(0) + ")"));
         sendValidationNotifications(object);
-        //std::cout << "Full description: " << fullTextDescription << std::endl;
+        std::cout << "Full description: " << fullTextDescription << std::endl;
 
         // Add validation result for specific predicates we are looking for
       } else {
@@ -618,19 +588,28 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
       }
     }
   }
-*/
 }
 
 
 ComponentValidator::BestDescription ComponentValidator::findBestReconstruction(pcl::PointCloud<pcl::PointXYZ>::Ptr& objectCloudOrig,
                                                                                cv::Mat& objectDepthImage) {
 
-  //std::vector<std::vector<float>> superEllipParams;
-  //std::vector<float> chamferWeights;
-
   cv::Mat objectDepthImageNorm = objectDepthImage.clone();
   cv::Mat objectDepthImageNormRot = objectDepthImage.clone();
 
+  // If user defined object structure before, we'll use that model
+  // Otherwise, we will use the default model given in the config file
+  std::string modelFile;  
+  std::string savedModelPathFile = "../vision/src/main/resources/config/edu/tufts/hrilab/vision/imgProcs/componentvalidator/model_path.txt";
+  if (std::filesystem::exists(savedModelPathFile)) {
+    std::ifstream pathFile(savedModelPathFile);
+    if (pathFile.is_open()) {
+      std::getline(pathFile, modelFile);
+      pathFile.close();
+      ComponentValidator::initModels(modelFile);
+    }
+  }
+  
   // Initialize the best description candidate
   BestDescription descriptionCandidate{std::numeric_limits<float>::max(),
                                        std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>{},
@@ -648,28 +627,26 @@ ComponentValidator::BestDescription ComponentValidator::findBestReconstruction(p
   objectCloudOrig = filterOrganizedCloud(objectCloudOrig);
 
   std::vector<float> rotationAnglesToTest;
-  for (int angle = 0; angle < 360; angle += 10) {
+  for (int angle = 0; angle < 3; angle += 10) {
       rotationAnglesToTest.push_back(static_cast<float>(angle));
   }
 
   for (float rotationAngle : rotationAnglesToTest) {
 
-    rotationAngle = rotationAnglePCA + rotationAngle; // Add PCA rotation to the angle
+    //rotationAngle = rotationAnglePCA + rotationAngle; // Add PCA rotation to the angle
     pcl::PointCloud<pcl::PointXYZ>::Ptr objectCloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
     objectCloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>(*objectCloudOrig);
 
-    // Rotate point cloud and depth image
-    if (rotationAngle != 0) {
-      rotatePointCloud(objectCloud, rotationAngle, Eigen::Vector3f::UnitX());
-      applyRotationToImage(objectDepthImageNorm, objectDepthImageNormRot, rotationAngle);
-    }
-
+    rotatePointCloud(objectCloud, rotationAngle, Eigen::Vector3f::UnitX());
+    applyRotationToImage(objectDepthImageNorm, objectDepthImageNormRot, rotationAngle);
+    
     // Convert opencv Mat into CNN input format
     double scalefactor = 1.0;
     cv::Scalar noMean(0.0, 0.0, 0.0);
     cv::Size depthImageSize(depthImageWidth, depthImageHeight);
 
-    for (size_t netIdx = 2; netIdx <= 2; ++netIdx) {
+    // Use most recently added model (the user defined one will be the last one in the list)
+    for (size_t netIdx = nets.size() - 1; netIdx < nets.size(); ++netIdx) {
 
       cv::Mat blob;
       cv::dnn::blobFromImage(objectDepthImageNormRot, blob, scalefactor, depthImageSize, noMean, true, CV_32F);
@@ -677,9 +654,10 @@ ComponentValidator::BestDescription ComponentValidator::findBestReconstruction(p
       // Apply Semantic Encoder
       nets[netIdx].setInput(blob);
       cv::Mat semMatrix = nets[netIdx].forward();
+
       cv::Mat semMatrixSig = applySigmoidToMatrix(semMatrix);
 
-      //cv::Mat blobSingle = blob.reshape(1, 250); // reshape to [192, 256]
+      cv::Mat blobSingle = blob.reshape(1, 250); // reshape to [192, 256]
       //cv::normalize(blobSingle, blobSingle, 0, 255, cv::NORM_MINMAX);
       //cv::imwrite("/home/schneiders/Desktop/blob.jpg", blobSingle);
 
@@ -707,9 +685,7 @@ ComponentValidator::BestDescription ComponentValidator::findBestReconstruction(p
       pcl::PointCloud<pcl::PointXYZ>::Ptr combinedSupereggProjected = combinePointClouds(projectedSupereggs);
 
       float chamferDistance = computeChamferDistance(combinedSupereggProjected, projectedObject);
-      //chamferWeights.push_back(chamferDistance);
-      //superEllipParams.push_back(semMatrixSigDenormUnRot);
-
+      
       // Find the description corresponding to the reconstruction with the lowest chamfer distance
       if (chamferDistance < descriptionCandidate.minChamferDist) {
 
@@ -723,142 +699,120 @@ ComponentValidator::BestDescription ComponentValidator::findBestReconstruction(p
       }
     }
   }
-
-  /*
-  std::vector<float> avgSuperEllipParams = weightedAverageSuperEllipParams(superEllipParams, chamferWeights);
-
-  auto cloudsAvg = createSuperellipsoidObject(avgSuperEllipParams);
-
-  // Rotate superellipsoid recontruciton such that it aligns with object point cloud COS
-  for (auto& cloud : cloudsAvg) {
-    rotatePointCloud(cloud, -90.0f, Eigen::Vector3f::UnitX());
-  }
-
-  visualizePointClouds({objectCloudOrig}, cloudsAvg);
-  */
   return descriptionCandidate;
-
 }
 
+void ComponentValidator::parseComponentShapes(const std::string& notification,
+                                              int& component_count,
+                                              std::unordered_map<int, std::string>& shapes,
+                                              std::string& type_name) {
+  // Parse component count (rendering code supports 1, 2, or 3 for now)
+  std::regex component_pattern(R"(components\((1|2|3)\))");
+  std::smatch match;
+  component_count = 0;
 
-// Function to de-normalize the semMatrixSigValues to the original 3D space for superellipsoid rendering
+  if (std::regex_search(notification, match, component_pattern)) {
+    component_count = std::stoi(match[1]);
+  }
+
+  // Parse shape(i, shapeName)
+  std::regex shape_pattern(R"(shape\((\d+),(cylindrical|spherical|cuboid|disk)\))");
+  auto begin = std::sregex_iterator(notification.begin(), notification.end(), shape_pattern);
+  auto end = std::sregex_iterator();
+
+  for (auto it = begin; it != end; ++it) {
+    int index = std::stoi((*it)[1]);
+    std::string shape = (*it)[2];
+    shapes[index] = shape;
+  }
+
+  // Parse type name (final argument)
+  std::regex name_pattern(R"(\),([a-zA-Z0-9_]+)\)$)");
+  if (std::regex_search(notification, match, name_pattern)) {
+    type_name = match[1];
+  } else {
+    type_name = "unknown";
+  }
+}
+
 std::vector<float> ComponentValidator::denormalizeSemanticParams(const cv::Mat& semMatrixSigValuesMat) {
   // Convert cv::Mat to std::vector<float>
   std::vector<float> semMatrixSigValues(semMatrixSigValuesMat.begin<float>(), semMatrixSigValuesMat.end<float>());
 
-  // Vector to store the de-normalized values, set to default value that will tell us later if comp is present
+  // Initialize with -100 to indicate missing components
   std::vector<float> zDenorm(30, -100.0f);
 
-  // De-normalize the sem_params related to 'b'
-  zDenorm[0] = denormalize(semMatrixSigValues[0], -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX);
-  zDenorm[1] = denormalize(semMatrixSigValues[1], -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX);
-  zDenorm[2] = denormalize(semMatrixSigValues[2], -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX);
-  zDenorm[3] = denormalize(semMatrixSigValues[3], EDGINESS_MIN, EDGINESS_MAX);
-  zDenorm[4] = denormalize(semMatrixSigValues[4], EDGINESS_MIN, EDGINESS_MAX);
-  zDenorm[5] = semMatrixSigValues[5] * AXIS_UNIT_CUBE_MAX;
-  zDenorm[6] = semMatrixSigValues[6] * AXIS_UNIT_CUBE_MAX;
-  zDenorm[7] = semMatrixSigValues[7] * AXIS_UNIT_CUBE_MAX;
-  zDenorm[8] = denormalize(semMatrixSigValues[8], ANGLE_MIN, ANGLE_MAX);
-  zDenorm[9] = denormalize(semMatrixSigValues[9], ANGLE_MIN, ANGLE_MAX);
+  auto denormalizeBlock = [&](int startIdx, int presenceIdx) {
+    // Skip presence check for 'b' (presenceIdx < 0)
+    if (presenceIdx >= 0) {
+      if (!(semMatrixSigValues[presenceIdx]     * AXIS_UNIT_CUBE_MAX > 0.5f &&
+          semMatrixSigValues[presenceIdx + 1] * AXIS_UNIT_CUBE_MAX > 0.5f &&
+          semMatrixSigValues[presenceIdx + 2] * AXIS_UNIT_CUBE_MAX > 0.5f)) {
+            return; // Component not present
+      }
+    }
 
-  // If the axes are smaller than what is reasonable (unit cube object), the component is not present
-  if (semMatrixSigValues[15] * AXIS_UNIT_CUBE_MAX > 0.5f &&
-      semMatrixSigValues[16] * AXIS_UNIT_CUBE_MAX > 0.5f &&
-      semMatrixSigValues[17] * AXIS_UNIT_CUBE_MAX > 0.5f) {
+    // Common mapping pattern for each block (10 values)
+    // Position (x, y, z), edginess (e1, e2), main axes (ax, ay, az), angle (a1, a2)
+    zDenorm[startIdx + 0] = denormalize(semMatrixSigValues[startIdx + 0], -AXIS_UNIT_CUBE_MAX/2, AXIS_UNIT_CUBE_MAX/2);
+    zDenorm[startIdx + 1] = denormalize(semMatrixSigValues[startIdx + 1], -AXIS_UNIT_CUBE_MAX/2, AXIS_UNIT_CUBE_MAX/2);
+    zDenorm[startIdx + 2] = denormalize(semMatrixSigValues[startIdx + 2], -AXIS_UNIT_CUBE_MAX/2, AXIS_UNIT_CUBE_MAX/2);
+    zDenorm[startIdx + 3] = denormalize(semMatrixSigValues[startIdx + 3], EDGINESS_MIN, EDGINESS_MAX);
+    zDenorm[startIdx + 4] = denormalize(semMatrixSigValues[startIdx + 4], EDGINESS_MIN, EDGINESS_MAX);
+    zDenorm[startIdx + 5] = semMatrixSigValues[startIdx + 5] * AXIS_UNIT_CUBE_MAX;
+    zDenorm[startIdx + 6] = semMatrixSigValues[startIdx + 6] * AXIS_UNIT_CUBE_MAX;
+    zDenorm[startIdx + 7] = semMatrixSigValues[startIdx + 7] * AXIS_UNIT_CUBE_MAX;
+    zDenorm[startIdx + 8] = denormalize(semMatrixSigValues[startIdx + 8], ANGLE_MIN, ANGLE_MAX);
+    zDenorm[startIdx + 9] = denormalize(semMatrixSigValues[startIdx + 9], ANGLE_MIN, ANGLE_MAX);
+  };
 
-    // De-normalize the sem_params related to 's1'
-    zDenorm[10] = denormalize(semMatrixSigValues[10], -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX);
-    zDenorm[11] = denormalize(semMatrixSigValues[11], -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX);
-    zDenorm[12] = denormalize(semMatrixSigValues[12], -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX);
-    zDenorm[13] = denormalize(semMatrixSigValues[13], EDGINESS_MIN, EDGINESS_MAX);
-    zDenorm[14] = denormalize(semMatrixSigValues[14], EDGINESS_MIN, EDGINESS_MAX);
-    zDenorm[15] = semMatrixSigValues[15] * AXIS_UNIT_CUBE_MAX;
-    zDenorm[16] = semMatrixSigValues[16] * AXIS_UNIT_CUBE_MAX;
-    zDenorm[17] = semMatrixSigValues[17] * AXIS_UNIT_CUBE_MAX;
+  // Apply to each block
+  denormalizeBlock(0,  -1);  // 'b' (no presence check)
+  denormalizeBlock(10, 15);  // 's1'
+  denormalizeBlock(20, 25);  // 's2'
 
-  }
-
-  // If the axes are smaller than what is reasonable (unit cube object), the component is not present
-  if (semMatrixSigValues[23] * AXIS_UNIT_CUBE_MAX > 0.5f &&
-      semMatrixSigValues[24] * AXIS_UNIT_CUBE_MAX > 0.5f &&
-      semMatrixSigValues[25] * AXIS_UNIT_CUBE_MAX > 0.5f) {
-
-    // De-normalize the sem_params related to 's2'
-    zDenorm[18] = denormalize(semMatrixSigValues[18], -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX);
-    zDenorm[19] = denormalize(semMatrixSigValues[19], -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX);
-    zDenorm[20] = denormalize(semMatrixSigValues[20], -AXIS_UNIT_CUBE_MAX, AXIS_UNIT_CUBE_MAX);
-    zDenorm[21] = denormalize(semMatrixSigValues[21], EDGINESS_MIN, EDGINESS_MAX);
-    zDenorm[22] = denormalize(semMatrixSigValues[22], EDGINESS_MIN, EDGINESS_MAX);
-    zDenorm[23] = semMatrixSigValues[23] * AXIS_UNIT_CUBE_MAX;
-    zDenorm[24] = semMatrixSigValues[24] * AXIS_UNIT_CUBE_MAX;
-    zDenorm[25] = semMatrixSigValues[25] * AXIS_UNIT_CUBE_MAX;
-
-  }
-
+  /*
+  auto printBlock = [&](const std::string& name, int idx) {
+    std::cout << name << ": ";
+    for (int i = 0; i < 10; ++i) {
+      std::cout << semMatrixSigValues[idx + i] << (i < 9 ? ", " : "\n");
+    }
+  };
+  printBlock("b", 0);
+  printBlock("s1", 10);
+  printBlock("s2", 20);
+  */ 
   return zDenorm;
 }
-
 
 std::vector<float> ComponentValidator::unrotateSemanticParams(
     const cv::Mat& semMatrixSig,
     float rotationAngle) {
 
   std::vector<float> semMatrixSigDenorm = denormalizeSemanticParams(semMatrixSig);
-
-  // Copy angle values
-  semMatrixSigDenorm[26] = semMatrixSigDenorm[8];
-  semMatrixSigDenorm[27] = semMatrixSigDenorm[9];
-  semMatrixSigDenorm[28] = semMatrixSigDenorm[8];
-  semMatrixSigDenorm[29] = semMatrixSigDenorm[9];
-
   std::vector<float> semMatrixSigDenormUnRot = semMatrixSigDenorm;
 
-  // Adjust angle
-  semMatrixSigDenormUnRot[8] += rotationAngle;
+  // Adjust angle for symmetries
+  auto wrapAngle = [](float& angle) {
+      if (angle >= 360.0f) angle -= 360.0f;
+      if (angle >= 180.0f) angle -= 180.0f;
+  };
 
-  if (semMatrixSigDenormUnRot[8] >= 360.0f)
-    semMatrixSigDenormUnRot[8] -= 360.0f;
-
-  if (semMatrixSigDenormUnRot[8] >= 180.0f)
-    semMatrixSigDenormUnRot[8] -= 180.0f;
-
-  float angle = semMatrixSigDenormUnRot[8];
-  semMatrixSigDenormUnRot[26] = angle;
-  semMatrixSigDenormUnRot[27] = semMatrixSigDenormUnRot[9];
-  semMatrixSigDenormUnRot[28] = angle;
-  semMatrixSigDenormUnRot[29] = semMatrixSigDenormUnRot[9];
+  const int rotationIndices[] = {8, 18, 28};
+  for (int idx : rotationIndices) {
+      semMatrixSigDenormUnRot[idx] += rotationAngle;
+      wrapAngle(semMatrixSigDenormUnRot[idx]);
+  }
 
   // Rotate points (assumes rotatePointInVector exists)
   Eigen::Vector3f axis(1, 0, 0);  // X-axis
   rotatePointInVector(semMatrixSigDenormUnRot, 0, -rotationAngle, axis);
   rotatePointInVector(semMatrixSigDenormUnRot, 10, -rotationAngle, axis);
-  rotatePointInVector(semMatrixSigDenormUnRot, 18, -rotationAngle, axis);
+  rotatePointInVector(semMatrixSigDenormUnRot, 20, -rotationAngle, axis);
   std::vector<float> sortedVector = semMatrixSigDenormUnRot;
-
-  // Sort based on z desc, y asc
-  std::vector<int> seOffsets = {0, 10};
-  std::vector<int> sortedOffsets = seOffsets;
-
-  std::sort(seOffsets.begin(), seOffsets.end(), [&](int a, int b) {
-    return compareSE(semMatrixSigDenormUnRot, a, b);
-  });
-
-
-  for (size_t i = 0; i < sortedOffsets.size(); ++i) {
-    int srcIdx = sortedOffsets[i];
-    int dstIdx = seOffsets[i];
-
-    std::copy(
-      semMatrixSigDenormUnRot.begin() + srcIdx,
-      semMatrixSigDenormUnRot.begin() + srcIdx + SE_SIZE,
-      sortedVector.begin() + dstIdx
-    );
-  }
-
+  
   return sortedVector;
 }
-
-
 
 void ComponentValidator::sampleSuperellipsoidMontecarlo(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
                                                         float a_x, float a_y, float a_z,
@@ -899,7 +853,6 @@ void ComponentValidator::sampleSuperellipsoidMontecarlo(pcl::PointCloud<pcl::Poi
 
 }
 
-
 void ComponentValidator::sampleSuperellipsoidInverseMapping(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
                                                             float a_x, float a_y, float a_z,
                                                             float n_1, float n_2, int num_samples) {
@@ -935,7 +888,6 @@ void ComponentValidator::sampleSuperellipsoidInverseMapping(pcl::PointCloud<pcl:
   cloud->is_dense = true;
 }
 
-
 void ComponentValidator::translatePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, const Eigen::Vector3f& translation) {
   // Create an Affine transformation matrix for translation
   Eigen::Affine3f transform = Eigen::Affine3f::Identity();
@@ -944,7 +896,6 @@ void ComponentValidator::translatePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr
   // Apply the translation transformation to the point cloud
   pcl::transformPointCloud(*cloud, *cloud, transform);
 }
-
 
 void ComponentValidator::translatePointCloudToOrigin(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
   // Compute the centroid of the point cloud
@@ -957,7 +908,6 @@ void ComponentValidator::translatePointCloudToOrigin(pcl::PointCloud<pcl::PointX
   transform.translation() = translation;
   pcl::transformPointCloud(*cloud, *cloud, transform);
 }
-
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr ComponentValidator::createSuperellipsoid(float a_x, float a_y, float a_z,
                                                                              float n_1, float n_2,
@@ -972,7 +922,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ComponentValidator::createSuperellipsoid(flo
   cloud->is_dense = false;
 
   // Combination of superellipsoid sampling leads to dense and well distributed point cloud
-  //sampleSuperellipsoidMontecarlo(cloud, a_x, a_y, a_z, n_1, n_2, resolution);
+  sampleSuperellipsoidMontecarlo(cloud, a_x, a_y, a_z, n_1, n_2, resolution);
   sampleSuperellipsoidInverseMapping(cloud, a_x, a_y, a_z, n_1, n_2, resolution);
   // Rotate superellipsoid by azimuth and elevation angles
   rotatePointCloud(cloud, -azimuth, Eigen::Vector3f::UnitX());
@@ -983,12 +933,11 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ComponentValidator::createSuperellipsoid(flo
   return cloud;
 }
 
-
 std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ComponentValidator::createSuperellipsoidObject(const std::vector<float>& semMatrixSigValues) {
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clouds;
   float EPSILON = 1e-6;  // Add small epsilon for the "is-component-present-check"
 
-  int baseResolution = 10;
+  int baseResolution = 20;
   float baseVolume = (4.0f / 3.0f) * M_PI; // Unit superellipsoid volume
 
   float x_0_1 = semMatrixSigValues[0], y_0_1 =semMatrixSigValues[1], z_0_1 = semMatrixSigValues[2];
@@ -1012,7 +961,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ComponentValidator::createSuper
   float x_0_2 = semMatrixSigValues[10], y_0_2 = semMatrixSigValues[11], z_0_2 = semMatrixSigValues[12];
   float n_1_2 = semMatrixSigValues[13], n_2_2 = semMatrixSigValues[14];
   float a_x2 = semMatrixSigValues[15], a_y2 = semMatrixSigValues[16], a_z2 = semMatrixSigValues[17];
-  float azimuth_2 = semMatrixSigValues[26], elev_2 = semMatrixSigValues[27];
+  float azimuth_2 = semMatrixSigValues[18], elev_2 = semMatrixSigValues[19];
 
   float volume2 = (4.0f / 3.0f) * M_PI * a_x2 * a_y2 * a_z2;
   int resolution2 = static_cast<int>(std::floor(baseResolution * (volume2 / baseVolume)));
@@ -1033,10 +982,10 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ComponentValidator::createSuper
     }
   }
 
-  float x_0_3 = semMatrixSigValues[18], y_0_3 = semMatrixSigValues[19], z_0_3 = semMatrixSigValues[20];
-  float n_1_3 = semMatrixSigValues[21], n_2_3 = semMatrixSigValues[22];
-  float a_x3 = semMatrixSigValues[23], a_y3 = semMatrixSigValues[24], a_z3 = semMatrixSigValues[25];
-  float azimuth_3 = semMatrixSigValues[26], elev_3 = semMatrixSigValues[27];
+  float x_0_3 = semMatrixSigValues[20], y_0_3 = semMatrixSigValues[21], z_0_3 = semMatrixSigValues[22];
+  float n_1_3 = semMatrixSigValues[23], n_2_3 = semMatrixSigValues[24];
+  float a_x3 = semMatrixSigValues[25], a_y3 = semMatrixSigValues[26], a_z3 = semMatrixSigValues[27];
+  float azimuth_3 = semMatrixSigValues[28], elev_3 = semMatrixSigValues[29];
 
   float volume3 = (4.0f / 3.0f) * M_PI * a_x3 * a_y3 * a_z3;
   int resolution3 = static_cast<int>(std::floor(baseResolution * (volume3 / baseVolume)));
@@ -1060,13 +1009,11 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> ComponentValidator::createSuper
   return clouds; // Return the vector of created superellipsoid clouds
 }
 
-
 Eigen::Vector4f ComponentValidator::computeBoundingBox(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
   Eigen::Vector4f min_pt, max_pt;
   pcl::getMinMax3D(*cloud, min_pt, max_pt);
   return max_pt - min_pt;  // Return the size (dimensions) of the bounding box
 }
-
 
 Eigen::Vector4f ComponentValidator::computeCentroid(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
     Eigen::Vector4f centroid;
@@ -1088,68 +1035,13 @@ Eigen::Vector4f ComponentValidator::computeBoundingBoxCentroid(pcl::PointCloud<p
   return bboxCentroid;
 }
 
-
 void ComponentValidator::denoiseAndUpsamplePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& inputCloud,
                                                       pcl::PointCloud<pcl::PointXYZ>::Ptr& outputCloud) {
-  // Denoise point cloud before upsampling it
-  pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
-  sor.setInputCloud(inputCloud);
-  sor.setKeepOrganized(true);  // We want to keep the organized structure
-  sor.setMeanK(50);  // Number of nearest neighbors to analyze for each point
-  sor.setStddevMulThresh(1.0);  // Set standard deviation threshold for filtering
-  sor.filter(*outputCloud);
-
-  int inputWidth = outputCloud->width;
-  int inputHeight = outputCloud->height;
-
-
-  // Double the resolution for upsampling
-  int outputWidth = inputWidth * 2;
-  int outputHeight = inputHeight * 2;
-  outputCloud->width = outputWidth;
-  outputCloud->height = outputHeight;
-  outputCloud->is_dense = inputCloud->is_dense;
-  outputCloud->points.resize(outputWidth * outputHeight);
-
-  // Perform bilinear interpolation over the organized grid
-  for (int y = 0; y < outputHeight; ++y) {
-    for (int x = 0; x < outputWidth; ++x) {
-      float gx = x / 2.0f;
-      float gy = y / 2.0f;
-
-      int gxi = static_cast<int>(gx);
-      int gyi = static_cast<int>(gy);
-
-      // Get fractional part
-      float dx = gx - gxi;
-      float dy = gy - gyi;
-
-      // Get the four neighboring points from the original grid
-      pcl::PointXYZ p00 = inputCloud->at(gxi, gyi);
-      pcl::PointXYZ p01 = inputCloud->at(gxi, std::min(gyi + 1, inputHeight - 1));
-      pcl::PointXYZ p10 = inputCloud->at(std::min(gxi + 1, inputWidth - 1), gyi);
-      pcl::PointXYZ p11 = inputCloud->at(std::min(gxi + 1, inputWidth - 1), std::min(gyi + 1, inputHeight - 1));
-
-      // Bilinear interpolation on XYZ values
-      pcl::PointXYZ newPoint;
-      newPoint.x = (1 - dx) * ((1 - dy) * p00.x + dy * p01.x) + dx * ((1 - dy) * p10.x + dy * p11.x);
-      newPoint.y = (1 - dx) * ((1 - dy) * p00.y + dy * p01.y) + dx * ((1 - dy) * p10.y + dy * p11.y);
-      newPoint.z = (1 - dx) * ((1 - dy) * p00.z + dy * p01.z) + dx * ((1 - dy) * p10.z + dy * p11.z);
-
-      // Assign new point to upsampled cloud
-      outputCloud->at(x, y) = newPoint;
-    }
-  }
-
-  // Do another stronger denoising with the upsampled cloud
-  sor.setInputCloud(outputCloud);
-  sor.setKeepOrganized(true);
-  sor.setMeanK(150);
-  sor.setStddevMulThresh(0.5);
-  sor.filter(*outputCloud);
-
+  // Remove NaNs first since organized neighbor search needs finite values
+  pcl::PointCloud<pcl::PointXYZ>::Ptr finiteCloud(new pcl::PointCloud<pcl::PointXYZ>);
+  std::vector<int> indices;
+  
 }
-
 
 void ComponentValidator::rotatePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float angle_degrees, const Eigen::Vector3f& axis) {
   // Compute rotation matrix and apply rotation
@@ -1158,7 +1050,6 @@ void ComponentValidator::rotatePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cl
   transform.rotate(Eigen::AngleAxisf(angle_radians, axis));
   pcl::transformPointCloud(*cloud, *cloud, transform);
 }
-
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr ComponentValidator::combinePointClouds(const std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>& clouds) {
   // Combine all superellipsoid point clouds into one combined point cloud
@@ -1169,7 +1060,6 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ComponentValidator::combinePointClouds(const
   return combinedCloud;
 }
 
-
 void ComponentValidator::scalePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float uniform_scale_factor) {
   Eigen::Affine3f transform = Eigen::Affine3f::Identity();
   transform.scale(Eigen::Vector3f(uniform_scale_factor, uniform_scale_factor, uniform_scale_factor));
@@ -1178,23 +1068,31 @@ void ComponentValidator::scalePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr clo
   pcl::transformPointCloud(*cloud, *cloud, transform);
 }
 
-
 void ComponentValidator::scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float cubeHalfSize) {
+
+  /*
+  for (auto& pt : cloud->points) {
+    if (!pcl::isFinite(pt) ||
+      pt.z < 0.6) {
+        
+      pt.x = pt.y = pt.z = std::numeric_limits<float>::quiet_NaN();
+    }
+  }
+  */
   pcl::PointXYZ min_pt, max_pt;
   pcl::getMinMax3D(*cloud, min_pt, max_pt);
 
-  // Compute center of bounding box
   Eigen::Vector3f center(
-      (min_pt.x + max_pt.x) * 0.5f,
-      (min_pt.y + max_pt.y) * 0.5f,
-      (min_pt.z + max_pt.z) * 0.5f
+    (min_pt.x + max_pt.x) * 0.5f,
+    (min_pt.y + max_pt.y) * 0.5f,
+    (min_pt.z + max_pt.z) * 0.5f
   );
 
   // Compute max extent of the bounding box
   float max_extent = std::max({
-      max_pt.x - min_pt.x,
-      max_pt.y - min_pt.y,
-      max_pt.z - min_pt.z
+    max_pt.x - min_pt.x,
+    max_pt.y - min_pt.y,
+    max_pt.z - min_pt.z
   });
 
   if (max_extent <= 0.0f) return; // avoid divide-by-zero
@@ -1204,15 +1102,11 @@ void ComponentValidator::scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXYZ
 
   // Apply translation and uniform scale
   for (auto& point : cloud->points) {
-      point.x = (point.x - center.x()) * scale;
-      point.y = (point.y - center.y()) * scale;
-      point.z = (point.z - center.z()) * scale;
+    point.x = (point.x - center.x()) * scale;
+    point.y = (point.y - center.y()) * scale;
+    point.z = (point.z - center.z()) * scale;
   }
-
-  pcl::getMinMax3D(*cloud, min_pt, max_pt);
-
 }
-
 
 void ComponentValidator::projectToYZPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected) {
   cloud_projected->clear();
@@ -1227,70 +1121,6 @@ void ComponentValidator::projectToYZPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cl
   cloud_projected->height = 1;
   cloud_projected->is_dense = true;
 }
-
-
-float ComponentValidator::computeIou(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud1, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud2) {
-  // Voxelize both clouds
-  voxelizeCloud(cloud1);
-  voxelizeCloud(cloud2);
-
-  // Create sets of voxel centers for both clouds
-  std::set<std::pair<int, int>> voxels1;
-  std::set<std::pair<int, int>> voxels2;
-
-  for (const auto& point : cloud1->points) {
-    int y_voxel = static_cast<int>(std::floor(point.y / voxel_size));
-    int z_voxel = static_cast<int>(std::floor(point.z / voxel_size));
-    voxels1.emplace(y_voxel, z_voxel);
-  }
-
-  for (const auto& point : cloud2->points) {
-    int y_voxel = static_cast<int>(std::floor(point.y / voxel_size));
-    int z_voxel = static_cast<int>(std::floor(point.z / voxel_size));
-    voxels2.emplace(y_voxel, z_voxel);
-  }
-
-  // Compute the intersection and union of the voxel sets
-  std::set<std::pair<int, int>> intersection_voxels;
-  std::set_intersection(voxels1.begin(), voxels1.end(),
-                        voxels2.begin(), voxels2.end(),
-                        std::inserter(intersection_voxels, intersection_voxels.begin()));
-
-  std::set<std::pair<int, int>> union_voxels;
-  std::set_union(voxels1.begin(), voxels1.end(),
-                 voxels2.begin(), voxels2.end(),
-                 std::inserter(union_voxels, union_voxels.begin()));
-
-  // Calculate IoU
-  float iou = static_cast<float>(intersection_voxels.size()) / (static_cast<float>(union_voxels.size()));
-
-  return iou;
-}
-
-
-void ComponentValidator::voxelizeCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) {
-  // Create a set to store unique voxel centers
-  std::set<std::pair<int, int>> voxel_centers;
-
-  for (const auto& point : cloud->points) {
-    int y_voxel = static_cast<int>(std::floor(point.y / voxel_size));
-    int z_voxel = static_cast<int>(std::floor(point.z / voxel_size));
-    voxel_centers.emplace(y_voxel, z_voxel);
-  }
-
-  // Clear the original cloud and insert voxel centers as new points
-  cloud->points.clear();
-  for (const auto& voxel : voxel_centers) {
-    pcl::PointXYZ new_point;
-    new_point.x = 0.0;
-    new_point.y = voxel.first * voxel_size; // Convert back to real coordinates
-    new_point.z = voxel.second * voxel_size; // Convert back to real coordinates
-    cloud->points.push_back(new_point);
-  }
-  cloud->width = static_cast<uint32_t>(cloud->points.size());
-  cloud->height = 1;
-}
-
 
 float ComponentValidator::computeChamferDistance(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud1,
                                                  const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud2) {
@@ -1330,7 +1160,6 @@ float ComponentValidator::computeChamferDistance(const pcl::PointCloud<pcl::Poin
   return chamferDistance;
 }
 
-
 void ComponentValidator::saveCombinedSuperellipsoid(const std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>& clouds,
                                                     const std::string& output_filename) {
   pcl::PointCloud<pcl::PointXYZ>::Ptr combined_cloud = combinePointClouds(clouds);
@@ -1342,7 +1171,6 @@ void ComponentValidator::saveCombinedSuperellipsoid(const std::vector<pcl::Point
   // Save the mesh as an OBJ file (to look at it in blender)
   pcl::io::saveOBJFile(output_filename, mesh);
 }
-
 
 void ComponentValidator::applyRotationToImage(const cv::Mat &objectDepthImageNorm, cv::Mat &objectDepthImageNormRot,
                                                  const float angle) {
@@ -1360,7 +1188,6 @@ void ComponentValidator::applyRotationToImage(const cv::Mat &objectDepthImageNor
   cv::warpAffine(objectDepthImageNorm, objectDepthImageNormRot, rotationMat, objectDepthImageNorm.size(),
                  cv::INTER_LINEAR, borderType, borderColor);
 }
-
 
 void ComponentValidator::createNaNMasks(const cv::Mat &objectDepthImage, cv::Mat &nanMask, cv::Mat &nanBackgroundMask,
                                         cv::Mat &nanInsideMask) {
@@ -1382,7 +1209,6 @@ void ComponentValidator::createNaNMasks(const cv::Mat &objectDepthImage, cv::Mat
 
 }
 
-
 void ComponentValidator::removeNansAndNoise(const cv::Mat &objectDepthImage, cv::Mat &objectDepthImageNorm) {
   // Variables to store the min and max values and their locations
   double minVal, maxVal;
@@ -1402,52 +1228,14 @@ void ComponentValidator::removeNansAndNoise(const cv::Mat &objectDepthImage, cv:
   cv::inpaint(objectDepthImageNorm, nanInsideMask, objectDepthImageNorm, impaintingRadius, cv::INPAINT_TELEA);
 
   cutOutObject(objectDepthImageNorm, nanBackgroundMask);
-  //cv::patchNaNs(objectDepthImageNorm, 0.0f);
+  cv::max(objectDepthImageNorm, 0, objectDepthImageNorm);
+
   //cv::imwrite("/home/schneiders/Desktop/cutOutObject.tiff", objectDepthImageNorm);
 
   if (objectDepthImageNorm.type() != CV_32FC1) {
     objectDepthImageNorm.convertTo(objectDepthImageNorm, CV_32FC1);
   }
-
-  //cv::Mat filtered;
-  //cv::bilateralFilter(objectDepthImageNorm, filtered, 19, 10.0, 19);
-  //objectDepthImageNorm = filtered;
-
-  //cv::GaussianBlur(objectDepthImageNorm, objectDepthImageNorm, cv::Size(kernelSize, kernelSize), 0);
-  //cv::boxFilter(objectDepthImageNorm, objectDepthImageNorm, -1, cv::Size(kernelSize, kernelSize));
-
-  //centerObject(objectDepthImageNorm, nanBackgroundMask);
-
-  //objectDepthImageNorm.convertTo(objectDepthImageNorm, CV_8U);
-  // Apply median blur to the entire image
-  //cv::medianBlur(objectDepthImageNorm, objectDepthImageNorm, kernelSize);
-  //objectDepthImageNorm.convertTo(objectDepthImageNorm, CV_32F);
 }
-
-
-void ComponentValidator::centerObject(cv::Mat &objectDepthImageNorm, const cv::Mat &mask) {
-
-  std::vector<std::vector<cv::Point>> contours;
-  cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-  if (!contours.empty()) {
-    cv::Moments M = cv::moments(contours[0]);
-    cv::Point centroid(M.m10 / M.m00, M.m01 / M.m00);
-
-    int imgWidth = objectDepthImageNorm.cols;
-    int imgHeight = objectDepthImageNorm.rows;
-    int offsetX = imgWidth / 2 - centroid.x;
-    int offsetY = imgHeight / 2 - centroid.y;
-
-    cv::Mat translationMatrix = (cv::Mat_<double>(2, 3) << 1, 0, offsetX, 0, 1, offsetY);
-
-    cv::warpAffine(objectDepthImageNorm, objectDepthImageNorm, translationMatrix, objectDepthImageNorm.size(),
-                   cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(maxNormValue + 1));
-  } else {
-    LOG4CXX_DEBUG(logger, "[ComponentValidation] no contour found in depth image.");
-  }
-}
-
 
 void ComponentValidator::cutOutObject(cv::Mat &objectDepthImageNorm, const cv::Mat &objectMask) {
   // Find contours in the mask (object outline)
@@ -1501,29 +1289,21 @@ void ComponentValidator::cutOutObject(cv::Mat &objectDepthImageNorm, const cv::M
 
 }
 
-
 bool ComponentValidator::isSideComponentPresent(const int compIndex, const cv::Mat &semMat) {
 
-//  float dx = semMat.at<float>(0, sideCompIdcs[compIndex - 1][0]);
-//  float dy = semMat.at<float>(0, sideCompIdcs[compIndex - 1][1]);
-//  float dz = semMat.at<float>(0, sideCompIdcs[compIndex - 1][2]);
-//  float n1 = semMat.at<float>(0, sideCompIdcs[compIndex - 1][3]);
-//  float n2 = semMat.at<float>(0, sideCompIdcs[compIndex - 1][4]);
   float ax = semMat.at<float>(0, sideCompIdcs[compIndex - 1][5]);
   float ay = semMat.at<float>(0, sideCompIdcs[compIndex - 1][6]);
   float az = semMat.at<float>(0, sideCompIdcs[compIndex - 1][7]);
 
-//  float sum = dx + dy + dz + n1 + n2 + ax + ay + az;
   float sum = ax + ay + az;
   LOG4CXX_DEBUG(logger, boost::format("[isSideComponentPresent] compIdx: %d Sum: %f Threshold: %f") % compIndex % sum % existenceThreshold);
-
+  // Component must have a large enough volume in order to be considered present
   if (sum > existenceThreshold) {
     return true;
   } else {
     return false;
   }
 }
-
 
 bool ComponentValidator::calculateSemProperty(const cv::Mat &semMat, const int semPredShape, const int semPredAxis,
                                               const int semPredIdx) {
@@ -1540,7 +1320,6 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat &semMat, const int s
   bool orientationPredicate = false;
 
   switch (semPredIdx) {
-    //we look for base component shape predicates
     case 0:
     case 1:
     case 2:
@@ -1549,26 +1328,27 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat &semMat, const int s
     case 3:
     case 4:
     case 5:
+    case 6:
       compIndex = 0;
       shapePredicate = true;
       break;
     //we look for side component 1 shape predicates
-    case 9:
     case 10:
     case 11:
+    case 12:
+    case 13:
       compIndex = 1;
       shapePredicate = true;
       break;
     //we look for side component 2 shape predicates
-    case 27:
-    case 28:
     case 29:
+    case 30:
+    case 31:
+    case 32:
       compIndex = 2;
       shapePredicate = true;
       break;
     //we look for side component 1 position predicates
-    case 12:
-    case 13:
     case 14:
     case 15:
     case 16:
@@ -1576,56 +1356,59 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat &semMat, const int s
     case 18:
     case 19:
     case 20:
+    case 21:
+    case 22:
       compIndex = 1;
       positionPredicate = true;
       break;
     //we look for side component 2 position predicates
-    case 30:
-    case 31:
-    case 32:
     case 33:
     case 34:
     case 35:
     case 36:
     case 37:
     case 38:
-      compIndex = 2;
-      positionPredicate = true;
-      break;
-    //we look for side component 1 size predicates
-    case 21:
-    case 22:
-    case 23:
-      compIndex = 1;
-      sizePredicate = true;
-      break;
-    //we look for side component 2 size predicates
     case 39:
     case 40:
     case 41:
       compIndex = 2;
+      positionPredicate = true;
+      break;
+    //we look for side component 1 size predicates
+    case 23:
+    case 24:
+    case 25:
+      compIndex = 1;
       sizePredicate = true;
       break;
-    case 6:
-    case 24:
+    //we look for side component 2 size predicates
     case 42:
+    case 43:
+    case 44:
+      compIndex = 2;
+      sizePredicate = true;
+      break;
+    //we look for eccentricity predicates
+    case 7:
+    case 26:
+    case 45:
       eccentricityPredicate = true;
       break;
     //we look for base component orientation predicates
-    case 7:
     case 8:
+    case 9:
       compIndex = 0;
       orientationPredicate = true;
       break;
     //we look for side component 1 orientation predicates
-    case 25:
-    case 26:
+    case 27:
+    case 28:
       compIndex = 1;
       orientationPredicate = true;
       break;
     //we look for side component 2 orientation predicates
-    case 43:
-    case 44:
+    case 46:
+    case 47:
       compIndex = 2;
       orientationPredicate = true;
       break;
@@ -1657,7 +1440,6 @@ bool ComponentValidator::calculateSemProperty(const cv::Mat &semMat, const int s
 
 }
 
-
 bool ComponentValidator::processShape(const int compIndex, const cv::Mat &semMat, const int semPredShape) {
 
   const auto &idcs = superEllipsoidParamsIdcs[compIndex];
@@ -1679,11 +1461,12 @@ bool ComponentValidator::processShape(const int compIndex, const cv::Mat &semMat
       return isRod(n1, n2, ax, ay, az);
     case 1:
       return isDisk(n1, n2, ax, ay, az);
+    case 2:
+      return isBlock(n1, n2);
     default:
       return false;
   }
 }
-
 
 bool ComponentValidator::isRod(const float n1, const float n2, const float ax, const float ay, const float az) {
 
@@ -1695,7 +1478,6 @@ bool ComponentValidator::isRod(const float n1, const float n2, const float ax, c
   return edginessDifferent && isElongated;
 }
 
-
 bool ComponentValidator::isDisk(const float n1, const float n2, const float ax, const float ay, const float az) {
 
   bool edginessDifferent = std::abs(n2 - n1) > edginessSimilarityThreshold;
@@ -1706,8 +1488,14 @@ bool ComponentValidator::isDisk(const float n1, const float n2, const float ax, 
   return edginessDifferent && isNotElongated;
 }
 
+bool ComponentValidator::isBlock(const float n1, const float n2) {
 
-// Check discrete position
+  bool isn1Low = n1 < 0.4;
+  bool isn2Low = n2 < 0.4;
+  
+  return isn1Low && isn2Low;
+}
+
 bool ComponentValidator::processPosition(const int compIndex, const cv::Mat &semMat, const int semPredAxis) {
 
   // Initialize semMatch to false
@@ -1743,15 +1531,11 @@ bool ComponentValidator::processPosition(const int compIndex, const cv::Mat &sem
 
   }
 
-  // Return the result
   return semPositionMatch;
-
 }
-
 
 bool ComponentValidator::processSize(const int compIndex, const cv::Mat &semMat, const int semPredIdx) {
 
-  // Initialize semMatch to false
   bool semSizeMatch = false;
 
   float axb = semMat.at<float>(0, sizeIdcs[0][0]);
@@ -1774,11 +1558,8 @@ bool ComponentValidator::processSize(const int compIndex, const cv::Mat &semMat,
     semSizeMatch = true;  // component is of similar size
   }
 
-  // Return the result
   return semSizeMatch;
-
 }
-
 
 bool ComponentValidator::processEccentricity(const cv::Mat &semMat, const int semPredIdx) {
 
@@ -1786,15 +1567,15 @@ bool ComponentValidator::processEccentricity(const cv::Mat &semMat, const int se
 
   switch (semPredIdx) {
     //we look for base component eccentricity
-    case 6:
+    case 7:
       compIndex = 0;
       break;
       //we look for side component 1 eccentricity
-    case 24:
+    case 26:
       compIndex = 1;
       break;
       //we look for side component 2 eccentricity
-    case 42:
+    case 45:
       compIndex = 2;
       break;
     default:
@@ -1816,7 +1597,6 @@ bool ComponentValidator::processEccentricity(const cv::Mat &semMat, const int se
 
 }
 
-
 bool ComponentValidator::processOrientation(const int compIndex, const cv::Mat &semMat, const int semPredIdx) {
 
   float ay = semMat.at<float>(0, sizeIdcs[compIndex][1]);
@@ -1830,7 +1610,7 @@ bool ComponentValidator::processOrientation(const int compIndex, const cv::Mat &
 
   if (isElongated) {
     // Group 1: Oriented along Y-axis if elongated (ay > az)
-    if (semPredIdx == 7 || semPredIdx == 25 || semPredIdx == 43) {
+    if (semPredIdx == 8 || semPredIdx == 27 || semPredIdx == 46) {
       bool yAxisDominant = ay > az;
       bool zAxisDominant = az > ay;
 
@@ -1848,7 +1628,7 @@ bool ComponentValidator::processOrientation(const int compIndex, const cv::Mat &
     }
 
     // Group 2: Oriented along Z-axis if elongated (az > ay)
-    else if (semPredIdx == 8 || semPredIdx == 26 || semPredIdx == 44) {
+    else if (semPredIdx == 9 || semPredIdx == 28 || semPredIdx == 47) {
       bool zAxisDominant = az > ay;
       bool yAxisDominant = ay > az;
 
@@ -1869,36 +1649,31 @@ bool ComponentValidator::processOrientation(const int compIndex, const cv::Mat &
   return semOrientationMatch;
 }
 
-
-// Function to apply sigmoid to matrix and check dimensions
 cv::Mat ComponentValidator::applySigmoidToMatrix(const cv::Mat &matrix) {
-
   // Check if the matrix is not empty and has the correct dimensions
-  if (!matrix.empty() && matrix.cols == 26 && matrix.rows == 1) {
+  if (!matrix.empty() && matrix.cols == 30 && matrix.rows == 1) {
     // Create a new matrix with 3 additional columns (24 + 3 = 27)
-    cv::Mat matrixWithZeros = cv::Mat::zeros(1, matrix.cols, CV_32F);
-
+    cv::Mat matrixSig = cv::Mat::zeros(1, matrix.cols, CV_32F);
     // Copy original matrix values to the new matrix, starting after the 3 initial zeros
     for (int i = 0; i < matrix.cols; ++i) {
-      matrixWithZeros.at<float>(0, i) = sigmoid(matrix.at<float>(0, i));
+      matrixSig.at<float>(0, i) = sigmoid(matrix.at<float>(0, i));
     }
-
-    return matrixWithZeros; // Return the new matrix with prepended zeros and sigmoid applied
+    return matrixSig; // Return the new matrix with prepended zeros and sigmoid applied
   } else {
     LOG4CXX_DEBUG(logger, "[ComponentValidation] Invalid semantic matrix dimensions ");
     return cv::Mat(); // Return an empty matrix to indicate an error
   }
 }
 
-
 // Generate a full text description based on the identified predicates
 void ComponentValidator::populateMemoryObjectDescription(std::vector<bool> foundPredicatesVector, MemoryObject::Ptr mo) {
 
   // Helper lambdas to determine shape and size
-  auto getShape = [&](int rodIndex, int diskIndex) -> std::string {
-      if (foundPredicatesVector[rodIndex]) return "rod";
-      if (foundPredicatesVector[diskIndex]) return "disk";
-      return "part";
+  auto getShape = [&](int rodIndex, int diskIndex, int blockIndex) -> std::string {
+    if (foundPredicatesVector[rodIndex]) return "rod";
+    if (foundPredicatesVector[diskIndex]) return "disk";
+    if (foundPredicatesVector[blockIndex]) return "block";
+    return "part";
   };
 
   auto getEccentricity = [&](int longIndex) -> std::string {
@@ -1936,9 +1711,9 @@ void ComponentValidator::populateMemoryObjectDescription(std::vector<bool> found
   mo->addValidationResult(0.9f, PredicateHelper("unknown(" + mo->getVariableName() + ")"));
 
   // Central component
-  std::string eccentricityCentral = getEccentricity(6);
-  std::string orientationCentral = getOrientation(7, 8);
-  std::string shapeCentral = getShape(3, 4);
+  std::string eccentricityCentral = getEccentricity(7);
+  std::string orientationCentral = getOrientation(8, 9);
+  std::string shapeCentral = getShape(3, 4, 5);
 
   // Object with one component
   if (foundPredicatesVector[0]) {
@@ -1952,11 +1727,11 @@ void ComponentValidator::populateMemoryObjectDescription(std::vector<bool> found
 
   // Object with two components
   if (foundPredicatesVector[1]) {
-    std::string sizeSecond = getSize(21, 22, 23);
-    std::string eccentricitySecond = getEccentricity(24);
-    std::string orientationSecond = getOrientation(25, 26);
-    std::string shapeSecond = getShape(9, 10);
-    std::string positionsSecond = getPosition({12, 13, 14, 15, 16, 17});
+    std::string sizeSecond = getSize(23, 24, 25);
+    std::string eccentricitySecond = getEccentricity(26);
+    std::string orientationSecond = getOrientation(27, 28);
+    std::string shapeSecond = getShape(10, 11, 12);
+    std::string positionsSecond = getPosition({14, 15, 16, 17, 18, 19});
 
     // central component
     MemoryObject::Ptr component1 = MemoryObject::Ptr(new MemoryObject(mo->getId(), "Y", mo->getCaptureData(), mo->getDetectionMask()));
@@ -1980,17 +1755,17 @@ void ComponentValidator::populateMemoryObjectDescription(std::vector<bool> found
 
   // Object with three components
   if (foundPredicatesVector[2]) {
-    std::string sizeSecond = getSize(21, 22, 23);
-    std::string eccentricitySecond = getEccentricity(24);
-    std::string orientationSecond = getOrientation(25, 26);
-    std::string shapeSecond = getShape(9, 10);
-    std::string positionsSecond = getPosition({12, 13, 14, 15, 16, 17});
+    std::string sizeSecond = getSize(23, 24, 25);
+    std::string eccentricitySecond = getEccentricity(26);
+    std::string orientationSecond = getOrientation(27, 28);
+    std::string shapeSecond = getShape(10, 11, 12);
+    std::string positionsSecond = getPosition({14, 15, 16, 17, 18, 19});
 
-    std::string sizeThird = getSize(39, 40, 41);
-    std::string eccentricityThird = getEccentricity(42);
-    std::string orientationThird = getOrientation(43, 44);
-    std::string shapeThird = getShape(27, 28);
-    std::string positionsThird = getPosition({30, 31, 32, 33, 34, 35});
+    std::string sizeThird = getSize(42, 43, 44);
+    std::string eccentricityThird = getEccentricity(45);
+    std::string orientationThird = getOrientation(46, 47);
+    std::string shapeThird = getShape(29, 30, 31);
+    std::string positionsThird = getPosition({33, 34, 35, 36, 37, 38});
 
     // central component
     MemoryObject::Ptr component1 = MemoryObject::Ptr(new MemoryObject(mo->getId(), "Y", mo->getCaptureData(), mo->getDetectionMask()));
@@ -2027,9 +1802,10 @@ void ComponentValidator::populateMemoryObjectDescription(std::vector<bool> found
 std::string ComponentValidator::generateFullDescription(std::vector<bool> foundPredicatesVector) {
 
   // Helper lambdas to determine shape and size
-  auto getShape = [&](int rodIndex, int diskIndex) -> std::string {
+  auto getShape = [&](int rodIndex, int diskIndex, int blockIndex) -> std::string {
     if (foundPredicatesVector[rodIndex]) return "rod";
     if (foundPredicatesVector[diskIndex]) return "disk";
+    if (foundPredicatesVector[blockIndex]) return "block";
     return "part";
   };
 
@@ -2038,8 +1814,8 @@ std::string ComponentValidator::generateFullDescription(std::vector<bool> foundP
   };
 
   auto getOrientation = [&](int horziontalIndex, int verticalIndex) -> std::string {
-//    if (foundPredicatesVector[horziontalIndex]) return "horizontal";
-//    if (foundPredicatesVector[verticalIndex]) return "vertical";
+    if (foundPredicatesVector[horziontalIndex]) return "horizontal";
+    if (foundPredicatesVector[verticalIndex]) return "vertical";
     return "";
   };
 
@@ -2051,9 +1827,9 @@ std::string ComponentValidator::generateFullDescription(std::vector<bool> foundP
   };
 
   auto getPosition = [&](std::vector<int> positionIndices) -> std::string {
-      std::string position = "";
-      const std::vector<std::string> positionLabels = {"in_front", "behind", "to_the_right", "to_the_left", "on_top",
-                                                       "at_the_bottom"};
+    std::string position = "";
+    const std::vector<std::string> positionLabels = {"in_front", "behind", "to_the_right", "to_the_left", "on_top",
+                                                      "at_the_bottom"};
 
     for (size_t i = 0; i < positionIndices.size(); ++i) {
       if (foundPredicatesVector[positionIndices[i]]) {
@@ -2065,9 +1841,9 @@ std::string ComponentValidator::generateFullDescription(std::vector<bool> foundP
   };
 
   // Central component
-  std::string shapeCentral = getShape(3, 4);
-  std::string eccentricityCentral = getEccentricity(6);
-  std::string orientationCentral = getOrientation(7, 8);
+  std::string eccentricityCentral = getEccentricity(7);
+  std::string orientationCentral = getOrientation(8, 9);
+  std::string shapeCentral = getShape(3, 4, 5);
 
   // Object with one component
   if (foundPredicatesVector[0]) {
@@ -2079,11 +1855,11 @@ std::string ComponentValidator::generateFullDescription(std::vector<bool> foundP
   if (foundPredicatesVector[1]) {
     LOG4CXX_DEBUG(logger, boost::format("Generating 2-component object description"));
 
-    std::string shapeSecond = getShape(9, 10);
-    std::string sizeSecond = getSize(21, 22, 23);
-    std::string eccentricitySecond = getEccentricity(24);
-    std::string positionsSecond = getPosition({12, 13, 14, 15, 16, 17});
-    std::string orientationSecond = getOrientation(25, 26);
+    std::string sizeSecond = getSize(23, 24, 25);
+    std::string eccentricitySecond = getEccentricity(26);
+    std::string orientationSecond = getOrientation(27, 28);
+    std::string shapeSecond = getShape(10, 11, 12);
+    std::string positionsSecond = getPosition({14, 15, 16, 17, 18, 19});
 
     return eccentricityCentral + "_" + orientationCentral + "_" + shapeCentral +
            "_with_a_" + sizeSecond + "_" + eccentricitySecond + "_" + orientationSecond + "_" + shapeSecond + "_" + positionsSecond;
@@ -2093,17 +1869,17 @@ std::string ComponentValidator::generateFullDescription(std::vector<bool> foundP
   if (foundPredicatesVector[2]) {
     LOG4CXX_DEBUG(logger, boost::format("Generating 3-component object description"));
 
-    std::string shapeSecond = getShape(9, 19);
-    std::string sizeSecond = getSize(21, 22, 23);
-    std::string eccentricitySecond = getEccentricity(24);
-    std::string positionsSecond = getPosition({12, 13, 14, 15, 16, 17});
-    std::string orientationSecond = getOrientation(25, 26);
+    std::string sizeSecond = getSize(23, 24, 25);
+    std::string eccentricitySecond = getEccentricity(26);
+    std::string orientationSecond = getOrientation(27, 28);
+    std::string shapeSecond = getShape(10, 11, 12);
+    std::string positionsSecond = getPosition({14, 15, 16, 17, 18, 19});
 
-    std::string shapeThird = getShape(27, 28);
-    std::string sizeThird = getSize(39, 40, 41);
-    std::string eccentricityThird = getEccentricity(42);
-    std::string positionsThird = getPosition({30, 31, 32, 33, 34, 35});
-    std::string orientationThird = getOrientation(43, 44);
+    std::string sizeThird = getSize(42, 43, 44);
+    std::string eccentricityThird = getEccentricity(45);
+    std::string orientationThird = getOrientation(46, 47);
+    std::string shapeThird = getShape(29, 30, 31);
+    std::string positionsThird = getPosition({33, 34, 35, 36, 37, 38});
 
     return eccentricityCentral + "_" + orientationCentral + "_central_" + shapeCentral +
            "_with_one_" + sizeSecond + "_" + eccentricitySecond + "_" + orientationSecond + "_" + shapeSecond + "_" + positionsSecond +
