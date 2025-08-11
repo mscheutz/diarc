@@ -13,7 +13,7 @@ from bosdyn.client.frame_helpers import get_a_tform_b
 from bosdyn.client.math_helpers import Vec3
 from jpype import JImplements, JOverride, JClass
 from spot_wrapper.wrapper import SpotWrapper
-from pytrade.wrapper import TRADEWrapper
+from diarc.pytrade.wrapper import TRADEWrapper
 import yaml
 from functools import wraps
 

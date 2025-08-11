@@ -88,11 +88,13 @@ advance to; VERBT; goto
 
 % pickup(?ADDRESSEE, REF:physobj)
 pick up; VERBT; pickup
-grab; VERBT; pickup
 pickup; VERBT; pickup
 lift up; VERBT; pickup
 lift; VERBT; pickup
 raise; VERBT; pickup
+
+% grab(?ADDRESSEE, REF:physobj)
+grab; VERBT; pickup
 
 
 % DO WE HAVE A PICKUP FROM?  pickup(?ADDRESSEE, REF:physobj; REF:location)

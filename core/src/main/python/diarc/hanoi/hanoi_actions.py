@@ -4,7 +4,7 @@ import logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 from . import kortex_controller
-from pytrade.wrapper import TRADEWrapper
+from diarc.pytrade.wrapper import TRADEWrapper
 
 wrapper = TRADEWrapper()
 

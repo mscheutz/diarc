@@ -5,7 +5,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
-from pytrade.wrapper import TRADEWrapper
+from diarc.pytrade.wrapper import TRADEWrapper
 from ai.thinkingrobots.trade import TRADE
 
 

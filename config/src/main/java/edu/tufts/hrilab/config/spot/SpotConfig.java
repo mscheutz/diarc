@@ -65,7 +65,6 @@ public class SpotConfig extends DiarcConfiguration {
 //    }
 
     createInstance(GoalManagerComponent.class,
-//            "-beliefg " +
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
                     "-beliefinitfile agents/agents.pl "
                     + "-beliefinitfile demos.pl "
@@ -77,14 +76,13 @@ public class SpotConfig extends DiarcConfiguration {
                     + "-asl vision.asl "
                     + "-asl demos/spotDemo.asl "
                     + "-asl spot/spotActions.asl "
-//                    + "-goal listen(self:agent) "
+                    + "-goal listen(self:agent) "
 //                    + "-goal init(self:agent) "
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
     );
 
-    createInstance(SimSpeechRecognitionComponent.class, "-speaker marlow -config spotDemo.simspeech");
+    createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -config spotDemo.simspeech");
 
-    flexComponent.openDoorTest();
   }
 
 }

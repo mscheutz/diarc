@@ -16,4 +16,12 @@ public interface FlexPythonInterface {
   @TRADEService
   @Action
   Justification open_door_primitive(int x_pix, int y_pix);
+
+  @TRADEService
+  @Action
+  Justification grasp_object_primitive(int x_pix, int y_pix);
+
+  @TRADEService
+  @Action
+  Justification push_button_primitive(int x_pix, int y_pix);
 }

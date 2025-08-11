@@ -8,7 +8,7 @@ from typing import List, Optional
 import jpype.imports
 from jpype import JObject
 
-from pytrade.java_util import to_java_class, convert_to_java_object
+from diarc.pytrade.java_util import to_java_class, convert_to_java_object
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.info("Starting PyTRADE")

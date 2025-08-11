@@ -3,7 +3,7 @@ import sys
 import logging
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-from pytrade.wrapper import TRADEWrapper
+from diarc.pytrade.wrapper import TRADEWrapper
 from ai.thinkingrobots.trade import TRADE
 from jpype import JImplements, JOverride
 from edu.tufts.hrilab.interfaces import DockingInterface

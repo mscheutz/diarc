@@ -3,8 +3,8 @@ import time
 import sys
 import threading
 
-from pytrade.java_util import to_java_object, to_java_object_from_class
-from pytrade.wrapper import TRADEWrapper
+from diarc.pytrade.java_util import to_java_object, to_java_object_from_class
+from diarc.pytrade.wrapper import TRADEWrapper
 
 from ai.thinkingrobots.trade import TRADE
 from edu.tufts.hrilab.interfaces import CoordinateFramesInterface

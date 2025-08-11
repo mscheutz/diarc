@@ -28,3 +28,9 @@ dock
 undock
 ----
 shut down
+----
+robot one grab the handle
+robot two pull out the rod
+robot one open the door by the handle
+robot two push the button
+
