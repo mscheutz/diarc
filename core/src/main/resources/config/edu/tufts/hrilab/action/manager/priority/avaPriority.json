@@ -86,5 +86,25 @@
   "interruptWaitForReadyAck": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "forgetTaughtAction": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportTaughtActions": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportInstructableActions": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeActionSteps": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportIfCanPerform": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

@@ -2445,6 +2445,18 @@ public class ExecutionManager implements GoalListener {
     return new ArrayList<>(learnedActions.stream().map(dbEntry -> dbEntry.getSignature(false)).toList());
   }
 
+  @TRADEService
+  public boolean isLearnedAction(Predicate actionSignature) {
+    try {
+      List<ActionDBEntry> actions = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActionsBySignature").argTypes(Predicate.class)).call(List.class, actionSignature);
+      actions = actions.stream().filter(action -> action.getDBFile().equals(learnedActionsFile) || action.getDBFile() == null).toList();
+      return !actions.isEmpty();
+    } catch (TRADEException e) {
+      log.error("[isLearnedAction] error getting action list from signature");
+      return false;
+    }
+  }
+
   /**
    * Returns true if the supplied goal should be intercepted by Action Learning.
    * Checks the actor of the supplied goal and any of its ancestors for matching criteria

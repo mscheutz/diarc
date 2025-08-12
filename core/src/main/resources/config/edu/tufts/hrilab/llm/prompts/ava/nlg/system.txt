@@ -9,119 +9,7 @@ Output will generally fall into one of the following categories:
 ###
 The set of actions this agent can perform, which may be referenced in the output semantics from the system, and what it would mean to a user are listed below:
 ##
-goToLocation(ava,?destination:location)
-Description: You go to location ?destination.
-#
-follow(ava)
-Description: You follow the user
-#
-say(ava,?words)
-Description: You say ?words
-#
-stopFollow(ava)
-Description: You stop following the user
-#
-showVideo(ava)
-Description: You play a video on your screen
-#
-escortToLocation(ava,?name, ?destination:location)
-Description: You escort ?name to location ?destination
-#
-escortFromLocationToLocation(ava,?name, ?start:location, ?destination:location)
-Description: You escort ?name from location ?start to location ?destination
-#
-describeCurrentLocation(ava)
-Description: You report what location you believe you are currently at
-#
-saveLocation(ava,?name)
-Description: You save your current location under the name ?name
-#
-saveLocationsToFile(ava)
-Description: You backup all your currently saved locations
-#
-definePatrolPath(ava)
-Description: You start learning a new patrol path
-#
-definePatrolPath(ava,?name)
-Description: You start learning a new patrol path called ?name
-#
-patrol(ava,?pathName:path,?actionName)
-Description: You navigate along the patrol path ?pathName while performing the action ?actionName at each location
-#
-wifiEvaluation(ava,?location:location)
-Description: You measure the strength of the wifi signal at location ?location
-#
-reportWifiForLocation(ava,?location:location)
-Description: You report the wifi signal strength at location ?location
-#
-reportWifiForPatrol(ava,?pathName:path)
-Description: You report the wifi signal quality at every location along patrol path ?pathName.
-#
-takePhoto(ava,?location:location)
-Description: You take a photo at location ?location
-#
-sit(ava)
-Description: You lower your screen
-#
-stand(ava)
-Description: You raise your screen
-#
-deliver(ava,?objectName,?location:location)
-Description: You deliver ?objectName to location ?location.
-#
-goHome(ava)
-Description: You go to your charging dock and charge
-#
-scheduleGoal(ava)
-Description: You begin a dialogue interaction with the user to schedule future execution of a task
-#
-modifyScheduledGoal(ava)
-Description: You begin a dialogue interaction with the user to modify the timing of a future scheduled task
-#
-describeScheduledGoals(ava)
-Description: You report what your currently scheduled goals are
-#
-describeCurrentGoal(ava)
-Description: You report what your current task is
-#
-describePendingGoals(ava)
-Description: You report what your currently pending tasks are
-#
-cancelSystemGoals(ava)
-Description: You stop and fully discard your current task
-#
-suspendSystemGoalsBlocking(ava)
-Description: You pause your current task, which can be later resumed
-#
-resumeSystemGoals(ava)
-Description: You resume a currently paused task
-#
-cancelAllScheduledGoals(ava)
-Description: You cancel all currently scheduled goals which have yet to begin execution.
-#
-cancelScheduledGoal(ava)
-Description: You begin a dialogue interaction with the user to cancel a particular scheduled goal
-#
-learnNewTask(ava)
-Description: You begin a dialogue interaction with the user to learn the steps of a new instructable action
-#
-endActionLearning(ava)
-Description: You conclude learning the steps of a new instructable action
-#
-reportBatteryLevel(ava)
-Description: You report the current battery level of the robot as a percentage
-#
-describeAllKnownLocations(ava)
-Description: You list all currently saved locations
-#
-describeAllKnownPatrolPaths(ava)
-Description: You list all currently saved patrol paths
-#
-describeAllLocationsOnPatrolPath(ava,?pathName:path)
-Description: You list all locations included along the saved patrol path named ?pathName
-#
-repeatLastQuestion(ava)
-Description: You repeat the last question you asked, which the human still needs to answer
+%actionList
 #
 %learnedActions%
 ###
@@ -195,6 +83,12 @@ Description: the speaker knows about or how to perform ?value
 #
 not(?fact)
 Description: the negation of ?fact
+#
+actionType(?type)
+Description: Specification of a type of action, referencing how the system came to know about the action. ?type takes three possible values: taught, predefined, or both. Taught references actions taught by the user, predefined references actions known automatically by the system on startup, and both references all actions.
+#
+amount(?number)
+Description: The specification of a number of things
 ###
 Previous interactions between the system and users may have already occurred. These interactions may be relevant to your task by providing context which can inform your translations. The recent conversation history between the user and the system leading up to this point is as follows:
 \n

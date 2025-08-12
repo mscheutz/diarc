@@ -151,6 +151,27 @@ Output:{"translation":"Did you mean to answer my question by saying a new patrol
 #
 Input:QUESTION(ava,%addressee,mean(%addressee,option(?number)),{})
 Output:{"translation":"Did you mean to answer my question by indicating option number ?number?"}
+#
+Input:QUESTION(ava,%addressee,mean(%addressee,actionType(?type)),{})
+Output:{"translation":"Did you mean to answer my question by indicating ?type type of actions?"}
+#
+Input:QUESTION(ava,%addressee,mean(%addressee,amount(?num)),{})
+Output:{"translation":"Did you mean to answer my question by indicating an amount of size ?num?"}
+#
+Input:QUESTION(ava,%addressee,mean(%addressee,reportTaughtActions(ava)),{})
+Output:{"translation":"Did you mean to ask me to list my learned actions?"}
+#
+Input:QUESTION(ava,%addressee,mean(%addressee,forgetTaughtAction(ava,?actionPredicate)),{})
+Output:{"translation":"Did you mean to ask me to forget how to perform ?actionPredicate?"}
+#
+Input:QUESTION(ava,%addressee,mean(%addressee,reportIfCanPerform(ava,?actionPredicate)),{})
+Output:{"translation":"Did you mean to ask me if I know how to perform an action to ?actionPredicate?"}
+#
+Input:QUESTION(ava,%addressee,mean(%addressee,reportInstructableActions(ava)),{})
+Output:{"translation":"Did you mean to ask me what all of the actions I can be instructed to perform are?"}
+#
+Input:QUESTION(ava,%addressee,mean(%addressee,describeActionSteps(?ava,?actionPredicate)),{})
+Output:{"translation":"Did you mean to ask me how I would perform an action to ?actionPredicate?"}
 ##
 In all future examples of this task you will not be given robot output with variables (inner words starting with ?). These variables will be replaced with input values from the user. Your output should reflect this and include the user values. For example:
 #

@@ -37,6 +37,73 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     private boolean registeredForNewActions = false;
     private boolean retrievedLearnedActions = false;
     private String learnedActionsString = "";
+    //TODO: All of this information should potentially be spread out to different parts of the system and gathered here
+    //  on startup rather than hardcoded. E.g. descriptions from ActionDBEntries (asl pre-existing and new java annotations),
+    //  NL examples from various parsers, selection of exposed actions from config, ... This is a fairly large architectural
+    //  decision to discuss and therefore will need to wait until after first deployment.
+    private class LLMActionEntry {
+        String signature;
+        String description;
+        LLMNLExample example;
+
+        LLMActionEntry(String signature, String description, LLMNLExample example) {
+            this.signature = signature;
+            this.description = description;
+            this.example = example;
+        }
+
+        LLMActionEntry(String signature, String description, String exampleInstruction, String exampleTranslation, int exampleConfidence) {
+            this.signature = signature;
+            this.description = description;
+            this.example = new LLMNLExample(exampleInstruction, exampleTranslation, exampleConfidence);
+        }
+
+        public String toString(boolean nlu) {
+            String signatureString = signature;
+            if (!nlu) {
+                String[] parts = signatureString.split("\\(",2);
+                signatureString = parts[0] + "(ava";
+                if (parts[1].equals(")")) {
+                    signatureString += parts[1];
+                } else {
+                    signatureString += "," + parts[1];
+                }
+            }
+            String output = signatureString + "\n" +
+                  "Description: " + description + "\n";
+            if (nlu) {
+                output +=
+                        "Example Translation: \"" +
+                                example.instruction +
+                                "\" -> {\"Semantics\":\"" +
+                                example.semantics +
+                                "\",\"Input Type\":\"INSTRUCT\",\"Confidence\":\"" +
+                                example.confidence +
+                                "\"}\n";
+            }
+            output += "#\n";
+            return output;
+        }
+    }
+    private class LLMNLExample {
+        String instruction;
+        String semantics;
+        int confidence;
+
+        LLMNLExample(String instruction, String semantics, int confidence) {
+            this.instruction = instruction;
+            this.semantics = semantics;
+            this.confidence = confidence;
+        }
+    }
+    private List<LLMActionEntry> exposedActionList = new ArrayList<>();
+
+
+    @Override
+    protected void init() {
+        super.init();
+        generateExposedActionList();
+    }
 
     @Override
     protected void executionLoop () {
@@ -152,7 +219,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                     }
                     utterance.setSemantics(Factory.createPredicate(command, Factory.createPredicate(innerArg.getName(), argsWithActor)));
                 }
-            } else if (command.equals("forgetLearnedAction")) {
+            } else if (command.equals("forgetTaughtAction") || command.equals("reportIfCanPerform") || command.equals("describeActionSteps")) {
                 //Not currently prompted to do this
                 if (utterance.getSemantics().hasArgs()) {
                     Symbol innerArg = ((Term)utterance.getSemantics()).get(1);
@@ -172,9 +239,15 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     }
 
     private List<Symbol> processSemantics(Predicate semantics, List<Symbol> processedArguments, Map<Symbol,Variable> varMap, Utterance.Builder output, String actor) {
+        return processSemantics(semantics,processedArguments,varMap, output, actor, false);
+    }
+    private List<Symbol> processSemantics(Predicate semantics, List<Symbol> processedArguments, Map<Symbol,Variable> varMap, Utterance.Builder output, String actor, boolean unpopulatedArgSafe) {
+        if (semantics.getName().equals("reportIfCanPerform")) {
+            unpopulatedArgSafe = true;
+        }
         for (Symbol arg: semantics.getArgs()) {
             if (arg.isPredicate()) {
-                List<Symbol> innerArgs = processSemantics((Predicate)arg,new ArrayList<>(),varMap,output,actor);
+                List<Symbol> innerArgs = processSemantics((Predicate)arg,new ArrayList<>(),varMap,output,actor,unpopulatedArgSafe);
                 if (innerArgs == null) {
                     return null;
                 }
@@ -182,8 +255,13 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             } else {
                 String argString = arg.toString();
                 if (argString.startsWith("?")) {
-                    log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}", argString);
-                    return null;
+                    if (unpopulatedArgSafe) {
+                        processedArguments.add(Factory.createSymbol(argString.substring(1).split(":")[0]));
+                        continue;
+                    } else {
+                        log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}", argString);
+                        return null;
+                    }
                 }
                 Symbol argSymbol;
                 String descriptorType = getDescriptorType(actor,argString);
@@ -286,6 +364,8 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         promptVars = new LinkedHashMap<>();
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
         promptVars.put("%language", language);
+        promptVars.put("%actionList", generateLLMActionListString(false));
+        promptVars.put("%learnedActions%",learnedActionsString);
         promptVars.put("%patrolPathList", String.join("\n", patrolPaths));
         promptVars.put("%locationList", String.join("\n", locations));
         promptVars.put("%addressee", utterance.getAddressee().getName());
@@ -334,14 +414,15 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
         List<String> locations = getLocations("self", true);
         List<String> patrolPaths = getPatrolPaths();
+        promptVars.put("%actionList", generateLLMActionListString(true));
         promptVars.put("%patrolPathList", String.join(":path\n", patrolPaths));
-        promptVars.put("%examplePath", patrolPaths.isEmpty() ? "test path" : patrolPaths.get(0));
         promptVars.put("%locationList", String.join(":location\n", locations));
-        promptVars.put("%exampleLocation", locations.isEmpty() ? "test location" : locations.get(0));
         promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
         promptVars.put("%goals", getGoalString(utterance.getAddressee()));
         promptVars.put("%questionList", getCurrentQuestionsString(utterance.getAddressee()));
         promptVars.put("%learnedActions%",learnedActionsString);
+        promptVars.put("%exampleLocation", locations.isEmpty() ? "test location" : locations.get(0));
+        promptVars.put("%examplePath", patrolPaths.isEmpty() ? "test path" : patrolPaths.get(0));
         populatePromptVarsWithProperties(promptVars, locations);
         currentChat.setSystem(nluSystemPrompt.apply(promptVars));
         //promptVars.clear();
@@ -599,11 +680,255 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 case "describeAllLocationsOnPatrolPath":
                 case "repeatLastQuestion":
                 case "describeCurrentGoal":
+                case "reportTaughtActions":
+                case "reportInstructableActions":
+                case "describeActionSteps":
+                case "reportIfCanPerform":
                     return true;
                 default:
                     return false;
             }
         }
         return false;
+    }
+
+    //TODO: Able to move at least some of this to the base class?
+    @TRADEService
+    public List<String> getInstructableActions() {
+        return new ArrayList<>(exposedActionList.stream().map(a -> a.signature.split("\\(")[0]).toList());
+    }
+
+    private String generateLLMActionListString(boolean nlu) {
+        StringBuilder sb = new StringBuilder();
+        for (LLMActionEntry entry : exposedActionList) {
+            sb.append(entry.toString(nlu));
+        }
+        return sb.toString();
+    }
+
+    private void generateExposedActionList() {
+        exposedActionList = new ArrayList<>();
+        LLMActionEntry entry;
+        entry = new LLMActionEntry("goToLocation(?destination:location)",
+                "You go to location ?destination:location.",
+                "please navigate to %exampleLocation",
+                "goToLocation(%exampleLocation:location)",
+                10
+        );
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportBatteryLevel()",
+                "You report the current battery level of the robot as a percentage",
+                "how much charge do you have",
+                "reportBatteryLevel()",
+                10
+        );
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("follow()",
+                "You follow the user",
+                "follow me",
+                "follow()",
+                10
+        );
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("say(?words)",
+                "You say ?words",
+                "say hello, it's me",
+                "say(hello, it's me)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("stopFollow()",
+                "You stop following the user",
+                "stop following me",
+                "stopFollow()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("showVideo()",
+                "You play a video on your screen",
+                "play the video",
+                "showVideo()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("escortToLocation(?name, ?destination:location)",
+                "You escort ?name to location ?destination:location",
+                "bring Owen to %exampleLocation",
+                "escortToLocation(owen,%exampleLocation:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("escortFromLocationToLocation(?name, ?start:location, ?destination:location)",
+                "You escort ?name from location ?start:location to location ?destination:location",
+                "bring our guest from %exampleLocation to the dock",
+                "escortFromLocationToLocation(guest,%exampleLocation:location,dock:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("saveLocation(?name)",
+                "You save your current location under the name ?name",
+                "save this area as location one",
+                "saveLocation(location one)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("saveLocationsToFile()",
+                "You backup all your currently saved locations",
+                "backup your current locations",
+                "saveLocationsToFile()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("definePatrolPath(?name)",
+                "You start learning a new patrol path called ?name",
+                "I want to teach you a new patrol path named lab circuit",
+                "definePatrolPath(lab circuit)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("definePatrolPath()",
+                "You start learning a new patrol path",
+                "I want to teach you a new patrol path",
+                "definePatrolPath()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("patrol(?pathName:path, ?actionName)",
+                "You navigate along the patrol path ?pathName:path while performing the action ?actionName at each location",
+                "perform %examplePath patrol with wifi evaluation",
+                "patrol(%examplePath:path, wifiEvaluation)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("wifiEvaluation(?location:location)",
+                "You measure the strength of the wifi signal at location ?location:location",
+                "check wifi near %exampleLocation",
+                "wifiEvaluation(%exampleLocation:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportWifiForLocation(?location:location)",
+                "You report the wifi signal strength at location ?location:location",
+                "what is the wifi signal quality at %exampleLocation",
+                "reportWifiForLocation(%exampleLocation:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportWifiForPatrol(?pathName:path)",
+                "You report the wifi signal quality at every location along patrol path ?pathName:path",
+                "report the wifi signal quality for patrol path %examplePath",
+                "reportWifiForPatrol(%examplePath:path)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("takePhoto(?location:location)",
+                "You take a photo at location ?location:location",
+                "take a photo of %exampleLocation",
+                "takePhoto(%exampleLocation:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("sit()",
+                "You lower your screen",
+                "sit down",
+                "sit()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("stand()",
+                "You raise your screen",
+                "stand up",
+                "stand()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("deliver(?objectName, ?location:location)",
+                "You deliver ?objectName to location ?location:location",
+                "bring the mug to %exampleLocation",
+                "deliver(mug,%exampleLocation:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("goHome()",
+                "You go to your charging dock and charge",
+                "go back to charge",
+                "goHome()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("scheduleGoal()",
+                "You begin a dialogue interaction with the user to schedule future execution of a task",
+                "I want to schedule a new task",
+                "scheduleGoal()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("modifyScheduledGoal()",
+                "You begin a dialogue interaction with the user to modify the timing of a future already scheduled task",
+                "I want to change the timing of an action",
+                "modifyScheduledGoal()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("describeScheduledGoals()",
+                "You report what your currently scheduled goals are",
+                "what are you scheduled to do",
+                "describeScheduledGoals()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("describeCurrentGoal()",
+                "You report what your current task is",
+                "what are you doing now",
+                "describeCurrentGoal()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("describePendingGoals()",
+                "You report what your currently pending/upcoming tasks are",
+                "what are you doing after your current task",
+                "describePendingGoals()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("cancelSystemGoals()",
+                "You stop and fully discard your current task",
+                "stop your current task",
+                "cancelSystemGoals()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("suspendSystemGoalsBlocking()",
+                "You pause your current task, which can be later resumed",
+                "pause what you're doing",
+                "suspendSystemGoalsBlocking()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("resumeSystemGoals()",
+                "You resume the currently paused task",
+                "resume previous task",
+                "resumeSystemGoals()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("cancelAllScheduledGoals()",
+                "You cancel all currently scheduled goals which have yet to begin execution",
+                "cancel all scheduled tasks",
+                "cancelAllScheduledGoals()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("cancelScheduledGoal()",
+                "You begin a dialogue interaction with the user to cancel a particular scheduled goal",
+                "I want to cancel a scheduled task",
+                "cancelScheduledGoal()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("learnNewTask()",
+                "You begin a dialogue interaction with the user to learn the steps of a new instructable action",
+                "i will teach you a new task",
+                "learnNewTask()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("endActionLearning()",
+                "You conclude learning the steps of a new instructable action",
+                "those are the steps of the task",
+                "endActionLearning()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("describeCurrentLocation()",
+                "You report what location you believe you are currently at",
+                "what is your current location",
+                "describeCurrentLocation()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("describeAllKnownLocations()",
+                "You list all currently saved locations",
+                "what are your saved locations",
+                "describeAllKnownLocations()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("describeAllKnownPatrolPaths()",
+                "You list all currently saved patrol paths",
+                "what paths do you know about",
+                "describeAllKnownPatrolPaths()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("describeAllLocationsOnPatrolPath(?pathName:path)",
+                "You list all locations included along the saved patrol path named ?pathName:path",
+                "what locations are in %examplePath",
+                "describeAllLocationsOnPatrolPath(%examplePath:path)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("repeatLastQuestion()",
+                "You repeat the last question you asked, which the human still needs to answer",
+                "could you repeat that",
+                "repeatLastQuestion()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportTaughtActions()",
+                "You list all of the actions which have been taught to you by a user",
+                "What actions have you been taught",
+                "reportTaughtActions()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("forgetTaughtAction(?actionPredicate)",
+                "You forget a previously taught action represented by ?actionPredicate. ?actionPredicate should be replaced by a populated instance of an INSTRUCT Semantics from the previous examples.",
+                "forget how to go to %exampleLocation",
+                "forgetTaughtAction(goToLocation(%exampleLocation:location))", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportIfCanPerform(?actionPredicate)",
+                "You report whether you know how to perform the action represented by ?actionPredicate. ?actionPredicate should be replaced by a populated instance of an INSTRUCT Semantics from the previous examples.",
+                "do you know how to escort a patient from %exampleLocation to the dock",
+                "reportIfCanPerform(escortFromLocationToLocation(guest,%exampleLocation:location,dock:location))", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportInstructableActions()",
+                "You report the list of actions a user is able to instruct you through natural language to perform",
+                "what can you be instructed to do",
+                "reportInstructableActions())", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("describeActionSteps(?action)",
+                "You describe an action by listing out the steps which would be performed when it is executed. ?action can be replaced by a populated instance of an INSTRUCT Semantics from the previous examples OR be just the name of an action if no specific arguments are supplied.",
+                "How would you escort someone",
+                "describeActionSteps(escort)", 10);
+        exposedActionList.add(entry);
     }
 }
