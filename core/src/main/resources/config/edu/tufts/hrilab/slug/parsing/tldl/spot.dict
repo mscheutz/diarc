@@ -94,7 +94,10 @@ lift; VERBT; pickup
 raise; VERBT; pickup
 
 % grab(?ADDRESSEE, REF:physobj)
-grab; VERBT; pickup
+grab; VERBT; graspObject
+pull out; VERBT; pullOut
+open the door; VERBT; openDoor
+push; VERBT; pushButton
 
 
 % DO WE HAVE A PICKUP FROM?  pickup(?ADDRESSEE, REF:physobj; REF:location)
@@ -261,6 +264,9 @@ object; THING
 bottle; THING
 cup; THING
 apple; THING
+handle; THING
+rod; THING
+button; THING
 unknown; RN/RN; #x.unknown($x) ; MOD
 unknown; REF/REF; #x.unknown($x) ; MOD
 

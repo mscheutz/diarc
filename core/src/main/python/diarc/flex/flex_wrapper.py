@@ -1,8 +1,10 @@
 import logging
 import os
 import time
+import argparse
 import typing
-from policies import door_open # from flex
+from policies import door_open, grasp_handle, push_button # from flex
+from sklearn.utils import Bunch
 
 from diarc.pytrade.java_util import to_java_object, to_java_object_from_class
 from diarc.pytrade.wrapper import TRADEWrapper
@@ -19,30 +21,56 @@ logger = logging.getLogger(__name__)
 
 @JImplements(FlexPythonInterface)
 class FlexWrapper:
-    def __init__(self, trade_wrapper: TRADEWrapper):
+    def __init__(self, trade_wrapper: TRADEWrapper, hostname):
         self.trade = trade_wrapper
+        self.hostname = hostname
+
 
     @JOverride
     def open_door_primitive(self, x_pix, y_pix):
+        config = Bunch()
+        config.hostname = self.hostname
+        config.image_source = "hand_color_image"
+        config.max_steps = 50
+        config.action_scale = 0.02
+        config.success_distance = 0.1
+        config.success_angle = 60.0
+
         # call flex policy
-        logging.info(f"calling flex door_open policy with pixel coordinates: {x_pix}, {y_pix}")
-        success = door_open.door_open_pixel_location(x_pix, y_pix)
+        logging.info(f"calling flex door_open policy with pixel coordinates: {x_pix}, {y_pix}, {config}")
+        success = door_open.door_open_pixel_location(x_pix, y_pix, config)
 
         return self._handle_return(success)
 
     @JOverride
     def grasp_object_primitive(self, x_pix, y_pix):
+        config = Bunch()
+        config.hostname = self.hostname
+        config.image_source = "hand_color_image"
+
         # call flex policy
-        logging.info(f"calling flex grasp_handle policy with pixel coordinates: {x_pix}, {y_pix}")
-        success = door_open.grasp_handle_pixel_location(x_pix, y_pix)
+        logging.info(f"calling flex grasp_handle policy with pixel coordinates: {x_pix}, {y_pix}, {config}")
+        success = grasp_handle.grasp_handle_pixel_location(x_pix, y_pix, config)
 
         return self._handle_return(success)
 
     @JOverride
     def push_button_primitive(self, x_pix, y_pix):
+        config = Bunch()
+        config.hostname = self.hostname
+        config.image_source = "hand_color_image"
+        config.approach_distance = 1
+        config.press_force_percentage = 0.05
+        config.press_duration = 1.0
+        config.walk_timeout = 15.0
+
         # call flex policy
-        logging.info(f"calling flex push_button policy with pixel coordinates: {x_pix}, {y_pix}")
-        success = door_open.push_button_pixel_location(x_pix, y_pix)
+        logging.info(f"calling flex push_button policy with pixel coordinates: {x_pix}, {y_pix}, {config}")
+        try:
+            success = push_button.push_button_pixel_location(x_pix, y_pix, config)
+        except Exception as e:
+            logging.error(f"Caught a general Java exception: {e}")
+            return False
 
         return self._handle_return(success)
 
@@ -55,5 +83,11 @@ class FlexWrapper:
 if __name__ == '__main__':
     trade_wrapper = TRADEWrapper()
 
-    nadia_wrapper = FlexWrapper(trade_wrapper)
-    TRADE.registerAllServices(nadia_wrapper, "")
+    parser = argparse.ArgumentParser(description='Flex TRADE Wrapper')
+    parser.add_argument('--hostname', required=True, help='Spot robot hostname or IP')
+
+    args = parser.parse_args()
+    logging.info(f"parsed args. known: {args}")
+
+    flex_wrapper = FlexWrapper(trade_wrapper, args.hostname)
+    TRADE.registerAllServices(flex_wrapper, "")

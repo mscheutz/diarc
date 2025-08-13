@@ -484,6 +484,8 @@ right; DIR; right
 right; N/N ; #x.right$x
 
 robot; ADDRESSABLE; self
+robot one; ADDRESSABLE; robotone
+robot two; ADDRESSABLE; robottwo
 
 room one; PLACE; roomOne
 

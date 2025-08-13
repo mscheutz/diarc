@@ -54,13 +54,16 @@ memberOf(andy, self).
 memberOf(leftArm, self).
 memberOf(rightArm, self).
 memberOf(human, self).
-memberOf(human, self).
+memberOf(robotone, self).
+memberOf(robottwo, self).
 object(temi, agent).
 object(andy, agent).
 object(fetch, agent).
 object(leftArm, yumi).
 object(rightArm, yumi).
 object(human, mobileyumi).
+object(robotone, agent).
+object(robottwo, agent).
 
 object(self, agent).
 team(self).

@@ -473,24 +473,25 @@ class SpotTRADEWrapper:
 
 # This main is largely used for testing behaviors
 if __name__ == '__main__':
-    with open('/home/mfawn/code/diarc/diarc/core/src/main/python/spot/spot_phi.yaml', 'r') as file:
+    parser.add_argument('--spot-config', required=True, help='Path to Spot yaml config file')
+    args = parser.parse_args()
+
+    with open(args.spot_config, 'r') as file:
         config = yaml.safe_load(file)
         config = config['/**']['ros__parameters']
 
     trade_wrapper = TRADEWrapper()
 
     spot_wrapper = SpotTRADEWrapper(config, trade_wrapper)
-    # spot_wrapper = MockSpotTRADEWrapper(config, trade_wrapper)
-    # TRADE.registerAllServices(spot_wrapper, "")
-    # TRADE.registerAllServices(spot_wrapper.locationConsultant, "location")
-    # time.sleep(1)
+    TRADE.registerAllServices(spot_wrapper, "")
+    TRADE.registerAllServices(spot_wrapper.locationConsultant, "location")
 
     spot_wrapper.claim()
-    spot_wrapper.spot.spot_graph_nav.upload_graph("/home/mfawn/new_map")
-    spot_wrapper.spot.spot_graph_nav.set_initial_localization_fiducial()
+    # spot_wrapper.spot.spot_graph_nav.upload_graph("/home/mfawn/new_map")
+    # spot_wrapper.spot.spot_graph_nav.set_initial_localization_fiducial()
 
     # spot_wrapper.undock()
-    pts = spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
-    logging.info(spot_wrapper.spot.spot_graph_nav._current_annotation_name_to_wp_id["test_two"])
+    # pts = spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
+    # logging.info(spot_wrapper.spot.spot_graph_nav._current_annotation_name_to_wp_id["test_two"])
 
     # spot_wrapper.dock(520)

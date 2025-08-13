@@ -203,7 +203,7 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
   @Override
   public Long getTypeId(Symbol objectRef) {
     log.debug("[getTypeId] objectRef: " + objectRef);
-    if(!objectRef.isTerm() && !objectRef.hasType()) {
+    if (!objectRef.isTerm() && !objectRef.hasType()) {
       objectRef = Factory.createSymbol(objectRef.getName() + ":" + objectRef.getName().split("_")[0]);
     }
     // if objectRef is actually a reference resolution id
@@ -249,19 +249,8 @@ public abstract class VisionConsultant extends Consultant<VisionReference> imple
     // if objectRef is actually a reference resolution id
     if (!objectRef.isTerm() && objectRef.getName().startsWith(kbName)) {
       VisionReference visionRef = getReference(objectRef);
-      // With object permanance changes, tokenId list for any objectRef should be of length 1
-      // In this case we don't want to check to add the tokenId to the visionRef, because it
-      //   should always already be there
-      // Create and return new MO list just to match current interface using symbol
-      // EAK: this relies on some other mechanism to update visionRefs with native MO results
-//      List<MemoryObject> tokens = new ArrayList();
-//      for (Long tokenId : visionRef.tokenIds) {
-//        MemoryObject token = visionComponent.getToken(tokenId);
-//        if (token != null) {
-//          tokens.add(token);
-//        }
-//      }
-      List<MemoryObject> tokens = visionComponent.getTokens(visionRef.typeId);
+      Long typeId = getTypeId(objectRef);
+      List<MemoryObject> tokens = visionComponent.getTokens(typeId);
       for (MemoryObject token : tokens) {
         if (!visionRef.tokenIds.contains(token.getTokenId())) {
           visionRef.tokenIds.add(token.getTokenId());

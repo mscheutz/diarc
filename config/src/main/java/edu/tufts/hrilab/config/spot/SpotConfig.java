@@ -48,21 +48,15 @@ public class SpotConfig extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, hybridParserArgs);
     if (useMockVision) {
-      createInstance(MockVisionComponent.class, "-belief -sceneClass edu.tufts.hrilab.vision.scene.config.SpotSceneGenerator");
+      createInstance(MockVisionComponent.class, "-groups robotone -sceneClass edu.tufts.hrilab.vision.scene.config.SpotSceneGenerator");
     }
 
-    edu.tufts.hrilab.flex.FlexComponent flexComponent = createInstance(edu.tufts.hrilab.flex.FlexComponent.class);
+    String tradeHubContainer = "192.168.0.251@10001";
+    edu.tufts.hrilab.flex.FlexComponent flexComponent = createInstance(edu.tufts.hrilab.flex.FlexComponent.class, "-groups robotone -hubContainer "  + tradeHubContainer + " -spotHostname 192.168.1.12");
 
-//    String file = "spot.spot_trade_wrapper"; // Specify the python file you want to run, according to its package path
-//    PythonWrapper wrapper = new PythonWrapper(file, true); // Declare the wrapper as a TRADE spoke
-//    wrapper.start(); // Start the wrapper
-//
-//    // Wait for PyTRADE to start
-//    try {
-//      Thread.sleep(2000);
-//    } catch (InterruptedException e) {
-//      throw new RuntimeException(e);
-//    }
+    String file = "diarc.spot.spot_trade_wrapper"; // Specify the python file you want to run, according to its package path
+    PythonWrapper wrapper = new PythonWrapper(file, true, tradeHubContainer); // Declare the wrapper as a TRADE spoke
+    wrapper.start("--spot-config",  "/home/evan/spot_phi.yaml"); // Start the wrapper
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
@@ -76,8 +70,8 @@ public class SpotConfig extends DiarcConfiguration {
                     + "-asl vision.asl "
                     + "-asl demos/spotDemo.asl "
                     + "-asl spot/spotActions.asl "
-                    + "-goal listen(self:agent) "
-//                    + "-goal init(self:agent) "
+                    + "-goal listen(self) "
+//                    + "-goal init(self) "
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
     );
 

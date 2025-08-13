@@ -24,12 +24,14 @@ public class FlexComponent extends DiarcComponent {
    * ip@port of hub container that python spokes should connect to
    */
   private String hubContainer;
+  private String spotHostname;
 
 
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("hubContainer").hasArg().argName("ip@port").desc("Set internal python modules to run as spoke with this hub").build());
+    options.add(Option.builder("spotHostname").hasArg().argName("ip").desc("Set IP address of spot robot").build());
     return options;
   }
 
@@ -38,12 +40,15 @@ public class FlexComponent extends DiarcComponent {
     if (cmdLine.hasOption("hubContainer")) {
       hubContainer = cmdLine.getOptionValue("hubContainer");
     }
+    if (cmdLine.hasOption("spotHostname")) {
+      spotHostname = cmdLine.getOptionValue("spotHostname");
+    }
   }
 
   @Override
   public void init() {
     PythonWrapper flex_wrapper = new PythonWrapper("diarc.flex.flex_wrapper", true, hubContainer);
-    flex_wrapper.start();
+    flex_wrapper.start("--hostname", spotHostname);
   }
 
   @Action
@@ -60,7 +65,7 @@ public class FlexComponent extends DiarcComponent {
     int y = mo.getBoundingBox().y;
 
     try {
-      return TRADE.getAvailableService(new TRADEServiceConstraints().name("open_door_primitive").argTypes(int.class, int.class))
+      return TRADE.getAvailableService(new TRADEServiceConstraints().name("open_door_primitive").argTypes(Integer.class, Integer.class))
               .call(Justification.class, x, y);
     } catch (TRADEException e) {
       log.error("Error calling python open_door_primitive.", e);
@@ -87,7 +92,7 @@ public class FlexComponent extends DiarcComponent {
     int y = mo.getBoundingBox().y;
 
     try {
-      return TRADE.getAvailableService(new TRADEServiceConstraints().name("grasp_object_primitive").argTypes(int.class, int.class))
+      return TRADE.getAvailableService(new TRADEServiceConstraints().name("grasp_object_primitive").argTypes(Integer.class, Integer.class))
               .call(Justification.class, x, y);
     } catch (TRADEException e) {
       log.error("Error calling python grasp_object_primitive.", e);
@@ -108,7 +113,7 @@ public class FlexComponent extends DiarcComponent {
     int y = mo.getBoundingBox().y;
 
     try {
-      return TRADE.getAvailableService(new TRADEServiceConstraints().name("push_button_primitive").argTypes(int.class, int.class))
+      return TRADE.getAvailableService(new TRADEServiceConstraints().name("push_button_primitive").argTypes(Integer.class, Integer.class))
               .call(Justification.class, x, y);
     } catch (TRADEException e) {
       log.error("Error calling python push_button_primitive.", e);
