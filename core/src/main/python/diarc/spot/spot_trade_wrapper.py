@@ -2,6 +2,7 @@ import logging
 import os
 import time
 import typing
+import argparse
 
 from bosdyn.api.graph_nav import graph_nav_pb2, nav_pb2
 from bosdyn.client.frame_helpers import get_odom_tform_body
@@ -51,13 +52,13 @@ class SpotTRADEWrapper:
             username=config['username'],
             password=config['password'],
             hostname=config['hostname'],
-            port=config['port'],
-            robot_name=config['name'],
+            port=config.get('port', ''),
+            robot_name=config.get('name', ''),
             logger=logger,
             start_estop=config['start_estop'],
             estop_timeout=config['start_estop'],
             use_take_lease=config['use_take_lease'],
-            get_lease_on_action=config['get_lease_on_action'],
+            get_lease_on_action=config.get('get_lease_on_action',True),
             continually_try_stand=True,
             rgb_cameras=config['rgb_cameras'],
         )
@@ -292,12 +293,19 @@ class SpotTRADEWrapper:
     @handle_return
     @JOverride
     def stand(self):
-        return self.spot.stand()
+#         self.spot.claim()
+#         self.spot.getLease()
+        result = self.spot.stand()
+#         self.spot.releaseLease()
+        return result
 
     @handle_return
     @JOverride
     def sit(self):
-        return self.spot.sit()
+        self.spot.getLease()
+        result = self.spot.sit()
+        self.spot.releaseLease()
+        return result
 
     @handle_return
     @JOverride
@@ -473,7 +481,9 @@ class SpotTRADEWrapper:
 
 # This main is largely used for testing behaviors
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Spot TRADE Wrapper')
     parser.add_argument('--spot-config', required=True, help='Path to Spot yaml config file')
+    parser.add_argument('--groups', nargs='*')
     args = parser.parse_args()
 
     with open(args.spot_config, 'r') as file:
@@ -483,10 +493,10 @@ if __name__ == '__main__':
     trade_wrapper = TRADEWrapper()
 
     spot_wrapper = SpotTRADEWrapper(config, trade_wrapper)
-    TRADE.registerAllServices(spot_wrapper, "")
+    TRADE.registerAllServices(spot_wrapper, args.groups if args.groups else "")
     TRADE.registerAllServices(spot_wrapper.locationConsultant, "location")
 
-    spot_wrapper.claim()
+    #spot_wrapper.claim()
     # spot_wrapper.spot.spot_graph_nav.upload_graph("/home/mfawn/new_map")
     # spot_wrapper.spot.spot_graph_nav.set_initial_localization_fiducial()
 

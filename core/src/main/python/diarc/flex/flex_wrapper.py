@@ -3,6 +3,7 @@ import os
 import time
 import argparse
 import typing
+import yaml
 from policies import door_open, grasp_handle, push_button # from flex
 from sklearn.utils import Bunch
 
@@ -21,14 +22,18 @@ logger = logging.getLogger(__name__)
 
 @JImplements(FlexPythonInterface)
 class FlexWrapper:
-    def __init__(self, trade_wrapper: TRADEWrapper, hostname):
+    def __init__(self, trade_wrapper: TRADEWrapper, username, password, hostname):
         self.trade = trade_wrapper
+        self.username = username
+        self.password = password
         self.hostname = hostname
 
 
     @JOverride
     def open_door_primitive(self, x_pix, y_pix):
         config = Bunch()
+        config.username = self.username
+        config.password = self.password
         config.hostname = self.hostname
         config.image_source = "hand_color_image"
         config.max_steps = 50
@@ -45,6 +50,8 @@ class FlexWrapper:
     @JOverride
     def grasp_object_primitive(self, x_pix, y_pix):
         config = Bunch()
+        config.username = self.username
+        config.password = self.password
         config.hostname = self.hostname
         config.image_source = "hand_color_image"
 
@@ -57,6 +64,8 @@ class FlexWrapper:
     @JOverride
     def push_button_primitive(self, x_pix, y_pix):
         config = Bunch()
+        config.username = self.username
+        config.password = self.password
         config.hostname = self.hostname
         config.image_source = "hand_color_image"
         config.approach_distance = 1
@@ -84,10 +93,19 @@ if __name__ == '__main__':
     trade_wrapper = TRADEWrapper()
 
     parser = argparse.ArgumentParser(description='Flex TRADE Wrapper')
-    parser.add_argument('--hostname', required=True, help='Spot robot hostname or IP')
-
+    parser.add_argument('--spot-config', required=True, help='Path to Spot yaml config file')
+    parser.add_argument('--groups', nargs='*')
     args = parser.parse_args()
-    logging.info(f"parsed args. known: {args}")
 
-    flex_wrapper = FlexWrapper(trade_wrapper, args.hostname)
-    TRADE.registerAllServices(flex_wrapper, "")
+    # load spot config yaml and get relevant bits
+    with open(args.spot_config, 'r') as file:
+        config = yaml.safe_load(file)
+        config = config['/**']['ros__parameters']
+
+    username = config["username"]
+    password = config["password"]
+    hostname = config["hostname"]
+    logging.info(f"Parsed config: username={username}, password={password}, hostname{hostname}")
+
+    flex_wrapper = FlexWrapper(trade_wrapper, username, password, hostname)
+    TRADE.registerAllServices(flex_wrapper, args.groups if args.groups else "")

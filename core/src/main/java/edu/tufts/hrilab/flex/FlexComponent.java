@@ -24,14 +24,14 @@ public class FlexComponent extends DiarcComponent {
    * ip@port of hub container that python spokes should connect to
    */
   private String hubContainer;
-  private String spotHostname;
+  private String spotConfigFile;
 
 
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("hubContainer").hasArg().argName("ip@port").desc("Set internal python modules to run as spoke with this hub").build());
-    options.add(Option.builder("spotHostname").hasArg().argName("ip").desc("Set IP address of spot robot").build());
+    options.add(Option.builder("spotConfigFile").hasArg().argName("file").desc("Path to yaml spot config").build());
     return options;
   }
 
@@ -40,15 +40,15 @@ public class FlexComponent extends DiarcComponent {
     if (cmdLine.hasOption("hubContainer")) {
       hubContainer = cmdLine.getOptionValue("hubContainer");
     }
-    if (cmdLine.hasOption("spotHostname")) {
-      spotHostname = cmdLine.getOptionValue("spotHostname");
+    if (cmdLine.hasOption("spotConfigFile")) {
+      spotConfigFile = cmdLine.getOptionValue("spotConfigFile");
     }
   }
 
   @Override
   public void init() {
     PythonWrapper flex_wrapper = new PythonWrapper("diarc.flex.flex_wrapper", true, hubContainer);
-    flex_wrapper.start("--hostname", spotHostname);
+    flex_wrapper.start("--spot-config", spotConfigFile);
   }
 
   @Action
@@ -83,13 +83,16 @@ public class FlexComponent extends DiarcComponent {
   @Action
   @TRADEService
   public Justification graspObject(Symbol refId) {
-    MemoryObject mo = getMemoryObject(refId);
-    if (mo == null) {
-      return new ConditionJustification(false, Factory.createPredicate("found(object)"));
-    }
+//    MemoryObject mo = getMemoryObject(refId);
+//    if (mo == null) {
+//      return new ConditionJustification(false, Factory.createPredicate("found(object)"));
+//    }
+//
+//    int x = mo.getBoundingBox().x;
+//    int y = mo.getBoundingBox().y;
 
-    int x = mo.getBoundingBox().x;
-    int y = mo.getBoundingBox().y;
+    int x = 320/2;
+    int y = 240/2;
 
     try {
       return TRADE.getAvailableService(new TRADEServiceConstraints().name("grasp_object_primitive").argTypes(Integer.class, Integer.class))

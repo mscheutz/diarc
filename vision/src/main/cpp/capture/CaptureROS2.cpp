@@ -213,7 +213,7 @@ namespace diarc {
         cv_bridge::CvImageConstPtr cv_depth_ptr;
         try {
           // get rgb frame and resize
-          cv_rgb_ptr = cv_bridge::toCvShare(image_msg_, sensor_msgs::image_encodings::TYPE_8UC4);
+          cv_rgb_ptr = cv_bridge::toCvShare(image_msg_, sensor_msgs::image_encodings::TYPE_8UC3);
           cv::resize(cv_rgb_ptr->image, frame, frame.size(), 0, 0, CV_INTER_NN);
 
           // get depth frame and resize

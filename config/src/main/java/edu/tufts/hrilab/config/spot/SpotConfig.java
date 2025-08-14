@@ -21,7 +21,6 @@ import edu.tufts.hrilab.vision.MockVisionComponent;
 public class SpotConfig extends DiarcConfiguration {
 
   boolean useMockVision = true;
-  boolean useMockSpot = true;
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
   boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
@@ -48,15 +47,21 @@ public class SpotConfig extends DiarcConfiguration {
 
     createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, hybridParserArgs);
     if (useMockVision) {
-      createInstance(MockVisionComponent.class, "-groups robotone -sceneClass edu.tufts.hrilab.vision.scene.config.SpotSceneGenerator");
+      createInstance(MockVisionComponent.class, "-groups agent:robotone -sceneClass edu.tufts.hrilab.vision.scene.config.SpotSceneGenerator");
+    } else {
+//      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-groups agent:robotone -capture spot.xml -cameraFrame hand_color_image_sensor");
+      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-groups agent:robotone -capture spot_ros2.xml -cameraFrame hand_color_image_sensor");
+//      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture pcd.xml -height 1.1 -rotX -45");
     }
 
-    String tradeHubContainer = "192.168.0.251@10001";
-    edu.tufts.hrilab.flex.FlexComponent flexComponent = createInstance(edu.tufts.hrilab.flex.FlexComponent.class, "-groups robotone -hubContainer "  + tradeHubContainer + " -spotHostname 192.168.1.12");
+    String spotConfigFile = "/home/evan/Downloads/spot_phi.yaml";
+    String tradeHubContainer = "127.0.0.1@10002";
+//    String tradeHubContainer = "192.168.0.251@10001";
+    edu.tufts.hrilab.flex.FlexComponent flexComponent = createInstance(edu.tufts.hrilab.flex.FlexComponent.class, "-groups agent:robotone -hubContainer "  + tradeHubContainer + " -spotConfigFile " + spotConfigFile);
 
     String file = "diarc.spot.spot_trade_wrapper"; // Specify the python file you want to run, according to its package path
     PythonWrapper wrapper = new PythonWrapper(file, true, tradeHubContainer); // Declare the wrapper as a TRADE spoke
-    wrapper.start("--spot-config",  "/home/evan/spot_phi.yaml"); // Start the wrapper
+    wrapper.start("--spot-config",  spotConfigFile, "--groups", "agent:robotone"); // Start the wrapper
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
