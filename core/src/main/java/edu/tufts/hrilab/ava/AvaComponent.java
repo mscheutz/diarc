@@ -111,6 +111,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private boolean shouldDing = true;
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
+  private boolean listenForWW = true;
 
   public AvaComponent() {
     super();
@@ -1172,7 +1173,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
   }
   @Override
+  public void interruptListenForWWandASR() {
+    listenForWW = false;
+  }
+  @Override
   public void listenForWWandASR() {
+    listenForWW = true;
     //TODO: Configure paths/get resources better
     //args:--whisper_model, --ww_model_path, --ww_detection_thresh
     String home = System.getProperty("user.home");
@@ -1184,11 +1190,14 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       InputStream is = process.getInputStream();
       ww_process_os = process.getOutputStream();
       String result = "";
-      while (true) {
+      while (listenForWW) {
         while (result.isEmpty()) {
           //Wait for WW detection
-          while (is.available() == 0) {
+          while (is.available() == 0 && listenForWW) {
             Thread.sleep(100);
+          }
+          if (!listenForWW) {
+            break;
           }
           //Clear stream buffer of message indicating WW detection
           StringBuilder s = new StringBuilder();
@@ -1253,23 +1262,28 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             }).start();
           }
         }
-        result = result.trim().toLowerCase();
-        result = result.replaceAll("\\p{Punct}", "");
-        Utterance utterance = new Utterance.Builder()
-                .setSpeaker(Factory.createSymbol("evan"))
-                .setAddressee(Factory.createSymbol("ava"))
-                .setWords(Arrays.asList(result.trim().split(" ")))
-                .setUtteranceType(UtteranceType.UNKNOWN)
-                .setIsInputUtterance(true)
-                .build();
-        try {
-          TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
-          log.info("Reported utterance \"" + result + "\"");
-        } catch (TRADEException ex) {
-          log.warn("Failed to report speech \"" + result + "\"");
+        if (!result.isEmpty()) {
+          result = result.trim().toLowerCase();
+          result = result.replaceAll("\\p{Punct}", "");
+          Utterance utterance = new Utterance.Builder()
+                  .setSpeaker(Factory.createSymbol("evan"))
+                  .setAddressee(Factory.createSymbol("ava"))
+                  .setWords(Arrays.asList(result.trim().split(" ")))
+                  .setUtteranceType(UtteranceType.UNKNOWN)
+                  .setIsInputUtterance(true)
+                  .build();
+          try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
+            log.info("Reported utterance \"" + result + "\"");
+          } catch (TRADEException ex) {
+            log.warn("Failed to report speech \"" + result + "\"");
+          }
+          result = "";
         }
-        result = "";
       }
+      is.close();
+      ww_process_os.close();
+      process.destroy();
       //String result = new String(is.readAllBytes());
       //int exitCode = process.waitFor();
       //log.info(String.valueOf(exitCode));
@@ -1314,6 +1328,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       } catch (TRADEException e) {
         log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
       }
+      is.close();
+      ready_process_os.close();
+      process.destroy();
     } catch (IOException | InterruptedException e) {
       log.error("error running process", e);
     }

@@ -1,6 +1,5 @@
 package edu.tufts.hrilab.config.ava;
 
-import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -17,8 +16,9 @@ public class AvaDemo extends DiarcConfiguration {
   String avaArgs = "";
   boolean useLLMParser = true;
   boolean useLLMNLG = true;
-  String service = "llamahf";
-  String model = "Qwen/Qwen3-14B";
+  String service = "openai";
+  String model = "Qwen/Qwen3-14B-AWQ";
+  String openaiEndpoint = "http://100.113.66.111:8000";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "";
@@ -105,18 +105,20 @@ public class AvaDemo extends DiarcConfiguration {
     if (useLLMNLG) {
       nlgArgs += " -llm";
     }
-    DiarcComponent.createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
+    createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
     createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
 
     if (useLLMNLG || useLLMParser) {
       createInstance(edu.tufts.hrilab.llm.serviceproviders.AvaLLMServiceProvider.class,"");
-      String llmComponentArgs = String.format("-service %s -model %s -temperature 0.6", service, model);
+      String llmComponentArgs = String.format("-service %s llamahf -model %s Qwen/Qwen3-14B -temperature 0.6 0.6", service, model);
       if (service.equals("llamahf")) {
         if (usePrivateEndpoint) {
           llmComponentArgs += " -endpoint https://wwil02mugudnd3ky.us-east-1.aws.endpoints.huggingface.cloud";
         }
       } else if (service.equals("azure")) {
-        llmComponentArgs += " -endpoint https://tracs-southcentralus-cjavc.southcentralus.inference.ml.azure.com/score";
+        llmComponentArgs += " -endpoint https://tracs-southcentralus-lezah.southcentralus.inference.ml.azure.com/score";
+      } else if (service.equals("openai") && !openaiEndpoint.isEmpty()) {
+        llmComponentArgs += " -endpoint " + openaiEndpoint;
       }
       createInstance(edu.tufts.hrilab.llm.LLMComponent.class, llmComponentArgs);
     }
@@ -179,6 +181,8 @@ public class AvaDemo extends DiarcConfiguration {
               "ava/avaTMCDemo.asl " +
               "demos/queueEM.asl"
         + " -priorityFile default.json avaPriority.json"
+        + " -scheduledGoalsFile ava.ser"
+        + " -learnedActionsFile avaDemo.asl"
         + (useQueueEM ? " -executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager" : ""));
 
     createInstance(edu.tufts.hrilab.action.manager.KioskGoalManager.class, kioskArgs);

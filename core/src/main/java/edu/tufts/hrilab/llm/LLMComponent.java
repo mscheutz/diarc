@@ -13,6 +13,7 @@ import edu.tufts.hrilab.llm.hf.HFClient;
 import java.awt.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +31,11 @@ import edu.tufts.hrilab.llm.llama.LlamaClient;
 public class LLMComponent extends DiarcComponent {
   static private Logger log = LoggerFactory.getLogger(LLMComponent.class);
 
-  public String service = "openai";
-  public String model = "gpt-4o";
-  public float temperature = 0.5f;
+  public List<String> services;
+  public List<String> models;
+  public List<Float> temperatures;
 
-  private LLMClient client;
+  private List<LLMClient> clients;
 
   public LLMComponent() {
     super();
@@ -43,37 +44,52 @@ public class LLMComponent extends DiarcComponent {
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("service").hasArg().argName("string").desc("Set the LLM service to use. [openai, llama]").build());
-    options.add(Option.builder("model").hasArg().argName("string").desc("Set the OpenAI LLM model to use. [ " + String.join(", ", OpenaiClient.chatCompletionModels.keySet()) + "]").build());
-    options.add(Option.builder("endpoint").hasArg().argName("string").desc("Set the endpoint of the LLM service to use.").build());
-    options.add(Option.builder("stopwords").hasArg().argName("string").desc("Set additional stopwords to use with models and services that support them. Comma-separated list.").build());
-    options.add(Option.builder("temperature").hasArg().argName("float").desc("Set the temperature of the model").build());
+    options.add(Option.builder("service").hasArgs().argName("string").desc("Set the LLM services to use (in supplied order until non-null response). [openai, llama, hf, azure]").build());
+    options.add(Option.builder("model").hasArgs().argName("string").desc("Set the LLM models to use.").build());
+    options.add(Option.builder("endpoint").hasArgs().argName("string").desc("Set the endpoints of the LLM services to use.").build());
+    options.add(Option.builder("stopwords").hasArgs().argName("string").desc("Set additional stopwords to use with models and services that support them. Comma-separated lists.").build());
+    options.add(Option.builder("temperature").hasArgs().argName("float").desc("Set the temperatures of the models").build());
     return options;
   }
 
   @Override
   protected void parseArgs (CommandLine cmdLine) {
     if (cmdLine.hasOption("service")) {
-      service = cmdLine.getOptionValue("service").toLowerCase();
-      log.debug("Using service: " + service);
+      setLLMServices(Arrays.asList(cmdLine.getOptionValues("service")));
+      log.debug("Using services: " + services);
+    } else {
+      setLLMService("openai");
     }
-    setLLMService(service);
 
     if (cmdLine.hasOption("endpoint")) {
-      setLLMEndpoint(cmdLine.getOptionValue("endpoint"));
+      setLLMEndpoints(cmdLine.getOptionValues("endpoint"));
     }
 
     if (cmdLine.hasOption("model")) {
-      setLLMModel(cmdLine.getOptionValue("model"));
-      log.debug("Using model: " + model);
+      setLLMModels(Arrays.asList(cmdLine.getOptionValues("model")));
+      log.debug("Using model: " + models);
+    } else {
+      setLLMModel("gpt-4o");
     }
 
     if (cmdLine.hasOption("stopwords")) {
-      setLLMStopWords(cmdLine.getOptionValue("stopwords").split(","));
+      String[] stopwordsets = cmdLine.getOptionValues("stopwords");
+      List<String[]> stopwords = new ArrayList<>();
+      for (String set : stopwordsets) {
+        stopwords.add(set.split(","));
+      }
+      setAllLLMStopWords(stopwords);
     }
 
     if (cmdLine.hasOption("temperature")) {
-      setLLMTemperature(Float.parseFloat(cmdLine.getOptionValue("temperature")));
+       String[] tempStrings = cmdLine.getOptionValues("temperature");
+       temperatures = new ArrayList<>();
+       for (String temp : tempStrings) {
+         temperatures.add(Float.parseFloat(temp));
+       }
+      setLLMTemperatures(temperatures);
+    } else {
+      setLLMTemperature(0.5f);
     }
   }
 
@@ -94,21 +110,31 @@ public class LLMComponent extends DiarcComponent {
    */
   @TRADEService
   public void setLLMService (String serviceStr) {
-    service = serviceStr;
-    if (service.equals("azure")) {
-      client = new AzureClient();
-    } else if (service.equals("openai")) {
-      client = new OpenaiClient();
-    } else if (service.endsWith("hf")) {
-      client = new HFClient();
-    } else if (service.equals("llama")) {
-      client = new LlamaClient();
-    } else {
-      log.warn("Service {} not supported. Defaulting to openai", service);
-      service = "openai";
-      client = new OpenaiClient();
+    setLLMServices(List.of(serviceStr));
+  }
+  private void setLLMServices(List<String> serviceStrs) {
+    clients = new ArrayList<>();
+    services = new ArrayList<>();
+    for (String serviceStr : serviceStrs) {
+      LLMClient client;
+      if (serviceStr.equals("azure")) {
+        client = new AzureClient();
+      } else if (serviceStr.equals("openai")) {
+        client = new OpenaiClient();
+      } else if (serviceStr.endsWith("hf")) {
+        client = new HFClient();
+      } else if (serviceStr.equals("llama")) {
+        client = new LlamaClient();
+      } else {
+        log.warn("Service {} not supported. Defaulting to openai", serviceStr);
+        serviceStr = "openai";
+        client = new OpenaiClient();
+      }
+      clients.add(client);
+      services.add(serviceStr);
     }
   }
+
   /**
    * Sets the LLM endpoint (URL).
    *
@@ -121,7 +147,20 @@ public class LLMComponent extends DiarcComponent {
   }
   @TRADEService
   public void setLLMEndpoint (String endpoint) {
-    client.setEndpoint(endpoint);
+    if (clients.isEmpty()) {
+      log.error("[setLLMEndpoint] no client exists");
+      return;
+    }
+    clients.get(0).setEndpoint(endpoint);
+  }
+  private void setLLMEndpoints(String[] endpoints) {
+    if (endpoints.length > clients.size()) {
+      log.error("[setLLMEndpoints] more supplied endpoints than configured clients");
+      return;
+    }
+    for (int i = 0; i < endpoints.length; i++) {
+      clients.get(i).setEndpoint(endpoints[i]);
+    }
   }
 
   /**
@@ -136,12 +175,23 @@ public class LLMComponent extends DiarcComponent {
   }
   @TRADEService
   public void setLLMModel (String modelStr) {
-    if (service.equals("llamahf") || service.equals("t5hf")) {
-      ((HFClient)client).setModel(service, modelStr);
-    } else {
-      client.setModel(modelStr);
-    }
+    setLLMModels(List.of(modelStr));
   }
+  private void setLLMModels(List<String> modelStrs) {
+    if (modelStrs.size() > services.size() || modelStrs.size() > clients.size()) {
+      log.error("[setLLMModels] more models supplied than configured clients or services");
+      return;
+    }
+    for (int i = 0; i < modelStrs.size(); i++) {
+      if (services.get(i).equals("llamahf") || services.get(i).equals("t5hf")) {
+        ((HFClient)clients.get(i)).setModel(services.get(i), modelStrs.get(i));
+      } else {
+        clients.get(i).setModel(modelStrs.get(i));
+      }
+    }
+    models = modelStrs;
+  }
+
 
   /**
    * Sets the stop words for the LLM to terminate token stream.
@@ -149,7 +199,18 @@ public class LLMComponent extends DiarcComponent {
    * @param stopWords - An array of stop words to set.
    */
   public void setLLMStopWords (String[] stopWords) {
-    client.setStopWords(stopWords);
+    List<String[]> stopWordsSets = new ArrayList<>();
+    stopWordsSets.add(stopWords);
+    setAllLLMStopWords(stopWordsSets);
+  }
+  private void setAllLLMStopWords(List<String[]> stopWords) {
+    if (stopWords.size() > clients.size()) {
+      log.error("[setAllLLMStopWords] more stopword sets supplied than clients present");
+      return;
+    }
+    for (int i = 0; i < stopWords.size(); i++) {
+      clients.get(i).setStopWords(stopWords.get(i));
+    }
   }
 
   /**
@@ -158,7 +219,17 @@ public class LLMComponent extends DiarcComponent {
    * @param temperatureFloat - The temperature value to set
    */
   public void setLLMTemperature (float temperatureFloat) {
-    client.setTemperature(temperatureFloat);
+    setLLMTemperatures(List.of(temperatureFloat));
+  }
+  private void setLLMTemperatures(List<Float> temperatureFloats) {
+    if (temperatureFloats.size() > clients.size()) {
+      log.error("[setLLMTemperatures] more temperatures supplied than clients present");
+      return;
+    }
+    for (int i = 0; i < temperatureFloats.size(); i++) {
+      clients.get(i).setTemperature(temperatureFloats.get(i));
+    }
+    temperatures = temperatureFloats;
   }
 
   /**
@@ -173,7 +244,14 @@ public class LLMComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Completion completion (String userPrompt) {
-    return client.completion(userPrompt);
+    Completion completion = null;
+    for (LLMClient client : clients) {
+      completion = client.completion(userPrompt);
+      if (completion != null) {
+        break;
+      }
+    }
+    return completion;
   }
 
   /**
@@ -185,7 +263,14 @@ public class LLMComponent extends DiarcComponent {
    **/
   @TRADEService
   public Completion completion (String userPrompt, String model) {
-    return client.completion(userPrompt, model);
+    Completion completion = null;
+    for (LLMClient client : clients) {
+      completion = client.completion(userPrompt, model);
+      if (completion != null) {
+        break;
+      }
+    }
+    return completion;
   }
 
   /**
@@ -198,7 +283,14 @@ public class LLMComponent extends DiarcComponent {
    **/
   @TRADEService
   public Completion completion (String userPrompt, String model, String systemPrompt) {
-    return client.completion(userPrompt,model,systemPrompt);
+    Completion completion = null;
+    for (LLMClient client : clients) {
+      completion = client.completion(userPrompt, model, systemPrompt);
+      if (completion != null) {
+        break;
+      }
+    }
+    return completion;
   }
 
   /**
@@ -212,7 +304,14 @@ public class LLMComponent extends DiarcComponent {
   **/
   @TRADEService
   public Completion chatCompletion (String userPrompt) {
-    return client.chatCompletion(userPrompt);
+    Completion completion = null;
+    for (LLMClient client : clients) {
+      completion = client.chatCompletion(userPrompt);
+      if (completion != null) {
+        break;
+      }
+    }
+    return completion;
   }
 
  /**
@@ -224,7 +323,14 @@ public class LLMComponent extends DiarcComponent {
   **/
   @TRADEService
   public Completion chatCompletion (String userPrompt, String model) {
-    return client.chatCompletion(userPrompt, model);
+    Completion completion = null;
+    for (LLMClient client : clients) {
+      completion = client.chatCompletion(userPrompt, model);
+      if (completion != null) {
+        break;
+      }
+    }
+    return completion;
   }
 
   /**
@@ -236,7 +342,14 @@ public class LLMComponent extends DiarcComponent {
    **/
   @TRADEService
   public Completion chatCompletion (String userPrompt, String model, String systemPrompt) {
-    return client.chatCompletion(userPrompt, model, systemPrompt);
+    Completion completion = null;
+    for (LLMClient client : clients) {
+      completion = client.chatCompletion(userPrompt, model, systemPrompt);
+      if (completion != null) {
+        break;
+      }
+    }
+    return completion;
   }
 
  /**
@@ -247,7 +360,14 @@ public class LLMComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Completion chatCompletion (List<Message> messages) {
-    return client.chatCompletion(messages);
+    Completion completion = null;
+    for (LLMClient client : clients) {
+      completion = client.chatCompletion(messages);
+      if (completion != null) {
+        break;
+      }
+    }
+    return completion;
   }
 
   /**
@@ -259,7 +379,14 @@ public class LLMComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Completion chatCompletion (Chat chat) {
-    return client.chatCompletion(chat);
+    Completion completion = null;
+    for (LLMClient client : clients) {
+      completion = client.chatCompletion(chat);
+      if (completion != null) {
+        break;
+      }
+    }
+    return completion;
   }
 
   /**
@@ -272,7 +399,14 @@ public class LLMComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Completion chatCompletion (Chat chat, String model) {
-    return client.chatCompletion(chat, model);
+    Completion completion = null;
+    for (LLMClient client : clients) {
+      completion = client.chatCompletion(chat, model);
+      if (completion != null) {
+        break;
+      }
+    }
+    return completion;
   }
 
   @TRADEService
@@ -292,13 +426,13 @@ public class LLMComponent extends DiarcComponent {
   @TRADEService
   @Action
   public Completion visionCompletion (List <VisionMessage> vmessages) {
-    switch (service) {
-      case "openai" :
-        return new Completion(((OpenaiClient)client).visionCompletion(vmessages));
-      default :
-        log.error("Service " + service + " not implemented");
-        return null;
+    for (int i = 0; i < services.size(); i++) {
+      if (services.get(i).equals("openai")) {
+        return new Completion(((OpenaiClient)clients.get(i)).visionCompletion(vmessages));
+      }
     }
+    log.error("No configured services implement vision completions");
+    return null;
   }
 
   @TRADEService

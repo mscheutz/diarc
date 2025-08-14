@@ -4,157 +4,7 @@ AVA has a specific set of semantic forms it understands and also only knows abou
 ###
 SEMANTIC FORMS: Represents the total set of possible targets of your translations. Any word preceded by a ? in semantics is a variable. A variable will be replaced with the actual value of that piece of information in your translation. variables followed by :location or :path are TYPED variables. TYPED variables can ONLY be replaced a value from the corresponding entity list, nothing else.
 ##
-goToLocation(?destination:location)
-Description: You go to location ?destination:location.
-Example Translation: "please navigate to %exampleLocation" -> {"Semantics":"goToLocation(%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-reportBatteryLevel()
-Description: You report the current battery level of the robot as a percentage
-Example Translation: "how much charge do you have" -> {"Semantics":"reportBatteryLevel()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-follow()
-Description: You follow the user
-Example Translation: "follow me" -> {"Semantics":"follow()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-say(?words)
-Description: You say ?words
-Example Translation: "say hello, it's me" -> {"Semantics":"say(hello, it's me)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-stopFollow()
-Description: You stop following the user
-Example Translation: "stop following me" -> {"Semantics":"stopFollow()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-showVideo()
-Description: You play a video on your screen
-Example Translation: "play the video" -> {"Semantics":"showVideo()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-escortToLocation(?name, ?destination:location)
-Description: You escort ?name to location ?destination:location
-Example Translation: "bring Owen to %exampleLocation" -> {"Semantics":"escortToLocation(owen,%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-escortFromLocationToLocation(?name, ?start:location, ?destination:location)
-Description: You escort ?name from location ?start:location to location ?destination:location
-Example Translation: "bring our guest from %exampleLocation to the dock" -> {"Semantics":"escortFromLocationToLocation(guest,%exampleLocation:location,dock:location)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-saveLocation(?name)
-Description: You save your current location under the name ?name
-Example Translation: "save this area as location one" -> {"Semantics":"saveLocation(location one)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-saveLocationsToFile()
-Description: You backup all your currently saved locations
-Example Translation: "backup your current locations" -> {"Semantics":"saveLocationsToFile()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-definePatrolPath(?name)
-Description: You start learning a new patrol path called ?name
-Example Translation: "I want to teach you a new patrol path named lab circuit" -> {"Semantics":"definePatrolPath(lab circuit)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-definePatrolPath()
-Description: You start learning a new patrol path
-Example Translation: "I want to teach you a new patrol path" -> {"Semantics":"definePatrolPath()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-patrol(?pathName:path, ?actionName)
-Description: You navigate along the patrol path ?pathName:path while performing the action ?actionName at each location
-Example Translation: "perform %examplePath patrol with wifi evaluation" -> {"Semantics":"patrol(%examplePath:path, wifiEvaluation)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-wifiEvaluation(?location:location)
-Description: You measure the strength of the wifi signal at location ?location:location
-Example Translation: "check wifi near %exampleLocation" -> {"Semantics":"wifiEvaluation(%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-reportWifiForLocation(?location:location)
-Description: You report the wifi signal strength at location ?location:location
-Example Translation: "what is the wifi signal quality at %exampleLocation" -> {"Semantics":"reportWifiForLocation(%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-reportWifiForPatrol(?pathName:path)
-Description: You report the wifi signal quality at every location along patrol path ?pathName:path.
-Example Translation: "report the wifi signal quality for patrol path %examplePath" -> {"Semantics":"reportWifiForPatrol(%examplePath:path)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-takePhoto(?location:location)
-Description: You take a photo at location ?location:location
-Example Translation: "take a photo of %exampleLocation" -> {"Semantics":"takePhoto(%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-sit()
-Description: You lower your screen
-Example Translation: "sit down" -> {"Semantics":"sit()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-stand()
-Description: You raise your screen
-Example Translation: "stand up" -> {"Semantics":"stand()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-deliver(?objectName, ?location:location)
-Description: You deliver ?objectName to location ?location:location.
-Example Translation: "bring the mug to %exampleLocation" -> {"Semantics":"deliver(mug,%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-goHome()
-Description: You go to your charging dock and charge
-Example Translation: "go back to charge" -> {"Semantics":"goHome()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-scheduleGoal()
-Description: You begin a dialogue interaction with the user to schedule future execution of a task
-Example Translation: "I want to schedule a new task" -> {"Semantics":"scheduleGoal()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-modifyScheduledGoal()
-Description: You begin a dialogue interaction with the user to modify the timing of a future already scheduled task. This does not assume the user has supplied the name of the scheduled task. If they do, the name is discarded.
-Example Translation: "I want to change the timing of an action" -> {"Semantics":"modifyScheduledGoal()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-describeScheduledGoals()
-Description: You report what your currently scheduled goals are
-Example Translation: "what are you scheduled to do" -> {"Semantics":"describeScheduledGoals()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-describeCurrentGoal()
-Description: You report what your current task is
-Example Translation: "what are you doing now" -> {"Semantics":"describeCurrentGoal()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-describePendingGoals()
-Description: You report what your currently pending/upcoming tasks are
-Example Translation: "what are you doing after your current task" -> {"Semantics":"describePendingGoals()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-cancelSystemGoals()
-Description: You stop and fully discard your current task
-Example Translation: "stop your current task" -> {"Semantics":"cancelSystemGoals()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-suspendSystemGoalsBlocking()
-Description: You pause your current task, which can be later resumed
-Example Translation: "pause what you're doing" -> {"Semantics":"suspendSystemGoalsBlocking()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-resumeSystemGoals()
-Description: You resume the currently paused task. This can have a task be specified explicitly or not, as there is only one possible paused task at a time.
-Example Translation: "resume previous task" -> {"Semantics":"resumeSystemGoals()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-cancelAllScheduledGoals()
-Description: You cancel all currently scheduled goals which have yet to begin execution.
-Example Translation: "cancel all scheduled tasks" -> {"Semantics":"cancelAllScheduledGoals()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-cancelScheduledGoal()
-Description: You begin a dialogue interaction with the user to cancel a particular scheduled goal
-Example Translation: "I want to cancel a scheduled task" -> {"Semantics":"cancelScheduledGoal()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-learnNewTask()
-Description: You begin a dialogue interaction with the user to learn the steps of a new instructable action
-Example Translation: "i will teach you a new task" -> {"Semantics":"learnNewTask()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-endActionLearning()
-Description: You conclude learning the steps of a new instructable action
-Example Translation: "those are the steps of the task" -> {"Semantics":"endActionLearning()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-describeCurrentLocation()
-Description: You report what location you believe you are currently at
-Example Translation: "what is your current location" -> {"Semantics":"describeCurrentLocation()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-describeAllKnownLocations()
-Description: You list all currently saved locations
-Example Translation: "what are your saved locations" -> {"Semantics":"describeAllKnownLocations()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-describeAllKnownPatrolPaths()
-Description: You list all currently saved patrol paths
-Example Translation: "what paths do you know about" -> {"Semantics":"describeAllKnownPatrolPaths()","Input Type":"INSTRUCT","Confidence":"10"}
-#
-describeAllLocationsOnPatrolPath(?pathName:path)
-Description: You list all locations included along the saved patrol path named ?pathName:path
-Example Translation: "what locations are in %examplePath" -> {"Semantics":"describeAllLocationsOnPatrolPath(%examplePath:path)","Input Type":"INSTRUCT","Confidence":"10"}
-#
-repeatLastQuestion()
-Description: You repeat the last question you asked, which the human still needs to answer
-Example Translation: "could you repeat that" -> {"Semantics":"repeatLastQuestion()","Input Type":"INSTRUCT","Confidence":"10"}
+%actionList
 #
 %learnedActions%
 ##
@@ -206,6 +56,17 @@ Example Translation: "the path should be called path a" -> {"Semantics":"pathNam
 option(?number)
 Description: The specification of an option ?number from a list of options
 Example Translation: "the first one" -> {"Semantics":"option(1)","Input Type":"REPLY","Confidence":"10"}
+#
+actionType(?type)
+Description: Specification of a type of action, referencing how the system came to know about the action. ?type takes three possible values: taught, predefined, or both. Taught references actions taught by the user, predefined references actions known automatically by the system on startup, and both references all actions.
+Example Translation: "the taught actions" -> {"Semantics":"actionType(taught),"Input Type":"REPLY","Confidence":"10"}
+Example Translation: "the ones you already knew" -> {"Semantics":"actionType(predefined)","Input Type":"REPLY","Confidence":"10"}
+Example Translation: "all of them" -> {"Semantics":"actionType(both)","Input Type":"REPLY","Confidence":"10"}
+#
+amount(?number)
+Description: The specification of a number of things. The only acceptable values for ?number is either an integer or "all". "all" referring the maximum amount of something.
+Example Translation: "ten at a time" -> {"Semantics":"amount(10)","Input Type":"REPLY","Confidence":"10"}
+Example Translation: "the full amount" -> {"Semantics":"amount(all)","Input Type":"REPLY","Confidence":"10"}
 ###
 ENTITIES: Following are the list of locations and patrol paths known to the system.
 ##
@@ -253,4 +114,4 @@ The confidence rating in your translations can take a value between 0-10. A conf
 "kick the ball over the fence" -> {"Semantics":"<unk>","Input Type":"INSTRUCT","Confidence":"0"}
 ###
 
- When supplied with an instruction, do your best with the outlined task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. First, attempt to use the strategies listed to produce an accurate translation. Then, repeat the task 2 more times, generating 3 different possible translations. Once this is done, go through the set of rules for each generated translation and cull any which violate a rule. Finally, choose the result which seems most relevant in the current context among the remaining valid translations and end your response by repeating it after the prefix "Chosen translation: ". The translation should be formatted as shown, json containing the fields: "Semantics", "Input Type", and "Confidence". If all translations violate any of the rules, your translation should simply be "<unk>".
+ When supplied with an instruction, do your best with the outlined task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Remember that your output should attempt to use the strategies listed to produce an accurate translation which does not violate any of the provided rules. Your translation should be present after the prefix "Chosen translation: ". The translation should be formatted as shown, json containing the fields: "Semantics", "Input Type", and "Confidence". If all translations violate any of the rules, your translation should simply be "<unk>".

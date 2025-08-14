@@ -10,6 +10,10 @@ import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
 import edu.tufts.hrilab.action.ActionInterpreter;
+import edu.tufts.hrilab.action.asl.ActionScriptLanguageParser;
+import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
+import edu.tufts.hrilab.action.db.ActionDBEntry;
+import edu.tufts.hrilab.action.db.Database;
 import edu.tufts.hrilab.action.goal.*;
 import edu.tufts.hrilab.action.goal.schedule.ScheduledGoal;
 import edu.tufts.hrilab.action.listener.ActionListener;
@@ -30,8 +34,11 @@ import edu.tufts.hrilab.fol.Symbol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
@@ -163,6 +170,12 @@ public class ExecutionManager implements GoalListener {
    */
   private final Condition goalStatusUpdateCondition = goalStatusUpdateLock.newCondition();
 
+  /**
+   * Path to the file which will have asl for all newly taught actions written to it (can be loaded on startup
+   * separately for persistence of taught actions)
+   * (root will be user.home/.diarc)
+   */
+  private String learnedActionsFile = null;
 
   private boolean displayActionLearningGui = false;
 
@@ -2369,6 +2382,81 @@ public class ExecutionManager implements GoalListener {
     }
   }
 
+  //TODO: Revisit location and interaction of persistent learned action functionality with rest of DB/EM.
+  //      Weird because file doesn't live in resources
+  //This function assumes it is being used alongside persistent taught actions written to file. Use forgetHow otherwise
+  @TRADEService
+  public Justification forgetTaughtAction(Predicate actionSignature) {
+    try {
+      List<ActionDBEntry> actions = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActionsBySignature").argTypes(Predicate.class)).call(List.class, actionSignature);
+      if (actions.isEmpty()) {
+        return new ConditionJustification(false, Factory.createPredicate("knowAction", actionSignature));
+      }
+      actions = actions.stream().filter(action -> action.getDBFile().equals(learnedActionsFile) || action.getDBFile() == null).toList();
+      if (actions.isEmpty()) {
+        return new ConditionJustification(false, Factory.createPredicate("taughtAction", actionSignature));
+      }
+      for (ActionDBEntry action : actions) {
+        //Remove from DB
+        Database.getActionDB().removeAction(action);
+        //Remove from file
+        if (action.getDBFile() != null) {
+          List<ActionDBEntry> learnedActions = loadLearnedActions(false);
+          boolean removed = learnedActions.remove(action);
+          if (!removed) {
+            log.warn("action was not found in learned file");
+          }
+          ActionScriptLanguageWriter writer = new ActionScriptLanguageWriter();
+          writer.writeToFile(learnedActions, learnedActionsFile);
+        }
+      }
+      return new ConditionJustification(true);
+    } catch (TRADEException e) {
+      log.error("could not find service", e);
+      return new ConditionJustification(false,Factory.createPredicate("known","error"));
+    }
+  }
+  //forgetAllTaughtActions - Too drastic to expose?
+
+  public List<ActionDBEntry> loadLearnedActions(boolean addToDB) {
+    if (learnedActionsFile != null) {
+      try {
+        String s = Files.readString(Path.of(learnedActionsFile));
+        if (!s.isEmpty()) {
+          ActionScriptLanguageParser parser = new ActionScriptLanguageParser();
+          List<ActionDBEntry> entries = parser.parseFromString(learnedActionsFile, new ArrayList<>(), s);
+          if (addToDB) {
+            for (ActionDBEntry entry : entries) {
+              Database.getInstance().addActionDBEntry(entry);
+            }
+          }
+          return entries;
+        }
+      } catch (IOException e) {
+        log.info("[initializeDB] Supplied learnedActionsFile does not yet exist");
+      }
+    }
+    return new ArrayList<>();
+  }
+
+  @TRADEService
+  public List<Predicate> getLearnedActionPredicates() {
+    List<ActionDBEntry> learnedActions = loadLearnedActions(false);
+    return new ArrayList<>(learnedActions.stream().map(dbEntry -> dbEntry.getSignature(false)).toList());
+  }
+
+  @TRADEService
+  public boolean isLearnedAction(Predicate actionSignature) {
+    try {
+      List<ActionDBEntry> actions = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActionsBySignature").argTypes(Predicate.class)).call(List.class, actionSignature);
+      actions = actions.stream().filter(action -> action.getDBFile().equals(learnedActionsFile) || action.getDBFile() == null).toList();
+      return !actions.isEmpty();
+    } catch (TRADEException e) {
+      log.error("[isLearnedAction] error getting action list from signature");
+      return false;
+    }
+  }
+
   /**
    * Returns true if the supplied goal should be intercepted by Action Learning.
    * Checks the actor of the supplied goal and any of its ancestors for matching criteria
@@ -2602,10 +2690,25 @@ public class ExecutionManager implements GoalListener {
     displayActionLearningGui = flag;
   }
 
+  public void setScheduledGoalsFile(String filename) {
+    scheduledGoalManager.setScheduledGoalsFile(filename);
+  }
+
+  public void setLearnedActionsFile(String filename) {
+    learnedActionsFile = filename;
+  }
+
+  public String getLearnedActionsFile() {
+    return learnedActionsFile;
+  }
+
   public boolean getActionLearningGuiFlag() {
     return displayActionLearningGui;
   }
 
+  public void writeScheduledGoalsToFile() {
+    scheduledGoalManager.writeScheduledGoalsToFile();
+  }
   /**
    * Shutdown this ExecutionManager. All currently managed goals are canceled, ending the ActionInterpreter.
    * Note: the goals are automagically moved to the pastGoals list by the ActionListener mechanism.
@@ -2613,26 +2716,15 @@ public class ExecutionManager implements GoalListener {
   public void shutdown() {
     log.info("Shutting down and cancelling all goals...");
 
-    synchronized (pendingGoalsLock) {
-      log.trace("[shutdown] have pendingGoalsLock]");
-      synchronized (goalsLock) {
-        log.trace("[shutdown] have goalsLock]");
-        synchronized (resourceLock) {
-          log.trace("[shutdown] have resourceLock]");
-          List<Goal> pendingGoals = getPendingGoals();
-          for (Goal g : pendingGoals) {
-            cancelGoal(g.getId());
-          }
+    // cancel all scheduled and pending and active goals and wait for them to terminate
+    writeScheduledGoalsToFile();
+    getScheduledGoals().forEach(goal -> cancelGoal(goal.getId()));
+    getPendingGoals().forEach(goal -> cancelGoal(goal.getId()));
+    List<Goal> activeGoals = getActiveGoals();
+    activeGoals.forEach(goal -> cancelGoal(goal.getId()));
+    activeGoals.forEach(goal -> joinOnGoal(goal.getId()));
 
-          List<Goal> goals = getActiveGoals();
-          for (Goal g : goals) {
-            cancelGoal(g.getId());
-          }
-        }
-      }
-      log.trace("[shutdown] released all locks");
-    }
-
+    scheduledGoalManager.shutdown();
     memoryManager.shutdown();
     sm.shutdown();
     executor.shutdown();

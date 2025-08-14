@@ -671,7 +671,7 @@ public class LearningState {
    * Iterates through the learning queue and creates events and roles for new action
    *
    */
-  public void generateActionDBEntry() {
+  public ActionDBEntry generateActionDBEntry() {
     ActionDBEntry.Builder newDBEntry = new ActionDBEntry.Builder(name);
     // roles -- learning state creates new generic symbol action binding before returning if non exists
     newDBEntry.addRoles(new ArrayList<>(valueActBindingMap.values()));
@@ -706,6 +706,7 @@ public class LearningState {
     ActionDBEntry x = newDBEntry.build(true);
     ActionScriptLanguageWriter writer= new ActionScriptLanguageWriter();
     log.debug("Built new action:\n" + writer.writeAction(x));
+    return x;
   }
 
 

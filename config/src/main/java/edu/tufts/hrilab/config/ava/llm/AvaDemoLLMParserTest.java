@@ -9,6 +9,7 @@ import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.llm.serviceproviders.AvaLLMServiceProvider;
+import edu.tufts.hrilab.llm.serviceproviders.PickAndPlace2024LLMServiceProvider;
 import edu.tufts.hrilab.map.MapComponent;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
@@ -29,13 +30,15 @@ import java.util.List;
 public class AvaDemoLLMParserTest extends DiarcConfiguration {
   boolean useQueueEM = true;
   String avaArgs = "";
-  String service = "llamahf";
-  String model = "Qwen/Qwen3-14B";
+  String service = "openai";
+  String model = "gaunernst/gemma-3-12b-it-int4-awq";
+  String openaiEndpoint = "http://100.113.66.111:8000";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "";
   LLMParserComponent llmParser;
-
+  List<Float> inf_times = new ArrayList();
+  boolean run_japanese_tests = false; //Holding off on adding corresponding prompts for translations
 
   @Override
   protected List<Option> additionalUsageInfo() {
@@ -69,7 +72,11 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
     DiarcComponent.createInstance(HybridNLGComponent.class, nlgArgs);
     createInstance(ListenerComponent.class);
 
-    createInstance(AvaLLMServiceProvider.class,"");
+    if (run_japanese_tests) {
+      createInstance(PickAndPlace2024LLMServiceProvider.class, "-japanese");
+    } else {
+      createInstance(AvaLLMServiceProvider.class,"");
+    }
     String llmComponentArgs = String.format("-service %s -model %s -temperature 0.6", service, model);
     if (service.equals("llamahf")) {
       if (usePrivateEndpoint) {
@@ -77,6 +84,8 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       }
     } else if (service.equals("azure")) {
       llmComponentArgs += " -endpoint https://tracs-southcentralus-cjavc.southcentralus.inference.ml.azure.com/score";
+    } else if (service.equals("openai") && !openaiEndpoint.isEmpty()) {
+      llmComponentArgs += " -endpoint " + openaiEndpoint;
     }
     createInstance(LLMComponent.class, llmComponentArgs);
 
@@ -121,13 +130,24 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
   private int testUtterance(String utterance, String desired, int num_runs) {
     int num_correct = 0;
     for (int i=0;i<num_runs;i++) {
-      Utterance.Builder inputUtterance = new Utterance.Builder()
-              .setSpeaker(Factory.createSymbol("eric"))
-              .setAddressee(Factory.createSymbol("ava"))
-              .setWords(Arrays.asList(utterance.split(" ")));
+      Utterance.Builder inputUtterance;
+      if (run_japanese_tests) {
+        inputUtterance = new Utterance.Builder()
+                .setSpeaker(Factory.createSymbol("brad"))
+                .setAddressee(Factory.createSymbol("robotone"))
+                .setWords(Arrays.asList(utterance.split(" ")));
+      } else {
+         inputUtterance = new Utterance.Builder()
+                .setSpeaker(Factory.createSymbol("eric"))
+                .setAddressee(Factory.createSymbol("ava"))
+                .setWords(Arrays.asList(utterance.split(" ")));
+      }
 
 
+      long startTime = System.currentTimeMillis();
       Utterance parseResult = llmParser.parseUtterance(inputUtterance.build());
+      float inf_time = (System.currentTimeMillis() - startTime) / 1000f;
+      inf_times.add(inf_time);
 
       String outcome = parseResult.toString();
       if (outcome.equals(desired)) {
@@ -137,6 +157,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
         log.error("outcome: " + outcome);
         log.error("desired: " + desired + "\n");
       }
+      log.info("inf time: {}", inf_time);
       num_correct += outcome.equals(desired) ? 1 : 0;
     }
     log.info("{}/{}: {}", num_correct, num_runs, utterance);
@@ -144,15 +165,34 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
   }
 
   private void runLLMParserTest() {
-    boolean run_easy = true;
-    boolean run_medium = true;
-    boolean run_hard = true;
+    boolean run_easy = false;
+    boolean run_medium = false;
+    boolean run_hard = false;
+    boolean run_japanese_documented = false;
+    boolean run_japanese_translated = false;
+    if (run_japanese_tests) {
+      run_japanese_documented = true;
+      run_japanese_translated = true;
+    } else {
+      run_easy = true;
+      run_medium = true;
+      run_hard = true;
+    }
+
     int num_runs = 1; //TODO: see if we can force clearing cached context. Seems to return the same result every time if senf in succession
     int easy_count = 0;
     int medium_count = 0;
     int hard_count = 0;
+    int japanese_documented_count = 0;
+    int japanese_translated_count = 0;
+    List<Float> easy_inf_times = new ArrayList<>();
+    List<Float> medium_inf_times = new ArrayList<>();
+    List<Float> hard_inf_times = new ArrayList<>();
+    List<Float> japanese_documented_inf_times = new ArrayList<>();
+    List<Float> japanese_translated_inf_times = new ArrayList<>();
 
     if (run_easy) {
+      inf_times = new ArrayList<>();
       int count_correct = 0;
       int count_total = 0;
       count_correct += testUtterance("follow me",
@@ -323,6 +363,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       );
       count_total += num_runs;
       easy_count = count_correct;
+      easy_inf_times = new ArrayList<>(inf_times);
 
       log.info("EASY: {}/{}", count_correct, count_total);
     }
@@ -330,6 +371,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
     if (run_medium) {
       int count_correct = 0;
       int count_total = 0;
+      inf_times = new ArrayList<>();
       count_correct += testUtterance("come with me",
               "INSTRUCT(eric,ava,follow(ava),{})"
               ,num_runs
@@ -498,6 +540,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       );
       count_total += num_runs;
       medium_count = count_correct;
+      medium_inf_times = new ArrayList<>(inf_times);
 
       log.info("MEDIUM: {}/{}", count_correct, count_total);
     }
@@ -505,6 +548,7 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
     if (run_hard) {
       int count_correct = 0;
       int count_total = 0;
+      inf_times = new ArrayList<>();
       count_correct += testUtterance("stay with me",
               "INSTRUCT(eric,ava,follow(ava),{})"
               ,num_runs
@@ -673,8 +717,632 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
       );
       count_total += num_runs;
       hard_count = count_correct;
+      hard_inf_times = new ArrayList<>(inf_times);
 
       log.info("HARD: {}/{}", count_correct, count_total);
+    }
+    
+    if (run_japanese_documented) {
+      int count_correct = 0;
+      int count_total = 0;
+      inf_times = new ArrayList<>();
+      count_correct += testUtterance("ポーズ2番にしてください",
+              "INSTRUCT(brad,robotone,goToPose(robotone,VAR0:pose),{location two(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("グリッパーを開いてください",
+              "INSTRUCT(brad,robotone,openGripper(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("グリッパーを閉めてください",
+              "INSTRUCT(brad,robotone,closeGripper(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("青いブロックをみつけてください",
+              "INSTRUCT(brad,robotone,detectObject(robotone,VAR0:physobj),{blue block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("物体を拾ってください",
+              "INSTRUCT(brad,robotone,pickUp(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックを拾ってください\n",
+              "INSTRUCT(brad,robotone,pickUp(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("物体を置いてください",
+              "INSTRUCT(brad,robotone,putDown(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックを置いてください",
+              "INSTRUCT(brad,robotone,putDown(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックを場所1から場所2に移動してください",
+              "INSTRUCT(brad,robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),location one(VAR1:pose),location two(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックを場所1に置いてください",
+              "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("物体を場所1番に置いてください",
+              "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックを場所1にしてください",
+              "INSTRUCT(brad,robotone,getObjectTo(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("swap the red block and the yellow block",
+              "INSTRUCT(brad,robotone,swapObjects(robotone,VAR0:physobj,VAR1:physobj),{red block(VAR0:physobj),yellow block(VAR1:physobj),DEFINITE(VAR0:physobj),DEFINITE(VAR1:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("現在のゴールを一時停止してください",
+              "INSTRUCT(brad,robotone,suspendSystemGoals(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("前ゴールを再採用してください",
+              "INSTRUCT(brad,robotone,resumeSystemGoals(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("現在のゴールを中止してください",
+              "INSTRUCT(brad,robotone,cancelSystemGoals(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("すべてのゴールを中止してください",
+              "INSTRUCT(brad,robotone,cancelAllCurrentGoals(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックは場所1にあります",
+              "INSTRUCT(brad,robotone,believeObjectAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックはもう場所1にありません",
+              "STATEMENT(brad,robotone,not(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+//        count_correct += testUtterance("eric is a supervisor",
+//                "STATEMENT(brad,robotone,supervisor(eric),{})",
+//                "brad",
+//                "robotone"
+//        ));
+//        count_correct += testUtterance("eric is not a supervisor",
+//                "STATEMENT(brad,robotone,not(supervisor(eric)),{})",
+//                "brad",
+//                "robotone"
+//        ));
+//        count_correct += testUtterance("eric is an admin",
+//                "STATEMENT(brad,robotone,admin(eric),{})",
+//                "brad",
+//                "robotone"
+//        ));
+//        count_correct += testUtterance("eric is not an admin",
+//                "STATEMENT(brad,robotone,not(admin(eric)),{})",
+//                "brad",
+//                "robotone"
+//        ));
+//        count_correct += testUtterance("eric is trusted",
+//                "STATEMENT(brad,robotone,trusted(eric),{})",
+//                "brad",
+//                "robotone"
+//        ));
+//        count_correct += testUtterance("eric is not trusted",
+//                "STATEMENT(brad,robotone,not(trusted(eric)),{})",
+//                "brad",
+//                "robotone"
+//        ));
+
+      count_correct += testUtterance("赤いブロックを場所1にしてくださいはできますか",
+              "QUESTION(brad,robotone,knowHowTo(robotone,getObjectTo(robotone,VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックは見えますか",
+              "QUESTION(brad,robotone,see(VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("場所1にブロックはありますか",
+              "QUESTION(brad,robotone,objectsAt(VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("場所1に赤いブロックはありますか",
+              "QUESTION(brad,robotone,at(VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックはどこにありますか",
+              "INSTRUCT(brad,robotone,describeObjectPose(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("位置を把握している物体をすべて教えてください",
+              "INSTRUCT(brad,robotone,describeObjectPoses(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("場所1にどのブロックがありますか",
+              "INSTRUCT(brad,robotone,describeObjectsAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("場所1に物体は何個ありますか",
+              "INSTRUCT(brad,robotone,describeNumberOfObjectsAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("where are you",
+              "INSTRUCT(brad,robotone,describeCurrentPose(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("現在のゴールは何でしょうか",
+              "INSTRUCT(brad,robotone,describeCurrentGoal(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("並んでいるゴールを教えてください",
+              "INSTRUCT(brad,robotone,describePendingGoals(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロック",
+              "REPLY(brad,robotone,objectType(VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("場所1",
+              "REPLY(brad,robotone,pose(VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("何でもないです",
+              "REPLY(brad,robotone,abort(question),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("場所なし",
+              "REPLY(brad,robotone,pose(none),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("オブジェクトがありません",
+              "REPLY(brad,robotone,objectType(none),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("はい",
+              "REPLY(brad,robotone,val(yes),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("いいえ",
+              "REPLY(brad,robotone,val(no),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      japanese_documented_count = count_correct;
+      japanese_documented_inf_times = new ArrayList<>(inf_times);
+
+      log.info("JAPANESE DOCUMENTED: {}/{}", count_correct, count_total);
+    }
+
+    if (run_japanese_translated) {
+      int count_correct = 0;
+      int count_total = 0;
+      inf_times = new ArrayList<>();
+
+      //Japanese input here simply taken from google translate - proper translations present in prompts
+      count_correct += testUtterance("ロボット1、場所1へ移動",
+              "INSTRUCT(brad,robotone,goToPose(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("場所 2 に移動します",
+              "INSTRUCT(brad,robotone,goToPose(robotone,VAR0:pose),{location two(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("ロボット1、赤いブロックが見えることを確認してください",
+              "INSTRUCT(brad,robotone,perceiveObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      //count_correct += testUtterance("赤いブロックを場所1に移動させる",
+      //        "INSTRUCT(brad,robotone,getObjectTo(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+      //        "brad",
+      //        "robotone"
+      //));
+
+      count_correct += testUtterance("あなたのグリッパーを位置 1 に移動します",//"アームのグリッパーを位置 1 に移動します。",
+              "INSTRUCT(brad,robotone,goToPose(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("オープングリッパー",
+              "INSTRUCT(brad,robotone,openGripper(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("グリッパーを開く",
+              "INSTRUCT(brad,robotone,openGripper(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("グリッパーを開けて",
+              "INSTRUCT(brad,robotone,openGripper(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("クローズグリッパー",
+              "INSTRUCT(brad,robotone,closeGripper(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("グリッパーを閉じてください",
+              "INSTRUCT(brad,robotone,closeGripper(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("グリッパーを閉じる",
+              "INSTRUCT(brad,robotone,closeGripper(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックを探してください",
+              "INSTRUCT(brad,robotone,perceiveObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを探せ",
+              "INSTRUCT(brad,robotone,perceiveObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを1つ探す",
+              "INSTRUCT(brad,robotone,perceiveObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを検出します",
+              "INSTRUCT(brad,robotone,perceiveObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを観察するk",
+              "INSTRUCT(brad,robotone,perceiveObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを見つける",
+              "INSTRUCT(brad,robotone,perceiveObject(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("ブロックをピックアップ",
+              "INSTRUCT(brad,robotone,pickUp(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("ブロックをつかむ",
+              "INSTRUCT(brad,robotone,pickUp(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("ブロックを手に入れる",
+              "INSTRUCT(brad,robotone,pickUp(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("ブロックを拾う",
+              "INSTRUCT(brad,robotone,pickUp(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("ブロックを1つ拾う",
+              "INSTRUCT(brad,robotone,pickUp(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックを拾う",
+              "INSTRUCT(brad,robotone,pickUp(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックをつかむ",
+              "INSTRUCT(brad,robotone,pickUp(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを取得する",
+              "INSTRUCT(brad,robotone,pickUp(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを拾う",
+              "INSTRUCT(brad,robotone,pickUp(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを1つ拾う",
+              "INSTRUCT(brad,robotone,pickUp(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("ブロックを下ろす",
+              "INSTRUCT(brad,robotone,putDown(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("ブロックを下に置きます",
+              "INSTRUCT(brad,robotone,putDown(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックを場所1から場所2に移動する",
+              "INSTRUCT(brad,robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),location one(VAR1:pose),location two(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを場所 1 から場所 2 に輸送する",
+              "INSTRUCT(brad,robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),location one(VAR1:pose),location two(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを場所 1 から場所 2 まで取得します",
+              "INSTRUCT(brad,robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),location one(VAR1:pose),location two(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを場所 1 と場所 2 の間で移動します",
+              "INSTRUCT(brad,robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),location one(VAR1:pose),location two(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックを場所1と場所2の間で輸送する",
+              "INSTRUCT(brad,robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),location one(VAR1:pose),location two(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      //Not sure if we want this to parse or not
+      count_correct += testUtterance("場所1と場所2の間の赤いブロックを取得します",
+              "INSTRUCT(brad,robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose,VAR2:pose),{red block(VAR0:physobj),location one(VAR1:pose),location two(VAR2:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose),DEFINITE(VAR2:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックを位置1に置く",
+              "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("場所1に赤いブロックを置く",
+              "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("ブロックを位置1に置く",
+              "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("ブロックを場所 1 に置きます",
+              "INSTRUCT(brad,robotone,placeObjectDownAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("場所 1 に赤いブロックが欲しい",
+              "INSTRUCT(brad,robotone,getObjectTo(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("場所1の赤いブロックが欲しい",
+              "INSTRUCT(brad,robotone,getObjectTo(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックが位置1にあるようにします",
+              "INSTRUCT(brad,robotone,getObjectTo(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+
+      //TODO
+      //count_correct += testUtterance("I want the red, blue, and green blocks at location one",
+      //        "",
+      //        "brad",
+      //        "robotone"
+      //));
+
+      count_correct += testUtterance("赤いブロックは位置1にあります",
+              "INSTRUCT(brad,robotone,believeObjectAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックは位置1に移動しました",
+              "INSTRUCT(brad,robotone,believeObjectAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックは場所2から場所1に移動しました",
+              "INSTRUCT(brad,robotone,believeObjectAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックはもう位置1には存在しません",
+              "STATEMENT(brad,robotone,not(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("赤いブロックは位置1から移動しました",
+              "STATEMENT(brad,robotone,not(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+
+      count_correct += testUtterance("ericは監督者です",
+              "STATEMENT(brad,robotone,supervisor(eric),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("ericは監督者ではありません",
+              "STATEMENT(brad,robotone,not(supervisor(eric)),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("ericは管理者です",
+              "STATEMENT(brad,robotone,admin(eric),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("ericは管理者ではありません",
+              "STATEMENT(brad,robotone,not(admin(eric)),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      //TODO: issue somewhere with knowHow parse matching early when more args are present and overloaded entries exist which take in different numbers of args
+      //count_correct += testUtterance("do you know how to get the red block to location one",
+      count_correct += testUtterance("赤いブロックを場所1に移動する方法を知っていますか",
+              "QUESTION(brad,robotone,knowHowTo(robotone,moveObjectTo(robotone,VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("赤いブロックが見えますか",
+              "QUESTION(brad,robotone,see(VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      //count_correct += testUtterance("do you know where the red block is",
+      //        "QUESTION(brad,robotone,know(robotone,at(VAR0:physobj,X)),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+      //        "brad",
+      //        "robotone"
+      //));
+      count_correct += testUtterance("赤いブロックはどこですか",
+              "INSTRUCT(brad,robotone,describeObjectPose(robotone,VAR0:physobj),{red block(VAR0:physobj),DEFINITE(VAR0:physobj)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("作業領域にあるブロックは何ですか",
+              "INSTRUCT(brad,robotone,describeObjectPoses(robotone),{})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      count_correct += testUtterance("位置1にあるブロックは何か",
+              "INSTRUCT(brad,robotone,describeObjectsAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("場所1にはブロックがいくつあるか",
+              "INSTRUCT(brad,robotone,describeNumberOfObjectsAt(robotone,VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("位置 1 にブロックはありますか",
+              "QUESTION(brad,robotone,objectsAt(VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("場所1に赤いブロックがありますか",
+              "QUESTION(brad,robotone,at(VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})",
+              num_runs
+      );
+      count_total += num_runs;
+
+      //count_correct += testUtterance("どのような種類のブロックを検出できますか",
+      //        "INSTRUCT(brad,robotone,describeObjectTypes(robotone),{})",
+      //        "brad",
+      //        "robotone"
+      //));
+
+      count_correct += testUtterance("ericは監督者ですか",
+              "QUESTION(brad,robotone,know(robotone,supervisor(eric)),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      count_correct += testUtterance("ericは管理者ですか",
+              "QUESTION(brad,robotone,know(robotone,admin(eric)),{})",
+              num_runs
+      );
+      count_total += num_runs;
+      japanese_translated_count = count_correct;
+      japanese_translated_inf_times = new ArrayList<>(inf_times);
+
+      log.info("JAPANESE TRANSLATED: {}/{}", count_correct, count_total);
     }
 
     int count_correct = 0;
@@ -692,12 +1360,24 @@ public class AvaDemoLLMParserTest extends DiarcConfiguration {
     log.info("CURRENT: {}/{}", count_correct, count_total);
     if (run_easy) {
       log.info("EASY: {}/{}", easy_count, 28*num_runs);
+      log.info("EASY inf: {}", easy_inf_times);
     }
     if (run_medium) {
       log.info("MEDIUM: {}/{}", medium_count, 28*num_runs);
+      log.info("MEDIUM inf: {}", medium_inf_times);
     }
     if (run_hard) {
       log.info("HARD: {}/{}", hard_count, 28*num_runs);
+      log.info("HARD inf: {}", hard_inf_times);
+    }
+    if (run_japanese_documented) {
+      log.info("JAPANESE DOCUMENTED: {}/{}", japanese_documented_count, 37*num_runs);
+      log.info("JAPANESE DOCUMENTED inf: {}", japanese_documented_inf_times);
+    }
+    if (run_japanese_translated) {
+      log.info("JAPANESE TRANSLATED: {}/{}", japanese_translated_count, 60*num_runs);
+      log.info("JAPANESE TRANSLATED inf: {}", japanese_translated_inf_times);
+
     }
   }
 }

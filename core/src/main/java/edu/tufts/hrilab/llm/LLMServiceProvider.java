@@ -16,6 +16,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class LLMServiceProvider extends DiarcComponent {
     boolean parserTest = false;
@@ -174,6 +176,21 @@ public abstract class LLMServiceProvider extends DiarcComponent {
             chat = generateNLUChat(utterance, chat, conversationHistory);
         } else {
             chat = generateNLGChat(utterance, conversationHistory);
+        }
+
+        String systemMessage = chat.systemMessage;
+        List<Message> userMessages = chat.getMessages();
+        Pattern pattern = Pattern.compile(".*%\\w+\\s*.*", Pattern.DOTALL);
+        Matcher m = pattern.matcher(systemMessage);
+        if (m.matches()) {
+            log.warn("[llmChatCompletionHelper] System message may have an unpopulated prompt variable");
+        }
+        for (Message message : userMessages) {
+            m = pattern.matcher(message.content); {
+                if (m.matches()) {
+                    log.warn("[llmChatCompletionHelper] A user message may have an unpopulated prompt variable");
+                }
+            }
         }
 
         // Call LLM to get Completion

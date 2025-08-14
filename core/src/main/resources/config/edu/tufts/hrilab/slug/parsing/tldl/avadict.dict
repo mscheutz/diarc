@@ -449,7 +449,7 @@ task greet; VAL; taskName(greet)
 i am done teaching; C; endTaskLearning(?ADDRESSEE)
 
 say; C/LIT*; #x.say(?ADDRESSEE, $x)
-greet; C; greet(?ADDRESSEE)
+%greet; C; greet(?ADDRESSEE)
 
 option; VAL/NUM; #x.option($x)
 
@@ -498,3 +498,12 @@ stop demo; VERBI; stopDemo
 
 ww; VERBI; triggerWW
 ready; VERBI; interruptWaitForReadyAck
+
+forget how to; C/C; #x.forgetTaughtAction(?ADDRESSEE,$x)
+
+%what actions have you been taught; VERBI; reportTaughtActions
+%what actions can you be instructed to perform; VERBI; reportInstructableActions
+%taught actions; VAL; actionType(taught)
+%predefined actions; VAL; actionType(predefined)
+%both; VAL; actionType(both)
+%at a time; VAL\NUM; #x.amount($x)

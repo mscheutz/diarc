@@ -36,7 +36,12 @@ import edu.tufts.hrilab.gui.GuiProvider;
 import edu.tufts.hrilab.util.Util;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -105,6 +110,18 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
    */
   private Map<String, PriorityInfo> goalPriorities = new HashMap<>();
   /**
+   * Path to the file containing the set of persisted scheduled goals to load from on startup and write to on shutdown
+   * (root will be user.home/.diarc)
+   */
+  private String scheduledGoalsFile = null;
+  /**
+   * Path to the file which will have asl for all newly taught actions written to it (can be loaded on startup
+   * separately for persistence of taught actions)
+   * (root will be user.home/.diarc)
+   */
+  private String learnedActionsFile = null;
+
+  /**
    * Action learning gui flag.
    */
   private boolean displayActionLearningGui = false;
@@ -157,6 +174,8 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     options.add(Option.builder("priorityFile").hasArgs().desc("goal priority information file(s)").build());
     options.add(Option.builder("nomemorymanager").desc("Do not utilize the memory manager in the goal manager to prune old goals").build());
     options.add(Option.builder("historylength").hasArg().argName("time").desc("How long to keep past goals").build());
+    options.add(Option.builder("scheduledGoalsFile").hasArg().argName("file").desc("File containing the set of persisted scheduled goals to load from on startup and write to on shutdown").build());
+    options.add(Option.builder("learnedActionsFile").hasArg().argName("file").desc("File to write newly learned asl scripts to").build());
 
     // local belief component options
     options.add(Option.builder("beliefinitfile").hasArgs().argName("file").desc("load initialization file").build());
@@ -221,6 +240,26 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     }
     if (cmdLine.hasOption("historylength")) {
       historyLength = Long.parseLong(cmdLine.getOptionValue("historylength"));
+    }
+    if (cmdLine.hasOption("scheduledGoalsFile")) {
+      String filename = cmdLine.getOptionValue("scheduledGoalsFile");
+      String homeDir = System.getProperty("user.home");
+      String scheduledGoalsDir = Paths.get(homeDir, ".diarc","scheduledGoals").toString();
+      scheduledGoalsFile = scheduledGoalsDir + File.separator + filename;
+    }
+    if (cmdLine.hasOption("learnedActionsFile")) {
+      String filename = cmdLine.getOptionValue("learnedActionsFile");
+      String homeDir = System.getProperty("user.home");
+      String learnedActionsDir = Paths.get(homeDir, ".diarc","learnedActions").toString();
+      learnedActionsFile = learnedActionsDir + File.separator + filename;
+      try {
+        File f = new File(learnedActionsFile);
+        f.getParentFile().mkdirs();
+        f.createNewFile();
+      } catch (IOException e) {
+        log.error("[GoalManagerComponent] couldn't create learned actions file in home directory");
+        learnedActionsFile = null;
+      }
     }
 
     /////////////////////////////////
@@ -289,6 +328,9 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     //TODO:brad: do we actually need to sleep?
     Util.Sleep(2000);
     submitInitGoals();
+    if (scheduledGoalsFile != null) {
+      loadScheduledGoals(scheduledGoalsFile);
+    }
   }
 
   // Methods calls during construction
@@ -304,12 +346,15 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     em = ExecutionManager.createInstance(executionManagerType, sm, rootContext, myGroups);
     em.configPruningMechanism(useMemoryManager, historyLength);
     em.setActionLearningGuiFlag(displayActionLearningGui);
+    em.setScheduledGoalsFile(scheduledGoalsFile);
+    em.setLearnedActionsFile(learnedActionsFile);
   }
 
   private void initializeDB() {
 
     // Add ASL files to database
     Database.getInstance().loadDatabaseFiles(dbFileDir, dbFiles);
+    em.loadLearnedActions(true);
 
     // Add PDDL model to action db and belief
     if (pddlFiles != null) {
@@ -348,6 +393,22 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   private void submitInitGoals() {
     // create goal for all command line goals
     initGoals.forEach(goal -> submitGoal(goal));
+  }
+
+  private void loadScheduledGoals(String filepath) {
+    File f = new File(filepath);
+    if (!f.exists()) {
+      log.warn("[loadScheduledGoals] file not found: " + filepath);
+      return;
+    }
+    try {
+      ObjectInputStream is = new ObjectInputStream(new FileInputStream(f));
+      List<Predicate> goalPredicates = (List<Predicate>) is.readObject();
+      goalPredicates.forEach(this::submitGoal);
+      is.close();
+    } catch (IOException | ClassNotFoundException e) {
+      log.error("[loadScheduledGoals] error loading cached scheduled goals on startup", e);
+    }
   }
 
   /**
@@ -1182,13 +1243,7 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @Override
   public void shutdownComponent() {
     if (this.em != null) {
-      // cancel all scheduled and pending and active goals and wait for them to terminate
-      em.getScheduledGoals().forEach(goal -> em.cancelGoal(goal.getId()));
-      em.getPendingGoals().forEach(goal -> em.cancelGoal(goal.getId()));
-      List<Goal> activeGoals = em.getActiveGoals();
-      activeGoals.forEach(goal -> em.cancelGoal(goal.getId()));
-      activeGoals.forEach(goal -> em.joinOnGoal(goal.getId()));
-
+      em.shutdown();
 
       try {
         TRADE.deregister(contextConsultant);
@@ -1196,7 +1251,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
       } catch (Exception e) {
         log.error("[shutdown]", e);
       }
-      em.shutdown();
     }
     Database.destroyInstance();
     ActionSelector.destroyInstance();

@@ -165,6 +165,10 @@ public class HFClient implements LLMClient {
     @Override
     public Completion chatCompletion(Chat chat, String model) {
         if (service.equals("llamahf")) {
+            //TODO: this shouldn't live here
+            if (model.startsWith("Qwen")) {
+                chat.systemMessage = "\\no_think " + chat.systemMessage;
+            }
             LlamaHFChat llamaHFChat = new LlamaHFChat(chat);
             llamaHFChat.setModel(model);
             llamaHFChat.setService(service);

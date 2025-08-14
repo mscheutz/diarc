@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.StringTokenizer;
+import edu.tufts.hrilab.action.goal.Goal;
 
 /******************************** Move Escort Deliver Scripts ********************************/
 
@@ -346,6 +347,7 @@ import java.util.StringTokenizer;
     if (op:isNull(!taskName)) {
         exit(FAIL, not(supplied(taskName)));
     }
+    !taskName = op:invokeMethod(!taskName, "replaceAll", " +", "");
 
     !actionSignature = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !taskName);
     op:log(info,!actionSignature);
@@ -388,7 +390,7 @@ import java.util.StringTokenizer;
     !responseForm = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "taskName(X)");
     op:add(!responseFormList,!responseForm);
 
-    (!bindings) = act:askQuestionFromString(?actor,"What is the name of the task?", !responseFormList);
+    (!bindings) = act:askQuestionFromString(user,"What is the name of the task?", !responseFormList);
    if (op:invokeMethod(!bindings, "isEmpty")) {
         ?name = op:setNull();
     } else {
@@ -464,5 +466,229 @@ import java.util.StringTokenizer;
      act:generateResponse(!generateResponsePredicate);
     } else {
         act:generateResponseFromString("I don't have a patrol path saved under the name ?pathName");
+    }
+}
+
+() = forgetTaughtAction(Predicate ?actionSignature) {
+    edu.tufts.hrilab.action.justification.Justification !actionJustification;
+    op:log("debug","[forgetTaughtAction] forgetting ?actionSignature");
+
+    !actionJustification = tsc:forgetTaughtAction(?actionSignature);
+    if (op:invokeMethod(!actionJustification, "getValue")) {
+        op:log("debug","[forgetTaughtAction] success");
+    } else {
+        exit(FAIL, !actionJustification);
+    }
+}
+
+() = reportTaughtActions() {
+    List !taughtActions;
+    Predicate !actionPred;
+    Integer !numTaught;
+    Predicate !reportedPred;
+
+    !taughtActions = tsc:getLearnedActionPredicates();
+    if (op:isEmpty(!taughtActions)) {
+        act:generateResponseFromString("I have not been taught any new actions");
+    } else {
+        !numTaught = op:invokeMethod(!taughtActions,"size");
+        act:generateResponseFromString("I have been taught !numTaught new actions.");
+        foreach (!actionPred : !taughtActions) {
+            !reportedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "iHaveBeenTaughtTo(!actionPred)");
+            act:generateResponse(!reportedPred);
+        }
+    }
+}
+
+() = reportPredefinedActions() {
+    List !instructableActions;
+    Predicate !reportedPredicate;
+    Integer !numPredefined;
+    String !actionName;
+    Map !bindings;
+    Variable !x = "X";
+    Symbol !confirmation;
+    String !numToReportString;
+    Integer !numToReport;
+    Integer !numReported = 0;
+
+    !instructableActions = tsc:getInstructableActions();
+    if (op:isEmpty(!instructableActions)) {
+        exit(FAIL,retrieve(exposedActionList));
+    } else {
+        !numPredefined = op:invokeMethod(!instructableActions,"size");
+        !bindings = act:askQuestionFromString(user,"I have !numPredefined predefined actions. Would you like me to start listing them out?", val(X));
+        if (op:invokeMethod(!bindings,"isEmpty")) {
+            exit(FAIL,not(wasAnswered(myQuestion)));
+        }
+        !confirmation = op:get(!bindings, !x);
+        if (op:equalsValue(!confirmation, yes)) {
+            !bindings = act:askQuestionFromString(user,"How many should I list at a time?", amount(X));
+            if (op:invokeMethod(!bindings,"isEmpty")) {
+                exit(FAIL,not(wasAnswered(myQuestion)));
+            }
+            !numToReportString = op:get(!bindings, !x);
+            if (op:equalsValue(!numToReportString,"all")) {
+                !numToReport = op:newObject("java.lang.Integer", !numPredefined);
+            } else {
+                !numToReport = op:newObject("java.lang.Integer", !numToReportString);
+            }
+            if (op:gt(!numToReport,0)) {
+                foreach (!actionName : !instructableActions) {
+                    if (op:equals(!numReported,!numToReport)) {
+                        !bindings = act:askQuestionFromString(user,"Would you like me to keep going?", val(X));
+                        if (op:invokeMethod(!bindings,"isEmpty")) {
+                            exit(FAIL,not(wasAnswered(myQuestion)));
+                        }
+                        !confirmation = op:get(!bindings, !x);
+                        if (op:equalsValue(!confirmation, yes)) {
+                            !numReported = op:newObject("java.lang.Integer", 0);
+                        } else {
+                            //weird hack to get desired control flow ('break' from loop)
+                            !numReported = op:++(!numReported);
+                        }
+                    } elseif (op:lt(!numReported,!numToReport)) {
+                        !reportedPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "iKnowHowTo(!actionName)");
+                        act:generateResponse(!reportedPredicate);
+                        !numReported = op:++(!numReported);
+                    }
+                }
+                act:generateResponseFromString("I am done listing the predefined actions I can be instructed to perform");
+            } else {
+            act:generateResponseFromString("Sorry, I am exiting this conversation context. Please try again and supply a positive number");
+            }
+        } else {
+            act:generateResponseFromString("Okay, not listing any predefined actions");
+        }
+    }
+}
+
+//TODO: LLM only - fail gracefully if no LLM present
+() = reportInstructableActions() {
+    Integer !numTaught;
+    Map !bindings;
+    Symbol !type;
+    Variable !x = "X";
+    Boolean !validResponse = false;
+    List !systemGoals;
+    Predicate !state;
+    java.lang.Long !goalID;
+    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+
+    !bindings = act:askQuestionFromString(user,"Would you like me to report all of the actions I have been taught, my predefined actions, or both?", actionType(X));
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
+
+    !type = op:get(!bindings, !x);
+    if (op:equalsValue(!type,"taught") || op:equalsValue(!type,"both")) {
+        !validResponse = op:newObject("java.lang.Boolean", true);
+        act:reportTaughtActions();
+    }
+    if (op:equalsValue(!type,"predefined") || op:equalsValue(!type,"both")) {
+        !validResponse = op:newObject("java.lang.Boolean", true);
+        !systemGoals = tsc:getSystemGoals();
+        if (op:isEmpty(!systemGoals)) {
+            !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reportPredefinedActions(?actor)");
+            !goalID = act:submitGoal(!state);
+            !goalStatus = act:joinOnGoal(!goalID);
+        } else {
+            //TODO: If goal is suspended, submit goal with high priority?
+                  //If goal is active, report failure to report?
+            act:generateResponseFromString("I cannot list all predefined actions while performing another task, please try again when I am not busy");
+        }
+    }
+    if (op:equals(!validResponse,false)) {
+        exit(FAIL,understood(responseToMyQuestion));
+    }
+}
+
+//TODO: how to split these two by language?
+//      (Currently commenting out other form and softly allowing LLM to provide unpopulated semantics and handling in postprocessing)
+//TODO: LLM only - fail gracefully if no LLM present
+//Wrapper to adhere to queueEM
+() = describeActionSteps(Predicate ?action) {
+    Goal !goal;
+    edu.tufts.hrilab.action.selector.ActionSelector !actionSelector;
+    edu.tufts.hrilab.action.ParameterizedAction !parameterizedAction;
+    Predicate !actionDescription;
+    edu.tufts.hrilab.action.ActionConstraints !ac;
+    edu.tufts.hrilab.action.state.StateMachine !sm;
+    java.util.List !eventSpecs;
+    Predicate !stepPredicate;
+    java.util.List !actDescArgs;
+    Predicate !failCond;
+    Predicate !desc;
+    Boolean !isTaughtAction;
+
+    !isTaughtAction = tsc:isLearnedAction(?action);
+
+    if (op:equals(!isTaughtAction,true)) {
+        // get StateMachine for use in action selection
+        !sm = tsc:getStateMachine();
+
+        // pick action, and get event specs from selected action
+        !goal = op:invokeStaticMethod("edu.tufts.hrilab.action.goal.Goal", "createGoal", ?action);
+        !ac = op:newObject("edu.tufts.hrilab.action.ActionConstraints");
+        !actionSelector = op:invokeStaticMethod("edu.tufts.hrilab.action.selector.ActionSelector", "getInstance");
+        !parameterizedAction = op:invokeMethod(!actionSelector, "selectActionForGoal", !goal, !ac, !sm);
+
+        // do null check for action
+        if (op:isNull(!parameterizedAction)) {
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,how(?action)))");
+            exit(FAIL, !failCond);
+        }
+
+        // construct final predicate to assert to belief
+        !actDescArgs = op:newObject("java.util.ArrayList");
+        !oldDescArgs = op:newObject("java.util.ArrayList");
+
+        // build and assert final predicate to belief
+        !stepPredicate = op:invokeMethod(!parameterizedAction, "getStepsInPredicateForm");
+        op:invokeMethod(!actDescArgs, "add", ?action);
+        op:invokeMethod(!actDescArgs, "add", !stepPredicate);
+        !actionDescription = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "actionDescription", !actDescArgs);
+        !desc = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "actionDescription", !actDescArgs);
+        act:generateResponse(!desc);
+    } else {
+        act:generateResponseFromString("As of right now, I can only describe the actions which have been taught to me by a user. For predefined actions, please refer to my user guide");
+    }
+}
+
+//() = describeActionSteps(String ?actionName) {
+//    //TODO: LLM only - fail gracefully if no LLM present
+//
+//}
+
+//Wrapper to adhere to queueEM
+() = reportIfCanPerform(Predicate ?actionPredicate) {
+    String !actionName;
+    Boolean !hasArgs;
+    Boolean !canPerform = false;
+
+    op:log("info","[reportIfCanPerform] ?actionPredicate");
+    //Workaround for inconsistent LLM semantics when specifying a general action name rather than signature
+    !hasArgs = op:invokeMethod(?actionPredicate,"hasArgs");
+    if (op:equals(!hasArgs,true)) {
+        op:log("info","[reportIfCanPerform] predicate has args");
+        if (tsc:actionExists(?actionPredicate)) {
+            op:log("info","[reportIfCanPerform] action found to exist");
+            !canPerform = op:newObject("java.lang.Boolean", true);
+        }
+    } else {
+        !actionName = op:getName(?actionPredicate);
+        op:log("info","[reportIfCanPerform] predicate has no args");
+        if (tsc:actionExists(!actionName)) {
+            op:log("info","[reportIfCanPerform] action found to exist");
+            !canPerform = op:newObject("java.lang.Boolean", true);
+        }
+    }
+
+    if (op:equals(!canPerform,true)) {
+      act:generateResponseFromString("Yes");
+      act:generateResponse(knowHow(?actionPredicate));
+    } else {
+      act:generateResponseFromString("No");
+      act:generateResponse(not(knowHow(?actionPredicate)));
     }
 }

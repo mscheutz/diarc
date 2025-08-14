@@ -279,6 +279,8 @@ import edu.tufts.hrilab.action.justification.Justification;
     if (op:isEmpty(!scheduledGoals)) {
         act:generateResponseFromString("There are no scheduled tasks");
     } else {
+        !numGoals = op:invokeMethod(!scheduledGoals,"size");
+        act:generateResponseFromString("I currently have !numGoals scheduled goals. They are");
         foreach (!goalPred : !scheduledGoals) {
             act:generateResponse(!goalPred);
         }

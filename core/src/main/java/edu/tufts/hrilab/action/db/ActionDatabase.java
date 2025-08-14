@@ -101,6 +101,7 @@ public class ActionDatabase {
    * @param type the type of the action to look up
    * @return if a matching action exists
    */
+  @TRADEService
   public final boolean actionExists(String type) {
     ActionDBEntry adb = Utilities.getEntry(actionDB, type);
     return adb != null;

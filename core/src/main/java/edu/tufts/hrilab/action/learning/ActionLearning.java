@@ -7,6 +7,7 @@ package edu.tufts.hrilab.action.learning;
 import edu.tufts.hrilab.action.Effect;
 import edu.tufts.hrilab.action.ConditionType;
 import edu.tufts.hrilab.action.EffectType;
+import edu.tufts.hrilab.action.asl.ActionScriptLanguageWriter;
 import edu.tufts.hrilab.action.execution.ExecutionType;
 import edu.tufts.hrilab.action.goal.GoalStatus;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
@@ -240,7 +241,11 @@ public class ActionLearning {
     }
 
     log.debug("Generating new ActionDBEntry");
-    learningState.generateActionDBEntry();
+    ActionDBEntry dbEntry  = learningState.generateActionDBEntry();
+    if (executionManager.getLearnedActionsFile() != null) {
+      ActionScriptLanguageWriter writer = new ActionScriptLanguageWriter();
+      writer.writeToFile(dbEntry, executionManager.getLearnedActionsFile(), true);
+    }
     LearningState previousLearningState = learningState.getPreviousLearningState();
     if (previousLearningState != null) {
       log.debug("restoring previous action: " + learningState.getPreviousLearningState().getName());
@@ -460,6 +465,7 @@ public class ActionLearning {
       Database.getActionDB().removeAction(existingEntry);
     }
     learningState.generateActionDBEntry();
+    //TODO: write new version of action to file?? Only for modified taught actions?
   }
 
   private void modifyAction(Predicate modification, Predicate location, LearningState ls) {

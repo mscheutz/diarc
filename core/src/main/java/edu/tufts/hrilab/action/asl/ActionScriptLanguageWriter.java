@@ -32,13 +32,16 @@ public class ActionScriptLanguageWriter {
   private StringBuilder sb;
 
   public void writeToFile(List<ActionDBEntry> actionScripts, String filename) {
+    writeToFile(actionScripts, filename, false);
+  }
+  public void writeToFile(List<ActionDBEntry> actionScripts, String filename, boolean append) {
     StringBuilder localSB = new StringBuilder();
 
     // write each action
     actionScripts.forEach(action -> localSB.append(writeAction(action)).append("\n"));
 
     try {
-      FileWriter fw = new FileWriter(filename);
+      FileWriter fw = new FileWriter(filename, append);
       fw.write(localSB.toString());
       fw.close();
     } catch (IOException e) {
@@ -52,7 +55,11 @@ public class ActionScriptLanguageWriter {
    * @param filename
    */
   public void writeToFile(ActionDBEntry actionScript, String filename) {
-    writeToFile(new ArrayList<>(Arrays.asList(actionScript)), filename);
+    writeToFile(new ArrayList<>(Arrays.asList(actionScript)), filename, false);
+  }
+
+  public void writeToFile(ActionDBEntry actionScript, String filename, boolean append) {
+    writeToFile(new ArrayList<>(Arrays.asList(actionScript)), filename, append);
   }
 
   public String writeAction(ActionDBEntry entry) {

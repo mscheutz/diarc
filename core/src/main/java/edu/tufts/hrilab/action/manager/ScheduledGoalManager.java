@@ -21,7 +21,12 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.*;
+import java.util.Calendar;
 
 public class ScheduledGoalManager {
   private final Logger log = LoggerFactory.getLogger(ScheduledGoalManager.class);
@@ -40,6 +45,8 @@ public class ScheduledGoalManager {
   private final Map<ScheduledGoal, JobKey> scheduledGoals = new HashMap<>();
 
   private final ExecutionManager em;
+
+  private String scheduledGoalsFile = null;
 
   public ScheduledGoalManager(ExecutionManager executionManager) {
     this.em = executionManager;
@@ -127,6 +134,29 @@ public class ScheduledGoalManager {
     // set end time
     if (goal.hasEndDate()) {
       triggerBuilder.endAt(goal.getEndDate());
+    }
+
+    //TODO: discuss before merging what the accepted behavior here should be
+    //Periodic goal is scheduled with a start time in the past. Moving new start time to the next future time matching
+    // the periodic interval. Doing this now mainly alongside persisting scheduled tasks across diarc shutdown/startup
+    // so things don't always occur immediately on startup (ideally configure timings through calendar function)
+    if (goal.isPeriodic() && goal.hasStartDate()) {
+      Date startDate = goal.getStartDate();
+      Date currentDate = new Date();
+      //Find first matching future start date on periodic interval
+      if (startDate.before(currentDate)) {
+        log.warn("[createTrigger] scheduled goal's start date is in the past. Finding first matching future time based on periodic interval");
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startDate);
+        while (calendar.getTime().before(currentDate)) {
+          calendar.add(Calendar.MILLISECOND, (int)goal.getScheduledPeriod());
+        }
+        if (goal.hasEndDate() && calendar.getTime().after(goal.getEndDate())) {
+          log.warn("[createTrigger] next matching scheduled interval time is past the configured end date");
+        } else {
+          triggerBuilder.startAt(calendar.getTime());
+        }
+      }
     }
 
     triggerBuilder.forJob(jobKey);
@@ -327,6 +357,44 @@ public class ScheduledGoalManager {
   public boolean removeGoal(ScheduledGoal goal) {
     synchronized (scheduledGoals) {
       return scheduledGoals.remove(goal) != null;
+    }
+  }
+
+  public void setScheduledGoalsFile(String filepath) {
+    scheduledGoalsFile = filepath;
+  }
+
+  public void writeScheduledGoalsToFile() {
+    if (scheduledGoalsFile != null) {
+      List<Predicate> goalPredicates = new ArrayList<>();
+      synchronized (scheduledGoals) {
+        for (ScheduledGoal sg : scheduledGoals.keySet()) {
+          goalPredicates.add(sg.getPredicate(true));
+        }
+      }
+
+      //Same TODO as MapComponent read/write of location references
+      File f = new File(scheduledGoalsFile);
+      try {
+        if (!f.exists()) {
+          f.getParentFile().mkdirs();
+          f.createNewFile();
+        }
+        ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(f));
+        os.writeObject(goalPredicates);
+        os.flush();
+        os.close();
+      } catch (IOException e) {
+        log.error("[writeScheduledGoalsToFile] error caching current scheduled goals", e);
+      }
+    }
+  }
+
+  public void shutdown() {
+    try {
+      goalScheduler.shutdown();
+    } catch (SchedulerException e) {
+      log.error("[shutdown] a scheduled goal was not correctly canceled during shutdown", e);
     }
   }
 }

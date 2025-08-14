@@ -34,6 +34,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     private boolean v2 = true;
     private boolean registeredForNewActions = false;
     private String learnedActionsString = "";
+    private boolean usingWithParserTest = false;
 
     //@Override
     //protected List<Option> additionalUsageInfo() {
@@ -336,9 +337,9 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                             transformedArgs.add(Factory.createSymbol(refs.get(arg).get(0).getName(),refs.get(arg).get(0).get(0).getType()));
                         }
                         ////TODO: this should only be present for testing
-                        //else {
-                        //    transformedArgs.add(arg);
-                        //}
+                        else if (usingWithParserTest){
+                            transformedArgs.add(arg);
+                        }
                     } catch (TRADEException e) {
                         log.warn("[generateREG]", e);
                     }
@@ -478,20 +479,18 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                 if (tsi != null) {
                     propertyNames = tsi.call(List.class);
                 }
-                //else {
-                //    //parserTest only
-                //    return Arrays.asList("red block", "orange block", "yellow block", "blue block", "green block");
-                //}
+                else if (usingWithParserTest) {
+                    return Arrays.asList("red block", "orange block", "yellow block", "blue block", "green block");
+                }
             } else {
                 //TODO: should be based on group
                 TRADEServiceInfo tsi = getServiceForAgent(actorName, "getJapaneseObjectDescriptors");
                 if (tsi != null) {
                     propertyNames = tsi.call(List.class);
                 }
-                //else {
-                //    //parserTest only
-                //    return Arrays.asList("赤いブロック", "オレンジ色のブロック", "黄色いブロック", "青いブロック", "緑色のブロック");
-                //}
+                else if (usingWithParserTest){
+                    return Arrays.asList("赤いブロック", "オレンジ色のブロック", "黄色いブロック", "青いブロック", "緑色のブロック");
+                }
             }
             return propertyNames;
         } catch (TRADEException e) {
@@ -509,19 +508,17 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                 if (tsi != null) {
                     propertyNames = tsi.call(List.class);
                 }
-                //else {
-                //    //parserTest only
-                //    return Arrays.asList("location one", "location two", "location three", "location four", "location five");
-                //}
+                else if (usingWithParserTest){
+                    return Arrays.asList("location one", "location two", "location three", "location four", "location five");
+                }
             } else {
                 TRADEServiceInfo tsi = getServiceForAgent(agentName,"getJapanesePoseDescriptors");
                 if (tsi != null) {
                     propertyNames = tsi.call(List.class);
                 }
-                //else {
-                //    //parserTest only
-                //    return Arrays.asList("場所1","場所2","場所3","場所4","場所5");
-                //}
+                else if (usingWithParserTest){
+                    return Arrays.asList("場所1","場所2","場所3","場所4","場所5");
+                }
             }
             return propertyNames;
         } catch (TRADEException e) {
@@ -532,58 +529,59 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
     }
 
     private String getWorldStateString(Symbol agent) {
-        ////If parser test
-        //return "Nothing is known by the robot";
-
-        StringBuilder builder = new StringBuilder();
-        Predicate query = Factory.createPredicate("at","X","Y");
-        List<Map<Variable, Symbol>> bindings;
-        String robotLocationString = "";
-        String holdingString = "";
-        try {
-            bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)).call(List.class,query);
-            for (Map<Variable, Symbol> binding : bindings) {
-                Symbol x = binding.get(new Variable("X"));
-                Symbol y = binding.get(new Variable("Y"));
-                TRADEServiceInfo tsi = getServiceForAgent(agent.getName(),"getDescriptorForID",Symbol.class);
-                if (tsi != null) {
-                    Symbol object = tsi.call(Symbol.class, x);
-                    tsi = getServiceForAgent(agent.getName(), "getDescriptorForPoseID", Symbol.class);
+        if (usingWithParserTest) {
+            return "Nothing is known by the robot";
+        } else {
+            StringBuilder builder = new StringBuilder();
+            Predicate query = Factory.createPredicate("at", "X", "Y");
+            List<Map<Variable, Symbol>> bindings;
+            String robotLocationString = "";
+            String holdingString = "";
+            try {
+                bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)).call(List.class, query);
+                for (Map<Variable, Symbol> binding : bindings) {
+                    Symbol x = binding.get(new Variable("X"));
+                    Symbol y = binding.get(new Variable("Y"));
+                    TRADEServiceInfo tsi = getServiceForAgent(agent.getName(), "getDescriptorForID", Symbol.class);
                     if (tsi != null) {
-                        Symbol pose = tsi.call(Symbol.class, y);
-                        if (x.getName().startsWith(agent.getName())) {
-                            if (object.getName().equals("none")) {
-                                robotLocationString = String.format("The robot is at %s. ", pose.getName());
-                            } else {
-                                builder.append(String.format("There is a %s at %s. ", object.getName(), pose.getName()));
+                        Symbol object = tsi.call(Symbol.class, x);
+                        tsi = getServiceForAgent(agent.getName(), "getDescriptorForPoseID", Symbol.class);
+                        if (tsi != null) {
+                            Symbol pose = tsi.call(Symbol.class, y);
+                            if (x.getName().startsWith(agent.getName())) {
+                                if (object.getName().equals("none")) {
+                                    robotLocationString = String.format("The robot is at %s. ", pose.getName());
+                                } else {
+                                    builder.append(String.format("There is a %s at %s. ", object.getName(), pose.getName()));
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            query = Factory.createPredicate("holding","X","Y");
-            bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)).call(List.class,query);
-            for (Map<Variable, Symbol> binding : bindings) {
-                Symbol x = binding.get(new Variable("X"));
-                Symbol y = binding.get(new Variable("Y"));
-                if (x.getName().startsWith(agent.getName())) {
-                    TRADEServiceInfo tsi = getServiceForAgent(agent.getName(),"getDescriptorForID", Symbol.class);
-                    if (tsi != null) {
-                        Symbol object = tsi.call(Symbol.class, y);
-                        holdingString = String.format("The robot is holding a %s. ", object);
+                query = Factory.createPredicate("holding", "X", "Y");
+                bindings = TRADE.getAvailableService(new TRADEServiceConstraints().name("queryBelief").argTypes(Predicate.class)).call(List.class, query);
+                for (Map<Variable, Symbol> binding : bindings) {
+                    Symbol x = binding.get(new Variable("X"));
+                    Symbol y = binding.get(new Variable("Y"));
+                    if (x.getName().startsWith(agent.getName())) {
+                        TRADEServiceInfo tsi = getServiceForAgent(agent.getName(), "getDescriptorForID", Symbol.class);
+                        if (tsi != null) {
+                            Symbol object = tsi.call(Symbol.class, y);
+                            holdingString = String.format("The robot is holding a %s. ", object);
+                        }
                     }
                 }
+            } catch (TRADEException e) {
+                log.error("[getWorldState] ", e);
+                return "Nothing is known by the robot";
             }
-        } catch (TRADEException e) {
-            log.error("[getWorldState] ", e);
-            return "Nothing is known by the robot";
+            if (robotLocationString.isEmpty() && holdingString.isEmpty()) {
+                log.warn("[getWorldState] no matching beliefs found for agent {}", agent);
+                return "Nothing is known by the robot";
+            }
+            return robotLocationString + holdingString + builder;
         }
-        if (robotLocationString.isEmpty() && holdingString.isEmpty()) {
-            log.warn("[getWorldState] no matching beliefs found for agent {}", agent);
-            return "Nothing is known by the robot";
-        }
-        return robotLocationString + holdingString + builder;
     }
 
     private String getDescriptorType(String agentName, String descriptor) {
