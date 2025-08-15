@@ -88,6 +88,13 @@ public class Goal {
   private static final IdGenerator idGenerator = new IdGenerator();
   private Set<Resource> requiredResources = null;
   private Set<Resource> heldResources = null;
+  /**
+   * What this goal's relationship with scheduling is
+   * 0 - no interaction with the scheduler
+   * 1 - a "scheduling" goal. I.e. ScheduledGoal which is doing the scheduling
+   * 2 - a "scheduled" goal. I.e. Goal which is a submitted execution of a scheduled goal
+   */
+  private int scheduledState = 0;
 
   /**
    * The ActionInterpreter currently executing this Goal. Can be null if this Goal isn't currently being executed.
@@ -284,6 +291,14 @@ public class Goal {
 
   public boolean isScheduled() {
     return false;
+  }
+
+  public void setScheduledState(int scheduledState) {
+    this.scheduledState = scheduledState;
+  }
+
+  public int getScheduledState() {
+    return scheduledState;
   }
 
   public Symbol getActor() {

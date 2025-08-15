@@ -90,6 +90,7 @@ public class ScheduledGoalManager {
                           newGoal.addListener(notifier);
                           newGoal.setPriority(priority);
                           newGoal.setPriorityTier(priorityTier);
+                          newGoal.setScheduledState(2);
                         } catch (TRADEException e) {
                           log.error("[executeScheduledGoal] could not set appropriate information in scheduled goal to be submitted",e);
                         }

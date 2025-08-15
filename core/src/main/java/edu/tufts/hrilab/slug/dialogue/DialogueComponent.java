@@ -45,6 +45,7 @@ public class DialogueComponent extends DiarcComponent {
   private Set<TRADEServiceInfo> questionAskingSubscribers = new HashSet<>();
   //I believe this should live at the level of AgentTeams.
   private ConcurrentHashMap<Symbol,Set<Question>> questionsPerAgent = new ConcurrentHashMap<>();
+  private List<Symbol> allowGoalsWithOpenQuestionsFor = new ArrayList<>();
   private Map<Symbol,Set<Symbol>> agentHierarchy = new HashMap<>();
 
   private boolean showDialogueGui = false;
@@ -473,9 +474,24 @@ public class DialogueComponent extends DiarcComponent {
 
   @TRADEService
   public boolean isAgentWaitingForResponse(Symbol agent) {
+    if (allowGoalsWithOpenQuestionsFor.contains(agent)) {
+      return false;
+    }
     Set<Question> currentQuestions = questionsPerAgent.get(agent);
     return !(currentQuestions == null || currentQuestions.stream().noneMatch(Question::isActive));
   }
+
+  //TODO: Hack to get around allowing direct action submission during interactive action learning including question asking
+  //      Real root of the issue is language constraints
+  @TRADEService
+  public void allowInstructionsDuringQAForAgent(Symbol agent) {
+    allowGoalsWithOpenQuestionsFor.add(agent);
+  }
+  @TRADEService
+  public void removeAllowInstructionsDuringQAForAgent(Symbol agent) {
+    allowGoalsWithOpenQuestionsFor.remove(agent);
+  }
+
 
   @TRADEService
   public String getLastQuestion(Symbol agent) {

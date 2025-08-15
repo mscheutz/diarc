@@ -61,6 +61,7 @@ public class ScheduledGoal extends Goal {
     }
 
     info.schedulingInfo = scheduleInfo;
+    setScheduledState(1);
   }
 
   @Override

@@ -598,7 +598,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         }
     }
     if (op:equals(!validResponse,false)) {
-        exit(FAIL,understood(responseToMyQuestion));
+        exit(FAIL,not(understood(responseToMyQuestion)));
     }
 }
 
@@ -690,4 +690,197 @@ import edu.tufts.hrilab.action.goal.Goal;
       act:generateResponseFromString("No");
       act:generateResponse(not(knowHow(?actionPredicate)));
     }
+}
+
+() = learnTourActionOnCancel(Integer ?tracker, Predicate ?learnedActionPred) {
+    if (op:gt(?tracker,0)) {
+        tsc:cancelActionLearning(?actor,?learnedActionPred);
+    }
+    if (op:equals(?tracker,2)) {
+        tsc:removeAllowInstructionsDuringQAForAgent(?actor);
+    }
+}
+
+() = learnTourActionOnSuspend(Integer ?tracker, Predicate ?learnedActionPred) {
+    if (op:gt(?tracker,0)) {
+        tsc:pauseActionLearning(?actor,?learnedActionPred);
+    }
+    if (op:equals(?tracker,2)) {
+        tsc:removeAllowInstructionsDuringQAForAgent(?actor);
+    }
+}
+
+() = learnTourActionOnResume(Integer ?tracker, Predicate ?learnedActionPred) {
+    if (op:gt(?tracker,0)) {
+        tsc:resumeActionLearning(?actor,?learnedActionPred);
+    }
+    if (op:equals(?tracker,2)) {
+        tsc:allowInstructionsDuringQAForAgent(?actor);
+    }
+}
+
+//TODO: can definitely clean this code up a bit
+() = learnTourAction() {
+    onInterrupt :{
+        cancel: act:learnTourActionOnCancel(!tracker,!actionPred);
+        suspend: act:learnTourActionOnSuspend(!tracker,!actionPred);
+        resume: act:learnTourActionOnResume(!tracker,!actionPred);
+    }
+    Map !bindings;
+    Variable !x = "X";
+    java.util.List !responseFormList;
+    Predicate !responseForm;
+    Symbol !responseBinding;
+    Predicate !stepPredicate;
+    String !tourName;
+    Predicate !actionPred;
+    Symbol !location;
+    Integer !tracker = 0;
+
+    //////////// Question Asking for tour name ////////////
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:createPredicate("taskName(X)");
+    op:add(!responseFormList,!responseForm);
+    !bindings = act:askQuestionFromString(user,"What would you like the action to go on this upcoming tour sequence be called?", !responseFormList);
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
+    !responseBinding = op:get(!bindings, !x);
+    !tourName = op:getName(!responseBinding);
+    //TODO: what had caused this to be necessary? Was it ASL parser not being comfortable with action names with spaces?
+    !tourName = op:invokeMethod(!tourName, "replaceAll", " +", "");
+
+
+    //////////// Question Asking for tour's initial location ////////////
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:createPredicate("location(X)");
+    op:add(!responseFormList,!responseForm);
+    !bindings = act:askQuestionFromString(user,"Where would you like the tour to begin?", !responseFormList);
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
+    !responseBinding = op:get(!bindings, !x);
+    if (op:equalsValue(!responseBinding,"none")) {
+        exit(FAIL,not(wasSupplied(anyLocation)));
+    }
+
+
+    //////////// Start action learning and add initial go to location step based on initial location provided ////////////
+    // Q: Need to make all introspection actions ignore action learning? Should all actions which skip the queue not be learning steps?
+             //I think yes, the only thing which makes this weird is the fact that itk and 'describeX' variations of the same action has no distinction currently
+    !actionPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !tourName);
+    noInterrupt {
+        async {
+            act:learnAction(!actionPred);
+        }
+        !tracker = op:newObject("java.lang.Integer", 1);
+    }
+    act:waitForActionLearningStart(!actionPred);
+    !stepPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goToLocation(?actor,!responseBinding)");
+    act:submitGoal(!stepPredicate);
+    act:pauseActionLearning(!actionPred);
+
+    //////////// Question Asking for whether the user would like to do anything at the initial location ////////////
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:createPredicate("val(X)");
+    op:add(!responseFormList,!responseForm);
+    !bindings = act:askQuestionFromString(user,"Do you want me to perform an action at the starting location?", !responseFormList);
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        act:cancelActionLearning(!actionPred);
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
+    !responseBinding = op:get(!bindings, !x);
+
+    //////////// Question Asking for action at the initial location ////////////
+    if (op:equalsValue(!responseBinding,"yes")) {
+        !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+        !responseForm = op:createPredicate("taskPredicate(X)");
+        op:add(!responseFormList,!responseForm);
+        async {
+            act:generateResponseFromString("What would you like me to do there?");
+        }
+        act:resumeActionLearning(!actionPred);
+        noInterrupt {
+            tsc:allowInstructionsDuringQAForAgent(?actor);
+            !tracker = op:newObject("java.lang.Integer", 2);
+        }
+        !bindings = act:waitForLearningGoalSubmissionOrQuestionAnswer(?actor, "What would you like me to do there?", !responseFormList, !actionPred);
+        if (op:isNull(!bindings)) {
+            act:cancelActionLearning(!actionPred);
+            tsc:removeAllowInstructionsDuringQAForAgent(?actor);
+            exit(FAIL,occurred(unknownError));
+        } elseif (~op:invokeMethod(!bindings,"isEmpty")) {
+            //QA answered - submit answered action predicate to add to learning state
+            !stepPredicate = op:get(!bindings,!x);
+            act:submitGoal(!stepPredicate);
+        }
+        //else goal submitted as direct action instruction (Question asking is cleaned up by java action in this case)
+        noInterrupt {
+            tsc:removeAllowInstructionsDuringQAForAgent(?actor);
+            !tracker = op:newObject("java.lang.Integer", 1);
+        }
+        // Pause action learning when doing next location QA
+        act:pauseActionLearning(!actionPred);
+    }
+
+
+    //////////// Start general loop - 1. QA for next location 2. QA for action at location ////////////
+    while (~op:equalsValue(!responseBinding,"none")) {
+        //////////// 1. QA for next location on the path ////////////
+        !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+        !responseForm = op:createPredicate("location(X)");
+        op:add(!responseFormList,!responseForm);
+        !bindings = act:askQuestionFromString(user,"What is the next location along the tour path?", !responseFormList);
+        if (op:invokeMethod(!bindings,"isEmpty")) {
+            act:cancelActionLearning(!actionPred);
+            exit(FAIL,not(wasAnswered(myQuestion)));
+        }
+        !responseBinding = op:get(!bindings, !x);
+
+        //////////// 2. QA for action to perform at that location ////////////
+        if (~op:equalsValue(!responseBinding,"none")) {
+            // Resume action learning
+            act:resumeActionLearning(!actionPred);
+
+            // Add go to location step
+            !stepPredicate = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goToLocation(?actor,!responseBinding)");
+            act:submitGoal(!stepPredicate);
+
+            // QA for action
+            !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+            !responseForm = op:createPredicate("taskPredicate(X)");
+            op:add(!responseFormList,!responseForm);
+            async {
+                act:generateResponseFromString("What would you like me to do there?");
+            }
+            noInterrupt {
+                !tracker = op:newObject("java.lang.Integer", 2);
+                tsc:allowInstructionsDuringQAForAgent(?actor);
+            }
+            !bindings = act:waitForLearningGoalSubmissionOrQuestionAnswer(?actor, "What would you like me to do there?", !responseFormList, !actionPred);
+            if (op:isNull(!bindings)) {
+                act:cancelActionLearning(!actionPred);
+                tsc:removeAllowInstructionsDuringQAForAgent(?actor);
+                exit(FAIL,occurred(unknownError));
+            } elseif (~op:invokeMethod(!bindings,"isEmpty")) {
+                //QA answered - submit answered action predicate to add to learning state
+                !stepPredicate = op:get(!bindings,!x);
+                act:submitGoal(!stepPredicate);
+            }
+            //else goal submitted as direct action instruction (Question asking is cleaned up by java action in this case)
+            noInterrupt {
+                !tracker = op:newObject("java.lang.Integer", 1);
+                tsc:removeAllowInstructionsDuringQAForAgent(?actor);
+            }
+
+            // Pause action learning
+            act:pauseActionLearning(!actionPred);
+        }
+    }
+
+    //Broke out of teaching loop - should not actively be in action learning and should be done teaching
+    //// Commit learning state to learned action ////
+    act:resumeActionLearning(!actionPred);
+    act:endActionLearning(!actionPred);
+    act:generateResponseFromString("I have learned the !tourName tour sequence. You can ask me to perform this by saying \"please perform !tourName\"");
 }

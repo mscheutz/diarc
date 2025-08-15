@@ -668,22 +668,23 @@ public class ExecutionManager implements GoalListener {
       return g;
     }
 
-    //TODO: Better way to designate whether a goal is meant for learning or execution. This should be determined
-    //      based on the listener of the utterance and handled appropriately. Currently if the agentTeam or any of its
-    //      ancestors are learning, it is assumed this goal is meant for that agentTeam's learning. Any goal for an
-    //      agentTeam whose descendent is currently learning will result in a resource conflict
-    //TODO: handle the above mentioned resource conflict by asking the user. Prevent unintentional state changes which
-    //      would break learning if executing while learning.
-    //If actor or ancestor AgentTeam currently learning, hand off to relevant ActionLearning instance.
-    if (handOffToLearning(g)) {
-      return g;
-    }
-
-    // check if goal is a scheduled goal, and handle
-    if (g.isScheduled()) {
+    if (g.getScheduledState() == 1) {
+      // check if goal is a scheduled goal, and handle
       scheduledGoalManager.executeScheduledGoal((ScheduledGoal) g);
       return g;
+    } else if (g.getScheduledState() == 0) {
+      //TODO: Better way to designate whether a goal is meant for learning or execution. This should be determined
+      //      based on the listener of the utterance and handled appropriately. Currently if the agentTeam or any of its
+      //      ancestors are learning, it is assumed this goal is meant for that agentTeam's learning. Any goal for an
+      //      agentTeam whose descendent is currently learning will result in a resource conflict
+      //TODO: handle the above mentioned resource conflict by asking the user. Prevent unintentional state changes which
+      //      would break learning if executing while learning.
+      //If actor or ancestor AgentTeam currently learning, hand off to relevant ActionLearning instance.
+      if (handOffToLearning(g)) {
+        return g;
+      }
     }
+    //else g.getScheduledState == 2 -> child of ScheduledGoal, should not interact with action learning
 
     // else, a "normal" goal submission
     addPendingGoal(new PendingGoal(g));
@@ -2449,11 +2450,28 @@ public class ExecutionManager implements GoalListener {
   public boolean isLearnedAction(Predicate actionSignature) {
     try {
       List<ActionDBEntry> actions = TRADE.getAvailableService(new TRADEServiceConstraints().name("getActionsBySignature").argTypes(Predicate.class)).call(List.class, actionSignature);
-      actions = actions.stream().filter(action -> action.getDBFile().equals(learnedActionsFile) || action.getDBFile() == null).toList();
+      actions = actions.stream().filter(action -> action.getDBFile() == null || action.getDBFile().equals(learnedActionsFile)).toList();
       return !actions.isEmpty();
     } catch (TRADEException e) {
       log.error("[isLearnedAction] error getting action list from signature");
       return false;
+    }
+  }
+
+  @TRADEService
+  public boolean waitForLearningStateUpdate(Symbol agent, Predicate actionSignature) {
+    AgentTeam agentTeam = getAgentTeam(agent);
+    if (agentTeam != null) {
+      return agentTeam.waitForLearningStateUpdate(actionSignature);
+    }
+    return false;
+  }
+
+  @TRADEService
+  public void interruptWaitForLearningStateUpdate(Symbol agent, Predicate actionSignature) {
+    AgentTeam agentTeam = getAgentTeam(agent);
+    if (agentTeam != null) {
+      agentTeam.interruptWaitForLearningStateUpdate(actionSignature);
     }
   }
 
@@ -2463,7 +2481,8 @@ public class ExecutionManager implements GoalListener {
    */
   private boolean handOffToLearning(Goal g) {
     AgentTeam originalAgentTeam = getAgentTeam(g.getActor());
-    if (originalAgentTeam.shouldIgnore(g)) {
+    //TODO: Is this correct that SKIPPENDING goals globally shouldn't be allowed to be taught as action steps?
+    if (originalAgentTeam.shouldIgnore(g) || g.getPriorityTier().equals(PriorityTier.SKIPPENDING)) {
       return false;
     }
 

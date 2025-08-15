@@ -421,6 +421,8 @@ import java.lang.Integer;
     //  it has asked, reject the goal and request an answer to the question first (In practice found that this case leads
     //  to users frequently being confused about system state. Also allows for potential of overlapping questions to be asked).
     if (~op:equalsValue(?priority,SKIPPENDING)) {
+        //TODO: Should this be modified to check if the agent is waiting for a response to a question specifically asked by this speaker? This would require
+        //      a solution to the issue of all questions actually being addressed to the correct entity - which in many cases requires attributing from within all actions which entity's command caused this action to be performed
         if (tsc:isAgentWaitingForResponse(?actor)) {
             act:generateResponseFromString("Please answer my question before sending further instructions");
             return;
