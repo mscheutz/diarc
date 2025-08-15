@@ -930,5 +930,10 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "How would you escort someone",
                 "describeActionSteps(escort)", 10);
         exposedActionList.add(entry);
+        entry = new LLMActionEntry("learnTourAction()",
+                "You begin a dialogue interaction with the user where they teach you how to perform a new type of tour",
+                "I want to teach you how to perform a tour",
+                "learnTourAction()", 10);
+        exposedActionList.add(entry);
     }
 }

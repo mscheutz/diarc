@@ -5,9 +5,11 @@
 package edu.tufts.hrilab.ava;
 
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.ava.message.AvaMoveGoal;
 import edu.tufts.hrilab.ava.message.response.*;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.map.PathAction;
 
 import ai.thinkingrobots.trade.TRADE;
@@ -46,8 +48,12 @@ import org.apache.commons.cli.Option;
 
 import java.lang.Math;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -1350,6 +1356,90 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       writer.flush();
     } catch (IOException e) {
       log.error("[interruptWaitForReadyAck] error signalling WW trigger");
+    }
+  }
+
+  @Action
+  @TRADEService
+  public void interruptWaitForLearningGoalSubmissionOrQuestionAnswer(Symbol agent, Predicate learnedActionPredicate) {
+    //Should only have to cancel one inner action of the two threads the action is waiting one - the action itself should cancel the other one
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("interruptWaitForLearningStateUpdate").argTypes(Symbol.class,Predicate.class)).call(void.class,agent,learnedActionPredicate);
+    } catch (TRADEException e) {
+      log.error("[interruptWaitForLearningGoalSubmissionOrQuestionAnswer] Exception canceling waiting for learning state change to unblock primitive", e);
+    }
+  }
+
+  //TODO: where should this live? Kind of an abomination of an action which shouldn't exist in the first place and
+  //      touches both action and dialogue. Placing here because it is ava demo specific for now?
+  @OnInterrupt(
+          onCancelServiceCall = "interruptWaitForLearningGoalSubmissionOrQuestionAnswer(?agent,?learnedActionPredicate)",
+          onSuspendServiceCall = "interruptWaitForLearningGoalSubmissionOrQuestionAnswer(?agent,?learnedActionPredicate)"
+  )
+  @Action
+  @TRADEService
+  public Map<Variable, Symbol> waitForLearningGoalSubmissionOrQuestionAnswer(Symbol agent, String questionString, List<Term> responseForms, Predicate learnedActionPredicate) {
+    Semaphore threadJoinSem = new Semaphore(0);
+    ExecutorService questionAskingExecutor = Executors.newSingleThreadExecutor();
+    Future<HashMap<Variable,Symbol>> future = questionAskingExecutor.submit(() -> {
+      HashMap<Variable,Symbol> resp = null;
+      try {
+        resp = TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForResponse").argTypes(String.class, List.class, Symbol.class)).call(HashMap.class,questionString, responseForms, agent);
+      } catch (TRADEException e) {
+        log.error("[waitForLearningGoalSubmissionOrQuestionAnswer] Exception waiting for question response", e);
+      }
+      threadJoinSem.release();
+      return resp;
+    });
+
+    final Boolean[] updateReceived = new Boolean[1];
+    Thread learningStateThread = new Thread(() -> {
+      try {
+        updateReceived[0] = TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForLearningStateUpdate").argTypes(Symbol.class, Predicate.class)).call(Boolean.class,agent,learnedActionPredicate);
+      } catch (TRADEException e) {
+        log.error("[waitForLearningGoalSubmissionOrQuestionAnswer] Exception waiting for learning state change", e);
+      }
+      threadJoinSem.release();
+    });
+    learningStateThread.start();
+
+    try {
+      threadJoinSem.acquire();
+    } catch (InterruptedException e) {
+      log.error("[waitForLearningGoalSubmissionOrQuestionAnswer] exception waiting for one of the two conditions to occur", e);
+      return null;
+    }
+
+    if (future.isDone()) {
+      HashMap<Variable, Symbol> questionResponse;
+      try {
+        questionResponse = future.get();
+      } catch (InterruptedException | ExecutionException e) {
+        log.error("[waitForLearningGoalSubmissionOrQuestionAnswer] exception getting question asking response bindings",e);
+        return null;
+      }
+      try {
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("interruptWaitForLearningStateUpdate").argTypes(Symbol.class,Predicate.class)).call(void.class,agent,learnedActionPredicate);
+      } catch (TRADEException e) {
+        log.error("[waitForLearningGoalSubmissionOrQuestionAnswer] Exception canceling waiting for learning state change", e);
+      }
+      learningStateThread.interrupt();
+      return questionResponse;
+    } else if (!learningStateThread.isAlive()) {
+      try {
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("cancelWaitForResponse").argTypes(String.class, List.class, Symbol.class)).call(Map.class,questionString, responseForms, agent);
+      } catch (TRADEException e) {
+        log.error("[waitForLearningGoalSubmissionOrQuestionAnswer] Exception canceling waiting for question response", e);
+      }
+      questionAskingExecutor.shutdownNow();
+      if (!updateReceived[0]) {
+        log.warn("[waitForLearningGoalSubmissionOrQuestionAnswer] learning state listener interrupted but no question answer was detected");
+        return null;
+      }
+      return new HashMap<>();
+    } else {
+      log.error("[waitForLearningGoalSubmissionOrQuestionAnswer] semaphore signalled but neither thread terminated?");
+      return null;
     }
   }
 }

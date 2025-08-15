@@ -123,10 +123,10 @@ Input:QUESTION(ava,%addressee,mean(%addressee,location(none)),{})
 Output:{"translation":"Did you mean to tell me that you are done supplying locations?"}
 #
 Input:QUESTION(ava,%addressee,mean(%addressee,taskPredicate(goHome(ava)),{}))
-Output:{"translation":"Did you mean to indicate that you want to schedule the task to return to the dock to charge?"}
+Output:{"translation":"Did you mean to answer my question by specifying the task to go home?"}
 #
 Input:QUESTION(ava,%addressee,mean(%addressee,taskPredicate(say(ava,?words)),{}))
-Output:{"translation":"Did you mean to indicate that you want to schedule the task to say the phrase \"?words\"?"}
+Output:{"translation":"Did you mean to answer my question by specifying the task to say the phrase \"?words\"?"}
 #
 Input:QUESTION(ava,%addressee,mean(%addressee,relativeTime(?number, ?type)),{})
 Output:{"translation":"Did you mean to answer my question by indicating a relative time ?number ?type from now?"}
@@ -161,21 +161,24 @@ Output:{"translation":"Did you mean to answer my question by indicating an amoun
 Input:QUESTION(ava,%addressee,mean(%addressee,reportTaughtActions(ava)),{})
 Output:{"translation":"Did you mean to ask me to list my learned actions?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,forgetTaughtAction(ava,?actionPredicate)),{})
-Output:{"translation":"Did you mean to ask me to forget how to perform ?actionPredicate?"}
+Input:QUESTION(ava,%addressee,mean(%addressee,forgetTaughtAction(ava,follow(ava))),{})
+Output:{"translation":"Did you mean to ask me to forget how to follow you"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,reportIfCanPerform(ava,?actionPredicate)),{})
-Output:{"translation":"Did you mean to ask me if I know how to perform an action to ?actionPredicate?"}
+Input:QUESTION(ava,%addressee,mean(%addressee,reportIfCanPerform(ava,learnNewTask(ava))),{})
+Output:{"translation":"Did you mean to ask me if I know how to learn a new task?"}
 #
 Input:QUESTION(ava,%addressee,mean(%addressee,reportInstructableActions(ava)),{})
 Output:{"translation":"Did you mean to ask me what all of the actions I can be instructed to perform are?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,describeActionSteps(?ava,?actionPredicate)),{})
-Output:{"translation":"Did you mean to ask me how I would perform an action to ?actionPredicate?"}
+Input:QUESTION(ava,%addressee,mean(%addressee,describeActionSteps(?ava,scheduleGoal(ava))),{})
+Output:{"translation":"Did you mean to ask me to describe the steps I would take to schedule a goal?"}
 ##
 In all future examples of this task you will not be given robot output with variables (inner words starting with ?). These variables will be replaced with input values from the user. Your output should reflect this and include the user values. For example:
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,goToLocation(ava))],{front door(VAR0:location),DEFINITE(VAR0:location)})
+Input:QUESTION(ava,%addressee,[mean(%addressee,goToLocation(ava,?location:location))],{front door(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Did you mean to ask me to go to the front door location?"}
+#
+Input:QUESTION(ava,%addressee,[mean(%addressee,learnTourAction(ava))],{})
+Output:{"translation":"Did you mean to ask me to learn a new tour sequence?"}
 ##
 Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with your results as shown in the examples.

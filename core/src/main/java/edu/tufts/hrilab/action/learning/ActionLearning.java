@@ -54,6 +54,8 @@ public class ActionLearning {
    */
   private ActionLearningStatus learningStatus = ActionLearningStatus.NONE;
   private Map<String, LearningState> pausedLearningStates = new HashMap<>();
+  private Condition learningStateUpdateCondition = goalQueueEmptyLock.newCondition();
+  private Map<Predicate,Boolean> learningStateUpdateListenerInterrupted = new HashMap<>();
   private ActionLearningGui learningGui;
 
   /**
@@ -166,7 +168,7 @@ public class ActionLearning {
   public void waitForActionLearningStart(Predicate newAction) {
     try {
       statusLock.lock();
-      while (learningStatus != ActionLearningStatus.ACTIVE && currentLearningState != null && !newAction.getName().equalsIgnoreCase(currentLearningState.getName())) {
+      while (!(learningStatus == ActionLearningStatus.ACTIVE && currentLearningState != null && newAction.getName().equalsIgnoreCase(currentLearningState.getName()))) {
         try {
           statusCondition.await();
         } catch (InterruptedException e) {
@@ -283,21 +285,28 @@ public class ActionLearning {
   public boolean cancelActionLearning(Predicate action) {
     log.debug("[cancelActionLearning] " + action);
 
-    if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
-      setLearningStatus(ActionLearningStatus.CANCEL);
-      currentLearningState = null;
-      setLearningStatus(ActionLearningStatus.NONE);
-      if (learningGui != null) {
-        learningGui.clear();
-      }
-    } else {
-      LearningState learningState = pausedLearningStates.remove(action.getName());
-      if (learningState == null) {
-        log.error("[cancelActionLearning] called for action with no learning state: {}", action);
-        return false;
+    if (action == null) {
+      log.warn("[cancelActionLearning] supplied action is null");
+      return false;
+    }
+    if (currentLearningState != null) {
+      if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
+        setLearningStatus(ActionLearningStatus.CANCEL);
+        currentLearningState = null;
+        setLearningStatus(ActionLearningStatus.NONE);
+        if (learningGui != null) {
+          learningGui.clear();
+        }
+        return true;
       }
     }
-    return true;
+    LearningState learningState = pausedLearningStates.remove(action.getName());
+    if (learningState == null) {
+      log.error("[cancelActionLearning] called for action with no learning state: {}", action);
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -309,8 +318,14 @@ public class ActionLearning {
   public boolean pauseActionLearning(Predicate action) {
     log.debug("[pauseActionLearning] " + action);
 
+    if (action == null) {
+      log.warn("[pauseActionLearning] supplied action is null");
+      return false;
+    }
+
     if (currentLearningState == null) {
       log.warn("[pauseActionLearning] Can't pause. Current learning state is null.");
+      return false;
     } else if (action.getName().equalsIgnoreCase(currentLearningState.getName())) {
       pausedLearningStates.put(action.getName(), currentLearningState);
       currentLearningState = null;
@@ -330,6 +345,12 @@ public class ActionLearning {
    */
   public boolean resumeActionLearning(Predicate action) {
     log.debug("[resumeActionLearning] " + action);
+
+    if (action == null) {
+      log.warn("[resumeActionLearning] supplied action is null");
+      return false;
+    }
+
     LearningState resumedLearningState = pausedLearningStates.get(action.getName());
     if (resumedLearningState != null) {
       if (currentLearningState != null) {
@@ -349,6 +370,40 @@ public class ActionLearning {
     return true;
   }
 
+  public boolean waitForLearningStateUpdate(Predicate action) {
+    boolean updated = false;
+    learningStateUpdateListenerInterrupted.put(action,false);
+    while (!updated) {
+      goalQueueEmptyLock.lock();
+      try {
+        learningStateUpdateCondition.await();
+        if (learningStateUpdateListenerInterrupted.get(action) == true) {
+          break;
+        }
+        //TODO: Why are the comparison checks only using name throughout this file. This isn't fully safe is it?
+        if (currentLearningState != null && currentLearningState.getName().equalsIgnoreCase(action.getName())) {
+          updated = true;
+        }
+      } catch (Exception e) {
+        log.error("[waitForLearningStateUpdate]", e);
+      } finally {
+        goalQueueEmptyLock.unlock();
+      }
+    }
+    return updated;
+  }
+
+  public void interruptWaitForLearningStateUpdate(Predicate action) {
+    if (learningStateUpdateListenerInterrupted.containsKey(action)) {
+      learningStateUpdateListenerInterrupted.put(action, true);
+      goalQueueEmptyLock.lock();
+      learningStateUpdateCondition.signal();
+      goalQueueEmptyLock.unlock();
+    } else {
+      log.error("[interruptWaitForLearningStateUpdate] don't have pending listener for predicate {}", action);
+    }
+  }
+
   public boolean shouldIgnore(Goal goal) {
     return ignoreActionSet.stream().anyMatch(a -> goal.getPredicate().instanceOf(a));
   }
@@ -365,6 +420,7 @@ public class ActionLearning {
     goalQueueEmptyLock.lock();
     try {
       goalQueueNotEmpty.signal();
+      learningStateUpdateCondition.signal();
     } catch (Exception e) {
       log.error("[addGoal] ", e);
     } finally {

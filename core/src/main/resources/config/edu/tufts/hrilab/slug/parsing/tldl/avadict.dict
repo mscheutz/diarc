@@ -445,6 +445,7 @@ where are you now; C; describeCurrentLocation(?ADDRESSEE)
 i will teach you a new task; C; learnNewTask(?ADDRESSEE)
 
 the task name is; VAL/LIT*; #x.taskName($x)
+it will be called; VAL/LIT*; #x.taskName($x)
 task greet; VAL; taskName(greet)
 i am done teaching; C; endTaskLearning(?ADDRESSEE)
 
@@ -507,3 +508,5 @@ forget how to; C/C; #x.forgetTaughtAction(?ADDRESSEE,$x)
 %predefined actions; VAL; actionType(predefined)
 %both; VAL; actionType(both)
 %at a time; VAL\NUM; #x.amount($x)
+
+learn new tour sequence; VERBI; learnTourAction
