@@ -795,11 +795,11 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         //        "report the wifi signal quality for patrol path %examplePath",
         //        "reportWifiForPatrol(%examplePath:path)", 10);
         //exposedActionList.add(entry);
-        entry = new LLMActionEntry("takePhoto(?location:location)",
-                "You take a photo at location ?location:location",
-                "take a photo of %exampleLocation",
-                "takePhoto(%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
+        //entry = new LLMActionEntry("takePhoto(?location:location)",
+        //        "You take a photo at location ?location:location",
+        //        "take a photo of %exampleLocation",
+        //        "takePhoto(%exampleLocation:location)", 10);
+        //exposedActionList.add(entry);
         entry = new LLMActionEntry("sit()",
                 "You lower your screen",
                 "sit down",

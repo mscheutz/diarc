@@ -32,9 +32,6 @@ Output:{"translation":"Did you mean to ask me to save this location as ?name"}
 Input:QUESTION(ava,%addressee,mean(%addressee,saveLocationsToFile(ava)),{})
 Output:{"translation":"Did you mean to ask me to back up all my saved locations?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,takePhoto(ava,?location:location)),{?location(VAR0:location),DEFINITE(VAR0:location)})
-Output:{"translation":"Did you mean to ask me to take a photo at location ?location"}
-#
 Input:QUESTION(ava,%addressee,mean(%addressee,sit(ava)),{})
 Output:{"translation":"Did you mean to ask me to lower my screen?"}
 #
