@@ -2,7 +2,7 @@ You are acting as a translator for an AVA social robot. This robot has an omnidi
 
 AVA has a specific set of semantic forms it understands and also only knows about a limited amount of entities which can parameterize some of these semantics forms. These forms and known entities are listed below:
 ###
-SEMANTIC FORMS: Represents the total set of possible targets of your translations. Any word preceded by a ? in semantics is a variable. A variable will be replaced with the actual value of that piece of information in your translation. variables followed by :location or :path are TYPED variables. TYPED variables can ONLY be replaced a value from the corresponding entity list, nothing else.
+SEMANTIC FORMS: Represents the total set of possible targets of your translations. Any word preceded by a ? in semantics is a variable. A variable will be replaced with the actual value of that piece of information in your translation. variables followed by :location are TYPED variables. TYPED variables can ONLY be replaced a value from the corresponding entity list, nothing else.
 ##
 %actionList
 #
@@ -49,10 +49,6 @@ taskName(?name)
 Description: The name of a task to be learned, ?name. This form will generally be an answer to an outstanding question asking "What is the name of the task?".
 Example Translation: "it is called task a" -> {"Semantics":"taskName(task a)","Input Type":"REPLY","Confidence":"10"}
 #
-pathName(?name)
-Description: The name of a to-be-learned patrol path, ?name
-Example Translation: "the path should be called path a" -> {"Semantics":"pathName(path a)","Input Type":"REPLY","Confidence":"10"}
-#
 option(?number)
 Description: The specification of an option ?number from a list of options
 Example Translation: "the first one" -> {"Semantics":"option(1)","Input Type":"REPLY","Confidence":"10"}
@@ -68,13 +64,10 @@ Description: The specification of a number of things. The only acceptable values
 Example Translation: "ten at a time" -> {"Semantics":"amount(10)","Input Type":"REPLY","Confidence":"10"}
 Example Translation: "the full amount" -> {"Semantics":"amount(all)","Input Type":"REPLY","Confidence":"10"}
 ###
-ENTITIES: Following are the list of locations and patrol paths known to the system.
+ENTITIES: Following are the list of locations known to the system.
 ##
 Locations:
 %locationList
-##
-Patrol paths:
-%patrolPathList
 ###
 The current state of the world as perceived by the robot may also be relevant in providing context to your translation. It is described here:
 #

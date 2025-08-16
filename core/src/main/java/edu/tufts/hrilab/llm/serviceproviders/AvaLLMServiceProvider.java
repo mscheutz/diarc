@@ -765,36 +765,36 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "backup your current locations",
                 "saveLocationsToFile()", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("definePatrolPath(?name)",
-                "You start learning a new patrol path called ?name",
-                "I want to teach you a new patrol path named lab circuit",
-                "definePatrolPath(lab circuit)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("definePatrolPath()",
-                "You start learning a new patrol path",
-                "I want to teach you a new patrol path",
-                "definePatrolPath()", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("patrol(?pathName:path, ?actionName)",
-                "You navigate along the patrol path ?pathName:path while performing the action ?actionName at each location",
-                "perform %examplePath patrol with wifi evaluation",
-                "patrol(%examplePath:path, wifiEvaluation)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("wifiEvaluation(?location:location)",
-                "You measure the strength of the wifi signal at location ?location:location",
-                "check wifi near %exampleLocation",
-                "wifiEvaluation(%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("reportWifiForLocation(?location:location)",
-                "You report the wifi signal strength at location ?location:location",
-                "what is the wifi signal quality at %exampleLocation",
-                "reportWifiForLocation(%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("reportWifiForPatrol(?pathName:path)",
-                "You report the wifi signal quality at every location along patrol path ?pathName:path",
-                "report the wifi signal quality for patrol path %examplePath",
-                "reportWifiForPatrol(%examplePath:path)", 10);
-        exposedActionList.add(entry);
+        //entry = new LLMActionEntry("definePatrolPath(?name)",
+        //        "You start learning a new patrol path called ?name",
+        //        "I want to teach you a new patrol path named lab circuit",
+        //        "definePatrolPath(lab circuit)", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("definePatrolPath()",
+        //        "You start learning a new patrol path",
+        //        "I want to teach you a new patrol path",
+        //        "definePatrolPath()", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("patrol(?pathName:path, ?actionName)",
+        //        "You navigate along the patrol path ?pathName:path while performing the action ?actionName at each location",
+        //        "perform %examplePath patrol with wifi evaluation",
+        //        "patrol(%examplePath:path, wifiEvaluation)", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("wifiEvaluation(?location:location)",
+        //        "You measure the strength of the wifi signal at location ?location:location",
+        //        "check wifi near %exampleLocation",
+        //        "wifiEvaluation(%exampleLocation:location)", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("reportWifiForLocation(?location:location)",
+        //        "You report the wifi signal strength at location ?location:location",
+        //        "what is the wifi signal quality at %exampleLocation",
+        //        "reportWifiForLocation(%exampleLocation:location)", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("reportWifiForPatrol(?pathName:path)",
+        //        "You report the wifi signal quality at every location along patrol path ?pathName:path",
+        //        "report the wifi signal quality for patrol path %examplePath",
+        //        "reportWifiForPatrol(%examplePath:path)", 10);
+        //exposedActionList.add(entry);
         entry = new LLMActionEntry("takePhoto(?location:location)",
                 "You take a photo at location ?location:location",
                 "take a photo of %exampleLocation",
@@ -890,16 +890,16 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "what are your saved locations",
                 "describeAllKnownLocations()", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("describeAllKnownPatrolPaths()",
-                "You list all currently saved patrol paths",
-                "what paths do you know about",
-                "describeAllKnownPatrolPaths()", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("describeAllLocationsOnPatrolPath(?pathName:path)",
-                "You list all locations included along the saved patrol path named ?pathName:path",
-                "what locations are in %examplePath",
-                "describeAllLocationsOnPatrolPath(%examplePath:path)", 10);
-        exposedActionList.add(entry);
+        //entry = new LLMActionEntry("describeAllKnownPatrolPaths()",
+        //        "You list all currently saved patrol paths",
+        //        "what paths do you know about",
+        //        "describeAllKnownPatrolPaths()", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("describeAllLocationsOnPatrolPath(?pathName:path)",
+        //        "You list all locations included along the saved patrol path named ?pathName:path",
+        //        "what locations are in %examplePath",
+        //        "describeAllLocationsOnPatrolPath(%examplePath:path)", 10);
+        //exposedActionList.add(entry);
         entry = new LLMActionEntry("repeatLastQuestion()",
                 "You repeat the last question you asked, which the human still needs to answer",
                 "could you repeat that",

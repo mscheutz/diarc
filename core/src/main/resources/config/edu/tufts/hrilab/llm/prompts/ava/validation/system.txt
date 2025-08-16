@@ -32,24 +32,6 @@ Output:{"translation":"Did you mean to ask me to save this location as ?name"}
 Input:QUESTION(ava,%addressee,mean(%addressee,saveLocationsToFile(ava)),{})
 Output:{"translation":"Did you mean to ask me to back up all my saved locations?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,definePatrolPath(ava,?name)),{})
-Output:{"translation":"Did you mean to tell me you will begin teaching me a new patrol path called ?name?"}
-#
-Input:QUESTION(ava,%addressee,mean(%addressee,definePatrolPath(ava)),{})
-Output:{"translation":"Did you mean to tell me you will begin teaching me a new patrol path?"}
-#
-Input:QUESTION(ava,%addressee,mean(%addressee,patrol(ava,?pathName:path, ?actionName)),{?pathName(VAR0:path),DEFINITE(VAR0:path)})
-Output:{"translation":"Did you mean to ask me to perform the ?actionName action along the patrol path ?pathName?"}
-#
-Input:QUESTION(ava,%addressee,mean(%addressee,wifiEvaluation(ava,?location:location)),{?location(VAR0:location),DEFINITE(VAR0:location)})
-Output:{"translation":"Did you mean to ask me to check the wifi strength at location ?location?"}
-#
-Input:QUESTION(ava,%addressee,mean(%addressee,reportWifiForLocation(ava,?location:location)),{?location(VAR0:location),DEFINITE(VAR0:location)})
-Output:{"translation":"Did you mean to ask me to report the wifi at location ?location?"}
-#
-Input:QUESTION(ava,%addressee,mean(%addressee,reportWifiForPatrol(ava,?pathName:path)),{?pathName(VAR0:path),DEFINITE(VAR0:path)})
-Output:{"translation":"Did you mean to ask me to report the wifi signal strength for all locations along the patrol path ?pathName?"}
-#
 Input:QUESTION(ava,%addressee,mean(%addressee,takePhoto(ava,?location:location)),{?location(VAR0:location),DEFINITE(VAR0:location)})
 Output:{"translation":"Did you mean to ask me to take a photo at location ?location"}
 #
@@ -145,9 +127,6 @@ Output:{"translation":"Did you mean to tell me to forget about my last question?
 #
 Input:QUESTION(ava,%addressee,mean(%addressee,taskName(?name)),{})
 Output:{"translation":"Did you mean to answer my question by saying a new action should be called ?name"}
-#
-Input:QUESTION(ava,%addressee,mean(%addressee,pathName(?name)),{})
-Output:{"translation":"Did you mean to answer my question by saying a new patrol path should be called ?name"}
 #
 Input:QUESTION(ava,%addressee,mean(%addressee,option(?number)),{})
 Output:{"translation":"Did you mean to answer my question by indicating option number ?number?"}

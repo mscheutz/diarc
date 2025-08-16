@@ -408,12 +408,12 @@ p.m.; VAL\NUM; #x.absoluteTime($x, pm)
 
 testtest; C; testtest(?ADDRESSEE)
 
-perform; (C/C)/C; #x,#y,#z.patrol($y,$z)
+#perform; (C/C)/C; #x,#y,#z.patrol($y,$z)
 
-perform lab patrol with wifi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
-perform office patrol with wifi evaluation; C; patrol(?ADDRESSEE, office patrol, wifiEvaluation)
-perform lab patrol with wi-fi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
-add a new patrol path; C/LIT*; #x.definePatrolPath(?ADDRESSEE,$x)
+#perform lab patrol with wifi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
+#perform office patrol with wifi evaluation; C; patrol(?ADDRESSEE, office patrol, wifiEvaluation)
+#perform lab patrol with wi-fi evaluation; C; patrol(?ADDRESSEE, lab patrol, wifiEvaluation)
+%add a new patrol path; C/LIT*; #x.definePatrolPath(?ADDRESSEE,$x)
 %the name is; VAL/LIT*; #x.name($x)
 that is all; VAL; location(none)
 modify a scheduled task; C; modifyScheduledGoal(?ADDRESSEE)
@@ -477,7 +477,7 @@ the path name is; VAL/LIT*; #x.pathName($x)
 what did you ask me; VERBI; repeatLastQuestion
 
 what locations do you have saved; VERBI; describeAllKnownLocations
-what patrol paths do you have saved; VERBI; describeAllKnownPatrolPaths
+%what patrol paths do you have saved; VERBI; describeAllKnownPatrolPaths
 
 %Start of itk ('correct') versions of describe actions
 what is your current task; Q; whatAre(?ADDRESSEE,currentGoals)
