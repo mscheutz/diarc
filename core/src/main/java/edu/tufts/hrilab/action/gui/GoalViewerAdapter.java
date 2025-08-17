@@ -197,6 +197,14 @@ public class GoalViewerAdapter extends GuiAdapter {
           return String.format("Patrol along %s while performing %s", splitRes[2], splitRes[3]);
         case "showVideo":
           return String.format("Show a video at location %s",getLocationNameFromReference(Factory.createSymbol(splitRes[2])));
+        case "learnNewTour":
+          return "Learning new tour sequence";
+        case "reportInstructableActionsAction":
+          return "Reporting list of instructable actions";
+        case "reportTaughtActionsAction":
+          return "Reporting list of taught actions";
+        case "describeAllKnownLocationsActions":
+          return "Reporting list of all saved locations";
         default:
           return predString;
       }

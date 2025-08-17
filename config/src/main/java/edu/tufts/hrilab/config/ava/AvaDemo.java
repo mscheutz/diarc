@@ -175,6 +175,7 @@ public class AvaDemo extends DiarcConfiguration {
               "dialogue/handleSemantics.asl " +
               "vision.asl " +
               "ava/ava.asl " +
+              "ava/avaIntrospection.asl " +
               "ava/scheduledGoals.asl " +
               "ava/avaMedia.asl " +
               "ava/avaASR.asl " +
