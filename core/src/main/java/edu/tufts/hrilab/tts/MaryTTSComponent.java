@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.sound.sampled.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -102,6 +104,10 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
   private String xmlFilename;
   private boolean speaking;
 
+  // Hold playback clips to potentially interrupt
+  private List<Clip> currentPlaybackClips;
+  private Lock clipLock;
+
   /**
    * Map from unknown token (i.e., newly learned word) to wave file of the word.
    */
@@ -167,6 +173,8 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
     wavFilename = tempWavFile.getPath();
     xmlFilename = tempXmlFile.getPath();
     speaking = false;
+    currentPlaybackClips = new ArrayList<>();
+    clipLock = new ReentrantLock();
 
     // default to male voice
     //voiceStr = "cmu-rms=hsmm"
@@ -216,8 +224,15 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
    */
   @Override
   public boolean stopUtterance() {
-    ap.interrupt();
-    return ap.isInterrupted();
+    clipLock.lock();
+    for (Clip clip : currentPlaybackClips) {
+      clip.stop();
+    }
+    clipLock.unlock();
+    return true;
+    //Doesn't seem to work?
+    //ap.interrupt();
+    //return ap.isInterrupted();
   }
 
   /**
@@ -408,6 +423,9 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
               isDone.set(true);
             }
           });
+          clipLock.lock();
+          currentPlaybackClips.add(playbackClip);
+          clipLock.unlock();
         } catch (LineUnavailableException ex) {
           log.error("line unavailable", ex);
         } catch (IOException ex) {
@@ -425,6 +443,9 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
         while (wait && !isDone.get()) {
           Util.Sleep(100);
         }
+        clipLock.lock();
+        currentPlaybackClips.remove(playbackClip);
+        clipLock.unlock();
       }
       log.debug("Exiting textToSpeech");
       speaking = false;
@@ -525,6 +546,9 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
           isDone.set(true);
         }
       });
+      clipLock.lock();
+      currentPlaybackClips.add(playbackClip);
+      clipLock.unlock();
       if (volume < 1.0f) {
         FloatControl gainControl = (FloatControl) playbackClip.getControl(FloatControl.Type.MASTER_GAIN);
         gainControl.setValue(20f * (float) Math.log10(volume));
@@ -534,6 +558,9 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
       while (!isDone.get()) {
         Util.Sleep(1);
       }
+      clipLock.lock();
+      currentPlaybackClips.remove(playbackClip);
+      clipLock.unlock();
     } catch (LineUnavailableException e1) {
       throw new RuntimeException("[playWavFile] LineUnavailableException", e1);
     }

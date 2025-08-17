@@ -465,6 +465,11 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           }
           if (shouldDing) {
             playAudioClip("ding.wav");
+            try {
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
+            } catch (TRADEException e) {
+              log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+            }
           } else {
             shouldDing = true;
           }
