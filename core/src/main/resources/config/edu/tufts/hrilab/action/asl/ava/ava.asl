@@ -255,11 +255,16 @@ import edu.tufts.hrilab.action.goal.Goal;
 () = recoverGoToLocation(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingActions : {goToLocation(X,Y)} //don't think this line practically matters
+            catchingActions : {goToLocation(X,Y)}
             postRecovery : postrecovery_retry
         }
-        failedActions: {goToLocation(X,Y,Z)}
-        maximumAttempts : 2
+        //failedActions: {goToLocation(X,Y,Z)}
+        failedActions: {goToLocation(X,Y)}
+        maximumAttempts : 1 //TODO: there is an issue here with recovery occurring more times in a row than desired because
+                            //      the failure information doesn't match because the failed actions list doesn't match
+                            //      (the 'currentLocation' in the goToLocation(actor,destination,current) doesn't match)
+                            //      I believe the fix is, when doing failure information equality while detecting duplicate failures,
+                            //      to only check for equality between the actually matched fields within lists of reasons?)
         excludedGoals : {recoverGoToLocation(X,Y,Z,A)} //If you want 0 recovery of recovery (80% sure failing the recovery goTo will exit in a way that the initial failed goTo does not retry) //TODO: requiring this feels like indication of a bug - maxAttempts > 1 with failed action involved in recovery of itself
         //excludedGoals : {recoverGoToLocation(X,Y,Z,recoverGoToLocation(X,A,B,C))} //If you want 1 layer of recovery for recovery
     }
