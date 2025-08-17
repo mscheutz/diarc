@@ -23,6 +23,7 @@ public class AvaDemo extends DiarcConfiguration {
   private String locationRefs = "refs/locations.json";
   private String speakerId = "";
   private boolean initKiosk = true;
+  private boolean persistKiosk = true;
   private String mediaDir = "videos";
   private boolean useDisplay = true;
 
@@ -161,6 +162,9 @@ public class AvaDemo extends DiarcConfiguration {
     String kioskArgs = "";
     if (initKiosk) {
       kioskArgs += " -enabled -timeout 2700";
+    }
+    if (persistKiosk) {
+      kioskArgs += " -kioskSettingsFile ava.ser";
     }
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,

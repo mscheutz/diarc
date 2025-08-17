@@ -644,7 +644,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleGoalNotification").argTypes(GoalInfo.class));
             unregisterService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
         } catch (TRADEException e) {
-            throw new RuntimeException(e);
+            log.error("[shutdownComponent]", e);
         }
     }
 
@@ -934,6 +934,31 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "You begin a dialogue interaction with the user where they teach you how to perform a new type of tour",
                 "I want to teach you how to perform a tour",
                 "learnTourAction()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportKioskSettings()",
+                "You report the current configuration of kiosk mode; Whether it is enabled and the currently configured kiosk timeout and action.",
+                "what is your kiosk configuration",
+                "reportKioskSettings()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("updateKioskTimeout()",
+                "You begin a dialogue interaction with the user to update the configured kiosk timeout",
+                "I would like to update the kiosk timeout",
+                "updateKioskTimeout()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("setKioskTimeout(?duration, ?timeunit)",
+                "You set the kiosk timeout to ?duration ?timeunits. ?timeunit can take the possible values of the Java TIMEUNIT enum.",
+                "Set the kiosk timeout to 30 minutes",
+                "setKioskTimeout(30,minutes)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("setKioskModeEnabled(?enabled)",
+                "You set whether or not kiosk mode is enabled. ?enabled can take the values true or false",
+                "turn on kiosk mode",
+                "setKioskModeEnabled(false)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("updateKioskAction()",
+                "You begin a dialogue interaction with the user to update the configured kiosk action",
+                "I want to change the kiosk action",
+                "updateKioskAction()", 10);
         exposedActionList.add(entry);
     }
 }

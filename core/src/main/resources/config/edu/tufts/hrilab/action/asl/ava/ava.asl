@@ -590,3 +590,40 @@ import edu.tufts.hrilab.action.goal.Goal;
     act:endActionLearning(!actionPred);
     act:generateResponseFromString("I have learned the !tourName tour sequence. You can ask me to perform this by saying \"please perform !tourName\"");
 }
+
+() = updateKioskTimeout() {
+    Map !bindings;
+    Variable !x = "X";
+    Variable !y = "Y";
+    Symbol !time;
+    Symbol !addl;
+    Boolean !success;
+
+    !bindings = act:askQuestionFromString(?actor, "How long should the inactivity timeout be?", relativeTime(X,Y));
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
+    !time = op:get(!bindings, !x);
+    !addl = op:get(!bindings, !y);
+
+    !success = tsc:setKioskTimeout(!time,!addl);
+    if (op:equals(!success,true)) {
+        act:generateResponseFromString("Okay, I have updated the kiosk timeout");
+    } else {
+        exit(FAIL,notParse(suppliedTime));
+    }
+}
+
+() = updateKioskAction() {
+    Map !bindings;
+    Variable !x = "X";
+    Predicate !goalPredicate;
+
+    !bindings = act:askQuestionFromString(?actor, "What should the new kiosk action be?", taskPredicate(X));
+    if (op:invokeMethod(!bindings,"isEmpty")) {
+        exit(FAIL,not(wasAnswered(myQuestion)));
+    }
+    !goalPredicate = op:get(!bindings, !x);
+    tsc:setKioskGoal(!goalPredicate);
+    act:generateResponseFromString("Okay, I have updated the kiosk action");
+}
