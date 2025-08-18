@@ -135,16 +135,19 @@ import edu.tufts.hrilab.action.goal.Goal;
     Predicate !actionPred;
     Integer !numTaught;
     Predicate !reportedPred;
+    String !actionName;
 
     !taughtActions = tsc:getLearnedActionPredicates();
     if (op:isEmpty(!taughtActions)) {
         act:generateResponseFromString("I have not been taught any new actions");
     } else {
         !numTaught = op:invokeMethod(!taughtActions,"size");
-        act:generateResponseFromString("I have been taught !numTaught new actions.");
+        act:generateResponseFromString("I have been taught !numTaught new actions. They are named");
         foreach (!actionPred : !taughtActions) {
-            !reportedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "iHaveBeenTaughtTo(!actionPred)");
-            act:generateResponse(!reportedPred);
+            //!reportedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "iHaveBeenTaughtTo(!actionPred)");
+            //act:generateResponse(!reportedPred);
+            !actionName = op:getName(!actionPred);
+            act:generateResponseFromString(!actionName);
         }
     }
 }
@@ -219,6 +222,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     Predicate !systemGoal;
     java.lang.Long !goalId;
     edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier;
 
     ?exists = op:newObject("java.lang.Boolean", "false");
     !systemGoals = tsc:getSystemGoals(?actor);
@@ -227,7 +231,8 @@ import edu.tufts.hrilab.action.goal.Goal;
         !systemGoal = op:get(!systemGoals,0);
         !goalId = tsc:getGoalId(!systemGoal);
         !goalStatus = tsc:getGoalStatus(!goalId);
-        if (~op:equalsValue(!goalStatus,"SUSPENDED")) {
+        !priorityTier = act:getGoalPriorityTier(!goalID);
+        if (~op:equalsValue(!goalStatus,"SUSPENDED") && ~op:equalsValue(!priorityTier,"KIOSK")) {
             ?exists = op:newObject("java.lang.Boolean", "true");
         }
     }
@@ -382,3 +387,63 @@ import edu.tufts.hrilab.action.goal.Goal;
     !kioskGoalPredicate = tsc:getWrappedKioskGoalPredicate();
     act:generateResponse(!kioskGoalPredicate);
 }
+
+() = listSavedVideos() {
+    Predicate !state;
+    java.lang.Long !goalID;
+    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
+    Boolean !blockingTaskExists;
+
+    !blockingTaskExists = act:blockingTaskExists();
+    if (op:equals(!blockingTaskExists,true)) {
+        act:generateResponseFromString("I cannot list saved videos while performing another task, please try again when I am not busy");
+    } else {
+        //TODO: if the current action is the kiosk action, then submit with SKIPPENDING priority?
+        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "listSavedVideosAction(?actor)");
+        !goalID = act:submitGoal(!state,!execType,!priorityTier);
+        !goalStatus = act:joinOnGoal(!goalID);
+    }
+}
+
+() = listSavedVideosAction() {
+    List !videoNames;
+    Integer !numVideos;
+    String !videoName;
+
+    !videoNames = tsc:getVideoNames(false);
+
+    if (op:isEmpty(!videoNames)) {
+        act:generateResponseFromString("I currently have no saved videos");
+    } else {
+        !numVideos = op:invokeMethod(!videoNames,"size");
+        act:generateResponseFromString("I have !numVideos saved videos. They are called");
+        foreach (!videoName : !videoNames) {
+            //TODO: bug in generateResponseFromString where the string is just a number
+            act:generateResponseFromString(" !videoName");
+        }
+    }
+}
+
+() = reportVideoVolume() {
+    Integer !volume;
+
+    !volume = tsc:getVideoVolume();
+    act:generateResponseFromString("video volume is currently set to !volume percent");
+}
+
+() = reportIsVideoSaved(Symbol ?videoName) {
+    Boolean !match;
+    String !name;
+
+    !name = op:getName(?videoName);
+    !match = tsc:isVideoSaved(!name);
+    if (op:equalsValue(!match,true)) {
+        act:generateResponseFromString("Yes, I have a video saved under the name !name");
+    } else {
+        act:generateResponseFromString("I do not have a video saved under the name !name");
+    }
+}
+
+//() = listSavedImages() {}

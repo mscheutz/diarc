@@ -14,7 +14,7 @@ import java.util.Map;
     Predicate !toAssert;
     Long !gid;
 
-    !goalPredicate = op:createPredicate("scheduled(showVideo(ava, location_4:location), start(3, minutes), period(1, hours))");
+    !goalPredicate = op:createPredicate("scheduled(playNextVideoAtLocation(ava, location_4:location), start(3, minutes), period(1, hours))");
     !gid = act:submitGoal(!goalPredicate);
     !toAssert = op:createPredicate("demoGoalId(!gid)");
     act:assertBelief(!toAssert);
@@ -26,10 +26,10 @@ import java.util.Map;
 
 () = doALap() {
     act:goToLocation(location_6:location);
-    act:showVideo();
+    act:playNextVideo();
     act:goToLocation(location_1:location);
     act:goToLocation(location_2:location);
-    act:showVideo();
+    act:playNextVideo();
     act:goToLocation(location_0:location);
 }
 

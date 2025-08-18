@@ -64,10 +64,16 @@ Description: The specification of a number of things. The only acceptable values
 Example Translation: "ten at a time" -> {"Semantics":"amount(10)","Input Type":"REPLY","Confidence":"10"}
 Example Translation: "the full amount" -> {"Semantics":"amount(all)","Input Type":"REPLY","Confidence":"10"}
 ###
-ENTITIES: Following are the list of locations known to the system.
+ENTITIES: Following are the list of locations, videos, and still images known to the system.
 ##
 Locations:
 %locationList
+##
+Videos:
+%videoList
+##
+Images:
+%imageList
 ###
 The current state of the world as perceived by the robot may also be relevant in providing context to your translation. It is described here:
 #

@@ -126,5 +126,25 @@
   "updateKioskAction": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "listSavedVideos": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "listSavedImages": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportVideoVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setVideoVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportIsVideoSaved": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

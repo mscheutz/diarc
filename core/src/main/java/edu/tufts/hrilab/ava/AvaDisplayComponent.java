@@ -9,6 +9,7 @@ import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.ava.display.DialogueManager;
 import edu.tufts.hrilab.ava.display.DisplayCanvas;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.util.resource.Resources;
 
@@ -91,16 +92,20 @@ public class AvaDisplayComponent extends DiarcComponent {
     initializeFrame();
   }
 
-  private List<String> getMediaFromDir(String videoDir, String fileType) {
+  private String getMediaPath(String videoDir) {
     String homeDir = System.getProperty("user.home");
     String diarcDirPath = Paths.get(homeDir, ".diarc").toString();
-    String videoDirPath = Paths.get(diarcDirPath, videoDir).toString();
+    return Paths.get(diarcDirPath, videoDir).toString();
+  }
+
+  private List<String> getMediaFromDir(String videoDir, String fileType) {
+    String videoDirPath = getMediaPath(videoDir);
     File dir = new File(videoDirPath);
     File[] files = dir.listFiles((dir1, name) -> name.toLowerCase().endsWith(fileType));
     List<String> toReturn = List.of();
     if (files != null) {
       List<File> fileList = List.of(files);
-      toReturn = fileList.stream().map(x -> x.getAbsolutePath()).toList();
+      toReturn = fileList.stream().map(x -> x.getName()).toList();
     }
     return toReturn;
   }
@@ -291,15 +296,17 @@ public class AvaDisplayComponent extends DiarcComponent {
    *
    * @param imageName filename of image to display
    */
+  //TODO: IF MAKING THIS PUBLIC, NEED TO MATCH CASE INDEPENDENT LIKE DONE FOR VIDEOS
   private void displayImage(String imageName, long timeout) {
     log.debug("displayImage(" + imageName + ")");
+    String path = getMediaPath(videoDir) + File.separator + imageName;
     BufferedImage image = null;
     try {
-      image = ImageIO.read(new File(imageName));
+      image = ImageIO.read(new File(path));
     } catch (IOException ex) {
-      log.error("Error getting image " + imageName, ex);
+      log.error("Error getting image " + path, ex);
     } catch (Exception ex) {
-      log.error("Other error getting image " + imageName, ex);
+      log.error("Other error getting image " + path, ex);
     }
     if (image == null) {
       return;
@@ -307,7 +314,6 @@ public class AvaDisplayComponent extends DiarcComponent {
     unsetIdle();
     canvas.setImage(image, timeout);
   }
-
 
   @TRADEService
   public void displayNextVideo() {
@@ -323,16 +329,31 @@ public class AvaDisplayComponent extends DiarcComponent {
     }
   }
 
-  @TRADEService
-  public void displayVideoMatching(String match) {
+  private String getMatchingVideoName(String name) {
     for (String video : videos) {
-      if (video.contains(match)) {
-        displayVideo(video);
+      if (video.equalsIgnoreCase(name)) {
+        return video;
       }
     }
+    return "";
   }
 
-  public void displayVideo(String path) {
+  @TRADEService
+  public boolean isVideoSaved(String name) {
+    return !getMatchingVideoName(name).isEmpty();
+  }
+
+  @TRADEService
+  public boolean displayVideoMatching(String match) {
+    String name = getMatchingVideoName(match);
+    if (name.isEmpty()) {
+      return false;
+    }
+    displayVideo(name);
+    return true;
+  }
+
+  private void displayVideo(String videoName) {
     try {
       SwingUtilities.invokeAndWait(() -> {
                 cardLayout.next(cardPanel);
@@ -341,6 +362,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     } catch (InterruptedException | InvocationTargetException e) {
       log.error("error switching back to logo", e);
     }
+    String path = getMediaPath(videoDir) + File.separator + videoName;
     mediaPlayerComponent.mediaPlayer().media().startPaused(path);
     videoPlaying = true;
     log.info("[displayNextVideo] displaying video: " + path);
@@ -437,6 +459,50 @@ public class AvaDisplayComponent extends DiarcComponent {
       dialogueManager.addMessage(words, speaker);
       unsetIdle();
     }
+  }
+
+  @TRADEService
+  public List<String> getVideoNames(boolean includeFileEndings) {
+    if (includeFileEndings) {
+      return new ArrayList<>(videos);
+    } else {
+      return new ArrayList<>(videos.stream().map(v -> v.split("\\.", 2)[0]).toList());
+    }
+  }
+
+  @TRADEService
+  public List<String> getImageNames(boolean includeFileEndings) {
+    if (includeFileEndings) {
+      return new ArrayList<>(images);
+    } else {
+      return new ArrayList<>(images.stream().map(v -> v.split("\\.", 2)[0]).toList());
+}
+  }
+
+  @TRADEService
+  public boolean setVideoVolume(Symbol volumeSymbol) {
+    try {
+      int volume = Integer.parseInt(volumeSymbol.getName());
+      return setVideoVolume(volume);
+    } catch (NumberFormatException e) {
+      log.error("[setVideoVolume] supplied volumeSymbol not parseable as int: {}", volumeSymbol, e);
+      return false;
+    }
+  }
+
+  @TRADEService
+  public boolean setVideoVolume(int volume) {
+    if (volume < 0 || volume > 100) {
+      log.error("[setVideoVolume] supplied volume is out of bounds [0,100]: {}",volume);
+      return false;
+    }
+    videoVolume = volume;
+    return true;
+  }
+
+  @TRADEService
+  public int getVideoVolume() {
+    return videoVolume;
   }
 
   /**

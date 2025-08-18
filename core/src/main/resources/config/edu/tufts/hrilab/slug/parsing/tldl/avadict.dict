@@ -484,7 +484,7 @@ what is your current task; Q; whatAre(?ADDRESSEE,currentGoals)
 what is your current goal; Q; whatAre(?ADDRESSEE,currentGoals)
 %what are you doing;  Q; whatAre(?ADDRESSEE,goals)
 
-show demo video; VERBI; showVideo
+show demo video; VERBI; playNextVideo
 enable microphone; VERBI; enableMic
 disable microphone; VERBI; disableMic
 

@@ -414,9 +414,30 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
         List<String> locations = getLocations("self", true);
         List<String> patrolPaths = getPatrolPaths();
+        List<String> videos = getVideoNames();
+        List<String> images = getImageNames();
+        String patrolPathList = String.join(":path\n", patrolPaths);
+        if (!patrolPathList.isEmpty()) {
+            patrolPathList += ":path\n";
+        }
+        String locationList = String.join(":location\n", locations);
+        if (!locationList.isEmpty()) {
+            locationList += ":location\n";
+        }
+        String videoList = String.join(":video\n", videos);
+        if (!videoList.isEmpty()) {
+            videoList += ":video\n";
+        }
+        String imageList = String.join(":image\n", images);
+        if (!videoList.isEmpty()) {
+            imageList += ":image\n";
+        }
         promptVars.put("%actionList", generateLLMActionListString(true));
-        promptVars.put("%patrolPathList", String.join(":path\n", patrolPaths));
-        promptVars.put("%locationList", String.join(":location\n", locations));
+        promptVars.put("%patrolPathList", patrolPathList);
+        promptVars.put("%locationList", locationList);
+        promptVars.put("%videoList", videoList);
+        promptVars.put("%exampleVideo", videos.isEmpty() ? "test" : videos.get(0));
+        promptVars.put("%imageList", imageList);
         promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
         promptVars.put("%goals", getGoalString(utterance.getAddressee()));
         promptVars.put("%questionList", getCurrentQuestionsString(utterance.getAddressee()));
@@ -486,6 +507,24 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         //    }
         //}
         return promptVars;
+    }
+
+    private List<String> getVideoNames() {
+        try {
+            return TRADE.getAvailableService(new TRADEServiceConstraints().name("getVideoNames").argTypes(Boolean.class)).call(List.class,true);
+        } catch (TRADEException e) {
+            log.error("[getVideoNames]", e);
+        }
+        return new ArrayList<>();
+    }
+
+    private List<String> getImageNames() {
+        try {
+            return TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageNames").argTypes(Boolean.class)).call(List.class,true);
+        } catch (TRADEException e) {
+            log.error("[getImageNames]", e);
+        }
+        return new ArrayList<>();
     }
 
     //TODO: calls to this/getMapReferences wildly inefficient, fix
@@ -684,6 +723,11 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 case "reportInstructableActions":
                 case "describeActionSteps":
                 case "reportIfCanPerform":
+                case "reportKioskSettings":
+                case "listSavedVideos":
+                case "reportVideoVolume":
+                case "listSavedImages":
+                case "reportIsVideoSaved":
                     return true;
                 default:
                     return false;
@@ -739,11 +783,6 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "You stop following the user",
                 "stop following me",
                 "stopFollow()", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("showVideo()",
-                "You play a video on your screen",
-                "play the video",
-                "showVideo()", 10);
         exposedActionList.add(entry);
         entry = new LLMActionEntry("escortToLocation(?name, ?destination:location)",
                 "You escort ?name to location ?destination:location",
@@ -959,6 +998,46 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "You begin a dialogue interaction with the user to update the configured kiosk action",
                 "I want to change the kiosk action",
                 "updateKioskAction()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("playNextVideo()",
+                "You begin playback of the next video in your saved collection, continuing where you left off",
+                "Play video",
+                "playNextVideo()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("playSpecificVideo(?videoName:video)",
+                "You begin playback of the specific video ?videoName",
+                "Show the %exampleVideo video",
+                "playNextVideo(%exampleVideo)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("playNextVideoAtLocation(?location:location)",
+                "You go to ?location and then begin playback of the next video in your saved collection, continuing where you left off",
+                "Play videos at %exampleLocation",
+                "playNextVideoAtLocation(%exampleLocation:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("playSpecificVideoAtLocation(?videoName:video, ?location:location)",
+                "You go to ?location and then begin playback of the specific video ?videoName",
+                "Go to %exampleLocation and play the %exampleVideo video.",
+                "playSpecificVideoAtLocation(%exampleVideo,%exampleLocation:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("setVideoVolume(?volume)",
+                "You set the volume of videos played on your screen. Acceptable values are whole numbers between 0 and 100.",
+                "Set the video volume to max",
+                "setVideoVolume(100)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("listSavedVideos()",
+                "You list out the collection of videos you currently have saved",
+                "what videos can you play",
+                "listSavedVideos()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportVideoVolume()",
+                "You report the current volume videos are set to play at",
+                "what is the video volume set to",
+                "reportVideoVolume()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportIsVideoSaved(?videoName:video)",
+                "You answer whether you have a video saved under the name ?videoName",
+                "Do you have the %exampleVideo video saved",
+                "reportIsVideoSaved(?videoName)", 10);
         exposedActionList.add(entry);
     }
 }

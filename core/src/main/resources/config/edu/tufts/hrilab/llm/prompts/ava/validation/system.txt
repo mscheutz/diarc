@@ -17,7 +17,7 @@ Output:{"translation":"Did you mean to ask me to say the phrase \'?words\"?"}
 Input:QUESTION(ava,%addressee,mean(%addressee,stopFollow(ava)),{})
 Output:{"translation":"Did you mean to ask me to stop following you?"}
 #
-Input:QUESTION(ava,%addressee,mean(%addressee,showVideo(ava)),{})
+Input:QUESTION(ava,%addressee,mean(%addressee,playNextVideo(ava)),{})
 Output:{"translation":"Did you mean to ask me to play a video on my screen?"}
 #
 Input:QUESTION(ava,%addressee,mean(%addressee,escortToLocation(ava,?name,?destination:location)),{?destination(VAR0:location),DEFINITE(VAR0:location)})
@@ -154,8 +154,8 @@ Output:{"translation":"Did you mean to ask me to report the current kiosk mode s
 ##
 In all future examples of this task you will not be given robot output with variables (inner words starting with ?). These variables will be replaced with input values from the user. Your output should reflect this and include the user values. For example:
 #
-Input:QUESTION(ava,%addressee,[mean(%addressee,goToLocation(ava,?location:location))],{front door(VAR0:location),DEFINITE(VAR0:location)})
-Output:{"translation":"Did you mean to ask me to go to the front door location?"}
+Input:QUESTION(ava,%addressee,[mean(%addressee,goToLocation(ava,?location:location))],{?location(VAR0:location),DEFINITE(VAR0:location)})
+Output:{"translation":"Did you mean to ask me to go to the ?location location?"}
 #
 Input:QUESTION(ava,%addressee,[mean(%addressee,learnTourAction(ava))],{})
 Output:{"translation":"Did you mean to ask me to learn a new tour sequence?"}
@@ -174,5 +174,29 @@ Output:{"translation":"Did you mean to ask me to disable kiosk mode?"}
 #
 Input:QUESTION(ava,%addressee,[mean(%addressee,updateKioskAction(ava))],{})
 Output:{"translation":"Did you mean to tell me that you want to update the configured kiosk action?"}
+#
+Input:QUESTION(ava,%addressee,[mean(%addressee,playNextVideo(ava))],{})
+Output:{"translation":"Did you mean to tell me that you want to me to play the next video in my collection?"}
+#
+Input:QUESTION(ava,%addressee,[mean(%addressee,playNextVideoAtLocation(ava,?location:location))],{?location(VAR0:location),DEFINITE(VAR0:location)})
+Output:{"translation":"Did you mean to tell me that you want to me to play the next video in my collection at ?location?"}
+#
+Input:QUESTION(ava,%addressee,[mean(%addressee,playSpecificVideo(ava,?videoName))],{})
+Output:{"translation":"Did you mean to tell me that you want to me to play the ?videoName video?"}
+#
+Input:QUESTION(ava,%addressee,[mean(%addressee,playSpecificVideoAtLocation(ava,?videoName,?location:location))],{?location(VAR0:location),DEFINITE(VAR0:location)})
+Output:{"translation":"Did you mean to tell me that you want to me to play the ?videoName video at ?location?"}
+#
+Input:QUESTION(ava,%addressee,[mean(%addressee,setVideoVolume(?volume))],{})
+Output:{"translation":"Did you mean to tell me to set video volume to ?volume percent?"}
+#
+Input:QUESTION(ava,%addressee,[mean(%addressee,listSavedVideos())],{})
+Output:{"translation":"Did you mean to tell me to list all of my saved videos?"}
+#
+Input:QUESTION(ava,%addressee,[mean(%addressee,reportVideoVolume())],{})
+Output:{"translation":"Did you mean to ask me what the video volume is set to?"}
+#
+Input:QUESTION(ava,%addressee,[mean(%addressee,reportIsVideoSaved(?videoName))],{})
+Output:{"translation":"Did you mean to ask me whether a video is saved under the name ?videoName?"}
 ##
 Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with your results as shown in the examples.
