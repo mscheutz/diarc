@@ -982,7 +982,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     for (RMSListTagsResponse res : resList) {
       for (Tag tag : res.response.tags.values()) {
         if ("Dock".equals(tag.attributes.get("TagType"))) {
-          toReturn.add(tag.name);
+          if ("SB00152".equals(tag.attributes.get("HomePositionForRobot"))) {
+            toReturn.add(tag.name);
+          }
         }
       }
     }
