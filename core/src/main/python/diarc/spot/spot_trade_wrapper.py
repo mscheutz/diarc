@@ -3,10 +3,11 @@ import os
 import time
 import typing
 import argparse
+from sklearn.utils import Bunch
 
+from policies import door_open, grasp_handle, push_button # from flex
 from bosdyn.api.graph_nav import graph_nav_pb2, nav_pb2
 from bosdyn.client.frame_helpers import get_odom_tform_body
-
 from bosdyn.api import manipulation_api_pb2, geometry_pb2
 from bosdyn.client.recording import GraphNavRecordingServiceClient
 from bosdyn.client import frame_helpers
@@ -41,7 +42,7 @@ def handle_return(func):
     return wrapper
 
 
-@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface])
+@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface,FlexPythonInterface])
 class SpotTRADEWrapper:
     def __init__(self, config, trade_wrapper: TRADEWrapper):
         self._reference_frame = "gpe"
@@ -69,6 +70,64 @@ class SpotTRADEWrapper:
             refsConfigDir = ""
             refsConfigFile = ""
             self.locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile)
+
+    def _get_center_pixel(self, refId: Symbol) -> (int, int):
+        # get pixel coordinates from refId
+        mo = self.trade.call_trade("getEntityForReference", refId,
+                                   JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+        if mo is None:
+            return False
+
+        x_pix = mo.getBoundingBox().x;
+        y_pix = mo.getBoundingBox().y;
+        return (x_pix, y_pix)
+
+    @JOverride
+    def openDoor(self, refId):
+
+        (x_pix, y_pix) = get_center_pixel(refId)
+
+        # call flex policy
+        config = Bunch()
+        config.max_steps = 50
+        config.action_scale = 0.02
+        config.success_distance = 0.1
+        config.success_angle = 60.0
+        logging.info(f"calling flex door_open policy with pixel coordinates: {x_pix}, {y_pix}, {config}")
+        success = door_open.door_open_pixel_location(self.spot, x_pix, y_pix, config)
+
+        return self._handle_return(success)
+
+    @JOverride
+    def graspObject(self, refId):
+
+        (x_pix, y_pix) = get_center_pixel(refId)
+
+        # call flex policy
+        logging.info(f"calling flex grasp_handle policy with pixel coordinates: {x_pix}, {y_pix}")
+        success = grasp_handle.grasp_handle_pixel_location(self.spot, x_pix, y_pix)
+
+        return self._handle_return(success)
+
+    @JOverride
+    def pushButton(self, refId):
+
+        (x_pix, y_pix) = get_center_pixel(refId)
+
+        # call flex policy
+        config = Bunch()
+        config.approach_distance = 1
+        config.press_force_percentage = 0.05
+        config.press_duration = 1.0
+        config.walk_timeout = 15.0
+        logging.info(f"calling flex push_button policy with pixel coordinates: {x_pix}, {y_pix}, {config}")
+        try:
+            success = push_button.push_button_pixel_location(self.spot, x_pix, y_pix, config)
+        except Exception as e:
+            logging.error(f"Caught a general Java exception: {e}")
+            return False
+
+        return self._handle_return(success)
 
     @JOverride
     def moveTo(self, groupName, point, orientation):
@@ -249,7 +308,7 @@ class SpotTRADEWrapper:
     def getTransform(self, srcFrame, dstFrame):
         tmp = Matrix4d()
         tmp.setIdentity()
-        tf = get_a_tform_b(self.spot.robot_state.kinematic_state.frame_tree_snapshot, srcFrame, dstFrame)
+        tf = get_a_tform_b(self.spot.robot_state.kinematic_state.transforms_snapshot, srcFrame, dstFrame)
         tmp.setRotation(Quat4d(tf.rot.x.tf.rot.y, tf.rot.z, tf.rot.w))
         tmp.setTranslation(Vector3d(tf.x, tf.y, tf.z))
         return tmp

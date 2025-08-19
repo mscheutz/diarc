@@ -16,6 +16,7 @@ import edu.tufts.hrilab.slug.listen.ListenerComponent;
 import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
+import edu.tufts.hrilab.spot.SpotComponent;
 import edu.tufts.hrilab.vision.MockVisionComponent;
 
 public class SpotConfig extends DiarcConfiguration {
@@ -57,11 +58,7 @@ public class SpotConfig extends DiarcConfiguration {
     String spotConfigFile = "/home/evan/Downloads/spot_phi.yaml";
     String tradeHubContainer = "127.0.0.1@10002";
 //    String tradeHubContainer = "192.168.0.251@10001";
-    edu.tufts.hrilab.flex.FlexComponent flexComponent = createInstance(edu.tufts.hrilab.flex.FlexComponent.class, "-groups agent:robotone -hubContainer "  + tradeHubContainer + " -spotConfigFile " + spotConfigFile);
-
-    String file = "diarc.spot.spot_trade_wrapper"; // Specify the python file you want to run, according to its package path
-    PythonWrapper wrapper = new PythonWrapper(file, true, tradeHubContainer); // Declare the wrapper as a TRADE spoke
-    wrapper.start("--spot-config",  spotConfigFile, "--groups", "agent:robotone"); // Start the wrapper
+    createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile + " -groups agent:robotone -tradeHub " + tradeHubContainer);
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +

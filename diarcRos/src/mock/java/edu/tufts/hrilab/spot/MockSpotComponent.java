@@ -18,6 +18,11 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
 import java.util.List;
 
+/**
+ * This class only exists for the MultiRobotCaddyDemo integration test, and should not be used for future development.
+ * A new MockSpotComponent should be written outside the diarcRos subproject.
+ */
+@Deprecated
 public class MockSpotComponent extends DiarcComponent implements ArmInterface {
     @Action
     @TRADEService

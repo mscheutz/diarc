@@ -7,21 +7,22 @@ package edu.tufts.hrilab.interfaces;
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.fol.Symbol;
 
 /**
  * Interface to be implemented by a Python module, not a Java DIARC component.
  */
-public interface FlexPythonInterface {
+public interface FlexInterface {
 
   @TRADEService
   @Action
-  Justification open_door_primitive(int x_pix, int y_pix);
+  Justification openDoor(Symbol refId);
 
   @TRADEService
   @Action
-  Justification grasp_object_primitive(int x_pix, int y_pix);
+  Justification graspObject(Symbol refId);
 
   @TRADEService
   @Action
-  Justification push_button_primitive(int x_pix, int y_pix);
+  Justification pushButton(Symbol refId);
 }
