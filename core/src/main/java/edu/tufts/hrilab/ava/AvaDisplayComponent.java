@@ -503,13 +503,13 @@ public class AvaDisplayComponent extends DiarcComponent {
    */
   @TRADEService
   public void avaDisplayDialogueCallback(Utterance utterance, boolean newAddition) {
-    if (newAddition) {
-      log.debug(utterance.toString());
-      String speaker = utterance.getSpeaker().toString();
-      String words = utterance.getWordsAsString();
-      dialogueManager.addMessage(words, speaker);
-      unsetIdle();
-    }
+    //if (newAddition) {
+    //  log.debug(utterance.toString());
+    //  String speaker = utterance.getSpeaker().toString();
+    //  String words = utterance.getWordsAsString();
+    //  dialogueManager.addMessage(words, speaker);
+    //  unsetIdle();
+    //}
     if (utterance.getSpeaker().getName().equals("ava")) {
       new Thread(() -> {
         //String displayedText = "Ava: " + utterance.getWordsAsString() + "\n" + currentText;
