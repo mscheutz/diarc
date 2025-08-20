@@ -124,6 +124,9 @@ Output:{"translation":"I cannot handle your reply to not answer a question becau
 Input:REPLY(ava,%addressee,cannot(learnTourAction(ava),because(not(wasSupplied(anyLocation)))),{})
 Output:{"translation":"I cannot finish learning the tour sequence because no locations were supplied"}
 #
+Input:REPLY(ava,%addressee,cannot(learnTourAction(ava),because(unknown)),{})
+Output:{"translation":"I cannot finish learning the tour sequence for an unknown reason"}
+#
 Input:REPLY(ava,%addressee,learnNewTask(ava),{})
 Output:{"translation":"I learn a new task"}
 #

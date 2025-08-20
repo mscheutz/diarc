@@ -2445,6 +2445,14 @@ public class ExecutionManager implements GoalListener {
           writer.writeToFile(learnedActions, learnedActionsFile);
         }
       }
+
+      //Ava learned presentation/media management hack
+      if (actionSignature.getName().length() > 7 && actionSignature.getName().startsWith("present")) {
+        try {
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("deletePresentationSlides").argTypes(String.class)).call(void.class, actionSignature.getName().split("present")[1]);
+        } catch (TRADEException ignored){}
+      }
+
       return new ConditionJustification(true);
     } catch (TRADEException e) {
       log.error("could not find service", e);

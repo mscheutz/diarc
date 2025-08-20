@@ -8,17 +8,19 @@ import ai.thinkingrobots.trade.*;
 
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
+import edu.tufts.hrilab.action.execution.ExecutionType;
+import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.ava.display.DialogueManager;
 import edu.tufts.hrilab.ava.display.DisplayCanvas;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
-import edu.tufts.hrilab.util.resource.Resources;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
-import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
 import java.awt.*;
@@ -31,9 +33,10 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * Class representing the display functionality on the screen of the Ava robot.
@@ -69,6 +72,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   private String videoDir = "";
   private String idleImageDir = "";
   private String userImageDir = "";
+  private String presentationSlidesDir = "";
   private List<String> videos = new ArrayList<>();
   private int currentVideo = -1;
   private int videoVolume;
@@ -330,6 +334,22 @@ public class AvaDisplayComponent extends DiarcComponent {
     return true;
   }
 
+  @Action
+  @TRADEService
+  @OnInterrupt(onCancelServiceCall = "interruptDisplayImageWithName()", onSuspendServiceCall = "interruptDisplayImageWithName()")
+  public void displaySlideWithName(String presentationName, String imageName, long timeout) {
+    if (presentationName.startsWith("\"") && presentationName.endsWith("\"")) {
+      presentationName = presentationName.substring(1,presentationName.length()-1);
+    }
+    if (imageName.startsWith("\"") && imageName.endsWith("\"")) {
+      imageName = imageName.substring(1,imageName.length()-1);
+    }
+    String path = getMediaPath(presentationSlidesDir) + File.separator + presentationName + File.separator + imageName;
+    userImageDisplayed = true;
+    displayImage(path, timeout, true);
+    userImageDisplayed = false;
+  }
+
   //TODO: smarter interaction with timeout on suspend/resume? Currently will reset timer
   @TRADEService
   public void interruptDisplayImageWithName() {
@@ -495,6 +515,13 @@ public class AvaDisplayComponent extends DiarcComponent {
     canvas.setText(text, textTimeout);
   }
 
+  @TRADEService
+  public void displayText(String text, long timeout) {
+    log.debug("displayText {} {}", text, timeout);
+    unsetIdle();
+    canvas.setText(text, timeout);
+  }
+
   /**
    * Callback TRADE service to receive dialogue events and display
    * them on the DisplayCanvas.
@@ -575,6 +602,126 @@ public class AvaDisplayComponent extends DiarcComponent {
     return videoVolume;
   }
 
+  //Leaving temporarily for reference
+  //@Action
+  //@TRADEService
+  //public void testLearnNewPresentationAction() {
+  //  List<String> slideNames = new ArrayList<>();
+  //  slideNames.add("slide 1.png");
+  //  slideNames.add("Slide 2.png");
+  //  slideNames.add("Slide3.png");
+  //  learnNewPresentationAction("Introduction Presentation",slideNames,10);
+  //}
+
+  //Called in forgetTaughtAction if action starts with name "present"
+  @TRADEService
+  public void deletePresentationSlides(String presentationName) {
+    if (presentationSlidesDir.isEmpty()) {
+      log.error("[deletePresentationSlides] cannot delete slides if media dir is not set");
+      return;
+    }
+
+    String path = getMediaPath(presentationSlidesDir) + File.separator + presentationName;
+    File directory = new File(path);
+    File[] files = directory.listFiles();
+    if (files != null) {
+      for (File file: files) {
+        file.delete();
+      }
+    }
+    directory.delete();
+  }
+
+  //Flexible on parameterization, e.g.:
+  //  Can have N durations rather than 1
+  //  Can provide presentation directory with sequentially named images rather than filename list
+  //Return value could be a string or justification for more specific failure messages if desired
+  @TRADEService
+  public boolean learnNewPresentationAction(String presentationName, List<String> slideFilenames, long duration) {
+    //Assumes these images are saved somewhere separate from userImages. Currently assuming presentation specific
+    // subfolders under "presentationSlides" macro folder (for the purposes of deleting files when forgetting action)
+    if (presentationSlidesDir.isEmpty()) {
+      log.error("[learnNewPresentationAction] cannot save new presentation action if media dir is not set");
+      return false;
+    }
+
+    String[] presentationNameParts = presentationName.toLowerCase().split("\\s+");
+    // If deleting the presentation action, I assume we then want to delete the associated files?
+    //  There is no way to know when to do this unless the presentation actions have a specific
+    //  naming pattern enforced which can be checked in "forgetTaughtAction"
+    // Calling method from "forgetTaughtAction" to delete all associated slide files when matching on a "present<name>" action
+    // TODO: The directory these files are saved to must match <name> in order to do this. This has to be enforced wherever
+    //        the images are saved to file. (<name> being capitalized, camel case joined string)
+    String safePresentationName = Arrays.stream(presentationNameParts).map(p -> Character.toUpperCase(p.charAt(0)) + p.substring(1)).collect(Collectors.joining());
+    String actionName = "present" + safePresentationName;
+
+    //Check all images can be loaded properly
+    for (String filename: slideFilenames) {
+      String path = getMediaPath(presentationSlidesDir) + File.separator + safePresentationName + File.separator + filename;
+      BufferedImage image = null;
+      try {
+        image = ImageIO.read(new File(path));
+      } catch (IOException ex) {
+        log.error("[learnNewPresentationAction] Error getting slide image " + path, ex);
+      } catch (Exception ex) {
+        log.error("[learnNewPresentationAction] Other error getting slide image " + path, ex);
+      }
+      if (image == null) {
+        return false;
+      }
+    }
+
+    // TODO: need teaching to be interactor/agentTeam specific here again - can have collisions if receiving instructions
+    //      during this. Hoping the window is small enough that it practically won't happen.
+    // Teach new presentation action at once:
+    Predicate actionPredicate = Factory.createPredicate(actionName);
+    try {
+      // Start Action Learning
+      new Thread(() -> {
+          try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("learnAction").argTypes(Symbol.class, Predicate.class)).call(void.class, Factory.createSymbol("ava"), actionPredicate);
+          } catch (TRADEException e) {
+            //Error handling in threads not very safe for learning state
+            log.error("[learnNewPresentationAction] exception teaching action");
+          }
+      }).start();
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForActionLearningStart").argTypes(Symbol.class, Predicate.class)).call(void.class, Factory.createSymbol("ava"),actionPredicate);
+
+      // Teach Action steps
+      for (String slideFilename : slideFilenames) {
+        Predicate displaySlidePredicate = Factory.createPredicate("displaySlideWithName","ava","\""+safePresentationName+"\"","\""+slideFilename+"\"",String.valueOf(duration));
+
+        // Need to synchronize properly around learning state updates
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<?> future = executor.submit(() -> {
+          try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForLearningStateUpdate").argTypes(Symbol.class, Predicate.class)).call(void.class, Factory.createSymbol("ava"), actionPredicate);
+          } catch (TRADEException e) {
+            log.error("[learnNewPresentationAction] exception teaching action");
+          }
+        });
+
+        // Submit display image goal as learning step
+        long gid = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class, ExecutionType.class, PriorityTier.class)).call(Long.class, displaySlidePredicate, ExecutionType.ACT, PriorityTier.NORMAL);
+        //TRADE.getAvailableService(new TRADEServiceConstraints().name("joinOnGoal").argTypes(Long.class)).call(GoalStatus.class, gid);
+
+        future.get(5,TimeUnit.SECONDS); //What is an appropriate amount of time to wait?
+
+      }
+    } catch (Exception e) {
+      log.error("[learnNewPresentationAction] exception teaching action");
+      return false;
+    } finally {
+      try {
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("endActionLearning").argTypes(Symbol.class, Predicate.class)).call(void.class, Factory.createSymbol("ava"), actionPredicate);
+      } catch (TRADEException e) {
+        log.error("[learnNewPresentationAction] exception ending learning");
+      }
+    }
+
+    return true;
+  }
+
   /**
    * Sets the display to be idle
    */
@@ -615,6 +762,7 @@ public class AvaDisplayComponent extends DiarcComponent {
       videoDir = mediaDir + File.separator + "videos";
       idleImageDir = mediaDir + File.separator + "idleImages";
       userImageDir = mediaDir + File.separator + "userImages";
+      presentationSlidesDir = mediaDir + File.separator + "presentationSlides";
     }
     if (cmdLine.hasOption("videoVolume")) {
       videoVolume = Integer.parseInt(cmdLine.getOptionValue("videoVolume"));

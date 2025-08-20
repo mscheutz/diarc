@@ -459,8 +459,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           log.info(s.toString());
           //Display on screen that we are listening
           try {
-            TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
-            service.call(void.class,"Understanding speech");
+            TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class, Long.class));
+            service.call(void.class,"Understanding speech",15);
           } catch (TRADEException e) {
             log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
           }
