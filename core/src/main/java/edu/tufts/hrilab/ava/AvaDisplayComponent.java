@@ -183,6 +183,14 @@ public class AvaDisplayComponent extends DiarcComponent {
       @Override
       public void stopped(MediaPlayer mediaPlayer) {
         videoPlaying = false;
+        try {
+          SwingUtilities.invokeAndWait(() -> {
+                    cardLayout.previous(cardPanel);
+                  }
+          );
+        } catch (InterruptedException | InvocationTargetException e) {
+          log.error("error switching back to idle display", e);
+        }
         continueIdleImageCycle();
       }
 
@@ -464,14 +472,6 @@ public class AvaDisplayComponent extends DiarcComponent {
   @TRADEService
   public void cancelVideoPlayback() {
     mediaPlayerComponent.mediaPlayer().controls().stop();
-    try {
-      SwingUtilities.invokeAndWait(() -> {
-                cardLayout.previous(cardPanel);
-              }
-      );
-    } catch (InterruptedException | InvocationTargetException e) {
-      log.error("error switching back to logo", e);
-    }
     videoPlaying = false;
   }
 
