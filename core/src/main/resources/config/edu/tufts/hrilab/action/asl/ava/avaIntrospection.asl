@@ -136,18 +136,61 @@ import edu.tufts.hrilab.action.goal.Goal;
     Integer !numTaught;
     Predicate !reportedPred;
     String !actionName;
+    String !numToReportString;
+    Integer !numToReport;
+    Integer !numReported = 0;
+    Map !bindings;
+    Variable !x = "X";
+    Symbol !confirmation;
 
     !taughtActions = tsc:getLearnedActionPredicates();
     if (op:isEmpty(!taughtActions)) {
         act:generateResponseFromString("I have not been taught any new actions");
     } else {
         !numTaught = op:invokeMethod(!taughtActions,"size");
-        act:generateResponseFromString("I have been taught !numTaught new actions. They are named");
-        foreach (!actionPred : !taughtActions) {
-            //!reportedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "iHaveBeenTaughtTo(!actionPred)");
-            //act:generateResponse(!reportedPred);
-            !actionName = op:getName(!actionPred);
-            act:generateResponseFromString(!actionName);
+        if (op:gt(!numTaught,5)) {
+            !bindings = act:askQuestionFromString(user,"I have been taught !numTaught new actions. How many should I list at a time?", amount(X));
+            if (op:invokeMethod(!bindings,"isEmpty")) {
+                exit(FAIL,not(wasAnswered(myQuestion)));
+            }
+            !numToReportString = op:get(!bindings, !x);
+            if (op:equalsValue(!numToReportString,"all")) {
+                !numToReport = op:newObject("java.lang.Integer", !numTaught);
+            } else {
+                !numToReport = op:newObject("java.lang.Integer", !numToReportString);
+            }
+            if (op:gt(!numToReport,0)) {
+                foreach (!actionPred : !taughtActions) {
+                    if (op:equals(!numReported,!numToReport)) {
+                        !bindings = act:askQuestionFromString(user,"Would you like me to keep going?", val(X));
+                        if (op:invokeMethod(!bindings,"isEmpty")) {
+                            exit(FAIL,not(wasAnswered(myQuestion)));
+                        }
+                        !confirmation = op:get(!bindings, !x);
+                        if (op:equalsValue(!confirmation, yes)) {
+                            !numReported = op:newObject("java.lang.Integer", 0);
+                        } else {
+                            //weird hack to get desired control flow ('break' from loop)
+                            !numReported = op:++(!numReported);
+                        }
+                    } elseif (op:lt(!numReported,!numToReport)) {
+                        !actionName = op:getName(!actionPred);
+                        act:generateResponseFromString(!actionName);
+                        !numReported = op:++(!numReported);
+                    }
+                }
+                act:generateResponseFromString("I am done listing the actions I have been taught");
+            } else {
+            act:generateResponseFromString("Sorry, I am exiting this conversation context. Please try again and supply a positive number");
+            }
+        } else {
+            act:generateResponseFromString("I have been taught !numTaught new actions. They are named");
+            foreach (!actionPred : !taughtActions) {
+                //!reportedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "iHaveBeenTaughtTo(!actionPred)");
+                //act:generateResponse(!reportedPred);
+                !actionName = op:getName(!actionPred);
+                act:generateResponseFromString(!actionName);
+            }
         }
     }
 }
@@ -231,7 +274,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         !systemGoal = op:get(!systemGoals,0);
         !goalId = tsc:getGoalId(!systemGoal);
         !goalStatus = tsc:getGoalStatus(!goalId);
-        !priorityTier = act:getGoalPriorityTier(!goalID);
+        !priorityTier = act:getGoalPriorityTier(!goalId);
         if (~op:equalsValue(!goalStatus,"SUSPENDED") && ~op:equalsValue(!priorityTier,"KIOSK")) {
             ?exists = op:newObject("java.lang.Boolean", "true");
         }

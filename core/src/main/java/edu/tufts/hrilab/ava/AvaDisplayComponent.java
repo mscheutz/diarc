@@ -364,6 +364,8 @@ public class AvaDisplayComponent extends DiarcComponent {
     canvas.cancelSetImage();
     clearImage();
     clearText();
+    userImageDisplayed = false;
+    continueIdleImageCycle();
   }
 
   private void displayUserImage(String imageName, long timeout) {
