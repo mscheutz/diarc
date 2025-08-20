@@ -24,7 +24,7 @@ public class AvaDemo extends DiarcConfiguration {
   private String speakerId = "";
   private boolean initKiosk = true;
   private boolean persistKiosk = true;
-  private String mediaDir = "videos";
+  private String mediaDir = "ava";
   private boolean useDisplay = true;
 
 
@@ -151,7 +151,7 @@ public class AvaDemo extends DiarcConfiguration {
 //    }
 
     if (useDisplay) {
-      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -videoDir " + mediaDir + " -videoVolume 10");
+      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 10");
     }
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);

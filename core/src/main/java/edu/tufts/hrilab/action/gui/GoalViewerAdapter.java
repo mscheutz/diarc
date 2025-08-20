@@ -211,8 +211,12 @@ public class GoalViewerAdapter extends GuiAdapter {
           return String.format("Playing video \"%s\"",splitRes[2]);
         case "playSpecificVideoAtLocation":
           return String.format("Playing video \"%s\" at location \"%s\"", splitRes[2], getLocationNameFromReference(Factory.createSymbol(splitRes[3])));
-        case "ListSavedVideosAction":
+        case "listSavedVideosAction":
           return "Listing all saved videos";
+        case "listSavedImagesAction":
+          return "Listing all saved Images";
+        case "waitForDuration":
+          return String.format("Waiting for %s seconds",splitRes[2]);
         default:
           return predString;
       }

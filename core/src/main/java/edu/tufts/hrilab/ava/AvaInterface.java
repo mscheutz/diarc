@@ -180,4 +180,12 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
   @TRADEService
   @Action
   public void interruptWaitForReadyAck();
+
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptWaitForDuration()", onSuspendServiceCall = "interruptWaitForDuration()")
+  public void waitForDuration(long seconds);
+  @TRADEService
+  @Action
+  public void interruptWaitForDuration();
 }

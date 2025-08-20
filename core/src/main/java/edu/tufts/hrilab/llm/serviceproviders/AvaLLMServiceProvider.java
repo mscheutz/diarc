@@ -437,6 +437,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         promptVars.put("%locationList", locationList);
         promptVars.put("%videoList", videoList);
         promptVars.put("%exampleVideo", videos.isEmpty() ? "test" : videos.get(0));
+        promptVars.put("%exampleImage", images.isEmpty() ? "test" : images.get(0));
         promptVars.put("%imageList", imageList);
         promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
         promptVars.put("%goals", getGoalString(utterance.getAddressee()));
@@ -1038,6 +1039,40 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "You answer whether you have a video saved under the name ?videoName",
                 "Do you have the %exampleVideo video saved",
                 "reportIsVideoSaved(?videoName)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("waitForDuration(?seconds)",
+                "You wait idly for ?seconds seconds. ?seconds must be a positive whole number.",
+                "Then wait for a minute",
+                "waitForDuration(60)", 10);
+        exposedActionList.add(entry);
+        //TODO: for a lot the video and image actions - allow then() semantics to be targeted and handled generally rather
+        //      than making these variations of the same method (or revisit this specific model and prompt format and
+        //      100% prevent misparamaterized actions from being generated - or have smarter recovery in these cases).
+        //      e.g. then(goToLocation(...),playVideo(...),waitForDuration(...))
+        entry = new LLMActionEntry("displayNamedImage(?imageName:image)",
+                "You display the image ?imageName at your current location until told otherwise",
+                "Display the %exampleImage image",
+                "displayNamedImage(%exampleImage)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("displayNamedImageAtLocation(?imageName:image,?location:location)",
+                "You go to location ?location then display the image ?imageName until told otherwise",
+                "Display the %exampleImage image at the %exampleLocation location",
+                "displayNamedImageAtLocation(%exampleImage,%exampleLocation:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("displayNamedImageForDuration(?imageName:image,?seconds)",
+                "You display the image ?imageName for ?seconds seconds",
+                "Display the %exampleImage image for a minute",
+                "displayNamedImageForDuration(%exampleImage,60)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("displayNamedImageForDurationAtLocation(?imageName:image,?location:location,?seconds)",
+                "You go to location ?location then display the image ?imageName for ?seconds seconds",
+                "Display the %exampleImage image at the %exampleLocation location for 45 seconds",
+                "displayNamedImageForDurationAtLocation(%exampleImage,%exampleLocation:location,45)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("listSavedImages()",
+                "You list out the collection of images you currently have saved",
+                "what images can you display",
+                "listSavedImages()", 10);
         exposedActionList.add(entry);
     }
 }

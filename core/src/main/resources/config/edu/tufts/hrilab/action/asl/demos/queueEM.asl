@@ -31,7 +31,10 @@ import edu.tufts.hrilab.action.justification.Justification;
         //Should never return more than one goalId in the queue case.
         //Wait for goal to be suspended
         !goalId = op:get(!goalIds,0);
-        !status = tsc:waitForNextGoalStatusUpdate(!goalId);
+        !status = tsc:getGoalStatus(!goalId);
+        if (~op:equalsValue(!status,SUSPENDED)) {
+            !status = tsc:waitForNextGoalStatusUpdate(!goalId);
+        }
         op:log("debug","[suspendSystemGoalsBlocking] have status update for suspended goal: !status");
         //Need to write this way because we can't short circuit ||, throws exception when comparing null
         if (~op:isNull(!status)) {
@@ -167,7 +170,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     Variable !tmpVar;
     Predicate !oldGoalsPred;
 
-    op:log("info","[checkKnowsActiveGoals]");
+    op:log("debug","[checkKnowsActiveGoals]");
 
     // construct and retract a generic predicate from belief to clear previous entries
     !tmpVar = op:newObject("edu.tufts.hrilab.fol.Variable", "X");
@@ -192,5 +195,5 @@ import edu.tufts.hrilab.action.justification.Justification;
     } else {
         !currentGoalsPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate","doing(nothing)");
     }
-    op:log("info","[checkKnowsActiveGoals] !currentGoalsPred");
+    op:log("debug","[checkKnowsActiveGoals] !currentGoalsPred");
 }

@@ -42,17 +42,24 @@ public class SimpleTextElement {
    *
    * @param text      The text to be displayed
    */
-  public void setText(String text, long textTimeout) {
+  public void setText(String text, long textTimeout, Runnable runnable) {
     this.text = text;
 
     if (scheduledClearTask != null && !scheduledClearTask.isDone()) {
       scheduledClearTask.cancel(false);
     }
 
-    if (textTimeout > 0) {
+    if (textTimeout > 0 && runnable != null) {
       // Schedule the text to be cleared after the specified timeout
-      scheduledClearTask = scheduler.schedule(this::clearText, textTimeout, TimeUnit.MILLISECONDS);
+      scheduledClearTask = scheduler.schedule(runnable, textTimeout, TimeUnit.MILLISECONDS);
     }
+  }
+
+  /**
+   * Gets the currently displayed text
+   */
+  public String getText() {
+    return text;
   }
 
   /**

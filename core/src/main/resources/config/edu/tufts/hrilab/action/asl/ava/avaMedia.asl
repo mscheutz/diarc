@@ -81,3 +81,31 @@ import java.util.Map;
 //    //Ask for video/image collection one by one
 //    //Should this be done automatically through a GUI upon submission of slides rather than language?
 //}
+
+() = displayNamedImage(String ?imageName) {
+    act:displayNamedImageForDurationAtLocation(?imageName,current,-1);
+}
+
+() = displayNamedImageAtLocation(String ?imageName, Symbol ?location:location) {
+    act:displayNamedImageForDurationAtLocation(?imageName,?location,-1);
+}
+
+() = displayNamedImageForDuration(String ?imageName, Symbol ?durationSymbol) {
+    act:displayNamedImageForDurationAtLocation(?imageName,current,?durationSymbol);
+}
+
+() = displayNamedImageForDurationAtLocation(String ?imageName, Symbol ?location:location, Symbol ?durationSymbol) {
+    Boolean !imageShown;
+    String !locationName;
+
+    !locationName = op:getName(?location);
+    if (~op:equals(!locationName,"current")) {
+        act:goToLocation(?location);
+    }
+
+    !imageShown = act:displayImageWithName(?imageName,?durationSymbol);
+
+    if (op:equals(!imageShown,false)) {
+        exit(FAIL,couldNotShowImage(?imageName));
+    }
+}

@@ -97,6 +97,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private String uriString = "http://172.18.0.1";
   private List<BufferedImage> mapImages = new ArrayList<>();
   private List<RMSMapMetadataResponse> mapMetadatas = new ArrayList<>();
+  private Thread sleepForDurationThread = null;
 
   /**
    * HACK: assumes location_0 reference in MapComponent consultant is the dock.
@@ -1443,6 +1444,24 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     } else {
       log.error("[waitForLearningGoalSubmissionOrQuestionAnswer] semaphore signalled but neither thread terminated?");
       return null;
+    }
+  }
+
+  @Override
+  public void waitForDuration(long seconds) {
+    log.info("[waitForDuration] sleeping for {} seconds", seconds);
+    try {
+      sleepForDurationThread = Thread.currentThread();
+      Thread.sleep(seconds*1000);
+    } catch (InterruptedException ignored) {}
+    sleepForDurationThread = null;
+    log.info("[waitForDuration] done sleeping");
+  }
+
+  @Override
+  public void interruptWaitForDuration() {
+    if (sleepForDurationThread != null) {
+      sleepForDurationThread.interrupt();
     }
   }
 }

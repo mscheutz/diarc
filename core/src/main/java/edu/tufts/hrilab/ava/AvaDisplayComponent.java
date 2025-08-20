@@ -6,6 +6,8 @@ package edu.tufts.hrilab.ava;
 
 import ai.thinkingrobots.trade.*;
 
+import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.ava.display.DialogueManager;
 import edu.tufts.hrilab.ava.display.DisplayCanvas;
 import edu.tufts.hrilab.diarc.DiarcComponent;
@@ -46,7 +48,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   private boolean useChat = false;
   private DialogueManager dialogueManager = new DialogueManager();
 
-  private final long textTimeout = 20000; //20 seconds
+  private final long textTimeout = 8000; //8 seconds
   private final long idleTimeout = 600000; //10 minutes
 
   private long idleTimer = -1;
@@ -55,6 +57,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   private EmbeddedMediaPlayerComponent mediaPlayerComponent;
 
   private final ScheduledExecutorService refreshExecutor = Executors.newScheduledThreadPool(1);
+  private ScheduledFuture currentImageCycleFuture = null;
 
   private TRADEServiceInfo isWakeWordEnabledService = null;
   private TRADEServiceInfo getWakeWordsService = null;
@@ -64,11 +67,15 @@ public class AvaDisplayComponent extends DiarcComponent {
   private CardLayout cardLayout;
   private JPanel cardPanel;
   private String videoDir = "";
+  private String idleImageDir = "";
+  private String userImageDir = "";
   private List<String> videos = new ArrayList<>();
   private int currentVideo = -1;
   private int videoVolume;
   private boolean videoPlaying = false;
-  private List<String> images = new ArrayList<>();
+  private boolean userImageDisplayed = false;
+  private List<String> idleImages = new ArrayList<>();
+  private List<String> userImages = new ArrayList<>();
   private int currentImage = -1;
   private int trLogoIndex = 0;
 
@@ -76,12 +83,14 @@ public class AvaDisplayComponent extends DiarcComponent {
   protected void init() {
     if (!videoDir.equals("")) {
       videos = getMediaFromDir(videoDir, ".mp4");
-      images = getMediaFromDir(videoDir, ".png");
-      images = images.stream().sorted().toList();
+      idleImages = getMediaFromDir(idleImageDir, ".png");
+      idleImages = idleImages.stream().sorted().toList();
+      userImages = getMediaFromDir(userImageDir, ".png");
+      userImages = userImages.stream().sorted().toList();
       currentVideo = 0;
       currentImage = 0;
       int index = 0;
-      for (String img : images) {
+      for (String img : idleImages) {
         if (img.contains("(1)")) {
           trLogoIndex = index;
           currentImage = trLogoIndex;
@@ -110,15 +119,15 @@ public class AvaDisplayComponent extends DiarcComponent {
     return toReturn;
   }
 
-//  @Override
-//  protected void postRegistrationInit() {
-//    // register to get notified of "registerForDialogueHistoryNotifications" service
-//    try {
-//      TRADE.registerNotificationNowOrWhenJoined(this, new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications").argTypes(TRADEServiceInfo.class), "registerDialogueCallback");
-//    } catch (TRADEException e) {
-//      log.error("Error trying to register for registerForDialogueHistoryNotifications service.", e);
-//    }
-//  }
+  @Override
+  protected void postRegistrationInit() {
+    // register to get notified of "registerForDialogueHistoryNotifications" service
+    try {
+      TRADE.registerNotificationNowOrWhenJoined(this, new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications").argTypes(TRADEServiceInfo.class), "registerDialogueCallback");
+    } catch (TRADEException e) {
+      log.error("Error trying to register for registerForDialogueHistoryNotifications service.", e);
+    }
+  }
 
   /**
    * Sets up the display. This includes initializing the display environment, configuring the screen.
@@ -169,16 +178,8 @@ public class AvaDisplayComponent extends DiarcComponent {
 
       @Override
       public void stopped(MediaPlayer mediaPlayer) {
-        try {
-          SwingUtilities.invokeAndWait(() -> {
-                    cardLayout.previous(cardPanel);
-                    displayImage(images.get(trLogoIndex), 10 * 1000);
-                  }
-          );
-        } catch (InterruptedException | InvocationTargetException e) {
-          log.error("error switching back to logo", e);
-        }
         videoPlaying = false;
+        continueIdleImageCycle();
       }
 
     };
@@ -203,34 +204,36 @@ public class AvaDisplayComponent extends DiarcComponent {
       frame.setVisible(true);
     }
 
-    Runnable cycleImageTask = () -> {
-      if (!videoPlaying) {
-        try {
-          SwingUtilities.invokeAndWait(() -> {
-                    displayImage(images.get(currentImage), 10 * 1000);
-                  }
-          );
-        } catch (InterruptedException | InvocationTargetException e) {
-          log.error("error switching back to logo", e);
-        }
-        if (currentImage >= (images.size() - 1)) {
-          currentImage = 0;
-        } else {
-          currentImage++;
-        }
-      }
-    };
+    startIdleImageCycle(0);
+  }
 
-    try {
-      SwingUtilities.invokeAndWait(() -> {
-                displayImage(images.get(trLogoIndex), 10 * 1000);
-              }
-      );
-    } catch (InterruptedException | InvocationTargetException e) {
-      log.error("error switching back to logo", e);
+  private void startIdleImageCycle(int initialDelay) {
+    if (currentImageCycleFuture != null) {
+      log.error("[startIdleImageCycle] called while previous scheduled future still exists");
+      return;
     }
+    Runnable cycleImageTask = this::continueIdleImageCycle;
 
-    refreshExecutor.scheduleAtFixedRate(cycleImageTask, 0, 30, TimeUnit.SECONDS);
+    currentImageCycleFuture = refreshExecutor.scheduleAtFixedRate(cycleImageTask, initialDelay, 30, TimeUnit.SECONDS);
+  }
+
+  private void continueIdleImageCycle() {
+    if (!videoPlaying && !userImageDisplayed) {
+      try {
+        SwingUtilities.invokeAndWait(() -> {
+                  displayIdleImage(idleImages.get(currentImage), -1);
+                }
+        );
+      } catch (InterruptedException | InvocationTargetException e) {
+        log.error("error advancing idle image", e);
+      }
+
+      if (currentImage >= (idleImages.size() - 1)) {
+        currentImage = 0;
+      } else {
+        currentImage++;
+      }
+    }
   }
 
   /**
@@ -291,15 +294,76 @@ public class AvaDisplayComponent extends DiarcComponent {
 
   }
 
+  private String getMatchingImageName(String name) {
+    for (String image : userImages) {
+      if (image.equalsIgnoreCase(name)) {
+        return image;
+      }
+    }
+    return "";
+  }
+
+  @Action
+  @TRADEService
+  @OnInterrupt(onCancelServiceCall = "interruptDisplayImageWithName()", onSuspendServiceCall = "interruptDisplayImageWithName()")
+  public boolean displayImageWithName(String imageName, Symbol timeoutSymbol) {
+    try {
+      long timeout = Long.parseLong(timeoutSymbol.getName());
+      return displayImageWithName(imageName, timeout);
+    } catch (NumberFormatException e) {
+      log.error("[displayImageWithName] error parsing timeoutSymbol {}", timeoutSymbol, e);
+      return false;
+    }
+  }
+
+  @Action
+  @TRADEService
+  @OnInterrupt(onCancelServiceCall = "interruptDisplayImageWithName()", onSuspendServiceCall = "interruptDisplayImageWithName()")
+  public boolean displayImageWithName(String imageName, long timeout) {
+    String name = getMatchingImageName(imageName);
+    if (name.isEmpty()) {
+      return false;
+    }
+
+    displayUserImage(imageName, timeout, true);
+
+    return true;
+  }
+
+  //TODO: smarter interaction with timeout on suspend/resume? Currently will reset timer
+  @TRADEService
+  public void interruptDisplayImageWithName() {
+    canvas.cancelSetImage();
+    clearImage();
+    clearText();
+  }
+
+  private void displayUserImage(String imageName, long timeout) {
+    displayUserImage(imageName, timeout, false);
+  }
+  private void displayIdleImage(String imageName, long timeout) {
+    displayIdleImage(imageName,timeout,false);
+  }
+  private void displayUserImage(String imageName, long timeout, boolean blocking) {
+    userImageDisplayed = true;
+    clearText();
+    String path = getMediaPath(userImageDir) + File.separator + imageName;
+    displayImage(path, timeout, blocking);
+    userImageDisplayed = false;
+    continueIdleImageCycle();
+  }
+  private void displayIdleImage(String imageName, long timeout, boolean blocking) {
+    String path = getMediaPath(idleImageDir) + File.separator + imageName;
+    displayImage(path, timeout, blocking);
+  }
+
   /**
    * Displays an image from the resources directory on the DisplayCanvas.
    *
-   * @param imageName filename of image to display
+   * @param path filename of image to display
    */
-  //TODO: IF MAKING THIS PUBLIC, NEED TO MATCH CASE INDEPENDENT LIKE DONE FOR VIDEOS
-  private void displayImage(String imageName, long timeout) {
-    log.debug("displayImage(" + imageName + ")");
-    String path = getMediaPath(videoDir) + File.separator + imageName;
+  private void displayImage(String path, long timeout, boolean blocking) {
+    log.debug("displayIdleImage(" + path + ")");
     BufferedImage image = null;
     try {
       image = ImageIO.read(new File(path));
@@ -312,7 +376,11 @@ public class AvaDisplayComponent extends DiarcComponent {
       return;
     }
     unsetIdle();
-    canvas.setImage(image, timeout);
+    if (blocking) {
+      canvas.setImageBlocking(image, timeout);
+    } else {
+      canvas.setImage(image, timeout);
+    }
   }
 
   @TRADEService
@@ -376,11 +444,6 @@ public class AvaDisplayComponent extends DiarcComponent {
   @TRADEService
   public void cancelVideoPlayback() {
     mediaPlayerComponent.mediaPlayer().controls().stop();
-  }
-
-  @TRADEService
-  public void pauseVideoPlayback() {
-    mediaPlayerComponent.mediaPlayer().controls().pause();
     try {
       SwingUtilities.invokeAndWait(() -> {
                 cardLayout.previous(cardPanel);
@@ -393,16 +456,12 @@ public class AvaDisplayComponent extends DiarcComponent {
   }
 
   @TRADEService
+  public void pauseVideoPlayback() {
+    mediaPlayerComponent.mediaPlayer().controls().pause();
+  }
+
+  @TRADEService
   public void resumeVideoPlayback() {
-    try {
-      SwingUtilities.invokeAndWait(() -> {
-                cardLayout.next(cardPanel);
-              }
-      );
-    } catch (InterruptedException | InvocationTargetException e) {
-      log.error("error switching back to logo", e);
-    }
-    videoPlaying = true;
     mediaPlayerComponent.mediaPlayer().controls().play();
   }
 
@@ -422,14 +481,6 @@ public class AvaDisplayComponent extends DiarcComponent {
   public void clearText() {
     log.debug("clearText()");
     canvas.clearText();
-    try {
-      SwingUtilities.invokeAndWait(() -> {
-                displayImage(images.get(trLogoIndex), 10 * 1000);
-              }
-      );
-    } catch (InterruptedException | InvocationTargetException e) {
-      log.error("error switching back to logo", e);
-    }
   }
 
   /**
@@ -459,6 +510,25 @@ public class AvaDisplayComponent extends DiarcComponent {
       dialogueManager.addMessage(words, speaker);
       unsetIdle();
     }
+    if (utterance.getSpeaker().getName().equals("ava")) {
+      new Thread(() -> {
+        //String displayedText = "Ava: " + utterance.getWordsAsString() + "\n" + currentText;
+        //displayText(displayedText);
+        String currentText = canvas.getText();
+        //Not sure what timing ideally looks like here - recognized speech string overwritten by response string
+        if (!currentText.isEmpty()) {
+          long sleepDuration = 500;
+          if (currentText.startsWith("Recognized Speech:")) {
+            sleepDuration = 1500;
+          }
+          try {
+            Thread.sleep(sleepDuration);
+          } catch (InterruptedException ignored) {
+          }
+        }
+        displayText("Ava: " + utterance.getWordsAsString());
+      }).start();
+    }
   }
 
   @TRADEService
@@ -473,9 +543,9 @@ public class AvaDisplayComponent extends DiarcComponent {
   @TRADEService
   public List<String> getImageNames(boolean includeFileEndings) {
     if (includeFileEndings) {
-      return new ArrayList<>(images);
+      return new ArrayList<>(userImages);
     } else {
-      return new ArrayList<>(images.stream().map(v -> v.split("\\.", 2)[0]).toList());
+      return new ArrayList<>(userImages.stream().map(v -> v.split("\\.", 2)[0]).toList());
 }
   }
 
@@ -527,7 +597,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("chat").argName("boolean").desc("switch dialogue to chat format").build());
     options.add(Option.builder("fullscreen").argName("boolean").desc("make the display full screen or not").build());
-    options.add(Option.builder("videoDir").hasArg().desc("name of directory for videos in .diarc dir").build());
+    options.add(Option.builder("mediaDir").hasArg().desc("name of base directory with videos, idleImages, and userImages subdirectories in .diarc dir").build());
     options.add(Option.builder("videoVolume").hasArg().desc("volume for video playback").build());
     return options;
   }
@@ -540,8 +610,11 @@ public class AvaDisplayComponent extends DiarcComponent {
     if (cmdLine.hasOption("fullscreen")) {
       isFullscreen = true;
     }
-    if (cmdLine.hasOption("videoDir")) {
-      videoDir = cmdLine.getOptionValue("videoDir");
+    if (cmdLine.hasOption("mediaDir")) {
+      String mediaDir = cmdLine.getOptionValue("mediaDir");
+      videoDir = mediaDir + File.separator + "videos";
+      idleImageDir = mediaDir + File.separator + "idleImages";
+      userImageDir = mediaDir + File.separator + "userImages";
     }
     if (cmdLine.hasOption("videoVolume")) {
       videoVolume = Integer.parseInt(cmdLine.getOptionValue("videoVolume"));

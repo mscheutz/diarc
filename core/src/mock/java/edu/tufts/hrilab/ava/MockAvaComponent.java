@@ -83,6 +83,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private List<RMSMapMetadataResponse> mapMetadatas = new ArrayList<>();
   private int numMaps = 0;
   private List<String> dockNames = new ArrayList<>();
+  private Thread sleepForDurationThread = null;
 
   @Override
   public void init() {
@@ -789,6 +790,24 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     } else {
       log.error("[waitForLearningGoalSubmissionOrQuestionAnswer] semaphore signalled but neither thread terminated?");
       return null;
+    }
+  }
+
+  @Override
+  public void waitForDuration(long seconds) {
+    log.info("[waitForDuration] sleeping for {} seconds", seconds);
+    try {
+      sleepForDurationThread = Thread.currentThread();
+      Thread.sleep(seconds*1000);
+    } catch (InterruptedException ignored) {}
+    sleepForDurationThread = null;
+    log.info("[waitForDuration] done sleeping");
+  }
+
+  @Override
+  public void interruptWaitForDuration() {
+    if (sleepForDurationThread != null) {
+      sleepForDurationThread.interrupt();
     }
   }
 }

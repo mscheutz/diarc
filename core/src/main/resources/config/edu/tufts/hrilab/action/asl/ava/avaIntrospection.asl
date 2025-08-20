@@ -446,4 +446,40 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
-//() = listSavedImages() {}
+() = listSavedImages() {
+    Predicate !state;
+    java.lang.Long !goalID;
+    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
+    Boolean !blockingTaskExists;
+
+    !blockingTaskExists = act:blockingTaskExists();
+    if (op:equals(!blockingTaskExists,true)) {
+        act:generateResponseFromString("I cannot list saved images while performing another task, please try again when I am not busy");
+    } else {
+        //TODO: if the current action is the kiosk action, then submit with SKIPPENDING priority?
+        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "listSavedImagesAction(?actor)");
+        !goalID = act:submitGoal(!state,!execType,!priorityTier);
+        !goalStatus = act:joinOnGoal(!goalID);
+    }
+}
+
+() = listSavedImagesAction() {
+    List !imageNames;
+    Integer !numImages;
+    String !imageName;
+
+    !imageNames = tsc:getImageNames(false);
+
+    if (op:isEmpty(!imageNames)) {
+        act:generateResponseFromString("I currently have no saved images");
+    } else {
+        !numImages = op:invokeMethod(!imageNames,"size");
+        act:generateResponseFromString("I have !numImages saved images. They are called");
+        foreach (!imageName : !imageNames) {
+            //TODO: bug in generateResponseFromString where the string is just a number
+            act:generateResponseFromString(" !imageName");
+        }
+    }
+}
