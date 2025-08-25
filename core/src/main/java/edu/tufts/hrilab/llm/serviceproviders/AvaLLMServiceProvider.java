@@ -729,6 +729,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 case "reportVideoVolume":
                 case "listSavedImages":
                 case "reportIsVideoSaved":
+                case "sayText":
                     return true;
                 default:
                     return false;
@@ -850,11 +851,11 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "stand up",
                 "stand()", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("deliver(?objectName, ?location:location)",
-                "You deliver ?objectName to location ?location:location",
-                "bring the mug to %exampleLocation",
-                "deliver(mug,%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
+        //entry = new LLMActionEntry("deliver(?objectName, ?location:location)",
+        //        "You deliver ?objectName to location ?location:location",
+        //        "bring the mug to %exampleLocation",
+        //        "deliver(mug,%exampleLocation:location)", 10);
+        //exposedActionList.add(entry);
         entry = new LLMActionEntry("goHome()",
                 "You go to your charging dock and charge",
                 "go back to charge",

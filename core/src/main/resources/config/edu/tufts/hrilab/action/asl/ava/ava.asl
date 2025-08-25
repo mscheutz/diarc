@@ -447,7 +447,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     !responseForm = op:createPredicate("taskName(X)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString(user,"What would you like the action to go on this upcoming tour sequence be called?", !responseFormList);
+    !bindings = act:askQuestionFromString(user,"What would you like the action to go on this upcoming tour sequence to be called?", !responseFormList);
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -455,7 +455,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !tourName = op:getName(!responseBinding);
     //TODO: what had caused this to be necessary? Was it ASL parser not being comfortable with action names with spaces?
     !tourName = op:invokeMethod(!tourName, "replaceAll", " +", "");
-
 
     //////////// Question Asking for tour's initial location ////////////
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
@@ -504,6 +503,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         op:add(!responseFormList,!responseForm);
         async {
             act:generateResponseFromString("What would you like me to do there?");
+            act:triggerWW();
         }
         act:resumeActionLearning(!actionPred);
         noInterrupt {
@@ -558,6 +558,7 @@ import edu.tufts.hrilab.action.goal.Goal;
             op:add(!responseFormList,!responseForm);
             async {
                 act:generateResponseFromString("What would you like me to do there?");
+                act:triggerWW();
             }
             noInterrupt {
                 !tracker = op:newObject("java.lang.Integer", 2);
@@ -588,7 +589,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     //// Commit learning state to learned action ////
     act:resumeActionLearning(!actionPred);
     act:endActionLearning(!actionPred);
-    act:generateResponseFromString("I have learned the !tourName tour sequence. You can ask me to perform this by saying \"please perform !tourName\"");
+    act:generateResponse("and(learnedTourSequence(!tourName),canAskToPerformBySaying(pleasePerform,!tourName))");
+    //act:generateResponseFromString("I have learned the !tourName tour sequence. You can ask me to perform this by saying \"please perform !tourName\"");
 }
 
 () = updateKioskTimeout() {
