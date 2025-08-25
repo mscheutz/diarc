@@ -42,7 +42,7 @@ def handle_return(func):
     return wrapper
 
 
-@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface,FlexPythonInterface])
+@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface])
 class SpotTRADEWrapper:
     def __init__(self, config, trade_wrapper: TRADEWrapper):
         self._reference_frame = "gpe"
@@ -83,56 +83,21 @@ class SpotTRADEWrapper:
         return (x_pix, y_pix)
 
     @JOverride
-    def openDoor(self, refId):
-
-        (x_pix, y_pix) = get_center_pixel(refId)
-
-        # call flex policy
-        config = Bunch()
-        config.max_steps = 50
-        config.action_scale = 0.02
-        config.success_distance = 0.1
-        config.success_angle = 60.0
-        logging.info(f"calling flex door_open policy with pixel coordinates: {x_pix}, {y_pix}, {config}")
-        success = door_open.door_open_pixel_location(self.spot, x_pix, y_pix, config)
-
-        return self._handle_return(success)
-
-    @JOverride
-    def graspObject(self, refId):
-
-        (x_pix, y_pix) = get_center_pixel(refId)
-
-        # call flex policy
-        logging.info(f"calling flex grasp_handle policy with pixel coordinates: {x_pix}, {y_pix}")
-        success = grasp_handle.grasp_handle_pixel_location(self.spot, x_pix, y_pix)
-
-        return self._handle_return(success)
-
-    @JOverride
-    def pushButton(self, refId):
-
-        (x_pix, y_pix) = get_center_pixel(refId)
-
-        # call flex policy
-        config = Bunch()
-        config.approach_distance = 1
-        config.press_force_percentage = 0.05
-        config.press_duration = 1.0
-        config.walk_timeout = 15.0
-        logging.info(f"calling flex push_button policy with pixel coordinates: {x_pix}, {y_pix}, {config}")
-        try:
-            success = push_button.push_button_pixel_location(self.spot, x_pix, y_pix, config)
-        except Exception as e:
-            logging.error(f"Caught a general Java exception: {e}")
-            return False
-
-        return self._handle_return(success)
-
-    @JOverride
     def moveTo(self, groupName, point, orientation):
-        return self.moveTo(groupName.getName(), point.x, point.y, point.z, orientation.x, orientation.y, orientation.z,
-                           orientation.w)
+        quat = geometry_pb2.Quaternion(orientation.x, orientation.y, orientation.z, orientation.w)
+        target_pose = SE3Pose(
+            x=point.x,
+            y=point.y,
+            z=point.z,
+            rot=quat
+        )
+
+        arm_cmd = RobotCommandBuilder.arm_pose_command_from_pose(target_pose.to_proto(), GROUND_PLANE_FRAME_NAME)
+
+        follow_arm_command = RobotCommandBuilder.follow_arm_command()
+        command = RobotCommandBuilder.build_synchro_command(follow_arm_command, arm_cmd)
+        (success, msg, cmd_id) = self.spot.robot_command(command)
+        # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
 
     @JOverride
     def moveTo(self, groupName, point_l, orientation_l, point_r, orientation_r):
