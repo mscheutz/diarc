@@ -1120,6 +1120,30 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   }
 
   /**
+   * Get the PriorityTier of a particular goal.
+   *
+   * @param gid the goal to check on
+   * @return the PriorityTier
+   */
+  @TRADEService
+  @Action
+  public PriorityTier getGoalPriorityTier(long gid) {
+    return em.getGoalPriorityTier(gid);
+  }
+
+  /**
+   * Get the priority of a particular goal.
+   *
+   * @param gid the goal to check on
+   * @return the priority
+   */
+  @TRADEService
+  @Action
+  public long getGoalPriority(long gid) {
+    return em.getGoalPriority(gid);
+  }
+
+  /**
    * Wait until a particular goal has its goal status updated to any new value.
    *
    * @param gid the goal id to check on

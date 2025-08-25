@@ -195,8 +195,28 @@ public class GoalViewerAdapter extends GuiAdapter {
           return "Learn a new patrol path";
         case "patrol":
           return String.format("Patrol along %s while performing %s", splitRes[2], splitRes[3]);
-        case "showVideo":
+        case "playNextVideoAtLocation":
           return String.format("Show a video at location %s",getLocationNameFromReference(Factory.createSymbol(splitRes[2])));
+        case "learnNewTour":
+          return "Learning new tour sequence";
+        case "reportInstructableActionsAction":
+          return "Reporting list of instructable actions";
+        case "reportTaughtActionsAction":
+          return "Reporting list of taught actions";
+        case "describeAllKnownLocationsActions":
+          return "Reporting list of all saved locations";
+        case "playNextVideo":
+            return "Playing a video";
+        case "playSpecificVideo":
+          return String.format("Playing video \"%s\"",splitRes[2]);
+        case "playSpecificVideoAtLocation":
+          return String.format("Playing video \"%s\" at location \"%s\"", splitRes[2], getLocationNameFromReference(Factory.createSymbol(splitRes[3])));
+        case "listSavedVideosAction":
+          return "Listing all saved videos";
+        case "listSavedImagesAction":
+          return "Listing all saved Images";
+        case "waitForDuration":
+          return String.format("Waiting for %s seconds",splitRes[2]);
         default:
           return predString;
       }

@@ -19,7 +19,15 @@ import edu.tufts.hrilab.slug.common.Utterance;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 //Temporary Solution - not sure where this should live or how it should be implemented in the end.
 //TODO: currently only implemented with the QueueEM in mind
@@ -39,13 +47,14 @@ public class KioskGoalManager extends DiarcComponent {
    */
   private static final Object kioskGoalAccessLock = new Object();
   private boolean kioskModeEnabled;
-  private Predicate kioskGoalPredicate;
-  private long kioskTimeout; //seconds
+  private Predicate kioskGoalPredicate = Factory.createPredicate("goHomeAndCharge","ava");
+  private long kioskTimeout = 2700; //seconds
   private TimerTask kioskTimerTask;
   private Timer kioskTimer;
   private long kioskGoalGid;
   private Set<Long> currentGids;
   private Set<Symbol> agentsWithQuestions;
+  private String kioskSettingsFile = null;
 
   public KioskGoalManager() {
     super();
@@ -58,8 +67,9 @@ public class KioskGoalManager extends DiarcComponent {
     kioskGoalGid = -1;
     currentGids = new HashSet<>();
     agentsWithQuestions = new HashSet<>();
-    //todo: generalize
-    kioskGoalPredicate = Factory.createPredicate("goHomeAndCharge","ava");
+    if (kioskSettingsFile != null) {
+      loadKioskSettings(kioskSettingsFile);
+    }
   }
 
   //TODO: Change so this isn't required to be instantiated after dialogue and GM
@@ -79,6 +89,7 @@ public class KioskGoalManager extends DiarcComponent {
   @Override
   protected List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
+    options.add(Option.builder("kioskSettingsFile").hasArg().argName("file").desc("File containing kiosk configuration to load from on startup and write to on shutdown").build());
     options.add(Option.builder("enabled").desc("whether kiosk mode should start enabled").build());
     options.add(Option.builder("goal").hasArg().desc("kiosk goal predicate").build());
     options.add(Option.builder("timeout").hasArg().desc("timeout for kiosk mode (seconds)").build());
@@ -95,6 +106,12 @@ public class KioskGoalManager extends DiarcComponent {
     }
     if (cmdLine.hasOption("timeout")) {
       kioskTimeout = Integer.parseInt(cmdLine.getOptionValue("timeout"));
+    }
+    if (cmdLine.hasOption("kioskSettingsFile")) {
+      String filename = cmdLine.getOptionValue("kioskSettingsFile");
+      String homeDir = System.getProperty("user.home");
+      String kioskSettingsDir = Paths.get(homeDir, ".diarc","KioskConfigurations").toString();
+      kioskSettingsFile = kioskSettingsDir + File.separator + filename;
     }
   }
 
@@ -250,10 +267,62 @@ public class KioskGoalManager extends DiarcComponent {
 
   @TRADEService
   @Action
+  public boolean setKioskTimeout(Symbol timeSymbol, Symbol timeUnitSymbol) {
+    log.debug("[setKioskTimeout] in method with timeout {} {}", timeSymbol, timeUnitSymbol);
+
+    long seconds;
+    try {
+      long time;
+      String timeUnitSymbolString = timeUnitSymbol.getName().toUpperCase();
+      float timeFloat = Float.parseFloat(timeSymbol.getName());
+      //TODO: address general issue of getting decimal time values
+      if (timeFloat == 0.5 && timeUnitSymbolString.equals("HOURS")) {
+        time = 30;
+        timeUnitSymbolString = "MINUTES";
+      } else {
+        time = Long.parseLong(timeSymbol.getName());
+      }
+      TimeUnit timeUnit = TimeUnit.valueOf(timeUnitSymbolString);
+      seconds = TimeUnit.SECONDS.convert(time,timeUnit);
+    } catch (Exception e) {
+      log.error("[setKioskTimeout] could not parse arguments", e);
+      return false;
+    }
+
+    synchronized (kioskGoalAccessLock) {
+      this.kioskTimeout = seconds;
+      resetKioskTimer();
+    }
+    return true;
+  }
+
+  @TRADEService
+  @Action
+  public void setKioskGoal(Predicate goal) {
+    log.debug("[setKioskGoal] in method with goal {}", goal);
+    synchronized (kioskGoalAccessLock) {
+      this.kioskGoalPredicate = goal;
+      resetKioskTimer();
+    }
+  }
+
+  @TRADEService
+  @Action
   public long getKioskTimeout() {
     return kioskTimeout;
   }
 
+  @TRADEService
+  @Action
+  public Predicate getKioskGoalPredicate() {
+    return kioskGoalPredicate;
+  }
+
+  @TRADEService
+  @Action
+  public Predicate getWrappedKioskGoalPredicate() {
+    return Factory.createPredicate("kioskGoal",kioskGoalPredicate,Factory.createSymbol(String.valueOf(kioskTimeout)));
+  }
 
   @TRADEService
   public void goalStatusChangedCallback(GoalInfo goalInfo) {
@@ -335,5 +404,55 @@ public class KioskGoalManager extends DiarcComponent {
         }
       }
     }
+  }
+
+  public void setKioskSettingsFile(String filepath) {
+    kioskSettingsFile = filepath;
+  }
+
+  public void writeKioskSettingsToFile() {
+    if (kioskSettingsFile != null) {
+      KioskSettings settings = new KioskSettings();
+      settings.kioskAction = kioskGoalPredicate;
+      settings.kioskTimeout = kioskTimeout;
+      settings.enabled = kioskModeEnabled;
+      //Same TODO as MapComponent read/write of location references
+      File f = new File(kioskSettingsFile);
+      try {
+        if (!f.exists()) {
+          f.getParentFile().mkdirs();
+          f.createNewFile();
+        }
+        ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(f));
+        os.writeObject(settings);
+        os.flush();
+        os.close();
+      } catch (IOException e) {
+        log.error("[writeKioskSettingsToFile] error caching current kiosk settings", e);
+      }
+    }
+  }
+
+  private void loadKioskSettings(String filepath) {
+    File f = new File(filepath);
+    if (!f.exists()) {
+      log.warn("[loadKioskSettings] file not found: " + filepath);
+      return;
+    }
+    try {
+      ObjectInputStream is = new ObjectInputStream(new FileInputStream(f));
+      KioskSettings settings = (KioskSettings) is.readObject();
+      setKioskGoal(settings.kioskAction);
+      setKioskTimeout(settings.kioskTimeout);
+      setKioskModeEnabled(settings.enabled);
+      is.close();
+    } catch (IOException | ClassNotFoundException e) {
+      log.error("[loadKioskSettings] error loading cached kiosk settings on startup", e);
+    }
+  }
+
+  @Override
+  public void shutdownComponent() {
+    writeKioskSettingsToFile();
   }
 }

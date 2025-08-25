@@ -2097,6 +2097,40 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
+   * Query the priority tier of a particular goal.
+   *
+   * @param gid the ID of the goal to check on
+   * @return PriorityTier object indicating the priority tier
+   */
+  public PriorityTier getGoalPriorityTier(long gid) {
+    log.trace("[getGoalPriorityTier] {}", gid);
+    Goal goal = getGoal(gid);
+
+    if (goal != null) {
+      return goal.getPriorityTier();
+    } else {
+      return PriorityTier.UNINITIALIZED;
+    }
+  }
+
+  /**
+   * Query the priority of a particular goal.
+   *
+   * @param gid the ID of the goal to check on
+   * @return long indicating the priority value
+   */
+  public long getGoalPriority(long gid) {
+    log.trace("[getGoalPriorityTier] {}", gid);
+    Goal goal = getGoal(gid);
+
+    if (goal != null) {
+      return goal.getPriority();
+    } else {
+      return -1;
+    }
+  }
+
+  /**
    * Query the ActionStatus of the action (i.e., root context for this goal) being executed
    * in pursuit of the specified goal.
    *
@@ -2411,6 +2445,14 @@ public class ExecutionManager implements GoalListener {
           writer.writeToFile(learnedActions, learnedActionsFile);
         }
       }
+
+      //Ava learned presentation/media management hack
+      if (actionSignature.getName().length() > 7 && actionSignature.getName().startsWith("present")) {
+        try {
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("deletePresentationSlides").argTypes(String.class)).call(void.class, actionSignature.getName().split("present")[1]);
+        } catch (TRADEException ignored){}
+      }
+
       return new ConditionJustification(true);
     } catch (TRADEException e) {
       log.error("could not find service", e);

@@ -93,6 +93,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private String uriString = "http://172.18.0.1";
   private List<BufferedImage> mapImages = new ArrayList<>();
   private List<RMSMapMetadataResponse> mapMetadatas = new ArrayList<>();
+  private Thread sleepForDurationThread = null;
 
   private Symbol dockLocation;
 
@@ -1213,13 +1214,18 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           log.info(s.toString());
           //Display on screen that we are listening
           try {
-            TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
-            service.call(void.class,"Understanding speech");
+            TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class,Long.class));
+            service.call(void.class,"Understanding speech",15);
           } catch (TRADEException e) {
             log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
           }
           if (shouldDing) {
             playAudioClip("ding.wav");
+            try {
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
+            } catch (TRADEException e) {
+              log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+            }
           } else {
             shouldDing = true;
           }
@@ -1440,6 +1446,24 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     } else {
       log.error("[waitForLearningGoalSubmissionOrQuestionAnswer] semaphore signalled but neither thread terminated?");
       return null;
+    }
+  }
+
+  @Override
+  public void waitForDuration(long seconds) {
+    log.info("[waitForDuration] sleeping for {} seconds", seconds);
+    try {
+      sleepForDurationThread = Thread.currentThread();
+      Thread.sleep(seconds*1000);
+    } catch (InterruptedException ignored) {}
+    sleepForDurationThread = null;
+    log.info("[waitForDuration] done sleeping");
+  }
+
+  @Override
+  public void interruptWaitForDuration() {
+    if (sleepForDurationThread != null) {
+      sleepForDurationThread.interrupt();
     }
   }
 }

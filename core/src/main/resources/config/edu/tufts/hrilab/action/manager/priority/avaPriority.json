@@ -106,5 +106,45 @@
   "reportIfCanPerform": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "reportKioskSettings": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "updateKioskTimeout": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setKioskTimeout": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setKioskModeEnabled": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "updateKioskAction": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "listSavedVideos": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "listSavedImages": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportVideoVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setVideoVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportIsVideoSaved": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }
