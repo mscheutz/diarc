@@ -1,5 +1,8 @@
 import logging
 import argparse
+
+from diarc.flex.env.PrismaticEnv import PrismaticEnv
+from diarc.flex.env.RevoluteEnv import RevoluteEnv
 from policies import door_open, grasp_handle, push_button # from flex
 from sklearn.utils import Bunch
 
@@ -21,7 +24,9 @@ logger = logging.getLogger(__name__)
 class FlexWrapper:
     def __init__(self, trade_wrapper: TRADEWrapper):
         self.trade = trade_wrapper
-        self.env = DIARCEnv(trade_wrapper)
+        self.analysis_env = AnalysisEnv(trade_wrapper)
+        self.prismatic_env = PrismaticEnv(trade_wrapper)
+        self.revolute_env = RevoluteEnv(trade_wrapper)
         self.joint_type = 'unknown'
         self.joint_params = None
 
@@ -37,15 +42,16 @@ class FlexWrapper:
     def callPolicy(self, policy_name: str):
         try:
             if policy_name == 'analyze_joint':
-                self.joint_type, self.joint_params = self.flex.analyze_door_joint(self.env)
+                self.joint_type, self.joint_params = self.flex.analyze_door_joint(self.analysis_env)
             elif policy_name == 'open_door':
                 # execute open door policy -- only if analyze_door_joint has been called
                 if self.joint_type == 'prismatic':
-                    success = self.flex.prismatic_policy(self.env)
-                    self.env.joint_params = self.joint_params
+                    self.prismatic_env.joint_params = self.joint_params
+                    (success, msg) = self.flex.execute_policy(self.prismatic_env)
                     self._handle_return(success)
                 if self.joint_type == 'revolute':
-                    success = self.flex.revolute_policy(self.env)
+                    self.revolute_env.joint_params = self.joint_params
+                    (success, msg) = self.flex.execute_policy(self.revolute_env)
                     self._handle_return(success)
                 else:
                    logger.error(f"Invalid joint_type: {self.joint_type}. Did you call the analyze_joint policy first?")
