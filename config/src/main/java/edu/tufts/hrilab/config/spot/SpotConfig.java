@@ -6,9 +6,7 @@ package edu.tufts.hrilab.config.spot;
 
 import edu.tufts.hrilab.action.GoalManagerComponent;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
-import edu.tufts.hrilab.flex.FlexComponent;
 import edu.tufts.hrilab.llm.LLMComponent;
-import edu.tufts.hrilab.python.PythonWrapper;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
@@ -58,7 +56,7 @@ public class SpotConfig extends DiarcConfiguration {
     String spotConfigFile = "/home/evan/Downloads/spot_phi.yaml";
     String tradeHubContainer = "127.0.0.1@10002";
 //    String tradeHubContainer = "192.168.0.251@10001";
-    createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile + " -groups agent:robotone -tradeHub " + tradeHubContainer);
+    createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile + " -groups agent:robotone -hubContainer " + tradeHubContainer);
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
@@ -70,8 +68,8 @@ public class SpotConfig extends DiarcConfiguration {
                     + "-asl dialogue/nlu.asl "
                     + "-asl dialogue/handleSemantics.asl "
                     + "-asl vision.asl "
-                    + "-asl demos/spotDemo.asl "
-                    + "-asl spot/spotActions.asl "
+//                    + "-asl demos/spotDemo.asl "
+//                    + "-asl spot/spotActions.asl "
                     + "-goal listen(self) "
 //                    + "-goal init(self) "
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "

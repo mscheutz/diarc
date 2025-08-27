@@ -65,14 +65,6 @@ public interface SpotInterface {
 
   @TRADEService
   @Action
-  Justification closeGripper();
-
-  @TRADEService
-  @Action
-  Justification openGripper();
-
-  @TRADEService
-  @Action
   Justification goToLocationUnsafe(Symbol location);
 
   @TRADEService

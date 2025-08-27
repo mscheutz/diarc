@@ -94,10 +94,15 @@ lift; VERBT; pickup
 raise; VERBT; pickup
 
 % grab(?ADDRESSEE, REF:physobj)
-grab; VERBT; graspObject
+grab; VERBT; grabObject
 pull out; VERBT; pullOut
 open the door by; VERBT; openDoor
 push; VERBT; pushButton
+
+claim; VERBI; claim
+release; VERBI; release
+power on; VERBI; powerOn
+power off; VERBI; powerOff
 
 
 % DO WE HAVE A PICKUP FROM?  pickup(?ADDRESSEE, REF:physobj; REF:location)
@@ -123,29 +128,29 @@ leave; VERBTT; putdownat
 set; VERBTT; putdownat
 
 % openGripper(?ADDRESSEE)
-open gripper; VERBI; openGripper
-open your gripper; VERBI; openGripper
-open the gripper; VERBI; openGripper
-open the clamp; VERBI; openGripper
-open up the gripper; VERBI; openGripper
-open your hand; VERBI; openGripper
-release the gripper; VERBI; openGripper
-release your grip; VERBI; openGripper
+open gripper; C; openGripper(?ADDRESSEE, arm)
+open your gripper; C; openGripper(?ADDRESSEE, arm)
+open the gripper; C; openGripper(?ADDRESSEE, arm)
+open the clamp; C; openGripper(?ADDRESSEE, arm)
+open up the gripper; C; openGripper(?ADDRESSEE, arm)
+open your hand; C; openGripper(?ADDRESSEE, arm)
+release the gripper; C; openGripper(?ADDRESSEE, arm)
+release your grip; C; openGripper(?ADDRESSEE, arm)
 
 
 
 % closeGripper(?ADDRESSEE)
-close gripper; VERBI; closeGripper
-close your gripper; VERBI; closeGripper
-close the gripper; VERBI; closeGripper
-clamp your gripper; VERBI; closeGripper
-clench the gripper; VERBI; closeGripper
-close up the gripper; VERBI; closeGripper
-close your hand; VERBI; closeGripper
-lock the gripper; VERBI; closeGripper
-shut the gripper; VERBI; closeGripper
-tighten the gripper; VERBI; closeGripper
-tTighten your grip; VERBI; closeGripper
+close gripper; C; closeGripper(?ADDRESSEE, arm)
+close your gripper; C; closeGripper(?ADDRESSEE, arm)
+close the gripper; C; closeGripper(?ADDRESSEE, arm)
+clamp your gripper; C; closeGripper(?ADDRESSEE, arm)
+clench the gripper; C; closeGripper(?ADDRESSEE, arm)
+close up the gripper; C; closeGripper(?ADDRESSEE, arm)
+close your hand; C; closeGripper(?ADDRESSEE, arm)
+lock the gripper; C; closeGripper(?ADDRESSEE, arm)
+shut the gripper; C; closeGripper(?ADDRESSEE, arm)
+tighten the gripper; C; closeGripper(?ADDRESSEE, arm)
+tTighten your grip; C; closeGripper(?ADDRESSEE, arm)
 
 
 

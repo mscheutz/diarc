@@ -3,6 +3,7 @@ import os
 import time
 import typing
 import argparse
+import traceback
 from sklearn.utils import Bunch
 
 from policies import door_open, grasp_handle, push_button # from flex
@@ -20,8 +21,9 @@ import yaml
 from functools import wraps
 
 from ai.thinkingrobots.trade import TRADE
-from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface
+from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, FlexInterface
 from edu.tufts.hrilab.spot.consultant import SpotNavGraphLocationConsultant
+from edu.tufts.hrilab.fol import Factory, Symbol, Predicate
 from javax.vecmath import Point3d, Matrix4d, Vector3d, Quat4d
 from edu.tufts.hrilab.action.justification import ConditionJustification
 
@@ -42,7 +44,7 @@ def handle_return(func):
     return wrapper
 
 
-@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface,FlexPythonInterface])
+@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, FlexInterface])
 class SpotTRADEWrapper:
     def __init__(self, config, trade_wrapper: TRADEWrapper):
         self._reference_frame = "gpe"
@@ -59,8 +61,8 @@ class SpotTRADEWrapper:
             start_estop=config['start_estop'],
             estop_timeout=config['start_estop'],
             use_take_lease=config['use_take_lease'],
-            get_lease_on_action=config.get('get_lease_on_action',True),
-            continually_try_stand=True,
+            get_lease_on_action=config.get('get_lease_on_action',False),
+            continually_try_stand=False,
             rgb_cameras=config['rgb_cameras'],
         )
         self.locationConsultant = SpotNavGraphLocationConsultant("location")
@@ -78,14 +80,14 @@ class SpotTRADEWrapper:
         if mo is None:
             return False
 
-        x_pix = mo.getBoundingBox().x;
-        y_pix = mo.getBoundingBox().y;
+        x_pix = mo.getBoundingBox().x
+        y_pix = mo.getBoundingBox().y
         return (x_pix, y_pix)
 
     @JOverride
     def openDoor(self, refId):
 
-        (x_pix, y_pix) = get_center_pixel(refId)
+        (x_pix, y_pix) = _get_center_pixel(refId)
 
         # call flex policy
         config = Bunch()
@@ -98,21 +100,30 @@ class SpotTRADEWrapper:
 
         return self._handle_return(success)
 
+    @handle_return
     @JOverride
-    def graspObject(self, refId):
+    def grabObject(self, refId):
+        try:
+            logging.info(f"python graspObject method entered. refID: {refId}")
 
-        (x_pix, y_pix) = get_center_pixel(refId)
+        #         (x_pix, y_pix) = _get_center_pixel(refId)
+            x_pix = 160
+            y_pix = 120
 
-        # call flex policy
-        logging.info(f"calling flex grasp_handle policy with pixel coordinates: {x_pix}, {y_pix}")
-        success = grasp_handle.grasp_handle_pixel_location(self.spot, x_pix, y_pix)
+            # call flex policy
+            logging.info(f"calling flex grasp_handle policy with pixel coordinates: {x_pix}, {y_pix}")
+            success = grasp_handle.grasp_handle_pixel_location(self.spot, x_pix, y_pix)
 
-        return self._handle_return(success)
+            return (success, "")
+#             return (True, "")
+        except Exception as e:
+            logging.error(f"Caught exception: {e} {traceback.format_exc()}")
+            return (False, "error msg")
 
     @JOverride
     def pushButton(self, refId):
 
-        (x_pix, y_pix) = get_center_pixel(refId)
+        (x_pix, y_pix) = _get_center_pixel(refId)
 
         # call flex policy
         config = Bunch()
@@ -226,7 +237,10 @@ class SpotTRADEWrapper:
     @handle_return
     @JOverride
     def openGripper(self, groupName):
-        return self.spot.spot_arm.gripper_open()
+        try:
+            return self.spot.spot_arm.gripper_open()
+        except jpype.JException as ex:
+            print("Caught a JPype exception:", ex)
 
     @handle_return
     @JOverride
@@ -314,13 +328,6 @@ class SpotTRADEWrapper:
         return tmp
 
     ### Spot Interface
-    @JOverride
-    def closeGripper(self):
-        return self.closeGripper("")
-
-    @JOverride
-    def openGripper(self):
-        return self.openGripper("")
 
     @handle_return
     @JOverride
@@ -352,23 +359,23 @@ class SpotTRADEWrapper:
     @handle_return
     @JOverride
     def stand(self):
-#         self.spot.claim()
-#         self.spot.getLease()
-        result = self.spot.stand()
-#         self.spot.releaseLease()
-        return result
+        try:
+            logging.info("python stand called")
+            return self.spot.stand()
+        except Exception as e:
+            logging.error(f"Error calling stand: {e}")
+            return (False, "error msg")
 
     @handle_return
     @JOverride
     def sit(self):
-        self.spot.getLease()
-        result = self.spot.sit()
-        self.spot.releaseLease()
-        return result
+        logging.info("python sit called")
+        return self.spot.sit()
 
     @handle_return
     @JOverride
     def powerOn(self):
+        logging.info("python powerOn called")
         return self.spot.power_on()
 
     @handle_return
@@ -533,8 +540,8 @@ class SpotTRADEWrapper:
 
         self._mapping = False
 
-        self.spot.spot_graph_nav.download_navigation_graph("/home/mfawn/new_map")
-        self.spot.spot_graph_nav.upload_graph("/home/mfawn/new_map")
+        self.spot.spot_graph_nav.download_navigation_graph("/tmp/spot_map")
+        self.spot.spot_graph_nav.upload_graph("/tmp/spot_map")
         spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
 
 
@@ -542,7 +549,8 @@ class SpotTRADEWrapper:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Spot TRADE Wrapper')
     parser.add_argument('--spot-config', required=True, help='Path to Spot yaml config file')
-    parser.add_argument('--groups', nargs='*')
+    parser.add_argument('--spot-map', help='Path to Spot graph_nav file')
+    parser.add_argument('--groups', nargs='*', help='TRADE group(s)')
     args = parser.parse_args()
 
     with open(args.spot_config, 'r') as file:
@@ -550,17 +558,22 @@ if __name__ == '__main__':
         config = config['/**']['ros__parameters']
 
     trade_wrapper = TRADEWrapper()
-
     spot_wrapper = SpotTRADEWrapper(config, trade_wrapper)
-    TRADE.registerAllServices(spot_wrapper, args.groups if args.groups else "")
+    logging.info(f"TRADE groups: {args.groups}")
+    TRADE.registerAllServices(spot_wrapper, args.groups if args.groups else "") # TODO: fix the args.groups when more than one group is specified
     TRADE.registerAllServices(spot_wrapper.locationConsultant, "location")
 
-    #spot_wrapper.claim()
-    # spot_wrapper.spot.spot_graph_nav.upload_graph("/home/mfawn/new_map")
-    # spot_wrapper.spot.spot_graph_nav.set_initial_localization_fiducial()
+    # claim robot
+    spot_wrapper.claim()
+#     spot_wrapper.spot.power_on()
+#     spot_wrapper.spot.spot_arm.gripper_open()
 
-    # spot_wrapper.undock()
-    # pts = spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
-    # logging.info(spot_wrapper.spot.spot_graph_nav._current_annotation_name_to_wp_id["test_two"])
+    # load pre-built spot map
+    if args.spot_map:
+        logging.info(f"Loading spot map: {args.spot_map}")
+        spot_wrapper.spot.spot_graph_nav.upload_graph(args.spot_map)
+        spot_wrapper.spot.spot_graph_nav.set_initial_localization_fiducial()
 
-    # spot_wrapper.dock(520)
+        # spot_wrapper.undock() # TODO: is undock-ing needed here?
+        pts = spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
+        logging.info(spot_wrapper.spot.spot_graph_nav._current_annotation_name_to_wp_id["test_two"])

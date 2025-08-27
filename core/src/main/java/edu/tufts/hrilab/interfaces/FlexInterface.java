@@ -20,7 +20,7 @@ public interface FlexInterface {
 
   @TRADEService
   @Action
-  Justification graspObject(Symbol refId);
+  Justification grabObject(Symbol refId);
 
   @TRADEService
   @Action
