@@ -39,7 +39,6 @@ public class SpotComponent extends DiarcComponent {
   @Override
   public void init() {
     String myGroups = String.join(", ", getMyGroups());
-
     PythonWrapper wrapper = new PythonWrapper("diarc.spot.spot_trade_wrapper", true, hubContainer); // Declare the wrapper as a TRADE spoke
     wrapper.start("--spot-config",  spotConfigFile, "--groups", myGroups); // Start the wrapper
   }

@@ -21,7 +21,7 @@ import yaml
 from functools import wraps
 
 from ai.thinkingrobots.trade import TRADE
-from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, FlexInterface
+from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface
 from edu.tufts.hrilab.spot.consultant import SpotNavGraphLocationConsultant
 from edu.tufts.hrilab.fol import Factory, Symbol, Predicate
 from javax.vecmath import Point3d, Matrix4d, Vector3d, Quat4d
@@ -44,7 +44,7 @@ def handle_return(func):
     return wrapper
 
 
-@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, FlexInterface])
+@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface])
 class SpotTRADEWrapper:
     def __init__(self, config, trade_wrapper: TRADEWrapper):
         self._reference_frame = "gpe"
@@ -61,8 +61,8 @@ class SpotTRADEWrapper:
             start_estop=config['start_estop'],
             estop_timeout=config['start_estop'],
             use_take_lease=config['use_take_lease'],
-            get_lease_on_action=config.get('get_lease_on_action',False),
-            continually_try_stand=False,
+            get_lease_on_action=config.get('get_lease_on_action',True),
+            continually_try_stand=True,
             rgb_cameras=config['rgb_cameras'],
         )
         self.locationConsultant = SpotNavGraphLocationConsultant("location")
@@ -80,70 +80,26 @@ class SpotTRADEWrapper:
         if mo is None:
             return False
 
-        x_pix = mo.getBoundingBox().x
-        y_pix = mo.getBoundingBox().y
+        x_pix = mo.getBoundingBox().x;
+        y_pix = mo.getBoundingBox().y;
         return (x_pix, y_pix)
 
     @JOverride
-    def openDoor(self, refId):
-
-        (x_pix, y_pix) = _get_center_pixel(refId)
-
-        # call flex policy
-        config = Bunch()
-        config.max_steps = 50
-        config.action_scale = 0.02
-        config.success_distance = 0.1
-        config.success_angle = 60.0
-        logging.info(f"calling flex door_open policy with pixel coordinates: {x_pix}, {y_pix}, {config}")
-        success = door_open.door_open_pixel_location(self.spot, x_pix, y_pix, config)
-
-        return self._handle_return(success)
-
-    @handle_return
-    @JOverride
-    def grabObject(self, refId):
-        try:
-            logging.info(f"python graspObject method entered. refID: {refId}")
-
-        #         (x_pix, y_pix) = _get_center_pixel(refId)
-            x_pix = 160
-            y_pix = 120
-
-            # call flex policy
-            logging.info(f"calling flex grasp_handle policy with pixel coordinates: {x_pix}, {y_pix}")
-            success = grasp_handle.grasp_handle_pixel_location(self.spot, x_pix, y_pix)
-
-            return (success, "")
-#             return (True, "")
-        except Exception as e:
-            logging.error(f"Caught exception: {e} {traceback.format_exc()}")
-            return (False, "error msg")
-
-    @JOverride
-    def pushButton(self, refId):
-
-        (x_pix, y_pix) = _get_center_pixel(refId)
-
-        # call flex policy
-        config = Bunch()
-        config.approach_distance = 1
-        config.press_force_percentage = 0.05
-        config.press_duration = 1.0
-        config.walk_timeout = 15.0
-        logging.info(f"calling flex push_button policy with pixel coordinates: {x_pix}, {y_pix}, {config}")
-        try:
-            success = push_button.push_button_pixel_location(self.spot, x_pix, y_pix, config)
-        except Exception as e:
-            logging.error(f"Caught a general Java exception: {e}")
-            return False
-
-        return self._handle_return(success)
-
-    @JOverride
     def moveTo(self, groupName, point, orientation):
-        return self.moveTo(groupName.getName(), point.x, point.y, point.z, orientation.x, orientation.y, orientation.z,
-                           orientation.w)
+        quat = geometry_pb2.Quaternion(orientation.x, orientation.y, orientation.z, orientation.w)
+        target_pose = SE3Pose(
+            x=point.x,
+            y=point.y,
+            z=point.z,
+            rot=quat
+        )
+
+        arm_cmd = RobotCommandBuilder.arm_pose_command_from_pose(target_pose.to_proto(), GROUND_PLANE_FRAME_NAME)
+
+        follow_arm_command = RobotCommandBuilder.follow_arm_command()
+        command = RobotCommandBuilder.build_synchro_command(follow_arm_command, arm_cmd)
+        (success, msg, cmd_id) = self.spot.robot_command(command)
+        # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
 
     @JOverride
     def moveTo(self, groupName, point_l, orientation_l, point_r, orientation_r):
@@ -558,6 +514,7 @@ if __name__ == '__main__':
         config = config['/**']['ros__parameters']
 
     trade_wrapper = TRADEWrapper()
+
     spot_wrapper = SpotTRADEWrapper(config, trade_wrapper)
     logging.info(f"TRADE groups: {args.groups}")
     TRADE.registerAllServices(spot_wrapper, args.groups if args.groups else "") # TODO: fix the args.groups when more than one group is specified

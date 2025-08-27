@@ -58,6 +58,10 @@ public class SpotConfig extends DiarcConfiguration {
 //    String tradeHubContainer = "192.168.0.251@10001";
     createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile + " -groups agent:robotone -hubContainer " + tradeHubContainer);
 
+    // flex rl
+    PythonWrapper flex = new PythonWrapper("diarc.flex.flex_wrapper", true, tradeHubContainer);
+    flex.start("--groups", "agent:robotone"); // Start the wrapper
+
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
                     "-beliefinitfile agents/agents.pl "

@@ -14,7 +14,7 @@ public interface RLInterface {
    */
   @TRADEService
   @Action
-  public Justification callPolicy(String action);
+  Justification callPolicy(String action);
 
   /**
    * Creates a new policy via RL and assigns it the given name
@@ -24,7 +24,7 @@ public interface RLInterface {
    */
   @TRADEService
   @Action
-  public Justification learnPolicy(String action);
+  Justification learnPolicy(String action);
 
   /**
    * Updates
@@ -34,5 +34,5 @@ public interface RLInterface {
    */
   @TRADEService
   @Action
-  public Justification updatePolicy(String failedOperator);
+  Justification updatePolicy(String failedOperator);
 }
