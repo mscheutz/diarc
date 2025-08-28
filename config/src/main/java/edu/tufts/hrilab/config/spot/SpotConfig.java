@@ -4,8 +4,12 @@
 
 package edu.tufts.hrilab.config.spot;
 
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.GoalManagerComponent;
+import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
@@ -15,7 +19,11 @@ import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.spot.SpotComponent;
+import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.vision.MockVisionComponent;
+
+import javax.vecmath.Point3d;
+import javax.vecmath.Quat4d;
 
 public class SpotConfig extends DiarcConfiguration {
 
@@ -59,8 +67,8 @@ public class SpotConfig extends DiarcConfiguration {
     createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile + " -groups agent:robotone -hubContainer " + tradeHubContainer);
 
     // flex rl
-    PythonWrapper flex = new PythonWrapper("diarc.flex.flex_wrapper", true, tradeHubContainer);
-    flex.start("--groups", "agent:robotone"); // Start the wrapper
+//    PythonWrapper flex = new PythonWrapper("diarc.flex.flex_wrapper", true, tradeHubContainer);
+//    flex.start("--groups", "agent:robotone"); // Start the wrapper
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
@@ -80,6 +88,18 @@ public class SpotConfig extends DiarcConfiguration {
     );
 
     createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -config spotDemo.simspeech");
+
+    Util.Sleep(2000);
+
+    try {
+      TRADEServiceInfo moveToService_1 = TRADE.getAvailableService(new TRADEServiceConstraints().name("moveTo").argTypes(String.class, Symbol.class));
+      TRADEServiceInfo moveToService_2 = TRADE.getAvailableService(new TRADEServiceConstraints().name("moveTo").argTypes(String.class, Point3d.class, Quat4d.class));
+
+      moveToService_1.call(Justification.class, "string", Factory.createSymbol("symbol"));
+      moveToService_2.call(Justification.class, "string", new Point3d(), new Quat4d());
+    } catch (TRADEException e) {
+      throw new RuntimeException(e);
+    }
 
   }
 

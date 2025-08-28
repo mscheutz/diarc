@@ -6,7 +6,6 @@ import argparse
 import traceback
 from sklearn.utils import Bunch
 
-from policies import door_open, grasp_handle, push_button # from flex
 from bosdyn.api.graph_nav import graph_nav_pb2, nav_pb2
 from bosdyn.client.frame_helpers import get_odom_tform_body
 from bosdyn.api import manipulation_api_pb2, geometry_pb2
@@ -20,6 +19,7 @@ from diarc.pytrade.wrapper import TRADEWrapper
 import yaml
 from functools import wraps
 
+from edu.tufts.hrilab.fol import Factory, Symbol, Predicate
 from ai.thinkingrobots.trade import TRADE
 from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface
 from edu.tufts.hrilab.spot.consultant import SpotNavGraphLocationConsultant
@@ -84,30 +84,35 @@ class SpotTRADEWrapper:
         y_pix = mo.getBoundingBox().y;
         return (x_pix, y_pix)
 
+    @handle_return
     @JOverride
     def moveTo(self, groupName, point, orientation):
-        quat = geometry_pb2.Quaternion(orientation.x, orientation.y, orientation.z, orientation.w)
-        target_pose = SE3Pose(
-            x=point.x,
-            y=point.y,
-            z=point.z,
-            rot=quat
-        )
-
-        arm_cmd = RobotCommandBuilder.arm_pose_command_from_pose(target_pose.to_proto(), GROUND_PLANE_FRAME_NAME)
-
-        follow_arm_command = RobotCommandBuilder.follow_arm_command()
-        command = RobotCommandBuilder.build_synchro_command(follow_arm_command, arm_cmd)
-        (success, msg, cmd_id) = self.spot.robot_command(command)
-        # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
+        logging.info(f"moveTo method called. point: {point} orientation: {orientation}")
+        return (True, "")
+        # quat = geometry_pb2.Quaternion(orientation.x, orientation.y, orientation.z, orientation.w)
+        # target_pose = SE3Pose(
+        #     x=point.x,
+        #     y=point.y,
+        #     z=point.z,
+        #     rot=quat
+        # )
+        #
+        # arm_cmd = RobotCommandBuilder.arm_pose_command_from_pose(target_pose.to_proto(), GROUND_PLANE_FRAME_NAME)
+        #
+        # follow_arm_command = RobotCommandBuilder.follow_arm_command()
+        # command = RobotCommandBuilder.build_synchro_command(follow_arm_command, arm_cmd)
+        # (success, msg, cmd_id) = self.spot.robot_command(command)
+        # # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
 
     @JOverride
     def moveTo(self, groupName, point_l, orientation_l, point_r, orientation_r):
         pass
 
+    @handle_return
     @JOverride
     def moveTo(self, groupName, refId):
-        pass
+        logging.info(f"moveTo method called. refId: {refId}")
+        return (True, "")
 
     @JOverride
     def moveTo(self, groupName, refId, constraints):
