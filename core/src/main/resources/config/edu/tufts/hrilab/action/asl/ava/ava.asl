@@ -30,7 +30,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
-    act:goHome();
+    //act:goHome();
 }
 
 () = escortFromLocationToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
@@ -44,8 +44,8 @@ import edu.tufts.hrilab.action.goal.Goal;
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
-    op:sleep(10000);
-    act:goToLocation(?escorteeLoc);
+    //op:sleep(10000);
+    //act:goToLocation(?escorteeLoc);
 }
 
 /**
@@ -325,16 +325,28 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
+() = learnNewTaskOnResume(Integer ?tracker, Predicate ?taskName) {
+    if (op:equals(?tracker,1)) {
+        act:learningPrompt(?taskName);
+    }
+}
+
 () = learnNewTask() {
+    onInterrupt :{
+        resume: act:learnNewTaskOnResume(!tracker,!taskName);
+    }
     Predicate !actionSignature;
     Predicate !pred;
     String !taskName;
+    Integer !tracker = 0;
+
     !taskName = act:askForTaskName();
 
     if (op:isNull(!taskName)) {
         exit(FAIL, not(supplied(taskName)));
     }
     !taskName = op:invokeMethod(!taskName, "replaceAll", " +", "");
+    !tracker = op:++(!tracker);
 
     !actionSignature = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !taskName);
     op:log(info,!actionSignature);
@@ -345,6 +357,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         act:learningPrompt(!taskName);
     }
     act:learnAction(!actionSignature);
+    !tracker = op:++(!tracker);
     !pred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knowHowTo(?actor,perform(!taskName))");
     act:generateResponse(!pred);
 }
@@ -628,4 +641,15 @@ import edu.tufts.hrilab.action.goal.Goal;
     !goalPredicate = op:get(!bindings, !x);
     tsc:setKioskGoal(!goalPredicate);
     act:generateResponseFromString("Okay, I have updated the kiosk action");
+}
+
+() = cancelTaskInQueueByIndex(Integer ?index) {
+    Boolean !success;
+
+    !success = act:cancelPendingGoalByIndex(?index);
+    if (op:equals(!success,false)) {
+        act:generateResponseFromString("I could not find a task in the queue at the supplied index");
+    } else {
+        act:generateResponseFromString("I have removed the task from the queue.");
+    }
 }

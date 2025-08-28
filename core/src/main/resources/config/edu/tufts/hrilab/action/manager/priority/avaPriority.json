@@ -146,5 +146,9 @@
   "reportIsVideoSaved": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "cancelTaskInQueueByIndex": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

@@ -103,7 +103,7 @@ Output:{"translation":"I have added a new scheduled task to say "Welcome to our 
 Input:REPLY(ava,%addressee,ack(okay),{})
 Output:{"translation":"okay"}
 #
-Input:REPLY(ava,%addressee,scheduled(escortFromToLocation(ava,patient,reception,chair 1),period(2,hours)),{})
+Input:REPLY(ava,%addressee,scheduled(escortFromLocationToLocation(ava,patient,reception,chair 1),period(2,hours)),{})
 Output:{"translation":"escorting the patient from reception to chair 1 is scheduled to occur every 2 hours"}
 #
 Input:REPLY(ava,%addressee,added(scheduled(stand(ava),start(20-00-00))),{})

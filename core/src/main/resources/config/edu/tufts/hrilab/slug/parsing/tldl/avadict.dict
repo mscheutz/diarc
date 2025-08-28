@@ -488,7 +488,7 @@ show demo video; VERBI; playNextVideo
 enable microphone; VERBI; enableMic
 disable microphone; VERBI; disableMic
 
-now; C/C; #x.urgentPriority(?ADDRESSEE,$x)
+now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
 right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
 
 start demo; VERBI; startDemo
@@ -510,3 +510,4 @@ forget how to; C/C; #x.forgetTaughtAction(?ADDRESSEE,$x)
 %at a time; VAL\NUM; #x.amount($x)
 
 learn new tour sequence; VERBI; learnTourAction
+remove the task from the queue at position; C/LIT* ; #x.cancelTaskInQueueByIndex(?ADDRESSEE,$x)

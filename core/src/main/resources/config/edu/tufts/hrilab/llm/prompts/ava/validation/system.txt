@@ -201,5 +201,11 @@ Output:{"translation":"Did you mean to ask me whether a video is saved under the
 #
 Input:QUESTION(ava,%addressee,[mean(%addressee,waitForDuration(?seconds))],{})
 Output:{"translation":"Did you mean to ask me to wait for ?seconds seconds?"}
+#
+Input:QUESTION(ava,%addressee,mean(%addressee,urgentPriority(goToLocation(ava,?destination:location))),{?location(VAR0:location),DEFINITE(VAR0:location)})
+Output:{"translation":"Did you mean to ask me to go to the ?destination location with high assigned priority?"}
+#
+Input:QUESTION(ava,%addressee,[mean(%addressee,cancelTaskInQueueByIndex(0))],{})
+Output:{"translation":"Did you mean to ask me to remove the first task present in the queue?"}
 ##
 Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with your results as shown in the examples.

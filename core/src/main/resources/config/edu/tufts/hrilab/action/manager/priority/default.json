@@ -32,10 +32,6 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "submitWithUrgentPriority": {
-    "priority": 1,
-    "priorityTier": "SKIPPENDING"
-  },
   "cancelAllActiveGoals": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
