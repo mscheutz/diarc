@@ -19,8 +19,14 @@ function App() {
     const wsBaseUrl = url.toString();
 
     const [availableEndpoints, setAvailableEndpoints] = useState<string[]>([]);
+    let webSocketUrl  = "";
+    if (typeof process.env.REACT_APP_SERVER_ADDR === 'undefined') {
+        webSocketUrl =`${wsBaseUrl}/ws`;
+    } else {
+        webSocketUrl =`${wsBaseUrl}/${process.env.REACT_APP_SITE_ID}/ws`;
+    }
     const {lastMessage, sendMessage, readyState} =
-        useWebSocket(`${wsBaseUrl}ws`);
+        useWebSocket(webSocketUrl);
 
     useEffect(() => {
         if (lastMessage === null) return;
