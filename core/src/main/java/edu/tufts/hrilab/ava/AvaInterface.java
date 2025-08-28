@@ -188,4 +188,11 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
   @TRADEService
   @Action
   public void interruptWaitForDuration();
+
+  @TRADEService
+  @Action
+  public void enableAdminMode();
+  @TRADEService
+  @Action
+  public void disableAdminMode();
 }

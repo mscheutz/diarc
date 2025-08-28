@@ -98,6 +98,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private List<BufferedImage> mapImages = new ArrayList<>();
   private List<RMSMapMetadataResponse> mapMetadatas = new ArrayList<>();
   private Thread sleepForDurationThread = null;
+  private Symbol speaker = Factory.createSymbol("local_user");
 
   /**
    * HACK: assumes location_0 reference in MapComponent consultant is the dock.
@@ -1276,7 +1277,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           result = result.trim().toLowerCase();
           result = result.replaceAll("\\p{Punct}", "");
           Utterance utterance = new Utterance.Builder()
-                  .setSpeaker(Factory.createSymbol("evan"))
+                  .setSpeaker(speaker)
                   .setAddressee(Factory.createSymbol("ava"))
                   .setWords(Arrays.asList(result.trim().split(" ")))
                   .setUtteranceType(UtteranceType.UNKNOWN)
@@ -1463,5 +1464,15 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     if (sleepForDurationThread != null) {
       sleepForDurationThread.interrupt();
     }
+  }
+
+  @Override
+  public void enableAdminMode() {
+    speaker = Factory.createSymbol("local_user");
+  }
+
+  @Override
+  public void disableAdminMode() {
+    speaker = Factory.createSymbol("local_visitor");
   }
 }

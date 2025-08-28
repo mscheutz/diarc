@@ -1,0 +1,14 @@
+isAdminGoal(saveLocation(D,A)).
+isAdminGoal(deleteLocation(D,A)).
+isAdminGoal(scheduleGoal(D)).
+isAdminGoal(modifyScheduledGoal(D)).
+isAdminGoal(cancelSystemGoals(D)).
+isAdminGoal(learnNewTask(D)).
+isAdminGoal(forgetTaughtAction(D,A)).
+isAdminGoal(learnTourAction(D)).
+isAdminGoal(updateKioskTimeout(D)).
+isAdminGoal(setKioskTimeout(D,A,B)).
+isAdminGoal(updateKioskAction(D)).
+isAdminGoal(setKioskModeEnabled(D,A)).
+isAdminGoal(cancelTaskInQueueByIndex(D,A)).
+isAdminGoal(enableAdminMode(D)).

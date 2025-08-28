@@ -125,7 +125,7 @@ public class AvaDemo extends DiarcConfiguration {
     }
 
     if (useGUI) {
-      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker user1 -addressee ava");
+      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker webapp -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
     createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.0 -showMixers" + " " + ((useMicrophone) ? " -muteMics" : ""));
@@ -170,7 +170,7 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
             "-historylength 3600000 "
         +   "-goal listen(self) monitorBattery(ava) listenForWWandASR(ava) " +
-                    "-beliefinitfile demos.pl agents/ava.pl"
+                    "-beliefinitfile demos.pl agents/ava.pl domains/ava.pl"
         + " -dbfile " +
               "core.asl " +
               "manipulation.asl " +

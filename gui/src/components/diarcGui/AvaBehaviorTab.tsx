@@ -81,7 +81,7 @@ const MyNewComponent: React.FC<Props> = ({
         sendMessage(JSON.stringify({
             "path": path,
             "input": command,
-            "speaker": "evan",
+            "speaker": "webapp",
             "addressee": "ava"
         }));
     };

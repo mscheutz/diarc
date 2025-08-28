@@ -730,6 +730,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 case "listSavedImages":
                 case "reportIsVideoSaved":
                 case "sayText":
+                case "say":
                     return true;
                 default:
                     return false;
@@ -1084,6 +1085,16 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "You cancel and remove the task in task queue at position ?index if it exists. ?index is a 0-based index.",
                 "Remove the first task from the queue",
                 "cancelTaskInQueueByIndex(0)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("enableAdminMode()",
+                "Allow certain actions which require administrator privileges to be instructed through voice directly to the robot.",
+                "enable admin mode",
+                "enableAdminMode()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("disableAdminMode()",
+                "Reject certain actions which require administrator privileges from being instructed through voice directly to the robot.",
+                "disable admin mode",
+                "disableAdminMode()", 10);
         exposedActionList.add(entry);
     }
 }

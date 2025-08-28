@@ -150,5 +150,13 @@
   "cancelTaskInQueueByIndex": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "enableAdminMode": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "disableAdminMode": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

@@ -84,6 +84,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private int numMaps = 0;
   private List<String> dockNames = new ArrayList<>();
   private Thread sleepForDurationThread = null;
+  private Symbol speaker = Factory.createSymbol("local_user");
 
   @Override
   public void init() {
@@ -523,7 +524,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           result = result.trim().toLowerCase();
           result = result.replaceAll("\\p{Punct}", "");
           Utterance utterance = new Utterance.Builder()
-                  .setSpeaker(Factory.createSymbol("user"))
+                  .setSpeaker(speaker)
                   .setAddressee(Factory.createSymbol("ava"))
                   .setWords(Arrays.asList(result.trim().split(" ")))
                   .setUtteranceType(UtteranceType.UNKNOWN)
@@ -809,5 +810,15 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     if (sleepForDurationThread != null) {
       sleepForDurationThread.interrupt();
     }
+  }
+
+  @Override
+  public void enableAdminMode() {
+    speaker = Factory.createSymbol("local_user");
+  }
+
+  @Override
+  public void disableAdminMode() {
+    speaker = Factory.createSymbol("local_visitor");
   }
 }
