@@ -255,6 +255,14 @@ public interface ArmInterface {
   @Action
   Justification openGripper(String groupName);
 
+  /**
+   * Set gripper position (i.e., how much gripper is open).
+   * TODO: consider renaming method to setGripperPosition
+   *
+   * @param groupName
+   * @param meters
+   * @return
+   */
   @TRADEService
   @Action
   Justification moveGripper(String groupName, float meters);

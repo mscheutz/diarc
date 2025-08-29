@@ -981,11 +981,11 @@ public class ExecutionManager implements GoalListener {
       startActionInterpreter(ai);
       return true;
     } else {
-      log.info("[executeGoal] Goal " + goal + " is not permissible.");
+      log.warn("[executeGoal] Goal " + goal + " is not permissible.");
       goal.setFailureStatus(GoalStatus.FAILED, constraintCheck);
     }
 
-    log.info("[executeGoal] Failed to add goal! {}", goal);
+    log.warn("[executeGoal] Failed to add goal! {}", goal);
     pastGoals.add(goal);
     return false;
   }
@@ -2110,7 +2110,7 @@ public class ExecutionManager implements GoalListener {
   }
 
   public void pruneOldData() {
-    log.info("Pruning...");
+    log.debug("Pruning...");
 
     // prune old goals (which have references to context tree)
     long pruneTime = System.currentTimeMillis() - historyLength;
@@ -2130,7 +2130,7 @@ public class ExecutionManager implements GoalListener {
       log.error("Exception caught while pruning.", e);
     }
 
-    log.info("...done pruning.");
+    log.debug("...done pruning.");
   }
 
   /**

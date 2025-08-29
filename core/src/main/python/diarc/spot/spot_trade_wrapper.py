@@ -4,22 +4,26 @@ import time
 import typing
 import argparse
 import traceback
+
+from bosdyn.api.geometry_pb2 import Vec2
+from bosdyn.client.robot_command import RobotCommandBuilder
 from sklearn.utils import Bunch
 
 from bosdyn.api.graph_nav import graph_nav_pb2, nav_pb2
-from bosdyn.client.frame_helpers import get_odom_tform_body
+from bosdyn.client.frame_helpers import get_odom_tform_body, GROUND_PLANE_FRAME_NAME
 from bosdyn.api import manipulation_api_pb2, geometry_pb2
 from bosdyn.client.recording import GraphNavRecordingServiceClient
 from bosdyn.client import frame_helpers
 from bosdyn.client.frame_helpers import get_a_tform_b
 from bosdyn.client.math_helpers import Vec3
-from jpype import JImplements, JOverride, JClass
+from jpype import JImplements, JOverride, JClass, JString, JObject, JBoolean
+from torch import set_grad_enabled
+
 from spot_wrapper.wrapper import SpotWrapper
 from diarc.pytrade.wrapper import TRADEWrapper
 import yaml
 from functools import wraps
 
-from edu.tufts.hrilab.fol import Factory, Symbol, Predicate
 from ai.thinkingrobots.trade import TRADE
 from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface
 from edu.tufts.hrilab.spot.consultant import SpotNavGraphLocationConsultant
@@ -80,43 +84,47 @@ class SpotTRADEWrapper:
         if mo is None:
             return False
 
-        x_pix = mo.getBoundingBox().x;
-        y_pix = mo.getBoundingBox().y;
+        x_pix = mo.getBoundingBox().x
+        y_pix = mo.getBoundingBox().y
         return (x_pix, y_pix)
 
-    @handle_return
-    @JOverride
-    def moveTo(self, groupName, point, orientation):
-        logging.info(f"moveTo method called. point: {point} orientation: {orientation}")
-        return (True, "")
-        # quat = geometry_pb2.Quaternion(orientation.x, orientation.y, orientation.z, orientation.w)
-        # target_pose = SE3Pose(
-        #     x=point.x,
-        #     y=point.y,
-        #     z=point.z,
-        #     rot=quat
-        # )
-        #
-        # arm_cmd = RobotCommandBuilder.arm_pose_command_from_pose(target_pose.to_proto(), GROUND_PLANE_FRAME_NAME)
-        #
-        # follow_arm_command = RobotCommandBuilder.follow_arm_command()
-        # command = RobotCommandBuilder.build_synchro_command(follow_arm_command, arm_cmd)
-        # (success, msg, cmd_id) = self.spot.robot_command(command)
-        # # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
-
-    @JOverride
-    def moveTo(self, groupName, point_l, orientation_l, point_r, orientation_r):
-        pass
+    ###################### moveTo overloaded method handling
 
     @handle_return
     @JOverride
-    def moveTo(self, groupName, refId):
-        logging.info(f"moveTo method called. refId: {refId}")
+    def moveTo(self, *args):
+        logging.info(f"moveTo dispatch method called")
+        # always use the wild card args when implementing a dispatch
+
+        if len(args)==2 and isinstance(args[0], JString) and isinstance(args[1], Symbol):
+            return self.moveToRef(*args)
+        if len(args)==3 and isinstance(args[0], JString) and isinstance(args[1], Point3d) and isinstance(args[2], Quat4d):
+            return self.moveToPose(*args)
+
+        logging.info(f"No valid argument match found.")
+        raise RuntimeError("Incorrect arguments")
+
+    def moveToPose(self, groupName, point, orientation):
+        logging.info(f"moveToPose method called. point: {point} orientation: {orientation}")
+#         return (True, "")
+        quat = geometry_pb2.Quaternion(orientation.x, orientation.y, orientation.z, orientation.w)
+        target_pose = geometry_pb2.SE3Pose(
+            x=point.x,
+            y=point.y,
+            z=point.z,
+            rot=quat
+        )
+
+        command = RobotCommandBuilder.arm_pose_command_from_pose(target_pose.to_proto(), GROUND_PLANE_FRAME_NAME, build_on_command=RobotCommandBuilder.follow_arm_command())
+        (success, msg, cmd_id) = self.spot.robot_command(command)
+        # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
+        return (success, msg)
+
+    def moveToRef(self, groupName, refId: JObject):
+        logging.info(f"moveToRef method called. refId: {refId}")
         return (True, "")
 
-    @JOverride
-    def moveTo(self, groupName, refId, constraints):
-        pass
+    ####################################################
 
     @JOverride
     def moveToRelative(self, groupName, point, orientation):
@@ -213,13 +221,36 @@ class SpotTRADEWrapper:
     def getGripperPosition(self, groupName):
         pass
 
+    ###################### pressObject overloaded method handling
+    @handle_return
     @JOverride
-    def pressObject(self, group_name, object_location, object_orientation):
+    def pressObject(self, *args):
+        logging.info(f"pressObject dispatch method called")
+        # always use the wild card args when implementing a dispatch
+
+        if len(args)==2:
+            return self.pressObjectRef(*args)
+        if len(args)==3:
+            return self.pressObjectPose(*args)
+
+        logging.info(f"No valid argument match found.")
+        raise RuntimeError("Incorrect arguments")
+
+    def pressObjectRef(self, group_name, refID):
         pass
 
-    @JOverride
-    def pressObject(self, group_name, refID):
+    def pressObjectPose(self, group_name, object_location, object_orientation):
+        # construct offset pose (set distance away from object_location along object_orientation vector)
+
+        # move gripper to offset pose
+        # moveToPose()
+
+        # move gripper into pressing position
+
+        # move gripper back to offset pose
         pass
+
+    ###########################################################
 
     ### Dock Interface
     @handle_return
@@ -243,41 +274,88 @@ class SpotTRADEWrapper:
     def setPoseGlobal(self, x, y, theta):
         pass
 
-    @JOverride
-    def goToLocation(self, location, wait):
-        pass
-
+    ###################### goToLocation overloaded method handling
     @handle_return
     @JOverride
-    def goToLocation(self, location):
+    def goToLocation(self, *args):
+        # dispatch method for overloaded goToLocation
+
+        if len(args)==1:
+            return self.goToLocationRef(args[0])
+        if len(args)==2 and isinstance(args[0], Symbol) and isinstance(args[1], JBoolean):
+            return self.goToLocationRefWait(*args)
+        if len(args)==2 and isinstance(args[0], Symbol) and isinstance(args[1], Symbol):
+            return self.goToLocationFrom(*args)
+        if len(args)==7:
+            return self.goToLocationPose(*args)
+
+        logging.info(f"No valid argument match found.")
+        raise RuntimeError("Incorrect arguments")
+
+    def goToLocationRef(self, location):
         # todo: Handle consultant stuff
         waypoint_id = self.locationConsultant.getRefWithId(location.getName()).getGraphId()
         return self.spot.spot_graph_nav.navigate_to_existing_waypoint(waypoint_id)
 
-    @JOverride
-    def goToLocation(self, desiredLocation, initialLocation):
+    def goToLocationRefWait(self, location, wait):
+        pass
+
+    def goToLocationFrom(self, desiredLocation, initialLocation):
         # todo: get ininital loc
         return self.goToLocation(desiredLocation)
 
-    @JOverride
-    def goToLocation(self, xdest, ydest, quat_x, quat_y, quat_z, quat_w, wait):
+    def goToLocationPose(self, xdest, ydest, quat_x, quat_y, quat_z, quat_w, wait):
         pass
 
-    @JOverride
-    def approachLocation(self, location):
-        pass
+    #####################################################################
 
+    @handle_return
     @JOverride
-    def approachLocation(self, desiredLocation, initialLocation):
-        pass
+    def approachLocation(self, refId):
+
+        # TODO: choose ray vs pixel based on contents in MO (i.e., if mo.getLocation() has nan values)
+        walk_to_object_in_image = False
+        if walk_to_object_in_image:
+            # use 2D pixel based bounding box to specify object to grasp -- assumes spot hand camera
+            (x_pix, y_pix) = self._get_center_pixel(refId)
+            image_response = self.spot.spot_images.get_hand_rgb_image()
+            walk = manipulation_api_pb2.WalkToObjectInImage(
+                pixel_xy=Vec2(x_pix, y_pix),
+                transforms_snapshot_for_camera=self.spot.robot_state.kinematic_state.transforms_snapshot,
+                frame_name_image_sensor=image_response.shot.frame_name_image_sensor,
+                camera_model=image_response.source.pinhole,
+            )
+        else:
+            # use ray to specify object to grasp -- requires 3D camera data
+            mo = self.trade.call_trade("getEntityForReference", refId,
+                                       JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+            mo.transformToBase()
+            start = Point3d(0, 0, 0)
+            mo.getBaseTransform().transform(start)
+
+            end = Point3d(start.x, start.y, start.z)
+            direction = mo.getDirection()
+            direction.scale(4.0)
+            end.add(direction)
+            walk = manipulation_api_pb2.WalkToObjectRayInWorld(
+                ray_start_rt_frame=Vec3(start.x, start.y, start.z),
+                ray_end_rt_frame=Vec3(end.x, end.y, end.z),
+                frame_name=self._reference_frame,
+            )
+
+        # Build the proto
+        if walk_to_object_in_image:
+            walk_request = manipulation_api_pb2.ManipulationApiRequest(
+                walk_to_object_in_image=walk)
+        else:
+            walk_request = manipulation_api_pb2.ManipulationApiRequest(
+                walk_to_object_ray_in_world=walk)
+
+        return self.spot.manipulation_command(walk_request)[:1]
 
     @JOverride
     def goToStartPose(self, safe):
         pass
-
-    @JOverride
-    def getTransform(self, dstFrame):
-        return self.getTransform(self._reference_frame, dstFrame)
 
     @JOverride
     def getTransform(self, srcFrame, dstFrame):
@@ -362,53 +440,70 @@ class SpotTRADEWrapper:
     @handle_return
     @JOverride
     def pickUpObject(self, refId):
-        source_frame = "hand_color_image_sensor"
 
-        mo = self.trade.call_trade("getEntityForReference", refId,
-                                   JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
-        mo.transformToBase()
-        start = Point3d(0, 0, 0)
-        mo.getBaseTransform().transform(start)
+        # TODO: choose ray vs pixel based on contents in MO (i.e., if mo.getLocation() has nan values)
+        pick_object_in_image = False
+        if pick_object_in_image:
+            # use 2D pixel based bounding box to specify object to grasp -- assumes spot hand camera
+            (x_pix, y_pix) = self._get_center_pixel(refId)
+            image_response = self.spot.spot_images.get_hand_rgb_image()
+            grasp = manipulation_api_pb2.PickObjectInImage(
+                pixel_xy=Vec2(x_pix, y_pix),
+                transforms_snapshot_for_camera=self.spot.robot_state.kinematic_state.transforms_snapshot,
+                frame_name_image_sensor=image_response.shot.frame_name_image_sensor,
+                camera_model=image_response.source.pinhole,
+                walk_gaze_mode=2
+            )
+        else:
+            # use ray to specify object to grasp -- requires 3D camera data
+            mo = self.trade.call_trade("getEntityForReference", refId,
+                                       JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+            mo.transformToBase()
+            start = Point3d(0, 0, 0)
+            mo.getBaseTransform().transform(start)
 
-        end = Point3d(start.x, start.y, start.z)
-        direction = mo.getDirection()
-        direction.scale(4.0)
-        end.add(direction)
-        grasp = manipulation_api_pb2.PickObjectRayInWorld(
-            ray_start_rt_frame=Vec3(start.x, start.y, start.z).to_proto(),
-            ray_end_rt_frame=Vec3(end.x, end.y, end.z).to_proto(),
-            frame_name=self._reference_frame,
-            walk_gaze_mode=2
-        )
+            end = Point3d(start.x, start.y, start.z)
+            direction = mo.getDirection()
+            direction.scale(4.0)
+            end.add(direction)
+            grasp = manipulation_api_pb2.PickObjectRayInWorld(
+                ray_start_rt_frame=Vec3(start.x, start.y, start.z),
+                ray_end_rt_frame=Vec3(end.x, end.y, end.z),
+                frame_name=self._reference_frame,
+                walk_gaze_mode=2
+            )
 
-        # We can specify where in the gripper we want to grasp. About halfway is generally good for
-        # small objects like this. For a bigger object like a shoe, 0 is better (use the entire
-        # gripper)
-        grasp.grasp_params.grasp_palm_to_fingertip = 0.2
-        #
-        # The axis on the gripper is the x-axis.
-        axis_on_gripper_ewrt_gripper = geometry_pb2.Vec3(x=0, y=1, z=0)
+        # setting grasp params restricts the types of objects that can be picked up (top-down vs side, etc),
+        # so it doesn't make for a very general pickUpObject method
+        set_grasp_params = False
+        if set_grasp_params:
+            # We can specify where in the gripper we want to grasp. About halfway is generally good for
+            # small objects like this. For a bigger object like a shoe, 0 is better (use the entire
+            # gripper)
+            grasp.grasp_params.grasp_palm_to_fingertip = 0.2
 
-        # The axis in the vision frame is the negative z-axis
-        axis_to_align_with_ewrt_vision = geometry_pb2.Vec3(x=0, y=0, z=-1)
+            # align user defined gripper axis to user defined alignment axis
+            constraint = grasp.grasp_params.allowable_orientation.add()
+            # The axis on the gripper
+            constraint.vector_alignment_with_tolerance.axis_on_gripper_ewrt_gripper = geometry_pb2.Vec3(x=0, y=1, z=0)
+            # The axis to align the gripper axis to
+            constraint.vector_alignment_with_tolerance.axis_to_align_with_ewrt_frame = geometry_pb2.Vec3(x=0, y=0, z=-1)
 
-        # Add the vector constraint to our proto.
-        constraint = grasp.grasp_params.allowable_orientation.add()
-        constraint.vector_alignment_with_tolerance.axis_on_gripper_ewrt_gripper.CopyFrom(
-            axis_on_gripper_ewrt_gripper)
-        constraint.vector_alignment_with_tolerance.axis_to_align_with_ewrt_frame.CopyFrom(
-            axis_to_align_with_ewrt_vision)
+            # We'll take anything within about 15 degrees for top-down or horizontal grasps.
+            constraint.vector_alignment_with_tolerance.threshold_radians = 0.5
 
-        # We'll take anything within about 15 degrees for top-down or horizontal grasps.
-        constraint.vector_alignment_with_tolerance.threshold_radians = 0.5
 
         # Specify the frame we're using.
-        grasp.grasp_params.grasp_params_frame_name = frame_helpers.VISION_FRAME_NAME
+        grasp.grasp_params.grasp_params_frame_name = GROUND_PLANE_FRAME_NAME
         grasp.grasp_params.manipulation_camera_source = 2
 
         # Build the proto
-        grasp_request = manipulation_api_pb2.ManipulationApiRequest(
-            pick_object_ray_in_world=grasp)
+        if pick_object_in_image:
+            grasp_request = manipulation_api_pb2.ManipulationApiRequest(
+                pick_object_in_image=grasp)
+        else:
+            grasp_request = manipulation_api_pb2.ManipulationApiRequest(
+                pick_object_ray_in_world=grasp)
 
         return self.spot.manipulation_command(grasp_request)
 
@@ -439,15 +534,14 @@ class SpotTRADEWrapper:
 
     @JOverride
     def localize(self):
-        # """Trigger localization when near a fiducial."""
-        state = self.spot._robot_state_client.get_robot_state()
+        """Trigger localization when near a fiducial."""
         current_odom_tform_body = get_odom_tform_body(
-            state.kinematic_state.transforms_snapshot).to_proto()
+            self.spot.robot_state.get_robot_state().kinematic_state.transforms_snapshot).to_proto()
 
         # Create an empty instance for initial localization since we are asking it to localize
         # based on the nearest fiducial.
         localization = nav_pb2.Localization()
-        self.spot._graph_nav_client.set_localization(initial_guess_localization=localization,
+        self.spot.spot_graph_nav.set_localization(initial_guess_localization=localization,
                                                      ko_tform_body=current_odom_tform_body)
 
     @JOverride
@@ -526,7 +620,7 @@ if __name__ == '__main__':
     TRADE.registerAllServices(spot_wrapper.locationConsultant, "location")
 
     # claim robot
-    spot_wrapper.claim()
+#     spot_wrapper.claim()
 #     spot_wrapper.spot.power_on()
 #     spot_wrapper.spot.spot_arm.gripper_open()
 
