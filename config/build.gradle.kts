@@ -37,6 +37,7 @@ sourceSets {
       exclude(
               "edu/tufts/hrilab/config/llm/*",
               "edu/tufts/hrilab/demos/llm/*",
+              "edu/tufts/hrilab/demos/TemiV3Test*",
       )
     }
   }
@@ -58,7 +59,7 @@ dependencies {
 //    implementation(project(":vision"))
 //  }
 
-  testImplementation("ai.thinkingrobots:mtracs-mock:1.12.1") {
+  testImplementation("ai.thinkingrobots:mtracs-mock:1.12.2") {
     exclude(group = "edu.tufts.hrilab", module = "diarc-core") //avoid a transitive dependency with the diarc-core inclusion for the external project.
   }
 

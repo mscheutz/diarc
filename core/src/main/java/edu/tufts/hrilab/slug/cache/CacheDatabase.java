@@ -380,6 +380,24 @@ public class CacheDatabase {
           log.warn("[get] cached utterance semantics possibly invalid {}", cachedUtterance.getSemantics());
         }
       }
+      //TODO: PickAndPlace2024 Hacks
+      //EW: this is only safe because we know it is for this domain, need to have better long term solution
+      else if (cachedUtterance.getType() == UtteranceType.QUESTION) {
+        List<Symbol> args = semantics.getArgs();
+        if (incoming.getAddressee().getName().equals("robotone")) {
+          for (int i=0;i<args.size();i++) {
+            if (args.get(i).getName().equals("robottwo")) {
+              semantics.set(i,incoming.getAddressee());
+            }
+          }
+        } else if (incoming.getAddressee().getName().equals("robottwo")) {
+          for (int i=0;i<args.size();i++) {
+            if (args.get(i).getName().equals("robotone")) {
+              semantics.set(i,incoming.getAddressee());
+            }
+          }
+        }
+      }
       incoming.setSemantics(semantics);
       incoming.setIndirectSemantics(cachedUtterance.getIndirectSemantics());
       incoming.setBindings(cachedUtterance.getBindings());

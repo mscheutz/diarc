@@ -247,6 +247,7 @@ public class GoalViewerAdapter extends GuiAdapter {
    * <ul>
    *     <li><code>name: string</code></li>
    *     <li><code>actor: string</code></li>
+   *     <li><code>currentAction: string</code></li>
    *     <li><code>status: string</code></li>
    *     <li><code>start: string</code></li>
    *     <li><code>end: string</code></li>
@@ -276,6 +277,7 @@ public class GoalViewerAdapter extends GuiAdapter {
       }
       goalJson.addProperty("name", goalString);
       goalJson.addProperty("actor", info.actor.getName());
+//      goalJson.addProperty("currentAction", "");
       goalJson.addProperty("status", info.status.toString().toLowerCase());
       goalJson.addProperty("start", info.start == -1 ? "" : simpleDateFormat.format(new Date(info.start)));
       goalJson.addProperty("end", (info.end == -1) ? "" : simpleDateFormat.format(new Date(info.end)));
@@ -408,15 +410,12 @@ public class GoalViewerAdapter extends GuiAdapter {
     switch (message.get("method").getAsString()) {
       case "cancel":
         applyChangeToGoals(message.getAsJsonArray("ids"), cancelGoal);
-        signalAvaExternalCommandReceived();
         break;
       case "suspend":
         applyChangeToGoals(message.getAsJsonArray("ids"), suspendGoal);
-        signalAvaExternalCommandReceived();
         break;
       case "resume":
         applyChangeToGoals(message.getAsJsonArray("ids"),resumeGoal);
-        signalAvaExternalCommandReceived();
         break;
       case "startup":
         onConnect();

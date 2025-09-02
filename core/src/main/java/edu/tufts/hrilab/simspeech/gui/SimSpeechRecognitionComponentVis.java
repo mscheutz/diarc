@@ -114,7 +114,7 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
     }
 
     int i = sConfigs.get(0).lastIndexOf(File.separator);
-    this.setTitle(sConfigs.get(0).substring(i + 1));
+    this.setTitle(sConfigs.get(0).substring(i + 1) + " | Addressee: " + component.getAddressee());
     this.setSize(scrollPane.getPreferredSize());
     this.setVisible(true);
   }
@@ -264,9 +264,5 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
     } catch (IOException ioe) {
       log.error("Error parsing config file: ", ioe);
     }
-  }
-
-  public void shutdown() {
-    this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
   }
 }

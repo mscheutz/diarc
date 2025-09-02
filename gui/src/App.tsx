@@ -10,11 +10,11 @@ function App() {
 
 
     // WEBSOCKET //
-    let location = "http://172.16.0.3:8000";
+    let location = document.location.toString();
     if (location.includes("#"))
         location = location.slice(0, location.indexOf("#"))
     const url: URL = new URL(location);
-    url.port = "8000";
+    url.port = "8080";
     url.protocol = "ws";
     const wsBaseUrl = url.toString();
 

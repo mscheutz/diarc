@@ -23,6 +23,7 @@ import edu.tufts.hrilab.vision.webgui.VisionAdapter;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
+import javax.annotation.Nonnull;
 import javax.vecmath.Matrix4d;
 import java.awt.*;
 import java.io.IOException;
@@ -117,7 +118,6 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
 
     if (refsConfigFile != null && !refsConfigFile.isEmpty()) {
       String filename = Resources.createFilepath(defaultConfigPath, refsConfigFile);
-      log.debug("Loading refs file " + filename);
       Vision.consultant.loadReferencesFromFile(filename);
     }
 

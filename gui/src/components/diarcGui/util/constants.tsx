@@ -10,8 +10,8 @@ import TradeServiceViewer from "../tradeService/TradeServiceViewer";
 import AvaBehaviorTab from "../AvaBehaviorTab"
 
 const handlerRoots: string[] =
-    //["actionProgrammer", "belief", "chat", "goalViewer", "goalManager", "map", "vision", "tradeService"];
-    ["actionProgrammer", "chat", "goalViewer", "goalQueueViewer", "vision", "tradeService", "avaBehaviors", "map"];
+    ["actionProgrammer", "belief", "chat", "goalViewer", "goalManager", "map",
+        "vision", "tradeService"];
 
 const handlers = {
     "actionProgrammer": {
@@ -46,28 +46,20 @@ const handlers = {
     "vision": {
         tabName: "Vision Manager",
         component: VisionManager
-    },
-    "avaBehaviors": {
-        tabName: "Task Submission",
-        component: AvaBehaviorTab
-    },
+    }
 };
 
 export { handlerRoots, handlers };
 
 const columns = [
     "Goal",
-    "Status",
-    "Start time",
-//     "Priority",
-//     "ID",
-];
-
-const pastColumns = [
-    "Goal",
+    "Actor",
+    "Current action",
     "Status",
     "Start time",
     "End time",
+    "Priority",
+    "ID"
 ];
 
 const scheduledColumns = [
@@ -88,8 +80,8 @@ const sortCriteria: Option[] = [
     { value: "status", label: "Status" },
     { value: "start", label: "Start time" },
     { value: "end", label: "End time" },
-//     { value: "priority", label: "Priority" },
-//     { value: "id", label: "ID" },
+    { value: "priority", label: "Priority" },
+    { value: "id", label: "ID" },
 ]
 
 const statuses: string[] = [

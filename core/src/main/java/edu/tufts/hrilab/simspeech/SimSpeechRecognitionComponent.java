@@ -136,6 +136,10 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
     log.info("addressee set to: " + this.addressee);
   }
 
+  public Symbol getAddressee() {
+    return this.addressee;
+  }
+
   // ********************************************************************
   // *** SimSpeech methods
   // ********************************************************************
@@ -284,9 +288,6 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
       reader.join();
     } catch (InterruptedException e) {
       log.error("[shutdown]");
-    }
-    if (useGui) {
-      gui.shutdown();
     }
   }
 }

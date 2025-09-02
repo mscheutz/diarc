@@ -74,6 +74,7 @@ public class ChatAdapter extends GuiAdapter {
    *
    * @param service the <code>getDiarcAgents()</code> TRADE service, provided
    *                by the notifier.
+   * @throws TRADEException if the TRADE service call fails.
    */
   @TRADEService
   public void populateDiarcAgents(TRADEServiceInfo service) {
@@ -84,8 +85,8 @@ public class ChatAdapter extends GuiAdapter {
       Set<Symbol> agents = diarcAgentsService.call(Set.class);
       //Set<String> diarcAgents = new HashSet<>();
       diarcAgents.clear();
-      agents.forEach(agent -> {if (!agent.getName().equals("self")) {diarcAgents.add(agent.getName());}});
-      //agents.forEach(agent -> diarcAgents.add(agent.getName()));
+      //agents.forEach(agent -> {if (!agent.getName().equals("self")) {diarcAgents.add(agent.getName());}});
+      agents.forEach(agent -> diarcAgents.add(agent.getName()));
       sendDiarcAgents(diarcAgents);
       log.debug("DIARC agents received");
     } catch (TRADEException e) {
@@ -160,8 +161,8 @@ public class ChatAdapter extends GuiAdapter {
     try {
       JsonObject json = new JsonObject();
       json.addProperty("message", utterance.getWordsAsString());
-      json.addProperty("sender", utterance.getSpeaker().toString());
-      json.addProperty("recipient", utterance.getAddressee().toString());
+      json.addProperty("sender", utterance.getSpeaker().toUntypedString());
+      json.addProperty("recipient", utterance.getAddressee().toUntypedString());
       json.addProperty("path", getPath());
       sendMessage(json);
     } catch (TRADEException e) {
@@ -287,7 +288,7 @@ public class ChatAdapter extends GuiAdapter {
             .setIsInputUtterance(true)
             .build();
 
-    signalAvaExternalCommandReceived();
+    //signalAvaExternalCommandReceived();
 
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints()

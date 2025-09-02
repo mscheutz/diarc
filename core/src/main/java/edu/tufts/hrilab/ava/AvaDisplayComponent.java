@@ -20,8 +20,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
-import uk.co.caprica.vlcj.player.base.MediaPlayer;
-import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
+//import uk.co.caprica.vlcj.player.base.MediaPlayer;
+//import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -57,7 +57,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   private long idleTimer = -1;
   private boolean idle = false;
 
-  private EmbeddedMediaPlayerComponent mediaPlayerComponent;
+  //private EmbeddedMediaPlayerComponent mediaPlayerComponent;
 
   private final ScheduledExecutorService refreshExecutor = Executors.newScheduledThreadPool(1);
   private ScheduledFuture currentImageCycleFuture = null;
@@ -166,37 +166,37 @@ public class AvaDisplayComponent extends DiarcComponent {
     frame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(WindowEvent e) {
-        mediaPlayerComponent.release();
+        //mediaPlayerComponent.release();
         frame.setVisible(false);
         frame.dispose();
         System.exit(0);
       }
     });
 
-    mediaPlayerComponent = new EmbeddedMediaPlayerComponent() {
-      @Override
-      public void playing(MediaPlayer mediaPlayer) {
-        mediaPlayer.audio().setVolume(videoVolume);
-        mediaPlayer.controls().play();
-      }
-
-      @Override
-      public void stopped(MediaPlayer mediaPlayer) {
-        videoPlaying = false;
-        try {
-          SwingUtilities.invokeAndWait(() -> {
-                    cardLayout.previous(cardPanel);
-                  }
-          );
-        } catch (InterruptedException | InvocationTargetException e) {
-          log.error("error switching back to idle display", e);
-        }
-        continueIdleImageCycle();
-      }
-
-    };
-
-    cardPanel.add(mediaPlayerComponent);
+    //mediaPlayerComponent = new EmbeddedMediaPlayerComponent() {
+    //  @Override
+    //  public void playing(MediaPlayer mediaPlayer) {
+    //    mediaPlayer.audio().setVolume(videoVolume);
+    //    mediaPlayer.controls().play();
+    //  }
+//
+    //  @Override
+    //  public void stopped(MediaPlayer mediaPlayer) {
+    //    videoPlaying = false;
+    //    try {
+    //      SwingUtilities.invokeAndWait(() -> {
+    //                cardLayout.previous(cardPanel);
+    //              }
+    //      );
+    //    } catch (InterruptedException | InvocationTargetException e) {
+    //      log.error("error switching back to idle display", e);
+    //    }
+    //    continueIdleImageCycle();
+    //  }
+//
+    //};
+//
+    //cardPanel.add(mediaPlayerComponent);
 
     if (isFullscreen) {
       frame.setUndecorated(true);
@@ -461,7 +461,7 @@ public class AvaDisplayComponent extends DiarcComponent {
       log.error("error switching back to logo", e);
     }
     String path = getMediaPath(videoDir) + File.separator + videoName;
-    mediaPlayerComponent.mediaPlayer().media().startPaused(path);
+    //mediaPlayerComponent.mediaPlayer().media().startPaused(path);
     videoPlaying = true;
     log.info("[displayNextVideo] displaying video: " + path);
   }
@@ -473,18 +473,18 @@ public class AvaDisplayComponent extends DiarcComponent {
 
   @TRADEService
   public void cancelVideoPlayback() {
-    mediaPlayerComponent.mediaPlayer().controls().stop();
+    //mediaPlayerComponent.mediaPlayer().controls().stop();
     videoPlaying = false;
   }
 
   @TRADEService
   public void pauseVideoPlayback() {
-    mediaPlayerComponent.mediaPlayer().controls().pause();
+    //mediaPlayerComponent.mediaPlayer().controls().pause();
   }
 
   @TRADEService
   public void resumeVideoPlayback() {
-    mediaPlayerComponent.mediaPlayer().controls().play();
+    //mediaPlayerComponent.mediaPlayer().controls().play();
   }
 
   /**

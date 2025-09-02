@@ -5,7 +5,7 @@
 
 export const getServices = async () => {
     try {
-        const response = await fetch("http://172.16.0.3:8000/services");
+        const response = await fetch("http://localhost:8080/services");
         if (!response.ok) {
             throw new Error("Network response was not ok");
         }
@@ -31,7 +31,7 @@ export const queryServices = async (
     service: string
 ) => {
     const url =
-        "http://172.16.0.3:8000/invoke-service?serviceName=" +
+        "http://localhost:8080/invoke-service?serviceName=" +
         service.replace(/\([^()]*\)/g, "");
 
     try {

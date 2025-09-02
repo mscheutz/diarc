@@ -24,7 +24,7 @@ public class SortingDemoMock extends DiarcConfiguration {
 
     @Override
     public void runConfiguration(){
-        assista = createInstance(ai.thinkingrobots.mtracs.mock.MockCR800Component.class, "-config mtracs/assista.json");
+        assista = createInstance(ai.thinkingrobots.mtracs.mock.MockCR800Component.class, "-config /mtracs/assista.json");
         plc = createInstance(ai.thinkingrobots.mtracs.mock.MockPLCComponent.class);
         createInstance(MockScaleComponent.class);
 

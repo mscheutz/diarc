@@ -1,0 +1,303 @@
+%TODO: Restrict types for refs in certain cases
+START-TEMPLATES
+VERBI; {C\AGENT ; #x.?PH($x)}, {C ; ?PH(?ADDRESSEE)}
+
+VERBT; {(C/REF)\AGENT ; #x#y.?PH($x,$y)}, {C/REF ; #x.?PH(?ADDRESSEE, $x)}
+ADDRESSABLE; {AGENT ; ?PH} ,{G/G, S/S, C/C, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
+
+GOTO; {C/REF ; #x.goToPose(?ADDRESSEE,$x)} ,{(C/REF)\AGENT ; #agent#x.goToPose($agent,$x)}
+
+END-TEMPLATES
+
+a; REF/RN ; #x.$x ; INDEFINITE
+the; REF/RN ; #x.$x ; DEFINITE
+one; REF/RN ; #x.$x ; INDEFINITE
+
+%it; REF ; it:physobj ; INFOCUS
+
+%%TODO: test these in the current domain
+suspend current goal; VERBI ; suspendSystemGoals
+resume previous goal; VERBI ; resumeSystemGoals
+resume goal; VERBI ; resumeSystemGoals
+resume; VERBI ; resumeSystemGoals
+cancel current goal; VERBI ; cancelSystemGoals
+remove goal from queue at position; C/LIT* ; #x.cancelPendingGoalByIndex(?ADDRESSEE,$x)
+%now; C/C; #x.urgentPriority(?ADDRESSEE,$x)
+%right now; C\C; #x.urgentPriority(?ADDRESSEE,$x)
+
+what is your current goal; VERBI; describeCurrentGoal
+what are your pending goals; VERBI; describePendingGoals
+cancel pending goals; VERBI; cancelAllPendingGoals
+cancel all active goals; VERBI; cancelAllActiveGoals
+cancel all goals; VERBI; cancelAllCurrentGoals
+
+%%% Homophones %%
+location 1; REF; locationOne:pose; DEFINITE
+location 1; RN; locationOne:pose; VAR
+location 1; PROPERTY; locationOne:pose
+
+location to; REF; location two:pose; DEFINITE
+location to; RN; location two:pose; VAR
+location to; PROPERTY; location two:pose
+location too; REF; location two:pose; DEFINITE
+location too; RN; location two:pose; VAR
+location too; PROPERTY; location two:pose
+location 2; REF; location two:pose; DEFINITE
+location 2; RN; location two:pose; VAR
+location 2; PROPERTY; location two:pose
+
+location 3; REF; location three:pose; DEFINITE
+location 3; RN; location three:pose; VAR
+location 3; PROPERTY; location three:pose
+
+location 4; REF; location four:pose; DEFINITE
+location 4; RN; location four:pose; VAR
+location 4; PROPERTY; location four:pose
+
+%%%%%%%%% Actions %%%%%%%%%
+
+%% goToPose %%
+go to; GOTO
+move to; GOTO
+move your gripper to; GOTO
+location; REF/REF; #l.$l
+pose; REF/REF; #l.$l
+
+%% openGripper %%
+open gripper; VERBI; openGripper
+open the gripper; VERBI; openGripper
+open your gripper; VERBI; openGripper
+open grippers; VERBI; openGripper
+open the grippers; VERBI; openGripper
+open your grippers; VERBI; openGripper
+
+%% closeGripper %%
+close gripper; VERBI; closeGripper
+close the gripper; VERBI; closeGripper
+close your gripper; VERBI; closeGripper
+close grippers; VERBI; closeGripper
+close the grippers; VERBI; closeGripper
+close your grippers; VERBI; closeGripper
+
+%% detectObject %%
+look for objects; VERBI; detectObjects
+look for; VERBT; detectObject
+search for; VERBT; detectObject
+find; VERBT; detectObject
+observe; VERBT; detectObject
+detect; VERBT; detectObject
+verify that you can see; VERBT; detectObject
+
+%% pick up no arg %%
+pick up; C/BLOCKC ; #x.pickUp(?ADDRESSEE)
+pickup; C/BLOCKC ; #x.pickUp(?ADDRESSEE)
+grab; C/BLOCKC ; #x.pickUp(?ADDRESSEE)
+get; C/BLOCKC ; #x.pickUp(?ADDRESSEE)
+block; BLOCKC; block;
+object; BLOCKC; object;
+a; BLOCKC/BLOCKC ; #x.$x
+an; BLOCKC/BLOCKC ; #x.$x
+the; BLOCKC/BLOCKC ; #x.$x
+one; BLOCKC/BLOCKC ; #x.$x
+
+%% pick up one arg
+pickup; VERBT; pickUp
+pick up; VERBT; pickUp
+grab; VERBT; pickUp
+get; VERBT; pickUp
+
+%% put down no arg %%
+put down; C/BLOCKC; #x.putDown(?ADDRESSEE)
+putdown; C/BLOCKC; #x.putDown(?ADDRESSEE)
+put; (C/PUTDOWNSUFFIX)/BLOCKC; #x#y.putDown(?ADDRESSEE)
+place; (C/PUTDOWNSUFFIX)/BLOCKC; #x#y.putDown(?ADDRESSEE)
+put down; C/REF; #x.putDown(?ADDRESSEE,$x)
+putdown; C/REF; #x.putDown(?ADDRESSEE,$x)
+put; (C/PUTDOWNSUFFIX)/REF; #x#y.putDown(?ADDRESSEE,$x)
+place; (C/PUTDOWNSUFFIX)/REF; #x#y.putDown(?ADDRESSEE,$x)
+down; PUTDOWNSUFFIX; down
+
+%% moveObjectTo three arg (object,from,to) %%
+move; ((C/REF)/REF)/REF; #x#y#z.moveObjectTo(?ADDRESSEE,$x,$y,$z)
+transport; ((C/REF)/REF)/REF; #x#y#z.moveObjectTo(?ADDRESSEE,$x,$y,$z)
+relocate; ((C/REF)/REF)/REF; #x#y#z.moveObjectTo(?ADDRESSEE,$x,$y,$z)
+get; ((C/REF)/REF)/REF; #x#y#z.moveObjectTo(?ADDRESSEE,$x,$y,$z)
+move; (C/MOVEBLOCKSUFFIX)/REF; #x#y.moveObjectTo(?ADDRESSEE,$x,$y)
+transport; (C/MOVEBLOCKSUFFIX)/REF; #x#y.moveObjectTo(?ADDRESSEE,$x,$y)
+relocate; (C/MOVEBLOCKSUFFIX)/REF; #x#y.moveObjectTo(?ADDRESSEE,$x,$y)
+between; (MOVEBLOCKSUFFIX/LOCREF)/REF; #x#y.$x,$y
+from; REF/REF; #x.$x
+to; REF/REF; #x.$x
+and; LOCREF/REF; #x.$x
+swap; (C/LOCREF)/REF; #x#y.swapObjects(?ADDRESSEE,$x,$y)
+
+%% placeObjectDownAt two arg (object,to) %%
+put down; (C/REF)/REF; #x#y.placeObjectDownAt(?ADDRESSEE,$x,$y)
+putdown; (C/REF)/REF; #x#y.placeObjectDownAt(?ADDRESSEE,$x,$y)
+put; (C/REF)/REF; #x#y.placeObjectDownAt(?ADDRESSEE,$x,$y)
+place; (C/REF)/REF; #x#y.placeObjectDownAt(?ADDRESSEE,$x,$y)
+place down; (C/REF)/REF; #x#y.placeObjectDownAt(?ADDRESSEE,$x,$y)
+put; ((C/REF)/PUTDOWNSUFFIX)/REF; #x#y#z.placeObjectDownAt(?ADDRESSEE,$x,$z)
+place; ((C/REF)/PUTDOWNSUFFIX)/REF; #x#y#z.placeObjectDownAt(?ADDRESSEE,$x,$z)
+at; REF/REF; #x.$x
+
+%% placeObjectDownAt one arg (to) %%
+put down; (C/REF)/BLOCKC; #x#y.placeObjectDownAt(?ADDRESSEE,$y)
+putdown; (C/REF)/BLOCKC; #x#y.placeObjectDownAt(?ADDRESSEE,$y)
+put; (C/REF)/BLOCKC; #x#y.placeObjectDownAt(?ADDRESSEE,$y)
+place; (C/REF)/BLOCKC; #x#y.placeObjectDownAt(?ADDRESSEE,$y)
+place down; (C/REF)/BLOCKC; #x#y.placeObjectDownAt(?ADDRESSEE,$y)
+put; ((C/REF)/PUTDOWNSUFFIX)/BLOCKC; #x#y#z.placeObjectDownAt(?ADDRESSEE,$z)
+place; ((C/REF)/PUTDOWNSUFFIX)/BLOCKC; #x#y#z.placeObjectDownAt(?ADDRESSEE,$z)
+
+%% resetDomain %%
+reset domain; VERBI; resetDomain
+clear domain; VERBI; resetDomain
+
+%%%%%%%%% Goal Wrappers %%%%%%%%%
+%TODO: Unsure if wrapper name is best for LLM, very close to moveObjectTo
+get; (C/REF)/REF; #x#y.getObjectTo(?ADDRESSEE,$x,$y)
+i want; (C/WANTBLOCKATREF)/REF; #x#y.getObjectTo(?ADDRESSEE,$x,$y)
+at; WANTBLOCKATREF/REF; #x.$x
+to be at; WANTBLOCKATREF/REF; #x.$x
+make it so; (C/WANTBLOCKATREF2)/REF; #x#y.getObjectTo(?ADDRESSEE,$x,$y)
+is at; WANTBLOCKATREF2/REF; #x.$x
+
+%%%%%%%%% Belief Assertions %%%%%%%%%
+
+%% at(X,Y) %%
+%is at; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y),not(holding(?ADDRESSEE,$x)))
+%moved to; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y),not(holding(?ADDRESSEE,$x)))
+%has moved to; (S/REF)\REF; #x#y.and(not(at($x,Y)),at($x,$y),not(holding(?ADDRESSEE,$x)))
+%has moved from; ((S/REF)/REF)\REF; #x#y#z.and(not(at($x,Y)),at($x,$z),not(holding(?ADDRESSEE,$x)))
+%% Needed to swap to an action (bad) because there was no way to conditionally assert free(?actor) depending on whether the object was currently being held or not
+is at; (C/REF)\REF; #x#y.believeObjectAt(?ADDRESSEE,$x,$y)
+moved to; (C/REF)\REF; #x#y.believeObjectAt(?ADDRESSEE,$x,$y)
+has moved to; (C/REF)\REF; #x#y.believeObjectAt(?ADDRESSEE,$x,$y)
+has moved from; ((C/REF)/REF)\REF; #x#y#z.believeObjectAt(?ADDRESSEE,$x,$z)
+
+%% not(at(X,Y)) %%
+is not at; (S/REF)\REF; #x#y.not(at($x,$y))
+is no longer at; (S/REF)\REF; #x#y.not(at($x,$y))
+has moved from; (S/REF)\REF; #x#y.not(at($x,$y))
+%is not at; (C/REF)\REF; #x#y.forgetThat(?ADDRESSEE,at($x,$y))
+%is no longer at; (C/REF)\REF; #x#y.forgetThat(?ADDRESSEE,at($x,$y))
+%has moved from; (C/REF)\REF; #x#y.forgetThat(?ADDRESSEE,at($x,$y))
+
+%TODO: make sure this actually applies to domain
+%% supervisor/admin permissions %%
+eric;AGENT;eric
+pete;AGENT;pete
+%is trusted; S\AGENT ; #a.trusted($a)
+%is not trusted; S\AGENT ; #a.not(trusted($a))
+%define new speaker; S/LIT*; #s.name($s,$s)
+add new supervisor; S/LIT*; #s.supervisor($s)
+add new admin; S/LIT* ; #a.admin($a)
+remove supervisor; S/LIT*; #s.not(supervisor($s))
+remove admin; S/LIT* ; #a.not(admin($a))
+is a supervisor; S\AGENT; #s.supervisor($s)
+is not a supervisor; S\AGENT; #s.not(supervisor($s))
+is an admin; S\AGENT ; #a.admin($a)
+is not an admin; S\AGENT ; #a.not(admin($a))
+
+%%%%%%%%% ITK %%%%%%%%%
+%%Do we even want this since all actions require verifying the object location and/or will not take into account where it thinks a object is?
+%where is; Q/REF ; #x.know(?ADDRESSEE,whereAt($x))
+where is; VERBT ; describeObjectPose
+%where; KNOWABLE/REF; #x.whereAt($x,X)
+%where; KNOWABLEWHEREIS/REF; #x.whereAt($x)
+%is; KNOWABLE\KNOWABLEWHEREIS; #x.$x
+
+%TODO add entries for variations of these
+what objects are you aware of; VERBI; describeObjectPoses
+what objects do you know the locations of; VERBI; describeObjectPoses
+what objects are at; VERBT; describeObjectsAt
+how many objects are at; VERBT; describeNumberOfObjectsAt
+are any objects at; Q/REF; #x.objectsAt($x)
+what blocks are you aware of; VERBI; describeObjectPoses
+what blocks do you know the locations of; VERBI; describeObjectPoses
+what blocks are at; VERBT; describeObjectsAt
+how many blocks are at; VERBT; describeNumberOfObjectsAt
+are any blocks at; Q/REF; #x.objectsAt($x)
+is there a; (Q/REF)/REF; #x#y.at($x,$y)
+%what types of objects can you detect; VERBI; describeObjectTypes
+where are you now; VERBI; describeCurrentPose
+what location are you at; VERBI; describeCurrentPose
+
+what objects can you detect; VERBI; describeDetectableObjectNames
+what poses exist; VERBI; describeKnownPoseNames
+
+is; Q/KNOWABLE; #x.know(?ADDRESSEE,$x)
+a supervisor; KNOWABLE\AGENT; #x.supervisor($x)
+an admin; KNOWABLE\AGENT; #x.admin($x)
+%trusted; KNOWABLE\AGENT; #x.trusted($x)
+
+%TODO: issue somewhere with knowHow parse matching early when more args are present and overloaded entries exist which take in different numbers of args
+do; Q/ C; #x.$x
+you; AGENT; ?ADDRESSEE
+know how; (C/INF)\AGENT ; #a#i.knowHow($a,$i)
+know; (C/KNOWABLE)\AGENT ; #a#k.know($a,$k)
+to; INF/C; #x.to($x)
+see; (C/REF)\AGENT ; #x#y.see($y)
+
+%TODO: is there any nice way to have just 'location one' be a VAL which is the ref for location one?
+% Doesn't seem like it, any workaround rule will try to match fully on 'location one' rather than just 'location' and ignore the less specific entry
+%location; VAL/REF; #l.pose($l);
+%area; VAL/REF; #a.pose($a);
+%pose; VAL/REF; #a.pose($a);
+%it is at; VAL/REF; #a.pose($a);
+%at; VAL/REF; #a.pose($a);
+%%the object is at; VAL/REF; #a.pose($a);
+%location; VAL/POSEREF; #l.pose($l);
+%one; POSEREF; locationOne:pose; DEFINITE
+
+
+%Same issue for objects
+%the; VAL/REF; #l.objectType($l);
+%block; VAL/REF; #l.objectType($l);
+
+%TODO: ability to do this (and to do this for both object and pose questions)
+%nowhere; VAL; pose(none);
+%none; VAL; objectType(none);
+%%nevermind; VAL; pose(none);
+%nevermind; VAL; objectType(none);
+%never mind; VAL; objectType(none);
+no block; VAL; objectType(none);
+no object; VAL; objectType(none);
+nowhere; VAL; pose(none);
+none; VAL; abort(question);
+%nevermind; VAL; abort(question);
+nevermind; VAL; abort(question);
+never mind; VAL; abort(question);
+
+yes; VAL; val(yes);
+はい; VAL; val(yes);
+no; VAL; val(no);
+いいえ; VAL ; val(no);
+
+%%% LLM control %%
+%clear conversation history; VERBI; clearConversationHistory
+%toggle nlg; VERBI; toggleLLMNLG
+
+%% Testing only %%
+%test nlg; C/LIT*; #x.testLLMNLGWithString(?ADDRESSEE,$x);
+
+hi; G ; hi
+hi there; G ; hi_there
+hello; G ; hello
+こんにちは; G; こんにちは
+
+init; C; init(?ADDRESSEE)
+
+what do you see; Q; whichObjectsAtCurrentPose(?ADDRESSEE)
+what do you see at your location; Q; whichObjectsAtCurrentPose(?ADDRESSEE)
+
+%% Temp learning language %%
+i will teach you a new task; VERBI; learnNewTask
+i will teach you how to perform a new task; VERBI; learnNewTask
+
+i am done teaching; VERBI; endActionLearning
+those are the steps of the task; VERBI; endActionLearning
+
+task a; VAL; taskName(task a)
+perform task a; VERBI; task a

@@ -129,6 +129,7 @@ const FilterGoals: React.FC<FilterGoalsProps> = (
 type Entry = {
     name: string,
     actor: string,
+    currentAction: string,
     status: string,
     start: string,
     end: string,
@@ -141,6 +142,7 @@ const toArray = (e: Entry) => {
     return [
         e.name,
         e.actor,
+        e.currentAction,
         e.status,
         e.start,
         e.end,
@@ -313,7 +315,7 @@ const GoalViewer: React.FC<Props> = ({
             return copy.sort(compare);
         };
 
-        setData(d => sorted(d));
+        setData(sorted(data));
 
         if (lastMessage === null) return;
         const newData = JSON.parse(lastMessage.data);

@@ -129,9 +129,11 @@ tasks.named<Test>("test") {
   useJUnit()
   maxHeapSize = "4g"
   forkEvery = 1
-  classpath += files("src/test/resources") // this is so the ActionASLTest can read/write into this directory
+  classpath += files("src/test/resources") + // this is so the ActionASLTest can read/write into this directory
+               files(System.getProperty("user.home") + "/.diarc")
   systemProperty("logback.configurationFile", properties["diarc.loggingConfigFile"].toString())
   systemProperty("diarc.planner.ff", properties["diarc.planner.ff"].toString())
+  systemProperty("trade.properties.path", properties.getOrDefault("diarc.test.tradePropertiesFile", "src/main/resources/default/trade.properties.default").toString())
   systemProperty("logging.config", properties["diarc.loggingConfigFile"].toString()) // for springboot
 
   // to run tests with logging printed to console
@@ -243,6 +245,7 @@ dependencies {
 
   implementation("javax.servlet:servlet-api:2.5")
   implementation("org.springframework.boot:spring-boot-starter-websocket:3.2.4")
+  implementation("org.java-websocket:Java-WebSocket:1.5.2")
 
   //DesktopFirebaseConnectionComponent
   implementation("com.google.firebase:firebase-admin:7.1.0")
@@ -282,11 +285,6 @@ dependencies {
 
   //gui
   implementation("org.apache.commons:commons-imaging:1.0-alpha3") // MapAdapter
-
-
-  //todo: unsafe to include? vlc wrapper library for playing videos
-  implementation("uk.co.caprica:vlcj:4.10.1")
-
 
 }
 

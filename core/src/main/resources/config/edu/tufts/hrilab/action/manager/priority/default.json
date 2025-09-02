@@ -321,5 +321,38 @@
   "setKioskModeEnabled": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+
+  "describeObjectPose": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeObjectPoses": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeObjectsAt": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeNumberOfObjectsAt": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeObjectTypes": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeCurrentPose": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeDetectableObjectNames": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "describeKnownPoseNames": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

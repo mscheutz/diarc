@@ -358,7 +358,7 @@ const ChatViewer: React.FC<Props> = ({
                 {chatContainer}
             </MainContainer>
 
-            {/*<ConnectionIndicator readyState={readyState} />*/}
+            <ConnectionIndicator readyState={readyState} />
         </div>
     );
 }

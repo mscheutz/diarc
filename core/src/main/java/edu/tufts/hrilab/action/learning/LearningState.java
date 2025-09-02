@@ -58,7 +58,7 @@ public class LearningState {
   private Map<List<Term>,String> localVariableProperties = new HashMap<>();
 
   //TODO:brad: get these values from the currently active consultants
-  private Set<String> consultantTypes = Set.of(new String[]{"physobj"});//,"gofapose","yumipose","mobileyumipose","location"});
+  private Set<String> consultantTypes = Set.of(new String[]{"physobj", "pose"});//,"gofapose","yumipose","mobileyumipose","location"});
   private int localVariableCounter=0;
   private int roleNameCounter = 0;
 
@@ -533,7 +533,7 @@ public class LearningState {
    */
   private EventSpec buildEventSpecForAction(Symbol actor, Predicate actionPredicate) {
     EventSpec.Builder esBuilder = new EventSpec.Builder(EventSpec.EventType.ACTION);
-    esBuilder.setActor(processEventArgument(actor));
+//    esBuilder.setActor(processEventArgument(actor));
     esBuilder.setCommand(actionPredicate.getName());
 
     List<Symbol> args = actionPredicate.getArgs();

@@ -226,7 +226,7 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
         (!ref) = tsc:createCogRefWithProps(?job, !additionalProps);
         //bind reference to the result that it matches
         (!iCopy) = op:newObject("java.lang.Integer", ?i);
-        tsc:bindCognexResult(!ref, !result, !iCopy);
+        tsc:bindCognexResult(!ref, !result);
         (?i) = op:++(?i);
         act:bindResultsRecursive(?job, ?cameraResults, ?i);
     }
@@ -254,7 +254,7 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
         //create reference and add any additional props
         (!ref) = tsc:createCogRefWithProps(!job, !additionalProps);
         //bind reference to the result that it matches
-        tsc:bindCognexResult(!ref, !result, 0);
+        tsc:bindCognexResult(!ref, !result);
         (?return) = op:invokeMethod(!ref, "getRefId");
     }
 }

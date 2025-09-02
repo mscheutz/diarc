@@ -1,3 +1,7 @@
+/*
+ * Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
+ */
+
 // Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.Lexer;
@@ -20,14 +24,14 @@ public class ASLLexer extends Lexer {
 		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, T__8=9, 
 		T__9=10, T__10=11, T__11=12, T__12=13, T__13=14, T__14=15, T__15=16, T__16=17, 
 		T__17=18, T__18=19, T__19=20, T__20=21, T__21=22, T__22=23, T__23=24, 
-		T__24=25, T__25=26, WS=27, LINECOMMENT=28, BLOCKCOMMENT=29, IMPORT=30, 
-		AS=31, ACTION=32, OPERATOR=33, OBSERVATION=34, GOAL=35, TSC=36, INFER=37, 
-		VAR=38, SET=39, OR=40, PRE=41, POST=42, OVERALL=43, OBLIGATION=44, EFFECT=45, 
-		ALWAYS=46, SUCCESS=47, FAILURE=48, NONPERF=49, OBSERVES=50, RECOVERY=51, 
-		LOCKS=52, CONDITION=53, IF=54, ELIF=55, ELSE=56, WHILE=57, FOR=58, FOREACH=59, 
-		TRUE=60, FALSE=61, EXIT=62, TRY=63, CATCH=64, FINALLY=65, NOT=66, RETURN=67, 
-		ASYNC=68, JOIN=69, INTERRUPT=70, SUSPEND=71, CANCEL=72, RESUME=73, NOINTERRUPT=74, 
-		ARIOPT=75, OROPT=76, ANDOPT=77, INCOPT=78, GRWOPT=79, CMPOPT=80, NUMBER=81, 
+		T__24=25, T__25=26, WS=27, LINECOMMENT=28, BLOCKCOMMENT=29, IMPORT=30,
+		AS=31, ACTION=32, OPERATOR=33, OBSERVATION=34, GOAL=35, TSC=36, INFER=37,
+		VAR=38, SET=39, OR=40, PRE=41, POST=42, OVERALL=43, OBLIGATION=44, EFFECT=45,
+		ALWAYS=46, SUCCESS=47, FAILURE=48, NONPERF=49, OBSERVES=50, RECOVERY=51,
+		LOCKS=52, CONDITION=53, IF=54, ELIF=55, ELSE=56, WHILE=57, FOR=58, FOREACH=59,
+		TRUE=60, FALSE=61, EXIT=62, TRY=63, CATCH=64, FINALLY=65, NOT=66, RETURN=67,
+		ASYNC=68, JOIN=69, INTERRUPT=70, SUSPEND=71, CANCEL=72, RESUME=73, NOINTERRUPT=74,
+		ARIOPT=75, OROPT=76, ANDOPT=77, INCOPT=78, GRWOPT=79, CMPOPT=80, NUMBER=81,
 		NAME=82, GLOBALVAR=83, LOCALVAR=84, SENTENCE=85;
 	public static String[] channelNames = {
 		"DEFAULT_TOKEN_CHANNEL", "HIDDEN"
@@ -42,15 +46,15 @@ public class ASLLexer extends Lexer {
 			"T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6", "T__7", "T__8", 
 			"T__9", "T__10", "T__11", "T__12", "T__13", "T__14", "T__15", "T__16", 
 			"T__17", "T__18", "T__19", "T__20", "T__21", "T__22", "T__23", "T__24", 
-			"T__25", "WS", "LINECOMMENT", "BLOCKCOMMENT", "IMPORT", "AS", "ACTION", 
-			"OPERATOR", "OBSERVATION", "GOAL", "TSC", "INFER", "VAR", "SET", "OR", 
-			"PRE", "POST", "OVERALL", "OBLIGATION", "EFFECT", "ALWAYS", "SUCCESS", 
-			"FAILURE", "NONPERF", "OBSERVES", "RECOVERY", "LOCKS", "CONDITION", "IF", 
-			"ELIF", "ELSE", "WHILE", "FOR", "FOREACH", "TRUE", "FALSE", "EXIT", "TRY", 
-			"CATCH", "FINALLY", "NOT", "RETURN", "ASYNC", "JOIN", "INTERRUPT", "SUSPEND", 
-			"CANCEL", "RESUME", "NOINTERRUPT", "NAMECHAR", "HEADCHAR", "LETTER", 
-			"LOWERCASELETTER", "DIGIT", "NONZERO", "DECIMAL", "INTEGER", "FLOAT", 
-			"ARIOPT", "OROPT", "ANDOPT", "INCOPT", "GRWOPT", "CMPOPT", "NUMBER", 
+			"T__25", "WS", "LINECOMMENT", "BLOCKCOMMENT", "IMPORT", "AS", "ACTION",
+			"OPERATOR", "OBSERVATION", "GOAL", "TSC", "INFER", "VAR", "SET", "OR",
+			"PRE", "POST", "OVERALL", "OBLIGATION", "EFFECT", "ALWAYS", "SUCCESS",
+			"FAILURE", "NONPERF", "OBSERVES", "RECOVERY", "LOCKS", "CONDITION", "IF",
+			"ELIF", "ELSE", "WHILE", "FOR", "FOREACH", "TRUE", "FALSE", "EXIT", "TRY",
+			"CATCH", "FINALLY", "NOT", "RETURN", "ASYNC", "JOIN", "INTERRUPT", "SUSPEND",
+			"CANCEL", "RESUME", "NOINTERRUPT", "NAMECHAR", "HEADCHAR", "LETTER",
+			"LOWERCASELETTER", "DIGIT", "NONZERO", "DECIMAL", "INTEGER", "FLOAT",
+			"ARIOPT", "OROPT", "ANDOPT", "INCOPT", "GRWOPT", "CMPOPT", "NUMBER",
 			"NAME", "GLOBALVAR", "LOCALVAR", "SENTENCE"
 		};
 	}
@@ -59,17 +63,17 @@ public class ASLLexer extends Lexer {
 	private static String[] makeLiteralNames() {
 		return new String[] {
 			null, "';'", "'='", "'['", "']'", "'('", "')'", "','", "'.'", "'<'", 
-			"'>'", "':'", "'{'", "'}'", "'actionRecovery'", "'catchingActions'", 
-			"'postRecovery'", "'postrecovery_retry'", "'postrecovery_continue'", 
-			"'goals'", "'excludedGoals'", "'failedActions'", "'excludedFailedActions'", 
-			"'failureReasons'", "'excludedFailureReasons'", "'actionStatuses'", "'maximumAttempts'", 
-			null, null, null, "'import'", "'as'", "'act'", "'op'", "'obs'", "'goal'", 
-			"'tsc'", "'infer'", "'var'", "'setting'", "'or'", "'pre'", "'post'", 
-			"'overall'", "'obligation'", "'effects'", "'always'", "'success'", "'failure'", 
-			"'nonperf'", "'observes'", "'recovery'", "'locks'", "'conditions'", "'if'", 
-			"'elseif'", "'else'", "'while'", "'for'", "'foreach'", "'true'", "'false'", 
-			"'exit'", "'try'", "'catch'", "'finally'", "'~'", "'return'", "'async'", 
-			"'join'", "'onInterrupt'", "'suspend'", "'cancel'", "'resume'", "'noInterrupt'", 
+			"'>'", "':'", "'{'", "'}'", "'actionRecovery'", "'catchingActions'",
+			"'postRecovery'", "'postrecovery_retry'", "'postrecovery_continue'",
+			"'goals'", "'excludedGoals'", "'failedActions'", "'excludedFailedActions'",
+			"'failureReasons'", "'excludedFailureReasons'", "'actionStatuses'", "'maximumAttempts'",
+			null, null, null, "'import'", "'as'", "'act'", "'op'", "'obs'", "'goal'",
+			"'tsc'", "'infer'", "'var'", "'setting'", "'or'", "'pre'", "'post'",
+			"'overall'", "'obligation'", "'effects'", "'always'", "'success'", "'failure'",
+			"'nonperf'", "'observes'", "'recovery'", "'locks'", "'conditions'", "'if'",
+			"'elseif'", "'else'", "'while'", "'for'", "'foreach'", "'true'", "'false'",
+			"'exit'", "'try'", "'catch'", "'finally'", "'~'", "'return'", "'async'",
+			"'join'", "'onInterrupt'", "'suspend'", "'cancel'", "'resume'", "'noInterrupt'",
 			null, "'||'", "'&&'"
 		};
 	}
@@ -78,13 +82,13 @@ public class ASLLexer extends Lexer {
 		return new String[] {
 			null, null, null, null, null, null, null, null, null, null, null, null, 
 			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, "WS", "LINECOMMENT", "BLOCKCOMMENT", "IMPORT", "AS", 
-			"ACTION", "OPERATOR", "OBSERVATION", "GOAL", "TSC", "INFER", "VAR", "SET", 
-			"OR", "PRE", "POST", "OVERALL", "OBLIGATION", "EFFECT", "ALWAYS", "SUCCESS", 
-			"FAILURE", "NONPERF", "OBSERVES", "RECOVERY", "LOCKS", "CONDITION", "IF", 
-			"ELIF", "ELSE", "WHILE", "FOR", "FOREACH", "TRUE", "FALSE", "EXIT", "TRY", 
-			"CATCH", "FINALLY", "NOT", "RETURN", "ASYNC", "JOIN", "INTERRUPT", "SUSPEND", 
-			"CANCEL", "RESUME", "NOINTERRUPT", "ARIOPT", "OROPT", "ANDOPT", "INCOPT", 
+			null, null, null, "WS", "LINECOMMENT", "BLOCKCOMMENT", "IMPORT", "AS",
+			"ACTION", "OPERATOR", "OBSERVATION", "GOAL", "TSC", "INFER", "VAR", "SET",
+			"OR", "PRE", "POST", "OVERALL", "OBLIGATION", "EFFECT", "ALWAYS", "SUCCESS",
+			"FAILURE", "NONPERF", "OBSERVES", "RECOVERY", "LOCKS", "CONDITION", "IF",
+			"ELIF", "ELSE", "WHILE", "FOR", "FOREACH", "TRUE", "FALSE", "EXIT", "TRY",
+			"CATCH", "FINALLY", "NOT", "RETURN", "ASYNC", "JOIN", "INTERRUPT", "SUSPEND",
+			"CANCEL", "RESUME", "NOINTERRUPT", "ARIOPT", "OROPT", "ANDOPT", "INCOPT",
 			"GRWOPT", "CMPOPT", "NUMBER", "NAME", "GLOBALVAR", "LOCALVAR", "SENTENCE"
 		};
 	}
