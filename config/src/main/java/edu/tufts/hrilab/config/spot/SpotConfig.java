@@ -19,6 +19,7 @@ import edu.tufts.hrilab.slug.nlg.SimpleNLGComponent;
 import edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent;
 import edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent;
 import edu.tufts.hrilab.spot.SpotComponent;
+import edu.tufts.hrilab.trade.gui.TRADEServiceGui;
 import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.vision.MockVisionComponent;
 
@@ -82,30 +83,34 @@ public class SpotConfig extends DiarcConfiguration {
                     + "-asl vision.asl "
 //                    + "-asl demos/spotDemo.asl "
 //                    + "-asl spot/spotActions.asl "
+                    + "-asl spot/spot.asl "
                     + "-goal listen(self) "
 //                    + "-goal init(self) "
                     + "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector "
     );
 
-    createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -config spotDemo.simspeech");
+    createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -addressee robotone -config spotDemo.simspeech");
 
-    Util.Sleep(2000);
+    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.interfaces.ArmInterface");
+    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.interfaces.CoordinateFramesInterface");
 
-    try {
-      TRADEServiceInfo sitService = TRADE.getAvailableService(new TRADEServiceConstraints().name("sit").argTypes());
-      TRADEServiceInfo testService_1 = TRADE.getAvailableService(new TRADEServiceConstraints().name("testMethod").argTypes());
-      TRADEServiceInfo testService_2 = TRADE.getAvailableService(new TRADEServiceConstraints().name("testMethod").argTypes(String.class));
-      TRADEServiceInfo moveToService_1 = TRADE.getAvailableService(new TRADEServiceConstraints().name("moveTo").argTypes(String.class, Symbol.class));
-      TRADEServiceInfo moveToService_2 = TRADE.getAvailableService(new TRADEServiceConstraints().name("moveTo").argTypes(String.class, Point3d.class, Quat4d.class));
-
-      sitService.call(Justification.class);
-      testService_1.call(Justification.class);
-      testService_2.call(Justification.class, "string");
-      moveToService_1.call(Justification.class, "string", Factory.createSymbol("symbol"));
-      moveToService_2.call(Justification.class, "string", new Point3d(), new Quat4d());
-    } catch (TRADEException e) {
-      throw new RuntimeException(e);
-    }
+//    Util.Sleep(2000);
+//
+//    try {
+//      TRADEServiceInfo sitService = TRADE.getAvailableService(new TRADEServiceConstraints().name("sit").argTypes());
+//      TRADEServiceInfo testService_1 = TRADE.getAvailableService(new TRADEServiceConstraints().name("testMethod").argTypes());
+//      TRADEServiceInfo testService_2 = TRADE.getAvailableService(new TRADEServiceConstraints().name("testMethod").argTypes(String.class));
+//      TRADEServiceInfo moveToService_1 = TRADE.getAvailableService(new TRADEServiceConstraints().name("moveTo").argTypes(String.class, Symbol.class));
+//      TRADEServiceInfo moveToService_2 = TRADE.getAvailableService(new TRADEServiceConstraints().name("moveTo").argTypes(String.class, Point3d.class, Quat4d.class));
+//
+//      sitService.call(Justification.class);
+//      testService_1.call(Justification.class);
+//      testService_2.call(Justification.class, "string");
+//      moveToService_1.call(Justification.class, "string", Factory.createSymbol("symbol"));
+//      moveToService_2.call(Justification.class, "string", new Point3d(), new Quat4d());
+//    } catch (TRADEException e) {
+//      throw new RuntimeException(e);
+//    }
 
   }
 

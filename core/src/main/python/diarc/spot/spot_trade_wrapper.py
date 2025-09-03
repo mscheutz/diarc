@@ -10,13 +10,14 @@ from bosdyn.client.robot_command import RobotCommandBuilder
 from sklearn.utils import Bunch
 
 from bosdyn.api.graph_nav import graph_nav_pb2, nav_pb2
-from bosdyn.client.frame_helpers import get_odom_tform_body, GROUND_PLANE_FRAME_NAME
+from bosdyn.client.frame_helpers import get_odom_tform_body, GROUND_PLANE_FRAME_NAME, BODY_FRAME_NAME, HAND_FRAME_NAME, \
+    GRAV_ALIGNED_BODY_FRAME_NAME, ODOM_FRAME_NAME
 from bosdyn.api import manipulation_api_pb2, geometry_pb2
 from bosdyn.client.recording import GraphNavRecordingServiceClient
-from bosdyn.client import frame_helpers
+from bosdyn.client import frame_helpers, math_helpers
 from bosdyn.client.frame_helpers import get_a_tform_b
 from bosdyn.client.math_helpers import Vec3
-from jpype import JImplements, JOverride, JClass, JString, JObject, JBoolean
+from jpype import JImplements, JOverride, JClass, JString, JObject, JBoolean, JArray
 from torch import set_grad_enabled
 
 from spot_wrapper.wrapper import SpotWrapper
@@ -25,7 +26,7 @@ import yaml
 from functools import wraps
 
 from ai.thinkingrobots.trade import TRADE
-from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface
+from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, CoordinateFramesInterface
 from edu.tufts.hrilab.spot.consultant import SpotNavGraphLocationConsultant
 from edu.tufts.hrilab.fol import Factory, Symbol, Predicate
 from javax.vecmath import Point3d, Matrix4d, Vector3d, Quat4d
@@ -48,7 +49,7 @@ def handle_return(func):
     return wrapper
 
 
-@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface])
+@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, CoordinateFramesInterface])
 class SpotTRADEWrapper:
     def __init__(self, config, trade_wrapper: TRADEWrapper):
         self._reference_frame = "gpe"
@@ -63,7 +64,7 @@ class SpotTRADEWrapper:
             robot_name=config.get('name', ''),
             logger=logger,
             start_estop=config['start_estop'],
-            estop_timeout=config['start_estop'],
+            estop_timeout=config['estop_timeout'],
             use_take_lease=config['use_take_lease'],
             get_lease_on_action=config.get('get_lease_on_action',True),
             continually_try_stand=True,
@@ -88,6 +89,9 @@ class SpotTRADEWrapper:
         y_pix = mo.getBoundingBox().y
         return (x_pix, y_pix)
 
+    def _get_transforms_snapshot(self):
+        return self.spot._robot_state_client.get_robot_state().kinematic_state.transforms_snapshot
+
     ###################### moveTo overloaded method handling
 
     @handle_return
@@ -106,19 +110,27 @@ class SpotTRADEWrapper:
 
     def moveToPose(self, groupName, point, orientation):
         logging.info(f"moveToPose method called. point: {point} orientation: {orientation}")
-#         return (True, "")
-        quat = geometry_pb2.Quaternion(orientation.x, orientation.y, orientation.z, orientation.w)
-        target_pose = geometry_pb2.SE3Pose(
-            x=point.x,
-            y=point.y,
-            z=point.z,
-            rot=quat
-        )
 
-        command = RobotCommandBuilder.arm_pose_command_from_pose(target_pose.to_proto(), GROUND_PLANE_FRAME_NAME, build_on_command=RobotCommandBuilder.follow_arm_command())
-        (success, msg, cmd_id) = self.spot.robot_command(command)
-        # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
-        return (success, msg)
+        try:
+            # Build the SE(3) pose of the desired hand position in the moving body frame.
+            body_T_hand = geometry_pb2.SE3Pose(
+                position=geometry_pb2.Vec3(x=point.x, y=point.y, z=point.z),
+                rotation=geometry_pb2.Quaternion(x=orientation.x, y=orientation.y, z=orientation.z, w=orientation.w)
+            )
+
+            # Transform the desired from the moving body frame to the odom frame.
+            odom_T_body = get_a_tform_b(self._get_transforms_snapshot(),
+                                        ODOM_FRAME_NAME, BODY_FRAME_NAME)
+            odom_T_hand = odom_T_body * math_helpers.SE3Pose.from_proto(body_T_hand)
+
+            command = RobotCommandBuilder.arm_pose_command_from_pose(odom_T_hand.to_proto(), ODOM_FRAME_NAME, build_on_command=RobotCommandBuilder.follow_arm_command())
+            (success, msg, cmd_id) = self.spot.robot_command(command)
+            # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
+            return (success, msg)
+
+        except Exception as e:
+            logging.error(f"Error calling moveToPose: {traceback.format_exc()}")
+            return (False, "error msg")
 
     def moveToRef(self, groupName, refId: JObject):
         logging.info(f"moveToRef method called. refId: {refId}")
@@ -128,7 +140,20 @@ class SpotTRADEWrapper:
 
     @JOverride
     def moveToRelative(self, groupName, point, orientation):
-        pass
+        try:
+            target_pose = geometry_pb2.SE3Pose(
+                position=geometry_pb2.Vec3(x=point.x, y=point.y, z=point.z),
+                rotation=geometry_pb2.Quaternion(x=orientation.x, y=orientation.y, z=orientation.z, w=orientation.w)
+            )
+
+            command = RobotCommandBuilder.arm_pose_command_from_pose(target_pose, HAND_FRAME_NAME, build_on_command=RobotCommandBuilder.follow_arm_command())
+            (success, msg, cmd_id) = self.spot.robot_command(command)
+            # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
+            return (success, msg)
+
+        except Exception as e:
+            logging.error(f"Error calling moveToRelative: {traceback.format_exc()}")
+            return (False, "error msg")
 
     @JOverride
     def graspObject(self, groupName, refId, position):
@@ -256,9 +281,16 @@ class SpotTRADEWrapper:
     @handle_return
     @JOverride
     def dock(self, dockId):
-        if isinstance(dockId, int):
-            return self.spot.spot_docking.dock(dockId)
-        return self.spot.spot_docking.dock(dockId.getName())
+        logging.info(f"dock called with id: {dockId}")
+        try:
+            if isinstance(dockId, Symbol):
+                return self.spot.spot_docking.dock(int(str(dockId.getName())))
+            if isinstance(dockId, int):
+                return self.spot.spot_docking.dock(dockId)
+        except Exception as e:
+            logging.error(f"Error calling dock: {traceback.format_exc()}")
+
+        return (False, "")
 
     @handle_return
     @JOverride
@@ -321,7 +353,7 @@ class SpotTRADEWrapper:
             image_response = self.spot.spot_images.get_hand_rgb_image()
             walk = manipulation_api_pb2.WalkToObjectInImage(
                 pixel_xy=Vec2(x_pix, y_pix),
-                transforms_snapshot_for_camera=self.spot.robot_state.kinematic_state.transforms_snapshot,
+                transforms_snapshot_for_camera=self._get_transforms_snapshot(),
                 frame_name_image_sensor=image_response.shot.frame_name_image_sensor,
                 camera_model=image_response.source.pinhole,
             )
@@ -359,12 +391,27 @@ class SpotTRADEWrapper:
 
     @JOverride
     def getTransform(self, srcFrame, dstFrame):
-        tmp = Matrix4d()
-        tmp.setIdentity()
-        tf = get_a_tform_b(self.spot.robot_state.kinematic_state.transforms_snapshot, srcFrame, dstFrame)
-        tmp.setRotation(Quat4d(tf.rot.x.tf.rot.y, tf.rot.z, tf.rot.w))
-        tmp.setTranslation(Vector3d(tf.x, tf.y, tf.z))
-        return tmp
+        try:
+            tmp = Matrix4d()
+            tmp.setIdentity()
+            tf = get_a_tform_b(self._get_transforms_snapshot(), str(srcFrame), str(dstFrame))
+            tmp.setRotation(Quat4d(tf.rotation.x, tf.rotation.y, tf.rotation.z, tf.rotation.w))
+            tmp.setTranslation(Vector3d(tf.position.x, tf.position.y, tf.position.z))
+            return tmp
+
+        except Exception as e:
+            logging.error(f"Error calling getTransform: {traceback.format_exc()}")
+            return Matrix4d()
+
+    @JOverride
+    def getCoordinateFrames(self):
+        frame_names = frame_helpers.get_frame_names(self._get_transforms_snapshot())
+        java_list = JArray(JString)(frame_names)
+        return java_list
+
+    @JOverride
+    def addLocalStaticTransform(self):
+        pass
 
     ### Spot Interface
 
@@ -449,7 +496,7 @@ class SpotTRADEWrapper:
             image_response = self.spot.spot_images.get_hand_rgb_image()
             grasp = manipulation_api_pb2.PickObjectInImage(
                 pixel_xy=Vec2(x_pix, y_pix),
-                transforms_snapshot_for_camera=self.spot.robot_state.kinematic_state.transforms_snapshot,
+                transforms_snapshot_for_camera=self._get_transforms_snapshot(),
                 frame_name_image_sensor=image_response.shot.frame_name_image_sensor,
                 camera_model=image_response.source.pinhole,
                 walk_gaze_mode=2
@@ -535,8 +582,7 @@ class SpotTRADEWrapper:
     @JOverride
     def localize(self):
         """Trigger localization when near a fiducial."""
-        current_odom_tform_body = get_odom_tform_body(
-            self.spot.robot_state.get_robot_state().kinematic_state.transforms_snapshot).to_proto()
+        current_odom_tform_body = get_odom_tform_body(self._get_transforms_snapshot()).to_proto()
 
         # Create an empty instance for initial localization since we are asking it to localize
         # based on the nearest fiducial.

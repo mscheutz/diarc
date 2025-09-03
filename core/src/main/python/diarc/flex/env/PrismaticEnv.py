@@ -32,7 +32,7 @@ class PrismaticEnv(gym.Env):
         self.success_distance = 0.05
         self.init_tf = None
         self.curr_tf = None
-        self.tf_src_frame = 'gpe'
+        self.tf_src_frame = 'odom'
         self.tf_dst_frame = 'hand'
 
         # TODO: are the action and observation spaces correct?
@@ -121,22 +121,17 @@ class PrismaticEnv(gym.Env):
         action_magnitude = np.dot(action, sliding_axis)
         constrained_action = action_magnitude * sliding_axis
 
-        # target position in "body" frame
+        # target position in "hand" frame (i.e., relative position)
         target_position = constrained_action * self.action_scale
 
         # Execute movement
         try:
-            trans = Vector3d(target_position[0], target_position[1], target_position[2])
-            orient = Quat4d()
-            self.init_tf.get(orient)
-
-            target_pose = Matrix4d()
-            target_pose.setIdentity()
-            target_pose.setRotation(orient)
-            target_pose.setTranslation(trans)
+            trans = Point3d(target_position[0], target_position[1], target_position[2])
+            orient = Quat4d(0,0,0,1)
+            # self.init_tf.get(orient)
 
             # make trade call(s) to execute action
-            ret = self.trade.call_trade("moveTo", [], "arm", target_pose)
+            ret = self.trade.call_trade("moveToRelative", [], "arm", trans, orient)
 
             # Get new observation
             state_vector = self._get_obs()

@@ -133,14 +133,6 @@ import java.util.List;
     act:dock(!dockId);
 }
 
-() = dock() {
-   try {
-     act:dock(521);
-   } catch () {
-     act:dock(522);
-   }
-}
-
 () = stow() {
     effects : {
         success : not(perceptionpose(?actor));
