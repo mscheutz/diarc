@@ -37,7 +37,6 @@ sourceSets {
       exclude(
               "edu/tufts/hrilab/config/llm/*",
               "edu/tufts/hrilab/demos/llm/*",
-              "edu/tufts/hrilab/demos/TemiV3Test*",
       )
     }
   }

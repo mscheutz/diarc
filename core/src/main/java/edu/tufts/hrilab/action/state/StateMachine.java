@@ -186,7 +186,7 @@ public class StateMachine {
     // update belief component with assertions and retractions
     List<Predicate> stateUpdates = context.getStateUpdates();
     //PickAndPlace2024: Hack to get around Prolog malformed goal expression
-    stateUpdates = stateUpdates.stream().filter(pred -> !(pred.toString().startsWith("succeeded(askQuestion") && pred.toString().contains("doYouMean"))).toList();
+    stateUpdates = stateUpdates.stream().filter(pred -> !(pred.toString().startsWith("succeeded(askQuestion") && pred.toString().contains("mean"))).toList();
     if (beliefComponent != null) {
       stateUpdates.stream().forEach(update -> {
         if (update.isNegated()) {

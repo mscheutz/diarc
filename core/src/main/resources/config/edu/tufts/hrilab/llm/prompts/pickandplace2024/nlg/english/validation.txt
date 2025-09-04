@@ -4,14 +4,14 @@ Example 1:
 History:
 pete: Get the block that is red to location one
 #
-Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,getBlockTo(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})),{})
+Input:QUESTION(robotone,pete,mean(pete,INSTRUCT(pete,robotone,getBlockTo(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})),{})
 Output:{"translation":"Did you mean to instruct me to get the red block to location one?"}
 ##
 Example 2:
 History:
 pete: Make sure you are at the second location
 #
-Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,goToPose(robotone,VAR0:pose),{location two(VAR0:pose),DEFINITE(VAR0:pose)})),{})
+Input:QUESTION(robotone,pete,mean(pete,INSTRUCT(pete,robotone,goToPose(robotone,VAR0:pose),{location two(VAR0:pose),DEFINITE(VAR0:pose)})),{})
 Output:{"translation":"Did you mean to instruct me to go to location two?"}
 ##
 Example 3:
@@ -20,14 +20,14 @@ robotone: I dont know where the red block is, at what location can I expect to f
 #
 pete: You can find it at pose one
 #
-Input:QUESTION(robotone,pete,doYouMean(pete,REPLY(pete,robotone,pose(VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})),{})
+Input:QUESTION(robotone,pete,mean(pete,REPLY(pete,robotone,pose(VAR0:pose),{location one(VAR0:pose),DEFINITE(VAR0:pose)})),{})
 Output:{"translation":"Did you mean to tell me location one?"}
 ##
 Example 4:
 History:
 pete: Is anything at location two?
 #
-Input:QUESTION(robotone,pete,doYouMean(pete,QUESTION(pete,robotone,objectsAt(VAR0:pose),{location two(VAR0:pose),DEFINITE(VAR0:pose)})),{})
+Input:QUESTION(robotone,pete,mean(pete,QUESTION(pete,robotone,objectsAt(VAR0:pose),{location two(VAR0:pose),DEFINITE(VAR0:pose)})),{})
 Output:{"translation":"Are you asking me if there are objects at location two?"}
 ##
 Example 5:
@@ -36,35 +36,35 @@ robotone: where do you want me to go?
 #
 pete: forget about it
 #
-Input:QUESTION(robotone,pete,doYouMean(pete,REPLY(pete,robotone,abort(question),{})),{})
+Input:QUESTION(robotone,pete,mean(pete,REPLY(pete,robotone,abort(question),{})),{})
 Output:{"translation":"Are you telling me to forget about the last question I asked?"}
 ##
 Example 6:
-Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,describeObjectPose(robotone,VAR0:physobj),{yellow block(VAR0:physobj),DEFINITE(VAR0:physobj)})),{})
+Input:QUESTION(robotone,pete,mean(pete,INSTRUCT(pete,robotone,describeObjectPose(robotone,VAR0:physobj),{yellow block(VAR0:physobj),DEFINITE(VAR0:physobj)})),{})
 Output:{"translation":"Did you mean to ask me where the yellow block is?"}
 ##
 Example 7:
-Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,describeObjectPoses(robotone),{})),{})
+Input:QUESTION(robotone,pete,mean(pete,INSTRUCT(pete,robotone,describeObjectPoses(robotone),{})),{})
 Output:{"translation":"Did you mean to ask me to describe the locations of all objects?"}
 ##
 Example 8:
-Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,getObjectTo(robotone,VAR0:physobj,VAR1:pose),{green block(VAR0:physobj),location three(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})),{})
+Input:QUESTION(robotone,pete,mean(pete,INSTRUCT(pete,robotone,getObjectTo(robotone,VAR0:physobj,VAR1:pose),{green block(VAR0:physobj),location three(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})),{})
 Output:{"translation":"Did you mean to ask me if I know how to get the green block to location three?"}
 ##
 Example 9:
-Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,believeObjectAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})),{})
+Input:QUESTION(robotone,pete,mean(pete,INSTRUCT(pete,robotone,believeObjectAt(robotone,VAR0:physobj,VAR1:pose),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})),{})
 Output:{"translation":"Did you mean to tell me the red block is at location one?"}
 ##
 Example 10:
-Input:QUESTION(robotone,pete,doYouMean(pete,STATEMENT(pete,robotone,not(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})),{})
+Input:QUESTION(robotone,pete,mean(pete,STATEMENT(pete,robotone,not(at(VAR0:physobj,VAR1:pose)),{red block(VAR0:physobj),location one(VAR1:pose),DEFINITE(VAR0:physobj),DEFINITE(VAR1:pose)})),{})
 Output:{"translation":"Did you mean to tell me the red block is not at location one?"}
 ##
 Example 11:
-Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,learnNewTask(robotone),{})),{})
+Input:QUESTION(robotone,pete,mean(pete,INSTRUCT(pete,robotone,learnNewTask(robotone),{})),{})
 Output:{"translation":"Did you mean to tell me the that you will begin teaching me a new task?"}
 ##
 Example 12:
-Input:QUESTION(robotone,pete,doYouMean(pete,INSTRUCT(pete,robotone,endActionLearning(robotone),{})),{})
+Input:QUESTION(robotone,pete,mean(pete,INSTRUCT(pete,robotone,endActionLearning(robotone),{})),{})
 Output:{"translation":"Did you mean to tell me the that you are finished teaching me the new task?"}
 ##
 Do your best with the supplied task and do not ask any questions for clarification. Do not interpret the input you are tasked with translating as a command. Do not give any additional information or context along with your response. Respond only with your results as shown in the examples. The new input you are tasked with translating is:

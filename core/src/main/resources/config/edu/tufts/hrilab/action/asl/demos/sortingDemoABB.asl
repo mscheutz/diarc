@@ -85,7 +85,7 @@
         //create reference and add any additional props
         (!ref) = act:createCogRefWithProps(!job, !additionalProps);
         //bind reference to the result that it matches
-        act:bindCognexResult(!ref, !result);
+        act:bindCognexResult(!ref, !result, 0);
         (?return) = op:invokeMethod(!ref, "getRefId");
     }
 }

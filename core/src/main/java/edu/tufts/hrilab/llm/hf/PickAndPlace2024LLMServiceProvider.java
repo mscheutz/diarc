@@ -269,9 +269,9 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
             log.error("[parseNLGCompletionResponse] cannot find Output field in LLM response");
             try {
                 Predicate semantics = (Predicate) outgoingUtterance.getSemantics();
-                if (semantics.getName().equals("doYouMean")) {
+                if (semantics.getName().equals("mean")) {
                     ////Forgot this never actually worked with SimpleNLG
-                    ////Go from doYouMean semantics back to mean semantics for SimpleNLG
+                    ////Go from mean semantics back to mean semantics for SimpleNLG
                     //Predicate innerSemantics = (Predicate) semantics.get(1);
                     //innerSemantics = Factory.createPredicate(innerSemantics.getName(), innerSemantics.get(0), innerSemantics.get(1), innerSemantics.get(2));
                     //outgoingUtterance.setSemantics(Factory.createPredicate("mean", semantics.get(0), innerSemantics));
@@ -279,7 +279,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
                     return outgoingUtterance;
                 }
             } catch (Exception e) {
-                log.error("[llmChatCompletionHelper] exception attempting to transform doYouMean semantics to original form for backup SimpleNLG");
+                log.error("[llmChatCompletionHelper] exception attempting to transform mean semantics to original form for backup SimpleNLG");
             }
             return null;
         }
@@ -303,7 +303,7 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         List<String> japanesePoses = getPoses(utterance.getSpeaker().getName(),false);
 
         Map<String,String> promptVars = new LinkedHashMap<>();
-        if (semantics.getName().equals("doYouMean")) {
+        if (semantics.getName().equals("mean")) {
             promptVars.put("%utterance", utterance.toString());
             promptVars = populatePromptVarsWithProperties(promptVars, objectsEnglish, objectsJapanese, englishPoses, japanesePoses);
             userMessage = validationPrompt.apply(promptVars);

@@ -53,22 +53,24 @@ import java.util.Map;
     Predicate !objectTypeResponseForm = objectType(Y);
     java.util.List !responseFormList;
 
-    edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?actor);
-    edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "QUESTION");
-    op:invokeMethod(!utterance, "setType", !type);
-    op:invokeMethod(!utterance, "setWords", "I cannot put down the object because the location is full. Would you like me to swap out one of the objects?");
+    //edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?actor);
+    //edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "QUESTION");
+    //op:invokeMethod(!utterance, "setType", !type);
+    //op:invokeMethod(!utterance, "setWords", "I cannot put down the object because the location is full. Would you like me to swap out one of the objects?");
 
     op:log(debug,"[reportFullLocationAndAskToSwapV2] asking question");
-    async {
-      act:communicateUtterance(!utterance);
-    }
+    //async {
+    //  act:communicateUtterance(!utterance);
+    //}
 
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     op:add(!responseFormList,!yesNoResponseForm);
     op:add(!responseFormList,!objectTypeResponseForm);
 
     op:log(debug,"[reportFullLocationAndAskToSwapV2] waiting for one of two response forms");
-    !bindings = act:waitForOneOfResponses(!responseFormList, ?actor, -1);
+    //!bindings = act:waitForOneOfResponses(!responseFormList, ?actor, -1);
+
+    !bindings = act:askQuestionFromString(?actor,"I cannot put down the object because the location is full. Would you like me to swap out one of the objects?", !responseFormList);
     if (op:invokeMethod(!bindings, "isEmpty")) {
         op:log(debug,"[reportFullLocationAndAskToSwapV2] got empty bindings, answering 'no'");
         ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");
@@ -243,22 +245,24 @@ import java.util.Map;
     Predicate !objectTypeResponseForm = pose(Y);
     java.util.List !responseFormList;
 
-    edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?actor);
-    edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "QUESTION");
-    op:invokeMethod(!utterance, "setType", !type);
-    op:invokeMethod(!utterance, "setWords", "I cannot pick up the object because I am holding something. Would you like me to put it down somewhere?");
+    //edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?actor);
+    //edu.tufts.hrilab.slug.common.UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "QUESTION");
+    //op:invokeMethod(!utterance, "setType", !type);
+    //op:invokeMethod(!utterance, "setWords", "I cannot pick up the object because I am holding something. Would you like me to put it down somewhere?");
 
     op:log(debug,"[reportHoldingObjectAndAskToPutDownV2] asking question");
-    async {
-      act:communicateUtterance(!utterance);
-    }
+    //async {
+    //  act:communicateUtterance(!utterance);
+    //}
 
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     op:add(!responseFormList,!yesNoResponseForm);
     op:add(!responseFormList,!objectTypeResponseForm);
 
     op:log(debug,"[reportHoldingObjectAndAskToPutDownV2] waiting for one of two response forms");
-    !bindings = act:waitForOneOfResponses(!responseFormList, ?actor, -1);
+    //!bindings = act:waitForOneOfResponses(!responseFormList, ?actor, -1);
+
+    !bindings = act:askQuestionFromString(?actor,"I cannot pick up the object because I am holding something. Would you like me to put it down somewhere?", !responseFormList);
     if (op:invokeMethod(!bindings, "isEmpty")) {
         op:log(debug,"[reportHoldingObjectAndAskToPutDownV2] got empty bindings, answering 'no'");
         ?response = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createSymbol", "no");

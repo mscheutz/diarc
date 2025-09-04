@@ -286,7 +286,8 @@ public class CognexConsultant extends Consultant<CognexReference> implements Con
 
   @TRADEService
   @Action
-  public void bindCognexResult(CognexReference ref, CognexResult result) {
+  public void bindCognexResult(CognexReference ref, CognexResult result, int indexIntoCognexResult) {
+    log.debug("Binding: " + ref.refId + " to cognex result index: " + indexIntoCognexResult);
     ref.setResult(result);
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("updateFOC")).call(void.class, ref.refId);

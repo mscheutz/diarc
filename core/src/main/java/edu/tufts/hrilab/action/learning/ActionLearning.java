@@ -198,16 +198,16 @@ public class ActionLearning {
     String actName = newAction.getName();
 
     // check to see if we are currently learning something
-    //PickAndPlace2024
-    //Should only be able to hit this case after resuming the associated context for this action - merge into previous learning state
-    if (currentLearningState != null && currentLearningState.getName().equalsIgnoreCase(actName)) {
-      log.debug("Already learning new action: " + newAction);
-      //if (!(currentLearningState.getName().equalsIgnoreCase(actName))) {
-      //  //EW: when do we hit/want this case?
-      //  currentLearningState = new LearningState(newAction, currentLearningState);
-      //} else {
-      //  log.debug("Already learning new action: " + newAction);
-      //}
+    if (learningStatus == ActionLearningStatus.ACTIVE) {
+      try {
+        if (!(currentLearningState.getName().equalsIgnoreCase(actName))) {
+          currentLearningState = new LearningState(newAction, currentLearningState);
+        } else {
+          log.debug("Already learning new action: " + newAction);
+        }
+      } catch (NullPointerException e) {
+        log.debug("[learnAction] supposedly already learning but LS is null... something is wrong");
+      }
     } else {
       currentLearningState = new LearningState(newAction);
     }
@@ -237,7 +237,7 @@ public class ActionLearning {
 
   //Cleanly finish learning, if parent learning state then resume learning
   public boolean endActionLearning(Predicate newAction) {
-    log.debug("[endActionLearningPrimitive] " + newAction);
+    log.debug("[endActionLearning] " + newAction);
 
     boolean currentState;
     LearningState learningState;
@@ -249,7 +249,7 @@ public class ActionLearning {
       learningState = pausedLearningStates.get(newAction.getName());
       currentState = false;
       if (learningState == null) {
-        log.error("[endActionLearningPrimitive] called for action with no learning state: {}", newAction);
+        log.error("[endActionLearning] called for action with no learning state: {}", newAction);
         return false;
       }
     }
@@ -370,11 +370,8 @@ public class ActionLearning {
       }
       currentLearningState = resumedLearningState;
       pausedLearningStates.remove(action.getName());
-      //PickAndPlace2024
-      //Move paused learning state back to current state -> don't set learning status or start queuing goals yet.
-      // Allow call to learnAction after resume to merge with current learning state and then do so itself
-      //setLearningStatus(ActionLearningStatus.ACTIVE);
-      //startQueuingGoals();
+      setLearningStatus(ActionLearningStatus.ACTIVE);
+      startQueuingGoals();
       // TODO: restart / create observers
     } else {
       //tmf: agent should convey that it hasn't started learning something.

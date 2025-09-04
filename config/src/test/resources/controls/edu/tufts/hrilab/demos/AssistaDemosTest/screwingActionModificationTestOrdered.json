@@ -36,13 +36,13 @@
       "serviceArgs" : [ "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=650.0, y=0.0, z=300.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=650.0, y=0.0, z=300.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=50.0, y=-515.0, z=300.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=50.0, y=-515.0, z=300.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=-75.0, y=-610.0, z=300.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=-75.0, y=-610.0, z=300.0, a=3.14159, b=0.0, c=3.14159, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     } ]
   }, {
     "serviceCalls" : [ {
@@ -350,7 +350,7 @@
       "serviceArgs" : [ "assemblenfsv(self:agent,physobj_1:physobj)", "1679594209844" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "getDescriptorForID",
       "serviceArgs" : [ "physobj_1:physobj", "nfsv" ]
@@ -359,7 +359,7 @@
       "serviceArgs" : [ "cbDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "openGripper",
       "serviceArgs" : [ "true" ]
@@ -374,7 +374,7 @@
       "serviceArgs" : [ "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "openGripper",
       "serviceArgs" : [ "true" ]
@@ -389,13 +389,13 @@
       "serviceArgs" : [ "holeDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=5.8E-4, yAbs=5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}, CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "getCameraData",
       "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "moveToCognexTarget",
       "serviceArgs" : [ "physobj_4:physobj", "true" ]
@@ -410,40 +410,40 @@
       "serviceArgs" : [ "1", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "getDescriptorForID",
       "serviceArgs" : [ "physobj_3:physobj", "m3" ]
@@ -452,13 +452,13 @@
       "serviceArgs" : [ "holeDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=5.8E-4, yAbs=5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}, CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "getCameraData",
       "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "moveToCognexTarget",
       "serviceArgs" : [ "physobj_5:physobj", "true" ]
@@ -473,43 +473,43 @@
       "serviceArgs" : [ "1", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "openGripper",
       "serviceArgs" : [ "true" ]
@@ -524,7 +524,7 @@
       "serviceArgs" : [ "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "openGripper",
       "serviceArgs" : [ "true" ]
@@ -642,7 +642,7 @@
       "serviceArgs" : [ "assemblenvfau(self:agent,physobj_6:physobj)", "1679594329755" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "getDescriptorForID",
       "serviceArgs" : [ "physobj_6:physobj", "nvfau" ]
@@ -651,7 +651,7 @@
       "serviceArgs" : [ "nvDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "openGripper",
       "serviceArgs" : [ "true" ]
@@ -666,7 +666,7 @@
       "serviceArgs" : [ "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "openGripper",
       "serviceArgs" : [ "true" ]
@@ -681,13 +681,13 @@
       "serviceArgs" : [ "holeDetT", "[]" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "getCameraData",
       "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "moveToCognexTarget",
       "serviceArgs" : [ "physobj_9:physobj", "true" ]
@@ -702,40 +702,40 @@
       "serviceArgs" : [ "1", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "getDescriptorForID",
       "serviceArgs" : [ "physobj_8:physobj", "deepM3" ]
@@ -744,13 +744,13 @@
       "serviceArgs" : [ "holeDetT", "[]" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.075, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "getCameraData",
       "serviceArgs" : [ "feedrDet", "[CognexResult{xOff=-0.06661, xAbs=-0.06661, yOff=-5.8E-4, yAbs=-5.8E-4, theta=-0.0017453292519943296, confidenceScore=63.475, X_IND=1, Y_IND=0, T_IND=5}]" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "moveToCognexTarget",
       "serviceArgs" : [ "physobj_10:physobj", "true" ]
@@ -765,43 +765,43 @@
       "serviceArgs" : [ "1", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=-2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=2.93, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=-0.18, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=3.14, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.0, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "openGripper",
       "serviceArgs" : [ "true" ]
@@ -816,7 +816,7 @@
       "serviceArgs" : [ "true" ]
     }, {
       "serviceName" : "goToPose",
-      "serviceArgs" : [ "MPose{approachOffset=170.0, surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
+      "serviceArgs" : [ "MPose{surfaceHeight=0.04, x=0.0, y=0.0, z=0.0, a=0.0, b=0.0, c=0.0, l1=0.0, l2=0.0, s1=7, s2=0}", "true" ]
     }, {
       "serviceName" : "openGripper",
       "serviceArgs" : [ "true" ]

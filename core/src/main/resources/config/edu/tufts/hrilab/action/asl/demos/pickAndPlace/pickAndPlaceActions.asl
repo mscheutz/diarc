@@ -302,8 +302,8 @@ import java.lang.Integer;
 () = pickUpWhileHoldingObjectRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingAction : moveObjectTo(A,X,Y,Z)
-            postRecovery : postrecovery_success
+            catchingActions : {moveObjectTo(A,X,Y,Z)}
+            postRecovery : postrecovery_continue
         }
         failureReasons : {not(holding(X,Y))}
     }
@@ -537,11 +537,13 @@ import java.lang.Integer;
 () = putDownAtFullLocationRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            postRecovery : postrecovery_success
+            catchingActions : {putDown(X)}
+            postRecovery : postrecovery_continue
         }
         failureReasons : {has(theLocationBelowMe,space)}
         excludedGoals : {putDown(X), putDown(X,Y)}
     }
+
     Symbol !response;
     Symbol !otherObject;
     String !otherObjectName;

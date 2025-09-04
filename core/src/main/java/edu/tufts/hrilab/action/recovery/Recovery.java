@@ -376,6 +376,10 @@ public class Recovery {
         if (childContext.isAction()) {
             List<Predicate> childFailedActionsList = ((ActionContext)childContext).getRecovery().failedActionsList;
             if (childFailedActionsList != null) {
+                //TODO: revisit - failedActionIsChild should be true if parent of lowest level failed action context, even if not the leaf?
+                if (childFailedActionsList.isEmpty()) {
+                    failedActionIsChild = true;
+                }
                 failedChildContext = (ActionContext) childContext;
                 failedActionsList = new ArrayList<>(childFailedActionsList);
                 failedActionsList.add(childContext.getSignatureInPredicateForm());

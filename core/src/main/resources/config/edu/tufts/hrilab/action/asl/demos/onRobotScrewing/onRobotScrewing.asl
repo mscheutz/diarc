@@ -129,3 +129,15 @@
     act:rotateToEE(!default);
     op:log("info","[runScrewDriverJob] finished screwing");
 }
+
+() = moveToCameraHeight["moves up by a camera z height as defined by an inline constant"]() {
+    //Todo: Will/Mar: change these from hardcoded values and/or see if these need to be inverses or not
+    java.lang.Double !dist = 0.15;
+    tsc:moveZRelative(!dist);
+}
+
+() = moveToObjectHeight["moves down by a camera z height as defined by an inline constant"]() {
+    //Todo: Will/Mar: change these from hardcoded values and/or see if these need to be inverses or not
+    java.lang.Double !dist = -0.15;
+    tsc:moveZRelative(!dist);
+}
