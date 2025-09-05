@@ -454,6 +454,14 @@ public class ActionScriptLanguageWriter {
     }
   }
 
+  private String escapeStringArgument(String arg) {
+    if (arg.matches(".*\\s+.*")) {
+      return "\"" + arg + "\"";
+    }
+    return arg;
+  }
+
+
   private String generateSpec(EventSpec spec) {
     String command = spec.getCommand();
     StringJoiner sj;
@@ -462,7 +470,9 @@ public class ActionScriptLanguageWriter {
     } else {
       sj = new StringJoiner(", ", "(", ")");
     }
-    spec.getInputArgs().forEach(sj::add);
+    List<String> escapedArgs = new ArrayList<>(spec.getInputArgs());
+    escapedArgs = escapedArgs.stream().map(this::escapeStringArgument).collect(Collectors.toList());
+    escapedArgs.forEach(sj::add);
 
     String type;
     switch (spec.getType()) {

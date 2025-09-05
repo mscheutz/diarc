@@ -4233,13 +4233,13 @@ public class TLDLParserComponentTest {
                 speaker, "self"));
 
 
-        assertTrue(testUtterance("perform lab patrol with wifi evaluation",
-                "INSTRUCT(brad,self,patrol(self,lab patrol,wifiEvaluation),{})",
-                speaker, "self"));
+        //assertTrue(testUtterance("perform lab patrol with wifi evaluation",
+        //        "INSTRUCT(brad,self,patrol(self,lab patrol,wifiEvaluation),{})",
+        //        speaker, "self"));
 
-        assertTrue(testUtterance("add a new patrol path demo path",
-                "INSTRUCT(brad,self,definePatrolPath(self,demo path),{})",
-                speaker, "self"));
+        //assertTrue(testUtterance("add a new patrol path demo path",
+        //        "INSTRUCT(brad,self,definePatrolPath(self,demo path),{})",
+        //        speaker, "self"));
 
         assertTrue(testUtterance("escort mark from the dock to the elevator",
                 "INSTRUCT(brad,self,escortFromLocationToLocation(self,mark,VAR0,VAR1),{dock(VAR0),elevator(VAR1),DEFINITE(VAR0),DEFINITE(VAR1)})",

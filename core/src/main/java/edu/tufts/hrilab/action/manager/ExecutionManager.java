@@ -868,11 +868,12 @@ public class ExecutionManager implements GoalListener {
         for (Goal activeGoal : activeGoals) {
           if (!activeGoal.getStatus().isTerminated()) {
             GoalStatus currentStatus = activeGoal.getStatus();
+            //TODO: Revisit this - kiosk goals cannot be canceled within this function due to held locks and multithreaded
+            //      nature of AI interruption stopping execution and disjoint status update listener cleaning up the goal itself
             if (activeGoal.getPriorityTier() == PriorityTier.KIOSK) {
               //superseded kiosk goals can be canceled and discarded rather than suspended and added to pending
               if (cancelActiveGoal(activeGoal)) {
                 waitForGoalStatus(activeGoal, GoalStatus.CANCELED);
-                unlockResources(activeGoal); //TODO: get rid of this when concurrency issues with supersede are fixed
               }
             } else {
               if (currentStatus == GoalStatus.ACTIVE) {
@@ -1029,7 +1030,13 @@ public class ExecutionManager implements GoalListener {
     synchronized (resourceLock) {
       log.trace("[unlockResources] unlocking resources {}", resources);
       for (Resource res : resources) {
-        res.releaseHolder();
+        if (res.getHolder() != g) {
+          //Known race condition exists due to synchronization issues from within supersedeGoals when interacting with kiosk goals
+          //Fix issue documented in supersedeGoals
+          log.warn("[unlockResources] Goal is attempting to unlock resource that it is not holding");
+        } else {
+          res.releaseHolder();
+        }
       }
     }
     log.trace("[unlockResources] released resourceLock");
@@ -1386,7 +1393,7 @@ public class ExecutionManager implements GoalListener {
     PendingGoal entry;
     synchronized (pendingGoalsLock) {
       if (index < pendingGoals.size()) {
-        Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.iterator();
+        Iterator<PendingGoal> pendingGoalsIterator = pendingGoals.descendingIterator();
         int i = 0;
         while (i < index) {
           pendingGoalsIterator.next();
@@ -2097,6 +2104,40 @@ public class ExecutionManager implements GoalListener {
   }
 
   /**
+   * Query the priority tier of a particular goal.
+   *
+   * @param gid the ID of the goal to check on
+   * @return PriorityTier object indicating the priority tier
+   */
+  public PriorityTier getGoalPriorityTier(long gid) {
+    log.trace("[getGoalPriorityTier] {}", gid);
+    Goal goal = getGoal(gid);
+
+    if (goal != null) {
+      return goal.getPriorityTier();
+    } else {
+      return PriorityTier.UNINITIALIZED;
+    }
+  }
+
+  /**
+   * Query the priority of a particular goal.
+   *
+   * @param gid the ID of the goal to check on
+   * @return long indicating the priority value
+   */
+  public long getGoalPriority(long gid) {
+    log.trace("[getGoalPriorityTier] {}", gid);
+    Goal goal = getGoal(gid);
+
+    if (goal != null) {
+      return goal.getPriority();
+    } else {
+      return -1;
+    }
+  }
+
+  /**
    * Query the ActionStatus of the action (i.e., root context for this goal) being executed
    * in pursuit of the specified goal.
    *
@@ -2411,6 +2452,14 @@ public class ExecutionManager implements GoalListener {
           writer.writeToFile(learnedActions, learnedActionsFile);
         }
       }
+
+      //Ava learned presentation/media management hack
+      if (actionSignature.getName().length() > 7 && actionSignature.getName().startsWith("present")) {
+        try {
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("deletePresentationSlides").argTypes(String.class)).call(void.class, actionSignature.getName().split("present")[1]);
+        } catch (TRADEException ignored){}
+      }
+
       return new ConditionJustification(true);
     } catch (TRADEException e) {
       log.error("could not find service", e);
@@ -2484,6 +2533,11 @@ public class ExecutionManager implements GoalListener {
     //TODO: Is this correct that SKIPPENDING goals globally shouldn't be allowed to be taught as action steps?
     if (originalAgentTeam.shouldIgnore(g) || g.getPriorityTier().equals(PriorityTier.SKIPPENDING)) {
       return false;
+    }
+
+    //What should happen here?
+    if (g.getPriorityTier().equals(PriorityTier.URGENT)) {
+      log.warn("[handOffToLearning] encountered goal with URGENT priority, were you trying to supersede action learning?");
     }
 
     AgentTeam agentTeam = originalAgentTeam;

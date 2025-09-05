@@ -23,7 +23,8 @@ public class AvaDemo extends DiarcConfiguration {
   private String locationRefs = "refs/locations.json";
   private String speakerId = "";
   private boolean initKiosk = true;
-  private String mediaDir = "videos";
+  private boolean persistKiosk = true;
+  private String mediaDir = "ava";
   private boolean useDisplay = true;
 
 
@@ -124,7 +125,7 @@ public class AvaDemo extends DiarcConfiguration {
     }
 
     if (useGUI) {
-      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker user1 -addressee ava");
+      createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker webapp -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
     createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.5 -showMixers");
@@ -150,7 +151,7 @@ public class AvaDemo extends DiarcConfiguration {
 //    }
 
     if (useDisplay) {
-      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -videoDir " + mediaDir + " -videoVolume 10");
+      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 10");
     }
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);
@@ -162,11 +163,14 @@ public class AvaDemo extends DiarcConfiguration {
     if (initKiosk) {
       kioskArgs += " -enabled -timeout 2700";
     }
+    if (persistKiosk) {
+      kioskArgs += " -kioskSettingsFile ava.ser";
+    }
 
     createInstance(edu.tufts.hrilab.action.GoalManagerComponent.class,
             "-historylength 3600000 "
         +   "-goal listen(self) monitorBattery(ava) listenForWWandASR(ava) " +
-                    "-beliefinitfile demos.pl agents/ava.pl"
+                    "-beliefinitfile demos.pl agents/ava.pl domains/ava.pl"
         + " -dbfile " +
               "core.asl " +
               "manipulation.asl " +
@@ -175,6 +179,7 @@ public class AvaDemo extends DiarcConfiguration {
               "dialogue/handleSemantics.asl " +
               "vision.asl " +
               "ava/ava.asl " +
+              "ava/avaIntrospection.asl " +
               "ava/scheduledGoals.asl " +
               "ava/avaMedia.asl " +
               "ava/avaASR.asl " +

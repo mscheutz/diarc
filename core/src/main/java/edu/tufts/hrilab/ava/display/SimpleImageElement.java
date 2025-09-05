@@ -4,6 +4,7 @@ import java.awt.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -14,6 +15,7 @@ public class SimpleImageElement {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> future;
+    private final Semaphore setImageBlockingLock = new Semaphore(0);
 
     /**
      * Sets an image to be displayed on the canvas.
@@ -23,13 +25,36 @@ public class SimpleImageElement {
     public void setImage(Image image, long timeout) {
         this.image = image;
 
+        //should we interrupt setImageBlocking here? Or have this block until it's complete?
+        cancelClearImageFuture();
+
+        if (timeout > 0) {
+            future = scheduler.schedule(this::clearImage, timeout, TimeUnit.SECONDS);
+        }
+    }
+    public void setImageBlocking(Image image, long timeout) {
+        this.image = image;
+
+        cancelClearImageFuture();
+
+        //Should there be more internal protection against these methods being called more than they should?
+        try {
+            if (timeout < 0) {
+                setImageBlockingLock.acquire();
+            } else {
+                setImageBlockingLock.tryAcquire(timeout, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException ignored){}
+        setImageBlockingLock.drainPermits();
+    }
+
+    private void cancelClearImageFuture() {
         if (future != null && !future.isDone()) {
             future.cancel(false);
         }
-
-        if (timeout > 0) {
-            future = scheduler.schedule(this::clearImage, timeout, TimeUnit.MILLISECONDS);
-        }
+    }
+    public void cancelSetImage() {
+        setImageBlockingLock.release();
     }
 
     /**

@@ -219,7 +219,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                     }
                     utterance.setSemantics(Factory.createPredicate(command, Factory.createPredicate(innerArg.getName(), argsWithActor)));
                 }
-            } else if (command.equals("forgetTaughtAction") || command.equals("reportIfCanPerform") || command.equals("describeActionSteps")) {
+            } else if (command.equals("forgetTaughtAction") || command.equals("reportIfCanPerform") || command.equals("describeActionSteps") || command.equals("urgentPriority")) {
                 //Not currently prompted to do this
                 if (utterance.getSemantics().hasArgs()) {
                     Symbol innerArg = ((Term)utterance.getSemantics()).get(1);
@@ -414,9 +414,31 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
         List<String> locations = getLocations("self", true);
         List<String> patrolPaths = getPatrolPaths();
+        List<String> videos = getVideoNames();
+        List<String> images = getImageNames();
+        String patrolPathList = String.join(":path\n", patrolPaths);
+        if (!patrolPathList.isEmpty()) {
+            patrolPathList += ":path\n";
+        }
+        String locationList = String.join(":location\n", locations);
+        if (!locationList.isEmpty()) {
+            locationList += ":location\n";
+        }
+        String videoList = String.join(":video\n", videos);
+        if (!videoList.isEmpty()) {
+            videoList += ":video\n";
+        }
+        String imageList = String.join(":image\n", images);
+        if (!videoList.isEmpty()) {
+            imageList += ":image\n";
+        }
         promptVars.put("%actionList", generateLLMActionListString(true));
-        promptVars.put("%patrolPathList", String.join(":path\n", patrolPaths));
-        promptVars.put("%locationList", String.join(":location\n", locations));
+        promptVars.put("%patrolPathList", patrolPathList);
+        promptVars.put("%locationList", locationList);
+        promptVars.put("%videoList", videoList);
+        promptVars.put("%exampleVideo", videos.isEmpty() ? "test" : videos.get(0));
+        promptVars.put("%exampleImage", images.isEmpty() ? "test" : images.get(0));
+        promptVars.put("%imageList", imageList);
         promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
         promptVars.put("%goals", getGoalString(utterance.getAddressee()));
         promptVars.put("%questionList", getCurrentQuestionsString(utterance.getAddressee()));
@@ -486,6 +508,24 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         //    }
         //}
         return promptVars;
+    }
+
+    private List<String> getVideoNames() {
+        try {
+            return TRADE.getAvailableService(new TRADEServiceConstraints().name("getVideoNames").argTypes(Boolean.class)).call(List.class,true);
+        } catch (TRADEException e) {
+            log.error("[getVideoNames]", e);
+        }
+        return new ArrayList<>();
+    }
+
+    private List<String> getImageNames() {
+        try {
+            return TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageNames").argTypes(Boolean.class)).call(List.class,true);
+        } catch (TRADEException e) {
+            log.error("[getImageNames]", e);
+        }
+        return new ArrayList<>();
     }
 
     //TODO: calls to this/getMapReferences wildly inefficient, fix
@@ -644,7 +684,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleGoalNotification").argTypes(GoalInfo.class));
             unregisterService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
         } catch (TRADEException e) {
-            throw new RuntimeException(e);
+            log.error("[shutdownComponent]", e);
         }
     }
 
@@ -684,6 +724,13 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 case "reportInstructableActions":
                 case "describeActionSteps":
                 case "reportIfCanPerform":
+                case "reportKioskSettings":
+                case "listSavedVideos":
+                case "reportVideoVolume":
+                case "listSavedImages":
+                case "reportIsVideoSaved":
+                case "sayText":
+                case "say":
                     return true;
                 default:
                     return false;
@@ -740,11 +787,6 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "stop following me",
                 "stopFollow()", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("showVideo()",
-                "You play a video on your screen",
-                "play the video",
-                "showVideo()", 10);
-        exposedActionList.add(entry);
         entry = new LLMActionEntry("escortToLocation(?name, ?destination:location)",
                 "You escort ?name to location ?destination:location",
                 "bring Owen to %exampleLocation",
@@ -760,46 +802,46 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "save this area as location one",
                 "saveLocation(location one)", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("saveLocationsToFile()",
-                "You backup all your currently saved locations",
-                "backup your current locations",
-                "saveLocationsToFile()", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("definePatrolPath(?name)",
-                "You start learning a new patrol path called ?name",
-                "I want to teach you a new patrol path named lab circuit",
-                "definePatrolPath(lab circuit)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("definePatrolPath()",
-                "You start learning a new patrol path",
-                "I want to teach you a new patrol path",
-                "definePatrolPath()", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("patrol(?pathName:path, ?actionName)",
-                "You navigate along the patrol path ?pathName:path while performing the action ?actionName at each location",
-                "perform %examplePath patrol with wifi evaluation",
-                "patrol(%examplePath:path, wifiEvaluation)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("wifiEvaluation(?location:location)",
-                "You measure the strength of the wifi signal at location ?location:location",
-                "check wifi near %exampleLocation",
-                "wifiEvaluation(%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("reportWifiForLocation(?location:location)",
-                "You report the wifi signal strength at location ?location:location",
-                "what is the wifi signal quality at %exampleLocation",
-                "reportWifiForLocation(%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("reportWifiForPatrol(?pathName:path)",
-                "You report the wifi signal quality at every location along patrol path ?pathName:path",
-                "report the wifi signal quality for patrol path %examplePath",
-                "reportWifiForPatrol(%examplePath:path)", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("takePhoto(?location:location)",
-                "You take a photo at location ?location:location",
-                "take a photo of %exampleLocation",
-                "takePhoto(%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
+        //entry = new LLMActionEntry("saveLocationsToFile()",
+        //        "You backup all your currently saved locations",
+        //        "backup your current locations",
+        //        "saveLocationsToFile()", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("definePatrolPath(?name)",
+        //        "You start learning a new patrol path called ?name",
+        //        "I want to teach you a new patrol path named lab circuit",
+        //        "definePatrolPath(lab circuit)", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("definePatrolPath()",
+        //        "You start learning a new patrol path",
+        //        "I want to teach you a new patrol path",
+        //        "definePatrolPath()", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("patrol(?pathName:path, ?actionName)",
+        //        "You navigate along the patrol path ?pathName:path while performing the action ?actionName at each location",
+        //        "perform %examplePath patrol with wifi evaluation",
+        //        "patrol(%examplePath:path, wifiEvaluation)", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("wifiEvaluation(?location:location)",
+        //        "You measure the strength of the wifi signal at location ?location:location",
+        //        "check wifi near %exampleLocation",
+        //        "wifiEvaluation(%exampleLocation:location)", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("reportWifiForLocation(?location:location)",
+        //        "You report the wifi signal strength at location ?location:location",
+        //        "what is the wifi signal quality at %exampleLocation",
+        //        "reportWifiForLocation(%exampleLocation:location)", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("reportWifiForPatrol(?pathName:path)",
+        //        "You report the wifi signal quality at every location along patrol path ?pathName:path",
+        //        "report the wifi signal quality for patrol path %examplePath",
+        //        "reportWifiForPatrol(%examplePath:path)", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("takePhoto(?location:location)",
+        //        "You take a photo at location ?location:location",
+        //        "take a photo of %exampleLocation",
+        //        "takePhoto(%exampleLocation:location)", 10);
+        //exposedActionList.add(entry);
         entry = new LLMActionEntry("sit()",
                 "You lower your screen",
                 "sit down",
@@ -810,11 +852,11 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "stand up",
                 "stand()", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("deliver(?objectName, ?location:location)",
-                "You deliver ?objectName to location ?location:location",
-                "bring the mug to %exampleLocation",
-                "deliver(mug,%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
+        //entry = new LLMActionEntry("deliver(?objectName, ?location:location)",
+        //        "You deliver ?objectName to location ?location:location",
+        //        "bring the mug to %exampleLocation",
+        //        "deliver(mug,%exampleLocation:location)", 10);
+        //exposedActionList.add(entry);
         entry = new LLMActionEntry("goHome()",
                 "You go to your charging dock and charge",
                 "go back to charge",
@@ -890,16 +932,16 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "what are your saved locations",
                 "describeAllKnownLocations()", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("describeAllKnownPatrolPaths()",
-                "You list all currently saved patrol paths",
-                "what paths do you know about",
-                "describeAllKnownPatrolPaths()", 10);
-        exposedActionList.add(entry);
-        entry = new LLMActionEntry("describeAllLocationsOnPatrolPath(?pathName:path)",
-                "You list all locations included along the saved patrol path named ?pathName:path",
-                "what locations are in %examplePath",
-                "describeAllLocationsOnPatrolPath(%examplePath:path)", 10);
-        exposedActionList.add(entry);
+        //entry = new LLMActionEntry("describeAllKnownPatrolPaths()",
+        //        "You list all currently saved patrol paths",
+        //        "what paths do you know about",
+        //        "describeAllKnownPatrolPaths()", 10);
+        //exposedActionList.add(entry);
+        //entry = new LLMActionEntry("describeAllLocationsOnPatrolPath(?pathName:path)",
+        //        "You list all locations included along the saved patrol path named ?pathName:path",
+        //        "what locations are in %examplePath",
+        //        "describeAllLocationsOnPatrolPath(%examplePath:path)", 10);
+        //exposedActionList.add(entry);
         entry = new LLMActionEntry("repeatLastQuestion()",
                 "You repeat the last question you asked, which the human still needs to answer",
                 "could you repeat that",
@@ -934,6 +976,125 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "You begin a dialogue interaction with the user where they teach you how to perform a new type of tour",
                 "I want to teach you how to perform a tour",
                 "learnTourAction()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportKioskSettings()",
+                "You report the current configuration of kiosk mode; Whether it is enabled and the currently configured kiosk timeout and action.",
+                "what is your kiosk configuration",
+                "reportKioskSettings()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("updateKioskTimeout()",
+                "You begin a dialogue interaction with the user to update the configured kiosk timeout",
+                "I would like to update the kiosk timeout",
+                "updateKioskTimeout()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("setKioskTimeout(?duration, ?timeunit)",
+                "You set the kiosk timeout to ?duration ?timeunits. ?timeunit can take the possible values of the Java TIMEUNIT enum.",
+                "Set the kiosk timeout to 30 minutes",
+                "setKioskTimeout(30,minutes)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("setKioskModeEnabled(?enabled)",
+                "You set whether or not kiosk mode is enabled. ?enabled can take the values true or false",
+                "turn on kiosk mode",
+                "setKioskModeEnabled(true)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("updateKioskAction()",
+                "You begin a dialogue interaction with the user to update the configured kiosk action",
+                "I want to change the kiosk action",
+                "updateKioskAction()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("playNextVideo()",
+                "You begin playback of the next video in your saved collection, continuing where you left off",
+                "Play video",
+                "playNextVideo()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("playSpecificVideo(?videoName:video)",
+                "You begin playback of the specific video ?videoName",
+                "Show the %exampleVideo video",
+                "playNextVideo(%exampleVideo)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("playNextVideoAtLocation(?location:location)",
+                "You go to ?location and then begin playback of the next video in your saved collection, continuing where you left off",
+                "Play videos at %exampleLocation",
+                "playNextVideoAtLocation(%exampleLocation:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("playSpecificVideoAtLocation(?videoName:video, ?location:location)",
+                "You go to ?location and then begin playback of the specific video ?videoName",
+                "Go to %exampleLocation and play the %exampleVideo video.",
+                "playSpecificVideoAtLocation(%exampleVideo,%exampleLocation:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("setVideoVolume(?volume)",
+                "You set the volume of videos played on your screen. Acceptable values are whole numbers between 0 and 100.",
+                "Set the video volume to max",
+                "setVideoVolume(100)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("listSavedVideos()",
+                "You list out the collection of videos you currently have saved",
+                "what videos can you play",
+                "listSavedVideos()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportVideoVolume()",
+                "You report the current volume videos are set to play at",
+                "what is the video volume set to",
+                "reportVideoVolume()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("reportIsVideoSaved(?videoName:video)",
+                "You answer whether you have a video saved under the name ?videoName",
+                "Do you have the %exampleVideo video saved",
+                "reportIsVideoSaved(?videoName)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("waitForDuration(?seconds)",
+                "You wait idly for ?seconds seconds. ?seconds must be a positive whole number.",
+                "Then wait for a minute",
+                "waitForDuration(60)", 10);
+        exposedActionList.add(entry);
+        //TODO: for a lot the video and image actions - allow then() semantics to be targeted and handled generally rather
+        //      than making these variations of the same method (or revisit this specific model and prompt format and
+        //      100% prevent misparamaterized actions from being generated - or have smarter recovery in these cases).
+        //      e.g. then(goToLocation(...),playVideo(...),waitForDuration(...))
+        entry = new LLMActionEntry("displayNamedImage(?imageName:image)",
+                "You display the image ?imageName at your current location until told otherwise",
+                "Display the %exampleImage image",
+                "displayNamedImage(%exampleImage)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("displayNamedImageAtLocation(?imageName:image,?location:location)",
+                "You go to location ?location then display the image ?imageName until told otherwise",
+                "Display the %exampleImage image at the %exampleLocation location",
+                "displayNamedImageAtLocation(%exampleImage,%exampleLocation:location)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("displayNamedImageForDuration(?imageName:image,?seconds)",
+                "You display the image ?imageName for ?seconds seconds",
+                "Display the %exampleImage image for a minute",
+                "displayNamedImageForDuration(%exampleImage,60)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("displayNamedImageForDurationAtLocation(?imageName:image,?location:location,?seconds)",
+                "You go to location ?location then display the image ?imageName for ?seconds seconds",
+                "Display the %exampleImage image at the %exampleLocation location for 45 seconds",
+                "displayNamedImageForDurationAtLocation(%exampleImage,%exampleLocation:location,45)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("listSavedImages()",
+                "You list out the collection of images you currently have saved",
+                "what images can you display",
+                "listSavedImages()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("urgentPriority(?actionPredicate)",
+                "You submit an action represented by ?actionPredicate with urgent priority. This means that this action will interrupt execution of any other currently submitted actions and be immediately prioritized. ?actionPredicate should be replaced by a populated instance of an INSTRUCT Semantics from the previous examples.",
+                "go to %exampleLocation right now",
+                "urgentPriority(goToLocation(%exampleLocation:location))", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("cancelTaskInQueueByIndex(?index)",
+                "You cancel and remove the task in task queue at position ?index if it exists. ?index is a 0-based index.",
+                "Remove the first task from the queue",
+                "cancelTaskInQueueByIndex(0)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("enableAdminMode()",
+                "Allow certain actions which require administrator privileges to be instructed through voice directly to the robot.",
+                "enable admin mode",
+                "enableAdminMode()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("disableAdminMode()",
+                "Reject certain actions which require administrator privileges from being instructed through voice directly to the robot.",
+                "disable admin mode",
+                "disableAdminMode()", 10);
         exposedActionList.add(entry);
     }
 }

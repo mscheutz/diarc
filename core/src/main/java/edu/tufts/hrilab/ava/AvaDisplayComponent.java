@@ -6,16 +6,21 @@ package edu.tufts.hrilab.ava;
 
 import ai.thinkingrobots.trade.*;
 
+import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.annotations.OnInterrupt;
+import edu.tufts.hrilab.action.execution.ExecutionType;
+import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.ava.display.DialogueManager;
 import edu.tufts.hrilab.ava.display.DisplayCanvas;
 import edu.tufts.hrilab.diarc.DiarcComponent;
+import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
+import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
-import edu.tufts.hrilab.util.resource.Resources;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
-import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
 import java.awt.*;
@@ -28,9 +33,10 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * Class representing the display functionality on the screen of the Ava robot.
@@ -45,7 +51,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   private boolean useChat = false;
   private DialogueManager dialogueManager = new DialogueManager();
 
-  private final long textTimeout = 20000; //20 seconds
+  private final long textTimeout = 8000; //8 seconds
   private final long idleTimeout = 600000; //10 minutes
 
   private long idleTimer = -1;
@@ -54,6 +60,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   private EmbeddedMediaPlayerComponent mediaPlayerComponent;
 
   private final ScheduledExecutorService refreshExecutor = Executors.newScheduledThreadPool(1);
+  private ScheduledFuture currentImageCycleFuture = null;
 
   private TRADEServiceInfo isWakeWordEnabledService = null;
   private TRADEServiceInfo getWakeWordsService = null;
@@ -63,11 +70,16 @@ public class AvaDisplayComponent extends DiarcComponent {
   private CardLayout cardLayout;
   private JPanel cardPanel;
   private String videoDir = "";
+  private String idleImageDir = "";
+  private String userImageDir = "";
+  private String presentationSlidesDir = "";
   private List<String> videos = new ArrayList<>();
   private int currentVideo = -1;
   private int videoVolume;
   private boolean videoPlaying = false;
-  private List<String> images = new ArrayList<>();
+  private boolean userImageDisplayed = false;
+  private List<String> idleImages = new ArrayList<>();
+  private List<String> userImages = new ArrayList<>();
   private int currentImage = -1;
   private int trLogoIndex = 0;
 
@@ -75,12 +87,14 @@ public class AvaDisplayComponent extends DiarcComponent {
   protected void init() {
     if (!videoDir.equals("")) {
       videos = getMediaFromDir(videoDir, ".mp4");
-      images = getMediaFromDir(videoDir, ".png");
-      images = images.stream().sorted().toList();
+      idleImages = getMediaFromDir(idleImageDir, ".png");
+      idleImages = idleImages.stream().sorted().toList();
+      userImages = getMediaFromDir(userImageDir, ".png");
+      userImages = userImages.stream().sorted().toList();
       currentVideo = 0;
       currentImage = 0;
       int index = 0;
-      for (String img : images) {
+      for (String img : idleImages) {
         if (img.contains("(1)")) {
           trLogoIndex = index;
           currentImage = trLogoIndex;
@@ -91,29 +105,33 @@ public class AvaDisplayComponent extends DiarcComponent {
     initializeFrame();
   }
 
-  private List<String> getMediaFromDir(String videoDir, String fileType) {
+  private String getMediaPath(String videoDir) {
     String homeDir = System.getProperty("user.home");
     String diarcDirPath = Paths.get(homeDir, ".diarc").toString();
-    String videoDirPath = Paths.get(diarcDirPath, videoDir).toString();
+    return Paths.get(diarcDirPath, videoDir).toString();
+  }
+
+  private List<String> getMediaFromDir(String videoDir, String fileType) {
+    String videoDirPath = getMediaPath(videoDir);
     File dir = new File(videoDirPath);
     File[] files = dir.listFiles((dir1, name) -> name.toLowerCase().endsWith(fileType));
     List<String> toReturn = List.of();
     if (files != null) {
       List<File> fileList = List.of(files);
-      toReturn = fileList.stream().map(x -> x.getAbsolutePath()).toList();
+      toReturn = fileList.stream().map(x -> x.getName()).toList();
     }
     return toReturn;
   }
 
-//  @Override
-//  protected void postRegistrationInit() {
-//    // register to get notified of "registerForDialogueHistoryNotifications" service
-//    try {
-//      TRADE.registerNotificationNowOrWhenJoined(this, new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications").argTypes(TRADEServiceInfo.class), "registerDialogueCallback");
-//    } catch (TRADEException e) {
-//      log.error("Error trying to register for registerForDialogueHistoryNotifications service.", e);
-//    }
-//  }
+  @Override
+  protected void postRegistrationInit() {
+    // register to get notified of "registerForDialogueHistoryNotifications" service
+    try {
+      TRADE.registerNotificationNowOrWhenJoined(this, new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications").argTypes(TRADEServiceInfo.class), "registerDialogueCallback");
+    } catch (TRADEException e) {
+      log.error("Error trying to register for registerForDialogueHistoryNotifications service.", e);
+    }
+  }
 
   /**
    * Sets up the display. This includes initializing the display environment, configuring the screen.
@@ -164,16 +182,16 @@ public class AvaDisplayComponent extends DiarcComponent {
 
       @Override
       public void stopped(MediaPlayer mediaPlayer) {
+        videoPlaying = false;
         try {
           SwingUtilities.invokeAndWait(() -> {
                     cardLayout.previous(cardPanel);
-                    displayImage(images.get(trLogoIndex), 10 * 1000);
                   }
           );
         } catch (InterruptedException | InvocationTargetException e) {
-          log.error("error switching back to logo", e);
+          log.error("error switching back to idle display", e);
         }
-        videoPlaying = false;
+        continueIdleImageCycle();
       }
 
     };
@@ -198,34 +216,36 @@ public class AvaDisplayComponent extends DiarcComponent {
       frame.setVisible(true);
     }
 
-    Runnable cycleImageTask = () -> {
-      if (!videoPlaying) {
-        try {
-          SwingUtilities.invokeAndWait(() -> {
-                    displayImage(images.get(currentImage), 10 * 1000);
-                  }
-          );
-        } catch (InterruptedException | InvocationTargetException e) {
-          log.error("error switching back to logo", e);
-        }
-        if (currentImage >= (images.size() - 1)) {
-          currentImage = 0;
-        } else {
-          currentImage++;
-        }
-      }
-    };
+    startIdleImageCycle(0);
+  }
 
-    try {
-      SwingUtilities.invokeAndWait(() -> {
-                displayImage(images.get(trLogoIndex), 10 * 1000);
-              }
-      );
-    } catch (InterruptedException | InvocationTargetException e) {
-      log.error("error switching back to logo", e);
+  private void startIdleImageCycle(int initialDelay) {
+    if (currentImageCycleFuture != null) {
+      log.error("[startIdleImageCycle] called while previous scheduled future still exists");
+      return;
     }
+    Runnable cycleImageTask = this::continueIdleImageCycle;
 
-    refreshExecutor.scheduleAtFixedRate(cycleImageTask, 0, 30, TimeUnit.SECONDS);
+    currentImageCycleFuture = refreshExecutor.scheduleAtFixedRate(cycleImageTask, initialDelay, 30, TimeUnit.SECONDS);
+  }
+
+  private void continueIdleImageCycle() {
+    if (!videoPlaying && !userImageDisplayed) {
+      try {
+        SwingUtilities.invokeAndWait(() -> {
+                  displayIdleImage(idleImages.get(currentImage), -1);
+                }
+        );
+      } catch (InterruptedException | InvocationTargetException e) {
+        log.error("error advancing idle image", e);
+      }
+
+      if (currentImage >= (idleImages.size() - 1)) {
+        currentImage = 0;
+      } else {
+        currentImage++;
+      }
+    }
   }
 
   /**
@@ -286,28 +306,112 @@ public class AvaDisplayComponent extends DiarcComponent {
 
   }
 
+  private String getMatchingImageName(String name) {
+    for (String image : userImages) {
+      if (image.equalsIgnoreCase(name)) {
+        return image;
+      }
+    }
+    return "";
+  }
+
+  @Action
+  @TRADEService
+  @OnInterrupt(onCancelServiceCall = "interruptDisplayImageWithName()", onSuspendServiceCall = "interruptDisplayImageWithName()")
+  public boolean displayImageWithName(String imageName, Symbol timeoutSymbol) {
+    try {
+      long timeout = Long.parseLong(timeoutSymbol.getName());
+      return displayImageWithName(imageName, timeout);
+    } catch (NumberFormatException e) {
+      log.error("[displayImageWithName] error parsing timeoutSymbol {}", timeoutSymbol, e);
+      return false;
+    }
+  }
+
+  @Action
+  @TRADEService
+  @OnInterrupt(onCancelServiceCall = "interruptDisplayImageWithName()", onSuspendServiceCall = "interruptDisplayImageWithName()")
+  public boolean displayImageWithName(String imageName, long timeout) {
+    String name = getMatchingImageName(imageName);
+    if (name.isEmpty()) {
+      return false;
+    }
+
+    displayUserImage(imageName, timeout, true);
+
+    return true;
+  }
+
+  @Action
+  @TRADEService
+  @OnInterrupt(onCancelServiceCall = "interruptDisplayImageWithName()", onSuspendServiceCall = "interruptDisplayImageWithName()")
+  public void displaySlideWithName(String presentationName, String imageName, long timeout) {
+    if (presentationName.startsWith("\"") && presentationName.endsWith("\"")) {
+      presentationName = presentationName.substring(1,presentationName.length()-1);
+    }
+    if (imageName.startsWith("\"") && imageName.endsWith("\"")) {
+      imageName = imageName.substring(1,imageName.length()-1);
+    }
+    String path = getMediaPath(presentationSlidesDir) + File.separator + presentationName + File.separator + imageName;
+    userImageDisplayed = true;
+    displayImage(path, timeout, true);
+    userImageDisplayed = false;
+  }
+
+  //TODO: smarter interaction with timeout on suspend/resume? Currently will reset timer
+  @TRADEService
+  public void interruptDisplayImageWithName() {
+    canvas.cancelSetImage();
+    clearImage();
+    clearText();
+    userImageDisplayed = false;
+    continueIdleImageCycle();
+  }
+
+  private void displayUserImage(String imageName, long timeout) {
+    displayUserImage(imageName, timeout, false);
+  }
+  private void displayIdleImage(String imageName, long timeout) {
+    displayIdleImage(imageName,timeout,false);
+  }
+  private void displayUserImage(String imageName, long timeout, boolean blocking) {
+    userImageDisplayed = true;
+    clearText();
+    String path = getMediaPath(userImageDir) + File.separator + imageName;
+    displayImage(path, timeout, blocking);
+    userImageDisplayed = false;
+    continueIdleImageCycle();
+  }
+  private void displayIdleImage(String imageName, long timeout, boolean blocking) {
+    String path = getMediaPath(idleImageDir) + File.separator + imageName;
+    displayImage(path, timeout, blocking);
+  }
+
   /**
    * Displays an image from the resources directory on the DisplayCanvas.
    *
-   * @param imageName filename of image to display
+   * @param path filename of image to display
    */
-  private void displayImage(String imageName, long timeout) {
-    log.debug("displayImage(" + imageName + ")");
+  private void displayImage(String path, long timeout, boolean blocking) {
+    log.debug("displayIdleImage(" + path + ")");
     BufferedImage image = null;
     try {
-      image = ImageIO.read(new File(imageName));
+      image = ImageIO.read(new File(path));
     } catch (IOException ex) {
-      log.error("Error getting image " + imageName, ex);
+      log.error("Error getting image " + path, ex);
     } catch (Exception ex) {
-      log.error("Other error getting image " + imageName, ex);
+      log.error("Other error getting image " + path, ex);
     }
     if (image == null) {
       return;
     }
     unsetIdle();
-    canvas.setImage(image, timeout);
+    if (blocking) {
+      canvas.setImageBlocking(image, timeout);
+    } else {
+      canvas.setImage(image, timeout);
+    }
   }
-
 
   @TRADEService
   public void displayNextVideo() {
@@ -323,16 +427,31 @@ public class AvaDisplayComponent extends DiarcComponent {
     }
   }
 
-  @TRADEService
-  public void displayVideoMatching(String match) {
+  private String getMatchingVideoName(String name) {
     for (String video : videos) {
-      if (video.contains(match)) {
-        displayVideo(video);
+      if (video.equalsIgnoreCase(name)) {
+        return video;
       }
     }
+    return "";
   }
 
-  public void displayVideo(String path) {
+  @TRADEService
+  public boolean isVideoSaved(String name) {
+    return !getMatchingVideoName(name).isEmpty();
+  }
+
+  @TRADEService
+  public boolean displayVideoMatching(String match) {
+    String name = getMatchingVideoName(match);
+    if (name.isEmpty()) {
+      return false;
+    }
+    displayVideo(name);
+    return true;
+  }
+
+  private void displayVideo(String videoName) {
     try {
       SwingUtilities.invokeAndWait(() -> {
                 cardLayout.next(cardPanel);
@@ -341,6 +460,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     } catch (InterruptedException | InvocationTargetException e) {
       log.error("error switching back to logo", e);
     }
+    String path = getMediaPath(videoDir) + File.separator + videoName;
     mediaPlayerComponent.mediaPlayer().media().startPaused(path);
     videoPlaying = true;
     log.info("[displayNextVideo] displaying video: " + path);
@@ -354,33 +474,16 @@ public class AvaDisplayComponent extends DiarcComponent {
   @TRADEService
   public void cancelVideoPlayback() {
     mediaPlayerComponent.mediaPlayer().controls().stop();
+    videoPlaying = false;
   }
 
   @TRADEService
   public void pauseVideoPlayback() {
     mediaPlayerComponent.mediaPlayer().controls().pause();
-    try {
-      SwingUtilities.invokeAndWait(() -> {
-                cardLayout.previous(cardPanel);
-              }
-      );
-    } catch (InterruptedException | InvocationTargetException e) {
-      log.error("error switching back to logo", e);
-    }
-    videoPlaying = false;
   }
 
   @TRADEService
   public void resumeVideoPlayback() {
-    try {
-      SwingUtilities.invokeAndWait(() -> {
-                cardLayout.next(cardPanel);
-              }
-      );
-    } catch (InterruptedException | InvocationTargetException e) {
-      log.error("error switching back to logo", e);
-    }
-    videoPlaying = true;
     mediaPlayerComponent.mediaPlayer().controls().play();
   }
 
@@ -400,14 +503,6 @@ public class AvaDisplayComponent extends DiarcComponent {
   public void clearText() {
     log.debug("clearText()");
     canvas.clearText();
-    try {
-      SwingUtilities.invokeAndWait(() -> {
-                displayImage(images.get(trLogoIndex), 10 * 1000);
-              }
-      );
-    } catch (InterruptedException | InvocationTargetException e) {
-      log.error("error switching back to logo", e);
-    }
   }
 
   /**
@@ -422,6 +517,13 @@ public class AvaDisplayComponent extends DiarcComponent {
     canvas.setText(text, textTimeout);
   }
 
+  @TRADEService
+  public void displayText(String text, long timeout) {
+    log.debug("displayText {} {}", text, timeout);
+    unsetIdle();
+    canvas.setText(text, timeout);
+  }
+
   /**
    * Callback TRADE service to receive dialogue events and display
    * them on the DisplayCanvas.
@@ -430,13 +532,196 @@ public class AvaDisplayComponent extends DiarcComponent {
    */
   @TRADEService
   public void avaDisplayDialogueCallback(Utterance utterance, boolean newAddition) {
-    if (newAddition) {
-      log.debug(utterance.toString());
-      String speaker = utterance.getSpeaker().toString();
-      String words = utterance.getWordsAsString();
-      dialogueManager.addMessage(words, speaker);
-      unsetIdle();
+    //if (newAddition) {
+    //  log.debug(utterance.toString());
+    //  String speaker = utterance.getSpeaker().toString();
+    //  String words = utterance.getWordsAsString();
+    //  dialogueManager.addMessage(words, speaker);
+    //  unsetIdle();
+    //}
+    if (utterance.getSpeaker().getName().equals("ava")) {
+      new Thread(() -> {
+        //String displayedText = "Ava: " + utterance.getWordsAsString() + "\n" + currentText;
+        //displayText(displayedText);
+        String currentText = canvas.getText();
+        //Not sure what timing ideally looks like here - recognized speech string overwritten by response string
+        if (!currentText.isEmpty()) {
+          long sleepDuration = 500;
+          if (currentText.startsWith("Recognized Speech:")) {
+            sleepDuration = 1500;
+          }
+          try {
+            Thread.sleep(sleepDuration);
+          } catch (InterruptedException ignored) {
+          }
+        }
+        displayText("Ava: " + utterance.getWordsAsString());
+      }).start();
     }
+  }
+
+  @TRADEService
+  public List<String> getVideoNames(boolean includeFileEndings) {
+    if (includeFileEndings) {
+      return new ArrayList<>(videos);
+    } else {
+      return new ArrayList<>(videos.stream().map(v -> v.split("\\.", 2)[0]).toList());
+    }
+  }
+
+  @TRADEService
+  public List<String> getImageNames(boolean includeFileEndings) {
+    if (includeFileEndings) {
+      return new ArrayList<>(userImages);
+    } else {
+      return new ArrayList<>(userImages.stream().map(v -> v.split("\\.", 2)[0]).toList());
+}
+  }
+
+  @TRADEService
+  public boolean setVideoVolume(Symbol volumeSymbol) {
+    try {
+      int volume = Integer.parseInt(volumeSymbol.getName());
+      return setVideoVolume(volume);
+    } catch (NumberFormatException e) {
+      log.error("[setVideoVolume] supplied volumeSymbol not parseable as int: {}", volumeSymbol, e);
+      return false;
+    }
+  }
+
+  @TRADEService
+  public boolean setVideoVolume(int volume) {
+    if (volume < 0 || volume > 100) {
+      log.error("[setVideoVolume] supplied volume is out of bounds [0,100]: {}",volume);
+      return false;
+    }
+    videoVolume = volume;
+    return true;
+  }
+
+  @TRADEService
+  public int getVideoVolume() {
+    return videoVolume;
+  }
+
+  //Leaving temporarily for reference
+  //@Action
+  //@TRADEService
+  //public void testLearnNewPresentationAction() {
+  //  List<String> slideNames = new ArrayList<>();
+  //  slideNames.add("slide 1.png");
+  //  slideNames.add("Slide 2.png");
+  //  slideNames.add("Slide3.png");
+  //  learnNewPresentationAction("Introduction Presentation",slideNames,10);
+  //}
+
+  //Called in forgetTaughtAction if action starts with name "present"
+  @TRADEService
+  public void deletePresentationSlides(String presentationName) {
+    if (presentationSlidesDir.isEmpty()) {
+      log.error("[deletePresentationSlides] cannot delete slides if media dir is not set");
+      return;
+    }
+
+    String path = getMediaPath(presentationSlidesDir) + File.separator + presentationName;
+    File directory = new File(path);
+    File[] files = directory.listFiles();
+    if (files != null) {
+      for (File file: files) {
+        file.delete();
+      }
+    }
+    directory.delete();
+  }
+
+  //Flexible on parameterization, e.g.:
+  //  Can have N durations rather than 1
+  //  Can provide presentation directory with sequentially named images rather than filename list
+  //Return value could be a string or justification for more specific failure messages if desired
+  @TRADEService
+  public boolean learnNewPresentationAction(String presentationName, List<String> slideFilenames, long duration) {
+    //Assumes these images are saved somewhere separate from userImages. Currently assuming presentation specific
+    // subfolders under "presentationSlides" macro folder (for the purposes of deleting files when forgetting action)
+    if (presentationSlidesDir.isEmpty()) {
+      log.error("[learnNewPresentationAction] cannot save new presentation action if media dir is not set");
+      return false;
+    }
+
+    String[] presentationNameParts = presentationName.toLowerCase().split("\\s+");
+    // If deleting the presentation action, I assume we then want to delete the associated files?
+    //  There is no way to know when to do this unless the presentation actions have a specific
+    //  naming pattern enforced which can be checked in "forgetTaughtAction"
+    // Calling method from "forgetTaughtAction" to delete all associated slide files when matching on a "present<name>" action
+    // TODO: The directory these files are saved to must match <name> in order to do this. This has to be enforced wherever
+    //        the images are saved to file. (<name> being capitalized, camel case joined string)
+    String safePresentationName = Arrays.stream(presentationNameParts).map(p -> Character.toUpperCase(p.charAt(0)) + p.substring(1)).collect(Collectors.joining());
+    String actionName = "present" + safePresentationName;
+
+    //Check all images can be loaded properly
+    for (String filename: slideFilenames) {
+      String path = getMediaPath(presentationSlidesDir) + File.separator + safePresentationName + File.separator + filename;
+      BufferedImage image = null;
+      try {
+        image = ImageIO.read(new File(path));
+      } catch (IOException ex) {
+        log.error("[learnNewPresentationAction] Error getting slide image " + path, ex);
+      } catch (Exception ex) {
+        log.error("[learnNewPresentationAction] Other error getting slide image " + path, ex);
+      }
+      if (image == null) {
+        return false;
+      }
+    }
+
+    // TODO: need teaching to be interactor/agentTeam specific here again - can have collisions if receiving instructions
+    //      during this. Hoping the window is small enough that it practically won't happen.
+    // Teach new presentation action at once:
+    Predicate actionPredicate = Factory.createPredicate(actionName);
+    try {
+      // Start Action Learning
+      new Thread(() -> {
+          try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("learnAction").argTypes(Symbol.class, Predicate.class)).call(void.class, Factory.createSymbol("ava"), actionPredicate);
+          } catch (TRADEException e) {
+            //Error handling in threads not very safe for learning state
+            log.error("[learnNewPresentationAction] exception teaching action");
+          }
+      }).start();
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForActionLearningStart").argTypes(Symbol.class, Predicate.class)).call(void.class, Factory.createSymbol("ava"),actionPredicate);
+
+      // Teach Action steps
+      for (String slideFilename : slideFilenames) {
+        Predicate displaySlidePredicate = Factory.createPredicate("displaySlideWithName","ava","\""+safePresentationName+"\"","\""+slideFilename+"\"",String.valueOf(duration));
+
+        // Need to synchronize properly around learning state updates
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<?> future = executor.submit(() -> {
+          try {
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("waitForLearningStateUpdate").argTypes(Symbol.class, Predicate.class)).call(void.class, Factory.createSymbol("ava"), actionPredicate);
+          } catch (TRADEException e) {
+            log.error("[learnNewPresentationAction] exception teaching action");
+          }
+        });
+
+        // Submit display image goal as learning step
+        long gid = TRADE.getAvailableService(new TRADEServiceConstraints().name("submitGoal").argTypes(Predicate.class, ExecutionType.class, PriorityTier.class)).call(Long.class, displaySlidePredicate, ExecutionType.ACT, PriorityTier.NORMAL);
+        //TRADE.getAvailableService(new TRADEServiceConstraints().name("joinOnGoal").argTypes(Long.class)).call(GoalStatus.class, gid);
+
+        future.get(5,TimeUnit.SECONDS); //What is an appropriate amount of time to wait?
+
+      }
+    } catch (Exception e) {
+      log.error("[learnNewPresentationAction] exception teaching action");
+      return false;
+    } finally {
+      try {
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("endActionLearning").argTypes(Symbol.class, Predicate.class)).call(void.class, Factory.createSymbol("ava"), actionPredicate);
+      } catch (TRADEException e) {
+        log.error("[learnNewPresentationAction] exception ending learning");
+      }
+    }
+
+    return true;
   }
 
   /**
@@ -461,7 +746,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     List<Option> options = new ArrayList<>();
     options.add(Option.builder("chat").argName("boolean").desc("switch dialogue to chat format").build());
     options.add(Option.builder("fullscreen").argName("boolean").desc("make the display full screen or not").build());
-    options.add(Option.builder("videoDir").hasArg().desc("name of directory for videos in .diarc dir").build());
+    options.add(Option.builder("mediaDir").hasArg().desc("name of base directory with videos, idleImages, and userImages subdirectories in .diarc dir").build());
     options.add(Option.builder("videoVolume").hasArg().desc("volume for video playback").build());
     return options;
   }
@@ -474,8 +759,12 @@ public class AvaDisplayComponent extends DiarcComponent {
     if (cmdLine.hasOption("fullscreen")) {
       isFullscreen = true;
     }
-    if (cmdLine.hasOption("videoDir")) {
-      videoDir = cmdLine.getOptionValue("videoDir");
+    if (cmdLine.hasOption("mediaDir")) {
+      String mediaDir = cmdLine.getOptionValue("mediaDir");
+      videoDir = mediaDir + File.separator + "videos";
+      idleImageDir = mediaDir + File.separator + "idleImages";
+      userImageDir = mediaDir + File.separator + "userImages";
+      presentationSlidesDir = mediaDir + File.separator + "presentationSlides";
     }
     if (cmdLine.hasOption("videoVolume")) {
       videoVolume = Integer.parseInt(cmdLine.getOptionValue("videoVolume"));

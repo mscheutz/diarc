@@ -83,6 +83,8 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private List<RMSMapMetadataResponse> mapMetadatas = new ArrayList<>();
   private int numMaps = 0;
   private List<String> dockNames = new ArrayList<>();
+  private Thread sleepForDurationThread = null;
+  private Symbol speaker = Factory.createSymbol("local_user");
 
   @Override
   public void init() {
@@ -458,13 +460,18 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           log.info(s.toString());
           //Display on screen that we are listening
           try {
-            TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
-            service.call(void.class,"Understanding speech");
+            TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class, Long.class));
+            service.call(void.class,"Understanding speech",15);
           } catch (TRADEException e) {
             log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
           }
           if (shouldDing) {
             playAudioClip("ding.wav");
+            try {
+              TRADE.getAvailableService(new TRADEServiceConstraints().name("stopUtterance")).call(void.class);
+            } catch (TRADEException e) {
+              log.debug("[listenForWWAndASR] exception calling stopUtterance", e);
+            }
           } else {
             shouldDing = true;
           }
@@ -517,7 +524,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
           result = result.trim().toLowerCase();
           result = result.replaceAll("\\p{Punct}", "");
           Utterance utterance = new Utterance.Builder()
-                  .setSpeaker(Factory.createSymbol("user"))
+                  .setSpeaker(speaker)
                   .setAddressee(Factory.createSymbol("ava"))
                   .setWords(Arrays.asList(result.trim().split(" ")))
                   .setUtteranceType(UtteranceType.UNKNOWN)
@@ -785,5 +792,33 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
       log.error("[waitForLearningGoalSubmissionOrQuestionAnswer] semaphore signalled but neither thread terminated?");
       return null;
     }
+  }
+
+  @Override
+  public void waitForDuration(long seconds) {
+    log.info("[waitForDuration] sleeping for {} seconds", seconds);
+    try {
+      sleepForDurationThread = Thread.currentThread();
+      Thread.sleep(seconds*1000);
+    } catch (InterruptedException ignored) {}
+    sleepForDurationThread = null;
+    log.info("[waitForDuration] done sleeping");
+  }
+
+  @Override
+  public void interruptWaitForDuration() {
+    if (sleepForDurationThread != null) {
+      sleepForDurationThread.interrupt();
+    }
+  }
+
+  @Override
+  public void enableAdminMode() {
+    speaker = Factory.createSymbol("local_user");
+  }
+
+  @Override
+  public void disableAdminMode() {
+    speaker = Factory.createSymbol("local_visitor");
   }
 }

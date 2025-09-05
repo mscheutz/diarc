@@ -423,9 +423,11 @@ import java.lang.Integer;
     if (~op:equalsValue(?priority,SKIPPENDING)) {
         //TODO: Should this be modified to check if the agent is waiting for a response to a question specifically asked by this speaker? This would require
         //      a solution to the issue of all questions actually being addressed to the correct entity - which in many cases requires attributing from within all actions which entity's command caused this action to be performed
-        if (tsc:isAgentWaitingForResponse(?actor)) {
-            act:generateResponseFromString("Please answer my question before sending further instructions");
-            return;
+        if (~op:equalsValue(?priority,URGENT)) {
+            if (tsc:isAgentWaitingForResponse(?actor)) {
+                act:generateResponseFromString("Please answer my question before sending further instructions");
+                return;
+            }
         }
     }
 

@@ -67,6 +67,13 @@ public class DisplayCanvas extends Canvas {
     simpleImageElement.setImage(img, timeout);
     repaint();
   }
+  public void setImageBlocking(Image img, long timeout) {
+    simpleImageElement.setImageBlocking(img, timeout);
+    repaint();
+  }
+  public void cancelSetImage() {
+    simpleImageElement.cancelSetImage();
+  }
 
   /**
    * Clears the background image and displays black background.
@@ -91,8 +98,15 @@ public class DisplayCanvas extends Canvas {
    * @param text      String to print on screen
    */
   public void setText(String text, long textTimeout) {
-    simpleTextElement.setText(text, textTimeout);
+    simpleTextElement.setText(text, textTimeout, this::clearText);
     repaint();
+  }
+
+  /**
+   * Gets the currently displayed text
+   */
+  public String getText() {
+    return simpleTextElement.getText();
   }
 
   /**
