@@ -219,7 +219,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                     }
                     utterance.setSemantics(Factory.createPredicate(command, Factory.createPredicate(innerArg.getName(), argsWithActor)));
                 }
-            } else if (command.equals("forgetTaughtAction") || command.equals("reportIfCanPerform") || command.equals("describeActionSteps")) {
+            } else if (command.equals("forgetTaughtAction") || command.equals("reportIfCanPerform") || command.equals("describeActionSteps") || command.equals("urgentPriority")) {
                 //Not currently prompted to do this
                 if (utterance.getSemantics().hasArgs()) {
                     Symbol innerArg = ((Term)utterance.getSemantics()).get(1);
@@ -729,6 +729,8 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 case "reportVideoVolume":
                 case "listSavedImages":
                 case "reportIsVideoSaved":
+                case "sayText":
+                case "say":
                     return true;
                 default:
                     return false;
@@ -800,11 +802,11 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "save this area as location one",
                 "saveLocation(location one)", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("saveLocationsToFile()",
-                "You backup all your currently saved locations",
-                "backup your current locations",
-                "saveLocationsToFile()", 10);
-        exposedActionList.add(entry);
+        //entry = new LLMActionEntry("saveLocationsToFile()",
+        //        "You backup all your currently saved locations",
+        //        "backup your current locations",
+        //        "saveLocationsToFile()", 10);
+        //exposedActionList.add(entry);
         //entry = new LLMActionEntry("definePatrolPath(?name)",
         //        "You start learning a new patrol path called ?name",
         //        "I want to teach you a new patrol path named lab circuit",
@@ -850,11 +852,11 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "stand up",
                 "stand()", 10);
         exposedActionList.add(entry);
-        entry = new LLMActionEntry("deliver(?objectName, ?location:location)",
-                "You deliver ?objectName to location ?location:location",
-                "bring the mug to %exampleLocation",
-                "deliver(mug,%exampleLocation:location)", 10);
-        exposedActionList.add(entry);
+        //entry = new LLMActionEntry("deliver(?objectName, ?location:location)",
+        //        "You deliver ?objectName to location ?location:location",
+        //        "bring the mug to %exampleLocation",
+        //        "deliver(mug,%exampleLocation:location)", 10);
+        //exposedActionList.add(entry);
         entry = new LLMActionEntry("goHome()",
                 "You go to your charging dock and charge",
                 "go back to charge",
@@ -993,7 +995,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         entry = new LLMActionEntry("setKioskModeEnabled(?enabled)",
                 "You set whether or not kiosk mode is enabled. ?enabled can take the values true or false",
                 "turn on kiosk mode",
-                "setKioskModeEnabled(false)", 10);
+                "setKioskModeEnabled(true)", 10);
         exposedActionList.add(entry);
         entry = new LLMActionEntry("updateKioskAction()",
                 "You begin a dialogue interaction with the user to update the configured kiosk action",
@@ -1073,6 +1075,26 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "You list out the collection of images you currently have saved",
                 "what images can you display",
                 "listSavedImages()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("urgentPriority(?actionPredicate)",
+                "You submit an action represented by ?actionPredicate with urgent priority. This means that this action will interrupt execution of any other currently submitted actions and be immediately prioritized. ?actionPredicate should be replaced by a populated instance of an INSTRUCT Semantics from the previous examples.",
+                "go to %exampleLocation right now",
+                "urgentPriority(goToLocation(%exampleLocation:location))", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("cancelTaskInQueueByIndex(?index)",
+                "You cancel and remove the task in task queue at position ?index if it exists. ?index is a 0-based index.",
+                "Remove the first task from the queue",
+                "cancelTaskInQueueByIndex(0)", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("enableAdminMode()",
+                "Allow certain actions which require administrator privileges to be instructed through voice directly to the robot.",
+                "enable admin mode",
+                "enableAdminMode()", 10);
+        exposedActionList.add(entry);
+        entry = new LLMActionEntry("disableAdminMode()",
+                "Reject certain actions which require administrator privileges from being instructed through voice directly to the robot.",
+                "disable admin mode",
+                "disableAdminMode()", 10);
         exposedActionList.add(entry);
     }
 }

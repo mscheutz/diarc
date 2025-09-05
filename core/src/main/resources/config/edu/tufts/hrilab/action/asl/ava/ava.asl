@@ -31,7 +31,7 @@ import edu.tufts.hrilab.action.goal.Goal;
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
-    act:goHome();
+    //act:goHome();
 }
 
 () = escortFromLocationToLocation(Symbol ?escortee, Symbol ?escorteeLoc, Symbol ?dstLoc) {
@@ -45,8 +45,8 @@ import edu.tufts.hrilab.action.goal.Goal;
 
     act:goToLocation(?dstLoc);
     act:say("Arrived at !locName");
-    op:sleep(10000);
-    act:goToLocation(?escorteeLoc);
+    //op:sleep(10000);
+    //act:goToLocation(?escorteeLoc);
 }
 
 /**
@@ -326,16 +326,28 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
+() = learnNewTaskOnResume(Integer ?tracker, Predicate ?taskName) {
+    if (op:equals(?tracker,1)) {
+        act:learningPrompt(?taskName);
+    }
+}
+
 () = learnNewTask() {
+    onInterrupt :{
+        resume: act:learnNewTaskOnResume(!tracker,!taskName);
+    }
     Predicate !actionSignature;
     Predicate !pred;
     String !taskName;
+    Integer !tracker = 0;
+
     !taskName = act:askForTaskName();
 
     if (op:isNull(!taskName)) {
         exit(FAIL, not(supplied(taskName)));
     }
     !taskName = op:invokeMethod(!taskName, "replaceAll", " +", "");
+    !tracker = op:++(!tracker);
 
     !actionSignature = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", !taskName);
     op:log(info,!actionSignature);
@@ -346,6 +358,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         act:learningPrompt(!taskName);
     }
     act:learnAction(!actionSignature);
+    !tracker = op:++(!tracker);
     !pred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "knowHowTo(?actor,perform(!taskName))");
     act:generateResponse(!pred);
 }
@@ -448,7 +461,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     !responseForm = op:createPredicate("taskName(X)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString(user,"What would you like the action to go on this upcoming tour sequence be called?", !responseFormList);
+    !bindings = act:askQuestionFromString(user,"What would you like the action to go on this upcoming tour sequence to be called?", !responseFormList);
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -456,7 +469,6 @@ import edu.tufts.hrilab.action.goal.Goal;
     !tourName = op:getName(!responseBinding);
     //TODO: what had caused this to be necessary? Was it ASL parser not being comfortable with action names with spaces?
     !tourName = op:invokeMethod(!tourName, "replaceAll", " +", "");
-
 
     //////////// Question Asking for tour's initial location ////////////
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
@@ -505,6 +517,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         op:add(!responseFormList,!responseForm);
         async {
             act:generateResponseFromString("What would you like me to do there?");
+            act:triggerWW();
         }
         act:resumeActionLearning(!actionPred);
         noInterrupt {
@@ -559,6 +572,7 @@ import edu.tufts.hrilab.action.goal.Goal;
             op:add(!responseFormList,!responseForm);
             async {
                 act:generateResponseFromString("What would you like me to do there?");
+                act:triggerWW();
             }
             noInterrupt {
                 !tracker = op:newObject("java.lang.Integer", 2);
@@ -589,7 +603,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     //// Commit learning state to learned action ////
     act:resumeActionLearning(!actionPred);
     act:endActionLearning(!actionPred);
-    act:generateResponseFromString("I have learned the !tourName tour sequence. You can ask me to perform this by saying \"please perform !tourName\"");
+    act:generateResponse("and(learnedTourSequence(!tourName),canAskToPerformBySaying(pleasePerform,!tourName))");
+    //act:generateResponseFromString("I have learned the !tourName tour sequence. You can ask me to perform this by saying \"please perform !tourName\"");
 }
 
 () = updateKioskTimeout() {
@@ -627,4 +642,15 @@ import edu.tufts.hrilab.action.goal.Goal;
     !goalPredicate = op:get(!bindings, !x);
     tsc:setKioskGoal(!goalPredicate);
     act:generateResponseFromString("Okay, I have updated the kiosk action");
+}
+
+() = cancelTaskInQueueByIndex(Integer ?index) {
+    Boolean !success;
+
+    !success = act:cancelPendingGoalByIndex(?index);
+    if (op:equals(!success,false)) {
+        act:generateResponseFromString("I could not find a task in the queue at the supplied index");
+    } else {
+        act:generateResponseFromString("I have removed the task from the queue.");
+    }
 }

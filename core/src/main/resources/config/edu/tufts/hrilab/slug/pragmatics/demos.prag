@@ -216,8 +216,8 @@ END-SET
 
 NEW-SET
 RULES
-INSTRUCT(A,B,urgentPriority(B,X),Z) := want(A,X,urgent)
-INSTRUCT(A,B,urgentPriority(C,X),Z) := want(A,X,urgent)
+INSTRUCT(A,B,urgentPriority(B,X),Z) := want(A,X,URGENT)
+INSTRUCT(A,B,urgentPriority(C,X),Z) := want(A,X,URGENT)
 END-SET
 
 # general cases of utterances which result in goal submission
