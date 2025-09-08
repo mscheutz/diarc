@@ -30,6 +30,7 @@ namespace diarc {
       SIM_PC2, //simulate kinect version w (pcd files)
       ROS,
       ROS2,
+      BOSDYN, // boston dynamics spot robot
       NAO,
       GSTREAMER, // H264-encoded stream via GStreamer
       MULTISENSE,
