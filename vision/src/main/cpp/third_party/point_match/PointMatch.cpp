@@ -280,7 +280,7 @@ int PointMatch( MYPOINT *PntModel, int nPntModel, MYPOINT *PntDeform, int nPntDe
 			HungarianMatch( costmat, PntModel2, nPntModel, PntDeform, nPntDeform, nMaxPnt );
 
 		//Calculate the number of matched points
-		BOOL	bChange = FALSE;	
+		BBOOL	bChange = FALSE;
 		nGood = 0;
 		for( i=0; i<nPntModel; i++ )
 		{
@@ -440,7 +440,7 @@ int PointMatchOutlier( MYPOINT *PntModel, int nPntModel, MYPOINT *PntDeform, int
 			HungarianMatch( costmat, PntModel2, nPntModel, PntDeform, nPntDeform, nMaxPnt );
 
 		nGood = 0;
-		BOOL	bChange = FALSE;
+		BBOOL	bChange = FALSE;
 		for( i=0; i<nPntModel; i++ )
 		{
 			//This is a bug in the original shape context method.

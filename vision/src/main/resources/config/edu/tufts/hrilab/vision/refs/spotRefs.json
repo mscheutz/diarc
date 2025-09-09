@@ -1,0 +1,25 @@
+{
+  "visionReferences": [
+    {
+      "refId": "physobj_0:physobj",
+      "variable": "VAR0:physobj",
+      "properties": [
+        "apple(VAR0:physobj)"
+      ]
+    },
+    {
+      "refId": "physobj_1:physobj",
+      "variable": "VAR0:physobj",
+      "properties": [
+        "bottle(VAR0:physobj)"
+      ]
+    },
+    {
+      "refId": "physobj_2:physobj",
+      "variable": "VAR0:physobj",
+      "properties": [
+        "object_consists_of_three_components(VAR0:physobj)"
+      ]
+    }
+  ]
+}

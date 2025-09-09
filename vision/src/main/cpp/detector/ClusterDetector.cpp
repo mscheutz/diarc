@@ -15,6 +15,10 @@
 #include "imgproc/saliency/SaliencyProcessor.hpp"
 #include "point_clouds/sorted_extract_clusters.hpp"
 
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/foreach.hpp>
+
 using namespace diarc::stm;
 
 bool IndexedValueTypeSortFunction(IndexedValueType i, IndexedValueType j) {
@@ -32,6 +36,24 @@ object_cluster_min_size(20 * (imgWidth / 320) * (imgHeight / 240)) {
 }
 
 ClusterDetector::~ClusterDetector() {
+}
+
+void ClusterDetector::loadConfig(const std::string &config) {
+  // populate tree structure pt
+  using boost::property_tree::ptree;
+  ptree pt;
+  read_xml(config, pt);
+
+  std::string predicateName;
+
+  // traverse pt
+
+  BOOST_FOREACH(ptree::value_type const& dataNode, pt.get_child("processor")) {
+          if (dataNode.first.compare("config") == 0) {
+            object_cluster_tolerance = dataNode.second.get<float>("object_cluster_tolerance", object_cluster_tolerance);
+            object_cluster_min_size = dataNode.second.get<float>("object_cluster_min_size", object_cluster_min_size);
+          }
+        }
 }
 
 void ClusterDetector::registerForCaptureNotification() {
@@ -148,6 +170,8 @@ MemoryObject::VecPtr ClusterDetector::createMemoryObjects(const std::vector<pcl:
 
   std::vector<pcl::PointIndices>::const_iterator cluster_iter;
   for (cluster_iter = clusters.begin(); cluster_iter != clusters.end(); ++cluster_iter) {
+
+    LOG4CXX_DEBUG(logger, boost::format("Num points in detected cluster: %d.") % cluster_iter->indices.size());
 
     // set detection confidence, descriptors, and typeids
     float confidence = 1.0f; //TODO

@@ -32,8 +32,8 @@ please contact zhengyf@cfar.umd.edu
 #include <string>
 #include "PointMatch.h"
 
-#ifndef BOOL
-#define BOOL bool
+#ifndef BBOOL
+#define BBOOL bool
 #endif
 
 #ifndef TRUE

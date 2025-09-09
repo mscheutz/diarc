@@ -47,7 +47,7 @@ public final class AvailableSearchManagers {
 
   //contains all SearchManagers, hashed by unique ID
   private Map<Long, SearchManager> types_byId = new HashMap();
-  private Map<SearchManager, HashSet<Object>> instantiatedSearchManagerClients = new HashMap();
+  private Map<SearchManager, Set<Object>> instantiatedSearchManagerClients = new HashMap();
   //contains descriptions to instantiate searches defined in xml config file
   private Map<String, List<NamedDescription>> typeDescriptions_byName = new HashMap();
   // searches stopped via the stopAllSearches method
@@ -763,7 +763,7 @@ public final class AvailableSearchManagers {
    * @param search instance being handed out to client
    */
   private void addClient(final Object client, final SearchManager search) {
-    HashSet<Object> clientList = instantiatedSearchManagerClients.get(search);
+    Set<Object> clientList = instantiatedSearchManagerClients.get(search);
     if (clientList == null) {
       clientList = new HashSet();
       instantiatedSearchManagerClients.put(search, clientList);
@@ -792,7 +792,7 @@ public final class AvailableSearchManagers {
       effectiveClient = client;
     }
 
-    HashSet<Object> clientList = instantiatedSearchManagerClients.get(searchType);
+    Set<Object> clientList = instantiatedSearchManagerClients.get(searchType);
     if (clientList == null || !clientList.contains(effectiveClient)) {
       log.warn("[release] Calling object is not a client of the SearchManager.");
       return;

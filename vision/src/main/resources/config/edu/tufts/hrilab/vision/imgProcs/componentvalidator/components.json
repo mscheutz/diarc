@@ -1,0 +1,241 @@
+{
+  "processor": {
+    "type": "category",
+    "arity": 1
+  },
+  "config": {
+    "model1": "2comp_uc_rotation_650epochs_perturb",
+    "model2": "2comp_uc_rotation_650epochs_noise_perturb",
+    "model3": "3comp_uc_rotation_650epochs_noise_perturb",
+    "type" : "onnx",
+    "identify_shapes" : true,
+    "visualize_reconstruction" : false,
+    "kernel_size" : 3,
+    "edginess_similarity_threshold" : 0.005,
+    "position_tolerance_front_behind" : 25,
+    "position_tolerance_left_right" : 3,
+    "position_tolerance_bottom_top" : 3,
+    "existence_threshold" : 0.8,
+    "volume_threshold" : 0.02,
+    "eccentricity_tolerance" : 2.0,
+    "width_compression_factor" : 1.0,
+    "height_compression_factor" : 1.0
+  },
+  "predicates": [
+    {
+      "name": "one_component",
+      "index": 0
+    },
+    {
+      "name": "two_components",
+      "index": 1
+    },
+    {
+      "name": "three_components",
+      "index": 2
+    },
+    {
+      "name": "centralshape_rod",
+      "shape": 0,
+      "index": 3
+    },
+    {
+      "name": "centralshape_disk",
+      "shape": 1,
+      "index": 4
+    },
+    {
+      "name": "centralshape_part",
+      "shape": 2,
+      "index": 5
+    },
+    {
+      "name": "centralsize_long",
+      "index": 6
+    },
+    {
+      "name": "first_horizontal",
+      "index": 7
+    },
+    {
+      "name": "first_vertical",
+      "index": 8
+    },
+    {
+      "name": "secondshape_rod",
+      "shape": 0,
+      "index": 9
+    },
+    {
+      "name": "secondshape_disk",
+      "shape": 1,
+      "index": 10
+    },
+    {
+      "name": "secondshape_other_part",
+      "shape": 2,
+      "index": 11
+    },
+    {
+      "name": "secondposition_in_front",
+      "axis": 0,
+      "index": 12
+    },
+    {
+      "name": "secondposition_behind",
+      "axis": 1,
+      "index": 13
+    },
+    {
+      "name": "secondposition_to_the_right",
+      "axis": 2,
+      "index": 14
+    },
+    {
+      "name": "secondposition_to_the_left",
+      "axis": 3,
+      "index": 15
+    },
+    {
+      "name": "secondposition_on_top",
+      "axis": 4,
+      "index": 16
+    },
+    {
+      "name": "secondposition_at_the_bottom",
+      "axis": 5,
+      "index": 17
+    },
+    {
+      "name": "secondposition_centered_along_the_depth_axis",
+      "axis": 6,
+      "index": 18
+    },
+    {
+      "name": "secondposition_horizontally_centered",
+      "axis": 7,
+      "index": 19
+    },
+    {
+      "name": "secondposition_vertically_centered",
+      "axis": 8,
+      "index": 20
+    },
+    {
+      "name": "secondsize_larger",
+      "index": 21
+    },
+    {
+      "name": "secondsize_smaller",
+      "index": 22
+    },
+    {
+      "name": "secondsize_similar_size",
+      "index": 23
+    },
+    {
+      "name": "secondsize_long",
+      "index": 24
+    },
+    {
+      "name": "second_horizontal",
+      "index": 25
+    },
+    {
+      "name": "second_vertical",
+      "index": 26
+    },
+    {
+      "name": "thirdshape_rod",
+      "shape": 0,
+      "index": 27
+    },
+    {
+      "name": "thirdshape_disk",
+      "shape": 1,
+      "index": 28
+    },
+    {
+      "name": "thirdshape_other_part",
+      "shape": 2,
+      "index": 29
+    },
+    {
+      "name": "thirdposition_in_front",
+      "axis": 0,
+      "index": 30
+    },
+    {
+      "name": "thirdposition_behind",
+      "axis": 1,
+      "index": 31
+    },
+    {
+      "name": "thirdposition_to_the_right",
+      "axis": 2,
+      "index": 32
+    },
+    {
+      "name": "thirdposition_to_the_left",
+      "axis": 3,
+      "index": 33
+    },
+    {
+      "name": "thirdposition_on_top",
+      "axis": 4,
+      "index": 34
+    },
+    {
+      "name": "thirdposition_at_the_bottom",
+      "axis": 5,
+      "index": 35
+    },
+    {
+      "name": "thirdposition_centered_along_the_depth_axis",
+      "axis": 6,
+      "index": 36
+    },
+    {
+      "name": "thirdposition_horizontally_centered",
+      "axis": 7,
+      "index": 37
+    },
+    {
+      "name": "thirdposition_vertically_centered",
+      "axis": 8,
+      "index": 38
+    },
+    {
+      "name": "thirdsize_larger",
+      "index": 39
+    },
+    {
+      "name": "thirdsize_smaller",
+      "index": 40
+    },
+    {
+      "name": "thirdsize_similar_size",
+      "index": 41
+    },
+    {
+      "name": "thirdsize_long",
+      "index": 42
+    },
+    {
+      "name": "third_horizontal",
+      "index": 43
+    },
+    {
+      "name": "third_vertical",
+      "index": 44
+    },
+    {
+      "name": "unknown",
+      "index": 45
+    },
+    {
+      "name": "full_description",
+      "index": 46
+    }
+  ]
+}
