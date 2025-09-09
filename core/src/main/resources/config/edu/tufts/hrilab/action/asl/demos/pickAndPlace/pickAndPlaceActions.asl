@@ -310,7 +310,7 @@ import java.lang.Integer;
 
     Symbol !response;
     Symbol !pose;
-    Symbol !currentPose;
+    Symbol !current;
     Symbol !blockToPickUp;
 
     op:log("debug","[pickUpWhileHoldingObjectRecovery");
@@ -318,7 +318,7 @@ import java.lang.Integer;
     op:log("debug","[pickUpWhileHoldingObjectRecovery] ?failureReasons");
     op:log("debug","[pickUpWhileHoldingObjectRecovery] ?failedGoal");
 
-    //!currentPose = act:getCurrentLocation();
+    //!current = act:getCurrentLocation();
     //!response = act:reportHoldingObjectAndAskToPutDown();
     //if (op:equals(!response,yes)) {
     //    !pose = act:askForPose();
@@ -327,7 +327,7 @@ import java.lang.Integer;
     //    } else {
     //        act:goToPose(!pose);
     //        act:putDown();
-    //        act:goToPose(!currentPose);
+    //        act:goToPose(!current);
     //        //only here because of ASL bug
     //        !blockToPickUp = op:invokeMethod(?failedGoal,"get",1);
     //        act:pickUp(!blockToPickUp);
@@ -336,7 +336,7 @@ import java.lang.Integer;
     //    exit(FAIL_RECOVERY);
     //}
 
-    !currentPose = act:getCurrentLocation();
+    !current = act:getCurrentLocation();
     //(bad var name, could be either response)
     !pose = act:reportHoldingObjectAndAskToPutDownV2();
     if (op:equals(!pose,yes)) {
@@ -350,7 +350,7 @@ import java.lang.Integer;
     } else {
         act:goToPose(!pose);
         act:putDown();
-        act:goToPose(!currentPose);
+        act:goToPose(!current);
         //only here because of ASL bug
         !blockToPickUp = op:invokeMethod(?failedGoal,"get",1);
         act:pickUp(!blockToPickUp);
@@ -548,7 +548,7 @@ import java.lang.Integer;
     Symbol !otherObject;
     String !otherObjectName;
     Symbol !object;
-    Symbol !currentPose;
+    Symbol !current;
     Symbol !otherObjectPose;
 
     op:log("debug","[putDownAtFullLocationRecovery");
@@ -557,7 +557,7 @@ import java.lang.Integer;
     op:log("debug","[putDownAtFullLocationRecovery] ?failedGoal");
 
     !object = act:getHeldObject();
-    !currentPose = act:getCurrentLocation();
+    !current = act:getCurrentLocation();
     ////TODO: populate question with held object and current location?
     ////  report that we cannot put down the object because the location is full
     ////  Ask if the user would like to swap the held object with a object in that location
@@ -570,7 +570,7 @@ import java.lang.Integer;
     //        exit(FAIL_RECOVERY);
     //    } else {
     //        !otherObjectPose = act:getObjectPose(!otherObject);
-    //        if (~op:equals(!currentPose,!otherObjectPose)) {
+    //        if (~op:equals(!current,!otherObjectPose)) {
     //            act:reportObjectToSwapNotAtCurrentPose();
     //            exit(FAIL_RECOVERY);
     //        }
@@ -598,7 +598,7 @@ import java.lang.Integer;
         exit(FAIL_RECOVERY);
     } else {
         !otherObjectPose = act:getObjectPose(!otherObject);
-        if (op:isNull(!otherObjectPose) || ~op:equals(!currentPose,!otherObjectPose)) {
+        if (op:isNull(!otherObjectPose) || ~op:equals(!current,!otherObjectPose)) {
             act:reportObjectToSwapNotAtCurrentPose();
             exit(FAIL_RECOVERY);
         }
@@ -679,7 +679,7 @@ import java.lang.Integer;
     edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
     List !objects;
     Symbol !object;
-    Symbol !currentPose;
+    Symbol !current;
     Symbol !objectDescriptor;
     Symbol !poseDescriptor;
     Predicate !ack = "ack(okay)";
@@ -690,7 +690,7 @@ import java.lang.Integer;
 
     op:log(info,"handleSeeObjectsITK");
 
-    !activeGoals = act:getActiveGoals();
+    !activeGoals = tsc:getSystemGoals();
     if (op:isEmpty(!activeGoals)) {
         !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "detectObjects(?actor)");
         !goalID = act:submitGoal(!state);
@@ -713,7 +713,7 @@ import java.lang.Integer;
 
     op:log(info,"handleSeeITK");
 
-    !activeGoals = act:getActiveGoals();
+    !activeGoals = tsc:getSystemGoals();
     if (op:isEmpty(!activeGoals)) {
         !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "perceiveEntity(?actor,?object)");
         !goalID = act:submitGoal(!state);
@@ -773,7 +773,7 @@ import java.lang.Integer;
     act:generateResponse(?actor,!ack,direct);
     if (op:equals(!response,yes)) {
         //Check if there is an active goal blocking verification
-        !activeGoals = act:getActiveGoals();
+        !activeGoals = tsc:getSystemGoals();
         if (op:isEmpty(!activeGoals)) {
             //Verify through goToAndDetect action
             !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goToAndDetect(?actor,?object,?pose)");
@@ -829,7 +829,7 @@ import java.lang.Integer;
     act:generateResponse(?actor,!ack,direct);
     if (op:equals(!response,yes)) {
         //Check if there is an active goal blocking verification
-        !activeGoals = act:getActiveGoals();
+        !activeGoals = tsc:getSystemGoals();
         if (op:isEmpty(!activeGoals)) {
             //Verify through goToAndDetect action
             !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "goToAndDetect(?actor,?pose)");
