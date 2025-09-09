@@ -6,6 +6,7 @@ package edu.tufts.hrilab.ava;
 
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
+import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.ava.message.AvaMoveGoal;
 import edu.tufts.hrilab.ava.message.response.*;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
@@ -27,6 +28,7 @@ import edu.tufts.hrilab.fol.Variable;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -120,6 +122,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
   private boolean listenForWW = true;
+  private int mixerID;
 
   public AvaComponent() {
     super();
@@ -266,6 +269,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
 //    setZLift(0);
     getCameraHeightMax();
+
+    mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
   }
 
   private void adjustDockTags(Map<String, Pair<Point3d, Quat4d>> allTags, List<String> dockTags) {
@@ -972,7 +977,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       for (Tag tag : res.response.tags.values()) {
         Point3d point = new Point3d(parseDouble(tag.position.x), parseDouble(tag.position.y), 0);
         Quat4d quat4d = Convert.convertToQuat4d(parseDouble(tag.position.theta), 0, 0);
-        toReturn.put(tag.name, new MutablePair<>(point, quat4d));
+        if (toReturn.size() < 20) {
+          toReturn.put(tag.name, new MutablePair<>(point, quat4d));
+        }
       }
     }
     return toReturn;
@@ -1166,14 +1173,17 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   public void playAudioClip(String fileName) {
     try {
       String homeDir = System.getProperty("user.home");
-      File audioFile = new File(Paths.get(homeDir, ".diarc","ava",fileName).toString());
+      String path = Paths.get(homeDir, ".diarc","ava",fileName).toString();
+      log.info("[playAudioClip] playing audio clip at path: " + path);
+      File audioFile = new File(path);
       AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
       AudioFormat format = audioStream.getFormat();
       DataLine.Info info = new DataLine.Info(Clip.class, format);
       Clip audioClip = (Clip) AudioSystem.getLine(info);
+      audioClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
       audioClip.open(audioStream);
       FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
-      control.setValue(-16f);
+      control.setValue(20f * (float) Math.log10(0.3));
       audioClip.start();
       Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
       audioClip.close();
@@ -1214,7 +1224,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           while (is.available() != 0) {
             s.append((char) is.read());
           }
-          log.info(s.toString());
+          log.info("[listenForWWandASR] reading from inputstream: " + s.toString());
           //Display on screen that we are listening
           try {
             TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class,Long.class));

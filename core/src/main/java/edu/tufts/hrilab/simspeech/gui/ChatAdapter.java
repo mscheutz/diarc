@@ -255,7 +255,7 @@ public class ChatAdapter extends GuiAdapter {
 
     try {
       TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class));
-      service.call(void.class,"config/edu/tufts/hrilab/ava/ding.wav");
+      service.call(void.class,"ding.wav");
     } catch (TRADEException e) {
       log.warn("[handleMessage] exception playing audio clip on Ava", e);
     }

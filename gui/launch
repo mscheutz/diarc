@@ -1,0 +1,3 @@
+#!/bin/bash
+
+PUBLIC_URL="/${REACT_APP_SITE_ID}/" npm run launchGui
