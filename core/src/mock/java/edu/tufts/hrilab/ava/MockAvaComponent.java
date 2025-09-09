@@ -259,7 +259,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
 
   @Override
   public Pair<Point3d, Quat4d> getPose() {
-    log.info("[getPose] called.");
+    log.debug("[getPose] called.");
     return new MutablePair<>(new Point3d(), new Quat4d());
   }
 

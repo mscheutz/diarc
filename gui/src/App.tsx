@@ -14,16 +14,17 @@ function App() {
     if (location.includes("#"))
         location = location.slice(0, location.indexOf("#"))
     const url: URL = new URL(location);
-    url.port = "8000";
+    url.port = process.env.PORT;
     url.protocol = "ws";
     const wsBaseUrl = url.toString();
 
     const [availableEndpoints, setAvailableEndpoints] = useState<string[]>([]);
     let webSocketUrl  = "";
-    if (typeof process.env.REACT_APP_SERVER_ADDR === 'undefined') {
-        webSocketUrl =`${wsBaseUrl}/ws`;
+    console.log(process.env.REACT_APP_SITE_ID);
+    if (process.env.REACT_APP_SITE_ID === undefined) {
+        webSocketUrl =`${wsBaseUrl}ws`;
     } else {
-        webSocketUrl =`${wsBaseUrl}/${process.env.REACT_APP_SITE_ID}/ws`;
+        webSocketUrl =`${wsBaseUrl}${process.env.REACT_APP_SITE_ID}/ws`;
     }
     const {lastMessage, sendMessage, readyState} =
         useWebSocket(webSocketUrl);
@@ -55,7 +56,7 @@ function App() {
                     sendMessage={sendMessage}
                     readyState={readyState}
                     lastMessage={lastMessage}
-                    wsBaseUrl={wsBaseUrl}
+                    wsBaseUrl={webSocketUrl}
                 />
             </Providers>
         </div>

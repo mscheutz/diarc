@@ -139,15 +139,12 @@ public class AvaMapAdapter extends GuiAdapter {
    * Update local current FloorMap and current floor number.
    */
   private void fetchMapImage() {
-    mapImages = new ArrayList<>();
+    //todo: we can't serialize java images (hooked into host image rendering apparently) naively. this is only going to work on a single host, and needs to be fixed.
     try {
-      List<byte[]> rawData = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapImages").argTypes().inGroups(this.groups.toArray(new String[0]))).call(List.class);
-      for (byte[] data : rawData) {
-        ByteArrayInputStream bais = new ByteArrayInputStream(data);
-        mapImages.add(ImageIO.read(bais));
-      }
-    } catch (TRADEException | IOException e) {
+      mapImages = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapImages").argTypes().inGroups(this.groups.toArray(new String[0]))).call(List.class);
+    } catch (TRADEException e) {
       log.error("Error getting map.", e);
+      mapImages = new ArrayList<>();
     }
   }
 
