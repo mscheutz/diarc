@@ -198,9 +198,22 @@ from; DESC/DESC; #x.$x
 in; DESC/DESC; #x.$x
 
 shut down; VERBI; shutDown
-stow arm; VERBI; stow
-unstow arm; VERBI; unstow
-carry mode; VERBI; carry
+
+stow arm; C; goToPose(?ADDRESSEE,stow)
+stow your arm; C; goToPose(?ADDRESSEE,stow)
+stow the arm; C; goToPose(?ADDRESSEE,stow)
+
+unstow arm; C; goToPose(?ADDRESSEE,unstow)
+unstow your arm; C; goToPose(?ADDRESSEE,unstow)
+unstow the arm; C; goToPose(?ADDRESSEE,unstow)
+
+carry mode; C; goToPose(?ADDRESSEE,carry)
+go to carry pose; C; goToPose(?ADDRESSEE,carry)
+go to the carry pose; C; goToPose(?ADDRESSEE,carry)
+
+detection mode; C; goToPose(?ADDRESSEE,carry)
+go to detection pose; C; goToPose(?ADDRESSEE,detection)
+go to the detection pose; C; goToPose(?ADDRESSEE,detection)
 
 look for; VERBT; perceiveEntity
 undock; VERBI; undock
@@ -244,10 +257,6 @@ hi there; G ; hi_there
 hello; G ; hello
 
 turn off; VERBI; shutDown
-stow your arm; VERBI; stow
-stow the arm; VERBI; stow
-unstow your arm; VERBI; unstow
-unstow the arm; VERBI; unstow
 enter carry mode; VERBI; carry
 search for; VERBT; perceiveEntity
 find; VERBT; perceiveEntity

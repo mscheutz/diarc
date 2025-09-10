@@ -128,7 +128,7 @@ import java.util.List;
     java.lang.Integer !dockId = 521;
 
     act:openGripper();
-    act:stow();
+    act:goToPose(stow);
     act:closeGripper();
     act:dock(!dockId);
 }
@@ -138,7 +138,7 @@ import java.util.List;
         success : not(perceptionpose(?actor));
     }
 
-    tsc:stow();
+    tsc:goToPose(stow);
 }
 
 () = openGripper() {
@@ -175,8 +175,7 @@ import java.util.List;
 }
 
 () = pickUp(Symbol ?object:physobj) {
-//    act:command(arm_carry);
-    act:detectionPose();
+    act:goToPose(detection);
     tsc:openGripper();
     act:startVisualSearch(?object);
     try {
@@ -212,14 +211,15 @@ import java.util.List;
         success : perceptionpose(?actor);
     }
 
-    act:detectionPose();
+    act:goToPose(detection);
 }
 
 () = gotocarrypose() {
     effects : {
         success : not(perceptionpose(?actor));
     }
-    act:command(arm_carry);
+
+    act:goToPose(carry);
 }
 
 () = deliveritem(Symbol ?object:physobj, Symbol ?at:location, Symbol ?type:property) {
@@ -244,10 +244,10 @@ import java.util.List;
 //    act:goToPutDownPose();
     act:askQuestionFromString(pete, "Let me know when you're holding the object.", holding(X));
     op:log(info, "Finishing handoff");
-    act:openGripper();
+    tsc:openGripper();
     op:sleep(500);
-    act:closeGripper();
-    act:command(arm_stow);
+    tsc:closeGripper();
+    tsc:goToPose(stow);
 }
 
 () = moveto(Symbol ?from:location, Symbol ?to:location) {

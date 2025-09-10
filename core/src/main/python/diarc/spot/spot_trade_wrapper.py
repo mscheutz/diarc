@@ -1,24 +1,20 @@
 import logging
-import os
 import time
-import typing
 import argparse
 import traceback
 
 from bosdyn.api.geometry_pb2 import Vec2
 from bosdyn.client.robot_command import RobotCommandBuilder
-from sklearn.utils import Bunch
 
 from bosdyn.api.graph_nav import graph_nav_pb2, nav_pb2
 from bosdyn.client.frame_helpers import get_odom_tform_body, GROUND_PLANE_FRAME_NAME, BODY_FRAME_NAME, HAND_FRAME_NAME, \
-    GRAV_ALIGNED_BODY_FRAME_NAME, ODOM_FRAME_NAME
+    ODOM_FRAME_NAME
 from bosdyn.api import manipulation_api_pb2, geometry_pb2
 from bosdyn.client.recording import GraphNavRecordingServiceClient
 from bosdyn.client import frame_helpers, math_helpers
 from bosdyn.client.frame_helpers import get_a_tform_b
 from bosdyn.client.math_helpers import Vec3
 from jpype import JImplements, JOverride, JClass, JString, JObject, JBoolean, JArray
-from torch import set_grad_enabled
 
 from spot_wrapper.wrapper import SpotWrapper
 from diarc.pytrade.wrapper import TRADEWrapper
@@ -195,13 +191,37 @@ class SpotTRADEWrapper:
     def loadPosesFromFile(self, filename):
         pass
 
+    @handle_return
     @JOverride
-    def goToPose(self, groupName, poseName):
-        pass
+    def goToPose(self, *args):
+        logging.info(f"goToPose dispatch method called")
+        # always use the wild card args when implementing a dispatch
 
-    @JOverride
-    def goToPose(self, poseName):
-        pass
+        if len(args)==1:
+            return self.goToPose1(*args)
+        if len(args)==2:
+            return self.goToPose2(*args)
+
+        logging.info(f"No valid argument match found.")
+        raise RuntimeError("Incorrect arguments")
+
+    def goToPose1(self, poseName):
+        logging.info(f"goToPose1 called: {poseName}")
+        pose = str(poseName.getName())
+        if pose == 'carry':
+            return self.spot.spot_arm.arm_carry()
+        if pose == 'detection':
+            return self.spot.spot_arm.hand_pose(0.818, -0.003, 0.523, -0.000, 0.389, -0.004, 0.921)
+        if pose == 'stow':
+            return self.spot.spot_arm.arm_stow()
+        if pose == 'unstow':
+            return self.spot.spot_arm.arm_unstow()
+
+        return False, ""
+
+    def goToPose2(self, groupName, poseName):
+        logging.info(f"goToPose2 called: {groupName} {poseName}")
+        return self.goToPose1(poseName)
 
     @JOverride
     def startRecordingTrajectory(self, trajectoryName):
@@ -226,15 +246,20 @@ class SpotTRADEWrapper:
     @handle_return
     @JOverride
     def closeGripper(self, groupName):
-        return self.spot.spot_arm.gripper_close()
+        try:
+            return self.spot.spot_arm.gripper_close()
+        except Exception as e:
+            logging.error(f"Error calling closeGripper: {traceback.format_exc()}")
+            return (False, "error msg")
 
     @handle_return
     @JOverride
     def openGripper(self, groupName):
         try:
             return self.spot.spot_arm.gripper_open()
-        except jpype.JException as ex:
-            print("Caught a JPype exception:", ex)
+        except Exception as e:
+            logging.error(f"Error calling openGripper: {traceback.format_exc()}")
+            return (False, "error msg")
 
     @handle_return
     @JOverride
@@ -295,7 +320,11 @@ class SpotTRADEWrapper:
     @handle_return
     @JOverride
     def undock(self):
-        return self.spot.spot_docking.undock()
+        try:
+            return self.spot.spot_docking.undock()
+        except Exception as e:
+            logging.error(f"Error calling undock: {traceback.format_exc()}")
+            return (False, "error msg")
 
     ### Move Base Interface
     @JOverride
@@ -337,6 +366,7 @@ class SpotTRADEWrapper:
         return self.goToLocation(desiredLocation)
 
     def goToLocationPose(self, xdest, ydest, quat_x, quat_y, quat_z, quat_w, wait):
+        self.spot.spot_images.get_rgb_image()
         pass
 
     #####################################################################
@@ -428,10 +458,6 @@ class SpotTRADEWrapper:
     def checkAt(self, locationTerm):
         pass
 
-    @JOverride
-    def command(self, input):
-        pass
-
     @handle_return
     @JOverride
     def claim(self):
@@ -446,7 +472,6 @@ class SpotTRADEWrapper:
     @JOverride
     def stand(self):
         try:
-            logging.info("python stand called")
             return self.spot.stand()
         except Exception as e:
             logging.error(f"Error calling stand: {e}")
@@ -468,21 +493,6 @@ class SpotTRADEWrapper:
     @JOverride
     def powerOff(self):
         return self.spot.safe_power_off()
-
-    @handle_return
-    @JOverride
-    def stow(self):
-        return self.spot.spot_arm.arm_stow()
-
-    @handle_return
-    @JOverride
-    def unstow(self):
-        return self.spot.spot_arm.arm_unstow()
-
-    @handle_return
-    @JOverride
-    def carry(self):
-        return self.spot.spot_arm.arm_carry()
 
     @handle_return
     @JOverride
@@ -571,11 +581,6 @@ class SpotTRADEWrapper:
 
     @JOverride
     @handle_return
-    def goToLocationUnsafe(self, location):
-        return self.goToLocation(location)
-
-    @JOverride
-    @handle_return
     def hasBeenLocalized(self):
         pass
 
@@ -589,11 +594,6 @@ class SpotTRADEWrapper:
         localization = nav_pb2.Localization()
         self.spot.spot_graph_nav.set_localization(initial_guess_localization=localization,
                                                      ko_tform_body=current_odom_tform_body)
-
-    @JOverride
-    @handle_return
-    def detectionPose(self):
-        return self.spot.spot_arm.hand_pose(0.818, -0.003, 0.523, -0.000, 0.389, -0.004, 0.921)
 
     def start_mapping(self):
         """
