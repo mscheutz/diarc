@@ -55,6 +55,10 @@
 #include "CaptureGStreamer.hpp"
 #endif
 
+#ifdef USE_BOSDYN
+#include "CaptureSpot.hpp"
+#endif
+
 namespace diarc {
   namespace capture {
     ///////////// START: static member initialization ////////////////
@@ -168,6 +172,13 @@ namespace diarc {
           LOG4CXX_ERROR(logger, "GStreamer not available");
 #endif
           break;
+      case BOSDYN:
+#ifdef USE_BOSDYN
+        captureDevice = Capture::Ptr(new CaptureSpot(configFile));
+#else
+        LOG4CXX_ERROR(logger, "Boston Dynamics SDK not available");
+#endif
+        break;
         default: LOG4CXX_ERROR(logger, "Invalid camera mode!");
         case NUM_MODES:
           break;
