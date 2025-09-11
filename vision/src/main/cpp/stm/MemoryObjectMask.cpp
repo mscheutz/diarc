@@ -264,8 +264,8 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
     loc.z /= locIndices;
     setLocation(loc); //also sets direction
   } else {
-    direction_ = diarc::capture::util::calcDirection(0, boundingBox_.x + (boundingBox_.width) / 2.0,
-                                                     boundingBox_.y + (boundingBox_.height) / 2.0);
+    setDirection(diarc::capture::util::calcDirection(0, boundingBox_.x + (boundingBox_.width) / 2.0,
+                                                   boundingBox_.y + (boundingBox_.height) / 2.0));
   }
 
 }
