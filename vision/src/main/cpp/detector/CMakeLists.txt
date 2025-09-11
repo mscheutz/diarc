@@ -9,7 +9,6 @@ SET(SOURCES
 	ClusterDetector2D.cpp
 	ColorBasedDetector.cpp
 	FaceDetector.cpp
-	FastSamDetector.cpp
 	HoughDetector.cpp
 	MotionDetector.cpp
 	ObjectDetector.cpp
@@ -39,6 +38,13 @@ SET(ELEVATORDOORDETECTOR_MODEL_PATH "${MODEL_DIR}/elevatordoordetector/elevatord
 SET(ELEVATORDOORDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models/raw/main/elevatordoordetector/elevatordoordetectorS320.onnx")
 
 # optional sources
+
+if (pybind11_FOUND)
+	SET(SOURCES ${SOURCES}
+			FastSamDetector.cpp
+	)
+endif (pybind11_FOUND)
+
 if (OpenCV3_dnn_FOUND OR OpenCV_dnn_FOUND)
 	SET(SOURCES ${SOURCES}
 			NeuralDetector.cpp
@@ -106,10 +112,14 @@ endif(ZBAR_FOUND)
 ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES})
 
 # link libraries
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} common stm visionproc display capture imgproc pyvis shape_match stdc++fs)
+TARGET_LINK_LIBRARIES(${PROJECT_NAME} common stm visionproc display capture imgproc shape_match stdc++fs)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${PCL_LIBRARIES} ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES} ${JSONCPP_LIBRARY} Boost::thread)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} pybind11::embed)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Python3_LIBRARIES})
+
+if (pybind11_FOUND)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} pyvis)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} pybind11::embed)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Python3_LIBRARIES})
+endif (pybind11_FOUND)
 if (V4R_V0_FOUND)
   TARGET_LINK_LIBRARIES(${PROJECT_NAME} v4rSurfaceSegmenter)
 endif (V4R_V0_FOUND)

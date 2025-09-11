@@ -55,8 +55,10 @@
 #include "CaptureGStreamer.hpp"
 #endif
 
+#ifdef USE_PYTHON
 #include "pyvis/PythonHelper.hpp"
 namespace py = pybind11;
+#endif // USE_PYTHON
 
 namespace diarc {
   namespace capture {
@@ -309,9 +311,12 @@ namespace diarc {
       }
 #endif //USE_ROS_VISION
 
+
       // initialize python for all vision threads
+#ifdef USE_PYTHON
       PythonHelper* pyInstance = PythonHelper::getInstance();
       pyInstance->initializePython();
+#endif //USE_PYTHON
     }
 
     Capture::~Capture() {
@@ -320,9 +325,13 @@ namespace diarc {
         stopAviWrite();
       }
 
+
       // finalize python stuff
+#ifdef USE_PYTHON
       PythonHelper* pyInstance = PythonHelper::getInstance();
       pyInstance->finalizePython();
+
+#endif // USE_PYTHON
     }
 
     bool Capture::capture(const double transform[]) {

@@ -18,7 +18,9 @@
 #include "SurfaceMarkingDetector.hpp"
 #include "MotionDetector.hpp"
 #include "ArucoDetector.hpp"
+#ifdef USE_PYTHON
 #include "FastSamDetector.hpp"
+#endif //USE_PYTHON
 
 #ifdef OPENCV3_DNN
 #include "NeuralDetector.hpp"
@@ -109,7 +111,11 @@ ObjectDetector::Ptr ObjectDetector::get(const DetectorType type, const long long
     case MOTION:
       return MotionDetector::Ptr(new MotionDetector(processorId, imgWidth, imgHeight));
     case FASTSAM:
+#if defined(USE_PYTHON)
       return FastSamDetector::Ptr(new FastSamDetector(processorId, imgWidth, imgHeight));
+#else
+      LOG4CXX_ERROR(factoryLogger, "FastSamDetector not available. This require pybind11.");
+#endif //USE_PYTHON
     case DNN:
       #if defined(OPENCV_DNN)
             return NeuralDetector::Ptr(new NeuralDetector(processorId, imgWidth, imgHeight));
