@@ -893,14 +893,17 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
     }
 
     boolean somethingLearned = false;
-
-    // iterate through sets of bindings
-    for (Map<Variable, Symbol> binding : bindings) {
-      // get the bindings from the bindings list
-      Term boundLearningTerm = PragUtil.getBoundTerm(binding, learningTerm);
-      Term nameLearned = Vision.availableLearners.learn(boundLearningTerm);
-      if (nameLearned != null) {
-        somethingLearned = true;
+    if (bindings.isEmpty()) {
+      Vision.availableLearners.learn(learningTerm);
+    } else {
+      // iterate through sets of bindings
+      for (Map<Variable, Symbol> binding : bindings) {
+        // get the bindings from the bindings list
+        Term boundLearningTerm = PragUtil.getBoundTerm(binding, learningTerm);
+        Term nameLearned = Vision.availableLearners.learn(boundLearningTerm);
+        if (nameLearned != null) {
+          somethingLearned = true;
+        }
       }
     }
 

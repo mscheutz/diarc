@@ -23,7 +23,7 @@ SET(SOURCES
 SET(CONFIG_DIR "../vision/build/resources/main/config/edu/tufts/hrilab/vision/imgProcs")
 
 # optional sources
-if (OpenCV_dnn_FOUND)
+if (pybind11_FOUND AND OpenCV_dnn_FOUND)
 	SET(SOURCES ${SOURCES}
 	    validator/ComponentValidator.cpp
 		)
@@ -54,7 +54,7 @@ if (OpenCV_dnn_FOUND)
     	message("Downloading model: ${COMPONENT_MODEL_URL_V3}")
     	file(DOWNLOAD "${COMPONENT_MODEL_URL_V3}" "${COMPONENT_MODEL_PATH_V3}")
     endif()
-endif(OpenCV_dnn_FOUND)
+endif (pybind11_FOUND AND OpenCV_dnn_FOUND)
 
 if (V4R_V0_FOUND)
 	SET(SOURCES ${SOURCES}
@@ -80,6 +80,11 @@ ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCES} )
 # link libraries
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} common stm visionproc capture vl shape_match)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${PCL_LIBRARIES} ${OpenCV_LIBS} ${LOG4CXX_LIBRARIES})
+if (pybind11_FOUND)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} pyvis)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} pybind11::embed)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Python3_LIBRARIES})
+endif (pybind11_FOUND)
 if (V4R_V0_FOUND) 
 	TARGET_LINK_LIBRARIES(${PROJECT_NAME} v4rEPUtils v4rAttentionModule)
 endif(V4R_V0_FOUND)

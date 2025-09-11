@@ -70,6 +70,9 @@ import edu.tufts.hrilab.fol.Predicate;
       op:add(?return, !bindings);
     }
   }
+
+  // stop all visual searches
+  tsc:stopAllSearches();
 }
 
 // ?actor looks for ?objectRef in current FOV and returns list of ?tokenIds

@@ -436,6 +436,11 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
     processor.resetHasLearned();
   }
 
+  public synchronized boolean handleLearningNotification(Term learningPredicate) {
+    String learningStr = parsePredicate(learningPredicate);
+    return processor.handleLearningNotification(learningStr);
+  }
+
   /**
    * Get whether or not VisionProcess display flag is set.
    *
@@ -595,25 +600,22 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
 
     runFlag = true;
     final Object thisProcessor = this;
-    runFuture = executor.submit(new Runnable() {
-      @Override
-      public void run() {
-        log.trace(String.format("[start] called: %s. running job.", thisProcessor.toString()));
-        try {
-          //initialze native processor
-          processor.init();
+    runFuture = executor.submit(() -> {
+      log.trace(String.format("[start] called: %s. running job.", thisProcessor.toString()));
+      try {
+        //initialze native processor
+        processor.init();
 
-          //set running status to true
-          processor.setRunningStatus(true);
+        //set running status to true
+        processor.setRunningStatus(true);
 
-          //add entry to FPS GUI
-          Vision.FPSpanel.addEntry(thisProcessor.toString());
+        //add entry to FPS GUI
+        Vision.FPSpanel.addEntry(thisProcessor.toString());
 
-          //main processing loop
-          perform();
-        } catch (Exception e) {
-          log.error("[start] Exception caught in perform.", e);
-        }
+        //main processing loop
+        perform();
+      } catch (Exception e) {
+        log.error("[start] Exception caught in perform.", e);
       }
     });
   }
@@ -692,36 +694,33 @@ public abstract class VisionProcess<T extends Enum<T>, Detail extends VisionProc
     final Object thisRef = this;
     final String thisString = thisRef.toString(); //get this here, to prevent deadlock
     if (stopFuture == null || stopFuture.isDone()) {
-      stopFuture = executor.submit(new Runnable() {
-        @Override
-        public void run() {
-          log.trace("[stopHelper] running.");
-          //stop image processing dependecies
-          for (ImageProcessor dependency : dependencies.values()) {
-            dependency.stop(thisRef, true);
-          }
-
-          //set running status to false
-          log.trace("[stopHelper] set run status.");
-          processor.setRunningStatus(false);
-
-          //close display
-          log.trace("[stopHelper] turnDisplayOff.");
-          processor.turnDisplayOff();
-
-          //finish up any unfinished introspection work
-          log.trace("[stopHelper] finish.");
-          performanceInfo.finish();
-
-          //any cleanup that needs to be done before native destructor is called
-          //(guaranteed to run in same thread as "perform")
-          log.trace("[stopHelper] cleanup.");
-          processor.cleanup();
-
-          log.trace("[stopHelper] done.");
-
-          Vision.FPSpanel.removeEntry(thisString);
+      stopFuture = executor.submit(() -> {
+        log.trace("[stopHelper] running.");
+        //stop image processing dependecies
+        for (ImageProcessor dependency : dependencies.values()) {
+          dependency.stop(thisRef, true);
         }
+
+        //set running status to false
+        log.trace("[stopHelper] set run status.");
+        processor.setRunningStatus(false);
+
+        //close display
+        log.trace("[stopHelper] turnDisplayOff.");
+        processor.turnDisplayOff();
+
+        //finish up any unfinished introspection work
+        log.trace("[stopHelper] finish.");
+        performanceInfo.finish();
+
+        //any cleanup that needs to be done before native destructor is called
+        //(guaranteed to run in same thread as "perform")
+        log.trace("[stopHelper] cleanup.");
+        processor.cleanup();
+
+        log.trace("[stopHelper] done.");
+
+        Vision.FPSpanel.removeEntry(thisString);
       });
     }
 

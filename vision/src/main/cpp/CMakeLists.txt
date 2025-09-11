@@ -33,7 +33,7 @@ ADD_DEFINITIONS(-DBOOST_FILESYSTEM_DEPRECATED)
 # turn no return-value warnings into errors
 ADD_DEFINITIONS(-Werror=return-type)
 
-# set explciit cmake policies
+# set explicit cmake policies
 CMAKE_POLICY(SET CMP0012 NEW)
 if(CMAKE_VERSION VERSION_LESS "3.13")
   message("Please consider upgrading CMake to 3.13 or newer")
@@ -67,6 +67,16 @@ FIND_PACKAGE( SWIG 3.0 REQUIRED COMPONENTS java )
 # OpenCV (required)
 FIND_PACKAGE( OpenCV REQUIRED )
 INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
+
+# PyBind11 (required)
+FIND_PACKAGE(pybind11)
+if (pybind11_FOUND)
+	add_definitions("-DUSE_PYTHON")
+	FIND_PACKAGE (Python3 COMPONENTS Interpreter Development)
+	INCLUDE_DIRECTORIES(${Python3_INCLUDE_DIRS})
+	message("Python3_LIBRARIES:${Python3_LIBRARIES}")
+	message("pybind11_LIBRARIES:${pybind11_LIBRARIES}")
+endif (pybind11_FOUND)
 
 # check for dnn module
 FIND_PACKAGE( OpenCV 3.4 QUIET OPTIONAL_COMPONENTS dnn)
@@ -121,6 +131,7 @@ endif(OPENNI2_FOUND)
 
 # Boost (required) -- this is only needed to patch the bug in PCLConfig.cmake that leaves out the "thread" component
 find_package(Boost COMPONENTS system filesystem date_time iostreams thread)
+include_directories(${Boost_INCLUDE_DIRS})
 
 # SWIG (required)
 FIND_PACKAGE(SWIG REQUIRED)
@@ -137,7 +148,8 @@ INCLUDE_DIRECTORIES(${JSON_INC_PATH})
 # SIFT (checked into this repo)
 LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/third_party/vlfeat/bin/glnxa64 )
 
-FIND_PACKAGE(bosdyn)
+# spot-cpp-sdk disabled until libprotobuf versioning issue can be resolved
+# FIND_PACKAGE(bosdyn)
 if (bosdyn_FOUND)
     ADD_DEFINITIONS(-DUSE_BOSDYN)
 endif(bosdyn_FOUND)
@@ -177,7 +189,7 @@ ENDIF(USE_ROS)
 
 
 # ROS 2
-OPTION(USE_ROS2 "Turn on/off integration with ROS2." ON)
+OPTION(USE_ROS2 "Turn on/off integration with ROS2." OFF)
 IF(USE_ROS2)
 	FIND_PACKAGE(rclcpp)
 	FIND_PACKAGE(rcl_interfaces)
@@ -291,6 +303,9 @@ endif(ZBAR_FOUND)
 #  ADD_SUBDIRECTORY(test)
 #endif(GTest_FOUND)
 
+if (pybind11_FOUND)
+  ADD_SUBDIRECTORY(pyvis)
+endif (pybind11_FOUND)
 ADD_SUBDIRECTORY(capture)
 ADD_SUBDIRECTORY(common)
 ADD_SUBDIRECTORY(detector)
