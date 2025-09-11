@@ -4,10 +4,11 @@
 
 #include "CaptureSpot.hpp"
 #include "util/CaptureUtilities.hpp"
-
-#include <jsoncpp/json/reader.h>
-
 #include "point_clouds/PointCloudUtilities.hpp"
+
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
 
 namespace diarc {
   namespace capture {
@@ -17,10 +18,12 @@ namespace diarc {
       loadConfig(configFile);
 
       // Create a Client SDK object.
+      LOG4CXX_INFO(logger, "Creating SDK ------");
       client_sdk = ::bosdyn::client::CreateStandardSDK("get_image");
       LOG4CXX_INFO(logger, "------Created SDK");
 
       // Create a robot instance. A robot instance represents a single user on a single robot.
+      LOG4CXX_INFO(logger, "Creating robot instance ------");
       ::bosdyn::client::Result<std::unique_ptr<::bosdyn::client::Robot>> robot_result = client_sdk->
         CreateRobot(hostname);
       if (!robot_result.status) {
@@ -29,6 +32,7 @@ namespace diarc {
       robot = std::move(robot_result.response);
       LOG4CXX_INFO(logger, "------Created Robot");
 
+      LOG4CXX_INFO(logger, "Authenticating with robot ------");
       ::bosdyn::common::Status status = robot->Authenticate(username, password);
       if (!status) {
         LOG4CXX_ERROR(logger, boost::format("Could not authenticate with robot: %s.") % status.DebugString());
@@ -36,40 +40,37 @@ namespace diarc {
       LOG4CXX_INFO(logger, "------Authenticated with Robot");
 
       // Create an ImageClient.
+      LOG4CXX_INFO(logger, "Creating image client ------");
       image_client_result = robot->EnsureServiceClient<::bosdyn::client::ImageClient>(
         ::bosdyn::client::ImageClient::GetDefaultServiceName());
       if (!image_client_result.status) {
         LOG4CXX_ERROR(
           logger, boost::format("Could not create image client: %s.") % image_client_result.status.DebugString());
       }
+
+      LOG4CXX_INFO(logger, "------ Created image client");
     };
 
     CaptureSpot::~CaptureSpot() {
     };
 
     void CaptureSpot::loadConfig(const std::string& configFile) {
-      //get directory
-      unsigned found = configFile.find_last_of("/\\"); // check if config file is filename or path
+      // get directory of config file
+      unsigned found = configFile.find_last_of("/\\");
       std::string dir = configFile.substr(0, found + 1);
-      std::string model_file;
-      std::string backEnd;
 
-      Json::CharReaderBuilder builder;
-      Json::Value root;
-      JSONCPP_STRING errs;
-      std::ifstream fileStream(configFile, std::ifstream::binary);
-      if (!Json::parseFromStream(builder, fileStream, &root, &errs)) {
-        LOG4CXX_ERROR(logger, boost::format("Error parsing json file: %s") % configFile.c_str());
-        return;
-      }
+      // extract configuration from xml
+      using boost::property_tree::ptree;
+      ptree pt;
+      read_xml(configFile, pt);
 
-      std::string hostname = root["hostname"].asString();
-      std::string username = root["username"].asString();
-      std::string password = root["password"].asString();
+      std::string hostname = pt.get<std::string>("capture.hostname");
+      std::string username = pt.get<std::string>("capture.username");
+      std::string password = pt.get<std::string>("capture.password");
     }
 
     bool CaptureSpot::captureCurrentCameraFrame() {
-      std::vector imageSources = std::vector<std::string>{"depth_aligned_hand_image", "color_hand_image"};
+      std::vector imageSources = std::vector<std::string>{"hand_depth_in_hand_color_frame", "hand_color_image"};
       ::bosdyn::client::GetImageResultType get_image_result = image_client_result.response->GetImage(imageSources);
 
       // Now get the images from the async calls.

@@ -24,4 +24,7 @@ NOTE: use this config with:
     <hasDepth>true</hasDepth>
     <convertToRGB>false</convertToRGB>
     <convertToMeters>true</convertToMeters>
+    <hostname>192.168.80.3</hostname>
+    <username>todo</username>
+    <password>todo</password>
 </capture>

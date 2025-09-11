@@ -120,6 +120,7 @@ if(GSTREAMER_FOUND AND GLIB_FOUND)
 endif(GSTREAMER_FOUND AND GLIB_FOUND)
 if(bosdyn_FOUND)
 	TARGET_LINK_LIBRARIES(${PROJECT_NAME} bosdyn::bosdyn_client)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} bosdyn::bosdyn_api)
 endif(bosdyn_FOUND)
 
 # build java wrappers via swig
