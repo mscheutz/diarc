@@ -34,6 +34,8 @@ protected:
 
 private:
 
+  std::string newestModelPathFile = "../vision/src/main/resources/config/edu/tufts/hrilab/vision/imgProcs/componentvalidator/model_path.txt";
+
   typedef struct {
     std::string predicateKey;
     int predicateShape;
@@ -64,7 +66,7 @@ private:
   std::vector<std::vector<int>> sizeIdcs = {
     {5, 6, 7},  // main axes (a_x, a_y, a_z) of base component
     {15, 16, 17},  // main axes (a_x, a_y, a_z) of side component 1
-    {23, 24, 25}  // main axes (a_x, a_y, a_z) of side component 2
+    {25, 26, 27}  // main axes (a_x, a_y, a_z) of side component 2
   };
 
   std::vector<std::vector<int>> sideCompIdcs = {
@@ -74,11 +76,10 @@ private:
 
   std::vector<std::vector<int>> rotationIdcs = {
     {8, 9},  // azimuth and elevation of base component
-    {26, 27},  // azimuth and elevation of side component 1
+    {18, 19},  // azimuth and elevation of side component 1
     {28, 29}  // azimuth and elevation of side component 2
   };
 
-  
   // Constants for de-normalizing output values back to 3D space
   const float EDGINESS_MIN = 0.01f;
   const float EDGINESS_MAX = 1.0f;
@@ -107,6 +108,7 @@ private:
   double existenceThreshold = 0.8;
   double volumeThreshold = 0.02;
   double eccentricityTolerance = 0.4;
+  double chamferTolerance = 2;
 
   std::vector<PredicateFeatures> semanticProperties;
   
@@ -168,7 +170,7 @@ private:
   bool processEccentricity(const cv::Mat& semMat, const int semPredIdx);
   bool processOrientation(const int compIndex, const cv::Mat &semMat, const int semPredIdx);
   cv::Mat applySigmoidToMatrix(const cv::Mat& semMatrix);
-  std::string generateFullDescription(std::vector<bool> foundPredicatesVector);
+  std::string generateFullDescription(std::vector<bool> foundPredicatesVector, float minChamfer);
   void populateMemoryObjectDescription(std::vector<bool> foundPredicatesVector, diarc::stm::MemoryObject::Ptr mo);
   
 };

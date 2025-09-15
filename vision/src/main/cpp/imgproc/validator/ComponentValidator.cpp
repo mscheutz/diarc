@@ -88,7 +88,6 @@ double computeObjectOrientation(const cv::Mat& img) {
   return angle * 180.0 / CV_PI; // convert to degrees
 }
 
-
 bool compareSE(const std::vector<float>& data, int idx1, int idx2,
                                float cx = 0.0f, float cy = 0.0f, float cz = 0.0f) {
   float dx1 = data[idx1]     - cx;
@@ -116,7 +115,7 @@ void rotatePointInVector(std::vector<float>& vec, int idx, float angle_degrees, 
   vec[idx + 2] = rotated.z();
 }
 
-void visualizePointClouds(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clouds1,
+cv::Mat visualizePointClouds(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clouds1,
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clouds2) {
 
   // Print min/max for first set of clouds
@@ -214,17 +213,16 @@ void visualizePointClouds(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloud
   };
 
   // Process the object point cloud
-  for (size_t i = 0; i < clouds1.size() && i < 3; ++i) {
-    process_cloud(clouds1[i], cv::COLORMAP_AUTUMN, true);
-  }
+  //for (size_t i = 0; i < clouds1.size() && i < 3; ++i) {
+  //  process_cloud(clouds1[i], cv::COLORMAP_AUTUMN, true);
+  //}
 
   // Process the superellipsoid reconstruction point clouds
   for (const auto& cloud : clouds2) {
     process_cloud(cloud, cv::COLORMAP_WINTER, true);
   }
 
-  cv::imshow("Projected Point Clouds", image);
-  cv::waitKey(0);
+  return image;
 }
 
 float sigmoid(float x) {
@@ -308,6 +306,7 @@ void ComponentValidator::loadConfig(const std::string &configFile) {
   existenceThreshold = config["existence_threshold"].asDouble();
   volumeThreshold = config["volume_threshold"].asDouble();
   eccentricityTolerance = config["eccentricity_tolerance"].asDouble();
+  chamferTolerance = config["chamfer_tolerance"].asDouble();
 }
 
 void ComponentValidator::initModels(const std::string &model_path) {
@@ -323,7 +322,8 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
   parseComponentShapes(notification, component_count, shapes, objectType);
 
   // Generate args for Blender
-  int numberOfSamples = 10;
+  int numberOfSamples = 50;
+  
   // Default to generic "part" if shapes are not explicitely given by user
   std::string shape1 = shapes.count(1) ? shapes[1] : "part";
   std::string shape2 = shapes.count(2) ? shapes[2] : "part";
@@ -370,7 +370,7 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     bp::std_out > "blender_output.log",
     bp::std_err > "blender_error.log"
   );
-  
+
   if (ret != 0) {
     LOG4CXX_ERROR(logger, boost::format("Rendering script returned with exit code != 0"));
   }
@@ -383,7 +383,6 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     LOG4CXX_DEBUG(logger, "[learn] GIL acquired.");
     py::module_ sys = py::module_::import("sys");
     py::module_ io = py::module_::import("io");
-
     // Create a Python file object that writes to a file
     py::object file = io.attr("open")("superellipsoid_training.log", "a");
     sys.attr("stdout") = file;
@@ -394,6 +393,7 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
     // --> Make sure that there is a meaningful number of objects (i.e. not too low)?
     // 50 seem to work okay enough for now --> it depends on the complexity fo the object structure
     py::object trainer = trainerWrapper(objectType, numberOfSamples);  
+    // Call the run method to start training
     trainer.attr("run")();
     LOG4CXX_DEBUG(logger, "Training finished.");
   } catch (py::error_already_set& e) {
@@ -401,29 +401,27 @@ bool ComponentValidator::handleLearningNotification(const std::string& notificat
   }
 
   pyInstance->releaseGIL();
-
-  std::string newModelFile =
+  
+  std::string newModelName =
     std::string("../vision/src/main/resources/config/edu/tufts/hrilab/vision/imgProcs/componentvalidator/")
     + "model_" + objectType;
-
-  std::string filePath = std::string("../vision/src/main/resources/config/edu/tufts/hrilab/vision/imgProcs/componentvalidator/")
-                         + "model_path.txt";
-
-  std::ofstream outFile(filePath);
+  // The model path of the newly trained model will be written to newestModelPathFile (a txt file), 
+  // the findBestReconstruction method will use the path given in that file when called after model training
+  std::ofstream outFile(newestModelPathFile);
   if (!outFile) {
     std::cerr << "Error: could not open file for writing\n";
     return 1;
   }
 
-  outFile << newModelFile << std::endl;
-
+  outFile << newModelName << std::endl;
+  
   return true;
   
 }
 
 void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification::ConstPtr notification) {
   LOG4CXX_TRACE(logger, "[ComponentValidation] method entered.");
-
+  
   MemoryObject::Ptr object = notification->object;
 
   // check if this typeId should currently be processed
@@ -457,10 +455,15 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
 
     if (visualizeReconstruction == true) {
 
-      visualizePointClouds({bestDescriptionCandidate.objectUnRot}, bestDescriptionCandidate.bestSuperellipsoidsUnRot);
-      std::cout << "Best Chamfer distance: "
-                << bestDescriptionCandidate.minChamferDist << std::endl;
-      std::cout << "Press any key to continue." << std::endl;
+      cv::Mat displayFrame = visualizePointClouds({bestDescriptionCandidate.objectUnRot}, bestDescriptionCandidate.bestSuperellipsoidsUnRot);
+      
+      std::string savePath = "projected_pointcloud.png";
+      cv::imwrite(savePath, displayFrame);
+      cv::namedWindow("Visual Object Representation", cv::WINDOW_AUTOSIZE);
+      cv::moveWindow("Visual Object Representation", 1340, 50); 
+      cv::imshow("Visual Object Representation", displayFrame);
+      cv::waitKey(2000); 
+     
     }
 
     // Check if the output matrix is valid before using it
@@ -545,7 +548,8 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
       // Add each identified predicate (shape, size, position, ...) as validation result
       if (keyToFind == "any" || keyToFind == "unknown") {
         //populateMemoryObjectDescription(foundPredicatesVector, object);
-        std::string descriptor = generateFullDescription(foundPredicatesVector);
+        std::string descriptor = generateFullDescription(foundPredicatesVector,  
+                                                          bestDescriptionCandidate.minChamferDist);
         LOG4CXX_INFO(logger, boost::format("Description: %s") % descriptor);
         object->addValidationResult(0.9f, PredicateHelper("unknown(" + object->getVariableName() + ")"));
         object->addValidationResult(0.9f, PredicateHelper(descriptor + "(" + object->getVariableName() + ")"));
@@ -555,7 +559,8 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
       // Add full text description as validation result
       } else if (keyToFind == "full_description") {
 
-        std::string fullTextDescription = generateFullDescription(foundPredicatesVector);
+        std::string fullTextDescription = generateFullDescription(foundPredicatesVector,
+                                                                  bestDescriptionCandidate.minChamferDist);
 
         object->addValidationResult(confidence, PredicateHelper(*descriptors_itr));
         object->addValidationResult(confidence, PredicateHelper(
@@ -597,12 +602,11 @@ ComponentValidator::BestDescription ComponentValidator::findBestReconstruction(p
   cv::Mat objectDepthImageNorm = objectDepthImage.clone();
   cv::Mat objectDepthImageNormRot = objectDepthImage.clone();
 
-  // If user defined object structure before, we'll use that model
+  // If user defined object structure before, we'll use that newly model
   // Otherwise, we will use the default model given in the config file
   std::string modelFile;  
-  std::string savedModelPathFile = "../vision/src/main/resources/config/edu/tufts/hrilab/vision/imgProcs/componentvalidator/model_path.txt";
-  if (std::filesystem::exists(savedModelPathFile)) {
-    std::ifstream pathFile(savedModelPathFile);
+  if (std::filesystem::exists(newestModelPathFile)) {
+    std::ifstream pathFile(newestModelPathFile);
     if (pathFile.is_open()) {
       std::getline(pathFile, modelFile);
       pathFile.close();
@@ -657,10 +661,6 @@ ComponentValidator::BestDescription ComponentValidator::findBestReconstruction(p
 
       cv::Mat semMatrixSig = applySigmoidToMatrix(semMatrix);
 
-      cv::Mat blobSingle = blob.reshape(1, 250); // reshape to [192, 256]
-      //cv::normalize(blobSingle, blobSingle, 0, 255, cv::NORM_MINMAX);
-      //cv::imwrite("/home/schneiders/Desktop/blob.jpg", blobSingle);
-
       std::vector<float> semMatrixSigDenormUnRot = unrotateSemanticParams(semMatrixSig, rotationAngle);
       auto cloudsUnRot = createSuperellipsoidObject(semMatrixSigDenormUnRot);
 
@@ -679,8 +679,6 @@ ComponentValidator::BestDescription ComponentValidator::findBestReconstruction(p
         projectToYZPlane(cloud, projectedCloud);
         projectedSupereggs.push_back(projectedCloud);
       }
-
-      //visualizePointClouds({objectCloudOrig}, cloudsUnRot);
 
       pcl::PointCloud<pcl::PointXYZ>::Ptr combinedSupereggProjected = combinePointClouds(projectedSupereggs);
 
@@ -716,7 +714,7 @@ void ComponentValidator::parseComponentShapes(const std::string& notification,
   }
 
   // Parse shape(i, shapeName)
-  std::regex shape_pattern(R"(shape\((\d+),(cylindrical|spherical|cuboid|disk)\))");
+  std::regex shape_pattern(R"(shape\((\d+),(cylinder|sphere|disk|cuboid|capsule|plate)\))");
   auto begin = std::sregex_iterator(notification.begin(), notification.end(), shape_pattern);
   auto end = std::sregex_iterator();
 
@@ -762,15 +760,16 @@ std::vector<float> ComponentValidator::denormalizeSemanticParams(const cv::Mat& 
     zDenorm[startIdx + 5] = semMatrixSigValues[startIdx + 5] * AXIS_UNIT_CUBE_MAX;
     zDenorm[startIdx + 6] = semMatrixSigValues[startIdx + 6] * AXIS_UNIT_CUBE_MAX;
     zDenorm[startIdx + 7] = semMatrixSigValues[startIdx + 7] * AXIS_UNIT_CUBE_MAX;
+    // Denormalize angles
     zDenorm[startIdx + 8] = denormalize(semMatrixSigValues[startIdx + 8], ANGLE_MIN, ANGLE_MAX);
-    zDenorm[startIdx + 9] = denormalize(semMatrixSigValues[startIdx + 9], ANGLE_MIN, ANGLE_MAX);
+    zDenorm[startIdx + 9] = denormalize(semMatrixSigValues[startIdx + 9], ANGLE_MIN, ANGLE_MAX/2);
+    
   };
 
   // Apply to each block
   denormalizeBlock(0,  -1);  // 'b' (no presence check)
   denormalizeBlock(10, 15);  // 's1'
   denormalizeBlock(20, 25);  // 's2'
-
   /*
   auto printBlock = [&](const std::string& name, int idx) {
     std::cout << name << ": ";
@@ -781,7 +780,7 @@ std::vector<float> ComponentValidator::denormalizeSemanticParams(const cv::Mat& 
   printBlock("b", 0);
   printBlock("s1", 10);
   printBlock("s2", 20);
-  */ 
+  */
   return zDenorm;
 }
 
@@ -1070,15 +1069,13 @@ void ComponentValidator::scalePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr clo
 
 void ComponentValidator::scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float cubeHalfSize) {
 
-  /*
+  
   for (auto& pt : cloud->points) {
-    if (!pcl::isFinite(pt) ||
-      pt.z < 0.6) {
-        
+    if (!pcl::isFinite(pt)) {
       pt.x = pt.y = pt.z = std::numeric_limits<float>::quiet_NaN();
     }
   }
-  */
+  
   pcl::PointXYZ min_pt, max_pt;
   pcl::getMinMax3D(*cloud, min_pt, max_pt);
 
@@ -1799,8 +1796,10 @@ void ComponentValidator::populateMemoryObjectDescription(std::vector<bool> found
 }
 
 // Generate a full text description based on the identified predicates
-std::string ComponentValidator::generateFullDescription(std::vector<bool> foundPredicatesVector) {
-
+std::string ComponentValidator::generateFullDescription(std::vector<bool> foundPredicatesVector, float chamferDistance) {
+  
+  std::string lowConfidenceStatement = ", but I have low confidence in my description.";
+  
   // Helper lambdas to determine shape and size
   auto getShape = [&](int rodIndex, int diskIndex, int blockIndex) -> std::string {
     if (foundPredicatesVector[rodIndex]) return "rod";
@@ -1828,8 +1827,8 @@ std::string ComponentValidator::generateFullDescription(std::vector<bool> foundP
 
   auto getPosition = [&](std::vector<int> positionIndices) -> std::string {
     std::string position = "";
-    const std::vector<std::string> positionLabels = {"in_front", "behind", "to_the_right", "to_the_left", "on_top",
-                                                      "at_the_bottom"};
+    const std::vector<std::string> positionLabels = {"in front", "behind", "to the right", "to the left", "on top",
+                                                      "at the bottom"};
 
     for (size_t i = 0; i < positionIndices.size(); ++i) {
       if (foundPredicatesVector[positionIndices[i]]) {
@@ -1848,7 +1847,16 @@ std::string ComponentValidator::generateFullDescription(std::vector<bool> foundP
   // Object with one component
   if (foundPredicatesVector[0]) {
     LOG4CXX_DEBUG(logger, boost::format("Generating 1-component object description"));
-    return eccentricityCentral + "_" + orientationCentral + "_" + shapeCentral;
+    std::string description = ", which is a " + eccentricityCentral + " " + orientationCentral + " " + shapeCentral;
+
+    // Add low confidence statement only if Chamfer distance is below threshold
+    if (chamferDistance > chamferTolerance) {
+      description += lowConfidenceStatement;
+    } else {
+      description += ". ";
+    }
+
+    return description;
   }
 
   // Object with two components
@@ -1861,10 +1869,18 @@ std::string ComponentValidator::generateFullDescription(std::vector<bool> foundP
     std::string shapeSecond = getShape(10, 11, 12);
     std::string positionsSecond = getPosition({14, 15, 16, 17, 18, 19});
 
-    return eccentricityCentral + "_" + orientationCentral + "_" + shapeCentral +
-           "_with_a_" + sizeSecond + "_" + eccentricitySecond + "_" + orientationSecond + "_" + shapeSecond + "_" + positionsSecond;
-  }
+    std::string description = ", which consists of a " + eccentricityCentral + " " + orientationCentral + " " + shapeCentral +
+           " and a" + sizeSecond + " " + eccentricitySecond + " " + orientationSecond + " " + shapeSecond + " " + positionsSecond;
 
+    if (chamferDistance > chamferTolerance) {
+      description += lowConfidenceStatement;
+    } else {
+      description += ". ";
+    }
+   
+    return description;
+  }
+  
   // Object with three components
   if (foundPredicatesVector[2]) {
     LOG4CXX_DEBUG(logger, boost::format("Generating 3-component object description"));
@@ -1881,11 +1897,19 @@ std::string ComponentValidator::generateFullDescription(std::vector<bool> foundP
     std::string shapeThird = getShape(29, 30, 31);
     std::string positionsThird = getPosition({33, 34, 35, 36, 37, 38});
 
-    return eccentricityCentral + "_" + orientationCentral + "_central_" + shapeCentral +
-           "_with_one_" + sizeSecond + "_" + eccentricitySecond + "_" + orientationSecond + "_" + shapeSecond + "_" + positionsSecond +
-           "_and_a_" + sizeThird + "_" + eccentricityThird + "_" + orientationThird + "_" + shapeThird + "_" + positionsThird;
-  }
+    std::string description = " , which consists of a " + eccentricityCentral + " " + orientationCentral + " central " + shapeCentral +
+           " with one " + sizeSecond + " " + eccentricitySecond + " " + orientationSecond + " " + shapeSecond + " " + positionsSecond +
+           " and a " + sizeThird + " " + eccentricityThird + " " + orientationThird + " " + shapeThird + " " + positionsThird;
 
+  // Add low confidence statement only if Chamfer distance is below threshold
+    if (chamferDistance > chamferTolerance) {
+      description += lowConfidenceStatement;
+    } else {
+      description += " . ";
+    }
+    return description;
+  }
+  
   // If no proper description
   return "No proper description generated";
 }

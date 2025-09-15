@@ -4,7 +4,7 @@
     "arity": 1
   },
   "config": {
-    "model": "model_objects_rod_with_rod_less_rot",
+    "model": "2comp_uc_rotation_650epochs_perturb",
     "type" : "onnx",
     "use_user_defined_model" : true,
     "identify_shapes" : true,
@@ -15,7 +15,8 @@
     "position_tolerance_bottom_top" : 3,
     "existence_threshold" : 0.8,
     "volume_threshold" : 0.02,
-    "eccentricity_tolerance" : 2.0
+    "eccentricity_tolerance" : 2.0,
+    "chamfer_tolerance" : 0.85
   },
   "predicates": [
     {
