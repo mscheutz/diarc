@@ -213,9 +213,9 @@ cv::Mat visualizePointClouds(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cl
   };
 
   // Process the object point cloud
-  //for (size_t i = 0; i < clouds1.size() && i < 3; ++i) {
-  //  process_cloud(clouds1[i], cv::COLORMAP_AUTUMN, true);
-  //}
+  for (size_t i = 0; i < clouds1.size() && i < 3; ++i) {
+    process_cloud(clouds1[i], cv::COLORMAP_AUTUMN, true);
+  }
 
   // Process the superellipsoid reconstruction point clouds
   for (const auto& cloud : clouds2) {
@@ -440,7 +440,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr objectCloudOrig = object->getDetectionMask()->getObjectPointCloud();
     pcl::PointCloud<pcl::PointXYZ>::Ptr denoisedCloud(new pcl::PointCloud<pcl::PointXYZ>());
     *denoisedCloud = *objectCloudOrig;
-    scalePointCloudToUnitCube(denoisedCloud, AXIS_UNIT_CUBE_MAX);
+    float refCubeScaleFactor = scalePointCloudToUnitCube(denoisedCloud, AXIS_UNIT_CUBE_MAX);
     cv::Mat objectDepthImage(denoisedCloud->height, denoisedCloud->width, CV_32FC1);
     diarc::pc::util::pointCloudToDepthWithinReferenceCube(objectDepthImage, denoisedCloud,
                                                         AXIS_UNIT_CUBE_MAX);
@@ -449,9 +449,10 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
     pcl::PointCloud<pcl::PointXYZ>::Ptr objectCloud = denoisedCloud;
     rotatePointCloud(objectCloud, 180.0f, Eigen::Vector3f::UnitX());
     rotatePointCloud(objectCloud, 90.0f, Eigen::Vector3f::UnitY());
-
+        
     // reconstruct superellipsoids for different rotations, use best (lowest chamfer distance) reconstruction
     BestDescription bestDescriptionCandidate = findBestReconstruction(objectCloud, objectDepthImage);
+    printRescaledAxes(bestDescriptionCandidate, refCubeScaleFactor);
 
     if (visualizeReconstruction == true) {
 
@@ -592,6 +593,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
         }
       }
     }
+      
   }
 }
 
@@ -613,7 +615,7 @@ ComponentValidator::BestDescription ComponentValidator::findBestReconstruction(p
       ComponentValidator::initModels(modelFile);
     }
   }
-  
+
   // Initialize the best description candidate
   BestDescription descriptionCandidate{std::numeric_limits<float>::max(),
                                        std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>{},
@@ -770,17 +772,19 @@ std::vector<float> ComponentValidator::denormalizeSemanticParams(const cv::Mat& 
   denormalizeBlock(0,  -1);  // 'b' (no presence check)
   denormalizeBlock(10, 15);  // 's1'
   denormalizeBlock(20, 25);  // 's2'
+  
   /*
   auto printBlock = [&](const std::string& name, int idx) {
     std::cout << name << ": ";
     for (int i = 0; i < 10; ++i) {
-      std::cout << semMatrixSigValues[idx + i] << (i < 9 ? ", " : "\n");
+      std::cout << zDenorm[idx + i] << (i < 9 ? ", " : "\n");
     }
   };
   printBlock("b", 0);
   printBlock("s1", 10);
   printBlock("s2", 20);
   */
+ 
   return zDenorm;
 }
 
@@ -1067,7 +1071,7 @@ void ComponentValidator::scalePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr clo
   pcl::transformPointCloud(*cloud, *cloud, transform);
 }
 
-void ComponentValidator::scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float cubeHalfSize) {
+float ComponentValidator::scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float cubeHalfSize) {
 
   
   for (auto& pt : cloud->points) {
@@ -1092,7 +1096,7 @@ void ComponentValidator::scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXYZ
     max_pt.z - min_pt.z
   });
 
-  if (max_extent <= 0.0f) return; // avoid divide-by-zero
+  if (max_extent <= 0.0f) return 1.0f; // avoid divide-by-zero
 
   // Desired scale: we want the largest dimension to span 20 units (-10 to 10)
   float scale = (2.0f * cubeHalfSize) / max_extent;
@@ -1102,6 +1106,42 @@ void ComponentValidator::scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXYZ
     point.x = (point.x - center.x()) * scale;
     point.y = (point.y - center.y()) * scale;
     point.z = (point.z - center.z()) * scale;
+  }
+
+  return scale;  // Return scale factor for dimension estimation
+}
+
+void ComponentValidator::printRescaledAxes(
+  BestDescription& bestDescriptionCandidate,
+  float refCubeScaleFactor)
+{
+  const char* axes[3] = {"x", "y", "z"};
+
+  for (size_t compIdx = 0; compIdx < sizeIdcs.size(); ++compIdx) {
+       
+    const auto& idxGroup = sizeIdcs[compIdx];
+    std::vector<float> scaledAxes(3, 0.0f);
+    bool componentPresent = false;
+
+    for (size_t axisIdx = 0; axisIdx < idxGroup.size(); ++axisIdx) {
+      int idx = idxGroup[axisIdx];
+      if (idx >= 0 && idx < bestDescriptionCandidate.bestSemMatrixSigUnRot.cols) {
+        float axisRef = bestDescriptionCandidate.bestSemMatrixSigUnRot.at<float>(0, idx);
+
+        if (axisRef == -100.0f) {
+          continue; // skip printing
+        }
+
+        float axisAbs = axisRef * refCubeScaleFactor;
+        
+        LOG4CXX_INFO(logger, boost::format(
+          "Component %1% | Axis %2% (idx %3%): %4% m")
+          % (compIdx + 1)
+          % axes[axisIdx]
+          % idx
+          % (axisAbs / 1000.0f));
+      }
+    }
   }
 }
 

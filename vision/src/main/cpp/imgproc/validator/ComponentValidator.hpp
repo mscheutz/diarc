@@ -145,7 +145,8 @@ private:
   Eigen::Vector4f computeCentroid(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);    
   Eigen::Vector4f computeBoundingBoxCentroid(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
   void scalePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float uniform_scale_factor);
-  void scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float cubeHalfSize);
+  float scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float cubeHalfSize);
+  void printRescaledAxes(BestDescription& bestDescriptionCandidate, float refCubeScaleFactor);
   void projectToYZPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected);   
   float computeChamferDistance(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud1, 
                                const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud2);
