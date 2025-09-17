@@ -4,6 +4,8 @@ import { ReadyState, SendMessage } from 'react-use-websocket';
 import ConnectionIndicator from './util/ConnectionIndicator';
 import "./util/StyleOverrides.css";
 
+import localImage from '../../map.png';
+
 type Position = { x: number, y: number, z: number };
 type Orientation = { x: number, y: number, z: number, w: number };
 type RobotPixelPosition = { x: number, y: number };
@@ -347,7 +349,8 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
             context.fillText("Map not loaded", canvas.width / 2, canvas.height / 2);
         } else {
             const image = new Image();
-            image.src = mapImageUrl;
+            // image.src = mapImageUrl;
+            image.src = localImage;
             image.onload = () => {
                 // Image scaling logic
                 const scale = Math.min(canvas.width / image.width, canvas.height / image.height);

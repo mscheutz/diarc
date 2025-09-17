@@ -18,6 +18,9 @@ function App() {
     url.protocol = "ws";
     const wsBaseUrl = url.toString();
 
+    let httpBaseUrl = new URL(wsBaseUrl);
+    httpBaseUrl.protocol = "http:";
+
     const [availableEndpoints, setAvailableEndpoints] = useState<string[]>([]);
     let webSocketUrl  = "";
     console.log(process.env.REACT_APP_SITE_ID);
@@ -57,6 +60,7 @@ function App() {
                     readyState={readyState}
                     lastMessage={lastMessage}
                     wsBaseUrl={webSocketUrl}
+                    generalBaseUrl={httpBaseUrl}
                 />
             </Providers>
         </div>

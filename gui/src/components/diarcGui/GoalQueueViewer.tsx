@@ -350,6 +350,8 @@ const GoalViewer: React.FC<Props> = ({
 
     // CALLBACKS //
     const handleGoalSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        console.log('selectedIds: ' + selectedIds);
+        console.log(e);
         if (e.target.checked)
             // `+` will convert string to number
             setSelectedIds(selectedIds.concat(+e.target.value))

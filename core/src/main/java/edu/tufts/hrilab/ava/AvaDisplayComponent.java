@@ -31,6 +31,8 @@ import javax.swing.*;
 import javax.imageio.ImageIO;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,24 +87,29 @@ public class AvaDisplayComponent extends DiarcComponent {
 
   @Override
   protected void init() {
+    refreshMedia();
+    currentVideo = 0;
+    currentImage = 0;
+    int index = 0;
+    for (String img : idleImages) {
+      if (img.contains("(1)")) {
+        trLogoIndex = index;
+        currentImage = trLogoIndex;
+      }
+      index++;
+    }
+    initializeFrame();
+  }
+
+  @TRADEService
+  public void refreshMedia() {
     if (!videoDir.equals("")) {
       videos = getMediaFromDir(videoDir, ".mp4");
       idleImages = getMediaFromDir(idleImageDir, ".png");
       idleImages = idleImages.stream().sorted().toList();
       userImages = getMediaFromDir(userImageDir, ".png");
       userImages = userImages.stream().sorted().toList();
-      currentVideo = 0;
-      currentImage = 0;
-      int index = 0;
-      for (String img : idleImages) {
-        if (img.contains("(1)")) {
-          trLogoIndex = index;
-          currentImage = trLogoIndex;
-        }
-        index++;
-      }
     }
-    initializeFrame();
   }
 
   private String getMediaPath(String videoDir) {
@@ -130,6 +137,25 @@ public class AvaDisplayComponent extends DiarcComponent {
       TRADE.registerNotificationNowOrWhenJoined(this, new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications").argTypes(TRADEServiceInfo.class), "registerDialogueCallback");
     } catch (TRADEException e) {
       log.error("Error trying to register for registerForDialogueHistoryNotifications service.", e);
+    }
+  }
+
+  @TRADEService
+  public String getVideosDir() {
+    return getMediaPath(videoDir);
+  }
+
+  @TRADEService
+  public String getUserImageDir() {
+    return getMediaPath(userImageDir);
+  }
+
+  @TRADEService
+  public void deleteMedia(String path) {
+    try {
+      Files.deleteIfExists(Path.of(path));
+    } catch (IOException e) {
+      log.error("[deleteMedia] failed to delete media file: " + path, e);
     }
   }
 

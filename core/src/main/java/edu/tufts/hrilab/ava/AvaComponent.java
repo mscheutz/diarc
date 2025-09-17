@@ -977,9 +977,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       for (Tag tag : res.response.tags.values()) {
         Point3d point = new Point3d(parseDouble(tag.position.x), parseDouble(tag.position.y), 0);
         Quat4d quat4d = Convert.convertToQuat4d(parseDouble(tag.position.theta), 0, 0);
-        if (toReturn.size() < 20) {
-          toReturn.put(tag.name, new MutablePair<>(point, quat4d));
-        }
+        toReturn.put(tag.name, new MutablePair<>(point, quat4d));
       }
     }
     return toReturn;
@@ -991,12 +989,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     for (RMSListTagsResponse res : resList) {
       for (Tag tag : res.response.tags.values()) {
         if ("Dock".equals(tag.attributes.get("TagType"))) {
-          if ("SB00152".equals(tag.attributes.get("HomePositionForRobot"))) {
             toReturn.add(tag.name);
           }
         }
       }
-    }
     return toReturn;
   }
 

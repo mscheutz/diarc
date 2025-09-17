@@ -144,7 +144,6 @@ public class AvaMapAdapter extends GuiAdapter {
       mapImages = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapImages").argTypes().inGroups(this.groups.toArray(new String[0]))).call(List.class);
     } catch (TRADEException e) {
       log.error("Error getting map.", e);
-      mapImages = new ArrayList<>();
     }
   }
 

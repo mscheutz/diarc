@@ -1,16 +1,15 @@
 // @ts-ignore
-import React, { useState, useEffect, useCallback } from "react";
+import React, {useState, useEffect, useCallback, ChangeEvent} from "react";
 import { ReadyState, SendMessage } from "react-use-websocket";
 import { Button } from "../Button";
-import {columns, mediaColumns, pastColumns} from "./util/constants";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faCircleInfo} from "@fortawesome/free-solid-svg-icons";
+import {mediaColumns} from "./util/constants";
 
 type Props = {
     path: string,
     lastMessage: MessageEvent<any> | null,
     sendMessage: SendMessage,
     readyState: ReadyState,
+    baseUrl: string,
     // other inputs that you need
 };
 
@@ -22,7 +21,14 @@ const getInitialState = () => {
 
 type Entry = {
     name: string,
-    mediaType: string,
+    type: string,
+};
+
+const toArray = (e: Entry) => {
+    return [
+        e.name,
+        e.type,
+    ];
 };
 
 type TableProps = {
@@ -30,29 +36,113 @@ type TableProps = {
     handleSelect: any,
 }
 
+type FileManagementProps = {
+    handleUpload: () => void,
+    handleDelete: () => void,
+}
+
+const FileManagment: React.FC<FileManagementProps> = ({
+                                                       handleUpload, handleDelete
+                                                   }) => {
+    return (
+        <div className="flex flex-row gap-2 shadow-md border border-1
+                        border-[#d1dbe3] rounded-md p-3">
+            <div className="grow flex flex-row gap-2">
+                <Button
+                    className="grow"
+                    title="Upload a new piece of media"
+                    onClick={handleUpload}>
+                    Upload
+                </Button>
+                <Button
+                    className="grow"
+                    title="Delete selected media"
+                    onClick={handleDelete}>
+                    Delete
+                </Button>
+            </div>
+        </div>
+    );
+};
+
 const MediaManager: React.FC<Props> = ({
-    path, lastMessage, sendMessage, readyState, /* other input names */
+    path, lastMessage, sendMessage, readyState, baseUrl/* other input names */
 }) => {
 
     //STATE & CALLBACKS
     const [data, setData] = useState<Entry[]>([]);
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [selectedIds, setSelectedIds] = useState<String[]>([]);
 
     useEffect(() => {
-        // Do stuff with data here
+
+        if (lastMessage === null) return;
+        const newData = JSON.parse(lastMessage.data);
+        if (!newData.path || newData.path !== path) return;
+
+        console.log(lastMessage.data)
+        console.log(newData)
+
+        const media = newData.media;
+
+        setData(media);
+
     }, [path, lastMessage]);
 
-
-    const handleSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.checked)
-            // `+` will convert string to number
-            setSelectedIds(selectedIds.concat(+e.target.value))
-        else
-            setSelectedIds(selectedIds.filter((element) =>
-                element !== +e.target.value))
+    const handleDelete = () => {
+        sendMessage(JSON.stringify({
+            "path": path,
+            "method": "delete",
+            "ids": selectedIds
+        }));
+        selectedIds.forEach(id => {
+            document.getElementById(id).checked = false;
+        })
+        setSelectedIds([])
     };
 
-    const ImageTable: React.FC<TableProps> = (
+    const handleUpload = () => {
+        if (!file) {
+            return;
+        }
+
+        const formData = new FormData()
+        formData.append("file", file);
+        // 👇 Uploading the file using the fetch API to the server
+        fetch(baseUrl + 'api/files/upload', {
+            method: 'POST',
+            body: formData,
+            mode: 'no-cors',
+        })
+            .then((res) => res.json())
+            .then((data) => console.log(data))
+            .catch((err) => console.error(err));
+
+        sendMessage(JSON.stringify({
+            path: path,
+            method: "refresh"
+        }));
+    };
+
+    const handleItemSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked)
+            setSelectedIds(selectedIds.concat(e.target.value))
+        else
+            setSelectedIds(selectedIds.filter((element) =>
+                element !== e.target.value))
+
+        console.log('selectedIds: ' + selectedIds);
+        console.log(e);
+    };
+
+    const [file, setFile] = useState<File>();
+
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setFile(e.target.files[0]);
+        }
+    };
+
+    const MediaTable: React.FC<TableProps> = (
         { data, handleSelect}
     ) => {
         let videos = [], images = []
@@ -75,102 +165,62 @@ const MediaManager: React.FC<Props> = ({
                     </tr>
                     </thead>
 
-                    {/*<tbody>*/}
-                    {/*{activeGoals.map((row, index) =>*/}
-                    {/*    (selectedStatuses.find((element) =>*/}
-                    {/*            element === row.status) !== undefined*/}
-                    {/*        && row.actor.includes(filteredActor)*/}
-                    {/*        && <tr*/}
-                    {/*            className="even:bg-slate-100"*/}
-                    {/*            key={index}>*/}
-                    {/*            <td className="border border-[#d1dbe3] px-1 text-center">*/}
-                    {/*                <input*/}
-                    {/*                    type="checkbox"*/}
-                    {/*                    value={row.id}*/}
-                    {/*                    id={row.id + ""}*/}
-                    {/*                    onChange={handleSelect}*/}
-                    {/*                    className="cursor-pointer"*/}
-                    {/*                />*/}
-                    {/*            </td>*/}
-                    {/*            {toArray(row).map((prop, index) =>*/}
-                    {/*                <td className="border border-[#d1dbe3] px-1"*/}
-                    {/*                    key={index}>*/}
-                    {/*                    <label*/}
-                    {/*                        htmlFor={row.id + ""}*/}
-                    {/*                        className="cursor-pointer"*/}
-                    {/*                        title={prop === "failed" ? "Reason: " + row.failureReason : ""}>*/}
-                    {/*                        {prop + ""}&nbsp;*/}
-                    {/*                        {prop === "failed" ? <FontAwesomeIcon icon={faCircleInfo}/> : null}*/}
-                    {/*                    </label>*/}
-                    {/*                </td>*/}
-                    {/*            )}*/}
-                    {/*        </tr>)*/}
-                    {/*)}*/}
-                    {/*</tbody>*/}
-                {/*</table>*/}
-                {/*<p className="text-lg pt-5">Past Goals</p>*/}
-                {/*<table className="border border-[#d1dbe3]">*/}
-                {/*    <caption className="hidden">Past Goal table</caption>*/}
-                {/*    <thead>*/}
-                {/*    <tr className="bg-sky-100">*/}
-                {/*        {pastColumns.map((col, index) =>*/}
-                {/*            <th className="border border-[#d1dbe3] p-1"*/}
-                {/*                key={index}>*/}
-                {/*                {col}*/}
-                {/*            </th>*/}
-                {/*        )}*/}
-                {/*    </tr>*/}
-                {/*    </thead>*/}
-
-                {/*    <tbody>*/}
-                {/*    {pastGoals.map((row, index) =>*/}
-                {/*        (selectedStatuses.find((element) =>*/}
-                {/*                element === row.status) !== undefined*/}
-                {/*            && row.actor.includes(filteredActor)*/}
-                {/*            && <tr*/}
-                {/*                className="even:bg-slate-100"*/}
-                {/*                key={index}>*/}
-                {/*                {toPastArray(row).map((prop, index) =>*/}
-                {/*                    <td className="border border-[#d1dbe3] px-1"*/}
-                {/*                        key={index}>*/}
-                {/*                        <label*/}
-                {/*                            htmlFor={row.id + ""}*/}
-                {/*                            className="cursor-pointer"*/}
-                {/*                            title={prop === "failed" ? "Reason: " + row.failureReason : ""}>*/}
-                {/*                            {prop + ""}&nbsp;*/}
-                {/*                            {prop === "failed" ? <FontAwesomeIcon icon={faCircleInfo}/> : null}*/}
-                {/*                        </label>*/}
-                {/*                    </td>*/}
-                {/*                )}*/}
-                {/*            </tr>)*/}
-                {/*    )}*/}
-                {/*    </tbody>*/}
+                    <tbody>
+                    {data.map((row, index ) =>
+                            <tr
+                                className="even:bg-slate-100"
+                                key={index}>
+                                <td className="border border-[#d1dbe3] px-1 text-center">
+                                    <input
+                                        type="checkbox"
+                                        defaultChecked={selectedIds.includes(row.name)}
+                                        value={row.name}
+                                        id={row.name}
+                                        onChange={handleSelect}
+                                        className="cursor-pointer"
+                                    />
+                                </td>
+                                {toArray(row).map((prop, index) =>
+                                    <td className="border border-[#d1dbe3] px-1"
+                                        key={index}>
+                                        <label
+                                            htmlFor={row.name}
+                                            className="cursor-pointer"
+                                            title="">
+                                            {prop + ""}&nbsp;
+                                        </label>
+                                    </td>
+                                )}
+                            </tr>
+                    )}
+                    </tbody>
                 </table>
             </div>
         );
     };
 
+    useEffect(() => {
+        sendMessage(JSON.stringify({
+            path: path,
+            method: "refresh"
+        }));
+    }, [path, sendMessage]);
+
     // @ts-ignore
     return (
         <div className="shadow-md border border-1 border-[#d1dbe3]
-                                        p-3 flex flex-col justify-start gap-3
+                                        p-3 flex flex-col justify-start gap-
                                         rounded-md grow w-3/4">
-            <p className="text-lg">Scheduled Goals</p>
+            <p className="text-lg">Available Media</p>
             <div className="grow flex flex-col overflow-auto min-h-0
                                             basis-0">
-                <ImageTable
+                <MediaTable
                     data={data}
-                    handleSelect={handleSelect}
+                    handleSelect={handleItemSelect}
                 />
             </div>
-            <p className="text-lg">Scheduled Goals</p>
-            <div className="grow flex overflow-auto flex-col min-h-0
-                                            basis-0">
-                <ImageTable
-                    data={data}
-                    handleSelect={handleSelect}
-                />
-            </div>
+            <input type="file" onChange={handleFileChange} />
+            <FileManagment handleUpload={handleUpload} handleDelete={handleDelete}/>
         </div>
     );
 };
