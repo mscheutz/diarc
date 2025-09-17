@@ -1073,7 +1073,6 @@ void ComponentValidator::scalePointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr clo
 
 float ComponentValidator::scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float cubeHalfSize) {
 
-  
   for (auto& pt : cloud->points) {
     if (!pcl::isFinite(pt)) {
       pt.x = pt.y = pt.z = std::numeric_limits<float>::quiet_NaN();
@@ -1132,15 +1131,14 @@ void ComponentValidator::printRescaledAxes(
           continue; // skip printing
         }
 
-        float axisAbs = axisRef * refCubeScaleFactor;
+        float axisAbs = axisRef / refCubeScaleFactor;
         
         LOG4CXX_INFO(logger, boost::format(
           "Component %1% | Axis %2% (idx %3%): %4% m")
           % (compIdx + 1)
           % axes[axisIdx]
           % idx
-          % (axisAbs / 1000.0f));
-      }
+          % (axisAbs));
     }
   }
 }
