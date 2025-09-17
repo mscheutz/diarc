@@ -1139,6 +1139,7 @@ void ComponentValidator::printRescaledAxes(
           % axes[axisIdx]
           % idx
           % (axisAbs));
+      }
     }
   }
 }
