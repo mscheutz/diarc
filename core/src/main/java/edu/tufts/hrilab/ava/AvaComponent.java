@@ -274,15 +274,22 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   private void adjustDockTags(Map<String, Pair<Point3d, Quat4d>> allTags, List<String> dockTags) {
+    if (allTags.isEmpty()) {
+      return;
+    }
+    log.info(allTags.toString());
+    log.info(dockTags.toString());
     for (String name : dockTags) {
       Pair<Point3d, Quat4d> pose = allTags.get(name);
-      Vector3d orientationVec = RotationHelpers.quaternionToNormVect(pose.getRight());
-      Point3d position = pose.getLeft();
-      log.info("adjusting dock tag " + name + " with position " + pose.getLeft());
-      position.add(orientationVec);
-      Pair<Point3d, Quat4d> newPose = new MutablePair<>(position, pose.getRight());
-      log.info("new position for " + name + " is " + newPose.getLeft());
-      allTags.put(name, newPose);
+      if (pose != null) {
+        Vector3d orientationVec = RotationHelpers.quaternionToNormVect(pose.getRight());
+        Point3d position = pose.getLeft();
+        log.info("adjusting dock tag " + name + " with position " + pose.getLeft());
+        position.add(orientationVec);
+        Pair<Point3d, Quat4d> newPose = new MutablePair<>(position, pose.getRight());
+        log.info("new position for " + name + " is " + newPose.getLeft());
+        allTags.put(name, newPose);
+      }
     }
   }
 
@@ -975,9 +982,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     Map<String, Pair<Point3d, Quat4d>> toReturn = new HashMap<>();
     for (RMSListTagsResponse res : resList) {
       for (Tag tag : res.response.tags.values()) {
-        Point3d point = new Point3d(parseDouble(tag.position.x), parseDouble(tag.position.y), 0);
-        Quat4d quat4d = Convert.convertToQuat4d(parseDouble(tag.position.theta), 0, 0);
-        toReturn.put(tag.name, new MutablePair<>(point, quat4d));
+        if ("true".equals(tag.attributes.get("tracs"))) {
+          Point3d point = new Point3d(parseDouble(tag.position.x), parseDouble(tag.position.y), 0);
+          Quat4d quat4d = Convert.convertToQuat4d(parseDouble(tag.position.theta), 0, 0);
+          toReturn.put(tag.name, new MutablePair<>(point, quat4d));
+        }
       }
     }
     return toReturn;
