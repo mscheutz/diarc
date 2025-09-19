@@ -23,11 +23,14 @@ function App() {
 
     const [availableEndpoints, setAvailableEndpoints] = useState<string[]>([]);
     let webSocketUrl  = "";
+    let httpBaseUrlString = "";
     console.log(process.env.REACT_APP_SITE_ID);
     if (process.env.REACT_APP_SITE_ID === undefined) {
         webSocketUrl =`${wsBaseUrl}ws`;
+        httpBaseUrlString =  `${httpBaseUrl.toString()}`;
     } else {
         webSocketUrl =`${wsBaseUrl}${process.env.REACT_APP_SITE_ID}/ws`;
+        httpBaseUrlString =  `${httpBaseUrl.toString()}${process.env.REACT_APP_SITE_ID}`;
     }
     const {lastMessage, sendMessage, readyState} =
         useWebSocket(webSocketUrl);
@@ -60,7 +63,7 @@ function App() {
                     readyState={readyState}
                     lastMessage={lastMessage}
                     wsBaseUrl={webSocketUrl}
-                    generalBaseUrl={httpBaseUrl}
+                    generalBaseUrl={httpBaseUrlString}
                 />
             </Providers>
         </div>

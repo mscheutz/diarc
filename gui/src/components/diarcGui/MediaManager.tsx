@@ -13,12 +13,6 @@ type Props = {
     // other inputs that you need
 };
 
-const getInitialState = () => {
-  const cachedCustomBehaviorCommands = sessionStorage.getItem("customBehaviorCommands");
-  return cachedCustomBehaviorCommands ? JSON.parse(cachedCustomBehaviorCommands) : []
-}
-
-
 type Entry = {
     name: string,
     type: string,
@@ -107,13 +101,11 @@ const MediaManager: React.FC<Props> = ({
 
         const formData = new FormData()
         formData.append("file", file);
-        // 👇 Uploading the file using the fetch API to the server
         fetch(baseUrl + 'api/files/upload', {
             method: 'POST',
             body: formData,
             mode: 'no-cors',
-        })
-            .then((res) => res.json())
+        }).then((res) => res.json())
             .then((data) => console.log(data))
             .catch((err) => console.error(err));
 
@@ -129,9 +121,6 @@ const MediaManager: React.FC<Props> = ({
         else
             setSelectedIds(selectedIds.filter((element) =>
                 element !== e.target.value))
-
-        console.log('selectedIds: ' + selectedIds);
-        console.log(e);
     };
 
     const [file, setFile] = useState<File>();

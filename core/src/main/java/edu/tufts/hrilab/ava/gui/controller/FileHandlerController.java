@@ -23,6 +23,6 @@ public class FileHandlerController {
   @PostMapping("/upload")
   public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
     String fileName = fileHandlerService.store(file);
-    return ResponseEntity.ok("File uploaded successfully: " + fileName);
+    return ResponseEntity.ok(fileName);
   }
 }

@@ -12,7 +12,7 @@ import MediaManager from "../MediaManager"
 
 const handlerRoots: string[] =
     //["actionProgrammer", "belief", "chat", "goalViewer", "goalManager", "map", "vision", "tradeService"];
-    ["actionProgrammer", "chat", "goalViewer", "goalQueueViewer", "vision", "tradeService", "avaBehaviors", "map", "media"];
+    ["actionProgrammer", "chat", "goalViewer", "goalQueueViewer", "vision", "tradeService", "avaBehaviors",  "media"];
 
 const handlers = {
     "actionProgrammer": {
@@ -35,10 +35,6 @@ const handlers = {
     "goalManager": {
         tabName: "Goal Submission",
         component: GoalSubmission
-    },
-    "map": {
-        tabName: "Map Viewer",
-        component: MapViewer
     },
     "tradeService": {
         tabName: "TRADE Service Viewer",

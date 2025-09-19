@@ -49,6 +49,7 @@ public class AvaMediaAdapter extends GuiAdapter {
   }
 
   private void deleteMedia(JsonArray ids) {
+    log.info("[deleteMedia] deleteMedia called");
     for (JsonElement id : ids) {
       Path path;
       String name = id.getAsString();
