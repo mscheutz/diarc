@@ -61,6 +61,7 @@
 
 #ifdef USE_PYTHON
 #include "pyvis/PythonHelper.hpp"
+#include "CaptureSpotPython.hpp"
 namespace py = pybind11;
 #endif // USE_PYTHON
 
@@ -182,6 +183,13 @@ namespace diarc {
         captureDevice = Capture::Ptr(new CaptureSpot(configFile));
 #else
         LOG4CXX_ERROR(logger, "Boston Dynamics SDK not available");
+#endif
+        break;
+      case BOSDYN_PYTHON:
+#ifdef USE_PYTHON
+        captureDevice = Capture::Ptr(new CaptureSpotPython(configFile));
+#else
+        LOG4CXX_ERROR(logger, "Boston Dynamics Python SDK requires pybind11");
 #endif
         break;
         default: LOG4CXX_ERROR(logger, "Invalid camera mode!");

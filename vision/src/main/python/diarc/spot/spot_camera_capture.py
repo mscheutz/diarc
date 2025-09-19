@@ -51,14 +51,33 @@ def display_image(img: cv2.Mat, name: str):
     cv2.imshow(name, img_copy)
 
 
+def populate_cam_param_list(img_response):
+
+    width = img_response.shot.image.cols
+    height = img_response.shot.image.rows
+
+    intrinsics = img_response.source.pinhole.intrinsics
+    f_x = intrinsics.focal_length.x
+    f_y = intrinsics.focal_length.y
+    c_x = intrinsics.principal_point.x
+    c_y = intrinsics.principal_point.y
+
+    return [width, height, f_x, f_y, c_x, c_y]
+
+
 class SpotCameraCapture:
-    def __init__(self, config):
+    def __init__(self, username: str, password: str, hostname: str, port = '', name = ''):
+        # username = username
+        # password = password
+        # hostname = hostname
+        # port = port
+        # name = name
         self.spot = SpotWrapper(
-            username=config['username'],
-            password=config['password'],
-            hostname=config['hostname'],
-            port=config.get('port', ''),
-            robot_name=config.get('name', ''),
+            username=username,
+            password=password,
+            hostname=hostname,
+            port=port,
+            robot_name=name,
             logger=logger,
             start_estop=False,
             use_take_lease=False,
@@ -67,7 +86,15 @@ class SpotCameraCapture:
             rgb_cameras=True,
         )
 
-    def get_color_image(self):
+    # def get_rgb_image(self):
+    #     cv2_img = cv2.imread("/home/evan/Pictures/test-scene-rgb.jpg")
+    #     return cv2_img
+    #
+    # def get_depth_aligned_image(self):
+    #     cv2_img = cv2.imread("/home/evan/Pictures/test-scene-depth.jpg")
+    #     return cv2_img
+
+    def get_rgb_image(self):
         img_response = self.spot.spot_images.get_hand_rgb_image()
         cv2_img, _ = image_to_opencv(img_response)
         return cv2_img
@@ -76,6 +103,41 @@ class SpotCameraCapture:
         img_bundle = self.spot.spot_images.get_depth_registered_images()
         cv2_img, _ = image_to_opencv(img_bundle.hand)
         return cv2_img
+
+    def get_rgb_camera_params(self):
+        """
+        Returns the parameters of the RGB camera.
+
+        This method provides a list containing the parameters for an RGB camera.
+        The parameters include width, height, focal length, and principal point.
+
+        Returns:
+            list: A list containing the RGB camera parameters. The parameters
+            are ordered as [width, height, fx, fy, cx, cy].
+        """
+
+        img_response = self.spot.spot_images.get_hand_rgb_image()
+
+        return populate_cam_param_list(img_response)
+        # return [320, 240, 580.0, 580.0, 160.0, 120.0]
+
+    def get_depth_camera_params(self):
+        """
+        Returns the parameters of the Depth camera.
+
+        This method provides a list containing the parameters for a Depth camera.
+        The parameters include width, height, focal length, and principal point.
+
+        Returns:
+            list: A list containing the RGB camera parameters. The parameters
+            are ordered as [width, height, fx, fy, cx, cy].
+        """
+
+        img_bundle = self.spot.spot_images.get_depth_registered_images()
+        img_response = img_bundle.hand
+
+        return populate_cam_param_list(img_response)
+        # return [320, 240, 580.0, 580.0, 160.0, 120.0]
 
 
 # This main is largely used for testing behaviors

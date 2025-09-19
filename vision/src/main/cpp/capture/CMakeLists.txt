@@ -32,6 +32,13 @@ if(bosdyn_FOUND)
 	)
 endif(bosdyn_FOUND)
 
+# no easy way to check for boston dynamics python sdk, so just check for pybind11
+if(pybind11_FOUND)
+	SET(SOURCES ${SOURCES}
+			CaptureSpotPython.cpp
+	)
+endif(pybind11_FOUND)
+
 # Intel RealSense capture
 if(REALSENSE_FOUND)
 	SET(SOURCES ${SOURCES}

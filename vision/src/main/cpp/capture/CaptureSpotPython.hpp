@@ -14,20 +14,22 @@
 
 #include "Capture.hpp"
 
+#include <pybind11/pytypes.h>
+
 namespace diarc {
   namespace capture {
-    class CaptureSpot : public Capture {
+    class CaptureSpotPython : public Capture {
     public:
-      CaptureSpot(const std::string& configFile);
+      CaptureSpotPython(const std::string& configFile);
 
-      virtual ~CaptureSpot();
+      virtual ~CaptureSpotPython();
 
       virtual bool captureCurrentCameraFrame();
 
     private:
       void loadConfig(const std::string& configFile);
-      //void setRGBCameraParameters(const bosdyn::api::ImageResponse& image_response) const;
-      //void setDepthCameraParameters(const bosdyn::api::ImageResponse& image_response) const;
+      void setRGBCameraParameters(const pybind11::list& params) const;
+      void setDepthCameraParameters(const pybind11::list& params) const;
 
       std::string hostname;
       std::string username;
