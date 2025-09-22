@@ -82,20 +82,26 @@ namespace diarc {
 
     bool CaptureSpotPython::captureCurrentCameraFrame() {
       PythonHelper* pyInstance = PythonHelper::getInstance();
-      {
-        pyInstance->acquireGIL();
-        LOG4CXX_DEBUG(logger, boost::format("[handleCaptureNotification] GIL acquired: %d") % PyGILState_Check());
+      pyInstance->acquireGIL();
+      LOG4CXX_DEBUG(logger, boost::format("[handleCaptureNotification] GIL acquired: %d") % PyGILState_Check());
 
-        // populate diarc images
-        py::object py_rgb_img = spotCameraInstance.attr("get_rgb_image")();
-        frame = PythonUtils::convertNumpyToMat(py_rgb_img.cast<py::array_t<uchar>>());
+      // get images from python
+      py::object py_rgb_img = spotCameraInstance.attr("get_rgb_image")();
+      cv::Mat cv_rgb_img = PythonUtils::convertNumpyToMat(py_rgb_img.cast<py::array_t<uchar>>());
+      py::object py_depth_img = spotCameraInstance.attr("get_depth_aligned_image")();
+      cv::Mat cv_depth_img = PythonUtils::convertNumpyToMat(py_depth_img.cast<py::array_t<uchar>>());
 
-        // create point cloud from color and depth frames
-        //      pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud);
-      }
-
+      // release GIL
       pyInstance->releaseGIL();
       LOG4CXX_DEBUG(logger, boost::format("[handleCaptureNotification] GIL released: %d") % PyGILState_Check());
+
+      // resize and populate diarc images
+      cv::resize(cv_rgb_img, frame, frame.size(), 0, 0, cv::INTER_NEAREST);
+      cv::resize(cv_depth_img, depthFrame, depthFrame.size(), 0, 0, cv::INTER_NEAREST);
+
+      // create point cloud from color and depth frames
+      pc::util::depthAndColorToPointCloud(depthFrame, frame, cloudRGB, cloud);
+
       return true;
     }
 
