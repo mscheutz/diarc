@@ -1284,8 +1284,17 @@ void ComponentValidator::cutOutObject(cv::Mat &objectDepthImageNorm, const cv::M
     return;
   }
 
-  // Find the bounding box of the largest contour
-  cv::Rect objectBoundingBox = cv::boundingRect(contours[0]);
+  // Sort countours by area and get the largest one
+  size_t largestContourIdx = 0;
+  double maxArea = 0.0;
+  for (size_t i = 0; i < contours.size(); ++i) {
+    double area = cv::contourArea(contours[i]);
+    if (area > maxArea) {
+      maxArea = area;
+      largestContourIdx = i;
+    }
+  }
+  cv::Rect objectBoundingBox = cv::boundingRect(contours[largestContourIdx]);
 
   // Ensure the bounding box stays within the image boundaries
   objectBoundingBox &= cv::Rect(0, 0, objectDepthImageNorm.cols, objectDepthImageNorm.rows);
