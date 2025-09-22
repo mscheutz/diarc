@@ -452,7 +452,7 @@ void ComponentValidator::handleMemoryObjectNotification(MemoryObjectNotification
         
     // reconstruct superellipsoids for different rotations, use best (lowest chamfer distance) reconstruction
     BestDescription bestDescriptionCandidate = findBestReconstruction(objectCloud, objectDepthImage);
-    printRescaledAxes(bestDescriptionCandidate, refCubeScaleFactor);
+    printDimensions(bestDescriptionCandidate, refCubeScaleFactor);
 
     if (visualizeReconstruction == true) {
 
@@ -1110,30 +1110,60 @@ float ComponentValidator::scalePointCloudToUnitCube(pcl::PointCloud<pcl::PointXY
   return scale;  // Return scale factor for dimension estimation
 }
 
-void ComponentValidator::printRescaledAxes(
+void ComponentValidator::printDimensions(
   BestDescription& bestDescriptionCandidate,
   float refCubeScaleFactor)
 {
-  const char* axes[3] = {"x", "y", "z"};
 
+  pcl::PointXYZ min_point;
+  pcl::PointXYZ max_point;
+  Eigen::Vector3f mass_center_base_tmp;
+  
+  // Rescale point clouds back to original size for dimension estimation
+  scalePointCloud(
+    bestDescriptionCandidate.bestSuperellipsoidsUnRot[0], 1/refCubeScaleFactor);
+  scalePointCloud(
+    bestDescriptionCandidate.objectUnRot, 1/refCubeScaleFactor);
+
+  diarc::pc::util::calculateBoundingBox(bestDescriptionCandidate.objectUnRot, 
+                                        min_point, max_point, 
+                                        mass_center_base_tmp); 
+
+  diarc::pc::util::calculateBoundingBox(bestDescriptionCandidate.bestSuperellipsoidsUnRot[0], 
+                                        min_point, max_point, 
+                                        mass_center_base_tmp);
+  
+  // Encoder COS differs from DIARC COS (x, y, z) -> (z, y, x)
+  const char* axes[3] = {"z", "y", "x"};
+
+  // Iteration over all components
   for (size_t compIdx = 0; compIdx < sizeIdcs.size(); ++compIdx) {
        
     const auto& idxGroup = sizeIdcs[compIdx];
     std::vector<float> scaledAxes(3, 0.0f);
     bool componentPresent = false;
+    float a_x = 0.0f, a_y = 0.0f, a_z = 0.0f;
+    float azimuth = bestDescriptionCandidate.bestSemMatrixSigUnRot.at<float>(0, rotationIdcs[compIdx][0]);
+    float elevation = bestDescriptionCandidate.bestSemMatrixSigUnRot.at<float>(0, rotationIdcs[compIdx][1]);
 
+    // Iterate over the three principal axes 
     for (size_t axisIdx = 0; axisIdx < idxGroup.size(); ++axisIdx) {
       int idx = idxGroup[axisIdx];
       if (idx >= 0 && idx < bestDescriptionCandidate.bestSemMatrixSigUnRot.cols) {
         float axisRef = bestDescriptionCandidate.bestSemMatrixSigUnRot.at<float>(0, idx);
 
         if (axisRef == -100.0f) {
-          continue; // skip printing
+          return; // No more compoonents to process
         }
 
-        float axisAbs = axisRef / refCubeScaleFactor;
+        float axisAbs = axisRef * 2;  // Axis length is double principal axis value
+
+        // Assign to explicit variables
+        if (axisIdx == 0) a_z = axisRef;
+        else if (axisIdx == 1) a_y = axisRef;
+        else if (axisIdx == 2) a_x = axisRef;
         
-        LOG4CXX_INFO(logger, boost::format(
+        LOG4CXX_DEBUG(logger, boost::format(
           "Component %1% | Axis %2% (idx %3%): %4% m")
           % (compIdx + 1)
           % axes[axisIdx]
@@ -1141,6 +1171,94 @@ void ComponentValidator::printRescaledAxes(
           % (axisAbs));
       }
     }
+
+    // Define the 8 corners of the box in local coordinates
+    pcl::PointXYZ corners_local[8] = {
+        { a_x,  a_y,  a_z}, { a_x,  a_y, -a_z},
+        { a_x, -a_y,  a_z}, { a_x, -a_y, -a_z},
+        {-a_x,  a_y,  a_z}, {-a_x,  a_y, -a_z},
+        {-a_x, -a_y,  a_z}, {-a_x, -a_y, -a_z}
+    };
+
+    // Rotation matrices (object orientation)
+    Eigen::AngleAxisf R1(-azimuth,   Eigen::Vector3f::UnitX());
+    Eigen::AngleAxisf R2(-elevation, Eigen::Vector3f::UnitZ());
+    Eigen::Matrix3f R = (R2 * R1).toRotationMatrix();
+
+    // Pair axes with extents
+    std::vector<std::pair<Eigen::Vector3f, float>> axes = {
+        {R.col(0), 2*a_x/refCubeScaleFactor},
+        {R.col(1), 2*a_y/refCubeScaleFactor},
+        {R.col(2), 2*a_z/refCubeScaleFactor},
+    };
+
+    // Sort axes by descending length (major → middle → minor)
+    std::sort(axes.begin(), axes.end(), [](auto &a, auto &b){
+        return a.second > b.second;
+    });
+
+    // Enforce right-handed system: minor = major × middle
+    axes[2].first = axes[0].first.cross(axes[1].first);
+
+    // Rebuild rotation matrix following PCL convention
+    Eigen::Matrix3f R_OBB;
+    R_OBB.col(0) = axes[0].first; // major
+    R_OBB.col(1) = axes[1].first; // middle
+    R_OBB.col(2) = axes[2].first; // minor
+
+    // Rotate corners to world space (OBB)
+    std::vector<pcl::PointXYZ> obb_corners;
+    obb_corners.reserve(8);
+
+    pcl::PointXYZ min_point(FLT_MAX, FLT_MAX, FLT_MAX);
+    pcl::PointXYZ max_point(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+    for (int i = 0; i < 8; ++i) {
+        Eigen::Vector3f p_world = R_OBB * Eigen::Vector3f(
+            corners_local[i].x,
+            corners_local[i].y,
+            corners_local[i].z
+        );
+        pcl::PointXYZ corner_world(p_world.x(), p_world.y(), p_world.z());
+        obb_corners.push_back(corner_world);
+
+        // Update AABB min/max
+        min_point.x = std::min(min_point.x, corner_world.x);
+        min_point.y = std::min(min_point.y, corner_world.y);
+        min_point.z = std::min(min_point.z, corner_world.z);
+
+        max_point.x = std::max(max_point.x, corner_world.x);
+        max_point.y = std::max(max_point.y, corner_world.y);
+        max_point.z = std::max(max_point.z, corner_world.z);
+    }
+
+    // Compute AABB dimensions
+    float aabb_x  = (max_point.x - min_point.x) / refCubeScaleFactor;
+    float aabb_y = (max_point.y - min_point.y) / refCubeScaleFactor;
+    float aabb_z  = (max_point.z - min_point.z) / refCubeScaleFactor;
+
+    // Print OBB corners
+    //std::cout << "OBB corners (world coordinates):" << std::endl;
+    //for (int i = 0; i < 8; ++i) {
+    //    std::cout << i << ": "
+    //              << obb_corners[i].x << " "
+    //              << obb_corners[i].y << " "
+    //              << obb_corners[i].z << std::endl;
+    //}
+
+    LOG4CXX_INFO(logger, boost::format(
+        "Component %1% dimensions (x->y->z)): %2% x %3% x %4% m")
+        % (compIdx + 1)
+        % aabb_x
+        % aabb_y
+        % aabb_z);
+
+    LOG4CXX_INFO(logger, boost::format(
+        "Component %1% dimensions (major->middle->minor): %2% x %3% x %4% m")
+        % (compIdx + 1)
+        % axes[0].second
+        % axes[1].second
+        % axes[2].second);
   }
 }
 
