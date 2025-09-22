@@ -1,15 +1,13 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="diarc",
+    name="diarc-vision",
     version="1.0.0",
     packages=find_packages(),
     install_requires=[
         'numpy',
         'opencv-python',
         'PyYAML',
-        'grpcio',
-        'protobuf'
     ],
     author="Thinking Robots, Inc., Tufts University",
     author_email="info@thinkingrobots.ai",
