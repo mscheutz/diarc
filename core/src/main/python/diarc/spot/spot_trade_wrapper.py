@@ -422,11 +422,30 @@ class SpotTRADEWrapper:
     @JOverride
     def getTransform(self, srcFrame, dstFrame):
         try:
+            src_frame_name = str(srcFrame)
+            dst_frame_name = str(dstFrame)
+            transforms_snapshot = self._get_transforms_snapshot()
+
+            if dst_frame_name == "hand_color_image_sensor":
+                # get hand_color_image_sensor to body
+                transforms_snapshot_with_sensor = self.spot.spot_images.get_hand_rgb_image().shot.transforms_snapshot
+                src_tf_body = get_a_tform_b(transforms_snapshot, src_frame_name, BODY_FRAME_NAME)
+                body_tf_dst = get_a_tform_b(transforms_snapshot_with_sensor, BODY_FRAME_NAME, dst_frame_name)
+                src_tf_dst = src_tf_body * body_tf_dst
+            elif src_frame_name == "hand_color_image_sensor":
+                # get body to hand_color_image_sensor
+                transforms_snapshot_with_sensor = self.spot.spot_images.get_hand_rgb_image().shot.transforms_snapshot
+                src_tf_body = get_a_tform_b(transforms_snapshot_with_sensor, src_frame_name, BODY_FRAME_NAME)
+                body_tf_dst = get_a_tform_b(transforms_snapshot, BODY_FRAME_NAME, dst_frame_name)
+                src_tf_dst = src_tf_body * body_tf_dst
+            else:
+                src_tf_dst = get_a_tform_b(transforms_snapshot, src_frame_name, dst_frame_name)
+
+            # finally, get transform
             tmp = Matrix4d()
             tmp.setIdentity()
-            tf = get_a_tform_b(self._get_transforms_snapshot(), str(srcFrame), str(dstFrame))
-            tmp.setRotation(Quat4d(tf.rotation.x, tf.rotation.y, tf.rotation.z, tf.rotation.w))
-            tmp.setTranslation(Vector3d(tf.position.x, tf.position.y, tf.position.z))
+            tmp.setRotation(Quat4d(src_tf_dst.rotation.x, src_tf_dst.rotation.y, src_tf_dst.rotation.z, src_tf_dst.rotation.w))
+            tmp.setTranslation(Vector3d(src_tf_dst.position.x, src_tf_dst.position.y, src_tf_dst.position.z))
             return tmp
 
         except Exception as e:
@@ -435,8 +454,17 @@ class SpotTRADEWrapper:
 
     @JOverride
     def getCoordinateFrames(self):
-        frame_names = frame_helpers.get_frame_names(self._get_transforms_snapshot())
-        java_list = JArray(JString)(frame_names)
+        try:
+            # TODO: combine these lists
+            # frame_names = frame_helpers.get_frame_names( self.spot.spot_images.get_hand_rgb_image().shot.transforms_snapshot)
+            frame_names = frame_helpers.get_frame_names(self._get_transforms_snapshot())
+            logging.info(f"Found frame names: {frame_names}")
+            java_list = JArray(JString)(frame_names)
+
+        except Exception as e:
+            logging.error(f"Error calling getCoordinateFrames: {traceback.format_exc()}")
+            return ()
+
         return java_list
 
     @JOverride

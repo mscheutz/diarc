@@ -44,8 +44,8 @@ namespace diarc {
       try {
         pyInstance->acquireGIL();
 
-        // Equivalent to "from diarc.spot.spot_camera_capture import SpotCameraCapture"
-        py::module_ module = pyInstance->importModule("diarc.spot.spot_camera_capture");
+        // Equivalent to "from diarc_vision.spot.spot_camera_capture import SpotCameraCapture"
+        py::module_ module = pyInstance->importModule("diarc_vision.spot.spot_camera_capture");
         SpotCameraCapture = module.attr("SpotCameraCapture");
 
         // Construct a Python object of class SpotCameraCapture

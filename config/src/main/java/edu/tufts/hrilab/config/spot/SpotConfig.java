@@ -28,7 +28,7 @@ import javax.vecmath.Quat4d;
 
 public class SpotConfig extends DiarcConfiguration {
 
-  boolean useMockVision = true;
+  boolean useMockVision = false;
   String service = "llamahf";
   String model = "Meta-Llama-3.1-70B-Instruct";
   boolean useLLM = false; //Ask Eric for HF key if you want to run with the LLM
@@ -58,7 +58,7 @@ public class SpotConfig extends DiarcConfiguration {
       createInstance(MockVisionComponent.class, "-groups agent:robotone -sceneClass edu.tufts.hrilab.vision.scene.config.SpotSceneGenerator");
     } else {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-groups agent:robotone -capture spot.xml -cameraFrame hand_color_image_sensor");
-      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-groups agent:robotone -capture spot_ros2.xml -cameraFrame hand_color_image_sensor");
+      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-groups agent:robotone -capture spot_python.xml -baseFrame gpe -cameraFrame hand_color_image_sensor");
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture pcd.xml -height 1.1 -rotX -45");
     }
 
@@ -81,7 +81,7 @@ public class SpotConfig extends DiarcConfiguration {
                     + "-asl dialogue/nlu.asl "
                     + "-asl dialogue/handleSemantics.asl "
                     + "-asl vision.asl "
-//                    + "-asl demos/spotDemo.asl "
+                    + "-asl demos/spotDemo.asl "
 //                    + "-asl spot/spotActions.asl "
                     + "-asl spot/spot.asl "
                     + "-goal listen(self) "
@@ -91,8 +91,8 @@ public class SpotConfig extends DiarcConfiguration {
 
     createInstance(SimSpeechRecognitionComponent.class, "-speaker evan -addressee robotone -config spotDemo.simspeech");
 
-    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.interfaces.ArmInterface");
-    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.interfaces.CoordinateFramesInterface");
+//    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.interfaces.ArmInterface");
+//    createInstance(TRADEServiceGui.class, "-class edu.tufts.hrilab.interfaces.CoordinateFramesInterface");
 
 //    Util.Sleep(2000);
 //
