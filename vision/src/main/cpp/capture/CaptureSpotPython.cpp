@@ -17,14 +17,24 @@ namespace py = pybind11;
 namespace diarc {
   namespace capture {
     CaptureSpotPython::CaptureSpotPython(const std::string& configFile)
-      : Capture(configFile) {
+      : Capture(configFile){
+
       // parse configuration params
       loadConfig(configFile);
 
       createSpotCameraCapture();
+
+      depthFrame.create(imgHeight, imgWidth, CV_32FC1);
     };
 
     CaptureSpotPython::~CaptureSpotPython() {
+      PythonHelper* pyInstance = PythonHelper::getInstance();
+      pyInstance->acquireGIL();
+
+      SpotCameraCapture = py::object();
+      spotCameraInstance = py::object();
+
+      pyInstance->releaseGIL();
     };
 
     void CaptureSpotPython::createSpotCameraCapture() {
@@ -32,37 +42,31 @@ namespace diarc {
 
       PythonHelper* pyInstance = PythonHelper::getInstance();
       try {
-        LOG4CXX_DEBUG(logger, "[createSpotCameraCapture] waiting on GIL...");
         pyInstance->acquireGIL();
-        LOG4CXX_DEBUG(logger, boost::format("[createSpotCameraCapture] GIL acquired: %d") % PyGILState_Check());
 
-        LOG4CXX_DEBUG(logger, "[createSpotCameraCapture] 2");
         // Equivalent to "from diarc.spot.spot_camera_capture import SpotCameraCapture"
         py::module_ module = pyInstance->importModule("diarc.spot.spot_camera_capture");
-        LOG4CXX_DEBUG(logger, "[createSpotCameraCapture] 3");
         SpotCameraCapture = module.attr("SpotCameraCapture");
-        LOG4CXX_DEBUG(logger, "[createSpotCameraCapture] 4");
+
         // Construct a Python object of class SpotCameraCapture
         spotCameraInstance = SpotCameraCapture(
           py::arg("hostname") = hostname,
           py::arg("username") = username,
           py::arg("password") = password
         );
-        LOG4CXX_DEBUG(logger, "[createSpotCameraCapture] 5");
 
         // get camera parameters
         py::object rgb_params = spotCameraInstance.attr("get_rgb_camera_params")();
         setRGBCameraParameters(rgb_params.cast<py::list>());
 
         py::object depth_params = spotCameraInstance.attr("get_depth_camera_params")();
-        setRGBCameraParameters(depth_params.cast<py::list>());
-      }
-      catch (py::error_already_set& e) {
+        setDepthCameraParameters(depth_params.cast<py::list>());
+
+      } catch (py::error_already_set& e) {
         LOG4CXX_ERROR(logger, boost::format("[createSpotCameraCapture] %s") % e.what());
       }
 
       pyInstance->releaseGIL();
-      LOG4CXX_DEBUG(logger, boost::format("[createSpotCameraCapture] done. GIL released: %d") % PyGILState_Check());
     }
 
     void CaptureSpotPython::loadConfig(const std::string& configFile) {
@@ -75,28 +79,34 @@ namespace diarc {
       ptree pt;
       read_xml(configFile, pt);
 
-      std::string hostname = pt.get<std::string>("capture.hostname");
-      std::string username = pt.get<std::string>("capture.username");
-      std::string password = pt.get<std::string>("capture.password");
+      hostname = pt.get<std::string>("capture.hostname");
+      username = pt.get<std::string>("capture.username");
+      password = pt.get<std::string>("capture.password");
     }
 
     bool CaptureSpotPython::captureCurrentCameraFrame() {
+      // acquire GIL
       PythonHelper* pyInstance = PythonHelper::getInstance();
       pyInstance->acquireGIL();
-      LOG4CXX_DEBUG(logger, boost::format("[handleCaptureNotification] GIL acquired: %d") % PyGILState_Check());
 
       // get images from python
       py::object py_rgb_img = spotCameraInstance.attr("get_rgb_image")();
       cv::Mat cv_rgb_img = PythonUtils::convertNumpyToMat(py_rgb_img.cast<py::array_t<uchar>>());
+
       py::object py_depth_img = spotCameraInstance.attr("get_depth_aligned_image")();
-      cv::Mat cv_depth_img = PythonUtils::convertNumpyToMat(py_depth_img.cast<py::array_t<uchar>>());
+      cv::Mat cv_depth_img = PythonUtils::convertNumpyToMatDepth(py_depth_img.cast<py::array_t<float>>());
 
       // release GIL
       pyInstance->releaseGIL();
-      LOG4CXX_DEBUG(logger, boost::format("[handleCaptureNotification] GIL released: %d") % PyGILState_Check());
 
       // resize and populate diarc images
       cv::resize(cv_rgb_img, frame, frame.size(), 0, 0, cv::INTER_NEAREST);
+      #if (CV_MAJOR_VERSION >= 4)
+        cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB); // opencv 4
+      #else
+        cv::cvtColor(frame, frame, CV_BGR2RGB); //  opencv 3
+      #endif
+
       cv::resize(cv_depth_img, depthFrame, depthFrame.size(), 0, 0, cv::INTER_NEAREST);
 
       // create point cloud from color and depth frames

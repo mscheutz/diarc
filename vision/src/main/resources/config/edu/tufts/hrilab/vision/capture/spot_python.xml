@@ -11,9 +11,9 @@ Required:
 Optional:
 	any additional fields the particular camera mode might need
 
-NOTE: use this config with:
-
-	 ros2 launch realsense2_camera rs_align_depth_launch.py"
+NOTE: use this config:
+    1) see the README in <DIARC_HOME>vision/src/main/python/diarc/spot/
+    2) set the hostname, username, and password below
 -->
 
 <capture>
@@ -21,9 +21,8 @@ NOTE: use this config with:
     <imageWidth>320</imageWidth>
     <imageHeight>240</imageHeight>
     <hasStereo>false</hasStereo>
-    <hasDepth>false</hasDepth>
-    <convertToRGB>false</convertToRGB>
-    <convertToMeters>true</convertToMeters>
+    <hasDepth>true</hasDepth>
+    <convertToRGB>true</convertToRGB>
     <hostname>192.168.80.3</hostname>
     <username>todo</username>
     <password>todo</password>
