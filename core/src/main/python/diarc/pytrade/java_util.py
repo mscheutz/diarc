@@ -28,7 +28,10 @@ def to_java_object(arg):
     """
     # Todo: Handle interfaces
     constructor = to_java_class(arg)
-    return constructor(arg)
+    if constructor == JClass("java.lang.Class").class_:
+        return arg
+    else:
+        return constructor(arg)
 
 def to_java_object_from_class(arg, clazz: str):
     """
@@ -46,7 +49,7 @@ def to_java_class(arg):
     :return: A corresponding java class
     """
     if isinstance(arg, JClass):
-        return arg
+        return JClass("java.lang.Class").class_
     elif isinstance(type(arg), JClass):
         return type(arg)
     clazz = PY_TO_JAVA_MAP.get(type(arg))
@@ -66,7 +69,7 @@ def convert_to_java_object(obj):
         return JClass("java.util.ArrayList")([convert_to_java_object(item) for item in list(obj)])
     elif isinstance(obj, list):  # Convert python lists to Arraylists
         return JClass("java.util.ArrayList")([convert_to_java_object(item) for item in obj])
-    elif isinstance(obj, dict):  # Convert python lists to Arraylists
+    elif isinstance(obj, dict):  # Convert python dictionary to HashMap
         java_map = JClass('java.util.HashMap')()
         [java_map.put(convert_to_java_object(key), convert_to_java_object(value)) for key, value in obj.items()]
         return java_map

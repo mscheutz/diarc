@@ -13,7 +13,6 @@ from bosdyn.api import manipulation_api_pb2, geometry_pb2
 from bosdyn.client.recording import GraphNavRecordingServiceClient
 from bosdyn.client import frame_helpers, math_helpers
 from bosdyn.client.frame_helpers import get_a_tform_b
-from bosdyn.client.math_helpers import Vec3
 from jpype import JImplements, JOverride, JClass, JString, JObject, JBoolean, JArray
 
 from spot_wrapper.wrapper import SpotWrapper
@@ -40,6 +39,8 @@ def handle_return(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         ret = func(self, *args, **kwargs)
+        if ret[0] is False:
+            logging.info(f"Failure msg: {ret[1]}")
         return ConditionJustification(ret[0])
 
     return wrapper
@@ -74,16 +75,32 @@ class SpotTRADEWrapper:
             refsConfigFile = ""
             self.locationConsultant.loadReferencesFromFile(refsConfigDir, refsConfigFile)
 
-    def _get_center_pixel(self, refId: Symbol) -> (int, int):
+    def _get_center_pixel(self, refId: Symbol, img_src_width: int, img_src_height: int) -> (int, int):
         # get pixel coordinates from refId
-        mo = self.trade.call_trade("getEntityForReference", refId,
-                                   JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+        ret = self.trade.call_trade("getEntityForReference", [], refId, JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+        mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(ret)
         if mo is None:
-            return False
+            return None
 
-        x_pix = mo.getBoundingBox().x
-        y_pix = mo.getBoundingBox().y
-        return (x_pix, y_pix)
+        bbox = mo.getBoundingBox()
+        x_pix = bbox.x + bbox.width / 2
+        y_pix = bbox.y + bbox.height / 2
+
+        logging.debug(f"BBox (x,y,width,height): {bbox.x}, {bbox.y}, {bbox.width}, {bbox.height}")
+        logging.debug(f"Center pixel: {x_pix}, {y_pix}. Img src size: {img_src_width}, {img_src_height}")
+        mo_img_width = mo.getImageWidth()
+        mo_img_height = mo.getImageHeight()
+        logging.info(f"mo img size: {mo_img_width}, {mo_img_height}")
+
+        # scale pixel location to match image_response size
+        x_pix = x_pix * (img_src_width / float(mo.getImageWidth()))
+        y_pix = y_pix * (img_src_height / float(mo.getImageHeight()))
+        # x_pix = x_pix * (img_src_width / 320)
+        # y_pix = y_pix * (img_src_height / 240)
+
+        logging.debug(f"Scaled center pixel: {x_pix}, {y_pix}.")
+
+        return x_pix, y_pix
 
     def _get_transforms_snapshot(self):
         return self.spot._robot_state_client.get_robot_state().kinematic_state.transforms_snapshot
@@ -207,15 +224,22 @@ class SpotTRADEWrapper:
 
     def goToPose1(self, poseName):
         logging.info(f"goToPose1 called: {poseName}")
-        pose = str(poseName.getName())
-        if pose == 'carry':
-            return self.spot.spot_arm.arm_carry()
-        if pose == 'detection':
-            return self.spot.spot_arm.hand_pose(0.818, -0.003, 0.523, -0.000, 0.389, -0.004, 0.921)
-        if pose == 'stow':
-            return self.spot.spot_arm.arm_stow()
-        if pose == 'unstow':
-            return self.spot.spot_arm.arm_unstow()
+        try:
+            pose = str(poseName.getName())
+            if pose == 'carry':
+                return self.spot.spot_arm.arm_carry()
+            if pose == 'detection':
+                return self.spot.spot_arm.hand_pose(x=0.818, y=-0.003, z=0.523, qx=-0.000, qy=0.389, qz=-0.004, qw=0.921)
+                # return self.spot.spot_arm.hand_pose(x=0.664, y=-0.001, z=0.420, qx=0.003, qy=0.233, qz=0.001, qw=0.973)
+            if pose == "putdown" or pose == "putDown":
+                return self.spot.spot_arm.hand_pose(x=1.1, y=0, z=0.4, qx=-0.7071, qy=0, qz=0, qw=0.7071)
+            if pose == 'stow':
+                return self.spot.spot_arm.arm_stow()
+            if pose == 'unstow':
+                return self.spot.spot_arm.arm_unstow()
+        except Exception as e:
+            logging.error(f"Error calling goToPose1: {traceback.format_exc()}")
+            return False, "error msg"
 
         return False, ""
 
@@ -376,21 +400,22 @@ class SpotTRADEWrapper:
     def approachLocation(self, refId):
 
         # TODO: choose ray vs pixel based on contents in MO (i.e., if mo.getLocation() has nan values)
-        walk_to_object_in_image = False
+        walk_to_object_in_image = True
         if walk_to_object_in_image:
             # use 2D pixel based bounding box to specify object to grasp -- assumes spot hand camera
-            (x_pix, y_pix) = self._get_center_pixel(refId)
             image_response = self.spot.spot_images.get_hand_rgb_image()
+            (x_pix, y_pix) = self._get_center_pixel(refId, image_response.source.cols, image_response.source.rows)
             walk = manipulation_api_pb2.WalkToObjectInImage(
-                pixel_xy=Vec2(x_pix, y_pix),
-                transforms_snapshot_for_camera=self._get_transforms_snapshot(),
+                pixel_xy=Vec2(x=x_pix, y=y_pix),
+                transforms_snapshot_for_camera=image_response.shot.transforms_snapshot,
                 frame_name_image_sensor=image_response.shot.frame_name_image_sensor,
                 camera_model=image_response.source.pinhole,
             )
         else:
             # use ray to specify object to grasp -- requires 3D camera data
-            mo = self.trade.call_trade("getEntityForReference", refId,
-                                       JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+            ret = self.trade.call_trade("getEntityForReference", [], refId, JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+            mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(ret)
+
             mo.transformToBase()
             start = Point3d(0, 0, 0)
             mo.getBaseTransform().transform(start)
@@ -400,8 +425,8 @@ class SpotTRADEWrapper:
             direction.scale(4.0)
             end.add(direction)
             walk = manipulation_api_pb2.WalkToObjectRayInWorld(
-                ray_start_rt_frame=Vec3(start.x, start.y, start.z),
-                ray_end_rt_frame=Vec3(end.x, end.y, end.z),
+                ray_start_rt_frame=geometry_pb2.Vec3(x=start.x, y=start.y, z=start.z),
+                ray_end_rt_frame=geometry_pb2.Vec3(x=end.x, y=end.y, z=end.z),
                 frame_name=self._reference_frame,
             )
 
@@ -525,72 +550,88 @@ class SpotTRADEWrapper:
     @handle_return
     @JOverride
     def pickUpObject(self, refId):
+        try:
 
-        # TODO: choose ray vs pixel based on contents in MO (i.e., if mo.getLocation() has nan values)
-        pick_object_in_image = False
-        if pick_object_in_image:
-            # use 2D pixel based bounding box to specify object to grasp -- assumes spot hand camera
-            (x_pix, y_pix) = self._get_center_pixel(refId)
-            image_response = self.spot.spot_images.get_hand_rgb_image()
-            grasp = manipulation_api_pb2.PickObjectInImage(
-                pixel_xy=Vec2(x_pix, y_pix),
-                transforms_snapshot_for_camera=self._get_transforms_snapshot(),
-                frame_name_image_sensor=image_response.shot.frame_name_image_sensor,
-                camera_model=image_response.source.pinhole,
-                walk_gaze_mode=2
-            )
-        else:
-            # use ray to specify object to grasp -- requires 3D camera data
-            mo = self.trade.call_trade("getEntityForReference", refId,
-                                       JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
-            mo.transformToBase()
-            start = Point3d(0, 0, 0)
-            mo.getBaseTransform().transform(start)
+            # TODO: choose ray vs pixel based on contents in MO (i.e., if mo.getLocation() has nan values)
+            pick_object_in_image = True
+            if pick_object_in_image:
+                # use 2D pixel based bounding box to specify object to grasp -- assumes spot hand camera
+                image_response = self.spot.spot_images.get_hand_rgb_image()
+                (x_pix, y_pix) = self._get_center_pixel(refId, image_response.source.cols, image_response.source.rows)
+                logging.info(f"Pick up object at pixel: {x_pix}, {y_pix}")
 
-            end = Point3d(start.x, start.y, start.z)
-            direction = mo.getDirection()
-            direction.scale(4.0)
-            end.add(direction)
-            grasp = manipulation_api_pb2.PickObjectRayInWorld(
-                ray_start_rt_frame=Vec3(start.x, start.y, start.z),
-                ray_end_rt_frame=Vec3(end.x, end.y, end.z),
-                frame_name=self._reference_frame,
-                walk_gaze_mode=2
-            )
+                grasp = manipulation_api_pb2.PickObjectInImage(
+                    pixel_xy=Vec2(x=x_pix, y=y_pix),
+                    transforms_snapshot_for_camera=image_response.shot.transforms_snapshot,
+                    frame_name_image_sensor=image_response.shot.frame_name_image_sensor,
+                    camera_model=image_response.source.pinhole,
+                    walk_gaze_mode=2
+                )
+            else:
+                # use ray to specify object to grasp -- requires 3D camera data
+                # NOT FULLY TESTED
+                ret = self.trade.call_trade("getEntityForReference", [], refId, JClass("edu.tufts.hrilab.vision.stm.MemoryObject"))
+                mo = JClass("edu.tufts.hrilab.vision.stm.MemoryObject")(ret)
 
-        # setting grasp params restricts the types of objects that can be picked up (top-down vs side, etc),
-        # so it doesn't make for a very general pickUpObject method
-        set_grasp_params = False
-        if set_grasp_params:
-            # We can specify where in the gripper we want to grasp. About halfway is generally good for
-            # small objects like this. For a bigger object like a shoe, 0 is better (use the entire
-            # gripper)
-            grasp.grasp_params.grasp_palm_to_fingertip = 0.2
+                mo.transformToBase()
+                start = Point3d(0, 0, 0)
+                mo.getBaseTransform().transform(start)
+                # logging.info(f"MO transform {mo.getBaseTransform()}")
 
-            # align user defined gripper axis to user defined alignment axis
-            constraint = grasp.grasp_params.allowable_orientation.add()
-            # The axis on the gripper
-            constraint.vector_alignment_with_tolerance.axis_on_gripper_ewrt_gripper = geometry_pb2.Vec3(x=0, y=1, z=0)
-            # The axis to align the gripper axis to
-            constraint.vector_alignment_with_tolerance.axis_to_align_with_ewrt_frame = geometry_pb2.Vec3(x=0, y=0, z=-1)
+                end = Point3d(start.x, start.y, start.z)
+                direction = mo.getDirection()
+                direction.scale(4.0)
+                end.add(direction)
+                # logging.info(f"Pick up object at ray. Start: {start.x}, {start.y}, {start.z} End: {end.x}, {end.y}, {end.z}")
 
-            # We'll take anything within about 15 degrees for top-down or horizontal grasps.
-            constraint.vector_alignment_with_tolerance.threshold_radians = 0.5
+                grasp = manipulation_api_pb2.PickObjectRayInWorld(
+                    ray_start_rt_frame=geometry_pb2.Vec3(x=start.x, y=start.y, z=start.z),
+                    ray_end_rt_frame=geometry_pb2.Vec3(x=end.x, y=end.y, z=end.z),
+                    frame_name=self._reference_frame,
+                    walk_gaze_mode=2
+                )
 
 
-        # Specify the frame we're using.
-        grasp.grasp_params.grasp_params_frame_name = GROUND_PLANE_FRAME_NAME
-        grasp.grasp_params.manipulation_camera_source = 2
+            # hint about camera source used (2 == hand camera)
+            grasp.grasp_params.manipulation_camera_source = 2
 
-        # Build the proto
-        if pick_object_in_image:
-            grasp_request = manipulation_api_pb2.ManipulationApiRequest(
-                pick_object_in_image=grasp)
-        else:
-            grasp_request = manipulation_api_pb2.ManipulationApiRequest(
-                pick_object_ray_in_world=grasp)
+            # setting grasp params restricts the types of objects that can be picked up (top-down vs side, etc),
+            # so it doesn't make for a very general pickUpObject method
+            set_grasp_params = False
+            if set_grasp_params:
+                # We can specify where in the gripper we want to grasp. About halfway is generally good for
+                # small objects like this. For a bigger object like a shoe, 0 is better (use the entire
+                # gripper)
+                grasp.grasp_params.grasp_palm_to_fingertip = 0.2
 
-        return self.spot.manipulation_command(grasp_request)
+                # align user defined gripper axis to user defined alignment axis
+                constraint = grasp.grasp_params.allowable_orientation.add()
+                # The axis on the gripper
+                constraint.vector_alignment_with_tolerance.axis_on_gripper_ewrt_gripper = geometry_pb2.Vec3(x=0, y=1, z=0)
+                # The axis to align the gripper axis to
+                constraint.vector_alignment_with_tolerance.axis_to_align_with_ewrt_frame = geometry_pb2.Vec3(x=0, y=0, z=-1)
+
+                # Frame name for the frame that the constraints in allowable_orientation are expressed in
+                grasp.grasp_params.grasp_params_frame_name = GROUND_PLANE_FRAME_NAME
+
+                # We'll take anything within about 15 degrees for top-down or horizontal grasps.
+                constraint.vector_alignment_with_tolerance.threshold_radians = 0.5
+
+            # Build the proto
+            if pick_object_in_image:
+                grasp_request = manipulation_api_pb2.ManipulationApiRequest(
+                    pick_object_in_image=grasp)
+            else:
+                grasp_request = manipulation_api_pb2.ManipulationApiRequest(
+                    pick_object_ray_in_world=grasp)
+
+            (success, msg, cmd_id) = self.spot.manipulation_command(grasp_request)
+            logging.info(f"Pickup command results: {success}, {msg} {cmd_id}")
+            return success, msg, cmd_id
+
+        except Exception as e:
+            logging.error(f"Error calling pickUpObject: {traceback.format_exc()}")
+            return False, "error msg"
 
     @handle_return
     @JOverride

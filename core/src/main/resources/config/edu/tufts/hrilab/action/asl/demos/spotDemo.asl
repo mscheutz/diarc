@@ -22,20 +22,20 @@ import java.util.List;
   op:log(warn, "[failedLocalization] location initialized to !defaultLocation after failing to localize");
 }
 
-() = failedGrasp(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
-  Symbol !defaultLocation = location_0:location;
-
-  recovery: {
-//    failedActions: {pickUpObject(self:agent, X:physobj)}
-    failureReasons: {failedGrasp(X)}
-//    actionStatuses: {FAIL}
-  }
-
-//    act:setInitialLocation(!defaultLocation);
-//  act:setLocationWithFiducial(!defaultLocation);
-  op:log(warn, "[failedGrasp] trying grasp again");
-  act:stopAllSearches();
-}
+//() = failedGrasp(Predicate ?failedActionPredicate, List ?failureReasons, Predicate ?goal) {
+//  Symbol !defaultLocation = location_0:location;
+//
+//  recovery: {
+////    failedActions: {pickUpObject(self:agent, X:physobj)}
+//    failureReasons: {failedGrasp(X)}
+////    actionStatuses: {FAIL}
+//  }
+//
+////    act:setInitialLocation(!defaultLocation);
+////  act:setLocationWithFiducial(!defaultLocation);
+//  op:log(warn, "[failedGrasp] trying grasp again");
+//  act:stopAllSearches();
+//}
 
 
 //////// Core behaviors //////////
@@ -127,9 +127,9 @@ import java.util.List;
 () = shutDown() {
     java.lang.Integer !dockId = 521;
 
-    act:openGripper();
+    act:openGripper(arm);
     act:goToPose(stow);
-    act:closeGripper();
+    act:closeGripper(arm);
     act:dock(!dockId);
 }
 
@@ -139,24 +139,6 @@ import java.util.List;
     }
 
     tsc:goToPose(stow);
-}
-
-() = openGripper() {
-//    Predicate !queryPred;
-//    Symbol !object;
-//    Predicate !toRetract;
-//    Predicate !free = free(?actor);
-//
-//    //todo: this shouldn't need to be done this way. should be handled in effects, etc
-//    !queryPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor, X)");
-//    !object = act:getBinding(!queryPred);
-//    if (~op:equalsValue(!object, none)) {
-//        !toRetract = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "holding(?actor, !object");
-//        op:log(debug, "[openGripper] found that holding(?actor, !object), retracting since we're opening gripper");
-//        act:retractBelief(!toRetract);
-//        act:assertBelief(!free);
-//    }
-    tsc:openGripper();
 }
 
 () = test() {
@@ -176,7 +158,7 @@ import java.util.List;
 
 () = pickUp(Symbol ?object:physobj) {
     act:goToPose(detection);
-    tsc:openGripper();
+    act:openGripper(arm);
     act:startVisualSearch(?object);
     try {
       act:findObject(?object);
@@ -190,14 +172,14 @@ import java.util.List;
 //      act:resumeCapture();
       act:stopVisualSearch(?object);
     }
-    act:gotocarrypose();
+//    act:gotocarrypose();
 }
 
 () = putDown() {
-    act:goToPutDownPose();
-    tsc:openGripper();
+    act:goToPose(putDown);
+    act:openGripper(arm);
     act:gotocarrypose();
-    act:closeGripper();
+    act:closeGripper(arm);
     act:stow();
 }
 
@@ -241,10 +223,10 @@ import java.util.List;
 
     op:log(info, "Delivering ?type ?object to ?at.");
     act:gotocarrypose();
-//    act:goToPutDownPose();
+//    act:goToPose(putDown);
     act:askQuestionFromString(pete, "Let me know when you're holding the object.", holding(X));
     op:log(info, "Finishing handoff");
-    tsc:openGripper();
+    act:openGripper(arm);
     op:sleep(500);
     tsc:closeGripper();
     tsc:goToPose(stow);
@@ -318,10 +300,4 @@ import java.util.List;
 
 () = runDemo() {
     act:deliver(physobj_1:physobj,location_1:location);
-}
-
-() = goToPutDownPose() {
-//    String !pose = "1.1 0 0.35 -0.7071 0 0 0.7071";
-    String !pose = "1.1 0 0.4 -0.7071 0 0 0.7071";
-    act:goToArmPose(!pose, "body");
 }
