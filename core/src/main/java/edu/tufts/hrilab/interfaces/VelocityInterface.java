@@ -5,6 +5,7 @@ package edu.tufts.hrilab.interfaces;
 
 import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.action.annotations.Action;
+import edu.tufts.hrilab.action.justification.Justification;
 
 /**
  * Minimal interface for setting and getting velocities.
@@ -48,7 +49,7 @@ public interface VelocityInterface {
    */
   @TRADEService
   @Action
-  void stop();
+  Justification stop();
 
   /**
    * Set translational velocity.

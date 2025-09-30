@@ -8,6 +8,8 @@ import com.aldebaran.qimessaging.Object;
 import com.aldebaran.qimessaging.CallError;
 import com.aldebaran.qimessaging.Future;
 import com.aldebaran.qimessaging.Session;
+import edu.tufts.hrilab.action.justification.ConditionJustification;
+import edu.tufts.hrilab.action.justification.Justification;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 
 import java.util.ArrayList;
@@ -977,14 +979,17 @@ public class NaoComponent extends DiarcComponent implements NaoInterface {
    * Stop the motors.
    */
   @Override
-  public void stop() {
+  public Justification stop() {
     try {
       curTV = 0.0;
       curRV = 0.0;
       motion.call("move", 0.0, 0.0, 0.0);
     } catch (CallError ce) {
-      throw new RuntimeException("stop failed: ", ce);
+      log.error("stop failed: ", ce);
+      return new ConditionJustification(false);
     }
+
+    return new ConditionJustification(true);
   }
 
   // ********************************************************************

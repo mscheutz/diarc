@@ -21,7 +21,7 @@ import yaml
 from functools import wraps
 
 from ai.thinkingrobots.trade import TRADE
-from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, CoordinateFramesInterface
+from edu.tufts.hrilab.interfaces import DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, CoordinateFramesInterface, VelocityInterface
 from edu.tufts.hrilab.spot.consultant import SpotNavGraphLocationConsultant
 from edu.tufts.hrilab.fol import Factory, Symbol, Predicate
 from javax.vecmath import Point3d, Matrix4d, Vector3d, Quat4d
@@ -46,7 +46,7 @@ def handle_return(func):
     return wrapper
 
 
-@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, CoordinateFramesInterface])
+@JImplements([DockingInterface, MoveBaseInterface, ArmInterface, SpotInterface, CoordinateFramesInterface, VelocityInterface])
 class SpotTRADEWrapper:
     def __init__(self, config, trade_wrapper: TRADEWrapper):
         self._reference_frame = "gpe"
@@ -501,11 +501,18 @@ class SpotTRADEWrapper:
     @handle_return
     @JOverride
     def stop(self):
-        return self.spot.stop()
+        try:
+            return self.spot.stop()
+        except Exception as e:
+            logging.error(f"Error calling stop: {traceback.format_exc()}")
+            return False, ""
 
+    @handle_return
     @JOverride
     def isMoving(self):
-        return self.spot.is_moving
+        isMoving = self.spot.is_moving
+        logging.info(f"isMoving = {isMoving}")
+        return isMoving, ""
 
     @JOverride
     def checkAt(self, locationTerm):
@@ -713,6 +720,67 @@ class SpotTRADEWrapper:
         self.spot.spot_graph_nav.download_navigation_graph("/tmp/spot_map")
         self.spot.spot_graph_nav.upload_graph("/tmp/spot_map")
         spot_wrapper.spot.spot_graph_nav.list_graph()  # Have to call this to update map
+
+    @JOverride
+    @handle_return
+    def getTV(self):
+        pass
+
+    @JOverride
+    @handle_return
+    def getRV(self):
+        pass
+
+    @JOverride
+    @handle_return
+    def getVels(self):
+        pass
+
+    @JOverride
+    @handle_return
+    def getDefaultVels(self):
+        pass
+
+    @JOverride
+    def setTV(self, tv):
+        try:
+            logging.info(f"Setting TV({tv})")
+            return self.setVels(tv, 0.0)
+        except Exception as e:
+            logging.error(f"Error calling setTV({tv}): {traceback.format_exc()}")
+            return False
+
+    @JOverride
+    def setRV(self, rv):
+        try:
+            logging.info(f"Setting RV({rv})")
+            return self.setVels(0.0, rv)
+        except Exception as e:
+            logging.error(f"Error calling setRV vel({rv}): {traceback.format_exc()}")
+            return False
+
+    @JOverride
+    def setVels(self, tv, rv):
+        try:
+            # Create a mobility command to walk forward
+            # Linear velocity in x (forward) direction, 0 for y and angular velocity for yaw
+            linear_velocity_x = float(tv)  # meters per second
+            linear_velocity_y = 0.0
+            angular_velocity_yaw = float(rv)
+
+            # Build the full mobility command
+            velocity_command = RobotCommandBuilder.synchro_velocity_command(
+                v_x=linear_velocity_x,
+                v_y=linear_velocity_y,
+                v_rot=angular_velocity_yaw
+            )
+
+            (success, msg, cmd_id) = self.spot.robot_command(velocity_command, duration=2)
+            return success
+
+        except Exception as e:
+            logging.error(f"Error calling setVels: {traceback.format_exc()}")
+            return False
 
 
 # This main is largely used for testing behaviors
