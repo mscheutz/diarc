@@ -25,6 +25,15 @@
     (!success) = tsc:goToPosePrimitiveLong(!goalPose);
 }
 
+() = goToPosePrimitiveNoAdjust(edu.tufts.hrilab.fol.Symbol ?pose) {
+    ai.thinkingrobots.mtracs.util.MPose !goal;
+    (!goal) = tsc:getPoseFromSymbol(?pose);
+    if (op:isNull(!goal)) {
+        exit(FAIL, notAPose(?pose));
+    }
+    tsc:goToPose(!goal);
+}
+
 () = goToPosePrimitive["goes to pose with adjustment to the given cameraHeight"](edu.tufts.hrilab.fol.Symbol ?pose, edu.tufts.hrilab.fol.Symbol ?cameraHeight) {
     ai.thinkingrobots.mtracs.util.MPose !goal;
     (!goal) = tsc:getPoseFromSymbol(?pose);

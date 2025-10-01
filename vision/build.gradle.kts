@@ -146,11 +146,11 @@ artifacts{
 }
 
 dependencies {
-  configurations.getByName("mockImplementation")(project(":core"))
+//  configurations.getByName("mockImplementation")(project(":core"))
 
     //TODO:figure out how to inherit this from the rootProject
   implementation("ch.qos.logback:logback-classic:1.4.14")
-  implementation(project(":core"))
+  implementation(project(":diarc:core"))
 
   implementation("com.google.code.gson:gson:2.6.2")
   implementation("javax.vecmath:vecmath:1.5.2")

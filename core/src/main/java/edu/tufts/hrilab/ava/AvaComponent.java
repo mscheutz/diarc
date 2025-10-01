@@ -6,6 +6,7 @@ package edu.tufts.hrilab.ava;
 
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
+import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.ava.message.AvaMoveGoal;
 import edu.tufts.hrilab.ava.message.response.*;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
@@ -128,8 +129,9 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
   private boolean listenForWW = true;
+  private int mixerID;
 
-  public AvaComponent() {
+    public AvaComponent() {
     super();
   }
 
@@ -274,6 +276,8 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
 //    setZLift(0);
     getCameraHeightMax();
+
+    mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, HDMI 0");
   }
 
   private void adjustDockTags(Map<String, Pair<Point3d, Quat4d>> allTags, List<String> dockTags) {
