@@ -15,6 +15,12 @@ import javax.vecmath.Point3d;
     MPose !pose;
     act:goToPosePrimitive("robotonepose_0:pose");
     act:lookForAndMoveToBox();
+    tsc:moveZRelative(-0.05);
+    tsc:closeGripper();
+    tsc:moveZRelative(0.10);
+    act:goToPosePrimitive("robotonepose_1:pose");
+    act:goToPosePrimitive("robotonepose_2:pose");
+    act:putDownInCrate();
 }
 
 () = lookForAndMoveToBox() {
@@ -47,10 +53,34 @@ import javax.vecmath.Point3d;
     }
     !location = op:invokeMethod(!mo, "getLocation");
     !x = op:invokeMethod(!location, "getX");
+    !x = op:*(!x, 1000);
     !y = op:invokeMethod(!location, "getY");
+    !y = op:*(!y, 1000);
     !z = op:invokeMethod(!location, "getZ");
+    !z = op:*(!z, 1000);
+    !goal = tsc:calculateRelativeMovement(!x, !y, !z);
     op:log(info, "[lookForAndMoveToBox] detected object at location: !x, !y, !z");
+    act:stopAllSearches();
 
-    !goal = op:newObject("ai.thinkingrobots.mtracs.util.MPose", !x, !y, !z, !a, !b, !c);
-    tsc:moveToRelative(!goal);
+//    act:rotateToEE(gripper);
+    tsc:goToPose(!goal);
+    tsc:rotateToVertical();
+
+    //!goal = op:newObject("ai.thinkingrobots.mtracs.util.MPose", !x, !y, !z, !a, !b, !c);
+    //tsc:moveToRelative(!goal);
+    //act:closeGripper()
+}
+
+() = rotateToGripper() {
+    act:rotateToEE(gripper);
+}
+
+() = rotateToDefault() {
+    act:rotateToEE(default);
+}
+
+() = putDownInCrate() {
+    tsc:moveZRelative(-0.2242);
+    tsc:openGripper();
+    tsc:moveZRelative(0.2242);
 }
