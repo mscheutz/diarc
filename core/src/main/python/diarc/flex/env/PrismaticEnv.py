@@ -1,12 +1,15 @@
+# Very initial impleemntation of PrismaticEnv for DIARC to be compatible with the existing untested flexExecutor class in the Github
+
+# diarc/flex/env/PrismaticEnv.py
 import sys
 import logging
-
+import numpy as np
+import gymnasium as gym
+from javax.vecmath import Point3d, Vector3d, Quat4d
 from diarc.pytrade.wrapper import TRADEWrapper
-from javax.vecmath import Point3d, Matrix4d, Vector3d, Quat4d
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-import gymnasium as gym
-import numpy as np
+
 
 class PrismaticEnv(gym.Env):
     """
@@ -14,147 +17,153 @@ class PrismaticEnv(gym.Env):
 
     State:
         [joint_axis_x, joint_axis_y, joint_axis_z,
-        displacement_x, displacement_y, displacement_z]
-        - joint_axis: a 3D unit vector indicating the current force application axis.
-        - displacement: difference between current end-effector position and initial position.
+         displacement_x, displacement_y, displacement_z]
 
     Action:
-      [force_direction (3D), force_scale (scalar ∈ [0,1])]
-
-      The applied force is computed as:
-          applied_force = normalize(force_direction) * force_scale * max_force
+        [dx, dy, dz] - 3D movement delta (already processed by FlexExecutor)
     """
+    
     def __init__(self, trade: TRADEWrapper):
         self.trade = trade
         self.joint_type = 'prismatic'
-        self.joint_params = None
-        self.action_scale = 0.05
-        self.success_distance = 0.05
+        self.joint_params = None  # Set by FlexWrapper after analysis
+        self.action_scale = 0.02
+        
+        # Transform tracking
         self.init_tf = None
-        self.curr_tf = None
         self.tf_src_frame = 'odom'
         self.tf_dst_frame = 'hand'
-
-        # TODO: are the action and observation spaces correct?
-        # Define observation space: joint_axis (3) and displacement (3)
-        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32)
-        # Define action space: force_direction (3) and force_scale (1)
-        self.action_space = gym.spaces.Box(low=np.array([-1, -1, -1, 0]), high=np.array([1, 1, 1, 1]), dtype=np.float32)
-
-    def _set_init_state(self):
-        # get the initial hand position (first step only)
-        if self.init_tf is None:
-            self.init_tf = self.trade.call_trade("getTransformTo", [], self.tf_src_frame, self.tf_dst_frame)
-
-    def _get_obs(self):
-        # Get the initial hand position
-        trans = Vector3d()
-        self.init_tf.get(trans)
-        initial_hand_pos = np.array([trans.x, trans.y, trans.z])
-
-        # Get the current hand position
-        curr_tf = self.trade.call_trade("getTransformTo", [], self.tf_src_frame, self.tf_dst_frame)
+        
+        # Gym spaces
+        self.observation_space = gym.spaces.Box(
+            low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32
+        )
+        self.action_space = gym.spaces.Box(
+            low=np.array([-1, -1, -1]), 
+            high=np.array([1, 1, 1]), 
+            dtype=np.float32
+        )
+    
+    def _get_current_position(self) -> np.ndarray:
+        """Get current gripper position. Required by FlexExecutor."""
+        curr_tf = self.trade.call_trade("getTransformTo", [], 
+                                       self.tf_src_frame, self.tf_dst_frame)
         trans = Vector3d()
         curr_tf.get(trans)
-        current_hand_pos = np.array([trans.x, trans.y, trans.z])
-
-        state_vector = self._construct_state_vector(current_hand_pos, initial_hand_pos)
-        return state_vector
-
-        # convert returned observations into target observation data type
-        # return np.random.uniform(-np.pi, np.pi, size=(6,))
-
-    def _check_manipulation_success(self, state_vector):
-        """Check if manipulation succeeded (existing logic)."""
-        distance = np.linalg.norm(state_vector[3:]) # displacement distance
-        success = distance >= self.success_distance
-        print(f"Prismatic distance: {distance:.3f}m (threshold: {self.success_distance:.3f}m)")
-        return success
-
-    def _construct_state_vector(self, current_position, initial_position):
-        """
-        Construct state vector for policy input.
-
-        Args:
-            current_position: Current gripper position [x, y, z]
-            initial_position: Initial grasp position [x, y, z]
-
-        Returns:
-            np.array: State vector [joint_axis_x, joint_axis_y, joint_axis_z,
-                                   displacement_x, displacement_y, displacement_z]
-        """
+        return np.array([trans.x, trans.y, trans.z])
+    
+    def _construct_state_vector(self, current_position: np.ndarray, 
+                               initial_position: np.ndarray) -> np.ndarray:
+        """Construct state vector for policy input."""
         if self.joint_params is None:
-            raise ValueError("Must analyze trajectory first!")
-
-        # Calculate displacement from initial position
+            raise ValueError("joint_params must be set before reset/step")
+        
         displacement = current_position - initial_position
-
-        # Get normalized joint axis
         joint_axis = self.joint_params["axis"]
         joint_axis = joint_axis / np.linalg.norm(joint_axis)
-
-        # Construct state: [joint_axis (3D), displacement (3D)]
         state = np.concatenate([joint_axis, displacement])
-
+        
         return state.astype(np.float32)
-
+    
     def reset(self, seed=None, options=None):
-        # reset the initial hand position
-        self.init_tf = None
-
-        return self._get_obs(), {}
-
-    def step(self, action):
-        # set initial hand position
-        self._set_init_state()
-
+        """Reset environment and capture initial state."""
+        super().reset(seed=seed)
+        
+        # Capture initial transform
+        self.init_tf = self.trade.call_trade("getTransformTo", [], 
+                                            self.tf_src_frame, self.tf_dst_frame)
+        
+        # Get initial position
+        trans = Vector3d()
+        self.init_tf.get(trans)
+        initial_position = np.array([trans.x, trans.y, trans.z])
+        
+        # Construct initial observation (displacement is zero)
+        obs = self._construct_state_vector(initial_position, initial_position)
+        
+        # Provide initial position in info for FlexExecutor
+        info = {"initial_position": initial_position}
+        
+        return obs, info
+    
+    def step(self, action: np.ndarray):
+        """Execute action via TRADE."""
         if len(action.shape) > 1:
             action = action.flatten()
-
-        # TODO: why is this needed?
-        action[0] = -action[0]  # Invert x action direction for Spot
-
-        sliding_axis = self.joint_params["axis"]
-        sliding_axis = sliding_axis / np.linalg.norm(sliding_axis)  # Normalize
-
-        # Project the 3D action onto the 1D sliding direction
-        action_magnitude = np.dot(action, sliding_axis)
-        constrained_action = action_magnitude * sliding_axis
-
-        # target position in "hand" frame (i.e., relative position)
-        target_position = constrained_action * self.action_scale
-
-        # Execute movement
+        
+        # Scale action
+        target_position = action * self.action_scale
+        
+        # Execute movement via TRADE
         try:
             trans = Point3d(target_position[0], target_position[1], target_position[2])
-            orient = Quat4d(0,0,0,1)
-            # self.init_tf.get(orient)
-
-            # make trade call(s) to execute action
+            orient = Quat4d(0, 0, 0, 1)
+            
             ret = self.trade.call_trade("moveToRelative", [], "arm", trans, orient)
-
+            
             # Get new observation
-            state_vector = self._get_obs()
-
-            # Check success
-            terminated = self._check_manipulation_success(state_vector)
-
-            return state_vector, None, terminated, False, {}
-
+            initial_trans = Vector3d()
+            self.init_tf.get(initial_trans)
+            initial_position = np.array([initial_trans.x, initial_trans.y, initial_trans.z])
+            
+            current_position = self._get_current_position()
+            obs = self._construct_state_vector(current_position, initial_position)
+            
+            info = {"trade_return": ret}
+            
+            return obs, 0.0, False, False, info
+            
         except Exception as e:
-            logging.error(f"Error executing step. {e}")
+            logging.error(f"Error executing step: {e}")
+            try:
+                initial_trans = Vector3d()
+                self.init_tf.get(initial_trans)
+                initial_position = np.array([initial_trans.x, initial_trans.y, initial_trans.z])
+                current_position = self._get_current_position()
+                obs = self._construct_state_vector(current_position, initial_position)
+            except:
+                obs = np.zeros(6, dtype=np.float32)
+            
+            return obs, 0.0, False, True, {"error": str(e)}
 
 # Test the environment
 if __name__ == "__main__":
-    env = PrismaticEnv(trade = TRADEWrapper())
-
-    obs, _ = env.reset()
-
-    for _ in range(10):
-        action = env.action_space.sample()  # Random action
-        print(action)
-        obs, reward, done, _, _ = env.step(action)
-        if done:
+    from diarc.pytrade.wrapper import TRADEWrapper
+    
+    print("Testing PrismaticEnv...")
+    
+    # Initialize environment
+    env = PrismaticEnv(trade=TRADEWrapper())
+    
+    # We shhould set joint_params before using
+    # (In real usage, we will use FlexWrapper sets this after analyze_joint)
+    env.joint_params = {
+        "axis": np.array([1.0, 0.0, 0.0]),  # Sliding along x-axis
+        "error": 0.01
+    }
+    
+    print("\n1. Resetting environment...")
+    obs, info = env.reset()
+    print(f"   Initial observation shape: {obs.shape}")
+    print(f"   Initial observation: {obs}")
+    print(f"   Initial position from info: {info['initial_position']}")
+    
+    print("\n2. Executing 5 random actions...")
+    for i in range(5):
+        # Generate random action
+        action = env.action_space.sample()
+        print(f"\n   Step {i+1}:")
+        print(f"   - Action: {action}")
+        
+        # Execute action
+        obs, reward, terminated, truncated, info = env.step(action)
+        
+        print(f"   - New observation: {obs}")
+        print(f"   - Displacement: {obs[3:]}")
+        print(f"   - Terminated: {terminated}, Truncated: {truncated}")
+        
+        if terminated or truncated:
+            print("   - Episode ended!")
             break
-
-    env.close()
+    
+    print("\n3. Test complete!")
