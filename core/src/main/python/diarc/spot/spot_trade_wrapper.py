@@ -782,6 +782,9 @@ class SpotTRADEWrapper:
             logging.error(f"Error calling setVels: {traceback.format_exc()}")
             return False
 
+    # @JOverride
+    # def moveToBlocking(self, x, y, theta):
+    #    pass
 
 # This main is largely used for testing behaviors
 if __name__ == '__main__':

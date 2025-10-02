@@ -271,7 +271,7 @@
       op:add(!angles, 1.6);
       act:angleInterpolation(!joints, !angles, !duration, true);
     } else {
-      !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,meaningOf(lowering(?arm))))");
+      !failCond = op:createPredicate("not(know(?actor,meaningOf(lowering(?arm))))");
       exit(FAIL, !failCond);
     }
 }
@@ -288,32 +288,40 @@
 }
 
 () = turn(edu.tufts.hrilab.fol.Symbol ?direction, edu.tufts.hrilab.fol.Symbol ?theta = infinite) {
-    java.lang.Float !rad = 0.01745;
+    edu.tufts.hrilab.fol.Predicate !failCond;
+    java.lang.Float !degToRad = 0.01745; // pi/180
+    java.long.Float !rads;
+    java.long.Float !radPerSec = 0.3;
+
     try {
       // determine direction
       if (op:equalsValue(?direction, right)) {
-        !rad = op:*(!rad, -1);
-      }
-
-      // determine angle
-      if (op:equalsValue(?theta, ninety)) {
-        !rad = op:*(!rad, 90);
-      } elseif (op:equalsValue(?theta, oneeighty)) {
-        !rad = op:*(!rad, 180);
-      } elseif (op:equalsValue(?theta, twoseventy)) {
-        !rad = op:*(!rad, 270);
+        !degToRad = op:*(!degToRad, -1);
+        !radPerSec = op:*(!radPerSec, -1);
       }
 
       // determine if it is turning forever or not
       if (op:equalsValue(?theta, infinite)) {
         act:setRV(!rad);
-      } else {
-        act:moveToBlocking(0.0, 0.0, !rad);
-      }
 
-      // setting vels is non-blocking. Loop here to keep action alive
-      while (act:isMoving()) {
-        op:sleep(100);
+        // setting vels is non-blocking. Loop here to keep action alive
+        while (act:isMoving()) {
+          op:sleep(100);
+        }
+      } else {
+        // determine angle
+        if (op:equalsValue(?theta, ninety)) {
+          !rad = op:*(!degToRad, 90);
+        } elseif (op:equalsValue(?theta, oneeighty)) {
+          !rad = op:*(!degToRad, 180);
+        } elseif (op:equalsValue(?theta, twoseventy)) {
+          !rad = op:*(!degToRad, 270);
+        } else {
+          op:log("error: unsupported theta value in turn action: ?theta");
+          !failCond = op:createPredicate("not(know(?actor,meaningOf(turning(?direction,?theta))))");
+          exit(FAIL, !failCond);
+        }
+        act:moveToBlocking(0.0, 0.0, !rad);
       }
     } finally {
       op:log("debug", "[turn(?actor, ?direction)] in finally block");
