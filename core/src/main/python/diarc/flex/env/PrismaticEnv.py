@@ -46,7 +46,7 @@ class PrismaticEnv(gym.Env):
     
     def _get_current_position(self) -> np.ndarray:
         """Get current gripper position. Required by FlexExecutor."""
-        curr_tf = self.trade.call_trade("getTransformTo", [], 
+        curr_tf = self.trade.call_trade("getTransform", [],
                                        self.tf_src_frame, self.tf_dst_frame)
         trans = Vector3d()
         curr_tf.get(trans)
@@ -70,7 +70,7 @@ class PrismaticEnv(gym.Env):
         super().reset(seed=seed)
         
         # Capture initial transform
-        self.init_tf = self.trade.call_trade("getTransformTo", [], 
+        self.init_tf = self.trade.call_trade("getTransform", [],
                                             self.tf_src_frame, self.tf_dst_frame)
         
         # Get initial position
@@ -96,6 +96,7 @@ class PrismaticEnv(gym.Env):
         
         # Execute movement via TRADE
         try:
+            # TODO: is target_position in "hand" frmae already?
             trans = Point3d(target_position[0], target_position[1], target_position[2])
             orient = Quat4d(0, 0, 0, 1)
             

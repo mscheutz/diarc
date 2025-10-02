@@ -44,7 +44,7 @@ class RevoluteEnv(gym.Env):
     def _set_init_state(self):
         # get the initial hand position (first step only)
         if self.init_tf is None:
-            self.init_tf = self.trade.call_trade("getTransformTo", [], self.tf_src_frame, self.tf_dst_frame)
+            self.init_tf = self.trade.call_trade("getTransform", [], self.tf_src_frame, self.tf_dst_frame)
 
     def _get_obs(self):
         # Get the initial hand position
@@ -53,7 +53,7 @@ class RevoluteEnv(gym.Env):
         initial_hand_pos = np.array([trans.x, trans.y, trans.z])
 
         # Get the current hand position
-        curr_tf = self.trade.call_trade("getTransformTo", [], self.tf_src_frame, self.tf_dst_frame)
+        curr_tf = self.trade.call_trade("getTransform", [], self.tf_src_frame, self.tf_dst_frame)
         trans = Vector3d()
         curr_tf.get(trans)
         current_hand_pos = np.array([trans.x, trans.y, trans.z])

@@ -44,7 +44,7 @@ class AnalysisEnv(gym.Env):
     def _get_current_position(self) -> np.ndarray:
         """Get current gripper position from TRADE."""
         try:
-            tf = self.trade.call_trade("getTransformTo", [], 
+            tf = self.trade.call_trade("getTransform", [],
                                       self.tf_src_frame, self.tf_dst_frame)
             trans = Vector3d()
             tf.get(trans)
@@ -95,29 +95,21 @@ class AnalysisEnv(gym.Env):
         
         try:
             # Get current transform for orientation
-            curr_tf = self.trade.call_trade("getTransformTo", [], 
+            curr_tf = self.trade.call_trade("getTransform", [],
                                            self.tf_src_frame, self.tf_dst_frame)
-            
-            # Extract current orientation (maintain it during wiggle)
-            orient = Quat4d()
-            curr_tf.get(orient)
+
+            # maintain current orientation during wiggle
+            orient = Quat4d(0, 0, 0, 1)
             
             # Create target pose (absolute position, current orientation)
             target = Point3d(target_position[0], target_position[1], target_position[2])
-            
-            # Execute movement to absolute position
-            # Note: You may need to adjust this TRADE call based on the API call
-            # Options: "moveToAbsolute", "moveArmToPosition", etc.
-            # this is a placeholder example
-            ret = self.trade.call_trade("moveToAbsolute", [], 
-                                       "arm", target, orient, self.tf_src_frame)
-            
-            # Alternative if moveToAbsolute doesn't exist:
+
+            # Execute movement
             # Calculate relative movement from current position
-            # current_pos = self._get_current_position()
-            # delta = target_position - current_pos
-            # ret = self.trade.call_trade("moveToRelative", [], "arm", 
-            #                            Point3d(delta[0], delta[1], delta[2]), orient)
+            current_pos = self._get_current_position()
+            delta = target_position - current_pos
+            ret = self.trade.call_trade("moveToRelative", [], "arm",
+                                       Point3d(delta[0], delta[1], delta[2]), orient)
             
             # Get achieved position
             achieved_position = self._get_current_position()
