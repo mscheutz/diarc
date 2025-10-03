@@ -95,6 +95,7 @@ const MediaManager: React.FC<Props> = ({
     };
 
     const handleUpload = () => {
+        console.log(baseUrl);
         if (!file) {
             return;
         }

@@ -10,16 +10,15 @@ function App() {
 
 
     // WEBSOCKET //
-    let location = `http://${process.env.REACT_APP_SERVER_ADDR}:8000`;
+    let location = `https://${process.env.REACT_APP_SERVER_ADDR}:443`;
     if (location.includes("#"))
         location = location.slice(0, location.indexOf("#"))
     const url: URL = new URL(location);
-    url.port = process.env.PORT;
-    url.protocol = "ws";
+    url.protocol = "wss";
     const wsBaseUrl = url.toString();
 
     let httpBaseUrl = new URL(wsBaseUrl);
-    httpBaseUrl.protocol = "http:";
+    httpBaseUrl.protocol = "https";
 
     const [availableEndpoints, setAvailableEndpoints] = useState<string[]>([]);
     let webSocketUrl  = "";
@@ -27,11 +26,12 @@ function App() {
     console.log(process.env.REACT_APP_SITE_ID);
     if (process.env.REACT_APP_SITE_ID === undefined) {
         webSocketUrl =`${wsBaseUrl}ws`;
-        httpBaseUrlString =  `${httpBaseUrl.toString()}`;
+        httpBaseUrlString =  `${httpBaseUrl.toString()}/`;
     } else {
         webSocketUrl =`${wsBaseUrl}${process.env.REACT_APP_SITE_ID}/ws`;
-        httpBaseUrlString =  `${httpBaseUrl.toString()}${process.env.REACT_APP_SITE_ID}`;
+        httpBaseUrlString =  `${httpBaseUrl.toString()}${process.env.REACT_APP_SITE_ID}/`;
     }
+    console.log("base string " + httpBaseUrlString);
     const {lastMessage, sendMessage, readyState} =
         useWebSocket(webSocketUrl);
 
