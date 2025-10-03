@@ -93,10 +93,10 @@ class SpotTRADEWrapper:
         logging.info(f"mo img size: {mo_img_width}, {mo_img_height}")
 
         # scale pixel location to match image_response size
-        x_pix = x_pix * (img_src_width / float(mo.getImageWidth()))
-        y_pix = y_pix * (img_src_height / float(mo.getImageHeight()))
-        # x_pix = x_pix * (img_src_width / 320)
-        # y_pix = y_pix * (img_src_height / 240)
+        #x_pix = x_pix * (img_src_width / float(mo.getImageWidth()))
+        #y_pix = y_pix * (img_src_height / float(mo.getImageHeight()))
+        x_pix = x_pix * (img_src_width / 320)
+        y_pix = y_pix * (img_src_height / 240)
 
         logging.debug(f"Scaled center pixel: {x_pix}, {y_pix}.")
 
@@ -230,7 +230,7 @@ class SpotTRADEWrapper:
                 return self.spot.spot_arm.arm_carry()
             if pose == 'detection':
                 return self.spot.spot_arm.hand_pose(x=0.818, y=-0.003, z=0.523, qx=-0.000, qy=0.389, qz=-0.004, qw=0.921)
-                # return self.spot.spot_arm.hand_pose(x=0.664, y=-0.001, z=0.420, qx=0.003, qy=0.233, qz=0.001, qw=0.973)
+#                 return self.spot.spot_arm.hand_pose(x=0.664, y=-0.001, z=0.420, qx=0.003, qy=0.233, qz=0.001, qw=0.973)
             if pose == "putdown" or pose == "putDown":
                 return self.spot.spot_arm.hand_pose(x=1.1, y=0, z=0.4, qx=-0.7071, qy=0, qz=0, qw=0.7071)
             if pose == 'stow':

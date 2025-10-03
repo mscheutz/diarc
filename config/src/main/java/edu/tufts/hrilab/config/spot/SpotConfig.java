@@ -62,10 +62,10 @@ public class SpotConfig extends DiarcConfiguration {
 //      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture pcd.xml -height 1.1 -rotX -45");
     }
 
-    String spotConfigFile = "/home/evan/Downloads/spot_psi.yaml";
+    String spotConfigFile = "/home/hrilab/Downloads/spot_psi.yaml";
 //    String spotConfigFile = "/home/evan/Downloads/spot_phi.yaml";
-    String tradeHubContainer = "127.0.0.1@10002";
-//    String tradeHubContainer = "192.168.0.251@10001";
+//    String tradeHubContainer = "127.0.0.1@10002";
+    String tradeHubContainer = "192.168.80.101@10001";
     createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile + " -groups agent:robotone -hubContainer " + tradeHubContainer);
 
     // flex rl

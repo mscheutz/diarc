@@ -200,10 +200,12 @@ in; DESC/DESC; #x.$x
 shut down; VERBI; shutDown
 
 stow arm; C; goToPose(?ADDRESSEE,stow)
+stow arms; C; goToPose(?ADDRESSEE,stow)
 stow your arm; C; goToPose(?ADDRESSEE,stow)
 stow the arm; C; goToPose(?ADDRESSEE,stow)
 
 unstow arm; C; goToPose(?ADDRESSEE,unstow)
+unstow arms; C; goToPose(?ADDRESSEE,unstow)
 unstow your arm; C; goToPose(?ADDRESSEE,unstow)
 unstow the arm; C; goToPose(?ADDRESSEE,unstow)
 
@@ -218,6 +220,7 @@ go to the detection pose; C; goToPose(?ADDRESSEE,detection)
 look for; VERBT; perceiveEntity
 undock; VERBI; undock
 dock; VERBI; dock
+doc; VERBI; dock
 
 %%%%%%%%%% Things %%%%%%%%%%%%%
 you; AGENT; ?ADDRESSEE
