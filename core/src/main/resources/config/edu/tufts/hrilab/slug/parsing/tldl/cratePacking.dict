@@ -1,0 +1,20 @@
+%TODO: Restrict types for refs in certain cases
+START-TEMPLATES
+VERBI; {C\AGENT ; #x.?PH($x)}, {C ; ?PH(?ADDRESSEE)}
+
+VERBT; {(C/REF)\AGENT ; #x#y.?PH($x,$y)}, {C/REF ; #x.?PH(?ADDRESSEE, $x)}
+ADDRESSABLE; {AGENT ; ?PH} ,{G/G, S/S, C/C, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
+
+GOTO; {C/REF ; #x.goToPose(?ADDRESSEE,$x)} ,{(C/REF)\AGENT ; #agent#x.goToPose($agent,$x)}
+
+END-TEMPLATES
+
+go to; GOTO
+move to; GOTO
+pick up the box; C ; pickUpItem(?ADDRESSEE)
+put down the box; C ; putDownItem(?ADDRESSEE)
+
+dodemo; C; doDemo(?ADDRESSEE)
+gripper; C; gripper(?ADDRESSEE)
+camera; C; camera(?ADDRESSEE)
+test vision; C; testVision(?ADDRESSEE)
