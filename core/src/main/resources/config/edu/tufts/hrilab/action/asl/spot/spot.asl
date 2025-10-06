@@ -20,7 +20,7 @@
           act:setTV(-0.25);
         }
       } else {
-        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(know(?actor,meaningOf(moving(?direction))))");
+        !failCond = op:createPredicate("not(know(?actor,meaningOf(moving(?direction))))");
         exit(FAIL, !failCond);
       }
     } finally {
@@ -30,6 +30,7 @@
 }
 
 () = turn(edu.tufts.hrilab.fol.Symbol ?direction, edu.tufts.hrilab.fol.Symbol ?theta = infinite) {
+    edu.tufts.hrilab.fol.Predicate !failCond;
     java.lang.Float !degToRad = 0.01745; // pi/180
     java.long.Float !rads;
     java.long.Float !radPerSec = 0.3;
@@ -55,7 +56,9 @@
         } elseif (op:equalsValue(?theta, twoseventy)) {
           !rad = op:*(!degToRad, 270);
         } else {
-          op:log("error: unsupported theta value in turn action: ?theta")
+          op:log("error: unsupported theta value in turn action: ?theta");
+          !failCond = op:createPredicate("not(know(?actor,meaningOf(turning(?direction,?theta))))");
+          exit(FAIL, !failCond);
         }
         act:moveToBlocking(0.0, 0.0, !rad);
       }
