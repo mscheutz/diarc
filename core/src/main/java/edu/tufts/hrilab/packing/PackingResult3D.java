@@ -17,4 +17,14 @@ public class PackingResult3D {
     this.layerPacking = layerPacking;
     this.orientation = orientation;
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    for (PackedItem item : allItems) {
+      sb.append(item.toString());
+      sb.append("\n");
+    }
+    return sb.toString();
+  }
 }

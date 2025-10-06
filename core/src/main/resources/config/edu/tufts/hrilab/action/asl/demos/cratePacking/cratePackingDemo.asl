@@ -9,6 +9,8 @@ import java.lang.Integer;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+import edu.tufts.hrilab.packing.PackedItem;
+import edu.tufts.hrilab.packing.PackingResult3D;
 
 () = testVision() {
     List !tokenIds;
@@ -47,19 +49,43 @@ import javax.vecmath.Vector3d;
 }
 
 () = doDemo() {
-    //get crate packing information (including number if items)
-    Integer !n = 1;
-    for (!i=0; !i lt !n; !i ++) {
-        act:goToPosePrimitive("robotonepose_0:pose");
-        act:lookForAndMoveToBox();
-        tsc:moveZRelative(-0.05);
-        tsc:closeGripper();
-        tsc:moveZRelative(0.3);
-        act:goToPosePrimitive("robotonepose_1:pose");
+    PackedItem !item;
+    Double !centerX;
+    Double !centerY;
+    Double !angle;
+    PackingResult3D !result;
+    Float !boxHeight = 0.060;
+    Float !zOffset;
+    Integer !tmp;
+    Integer !itemsPerLayer;
+    Integer !numLayers;
 
-        //get values from packing info
-        act:putDownInCrate(120f, 200f, 0.0f, -1.57f);
+    //get crate packing information (including number if items)
+    !result = tsc:solvePalletPacking3D();
+    op:log(warn, "[doDemo] packing result: !result");
+    !numLayers = tsc:getNumLayers();
+    !itemsPerLayer = tsc:getNumberOfItemsPerLayer();
+    for (!i=0; !i lt !numLayers; !i ++) {
+        for (!j=0; !j lt !itemsPerLayer; !j ++) {
+            act:goToPosePrimitive("robotonepose_0:pose");
+            act:lookForAndMoveToBox();
+            tsc:moveZRelative(-0.05);
+            tsc:closeGripper();
+            tsc:moveZRelative(0.3);
+            act:goToPosePrimitive("robotonepose_1:pose");
+
+            //get values from packing info
+            !item = tsc:getNextPackedItem();
+            !centerY = op:invokeMethod(!item, "getCenterX");
+            !centerX = op:invokeMethod(!item, "getCenterY");
+            !angle = op:invokeMethod(!item, "getAngle");
+            op:log(info, "[doDemo] putting down item at !centerX, !centerY, !angle");
+            !tmp = op:+(!i,1);
+            !zOffset = op:*(!boxHeight, !tmp);
+            act:putDownInCrate(!centerX, !centerY, !zOffset, !angle);
+        }
     }
+    act:goToPosePrimitive("robotonepose_0:pose");
 }
 
 () = lookForAndMoveToBox() {
@@ -129,8 +155,7 @@ import javax.vecmath.Vector3d;
     !origin = tsc:getPoseFromSymbol(robotonepose_2:pose);
     act:moveToAdjustedPose(!origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc); //todo: rotate if needed
 
-
-    !height = op:+(-0.48, 0.065);
+    !height = op:+(-0.38, ?dz);
     tsc:moveZRelative(!height);
     tsc:openGripper();
     !height = op:*(!height, -1);
