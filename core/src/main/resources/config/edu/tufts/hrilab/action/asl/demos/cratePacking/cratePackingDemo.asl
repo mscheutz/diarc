@@ -5,24 +5,61 @@ import java.util.List;
 import java.lang.Long;
 import java.lang.Double;
 import java.lang.Float;
+import java.lang.Integer;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+
+() = testVision() {
+    List !tokenIds;
+    Long !tokenId;
+    Symbol !refId;
+    MemoryObject !mo;
+    Point3d !location;
+    MPose !goal;
+    Double !x;
+    Double !y;
+    Double !z;
+    Double !theta;
+    Term !props;
+    Symbol !robotone="robotone:agent";
+
+    act:goToPosePrimitive("robotonepose_0:pose");
+
+    act:rotateToEE("default");
+
+    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
+    op:log(info, "reference for an object to get the search moving with props: !props");
+    !refId = !robotone.act:positReference(!props);
+    op:log(info, "refId: !refId");
+
+    op:log(info, "[lookForAndMoveToBox] looking for box...");
+    (!tokenIds, !tokenId) = act:findObject(!refId);
+    op:log(info, "[lookForAndMoveToBox] done looking for box");
+    op:log(info, "[lookForAndMoveToBox] tokenId: !tokenId, tokenIds: !tokenIds");
+    op:log(info, "[lookForAndMoveToBox] search succeeded");
+    !mo = tsc:getToken(!tokenId);
+    act:stopAllSearches();
+}
 
 () = goToPoseDirect(Symbol ?pose) {
     act:goToPosePrimitiveNoAdjust(?pose);
 }
 
 () = doDemo() {
-    MPose !pose;
-    act:goToPosePrimitive("robotonepose_0:pose");
-    act:lookForAndMoveToBox();
-    tsc:moveZRelative(-0.05);
-    tsc:closeGripper();
-    tsc:moveZRelative(0.10);
-    act:goToPosePrimitive("robotonepose_1:pose");
-    act:goToPosePrimitive("robotonepose_2:pose");
-    act:putDownInCrate();
+    //get crate packing information (including number if items)
+    Integer !n = 1;
+    for (!i=0; !i lt !n; !i ++) {
+        act:goToPosePrimitive("robotonepose_0:pose");
+        act:lookForAndMoveToBox();
+        tsc:moveZRelative(-0.05);
+        tsc:closeGripper();
+        tsc:moveZRelative(0.3);
+        act:goToPosePrimitive("robotonepose_1:pose");
+
+        //get values from packing info
+        act:putDownInCrate(120f, 200f, 0.0f, -1.57f);
+    }
 }
 
 () = lookForAndMoveToBox() {
@@ -30,37 +67,28 @@ import javax.vecmath.Vector3d;
     Long !tokenId;
     Symbol !refId;
     MemoryObject !mo;
-    List !mos;
     Point3d !location;
     MPose !goal;
     Double !x;
     Double !y;
     Double !z;
     Double !theta;
-    Long !typeId;
     Term !props;
     Symbol !robotone="robotone:agent";
 
     act:rotateToEE("default");
+
     !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
     op:log(info, "reference for an object to get the search moving with props: !props");
     !refId = !robotone.act:positReference(!props);
     op:log(info, "refId: !refId");
 
     op:log(info, "[lookForAndMoveToBox] looking for box...");
-    !tokenIds = act:lookForObject(!refId);
-    !typeId = tsc:getTypeId(!refId);
+    (!tokenIds, !tokenId) = act:findObject(!refId);
     op:log(info, "[lookForAndMoveToBox] done looking for box");
-    if (op:isEmpty(!tokenIds)) {
-        exit(FAIL, not(found()));
-    }
-    !tokenId = op:get(!tokenIds, 0);
+    op:log(info, "[lookForAndMoveToBox] tokenId: !tokenId, tokenIds: !tokenIds");
     op:log(info, "[lookForAndMoveToBox] search succeeded");
-    !mos = tsc:getTokens(!tokenId);
-    if (op:isEmpty(!mos)) {
-        exit(FAIL, not(found()));
-    }
-    !mo = op:get(!mos, 0);
+    !mo = tsc:getToken(!tokenId);
     !location = op:invokeMethod(!mo, "getLocation");
     op:log(warn, "location reported from MO is !location");
 //    act:calculateAndMoveToGrasp(!mo);
@@ -79,7 +107,6 @@ import javax.vecmath.Vector3d;
 //    op:log(info, "[lookForAndMoveToBox] detected object at location: !x, !y, !z");
 //
     tsc:goToPose(!goal);
-    tsc:rotateToVertical();
     tsc:moveCRelative(!theta);
 }
 
@@ -91,10 +118,23 @@ import javax.vecmath.Vector3d;
     act:rotateToEE(default);
 }
 
-() = putDownInCrate() {
-    //tsc:moveZRelative(-0.2242);
+() = putDownInCrate(Float ?dx, Float ?dy, Float ?dz, Float ?dc) {
+
+    MPose !origin;
+    Double !height;
+    Symbol !robotone = "robotone:agent";
+
+    Float !zero = 0.0f;
+
+    !origin = tsc:getPoseFromSymbol(robotonepose_2:pose);
+    act:moveToAdjustedPose(!origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc); //todo: rotate if needed
+
+
+    !height = op:+(-0.48, 0.065);
+    tsc:moveZRelative(!height);
     tsc:openGripper();
-    //tsc:moveZRelative(0.2242);
+    !height = op:*(!height, -1);
+    tsc:moveZRelative(!height);
 }
 
 () = gripper() {

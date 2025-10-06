@@ -144,9 +144,10 @@ public class CratePacking extends DiarcConfiguration {
                 rv4fr = createInstance(ai.thinkingrobots.mtracs.CR800Component.class, "-config " + rv4frConfigPath + " -poses " + locationsPath + " -objects " + objectsPath + " -groups agent:robottwo:agent");
             }
         }
-
-      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture rsense.xml -groups agent:robotone:agent -rotX -67.5 -height 1.1");
-      createInstance(edu.tufts.hrilab.grasp.GraspComponent.class, "-groups agent:robotone:agent");
+        if (!mock) {
+          createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture rsense.xml -groups agent:robotone:agent -rotX -67.5 -height 1.1");
+          createInstance(edu.tufts.hrilab.grasp.GraspComponent.class, "-groups agent:robotone:agent");
+        }
 
         if (japanese) {
             languageGenerationASLFile = "config/edu/tufts/hrilab/action/asl/demos/pickAndPlace/pickAndPlaceLanguageGenerationJapanese.asl";

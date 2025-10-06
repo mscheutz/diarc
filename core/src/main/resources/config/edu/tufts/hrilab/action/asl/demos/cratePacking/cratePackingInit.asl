@@ -7,6 +7,8 @@ import java.util.HashMap;
 
 () = initCratePacking(){
     Symbol !robotone="robotone:agent";
+    Term !props;
+    Symbol !refId;
 
     !robotone.tsc:loadLocations(!robotone);
     !robotone.act:setupPoses();
