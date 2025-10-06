@@ -1,4 +1,4 @@
-# Very initial impleemntation of AnalysisEnv for DIARC to be compatible with the existing untested flexExecutor class in the Github
+# diarc/flex/env/AnalysisEnv.py
 import sys
 import logging
 import numpy as np
@@ -13,30 +13,18 @@ class AnalysisEnv(gym.Env):
     """
     DIARC Gymnasium environment for joint analysis via wiggle movements.
     
-    This environment executes exploratory movements to collect trajectory data
-    for determining joint type and parameters.
-    
-    Action:
-        [x, y, z] - Absolute target position in vision frame
-    
-    Observation:
-        [x, y, z] - Current gripper position
+    Action: [x, y, z] - Absolute target position in odom frame
+    Observation: [x, y, z] - Current gripper position
     """
     
     def __init__(self, trade: TRADEWrapper):
         self.trade = trade
-        
-        # Transform parameters
         self.tf_src_frame = 'odom'
         self.tf_dst_frame = 'hand'
         
-        # Gym spaces
-        # Action: absolute 3D position
         self.action_space = gym.spaces.Box(
             low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
         )
-        
-        # Observation: current 3D position
         self.observation_space = gym.spaces.Box(
             low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
         )
@@ -54,66 +42,36 @@ class AnalysisEnv(gym.Env):
             raise
     
     def reset(self, seed=None, options=None):
-        """
-        Reset and return current gripper position.
-        
-        Returns:
-            obs: Current position [x, y, z]
-            info: Dict with initial position
-        """
+        """Reset and return current gripper position."""
         super().reset(seed=seed)
-        
-        # Get current position as starting point
         current_position = self._get_current_position()
-        
         logging.info(f"AnalysisEnv reset at position: {current_position}")
-        
-        # Return current position as observation
         info = {"initial_position": current_position}
         return current_position, info
     
     def step(self, action: np.ndarray):
-        """
-        Move gripper to target absolute position.
-        
-        Args:
-            action: Target position [x, y, z] in vision frame (absolute)
-        
-        Returns:
-            obs: Achieved position [x, y, z]
-            reward: 0 (not used)
-            terminated: False
-            truncated: True if error occurred
-            info: Dict with movement info
-        """
+        """Move gripper to target absolute position in odom frame."""
         if len(action.shape) > 1:
             action = action.flatten()
         
-        target_position = action
-        
+        target_position = action  # Absolute position in odom frame
         logging.info(f"AnalysisEnv moving to: {target_position}")
         
         try:
-            # Get current transform for orientation
+            # Get current orientation to maintain it
             curr_tf = self.trade.call_trade("getTransform", [],
                                            self.tf_src_frame, self.tf_dst_frame)
-
-            # maintain current orientation during wiggle
-            orient = Quat4d(0, 0, 0, 1)
+            orient = Quat4d()
+            curr_tf.get(orient)
             
-            # Create target pose (absolute position, current orientation)
+            # Create target point
             target = Point3d(target_position[0], target_position[1], target_position[2])
-
-            # Execute movement
-            # Calculate relative movement from current position
-            current_pos = self._get_current_position()
-            delta = target_position - current_pos
-            ret = self.trade.call_trade("moveToRelative", [], "arm",
-                                       Point3d(delta[0], delta[1], delta[2]), orient)
+            
+            # Use moveTo for absolute positioning in odom frame
+            ret = self.trade.call_trade("moveTo", [], "arm", target, orient)
             
             # Get achieved position
             achieved_position = self._get_current_position()
-            
             logging.info(f"AnalysisEnv achieved: {achieved_position}")
             
             info = {
@@ -127,13 +85,10 @@ class AnalysisEnv(gym.Env):
             
         except Exception as e:
             logging.error(f"Error in AnalysisEnv step: {e}")
-            
-            # Try to return current position on error
             try:
                 obs = self._get_current_position()
             except:
                 obs = np.zeros(3, dtype=np.float32)
-            
             return obs, 0.0, False, True, {"error": str(e)}
 
 
@@ -144,12 +99,11 @@ if __name__ == "__main__":
     obs, info = env.reset()
     print(f"Initial position: {obs}")
     
-    # Simulate wiggle movements
     wiggle_offsets = [
-        np.array([0.05, 0.0, 0.0]),   # Forward
-        np.array([-0.05, 0.0, 0.0]),  # Back
-        np.array([0.0, 0.05, 0.0]),   # Left
-        np.array([0.0, -0.05, 0.0]),  # Right
+        np.array([0.05, 0.0, 0.0]),
+        np.array([-0.05, 0.0, 0.0]),
+        np.array([0.0, 0.05, 0.0]),
+        np.array([0.0, -0.05, 0.0]),
     ]
     
     start_pos = obs.copy()
@@ -157,7 +111,6 @@ if __name__ == "__main__":
     for i, offset in enumerate(wiggle_offsets):
         target = start_pos + offset
         print(f"\nWiggle {i+1}: Moving to {target}")
-        
         obs, reward, done, truncated, info = env.step(target)
         print(f"Achieved: {obs}")
         print(f"Error: {info.get('error', 'N/A')}")
@@ -166,6 +119,5 @@ if __name__ == "__main__":
             print("Movement failed!")
             break
         
-        # Return to start
         obs, _, _, _, _ = env.step(start_pos)
         print(f"Returned to: {obs}")

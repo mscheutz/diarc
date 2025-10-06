@@ -1,14 +1,10 @@
 import logging
 import argparse
-from diarc.flex.env.AnalysisEnv import AnalysisEnv  # we need to add THIS
+from diarc.flex.env.AnalysisEnv import AnalysisEnv
 from diarc.flex.env.PrismaticEnv import PrismaticEnv
 from diarc.flex.env.RevoluteEnv import RevoluteEnv
 
-# REMOVE: from policies import door_open, grasp_handle, push_button
-# REMOVE: from sklearn.utils import Bunch
-# REMOVE: from diarc.flex.DIARC_env import DIARCEnv
-
-# ADD: Import from FLEX repo
+# Import from FLEX repo
 from flex.executor import FlexExecutor
 from flex.config import FlexConfig
 
@@ -34,10 +30,10 @@ class FlexWrapper:
         self.revolute_env = RevoluteEnv(trade_wrapper)
         
         # State tracking
-        self.joint_type = None  # CHANGE: None instead of 'unknown'
+        self.joint_type = None
         self.joint_params = None
         
-        # REPLACE Bunch config with FlexConfig
+        # Create FlexConfig
         config = FlexConfig(
             max_steps=50,
             action_scale=0.02,
@@ -48,7 +44,7 @@ class FlexWrapper:
             revolute_policy_path="models/revolute"
         )
         
-        # flex.FlexPolicies with FlexExecutor
+        # Create FlexExecutor
         self.flex_executor = FlexExecutor(config)
     
     @JOverride
@@ -72,7 +68,7 @@ class FlexWrapper:
         """Phase 1: Joint analysis via wiggle movements."""
         logger.info("Starting joint analysis...")
         
-        #  to FlexExecutor
+        # Delegate to FlexExecutor
         self.joint_type, self.joint_params = self.flex_executor.analyze_joint(
             self.analysis_env
         )
@@ -84,7 +80,6 @@ class FlexWrapper:
     
     def _open_door(self):
         """Phase 2: Policy-based door opening."""
-        # Check if analysis was done
         if self.joint_type is None or self.joint_params is None:
             logger.error("Must call analyze_joint before open_door")
             return self._handle_return(False)
