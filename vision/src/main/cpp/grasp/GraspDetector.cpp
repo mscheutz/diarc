@@ -54,19 +54,19 @@ std::vector<Grasp> GraspDetector::calculateGraspOptions(pcl::PointCloud<pcl::Poi
 
   // if size of object is "small enough" then just make naive grasp calculation for pr2-style gripper
   std::vector<Grasp> grasps;
-  if (smallObjectGrasp->canCalculateGraspPoses(cloud, transform)) {
+  smallObjectGrasp->canCalculateGraspPoses(cloud, transform);
     LOG4CXX_DEBUG(logger, "Calculating small object grasps.");
     grasps = smallObjectGrasp->calculateGraspPoses(cloud, transform);
     LOG4CXX_DEBUG(logger, boost::format("Detected %d small object grasp options.") % grasps.size());
-  } else {
-    #if defined(USE_AGILEGRASP)
-      LOG4CXX_DEBUG(logger, "Calculating agile grasps.");
-      grasps = agileGrasp->calculateGraspPoses(cloud, transform);
-      LOG4CXX_DEBUG(logger, boost::format("Detected %d agile grasp options.") % grasps.size());
-    #else
-      LOG4CXX_WARN(logger, "No small object grasps found, and Agile Grasp is not available.");
-    #endif
-  }
+//  } else {
+//    #if defined(USE_AGILEGRASP)
+//      LOG4CXX_DEBUG(logger, "Calculating agile grasps.");
+//      grasps = agileGrasp->calculateGraspPoses(cloud, transform);
+//      LOG4CXX_DEBUG(logger, boost::format("Detected %d agile grasp options.") % grasps.size());
+//    #else
+//      LOG4CXX_WARN(logger, "No small object grasps found, and Agile Grasp is not available.");
+//    #endif
+//  }
 
   return grasps;
 }

@@ -19,8 +19,6 @@ public interface VisionConsultantInterface extends ConsultantInterface {
    * @param objectRef
    * @return
    */
-  @TRADEService
-  @Action
   Long getTypeId(Symbol objectRef);
 
   /**

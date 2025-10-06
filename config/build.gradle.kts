@@ -49,6 +49,9 @@ dependencies {
   implementation(project(":vision","mockJar"))
   implementation(project(":diarcRos"))
   implementation(project(":diarcRos","mockJar"))
+  implementation("ai.thinkingrobots:mtracs:1.12.2") {
+    exclude(group = "edu.tufts.hrilab", module = "diarc-core") //avoid a transitive dependency with the diarc-core inclusion for the external project.
+  }
 
   if(project.hasProperty("diarc.enableRos") && project.property("diarc.enableRos").toString().toBoolean()) {
     implementation(project(":diarcRos"))

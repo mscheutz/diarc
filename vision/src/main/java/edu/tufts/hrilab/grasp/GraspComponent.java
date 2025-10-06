@@ -5,14 +5,19 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.util.RotationHelpers;
 import edu.tufts.hrilab.util.resource.Resources;
 import edu.tufts.hrilab.vision.common.swig.CommonModule;
 import edu.tufts.hrilab.vision.grasp.swig.GraspDetectorModule;
 import edu.tufts.hrilab.vision.stm.Grasp;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
+import edu.tufts.hrilab.vision.stm.MemoryObjectUtil;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.lang3.tuple.Pair;
 
+import javax.vecmath.Tuple3d;
+import javax.vecmath.Vector3d;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +87,53 @@ public class GraspComponent extends DiarcComponent {
   public List<Grasp> calculateGraspOptions(MemoryObject mo) {
     return calculateGraspOptions(mo, new ArrayList<>());
   }
+
+  //tood: (pete) put this somewhere sensible
+  @TRADEService
+  public Grasp calculateSingleGraspOption(MemoryObject mo) {
+    List<Grasp> graspOptions = calculateGraspOptions(mo);
+    graspOptions.sort((grasp0, grasp1) -> {
+      Vector3d vertical = new Vector3d(0, 0, -1);
+      double angleA = MemoryObjectUtil.getAngleFromAngle(grasp0, vertical);
+      double angleB = MemoryObjectUtil.getAngleFromAngle(grasp1, vertical);
+      if (angleA == angleB)
+        return 0;
+      else
+        return (angleA < angleB) ? -1 : 1;
+    });
+    if (graspOptions.isEmpty()) {
+      return null;
+    }
+    return graspOptions.get(0);
+  }
+
+@TRADEService
+public double calculateAngleOfObject(MemoryObject mo) {
+  //(NOPE! that's a lie. calculate it!) -------The order is bottomLeft, topLeft, topRight, bottomRight.------
+  //todo: (pete) don't do this here. learn how JNI actually works and stop abusing the grasp class
+  Grasp grasp = calculateGraspOptions(mo).get(0);
+  List <Vector3d> points = new ArrayList<>();
+  for (int i = 0; i < grasp.getNumPoints(); i++) {
+    points.add(grasp.getPoint(i));
+  }
+  points.sort((a, b) -> {
+    if (a.x == b.x)
+      return 0;
+    else
+      return (a.x < b.x) ? -1 : 1;
+  });
+
+  Vector3d bottomLeft = points.get(0).y < points.get(1).y ? points.get(0) : points.get(1);
+  Vector3d bottomRight = points.get(2).y < points.get(3).y ? points.get(2) : points.get(3);
+
+  log.info("[calculateAngleOfObject] bottom left: " + bottomLeft + " bottom right " + bottomRight);
+
+  double theta = Math.atan2(bottomRight.getY() - bottomLeft.getY(), bottomRight.getX() - bottomLeft.getX());
+//  if (bottomLeft.getY() > bottomRight.getY()) {
+//    theta = -theta;
+//  }
+  return theta;
+}
 
   public List<Grasp> calculateGraspOptions(MemoryObject mo, List<? extends Term> constraints) {
     double[][] cloud = mo.getPointCloud();

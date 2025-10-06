@@ -10,14 +10,6 @@ import java.util.HashMap;
 
     !robotone.tsc:loadLocations(!robotone);
     !robotone.act:setupPoses();
-    !robotone.act:setupObject();
-}
-
-() = setupObject() {
-    Term !props;
-    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
-    op:log(info, "reference for an object to get the search moving");
-    ?refId = act:positReference(!props);
 }
 
 () = setupPoses() {
