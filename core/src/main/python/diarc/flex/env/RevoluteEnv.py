@@ -45,15 +45,27 @@ class RevoluteEnv(gym.Env):
         return np.array([trans.x, trans.y, trans.z])
     
     def _construct_state_vector(self, current_position: np.ndarray, 
-                               initial_position: np.ndarray) -> np.ndarray:
-        """Construct state vector for policy input."""
+                            initial_position: np.ndarray) -> np.ndarray:
+        """Construct state vector for revolute policy input."""
         if self.joint_params is None:
             raise ValueError("joint_params must be set before reset/step")
         
-        displacement = current_position - initial_position
+        # Get joint parameters
         joint_axis = self.joint_params["axis"]
         joint_axis = joint_axis / np.linalg.norm(joint_axis)
-        state = np.concatenate([joint_axis, displacement])
+        joint_center = self.joint_params["center"]  # pr
+        
+        # For revolute: vt = (pt - pr) - [(pt - pr)·hr]hr
+        vector_to_point = current_position - joint_center  # pt - pr
+        
+        # Project onto rotation axis
+        projection_on_axis = np.dot(vector_to_point, joint_axis) * joint_axis
+        
+        # vt is the component perpendicular to the axis
+        vt = vector_to_point - projection_on_axis
+        
+        # State: [hr, vt]
+        state = np.concatenate([joint_axis, vt])
         
         return state.astype(np.float32)
     
