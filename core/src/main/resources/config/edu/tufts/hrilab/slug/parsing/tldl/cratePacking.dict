@@ -18,3 +18,16 @@ dodemo; C; doDemo(?ADDRESSEE)
 gripper; C; gripper(?ADDRESSEE)
 camera; C; camera(?ADDRESSEE)
 test vision; C; testVision(?ADDRESSEE)
+
+items; VAL\NUM; #x.amount($x)
+all of them; c; amount(max)
+as many as possible; c; amount(max)
+the maximum ammount; c; amount(max)
+
+yes; VAL; val(yes)
+no; VAL; val(no)
+
+millimeters; VAL\NUM; #x.sizeInMM($x)
+mm; VAL\NUM; #x.sizeInMM($x)
+
+configure; C; packingConfigurationStub(?ADDRESSEE)
