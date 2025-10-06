@@ -176,6 +176,7 @@ public class CratePacking extends DiarcConfiguration {
 
                         "-asl config/edu/tufts/hrilab/action/asl/demos/cratePacking/cratePackingDemo.asl " +
                         "-asl config/edu/tufts/hrilab/action/asl/demos/cratePacking/cratePackingInit.asl " +
+                        "-asl config/edu/tufts/hrilab/action/asl/demos/cratePacking/cratePackingDialogue.asl " +
 
                         "-asl config/edu/tufts/hrilab/action/asl/demos/cratePacking/cratePackingInit.asl " +
                         "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/cognexArmUtil.asl " +

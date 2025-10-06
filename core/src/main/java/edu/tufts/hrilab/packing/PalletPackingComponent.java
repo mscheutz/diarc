@@ -1,6 +1,7 @@
 package edu.tufts.hrilab.packing;
 
 import ai.thinkingrobots.trade.TRADEService;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -83,6 +84,7 @@ public class PalletPackingComponent extends DiarcComponent {
    * height, allowing only for 90-degree horizontal rotation of the item
    */
   @TRADEService
+  @Action
   public PackingResult3D solvePalletPacking3D() {
     if (palletL == -1 || palletW == -1 || palletH == -1 || rectL == -1 || rectW == -1 || rectH == -1) {
       log.error("[solvePalletPacking3D] pallet and item dimensions must be fully set before running solve. Current values {},{},{} {},{},{}", palletL, palletW, palletH, rectL, rectW, rectH);
@@ -91,6 +93,7 @@ public class PalletPackingComponent extends DiarcComponent {
     return solvePalletPacking3D(palletL, palletW, palletH, rectL, rectW, rectH);
   }
   @TRADEService
+  @Action
   public PackingResult3D solvePalletPacking3D(int palletL, int palletW, int palletH, int rectL, int rectW, int rectH) {
     itemIndex = 0;
     if (palletH < rectH) {

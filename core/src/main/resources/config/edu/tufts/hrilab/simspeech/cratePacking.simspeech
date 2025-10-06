@@ -2,3 +2,16 @@ dodemo
 ------
 gripper
 camera
+------
+configure
+30 mm
+20 mm
+10 mm
+6 mm
+4 mm
+5 mm
+--
+yes
+--
+no
+10 items
