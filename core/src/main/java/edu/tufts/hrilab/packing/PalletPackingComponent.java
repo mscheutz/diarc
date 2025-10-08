@@ -344,6 +344,6 @@ public class PalletPackingComponent extends DiarcComponent {
             new Camera(cameraHeightMM, cameraAngle),
             new Box(rectW, rectL, rectH), boxProjection,
             new Vector2D(imageWidth/2.0, imageHeight/2.0));
-    return new RobotAdjustment(new Vector2D(adjustment.getX(), adjustment.getY()), adjustment.rotationDegrees() + 90);
+    return new RobotAdjustment(new Vector2D(adjustment.getX(), adjustment.getY()), adjustment.rotationDegrees());
   }
 }

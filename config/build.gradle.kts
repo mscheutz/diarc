@@ -49,7 +49,7 @@ dependencies {
   implementation(project(":vision","mockJar"))
   implementation(project(":diarcRos"))
   implementation(project(":diarcRos","mockJar"))
-  implementation("ai.thinkingrobots:mtracs:1.12.55") {
+  implementation("ai.thinkingrobots:mtracs:1.12.55-SNAPSHOT") {
     exclude(group = "edu.tufts.hrilab", module = "diarc-core") //avoid a transitive dependency with the diarc-core inclusion for the external project.
   }
 
@@ -61,7 +61,7 @@ dependencies {
 //    implementation(project(":vision"))
 //  }
 
-  testImplementation("ai.thinkingrobots:mtracs-mock:1.12.55") {
+  testImplementation("ai.thinkingrobots:mtracs-mock:1.12.55-SNAPSHOT") {
     exclude(group = "edu.tufts.hrilab", module = "diarc-core") //avoid a transitive dependency with the diarc-core inclusion for the external project.
   }
 
@@ -260,4 +260,8 @@ repositories {
     url = uri("http://hrilab.tufts.edu:11361/repository/internal/")
     isAllowInsecureProtocol = true
   }
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor(0, "seconds")
 }

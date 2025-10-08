@@ -36,15 +36,6 @@ import java.awt.Rectangle;
     !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
     op:log(info, "reference for an object to get the search moving with props: !props");
     !refId = !robotone.act:positReference(!props);
-    op:log(info, "refId: !refId");
-
-    op:log(info, "[lookForAndMoveToBox] looking for box...");
-    (!tokenIds, !tokenId) = act:findObject(!refId);
-    op:log(info, "[lookForAndMoveToBox] done looking for box");
-    op:log(info, "[lookForAndMoveToBox] tokenId: !tokenId, tokenIds: !tokenIds");
-    op:log(info, "[lookForAndMoveToBox] search succeeded");
-    !mo = tsc:getToken(!tokenId);
-    act:stopAllSearches();
 }
 
 () = goToPoseDirect(Symbol ?pose) {
@@ -110,34 +101,35 @@ import java.awt.Rectangle;
 
     act:rotateToEE("camera");
 
-    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
-    op:log(info, "reference for an object to get the search moving with props: !props");
-    !refId = !robotone.act:positReference(!props);
-    op:log(info, "refId: !refId");
+    //52 and 108 are the "threshold" values that seem to work for the contrast-based detection
 
-    op:log(info, "[lookForAndMoveToBox] looking for box...");
-    (!tokenIds, !tokenId) = act:findObject(!refId);
-    op:log(info, "[lookForAndMoveToBox] done looking for box");
-    op:log(info, "[lookForAndMoveToBox] tokenId: !tokenId, tokenIds: !tokenIds");
-    op:log(info, "[lookForAndMoveToBox] search succeeded");
-    !mo = tsc:getToken(!tokenId);
-
-    !box = op:invokeMethod(!mo, "getBoundingBox");
+//    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
+//    op:log(info, "reference for an object to get the search moving with props: !props");
+//    !refId = !robotone.act:positReference(!props);
+//    op:log(info, "refId: !refId");
+//
+//    op:log(info, "[lookForAndMoveToBox] looking for box...");
+//    (!tokenIds, !tokenId) = act:findObject(!refId);
+//    op:log(info, "[lookForAndMoveToBox] done looking for box");
+//    op:log(info, "[lookForAndMoveToBox] tokenId: !tokenId, tokenIds: !tokenIds");
+//    op:log(info, "[lookForAndMoveToBox] search succeeded");
+//    !mo = tsc:getToken(!tokenId);
+//
+//    !box = op:invokeMethod(!mo, "getBoundingBox");
+    !box = tsc:getBoundingBox();
     !adjustment = tsc:calculateRobotAdjustment(!box);
     !x = op:invokeMethod(!adjustment, "getX");
-    !x = op:/(!x, 1000);
     !y = op:invokeMethod(!adjustment, "getY");
-    !y = op:/(!y, 1000);
     !theta = op:invokeMethod(!adjustment, "getRotation");
 
     op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
 
     act:stopAllSearches();
 
-    !currentPose = tsc:getCurrentPose();
     tsc:moveXRelative(!x);
     tsc:moveYRelative(!y);
-    !goal = tsc:calculateRelativeMovement(!currentPose);
+    !currentPose = tsc:getCurrentPose();
+    !goal = tsc:calculateRelativeMovement(!currentPose, !theta);
     act:rotateToEE("gripper");
     tsc:goToPose(!goal);
 }
