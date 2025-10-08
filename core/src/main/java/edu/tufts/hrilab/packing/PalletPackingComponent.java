@@ -21,6 +21,10 @@ import java.util.Map;
  */
 public class PalletPackingComponent extends DiarcComponent {
 
+  private double imageWidth;
+  private double imageHeight;
+  private double cameraHeightMM;
+  private double cameraAngle;
   //TODO:Likely will want to modify this to not have 1:1 relationship with a packing instance?
   int palletL, palletW, palletH, rectL, rectW, rectH;
   PackingResult3D cachedResult = null;
@@ -35,13 +39,22 @@ public class PalletPackingComponent extends DiarcComponent {
     rectH = -1;
   }
 
-  public PalletPackingComponent(int palletL, int palletW, int palletH, int rectL, int rectW, int rectH) {
+  public PalletPackingComponent(int palletL, int palletW, int palletH, int rectL, int rectW, int rectH, double cameraAngle, double cameraHeightMM, double imageWidth, double imageHeight) {
     this.palletL = palletL;
     this.palletW = palletW;
     this.palletH = palletH;
     this.rectL = rectL;
     this.rectW = rectW;
     this.rectH = rectH;
+    this.cameraAngle = cameraAngle;
+    this.cameraHeightMM = cameraHeightMM;
+    this.imageWidth = imageWidth;
+    this.imageHeight = imageHeight;
+  }
+
+  @Override
+  public void init() {
+    super.init();
   }
 
   @Override
@@ -65,6 +78,17 @@ public class PalletPackingComponent extends DiarcComponent {
         log.warn("[parseArgs] Not all item dimensions supplied, ignoring");
       }
     }
+
+    if (cmdLine.hasOption("cameraAngle") || cmdLine.hasOption("cameraHeightMM") || cmdLine.hasOption("imageWidth") || cmdLine.hasOption("imageHeight")) {
+      if (cmdLine.hasOption("cameraAngle") && cmdLine.hasOption("cameraHeightMM")) {
+        cameraAngle = Double.parseDouble(cmdLine.getOptionValue("cameraAngle"));
+        cameraHeightMM = Double.parseDouble(cmdLine.getOptionValue("cameraHeightMM"));
+        imageWidth = Double.parseDouble(String.valueOf(cmdLine.getOptionValue("imageWidth")));
+        imageHeight = Double.parseDouble(String.valueOf(cmdLine.getOptionValue("imageHeight")));
+      } else {
+        log.warn("[parseArgs] Not all camera information supplied, ignoring");
+      }
+    }
   }
 
   @Override
@@ -76,6 +100,10 @@ public class PalletPackingComponent extends DiarcComponent {
     options.add(Option.builder("itemL").hasArg().build());
     options.add(Option.builder("itemW").hasArg().build());
     options.add(Option.builder("itemH").hasArg().build());
+    options.add(Option.builder("cameraHeightMM").hasArg().build());
+    options.add(Option.builder("cameraAngle").hasArg().build());
+    options.add(Option.builder("imageWidth").hasArg().build());
+    options.add(Option.builder("imageHeight").hasArg().build());
     return options;
   }
 
@@ -304,5 +332,18 @@ public class PalletPackingComponent extends DiarcComponent {
       return null;
     }
     return cachedResult.layerPacking;
+  }
+
+  @TRADEService
+  public RobotAdjustment calculateRobotAdjustment(Rectangle r) {
+    Quadrilateral boxProjection = new Quadrilateral(new Vector2D(r.getMinX(), imageHeight - r.getMinY()),
+            new Vector2D(r.getMaxX(), imageHeight - r.getMinY()),
+            new  Vector2D(r.getMaxX(), imageHeight - r.getMaxY()),
+            new  Vector2D(r.getMinX(), imageHeight - r.getMaxY()));
+    RobotAdjustment adjustment = VisualServoingCalculator.calculateRobotAdjustment(
+            new Camera(cameraHeightMM, cameraAngle),
+            new Box(rectW, rectL, rectH), boxProjection,
+            new Vector2D(imageWidth/2.0, imageHeight/2.0));
+    return new RobotAdjustment(new Vector2D(adjustment.getX(), adjustment.getY()), adjustment.rotationDegrees() + 90);
   }
 }

@@ -5,6 +5,8 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.packing.Quadrilateral;
+import edu.tufts.hrilab.packing.Vector2D;
 import edu.tufts.hrilab.util.RotationHelpers;
 import edu.tufts.hrilab.util.resource.Resources;
 import edu.tufts.hrilab.vision.common.swig.CommonModule;
@@ -109,8 +111,16 @@ public class GraspComponent extends DiarcComponent {
 
 @TRADEService
 public double calculateAngleOfObject(MemoryObject mo) {
-  //(NOPE! that's a lie. calculate it!) -------The order is bottomLeft, topLeft, topRight, bottomRight.------
-  //todo: (pete) don't do this here. learn how JNI actually works and stop abusing the grasp class
+    Quadrilateral boundingBox = calculateQuadrilateral(mo);
+    Vector2D bottomLeft = boundingBox.getP4();
+    Vector2D bottomRight = boundingBox.getP3();
+
+  double theta = Math.atan2(bottomRight.y() - bottomLeft.y(), bottomRight.x() - bottomLeft.x());
+  return theta;
+}
+
+@TRADEService
+public Quadrilateral calculateQuadrilateral(MemoryObject mo) {
   Grasp grasp = calculateGraspOptions(mo).get(0);
   List <Vector3d> points = new ArrayList<>();
   for (int i = 0; i < grasp.getNumPoints(); i++) {
@@ -123,16 +133,26 @@ public double calculateAngleOfObject(MemoryObject mo) {
       return (a.x < b.x) ? -1 : 1;
   });
 
-  Vector3d bottomLeft = points.get(0).y < points.get(1).y ? points.get(0) : points.get(1);
-  Vector3d bottomRight = points.get(2).y < points.get(3).y ? points.get(2) : points.get(3);
-
-  log.info("[calculateAngleOfObject] bottom left: " + bottomLeft + " bottom right " + bottomRight);
-
-  double theta = Math.atan2(bottomRight.getY() - bottomLeft.getY(), bottomRight.getX() - bottomLeft.getX());
-//  if (bottomLeft.getY() > bottomRight.getY()) {
-//    theta = -theta;
-//  }
-  return theta;
+  Vector2D bottomLeft;
+  Vector2D bottomRight;
+  Vector2D topLeft;
+  Vector2D topRight;
+  if (points.get(0).y < points.get(1).y) {
+    bottomLeft = new Vector2D(points.get(0).x, points.get(0).y);
+    topLeft = new Vector2D(points.get(1).x, points.get(1).y);
+  } else {
+    bottomLeft = new Vector2D(points.get(1).x, points.get(1).y);
+    topLeft = new Vector2D(points.get(0).x, points.get(0).y);
+  }
+  if (points.get(2).y < points.get(3).y) {
+    bottomRight = new Vector2D(points.get(2).x, points.get(2).y);
+    topRight = new Vector2D(points.get(3).x, points.get(3).y);
+  } else {
+    bottomRight = new Vector2D(points.get(3).x, points.get(3).y);
+    topRight = new Vector2D(points.get(2).x, points.get(2).y);
+  }
+  log.info("[calculateQuadrilateral] bottom left: " + bottomLeft + " bottom right " + bottomRight + " top left " + topLeft + " top right" + topRight);
+  return new Quadrilateral(topLeft, topRight, bottomRight, bottomLeft);
 }
 
   public List<Grasp> calculateGraspOptions(MemoryObject mo, List<? extends Term> constraints) {
