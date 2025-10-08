@@ -821,4 +821,45 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   public void disableAdminMode() {
     speaker = Factory.createSymbol("local_visitor");
   }
+
+
+  @TRADEService
+  @Action
+  public void toggleDisplay() {
+    String homeDir = System.getProperty("user.home");
+    String scriptDir = Paths.get(homeDir, ".diarc").toString();
+    String statusCommand = "/bin/bash " + scriptDir + "getDisplay.sh";
+    String statusResult = callLocal(statusCommand);
+    log.info("[toggleDisplay] status result: " + statusResult);
+    List<String> results = Arrays.stream(statusResult.split("MainVideoSource")).toList();
+    int id = Integer.valueOf(results.get(1).substring(1,1));
+    log.info("[toggleDisplay] id of current display input: " + id);
+    String command;
+    if (id == 1) {
+      command = "/bin/bash " + scriptDir + "setDisplay2.sh";
+    } else {
+      command = "/bin/bash " + scriptDir + "setDisplay1.sh";
+    }
+    String result = callLocal(command);
+    log.info("[toggleDisplay] result: " + result);
+  }
+
+  private String callLocal(String command) {
+    StringBuilder result = new StringBuilder();
+    String s;
+    try {
+      Process p = Runtime.getRuntime().exec(command);
+      BufferedReader br = new BufferedReader(
+              new InputStreamReader(p.getInputStream()));
+      while ((s = br.readLine()) != null)
+        result.append(s);
+      p.waitFor();
+      log.info("[callLocal] p: " + p);
+      p.destroy();
+    } catch (Exception e) {
+      log.error("[showTRACS] error changing display input");
+    }
+    return result.toString();
+  }
+
 }

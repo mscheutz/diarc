@@ -1096,5 +1096,10 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "disable admin mode",
                 "disableAdminMode()", 10);
         exposedActionList.add(entry);
+      entry = new LLMActionEntry("toggleDisplay()",
+              "Change the output on your display between the two possible inputs",
+              "toggle display",
+              "toggleDisplay()", 10);
+      exposedActionList.add(entry);
     }
 }
