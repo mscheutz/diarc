@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.llm.hf.PickAndPlace2024LLMServiceProvider;
-import edu.tufts.hrilab.packing.PalletPackingComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -147,9 +146,10 @@ public class CratePacking extends DiarcConfiguration {
         }
 
 //      createInstance(PalletPackingComponent.class, "-palletL 560 -palletW 360 -palletH 200 -itemL 215 -itemW 145 -itemH 60 -groups agent:robotone:agent");
-      createInstance(PalletPackingComponent.class, "-palletL 560 -palletW 360 -palletH 200 -itemL 230 -itemW 170 -itemH 60 -groups agent:robotone:agent");
-      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture rsense.xml -groups agent:robotone:agent -rotX -67.5 -height 1.1");
+      createInstance(edu.tufts.hrilab.packing.PalletPackingComponent.class, "-palletL 560 -palletW 360 -palletH 200 -itemL 230 -itemW 170 -itemH 60 -groups agent:robotone:agent");
+      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture rsense.xml -groups agent:robotone:agent -rotX -67.5 -height 1.14");
       createInstance(edu.tufts.hrilab.grasp.GraspComponent.class, "-groups agent:robotone:agent");
+      createInstance(edu.tufts.hrilab.packing.BoxOBBComponent.class,"");
 
         if (japanese) {
             languageGenerationASLFile = "config/edu/tufts/hrilab/action/asl/demos/pickAndPlace/pickAndPlaceLanguageGenerationJapanese.asl";
