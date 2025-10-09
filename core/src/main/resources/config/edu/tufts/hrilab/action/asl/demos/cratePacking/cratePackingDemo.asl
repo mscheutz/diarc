@@ -28,14 +28,23 @@ import java.awt.Rectangle;
     Double !theta;
     Term !props;
     Symbol !robotone="robotone:agent";
+    List !box;
+    RobotAdjustment !adjustment;
+    MPose !currentPose;
 
     act:goToPosePrimitive("robotonepose_0:pose");
 
     act:rotateToEE("camera");
 
-    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
-    op:log(info, "reference for an object to get the search moving with props: !props");
-    !refId = !robotone.act:positReference(!props);
+    !box = tsc:generateOBB();
+    !adjustment = tsc:calculateRobotAdjustment(!box);
+    !x = op:invokeMethod(!adjustment, "getX");
+    !x = op:/(!x, 1000);
+    !y = op:invokeMethod(!adjustment, "getY");
+    !y = op:/(!y, 1000);
+    !theta = op:invokeMethod(!adjustment, "getRotation");
+
+    op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
 }
 
 () = goToPoseDirect(Symbol ?pose) {
@@ -95,13 +104,15 @@ import java.awt.Rectangle;
     Double !theta;
     Term !props;
     Symbol !robotone="robotone:agent";
-    Rectangle !box;
+    List !box;
     RobotAdjustment !adjustment;
     MPose !currentPose;
+
 
     act:rotateToEE("camera");
 
     //52 and 108 are the "threshold" values that seem to work for the contrast-based detection
+
 
 //    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
 //    op:log(info, "reference for an object to get the search moving with props: !props");
@@ -116,15 +127,16 @@ import java.awt.Rectangle;
 //    !mo = tsc:getToken(!tokenId);
 //
 //    !box = op:invokeMethod(!mo, "getBoundingBox");
-    !box = tsc:getBoundingBox();
+    !box = tsc:generateOBB();
+//    op:log(info, "[lookForAndMovetoBox] bounding box is: !box");
     !adjustment = tsc:calculateRobotAdjustment(!box);
     !x = op:invokeMethod(!adjustment, "getX");
+    !x = op:/(!x, 1000);
     !y = op:invokeMethod(!adjustment, "getY");
+    !y = op:/(!y, 1000);
     !theta = op:invokeMethod(!adjustment, "getRotation");
 
     op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
-
-    act:stopAllSearches();
 
     tsc:moveXRelative(!x);
     tsc:moveYRelative(!y);

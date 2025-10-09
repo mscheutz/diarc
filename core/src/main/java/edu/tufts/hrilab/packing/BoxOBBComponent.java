@@ -7,7 +7,10 @@ import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.vision.util.CompressionUtil;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 
+import javax.swing.*;
 import javax.vecmath.Point2d;
 import javax.vecmath.Vector2d;
 import java.awt.*;
@@ -22,8 +25,47 @@ import java.util.zip.DataFormatException;
 
 public class BoxOBBComponent extends DiarcComponent {
 
+  BoxOBBGui gui;
+  private int lowerThresholdInit;
+  private int upperThresholdInit;
+
+  @Override
+  public void init() {
+    shouldRunExecutionLoop = true;
+    super.init();
+    SwingUtilities.invokeLater(() -> {
+        gui = new BoxOBBGui(lowerThresholdInit, upperThresholdInit);
+        gui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        gui.pack();
+        gui.setSize(1200, 600);
+        gui.setLocationRelativeTo(null);
+        gui.setVisible(true);
+    });
+  }
+
+  @Override
+  public void executionLoop() {
+    List<Point2d> box = generateOBB();
+  }
+
+  public void parseArgs(CommandLine cmdLine) {
+    lowerThresholdInit = Integer.parseInt(cmdLine.getOptionValue("lowerThreshold"));
+    upperThresholdInit = Integer.parseInt(cmdLine.getOptionValue("upperThreshold"));
+  }
+
+  @Override
+  public List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("lowerThreshold").hasArg().build());
+    options.add(Option.builder("upperThreshold").hasArg().build());
+    return options;
+  }
+
   @TRADEService
-  public List<Point2d> generateOBB(int lowerThreshold, int upperThreshold) {
+  public List<Point2d> generateOBB() {
+    int lowerThreshold = gui.getLowerThreshold();
+    int upperThreshold = gui.getUpperThreshold();
+
     //TODO: add check if capture is paused
     Dimension imageSize;
     byte[] imageData;
@@ -52,7 +94,9 @@ public class BoxOBBComponent extends DiarcComponent {
     if (largestComponent.isEmpty()) return new ArrayList<>();
 
     double angleDegrees = calculateOrientation(largestComponent);
-    return List.of(getOrientedBoundingBox(largestComponent, angleDegrees));
+    Point2d[] box = getOrientedBoundingBox(largestComponent, angleDegrees);
+    gui.update(image, largestComponent, box, angleDegrees);
+    return List.of(box);
   }
 
   /**

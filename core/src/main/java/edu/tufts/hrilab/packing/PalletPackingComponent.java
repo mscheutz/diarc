@@ -6,11 +6,14 @@ import edu.tufts.hrilab.diarc.DiarcComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
+import javax.vecmath.Point2d;
 import java.awt.Rectangle;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * An implementation of pallet packing with homogeneous items of
@@ -335,15 +338,39 @@ public class PalletPackingComponent extends DiarcComponent {
   }
 
   @TRADEService
-  public RobotAdjustment calculateRobotAdjustment(Rectangle r) {
-    Quadrilateral boxProjection = new Quadrilateral(new Vector2D(r.getMinX(), imageHeight - r.getMinY()),
-            new Vector2D(r.getMaxX(), imageHeight - r.getMinY()),
-            new  Vector2D(r.getMaxX(), imageHeight - r.getMaxY()),
-            new  Vector2D(r.getMinX(), imageHeight - r.getMaxY()));
-    RobotAdjustment adjustment = VisualServoingCalculator.calculateRobotAdjustment(
+  public RobotAdjustment calculateRobotAdjustment(List<Point2d> input) {
+    Vector2D bottomLeft;
+    Vector2D bottomRight;
+    Vector2D topLeft;
+    Vector2D topRight;
+    ArrayList<Point2d> points = input.stream().map(p -> new Point2d(p.getX(), imageHeight - p.getY())).collect(Collectors.toCollection(ArrayList::new));
+    points.sort((a, b) -> {
+      if (a.x == b.x)
+        return 0;
+      else
+        return (a.x < b.x) ? -1 : 1;
+    });
+
+
+    if (points.get(0).y < points.get(1).y) {
+      bottomLeft = new Vector2D(points.get(0).x, points.get(0).y);
+      topLeft = new Vector2D(points.get(1).x, points.get(1).y);
+    } else {
+      bottomLeft = new Vector2D(points.get(1).x, points.get(1).y);
+      topLeft = new Vector2D(points.get(0).x, points.get(0).y);
+    }
+    if (points.get(2).y < points.get(3).y) {
+      bottomRight = new Vector2D(points.get(2).x, points.get(2).y);
+      topRight = new Vector2D(points.get(3).x, points.get(3).y);
+    } else {
+      bottomRight = new Vector2D(points.get(3).x, points.get(3).y);
+      topRight = new Vector2D(points.get(2).x, points.get(2).y);
+    }
+    Quadrilateral boxProjection = new Quadrilateral(topLeft, topRight, bottomRight, bottomLeft);
+    log.info("[calculateRobotAdjustment] bounding box projection: " + boxProjection);
+    return VisualServoingCalculator.calculateRobotAdjustment(
             new Camera(cameraHeightMM, cameraAngle),
             new Box(rectW, rectL, rectH), boxProjection,
             new Vector2D(imageWidth/2.0, imageHeight/2.0));
-    return new RobotAdjustment(new Vector2D(adjustment.getX(), adjustment.getY()), adjustment.rotationDegrees());
   }
 }
