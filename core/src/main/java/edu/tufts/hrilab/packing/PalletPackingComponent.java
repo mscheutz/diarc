@@ -32,6 +32,7 @@ public class PalletPackingComponent extends DiarcComponent {
   int palletL, palletW, palletH, rectL, rectW, rectH;
   PackingResult3D cachedResult = null;
   int itemIndex = 0;
+  private int tolerance;
 
   public PalletPackingComponent() {
     palletL = -1;
@@ -77,6 +78,7 @@ public class PalletPackingComponent extends DiarcComponent {
         rectL = Integer.parseInt(cmdLine.getOptionValue("itemL"));
         rectW = Integer.parseInt(cmdLine.getOptionValue("itemW"));
         rectH = Integer.parseInt(cmdLine.getOptionValue("itemH"));
+        tolerance = Integer.parseInt(cmdLine.getOptionValue("tolerance"));
       } else {
         log.warn("[parseArgs] Not all item dimensions supplied, ignoring");
       }
@@ -107,6 +109,7 @@ public class PalletPackingComponent extends DiarcComponent {
     options.add(Option.builder("cameraAngle").hasArg().build());
     options.add(Option.builder("imageWidth").hasArg().build());
     options.add(Option.builder("imageHeight").hasArg().build());
+    options.add(Option.builder("tolerance").hasArg().build());
     return options;
   }
 
@@ -121,7 +124,7 @@ public class PalletPackingComponent extends DiarcComponent {
       log.error("[solvePalletPacking3D] pallet and item dimensions must be fully set before running solve. Current values {},{},{} {},{},{}", palletL, palletW, palletH, rectL, rectW, rectH);
       return null;
     }
-    return solvePalletPacking3D(palletL, palletW, palletH, rectL, rectW, rectH);
+    return solvePalletPacking3D(palletL, palletW, palletH, rectL + tolerance, rectW + tolerance, rectH);
   }
   @TRADEService
   @Action

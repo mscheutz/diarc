@@ -148,6 +148,7 @@ public class CratePacking extends DiarcConfiguration {
 //      createInstance(PalletPackingComponent.class, "-palletL 560 -palletW 360 -palletH 200 -itemL 215 -itemW 145 -itemH 60 -groups agent:robotone:agent");
       createInstance(edu.tufts.hrilab.packing.PalletPackingComponent.class, "-palletL 560 -palletW 360 -palletH 200 " +
               "-itemL 220 -itemW 150 -itemH 60 " +
+              "-tolerance 20 " +
               "-cameraAngle 22.5 -cameraHeightMM 430 -imageWidth 320 -imageHeight 240 " +
               "-groups agent:robotone:agent");
 
