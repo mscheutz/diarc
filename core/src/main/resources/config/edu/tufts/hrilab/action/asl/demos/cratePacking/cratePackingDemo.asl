@@ -36,12 +36,12 @@ import java.awt.Rectangle;
 
     act:rotateToEE("camera");
 
-    !box = tsc:generateOBB();
-    !adjustment = tsc:calculateRobotAdjustment(!box);
-    !x = op:invokeMethod(!adjustment, "getX");
-    !x = op:/(!x, 1000);
-    !y = op:invokeMethod(!adjustment, "getY");
-    !y = op:/(!y, 1000);
+//    !box = tsc:generateOBB();
+//    !adjustment = tsc:calculateRobotAdjustment(!box);
+//    !x = op:invokeMethod(!adjustment, "getX");
+//    !x = op:/(!x, 1000);
+//    !y = op:invokeMethod(!adjustment, "getY");
+//    !y = op:/(!y, 1000);
     !theta = op:invokeMethod(!adjustment, "getRotation");
 
     op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
