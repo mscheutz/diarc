@@ -350,105 +350,105 @@ public class PalletPackingComponent extends DiarcComponent {
     return cachedResult.layerPacking;
   }
 
+  @TRADEService
+  public RobotAdjustment calculateRobotAdjustment(List<Point2d> input) {
+    Vector2D bottomLeft;
+    Vector2D bottomRight;
+    Vector2D topLeft;
+    Vector2D topRight;
+    ArrayList<Point2d> points = input.stream().map(p -> new Point2d(p.getX(), imageHeight - p.getY())).collect(Collectors.toCollection(ArrayList::new));
+    points.sort((a, b) -> {
+      if (a.x == b.x)
+        return 0;
+      else
+        return (a.x < b.x) ? -1 : 1;
+    });
+
+
+    if (points.get(0).y < points.get(1).y) {
+      bottomLeft = new Vector2D(points.get(0).x, points.get(0).y);
+      topLeft = new Vector2D(points.get(1).x, points.get(1).y);
+    } else {
+      bottomLeft = new Vector2D(points.get(1).x, points.get(1).y);
+      topLeft = new Vector2D(points.get(0).x, points.get(0).y);
+    }
+    if (points.get(2).y < points.get(3).y) {
+      bottomRight = new Vector2D(points.get(2).x, points.get(2).y);
+      topRight = new Vector2D(points.get(3).x, points.get(3).y);
+    } else {
+      bottomRight = new Vector2D(points.get(3).x, points.get(3).y);
+      topRight = new Vector2D(points.get(2).x, points.get(2).y);
+    }
+    Quadrilateral boxProjection = new Quadrilateral(topLeft, topRight, bottomRight, bottomLeft);
+    log.info("[calculateRobotAdjustment] bounding box projection: " + boxProjection);
+    return VisualServoingCalculator.calculateRobotAdjustment(
+            new Camera(cameraHeightMM, cameraAngle),
+            new Box(rectW, rectL, rectH), boxProjection,
+            new Vector2D(imageWidth/2.0, imageHeight/2.0));
+  }
+
 //  @TRADEService
-//  public RobotAdjustment calculateRobotAdjustment(List<Point2d> input) {
-//    Vector2D bottomLeft;
-//    Vector2D bottomRight;
-//    Vector2D topLeft;
-//    Vector2D topRight;
-//    ArrayList<Point2d> points = input.stream().map(p -> new Point2d(p.getX(), imageHeight - p.getY())).collect(Collectors.toCollection(ArrayList::new));
-//    points.sort((a, b) -> {
-//      if (a.x == b.x)
-//        return 0;
-//      else
-//        return (a.x < b.x) ? -1 : 1;
-//    });
-//
-//
-//    if (points.get(0).y < points.get(1).y) {
-//      bottomLeft = new Vector2D(points.get(0).x, points.get(0).y);
-//      topLeft = new Vector2D(points.get(1).x, points.get(1).y);
-//    } else {
-//      bottomLeft = new Vector2D(points.get(1).x, points.get(1).y);
-//      topLeft = new Vector2D(points.get(0).x, points.get(0).y);
+//  public BufferedImage getImage() {
+//    //TODO: add check if capture is paused
+//    Dimension imageSize;
+//    byte[] imageData;
+//    try {
+//      imageSize = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageSize")).call(Dimension.class);
+//      imageData = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFrame")).call(byte[].class);
+//      imageData = CompressionUtil.decompress(imageData);
+//    } catch (TRADEException e) {
+//      log.error("[generateOBB] error getting capture image, is vision running?", e);
+//      return null;
+//    } catch (DataFormatException | IOException e) {
+//      log.error("[generateOBB] error decompressing camera raw image data?", e);
+//      return null;
 //    }
-//    if (points.get(2).y < points.get(3).y) {
-//      bottomRight = new Vector2D(points.get(2).x, points.get(2).y);
-//      topRight = new Vector2D(points.get(3).x, points.get(3).y);
-//    } else {
-//      bottomRight = new Vector2D(points.get(3).x, points.get(3).y);
-//      topRight = new Vector2D(points.get(2).x, points.get(2).y);
-//    }
-//    Quadrilateral boxProjection = new Quadrilateral(topLeft, topRight, bottomRight, bottomLeft);
-//    log.info("[calculateRobotAdjustment] bounding box projection: " + boxProjection);
-//    return VisualServoingCalculator.calculateRobotAdjustment(
-//            new Camera(cameraHeightMM, cameraAngle),
-//            new Box(rectW, rectL, rectH), boxProjection,
-//            new Vector2D(imageWidth/2.0, imageHeight/2.0));
+//
+//    WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, imageSize.width, imageSize.height, 3, null);
+//    BufferedImage image = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_3BYTE_BGR);
+//    raster.setDataElements(0, 0, imageSize.width, imageSize.height, imageData);
+//    image.setData(raster);
+//    return image;
 //  }
-
-  @TRADEService
-  public BufferedImage getImage() {
-    //TODO: add check if capture is paused
-    Dimension imageSize;
-    byte[] imageData;
-    try {
-      imageSize = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageSize")).call(Dimension.class);
-      imageData = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFrame")).call(byte[].class);
-      imageData = CompressionUtil.decompress(imageData);
-    } catch (TRADEException e) {
-      log.error("[generateOBB] error getting capture image, is vision running?", e);
-      return null;
-    } catch (DataFormatException | IOException e) {
-      log.error("[generateOBB] error decompressing camera raw image data?", e);
-      return null;
-    }
-
-    WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, imageSize.width, imageSize.height, 3, null);
-    BufferedImage image = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_3BYTE_BGR);
-    raster.setDataElements(0, 0, imageSize.width, imageSize.height, imageData);
-    image.setData(raster);
-    return image;
-  }
-
-  @TRADEService
-  public Pose calculateRobotAdjustment(double x, double y, double z, double a, double b, double c) {
-  // assume the gripper is above the conveyor belt at a given height, e.g., 30cm
-    double prePickHeightZ = 0.520;
-
-    BufferedImage capturedImage = getImage();
-    Vec2 imageCenter = new Vec2(capturedImage.getWidth() / 2.0, capturedImage.getHeight() / 2.0);
-    ComplicatedCamera robotCamera = new ComplicatedCamera(); // instantiate a new camera object for the robot
-    double alpha = 2450.0;                 // this is from the K matrix, the initial calibration
-    robotCamera.updateIntrinsics(a, imageCenter.x, imageCenter.y); // update the intrisic matrix K
-
-    //todo: (pete) use this for computing the rolling avg of a based on detection.
-    double objectWidthW = 0.12; // The known width of the box, e.g, 12 cm
-
-
-  // find the rectangle in the image
-    DetectionResult result = RectangleDetection.findRectangle(capturedImage, 100);
-
-    if (result.corners != null) {
-      // --- Calculate the alignment error ---
-      Vec2 rectangleCenter = Vec2.average(result.corners);
-      Vec2 widthEdge = result.corners.get(1).subtract(result.corners.get(0)); // or other edge based on sorting
-
-      // calculate the error in meters and radians
-      double shiftErrorX = (rectangleCenter.x - imageCenter.x) * prePickHeightZ / alpha;
-      double shiftErrorY = (rectangleCenter.y - imageCenter.y) * prePickHeightZ / alpha;
-      double rotationErrorRad = Math.atan2(widthEdge.y, widthEdge.x);
-
-      // update the camera with the alignment error we just found
-      robotCamera.updateAlignment(rotationErrorRad, shiftErrorX, shiftErrorY);
-
-      // now get the robot's current pose and ask the camera object for the corrected pose
-      Vec3 currentRobotPosition = new Vec3(x, y, z);
-      Vec3 currentRobotRotation = new Vec3(a, b, c);
-      Pose finalPickPose = robotCamera.getAlignedCameraPose(currentRobotPosition, currentRobotRotation);
-      return finalPickPose;
-    }
-    return null;
-  }
+//
+//  @TRADEService
+//  public Pose calculateRobotAdjustment(double x, double y, double z, double a, double b, double c) {
+//  // assume the gripper is above the conveyor belt at a given height, e.g., 30cm
+//    double prePickHeightZ = 0.520;
+//
+//    BufferedImage capturedImage = getImage();
+//    Vec2 imageCenter = new Vec2(capturedImage.getWidth() / 2.0, capturedImage.getHeight() / 2.0);
+//    ComplicatedCamera robotCamera = new ComplicatedCamera(); // instantiate a new camera object for the robot
+//    double alpha = 2450.0;                 // this is from the K matrix, the initial calibration
+//    robotCamera.updateIntrinsics(a, imageCenter.x, imageCenter.y); // update the intrisic matrix K
+//
+//    //todo: (pete) use this for computing the rolling avg of a based on detection.
+//    double objectWidthW = 0.12; // The known width of the box, e.g, 12 cm
+//
+//
+//  // find the rectangle in the image
+//    DetectionResult result = RectangleDetection.findRectangle(capturedImage, 100);
+//
+//    if (result.corners != null) {
+//      // --- Calculate the alignment error ---
+//      Vec2 rectangleCenter = Vec2.average(result.corners);
+//      Vec2 widthEdge = result.corners.get(1).subtract(result.corners.get(0)); // or other edge based on sorting
+//
+//      // calculate the error in meters and radians
+//      double shiftErrorX = (rectangleCenter.x - imageCenter.x) * prePickHeightZ / alpha;
+//      double shiftErrorY = (rectangleCenter.y - imageCenter.y) * prePickHeightZ / alpha;
+//      double rotationErrorRad = Math.atan2(widthEdge.y, widthEdge.x);
+//
+//      // update the camera with the alignment error we just found
+//      robotCamera.updateAlignment(rotationErrorRad, shiftErrorX, shiftErrorY);
+//
+//      // now get the robot's current pose and ask the camera object for the corrected pose
+//      Vec3 currentRobotPosition = new Vec3(x, y, z);
+//      Vec3 currentRobotRotation = new Vec3(a, b, c);
+//      Pose finalPickPose = robotCamera.getAlignedCameraPose(currentRobotPosition, currentRobotRotation);
+//      return finalPickPose;
+//    }
+//    return null;
+//  }
 
 }
