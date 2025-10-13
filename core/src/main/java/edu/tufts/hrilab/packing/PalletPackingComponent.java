@@ -43,6 +43,7 @@ public class PalletPackingComponent extends DiarcComponent {
   PackingResult3D cachedResult = null;
   int itemIndex = 0;
   private int tolerance;
+  private RobotVisionProcessor visionProcessor;
 
   public PalletPackingComponent() {
     palletL = -1;
@@ -51,6 +52,7 @@ public class PalletPackingComponent extends DiarcComponent {
     rectL = -1;
     rectW = -1;
     rectH = -1;
+    visionProcessor = null;
   }
 
   public PalletPackingComponent(int palletL, int palletW, int palletH, int rectL, int rectW, int rectH, double cameraAngle, double cameraHeightMM, double imageWidth, double imageHeight) {
@@ -69,6 +71,7 @@ public class PalletPackingComponent extends DiarcComponent {
   @Override
   public void init() {
     super.init();
+    this.visionProcessor = new RobotVisionProcessor(rectW/1000.0, rectL/1000.0, cameraHeightMM/1000.0);
   }
 
   @Override
@@ -350,66 +353,66 @@ public class PalletPackingComponent extends DiarcComponent {
     return cachedResult.layerPacking;
   }
 
+  //@TRADEService
+  //public RobotAdjustment calculateRobotAdjustment(List<Point2d> input) {
+  //  Vector2D bottomLeft;
+  //  Vector2D bottomRight;
+  //  Vector2D topLeft;
+  //  Vector2D topRight;
+  //  ArrayList<Point2d> points = input.stream().map(p -> new Point2d(p.getX(), imageHeight - p.getY())).collect(Collectors.toCollection(ArrayList::new));
+  //  points.sort((a, b) -> {
+  //    if (a.x == b.x)
+  //      return 0;
+  //    else
+  //      return (a.x < b.x) ? -1 : 1;
+  //  });
+
+
+  //  if (points.get(0).y < points.get(1).y) {
+  //    bottomLeft = new Vector2D(points.get(0).x, points.get(0).y);
+  //    topLeft = new Vector2D(points.get(1).x, points.get(1).y);
+  //  } else {
+  //    bottomLeft = new Vector2D(points.get(1).x, points.get(1).y);
+  //    topLeft = new Vector2D(points.get(0).x, points.get(0).y);
+  //  }
+  //  if (points.get(2).y < points.get(3).y) {
+  //    bottomRight = new Vector2D(points.get(2).x, points.get(2).y);
+  //    topRight = new Vector2D(points.get(3).x, points.get(3).y);
+  //  } else {
+  //    bottomRight = new Vector2D(points.get(3).x, points.get(3).y);
+  //    topRight = new Vector2D(points.get(2).x, points.get(2).y);
+  //  }
+  //  Quadrilateral boxProjection = new Quadrilateral(topLeft, topRight, bottomRight, bottomLeft);
+  //  log.info("[calculateRobotAdjustment] bounding box projection: " + boxProjection);
+  //  return VisualServoingCalculator.calculateRobotAdjustment(
+  //          new Camera(cameraHeightMM, cameraAngle),
+  //          new Box(rectW, rectL, rectH), boxProjection,
+  //          new Vector2D(imageWidth/2.0, imageHeight/2.0));
+  //}
+
   @TRADEService
-  public RobotAdjustment calculateRobotAdjustment(List<Point2d> input) {
-    Vector2D bottomLeft;
-    Vector2D bottomRight;
-    Vector2D topLeft;
-    Vector2D topRight;
-    ArrayList<Point2d> points = input.stream().map(p -> new Point2d(p.getX(), imageHeight - p.getY())).collect(Collectors.toCollection(ArrayList::new));
-    points.sort((a, b) -> {
-      if (a.x == b.x)
-        return 0;
-      else
-        return (a.x < b.x) ? -1 : 1;
-    });
-
-
-    if (points.get(0).y < points.get(1).y) {
-      bottomLeft = new Vector2D(points.get(0).x, points.get(0).y);
-      topLeft = new Vector2D(points.get(1).x, points.get(1).y);
-    } else {
-      bottomLeft = new Vector2D(points.get(1).x, points.get(1).y);
-      topLeft = new Vector2D(points.get(0).x, points.get(0).y);
+  public BufferedImage getImage() {
+    //TODO: add check if capture is paused
+    Dimension imageSize;
+    byte[] imageData;
+    try {
+      imageSize = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageSize")).call(Dimension.class);
+      imageData = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFrame")).call(byte[].class);
+      imageData = CompressionUtil.decompress(imageData);
+    } catch (TRADEException e) {
+      log.error("[PalletPackingComponent] error getting capture image, is vision running?", e);
+      return null;
+    } catch (DataFormatException | IOException e) {
+      log.error("[PalletPackingComponent] error decompressing camera raw image data?", e);
+      return null;
     }
-    if (points.get(2).y < points.get(3).y) {
-      bottomRight = new Vector2D(points.get(2).x, points.get(2).y);
-      topRight = new Vector2D(points.get(3).x, points.get(3).y);
-    } else {
-      bottomRight = new Vector2D(points.get(3).x, points.get(3).y);
-      topRight = new Vector2D(points.get(2).x, points.get(2).y);
-    }
-    Quadrilateral boxProjection = new Quadrilateral(topLeft, topRight, bottomRight, bottomLeft);
-    log.info("[calculateRobotAdjustment] bounding box projection: " + boxProjection);
-    return VisualServoingCalculator.calculateRobotAdjustment(
-            new Camera(cameraHeightMM, cameraAngle),
-            new Box(rectW, rectL, rectH), boxProjection,
-            new Vector2D(imageWidth/2.0, imageHeight/2.0));
+
+    WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, imageSize.width, imageSize.height, 3, null);
+    BufferedImage image = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_3BYTE_BGR);
+    raster.setDataElements(0, 0, imageSize.width, imageSize.height, imageData);
+    image.setData(raster);
+    return image;
   }
-
-//  @TRADEService
-//  public BufferedImage getImage() {
-//    //TODO: add check if capture is paused
-//    Dimension imageSize;
-//    byte[] imageData;
-//    try {
-//      imageSize = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageSize")).call(Dimension.class);
-//      imageData = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFrame")).call(byte[].class);
-//      imageData = CompressionUtil.decompress(imageData);
-//    } catch (TRADEException e) {
-//      log.error("[generateOBB] error getting capture image, is vision running?", e);
-//      return null;
-//    } catch (DataFormatException | IOException e) {
-//      log.error("[generateOBB] error decompressing camera raw image data?", e);
-//      return null;
-//    }
-//
-//    WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, imageSize.width, imageSize.height, 3, null);
-//    BufferedImage image = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_3BYTE_BGR);
-//    raster.setDataElements(0, 0, imageSize.width, imageSize.height, imageData);
-//    image.setData(raster);
-//    return image;
-//  }
 //
 //  @TRADEService
 //  public Pose calculateRobotAdjustment(double x, double y, double z, double a, double b, double c) {
@@ -451,4 +454,9 @@ public class PalletPackingComponent extends DiarcComponent {
 //    return null;
 //  }
 
+  @TRADEService
+  public Vec3 calculateRobotAdjustment() {
+    BufferedImage image = getImage();
+    return visionProcessor.calculatePickupAction(image);
+  }
 }

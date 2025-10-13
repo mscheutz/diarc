@@ -14,6 +14,7 @@ import edu.tufts.hrilab.packing.PackingResult3D;
 import edu.tufts.hrilab.packing.Quadrilateral;
 import edu.tufts.hrilab.packing.RobotAdjustment;
 import java.awt.Rectangle;
+import edu.tufts.hrilab.packing.Vec3;
 
 () = testVision() {
     List !tokenIds;
@@ -105,7 +106,7 @@ import java.awt.Rectangle;
     Term !props;
     Symbol !robotone="robotone:agent";
     List !box;
-    RobotAdjustment !adjustment;
+    Vec3 !adjustment;
     MPose !currentPose;
 
 
@@ -127,14 +128,13 @@ import java.awt.Rectangle;
 //    !mo = tsc:getToken(!tokenId);
 //
 //    !box = op:invokeMethod(!mo, "getBoundingBox");
-    !box = tsc:generateOBB();
+//    !box = tsc:generateOBB();
 //    op:log(info, "[lookForAndMovetoBox] bounding box is: !box");
-    !adjustment = tsc:calculateRobotAdjustment(!box);
+    !adjustment = tsc:calculateRobotAdjustment();
     !x = op:invokeMethod(!adjustment, "getX");
-    !x = op:/(!x, 1000);
     !y = op:invokeMethod(!adjustment, "getY");
-    !y = op:/(!y, 1000);
-    !theta = op:invokeMethod(!adjustment, "getRotation");
+    !theta = op:invokeMethod(!adjustment, "getZ");
+    !theta = op:+(!theta, 0.7853981)
 
     op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
 

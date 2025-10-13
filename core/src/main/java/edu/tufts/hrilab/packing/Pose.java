@@ -16,7 +16,7 @@ public class Pose {
 
   @Override
   public String toString() {
-    return String.format("Position: %s, Rotation (deg): %s", position, rotation.toDegrees());
+    return String.format("Position: %s, Rotation (radians): %s", position, rotation);
   }
 }
 
