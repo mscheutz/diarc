@@ -150,7 +150,7 @@ public class CratePacking extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, "-crateL 560 -crateW 360 -crateH 200 " +
               "-itemL 230 -itemW 160 -itemH 55 " +
               "-tolerance 15 " +
-              "-cameraAngle 0.0 -cameraHeightMM 325 -imageWidth 320 -imageHeight 240 " +
+              "-cameraAngle 0.0 -cameraHeightMM 325 -imageWidth 320 -imageHeight 260 " +
               "-groups agent:robotone:agent");
       if (mock) {
         createInstance(edu.tufts.hrilab.vision.MockVisionComponent.class, "-groups agent:robotone:agent -rotX -67.5 -height 1.14");
