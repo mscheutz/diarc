@@ -96,7 +96,7 @@ Strategies:
 3. Reason about the amount of information and number of objects present in the input. This likely maps closely to the amount of variables present in the correct semantic form. The user may overspecify information in their input relative to the semantic translation, but will never underspecify. If there are similar versions of the same semantic form, the more specific one is better to choose if all the information is present.
 #
 Rules:
-1. All variables in your output must have been replaced with values from the input. If there are any variables remaining in your translation (arguments preceded by a "%"), the output is invalid.
+1. All variables in your output must have been replaced with values from the input. If there are any variables remaining in your translation (arguments preceded by a "?"), the output is invalid.
 Invalid Example: "Deliver to %exampleLocation" -> {"Semantics":"deliver(?objectName,%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"0"}
 2. Typed variables in your translations must only be replaced with values from the corresponding entities list. Any value supplied which is not present in that list is invalid.
 Valid Example: "go to %exampleLocation" -> {"Semantics":"goToLocation(%exampleLocation:location)","Input Type":"INSTRUCT","Confidence":"10"}

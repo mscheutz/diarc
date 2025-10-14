@@ -3,8 +3,8 @@ yes
 560 mm
 360 mm
 200 mm
-230 mm
-170 mm
+220 mm
+150 mm
 60 mm
 no
 10 items
@@ -15,8 +15,8 @@ I would like to set the packing parameters
 560 mm
 360 mm
 200 mm
-230 mm
-170 mm
+220 mm
+150 mm
 60 mm
 yes
 start packing
@@ -24,7 +24,7 @@ no
 --
 done
 ------
-the packed food items are 230 by 170 by 60 millimeters large
+the packed food items are 220 by 150 by 60 millimeters large
 the crates are 560 by 360 by 200 millimeters large
 what can a fully packed crate hold
 how fully are you currently packing crates
