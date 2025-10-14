@@ -1,5 +1,6 @@
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.fol.Term;
+import edu.tufts.hrilab.fol.Predicate;
 import ai.thinkingrobots.mtracs.util.MPose;
 import java.util.List;
 import java.lang.Long;
@@ -147,6 +148,7 @@ import edu.tufts.hrilab.packing.Vec3;
     List !box;
     Vec3 !adjustment;
     MPose !currentPose;
+    Predicate !failCond;
 
 
     act:rotateToEE("camera");
@@ -170,10 +172,15 @@ import edu.tufts.hrilab.packing.Vec3;
 //    !box = tsc:generateOBB();
 //    op:log(info, "[lookForAndMovetoBox] bounding box is: !box");
     !adjustment = tsc:calculateRobotAdjustment();
+    if (op:isNull(!adjustment)) {
+        op:log(error, "[lookForAndMoveToBox] no object found in frame");
+        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(see(?actor, item))");
+        exit(FAIL, !failCond);
+    }
     !x = op:invokeMethod(!adjustment, "getX");
     !y = op:invokeMethod(!adjustment, "getY");
-    !y = op:-(!y, 0.02);
-    !x = op:-(!x, 0.01);
+    !y = op:-(!y, 0.03);
+    !x = op:-(!x, 0.02);
     !theta = op:invokeMethod(!adjustment, "getZ");
     !theta = op:-(!theta, 1.5705);
 

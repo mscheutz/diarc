@@ -74,7 +74,7 @@ public class CratePackingComponent extends DiarcComponent {
   @Override
   public void init() {
     super.init();
-    this.visionProcessor = new RobotVisionProcessor(rectW/1000.0, rectL/1000.0, cameraHeightMM/1000.0);
+    this.visionProcessor = new RobotVisionProcessor(packedItemW/1000.0, packedItemH/1000.0, cameraHeightMM/1000.0);
   }
 
   @Override
@@ -501,6 +501,10 @@ public class CratePackingComponent extends DiarcComponent {
   public Vec3 calculateRobotAdjustment() {
     BufferedImage image = getImage();
     Vec3 result = visionProcessor.calculatePickupAction(image);
+    if (result == null) {
+      log.error("[calculateRobotAdjustment] no object detected");
+      return null;
+    }
     return new Vec3(result.getX(), -1 * result.getY(), -1 * result.getZ());
   }
 }
