@@ -7,8 +7,6 @@ package edu.tufts.hrilab.llm.serviceproviders;
 import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.db.ActionDBEntry;
-//import edu.tufts.hrilab.action.goal.GoalInfo;
-//import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.action.goal.GoalInfo;
 import edu.tufts.hrilab.action.notification.NotificationType;
 import edu.tufts.hrilab.fol.*;
@@ -376,33 +374,6 @@ public class PickAndPlace2024LLMServiceProvider extends LLMServiceProvider {
         currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
 
         return currentChat;
-    }
-
-    @Action
-    @TRADEService
-    public void testLLMNLGWithString(String semantics) {
-        Chat chat = new Chat();
-        List<Utterance> conversationHistory = new ArrayList<>();
-        Predicate semanticsPred = Factory.createPredicate(semantics);
-        Utterance utterance = new Utterance.Builder().setSemantics(semanticsPred).setIsInputUtterance(false).setUtteranceType(UtteranceType.REPLY).setSpeaker(Factory.createSymbol("robotone")).setListener(Factory.createSymbol("pete")).build();
-        chat = generateNLGChat(utterance, conversationHistory);
-
-        // Call LLM to get Completion
-        Completion response;
-        try {
-            response = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
-        } catch (TRADEException e) {
-            log.error("[testLLMNLGWithString] Error performing chat completion", e);
-            return;
-        }
-        utterance = parseNLGCompletionResponse(utterance, response);
-        log.info("[testLLMNLGWithString] {}",utterance.getWordsAsString());
-
-        try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(String.class)).call(Void.class,utterance.getWordsAsString());
-        } catch (TRADEException e) {
-            log.error("[testLLMNLGWithString] Error calling sayText", e);
-        }
     }
 
     private String getConversationHistoryString(List<Utterance> conversationHistory) {

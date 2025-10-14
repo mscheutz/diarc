@@ -8,8 +8,10 @@ import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.slug.common.Utterance;
+import edu.tufts.hrilab.slug.common.UtteranceType;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.Pair;
@@ -448,5 +450,33 @@ public abstract class LLMServiceProvider extends DiarcComponent {
         currentChats = new HashMap<>();
         conversationMappings = new HashMap<>();
         currentConversations = new HashMap<>();
+    }
+
+    // Testing Code //
+    @Action
+    @TRADEService
+    public void testLLMNLGWithString(String semantics) {
+      Chat chat = new Chat();
+      List<Utterance> conversationHistory = new ArrayList<>();
+      Predicate semanticsPred = Factory.createPredicate(semantics);
+      Utterance utterance = new Utterance.Builder().setSemantics(semanticsPred).setIsInputUtterance(false).setUtteranceType(UtteranceType.REPLY).setSpeaker(Factory.createSymbol("robotone")).setListener(Factory.createSymbol("pete")).build();
+      chat = generateNLGChat(utterance, conversationHistory);
+
+      // Call LLM to get Completion
+      Completion response;
+      try {
+        response = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
+      } catch (TRADEException e) {
+        log.error("[testLLMNLGWithString] Error performing chat completion", e);
+        return;
+      }
+      utterance = parseNLGCompletionResponse(utterance, response);
+      log.info("[testLLMNLGWithString] {}",utterance.getWordsAsString());
+
+      try {
+        TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(String.class)).call(Void.class,utterance.getWordsAsString());
+      } catch (TRADEException e) {
+        log.error("[testLLMNLGWithString] Error calling sayText", e);
+      }
     }
 }

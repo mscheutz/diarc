@@ -9,9 +9,17 @@ import java.util.HashMap;
     Symbol !robotone="robotone:agent";
     Term !props;
     Symbol !refId;
+    java.lang.Integer !crateL;
+    java.lang.Integer !itemL;
 
     !robotone.tsc:loadLocations(!robotone);
     !robotone.act:setupPoses();
+
+    !crateL = !robotone.tsc:getCrateLength();
+    !itemL = !robotone.tsc:getPackedItemLength();
+    if (~op:equals(!crateL,-1) && ~op:equals(!itemL,-1)) {
+        !robotone.act:solveCratePacking3D();
+    }
 }
 
 () = setupPoses() {

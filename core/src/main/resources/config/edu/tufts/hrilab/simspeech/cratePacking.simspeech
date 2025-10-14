@@ -1,17 +1,37 @@
-dodemo
+start packing
+yes
+560 mm
+360 mm
+200 mm
+230 mm
+170 mm
+60 mm
+no
+10 items
+--
+the crate has been replaced
+------
+I would like to set the packing parameters
+560 mm
+360 mm
+200 mm
+230 mm
+170 mm
+60 mm
+yes
+start packing
+no
+--
+done
+------
+the packed food items are 230 by 170 by 60 millimeters large
+the crates are 560 by 360 by 200 millimeters large
+what can a fully packed crate hold
+how fully are you currently packing crates
+you should pack ten items at a time
+how fully are you currently packing crates
+start packing
+no
 ------
 gripper
 camera
-------
-configure
-30 mm
-20 mm
-10 mm
-6 mm
-4 mm
-5 mm
---
-yes
---
-no
-10 items

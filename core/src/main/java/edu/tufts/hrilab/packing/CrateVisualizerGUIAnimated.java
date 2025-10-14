@@ -10,11 +10,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * visualization of the results from the PalletPacker algorithm
+ * visualization of the results from the CratePacker algorithm
  */
-public class PalletVisualizerGUIAnimated extends JFrame {
+public class CrateVisualizerGUIAnimated extends JFrame {
 
-  private final JTextField palletLField, palletWField, palletHField, rectLField, rectWField, rectHField;
+  private final JTextField crateLField, crateWField, crateHField, rectLField, rectWField, rectHField;
   private final JLabel resultLabel;
   private final JTextArea bottomLayerInfoArea;
   private final DrawingPanel drawingPanel;
@@ -22,27 +22,27 @@ public class PalletVisualizerGUIAnimated extends JFrame {
   private PackingResult3D lastResult;
   private Timer animationStateTimer;
 
-  public PalletVisualizerGUIAnimated() {
-    setTitle("Pallet Packer Visualizer");
+  public CrateVisualizerGUIAnimated() {
+    setTitle("Crate Packer Visualizer");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setLayout(new BorderLayout(10, 10));
 
     // --- Input Panel ---
     JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
     inputPanel.setBorder(BorderFactory.createTitledBorder("Dimensions"));
-    palletLField = new JTextField("50");
-    palletWField = new JTextField("40");
-    palletHField = new JTextField("18");
+    crateLField = new JTextField("50");
+    crateWField = new JTextField("40");
+    crateHField = new JTextField("18");
     rectLField = new JTextField("7");
     rectWField = new JTextField("11");
     rectHField = new JTextField("5");
 
-    inputPanel.add(new JLabel("Pallet Length (L):"));
-    inputPanel.add(palletLField);
-    inputPanel.add(new JLabel("Pallet Width (W):"));
-    inputPanel.add(palletWField);
-    inputPanel.add(new JLabel("Pallet Height (H):"));
-    inputPanel.add(palletHField);
+    inputPanel.add(new JLabel("Crate Length (L):"));
+    inputPanel.add(crateLField);
+    inputPanel.add(new JLabel("Crate Width (W):"));
+    inputPanel.add(crateWField);
+    inputPanel.add(new JLabel("Crate Height (H):"));
+    inputPanel.add(crateHField);
     inputPanel.add(new JSeparator());
     inputPanel.add(new JSeparator());
     inputPanel.add(new JLabel("Item Length (l):"));
@@ -116,9 +116,9 @@ public class PalletVisualizerGUIAnimated extends JFrame {
     }
     drawingPanel.stopAnimation();
     try {
-      int palletL = Integer.parseInt(palletLField.getText());
-      int palletW = Integer.parseInt(palletWField.getText());
-      int palletH = Integer.parseInt(palletHField.getText());
+      int crateL = Integer.parseInt(crateLField.getText());
+      int crateW = Integer.parseInt(crateWField.getText());
+      int crateH = Integer.parseInt(crateHField.getText());
       int rectL = Integer.parseInt(rectLField.getText());
       int rectW = Integer.parseInt(rectWField.getText());
       int rectH = Integer.parseInt(rectHField.getText());
@@ -131,8 +131,8 @@ public class PalletVisualizerGUIAnimated extends JFrame {
       new SwingWorker<PackingResult3D, Void>() {
         @Override
         protected PackingResult3D doInBackground() {
-          PalletPackingComponent packer = new PalletPackingComponent();
-          return packer.solvePalletPacking3D(palletL, palletW, palletH, rectL, rectW, rectH);
+          CratePackingComponent packer = new CratePackingComponent();
+          return packer.solveCratePacking3D(crateL, crateW, crateH, rectL, rectW, rectH);
         }
 
         @Override
@@ -145,12 +145,12 @@ public class PalletVisualizerGUIAnimated extends JFrame {
               printBottomLayerInfo(lastResult.allItems);
               animateButton.setEnabled(true);
             } else {
-              resultText = "No items fit on the pallet.";
+              resultText = "No items fit on the crate.";
               bottomLayerInfoArea.setText("N/A");
               lastResult = null;
             }
             resultLabel.setText(resultText);
-            drawingPanel.setPackingResult(palletL, palletW, lastResult != null ? lastResult.layerPacking.rectangles : Collections.emptyList());
+            drawingPanel.setPackingResult(crateL, crateW, lastResult != null ? lastResult.layerPacking.rectangles : Collections.emptyList());
           } catch (Exception e) {
             resultLabel.setText("An error occurred during calculation.");
             e.printStackTrace();
@@ -169,7 +169,7 @@ public class PalletVisualizerGUIAnimated extends JFrame {
 
     setAnimationControlsEnabled(true);
     pauseResumeButton.setText("Pause");
-    drawingPanel.startAnimation(lastResult.allItems, Integer.parseInt(palletLField.getText()), Integer.parseInt(palletWField.getText()));
+    drawingPanel.startAnimation(lastResult.allItems, Integer.parseInt(crateLField.getText()), Integer.parseInt(crateWField.getText()));
 
     animationStateTimer = new Timer(100, e -> {
       if (!drawingPanel.isAnimationRunning()) {
@@ -195,7 +195,7 @@ public class PalletVisualizerGUIAnimated extends JFrame {
     setAnimationControlsEnabled(false);
     pauseResumeButton.setText("Pause");
     if (lastResult != null) {
-      drawingPanel.setPackingResult(Integer.parseInt(palletLField.getText()), Integer.parseInt(palletWField.getText()), lastResult.layerPacking.rectangles);
+      drawingPanel.setPackingResult(Integer.parseInt(crateLField.getText()), Integer.parseInt(crateWField.getText()), lastResult.layerPacking.rectangles);
     }
   }
 
@@ -210,10 +210,10 @@ public class PalletVisualizerGUIAnimated extends JFrame {
   }
 
   private static class DrawingPanel extends JPanel {
-    private int palletL = 1, palletW = 1;
+    private int crateL = 1, crateW = 1;
     private List<Rectangle> packedRectangles;
 
-    private enum AnimState { IDLE, APPROACHING_PICKUP, PICKING, MOVING_TO_PALLET, PLACING, FINISHED }
+    private enum AnimState { IDLE, APPROACHING_PICKUP, PICKING, MOVING_TO_CRATE, PLACING, FINISHED }
     private Timer animationTimer;
     private List<PackedItem> allItems;
     private int currentItemIndex, currentLayer;
@@ -235,9 +235,9 @@ public class PalletVisualizerGUIAnimated extends JFrame {
       armShoulder = new Point2D.Double(); armElbow = new Point2D.Double(); armGripper = new Point2D.Double();
     }
 
-    public void setPackingResult(int palletL, int palletW, List<Rectangle> rectangles) {
+    public void setPackingResult(int crateL, int crateW, List<Rectangle> rectangles) {
       stopAnimation();
-      this.palletL = palletL; this.palletW = palletW;
+      this.crateL = crateL; this.crateW = crateW;
       this.packedRectangles = new ArrayList<>(rectangles);
       this.allItems = null; this.animState = AnimState.IDLE;
       revalidate(); repaint();
@@ -252,9 +252,9 @@ public class PalletVisualizerGUIAnimated extends JFrame {
     public void resumeAnimation() { if(animationTimer != null) animationTimer.start(); isPaused = false; }
     public boolean isPaused() { return isPaused; }
 
-    public void startAnimation(List<PackedItem> allItems, int palletL, int palletW) {
+    public void startAnimation(List<PackedItem> allItems, int crateL, int crateW) {
       stopAnimation();
-      this.palletL = palletL; this.palletW = palletW;
+      this.crateL = crateL; this.crateW = crateW;
       this.allItems = allItems.stream()
               .sorted(Comparator.comparingInt((PackedItem i) -> i.layer)
                       .thenComparingInt((PackedItem i) -> i.rect.y)
@@ -289,7 +289,7 @@ public class PalletVisualizerGUIAnimated extends JFrame {
     private void startTransition(AnimState nextState, int frames) {
       this.animState = nextState; this.animFrame = 0; this.animTotalFrames = frames;
 
-      conveyorEnd = new Point2D.Double(-movingItem.width / 2.0, palletW * 0.8);
+      conveyorEnd = new Point2D.Double(-movingItem.width / 2.0, crateW * 0.8);
 
       switch(nextState) {
         case APPROACHING_PICKUP:
@@ -298,7 +298,7 @@ public class PalletVisualizerGUIAnimated extends JFrame {
           armAnimFrom = (Point2D.Double) armGripper.clone(); armAnimTo = conveyorEnd;
           break;
         case PICKING: break;
-        case MOVING_TO_PALLET:
+        case MOVING_TO_CRATE:
           armAnimFrom = (Point2D.Double) armGripper.clone();
           armAnimTo = new Point2D.Double(currentPackedItem.rect.getCenterX(), currentPackedItem.rect.getCenterY());
           break;
@@ -319,7 +319,7 @@ public class PalletVisualizerGUIAnimated extends JFrame {
           armGripper.x = armAnimFrom.x + t * (armAnimTo.x - armAnimFrom.x);
           armGripper.y = armAnimFrom.y + t * (armAnimTo.y - armAnimFrom.y);
           break;
-        case MOVING_TO_PALLET:
+        case MOVING_TO_CRATE:
           armGripper.x = armAnimFrom.x + t * (armAnimTo.x - armAnimFrom.x);
           armGripper.y = armAnimFrom.y + t * (armAnimTo.y - armAnimFrom.y);
           movingItem.setLocation((int)(armGripper.x - movingItem.width/2.0), (int)(armGripper.y - movingItem.height/2.0));
@@ -331,8 +331,8 @@ public class PalletVisualizerGUIAnimated extends JFrame {
       if (animFrame > animTotalFrames) {
         switch (animState) {
           case APPROACHING_PICKUP: startTransition(AnimState.PICKING, 10); break;
-          case PICKING:            startTransition(AnimState.MOVING_TO_PALLET, 40); break;
-          case MOVING_TO_PALLET:   startTransition(AnimState.PLACING, 10); break;
+          case PICKING:            startTransition(AnimState.MOVING_TO_CRATE, 40); break;
+          case MOVING_TO_CRATE:   startTransition(AnimState.PLACING, 10); break;
           case PLACING:
             placedItemsInCurrentLayer.add(currentPackedItem.rect);
             currentItemIndex++;
@@ -347,7 +347,7 @@ public class PalletVisualizerGUIAnimated extends JFrame {
     private double getScale(int width, int height) {
       double panelWidth = width - getInsets().left - getInsets().right;
       double panelHeight = height - getInsets().top - getInsets().bottom;
-      return Math.min(panelWidth / (palletL * 1.4), panelHeight / palletW);
+      return Math.min(panelWidth / (crateL * 1.4), panelHeight / crateW);
     }
 
     @Override
@@ -357,20 +357,20 @@ public class PalletVisualizerGUIAnimated extends JFrame {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
       double scale = getScale(getWidth(), getHeight());
-      int drawXOffset = getInsets().left + (int)(palletL * 0.4 * scale);
+      int drawXOffset = getInsets().left + (int)(crateL * 0.4 * scale);
       int drawYOffset = getInsets().top;
 
-      conveyorStart = new Point2D.Double(-palletL * 0.4, palletW * 0.8);
-      armShoulder.setLocation(palletL * 1.1, -palletW * 0.1);
+      conveyorStart = new Point2D.Double(-crateL * 0.4, crateW * 0.8);
+      armShoulder.setLocation(crateL * 1.1, -crateW * 0.1);
 
       g2d.setColor(Color.LIGHT_GRAY);
-      g2d.fillRect(drawXOffset, drawYOffset, (int)(palletL * scale), (int)(palletW * scale));
+      g2d.fillRect(drawXOffset, drawYOffset, (int)(crateL * scale), (int)(crateW * scale));
 
       if (packedRectangles != null) {
         for (Rectangle r : packedRectangles) drawRectangle(g2d, r, scale, drawXOffset, drawYOffset, 1, false);
       }
 
-      double conveyorWidthScale = (movingItem != null) ? -movingItem.width/2.0 : -palletL * 0.1;
+      double conveyorWidthScale = (movingItem != null) ? -movingItem.width/2.0 : -crateL * 0.1;
       g2d.setColor(Color.DARK_GRAY);
       g2d.fillRect(drawXOffset + (int)(conveyorStart.x * scale), drawYOffset + (int)(conveyorStart.y * scale) - 5, (int)((conveyorWidthScale - conveyorStart.x) * scale * 1.2), 10);
 
@@ -388,12 +388,12 @@ public class PalletVisualizerGUIAnimated extends JFrame {
           drawRectangle(g2d, movingItem, scale, drawXOffset, drawYOffset, currentLayer, isHeld);
         }
 
-        calculateArmJoints(armShoulder, armGripper, palletL, palletW, armElbow);
+        calculateArmJoints(armShoulder, armGripper, crateL, crateW, armElbow);
         drawArm(g2d, scale, drawXOffset, drawYOffset);
       }
 
       g2d.setColor(Color.BLACK); g2d.setStroke(new BasicStroke(3));
-      g2d.drawRect(drawXOffset, drawYOffset, (int)(palletL * scale), (int)(palletW * scale));
+      g2d.drawRect(drawXOffset, drawYOffset, (int)(crateL * scale), (int)(crateW * scale));
       g2d.dispose();
     }
 
@@ -419,7 +419,7 @@ public class PalletVisualizerGUIAnimated extends JFrame {
       g2d.drawLine(x1, y1, x2, y2); g2d.drawLine(x2, y2, x3, y3);
       g2d.setColor(Color.GRAY);
       g2d.fillOval(x1 - 12, y1 - 12, 24, 24); g2d.fillOval(x2 - 10, y2 - 10, 20, 20);
-      g2d.setColor(animState == AnimState.PICKING || animState == AnimState.MOVING_TO_PALLET ? Color.RED : Color.BLACK);
+      g2d.setColor(animState == AnimState.PICKING || animState == AnimState.MOVING_TO_CRATE ? Color.RED : Color.BLACK);
       g2d.fillOval(x3 - 8, y3 - 8, 16, 16);
     }
 
@@ -442,6 +442,6 @@ public class PalletVisualizerGUIAnimated extends JFrame {
   }
 
   public static void main(String[] args) {
-    SwingUtilities.invokeLater(() -> new PalletVisualizerGUIAnimated().setVisible(true));
+    SwingUtilities.invokeLater(() -> new CrateVisualizerGUIAnimated().setVisible(true));
   }
 }

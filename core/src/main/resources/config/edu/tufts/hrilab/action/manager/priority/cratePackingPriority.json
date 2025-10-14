@@ -1,0 +1,70 @@
+{
+  "reportAllPackingParameters": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportFullyPackedCrateConfiguration": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportMaxNumberOfPackedItemsPerLayer": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportMaxNumberOfPackedLayers": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportMaxNumberOfPackedItems": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportCurrentPackedCrateConfiguration": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportCurrentNumberOfLayersToPack": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportCurrentNumberOfItemsToPack": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportCrateDimensions": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportCrateHeight": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportCrateWidth": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportCrateLength": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportPackedItemDimensions": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportPackedItemHeight": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportPackedItemWidth": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportPackedItemLength": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setNumberOfItemsToPackPerCrate": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  }
+}

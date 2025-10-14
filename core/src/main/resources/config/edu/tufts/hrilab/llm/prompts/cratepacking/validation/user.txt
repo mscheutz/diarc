@@ -1,0 +1,4 @@
+ The new input you are tasked with translating is:
+#
+Input:%utterance
+Output:
