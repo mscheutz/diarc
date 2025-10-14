@@ -482,12 +482,23 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     log.info("[ignoreTentativeAccept] goalPred: "+goalPred);
     if(goalPred != null) {
       switch (goalPred.getName()) {
-        case "describeScheduledGoals":
-        case "describeCurrentLocation":
-        case "describePendingGoals":
-        case "describeAllKnownLocations":
-        case "describeAllKnownPatrolPaths":
-        case "describeAllLocationsOnPatrolPath":
+        case "reportAllPackingParameters":
+        case "reportFullyPackedCrateConfiguration":
+        case "reportMaxNumberOfPackedItemsPerLayer":
+        case "reportMaxNumberOfPackedLayers":
+        case "reportMaxNumberOfPackedItems":
+        case "reportCurrentPackedCrateConfiguration":
+        case "reportCurrentNumberOfLayersToPack":
+        case "reportCurrentNumberOfItemsToPack":
+        case "reportCrateDimensions":
+        case "reportCrateHeight":
+        case "reportCrateWidth":
+        case "reportCrateLength":
+        case "reportPackedItemDimensions":
+        case "reportPackedItemHeight":
+        case "reportPackedItemWidth":
+        case "reportPackedItemLength":
+        case "setNumberOfItemsToPackPerCrate":
         case "repeatLastQuestion":
         case "describeCurrentGoal":
         case "reportTaughtActions":
@@ -495,10 +506,6 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
         case "describeActionSteps":
         case "reportIfCanPerform":
         case "reportKioskSettings":
-        case "listSavedVideos":
-        case "reportVideoVolume":
-        case "listSavedImages":
-        case "reportIsVideoSaved":
         case "sayText":
         case "say":
           return true;

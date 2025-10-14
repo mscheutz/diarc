@@ -620,21 +620,16 @@ import java.lang.Boolean;
 
     !queryPred = op:createPredicate("numItemsPerCrate(X)");
     !bindings = act:queryBelief(!queryPred);
-    op:log("info","!bindings");
     if (~op:isEmpty(!bindings)) {
         !binding = op:get(!bindings, 0);
-        op:log("info","!binding");
         !numSymbol = op:get(!binding,!bindingVar);
-        op:log("info","!numSymbol");
         !numString = op:getName(!numSymbol);
         ?numItemsPerCrate = op:newObject("java.lang.Integer", !numString);
     } else {
         //TODO: fail here, or let any caller handle it?
         //TODO: see if default value for return arg works?
         ?numItemsPerCrate = op:newObject("java.lang.Integer", -1);
-        op:log("info","?numItemsPerCrate");
     }
-    op:log("info","?numItemsPerCrate");
 }
 
 //TODO: remove?

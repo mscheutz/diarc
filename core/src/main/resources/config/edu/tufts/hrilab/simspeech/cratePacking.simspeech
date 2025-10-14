@@ -11,6 +11,24 @@ no
 --
 the crate has been replaced
 ------
+start packing
+no
+what are the dimensions of the crate
+--
+*Input box/item dimensions into GUI*
+the packed food items are 220 by 150 by 60 millimeters large
+the crates are 560 by 360 by 200 millimeters large
+--
+what are the dimensions of the crate
+what can a fully packed crate hold
+yes
+how fully are you currently packing crates
+you should only pack 10 items at a time
+how fully are you currently packing crates
+start packing
+no
+-------------------
+-------------------
 I would like to set the packing parameters
 560 mm
 360 mm
