@@ -6,35 +6,35 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * visualization of the results from the PalletPacker algorithm
+ * visualization of the results from the CratePacker algorithm
  */
-public class PalletVisualizerGUI extends JFrame {
+public class CrateVisualizerGUI extends JFrame {
 
-  private final JTextField palletLField, palletWField, palletHField, rectLField, rectWField, rectHField;
+  private final JTextField crateLField, crateWField, crateHField, rectLField, rectWField, rectHField;
   private final JLabel resultLabel;
   private final JTextArea bottomLayerInfoArea;
   private final DrawingPanel drawingPanel;
 
-  public PalletVisualizerGUI() {
-    setTitle("Pallet Packer Visualizer");
+  public CrateVisualizerGUI() {
+    setTitle("Crate Packer Visualizer");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setLayout(new BorderLayout(10, 10));
 
     JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
     inputPanel.setBorder(BorderFactory.createTitledBorder("Dimensions"));
-    palletLField = new JTextField("50");
-    palletWField = new JTextField("40");
-    palletHField = new JTextField("18");
+    crateLField = new JTextField("50");
+    crateWField = new JTextField("40");
+    crateHField = new JTextField("18");
     rectLField = new JTextField("7");
     rectWField = new JTextField("11");
     rectHField = new JTextField("5");
 
-    inputPanel.add(new JLabel("Pallet Length (L):"));
-    inputPanel.add(palletLField);
-    inputPanel.add(new JLabel("Pallet Width (W):"));
-    inputPanel.add(palletWField);
-    inputPanel.add(new JLabel("Pallet Height (H):"));
-    inputPanel.add(palletHField);
+    inputPanel.add(new JLabel("Crate Length (L):"));
+    inputPanel.add(crateLField);
+    inputPanel.add(new JLabel("Crate Width (W):"));
+    inputPanel.add(crateWField);
+    inputPanel.add(new JLabel("Crate Height (H):"));
+    inputPanel.add(crateHField);
     inputPanel.add(new JSeparator());
     inputPanel.add(new JSeparator());
     inputPanel.add(new JLabel("Item Length (l):"));
@@ -79,9 +79,9 @@ public class PalletVisualizerGUI extends JFrame {
 
   private void runCalculation() {
     try {
-      int palletL = Integer.parseInt(palletLField.getText());
-      int palletW = Integer.parseInt(palletWField.getText());
-      int palletH = Integer.parseInt(palletHField.getText());
+      int crateL = Integer.parseInt(crateLField.getText());
+      int crateW = Integer.parseInt(crateWField.getText());
+      int crateH = Integer.parseInt(crateHField.getText());
       int rectL = Integer.parseInt(rectLField.getText());
       int rectW = Integer.parseInt(rectWField.getText());
       int rectH = Integer.parseInt(rectHField.getText());
@@ -93,8 +93,8 @@ public class PalletVisualizerGUI extends JFrame {
       new SwingWorker<PackingResult3D, Void>() {
         @Override
         protected PackingResult3D doInBackground() {
-          PalletPackingComponent packer = new PalletPackingComponent();
-          return packer.solvePalletPacking3D(palletL, palletW, palletH, rectL, rectW, rectH);
+          CratePackingComponent packer = new CratePackingComponent();
+          return packer.solveCratePacking3D(crateL, crateW, crateH, rectL, rectW, rectH);
         }
 
         @Override
@@ -109,11 +109,11 @@ public class PalletVisualizerGUI extends JFrame {
               );
               printBottomLayerInfo(result.allItems);
             } else {
-              resultText = "No items fit on the pallet.";
+              resultText = "No items fit on the crate.";
               bottomLayerInfoArea.setText("N/A");
             }
             resultLabel.setText(resultText);
-            drawingPanel.setPackingResult(palletL, palletW, result.layerPacking.rectangles);
+            drawingPanel.setPackingResult(crateL, crateW, result.layerPacking.rectangles);
           } catch (Exception e) {
             resultLabel.setText("An error occurred during calculation.");
             e.printStackTrace();
@@ -144,7 +144,7 @@ public class PalletVisualizerGUI extends JFrame {
   }
 
   private static class DrawingPanel extends JPanel {
-    private int palletL = 1, palletW = 1;
+    private int crateL = 1, crateW = 1;
     private List<Rectangle> packedRectangles;
 
     DrawingPanel() {
@@ -152,9 +152,9 @@ public class PalletVisualizerGUI extends JFrame {
       setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     }
 
-    public void setPackingResult(int palletL, int palletW, List<Rectangle> rectangles) {
-      this.palletL = palletL;
-      this.palletW = palletW;
+    public void setPackingResult(int crateL, int crateW, List<Rectangle> rectangles) {
+      this.crateL = crateL;
+      this.crateW = crateW;
       this.packedRectangles = rectangles;
       revalidate();
       repaint();
@@ -170,7 +170,7 @@ public class PalletVisualizerGUI extends JFrame {
       double panelWidth = getParent().getWidth() - 20;
       double panelHeight = getParent().getHeight() - 20;
       if (panelWidth <= 0 || panelHeight <= 0) return 1.0;
-      return Math.min(panelWidth / palletL, panelHeight / palletW);
+      return Math.min(panelWidth / crateL, panelHeight / crateW);
     }
 
     @Override
@@ -185,10 +185,10 @@ public class PalletVisualizerGUI extends JFrame {
       int drawXOffset = getInsets().left;
       int drawYOffset = getInsets().top;
 
-      int palletDrawWidth = (int)(palletL * scale);
-      int palletDrawHeight = (int)(palletW * scale);
+      int crateDrawWidth = (int)(crateL * scale);
+      int crateDrawHeight = (int)(crateW * scale);
       g2d.setColor(Color.LIGHT_GRAY);
-      g2d.fillRect(drawXOffset, drawYOffset, palletDrawWidth, palletDrawHeight);
+      g2d.fillRect(drawXOffset, drawYOffset, crateDrawWidth, crateDrawHeight);
 
       for (Rectangle r : packedRectangles) {
         int x = drawXOffset + (int) (r.x * scale);
@@ -212,11 +212,11 @@ public class PalletVisualizerGUI extends JFrame {
 
       g2d.setColor(Color.BLACK);
       g2d.setStroke(new BasicStroke(3));
-      g2d.drawRect(drawXOffset, drawYOffset, palletDrawWidth, palletDrawHeight);
+      g2d.drawRect(drawXOffset, drawYOffset, crateDrawWidth, crateDrawHeight);
     }
   }
 
   public static void main(String[] args) {
-    SwingUtilities.invokeLater(() -> new PalletVisualizerGUI().setVisible(true));
+    SwingUtilities.invokeLater(() -> new CrateVisualizerGUI().setVisible(true));
   }
 }

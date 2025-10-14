@@ -454,33 +454,6 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         return currentChat;
     }
 
-    @Action
-    @TRADEService
-    public void testLLMNLGWithString(String semantics) {
-        Chat chat = new Chat();
-        List<Utterance> conversationHistory = new ArrayList<>();
-        Predicate semanticsPred = Factory.createPredicate(semantics);
-        Utterance utterance = new Utterance.Builder().setSemantics(semanticsPred).setIsInputUtterance(false).setUtteranceType(UtteranceType.REPLY).setSpeaker(Factory.createSymbol("robotone")).setListener(Factory.createSymbol("pete")).build();
-        chat = generateNLGChat(utterance, conversationHistory);
-
-        // Call LLM to get Completion
-        Completion response;
-        try {
-            response = TRADE.getAvailableService(new TRADEServiceConstraints().name("chatCompletion").argTypes(Chat.class)).call(Completion.class, chat);
-        } catch (TRADEException e) {
-            log.error("[testLLMNLGWithString] Error performing chat completion", e);
-            return;
-        }
-        utterance = parseNLGCompletionResponse(utterance, response);
-        log.info("[testLLMNLGWithString] {}",utterance.getWordsAsString());
-
-        try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("sayText").argTypes(String.class)).call(Void.class,utterance.getWordsAsString());
-        } catch (TRADEException e) {
-            log.error("[testLLMNLGWithString] Error calling sayText", e);
-        }
-    }
-
     private String getConversationHistoryString(List<Utterance> conversationHistory) {
         StringBuilder builder = new StringBuilder();
         if (conversationHistory.isEmpty()) {

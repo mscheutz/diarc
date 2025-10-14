@@ -28,43 +28,43 @@ import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 /**
- * An implementation of pallet packing with homogeneous items of
+ * An implementation of crate packing with homogeneous items of
  * the same length, width and height (l,w,h) which are placed in a box
  * such that items are layered in layers of h with (l,w) either
  * horizontally or vertically placed to maxmize 2d packing in each layer;
  * all layers are repeated
  */
-public class PalletPackingComponent extends DiarcComponent {
+public class CratePackingComponent extends DiarcComponent {
 
   private double imageWidth;
   private double imageHeight;
   private double cameraHeightMM;
   private double cameraAngle;
   //TODO:Likely will want to modify this to not have 1:1 relationship with a packing instance?
-  int palletL, palletW, palletH, rectL, rectW, rectH;
+  int crateL, crateW, crateH, packedItemL, packedItemW, packedItemH;
   PackingResult3D cachedResult = null;
   int itemIndex = 0;
   private int tolerance;
   private RobotVisionProcessor visionProcessor;
   private int itemNumber = 0;
 
-  public PalletPackingComponent() {
-    palletL = -1;
-    palletW = -1;
-    palletH = -1;
-    rectL = -1;
-    rectW = -1;
-    rectH = -1;
+  public CratePackingComponent() {
+    crateL = -1;
+    crateW = -1;
+    crateH = -1;
+    packedItemL = -1;
+    packedItemW = -1;
+    packedItemH = -1;
     visionProcessor = null;
   }
 
-  public PalletPackingComponent(int palletL, int palletW, int palletH, int rectL, int rectW, int rectH, double cameraAngle, double cameraHeightMM, double imageWidth, double imageHeight) {
-    this.palletL = palletL;
-    this.palletW = palletW;
-    this.palletH = palletH;
-    this.rectL = rectL;
-    this.rectW = rectW;
-    this.rectH = rectH;
+  public CratePackingComponent(int crateL, int crateW, int crateH, int packedItemL, int packedItemW, int packedItemH, double cameraAngle, double cameraHeightMM, double imageWidth, double imageHeight) {
+    this.crateL = crateL;
+    this.crateW = crateW;
+    this.crateH = crateH;
+    this.packedItemL = packedItemL;
+    this.packedItemW = packedItemW;
+    this.packedItemH = packedItemH;
     this.cameraAngle = cameraAngle;
     this.cameraHeightMM = cameraHeightMM;
     this.imageWidth = imageWidth;
@@ -79,21 +79,21 @@ public class PalletPackingComponent extends DiarcComponent {
 
   @Override
   public void parseArgs(CommandLine cmdLine) {
-    if (cmdLine.hasOption("palletL") || cmdLine.hasOption("palletW") || cmdLine.hasOption("palletH")) {
-      if (cmdLine.hasOption("palletL") && cmdLine.hasOption("palletW") && cmdLine.hasOption("palletH")) {
-        palletL = Integer.parseInt(cmdLine.getOptionValue("palletL"));
-        palletW = Integer.parseInt(cmdLine.getOptionValue("palletW"));
-        palletH = Integer.parseInt(cmdLine.getOptionValue("palletH"));
+    if (cmdLine.hasOption("crateL") || cmdLine.hasOption("crateW") || cmdLine.hasOption("crateH")) {
+      if (cmdLine.hasOption("crateL") && cmdLine.hasOption("crateW") && cmdLine.hasOption("crateH")) {
+        crateL = Integer.parseInt(cmdLine.getOptionValue("crateL"));
+        crateW = Integer.parseInt(cmdLine.getOptionValue("crateW"));
+        crateH = Integer.parseInt(cmdLine.getOptionValue("crateH"));
       } else {
-        log.warn("[parseArgs] Not all pallet dimensions supplied, ignoring");
+        log.warn("[parseArgs] Not all crate dimensions supplied, ignoring");
       }
     }
 
     if (cmdLine.hasOption("itemL") || cmdLine.hasOption("itemW") || cmdLine.hasOption("itemH")) {
       if (cmdLine.hasOption("itemL") && cmdLine.hasOption("itemW") && cmdLine.hasOption("itemH")) {
-        rectL = Integer.parseInt(cmdLine.getOptionValue("itemL"));
-        rectW = Integer.parseInt(cmdLine.getOptionValue("itemW"));
-        rectH = Integer.parseInt(cmdLine.getOptionValue("itemH"));
+        packedItemL = Integer.parseInt(cmdLine.getOptionValue("itemL"));
+        packedItemW = Integer.parseInt(cmdLine.getOptionValue("itemW"));
+        packedItemH = Integer.parseInt(cmdLine.getOptionValue("itemH"));
         tolerance = Integer.parseInt(cmdLine.getOptionValue("tolerance"));
       } else {
         log.warn("[parseArgs] Not all item dimensions supplied, ignoring");
@@ -115,9 +115,9 @@ public class PalletPackingComponent extends DiarcComponent {
   @Override
   public List<Option> additionalUsageInfo() {
     List<Option> options = new ArrayList<>();
-    options.add(Option.builder("palletL").hasArg().build());
-    options.add(Option.builder("palletW").hasArg().build());
-    options.add(Option.builder("palletH").hasArg().build());
+    options.add(Option.builder("crateL").hasArg().build());
+    options.add(Option.builder("crateW").hasArg().build());
+    options.add(Option.builder("crateH").hasArg().build());
     options.add(Option.builder("itemL").hasArg().build());
     options.add(Option.builder("itemW").hasArg().build());
     options.add(Option.builder("itemH").hasArg().build());
@@ -134,25 +134,23 @@ public class PalletPackingComponent extends DiarcComponent {
    * height, allowing only for 90-degree horizontal rotation of the item
    */
   @TRADEService
-  @Action
-  public PackingResult3D solvePalletPacking3D() {
-    if (palletL == -1 || palletW == -1 || palletH == -1 || rectL == -1 || rectW == -1 || rectH == -1) {
-      log.error("[solvePalletPacking3D] pallet and item dimensions must be fully set before running solve. Current values {},{},{} {},{},{}", palletL, palletW, palletH, rectL, rectW, rectH);
+  public PackingResult3D solveCratePacking3D() {
+    if (crateL == -1 || crateW == -1 || crateH == -1 || packedItemL == -1 || packedItemW == -1 || packedItemH == -1) {
+      log.error("[solveCratePacking3D] crate and item dimensions must be fully set before running solve. Current values {},{},{} {},{},{}", crateL, crateW, crateH, packedItemL, packedItemW, packedItemH);
       return null;
     }
-    return solvePalletPacking3D(palletL, palletW, palletH, rectL + tolerance, rectW + tolerance, rectH);
+    return solveCratePacking3D(crateL, crateW, crateH, packedItemL + tolerance, packedItemW + tolerance, packedItemH);
   }
   @TRADEService
-  @Action
-  public PackingResult3D solvePalletPacking3D(int palletL, int palletW, int palletH, int rectL, int rectW, int rectH) {
+  public PackingResult3D solveCratePacking3D(int crateLength, int crateW, int crateH, int rectL, int rectW, int rectH) {
     itemIndex = 0;
-    if (palletH < rectH) {
+    if (crateH < rectH) {
       cachedResult = new PackingResult3D(0, 0, new ArrayList<>(), new PackingResult(0, new ArrayList<>()), "None");
       return cachedResult;
     }
 
-    int numLayers = palletH / rectH;
-    PackingResult layerResult = solve(palletL, palletW, rectL, rectW);
+    int numLayers = crateH / rectH;
+    PackingResult layerResult = solve(crateLength, crateW, rectL, rectW);
     int totalCount = numLayers * layerResult.count;
 
     List<PackedItem> allItems = new ArrayList<>();
@@ -170,20 +168,20 @@ public class PalletPackingComponent extends DiarcComponent {
   }
 
   /**
-   * the 2d solver solves for a pallet with L >= W and then
+   * the 2d solver solves for a crate with L >= W and then
    * transposes the result if the original dimensions were swapped
    */
-  private PackingResult solve(int palletL, int palletW, int rectL, int rectW) {
+  private PackingResult solve(int crateLength, int crateW, int rectL, int rectW) {
     boolean swapped = false;
-    if (palletL < palletW) {
-      int temp = palletL;
-      palletL = palletW;
-      palletW = temp;
+    if (crateLength < crateW) {
+      int temp = crateLength;
+      crateLength = crateW;
+      crateW = temp;
       swapped = true;
     }
 
     Map<String, PackingResult> memo = new HashMap<>();
-    PackingResult canonicalResult = pack(palletL, palletW, rectL, rectW, memo);
+    PackingResult canonicalResult = pack(crateLength, crateW, rectL, rectW, memo);
 
     if (swapped) {
       List<Rectangle> transposedRects = new ArrayList<>();
@@ -266,55 +264,60 @@ public class PalletPackingComponent extends DiarcComponent {
   }
 
   @TRADEService
-  public void setPalletLength(int palletL) {
-    this.palletL = palletL;
+  public void setCrateLength(int crateLength) {
+    this.crateL = crateLength;
   }
   @TRADEService
-  public void setPalletWidth(int palletW) {
-    this.palletW = palletW;
+  public void setCrateWidth(int crateW) {
+    this.crateW = crateW;
   }
   @TRADEService
-  public void setPalletHeight(int palletH) {
-    this.palletH = palletH;
+  public void setCrateHeight(int crateH) {
+    this.crateH = crateH;
   }
   @TRADEService
-  public void setPalletDimensions(int palletL, int palletW, int palletH) {
-    this.palletL = palletL;
-    this.palletW = palletW;
-    this.palletH = palletH;
+  public void setCrateDimensions(int crateLength, int crateW, int crateH) {
+    this.crateL = crateLength;
+    this.crateW = crateW;
+    this.crateH = crateH;
   }
   @TRADEService
-  public void setPackingItemLength(int itemL) {
-    rectL = itemL;
+  public void setPackedItemLength(int itemL) {
+    packedItemL = itemL;
   }
   @TRADEService
-  public void setPackingItemWidth(int itemW) {
-    rectW = itemW;
+  public void setPackedItemWidth(int itemW) {
+    packedItemW = itemW;
   }
   @TRADEService
-  public void setPackingItemHeight(int itemH) {
-    rectH = itemH;
+  public void setPackedItemHeight(int itemH) {
+    packedItemH = itemH;
   }
   @TRADEService
-  public void setPackingItemDimensions(int itemL, int itemW, int itemH) {
-    rectL = itemL;
-    rectW = itemW;
-    rectH = itemH;
+  public void setPackedItemDimensions(int itemL, int itemW, int itemH) {
+    packedItemL = itemL;
+    packedItemW = itemW;
+    packedItemH = itemH;
   }
 
   @TRADEService
   public PackingResult3D getCachedPackingResult3D() {
     if (cachedResult == null) {
-      log.warn("[getCachedPackingResult3D]  No cached packing result found, run solvePalletPacking3D first");
+      log.warn("[getCachedPackingResult3D]  No cached packing result found, run solveCratePacking3D first");
       return null;
     }
     return cachedResult;
   }
 
   @TRADEService
+  public void resetPackedItemIndex() {
+    itemIndex = 0;
+  }
+
+  @TRADEService
   public PackedItem getNextPackedItem() {
     if (cachedResult == null) {
-      log.warn("[getNextPackedItem] No cached packing result found, run solvePalletPacking3D first");
+      log.warn("[getNextPackedItem] No cached packing result found, run solveCratePacking3D first");
       return null;
     }
     return cachedResult.allItems.get(itemIndex++);
@@ -323,7 +326,7 @@ public class PalletPackingComponent extends DiarcComponent {
   @TRADEService
   public int getNumLayers() {
     if (cachedResult == null) {
-      log.warn("[getNumLayers] No cached packing result found, run solvePalletPacking3D first");
+      log.warn("[getNumLayers] No cached packing result found, run solveCratePacking3D first");
       return -1;
     }
     return cachedResult.numLayers;
@@ -332,7 +335,7 @@ public class PalletPackingComponent extends DiarcComponent {
   @TRADEService
   public int getTotalNumberOfItems() {
     if (cachedResult == null) {
-      log.warn("[getTotalNumberOfItems] No cached packing result found, run solvePalletPacking3D first");
+      log.warn("[getTotalNumberOfItems] No cached packing result found, run solveCratePacking3D first");
       return -1;
     }
     return cachedResult.totalCount;
@@ -341,7 +344,7 @@ public class PalletPackingComponent extends DiarcComponent {
   @TRADEService
   public int getNumberOfItemsPerLayer() {
     if (cachedResult == null) {
-      log.warn("[getNumberOfItemsPerLayer] No cached packing result found, run solvePalletPacking3D first");
+      log.warn("[getNumberOfItemsPerLayer] No cached packing result found, run solveCratePacking3D first");
       return -1;
     }
     return cachedResult.layerPacking.count;
@@ -350,48 +353,78 @@ public class PalletPackingComponent extends DiarcComponent {
   @TRADEService
   public PackingResult getLayerRectangles() {
     if (cachedResult == null) {
-      log.warn("[getLayerRectangle] No cached packing result found, run solvePalletPacking3D first");
+      log.warn("[getLayerRectangle] No cached packing result found, run solveCratePacking3D first");
       return null;
     }
     return cachedResult.layerPacking;
   }
 
-  //@TRADEService
-  //public RobotAdjustment calculateRobotAdjustment(List<Point2d> input) {
-  //  Vector2D bottomLeft;
-  //  Vector2D bottomRight;
-  //  Vector2D topLeft;
-  //  Vector2D topRight;
-  //  ArrayList<Point2d> points = input.stream().map(p -> new Point2d(p.getX(), imageHeight - p.getY())).collect(Collectors.toCollection(ArrayList::new));
-  //  points.sort((a, b) -> {
-  //    if (a.x == b.x)
-  //      return 0;
-  //    else
-  //      return (a.x < b.x) ? -1 : 1;
-  //  });
+  @TRADEService
+  public int getCrateLength() {
+    return crateL;
+  }
 
+  @TRADEService
+  public int getCrateWidth() {
+    return crateW;
+  }
 
-  //  if (points.get(0).y < points.get(1).y) {
-  //    bottomLeft = new Vector2D(points.get(0).x, points.get(0).y);
-  //    topLeft = new Vector2D(points.get(1).x, points.get(1).y);
-  //  } else {
-  //    bottomLeft = new Vector2D(points.get(1).x, points.get(1).y);
-  //    topLeft = new Vector2D(points.get(0).x, points.get(0).y);
-  //  }
-  //  if (points.get(2).y < points.get(3).y) {
-  //    bottomRight = new Vector2D(points.get(2).x, points.get(2).y);
-  //    topRight = new Vector2D(points.get(3).x, points.get(3).y);
-  //  } else {
-  //    bottomRight = new Vector2D(points.get(3).x, points.get(3).y);
-  //    topRight = new Vector2D(points.get(2).x, points.get(2).y);
-  //  }
-  //  Quadrilateral boxProjection = new Quadrilateral(topLeft, topRight, bottomRight, bottomLeft);
-  //  log.info("[calculateRobotAdjustment] bounding box projection: " + boxProjection);
-  //  return VisualServoingCalculator.calculateRobotAdjustment(
-  //          new Camera(cameraHeightMM, cameraAngle),
-  //          new Box(rectW, rectL, rectH), boxProjection,
-  //          new Vector2D(imageWidth/2.0, imageHeight/2.0));
-  //}
+  @TRADEService
+  public int getCrateHeight() {
+    return crateH;
+  }
+
+  @TRADEService
+  public int getPackedItemLength() {
+    return packedItemL;
+  }
+
+  @TRADEService
+  public int getPackedItemWidth() {
+    return packedItemW;
+  }
+
+  @TRADEService
+  public int getPackedItemHeight() {
+    return packedItemH;
+  }
+
+//  @TRADEService
+//  public RobotAdjustment calculateRobotAdjustment(List<Point2d> input) {
+//    Vector2D bottomLeft;
+//    Vector2D bottomRight;
+//    Vector2D topLeft;
+//    Vector2D topRight;
+//    ArrayList<Point2d> points = input.stream().map(p -> new Point2d(p.getX(), imageHeight - p.getY())).collect(Collectors.toCollection(ArrayList::new));
+//    points.sort((a, b) -> {
+//      if (a.x == b.x)
+//        return 0;
+//      else
+//        return (a.x < b.x) ? -1 : 1;
+//    });
+//
+//
+//    if (points.get(0).y < points.get(1).y) {
+//      bottomLeft = new Vector2D(points.get(0).x, points.get(0).y);
+//      topLeft = new Vector2D(points.get(1).x, points.get(1).y);
+//    } else {
+//      bottomLeft = new Vector2D(points.get(1).x, points.get(1).y);
+//      topLeft = new Vector2D(points.get(0).x, points.get(0).y);
+//    }
+//    if (points.get(2).y < points.get(3).y) {
+//      bottomRight = new Vector2D(points.get(2).x, points.get(2).y);
+//      topRight = new Vector2D(points.get(3).x, points.get(3).y);
+//    } else {
+//      bottomRight = new Vector2D(points.get(3).x, points.get(3).y);
+//      topRight = new Vector2D(points.get(2).x, points.get(2).y);
+//    }
+//    Quadrilateral boxProjection = new Quadrilateral(topLeft, topRight, bottomRight, bottomLeft);
+//    log.info("[calculateRobotAdjustment] bounding box projection: " + boxProjection);
+//    return VisualServoingCalculator.calculateRobotAdjustment(
+//            new Camera(cameraHeightMM, cameraAngle),
+//            new Box(rectW, rectL, rectH), boxProjection,
+//            new Vector2D(imageWidth/2.0, imageHeight/2.0));
+//  }
 
   @TRADEService
   public BufferedImage getImage() {

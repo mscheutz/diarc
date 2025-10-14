@@ -20,9 +20,9 @@ camera; C; camera(?ADDRESSEE)
 test vision; C; testVision(?ADDRESSEE)
 
 items; VAL\NUM; #x.amount($x)
-all of them; c; amount(max)
-as many as possible; c; amount(max)
-the maximum ammount; c; amount(max)
+all of them; VAL; amount(max)
+as many as possible; VAL; amount(max)
+the maximum ammount; VAL; amount(max)
 
 yes; VAL; val(yes)
 no; VAL; val(no)
@@ -30,4 +30,16 @@ no; VAL; val(no)
 millimeters; VAL\NUM; #x.sizeInMM($x)
 mm; VAL\NUM; #x.sizeInMM($x)
 
-configure; C; packingConfigurationStub(?ADDRESSEE)
+%configure; C; packingConfigurationStub(?ADDRESSEE)
+
+start packing; VERBI; packItemsIntoCrates
+begin packing; VERBI; packItemsIntoCrates
+I would like to set the packing parameters; VERBI; configurePackingParameters
+
+done; VAL; replaced(packingCrate)
+the crate has been replaced; VAL; replaced(packingCrate)
+
+suspend current task; VERBI ; suspendSystemGoalsBlocking
+resume current task; VERBI ; resumeSystemGoals
+resume; VERBI ; resumeSystemGoals
+cancel current task; VERBI ; cancelSystemGoals

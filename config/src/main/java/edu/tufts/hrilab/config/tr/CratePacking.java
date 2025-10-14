@@ -4,7 +4,7 @@ import ai.thinkingrobots.mtracs.interfaces.CR800ComponentInterface;
 import com.google.gson.Gson;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.llm.LLMComponent;
-import edu.tufts.hrilab.llm.hf.PickAndPlace2024LLMServiceProvider;
+import edu.tufts.hrilab.llm.serviceproviders.CratePackingLLMServiceProvider;
 import edu.tufts.hrilab.packing.CameraCalibrationTool;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import org.apache.commons.cli.CommandLine;
@@ -111,7 +111,7 @@ public class CratePacking extends DiarcConfiguration {
             if (japanese) {
                 serviceProviderArgs += " -japanese";
             }
-            createInstance(PickAndPlace2024LLMServiceProvider.class, serviceProviderArgs);
+            createInstance(CratePackingLLMServiceProvider.class, serviceProviderArgs);
             String llmComponentArgs = String.format("-service %s llamahf -model %s Qwen/Qwen3-14B -temperature 0.6 0.6", service, model);
             if (service.equals("llamahf")) {
                 if (usePrivateEndpoint) {
@@ -147,26 +147,31 @@ public class CratePacking extends DiarcConfiguration {
         }
 
 //      createInstance(PalletPackingComponent.class, "-palletL 560 -palletW 360 -palletH 200 -itemL 215 -itemW 145 -itemH 60 -groups agent:robotone:agent");
-      createInstance(edu.tufts.hrilab.packing.PalletPackingComponent.class, "-palletL 560 -palletW 360 -palletH 200 " +
+      createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, "-palletL 560 -palletW 360 -palletH 200 " +
               "-itemL 230 -itemW 160 -itemH 50 " +
               "-tolerance 20 " +
               "-cameraAngle 0.0 -cameraHeightMM 325 -imageWidth 320 -imageHeight 240 " +
               "-groups agent:robotone:agent");
-
-      createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture rsense.xml -groups agent:robotone:agent -rotX -67.5 -height 1.14");
-//      SwingUtilities.invokeLater(() -> new CameraCalibrationTool().setVisible(true));
-//      createInstance(edu.tufts.hrilab.grasp.GraspComponent.class, "-groups agent:robotone:agent");
+      if (mock) {
+        createInstance(edu.tufts.hrilab.vision.MockVisionComponent.class, "-groups agent:robotone:agent -rotX -67.5 -height 1.14");
+        createInstance(edu.tufts.hrilab.grasp.MockGraspComponent.class, "-groups agent:robotone:agent");
+      } else {
+        createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture rsense.xml -groups agent:robotone:agent -rotX -67.5 -height 1.14");
+  //      SwingUtilities.invokeLater(() -> new CameraCalibrationTool().setVisible(true));
+        //createInstance(edu.tufts.hrilab.grasp.GraspComponent.class, "-groups agent:robotone:agent");
+      }
 //      createInstance(edu.tufts.hrilab.packing.BoxOBBComponent.class,"-lowerThreshold 42 -upperThreshold 86");
 
         if (japanese) {
             languageGenerationASLFile = "config/edu/tufts/hrilab/action/asl/demos/pickAndPlace/pickAndPlaceLanguageGenerationJapanese.asl";
         }
         String goalManagerArgs=
-                "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
+                //"-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
+                "-executionManagerType edu.tufts.hrilab.action.manager.SingleGoalExecutionManager " +
                 "-beliefinitfile demos.pl " +
                         "-beliefinitfile agents/onRobotScrewingAgents.pl " +
                         "-beliefinitfile demos/onRobotScrewing.pl " +
-                        "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector " +
+//                        "-selector edu.tufts.hrilab.action.selector.GoalPlanningActionSelector " +
 //                        "-selector edu.tufts.hrilab.action.selector.UtilitarianActionSelector " +
 
                         "-dbfileDir / " +
@@ -192,6 +197,7 @@ public class CratePacking extends DiarcConfiguration {
                         "-asl config/edu/tufts/hrilab/action/asl/mtracs/cr800Base.asl " +
                         "-asl config/edu/tufts/hrilab/action/asl/vision.asl " +
 
+                        "-priorityFile default.json cratePackingPriority.json " +
                         //TODO:brad this has to come after the agents file
                         "-goal listen(self) ";
         if (useAssista) {

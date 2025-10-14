@@ -52,7 +52,47 @@ import edu.tufts.hrilab.packing.Vec3;
     act:goToPosePrimitiveNoAdjust(?pose);
 }
 
-() = doDemo() {
+//() = doDemo() {
+//    PackedItem !item;
+//    Double !centerX;
+//    Double !centerY;
+//    Double !angle;
+//    PackingResult3D !result;
+//    Float !boxHeight = 0.060;
+//    Float !zOffset;
+//    Integer !tmp;
+//    Integer !itemsPerLayer;
+//    Integer !numLayers;
+
+//    //get crate packing information (including number if items)
+//    !result = act:solveCratePacking3D();
+//    op:log(warn, "[doDemo] packing result: !result");
+//    !numLayers = tsc:getNumLayers();
+//    !itemsPerLayer = tsc:getNumberOfItemsPerLayer();
+//    for (!i=0; !i lt !numLayers; !i ++) {
+//        for (!j=0; !j lt !itemsPerLayer; !j ++) {
+//            act:goToPosePrimitive("robotonepose_0:pose");
+//            act:lookForAndMoveToBox();
+//            tsc:moveZRelative(-0.05);
+//            tsc:closeGripper();
+//            tsc:moveZRelative(0.3);
+//            act:goToPosePrimitive("robotonepose_1:pose");
+
+//            //get values from packing info
+//            !item = tsc:getNextPackedItem();
+//            !centerY = op:invokeMethod(!item, "getCenterX");
+//            !centerX = op:invokeMethod(!item, "getCenterY");
+//            !angle = op:invokeMethod(!item, "getAngle");
+//            op:log(info, "[doDemo] putting down item at !centerX, !centerY, !angle");
+//            !tmp = op:+(!i,1);
+//            !zOffset = op:*(!boxHeight, !tmp);
+//            act:putDownInCrate(!centerX, !centerY, !zOffset, !angle);
+//        }
+//    }
+//    act:goToPosePrimitive("robotonepose_0:pose");
+//}
+
+() = packCrate(Integer ?numItems) {
     PackedItem !item;
     Double !centerX;
     Double !centerY;
@@ -62,33 +102,32 @@ import edu.tufts.hrilab.packing.Vec3;
     Float !zOffset;
     Integer !tmp;
     Integer !itemsPerLayer;
-    Integer !numLayers;
 
     //get crate packing information (including number if items)
-    !result = tsc:solvePalletPacking3D();
+    !result = tsc:getCachedPackingResult3D();
     op:log(warn, "[doDemo] packing result: !result");
-    !numLayers = tsc:getNumLayers();
     !itemsPerLayer = tsc:getNumberOfItemsPerLayer();
-    for (!i=0; !i lt !numLayers; !i ++) {
-        for (!j=0; !j lt !itemsPerLayer; !j ++) {
-            act:goToPosePrimitive("robotonepose_0:pose");
-            act:lookForAndMoveToBox();
-            tsc:moveZRelative(-0.05);
-            tsc:closeGripper();
-            tsc:moveZRelative(0.3);
-            act:goToPosePrimitive("robotonepose_1:pose");
+    for (!i=0; !i lt ?numItems; !i ++) {
+        act:goToPosePrimitive("robotonepose_0:pose");
+        act:lookForAndMoveToBox();
+        tsc:moveZRelative(-0.05);
+        tsc:closeGripper();
+        tsc:moveZRelative(0.3);
+        act:goToPosePrimitive("robotonepose_1:pose");
 
-            //get values from packing info
-            !item = tsc:getNextPackedItem();
-            !centerY = op:invokeMethod(!item, "getCenterX");
-            !centerX = op:invokeMethod(!item, "getCenterY");
-            !angle = op:invokeMethod(!item, "getAngle");
-            op:log(info, "[doDemo] putting down item at !centerX, !centerY, !angle");
-            !tmp = op:+(!i,1);
-            !zOffset = op:*(!boxHeight, !tmp);
-            act:putDownInCrate(!centerX, !centerY, !zOffset, !angle);
-        }
+        //get values from packing info
+        !item = tsc:getNextPackedItem();
+        !centerY = op:invokeMethod(!item, "getCenterX");
+        !centerX = op:invokeMethod(!item, "getCenterY");
+        !angle = op:invokeMethod(!item, "getAngle");
+        op:log(info, "[doDemo] putting down item at !centerX, !centerY, !angle");
+
+        !tmp = op:/(!i,!itemsPerLayer);
+        !tmp = op:+(!tmp,1);
+        !zOffset = op:*(!boxHeight, !tmp);
+        act:putDownInCrate(!centerX, !centerY, !zOffset, !angle);
     }
+    //TODO: whether we do this or not depends partially on whether we ack or not in main loop
     act:goToPosePrimitive("robotonepose_0:pose");
 }
 

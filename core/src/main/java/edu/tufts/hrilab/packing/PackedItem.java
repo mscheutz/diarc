@@ -14,7 +14,7 @@ public class PackedItem {
     this.rect = rect;
     this.layer = layer;
     this.itemH = itemH;
-    // calculate the center of the item relative to the pallet origin (0,0,0)
+    // calculate the center of the item relative to the crate origin (0,0,0)
     this.centerX = (float) (rect.x + rect.width / 2.0);
     this.centerY = (float) (rect.y + rect.height / 2.0);
     this.centerZ = (layer - 1) * itemH + itemH; // the Z value is on the surface of the item

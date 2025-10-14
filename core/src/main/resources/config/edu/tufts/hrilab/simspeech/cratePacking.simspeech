@@ -1,19 +1,54 @@
-test vision
-----------
-dodemo
-------
-gripper
-camera
-------
-configure
-30 mm
-20 mm
-10 mm
-6 mm
-4 mm
-5 mm
---
+start packing
 yes
---
+560 mm
+360 mm
+200 mm
+220 mm
+150 mm
+60 mm
 no
 10 items
+--
+the crate has been replaced
+------
+start packing
+no
+what are the dimensions of the crate
+--
+*Input box/item dimensions into GUI*
+the packed food items are 220 by 150 by 60 millimeters large
+the crates are 560 by 360 by 200 millimeters large
+--
+what are the dimensions of the crate
+what can a fully packed crate hold
+yes
+how fully are you currently packing crates
+you should only pack 10 items at a time
+how fully are you currently packing crates
+start packing
+no
+-------------------
+-------------------
+I would like to set the packing parameters
+560 mm
+360 mm
+200 mm
+220 mm
+150 mm
+60 mm
+yes
+start packing
+no
+--
+done
+------
+the packed food items are 220 by 150 by 60 millimeters large
+the crates are 560 by 360 by 200 millimeters large
+what can a fully packed crate hold
+how fully are you currently packing crates
+you should pack ten items at a time
+how fully are you currently packing crates
+start packing
+no
+------
+test vision
