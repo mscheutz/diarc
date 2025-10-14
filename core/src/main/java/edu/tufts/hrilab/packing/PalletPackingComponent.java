@@ -10,6 +10,7 @@ import edu.tufts.hrilab.vision.util.CompressionUtil;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
+import javax.imageio.ImageIO;
 import javax.vecmath.Point2d;
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -17,6 +18,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +46,7 @@ public class PalletPackingComponent extends DiarcComponent {
   int itemIndex = 0;
   private int tolerance;
   private RobotVisionProcessor visionProcessor;
+  private int itemNumber = 0;
 
   public PalletPackingComponent() {
     palletL = -1;
@@ -411,6 +414,13 @@ public class PalletPackingComponent extends DiarcComponent {
     BufferedImage image = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_3BYTE_BGR);
     raster.setDataElements(0, 0, imageSize.width, imageSize.height, imageData);
     image.setData(raster);
+
+    File outputfile = new File("/home/pete/matthias/" + itemNumber++ + "image.png");
+    try {
+      ImageIO.write(image, "png", outputfile);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     return image;
   }
 //
@@ -457,6 +467,7 @@ public class PalletPackingComponent extends DiarcComponent {
   @TRADEService
   public Vec3 calculateRobotAdjustment() {
     BufferedImage image = getImage();
-    return visionProcessor.calculatePickupAction(image);
+    Vec3 result = visionProcessor.calculatePickupAction(image);
+    return new Vec3(result.getX(), -1 * result.getY(), -1 * result.getZ());
   }
 }

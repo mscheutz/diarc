@@ -23,9 +23,9 @@ public class RobotVisionProcessor {
         this.cameraZDistanceMeters = cameraZDistanceMeters;
 
         // defaul canny edge parameters that worked on all the test images
-        this.cannyLowThreshold = 41;
-        this.cannyHighThreshold = 155;
-        this.dilationIterations = 4;
+        this.cannyLowThreshold = 100;
+        this.cannyHighThreshold = 204;
+        this.dilationIterations = 1;
         SwingUtilities.invokeLater(() -> {
           tool = new ContourDetectionTool();
           tool.setVisible(true);
@@ -62,7 +62,8 @@ public class RobotVisionProcessor {
 
         // determine the factor "a" -- note this is computed anew on the fly every time
 	// we should really track this over multiple iteration to learn the best value
-        double a = (cameraZDistanceMeters * pixelWidth) / realWidth;
+        double aCalculated = (cameraZDistanceMeters * pixelWidth) / realWidth;
+        double a = 290.00;
 
         // calculate the center of the image and the detected rectangle
         double imageCenterX = capturedImage.getWidth() / 2.0;
@@ -82,7 +83,7 @@ public class RobotVisionProcessor {
         double rotationAngleRad = Math.atan2(widthEdgeP2.y - widthEdgeP1.y, widthEdgeP2.x - widthEdgeP1.x);
 
         //update GUI
-        tool.update(capturedImage, rectangleCorners, imageCenterX, imageCenterY, rectCenterX, rectCenterY, rotationAngleRad, a, realWorldShiftX, realWorldShiftY);
+        tool.update(capturedImage, rectangleCorners, imageCenterX, imageCenterY, rectCenterX, rectCenterY, rotationAngleRad, a, aCalculated, realWorldShiftX, realWorldShiftY);
 
         // return the required adjustment in x,y shift and rotation angle in degrees
         return new Vec3(realWorldShiftX, realWorldShiftY, rotationAngleRad);

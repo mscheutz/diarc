@@ -133,8 +133,10 @@ import edu.tufts.hrilab.packing.Vec3;
     !adjustment = tsc:calculateRobotAdjustment();
     !x = op:invokeMethod(!adjustment, "getX");
     !y = op:invokeMethod(!adjustment, "getY");
+    !y = op:-(!y, 0.02);
+    !x = op:-(!x, 0.01);
     !theta = op:invokeMethod(!adjustment, "getZ");
-    !theta = op:+(!theta, 0.7853981)
+    !theta = op:-(!theta, 1.5705);
 
     op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
 

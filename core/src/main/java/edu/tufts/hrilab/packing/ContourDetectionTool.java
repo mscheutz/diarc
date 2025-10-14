@@ -168,10 +168,10 @@ public class ContourDetectionTool extends JFrame {
         correctedPanel.setImage(corrected, null, new Point(corrected.getWidth()/2, corrected.getHeight()/2), null);
     }
 
-    protected void update(BufferedImage sourceImage, List<Point>corners, double imageCenterX, double imageCenterY, double rectCenterX, double rectCenterY, double rotationAngleRad, double a, double realWorldShiftX, double realWorldShiftY) {
+    protected void update(BufferedImage sourceImage, List<Point>corners, double imageCenterX, double imageCenterY, double rectCenterX, double rectCenterY, double rotationAngleRad, double a, double aCalculated, double realWorldShiftX, double realWorldShiftY) {
       camera.updateIntrinsics(a, imageCenterX, imageCenterY);
       camera.updateAlignment(rotationAngleRad, realWorldShiftX, realWorldShiftY);
-      resultLabel.setText(String.format("Shift: (%.4f, %.4f) m. Rotation: %.2f radians. 'a' factor: %.2f", realWorldShiftX, realWorldShiftY, rotationAngleRad, a));
+      resultLabel.setText(String.format("Shift: (%.4f, %.4f) m. Rotation: %.2f radians. 'a' factor: %.2f. 'a calculated': %.2f", realWorldShiftX, realWorldShiftY, rotationAngleRad, a, aCalculated));
       originalPanel.setImage(sourceImage, corners, new Point((int)imageCenterX, (int)imageCenterY), new Point((int)rectCenterX, (int)rectCenterY));
       BufferedImage corrected = createCorrectedImage(sourceImage, new Point((int)rectCenterX, (int)rectCenterY), rotationAngleRad);
       correctedPanel.setImage(corrected, null, new Point(corrected.getWidth()/2, corrected.getHeight()/2), null);
