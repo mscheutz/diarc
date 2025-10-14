@@ -11,6 +11,9 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import edu.tufts.hrilab.packing.PackedItem;
 import edu.tufts.hrilab.packing.PackingResult3D;
+import edu.tufts.hrilab.packing.Quadrilateral;
+import edu.tufts.hrilab.packing.RobotAdjustment;
+import java.awt.Rectangle;
 
 () = testVision() {
     List !tokenIds;
@@ -25,23 +28,23 @@ import edu.tufts.hrilab.packing.PackingResult3D;
     Double !theta;
     Term !props;
     Symbol !robotone="robotone:agent";
+    List !box;
+    RobotAdjustment !adjustment;
+    MPose !currentPose;
 
     act:goToPosePrimitive("robotonepose_0:pose");
 
-    act:rotateToEE("default");
+    act:rotateToEE("camera");
 
-    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
-    op:log(info, "reference for an object to get the search moving with props: !props");
-    !refId = !robotone.act:positReference(!props);
-    op:log(info, "refId: !refId");
+//    !box = tsc:generateOBB();
+//    !adjustment = tsc:calculateRobotAdjustment(!box);
+//    !x = op:invokeMethod(!adjustment, "getX");
+//    !x = op:/(!x, 1000);
+//    !y = op:invokeMethod(!adjustment, "getY");
+//    !y = op:/(!y, 1000);
+    !theta = op:invokeMethod(!adjustment, "getRotation");
 
-    op:log(info, "[lookForAndMoveToBox] looking for box...");
-    (!tokenIds, !tokenId) = act:findObject(!refId);
-    op:log(info, "[lookForAndMoveToBox] done looking for box");
-    op:log(info, "[lookForAndMoveToBox] tokenId: !tokenId, tokenIds: !tokenIds");
-    op:log(info, "[lookForAndMoveToBox] search succeeded");
-    !mo = tsc:getToken(!tokenId);
-    act:stopAllSearches();
+    op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
 }
 
 () = goToPoseDirect(Symbol ?pose) {
@@ -140,39 +143,46 @@ import edu.tufts.hrilab.packing.PackingResult3D;
     Double !theta;
     Term !props;
     Symbol !robotone="robotone:agent";
+    List !box;
+    RobotAdjustment !adjustment;
+    MPose !currentPose;
 
-    act:rotateToEE("default");
 
-    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
-    op:log(info, "reference for an object to get the search moving with props: !props");
-    !refId = !robotone.act:positReference(!props);
-    op:log(info, "refId: !refId");
+    act:rotateToEE("camera");
 
-    op:log(info, "[lookForAndMoveToBox] looking for box...");
-    (!tokenIds, !tokenId) = act:findObject(!refId);
-    op:log(info, "[lookForAndMoveToBox] done looking for box");
-    op:log(info, "[lookForAndMoveToBox] tokenId: !tokenId, tokenIds: !tokenIds");
-    op:log(info, "[lookForAndMoveToBox] search succeeded");
-    !mo = tsc:getToken(!tokenId);
-    !location = op:invokeMethod(!mo, "getLocation");
-    op:log(warn, "location reported from MO is !location");
-//    act:calculateAndMoveToGrasp(!mo);
-    !theta = tsc:calculateAngleOfObject(!mo);
+    //52 and 108 are the "threshold" values that seem to work for the contrast-based detection
 
-    act:stopAllSearches();
-    op:log(info, "[lookForAndMoveToBox] angle calculated to be: !theta");
-    !x = op:invokeMethod(!location, "getX");
-    !x = op:*(!x, 1000);
-    !y = op:invokeMethod(!location, "getY");
-    !y = op:*(!y, 1000);
-    !z = op:invokeMethod(!location, "getZ");
-    !z = op:*(!z, 1000);
-    !goal = tsc:calculateRelativeMovement(!x, !y, !z, 0.0);
-    act:rotateToEE("gripper");
-//    op:log(info, "[lookForAndMoveToBox] detected object at location: !x, !y, !z");
+
+//    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
+//    op:log(info, "reference for an object to get the search moving with props: !props");
+//    !refId = !robotone.act:positReference(!props);
+//    op:log(info, "refId: !refId");
 //
+//    op:log(info, "[lookForAndMoveToBox] looking for box...");
+//    (!tokenIds, !tokenId) = act:findObject(!refId);
+//    op:log(info, "[lookForAndMoveToBox] done looking for box");
+//    op:log(info, "[lookForAndMoveToBox] tokenId: !tokenId, tokenIds: !tokenIds");
+//    op:log(info, "[lookForAndMoveToBox] search succeeded");
+//    !mo = tsc:getToken(!tokenId);
+//
+//    !box = op:invokeMethod(!mo, "getBoundingBox");
+    !box = tsc:generateOBB();
+//    op:log(info, "[lookForAndMovetoBox] bounding box is: !box");
+    !adjustment = tsc:calculateRobotAdjustment(!box);
+    !x = op:invokeMethod(!adjustment, "getX");
+    !x = op:/(!x, 1000);
+    !y = op:invokeMethod(!adjustment, "getY");
+    !y = op:/(!y, 1000);
+    !theta = op:invokeMethod(!adjustment, "getRotation");
+
+    op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
+
+    tsc:moveXRelative(!x);
+    tsc:moveYRelative(!y);
+    !currentPose = tsc:getCurrentPose();
+    !goal = tsc:calculateRelativeMovement(!currentPose, !theta);
+    act:rotateToEE("gripper");
     tsc:goToPose(!goal);
-    tsc:moveCRelative(!theta);
 }
 
 () = rotateToGripper() {
@@ -206,5 +216,5 @@ import edu.tufts.hrilab.packing.PackingResult3D;
 }
 
 () = camera() {
-    act:rotateToEE("default");
+    act:rotateToEE("camera");
 }

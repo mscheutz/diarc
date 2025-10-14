@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.llm.serviceproviders.CratePackingLLMServiceProvider;
+import edu.tufts.hrilab.packing.CameraCalibrationTool;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -145,17 +146,24 @@ public class CratePacking extends DiarcConfiguration {
             }
         }
 
-//      createInstance(CratePackingComponent.class, "-palletL 560 -palletW 360 -palletH 200 -itemL 215 -itemW 145 -itemH 60 -groups agent:robotone:agent");
-//      createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, "-crateL 560 -crateW 360 -crateH 200 -itemL 230 -itemW 170 -itemH 60 -groups agent:robotone:agent");
-      createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, "-groups agent:robotone:agent");
+//      createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, "-palletL 560 -palletW 360 -palletH 200 " +
+//              "-itemL 220 -itemW 150 -itemH 60 " +
+//              "-tolerance 20 " +
+//              "-cameraAngle 22.5 -cameraHeightMM 430 -imageWidth 320 -imageHeight 240 " +
+//              "-groups agent:robotone:agent");
+      createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class,
+              "-tolerance 20 " +
+              "-cameraAngle 22.5 -cameraHeightMM 430 -imageWidth 320 -imageHeight 240 " +
+              "-groups agent:robotone:agent");
       if (mock) {
         createInstance(edu.tufts.hrilab.vision.MockVisionComponent.class, "-groups agent:robotone:agent -rotX -67.5 -height 1.14");
         createInstance(edu.tufts.hrilab.grasp.MockGraspComponent.class, "-groups agent:robotone:agent");
       } else {
         createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture rsense.xml -groups agent:robotone:agent -rotX -67.5 -height 1.14");
-        createInstance(edu.tufts.hrilab.grasp.GraspComponent.class, "-groups agent:robotone:agent");
+        SwingUtilities.invokeLater(() -> new CameraCalibrationTool().setVisible(true));
+        //createInstance(edu.tufts.hrilab.grasp.GraspComponent.class, "-groups agent:robotone:agent");
       }
-      createInstance(edu.tufts.hrilab.packing.BoxOBBComponent.class,"");
+//      createInstance(edu.tufts.hrilab.packing.BoxOBBComponent.class,"-lowerThreshold 42 -upperThreshold 86");
 
         if (japanese) {
             languageGenerationASLFile = "config/edu/tufts/hrilab/action/asl/demos/pickAndPlace/pickAndPlaceLanguageGenerationJapanese.asl";
