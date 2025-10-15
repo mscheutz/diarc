@@ -11,6 +11,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import javax.vecmath.Point2d;
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -75,6 +76,16 @@ public class CratePackingComponent extends DiarcComponent {
   public void init() {
     super.init();
     this.visionProcessor = new RobotVisionProcessor(packedItemW/1000.0, packedItemH/1000.0, cameraHeightMM/1000.0);
+    SwingUtilities.invokeLater(() -> {new CratePackingGui(this).setVisible(true);});
+  }
+
+  public void updateArgs(int crateL, int crateW, int crateH, int packedItemL, int packedItemW, int packedItemH) {
+    this.crateL = crateL;
+    this.crateW = crateW;
+    this.crateH = crateH;
+    this.packedItemL = packedItemL;
+    this.packedItemW = packedItemW;
+    this.packedItemH = packedItemH;
   }
 
   @Override

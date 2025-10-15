@@ -31,7 +31,7 @@ import java.lang.Boolean;
 
     if (op:equals(!crateL,-1) || op:equals(!crateW,-1) || op:equals(!crateH,-1) || op:equals(!itemL,-1) || op:equals(!itemW,-1) || op:equals(!itemH,-1)) {
         //TODO: use semantics for all questions, move text into prompt examples
-        !bindings = act:askQuestionFromString(?actor,"Before commencing, there are unset packing parameters which must be configured. May I ask for them now?", val(X));
+        !bindings = act:askQuestionFromString(?actor,"There are unset packing parameters. May I ask for them now?", val(X));
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings, !x);
             if (op:equalsValue(!response,yes)) {
