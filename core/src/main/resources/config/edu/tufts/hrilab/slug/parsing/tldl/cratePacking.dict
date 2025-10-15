@@ -5,7 +5,7 @@ VERBI; {C\AGENT ; #x.?PH($x)}, {C ; ?PH(?ADDRESSEE)}
 VERBT; {(C/REF)\AGENT ; #x#y.?PH($x,$y)}, {C/REF ; #x.?PH(?ADDRESSEE, $x)}
 ADDRESSABLE; {AGENT ; ?PH} ,{G/G, S/S, C/C, Q/Q, G\G, S\S, C\C, Q\Q; #x.directAddress(?PH,$x)}
 
-GOTO; {C/REF ; #x.goToPose(?ADDRESSEE,$x)} ,{(C/REF)\AGENT ; #agent#x.goToPose($agent,$x)}
+GOTO; {C/REF ; #x.goToPoseDirect(?ADDRESSEE,$x)} ,{(C/REF)\AGENT ; #agent#x.goToPoseDirect($agent,$x)}
 
 END-TEMPLATES
 

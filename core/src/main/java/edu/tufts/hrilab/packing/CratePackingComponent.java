@@ -516,6 +516,6 @@ public class CratePackingComponent extends DiarcComponent {
       log.error("[calculateRobotAdjustment] no object detected");
       return null;
     }
-    return new Vec3(result.getX(), -1 * result.getY(), -1 * result.getZ());
+    return new Vec3(result.getX() * 1000, -1 * result.getY() * 1000, -1 * result.getZ());
   }
 }

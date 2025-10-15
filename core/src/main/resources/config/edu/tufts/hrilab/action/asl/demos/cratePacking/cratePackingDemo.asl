@@ -111,7 +111,7 @@ import edu.tufts.hrilab.packing.Vec3;
     for (!i=0; !i lt ?numItems; !i ++) {
         act:goToPosePrimitive("robotonepose_0:pose");
         act:lookForAndMoveToBox();
-        tsc:moveZRelative(-0.05);
+        tsc:moveZRelative(-0.088);
         tsc:closeGripper();
         tsc:moveZRelative(0.3);
         act:goToPosePrimitive("robotonepose_1:pose");
@@ -179,17 +179,15 @@ import edu.tufts.hrilab.packing.Vec3;
     }
     !x = op:invokeMethod(!adjustment, "getX");
     !y = op:invokeMethod(!adjustment, "getY");
-    !y = op:-(!y, 0.03);
-    !x = op:-(!x, 0.02);
+//    !y = op:-(!y, 0.03);
+//    !x = op:-(!x, 0.02);
     !theta = op:invokeMethod(!adjustment, "getZ");
     !theta = op:-(!theta, 1.5705);
 
     op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
 
-    tsc:moveXRelative(!x);
-    tsc:moveYRelative(!y);
     !currentPose = tsc:getCurrentPose();
-    !goal = tsc:calculateRelativeMovement(!currentPose, !theta);
+    !goal = tsc:calculateRelativeMovement(!currentPose, !x, !y, !theta);
     act:rotateToEE("gripper");
     tsc:goToPose(!goal);
 }
@@ -213,7 +211,7 @@ import edu.tufts.hrilab.packing.Vec3;
     !origin = tsc:getPoseFromSymbol(robotonepose_2:pose);
     act:moveToAdjustedPose(!origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc); //todo: rotate if needed
 
-    !height = op:+(-0.38, ?dz);
+    !height = op:+(-0.392, ?dz);
     tsc:moveZRelative(!height);
     tsc:openGripper();
     !height = op:*(!height, -1);

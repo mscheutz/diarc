@@ -43,5 +43,4 @@ import java.util.HashMap;
 
     //These are here so they are done for each robot if we have more than one
     tsc:openGripper();
-
 }

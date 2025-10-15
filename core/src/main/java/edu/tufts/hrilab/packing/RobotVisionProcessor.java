@@ -23,8 +23,8 @@ public class RobotVisionProcessor {
         this.cameraZDistanceMeters = cameraZDistanceMeters;
 
         // defaul canny edge parameters that worked on all the test images
-        this.cannyLowThreshold = 100;
-        this.cannyHighThreshold = 204;
+        this.cannyLowThreshold = 97;
+        this.cannyHighThreshold = 200;
         this.dilationIterations = 1;
         SwingUtilities.invokeLater(() -> {
           tool = new ContourDetectionTool();
@@ -62,8 +62,8 @@ public class RobotVisionProcessor {
 
         // determine the factor "a" -- note this is computed anew on the fly every time
 	// we should really track this over multiple iteration to learn the best value
-        double aCalculated = (cameraZDistanceMeters * pixelWidth) / realWidth;
-        double a = 290.00;
+        double aCalculated = pixelWidth / realWidth;
+        double a = 733.00;
 
         // calculate the center of the image and the detected rectangle
         double imageCenterX = capturedImage.getWidth() / 2.0;
@@ -76,14 +76,14 @@ public class RobotVisionProcessor {
         double shiftY_pixels = rectCenterY - imageCenterY;
 
         // convert the pixel shift into a real-world shift in meters
-        double realWorldShiftX = (shiftX_pixels * cameraZDistanceMeters) / a;
-        double realWorldShiftY = (shiftY_pixels * cameraZDistanceMeters) / a;
+        double realWorldShiftX = shiftX_pixels / a;
+        double realWorldShiftY = shiftY_pixels / a;
 
         // calculate the rotation required in degrees
         double rotationAngleRad = Math.atan2(widthEdgeP2.y - widthEdgeP1.y, widthEdgeP2.x - widthEdgeP1.x);
 
         //update GUI
-        tool.update(capturedImage, rectangleCorners, imageCenterX, imageCenterY, rectCenterX, rectCenterY, rotationAngleRad, a, aCalculated, realWorldShiftX, realWorldShiftY);
+        tool.update(capturedImage, rectangleCorners, imageCenterX, imageCenterY, rectCenterX, rectCenterY, rotationAngleRad, a, aCalculated, realWorldShiftX, realWorldShiftY, pixelWidth);
 
         // return the required adjustment in x,y shift and rotation angle in degrees
         return new Vec3(realWorldShiftX, realWorldShiftY, rotationAngleRad);
