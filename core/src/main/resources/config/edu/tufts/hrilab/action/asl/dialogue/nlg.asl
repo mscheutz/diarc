@@ -135,7 +135,7 @@ import java.util.Map;
  * ?attempts - number of times to re-ask the questions if there's no response within ?duration
  * ?duration - ?duration to wait for response
  */
-(Map ?answerBindings) = askQuestion(Symbol ?addressee, Predicate ?questionSemantics, Predicate ?responseForms, long ?attempts=1, long ?duration=-1) {
+(Map ?answerBindings) = askQuestion(Symbol ?addressee, Predicate ?questionSemantics, List ?responseForms, long ?attempts=1, long ?duration=-1) {
 
   // build question utterance
   Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
