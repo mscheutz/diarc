@@ -353,4 +353,8 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     }
     executor.shutdownNow();
   }
+
+  public CachedParserComponent getCacheParser() {
+    return cacheParser;
+  }
 }

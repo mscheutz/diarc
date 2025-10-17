@@ -246,7 +246,7 @@ import java.util.Map;
     java.lang.String !questionString;
     !questionString = tsc:getLastQuestion(?actor);
     if (op:invokeMethod(!questionString,"isEmpty")) {
-        act:generateResponseFromString("I have no currently pending questions");
+        act:generateResponse(not(have(?actor,pendingQuestions)));
     } else {
         act:generateResponseFromString(!questionString);
     }

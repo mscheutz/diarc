@@ -107,7 +107,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
 
       if (op:isNull(!response)) {
         op:log("debug", "Utterance validation aborted, not processing utterance");
-        act:sayText("Okay, I am ignoring the previous command"); //TODO: not sure about this
+        //act:sayText("Okay, I am ignoring the previous command"); //TODO: not sure about this
+        act:generateResponse(and(ack(okay),ignoring(?actor,previousCommand)));
         return;
       } elseif (op:equalsValue(!response, yes())) {
         op:log("debug", "Utterance validated.");
@@ -115,7 +116,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
       } elseif (op:equalsValue(!response, no())) {
         // ask for human to rephrase their request
         op:log("debug", "Utterance not validated. Asking to rephrase.");
-        act:sayText("please rephrase");
+        //act:sayText("please rephrase");
+        act:generateResponse(please(rephrase));
         return;
       } else {
         op:log("error", "Unexpected question response: !response");

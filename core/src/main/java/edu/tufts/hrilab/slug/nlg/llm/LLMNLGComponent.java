@@ -21,7 +21,7 @@ public class LLMNLGComponent extends DiarcComponent implements NLGInterface {
     public Utterance convertSemanticsToText(Utterance input) {
         Utterance output;
 
-        log.info("parseUtterance: " + input.getWordsAsString());
+        log.info("convertSemanticsToText: " + input.getWordsAsString());
 
         try {
             output = TRADE.getAvailableService(new TRADEServiceConstraints().name("convertSemanticsToTextLLMService").argTypes(Utterance.class)).call(Utterance.class, input);

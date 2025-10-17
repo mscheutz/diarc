@@ -21,6 +21,7 @@ import java.lang.Boolean;
     Integer !itemH;
     Integer !numItems;
     Integer !updatedNumItems;
+    Integer !currentCrateCapacity;
 
     !crateL = tsc:getCrateLength();
     !crateW = tsc:getCrateWidth();
@@ -30,8 +31,8 @@ import java.lang.Boolean;
     !itemH = tsc:getPackedItemHeight();
 
     if (op:equals(!crateL,-1) || op:equals(!crateW,-1) || op:equals(!crateH,-1) || op:equals(!itemL,-1) || op:equals(!itemW,-1) || op:equals(!itemH,-1)) {
-        //TODO: use semantics for all questions, move text into prompt examples
-        !bindings = act:askQuestionFromString(?actor,"There are unset packing parameters. May I ask for them now?", val(X));
+        //!bindings = act:askQuestionFromString(?actor,"Before commencing, there are unset packing parameters which must be configured. May I ask for them now?", val(X));
+        !bindings = act:askQuestion(?actor,then(report(prerequisite(packing,configure(unsetParameters))),ask(can(askFor(them)))), val(X));
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings, !x);
             if (op:equalsValue(!response,yes)) {
@@ -42,9 +43,15 @@ import java.lang.Boolean;
                     !updatedNumItems = act:getNumberOfItemsToPackPerCrate();
                     if (~op:equals(!numItems,!updatedNumItems)) {
                         //If numItems updated between loops, report packing a different total number of items
-                        act:generateResponseFromString("Putting update to number of items to pack into effect. I will now pack !updatedNumItems items into each crate.");
+                        //If current crate capacity is already set to the updated number of items, means change was applied mid-loop. Don't report.
+                        !currentCrateCapacity = tsc:getCurrentCrateCapacity();
+                        if (~op:equals(!currentCrateCapacity,!updatedNumItems)) {
+                            //act:generateResponseFromString("Putting update to number of items to pack into effect. I will now pack !updatedNumItems items into each crate.");
+                            act:generateResponse("then(applyingParameterUpdate(numItemsToPack),packingPerCrate(!updatedNumItems))");
+                        }
                         !numItems = op:newObject("java.lang.Integer",!updatedNumItems);
                     }
+                    tsc:setCurrentCrateCapacity(!updatedNumItems);
                     tsc:resetPackedItemIndex();
                     act:reportPackingNewCrate();
                     act:packCrate(!numItems);
@@ -67,7 +74,8 @@ import java.lang.Boolean;
         !numItems = act:askForNumberOfItemsToPack();
         act:setNumberOfItemsToPackPerCrate(!numItems, !instructedDirectly);
     } else {
-        !bindings = act:askQuestionFromString(?actor,"I am currently configured to pack !numItems items into each crate. Do you want to change that amount?",val(X));
+        //!bindings = act:askQuestionFromString(?actor,"I am currently configured to pack !numItems items into each crate. Do you want to change that amount?",val(X));
+        !bindings = act:askQuestion(?actor,then(report(configuredAmountToPackPerCrate(?actor,!numItems)),ask(want(?actor,changeAmount))),val(X));
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings, !x);
             if (op:equalsValue(!response,yes)) {
@@ -82,9 +90,15 @@ import java.lang.Boolean;
         !updatedNumItems = act:getNumberOfItemsToPackPerCrate();
         if (~op:equals(!numItems,!updatedNumItems)) {
             //If numItems updated between loops, report packing a different total number of items
-            act:generateResponseFromString("Putting update to number of items to pack into effect. I will now pack !updatedNumItems items into each crate.");
+            //If current crate capacity is already set to the updated number of items, means change was applied mid-loop. Don't report.
+            !currentCrateCapacity = tsc:getCurrentCrateCapacity();
+            if (~op:equals(!currentCrateCapacity,!updatedNumItems)) {
+                //act:generateResponseFromString("Putting update to number of items to pack into effect. I will now pack !updatedNumItems items into each crate.");
+                act:generateResponse("then(applyingParameterUpdate(numItemsToPack),packingPerCrate(!updatedNumItems))");
+            }
             !numItems = op:newObject("java.lang.Integer",!updatedNumItems);
         }
+        tsc:setCurrentCrateCapacity(!updatedNumItems);
         tsc:resetPackedItemIndex();
         act:reportPackingNewCrate();
         act:packCrate(!numItems);
@@ -152,13 +166,15 @@ import java.lang.Boolean;
             act:setPackedItemHeight(!itemH);
         }
     }
-    act:generateResponseFromString("Okay, give me a moment to compute the optimal packing arrangement");
+    //act:generateResponseFromString("Okay, give me a moment to compute the optimal packing arrangement");
+    act:generateResponse("and(ack(okay),report(needMomentToCompute(optimalPackingArrangement)))");
     act:solveCratePacking3D();
     act:reportFullyPackedCrateConfiguration();
     !numItemsToPack = act:askForNumberOfItemsToPack();
     act:setNumberOfItemsToPackPerCrate(!numItemsToPack, !instructedDirectly);
     if (op:equals(?direct,true)) {
-        act:generateResponseFromString("packing parameters have been fully updated.");
+        //act:generateResponseFromString("packing parameters have been fully updated.");
+        act:generateResponse("fullyUpdated(packingParameters)");
     }
 }
 
@@ -168,7 +184,8 @@ import java.lang.Boolean;
     Symbol !response;
     String !sizeString;
 
-    (!bindings) = act:askQuestionFromString(?actor,"How long is the crate?", sizeInMM(X));
+    //(!bindings) = act:askQuestionFromString(?actor,"How long is the crate?", sizeInMM(X));
+    (!bindings) = act:askQuestion(?actor,length(crate), sizeInMM(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         //TODO EW: note to self - think about refactoring to have askQuestionFromString throw this error and then force
                 // scripts to handle differently through recovery policy if desired.
@@ -186,7 +203,8 @@ import java.lang.Boolean;
     Symbol !response;
     String !sizeString;
 
-    (!bindings) = act:askQuestionFromString(?actor,"How wide is the crate?", sizeInMM(X));
+    //(!bindings) = act:askQuestionFromString(?actor,"How wide is the crate?", sizeInMM(X));
+    (!bindings) = act:askQuestion(?actor,width(crate), sizeInMM(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     } else {
@@ -202,7 +220,8 @@ import java.lang.Boolean;
     Symbol !response;
     String !sizeString;
 
-    (!bindings) = act:askQuestionFromString(?actor,"How tall is the crate?", sizeInMM(X));
+    //(!bindings) = act:askQuestionFromString(?actor,"How tall is the crate?", sizeInMM(X));
+    (!bindings) = act:askQuestion(?actor,height(crate), sizeInMM(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     } else {
@@ -218,7 +237,8 @@ import java.lang.Boolean;
     Symbol !response;
     String !sizeString;
 
-    (!bindings) = act:askQuestionFromString(?actor,"How long is the item being packed?", sizeInMM(X));
+    //(!bindings) = act:askQuestionFromString(?actor,"How long is the item being packed?", sizeInMM(X));
+    (!bindings) = act:askQuestion(?actor,length(packedItem), sizeInMM(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     } else {
@@ -234,7 +254,8 @@ import java.lang.Boolean;
     Symbol !response;
     String !sizeString;
 
-    (!bindings) = act:askQuestionFromString(?actor,"How wide is the item being packed?", sizeInMM(X));
+    //(!bindings) = act:askQuestionFromString(?actor,"How wide is the item being packed?", sizeInMM(X));
+    (!bindings) = act:askQuestion(?actor,width(packedItem), sizeInMM(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     } else {
@@ -250,7 +271,8 @@ import java.lang.Boolean;
     Symbol !response;
     String !sizeString;
 
-    (!bindings) = act:askQuestionFromString(?actor,"How tall is the item being packed?", sizeInMM(X));
+    //(!bindings) = act:askQuestionFromString(?actor,"How tall is the item being packed?", sizeInMM(X));
+    (!bindings) = act:askQuestion(?actor,height(packedItem), sizeInMM(X));
     if (op:invokeMethod(!bindings, "isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     } else {
@@ -299,7 +321,8 @@ import java.lang.Boolean;
     op:add(!responseFormList,!responseForm);
     !responseForm = op:createPredicate("amount(X)");
     op:add(!responseFormList,!responseForm);
-    !bindings = act:askQuestionFromString(?actor, "do you want me to fill each crate completely?", !responseFormList);
+    //!bindings = act:askQuestionFromString(?actor, "do you want me to fill each crate completely?", !responseFormList);
+    !bindings = act:askQuestion(?actor, fill(?actor,eachCrate,completely), !responseFormList);
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -308,7 +331,8 @@ import java.lang.Boolean;
         ?numItems = op:newObject("java.lang.Integer", !totalNumItems);
         return;
     } elseif (op:equalsValue(!response,no)) {
-        !bindings = act:askQuestionFromString(?actor, "How many items would you like me to pack?", amount(X));
+        //!bindings = act:askQuestionFromString(?actor, "How many items would you like me to pack?", amount(X));
+        !bindings = act:askQuestion(?actor, number(items,pack(?actor)), amount(X));
         if (op:invokeMethod(!bindings,"isEmpty")) {
             exit(FAIL,not(wasAnswered(myQuestion)));
         }
@@ -354,8 +378,11 @@ import java.lang.Boolean;
     Symbol !response;
     Boolean !answered = false;
 
-    !bindings = act:askQuestionFromString(?actor, "I have finished packing this crate, please let me know when you have replaced it with an empty one", replaced(packingCrate));
-    act:generateResponseFromString("thank you!");
+    //!bindings = act:askQuestionFromString(?actor, "I have finished packing this crate, please let me know when you have replaced it with an empty one", replaced(packingCrate));
+    !bindings = act:askQuestion(?actor, then(report(complete(pack(?actor,crate))),ask(ackWhen(replaced(packedCrate,emptyCrate)))), replaced(packingCrate));
+    //Asked not to have this
+    //act:generateResponseFromString("thank you!");
+
     //TODO: cannot check for abort(question) in this way because won't be any bindings in either case
     //if (~op:invokeMethod(!bindings,"isEmpty")) {
     //    !answered = op:newObject("java.lang.Boolean", true);
@@ -494,15 +521,48 @@ import java.lang.Boolean;
     }
 }
 
-() = reportCurrentNumberOfItemsToPack() {
-    Integer !numItems;
+() = reportConfiguredNumberOfItemsToPack() {
+    Integer !configuredNumItems;
+    Integer !currentNumItems;
+    String !currentPackingStatus;
 
-    !numItems = act:getNumberOfItemsToPackPerCrate();
-    if (op:equals(!numItems,-1)) {
-        act:generateResponse("and(not(told(numberOfItemsPerCrate)),assuming(maxPossibleNumber))");
-        //act:reportMaxNumberOfPackedItems();
+    !configuredNumItems = act:getNumberOfItemsToPackPerCrate();
+    !currentNumItems = act:getCurrentCrateCapacity();
+    !currentPackingStatus = tsc:getCratePackingStatus();
+
+    //cases: upcoming | current/prev
+    //  -1 -1  - report not told, assuming maximum possible number
+    //  -1 set - say currently packing N, but parameters affecting the number of possible items have been updated (algo has been run)
+    //  set -1 - Think actually this one isn't possible. can never start packing without setting numToPack to positive num
+    //  set set == just say N
+    //  set set =/= say currently packing N, next crate will pack M - only possible if changed while packing
+
+    if (op:equals(!configuredNumItems,-1)) {
+        if (op:equals(!currentNumItems,-1)) {
+            // Neither configured
+            act:generateResponse("not(configured(numberOfItemsPerCrate))");
+        } else {
+            // Current/last crate packing !numItems into crate, next crate unknown/max
+            if (op:equals(!currentPackingStatus,"packing")) {
+                act:generateResponse("but(currentPackedItemsPerCrate(!currentNumItems),and(nextPackedItemsPerCrate(unknown),because(packingParametersChanged)))");
+            } elseif (op:equals(!currentPackingStatus,"complete")) {
+                act:generateResponse("but(lastPackedItemsPerCrate(!currentNumItems),and(nextPackedItemsPerCrate(unknown),because(packingParametersChanged)))");
+            } else {
+                act:generateResponse("currentPackedItemsPerCrate(!currentNumItems)");
+            }
+        }
     } else {
-        act:generateResponse("currentPackedItemsPerCrate(!numItems)");
+        if (op:equals(!currentNumItems,!configuredNumItems)) {
+            // Configured amount to pack unchanged
+            act:generateResponse("currentPackedItemsPerCrate(!currentNumItems)");
+        } else {
+            // Configured amount has changed. Next crate packing less
+            if (op:equals(!currentPackingStatus,"packing")) {
+                act:generateResponse("but(currentPackedItemsPerCrate(!currentNumItems),NextPackedItemsPerCrate(!configuredNumItems))");
+            } else {
+                act:generateResponse("currentPackedItemsPerCrate(!configuredNumItems)");
+            }
+        }
     }
 }
 
@@ -559,6 +619,20 @@ import java.lang.Boolean;
     }
 }
 
+() = reportNumberOfItemsInCrate() {
+    Integer !numItems;
+    String !crateStatus;
+
+    !numItems = tsc:getCurrentCrateNumItems();
+    if (op:equals(!crateStatus,"")) {
+        act:generateResponse("not(startedPacking(?actor,crates))");
+    } elseif (op:equals(!crateStatus,"canceled")) {
+        act:generateResponse("beforePackingWasCanceled(held(lastCrate,numberOfItems(!numItems)))");
+    } else {
+        act:generateResponse("holding(currentCrate,numberOfItems(!numItems))");
+    }
+}
+
 () = solverNotRanRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
@@ -571,16 +645,19 @@ import java.lang.Boolean;
     Symbol !response;
     edu.tufts.hrilab.packing.PackingResult3D !res;
 
-    !bindings = act:askQuestionFromString(?actor,"Relevant packing parameters have been updated since the last time an optimal crate arrangement has been calculated, may I rerun the algorithm to be up-to-date?",val(X));
+    //!bindings = act:askQuestionFromString(?actor,"Relevant packing parameters have been updated since the last time an optimal crate arrangement has been calculated, may I rerun the algorithm to be up-to-date?",val(X));
+    !bindings = act:askQuestion(?actor,then(report(updatedSince(relevantPackingParameters,calculated(optimalCrateArrangement))),ask(may(?actor,rerunAlgorithm),desire(upToDate))),val(X));
     if (~op:invokeMethod(!bindings,"isEmpty")) {
         !response = op:get(!bindings, !x);
         if (op:equalsValue(!response,yes)) {
-            act:generateResponseFromString("Okay, please give me a moment to compute the optimal packing arrangement");
+            //act:generateResponseFromString("Okay, please give me a moment to compute the optimal packing arrangement");
+            act:generateResponse("and(ack(okay),report(needMomentToCompute(optimalPackingArrangement)))");
             !res = act:solveCratePacking3D();
             if (op:isNull(!res)) {
                 exit(FAIL);
             }
-            act:generateResponseFromString("Done! Thank you");
+            //act:generateResponseFromString("Done! Thank you");
+            act:generateResponse("and(report(done),ack(thankYou))");
             return;
         }
     }
@@ -593,20 +670,40 @@ import java.lang.Boolean;
 //TODO: move below to demo script file
 
 () = setNumberOfItemsToPackPerCrate(Integer ?numItems, Boolean ?direct=true) {
-    Predicate !fact;
     conditions : {
         pre: ranPackingAlgorithmWithUpdatedSettings(?actor);
     }
-    //TODO: make sure a valid amount has been supplied based on max amount
+    Predicate !fact;
+    Integer !currentNumItems;
+    Integer !maxNumItems;
+    String !packingStatus;
+
+    !maxNumItems = tsc:getTotalNumberOfItems();
+    // make sure a valid amount has been supplied based on max amount
+    if (op:lt(?numItems,0)) {
+        exit(FAIL,not(supplied(positiveNumber)));
+    } elseif (op:gt(?numItems,!maxNumItems)) {
+        exit(FAIL,greaterThan(?numItems,maxCapacity));
+    }
 
     !fact = op:createPredicate("numItemsPerCrate(X)");
     act:retractBelief(!fact);
     !fact = op:createPredicate("numItemsPerCrate(?numItems)");
     act:assertBelief(!fact);
 
-    //TODO: if called in the middle of packing a crate, will defer until next crate. But what if less than that number of items is currently in the crate?
     if (op:equals(?direct,true)) {
-        act:generateResponseFromString("Okay, this change will take effect for the next packed crate");
+        !packingStatus = tsc:getCratePackingStatus();
+        if (op:equals(!packingStatus,"packing")) {
+            !currentNumItems = tsc:getCurrentCrateNumItems();
+            if (op:gt(?numItems,!currentNumItems)) {
+                tsc:setCurrentCrateCapacity(?numItems);
+                act:generateResponse("and(ack(okay),report(changeWillTakeEffectForTheCurrentPackedCrate))");
+                return;
+            }
+        }
+
+        //act:generateResponseFromString("Okay, this change will take effect for the next packed crate");
+        act:generateResponse("and(ack(okay),report(changeWillTakeEffectForTheNextPackedCrate))");
     }
 }
 
@@ -700,7 +797,8 @@ import java.lang.Boolean;
     }
     ?result = tsc:solveCratePacking3D();
     if (op:isNull(?result)) {
-        act:generateResponseFromString("I could not run the packing algorithm because the crate and item dimensions have not been fully defined");
+        //act:generateResponseFromString("I could not run the packing algorithm because the crate and item dimensions have not been fully defined");
+        act:generateResponse("and(couldNot(run(?actor,packingAlgorithm)),because(not(fullyDefined,and(crateDimensions,itemDimensions))))");
         //TODO: fix user facing experience when interacting with recovery policy and use the below
         //exit(FAIL,not(fullyDefined(and(crateDimensions,itemDimensions))));
     }

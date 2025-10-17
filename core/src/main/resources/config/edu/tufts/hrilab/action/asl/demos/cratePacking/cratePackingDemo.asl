@@ -94,6 +94,9 @@ import edu.tufts.hrilab.packing.Vec3;
 //}
 
 () = packCrate(Integer ?numItems) {
+     onInterrupt :{
+         cancel: tsc:setCratePackingStatus("canceled");
+     }
     PackedItem !item;
     Double !centerX;
     Double !centerY;
@@ -108,6 +111,7 @@ import edu.tufts.hrilab.packing.Vec3;
     !result = tsc:getCachedPackingResult3D();
     op:log(warn, "[doDemo] packing result: !result");
     !itemsPerLayer = tsc:getNumberOfItemsPerLayer();
+    tsc:setCratePackingStatus("packing");
     for (!i=0; !i lt ?numItems; !i ++) {
         act:goToPosePrimitive("robotonepose_0:pose");
         act:lookForAndMoveToBox();
@@ -127,7 +131,10 @@ import edu.tufts.hrilab.packing.Vec3;
         !tmp = op:+(!tmp,1);
         !zOffset = op:*(!boxHeight, !tmp);
         act:putDownInCrate(!centerX, !centerY, !zOffset, !angle);
+        tsc:incrementNumPackedItems();
+        ?numItems = tsc:getCurrentCrateCapacity(); //TODO: test - does this work? Looks like it should
     }
+    tsc:setCratePackingStatus("complete");
     //TODO: whether we do this or not depends partially on whether we ack or not in main loop
     act:goToPosePrimitive("robotonepose_0:pose");
 }

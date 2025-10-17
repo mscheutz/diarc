@@ -11,6 +11,8 @@ END-TEMPLATES
 
 go to; GOTO
 move to; GOTO
+location; REF/REF; #l.$l
+pose; REF/REF; #l.$l
 pick up the box; C ; pickUpItem(?ADDRESSEE)
 put down the box; C ; putDownItem(?ADDRESSEE)
 
@@ -20,15 +22,19 @@ camera; C; camera(?ADDRESSEE)
 test vision; C; testVision(?ADDRESSEE)
 
 items; VAL\NUM; #x.amount($x)
+個です; VAL\NUM; #x.amount($x)
 all of them; VAL; amount(max)
 as many as possible; VAL; amount(max)
 the maximum ammount; VAL; amount(max)
 
 yes; VAL; val(yes)
 no; VAL; val(no)
+はい; VAL; val(yes);
+いいえ; VAL ; val(no);
 
 millimeters; VAL\NUM; #x.sizeInMM($x)
 mm; VAL\NUM; #x.sizeInMM($x)
+mmです; VAL\NUM; #x.sizeInMM($x)
 
 %configure; C; packingConfigurationStub(?ADDRESSEE)
 
@@ -43,3 +49,5 @@ suspend current task; VERBI ; suspendSystemGoalsBlocking
 resume current task; VERBI ; resumeSystemGoals
 resume; VERBI ; resumeSystemGoals
 cancel current task; VERBI ; cancelSystemGoals
+
+what did you ask me; VERBI; repeatLastQuestion

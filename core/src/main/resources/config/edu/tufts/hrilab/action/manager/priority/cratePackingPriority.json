@@ -27,7 +27,7 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
-  "reportCurrentNumberOfItemsToPack": {
+  "reportConfiguredNumberOfItemsToPack": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
@@ -64,6 +64,14 @@
     "priorityTier": "SKIPPENDING"
   },
   "setNumberOfItemsToPackPerCrate": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "repeatLastQuestion":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportNumberOfItemsInCrate":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   }
