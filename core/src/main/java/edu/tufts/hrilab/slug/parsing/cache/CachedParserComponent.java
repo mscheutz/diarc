@@ -20,6 +20,7 @@ public class CachedParserComponent extends DiarcComponent implements NLUInterfac
   private String[] loadPaths = null;
   private boolean persist = false;
   private CacheDatabase database;
+  private String language = "English";
 
   @Override
   protected List<Option> additionalUsageInfo() {
@@ -27,6 +28,7 @@ public class CachedParserComponent extends DiarcComponent implements NLUInterfac
     options.add(Option.builder("name").hasArg().argName("string").desc("Name of cached dictionary to store").build());
     options.add(Option.builder("load").hasArgs().argName("file").desc("Name of cached dictionary to load, can have multiple").build());
     options.add(Option.builder("persist").argName("boolean").desc("Whether to persist cache in a named file").build());
+    options.add(Option.builder("language").argName("string").desc("Initial language to set in stored/retrieved utterances").build());
     return options;
   }
 
@@ -41,11 +43,14 @@ public class CachedParserComponent extends DiarcComponent implements NLUInterfac
     if (cmdLine.hasOption("persist")) {
       persist = true;
     }
+    if (cmdLine.hasOption("language")) {
+      language = cmdLine.getOptionValue("language");
+    }
   }
 
   @Override
   protected void init () {
-    database = new CacheDatabase(name, loadPaths, persist, false, "English");
+    database = new CacheDatabase(name, loadPaths, persist, false);
   }
 
   /**
@@ -56,7 +61,7 @@ public class CachedParserComponent extends DiarcComponent implements NLUInterfac
    */
   @Override
   public Utterance parseUtterance(Utterance incoming) {
-    Utterance outgoing = database.get(incoming);
+    Utterance outgoing = database.get(incoming,language);
     if (outgoing != null) {
       incoming.setSemantics(outgoing.getSemantics());
       incoming.setIndirectSemantics(outgoing.getIndirectSemantics());
@@ -72,6 +77,11 @@ public class CachedParserComponent extends DiarcComponent implements NLUInterfac
    */
   @TRADEService
   public void addEntryToCache(Utterance entry) {
-    database.add(entry);
+    database.add(entry, language);
+  }
+
+  //TODO: should eventually remove this and use utterance language, see CacheDatabase
+  public void setLanguage(String language) {
+    this.language = language;
   }
 }

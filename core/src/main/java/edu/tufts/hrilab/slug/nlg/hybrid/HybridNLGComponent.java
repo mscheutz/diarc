@@ -204,4 +204,8 @@ public class HybridNLGComponent extends DiarcComponent implements NLGInterface {
         super.shutdownComponent();
         executor.shutdownNow();
     }
+
+    public CachedNLGComponent getCacheNLG() {
+      return cacheNLG;
+    }
 }

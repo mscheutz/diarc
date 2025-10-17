@@ -7,6 +7,8 @@ import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.llm.serviceproviders.CratePackingLLMServiceProvider;
 import edu.tufts.hrilab.packing.CameraCalibrationTool;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
+import edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent;
+import edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -29,18 +31,20 @@ public class CratePacking extends DiarcConfiguration {
     String openaiEndpoint = "http://dashboard.thinkingrobots.ai:8000/qwen";
     boolean japanese = false;
     boolean usePrivateEndpoint = false; //DO NOT CHANGE THIS TO TRUE
-    String languageGenerationASLFile = "config/edu/tufts/hrilab/action/asl/demos/pickAndPlace/pickAndPlaceLanguageGeneration.asl";
     private boolean cachePersist = false;
     private String configFilesPrefixPath = "/home/pete/dev/mtracs/crate_packing/";
     boolean use4fr = true;
     boolean useAssista = true;
+    private HybridNLGComponent hybridNLGComponent;
+    private HybridParserComponent hybridParserComponent;
+    private CratePackingLLMServiceProvider serviceProvider;
 
     @Override
     protected List<Option> additionalUsageInfo() {
         List<Option> options = new ArrayList<>();
         options.add(Option.builder("mock").desc("run in mock").build());
         options.add(Option.builder("noLLM").desc("run without LLM for language").build());
-        options.add(Option.builder("japanese").desc("run in mock").build());
+        options.add(Option.builder("japanese").desc("run in Japanese").build());
         options.add(Option.builder("privateEndpoint").desc("run using privately hosted endpoint rather than free serverless endpoint").build());
         options.add(Option.builder("configFilesPrefixPath").desc("prefix path for config files").hasArg().argName("path").build());
         return options;
@@ -88,14 +92,14 @@ public class CratePacking extends DiarcConfiguration {
         createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class, "");
         createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
 
-        String nlgArgs = "-simpleNLG -cache -cacheName pickAndPlace2024-reverse";
+        String nlgArgs = "-simpleNLG -cache -cacheName cratePacking-reverse";
         if (useLLMNLG) {
             nlgArgs += " -llm";
         }
         if (cachePersist) {
             nlgArgs += " -cachePersist";
         }
-        createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
+        hybridNLGComponent = createInstance(edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent.class, nlgArgs);
 
         String parserArgs = "-tldl cratePacking.dict -cache -cacheName cratePacking";
         if (useLLMParser) {
@@ -104,14 +108,18 @@ public class CratePacking extends DiarcConfiguration {
         if (cachePersist) {
             parserArgs += " -cachePersist";
         }
-        createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, parserArgs);
+        hybridParserComponent = createInstance(edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent.class, parserArgs);
+        if (japanese) {
+          hybridParserComponent.getCacheParser().setLanguage("Japanese");
+          hybridNLGComponent.getCacheNLG().setLanguage("Japanese");
+        }
 
         if (useLLMNLG || useLLMParser) {
             String serviceProviderArgs = "";
             if (japanese) {
                 serviceProviderArgs += " -japanese";
             }
-            createInstance(CratePackingLLMServiceProvider.class, serviceProviderArgs);
+            serviceProvider = createInstance(CratePackingLLMServiceProvider.class, serviceProviderArgs);
             String llmComponentArgs = String.format("-service %s llamahf -model %s Qwen/Qwen3-14B -temperature 0.6 0.6", service, model);
             if (service.equals("llamahf")) {
                 if (usePrivateEndpoint) {
@@ -165,9 +173,6 @@ public class CratePacking extends DiarcConfiguration {
       }
 //      createInstance(edu.tufts.hrilab.packing.BoxOBBComponent.class,"-lowerThreshold 42 -upperThreshold 86");
 
-        if (japanese) {
-            languageGenerationASLFile = "config/edu/tufts/hrilab/action/asl/demos/pickAndPlace/pickAndPlaceLanguageGenerationJapanese.asl";
-        }
         String goalManagerArgs=
                 //"-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
                 "-executionManagerType edu.tufts.hrilab.action.manager.SingleGoalExecutionManager " +
@@ -195,7 +200,6 @@ public class CratePacking extends DiarcConfiguration {
 
                         "-asl config/edu/tufts/hrilab/action/asl/demos/cratePacking/cratePackingInit.asl " +
                         "-asl config/edu/tufts/hrilab/action/asl/demos/onRobotScrewing/cognexArmUtil.asl " +
-                        "-asl " + languageGenerationASLFile + " " +
 
                         "-asl config/edu/tufts/hrilab/action/asl/mtracs/cr800Base.asl " +
                         "-asl config/edu/tufts/hrilab/action/asl/vision.asl " +
@@ -229,6 +233,20 @@ public class CratePacking extends DiarcConfiguration {
         this.buildAndDisplayGui();
     }
 
+    //Should be one of "English" or "Japanese" (case matters)
+    public void setLanguage(String language) {
+      log.info("Setting language to: {}", language);
+      hybridNLGComponent.getCacheNLG().setLanguage(language);
+      hybridParserComponent.getCacheParser().setLanguage(language);
+      if (serviceProvider != null) {
+        serviceProvider.setLanguage(language);
+      }
+    }
+
+    private void toggleLanguage() {
+      japanese = !japanese;
+      setLanguage(japanese ? "Japanese" : "English");
+    }
 
     private void buildAndDisplayGui(){
         JFrame frame = new JFrame("TRACS");
@@ -241,6 +259,9 @@ public class CratePacking extends DiarcConfiguration {
     private void buildContent(JFrame aFrame){
         JPanel panel = new JPanel();
         panel.add(new JLabel("TRACS RUNNING"));
+        JCheckBox languageToggle = new JCheckBox();
+        languageToggle.addActionListener(e -> toggleLanguage());
+        panel.add(languageToggle);
         aFrame.getContentPane().add(panel);
     }
 

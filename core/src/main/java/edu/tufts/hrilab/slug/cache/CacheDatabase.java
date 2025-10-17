@@ -55,11 +55,8 @@ public class CacheDatabase {
   private PreparedStatement getStatement;
   private PreparedStatement insertStatement;
 
-  private String language;
-
-  public CacheDatabase (String name, String[] loadPaths, boolean persist, boolean reverseCache, String language) {
+  public CacheDatabase (String name, String[] loadPaths, boolean persist, boolean reverseCache) {
     this.reverseCache = reverseCache;
-    this.language = language;
     String homeDirPath;
 
     if (persist) {
@@ -292,7 +289,12 @@ public class CacheDatabase {
    *
    * @param entry The Utterance object to add to the cache.
    */
+  //TODO: This method should be removed and the language set in the utterance itself should be used instead.
+  //      Need coherent universal notion of language and multilingual support
   public void add (Utterance entry) {
+    add(entry,"English");
+  }
+  public void add (Utterance entry, String language) {
     int rows = -1;
     UtteranceType type = entry.getType();
     Symbol semantics = entry.getSemantics();
@@ -326,7 +328,12 @@ public class CacheDatabase {
    * @param incoming The Utterance object containing the words to retrieve from the cache.
    * @return The Utterance object with updated values if found in the cache; otherwise, returns the incoming Utterance unchanged.
    */
+  //TODO: This method should be removed and the language set in the utterance itself should be used instead.
+  //      Need coherent universal notion of language and multilingual support
   public Utterance get (Utterance incoming) {
+    return get(incoming,"English");
+  }
+  public Utterance get (Utterance incoming, String language) {
     String getStatementString;
     String words = incoming.getWordsAsString();
     if (reverseCache) {

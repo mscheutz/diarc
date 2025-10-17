@@ -427,7 +427,8 @@ import java.lang.Integer;
         //      a solution to the issue of all questions actually being addressed to the correct entity - which in many cases requires attributing from within all actions which entity's command caused this action to be performed
         if (~op:equalsValue(?priority,URGENT)) {
             if (tsc:isAgentWaitingForResponse(?actor)) {
-                act:generateResponseFromString("Please answer my question before sending further instructions");
+                //act:generateResponseFromString("Please answer my question before sending further instructions");
+                act:generateResponse(please(before(sendingFurtherInstruction,answer(myQuestion))));
                 return;
             }
         }
@@ -563,7 +564,8 @@ import java.lang.Integer;
     } elseif (op:gt(!numQuestions,1)) {
         op:log("debug", "[selectQuestionToAnswerHelper] multiple matching question, asking disambiguation question");
         //Multiple matching questions for direct agent, disambiguate between them
-        act:generateResponseFromString("It is unclear which question you are answering. Possible candidates are:");
+        //act:generateResponseFromString("It is unclear which question you are answering. Possible candidates are:");
+        act:generateResponse(and(report(itIsUnclearWhichQuestionYouAreAnswering),promptList(possibleCandidatesAre)));
         for (!questionIndex=0; !questionIndex lt !numQuestions; !questionIndex ++) {
             !question = op:get(?agentQuestions,!questionIndex);
             !questionString = op:invokeMethod(!question,"getQuestionString");
@@ -571,7 +573,8 @@ import java.lang.Integer;
             act:generateResponseFromString("Option !spokenIndex: !questionString");
         }
         act:suspendWaitForResponse(option(X),?actor,false);
-        !bindings = act:askQuestionFromString(?actor, "Which question did you mean to answer?", option(X));
+        //!bindings = act:askQuestionFromString(?actor, "Which question did you mean to answer?", option(X));
+        !bindings = act:askQuestion(?actor, meanToAnswer(which(question)), option(X));
         act:resumeWaitForResponse(option(X),?actor);
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
@@ -582,7 +585,8 @@ import java.lang.Integer;
                 ?matchingQuestion = op:get(?agentQuestions,!questionNumber);
                 return;
             } else {
-                act:generateResponseFromString("Question !questionNumber was not a valid option");
+                //act:generateResponseFromString("Question !questionNumber was not a valid option");
+                act:generateResponse(not(validOption(question(!questionNumber))));
             }
         }
     }

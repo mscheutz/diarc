@@ -4,15 +4,12 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.vision.util.CompressionUtil;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
-import javax.vecmath.Point2d;
 import java.awt.*;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
@@ -22,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 /**
@@ -43,6 +39,13 @@ public class CratePackingComponent extends DiarcComponent {
   PackingResult3D cachedResult = null;
   int itemIndex = 0;
   private int tolerance;
+  // Current box's number of items to pack. Slightly different than what is stored in belief. Discrepancy between
+  //  the two means that there is an update which will take effect next crate.
+  int currentCrateCapacity = -1;
+  // Essentially itemIndex, but confirmed that the item was placed into the crate successfully. Discrepancy between
+  //  this value and itemIndex means the box is likely in the gripper currently.
+  int currentCrateNumItems = 0;
+  String cratePackingStatus = "";
 
   public CratePackingComponent() {
     crateL = -1;
@@ -304,8 +307,23 @@ public class CratePackingComponent extends DiarcComponent {
   }
 
   @TRADEService
+  public void setCratePackingStatus(String status) {
+    if (status.equals("packing") || status.equals("complete") || status.equals("canceled")) {
+      cratePackingStatus = status;
+    } else {
+      log.error("[setCratePackingStatus] unknown status {}",status);
+    }
+  }
+
+  @TRADEService
+  public void setCurrentCrateCapacity(int capacity) {
+    currentCrateCapacity = capacity;
+  }
+
+  @TRADEService
   public void resetPackedItemIndex() {
     itemIndex = 0;
+    currentCrateNumItems = 0; //Maybe should be in own call
   }
 
   @TRADEService
@@ -315,6 +333,29 @@ public class CratePackingComponent extends DiarcComponent {
       return null;
     }
     return cachedResult.allItems.get(itemIndex++);
+  }
+  
+  @TRADEService
+  public void incrementNumPackedItems() {
+    currentCrateNumItems++;
+    if (currentCrateNumItems > currentCrateCapacity) {
+      log.warn("[incrementPackedItemIndex] reported number of items packed in crate ({}) larger than configured amount ({})", currentCrateNumItems, currentCrateCapacity);
+    }
+  }
+
+  @TRADEService
+  public String getCratePackingStatus() {
+    return cratePackingStatus;
+  }
+
+  @TRADEService
+  public int getCurrentCrateNumItems() {
+    return currentCrateNumItems;
+  }
+
+  @TRADEService
+  public int getCurrentCrateCapacity() {
+    return currentCrateCapacity;
   }
 
   @TRADEService
