@@ -17,81 +17,9 @@ import edu.tufts.hrilab.packing.RobotAdjustment;
 import java.awt.Rectangle;
 import edu.tufts.hrilab.packing.Vec3;
 
-() = testVision() {
-    List !tokenIds;
-    Long !tokenId;
-    Symbol !refId;
-    MemoryObject !mo;
-    Point3d !location;
-    MPose !goal;
-    Double !x;
-    Double !y;
-    Double !z;
-    Double !theta;
-    Term !props;
-    Symbol !robotone="robotone:agent";
-    List !box;
-    RobotAdjustment !adjustment;
-    MPose !currentPose;
-
-    act:goToPosePrimitive("robotonepose_0:pose");
-
-    act:rotateToEE("camera");
-
-    !box = tsc:generateOBB();
-    !adjustment = tsc:calculateRobotAdjustment(!box);
-    !x = op:invokeMethod(!adjustment, "getX");
-    !x = op:/(!x, 1000);
-    !y = op:invokeMethod(!adjustment, "getY");
-    !y = op:/(!y, 1000);
-    !theta = op:invokeMethod(!adjustment, "getRotation");
-
-    op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
-}
-
 () = goToPoseDirect(Symbol ?pose) {
     act:goToPosePrimitiveNoAdjust(?pose);
 }
-
-//() = doDemo() {
-//    PackedItem !item;
-//    Double !centerX;
-//    Double !centerY;
-//    Double !angle;
-//    PackingResult3D !result;
-//    Float !boxHeight = 0.060;
-//    Float !zOffset;
-//    Integer !tmp;
-//    Integer !itemsPerLayer;
-//    Integer !numLayers;
-
-//    //get crate packing information (including number if items)
-//    !result = act:solveCratePacking3D();
-//    op:log(warn, "[doDemo] packing result: !result");
-//    !numLayers = tsc:getNumLayers();
-//    !itemsPerLayer = tsc:getNumberOfItemsPerLayer();
-//    for (!i=0; !i lt !numLayers; !i ++) {
-//        for (!j=0; !j lt !itemsPerLayer; !j ++) {
-//            act:goToPosePrimitive("robotonepose_0:pose");
-//            act:lookForAndMoveToBox();
-//            tsc:moveZRelative(-0.05);
-//            tsc:closeGripper();
-//            tsc:moveZRelative(0.3);
-//            act:goToPosePrimitive("robotonepose_1:pose");
-
-//            //get values from packing info
-//            !item = tsc:getNextPackedItem();
-//            !centerY = op:invokeMethod(!item, "getCenterX");
-//            !centerX = op:invokeMethod(!item, "getCenterY");
-//            !angle = op:invokeMethod(!item, "getAngle");
-//            op:log(info, "[doDemo] putting down item at !centerX, !centerY, !angle");
-//            !tmp = op:+(!i,1);
-//            !zOffset = op:*(!boxHeight, !tmp);
-//            act:putDownInCrate(!centerX, !centerY, !zOffset, !angle);
-//        }
-//    }
-//    act:goToPosePrimitive("robotonepose_0:pose");
-//}
 
 () = packCrate(Integer ?numItems) {
      onInterrupt :{
@@ -160,24 +88,6 @@ import edu.tufts.hrilab.packing.Vec3;
 
     act:rotateToEE("camera");
 
-    //52 and 108 are the "threshold" values that seem to work for the contrast-based detection
-
-
-//    !props = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "and(object(X:physobj))");
-//    op:log(info, "reference for an object to get the search moving with props: !props");
-//    !refId = !robotone.act:positReference(!props);
-//    op:log(info, "refId: !refId");
-//
-//    op:log(info, "[lookForAndMoveToBox] looking for box...");
-//    (!tokenIds, !tokenId) = act:findObject(!refId);
-//    op:log(info, "[lookForAndMoveToBox] done looking for box");
-//    op:log(info, "[lookForAndMoveToBox] tokenId: !tokenId, tokenIds: !tokenIds");
-//    op:log(info, "[lookForAndMoveToBox] search succeeded");
-//    !mo = tsc:getToken(!tokenId);
-//
-//    !box = op:invokeMethod(!mo, "getBoundingBox");
-//    !box = tsc:generateOBB();
-//    op:log(info, "[lookForAndMovetoBox] bounding box is: !box");
     !adjustment = tsc:calculateRobotAdjustment();
     if (op:isNull(!adjustment)) {
         op:log(error, "[lookForAndMoveToBox] no object found in frame");
@@ -186,8 +96,6 @@ import edu.tufts.hrilab.packing.Vec3;
     }
     !x = op:invokeMethod(!adjustment, "getX");
     !y = op:invokeMethod(!adjustment, "getY");
-//    !y = op:-(!y, 0.03);
-//    !x = op:-(!x, 0.02);
     !theta = op:invokeMethod(!adjustment, "getZ");
     !theta = op:-(!theta, 1.5705);
 
@@ -232,8 +140,10 @@ import edu.tufts.hrilab.packing.Vec3;
     !holding = tsc:checkHolding();
     !failurePred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding)");
     if (op:equals(!holding, false)) {
+        op:log(debug, "[checkHolding] NOT holding item");
         exit(FAIL, !failurePred);
     }
+    op:log(debug, "[checkHolding] holding item");
 }
 
 () = gripper() {
@@ -243,3 +153,11 @@ import edu.tufts.hrilab.packing.Vec3;
 () = camera() {
     act:rotateToEE("camera");
 }
+
+ () = openGripper() {
+    tsc:openGripper();
+ }
+
+ () = closeGripper() {
+    tsc:closeGripper();
+ }

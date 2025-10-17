@@ -91,26 +91,6 @@ public class CameraCalibrationTool extends JFrame {
       }
       originalImage = image;
       processImage();
-      File outputfile = new File("/home/pete/matthias/" + itemNumber++ + "image.png");
-      try {
-        ImageIO.write(originalImage, "png", outputfile);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-//        try {
-//            objectWidthW = Double.parseDouble(wField.getText());
-//            distanceZ = Double.parseDouble(zField.getText());
-//            JFileChooser fileChooser = new JFileChooser();
-//            if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-//                originalImage = ImageIO.read(fileChooser.getSelectedFile());
-//                processImage();
-//            }
-//        } catch (NumberFormatException ex) {
-//            JOptionPane.showMessageDialog(this, "Please enter valid numbers for W and Z.", "Input Error", JOptionPane.ERROR_MESSAGE);
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//            JOptionPane.showMessageDialog(this, "Error loading image: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-//        }
     }
 
     private void processImage() {
