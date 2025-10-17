@@ -218,6 +218,17 @@ import edu.tufts.hrilab.packing.Vec3;
     tsc:moveZRelative(!height);
 }
 
+() = checkHolding() {
+    Boolean !holding;
+    Predicate !failurePred;
+
+    !holding = tsc:checkHolding();
+    !failurePred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding)");
+    if (op:equals(!holding, false)) {
+        exit(FAIL, !failurePred);
+    }
+}
+
 () = gripper() {
     act:rotateToEE("gripper");
 }
