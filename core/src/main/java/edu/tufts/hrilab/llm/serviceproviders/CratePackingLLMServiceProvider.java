@@ -255,12 +255,13 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     String actorName = utterance.getAddressee().getName();
     try {
       String command = utterance.getSemantics().getName();
-      if (command.startsWith("describe")) {
-        utterance.setType(UtteranceType.INSTRUCT);
-        List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
-        args.add(0, Factory.createSymbol(actorName));
-        utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
-      } else if (command.equals("knowHowTo")) {
+      //if (command.startsWith("describe")) {
+      //  utterance.setType(UtteranceType.INSTRUCT);
+      //  List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
+      //  args.add(0, Factory.createSymbol(actorName));
+      //  utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
+      //} else
+      if (command.equals("knowHowTo")) {
         List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
         args.add(0, Factory.createSymbol(actorName));
         Term knownPredicate = (Term) args.remove(1);
@@ -767,18 +768,37 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     );
     exposedInstructList.add(entry);
     entry = new LLMSemanticEntry("reportAllPackingParameters()",
-            "You report all relevant packing parameters you are aware of; The dimensions of food items, the dimensions of the crates, your current packed crate configuration, and the fully packed crate configuration.",
+            "You report the state of all relevant packing parameters you are aware of; The dimensions of food items, the dimensions of the crates, your current packed crate configuration, and the fully packed crate configuration.",
             "Tell me your overall packing configuration",
             "全体の積み付け設定を教えてください",
             "reportAllPackingParameters()",
             10,
             "INSTRUCT"
     );
+    exposedInstructList.add(entry);
     entry = new LLMSemanticEntry("reportNumberOfItemsInCrate()",
             "You report the number of items which have been packed so far into the current or last crate",
             "",
             "",
             "reportNumberOfItemsInCrate()",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("reportWhatPackingParametersExist()",
+            "You report the total list of packing parameters which exist and can be configured",
+            "",
+            "",
+            "reportWhatPackingParametersExist()",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("reportUnsetPackingParameters()",
+            "You report the list of packing parameters which the user has not yet configured and still needs to before beginning to pack",
+            "",
+            "",
+            "reportUnsetPackingParameters()",
             10,
             "INSTRUCT"
     );
@@ -801,11 +821,65 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
             "INSTRUCT"
     );
     exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("setPackedItemLength(?itemLength)",
+            "You directly configure the length of the food items you are packing in millimeters",
+            "",
+            "",
+            "setPackedItemLength(200)",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("setPackedItemWidth(?itemWidth)",
+            "You directly configure the width of the food items you are packing in millimeters",
+            "",
+            "",
+            "setPackedItemWidth(200)",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("setPackedItemHeight(?itemHeight)",
+            "You directly configure the height of the food items you are packing in millimeters",
+            "",
+            "",
+            "setPackedItemHeight(200)",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
     entry = new LLMSemanticEntry("setCrateDimensions(?crateLength, ?crateWidth, ?crateHeight)",
             "You directly configure all three dimensions of the crate you are packing items into. Each dimension is measured in millimeters. This is only a valid semantic form if all three dimensions are given.",
             "The crates are 2 meters long, 1.5 meters wide, and 400 mm tall",
             "番重のサイズは、長さ2メートル、幅1.5メートル、高さ400mmです",
             "setPackedItemDimensions(2000,1500,400)",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("setCrateLength(?itemLength)",
+            "You directly configure the length of the crate you are packing into in millimeters",
+            "",
+            "",
+            "setCrateLength(200)",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("setCrateWidth(?itemWidth)",
+            "You directly configure the width of the crate you are packing into in millimeters",
+            "",
+            "",
+            "setCrateWidth(200)",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("setCrateHeight(?itemHeight)",
+            "You directly configure the height of the crate you are packing into in millimeters",
+            "",
+            "",
+            "setCrateHeight(200)",
             10,
             "INSTRUCT"
     );

@@ -16,6 +16,7 @@ import edu.tufts.hrilab.packing.Quadrilateral;
 import edu.tufts.hrilab.packing.RobotAdjustment;
 import java.awt.Rectangle;
 import edu.tufts.hrilab.packing.Vec3;
+import java.lang.Boolean;
 
 () = goToPoseDirect(Symbol ?pose) {
     act:goToPosePrimitiveNoAdjust(?pose);
@@ -40,8 +41,9 @@ import edu.tufts.hrilab.packing.Vec3;
     op:log(warn, "[doDemo] packing result: !result");
     !itemsPerLayer = tsc:getNumberOfItemsPerLayer();
     tsc:setCratePackingStatus("packing");
+    act:goToPosePrimitive("robotonepose_0:pose");
     for (!i=0; !i lt ?numItems; !i ++) {
-        act:goToPosePrimitive("robotonepose_0:pose");
+        //act:goToPosePrimitive("robotonepose_0:pose");
         act:lookForAndMoveToBox();
         tsc:moveZRelative(-0.088);
         tsc:closeGripper();
@@ -60,7 +62,14 @@ import edu.tufts.hrilab.packing.Vec3;
         !zOffset = op:*(!boxHeight, !tmp);
         act:putDownInCrate(!centerX, !centerY, !zOffset, !angle);
         tsc:incrementNumPackedItems();
-        ?numItems = tsc:getCurrentCrateCapacity(); //TODO: test - does this work? Looks like it should
+        //TODO: test on real robot
+        //      1. this doesn't break functionality
+        //      2. setting the number to pack to the number which is in the crate while the arm is on the way back to
+        //          the conveyor breaks from this loop before packing more
+        //Putting this at the bottom of the loop so that changing the number of items to pack per crate has a chance
+        //  to be caught before picking up the next item
+        act:goToPosePrimitive("robotonepose_0:pose");
+        ?numItems = tsc:getCurrentCrateCapacity();
     }
     tsc:setCratePackingStatus("complete");
     //TODO: whether we do this or not depends partially on whether we ack or not in main loop

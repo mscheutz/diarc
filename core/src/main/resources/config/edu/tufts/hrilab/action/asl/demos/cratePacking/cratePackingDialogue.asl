@@ -525,9 +525,10 @@ import java.lang.Boolean;
     Integer !configuredNumItems;
     Integer !currentNumItems;
     String !currentPackingStatus;
+    Boolean !ranUpdatedAlgo;
 
     !configuredNumItems = act:getNumberOfItemsToPackPerCrate();
-    !currentNumItems = act:getCurrentCrateCapacity();
+    !currentNumItems = tsc:getCurrentCrateCapacity();
     !currentPackingStatus = tsc:getCratePackingStatus();
 
     //cases: upcoming | current/prev
@@ -544,23 +545,28 @@ import java.lang.Boolean;
         } else {
             // Current/last crate packing !numItems into crate, next crate unknown/max
             if (op:equals(!currentPackingStatus,"packing")) {
+                //Don't believe this case is possible
                 act:generateResponse("but(currentPackedItemsPerCrate(!currentNumItems),and(nextPackedItemsPerCrate(unknown),because(packingParametersChanged)))");
             } elseif (op:equals(!currentPackingStatus,"complete")) {
+                //Don't believe this case is possible
                 act:generateResponse("but(lastPackedItemsPerCrate(!currentNumItems),and(nextPackedItemsPerCrate(unknown),because(packingParametersChanged)))");
             } else {
-                act:generateResponse("currentPackedItemsPerCrate(!currentNumItems)");
+                act:generateResponse("isNot(configured(numberOfItemsPerCrate),because(packingParametersChanged))");
             }
         }
     } else {
-        if (op:equals(!currentNumItems,!configuredNumItems)) {
+        !ranUpdatedAlgo = act:getHaveRanUpdatedPackingAlgorithm();
+        if (op:equals(!ranUpdatedAlgo,false)) {
+            act:generateResponse("isNot(configured(numberOfItemsPerCrate),because(packingParametersChanged))");
+        } elseif (op:equals(!currentNumItems,!configuredNumItems)) {
             // Configured amount to pack unchanged
             act:generateResponse("currentPackedItemsPerCrate(!currentNumItems)");
         } else {
             // Configured amount has changed. Next crate packing less
-            if (op:equals(!currentPackingStatus,"packing")) {
-                act:generateResponse("but(currentPackedItemsPerCrate(!currentNumItems),NextPackedItemsPerCrate(!configuredNumItems))");
+            if (op:equals(!currentPackingStatus,"canceled")) {
+                act:generateResponse("upcomingPackedItemsPerCrate(!configuredNumItems)");
             } else {
-                act:generateResponse("currentPackedItemsPerCrate(!configuredNumItems)");
+                act:generateResponse("but(currentPackedItemsPerCrate(!currentNumItems),upcomingPackedItemsPerCrate(!configuredNumItems))");
             }
         }
     }
@@ -623,6 +629,7 @@ import java.lang.Boolean;
     Integer !numItems;
     String !crateStatus;
 
+    !crateStatus = tsc:getCratePackingStatus();
     !numItems = tsc:getCurrentCrateNumItems();
     if (op:equals(!crateStatus,"")) {
         act:generateResponse("not(startedPacking(?actor,crates))");
@@ -630,6 +637,60 @@ import java.lang.Boolean;
         act:generateResponse("beforePackingWasCanceled(held(lastCrate,numberOfItems(!numItems)))");
     } else {
         act:generateResponse("holding(currentCrate,numberOfItems(!numItems))");
+    }
+}
+
+() = reportWhatPackingParametersExist() {
+    act:generateResponse("packingParametersWhichExistAndCanBeConfigured(crate(length,width,height),packedItem(length,width,height),numberOfItemsToPackPerCrate)");
+}
+
+() = reportUnsetPackingParameters() {
+    Integer !crateL;
+    Integer !crateW;
+    Integer !crateH;
+    Integer !itemL;
+    Integer !itemW;
+    Integer !itemH;
+    Integer !numItemsToPack;
+    List !unsetParamList;
+    String !unsetParamString;
+
+    !unsetParamList = op:newObject("java.util.ArrayList");
+
+    !crateL = tsc:getCrateLength();
+    if (op:equals(!crateL,-1)) {
+        op:add(!unsetParamList,"crateLength");
+    }
+    !crateW = tsc:getCrateWidth();
+    if (op:equals(!crateW,-1)) {
+        op:add(!unsetParamList,"crateWidth");
+    }
+    !crateH = tsc:getCrateHeight();
+    if (op:equals(!crateH,-1)) {
+        op:add(!unsetParamList,"crateHeight");
+    }
+    !itemL = tsc:getPackedItemLength();
+    if (op:equals(!itemL,-1)) {
+        op:add(!unsetParamList,"itemLength");
+    }
+    !itemW = tsc:getPackedItemWidth();
+    if (op:equals(!itemW,-1)) {
+        op:add(!unsetParamList,"itemWidth");
+    }
+    !itemH = tsc:getPackedItemHeight();
+    if (op:equals(!itemH,-1)) {
+        op:add(!unsetParamList,"itemHeight");
+    }
+    !numItemsToPack = act:getNumberOfItemsToPackPerCrate();
+    if (op:equals(!numItemsToPack,-1)) {
+        op:add(!unsetParamList,"numberOfItemsToPack");
+    }
+
+    if (op:isEmpty(!unsetParamList)) {
+        act:generateResponse("allSet(packingParameters)");
+    } else {
+        !unsetParamString = op:invokeStaticMethod("java.lang.String","join",",",!unsetParamList);
+        act:generateResponse("unsetParamsAre(!unsetParamString)");
     }
 }
 
@@ -680,8 +741,8 @@ import java.lang.Boolean;
 
     !maxNumItems = tsc:getTotalNumberOfItems();
     // make sure a valid amount has been supplied based on max amount
-    if (op:lt(?numItems,0)) {
-        exit(FAIL,not(supplied(positiveNumber)));
+    if (op:le(?numItems,0)) {
+        exit(FAIL,not(supplied(numberGreaterThanZero)));
     } elseif (op:gt(?numItems,!maxNumItems)) {
         exit(FAIL,greaterThan(?numItems,maxCapacity));
     }
@@ -743,6 +804,10 @@ import java.lang.Boolean;
     effects : {
         success : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
     }
+    if (op:lt(?itemLength,1)) {
+        act:generateResponse("mustBe(itemLength,greaterThan(0))");
+        return;
+    }
     tsc:setPackedItemLength(?itemLength);
 }
 
@@ -750,12 +815,20 @@ import java.lang.Boolean;
     effects : {
         success : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
     }
+    if (op:lt(?itemWidth,1)) {
+        act:generateResponse("mustBe(itemWidth,greaterThan(0))");
+        return;
+    }
     tsc:setPackedItemWidth(?itemWidth);
 }
 
 () = setPackedItemHeight(Integer ?itemHeight) {
     effects : {
         success : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
+    }
+    if (op:lt(?itemHeight,1)) {
+        act:generateResponse("mustBe(itemHeight,greaterThan(0))");
+        return;
     }
     tsc:setPackedItemHeight(?itemHeight);
 }
@@ -771,6 +844,10 @@ import java.lang.Boolean;
     effects : {
         success : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
     }
+    if (op:lt(?crateLength,1)) {
+        act:generateResponse("mustBe(crateLength,greaterThan(0))");
+        return;
+    }
     tsc:setCrateLength(?crateLength);
 }
 
@@ -778,12 +855,20 @@ import java.lang.Boolean;
     effects : {
         success : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
     }
+    if (op:lt(?crateWidth,1)) {
+        act:generateResponse("mustBe(crateWidth,greaterThan(0))");
+        return;
+    }
     tsc:setCrateWidth(?crateWidth);
 }
 
 () = setCrateHeight(Integer ?crateHeight) {
     effects : {
         success : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
+    }
+    if (op:lt(?crateHeight,1)) {
+        act:generateResponse("mustBe(crateHeight,greaterThan(0))");
+        return;
     }
     tsc:setCrateHeight(?crateHeight);
 }
@@ -804,31 +889,32 @@ import java.lang.Boolean;
     }
 }
 
-//TODO: figure out where this lives on main branch
-() = describeCurrentGoal["describes ?actor's current active task(s)"](){
-
-    java.util.List !goalPreds;
-    java.lang.Integer !resultsSize=0;
-    java.lang.String !status;
-    Predicate !goalPred;
-
-    !goalPreds = act:getSystemGoalsPredicates();
-    !resultsSize = op:size(!goalPreds);
-    if(op:gt(!resultsSize,0)){
-        foreach(!goalPred: !goalPreds){
-            !status= op:getName(!goalPred);
-            !goalPred= op:getArg(!goalPred,0);
-            act:reportGoalStatus(!status);
-            act:generateResponse(!goalPred);
-        }
-    } else {
-        act:reportNoCurrentGoal();
-    }
-}
-
 () = checkPackingResultUpToDate() {
     conditions : {
         pre : ranPackingAlgorithmWithUpdatedSettings(?actor);
     }
     op:log("debug","[checkPackingResultUpToDate] dummy action");
+}
+
+(Boolean ?ran) = getHaveRanUpdatedPackingAlgorithm() {
+    Predicate !queryPred;
+    List !bindings;
+    Variable !bindingVar = X;
+    Map !elem;
+    Symbol !a;
+    String !actorString;
+
+    !queryPred = op:createPredicate("ranPackingAlgorithmWithUpdatedSettings(X)");
+    !bindings = act:queryBelief(!queryPred);
+    if (~op:isEmpty(!bindings)) {
+        foreach(!elem : !bindings) {
+            !a = op:get(!elem,!bindingVar);
+            !actorString = op:getName(!a);
+            if (op:equalsValue(!actorString,?actor)) {
+                ?ran = op:newObject("java.lang.Boolean", true);
+                return;
+            }
+        }
+    }
+    ?ran = op:newObject("java.lang.Boolean", false);
 }

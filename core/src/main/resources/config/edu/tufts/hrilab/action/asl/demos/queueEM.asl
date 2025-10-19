@@ -123,16 +123,17 @@ import edu.tufts.hrilab.action.justification.Justification;
     Predicate !goalPred;
 
     !goalPreds = act:getSystemGoalsPredicates();
-    !resultsSize = op:invokeMethod(!goalPreds, "size");
+    !resultsSize = op:size(!goalPreds);
     if(op:gt(!resultsSize,0)){
         foreach(!goalPred: !goalPreds){
             !status= op:getName(!goalPred);
             !goalPred= op:getArg(!goalPred,0);
-            act:generateResponseFromString("!status task: ");
-            act:generateResponse(!goalPred);
+            act:generateResponse(goal(status(!status),predicate(!goalPred)));
+            //act:reportGoalStatus(!status);
+            //act:generateResponse(!goalPred);
         }
     } else {
-        act:generateResponseFromString("no current task");
+        act:reportNoCurrentGoal();
     }
 }
 

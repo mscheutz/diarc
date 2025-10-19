@@ -34,6 +34,7 @@ import java.util.zip.DataFormatException;
  */
 public class CratePackingComponent extends DiarcComponent {
 
+  private boolean mock = false;
   private double imageWidth;
   private double imageHeight;
   private double cameraHeightMM;
@@ -125,6 +126,10 @@ public class CratePackingComponent extends DiarcComponent {
         log.warn("[parseArgs] Not all camera information supplied, ignoring");
       }
     }
+
+    if (cmdLine.hasOption("mock")) {
+      mock = true;
+    }
   }
 
   @Override
@@ -141,6 +146,7 @@ public class CratePackingComponent extends DiarcComponent {
     options.add(Option.builder("imageWidth").hasArg().build());
     options.add(Option.builder("imageHeight").hasArg().build());
     options.add(Option.builder("tolerance").hasArg().build());
+    options.add(Option.builder("mock").build());
     return options;
   }
 
@@ -552,7 +558,17 @@ public class CratePackingComponent extends DiarcComponent {
 
   @TRADEService
   public Vec3 calculateRobotAdjustment() {
+    if (mock) {
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException ignored){}
+      return new Vec3(0,0,0);
+    }
     BufferedImage image = getImage();
+    if (image == null) {
+      log.error("[calculateRobotAdjustment] no image received");
+      return null;
+    }
     Vec3 result = visionProcessor.calculatePickupAction(image);
     if (result == null) {
       log.error("[calculateRobotAdjustment] no object detected");

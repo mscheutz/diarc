@@ -74,5 +74,13 @@
   "reportNumberOfItemsInCrate":  {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "reportWhatPackingParametersExist":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "reportUnsetPackingParameters":  {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

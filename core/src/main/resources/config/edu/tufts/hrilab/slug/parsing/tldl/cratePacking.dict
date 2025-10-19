@@ -52,6 +52,10 @@ cancel current task; VERBI ; cancelSystemGoals
 
 what did you ask me; VERBI; repeatLastQuestion
 
+hi; G ; hi
+hi there; G ; hi_there
+hello; G ; hello
+
 check holding; C; checkHolding(?ADDRESSEE)
 open gripper; C; openGripper(?ADDRESSEE)
 close gripper; C; closeGripper(?ADDRESSEE)

@@ -154,21 +154,26 @@ public class CratePacking extends DiarcConfiguration {
             }
         }
 
-      createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, "-crateL 560 -crateW 360 -crateH 200 " +
-              "-itemL 230 -itemW 160 -itemH 55 " +
-//        createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, " " +
-              "-tolerance 15 " +
-              "-cameraAngle 0.0 -cameraHeightMM 325 -imageWidth 320 -imageHeight 260 " +
-              "-groups agent:robotone:agent");
-      if (mock) {
-        createInstance(edu.tufts.hrilab.vision.MockVisionComponent.class, "-groups agent:robotone:agent -rotX -67.5 -height 1.14");
-        createInstance(edu.tufts.hrilab.grasp.MockGraspComponent.class, "-groups agent:robotone:agent");
-      } else {
-        createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture rsense.xml -groups agent:robotone:agent -rotX -67.5 -height 1.14");
-  //      SwingUtilities.invokeLater(() -> new CameraCalibrationTool().setVisible(true));
-        //createInstance(edu.tufts.hrilab.grasp.GraspComponent.class, "-groups agent:robotone:agent");
-      }
-//      createInstance(edu.tufts.hrilab.packing.BoxOBBComponent.class,"-lowerThreshold 42 -upperThreshold 86");
+        String cratePackingComponentArgs =  "-crateL 560 -crateW 360 -crateH 200 " +
+                "-itemL 230 -itemW 160 -itemH 55 " +
+  //        createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, " " +
+                "-tolerance 15 " +
+                "-cameraAngle 0.0 -cameraHeightMM 325 -imageWidth 320 -imageHeight 260 " +
+                "-groups agent:robotone:agent";
+        if (mock) {
+          cratePackingComponentArgs += " -mock";
+        }
+        createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, cratePackingComponentArgs);
+
+        if (mock) {
+          createInstance(edu.tufts.hrilab.vision.MockVisionComponent.class, "-groups agent:robotone:agent -rotX -67.5 -height 1.14");
+          createInstance(edu.tufts.hrilab.grasp.MockGraspComponent.class, "-groups agent:robotone:agent");
+        } else {
+          createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture rsense.xml -groups agent:robotone:agent -rotX -67.5 -height 1.14");
+    //      SwingUtilities.invokeLater(() -> new CameraCalibrationTool().setVisible(true));
+          //createInstance(edu.tufts.hrilab.grasp.GraspComponent.class, "-groups agent:robotone:agent");
+        }
+  //      createInstance(edu.tufts.hrilab.packing.BoxOBBComponent.class,"-lowerThreshold 42 -upperThreshold 86");
 
         String goalManagerArgs=
                 //"-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +
@@ -200,6 +205,8 @@ public class CratePacking extends DiarcConfiguration {
 
                         "-asl config/edu/tufts/hrilab/action/asl/mtracs/cr800Base.asl " +
                         "-asl config/edu/tufts/hrilab/action/asl/vision.asl " +
+
+                        "-asl config/edu/tufts/hrilab/action/asl/demos/queueEM.asl " +
 
                         "-priorityFile default.json cratePackingPriority.json " +
                         //TODO:brad this has to come after the agents file
