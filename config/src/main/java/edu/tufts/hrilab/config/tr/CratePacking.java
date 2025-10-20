@@ -3,6 +3,7 @@ package edu.tufts.hrilab.config.tr;
 import ai.thinkingrobots.mtracs.interfaces.CR800ComponentInterface;
 import com.google.gson.Gson;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
+import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.llm.serviceproviders.CratePackingLLMServiceProvider;
 import edu.tufts.hrilab.packing.CameraCalibrationTool;
@@ -13,6 +14,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -245,6 +247,34 @@ public class CratePacking extends DiarcConfiguration {
       if (serviceProvider != null) {
         serviceProvider.setLanguage(language);
       }
+      if (useAssista) {
+        List<String> currentPoseNames;
+        List<String> newPoseNames;
+        if (language.equals("Japanese")) {
+          currentPoseNames = assista.getEnglishPoseDescriptors();
+          newPoseNames = assista.getJapanesePoseDescriptors();
+        } else {
+          currentPoseNames = assista.getJapanesePoseDescriptors();
+          newPoseNames = assista.getEnglishPoseDescriptors();
+        }
+        for (int i=0; i<currentPoseNames.size(); i++) {
+          assista.updatePoseName(Factory.createSymbol(currentPoseNames.get(i),"pose"), Factory.createSymbol(newPoseNames.get(i),"pose"));
+        }
+      }
+      if (use4fr) {
+        List<String> currentPoseNames;
+        List<String> newPoseNames;
+        if (language.equals("Japanese")) {
+          currentPoseNames = rv4fr.getJapanesePoseDescriptors();
+          newPoseNames = rv4fr.getEnglishPoseDescriptors();
+        } else {
+          currentPoseNames = rv4fr.getEnglishPoseDescriptors();
+          newPoseNames = rv4fr.getJapanesePoseDescriptors();
+        }
+        for (int i=0; i<currentPoseNames.size(); i++) {
+          rv4fr.updatePoseName(Factory.createSymbol(currentPoseNames.get(i),"pose"), Factory.createSymbol(newPoseNames.get(i),"pose"));
+        }
+      }
     }
 
     private void toggleLanguage() {
@@ -262,10 +292,15 @@ public class CratePacking extends DiarcConfiguration {
 
     private void buildContent(JFrame aFrame){
         JPanel panel = new JPanel();
-        panel.add(new JLabel("TRACS RUNNING"));
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        //panel.add(new JLabel("TRACS RUNNING"));
+        JPanel innerPanel = new JPanel();
         JCheckBox languageToggle = new JCheckBox();
+        JLabel languageToggleLabel = new JLabel("Set Language to Japanese: ");
         languageToggle.addActionListener(e -> toggleLanguage());
-        panel.add(languageToggle);
+        innerPanel.add(languageToggleLabel);
+        innerPanel.add(languageToggle);
+        panel.add(innerPanel);
         aFrame.getContentPane().add(panel);
     }
 

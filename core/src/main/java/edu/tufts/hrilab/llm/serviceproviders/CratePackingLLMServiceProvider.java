@@ -271,7 +271,7 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
         utterance.setSemantics(Factory.createPredicate(utterance.getSemantics().getName(), args));
       } else if (command.equals("goTo")) {
         List<Symbol> args = ((Predicate) (utterance.getSemantics())).getArgs();
-        utterance.setSemantics(Factory.createPredicate("goToPose", args));
+        utterance.setSemantics(Factory.createPredicate("goToPoseDirect", args));
       }
     } catch (Exception e) {
       log.warn("[correctCommonNLUMistakes] unexpected semantics format");
@@ -440,14 +440,13 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     promptVars.put("%language", language);
     promptVars.put("%addressee", utterance.getAddressee().getName());
     List<String> poses;
-    //TODO: swapping language on the fly doesn't change location names - just use english for now in nlu and swap in nlg?
-    //if (language.equals("Japanese")) {
-    //  poses = getPoses(utterance.getAddressee().getName(),false);
-    //  promptVars.put("%examplePose", poses.isEmpty() ? "試験場所" : poses.get(0));
-    //} else {
+    if (language.equals("Japanese")) {
+      poses = getPoses(utterance.getAddressee().getName(),false);
+      promptVars.put("%examplePose", poses.isEmpty() ? "試験場所" : poses.get(0));
+    } else {
       poses = getPoses(utterance.getAddressee().getName(),true);
       promptVars.put("%examplePose", poses.isEmpty() ? "test location" : poses.get(0));
-    //}
+    }
     promptVars.put("%poseList", String.join("\n", poses));
     //TODO: if have relevant world state, reinclude
     //promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
@@ -919,11 +918,11 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
             "repeatLastQuestion()", 10,
             "INSTRUCT");
     exposedInstructList.add(entry);
-    entry = new LLMSemanticEntry("goToPose(?destination:pose)",
+    entry = new LLMSemanticEntry("goToPoseDirect(?destination:pose)",
             "You go to location ?destination:pose.",
             "please navigate to %examplePose",
             "%examplePose番にしてください",
-            "goToPose(%examplePose:pose)",
+            "goToPoseDirect(%examplePose:pose)",
             10,
             "INSTRUCT"
     );

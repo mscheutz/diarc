@@ -53,6 +53,7 @@ public class CratePackingComponent extends DiarcComponent {
   //  this value and itemIndex means the box is likely in the gripper currently.
   int currentCrateNumItems = 0;
   String cratePackingStatus = "";
+  CratePackingGui gui;
 
   public CratePackingComponent() {
     crateL = -1;
@@ -81,16 +82,14 @@ public class CratePackingComponent extends DiarcComponent {
   public void init() {
     super.init();
     this.visionProcessor = new RobotVisionProcessor(packedItemW/1000.0, packedItemH/1000.0, cameraHeightMM/1000.0);
-    SwingUtilities.invokeLater(() -> {new CratePackingGui(this).setVisible(true);});
+    SwingUtilities.invokeLater(() -> {
+      gui = new CratePackingGui(this);
+      gui.setVisible(true);});
   }
 
   public void updateArgs(int crateL, int crateW, int crateH, int packedItemL, int packedItemW, int packedItemH) {
-    this.crateL = crateL;
-    this.crateW = crateW;
-    this.crateH = crateH;
-    this.packedItemL = packedItemL;
-    this.packedItemW = packedItemW;
-    this.packedItemH = packedItemH;
+    setCrateDimensions(crateL, crateW, crateH);
+    setPackedItemDimensions(packedItemL, packedItemW, packedItemH);
   }
 
   @Override
@@ -285,40 +284,68 @@ public class CratePackingComponent extends DiarcComponent {
   }
 
   @TRADEService
-  public void setCrateLength(int crateLength) {
-    this.crateL = crateLength;
+  public void setCrateLength(int crateL) {
+    this.crateL = crateL;
+    if (gui != null) {
+      gui.setCrateLFieldValue(crateL);
+    }
   }
   @TRADEService
   public void setCrateWidth(int crateW) {
     this.crateW = crateW;
+    if (gui != null) {
+      gui.setCrateWFieldValue(crateW);
+    }
   }
   @TRADEService
   public void setCrateHeight(int crateH) {
     this.crateH = crateH;
+    if (gui != null) {
+      gui.setCrateHFieldValue(crateH);
+    }
   }
   @TRADEService
-  public void setCrateDimensions(int crateLength, int crateW, int crateH) {
-    this.crateL = crateLength;
+  public void setCrateDimensions(int crateL, int crateW, int crateH) {
+    this.crateL = crateL;
     this.crateW = crateW;
     this.crateH = crateH;
+    if (gui != null) {
+      gui.setCrateLFieldValue(crateL);
+      gui.setCrateWFieldValue(crateW);
+      gui.setCrateHFieldValue(crateH);
+    }
   }
   @TRADEService
   public void setPackedItemLength(int itemL) {
     packedItemL = itemL;
+    if (gui != null) {
+      gui.setItemLFieldValue(itemL);
+    }
   }
   @TRADEService
   public void setPackedItemWidth(int itemW) {
     packedItemW = itemW;
+    if (gui != null) {
+      gui.setItemWFieldValue(itemW);
+    }
   }
   @TRADEService
   public void setPackedItemHeight(int itemH) {
     packedItemH = itemH;
+    if (gui != null) {
+      gui.setItemHFieldValue(itemH);
+    }
   }
   @TRADEService
   public void setPackedItemDimensions(int itemL, int itemW, int itemH) {
     packedItemL = itemL;
     packedItemW = itemW;
     packedItemH = itemH;
+    if (gui != null) {
+      gui.setItemLFieldValue(itemL);
+      gui.setItemWFieldValue(itemW);
+      gui.setItemHFieldValue(itemH);
+    }
   }
 
   @TRADEService
