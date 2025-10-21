@@ -7,6 +7,7 @@ import java.lang.Long;
 import java.lang.Double;
 import java.lang.Float;
 import java.lang.Integer;
+import java.lang.String;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -43,6 +44,7 @@ import java.lang.Boolean;
     tsc:setCratePackingStatus("packing");
     act:goToPosePrimitive("robotonepose_0:pose");
     for (!i=0; !i lt ?numItems; !i ++) {
+        tsc:incrementPackingItemNum();
         //act:goToPosePrimitive("robotonepose_0:pose");
         act:lookForAndMoveToBox();
         tsc:moveZRelative(-0.088);
@@ -62,6 +64,7 @@ import java.lang.Boolean;
         !zOffset = op:*(!boxHeight, !tmp);
         act:putDownInCrate(!centerX, !centerY, !zOffset, !angle);
         tsc:incrementNumPackedItems();
+        //TODO TODO: can we undo this now that we added incrementPackingItemNum?
         //TODO: test on real robot
         //      1. this doesn't break functionality
         //      2. setting the number to pack to the number which is in the crate while the arm is on the way back to
@@ -170,3 +173,91 @@ import java.lang.Boolean;
  () = closeGripper() {
     tsc:closeGripper();
  }
+
+// Demo Utilities //
+//Submit these using a separate "simspeech" GUI which doesn't go through dialogue? Or have "mute" action?
+() = resetDemo() {
+    //TODO: have safe onCancel method for packing? or at least open/closeGripper in LLM?
+    //Cancel current task if exists? - or cant submit this while packing? - if having separate component then can submit this separately
+
+    op:log("info","[resetDemo] in method");
+
+    //Cancel all question asking
+    act:clearQuestions();
+
+    //Clear belief and packing component state
+    act:clearPackingParams();
+
+    //Move back to conveyor location?
+    act:goToPosePrimitive("robotonepose_0:pose");
+}
+
+() = clearCurrentCrate() {
+    Predicate !fact;
+
+    op:log("info","[clearCurrentCrate] in method");
+
+    !fact = op:createPredicate("numItemsPerCrate(X)");
+    act:retractBelief(!fact);
+
+    tsc:resetCurrentCrate();
+}
+
+() = clearPackingParams() {
+    Predicate !fact;
+
+    op:log("info","[clearPackingParams] in method");
+
+    //Clear belief
+    !fact = op:createPredicate("numItemsPerCrate(X)");
+    act:retractBelief(!fact);
+    !fact = op:createPredicate("ranPackingAlgorithmWithUpdatedSettings(?actor)");
+    act:retractBelief(!fact);
+
+    tsc:resetPackingState();
+}
+
+//Setting item/crate params can be done through the GUI
+
+() = setNumItemsPerCrate(Integer ?numItems) {
+    Predicate !fact;
+
+    op:log("info","[setNumItemsPerCrate] in method ?numItems");
+
+    //Clear belief
+    !fact = op:createPredicate("numItemsPerCrate(?numItems)");
+    act:assertBelief(!fact);
+}
+
+() = clearQuestions() {
+    String !question;
+    List !responseForms;
+
+    op:log("info","[clearQuestions] in method");
+
+    //Cancel all question asking
+    !question = tsc:getLastQuestion(?actor);
+    while (~op:invokeMethod(!question,"isEmpty")) {
+        !responseForms = tsc:getLastQuestionResponseForm(?actor);
+        op:log("info","[resetDemo] canceling question !question");
+        tsc:cancelWaitForResponse(!question,!responseForms,?actor);
+        !question = tsc:getLastQuestion(?actor);
+    }
+}
+
+(edu.tufts.hrilab.packing.PackingResult3D ?result) = runSolver() {
+    Predicate !fact;
+    op:log("info","[runSolver] in method");
+
+    ?result = tsc:solveCratePacking3D();
+    if (op:isNull(?result)) {
+        op:log("info","[runSolver] result is null");
+    } else {
+        !fact = op:createPredicate("numItemsPerCrate(X)");
+        act:retractBelief(!fact);
+        !fact = op:createPredicate("numItemsPerCrate(-1)");
+        act:assertBelief(!fact);
+        !fact = op:createPredicate("ranPackingAlgorithmWithUpdatedSettings(?actor)");
+        act:retractBelief(!fact);
+    }
+}

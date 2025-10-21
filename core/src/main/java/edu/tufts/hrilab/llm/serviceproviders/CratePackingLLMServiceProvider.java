@@ -578,6 +578,7 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
         case "reportPackedItemWidth":
         case "reportPackedItemLength":
         case "setNumberOfItemsToPackPerCrate":
+        case "reportNumberOfItemsInCrate":
         case "repeatLastQuestion":
         case "describeCurrentGoal":
         case "reportTaughtActions":
@@ -1259,7 +1260,7 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
             "QUESTION");
     nlgExampleList.add(example);
     example = new LLMNLGExample("then(report(complete(pack(robotone,crate))),ask(ackWhen(replaced(packedCrate,emptyCrate))))",
-            "I have finished packing this crate, please let me know when it has been replaced it with an empty one?",
+            "I have finished packing this crate, please let me know when it has been replaced with an empty one?",
             "番重への積み付けを完了しました。空の番重への交換が完了したらお知らせください?",
             "QUESTION");
     nlgExampleList.add(example);

@@ -52,6 +52,7 @@ public class CratePackingComponent extends DiarcComponent {
   // Essentially itemIndex, but confirmed that the item was placed into the crate successfully. Discrepancy between
   //  this value and itemIndex means the box is likely in the gripper currently.
   int currentCrateNumItems = 0;
+  int currentlyPackingItemNum = 0;
   String cratePackingStatus = "";
   CratePackingGui gui;
 
@@ -375,6 +376,7 @@ public class CratePackingComponent extends DiarcComponent {
   public void resetPackedItemIndex() {
     itemIndex = 0;
     currentCrateNumItems = 0; //Maybe should be in own call
+    currentlyPackingItemNum = 0;
   }
 
   @TRADEService
@@ -384,6 +386,17 @@ public class CratePackingComponent extends DiarcComponent {
       return null;
     }
     return cachedResult.allItems.get(itemIndex++);
+  }
+
+  //TODO: resolve discrepancy between "how many items are in the crate" and "have you started packing item N"
+  // ^ in relation to check whether you should apply a change in the number of items to pack to the current crate or not
+  // (and contrast to reporting the number of items in the crate accurately)
+  @TRADEService
+  public void incrementPackingItemNum() {
+    currentlyPackingItemNum++;
+    if (currentlyPackingItemNum > currentCrateCapacity) {
+      log.warn("[incrementPackingItemNum] reported started packing num ({}) larger than configured amount ({})", currentlyPackingItemNum, currentCrateCapacity);
+    }
   }
 
   @TRADEService
@@ -402,6 +415,11 @@ public class CratePackingComponent extends DiarcComponent {
   @TRADEService
   public int getCurrentCrateNumItems() {
     return currentCrateNumItems;
+  }
+
+  @TRADEService
+  public int getPackingItemNum() {
+    return currentlyPackingItemNum;
   }
 
   @TRADEService
@@ -602,5 +620,28 @@ public class CratePackingComponent extends DiarcComponent {
       return null;
     }
     return new Vec3(result.getX() * 1000, -1 * result.getY() * 1000, -1 * result.getZ());
+  }
+
+  @TRADEService
+  public void resetPackingState() {
+    log.info("[resetPackingState] in method");
+    crateL = -1;
+    crateW = -1;
+    crateH = -1;
+    packedItemL = -1;
+    packedItemW = -1;
+    packedItemH = -1;
+    cachedResult = null;
+    itemIndex = 0;
+    currentCrateCapacity = -1;
+    currentCrateNumItems = 0;
+    currentlyPackingItemNum = 0;
+  }
+
+  @TRADEService
+  public void resetCurrentCrate() {
+    itemIndex = 0;
+    currentCrateNumItems = 0;
+    currentlyPackingItemNum = 0;
   }
 }

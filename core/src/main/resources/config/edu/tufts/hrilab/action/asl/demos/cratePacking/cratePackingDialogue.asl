@@ -755,8 +755,10 @@ import java.lang.Boolean;
     if (op:equals(?direct,true)) {
         !packingStatus = tsc:getCratePackingStatus();
         if (op:equals(!packingStatus,"packing")) {
-            !currentNumItems = tsc:getCurrentCrateNumItems();
-            if (op:gt(?numItems,!currentNumItems)) {
+            //!currentNumItems = tsc:getCurrentCrateNumItems();
+            !currentNumItems = tsc:getPackingItemNum();
+            //if (op:gt(?numItems,!currentNumItems)) {
+            if (op:ge(?numItems,!currentNumItems)) {
                 tsc:setCurrentCrateCapacity(?numItems);
                 act:generateResponse("and(ack(okay),report(changeWillTakeEffectForTheCurrentPackedCrate))");
                 return;

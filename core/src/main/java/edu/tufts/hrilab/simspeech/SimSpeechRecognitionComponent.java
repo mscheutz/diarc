@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 import edu.tufts.hrilab.fol.Factory;
+import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.simspeech.gui.SimSpeechRecognitionComponentVis;
 import edu.tufts.hrilab.slug.common.Utterance;
@@ -289,5 +290,23 @@ public class SimSpeechRecognitionComponent extends DiarcComponent {
     } catch (InterruptedException e) {
       log.error("[shutdown]");
     }
+  }
+
+  public void callDemoAction(String command) {
+    try {
+      TRADEServiceInfo submitGoalService = TRADE.getAvailableService(
+              new TRADEServiceConstraints()
+                      .name("submitGoal")
+                      .argTypes(Predicate.class)
+                      .returnType(long.class)
+      );
+      submitGoalService.call(
+              long.class,
+              Factory.createPredicate(command)
+      );
+    } catch (TRADEException e) {
+      log.error("[callDemoTRADEService] unable to submit demo goal", e);
+    }
+
   }
 }
