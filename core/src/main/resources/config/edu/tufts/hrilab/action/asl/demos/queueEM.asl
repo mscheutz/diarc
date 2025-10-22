@@ -133,7 +133,7 @@ import edu.tufts.hrilab.action.justification.Justification;
             //act:generateResponse(!goalPred);
         }
     } else {
-        act:reportNoCurrentGoal();
+        act:generateResponse(report(not(have(?actor, currentGoal))));
     }
 }
 
