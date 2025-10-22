@@ -971,6 +971,24 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
             "INSTRUCT"
     );
     exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("reconfigureCrateDimensions()",
+            "The user is telling you that they have changed the type of crate you are packing into or that the dimensions of the crate have changed without supplying any actual values",
+            "",
+            "",
+            "reconfigureCrateDimensions()",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("reconfigurePackedItemDimensions()",
+            "The user is telling you that they have changed the type of items you are packing or that the dimensions of the packed items have changed without supplying any actual values",
+            "",
+            "",
+            "reconfigurePackedItemDimensions()",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
 //    entry = new LLMActionEntry("",
 //            "",
 //            "",
