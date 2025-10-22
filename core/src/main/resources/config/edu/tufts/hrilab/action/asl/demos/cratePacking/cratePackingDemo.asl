@@ -19,6 +19,12 @@ import java.awt.Rectangle;
 import edu.tufts.hrilab.packing.Vec3;
 import java.lang.Boolean;
 
+() = testGrasp() {
+    act:goToPosePrimitive("robotonepose_0:pose");
+    act:lookForAndMoveToBox();
+    tsc:moveZRelative(-0.087);
+}
+
 () = goToPoseDirect(Symbol ?pose) {
     act:goToPosePrimitiveNoAdjust(?pose);
 }
@@ -47,7 +53,7 @@ import java.lang.Boolean;
         tsc:incrementPackingItemNum();
         //act:goToPosePrimitive("robotonepose_0:pose");
         act:lookForAndMoveToBox();
-        tsc:moveZRelative(-0.088);
+        tsc:moveZRelative(-0.086);
         tsc:closeGripper();
         tsc:moveZRelative(0.3);
         act:goToPosePrimitive("robotonepose_1:pose");
@@ -96,20 +102,32 @@ import java.lang.Boolean;
     Vec3 !adjustment;
     MPose !currentPose;
     Predicate !failCond;
-
+    Integer !failToDetectCount = 0;
 
     act:rotateToEE("camera");
 
     !adjustment = tsc:calculateRobotAdjustment();
+
     if (op:isNull(!adjustment)) {
+        //todo: actually say something useful here. these semantics don't have generation examples currently
+        act:generateResponse(and(not(see(item, waitingToSee(it)))));
+    }
+    while (op:isNull(!adjustment)) {
+        !failToDetectCount = op:++(!failToDetectCount);
         op:log(error, "[lookForAndMoveToBox] no object found in frame");
-        !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(see(?actor, item))");
-        exit(FAIL, !failCond);
+        op:log(warn, "[lookForAndMoveToBox] waiting for motion condition to re-detect");
+        act:blockingDetectMotionStopStart();
+        !adjustment = tsc:calculateRobotAdjustment();
+        if (op:gt(!failToDetectCount, 20)) {
+            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(see(?actor, item))");
+            exit(FAIL, !failCond);
+        }
     }
     !x = op:invokeMethod(!adjustment, "getX");
     !y = op:invokeMethod(!adjustment, "getY");
+    !y = op:+(!y, 25);
     !theta = op:invokeMethod(!adjustment, "getZ");
-    !theta = op:-(!theta, 1.5705);
+//    !theta = op:-(!theta, 1.5705);
 
     op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
 
@@ -138,7 +156,7 @@ import java.lang.Boolean;
     !origin = tsc:getPoseFromSymbol(robotonepose_2:pose);
     act:moveToAdjustedPose(!origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc); //todo: rotate if needed
 
-    !height = op:+(-0.392, ?dz);
+    !height = op:+(-0.41, ?dz);
     tsc:moveZRelative(!height);
     tsc:openGripper();
     !height = op:*(!height, -1);

@@ -46,6 +46,7 @@ done; VAL; replaced(packingCrate)
 the crate has been replaced; VAL; replaced(packingCrate)
 
 suspend current task; VERBI ; suspendSystemGoalsBlocking
+pause; VERBI ; suspendSystemGoalsBlocking
 resume current task; VERBI ; resumeSystemGoals
 resume; VERBI ; resumeSystemGoals
 cancel current task; VERBI ; cancelSystemGoals
@@ -59,3 +60,5 @@ hello; G ; hello
 check holding; C; checkHolding(?ADDRESSEE)
 open gripper; C; openGripper(?ADDRESSEE)
 close gripper; C; closeGripper(?ADDRESSEE)
+
+test grasp; C; testGrasp(?ADDRESSEE)
