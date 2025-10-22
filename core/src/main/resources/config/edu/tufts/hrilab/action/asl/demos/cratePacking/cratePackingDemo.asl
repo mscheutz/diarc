@@ -153,22 +153,36 @@ import java.lang.Boolean;
     act:rotateToEE(default);
 }
 
+() = putDownInCrateCancel(Integer ?tracker, Double ?height, MPose ?origin, Float ?dx, Float ?dy, Float ?dz, Float ?zero, Float ?zeroAgain, Float ?dc) {
+    if (op:equals(?tracker, 1)) {
+        act:moveToAdjustedPose(!origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc);
+    }
+}
+
 () = putDownInCrate(Float ?dx, Float ?dy, Float ?dz, Float ?dc) {
+    onInterrupt :{
+        cancel: act:putDownInCrateCancel(!tracker, !heightUp, !origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc);
+    }
 
     MPose !origin;
     Double !height;
+    Double !heightUp;
     Symbol !robotone = "robotone:agent";
+    Integer !tracker = 0;
 
     Float !zero = 0.0f;
 
     !origin = tsc:getPoseFromSymbol(robotonepose_2:pose);
-    act:moveToAdjustedPose(!origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc); //todo: rotate if needed
+    act:moveToAdjustedPose(!origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc);
 
     !height = op:+(-0.41, ?dz);
+    !heightUp = op:*(!height, -1);
+    !tracker = op:++(!tracker);
     tsc:moveZRelative(!height);
     tsc:openGripper();
-    !height = op:*(!height, -1);
-    tsc:moveZRelative(!height);
+    tsc:moveZRelative(!heightUp);
+    !tracker = op:++(!tracker);
+    op:log(debug, "done putting down crate");
 }
 
 () = checkHolding() {
