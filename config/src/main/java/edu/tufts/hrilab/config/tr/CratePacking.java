@@ -144,22 +144,16 @@ public class CratePacking extends DiarcConfiguration {
             if (useAssista) {
                 assista = createInstance(ai.thinkingrobots.mtracs.mock.MockCR800Component.class, "-config " + assistaConfigPath + " -poses " + locationsPath + " -objects " + objectsPath + " -groups agent:robotone:agent");
             }
-            if (use4fr) {
-                rv4fr = createInstance(ai.thinkingrobots.mtracs.mock.MockCR800Component.class, "-config " + rv4frConfigPath + " -poses " + locationsPath + " -objects " + objectsPath + " -groups agent:robottwo:agent");
-            }
         } else {
             if (useAssista) {
                 assista = createInstance(ai.thinkingrobots.mtracs.CR800Component.class, "-config " + assistaConfigPath + " -poses " + locationsPath + " -objects " + objectsPath + " -groups agent:robotone:agent");
-            }
-            if (use4fr) {
-                rv4fr = createInstance(ai.thinkingrobots.mtracs.CR800Component.class, "-config " + rv4frConfigPath + " -poses " + locationsPath + " -objects " + objectsPath + " -groups agent:robottwo:agent");
             }
         }
 
         String cratePackingComponentArgs =  "-crateL 560 -crateW 360 -crateH 200 " +
                 "-itemL 230 -itemW 160 -itemH 55 " +
-  //        createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, " " +
-                "-tolerance 15 " +
+//        String cratePackingComponentArgs =  " " +
+                "-tolerance 20 " +
                 "-cameraAngle 0.0 -cameraHeightMM 325 -imageWidth 320 -imageHeight 260 " +
                 "-groups agent:robotone:agent";
         if (mock) {
@@ -225,15 +219,9 @@ public class CratePacking extends DiarcConfiguration {
             if (useAssista) {
                 simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker たたら -addressee robotone -config pickAndPlace.simspeech");
             }
-            if (use4fr) {
-                simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker たたら -addressee robottwo -config pickAndPlace.simspeech");
-            }
         } else {
             if (useAssista) {
                 simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker pete -addressee robotone -config cratePacking.simspeech");
-            }
-            if (use4fr) {
-                simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker pete -addressee robottwo -config pickAndPlace.simspeech");
             }
         }
         this.buildAndDisplayGui();

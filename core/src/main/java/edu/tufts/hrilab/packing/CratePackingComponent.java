@@ -4,20 +4,19 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEService;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import edu.tufts.hrilab.action.annotations.OnInterrupt;
+import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.vision.util.CompressionUtil;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.vecmath.Point2d;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,6 +53,8 @@ public class CratePackingComponent extends DiarcComponent {
   int currentCrateNumItems = 0;
   String cratePackingStatus = "";
   CratePackingGui gui;
+  private BufferedImage previousImage;
+  private boolean cancel = false;
 
   public CratePackingComponent() {
     crateL = -1;
@@ -81,7 +82,7 @@ public class CratePackingComponent extends DiarcComponent {
   @Override
   public void init() {
     super.init();
-    this.visionProcessor = new RobotVisionProcessor(packedItemW/1000.0, packedItemH/1000.0, cameraHeightMM/1000.0);
+    this.visionProcessor = new RobotVisionProcessor(packedItemW/1000.0, packedItemL/1000.0, cameraHeightMM/1000.0);
     SwingUtilities.invokeLater(() -> {
       gui = new CratePackingGui(this);
       gui.setVisible(true);});
@@ -534,54 +535,8 @@ public class CratePackingComponent extends DiarcComponent {
     raster.setDataElements(0, 0, imageSize.width, imageSize.height, imageData);
     image.setData(raster);
 
-    File outputfile = new File("/home/pete/matthias/" + itemNumber++ + "image.png");
-    try {
-      ImageIO.write(image, "png", outputfile);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
     return image;
   }
-//
-//  @TRADEService
-//  public Pose calculateRobotAdjustment(double x, double y, double z, double a, double b, double c) {
-//  // assume the gripper is above the conveyor belt at a given height, e.g., 30cm
-//    double prePickHeightZ = 0.520;
-//
-//    BufferedImage capturedImage = getImage();
-//    Vec2 imageCenter = new Vec2(capturedImage.getWidth() / 2.0, capturedImage.getHeight() / 2.0);
-//    ComplicatedCamera robotCamera = new ComplicatedCamera(); // instantiate a new camera object for the robot
-//    double alpha = 2450.0;                 // this is from the K matrix, the initial calibration
-//    robotCamera.updateIntrinsics(a, imageCenter.x, imageCenter.y); // update the intrisic matrix K
-//
-//    //todo: (pete) use this for computing the rolling avg of a based on detection.
-//    double objectWidthW = 0.12; // The known width of the box, e.g, 12 cm
-//
-//
-//  // find the rectangle in the image
-//    DetectionResult result = RectangleDetection.findRectangle(capturedImage, 100);
-//
-//    if (result.corners != null) {
-//      // --- Calculate the alignment error ---
-//      Vec2 rectangleCenter = Vec2.average(result.corners);
-//      Vec2 widthEdge = result.corners.get(1).subtract(result.corners.get(0)); // or other edge based on sorting
-//
-//      // calculate the error in meters and radians
-//      double shiftErrorX = (rectangleCenter.x - imageCenter.x) * prePickHeightZ / alpha;
-//      double shiftErrorY = (rectangleCenter.y - imageCenter.y) * prePickHeightZ / alpha;
-//      double rotationErrorRad = Math.atan2(widthEdge.y, widthEdge.x);
-//
-//      // update the camera with the alignment error we just found
-//      robotCamera.updateAlignment(rotationErrorRad, shiftErrorX, shiftErrorY);
-//
-//      // now get the robot's current pose and ask the camera object for the corrected pose
-//      Vec3 currentRobotPosition = new Vec3(x, y, z);
-//      Vec3 currentRobotRotation = new Vec3(a, b, c);
-//      Pose finalPickPose = robotCamera.getAlignedCameraPose(currentRobotPosition, currentRobotRotation);
-//      return finalPickPose;
-//    }
-//    return null;
-//  }
 
   @TRADEService
   public Vec3 calculateRobotAdjustment() {
@@ -601,6 +556,71 @@ public class CratePackingComponent extends DiarcComponent {
       log.error("[calculateRobotAdjustment] no object detected");
       return null;
     }
-    return new Vec3(result.getX() * 1000, -1 * result.getY() * 1000, -1 * result.getZ());
+    double rotationAngleRad = (-1 * result.getZ()) - (Math.PI/2);
+    if (rotationAngleRad > Math.PI/2) {
+      rotationAngleRad = rotationAngleRad - (2 * Math.PI);
+    } else if (rotationAngleRad < -(Math.PI/2)) {
+      rotationAngleRad = rotationAngleRad + (2 * Math.PI);
+    }
+    return new Vec3(result.getX() * 1000, -1 * result.getY() * 1000, rotationAngleRad);
   }
+
+  private boolean detectStartMotion() {
+    if (previousImage == null) {
+      this.previousImage = getImage();
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        log.warn("[deetectMotionInImage] interrupted while waiting between image detections");
+      }
+    }
+    BufferedImage currentImage = getImage();
+    double percentChange = visionProcessor.detectAndVisualizeMotion(previousImage, currentImage);
+    this.previousImage = currentImage;
+    return (percentChange > 5);
+  }
+
+  private boolean detectEndMotion() {
+    int validCount = 0;
+    //todo: do a real timeout
+    for (int i = 0; i < 50; i++) {
+      BufferedImage currentImage = getImage();
+      double percentChange = visionProcessor.detectAndVisualizeMotion(previousImage, currentImage);
+      this.previousImage = currentImage;
+      if (percentChange <= 5) {
+        validCount++;
+      }
+    }
+    log.debug("[detectEndMotionHelper] number of frame comparisons with no motion (of 10): " + validCount);
+    return validCount >= 25;
+  }
+
+  @TRADEService
+  public void cancelBlockingDetectMotion() {
+    log.debug("[cancelBlockingDetectMotion] setting cancel condition to true");
+    cancel = true;
+  }
+
+
+  @TRADEService
+  @Action
+  @OnInterrupt(
+          onCancelServiceCall = "cancelBlockingDetectMotion()"
+  )
+  public void blockingDetectMotionStopStart() {
+    boolean detected = false;
+    while (!detected) {
+      detected = detectStartMotion() && detectEndMotion();
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        log.warn("[blockingDetectMotionStopStart] interrupted while waiting between image detections");
+      }
+      if (cancel) {
+        cancel = false;
+        return;
+      }
+    }
+  }
+
 }
