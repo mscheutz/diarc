@@ -792,16 +792,25 @@ import java.lang.Boolean;
     }
 }
 
-//TODO: remove?
-//Wrappers which don't actually need to exist?
 () = setPackedItemDimensions(Integer ?itemLength, Integer ?itemWidth, Integer ?itemHeight) {
     effects : {
         success : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
     }
+    if (op:lt(?itemLength,1)) {
+        act:generateResponse("mustBe(itemLength,greaterThan(0))");
+        return;
+    }
+    if (op:lt(?itemWidth,1)) {
+        act:generateResponse("mustBe(itemWidth,greaterThan(0))");
+        return;
+    }
+    if (op:lt(?itemHeight,1)) {
+        act:generateResponse("mustBe(itemHeight,greaterThan(0))");
+        return;
+    }
     tsc:setPackedItemDimensions(?itemLength, ?itemWidth, ?itemHeight);
 }
 
-//TODO: add these to LLM prompts? Or if don't like the idea of being able to set one at a time, should at least report to user the correct way to update this rather than just say "dont know what you mean"
 () = setPackedItemLength(Integer ?itemLength) {
     effects : {
         success : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
@@ -835,9 +844,44 @@ import java.lang.Boolean;
     tsc:setPackedItemHeight(?itemHeight);
 }
 
+() = reconfigurePackedItemDimensions() {
+    effects : {
+        always : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
+    }
+    Integer !itemL;
+    Integer !itemW;
+    Integer !itemH;
+
+    act:generateResponse("report(clearing(?actor,currentNotionOfPackedItemDimensions))");
+    tsc:setPackedItemLength(-1);
+    tsc:setPackedItemWidth(-1);
+    tsc:setPackedItemHeight(-1);
+
+    !itemL = act:askForItemLength();
+    act:setPackedItemLength(!itemL);
+    !itemW = act:askForItemWidth();
+    act:setPackedItemWidth(!itemW);
+    !itemH = act:askForItemHeight();
+    act:setPackedItemHeight(!itemH);
+
+    act:generateResponse("report(?actor,haveUpdatedItemDimensions)");
+}
+
 () = setCrateDimensions(Integer ?crateLength, Integer ?crateWidth, Integer ?crateHeight) {
     effects : {
         success : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
+    }
+    if (op:lt(?crateLength,1)) {
+        act:generateResponse("mustBe(crateLength,greaterThan(0))");
+        return;
+    }
+    if (op:lt(?crateWidth,1)) {
+        act:generateResponse("mustBe(crateWidth,greaterThan(0))");
+        return;
+    }
+    if (op:lt(?crateHeight,1)) {
+        act:generateResponse("mustBe(crateHeight,greaterThan(0))");
+        return;
     }
     tsc:setCrateDimensions(?crateLength, ?crateWidth, ?crateHeight);
 }
@@ -875,6 +919,29 @@ import java.lang.Boolean;
     tsc:setCrateHeight(?crateHeight);
 }
 
+() = reconfigureCrateDimensions() {
+    effects : {
+        always : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
+    }
+    Integer !crateL;
+    Integer !crateW;
+    Integer !crateH;
+
+    act:generateResponse("report(clearing(?actor,currentNotionOfCrateDimensions))");
+    tsc:setCrateLength(-1);
+    tsc:setCrateWidth(-1);
+    tsc:setCrateHeight(-1);
+
+    !crateL = act:askForCrateLength();
+    act:setCrateLength(!crateL);
+    !crateW = act:askForCrateWidth();
+    act:setCrateWidth(!crateW);
+    !crateH = act:askForCrateHeight();
+    act:setCrateHeight(!crateH);
+
+    act:generateResponse("report(?actor,haveUpdatedCrateDimensions)");
+}
+
 (edu.tufts.hrilab.packing.PackingResult3D ?result) = solveCratePacking3D() {
     Variable !x;
     effects : {
@@ -885,7 +952,7 @@ import java.lang.Boolean;
     ?result = tsc:solveCratePacking3D();
     if (op:isNull(?result)) {
         //act:generateResponseFromString("I could not run the packing algorithm because the crate and item dimensions have not been fully defined");
-        act:generateResponse("and(couldNot(run(?actor,packingAlgorithm)),because(not(fullyDefined,and(crateDimensions,itemDimensions))))");
+        act:generateResponse("and(couldNot(run(?actor,packingAlgorithm)),because(not(fullyDefined(and(crateDimensions,itemDimensions)))))");
         //TODO: fix user facing experience when interacting with recovery policy and use the below
         //exit(FAIL,not(fullyDefined(and(crateDimensions,itemDimensions))));
     }
