@@ -53,9 +53,7 @@ import java.lang.Boolean;
         tsc:incrementPackingItemNum();
         //act:goToPosePrimitive("robotonepose_0:pose");
         act:lookForAndMoveToBox();
-        tsc:moveZRelative(-0.086);
-        tsc:closeGripper();
-        tsc:moveZRelative(0.3);
+        act:graspItemWrapper();
         act:goToPosePrimitive("robotonepose_1:pose");
 
         //get values from packing info
@@ -83,6 +81,16 @@ import java.lang.Boolean;
     tsc:setCratePackingStatus("complete");
     //TODO: whether we do this or not depends partially on whether we ack or not in main loop
     act:goToPosePrimitive("robotonepose_0:pose");
+}
+
+() = graspItemWrapper() {
+    act:graspItem();
+}
+
+() = graspItem() {
+    tsc:moveZRelative(-0.086);
+    act:closeGripper();
+    tsc:moveZRelative(0.3);
 }
 
 () = lookForAndMoveToBox() {
@@ -189,7 +197,14 @@ import java.lang.Boolean;
  }
 
  () = closeGripper() {
-    tsc:closeGripper();
+    Predicate !failCond;
+    op:log(debug, "[closeGripper] closing gripper");
+    Boolean !result;
+    !result = tsc:closeGripper();
+    if (op:equals(!result, false)) {
+      !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor, item))");
+      exit(FAIL, !failCond);
+    }
  }
 
 // Demo Utilities //
@@ -278,4 +293,22 @@ import java.lang.Boolean;
         !fact = op:createPredicate("ranPackingAlgorithmWithUpdatedSettings(?actor)");
         act:retractBelief(!fact);
     }
+}
+
+() = closeGripperFailureRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
+    recovery : {
+        actionRecovery : {
+            catchingActions : {graspItemWrapper(A)}
+            postRecovery : postrecovery_retry
+        }
+        failureReasons : {not(holding(X,Y))}
+    }
+
+    op:log(debug, "[closeGripperFailureRecovery] starting recovery");
+    act:openGripper();
+    tsc:moveZRelative(0.3);
+    act:goToPosePrimitive("robotonepose_0:pose");
+//    act:generateResponse();
+    act:lookForAndMoveToBox();
+    op:log(debug, "[closeGripperFailureRecovery] finished recovery");
 }
