@@ -167,7 +167,7 @@ import java.lang.Boolean;
         }
     }
     //act:generateResponseFromString("Okay, give me a moment to compute the optimal packing arrangement");
-    act:generateResponse("and(ack(okay),report(needMomentToCompute(optimalPackingArrangement)))");
+    act:generateResponse("report(needMomentToCompute(optimalPackingArrangement))");
     act:solveCratePacking3D();
     act:reportFullyPackedCrateConfiguration();
     !numItemsToPack = act:askForNumberOfItemsToPack();
@@ -712,7 +712,7 @@ import java.lang.Boolean;
         !response = op:get(!bindings, !x);
         if (op:equalsValue(!response,yes)) {
             //act:generateResponseFromString("Okay, please give me a moment to compute the optimal packing arrangement");
-            act:generateResponse("and(ack(okay),report(needMomentToCompute(optimalPackingArrangement)))");
+            act:generateResponse("report(needMomentToCompute(optimalPackingArrangement))");
             !res = act:solveCratePacking3D();
             if (op:isNull(!res)) {
                 exit(FAIL);
@@ -755,16 +755,18 @@ import java.lang.Boolean;
     if (op:equals(?direct,true)) {
         !packingStatus = tsc:getCratePackingStatus();
         if (op:equals(!packingStatus,"packing")) {
-            !currentNumItems = tsc:getCurrentCrateNumItems();
-            if (op:gt(?numItems,!currentNumItems)) {
+            //!currentNumItems = tsc:getCurrentCrateNumItems();
+            !currentNumItems = tsc:getPackingItemNum();
+            //if (op:gt(?numItems,!currentNumItems)) {
+            if (op:ge(?numItems,!currentNumItems)) {
                 tsc:setCurrentCrateCapacity(?numItems);
-                act:generateResponse("and(ack(okay),report(changeWillTakeEffectForTheCurrentPackedCrate))");
+                act:generateResponse("report(changeWillTakeEffectForTheCurrentPackedCrate)");
                 return;
             }
         }
 
         //act:generateResponseFromString("Okay, this change will take effect for the next packed crate");
-        act:generateResponse("and(ack(okay),report(changeWillTakeEffectForTheNextPackedCrate))");
+        act:generateResponse("report(changeWillTakeEffectForTheNextPackedCrate)");
     }
 }
 

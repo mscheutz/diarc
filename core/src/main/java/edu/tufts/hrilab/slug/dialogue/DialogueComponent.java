@@ -506,6 +506,13 @@ public class DialogueComponent extends DiarcComponent {
   }
 
   @TRADEService
+  public List<String> getAllQuestions(Symbol agent) {
+    agent = agent.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(agent);
+    return currentQuestions.stream().sorted(Comparator.comparingLong(Question::getTimestamp)).map(Question::getQuestionString).toList();
+  }
+
+  @TRADEService
   public List<Term> getLastQuestionResponseForm(Symbol agent) {
     agent = agent.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(agent);
@@ -515,5 +522,12 @@ public class DialogueComponent extends DiarcComponent {
       Question mostRecentQuestion = currentQuestions.stream().max(Comparator.comparingLong(Question::getTimestamp)).get();
       return mostRecentQuestion.getResponseForms();
     }
+  }
+
+  @TRADEService
+  public List<List<Term>> getAllQuestionResponseForms(Symbol agent) {
+    agent = agent.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(agent);
+    return currentQuestions.stream().sorted(Comparator.comparingLong(Question::getTimestamp)).map(Question::getResponseForms).toList();
   }
 }

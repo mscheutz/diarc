@@ -369,10 +369,24 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     //Doesn't include suppSemantics
     semantics = replaceReferencesInSemantics(semantics);
     utterance.setSemantics(semantics);
-    promptVars.put("%utterance", utterance.toString());
+    String utteranceString = utterance.toString();
     if (semantics.getName().equals("mean")) {
+      //Quick fix - change sizeInMM to lengthInMM/widthInMM/heightInMM based on current outstanding question
+      String relevantQuestion = getFirstQuestion(utterance.getSpeaker());
+      if (relevantQuestion.contains("sizeInMM")) {
+        if (relevantQuestion.contains("long") || relevantQuestion.contains("長さ")) {
+          utteranceString = utteranceString.replaceAll("sizeInMM","lengthInMM");
+        } else if (relevantQuestion.contains("wide") || relevantQuestion.contains("幅")) {
+          utteranceString = utteranceString.replaceAll("sizeInMM","widthInMM");
+        } else if (relevantQuestion.contains("tall") || relevantQuestion.contains("高さ")) {
+          utteranceString = utteranceString.replaceAll("sizeInMM","heightInMM");
+        }
+      }
+      promptVars.put("%utterance", utteranceString);
       userMessage = validationUserPrompt.apply(promptVars);
     } else {
+      utterance.setSemantics(semantics);
+      promptVars.put("%utterance", utteranceString);
       userMessage = nlgUserPrompt.apply(promptVars);
     }
     chat.addUserMessage(userMessage);
@@ -431,6 +445,17 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
       currentChat = new Chat();
     }
 
+    //TODO: build in notion of homophones more explicitly into serviceproviders (or this should really be done in the ASR app)
+    //Preprocess utterance (intended for ASR results)
+    String utteranceString = utterance.getWordsAsString();
+    utteranceString = utteranceString.replaceAll("饅頭","番重");
+    utteranceString = utteranceString.replaceAll("まんじゅう","番重");
+    utteranceString = utteranceString.replaceAll("バンジー","番重");
+    utteranceString = utteranceString.replaceAll("見つけ作業","積み付け作業");
+    utteranceString = utteranceString.replaceAll("墨付け","積み付け");
+    utteranceString = utteranceString.replaceAll("つみつけ","積み付け");
+    utteranceString = utteranceString.replaceAll("素材パック","惣菜パック");
+
     Map<String,String> promptVars = new LinkedHashMap<>();
     promptVars.put("%actionList", exposedInstructListNLUString);
     promptVars.put("%semanticList", exposedReplyListNLUString);
@@ -452,7 +477,7 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     //promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
     currentChat.setSystem(nluSystemPrompt.apply(promptVars));
     promptVars.clear();
-    promptVars.put("%utterance", utterance.getWordsAsString());
+    promptVars.put("%utterance", utteranceString);
     currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
 
     return currentChat;
@@ -482,6 +507,24 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
       log.error("[getWorldStateString] error getting current goal for agent", e);
     }
     return currentGoalString;
+  }
+
+  private String getFirstQuestion(Symbol agent) {
+    String output = "";
+    try {
+      List<String> questionStrings = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllQuestions").argTypes(Symbol.class)).call(List.class,agent);
+      if (!questionStrings.isEmpty()) {
+        output = questionStrings.get(0);
+      }
+      List<List<Term>> allExpectedResponseForms = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAllQuestionResponseForms").argTypes(Symbol.class)).call(List.class,agent);
+      if (!allExpectedResponseForms.isEmpty()) {
+        List<Term> expectedResponseForms = allExpectedResponseForms.get(0);
+        output += "\nEXPECTED REPLY FORM:\n" + String.join("\n",expectedResponseForms.stream().map(Term::toString).toList());
+      }
+    } catch (TRADEException e) {
+      log.error("[getCurrentQuestionsString] error getting last question for agent");
+    }
+    return output;
   }
 
   private String getCurrentQuestionsString(Symbol agent) {
@@ -578,6 +621,7 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
         case "reportPackedItemWidth":
         case "reportPackedItemLength":
         case "setNumberOfItemsToPackPerCrate":
+        case "reportNumberOfItemsInCrate":
         case "repeatLastQuestion":
         case "describeCurrentGoal":
         case "reportTaughtActions":
@@ -706,7 +750,7 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     entry = new LLMSemanticEntry("reportConfiguredNumberOfItemsToPack()",
             "You say how many items you are currently configured to pack into each crate",
             "How many items are you packing into a crate",
-            "1つの番重にいくつの惣菜パックを積み付けますか",
+            "1つの番重にいくつの惣菜パックを積み付けるよう設定されていますか",
             "reportConfiguredNumberOfItemsToPack()",
             10,
             "INSTRUCT"
@@ -777,8 +821,8 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     exposedInstructList.add(entry);
     entry = new LLMSemanticEntry("reportNumberOfItemsInCrate()",
             "You report the number of items which have been packed so far into the current or last crate",
-            "",
-            "",
+            "How many items are in the crate?",
+            "番重の中にいくつの惣菜パックがありますか？",
             "reportNumberOfItemsInCrate()",
             10,
             "INSTRUCT"
@@ -786,8 +830,8 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     exposedInstructList.add(entry);
     entry = new LLMSemanticEntry("reportWhatPackingParametersExist()",
             "You report the total list of packing parameters which exist and can be configured",
-            "",
-            "",
+            "What parameters can be set before packing?",
+            "番重の積付けに必要な設定を教えて下さい？",
             "reportWhatPackingParametersExist()",
             10,
             "INSTRUCT"
@@ -795,8 +839,8 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     exposedInstructList.add(entry);
     entry = new LLMSemanticEntry("reportUnsetPackingParameters()",
             "You report the list of packing parameters which the user has not yet configured and still needs to before beginning to pack",
-            "",
-            "",
+            "What do I need to set before packing?",
+            "番重の積み付けのために、他に必要な設定はなんですか？",
             "reportUnsetPackingParameters()",
             10,
             "INSTRUCT"
@@ -914,7 +958,7 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     entry = new LLMSemanticEntry("repeatLastQuestion()",
             "You repeat the last question you asked, which the human still needs to answer",
             "could you repeat that",
-            "could you repeat that",
+            "質問をもう一度お願いします",
             "repeatLastQuestion()", 10,
             "INSTRUCT");
     exposedInstructList.add(entry);
@@ -995,7 +1039,7 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     exposedReplyList.add(entry);
     entry = new LLMSemanticEntry("replaced(packingCrate)",
             "Acknowledgement that a full crate has been replaced with an empty one",
-            "I have placed a new crate\" or \"done",
+            "\"I have placed a new crate\" or \"done\"",
             "交換が完了しました",
             "replaced(packingCrate)",
             10,
@@ -1184,9 +1228,9 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
             "積み付け個数を更新します。これ以降、各番重に10個を積み付けます",
             "REPLY");
     nlgExampleList.add(example);
-    example = new LLMNLGExample("and(ack(okay),report(needMomentToCompute(optimalPackingArrangement)))",
-            "Okay, give me a moment to compute the optimal packing arrangement",
-            "わかりました。最適な配置を計算しています",
+    example = new LLMNLGExample("report(needMomentToCompute(optimalPackingArrangement))",
+            "Please give me a moment to compute the optimal packing arrangement",
+            "最適な配置を計算しています",
             "REPLY");
     nlgExampleList.add(example);
     example = new LLMNLGExample("fullyUpdated(packingParameters)",
@@ -1199,9 +1243,9 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
             "配置計算が完了しました",
             "REPLY");
     nlgExampleList.add(example);
-    example = new LLMNLGExample("and(ack(okay),report(changeWillTakeEffectForTheNextPackedCrate))",
-            "Okay, this change will take effect for the next packed crate",
-            "わかりました。この変更は次の番重から適用されます",
+    example = new LLMNLGExample("report(changeWillTakeEffectForTheNextPackedCrate)",
+            "This change will take effect for the next packed crate",
+            "この変更は次の番重から適用されます",
             "REPLY");
     nlgExampleList.add(example);
     example = new LLMNLGExample("and(couldNot(run(?actor,packingAlgorithm)),because(not(fullyDefined,and(crateDimensions,itemDimensions))))",
@@ -1211,61 +1255,61 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     nlgExampleList.add(example);
     example = new LLMNLGExample("then(report(prerequisite(packing,configure(unsetParameters))),ask(may(robotone,askFor(them))))",
             "Before commencing, there are unset packing parameters which must be configured. May I ask for them now?",
-            "未設定の積み付けパラメータがあります。設定しますか?",
+            "未設定の積み付けパラメータがあります。設定しますか？",
             "QUESTION");
     nlgExampleList.add(example);
     example = new LLMNLGExample("then(report(configuredAmountToPackPerCrate(robotone,8)),ask(want(robotone,changeAmount)))",
             "I am currently configured to pack 8 items into each crate. Do you want to change that amount?",
-            "現在、1つの番重に8個を積み付ける設定になっています。この数を変更しますか?",
+            "現在、1つの番重に8個を積み付ける設定になっています。この数を変更しますか？",
             "QUESTION");
     nlgExampleList.add(example);
     example = new LLMNLGExample("length(crate)",
             "How long is the crate?",
-            "番重の長さはいくつですか?",
+            "番重の長さはいくつですか？",
             "QUESTION");
     nlgExampleList.add(example);
     example = new LLMNLGExample("width(crate)",
             "How wide is the crate?",
-            "番重の幅はいくつですか?",
+            "番重の幅はいくつですか？",
             "QUESTION");
     nlgExampleList.add(example);
     example = new LLMNLGExample("height(crate)",
             "How tall is the crate?",
-            "番重の高さはいくつですか?",
+            "番重の高さはいくつですか？",
             "QUESTION");
     example = new LLMNLGExample("length(packedItem)",
             "How long is the item being packed?",
-            "惣菜パックの長さはいくつですか?",
+            "惣菜パックの長さはいくつですか？",
             "QUESTION");
     nlgExampleList.add(example);
     example = new LLMNLGExample("width(packedItem)",
             "How wide is the item being packed?",
-            "惣菜パックの幅はいくつですか?",
+            "惣菜パックの幅はいくつですか？",
             "QUESTION");
     nlgExampleList.add(example);
     example = new LLMNLGExample("height(packedItem)",
             "How tall is the item being packed?",
-            "惣菜パックの高さはいくつですか?",
+            "惣菜パックの高さはいくつですか？",
             "QUESTION");
     nlgExampleList.add(example);
     example = new LLMNLGExample("fill(robotone,eachCrate,completely)",
             "Do you want me to fill each crate completely?",
-            "それぞれの番重は、完全に満杯にしていいですか?",
+            "それぞれの番重は、完全に満杯にしていいですか？",
             "QUESTION");
     nlgExampleList.add(example);
     example = new LLMNLGExample("number(items,pack(robotone))",
             "How many items would you like me to pack?",
-            "それぞれの番重には、いくつ積み付けますか?",
+            "それぞれの番重には、いくつ積み付けますか？",
             "QUESTION");
     nlgExampleList.add(example);
     example = new LLMNLGExample("then(report(complete(pack(robotone,crate))),ask(ackWhen(replaced(packedCrate,emptyCrate))))",
-            "I have finished packing this crate, please let me know when it has been replaced with an empty one?",
-            "番重への積み付けを完了しました。空の番重への交換が完了したらお知らせください?",
+            "I have finished packing this crate, please let me know when it has been replaced with an empty one",
+            "番重への積み付けを完了しました。からの盤寿への交換が完了したらお知らせください",
             "QUESTION");
     nlgExampleList.add(example);
     example = new LLMNLGExample("then(report(updatedSince(relevantPackingParameters,calculated(optimalCrateArrangement))),ask(may(robotone,rerunAlgorithm),desire(upToDate)))",
             "Relevant packing parameters have been updated since the last time an optimal crate arrangement has been calculated, may I rerun the algorithm to be up-to-date?",
-            "前回から、関連する積み付けパラメータが更新されています。最適な配置を再計算してもよろしいですか?",
+            "前回から、関連する積み付けパラメータが更新されています。最適な配置を再計算してもよろしいですか？",
             "QUESTION");
     nlgExampleList.add(example);
   }
@@ -1282,152 +1326,152 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     validationExampleList = new ArrayList<>();
     LLMNLGExample example = new LLMNLGExample("packItemsIntoCrates(robotone)",
             "Did you mean to tell me to begin packing?",
-            "積み付けを開始するよう指示されましたか?",
+            "積み付けを開始するよう指示されましたか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("configurePackingParameters(robotone)",
             "Did you mean to tell me that you want to begin updating all parameters of the packing task?",
-            "積み付け作業のすべてのパラメータを更新したいという意味ですか?",
+            "積み付け作業のすべてのパラメータを更新したいという意味ですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportPackedItemLength(robotone)",
             "Are you asking me what I think the length of the items to pack are?",
-            "積み付け対象の惣菜パックの長さについて、システムが認識している値をお尋ねですか?",
+            "積み付け対象の惣菜パックの長さについて、システムが認識している値をお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportPackedItemWidth(robotone)",
             "Are you asking me what I think the width of the items to pack are?",
-            "積み付け対象の惣菜パックの幅について、システムが認識している値をお尋ねですか?",
+            "積み付け対象の惣菜パックの幅について、システムが認識している値をお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportPackedItemHeight(robotone)",
             "Are you asking me what I think the height of the items to pack are?",
-            "積み付け対象の惣菜パックの高さについて、システムが認識している値をお尋ねですか?",
+            "積み付け対象の惣菜パックの高さについて、システムが認識している値をお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportPackedItemDimensions(robotone)",
             "Are you asking me what I think the dimensions of the items to pack are?",
-            "システムが把握している惣菜パックのサイズをお尋ねですか?",
+            "システムが把握している惣菜パックのサイズをお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportCrateLength(robotone)",
             "Are you asking me what I think the length of the crates I am packing into are?",
-            "積み付け先の番重の長さについて、システムが認識している値をお尋ねですか?",
+            "積み付け先の番重の長さについて、システムが認識している値をお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportCrateWidth(robotone)",
             "Are you asking me what I think the width of the crates I am packing into are?",
-            "積み付け先の番重の幅について、システムが認識している値をお尋ねですか?",
+            "積み付け先の番重の幅について、システムが認識している値をお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportCrateHeight(robotone)",
             "Are you asking me what I think the height of the crates I am packing into are?",
-            "積み付け先の番重の高さについて、システムが認識している値をお尋ねですか?",
+            "積み付け先の番重の高さについて、システムが認識している値をお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportCrateDimensions(robotone)",
             "Are you asking me what I think the dimensions of the crates I am packing into are?",
-            "システムが把握している番重のサイズをお尋ねですか?",
+            "システムが把握している番重のサイズをお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportConfiguredNumberOfItemsToPack(robotone)",
             "Are you asking me how many items I am configured to pack into each crate?",
-            "1つの番重への積み付け個数をお尋ねですか?",
+            "1つの番重への積み付けるよう設定されてい個数をお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportCurrentNumberOfLayersToPack(robotone)",
             "Are you asking me how many layers will be present in a packed crate given my current configuration?",
-            "現在の設定で、番重の中にいくつの層ができるかをお尋ねですか?",
+            "現在の設定で、番重の中にいくつの層ができるかをお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportCurrentPackedCrateConfiguration(robotone)",
             "Are you asking me what a packed crate will look like under my current configuration?",
-            "現在の設定で積み付けた番重がどのようになるかをお尋ねですか?",
+            "現在の設定で積み付けた番重がどのようになるかをお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportMaxNumberOfPackedItems(robotone)",
             "Are you asking me what the maximum number of items I could pack into a crate is?",
-            "1つの番重に積み付け可能な最大の惣菜パック数をお尋ねですか?",
+            "1つの番重に積み付け可能な最大の惣菜パック数をお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportMaxNumberOfPackedLayers(robotone)",
             "Are you asking me what the maximum number of layers of items I can pack into a crate is?",
-            "番重に積み付け可能な最大の層数をお尋ねですか?",
+            "番重に積み付け可能な最大の層数をお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportMaxNumberOfPackedItemsPerLayer(robotone)",
             "Are you asking me how many items will be packed into a full crate layer?",
-            "番重の各層に、いくつの惣菜パックが入るかお尋ねですか?",
+            "番重の各層に、いくつの惣菜パックが入るかお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportFullyPackedCrateConfiguration(robotone)",
             "Are you asking me what a fully packed crate would look like?",
-            "完全に積み付けられた番重の見た目をお尋ねですか?",
+            "完全に積み付けられた番重の見た目をお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("reportAllPackingParameters(robotone)",
             "Are you asking me to report every configured parameter of the packing task?",
-            "積み付け作業に関する全ての設定パラメータを知りたいということですか?",
+            "積み付け作業に関する全ての設定パラメータを知りたいということですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("setNumberOfItemsToPackPerCrate(robotone,10)",
             "Are you telling me to fit 10 items per crate when packing?",
-            "1つの番重に10個の惣菜パックを積み付けるよう指示されていますか?",
+            "1つの番重に10個の惣菜パックを積み付けるよう指示されていますか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("setPackedItemDimensions(robotone,500,400,80)",
             "Are you telling me the items being packed are 500 millimeters long, 400 millimeters wide, and 80 millimeters tall?",
-            "惣菜パックのサイズが、長さ500mm、幅400mm、高さ80mmであると指定されていますか?",
+            "惣菜パックのサイズが、長さ500mm、幅400mm、高さ80mmであると指定されていますか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("setCrateDimensions(robotone,1000,500,200)",
             "Are you telling me the crates being packed into are a meter long, half a meter wide, and 200 millimeters tall?",
-            "積み付け先の番重が、長さ1m、幅0.5m、高さ200mmであると指定されていますか?",
+            "積み付け先の番重が、長さ1m、幅0.5m、高さ200mmであると指定されていますか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("describeCurrentGoal(robotone)",
             "Are you asking me what my current task is?",
-            "現在システムが実行している作業内容をお尋ねですか?",
+            "現在システムが実行している作業内容をお尋ねですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("cancelSystemGoals(robotone)",
             "Are you asking me to cancel and discard my current task?",
-            "現在の作業をキャンセルして破棄するよう指示されていますか?",
+            "現在の作業をキャンセルして破棄するよう指示されていますか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("suspendSystemGoalsBlocking(robotone)",
             "Are you asking me to pause my current task?",
-            "現在の作業を一時停止するよう指示されていますか?",
+            "現在の作業を一時停止するよう指示されていますか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("resumeSystemGoals(robotone)",
             "Are you asking me to resume my current task?",
-            "一時停止した作業を再開するよう指示されていますか?",
+            "一時停止した作業を再開するよう指示されていますか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("val(yes)",
             "Did you mean to answer my question by saying yes?",
-            "私の質問に「はい」と答えたという理解でよろしいですか?",
+            "私の質問に「はい」と答えたという理解でよろしいですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("val(no)",
             "Did you mean to answer my question by saying no?",
-            "私の質問に「いいえ」と答えたという理解でよろしいですか?",
+            "私の質問に「いいえ」と答えたという理解でよろしいですか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("sizeInMM(150)",
-            "Did you mean to answer my question by indicating a size of 150 millimeters",
-            "サイズが150mmという意味でお答えいただきましたか?",
+            "Did you mean to answer my question by indicating a size of 150 millimeters?",
+            "サイズが150mmという意味でお答えいただきましたか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("amount(20)",
             "Did you mean to answer by question by indicating an amount of 20?",
-            "数量が20という意味でお答えいただきましたか?",
+            "数量が20という意味でお答えいただきましたか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("abort(question)",
             "Did you mean to tell me to forget about my last question?",
-            "先ほどの質問を忘れるよう指示されていますか?",
+            "先ほどの質問を忘れるよう指示されていますか？",
             "QUESTION");
     validationExampleList.add(example);
     example = new LLMNLGExample("repeatLastQuestion(robotone)",

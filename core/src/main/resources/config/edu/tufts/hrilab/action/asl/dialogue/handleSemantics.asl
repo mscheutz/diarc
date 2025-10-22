@@ -428,7 +428,7 @@ import java.lang.Integer;
         if (~op:equalsValue(?priority,URGENT)) {
             if (tsc:isAgentWaitingForResponse(?actor)) {
                 //act:generateResponseFromString("Please answer my question before sending further instructions");
-                act:generateResponse(please(before(youSendFurtherInstructions,answer(myQuestion))));
+                act:generateResponse(please(before(youSendFurtherInstruction,answer(myQuestion))));
                 return;
             }
         }
