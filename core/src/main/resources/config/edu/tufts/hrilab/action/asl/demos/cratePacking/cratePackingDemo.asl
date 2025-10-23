@@ -217,7 +217,7 @@ import java.lang.Boolean;
     !result = tsc:closeGripper();
     if (op:equals(!result, false)) {
       !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor, item))");
-      exit(FAIL, !failCond);
+      exit(FAIL_POSTCONDITIONS, !failCond);
     }
  }
 
@@ -312,10 +312,10 @@ import java.lang.Boolean;
 () = closeGripperFailureRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingActions : {graspItemWrapper(A)}
+            catchingActions : {graspItem(A)}
             postRecovery : postrecovery_retry
         }
-        failureReasons : {not(holding(X,Y))}
+        failureReasons : {holding(X,Y)}
     }
 
     op:log(debug, "[closeGripperFailureRecovery] starting recovery");
