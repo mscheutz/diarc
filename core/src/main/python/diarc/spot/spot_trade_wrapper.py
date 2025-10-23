@@ -183,58 +183,58 @@ class SpotTRADEWrapper:
             logging.error(f"Error calling moveToPoseImpedanceControl: {traceback.format_exc()}")
             return (False, "error msg")
 
-    def moveToPoseWithForceLimits(self, groupName, point, orientation):
-        logging.info(f"moveToPoseWithForceLimits method called. point: {point} orientation: {orientation}")
-
-        try:
-            frame_name = BODY_FRAME_NAME
-            control_mode = basic_command_pb2.ConstrainedManipulationCommand.Request.CONTROL_MODE_POSITION
-            force_lim = 5.0
-            torque_lim = 5.0
-
-            curr_body_T_hand = get_a_tform_b(self._get_transforms_snapshot(),  BODY_FRAME_NAME, HAND_FRAME_NAME)
-            curr_hand_pos = curr_body_T_hand.position
-            target_hand_pos = geometry_pb2.Vec3(x=point.x, y=point.y, z=point.z)
-            target_dir = target_hand_pos - curr_hand_pos
-
-            # first, perform translation
-            position_value = target_dir.length()
-            force_direction = target_dir
-            torque_direction = geometry_pb2.Vec3(x=0.0, y=0.0, z=0.0)
-            init_wrench_dir = geometry_pb2.Wrench(force=force_direction, torque=torque_direction)
-            task_type = basic_command_pb2.ConstrainedManipulationCommand.Request.TASK_TYPE_R3_LINEAR_FORCE
-
-            command = RobotCommandBuilder.constrained_manipulation_command(
-                task_type=task_type, init_wrench_direction_in_frame_name=init_wrench_dir,
-                force_limit=force_lim, torque_limit=torque_lim,
-                frame_name=frame_name, control_mode=control_mode, target_linear_position=position_value,
-                reset_estimator=True)
-
-            (success, msg, cmd_id) = self.spot.robot_command(command)
-            # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
-
-
-            # second, perform rotation
-            force_direction = geometry_pb2.Vec3(x=0.0, y=0.0, z=0.0)
-            torque_direction = geometry_pb2.Vec3(x=0.0, y=0.0, z=0.0) # TODO: calculate this
-            init_wrench_dir = geometry_pb2.Wrench(force=force_direction, torque=torque_direction)
-            task_type = basic_command_pb2.ConstrainedManipulationCommand.Request.TASK_TYPE_SE3_ROTATIONAL_TORQUE
-            angle_value = # TODO: calculate this
-
-            command = RobotCommandBuilder.constrained_manipulation_command(
-                task_type=task_type, init_wrench_direction_in_frame_name=init_wrench_dir,
-                force_limit=force_lim, torque_limit=torque_lim,
-                frame_name=frame_name, control_mode=control_mode, target_angle=angle_value,
-                reset_estimator=True)
-
-            (success, msg, cmd_id) = self.spot.robot_command(command)
-            # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
-
-            return (success, msg)
-
-        except Exception as e:
-            logging.error(f"Error calling moveToPose: {traceback.format_exc()}")
-            return (False, "error msg")
+    # def moveToPoseWithForceLimits(self, groupName, point, orientation):
+    #     logging.info(f"moveToPoseWithForceLimits method called. point: {point} orientation: {orientation}")
+    #
+    #     try:
+    #         frame_name = BODY_FRAME_NAME
+    #         control_mode = basic_command_pb2.ConstrainedManipulationCommand.Request.CONTROL_MODE_POSITION
+    #         force_lim = 5.0
+    #         torque_lim = 5.0
+    #
+    #         curr_body_T_hand = get_a_tform_b(self._get_transforms_snapshot(),  BODY_FRAME_NAME, HAND_FRAME_NAME)
+    #         curr_hand_pos = curr_body_T_hand.position
+    #         target_hand_pos = geometry_pb2.Vec3(x=point.x, y=point.y, z=point.z)
+    #         target_dir = target_hand_pos - curr_hand_pos
+    #
+    #         # first, perform translation
+    #         position_value = target_dir.length()
+    #         force_direction = target_dir
+    #         torque_direction = geometry_pb2.Vec3(x=0.0, y=0.0, z=0.0)
+    #         init_wrench_dir = geometry_pb2.Wrench(force=force_direction, torque=torque_direction)
+    #         task_type = basic_command_pb2.ConstrainedManipulationCommand.Request.TASK_TYPE_R3_LINEAR_FORCE
+    #
+    #         command = RobotCommandBuilder.constrained_manipulation_command(
+    #             task_type=task_type, init_wrench_direction_in_frame_name=init_wrench_dir,
+    #             force_limit=force_lim, torque_limit=torque_lim,
+    #             frame_name=frame_name, control_mode=control_mode, target_linear_position=position_value,
+    #             reset_estimator=True)
+    #
+    #         (success, msg, cmd_id) = self.spot.robot_command(command)
+    #         # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
+    #
+    #
+    #         # second, perform rotation
+    #         force_direction = geometry_pb2.Vec3(x=0.0, y=0.0, z=0.0)
+    #         torque_direction = geometry_pb2.Vec3(x=0.0, y=0.0, z=0.0) # TODO: calculate this
+    #         init_wrench_dir = geometry_pb2.Wrench(force=force_direction, torque=torque_direction)
+    #         task_type = basic_command_pb2.ConstrainedManipulationCommand.Request.TASK_TYPE_SE3_ROTATIONAL_TORQUE
+    #         angle_value = # TODO: calculate this
+    #
+    #         command = RobotCommandBuilder.constrained_manipulation_command(
+    #             task_type=task_type, init_wrench_direction_in_frame_name=init_wrench_dir,
+    #             force_limit=force_lim, torque_limit=torque_lim,
+    #             frame_name=frame_name, control_mode=control_mode, target_angle=angle_value,
+    #             reset_estimator=True)
+    #
+    #         (success, msg, cmd_id) = self.spot.robot_command(command)
+    #         # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
+    #
+    #         return (success, msg)
+    #
+    #     except Exception as e:
+    #         logging.error(f"Error calling moveToPose: {traceback.format_exc()}")
+    #         return (False, "error msg")
 
     def moveToRef(self, groupName, refId: JObject):
         logging.info(f"moveToRef method called. refId: {refId}")
