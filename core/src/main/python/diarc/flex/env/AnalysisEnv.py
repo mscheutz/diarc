@@ -59,16 +59,32 @@ class AnalysisEnv(gym.Env):
         
         try:
             # Get current orientation to maintain it
-            curr_tf = self.trade.call_trade("getTransform", [],
+            odom_tf_hand = self.trade.call_trade("getTransform", [],
                                            self.tf_src_frame, self.tf_dst_frame)
-            orient = Quat4d()
-            curr_tf.get(orient)
-            
+
+            odom_orient_hand = Quat4d()
+            odom_tf_hand.get(odom_orient_hand)
+
             # Create target point
             target = Point3d(target_position[0], target_position[1], target_position[2])
-            
+
+            #################### transform to "body" frame
+            body_tf_odom = self.trade.call_trade("getTransform", [],"body", "odom")
+            # position from odom frame to body frame
+            body_tf_odom.transform(target)
+            # orientation from odom frame to body frame
+            body_orient_hand = Quat4d()
+
+            body_tf_hand = self.trade.call_trade("getTransform", [],"body", "hand")
+            body_tf_hand.get(body_orient_hand)
+            # body_tf_odom.get(orient)
+            # orient.mul(odom_orient)
+            ################################
+
             # Use moveTo for absolute positioning in odom frame
-            ret = self.trade.call_trade("moveTo", [], "arm", target, orient)
+            logging.info(f"moveToPose method called. point: {target} orientation: {body_orient_hand}")
+            ret = self.trade.call_trade("moveTo", [], "arm", target, body_orient_hand)
+            # ret = True
             
             # Get achieved position
             achieved_position = self._get_current_position()

@@ -1,8 +1,5 @@
 import logging
 import argparse
-from diarc.flex.env.AnalysisEnv import AnalysisEnv
-from diarc.flex.env.PrismaticEnv import PrismaticEnv
-from diarc.flex.env.RevoluteEnv import RevoluteEnv
 
 # Import from FLEX repo
 from flex.executor import FlexExecutor
@@ -12,9 +9,13 @@ from diarc.pytrade.java_util import to_java_object, to_java_object_from_class
 from diarc.pytrade.wrapper import TRADEWrapper
 from jpype import JImplements, JOverride, JClass, JString
 from ai.thinkingrobots.trade import TRADE
-from edu.tufts.hrilab.interfaces import RLInterface
+from edu.tufts.hrilab.rl import RLInterface
 from edu.tufts.hrilab.action.justification import ConditionJustification, Justification
 from edu.tufts.hrilab.fol import Factory, Symbol, Predicate
+
+from diarc.flex.env.AnalysisEnv import AnalysisEnv
+from diarc.flex.env.PrismaticEnv import PrismaticEnv
+from diarc.flex.env.RevoluteEnv import RevoluteEnv
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,8 @@ class FlexWrapper:
     
     @JOverride
     def callPolicy(self, policy_name: str):
+        logger.info(f"FLEX call policy: {policy_name}")
+
         try:
             if policy_name == 'analyze_joint':
                 return self._analyze_joint()

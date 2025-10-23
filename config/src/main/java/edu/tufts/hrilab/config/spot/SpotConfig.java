@@ -11,6 +11,7 @@ import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.llm.LLMComponent;
+import edu.tufts.hrilab.python.PythonWrapper;
 import edu.tufts.hrilab.simspeech.SimSpeechProductionComponent;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.dialogue.DialogueComponent;
@@ -63,14 +64,15 @@ public class SpotConfig extends DiarcConfiguration {
     }
 
     String spotConfigFile = "/home/hrilab/Downloads/spot_psi.yaml";
+//    String spotConfigFile = "/home/evan/Downloads/spot_psi.yaml";
 //    String spotConfigFile = "/home/evan/Downloads/spot_phi.yaml";
 //    String tradeHubContainer = "127.0.0.1@10002";
     String tradeHubContainer = "192.168.80.101@10001";
     createInstance(SpotComponent.class, "-spotConfigFile " + spotConfigFile + " -groups agent:robotone -hubContainer " + tradeHubContainer);
 
     // flex rl
-//    PythonWrapper flex = new PythonWrapper("diarc.flex.flex_wrapper", true, tradeHubContainer);
-//    flex.start("--groups", "agent:robotone"); // Start the wrapper
+    PythonWrapper flex = new PythonWrapper("diarc.flex.flex_wrapper", true, tradeHubContainer);
+    flex.start("--groups", "agent:robotone"); // Start the wrapper
 
     createInstance(GoalManagerComponent.class,
             "-executionManagerType edu.tufts.hrilab.action.manager.QueueExecutionManager " +

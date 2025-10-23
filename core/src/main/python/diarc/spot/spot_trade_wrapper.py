@@ -136,9 +136,10 @@ class SpotTRADEWrapper:
                                         ODOM_FRAME_NAME, BODY_FRAME_NAME)
             odom_T_hand = odom_T_body * math_helpers.SE3Pose.from_proto(body_T_hand)
 
-            command = RobotCommandBuilder.arm_pose_command_from_pose(odom_T_hand.to_proto(), ODOM_FRAME_NAME, build_on_command=RobotCommandBuilder.follow_arm_command())
+            command = RobotCommandBuilder.arm_pose_command_from_pose(odom_T_hand.to_proto(), ODOM_FRAME_NAME)
             (success, msg, cmd_id) = self.spot.robot_command(command)
-            # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
+
+            self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
             return (success, msg)
 
         except Exception as e:

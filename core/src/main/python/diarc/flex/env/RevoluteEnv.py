@@ -93,14 +93,28 @@ class RevoluteEnv(gym.Env):
             logging.info(f"Target position: {target_pos}")
             
             # Get current orientation to maintain it
-            curr_tf = self.trade.call_trade("getTransform", [],
+            odom_tf_hand = self.trade.call_trade("getTransform", [],
                                            self.tf_src_frame, self.tf_dst_frame)
             orient = Quat4d()
-            curr_tf.get(orient)
+            odom_tf_hand.get(orient)
             
             # Use moveTo for absolute positioning in odom frame
             target = Point3d(target_pos[0], target_pos[1], target_pos[2])
-            ret = self.trade.call_trade("moveTo", [], "arm", target, orient)
+
+
+            #################### transform to "body" frame
+            body_tf_odom = self.trade.call_trade("getTransform", [],"body", "odom")
+            # position from odom frame to body frame
+            body_tf_odom.transform(target)
+            # orientation from odom frame to body frame
+            body_orient_hand = Quat4d()
+            body_tf_hand = self.trade.call_trade("getTransform", [],"body", "hand")
+            body_tf_hand.get(body_orient_hand)
+            # body_tf_odom.get(orient)
+            # orient.mul(odom_orient)
+            ################################
+
+            ret = self.trade.call_trade("moveTo", [], "arm", target, body_orient_hand)
             
             # Get new observation
             initial_trans = Vector3d()

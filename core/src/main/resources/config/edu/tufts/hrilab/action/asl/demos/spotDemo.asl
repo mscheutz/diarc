@@ -157,7 +157,7 @@ import java.util.List;
 }
 
 () = pickUp(Symbol ?object:physobj) {
-    act:goToPose(detection);
+    //act:goToPose(detection);
     act:openGripper(arm);
     act:startVisualSearch(?object);
     try {

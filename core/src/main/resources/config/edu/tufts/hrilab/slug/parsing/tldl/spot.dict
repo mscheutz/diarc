@@ -96,7 +96,7 @@ raise; VERBT; pickUp
 % grab(?ADDRESSEE, REF:physobj)
 grab; VERBT; grabObject
 pull out; VERBT; pullOut
-open the door by; VERBT; openDoor
+% open the door by; VERBT; openDoor
 push; VERBT; pushButton
 
 claim; VERBI; claim
@@ -221,6 +221,10 @@ look for; VERBT; perceiveEntity
 undock; VERBI; undock
 dock; VERBI; dock
 doc; VERBI; dock
+
+% flex actions
+analyze joint; C; callPolicy(?ADDRESSEE, analyze_joint)
+open the door; C; callPolicy(?ADDRESSEE, open_door)
 
 %%%%%%%%%% Things %%%%%%%%%%%%%
 you; AGENT; ?ADDRESSEE
