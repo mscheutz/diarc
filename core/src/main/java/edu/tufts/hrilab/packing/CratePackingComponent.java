@@ -320,6 +320,7 @@ public class CratePackingComponent extends DiarcComponent {
   @TRADEService
   public void setPackedItemLength(int itemL) {
     packedItemL = itemL;
+    visionProcessor.setBoxLengthMeters(itemL/1000.0);
     if (gui != null) {
       gui.setItemLFieldValue(itemL);
     }
@@ -327,6 +328,7 @@ public class CratePackingComponent extends DiarcComponent {
   @TRADEService
   public void setPackedItemWidth(int itemW) {
     packedItemW = itemW;
+    visionProcessor.setBoxWidthMeters(itemW/1000.0);
     if (gui != null) {
       gui.setItemWFieldValue(itemW);
     }
@@ -343,6 +345,8 @@ public class CratePackingComponent extends DiarcComponent {
     packedItemL = itemL;
     packedItemW = itemW;
     packedItemH = itemH;
+    visionProcessor.setBoxLengthMeters(itemL/1000.0);
+    visionProcessor.setBoxWidthMeters(itemW/1000.0);
     if (gui != null) {
       gui.setItemLFieldValue(itemL);
       gui.setItemWFieldValue(itemW);

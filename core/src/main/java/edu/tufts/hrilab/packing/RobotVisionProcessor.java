@@ -9,8 +9,8 @@ import java.util.List;
  * process a camera image to determine the necessary robot action for pickup of the box
  */
 public class RobotVisionProcessor {
-  private final double boxWidthMeters;
-  private final double boxLengthMeters;
+  private double boxWidthMeters;
+  private double boxLengthMeters;
   private final double cameraZDistanceMeters;
   private final int cannyLowThreshold;
   private final int cannyHighThreshold;
@@ -135,5 +135,11 @@ public class RobotVisionProcessor {
     return (int) (0.299 * r + 0.587 * g + 0.114 * b);
   }
 
+  public void setBoxWidthMeters(double boxWidthMeters) {
+    this.boxWidthMeters = boxWidthMeters;
+  }
 
+  public void setBoxLengthMeters(double boxLengthMeters) {
+    this.boxLengthMeters = boxLengthMeters;
+  }
 }
