@@ -62,3 +62,5 @@ open gripper; C; openGripper(?ADDRESSEE)
 close gripper; C; closeGripper(?ADDRESSEE)
 
 test grasp; C; testGrasp(?ADDRESSEE)
+
+option; VAL/NUM; #x.option($x)
