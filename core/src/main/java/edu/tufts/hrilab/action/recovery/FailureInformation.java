@@ -116,7 +116,8 @@ public class FailureInformation {
     }
 
     if (!constraints.failureReasons.isEmpty()) {
-      if (!failureReasons.stream().allMatch(reason -> constraints.failureReasons.stream().anyMatch(validReason -> reason.instanceOf(validReason)))) {
+      //TODO: change made in demo crunch - double check. Was it intended that a match would be made when a policy has explicit failure reasons but but the actual failure had no justification?
+      if (failureReasons.isEmpty() || !failureReasons.stream().allMatch(reason -> constraints.failureReasons.stream().anyMatch(validReason -> reason.instanceOf(validReason)))) {
         return 0;
       } else {
         ++matches;

@@ -557,6 +557,8 @@ public class ActionContext extends DatabaseEntryContext<ActionDBEntry> {
         //Get the failed action which caused recovery and add a reinitialized copy as the next child
         setStatus(ActionStatus.PROGRESS);
         ActionContext copiedChildContext = recovery.getContextToRetry().copy(this);
+        //TODO: done in demo crunch, revisit. Resetting context doesn't clear children but parser and childIndex both are. How was this never an issue?
+        copiedChildContext.childContexts.clear();
         copiedChildContext.resetContext();
         childContexts.add(copiedChildContext);
         break;

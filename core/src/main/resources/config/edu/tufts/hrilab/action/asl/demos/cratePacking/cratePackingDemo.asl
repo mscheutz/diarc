@@ -298,10 +298,10 @@ import java.lang.Boolean;
 () = closeGripperFailureRecovery(List ?failedActionPredicates, List ?failureReasons, Predicate ?failedGoal) {
     recovery : {
         actionRecovery : {
-            catchingActions : {graspItemWrapper(A)}
+            catchingActions : {graspItem(A)}
             postRecovery : postrecovery_retry
         }
-        failureReasons : {not(holding(X,Y))}
+        failureReasons : {holding(X,Y)}
     }
 
     op:log(debug, "[closeGripperFailureRecovery] starting recovery");
