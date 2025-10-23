@@ -3,14 +3,16 @@ import time
 import argparse
 import traceback
 
-from bosdyn.api.geometry_pb2 import Vec2, SE3Pose
-from bosdyn.client.math_helpers import Quat
+from bosdyn.api.geometry_pb2 import Vec2
 from bosdyn.client.robot_command import RobotCommandBuilder
+
+from google.protobuf.wrappers_pb2 import DoubleValue
 
 from bosdyn.api.graph_nav import graph_nav_pb2, nav_pb2
 from bosdyn.client.frame_helpers import get_odom_tform_body, GROUND_PLANE_FRAME_NAME, BODY_FRAME_NAME, HAND_FRAME_NAME, \
     ODOM_FRAME_NAME
-from bosdyn.api import manipulation_api_pb2, geometry_pb2, basic_command_pb2, arm_command_pb2, robot_command_pb2
+from bosdyn.api import manipulation_api_pb2, geometry_pb2, basic_command_pb2, arm_command_pb2, robot_command_pb2, \
+    trajectory_pb2, synchronized_command_pb2
 from bosdyn.client.recording import GraphNavRecordingServiceClient
 from bosdyn.client import frame_helpers, math_helpers
 from bosdyn.client.frame_helpers import get_a_tform_b
@@ -152,33 +154,37 @@ class SpotTRADEWrapper:
         logging.info(f"moveToPoseImpedanceControl method called. point: {point} orientation: {orientation}")
 
         try:
-            robot_cmd = robot_command_pb2.RobotCommand()
-            impedance_cmd = robot_cmd.synchronized_command.arm_command.arm_impedance_command
-
-            impedance_cmd.root_frame_name = BODY_FRAME_NAME
-
             # Set up stiffness and damping matrices. Note: if these values are set too high,
             # the arm can become unstable. Currently, these are the max stiffness and
             # damping values that can be set.
-            impedance_cmd.diagonal_stiffness_matrix.CopyFrom(
-                geometry_pb2.Vector(values=[500, 500, 500, 60, 60, 60]))
-            impedance_cmd.diagonal_damping_matrix.CopyFrom(
-                geometry_pb2.Vector(values=[2.5, 2.5, 2.5, 1.0, 1.0, 1.0]))
+            stiffness = geometry_pb2.Vector(values=[500, 500, 500, 60, 60, 60])
+            damping = geometry_pb2.Vector(values=[2.5, 2.5, 2.5, 1.0, 1.0, 1.0])
 
-            # Set up our `desired_tool` trajectory. This is where we want the tool to be with respect
-            # to the task frame. The stiffness we set will drag the tool towards `desired_tool`.
-            traj = impedance_cmd.task_tform_desired_tool
-            pt1 = traj.points.add()
-            pt1.time_since_reference.CopyFrom(seconds_to_duration(3.0))
-            pt1.pose.CopyFrom(SE3Pose(point.x, point.y, point.z, Quat(orientation.w, orientation.x, orientation.y, orientation.z)).to_proto())
+            # set up hand trajectory
+            duration = seconds_to_duration(3.0)
+            hand_pose = geometry_pb2.SE3Pose(
+                    position=geometry_pb2.Vec3(x=point.x, y=point.y, z=point.z),
+                    rotation=geometry_pb2.Quaternion(x=orientation.x, y=orientation.y, z=orientation.z, w=orientation.w)
+                )
+            hand_pose_traj_point = trajectory_pb2.SE3TrajectoryPoint(pose=hand_pose,
+                                                                     time_since_reference=duration)
+            hand_trajectory = trajectory_pb2.SE3Trajectory(points=[hand_pose_traj_point])
 
-            impedance_cmd.max_force_mag = 5.0
-            impedance_cmd.max_torque_mag = 5.0
+            # built arm impedance command
+            impedance_cmd = arm_command_pb2.ArmImpedanceCommand.Request(
+                root_frame_name=BODY_FRAME_NAME, task_tform_desired_tool=hand_trajectory,
+                diagonal_stiffness_matrix=stiffness, diagonal_damping_matrix=damping,
+                max_force_mag=DoubleValue(value=5.0), max_torque_mag=DoubleValue(value=5.0))
+            arm_command = arm_command_pb2.ArmCommand.Request(
+                arm_impedance_command=impedance_cmd)
+            synchronized_command = synchronized_command_pb2.SynchronizedCommand.Request(
+                arm_command=arm_command)
+            robot_command = robot_command_pb2.RobotCommand(synchronized_command=synchronized_command)
 
-            (success, msg, cmd_id) = self.spot.robot_command(robot_cmd)
-            traj_completed = self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
+            (success, msg, cmd_id) = self.spot.robot_command(robot_command)
+            self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=5.0)
 
-            return (traj_completed, "")
+            return (success, msg)
 
         except Exception as e:
             logging.error(f"Error calling moveToPoseImpedanceControl: {traceback.format_exc()}")
