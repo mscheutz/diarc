@@ -316,6 +316,7 @@ import java.lang.Boolean;
             postRecovery : postrecovery_retry
         }
         failureReasons : {holding(X,Y)}
+        maximumAttempts : 99
     }
 
     op:log(debug, "[closeGripperFailureRecovery] starting recovery");
