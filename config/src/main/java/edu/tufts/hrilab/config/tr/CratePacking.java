@@ -150,9 +150,9 @@ public class CratePacking extends DiarcConfiguration {
             }
         }
 
-        String cratePackingComponentArgs =  "-crateL 560 -crateW 360 -crateH 200 " +
-                "-itemL 230 -itemW 160 -itemH 55 " +
-//        String cratePackingComponentArgs =  " " +
+//        String cratePackingComponentArgs =  "-crateL 560 -crateW 360 -crateH 200 " +
+//                "-itemL 230 -itemW 160 -itemH 55 " +
+        String cratePackingComponentArgs =  " " +
                 "-tolerance 20 " +
                 "-cameraAngle 0.0 -cameraHeightMM 325 -imageWidth 320 -imageHeight 260 " +
                 "-groups agent:robotone:agent";
