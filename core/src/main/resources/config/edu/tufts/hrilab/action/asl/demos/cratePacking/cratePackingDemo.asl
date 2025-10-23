@@ -313,7 +313,7 @@ import java.lang.Boolean;
     recovery : {
         actionRecovery : {
             catchingActions : {graspItem(A)}
-            postRecovery : postrecovery_continue
+            postRecovery : postrecovery_retry
         }
         failureReasons : {holding(X,Y)}
     }
@@ -322,6 +322,7 @@ import java.lang.Boolean;
     act:openGripper();
     tsc:moveZRelative(0.3);
     act:goToPosePrimitive("robotonepose_0:pose");
-    act:generateResponse();
+    act:generateResponse("report(and(failedToGrasp(?actor,item),tryingAgain))");
+    act:lookForAndMoveToBox();
     op:log(debug, "[closeGripperFailureRecovery] finished recovery");
 }
