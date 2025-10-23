@@ -5,50 +5,36 @@ yes
 200 mm
 230 mm
 160 mm
-60 mm
+55 mm
 no
 10 items
---
-the crate has been replaced
-------
-start packing
-no
-what are the dimensions of the crate
---
-*Input box/item dimensions into GUI*
-the packed food items are 220 by 150 by 60 millimeters large
+-- optional --
+what information do you need from me before packing
 the crates are 560 by 360 by 200 millimeters large
---
-what are the dimensions of the crate
-How many items are in a fully packed layer
-yes
-how fully are you currently packing crates
-you should only pack 10 items at a time
+the packed item dimensions are 230 by 160 by 55 mm
+pack 10 items per crate
 start packing
-no
--------------------
--------------------
-I would like to set the packing parameters
-560 mm
-360 mm
-200 mm
-220 mm
-150 mm
-60 mm
-yes
+-------------
+pause the current task
+what is your current task
+i would like to update the packing parameters
+how many items are in the crate right now
+please pack 9 items per crate instead
+pack 1 item per crate
+resume
+--------------
+*swipe box and show recovery*
+--------------
+i have replaced the crate
+--------------
+stop packing
+--------------
+--------------
+I have changed the type of crate being used
+the crate is now 340 by 220 by 140 mm
+how many items can you fit in the crate
 start packing
-no
---
-done
 ------
-the packed food items are 220 by 150 by 60 millimeters large
-the crates are 560 by 360 by 200 millimeters large
-what can a fully packed crate hold
-how fully are you currently packing crates
-you should pack ten items at a time
-how fully are you currently packing crates
-start packing
-no
 ------
-test vision
+------
 ------
