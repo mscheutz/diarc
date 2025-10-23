@@ -3,16 +3,18 @@ import time
 import argparse
 import traceback
 
-from bosdyn.api.geometry_pb2 import Vec2
+from bosdyn.api.geometry_pb2 import Vec2, SE3Pose
+from bosdyn.client.math_helpers import Quat
 from bosdyn.client.robot_command import RobotCommandBuilder
 
 from bosdyn.api.graph_nav import graph_nav_pb2, nav_pb2
 from bosdyn.client.frame_helpers import get_odom_tform_body, GROUND_PLANE_FRAME_NAME, BODY_FRAME_NAME, HAND_FRAME_NAME, \
     ODOM_FRAME_NAME
-from bosdyn.api import manipulation_api_pb2, geometry_pb2
+from bosdyn.api import manipulation_api_pb2, geometry_pb2, basic_command_pb2, arm_command_pb2, robot_command_pb2
 from bosdyn.client.recording import GraphNavRecordingServiceClient
 from bosdyn.client import frame_helpers, math_helpers
 from bosdyn.client.frame_helpers import get_a_tform_b
+from bosdyn.util import seconds_to_duration
 from jpype import JImplements, JOverride, JClass, JString, JObject, JBoolean, JArray
 
 from spot_wrapper.wrapper import SpotWrapper
@@ -116,7 +118,8 @@ class SpotTRADEWrapper:
         if len(args)==2 and isinstance(args[0], JString) and isinstance(args[1], Symbol):
             return self.moveToRef(*args)
         if len(args)==3 and isinstance(args[0], JString) and isinstance(args[1], Point3d) and isinstance(args[2], Quat4d):
-            return self.moveToPose(*args)
+            return self.moveToPoseImpedanceControl(*args)
+            # return self.moveToPose(*args)
 
         logging.info(f"No valid argument match found.")
         raise RuntimeError("Incorrect arguments")
@@ -132,8 +135,7 @@ class SpotTRADEWrapper:
             )
 
             # Transform the desired from the moving body frame to the odom frame.
-            odom_T_body = get_a_tform_b(self._get_transforms_snapshot(),
-                                        ODOM_FRAME_NAME, BODY_FRAME_NAME)
+            odom_T_body = get_a_tform_b(self._get_transforms_snapshot(), ODOM_FRAME_NAME, BODY_FRAME_NAME)
             odom_T_hand = odom_T_body * math_helpers.SE3Pose.from_proto(body_T_hand)
 
             command = RobotCommandBuilder.arm_pose_command_from_pose(odom_T_hand.to_proto(), ODOM_FRAME_NAME)
@@ -145,6 +147,95 @@ class SpotTRADEWrapper:
         except Exception as e:
             logging.error(f"Error calling moveToPose: {traceback.format_exc()}")
             return (False, "error msg")
+
+    def moveToPoseImpedanceControl(self, groupName, point, orientation):
+        logging.info(f"moveToPoseImpedanceControl method called. point: {point} orientation: {orientation}")
+
+        try:
+            robot_cmd = robot_command_pb2.RobotCommand()
+            impedance_cmd = robot_cmd.synchronized_command.arm_command.arm_impedance_command
+
+            impedance_cmd.root_frame_name = BODY_FRAME_NAME
+
+            # Set up stiffness and damping matrices. Note: if these values are set too high,
+            # the arm can become unstable. Currently, these are the max stiffness and
+            # damping values that can be set.
+            impedance_cmd.diagonal_stiffness_matrix.CopyFrom(
+                geometry_pb2.Vector(values=[500, 500, 500, 60, 60, 60]))
+            impedance_cmd.diagonal_damping_matrix.CopyFrom(
+                geometry_pb2.Vector(values=[2.5, 2.5, 2.5, 1.0, 1.0, 1.0]))
+
+            # Set up our `desired_tool` trajectory. This is where we want the tool to be with respect
+            # to the task frame. The stiffness we set will drag the tool towards `desired_tool`.
+            traj = impedance_cmd.task_tform_desired_tool
+            pt1 = traj.points.add()
+            pt1.time_since_reference.CopyFrom(seconds_to_duration(3.0))
+            pt1.pose.CopyFrom(SE3Pose(point.x, point.y, point.z, Quat(orientation.w, orientation.x, orientation.y, orientation.z)).to_proto())
+
+            impedance_cmd.max_force_mag = 5.0
+            impedance_cmd.max_torque_mag = 5.0
+
+            (success, msg, cmd_id) = self.spot.robot_command(robot_cmd)
+            traj_completed = self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
+
+            return (traj_completed, "")
+
+        except Exception as e:
+            logging.error(f"Error calling moveToPoseImpedanceControl: {traceback.format_exc()}")
+            return (False, "error msg")
+
+    # def moveToPoseWithForceLimits(self, groupName, point, orientation):
+    #     logging.info(f"moveToPoseWithForceLimits method called. point: {point} orientation: {orientation}")
+    #
+    #     try:
+    #         frame_name = BODY_FRAME_NAME
+    #         control_mode = basic_command_pb2.ConstrainedManipulationCommand.Request.CONTROL_MODE_POSITION
+    #         force_lim = 5.0
+    #         torque_lim = 5.0
+    #
+    #         curr_body_T_hand = get_a_tform_b(self._get_transforms_snapshot(),  BODY_FRAME_NAME, HAND_FRAME_NAME)
+    #         curr_hand_pos = curr_body_T_hand.position
+    #         target_hand_pos = geometry_pb2.Vec3(x=point.x, y=point.y, z=point.z)
+    #         target_dir = target_hand_pos - curr_hand_pos
+    #
+    #         # first, perform translation
+    #         position_value = target_dir.length()
+    #         force_direction = target_dir
+    #         torque_direction = geometry_pb2.Vec3(x=0.0, y=0.0, z=0.0)
+    #         init_wrench_dir = geometry_pb2.Wrench(force=force_direction, torque=torque_direction)
+    #         task_type = basic_command_pb2.ConstrainedManipulationCommand.Request.TASK_TYPE_R3_LINEAR_FORCE
+    #
+    #         command = RobotCommandBuilder.constrained_manipulation_command(
+    #             task_type=task_type, init_wrench_direction_in_frame_name=init_wrench_dir,
+    #             force_limit=force_lim, torque_limit=torque_lim,
+    #             frame_name=frame_name, control_mode=control_mode, target_linear_position=position_value,
+    #             reset_estimator=True)
+    #
+    #         (success, msg, cmd_id) = self.spot.robot_command(command)
+    #         # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
+    #
+    #
+    #         # second, perform rotation
+    #         force_direction = geometry_pb2.Vec3(x=0.0, y=0.0, z=0.0)
+    #         torque_direction = geometry_pb2.Vec3(x=0.0, y=0.0, z=0.0) # TODO: calculate this
+    #         init_wrench_dir = geometry_pb2.Wrench(force=force_direction, torque=torque_direction)
+    #         task_type = basic_command_pb2.ConstrainedManipulationCommand.Request.TASK_TYPE_SE3_ROTATIONAL_TORQUE
+    #         angle_value = # TODO: calculate this
+    #
+    #         command = RobotCommandBuilder.constrained_manipulation_command(
+    #             task_type=task_type, init_wrench_direction_in_frame_name=init_wrench_dir,
+    #             force_limit=force_lim, torque_limit=torque_lim,
+    #             frame_name=frame_name, control_mode=control_mode, target_angle=angle_value,
+    #             reset_estimator=True)
+    #
+    #         (success, msg, cmd_id) = self.spot.robot_command(command)
+    #         # self.spot.spot_arm.wait_for_arm_command_to_complete(cmd_id, timeout_sec=3.0)
+    #
+    #         return (success, msg)
+    #
+    #     except Exception as e:
+    #         logging.error(f"Error calling moveToPose: {traceback.format_exc()}")
+    #         return (False, "error msg")
 
     def moveToRef(self, groupName, refId: JObject):
         logging.info(f"moveToRef method called. refId: {refId}")
