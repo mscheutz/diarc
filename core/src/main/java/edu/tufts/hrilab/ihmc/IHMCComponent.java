@@ -49,10 +49,10 @@ public class IHMCComponent extends DiarcComponent {
 
   @Override
   public void init() {
-    PythonWrapper ihmc_wrapper = new PythonWrapper("ihmc.ihmc_wrapper", true, hubContainer);
+    PythonWrapper ihmc_wrapper = new PythonWrapper("diarc.ihmc.ihmc_wrapper", true, hubContainer);
     ihmc_wrapper.start();
 
-    PythonWrapper ros2_tf2_wrapper = new PythonWrapper("ros2_tf2.ros2_tf2_wrapper", true, hubContainer);
+    PythonWrapper ros2_tf2_wrapper = new PythonWrapper("diarc.ros2_tf2.ros2_tf2_wrapper", true, hubContainer);
     ros2_tf2_wrapper.start();
 
     consultant = new IHMCConsultant(IHMCReference.class, "location", new ArrayList<>());
