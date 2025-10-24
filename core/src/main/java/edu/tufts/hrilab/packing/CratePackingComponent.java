@@ -111,10 +111,15 @@ public class CratePackingComponent extends DiarcComponent {
         packedItemL = Integer.parseInt(cmdLine.getOptionValue("itemL"));
         packedItemW = Integer.parseInt(cmdLine.getOptionValue("itemW"));
         packedItemH = Integer.parseInt(cmdLine.getOptionValue("itemH"));
-        tolerance = Integer.parseInt(cmdLine.getOptionValue("tolerance"));
       } else {
         log.warn("[parseArgs] Not all item dimensions supplied, ignoring");
       }
+    }
+
+    if (cmdLine.hasOption("tolerance")) {
+      tolerance = Integer.parseInt(cmdLine.getOptionValue("tolerance"));
+    } else {
+      log.warn("[parseArgs] Not all item dimensions supplied, ignoring");
     }
 
     if (cmdLine.hasOption("cameraAngle") || cmdLine.hasOption("cameraHeightMM") || cmdLine.hasOption("imageWidth") || cmdLine.hasOption("imageHeight")) {
