@@ -154,6 +154,9 @@ import edu.tufts.hrilab.slug.common.Utterance;
 
     if (op:invokeMethod(?utterance, "needsValidation")) {
       act:updateDialogueHistory(?utterance,false);
+      //TODO: revisit - should have been validated to reach this point. Setting needsValidation to false for LLM
+                     // conversation history purposes
+      op:invokeMethod(?utterance,"setNeedsValidation",false);
     } else {
       act:updateDialogueHistory(?utterance);
     }
