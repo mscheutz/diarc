@@ -119,7 +119,7 @@ public class CratePackingComponent extends DiarcComponent {
     if (cmdLine.hasOption("tolerance")) {
       tolerance = Integer.parseInt(cmdLine.getOptionValue("tolerance"));
     } else {
-      log.warn("[parseArgs] Not all item dimensions supplied, ignoring");
+      tolerance = 0;
     }
 
     if (cmdLine.hasOption("cameraAngle") || cmdLine.hasOption("cameraHeightMM") || cmdLine.hasOption("imageWidth") || cmdLine.hasOption("imageHeight")) {
@@ -166,19 +166,62 @@ public class CratePackingComponent extends DiarcComponent {
       log.error("[solveCratePacking3D] crate and item dimensions must be fully set before running solve. Current values {},{},{} {},{},{}", crateL, crateW, crateH, packedItemL, packedItemW, packedItemH);
       return null;
     }
-    return solveCratePacking3D(crateL, crateW, crateH, packedItemL + tolerance, packedItemW + tolerance, packedItemH);
+    return solveCratePacking3D(crateL, crateW, crateH, packedItemL, packedItemW, packedItemH);
   }
   @TRADEService
   public PackingResult3D solveCratePacking3D(int crateLength, int crateW, int crateH, int rectL, int rectW, int rectH) {
+    int adjustedRectL = rectL + tolerance;
+    int adjustedRectW = rectW + tolerance;
     itemIndex = 0;
-    if (crateH < rectH) {
+    if (crateH < rectH || crateLength < rectL || crateW < rectW) {
       cachedResult = new PackingResult3D(0, 0, new ArrayList<>(), new PackingResult(0, new ArrayList<>()), "None");
       return cachedResult;
     }
 
     int numLayers = crateH / rectH;
-    PackingResult layerResult = solve(crateLength, crateW, rectL, rectW);
+    PackingResult layerResult = solve(crateLength, crateW, adjustedRectL, adjustedRectW);
     int totalCount = numLayers * layerResult.count;
+
+    if (tolerance <= 0) {
+      for (Rectangle item : layerResult.rectangles) {
+        double centerX = item.getCenterX();
+        double centerY = item.getCenterY();
+        int itemL = item.width - tolerance;
+        int itemW = item.height - tolerance;
+        if (centerX <= (itemL / 2.0)) {
+          //If touching edge, apply entire offset to avoid overlap/hitting
+          //Setting to 1 rather than 0 to give implicit 1mm clearance for edges of the container
+          item.x = 2;
+          item.width = itemL;
+        } else if (centerX + itemL / 2. > crateLength) {
+          //If touching edge, apply entire offset to avoid overlap/hitting
+          item.x = crateLength - itemL - 2;//+1
+          item.width = itemL;
+        } else {
+          //For accurate visualization/logging purposes
+          if (tolerance != 0) {
+            item.x += tolerance / 2;
+          }
+          item.width = itemL;
+          //TODO: If in the middle, distribute extra half of offset not accounted for among all boxes on that side
+          //Need to be able to reason about number of items in a "row"/"column". Think this is technically possible due
+          // to the nature of the algorithm as long the items are homogenous and only allow the two orientations.
+        }
+
+        if (centerY <= (itemW / 2.0)) {
+          item.y = 2;
+          item.height = itemW;
+        } else if (centerY + itemW / 2. > crateW) {
+          item.y = crateW - itemW - 2;//+1
+          item.height = itemW;
+        } else {
+          if (tolerance != 0) {
+            item.y += tolerance / 2;
+          }
+          item.height = itemW;
+        }
+      }
+    }
 
     List<PackedItem> allItems = new ArrayList<>();
     if (totalCount > 0) {
