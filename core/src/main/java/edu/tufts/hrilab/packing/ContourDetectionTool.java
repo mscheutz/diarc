@@ -1,9 +1,9 @@
 package edu.tufts.hrilab.packing;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
-import ai.thinkingrobots.trade.TRADEServiceInfo;
+import ai.thinkingrobots.trade.*;
+import edu.tufts.hrilab.packing.vision.PackingCameraInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -14,10 +14,10 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ContourDetectionTool extends JFrame {
-  private JButton loadImageButton;
   private JButton startStopCameraButton;
   private ContourImagePanel originalPanel, correctedPanel;
   private JLabel infoLabel, resultLabel, dimensionsLabel;
@@ -25,7 +25,12 @@ public class ContourDetectionTool extends JFrame {
   private JTextField wField, lField, zField;
   private BufferedImage sourceImage;
   private ContourCamera camera;
+  private int selectedCamera = -1;
   private boolean capture;
+  private int imgNum = 0;
+  private JComboBox<PackingCameraInfo> cameraSelectionBox;
+  private List<PackingCameraInfo> camerasList;
+  private static final Logger log =  LoggerFactory.getLogger(ContourDetectionTool.class);
 
   public ContourDetectionTool() {
     this.camera = new ContourCamera();
@@ -38,9 +43,20 @@ public class ContourDetectionTool extends JFrame {
     topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
 
     JPanel mainControlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    loadImageButton = new JButton("Load Image");
+
+    cameraSelectionBox = new JComboBox<>();
+    camerasList = getAvailableCameras();
+    cameraSelectionBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        JComboBox cb = (JComboBox) e.getSource();
+        PackingCameraInfo selected = (PackingCameraInfo) cb.getSelectedItem();
+        setCamera(selected.id());
+      }
+    });
+    camerasList.stream().forEach(e -> cameraSelectionBox.addItem(e));
+    mainControlsPanel.add(cameraSelectionBox);
+
     startStopCameraButton = new JButton("Start/Stop Camera");
-    mainControlsPanel.add(loadImageButton);
     mainControlsPanel.add(startStopCameraButton);
     mainControlsPanel.add(new JSeparator(SwingConstants.VERTICAL));
     mainControlsPanel.add(new JLabel("Box W (m):"));
@@ -82,9 +98,7 @@ public class ContourDetectionTool extends JFrame {
     imagesContainer.add(correctedPanel);
     add(imagesContainer, BorderLayout.CENTER);
 
-    loadImageButton.addActionListener(e -> loadImage());
     startStopCameraButton.addActionListener(e -> startCameraCapture());
-
 
     Timer timer = new Timer(500, e -> {
       if (capture) {
@@ -99,6 +113,53 @@ public class ContourDetectionTool extends JFrame {
     });
 
     timer.start();
+  }
+
+  private void setCamera(int selectedCamera){
+    try {
+      TRADEServiceInfo tsi =  TRADE.getAvailableService(new TRADEServiceConstraints().name("setCamera").argTypes(Integer.class));
+      tsi.call(void.class, selectedCamera);
+    } catch (TRADEException ex) {
+      JOptionPane.showMessageDialog(this, "Error setting camera!", "Error", JOptionPane.ERROR_MESSAGE);
+      log.error("[setCamera] error setting camera: ", ex);
+    }
+  }
+
+  private List<PackingCameraInfo> getAvailableCameras() {
+    boolean foundService = false;
+    List<PackingCameraInfo> result = null;
+    while (!foundService) {
+      result = new ArrayList<>();
+      try {
+        TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAvailableCameras"));
+        result = tsi.call(List.class);
+        foundService = true;
+      } catch (TRADEException e) {
+        log.debug("[getAvailableCameras] error calling TRADE service to get available cameras. waiting.");
+      }
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        log.error("[getAvailableCameras] interrupted when sleeping");
+      }
+    }
+
+    return result;
+  }
+
+  private void saveImage() {
+    try {
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImage"));
+      sourceImage = tsi.call(BufferedImage.class);
+      processImage();
+    } catch (TRADEException ex) {
+      throw new RuntimeException(ex);
+    }
+    try {
+      ImageIO.write(sourceImage, "png", new File("/home/pete/matthias/" + ++imgNum + ".png"));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void startCameraCapture() {

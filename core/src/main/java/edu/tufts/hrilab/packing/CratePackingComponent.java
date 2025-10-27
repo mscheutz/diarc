@@ -1,9 +1,6 @@
 package edu.tufts.hrilab.packing;
 
-import ai.thinkingrobots.trade.TRADE;
-import ai.thinkingrobots.trade.TRADEException;
-import ai.thinkingrobots.trade.TRADEService;
-import ai.thinkingrobots.trade.TRADEServiceConstraints;
+import ai.thinkingrobots.trade.*;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.diarc.DiarcComponent;
@@ -11,12 +8,15 @@ import edu.tufts.hrilab.vision.util.CompressionUtil;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -543,24 +543,32 @@ public class CratePackingComponent extends DiarcComponent {
   @TRADEService
   public BufferedImage getImage() {
     //TODO: add check if capture is paused
-    Dimension imageSize;
+//    Dimension imageSize;
     byte[] imageData;
     try {
-      imageSize = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageSize")).call(Dimension.class);
+//      imageSize = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImageSize")).call(Dimension.class);
       imageData = TRADE.getAvailableService(new TRADEServiceConstraints().name("getFrame")).call(byte[].class);
-      imageData = CompressionUtil.decompress(imageData);
+//      imageData = CompressionUtil.decompress(imageData);
     } catch (TRADEException e) {
       log.error("[PalletPackingComponent] error getting capture image, is vision running?", e);
       return null;
-    } catch (DataFormatException | IOException e) {
-      log.error("[PalletPackingComponent] error decompressing camera raw image data?", e);
-      return null;
     }
+//    } catch (DataFormatException | IOException e) {
+//      log.error("[PalletPackingComponent] error decompressing camera raw image data?", e);
+//      return null;
+//    }
 
-    WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, imageSize.width, imageSize.height, 3, null);
-    BufferedImage image = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_3BYTE_BGR);
-    raster.setDataElements(0, 0, imageSize.width, imageSize.height, imageData);
-    image.setData(raster);
+//    WritableRaster raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, imageSize.width, imageSize.height, 3, null);
+//    BufferedImage image = new BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_3BYTE_BGR);
+//    raster.setDataElements(0, 0, imageSize.width, imageSize.height, imageData);
+//    image.setData(raster);
+
+    BufferedImage image = null;
+    try {
+      image = ImageIO.read(new ByteArrayInputStream(imageData));
+    } catch (IOException e) {
+      log.error("[getImage] error reading image input stream");
+    }
 
     return image;
   }
@@ -673,4 +681,15 @@ public class CratePackingComponent extends DiarcComponent {
     currentlyPackingItemNum = 0;
   }
 
+  private int imgNum;
+
+  @TRADEService
+  public void getAndSaveCalibrationImage() {
+    BufferedImage image = getImage();
+    try {
+      ImageIO.write(image, "png", new File("/home/pete/matthias/" + ++imgNum + ".png"));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

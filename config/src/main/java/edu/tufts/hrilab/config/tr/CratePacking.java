@@ -161,14 +161,15 @@ public class CratePacking extends DiarcConfiguration {
         }
         createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, cratePackingComponentArgs);
 
-        if (mock) {
-          createInstance(edu.tufts.hrilab.vision.MockVisionComponent.class, "-groups agent:robotone:agent -rotX -67.5 -height 1.14");
-          createInstance(edu.tufts.hrilab.grasp.MockGraspComponent.class, "-groups agent:robotone:agent");
-        } else {
-          createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture rsense.xml -groups agent:robotone:agent -rotX -67.5 -height 1.14");
+        createInstance(edu.tufts.hrilab.packing.vision.PackingVisionComponent.class, "");
+//        if (mock) {
+//          createInstance(edu.tufts.hrilab.vision.MockVisionComponent.class, "-groups agent:robotone:agent -rotX -67.5 -height 1.14");
+//          createInstance(edu.tufts.hrilab.grasp.MockGraspComponent.class, "-groups agent:robotone:agent");
+//        } else {
+//          createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-capture rsense.xml -groups agent:robotone:agent -rotX -67.5 -height 1.14");
     //      SwingUtilities.invokeLater(() -> new CameraCalibrationTool().setVisible(true));
           //createInstance(edu.tufts.hrilab.grasp.GraspComponent.class, "-groups agent:robotone:agent");
-        }
+//        }
   //      createInstance(edu.tufts.hrilab.packing.BoxOBBComponent.class,"-lowerThreshold 42 -upperThreshold 86");
 
         String goalManagerArgs=
