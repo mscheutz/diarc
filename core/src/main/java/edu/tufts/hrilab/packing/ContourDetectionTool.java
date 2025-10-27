@@ -116,12 +116,16 @@ public class ContourDetectionTool extends JFrame {
   }
 
   private void setCamera(int selectedCamera){
+    boolean result;
     try {
       TRADEServiceInfo tsi =  TRADE.getAvailableService(new TRADEServiceConstraints().name("setCamera").argTypes(Integer.class));
-      tsi.call(void.class, selectedCamera);
+      result = tsi.call(boolean.class, selectedCamera);
     } catch (TRADEException ex) {
-      JOptionPane.showMessageDialog(this, "Error setting camera!", "Error", JOptionPane.ERROR_MESSAGE);
+      result = false;
       log.error("[setCamera] error setting camera: ", ex);
+    }
+    if (!result) {
+      JOptionPane.showMessageDialog(this, "Error setting camera!", "Error", JOptionPane.ERROR_MESSAGE);
     }
   }
 
