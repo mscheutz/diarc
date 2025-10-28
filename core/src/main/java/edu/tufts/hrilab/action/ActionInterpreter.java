@@ -682,6 +682,7 @@ public class ActionInterpreter implements Callable<ActionStatus> {
           // setting cancel flag will set nextStep to cancel in the mainLoop before it's executed
           canceled.set(true);
         } else {
+          //TODO: async AIs never hit cancel and are never interrupted
           //If the script is complete except for waiting on async AIs, cancel the async AIs or else this action
           //  will continue to block indefinitely
           this.goal.setStatus(GoalStatus.CANCELED);
@@ -735,6 +736,14 @@ public class ActionInterpreter implements Callable<ActionStatus> {
     shouldUpdate.set(false);
 
     // wait for sub-AIs to finish
+    //TODO: [CratePacking] revisit - no signal is ever sent to async AIs to be interrupted on cancel
+    if (rootStep.getStatus() == ActionStatus.CANCEL) {
+      for (ActionInterpreter ai : asyncAIs.values()) {
+        if (ai.isRunning) {
+          ai.cancel();
+        }
+      }
+    }
     // sub-AIs stay alive during suspend, so they can be resumed
     if (rootStep.getStatus() != ActionStatus.SUSPEND) {
       for (Long contextId : asyncFutures.keySet()) {
