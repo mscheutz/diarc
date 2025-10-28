@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
  */
 public class RobotVisionProcessor {
   private final String settingsFile;
+  public int defaultCamera;
   private double boxWidthMeters;
   private double boxLengthMeters;
   private final double cameraZDistanceMeters;
@@ -31,7 +32,7 @@ public class RobotVisionProcessor {
 
   private final double detectedSizeThreshold = 0.25;
   private double a = -1;
-  private static final Logger log = LoggerFactory.getLogger(ResponseGeneration.class);
+  private static final Logger log = LoggerFactory.getLogger(RobotVisionProcessor.class);
 
   private String visionsSettingsFile = "visionSettings";
 
@@ -58,12 +59,14 @@ public class RobotVisionProcessor {
       List<String> jsonList = br.lines().collect(Collectors.toList());
       for (String s : jsonList) {
         json.append(s);
-        PackingVisionSettingsJson settings = gson.fromJson(json.toString(), PackingVisionSettingsJson.class);
-
-        this.cannyLowThreshold = settings.lowThreshold;
-        this.cannyHighThreshold = settings.highThreshold;
-        this.dilationIterations = settings.dilationIterations;
       }
+      PackingVisionSettingsJson settings = gson.fromJson(json.toString(), PackingVisionSettingsJson.class);
+
+      this.cannyLowThreshold = settings.lowThreshold;
+      this.cannyHighThreshold = settings.highThreshold;
+      this.dilationIterations = settings.dilationIterations;
+      this.a = settings.alpha;
+      this.defaultCamera = settings.selectedCamera;
     }
     SwingUtilities.invokeLater(() -> {
       tool = new ContourDetectionTool(this);
@@ -213,7 +216,7 @@ public class RobotVisionProcessor {
       Writer writer = new FileWriter(settingsFile);
       Gson gson = new Gson();
 
-      PackingVisionSettingsJson settings = new PackingVisionSettingsJson(cannyLowThreshold, cannyHighThreshold, dilationIterations, a);
+      PackingVisionSettingsJson settings = new PackingVisionSettingsJson(cannyLowThreshold, cannyHighThreshold, dilationIterations, a, tool.getSelectedCamera());
       gson.toJson(settings, writer);
       writer.flush();
     } catch (IOException e) {

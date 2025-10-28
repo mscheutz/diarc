@@ -48,11 +48,16 @@ public class ContourDetectionTool extends JFrame {
 
     JPanel mainControlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
+
+    this.selectedCamera = visionProcessor.defaultCamera;
+    setCamera(selectedCamera);
+
     cameraSelectionBox = new JComboBox<>();
     cameraSelectionBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         JComboBox cb = (JComboBox) e.getSource();
         PackingCameraInfo selected = (PackingCameraInfo) cb.getSelectedItem();
+        selectedCamera = selected.id();
         setCamera(selected.id());
       }
     });
@@ -321,5 +326,9 @@ public class ContourDetectionTool extends JFrame {
     g2d.drawImage(source, tx, null);
     g2d.dispose();
     return target;
+  }
+
+  public int getSelectedCamera() {
+    return selectedCamera;
   }
 }

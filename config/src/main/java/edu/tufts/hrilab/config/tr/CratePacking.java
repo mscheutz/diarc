@@ -44,7 +44,7 @@ public class CratePacking extends DiarcConfiguration {
     boolean japanese = false;
     boolean usePrivateEndpoint = false; //DO NOT CHANGE THIS TO TRUE
     private boolean cachePersist = false;
-    private String configFilesPrefixPath = "/home/pete/dev/mtracs/crate_packing/";
+    private String configFilesPrefixPath = "";
     boolean use4fr = true;
     boolean useAssista = true;
     private HybridNLGComponent hybridNLGComponent;
@@ -107,6 +107,16 @@ public class CratePacking extends DiarcConfiguration {
 
     @Override
     public void runConfiguration() {
+      String currentPath;
+      if (configFilesPrefixPath.equals("")) {
+        currentPath = System.getProperty("user.dir");
+      } else {
+        currentPath = configFilesPrefixPath;
+      }
+
+      log.error(currentPath);
+
+      loadPickAndPlaceSettings(String.valueOf(Paths.get(currentPath, "settings.json")));
       if (production) {
         licenseAndLaunch();
       }
@@ -175,7 +185,10 @@ public class CratePacking extends DiarcConfiguration {
             }
         }
 
-        String cratePackingComponentArgs =  " " +
+
+        String cratePackingComponentArgs =  "-crateL 560 -crateW 360 -crateH 200 " +
+                "-itemL 230 -itemW 160 -itemH 60 " +
+//        String cratePackingComponentArgs =  " " +
                 "-tolerance 20 " +
                 "-cameraAngle 0.0 -cameraHeightMM 325 -imageWidth 320 -imageHeight 260 " +
                 "-groups agent:robotone:agent";

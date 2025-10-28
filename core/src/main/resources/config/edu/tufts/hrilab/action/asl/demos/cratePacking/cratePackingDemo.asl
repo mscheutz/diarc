@@ -19,12 +19,6 @@ import java.awt.Rectangle;
 import edu.tufts.hrilab.packing.Vec3;
 import java.lang.Boolean;
 
-() = testGrasp() {
-    act:goToPosePrimitive("robotonepose_0:pose");
-    act:lookForAndMoveToBox();
-    tsc:moveZRelative(-0.087);
-}
-
 () = goToPoseDirect(Symbol ?pose) {
     act:goToPosePrimitiveNoAdjust(?pose);
 }
@@ -38,10 +32,13 @@ import java.lang.Boolean;
     Double !centerY;
     Double !angle;
     PackingResult3D !result;
-    Float !boxHeight = 0.060;
-    Float !zOffset;
+    Float !boxHeight;
     Integer !tmp;
+    Float !zOffset;
     Integer !itemsPerLayer;
+
+    !tmp = tsc:getPackedItemHeight();
+    !boxHeight = op:*(1.0f, !tmp);
 
     //get crate packing information (including number if items)
     !result = tsc:getCachedPackingResult3D();
@@ -53,7 +50,7 @@ import java.lang.Boolean;
         tsc:incrementPackingItemNum();
         act:lookForAndMoveToBox();
         act:graspItemWrapper();
-        act:goToPosePrimitive("robotonepose_1:pose");
+        act:goToPosePrimitive("robotonepose_0:pose");
 
         //get values from packing info
         !item = tsc:getNextPackedItem();
@@ -87,7 +84,7 @@ import java.lang.Boolean;
 }
 
 () = graspItem() {
-    tsc:moveZRelative(-0.086);
+    tsc:moveZRelative(-0.00); //todo: hardcoded zOffset. also in lookForAndMoveToBox
     act:closeGripper();
     tsc:moveZRelative(0.3);
 }
@@ -109,8 +106,13 @@ import java.lang.Boolean;
     Vec3 !adjustment;
     MPose !currentPose;
     Predicate !failCond;
+    Integer !tmp;
 
-    act:rotateToEE("camera");
+    Double !boxHeight;
+    Double !zOffset = 0.0; //todo: hardcoded offset. see graspItem as well.
+    Float !surfaceHeight;
+
+    act:rotateToEE(default);
 
     !adjustment = tsc:calculateRobotAdjustment();
 
@@ -126,14 +128,24 @@ import java.lang.Boolean;
     }
     !x = op:invokeMethod(!adjustment, "getX");
     !y = op:invokeMethod(!adjustment, "getY");
-    !y = op:+(!y, 25);
     !theta = op:invokeMethod(!adjustment, "getZ");
-//    !theta = op:-(!theta, 1.5705);
+
 
     op:log(debug, "[lookForAndMoveToBox] x: !x, y: !y, theta: !theta");
 
+    !tmp = tsc:getPackedItemHeight();
+    !boxHeight = op:*(1.0, !tmp);
+    op:log(error, "[looforafafsdafdsa] boxHeight !boxHeight");
+    op:log(error, "[looforafafsdafdsa] zOffset !zOffset");
+    !currentPose = tsc:getPoseFromSymbol(robotonepose_0:pose);
+    !surfaceHeight = op:invokeMethod(!currentPose, "getSurfaceHeight");
+    !surfaceHeight = op:*(!surfaceHeight, 1000);
+    op:log(error, "[looforafafsdafdsa] surfaceHeight !surfaceHeight");
+    !boxHeight = op:+(!boxHeight, !surfaceHeight);
+    op:log(error, "[looforafafsdafdsa] boxHeight !boxHeight");
+
     !currentPose = tsc:getCurrentPose();
-    !goal = tsc:calculateRelativeMovement(!currentPose, !x, !y, !theta);
+    !goal = tsc:calculateRelativeMovement(!currentPose, !x, !y, !theta, !boxHeight, !zOffset);
     act:rotateToEE("gripper");
     tsc:goToPose(!goal);
 }
@@ -148,7 +160,7 @@ import java.lang.Boolean;
 
 () = putDownInCrateCancel(Integer ?tracker, Double ?height, MPose ?origin, Float ?dx, Float ?dy, Float ?dz, Float ?zero, Float ?zeroAgain, Float ?dc) {
     if (op:equals(?tracker, 1)) {
-        act:moveToAdjustedPose(!origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc);
+        act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
     }
 }
 
@@ -158,22 +170,33 @@ import java.lang.Boolean;
     }
 
     MPose !origin;
-    Double !height;
+    Float !height;
     Double !heightUp;
     Symbol !robotone = "robotone:agent";
     Integer !tracker = 0;
 
     Float !zero = 0.0f;
+    Float !surfaceHeight;
+    MPose !updated;
+    Float !dctmp;
 
-    !origin = tsc:getPoseFromSymbol(robotonepose_2:pose);
-    act:moveToAdjustedPose(!origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc);
+    !dctmp = op:*(?dc, 1.0f);
 
-    !height = op:+(-0.41, ?dz);
-    !heightUp = op:*(!height, -1);
+    op:log(error, "dz ?dz");
+
+    !origin = tsc:getPoseFromSymbol(robotonepose_1:pose);
+    act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
+
+    !updated = tsc:getCurrentPose();
+
+    !surfaceHeight = op:invokeMethod(!origin, "getSurfaceHeight");
+    !height = op:+(!surfaceHeight, ?dz);
+    op:log(error, "height !height");
+
     !tracker = op:++(!tracker);
-    tsc:moveZRelative(!height);
+    tsc:moveToZ(!origin, !height, !dctmp);
     tsc:openGripper();
-    tsc:moveZRelative(!heightUp);
+    act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
     !tracker = op:++(!tracker);
     op:log(debug, "done putting down crate");
 }
@@ -196,7 +219,7 @@ import java.lang.Boolean;
 }
 
 () = camera() {
-    act:rotateToEE("camera");
+    act:rotateToEE(default);
 }
 
  () = openGripper() {
