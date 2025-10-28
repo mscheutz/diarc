@@ -250,6 +250,7 @@ import edu.tufts.hrilab.action.justification.Justification;
             act:generateResponseFromString("Task !spokenIndex");
             act:generateResponse(!goalPred);
         }
+        //TODO: should be updated to handle potential question overlap properly
         act:suspendWaitForResponse(option(X),?actor,false);
         !bindings = act:askQuestionFromString(?actor, "Which task did you want to modify?", option(X));
         act:resumeWaitForResponse(option(X),?actor);

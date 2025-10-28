@@ -459,6 +459,11 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     Map<String,String> promptVars = new LinkedHashMap<>();
     promptVars.put("%actionList", exposedInstructListNLUString);
     promptVars.put("%semanticList", exposedReplyListNLUString);
+    //TODO: revisit, don't have time to fully address - for now removing validation interactions from the conversation
+    //      history in order to avoid biasing future parsing attempts
+    //      Will have floating yes/no responses to validation currently though
+    conversationHistory = conversationHistory.stream().filter(u -> !(u.needsValidation() || (u.getSemantics() != null && u.getSemantics().getName().equals("mean"))))
+            .toList();
     promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
     promptVars.put("%goals", getGoalString(utterance.getAddressee()));
     promptVars.put("%questionList", getCurrentQuestionsString(utterance.getAddressee()));
@@ -840,7 +845,7 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     entry = new LLMSemanticEntry("reportUnsetPackingParameters()",
             "You report the list of packing parameters which the user has not yet configured and still needs to before beginning to pack",
             "What do I need to set before packing?",
-            "番重の積み付けのために、他に必要な設定はなんですか？",
+            "番重の積み付けのために、他に必要な設定はなんですか？ OR 何が必要ですか?",
             "reportUnsetPackingParameters()",
             10,
             "INSTRUCT"
@@ -973,8 +978,8 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     exposedInstructList.add(entry);
     entry = new LLMSemanticEntry("reconfigureCrateDimensions()",
             "The user is telling you that they have changed the type of crate you are packing into or that the dimensions of the crate have changed without supplying any actual values",
-            "",
-            "",
+            "I",
+            "番重 のパラメータを設定したいです",
             "reconfigureCrateDimensions()",
             10,
             "INSTRUCT"
@@ -983,7 +988,7 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     entry = new LLMSemanticEntry("reconfigurePackedItemDimensions()",
             "The user is telling you that they have changed the type of items you are packing or that the dimensions of the packed items have changed without supplying any actual values",
             "",
-            "",
+            "惣菜パック のパラメータを設定したいです",
             "reconfigurePackedItemDimensions()",
             10,
             "INSTRUCT"
