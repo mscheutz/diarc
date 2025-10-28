@@ -399,6 +399,14 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     if (semantics.getName().equals("mean")) {
       //TODO: gen once per swapping language,
       promptVars.put("%exampleList", validationExampleListString);
+      List<String> poses;
+      if (language.equals("Japanese")) {
+        poses = getPoses(utterance.getAddressee().getName(),false);
+        promptVars.put("%examplePose", poses.isEmpty() ? "試験場所" : poses.get(0));
+      } else {
+        poses = getPoses(utterance.getAddressee().getName(),true);
+        promptVars.put("%examplePose", poses.isEmpty() ? "test location" : poses.get(0));
+      }
       promptVars.put("%addressee", utterance.getAddressee().getName());
       chat.setSystem(validationSystemPrompt.apply(promptVars));
     } else {
@@ -994,6 +1002,24 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
             "INSTRUCT"
     );
     exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("openGripper()",
+            "The user is telling you to let go of an object by turning off the vacuum of the suction gripper",
+            "open gripper",
+            "グリッパーを開いてください",
+            "openGripper()",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
+    entry = new LLMSemanticEntry("closeGripper()",
+            "The user is telling you to latch onto an object by turning on the vacuum of the suction gripper",
+            "close gripper",
+            "グリッパーを閉めてください",
+            "closeGripper()",
+            10,
+            "INSTRUCT"
+    );
+    exposedInstructList.add(entry);
 //    entry = new LLMActionEntry("",
 //            "",
 //            "",
@@ -1501,7 +1527,12 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
             "Did you mean to ask me to repeat my last question?",
             "",
             "QUESTION");
-            validationExampleList.add(example);
+    validationExampleList.add(example);
+    example = new LLMNLGExample("goToPoseDirect(robotone,%examplePose:pose)",
+            "Did you mean to ask me to go to the %examplePose pose?",
+            "%examplePose番にしてください、という指示でしょうか",
+            "QUESTION");
+    validationExampleList.add(example);
   }
 
   TRADEServiceInfo getServiceForAgent(String agentName, String serviceName, Class<?>... argTypes) {

@@ -987,3 +987,18 @@ import java.lang.Boolean;
     }
     ?ran = op:newObject("java.lang.Boolean", false);
 }
+
+() = updateAllDimensions(Integer ?crateLength, Integer ?crateWidth, Integer ?crateHeight, Integer ?itemLength, Integer ?itemWidth, Integer ?itemHeight) {
+    effects : {
+        success : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
+    }
+    tsc:setCrateDimensions(?crateLength, ?crateWidth, ?crateHeight);
+    tsc:setPackedItemDimensions(?itemLength, ?itemWidth, ?itemHeight);
+}
+
+() = updateItemTolerance(Integer ?tolerance) {
+    effects : {
+        success : not(ranPackingAlgorithmWithUpdatedSettings(?actor));
+    }
+    tsc:setTolerance(?tolerance);
+}

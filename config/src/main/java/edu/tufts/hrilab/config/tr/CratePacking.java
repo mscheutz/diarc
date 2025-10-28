@@ -8,6 +8,8 @@ import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.llm.serviceproviders.CratePackingLLMServiceProvider;
+import edu.tufts.hrilab.packing.CratePackingComponent;
+import edu.tufts.hrilab.packing.CratePackingGui;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent;
 import edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent;
@@ -34,22 +36,23 @@ public class CratePacking extends DiarcConfiguration {
   private final boolean production = true;
 
   private boolean mock = false;
-    private CR800ComponentInterface assista;
-    private SimSpeechRecognitionComponent simspeech;
-    boolean useLLMParser = true;
-    boolean useLLMNLG = true;
-    String service = "openai";
-    String model = "Qwen/Qwen3-14B-AWQ";
-    String openaiEndpoint = "http://dashboard.thinkingrobots.ai:8000/qwen";
-    boolean japanese = false;
-    boolean usePrivateEndpoint = false; //DO NOT CHANGE THIS TO TRUE
-    private boolean cachePersist = false;
-    private String configFilesPrefixPath = "";
-    boolean use4fr = true;
-    boolean useAssista = true;
-    private HybridNLGComponent hybridNLGComponent;
-    private HybridParserComponent hybridParserComponent;
-    private CratePackingLLMServiceProvider serviceProvider;
+  private CR800ComponentInterface assista;
+  private SimSpeechRecognitionComponent simspeech;
+  boolean useLLMParser = true;
+  boolean useLLMNLG = true;
+  String service = "openai";
+  String model = "Qwen/Qwen3-14B-AWQ";
+  String openaiEndpoint = "http://dashboard.thinkingrobots.ai:8000/qwen";
+  boolean japanese = false;
+  boolean usePrivateEndpoint = false; //DO NOT CHANGE THIS TO TRUE
+  private boolean cachePersist = false;
+  private String configFilesPrefixPath = "";
+  boolean use4fr = true;
+  boolean useAssista = true;
+  private HybridNLGComponent hybridNLGComponent;
+  private HybridParserComponent hybridParserComponent;
+  private CratePackingLLMServiceProvider serviceProvider;
+  private CratePackingComponent cratePackingComponent;
   private TRACSBackendClient backendClient;
   private JFrame frame;
 
@@ -185,11 +188,8 @@ public class CratePacking extends DiarcConfiguration {
             }
         }
 
-
-        String cratePackingComponentArgs =  "-crateL 560 -crateW 360 -crateH 200 " +
-                "-itemL 230 -itemW 160 -itemH 60 " +
-//        String cratePackingComponentArgs =  " " +
-                "-tolerance 20 " +
+        String cratePackingComponentArgs =  " " +
+                //"-tolerance 20 " +
                 "-cameraAngle 0.0 -cameraHeightMM 325 -imageWidth 320 -imageHeight 260 " +
                 "-groups agent:robotone:agent";
         if (mock) {
@@ -197,8 +197,9 @@ public class CratePacking extends DiarcConfiguration {
         }
 
         //IMPORTANT: PackingVisionComponent _must_ be started before CratePackingComponent. There is a good way to do this and I'm not bothering right now (Pete)
-      createInstance(edu.tufts.hrilab.packing.vision.PackingVisionComponent.class, "");
-        createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, cratePackingComponentArgs);
+        createInstance(edu.tufts.hrilab.packing.vision.PackingVisionComponent.class, "");
+        cratePackingComponent = createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, cratePackingComponentArgs);
+        loadCratePackingSettings();
 
 //        if (mock) {
 //          createInstance(edu.tufts.hrilab.vision.MockVisionComponent.class, "-groups agent:robotone:agent -rotX -67.5 -height 1.14");
@@ -260,52 +261,79 @@ public class CratePacking extends DiarcConfiguration {
             }
         } else {
             if (useAssista) {
-                simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker pete -addressee robotone -config cratePacking.simspeech");
+                simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker user -addressee robotone -config cratePacking.simspeech");
             }
         }
+
+        cratePackingComponent.setGui(new CratePackingGui(cratePackingComponent, hybridParserComponent, hybridNLGComponent, serviceProvider, japanese));
     }
 
-    //Should be one of "English" or "Japanese" (case matters)
-    public void setLanguage(String language) {
-      log.info("Setting language to: {}", language);
-      hybridNLGComponent.getCacheNLG().setLanguage(language);
-      hybridParserComponent.getCacheParser().setLanguage(language);
-      if (serviceProvider != null) {
-        serviceProvider.setLanguage(language);
+    public class PackingParams {
+      private int crateL;
+      private int crateW;
+      private int crateH;
+      private int itemL;
+      private int itemW;
+      private int itemH;
+      private int tolerance;
+
+      public PackingParams(int crateL, int crateW, int crateH, int itemL, int itemW, int itemH, int tolerance) {
+        this.crateL = crateL;
+        this.crateW = crateW;
+        this.crateH = crateH;
+        this.itemL = itemL;
+        this.itemW = itemW;
+        this.itemH = itemH;
+        this.tolerance = tolerance;
       }
-      if (useAssista) {
-        List<String> currentPoseNames;
-        List<String> newPoseNames;
-        if (language.equals("Japanese")) {
-          currentPoseNames = assista.getEnglishPoseDescriptors();
-          newPoseNames = assista.getJapanesePoseDescriptors();
+    }
+
+    private void loadCratePackingSettings() {
+      String filename = "cratePackingParams.json";
+      String homeDir = System.getProperty("user.home");
+      String cratePackingDir = Paths.get(homeDir, ".diarc").toString();
+      String cratePackingParamsFile = cratePackingDir + File.separator + filename;
+      Gson gson = new Gson();
+      try {
+        FileReader reader = new FileReader(cratePackingParamsFile);
+        PackingParams params = gson.fromJson(reader, PackingParams.class);
+        if (params != null) {
+          cratePackingComponent.setCrateDimensions(params.crateL, params.crateW, params.crateH);
+          cratePackingComponent.setPackedItemDimensions(params.itemL, params.itemW, params.itemH);
+          cratePackingComponent.setTolerance(params.tolerance);
+          log.info("[loadCratePackingSettings] loaded from file");
+          //cratePackingComponent.solveCratePacking3D();
         } else {
-          currentPoseNames = assista.getJapanesePoseDescriptors();
-          newPoseNames = assista.getEnglishPoseDescriptors();
+          log.info("[loadCratePackingSettings] file is empty");
         }
-        for (int i=0; i<currentPoseNames.size(); i++) {
-          assista.updatePoseName(Factory.createSymbol(currentPoseNames.get(i),"pose"), Factory.createSymbol(newPoseNames.get(i),"pose"));
-        }
+      } catch (IOException e) {
+        log.error("[loadCratePackingSettings] error loading crate packing settings", e);
       }
     }
 
-    private void toggleLanguage() {
-      japanese = !japanese;
-      setLanguage(japanese ? "Japanese" : "English");
-    }
-
-    private void buildContent(JFrame aFrame){
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        //panel.add(new JLabel("TRACS RUNNING"));
-        JPanel innerPanel = new JPanel();
-        JCheckBox languageToggle = new JCheckBox();
-        JLabel languageToggleLabel = new JLabel("Set Language to Japanese: ");
-        languageToggle.addActionListener(e -> toggleLanguage());
-        innerPanel.add(languageToggleLabel);
-        innerPanel.add(languageToggle);
-        panel.add(innerPanel);
-        aFrame.getContentPane().add(panel);
+    private void saveCratePackingSettings() {
+      String filename = "cratePackingParams.json";
+      String homeDir = System.getProperty("user.home");
+      String cratePackingDir = Paths.get(homeDir, ".diarc").toString();
+      String cratePackingParamsFile = cratePackingDir + File.separator + filename;
+      Gson gson = new Gson();
+      try {
+        FileWriter writer = new FileWriter(cratePackingParamsFile);
+        int crateL = cratePackingComponent.getCrateLength();
+        int crateW = cratePackingComponent.getCrateWidth();
+        int crateH = cratePackingComponent.getCrateHeight();
+        int itemL = cratePackingComponent.getPackedItemLength();
+        int itemW = cratePackingComponent.getPackedItemWidth();
+        int itemH = cratePackingComponent.getPackedItemHeight();
+        int tolerance = cratePackingComponent.getTolerance();
+        PackingParams params = new PackingParams(crateL, crateW, crateH, itemL, itemW, itemH, tolerance);
+        gson.toJson(params, writer);
+        writer.flush();
+        writer.close();
+        log.info("[saveCratePackingSettings] written to file");
+      } catch (IOException e) {
+        log.error("[loadCratePackingSettings] error saving crate packing settings", e);
+      }
     }
 
     private void loadPickAndPlaceSettings(String path) {
@@ -350,7 +378,6 @@ public class CratePacking extends DiarcConfiguration {
         }
       }
     }
-
 
     private void buildAndDisplayGui() {
       frame = new JFrame("TRACS Launcher");
@@ -489,5 +516,11 @@ public class CratePacking extends DiarcConfiguration {
       } else {
         return sanitizedKey;
       }
+    }
+
+    @Override
+    public void shutdownConfiguration() {
+      saveCratePackingSettings();
+      super.shutdownConfiguration();
     }
 }
