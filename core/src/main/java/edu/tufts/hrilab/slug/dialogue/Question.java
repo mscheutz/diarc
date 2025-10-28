@@ -20,13 +20,15 @@ public class Question {
     private boolean active;
     private Term lastFormMatch = null;
     private long timestamp;
+    private long qid;
 
-    Question(String questionString, List<Term> responseForms) {
+    Question(String questionString, List<Term> responseForms, long qid) {
         this.questionString = questionString;
         this.responseForms = responseForms;
         answer = new Answer();
         active = true;
         timestamp = System.currentTimeMillis();
+        this.qid = qid;
     }
 
     public boolean isMatchingAnswerSemantics(Term answerSemantics) {
@@ -120,5 +122,9 @@ public class Question {
 
     public List<Term> getResponseForms() {
         return responseForms;
+    }
+
+    public long getQid() {
+      return qid;
     }
 }

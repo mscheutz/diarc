@@ -509,6 +509,7 @@ import java.lang.Integer;
             foreach(!agent : !agentSet) {
                 act:generateResponseFromString(!agent);
             }
+            //TODO: should be updated to handle potential question overlap properly
             act:suspendWaitForResponse(agent(X),?actor,false);
             !bindings = act:askQuestionFromString(?actor, "Which one did you mean to address?", agent(X));
             act:resumeWaitForResponse(agent(X),?actor);
@@ -572,6 +573,7 @@ import java.lang.Integer;
             !spokenIndex = op:++(!questionIndex);
             act:generateResponseFromString("Option !spokenIndex: !questionString");
         }
+        //TODO: should be updated to handle potential question overlap properly
         act:suspendWaitForResponse(option(X),?actor,false);
         //!bindings = act:askQuestionFromString(?actor, "Which question did you mean to answer?", option(X));
         !bindings = act:askQuestion(?actor, meanToAnswer(which(question)), option(X));

@@ -75,6 +75,8 @@ import edu.tufts.hrilab.slug.common.Utterance;
     Symbol !utteranceSymbol;
     Predicate !response;
     java.util.Map !bindings;
+    java.util.List !suspendedQids;
+    java.lang.Long !qid;
     edu.tufts.hrilab.fol.Variable !x = "X";
     if (op:invokeMethod(?utterance, "needsValidation")) {
       op:log("debug", "Validating utterance: ?utterance");
@@ -97,13 +99,21 @@ import edu.tufts.hrilab.slug.common.Utterance;
       !language = op:invokeMethod(?utterance,"getLanguage");
       op:invokeMethod(!queryUtterance,"setLanguage",!language);
 
+      //TODO: Revisit - This reasoning can be extended to catch if you are conflicting with a generic yes/no question vs
+              //        another validation question specifically (and whether the target of validation is yes/no itself)
+              //        Overall, what happens to validation questions when other input is received should be discussed
+              //        ^practically seen that novice users often miss or ignore validation questions
       //Wrapping question in suspend/resume for val(X) in case of validation of a yes/no answer. Only potential awkwardness
       //  arises if the goal prompting the original question is canceled, then answering the validation question will cause
       //  the validated response to hit nothing.
-      act:suspendWaitForResponse(val(X),!addressee,false);
+      !suspendedQids = act:suspendWaitForResponse(val(X),!addressee,false);
       !bindings = !addressee.act:askQuestionFromUtterance(!queryUtterance, val(X),1,-1);
       !response = op:get(!bindings, !x);
-      act:resumeWaitForResponse(val(X),!addressee);
+      if (~op:isEmpty(!suspendedQids)) {
+          foreach(!qid : !suspendedQids) {
+              act:resumeWaitForResponse(!qid,!addressee);
+          }
+      }
 
       if (op:isNull(!response)) {
         op:log("debug", "Utterance validation aborted, not processing utterance");

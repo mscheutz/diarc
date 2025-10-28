@@ -462,7 +462,8 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     //TODO: revisit, don't have time to fully address - for now removing validation interactions from the conversation
     //      history in order to avoid biasing future parsing attempts
     //      Will have floating yes/no responses to validation currently though
-    conversationHistory = conversationHistory.stream().filter(u -> !(u.needsValidation() || u.getSemantics().getName().equals("mean"))).toList();
+    conversationHistory = conversationHistory.stream().filter(u -> !(u.needsValidation() || (u.getSemantics() != null && u.getSemantics().getName().equals("mean"))))
+            .toList();
     promptVars.put("%conversationHistory", getConversationHistoryString(conversationHistory));
     promptVars.put("%goals", getGoalString(utterance.getAddressee()));
     promptVars.put("%questionList", getCurrentQuestionsString(utterance.getAddressee()));
