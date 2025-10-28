@@ -616,7 +616,7 @@ public class CratePackingComponent extends DiarcComponent {
   private boolean detectEndMotion() {
     int validCount = 0;
     //todo: do a real timeout
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 25; i++) {
       BufferedImage currentImage = getImage();
       double percentChange = visionProcessor.detectAndVisualizeMotion(previousImage, currentImage);
       this.previousImage = currentImage;
@@ -625,7 +625,7 @@ public class CratePackingComponent extends DiarcComponent {
       }
     }
     log.debug("[detectEndMotionHelper] number of frame comparisons with no motion (of 10): " + validCount);
-    return validCount >= 25;
+    return validCount >= 10;
   }
 
   @TRADEService

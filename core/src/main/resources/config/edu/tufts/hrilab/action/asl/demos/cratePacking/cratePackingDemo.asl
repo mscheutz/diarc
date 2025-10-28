@@ -164,39 +164,78 @@ import java.lang.Boolean;
     }
 }
 
+//() = putDownInCrate(Float ?dx, Float ?dy, Float ?dz, Float ?dc) {
+//    onInterrupt :{
+//        cancel: act:putDownInCrateCancel(!tracker, !heightUp, !origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc);
+//    }
+//
+//    MPose !origin;
+//    Float !height;
+//    Double !heightUp;
+//    Symbol !robotone = "robotone:agent";
+//    Integer !tracker = 0;
+//
+//    Float !zero = 0.0f;
+//    Float !surfaceHeight;
+//    MPose !updated;
+//    Float !dctmp;
+//
+//    !dctmp = op:*(?dc, 1.0f);
+//
+//    op:log(error, "dz ?dz");
+//
+//    !origin = tsc:getPoseFromSymbol(robotonepose_1:pose);
+//    act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
+//
+//    !updated = tsc:getCurrentPose();
+//
+//    !surfaceHeight = op:invokeMethod(!origin, "getSurfaceHeight");
+//    !height = op:+(!surfaceHeight, ?dz);
+//    op:log(error, "height !height");
+//
+//    !tracker = op:++(!tracker);
+//    tsc:moveToZ(!origin, !height, !dctmp);
+//    tsc:openGripper();
+//    act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
+//    !tracker = op:++(!tracker);
+//    op:log(debug, "done putting down crate");
+//}
+
 () = putDownInCrate(Float ?dx, Float ?dy, Float ?dz, Float ?dc) {
     onInterrupt :{
         cancel: act:putDownInCrateCancel(!tracker, !heightUp, !origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc);
     }
 
     MPose !origin;
-    Float !height;
+    Double !height;
     Double !heightUp;
     Symbol !robotone = "robotone:agent";
     Integer !tracker = 0;
+    Float !surfaceHeight;
+    Float !currentZ;
 
     Float !zero = 0.0f;
-    Float !surfaceHeight;
-    MPose !updated;
-    Float !dctmp;
-
-    !dctmp = op:*(?dc, 1.0f);
-
-    op:log(error, "dz ?dz");
+    Double !difference;
 
     !origin = tsc:getPoseFromSymbol(robotonepose_1:pose);
-    act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
-
-    !updated = tsc:getCurrentPose();
+    act:moveToAdjustedPose(!origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc);
 
     !surfaceHeight = op:invokeMethod(!origin, "getSurfaceHeight");
     !height = op:+(!surfaceHeight, ?dz);
     op:log(error, "height !height");
 
+    !currentZ = op:invokeMethod(!origin, "getZ");
+
+    !difference = op:-(!currentZ, !height);
+    !difference = op:/(!difference, 1000);
+    op:log(error, "[dsafdadsafadsdfas] height: !height, currentZ: !currentZ, difference: !difference");
+
+
+    !heightUp = op:*(!difference, -1);
     !tracker = op:++(!tracker);
-    tsc:moveToZ(!origin, !height, !dctmp);
+    tsc:moveZRelative(!heightUp);
     tsc:openGripper();
-    act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
+    tsc:moveZRelative(!difference);
     !tracker = op:++(!tracker);
     op:log(debug, "done putting down crate");
 }
