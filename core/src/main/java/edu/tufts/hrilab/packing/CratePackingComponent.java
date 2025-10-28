@@ -643,6 +643,7 @@ public class CratePackingComponent extends DiarcComponent {
           onCancelServiceCall = "cancelBlockingDetectMotion()"
   )
   public void blockingDetectMotionStopStart() {
+    long startTime =  System.currentTimeMillis();
     boolean detected = false;
     while (!detected) {
       detected = detectStartMotion() && detectEndMotion();
@@ -653,6 +654,10 @@ public class CratePackingComponent extends DiarcComponent {
       }
       if (cancel) {
         cancel = false;
+        return;
+      }
+      long currentTime =  System.currentTimeMillis();
+      if (currentTime - startTime > 5000) {
         return;
       }
     }

@@ -51,7 +51,6 @@ import java.lang.Boolean;
     act:goToPosePrimitive("robotonepose_0:pose");
     for (!i=0; !i lt ?numItems; !i ++) {
         tsc:incrementPackingItemNum();
-        //act:goToPosePrimitive("robotonepose_0:pose");
         act:lookForAndMoveToBox();
         act:graspItemWrapper();
         act:goToPosePrimitive("robotonepose_1:pose");
@@ -110,7 +109,6 @@ import java.lang.Boolean;
     Vec3 !adjustment;
     MPose !currentPose;
     Predicate !failCond;
-    Integer !failToDetectCount = 0;
 
     act:rotateToEE("camera");
 
@@ -121,15 +119,10 @@ import java.lang.Boolean;
         act:generateResponse(and(not(see(item, waitingToSee(it)))));
     }
     while (op:isNull(!adjustment)) {
-        !failToDetectCount = op:++(!failToDetectCount);
         op:log(error, "[lookForAndMoveToBox] no object found in frame");
         op:log(warn, "[lookForAndMoveToBox] waiting for motion condition to re-detect");
         act:blockingDetectMotionStopStart();
         !adjustment = tsc:calculateRobotAdjustment();
-        if (op:gt(!failToDetectCount, 20)) {
-            !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(see(?actor, item))");
-            exit(FAIL, !failCond);
-        }
     }
     !x = op:invokeMethod(!adjustment, "getX");
     !y = op:invokeMethod(!adjustment, "getY");

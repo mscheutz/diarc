@@ -31,7 +31,7 @@ public class CratePacking extends DiarcConfiguration {
 
 
   private static final String TIER = "2 robot; action learning;";
-  private final boolean production = false;
+  private final boolean production = true;
 
   private boolean mock = false;
     private CR800ComponentInterface assista;
