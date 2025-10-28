@@ -1,6 +1,8 @@
 package edu.tufts.hrilab.config.tr;
 
+import ai.thinkingrobots.mtracs.TRACSBackendClient;
 import ai.thinkingrobots.mtracs.interfaces.CR800ComponentInterface;
+import ai.thinkingrobots.mtracs.util.Util;
 import com.google.gson.Gson;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fol.Factory;
@@ -14,16 +16,25 @@ import org.apache.commons.cli.Option;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
 public class CratePacking extends DiarcConfiguration {
-    private boolean mock = false;
+
+
+  private static final String TIER = "2 robot; action learning;";
+  private final boolean production = false;
+
+  private boolean mock = false;
     private CR800ComponentInterface assista;
-    private CR800ComponentInterface rv4fr;
     private SimSpeechRecognitionComponent simspeech;
     boolean useLLMParser = true;
     boolean useLLMNLG = true;
@@ -39,8 +50,19 @@ public class CratePacking extends DiarcConfiguration {
     private HybridNLGComponent hybridNLGComponent;
     private HybridParserComponent hybridParserComponent;
     private CratePackingLLMServiceProvider serviceProvider;
+  private TRACSBackendClient backendClient;
+  private JFrame frame;
 
-    @Override
+  private boolean licenseValidated = false;
+  private JTextField authKeyField;
+  private String licenseKey = UNINITIALIZED_LICENSE_KEY;
+  private final String liceseKeyFileName = "keyCache";
+
+  private static final String UNINITIALIZED_LICENSE_KEY = "UNKNOWN";
+
+  protected static final Insets buttonInsets = new Insets(10, 10, 0, 10);
+
+  @Override
     protected List<Option> additionalUsageInfo() {
         List<Option> options = new ArrayList<>();
         options.add(Option.builder("mock").desc("run in mock").build());
@@ -85,7 +107,11 @@ public class CratePacking extends DiarcConfiguration {
 
     @Override
     public void runConfiguration() {
-        loadPickAndPlaceSettings(configFilesPrefixPath + "settings.json");
+      if (production) {
+        licenseAndLaunch();
+      }
+
+      loadPickAndPlaceSettings(configFilesPrefixPath + "settings.json");
 
         createInstance(edu.tufts.hrilab.slug.listen.ListenerComponent.class);
         createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class, "");
@@ -224,7 +250,6 @@ public class CratePacking extends DiarcConfiguration {
                 simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker pete -addressee robotone -config cratePacking.simspeech");
             }
         }
-        this.buildAndDisplayGui();
     }
 
     //Should be one of "English" or "Japanese" (case matters)
@@ -249,33 +274,11 @@ public class CratePacking extends DiarcConfiguration {
           assista.updatePoseName(Factory.createSymbol(currentPoseNames.get(i),"pose"), Factory.createSymbol(newPoseNames.get(i),"pose"));
         }
       }
-      if (use4fr) {
-        List<String> currentPoseNames;
-        List<String> newPoseNames;
-        if (language.equals("Japanese")) {
-          currentPoseNames = rv4fr.getJapanesePoseDescriptors();
-          newPoseNames = rv4fr.getEnglishPoseDescriptors();
-        } else {
-          currentPoseNames = rv4fr.getEnglishPoseDescriptors();
-          newPoseNames = rv4fr.getJapanesePoseDescriptors();
-        }
-        for (int i=0; i<currentPoseNames.size(); i++) {
-          rv4fr.updatePoseName(Factory.createSymbol(currentPoseNames.get(i),"pose"), Factory.createSymbol(newPoseNames.get(i),"pose"));
-        }
-      }
     }
 
     private void toggleLanguage() {
       japanese = !japanese;
       setLanguage(japanese ? "Japanese" : "English");
-    }
-
-    private void buildAndDisplayGui(){
-        JFrame frame = new JFrame("TRACS");
-        buildContent(frame);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setVisible(true);
     }
 
     private void buildContent(JFrame aFrame){
@@ -319,5 +322,159 @@ public class CratePacking extends DiarcConfiguration {
       public boolean persistCache;
       public boolean assista;
       public boolean rv4fr;
+    }
+
+    //for distribution
+
+    private void licenseAndLaunch() {
+      this.backendClient = new TRACSBackendClient();
+      this.buildAndDisplayGui();
+      while (!licenseValidated) {
+        try {
+          Thread.sleep(500);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+
+
+    private void buildAndDisplayGui() {
+      frame = new JFrame("TRACS Launcher");
+      frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+      frame.addWindowListener(new WindowAdapter() {
+        public void windowClosing(WindowEvent e) {
+          frame.setVisible(false);
+          try {
+            backendClient.uploadLogs(licenseKey);
+          } catch (IOException ex) {
+            log.error("Unable to upload logs");
+          }
+          frame.dispose();
+          System.exit(0);
+        }
+      });
+
+      Container container = frame.getContentPane();
+
+      JPanel mainPanel = new JPanel();
+      mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+
+      JPanel entryPanel = new JPanel();
+      entryPanel.setLayout(new GridBagLayout());
+
+      int gridY = 0;
+
+      JLabel authKeyLabelString = new JLabel("Product Key");
+      addComponent(entryPanel, authKeyLabelString, 0, gridY, 1, 1, buttonInsets, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL);
+
+      authKeyField = new JTextField(20);
+      addComponent(entryPanel, authKeyField, 1, gridY++, 1, 1, buttonInsets, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL);
+
+      mainPanel.add(entryPanel);
+
+      JPanel buttonPanel = new JPanel();
+      buttonPanel.setLayout(new FlowLayout());
+
+      String licenseKeyPath;
+      try {
+        String diarcPath = Util.ensureDiarcDirPath();
+        licenseKeyPath = String.valueOf(Paths.get(diarcPath, liceseKeyFileName));
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      try {
+        licenseKey = readCachedLicenseKey(licenseKeyPath);
+        if (!licenseKey.equals(UNINITIALIZED_LICENSE_KEY)) {
+          authKeyField.setText(licenseKey);
+        }
+      } catch (IOException e) {
+        log.error("Failed to read cached license key value"); //todo: should this pop up a dialogue window?
+      }
+
+      JButton okButton = new JButton("OK");
+      okButton.setAlignmentX(JButton.RIGHT_ALIGNMENT);
+      okButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent event) {
+          String rawKeyFromField = authKeyField.getText();
+          licenseKey = validateLicenseKey(rawKeyFromField, TIER);
+          if (!licenseKey.equals(UNINITIALIZED_LICENSE_KEY)) {
+            licenseValidated = true;
+            try {
+              cacheLicenseKey(licenseKey, licenseKeyPath);
+            } catch (IOException e) {
+              log.error("Failed to cache the license key value"); //todo: should this pop up a dialogue window?
+            }
+            authKeyField.setEnabled(false);
+            okButton.setEnabled(false);
+          }
+        }
+      });
+
+      buttonPanel.add(okButton);
+
+      mainPanel.add(buttonPanel);
+
+      container.add(mainPanel);
+      frame.pack();
+      frame.setVisible(true);
+      okButton.requestFocusInWindow();
+    }
+
+    private void uploadLogFileOnWindowClose(String licenseKey) {
+      try {
+        backendClient.uploadLogs(licenseKey);
+      } catch (IOException e) {
+        log.error("Failed to upload logs"); //todo: should this pop up a dialogue window?
+      }
+    }
+
+    private void cacheLicenseKey(String licenseKey, String filePath) throws IOException {
+      try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+        writer.write(licenseKey);
+        writer.newLine();
+      }
+    }
+
+    private String readCachedLicenseKey(String filePath) throws IOException {
+      File f = new File(filePath);
+      String toReturn = null;
+      if (f.isFile()) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(f))) {
+          toReturn = reader.readLine();
+        }
+      }
+      if (toReturn != null) {
+        return toReturn;
+      } else {
+        return UNINITIALIZED_LICENSE_KEY;
+      }
+    }
+
+    private void addComponent(Container container, Component component,
+                              int gridx, int gridy, int gridwidth, int gridheight, Insets insets,
+                              int anchor, int fill) {
+      GridBagConstraints gbc = new GridBagConstraints(gridx, gridy,
+              gridwidth, gridheight, 1.0D, 1.0D, anchor, fill, insets, 0, 0);
+      container.add(component, gbc);
+    }
+
+    private String validateLicenseKey(String key, String tier) {
+      String sanitizedKey = key.trim().toLowerCase();
+      boolean valid = false;
+      try {
+        valid = backendClient.validateLicense(sanitizedKey, tier);
+      } catch (IOException e) {
+        JOptionPane.showMessageDialog(frame, "Failed to validate license. Please verify license key and network connection.");
+      }
+      if (!valid) {
+        JOptionPane.showMessageDialog(frame, "Error: Invalid license key.");
+        return UNINITIALIZED_LICENSE_KEY;
+      } else {
+        return sanitizedKey;
+      }
     }
 }
