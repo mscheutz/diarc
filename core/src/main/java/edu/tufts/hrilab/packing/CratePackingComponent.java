@@ -84,9 +84,9 @@ public class CratePackingComponent extends DiarcComponent {
   public void init() {
     super.init();
     this.visionProcessor = new RobotVisionProcessor(packedItemW/1000.0, packedItemL/1000.0, cameraHeightMM/1000.0);
-    SwingUtilities.invokeLater(() -> {
-      gui = new CratePackingGui(this);
-      gui.setVisible(true);});
+    //SwingUtilities.invokeLater(() -> {
+    //  gui = new CratePackingGui(this);
+    //  gui.setVisible(true);});
   }
 
   public void updateArgs(int crateL, int crateW, int crateH, int packedItemL, int packedItemW, int packedItemH) {
@@ -715,6 +715,16 @@ public class CratePackingComponent extends DiarcComponent {
     packedItemL = -1;
     packedItemW = -1;
     packedItemH = -1;
+    if (gui != null) {
+      gui.setItemLFieldValue(-1);
+      gui.setItemWFieldValue(-1);
+      gui.setItemHFieldValue(-1);
+      gui.setCrateLFieldValue(-1);
+      gui.setCrateWFieldValue(-1);
+      gui.setCrateHFieldValue(-1);
+      //gui.setNumToPackFieldValue();
+    }
+    //visionProcessor.setBoxWidthMeters(); //What is state of this when uninitialized?
     cachedResult = null;
     itemIndex = 0;
     currentCrateCapacity = -1;
@@ -739,5 +749,21 @@ public class CratePackingComponent extends DiarcComponent {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public void setGui(CratePackingGui gui) {
+    this.gui = gui;
+  }
+
+  public int getTolerance() {
+    return tolerance;
+  }
+
+  @TRADEService
+  public void setTolerance(int tolerance) {
+    if (gui != null) {
+      gui.setToleranceFieldValue(tolerance);
+    }
+    this.tolerance = tolerance;
   }
 }
