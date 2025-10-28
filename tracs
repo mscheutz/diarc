@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+tradeLoggingPath=/home/pete/dev/diarc-config/src/main/resources/peruserfiles/pete/trade.properties
+tracsLoggingPath=/home/pete/dev/diarc-config/src/main/resources/peruserfiles/pete/logging.xml
+main=edu.tufts.hrilab.config.tr.CratePacking
+
+java -DtradeLogging.config.path=$tradeLoggingPath -Dlogback.configurationFile=$tracsLoggingPath -cp tracs.jar: edu.tufts.hrilab.diarc.DiarcConfiguration $main
