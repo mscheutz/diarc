@@ -19,11 +19,13 @@ import java.util.Collection;
 import java.util.List;
 
 public class ContourDetectionTool extends JFrame {
+  private final RobotVisionProcessor visionProcessor;
   private JButton startStopCameraButton;
+  private JButton setAlphaButton;
   private ContourImagePanel originalPanel, correctedPanel;
   private JLabel infoLabel, resultLabel, dimensionsLabel;
   private JSlider lowThresholdSlider, highThresholdSlider, dilationSlider;
-  private JTextField wField, lField, zField;
+  private JTextField wField, lField;
   private BufferedImage sourceImage;
   private ContourCamera camera;
   private int selectedCamera = -1;
@@ -31,8 +33,10 @@ public class ContourDetectionTool extends JFrame {
   private int imgNum = 0;
   private JComboBox<PackingCameraInfo> cameraSelectionBox;
   private static final Logger log =  LoggerFactory.getLogger(ContourDetectionTool.class);
+  private double alpha = -1;
 
-  public ContourDetectionTool() {
+  public ContourDetectionTool(RobotVisionProcessor robotVisionProcessor) {
+    this.visionProcessor = robotVisionProcessor;
     this.camera = new ContourCamera();
     setTitle("Interactive Camera Calibration Tool");
     setSize(1600, 900);
@@ -63,18 +67,21 @@ public class ContourDetectionTool extends JFrame {
     mainControlsPanel.add(new JLabel("L (m):"));
     lField = new JTextField("0.225", 5);  // default length of box
     mainControlsPanel.add(lField);
-    mainControlsPanel.add(new JLabel("Z (m):"));
-    zField = new JTextField("0.41", 5);   // default distance between camera and box
-    mainControlsPanel.add(zField);
+    setAlphaButton = new JButton("Set Calibration");
 
     JPanel slidersPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
     // default canny edge detection values that worked on all the test images
-    lowThresholdSlider = createSlider(0, 255, 41, "Canny Low Threshold");
-    highThresholdSlider = createSlider(0, 255, 155, "Canny High Threshold");
-    dilationSlider = createSlider(0, 10, 4, "Dilation Iterations");
+    lowThresholdSlider = createSlider(0, 255, visionProcessor.getCannyLowThreshold(), "Canny Low Threshold");
+    highThresholdSlider = createSlider(0, 255, visionProcessor.getCannyHighThreshold(), "Canny High Threshold");
+    dilationSlider = createSlider(0, 10, visionProcessor.getDilationIterations(), "Dilation Iterations");
     slidersPanel.add(lowThresholdSlider.getParent());
     slidersPanel.add(highThresholdSlider.getParent());
     slidersPanel.add(dilationSlider.getParent());
+    slidersPanel.add(setAlphaButton);
+
+    lowThresholdSlider.addChangeListener(e -> visionProcessor.setCannyLowThreshold(lowThresholdSlider.getValue()));
+    highThresholdSlider.addChangeListener(e -> visionProcessor.setCannyHighThreshold(highThresholdSlider.getValue()));
+    dilationSlider.addChangeListener(e -> visionProcessor.setDilationIterations(dilationSlider.getValue()));
 
     topPanel.add(mainControlsPanel);
     topPanel.add(slidersPanel);
@@ -97,6 +104,8 @@ public class ContourDetectionTool extends JFrame {
     add(imagesContainer, BorderLayout.CENTER);
 
     startStopCameraButton.addActionListener(e -> startCameraCapture());
+
+    setAlphaButton.addActionListener(e -> setAlpha());
 
     Timer timer = new Timer(500, e -> {
       if (capture) {
@@ -123,6 +132,15 @@ public class ContourDetectionTool extends JFrame {
       }
     } catch (TRADEException e) {
       log.error("[init] error registering for TRADE notification for getAvailableCameras join", e);
+    }
+  }
+
+  private void setAlpha() {
+    try {
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("setAlpha"));
+      tsi.call(void.class, alpha);
+    } catch (TRADEException e) {
+      log.error("[setAlpha] error calling trade service to set value of constant value a", e);
     }
   }
 
@@ -232,7 +250,6 @@ public class ContourDetectionTool extends JFrame {
     try {
       objectWidthW = Double.parseDouble(wField.getText());
       objectLengthL = Double.parseDouble(lField.getText());
-      distanceZ = Double.parseDouble(zField.getText());
     } catch (NumberFormatException ex) {
       infoLabel.setText("Invalid dimensions (W, L, Z). Please enter valid numbers.");
       return;
@@ -279,6 +296,7 @@ public class ContourDetectionTool extends JFrame {
     originalPanel.setImage(sourceImage, corners, new Point((int) imageCenterX, (int) imageCenterY), new Point((int) rectCenterX, (int) rectCenterY));
     BufferedImage corrected = createCorrectedImage(sourceImage, new Point((int) rectCenterX, (int) rectCenterY), rotationAngleRad);
     correctedPanel.setImage(corrected, null, new Point(corrected.getWidth() / 2, corrected.getHeight() / 2), null);
+    this.alpha = a;
   }
 
   protected void update(BufferedImage sourceImage, List<Point> corners, double imageCenterX, double imageCenterY, double rectCenterX, double rectCenterY, double rotationAngleRad, double a, double aCalculated, double realWorldShiftX, double realWorldShiftY, double pixelWidth) {
@@ -303,9 +321,5 @@ public class ContourDetectionTool extends JFrame {
     g2d.drawImage(source, tx, null);
     g2d.dispose();
     return target;
-  }
-
-  public static void main(String[] args) {
-    SwingUtilities.invokeLater(() -> new ContourDetectionTool().setVisible(true));
   }
 }

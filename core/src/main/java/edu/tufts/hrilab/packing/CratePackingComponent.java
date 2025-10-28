@@ -156,6 +156,11 @@ public class CratePackingComponent extends DiarcComponent {
     return options;
   }
 
+  @Override
+  protected void shutdownComponent() {
+    visionProcessor.writeSettings();
+  }
+
   /**
    * the 3d solver which calculates the packing based on a fixed item
    * height, allowing only for 90-degree horizontal rotation of the item
@@ -739,5 +744,10 @@ public class CratePackingComponent extends DiarcComponent {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @TRADEService
+  public void setAlpha(double alpha) {
+    visionProcessor.setA(alpha);
   }
 }

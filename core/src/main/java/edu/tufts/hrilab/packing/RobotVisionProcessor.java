@@ -1,37 +1,72 @@
 package edu.tufts.hrilab.packing;
 
+import com.google.gson.Gson;
+import edu.tufts.hrilab.packing.gson.PackingVisionSettingsJson;
+import edu.tufts.hrilab.slug.dialogue.ResponseGeneration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.*;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * process a camera image to determine the necessary robot action for pickup of the box
  */
 public class RobotVisionProcessor {
+  private final String settingsFile;
   private double boxWidthMeters;
   private double boxLengthMeters;
   private final double cameraZDistanceMeters;
-  private final int cannyLowThreshold;
-  private final int cannyHighThreshold;
-  private final int dilationIterations;
+  private int cannyLowThreshold = 0;
+  private int cannyHighThreshold = 80;
+  private int dilationIterations = 1;
   private ContourDetectionTool tool;
 
   private final int PIXEL_DIFFERENCE_THRESHOLD = 30;
 
   private final double detectedSizeThreshold = 0.25;
+  private double a = -1;
+  private static final Logger log = LoggerFactory.getLogger(ResponseGeneration.class);
+
+  private String visionsSettingsFile = "visionSettings";
 
   public RobotVisionProcessor(double boxWidthMeters, double boxLengthMeters, double cameraZDistanceMeters) {
     this.boxWidthMeters = boxWidthMeters;
     this.boxLengthMeters = boxLengthMeters;
     this.cameraZDistanceMeters = cameraZDistanceMeters;
 
-    // defaul canny edge parameters that worked on all the test images
-    this.cannyLowThreshold = 0;
-    this.cannyHighThreshold = 80;
-    this.dilationIterations = 1;
+    String homeDir = System.getProperty("user.home");
+    settingsFile = Paths.get(homeDir, ".diarc","visionSettings").toString();
+
+
+    Gson gson = new Gson();
+    StringBuilder json = new StringBuilder();
+    InputStream is;
+    BufferedReader br = null;
+    try {
+      is = new FileInputStream(settingsFile);
+      br = new BufferedReader(new InputStreamReader(is));
+    } catch (FileNotFoundException e) {
+      log.warn("[loadLocationConfig] error loading location configuration from file at path" + settingsFile);
+    }
+    if (br != null) {
+      List<String> jsonList = br.lines().collect(Collectors.toList());
+      for (String s : jsonList) {
+        json.append(s);
+        PackingVisionSettingsJson settings = gson.fromJson(json.toString(), PackingVisionSettingsJson.class);
+
+        this.cannyLowThreshold = settings.lowThreshold;
+        this.cannyHighThreshold = settings.highThreshold;
+        this.dilationIterations = settings.dilationIterations;
+      }
+    }
     SwingUtilities.invokeLater(() -> {
-      tool = new ContourDetectionTool();
+      tool = new ContourDetectionTool(this);
     });
   }
 
@@ -42,6 +77,10 @@ public class RobotVisionProcessor {
    * @return the required adjustments, or null if no object was found
    */
   public Vec3 calculatePickupAction(BufferedImage capturedImage) {
+    if (a == -1) {
+      log.error("[calculatePickupAction] calibration value 'a' has not been set");
+      return null;
+    }
     // call the contour detection to find the tightest rectangle
     List<Point> rectangleCorners = ContourDetector.findLargestObjectRectangle(
             capturedImage, cannyLowThreshold, cannyHighThreshold, dilationIterations);
@@ -67,7 +106,6 @@ public class RobotVisionProcessor {
     // determine the factor "a" -- note this is computed anew on the fly every time
     // we should really track this over multiple iteration to learn the best value
     double aCalculated = pixelWidth / realWidth;
-    double a = 733.00;
     double calculatedWidth = pixelWidth / a;
     double ratio = calculatedWidth / realWidth;
 
@@ -140,5 +178,46 @@ public class RobotVisionProcessor {
 
   public void setBoxLengthMeters(double boxLengthMeters) {
     this.boxLengthMeters = boxLengthMeters;
+  }
+
+  public void setA(double a) {
+    this.a = a;
+  }
+
+  public int getCannyLowThreshold() {
+    return cannyLowThreshold;
+  }
+
+  public int getCannyHighThreshold() {
+    return cannyHighThreshold;
+  }
+
+  public int getDilationIterations() {
+    return dilationIterations;
+  }
+
+  public void setCannyLowThreshold(int value) {
+    this.cannyLowThreshold = value;
+  }
+
+  public void setCannyHighThreshold(int value) {
+    this.cannyHighThreshold = value;
+  }
+
+  public void setDilationIterations(int value) {
+    this.dilationIterations = value;
+  }
+
+  public void writeSettings() {
+    try {
+      Writer writer = new FileWriter(settingsFile);
+      Gson gson = new Gson();
+
+      PackingVisionSettingsJson settings = new PackingVisionSettingsJson(cannyLowThreshold, cannyHighThreshold, dilationIterations, a);
+      gson.toJson(settings, writer);
+      writer.flush();
+    } catch (IOException e) {
+      log.error("[writeSettings] error writing vision settings to file.", e);
+    }
   }
 }
