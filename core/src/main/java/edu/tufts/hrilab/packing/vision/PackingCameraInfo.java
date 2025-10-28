@@ -4,5 +4,7 @@
 
 package edu.tufts.hrilab.packing.vision;
 
-public record PackingCameraInfo(String name, int id) {
+import java.io.Serializable;
+
+public record PackingCameraInfo(String name, int id) implements Serializable {
 }

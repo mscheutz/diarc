@@ -32,7 +32,6 @@ public class RobotVisionProcessor {
     this.dilationIterations = 1;
     SwingUtilities.invokeLater(() -> {
       tool = new ContourDetectionTool();
-      tool.setVisible(true);
     });
   }
 

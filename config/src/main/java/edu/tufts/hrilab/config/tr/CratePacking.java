@@ -6,7 +6,6 @@ import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.llm.LLMComponent;
 import edu.tufts.hrilab.llm.serviceproviders.CratePackingLLMServiceProvider;
-import edu.tufts.hrilab.packing.CameraCalibrationTool;
 import edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent;
 import edu.tufts.hrilab.slug.nlg.hybrid.HybridNLGComponent;
 import edu.tufts.hrilab.slug.parsing.hybrid.HybridParserComponent;
@@ -150,8 +149,6 @@ public class CratePacking extends DiarcConfiguration {
             }
         }
 
-//        String cratePackingComponentArgs =  "-crateL 560 -crateW 360 -crateH 200 " +
-//                "-itemL 230 -itemW 160 -itemH 55 " +
         String cratePackingComponentArgs =  " " +
                 "-tolerance 20 " +
                 "-cameraAngle 0.0 -cameraHeightMM 325 -imageWidth 320 -imageHeight 260 " +
@@ -159,9 +156,11 @@ public class CratePacking extends DiarcConfiguration {
         if (mock) {
           cratePackingComponentArgs += " -mock";
         }
+
+        //IMPORTANT: PackingVisionComponent _must_ be started before CratePackingComponent. There is a good way to do this and I'm not bothering right now (Pete)
+      createInstance(edu.tufts.hrilab.packing.vision.PackingVisionComponent.class, "");
         createInstance(edu.tufts.hrilab.packing.CratePackingComponent.class, cratePackingComponentArgs);
 
-        createInstance(edu.tufts.hrilab.packing.vision.PackingVisionComponent.class, "");
 //        if (mock) {
 //          createInstance(edu.tufts.hrilab.vision.MockVisionComponent.class, "-groups agent:robotone:agent -rotX -67.5 -height 1.14");
 //          createInstance(edu.tufts.hrilab.grasp.MockGraspComponent.class, "-groups agent:robotone:agent");

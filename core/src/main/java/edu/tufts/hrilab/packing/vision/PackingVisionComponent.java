@@ -159,8 +159,7 @@ public class PackingVisionComponent extends DiarcComponent {
         System.out.println("Command exited with code: " + exitCode);
 
       } catch (Exception e) {
-        e.printStackTrace();
-        //todo: do better logging.
+        log.error("[getAvailableCameras] error in system calls to get camera info", e);
       }
     }
     log.info("[results list] " + toReturn);

@@ -15,6 +15,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class ContourDetectionTool extends JFrame {
@@ -29,7 +30,6 @@ public class ContourDetectionTool extends JFrame {
   private boolean capture;
   private int imgNum = 0;
   private JComboBox<PackingCameraInfo> cameraSelectionBox;
-  private List<PackingCameraInfo> camerasList;
   private static final Logger log =  LoggerFactory.getLogger(ContourDetectionTool.class);
 
   public ContourDetectionTool() {
@@ -45,7 +45,6 @@ public class ContourDetectionTool extends JFrame {
     JPanel mainControlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
     cameraSelectionBox = new JComboBox<>();
-    camerasList = getAvailableCameras();
     cameraSelectionBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         JComboBox cb = (JComboBox) e.getSource();
@@ -53,7 +52,6 @@ public class ContourDetectionTool extends JFrame {
         setCamera(selected.id());
       }
     });
-    camerasList.stream().forEach(e -> cameraSelectionBox.addItem(e));
     mainControlsPanel.add(cameraSelectionBox);
 
     startStopCameraButton = new JButton("Start/Stop Camera");
@@ -113,6 +111,19 @@ public class ContourDetectionTool extends JFrame {
     });
 
     timer.start();
+
+    try {
+      TRADE.registerAllServices(this, "");
+      Collection<TRADEServiceInfo> services = TRADE.getAvailableServices(new TRADEServiceConstraints().name("getAvailableCameras"));
+      if (services.isEmpty()) {
+        TRADE.requestNotification(this, "joined", new TRADEServiceConstraints().name("getAvailableCameras"),null, "getAvailableCamerasCallback");
+      } else {
+        TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAvailableCameras"));
+        getAvailableCamerasCallback(tsi);
+      }
+    } catch (TRADEException e) {
+      log.error("[init] error registering for TRADE notification for getAvailableCameras join", e);
+    }
   }
 
   private void setCamera(int selectedCamera){
@@ -129,26 +140,22 @@ public class ContourDetectionTool extends JFrame {
     }
   }
 
-  private List<PackingCameraInfo> getAvailableCameras() {
-    boolean foundService = false;
-    List<PackingCameraInfo> result = null;
-    while (!foundService) {
-      result = new ArrayList<>();
-      try {
-        TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getAvailableCameras"));
-        result = tsi.call(List.class);
-        foundService = true;
-      } catch (TRADEException e) {
-        log.debug("[getAvailableCameras] error calling TRADE service to get available cameras. waiting.");
-      }
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        log.error("[getAvailableCameras] interrupted when sleeping");
-      }
+  @TRADEService
+  public void getAvailableCamerasCallback(TRADEServiceInfo tsi) {
+    List<PackingCameraInfo> camerasList = new ArrayList<>();
+    try {
+      camerasList = tsi.call(List.class);
+    } catch (TRADEException e) {
+      log.error("[getAvailableCameras] error calling TRADE service to get available cameras.", e);
     }
-
-    return result;
+    for (PackingCameraInfo packingCameraInfo : camerasList) {
+      cameraSelectionBox.addItem(packingCameraInfo);
+    }
+    log.warn("[getAvailableCameras] cameras were found: " + camerasList);
+    SwingUtilities.invokeLater(() -> {
+      cameraSelectionBox.repaint();
+      this.setVisible(true);
+    });
   }
 
   private void saveImage() {
