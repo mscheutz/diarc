@@ -62,7 +62,7 @@ public class SimSpeechRecognitionComponentVis extends JFrame {
     // Add buttons from config file
     sConfigs.forEach(config -> parseConfigFile(config));
 
-    addDemoButtons();
+    //addDemoButtons();
 
     if (useCommand) {
       // Add text field and button
