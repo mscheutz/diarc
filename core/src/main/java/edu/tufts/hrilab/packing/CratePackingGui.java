@@ -60,9 +60,6 @@ public class CratePackingGui extends JFrame {
   private CratePackingLLMServiceProvider serviceProvider;
   private boolean japanese;
 
-  //TODO: add tolerance, number of items to pack?
-  //      update display correctly
-  //      Write to file on close
   public CratePackingGui(CratePackingComponent cratePackingComponent, HybridParserComponent hybridParserComponent, HybridNLGComponent hybridNLGComponent, CratePackingLLMServiceProvider serviceProvider, boolean japanese) {
     this.cratePackingComponent = cratePackingComponent;
     this.hybridParserComponent = hybridParserComponent;
@@ -82,6 +79,7 @@ public class CratePackingGui extends JFrame {
     JPanel innerPanel = new JPanel();
     //innerPanel.setSize(1800,50);
     innerPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+    innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 800));
     JCheckBox languageToggle = new JCheckBox();
     JLabel languageToggleLabel = new JLabel("Set Language to Japanese: ");
     languageToggle.addActionListener(e -> toggleLanguage());
@@ -96,9 +94,7 @@ public class CratePackingGui extends JFrame {
     //dimensionsPanel.setSize(1000, 150);
     //dimensionsPanel.setLayout(new BorderLayout());
     JPanel cratePanel = new  JPanel(new FlowLayout(FlowLayout.LEFT));
-    cratePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 100));
     JPanel itemPanel = new  JPanel(new FlowLayout(FlowLayout.LEFT));
-    itemPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 100));
     crateLLabel = new JLabel("Crate Length (L) in mm:");
     JPanel crateLFieldPanel = new JPanel();
     crateLFieldPanel.setLayout(new BoxLayout(crateLFieldPanel, BoxLayout.Y_AXIS));
