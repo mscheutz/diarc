@@ -1,0 +1,14 @@
+{
+  "processor": {
+    "type": "object",
+    "arity": 1
+  },
+  "predicates": [
+    {
+      "name": "owl"
+    },
+    {
+      "name": "person"
+    }
+  ]
+}

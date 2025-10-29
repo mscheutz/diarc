@@ -42,6 +42,7 @@ SET(ELEVATORDOORDETECTOR_MODEL_URL "https://github.com/hrilabtufts/vision_models
 if (pybind11_FOUND)
 	SET(SOURCES ${SOURCES}
 			FastSamDetector.cpp
+			OwlV2Detector.cpp
 	)
 endif (pybind11_FOUND)
 

@@ -24,7 +24,7 @@ OwlV2Detector::OwlV2Detector(const long long& processorId, const int imgWidth, c
   : ObjectDetector(processorId, imgWidth, imgHeight) {
   visionProcessName = "OwlV2Detector";
   logger = log4cxx::Logger::getLogger("diarc.detector.OwlV2Detector");
-  segmenter_initialized = false;
+  detector_initialized = false;
 
   createDetector();
 }
@@ -34,7 +34,7 @@ OwlV2Detector::~OwlV2Detector() {
 }
 
 void OwlV2Detector::createDetector() {
-  if (!segmenter_initialized) {
+  if (!detector_initialized) {
     LOG4CXX_DEBUG(logger, "[createDetector]");
 
     PythonHelper* pyInstance = PythonHelper::getInstance();
@@ -57,13 +57,13 @@ void OwlV2Detector::createDetector() {
     }
 
     pyInstance->releaseGIL();
-    segmenter_initialized = true;
+    detector_initialized = true;
     LOG4CXX_DEBUG(logger, boost::format("[createDetector] done. GIL released: %d") % PyGILState_Check());
   }
 }
 
 void OwlV2Detector::destroyDetector() {
-  if (segmenter_initialized) {
+  if (detector_initialized) {
 
     LOG4CXX_DEBUG(logger, "[destroyDetector]...");
     PythonHelper* pyInstance = PythonHelper::getInstance();
@@ -73,7 +73,7 @@ void OwlV2Detector::destroyDetector() {
     owlV2Detector = py::object();
 
     pyInstance->releaseGIL();
-    segmenter_initialized = false;
+    detector_initialized = false;
     LOG4CXX_DEBUG(logger, "[destroyDetector] done");
   }
 }
@@ -86,6 +86,7 @@ void OwlV2Detector::cleanup() {
 
 void OwlV2Detector::handleCaptureNotification(CaptureNotification::ConstPtr notification) {
   cv::Mat frame = notification->captureData->frame;
+  MemoryObject::VecPtr newObjects;
 
   PythonHelper* pyInstance = PythonHelper::getInstance();
   {
@@ -99,19 +100,23 @@ void OwlV2Detector::handleCaptureNotification(CaptureNotification::ConstPtr noti
     // results[4] --> [name1, name2, ...]
     py::array_t<uchar> pyFrame = PythonUtils::convertMatToNumpy(frame);
     std::vector<std::string> labels = {"person", "face"}; // TODO: populate this with search predicates
+
+    py::list pyLabels;
+    for (const auto& label : labels) {
+      pyLabels.append(label);
+    }
+
     LOG4CXX_DEBUG(logger, "[handleCaptureNotification] 1");
-    py::object tmpResults = owlV2Detector.attr("detect")(pyFrame, labels, 0.2);
+    py::object tmpResults = owlV2Detector.attr("detect")(pyFrame, pyLabels, 0.2);
     LOG4CXX_DEBUG(logger, "[handleCaptureNotification] 2");
     py::tuple results = py::cast<py::tuple>(tmpResults);
 
     LOG4CXX_DEBUG(logger, "[handleCaptureNotification] 3");
 
-    displayFrame = PythonUtils::convertNumpyToMat(overlay.cast<py::array_t<uchar>>());
-
     // populate MOs and send notifications
-    MemoryObject::VecPtr newClusterObjects = createMemoryObjects(results[0].cast<py::list>(), results[1].cast<py::list>(),
+    newObjects = createMemoryObjects(results[0].cast<py::list>(), results[1].cast<py::list>(),
                                                                  notification->captureData);
-    sendDetectionNotifications(newClusterObjects);
+    sendDetectionNotifications(newObjects);
 
     LOG4CXX_DEBUG(logger, "[handleCaptureNotification] 4");
   }
@@ -119,31 +124,39 @@ void OwlV2Detector::handleCaptureNotification(CaptureNotification::ConstPtr noti
   pyInstance->releaseGIL();
   LOG4CXX_DEBUG(logger, boost::format("[handleCaptureNotification] GIL released: %d") % PyGILState_Check());
 
+  // draw bounding boxes
   if (getDisplayFlag()) {
+    frame.copyTo(displayFrame);
+
+    MemoryObject::Vec::const_iterator newObjectsItr;
+    for (newObjectsItr = newObjects->begin(); newObjectsItr != newObjects->end(); ++newObjectsItr) {
+      const cv::Rect &moRect = (*newObjectsItr)->getDetectionMask()->getBoundingBox();
+      cv::rectangle(displayFrame, cv::Point(moRect.x, moRect.y),
+                    cv::Point(moRect.x + moRect.width, moRect.y + moRect.height),
+                    CV_RGB(255, 0, 0), 2, 8, 0);
+    }
+
     diarc::Display::displayFrame(displayFrame, getDisplayName());
   }
 }
 
-MemoryObject::VecPtr OwlV2Detector::createMemoryObjects(py::list masks, py::list confs,
+MemoryObject::VecPtr OwlV2Detector::createMemoryObjects(py::list boxes, py::list confs,
                                                           CaptureData::ConstPtr captureData) {
   // get current descriptors to process
   TypesByDescriptorConstPtr descriptors = getDescriptors();
 
   std::tr1::unordered_set<long long>::const_iterator typeIds_itr;
   MemoryObject::VecPtr newObjs(new MemoryObject::Vec());
-  LOG4CXX_DEBUG(logger, boost::format("[createMemoryObjects] num detected objects: %d") % masks.size());
+  LOG4CXX_DEBUG(logger, boost::format("[createMemoryObjects] num detected objects: %d") % boxes.size());
   for (TypesByDescriptor::const_iterator descriptor_iter = descriptors->begin(); descriptor_iter != descriptors->end(); ++descriptor_iter) {
-    for (int i = 0; i < masks.size(); ++i) {
-       auto pyMask = masks[i].attr("cpu")().attr("numpy")(); // convert torch.Tensor to numpy
-
-      cv::Mat cvMask = PythonUtils::convertNumpyToMat(pyMask.cast<py::array_t<uchar>>());
-      cv::Mat binary;
-      cv::threshold(cvMask, binary, 0.5, 255, cv::THRESH_BINARY);
+    for (int i = 0; i < boxes.size(); ++i) {
+      py::list pyBox = py::cast<py::list>(boxes[i]);
+      cv::Rect bbox = cv::Rect(pyBox[0].cast<int>(), pyBox[1].cast<int>(), pyBox[2].cast<int>(), pyBox[3].cast<int>());
       float conf = confs[i].cast<float>();
 
       // create MemoryObject for each relevant typeId
       for (typeIds_itr = descriptor_iter->second.begin(); typeIds_itr != descriptor_iter->second.end(); ++typeIds_itr) {
-        MemoryObjectMask::Ptr moMask(new MemoryObjectMask(captureData, binary));
+        MemoryObjectMask::Ptr moMask(new MemoryObjectMask(captureData, bbox));
         MemoryObject::Ptr newObj(
           new MemoryObject(*typeIds_itr, descriptor_iter->first.getArg(0), captureData, moMask));
         newObj->addValidationResult(conf, descriptor_iter->first);

@@ -27,6 +27,7 @@ log4j.appender.file1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
 #log4j.logger.diarc.detector.hough.GHT=DEBUG, file1
 #log4j.logger.diarc.detector.SpatialRelationDetector=DEBUG, file1
 #log4j.logger.diarc.detector.OpPoseDetector=DEBUG, file1
+#log4j.logger.diarc.detector.OwlV2Detector=DEBUG, file1
 #log4j.logger.diarc.detector.SiftDetector=DEBUG, file1
 #log4j.logger.diarc.detector.V4RDetector=TRACE, file1
 

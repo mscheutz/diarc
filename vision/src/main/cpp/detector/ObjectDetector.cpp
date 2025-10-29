@@ -20,6 +20,7 @@
 #include "ArucoDetector.hpp"
 #ifdef USE_PYTHON
 #include "FastSamDetector.hpp"
+#include "OwlV2Detector.hpp"
 #endif //USE_PYTHON
 
 #ifdef OPENCV3_DNN
@@ -115,6 +116,12 @@ ObjectDetector::Ptr ObjectDetector::get(const DetectorType type, const long long
       return FastSamDetector::Ptr(new FastSamDetector(processorId, imgWidth, imgHeight));
 #else
       LOG4CXX_ERROR(factoryLogger, "FastSamDetector not available. This require pybind11.");
+#endif //USE_PYTHON
+    case OWLV2:
+#if defined(USE_PYTHON)
+      return OwlV2Detector::Ptr(new OwlV2Detector(processorId, imgWidth, imgHeight));
+#else
+      LOG4CXX_ERROR(factoryLogger, "OwlV2Detector not available. This require pybind11.");
 #endif //USE_PYTHON
     case DNN:
       #if defined(OPENCV_DNN)

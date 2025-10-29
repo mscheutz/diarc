@@ -2,14 +2,13 @@
  Copyright © Thinking Robots, Inc., Tufts University, and others 2024.
 */
 
-#ifndef FASTSAMDETECTOR_HPP
-#define FASTSAMDETECTOR_HPP
+#ifndef OWLV2DETECTOR_HPP
+#define OWLV2DETECTOR_HPP
 
 #include "ObjectDetector.hpp"
 #include "stm/MemoryObject.hpp"
 
 #include <pybind11/pytypes.h>
-
 
 class OwlV2Detector : public ObjectDetector {
 public:
@@ -26,14 +25,14 @@ protected:
   void handleCaptureNotification(CaptureNotification::ConstPtr notification) override;
 
 private:
-  void createSegmenter();
-  void destroySegmenter();
+  void createDetector();
+  void destroyDetector();
 
-  bool segmenter_initialized;
+  bool detector_initialized;
   pybind11::object OwlV2DetectorClass;
   pybind11::object owlV2Detector;
 
   diarc::stm::MemoryObject::VecPtr createMemoryObjects(pybind11::list masks, pybind11::list confs, CaptureData::ConstPtr captureData);
 };
 
-#endif  //OwlV2Detector_HPP
+#endif  //OWLV2DETECTOR_HPP
