@@ -1,5 +1,6 @@
 import logging
 import argparse
+import os
 
 # Import from FLEX repo
 from flex.executor import FlexExecutor
@@ -33,7 +34,11 @@ class FlexWrapper:
         # State tracking
         self.joint_type = None
         self.joint_params = None
-        
+
+        home_dir = os.path.expanduser("~")
+        prismatic_model_dir = os.path.join(home_dir, ".diarc", "flex", "models", "prismatic")
+        revolute_model_dir = os.path.join(home_dir, ".diarc", "flex", "models", "revolute")
+
         # Create FlexConfig
         config = FlexConfig(
             max_steps=50,
@@ -41,13 +46,23 @@ class FlexWrapper:
             success_distance=0.1,
             success_angle=60.0,
             movement_distance=0.05,
-            prismatic_policy_path="models/prismatic",
-            revolute_policy_path="models/revolute"
+            prismatic_policy_path=prismatic_model_dir,
+            revolute_policy_path=revolute_model_dir
         )
         
         # Create FlexExecutor
         self.flex_executor = FlexExecutor(config)
-    
+
+        # PRE-LOAD policies to avoid lazy loading during shutdown
+        try:
+            logger.info("Pre-loading policies...")
+            self.flex_executor._get_policy('prismatic')
+            self.flex_executor._get_policy('revolute')
+            logger.info("Policies pre-loaded successfully")
+        except Exception as e:
+            logger.warning(f"Could not pre-load policies: {e}")
+
+
     @JOverride
     def callPolicy(self, policy_name: str):
         logger.info(f"FLEX call policy: {policy_name}")
