@@ -2,8 +2,10 @@
 
 set -e
 
-tradeLoggingPath=/home/pete/dev/diarc-config/src/main/resources/peruserfiles/pete/trade.properties
-tracsLoggingPath=/home/pete/dev/diarc-config/src/main/resources/peruserfiles/pete/logging.xml
+basePath=`pwd`
+tradeLoggingPath=${basePath}/tradeLogging.config
+tracsLoggingPath=${basePath}/logback.xml
+tradePropertiesPath=${basePath}/trade.properties
 main=edu.tufts.hrilab.config.tr.CratePacking
 
-java -DtradeLogging.config.path=$tradeLoggingPath -Dlogback.configurationFile=$tracsLoggingPath -cp tracs.jar: edu.tufts.hrilab.diarc.DiarcConfiguration $main
+java -DtradeLogging.config.path=$tradeLoggingPath -Dlogback.configurationFile=$tracsLoggingPath -Dtrade.properties.path=$tradePropertiesPath -cp tracs.jar: edu.tufts.hrilab.diarc.DiarcConfiguration $main
