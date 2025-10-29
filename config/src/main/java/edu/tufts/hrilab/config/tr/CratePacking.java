@@ -176,7 +176,7 @@ public class CratePacking extends DiarcConfiguration {
         String locationsPath = configFilesPrefixPath + "locations.json";
         String objectsPath = configFilesPrefixPath + "objects.json";
         String assistaConfigPath = configFilesPrefixPath + "5AS.json"; //todo this should be passed in as a command line arg or should be configurable in the settings file?
-        String rv4frConfigPath = configFilesPrefixPath + "RV4FR.json";
+        //String rv4frConfigPath = configFilesPrefixPath + "RV4FR.json";
 
         if (mock) {
             if (useAssista) {
@@ -354,7 +354,7 @@ public class CratePacking extends DiarcConfiguration {
         japanese = settings.useJapanese;
         cachePersist = settings.persistCache;
         useAssista = settings.assista;
-        use4fr = settings.rv4fr;
+        //use4fr = settings.rv4fr;
     }
 
     private class PickAndPlaceSettings {
@@ -362,7 +362,7 @@ public class CratePacking extends DiarcConfiguration {
       public boolean useJapanese;
       public boolean persistCache;
       public boolean assista;
-      public boolean rv4fr;
+      //public boolean rv4fr;
     }
 
     //for distribution
