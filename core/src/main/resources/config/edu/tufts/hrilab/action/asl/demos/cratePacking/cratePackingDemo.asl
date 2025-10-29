@@ -218,7 +218,7 @@ import java.lang.Boolean;
     Double !difference;
 
     !origin = tsc:getPoseFromSymbol(robotonepose_1:pose);
-    act:moveToAdjustedPose(!origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc);
+    act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
 
     !surfaceHeight = op:invokeMethod(!origin, "getSurfaceHeight");
     !height = op:+(!surfaceHeight, ?dz);
