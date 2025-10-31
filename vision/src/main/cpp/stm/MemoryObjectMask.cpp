@@ -6,6 +6,8 @@
 #include "MemoryObjectMask.hpp"
 
 #include "capture/util/CaptureUtilities.hpp"
+#include "point_clouds/PCLFunctions.hpp"
+
 #include <boost/format.hpp>
 #include <boost/thread/lock_guard.hpp>
 #include <pcl/filters/extract_indices.h>
@@ -20,19 +22,10 @@ log4cxx::LoggerPtr MemoryObjectMask::logger(log4cxx::Logger::getLogger("edu.tuft
 
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const cv::Mat &mask)
         : captureData_(capture),
-          imageMask_(),
-          indicesMask_(),
-          boundingBox_(),
-          dimensions_(),
           location_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
                     std::numeric_limits<double>::quiet_NaN()),
           direction_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-                     std::numeric_limits<double>::quiet_NaN()),
-          objectCloud_(),
-          objectCloudRGB_(),
-          objectImage_(),
-          cloud_mutex_(),
-          image_mutex_() {
+                     std::numeric_limits<double>::quiet_NaN()) {
 
   LOG4CXX_DEBUG(logger, "[MemoryObjectMask] cvMat Mask constructor.");
 
@@ -62,8 +55,6 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
   // for location
   cv::Point3d loc(0, 0, 0);
   int locIndices = 0;
-
-  //
   for (int x = 0; x < mask.cols; ++x) {
     for (int y = 0; y < mask.rows; ++y) {
       if (imageMask_.at<float>(y, x) > 0) {
@@ -107,12 +98,12 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
 
   // set dimensions
   if (captureData_->hasCloudData()) {
-    pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
+    pcl::MomentOfInertiaEstimation<pcl::PointXYZ> feature_extractor;
     feature_extractor.setInputCloud(cloud_filtered);
     feature_extractor.compute();
     pcl::PointXYZ min_point_AABB;
     pcl::PointXYZ max_point_AABB;
-    feature_extractor.getAABB (min_point_AABB, max_point_AABB);
+    feature_extractor.getAABB(min_point_AABB, max_point_AABB);
     LOG4CXX_DEBUG(logger, boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
     LOG4CXX_DEBUG(logger, boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
 
@@ -140,19 +131,11 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
 
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const cv::Rect &boundingBoxMask)
         : captureData_(capture),
-          imageMask_(),
-          indicesMask_(),
           boundingBox_(boundingBoxMask),
-          dimensions_(),
           location_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
                     std::numeric_limits<double>::quiet_NaN()),
           direction_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-                     std::numeric_limits<double>::quiet_NaN()),
-          objectCloud_(),
-          objectCloudRGB_(),
-          objectImage_(),
-          cloud_mutex_(),
-          image_mutex_() {
+                     std::numeric_limits<double>::quiet_NaN())  {
 
   if (logger->isDebugEnabled()) {
     LOG4CXX_DEBUG(logger, boost::format("[MemoryObjectMask] rect constructor. Rect: (%d,%d,%d,%d)")
@@ -201,42 +184,59 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
   for (int x = boundingBox_.x; x < (boundingBox_.x + boundingBox_.width); ++x) {
     for (int y = boundingBox_.y; y < (boundingBox_.y + boundingBox_.height); ++y) {
 
-      imageMask_(y, x) = 1.0;
-
       int index = x + y * imgWidth;
-      indicesMask_.push_back(index);
 
       // if we have depth info
-      if (captureData_->hasCloudData()
-          && !std::isnan(captureData_->cloud->points[index].x)
-          && !std::isnan(captureData_->cloud->points[index].y)
-          && !std::isnan(captureData_->cloud->points[index].z)) {
+      if (captureData_->hasCloudData()) {
 
-        // create filtered cloud to use for finding dimensions
-        pcl::PointXYZ point = captureData_->cloud->at(index);
-        // Note: Added conditional necessary due to detector randomly picking up (0,0,0) points
-        // TODO: Fix clustering of object points to eliminate noise then get rid of conditional
-        if (!(point.x == 0.0 && point.y == 0.0 && point.z == 0.0))
-          cloud_filtered->push_back(point);
+        pcl::PointXYZ point = captureData_->cloud->points[index];
+        if (!std::isnan(captureData_->cloud->points[index].x)
+            && !std::isnan(captureData_->cloud->points[index].y)
+            && !std::isnan(captureData_->cloud->points[index].z)
+            && !(point.x == 0.0 && point.y == 0.0 && point.z == 0.0)) {
 
-        //add to loc sum
-        loc.x += point.x;
-        loc.y += point.y;
-        loc.z += point.z;
-        ++locIndices;
+          imageMask_(y, x) = 1.0;
+          indicesMask_.push_back(index);
+        }
+      } else {
+        // no depth info -- assume everything in bounding box is part of mask
+        imageMask_(y, x) = 1.0;
+
+        int index = x + y * imgWidth;
+        indicesMask_.push_back(index);
       }
     }
   }
 
+  // refine mask using region growing if depth data is available
+  if (captureData_->hasCloudData()) {
+    pcl::PointIndicesPtr indicesPtr(new pcl::PointIndices);
+    indicesPtr->indices = indicesMask_;
+
+    LOG4CXX_DEBUG(logger, boost::format("num mask indices BEFORE region segmentation: %d.") % indicesMask_.size());
+
+    int index = (boundingBox_.x + (boundingBox_.width / 2.0)) + (boundingBox_.y + (boundingBox_.height / 2.0)) * imgWidth;
+    pcl::PointIndicesPtr outIndicesPtr(new pcl::PointIndices);
+    if (SegmentRegionFromPoint<pcl::PointXYZ>(captureData_->cloud, indicesPtr, index, outIndicesPtr)) {
+      indicesMask_.clear();
+      indicesMask_.insert(indicesMask_.end(), outIndicesPtr->indices.begin(), outIndicesPtr->indices.end());
+    }
+
+    LOG4CXX_DEBUG(logger, boost::format("num mask indices AFTER region segmentation: %d.") % outIndicesPtr->indices.size());
+  }
+
   // set dimensions
   if (captureData_->hasCloudData()) {
-    // pcl::io::savePCDFileASCII ("/home/dev/Downloads/empty_bowl_test.pcd", *cloud_filtered);
-    pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
-    feature_extractor.setInputCloud(cloud_filtered);
+    pcl::PointIndicesPtr indicesPtr(new pcl::PointIndices);
+    indicesPtr->indices = indicesMask_;
+
+    pcl::MomentOfInertiaEstimation<pcl::PointXYZ> feature_extractor;
+    feature_extractor.setInputCloud(captureData_->cloud);
+    feature_extractor.setIndices(indicesPtr);
     feature_extractor.compute();
     pcl::PointXYZ min_point_AABB;
     pcl::PointXYZ max_point_AABB;
-    feature_extractor.getAABB (min_point_AABB, max_point_AABB);
+    feature_extractor.getAABB(min_point_AABB, max_point_AABB);
     LOG4CXX_DEBUG(logger, boost::format("max_point: %f %f %f.") % max_point_AABB.x % max_point_AABB.y % max_point_AABB.z);
     LOG4CXX_DEBUG(logger, boost::format("min_point: %f %f %f.") % min_point_AABB.x % min_point_AABB.y % min_point_AABB.z);
 
@@ -248,33 +248,35 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const c
   LOG4CXX_DEBUG(logger, boost::format("[MemoryObjectMask] num depth points: %d.") % locIndices);
 
   //set direction and location
-  if (captureData_->hasCloudData() && locIndices > 0) {
+  if (captureData_->hasCloudData()) {
+
+    for (int index : indicesMask_) {
+      pcl::PointXYZ point = captureData_->cloud->at(index);
+      //add to loc sum
+      loc.x += point.x;
+      loc.y += point.y;
+      loc.z += point.z;
+      ++locIndices;
+    }
+
     loc.x /= locIndices;
     loc.y /= locIndices;
     loc.z /= locIndices;
     setLocation(loc); //also sets direction
   } else {
-    direction_ = diarc::capture::util::calcDirection(0, boundingBox_.x + (boundingBox_.width) / 2.0,
-                                                   boundingBox_.y + (boundingBox_.height) / 2.0);
+    setDirection(diarc::capture::util::calcDirection(0, boundingBox_.x + (boundingBox_.width) / 2.0,
+                                                   boundingBox_.y + (boundingBox_.height) / 2.0));
   }
 
 }
 
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const std::vector<int> &imageIndicesMask)
         : captureData_(capture),
-          imageMask_(),
           indicesMask_(imageIndicesMask),
-          boundingBox_(),
-          dimensions_(),
           location_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
                     std::numeric_limits<double>::quiet_NaN()),
           direction_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-                     std::numeric_limits<double>::quiet_NaN()),
-          objectCloud_(),
-          objectCloudRGB_(),
-          objectImage_(),
-          cloud_mutex_(),
-          image_mutex_() {
+                     std::numeric_limits<double>::quiet_NaN()) {
 
   LOG4CXX_DEBUG(logger, "[MemoryObjectMask] imageIndicesMask constructor.");
   // initialize image mask to all zeros
@@ -351,7 +353,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const s
 
   // set dimensions
   if (captureData_->hasCloudData()) {
-    pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
+    pcl::MomentOfInertiaEstimation<pcl::PointXYZ> feature_extractor;
     feature_extractor.setInputCloud(cloud_filtered);
     feature_extractor.compute();
     pcl::PointXYZ min_point_AABB;
@@ -366,7 +368,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const s
     // loc.x = (max_point_AABB.x + min_point_AABB.x)/2.0;
     // loc.y = (max_point_AABB.y + min_point_AABB.y)/2.0;
     // loc.z = (max_point_AABB.z + min_point_AABB.z)/2.0;
-    setLocation(loc); //also sets direction
+    // setLocation(loc); //also sets direction
   }
 
   //set direction and location
@@ -394,19 +396,10 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture, const s
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
                                    const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloudMask)
         : captureData_(capture),
-          imageMask_(),
-          indicesMask_(),
-          boundingBox_(),
-          dimensions_(),
           location_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
                     std::numeric_limits<double>::quiet_NaN()),
           direction_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-                     std::numeric_limits<double>::quiet_NaN()),
-          objectCloud_(),
-          objectCloudRGB_(),
-          objectImage_(),
-          cloud_mutex_(),
-          image_mutex_() {
+                     std::numeric_limits<double>::quiet_NaN())  {
 
   LOG4CXX_DEBUG(logger, "[MemoryObjectMask] point cloud constructor.");
 
@@ -491,7 +484,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
 
   // TODO: handle better
   if (cloudMask->size() > 1) {
-    pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
+    pcl::MomentOfInertiaEstimation<pcl::PointXYZ> feature_extractor;
     feature_extractor.setInputCloud(cloud_filtered);
     feature_extractor.compute();
     pcl::PointXYZ min_point_AABB;
@@ -503,8 +496,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     dimensions_.x = max_point_AABB.x - min_point_AABB.x;
     dimensions_.y = max_point_AABB.y - min_point_AABB.y;
     dimensions_.z = max_point_AABB.z - min_point_AABB.z;
-  }
-  else {
+  } else {
     dimensions_.x = 0;
     dimensions_.y = 0;
     dimensions_.z = 0;
@@ -517,7 +509,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     loc.z /= indicesMask_.size();
     setLocation(loc); //also sets direction
   } else {
-    direction_ = diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
+    setDirection(diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0));
   }
 
   //set bounding box
@@ -535,19 +527,10 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
 MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
                                    const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloudMask)
         : captureData_(capture),
-          imageMask_(),
-          indicesMask_(),
-          boundingBox_(),
-          dimensions_(),
           location_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
                     std::numeric_limits<double>::quiet_NaN()),
           direction_(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
-                     std::numeric_limits<double>::quiet_NaN()),
-          objectCloud_(),
-          objectCloudRGB_(),
-          objectImage_(),
-          cloud_mutex_(),
-          image_mutex_() {
+                     std::numeric_limits<double>::quiet_NaN()) {
 
   LOG4CXX_DEBUG(logger, "[MemoryObjectMask] RGB point cloud constructor.");
 
@@ -630,7 +613,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
 
   if (cloudMask->size() > 1) {
     // set dimensions
-    pcl::MomentOfInertiaEstimation <pcl::PointXYZ> feature_extractor;
+    pcl::MomentOfInertiaEstimation<pcl::PointXYZ> feature_extractor;
     feature_extractor.setInputCloud(cloud_filtered);
     feature_extractor.compute();
     pcl::PointXYZ min_point_AABB;
@@ -642,13 +625,12 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     dimensions_.x = max_point_AABB.x - min_point_AABB.x;
     dimensions_.y = max_point_AABB.y - min_point_AABB.y;
     dimensions_.z = max_point_AABB.z - min_point_AABB.z;
-  }
-  else {
+  } else {
     dimensions_.x = 0;
     dimensions_.y = 0;
     dimensions_.z = 0;
   }
-  
+
   //set direction and location
   if (indicesMask_.size() > 0) {
     loc.x /= indicesMask_.size();
@@ -656,7 +638,7 @@ MemoryObjectMask::MemoryObjectMask(const CaptureData::ConstPtr &capture,
     loc.z /= indicesMask_.size();
     setLocation(loc); //also sets direction
   } else {
-    direction_ = diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0);
+    setDirection(diarc::capture::util::calcDirection(0, xmin + (xmax - xmin) / 2.0, ymin + (ymax - ymin) / 2.0));
   }
 
   //set bounding box
@@ -947,6 +929,8 @@ void MemoryObjectMask::setDirection(const double &x, const double &y, const doub
   direction_[0] *= normValue;
   direction_[1] *= normValue;
   direction_[2] *= normValue;
+
+  LOG4CXX_DEBUG(logger, boost::format("[setDirection] normalized (x,y,z) = (%d,%d,%d).") % direction_[0] % direction_[1] % direction_[2]);
 }
 
 void MemoryObjectMask::setDirection(const cv::Vec3d &dir) {

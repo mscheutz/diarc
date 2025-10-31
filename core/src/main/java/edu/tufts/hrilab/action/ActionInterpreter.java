@@ -491,6 +491,10 @@ public class ActionInterpreter implements Callable<ActionStatus> {
   private void mainExecutionLoop() {
     log.debug("Entering main execution loop. Goal: {} Context: {}", goal, ((currentStep == null) ? "null" : currentStep));
 
+    // flags to allow finally blocks to execute during cancel/suspend
+    boolean alreadySuspended = false;
+    boolean alreadyCancelled = false;
+
     while (shouldUpdate.get()) {
       goal.setCurrentContext(currentStep);
       Context nextStep;
@@ -507,10 +511,21 @@ public class ActionInterpreter implements Callable<ActionStatus> {
       // because the cancel/suspend hooks happens asynchronously to the main execution loop, it's possible the currentStep
       // already has a terminal status in the calls to cancel/suspend (and can't be cancelled/suspended). This ensures
       // the cancel/suspend is set on the nextStep and propagated up/down the context tree
-      if (suspended.get() && nextStep != null && nextStep.getStatus() != ActionStatus.SUSPEND && nextStep.isInterruptible()) {
-        nextStep.setStatus(ActionStatus.PARENT_SUSPENDED);
-      } else if (canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL && nextStep.isInterruptible()) {
-        nextStep.setStatus(ActionStatus.PARENT_CANCELED);
+      if (!alreadySuspended && suspended.get() && nextStep != null && nextStep.getStatus() != ActionStatus.SUSPEND && nextStep.isInterruptible()) {
+        if (currentStep.getStatus() == ActionStatus.SUSPEND) {
+          // this should only happen when executing a finally block, which we want to execute before suspending
+          alreadySuspended = true;
+        } else {
+          nextStep.setStatus(ActionStatus.SUSPEND);
+        }
+        nextStep.setStatus(ActionStatus.SUSPEND);
+      } else if (!alreadyCancelled && canceled.get() && nextStep != null && nextStep.getStatus() != ActionStatus.CANCEL && nextStep.isInterruptible()) {
+        if (currentStep.getStatus() == ActionStatus.CANCEL) {
+          // this should only happen when executing a finally block, which we want to execute before cancelling
+          alreadyCancelled = true;
+        } else {
+          nextStep.setStatus(ActionStatus.CANCEL);
+        }
       }
 
       // update current step

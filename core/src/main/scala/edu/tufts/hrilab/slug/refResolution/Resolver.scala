@@ -524,6 +524,7 @@ class Resolver(groups: java.util.List[String]) {
       }
   }
 
+  // TODO: generating a referring expression depends on context (describing a scene vs clarification requests), and there is none here...
   //brad: the structure of this is wild...
   def generateRE(ref: Symbol): java.util.LinkedHashMap[Symbol, java.util.List[Term]] = {
     log.debug("generating RE -resolver")
@@ -585,47 +586,50 @@ class Resolver(groups: java.util.List[String]) {
       //val props = mutable.Stack(consultant.getPropertiesHandled.map((_, Map[String, String]())): _*) //LINE 1
       log.debug("PROPS: " + props)
       //TODO: old code didn't account for there only being a single object ref, thus no distractors
-      while (props.nonEmpty && distractors.nonEmpty) {
-        //LINE 2
-        log.debug("Distractors: " + distractors + "; P: " + props)
-        val (prop: Property, bindings: mutable.ListMap[Symbol, Symbol]) = props.pop()
-        log.debug("TRYING: " + prop)
-        val args: List[Symbol] = prop.predicateForm.get(0).asInstanceOf[Term].getArgs.asScala.toList
+      // This doesn't work for describing a scene, where you don't necessarily want optimized descriptions, but
+      // instead prefer verbosity
+//      while (props.nonEmpty && distractors.nonEmpty) {
+//        //LINE 2
+//        log.debug("Distractors: " + distractors + "; P: " + props)
+//        val (prop: Property, bindings: mutable.ListMap[Symbol, Symbol]) = props.pop()
+//        log.debug("TRYING: " + prop)
+//        val args: List[Symbol] = prop.predicateForm.get(0).asInstanceOf[Term].getArgs.asScala.toList
+//
+//        log.debug("BINDINGS: " + bindings + " /// FOUND: " + found)
+//        if (bindings.values.toList.intersect(found).nonEmpty) {
+//          log.debug("Refers to something already described, dropping")
+//        } else {
+//          log.debug("LINE6 -- " + prop + " -- " + bindings) //LINE 6
+//          log.debug("args: " + args)
+//          args.find(s => !bindings.contains(s)) match {
+//            case None => throw new Exception("No variables left unfilled?")
+//            case Some(missing) =>
+//              log.debug("MISSING: " + missing)
+//              //rebinds query to refer to each distractor, then checks whether property holds for that distractor
+//              //elimDist is distractors which don't have the property we're looking for
+//              val elimDist = distractors.filter(d => assess(b2h(bindings + (ref -> d)), prop) < GENTAU)
+//              //LINE 8
+//              log.debug("DISTRACTORS ELIMINATED: " + elimDist)
+//              // if the set of distractors for which the property does not appear in STM != 0
+//              if (elimDist.nonEmpty || distractors.isEmpty) {
+//                //LINE 9
+//                //TODO:brad: why is this Variable?
+//                description.add(prop.boundForm(bindings.map(x => new Variable(x._1.getName, x._2.getName)).toList))
+//                //LINE 10
+//                distractors = distractors diff elimDist //LINE 11
+//                log.debug("DESCRIPTION: " + description)
+//                log.debug("DISTRACTORS: " + distractors)
+//              }
+//          }
+//        }
+//      }
 
-        log.debug("BINDINGS: " + bindings + " /// FOUND: " + found)
-        if (bindings.values.toList.intersect(found).nonEmpty) {
-          log.debug("Refers to something already described, dropping")
-        } else {
-          log.debug("LINE6 -- " + prop + " -- " + bindings) //LINE 6
-          log.debug("args: " + args)
-          args.find(s => !bindings.contains(s)) match {
-            case None => throw new Exception("No variables left unfilled?")
-            case Some(missing) =>
-              log.debug("MISSING: " + missing)
-              //rebinds query to refer to each distractor, then checks whether property holds for that distractor
-              //elimDist is distractors which don't have the property we're looking for
-              val elimDist = distractors.filter(d => assess(b2h(bindings + (ref -> d)), prop) < GENTAU)
-              //LINE 8
-              log.debug("DISTRACTORS ELIMINATED: " + elimDist)
-              // if the set of distractors for which the property does not appear in STM != 0
-              if (elimDist.nonEmpty || distractors.isEmpty) {
-                //LINE 9
-                //TODO:brad: why is this Variable?
-                description.add(prop.boundForm(bindings.map(x => new Variable(x._1.getName, x._2.getName)).toList))
-                //LINE 10
-                distractors = distractors diff elimDist //LINE 11
-                log.debug("DESCRIPTION: " + description)
-                log.debug("DISTRACTORS: " + distractors)
-              }
-          }
-        }
-      }
-      //commented out because it ruins reference expression generation for clarification requests
-      /*while (props.nonEmpty && !distractors.nonEmpty) {
+      // this ruins reference expression generation for clarification requests
+      while (props.nonEmpty && !distractors.nonEmpty) {
         val (prop: Property, bindings: mutable.ListMap[Symbol, Symbol]) = props.pop()
         description.add(prop.boundForm(bindings.map(x => new Variable(x._1.getName, x._2.getName)).toList))
         log.debug("DESCRIPTION: " + description)
-      }*/
+      }
       Option((ref, description), distractors) // Line 12
     }
 

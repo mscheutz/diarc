@@ -154,6 +154,14 @@ public:
   */
   virtual void resetHasLearned();
 
+  /**
+   * When learning only requires a predicate as input (i.e., no detected object from another visual search), this
+   * allows the predicate to be sent directly from the Java side without the need to start a complicated vision
+   * pipeline.
+   * @param notification predicate describing what should be learned
+   */
+  virtual bool handleLearningNotification(const std::string& notification);
+
   //display methods - thread safe
   //overriding methods need to ensure same level of thread-safety
   virtual void turnDisplayOn(const std::string& windowName);

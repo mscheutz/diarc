@@ -23,6 +23,11 @@
 #include "validator/SpatialRelationValidator.hpp"
 
 #include "saliency/MasterSaliencyProcessor.hpp"
+
+#if defined(OPENCV_DNN) && defined(USE_PYTHON)
+#include "validator/ComponentValidator.hpp"
+#endif //OPENCV_DNN
+
 #ifdef USE_V4R_V0
 //#include "saliency/RelativeHeightProcessor.hpp"
 //#include "saliency/SurfaceOrientationProcessor.hpp"
@@ -33,7 +38,6 @@
 #include "saliency/LocationSaliencyProcessor.hpp"
 #include "saliency/OrientationProcessor.hpp"
 #include "saliency/MasterSaliencyProcessor.hpp"
-#include "validator/ShapeValidator.hpp"
 #include "validator/SurfaceMarkingValidator.hpp"
 #endif //USE_V4R_V0
 
@@ -120,13 +124,13 @@ ImageProcessor::Ptr ImageProcessor::get(const ImageProcessorType type, const lon
       return GlobalFeatureValidator::Ptr(new GlobalFeatureValidator(processorId, imgWidth, imgHeight));
     case SIZEVALIDATOR:
       return SizeValidator::Ptr(new SizeValidator(processorId, imgWidth, imgHeight, isStereo));
-    case SHAPEVALIDATOR:
-#ifdef USE_V4R_V0
-      return ShapeValidator::Ptr(new ShapeValidator(processorId, imgWidth, imgHeight, isStereo));
+    case COMPONENTVALIDATOR:
+#if defined(OPENCV_DNN) && defined(USE_PYTHON)
+      return ComponentValidator::Ptr(new ComponentValidator(processorId, imgWidth, imgHeight, isStereo));
 #else
-      LOG4CXX_ERROR(factoryLogger, "ShapeValidator not available. Did you compile vision with V4R?");
-#endif
+      LOG4CXX_ERROR(factoryLogger, "ComponentValidator not available. This require OpenCV DNN module 4.5+ and pybind11.");
       break;
+#endif
     case SPATIALRELATIONVALIDATOR:
       return SpatialRelationValidator::Ptr(new SpatialRelationValidator(processorId, imgWidth, imgHeight, isStereo));
     case SURFACEMARKINGVALIDATOR:

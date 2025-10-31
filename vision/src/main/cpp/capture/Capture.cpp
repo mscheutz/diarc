@@ -26,15 +26,10 @@
 #include "CapturePCDFile.cpp"
 #include "common/notification/CaptureNotification.hpp"
 
-#ifdef FREENECT
-#include "CaptureFreenect.cpp"
-#endif
 #ifdef USE_OPENNI
-
 #include "CaptureOpenni.cpp"
-#include "CaptureOpenniPlus.cpp"
-
 #endif
+
 #ifdef USE_OPENNI2
 #include "CaptureOpenni2.cpp"
 #endif
@@ -48,6 +43,10 @@
 #include "CaptureMultisense.hpp"
 #endif
 
+#ifdef USE_ROS2_VISION
+#include "CaptureROS2.hpp"
+#endif
+
 #ifdef USE_NAO
 #include "CaptureNao.hpp"
 #endif
@@ -55,6 +54,11 @@
 #ifdef USE_GSTREAMER
 #include "CaptureGStreamer.hpp"
 #endif
+
+#ifdef USE_PYTHON
+#include "pyvis/PythonHelper.hpp"
+namespace py = pybind11;
+#endif // USE_PYTHON
 
 namespace diarc {
   namespace capture {
@@ -83,11 +87,6 @@ namespace diarc {
       LOG4CXX_INFO(logger, boost::format("Capture Factory cammode: %d.") % camMode);
 
       switch (camMode) {
-        case MONO_FW:
-        case STEREO_FW:
-        case STEREO_SYNC: LOG4CXX_ERROR(logger, "FireWire modes not available. Capture classes need to be rewritten!!");
-          //captureDevice = Capture::Ptr(new CaptureFirewire(configFile));
-          break;
         case MONO_V4L2:
           captureDevice = Capture::Ptr(new CaptureV4L2(configFile));
           break;
@@ -139,6 +138,13 @@ namespace diarc {
         LOG4CXX_ERROR(logger, "ROS is not available.");
 #endif
           break;
+        case ROS2:
+#ifdef USE_ROS2_VISION
+          captureDevice = Capture::Ptr(new CaptureROS2(configFile));
+#else
+            LOG4CXX_ERROR(logger, "ROS2 is not available.");
+#endif
+        break;
           //====================== End PR2 Options ===========================
 
         case MULTISENSE:
@@ -152,13 +158,6 @@ namespace diarc {
         case SIM_PC1:
         case SIM_PC2:
           captureDevice = Capture::Ptr(new CaptureSimulateKinect(configFile));
-          break;
-        case KINECT_PLUS:
-#ifdef USE_OPENNI
-          captureDevice = Capture::Ptr(new CaptureOpenniPlus(configFile));
-#else
-          LOG4CXX_ERROR(logger, "OpenNI is not available.");
-#endif
           break;
         case NAO:
 #ifdef USE_NAO
@@ -311,6 +310,13 @@ namespace diarc {
         pub = nh->advertise<pcl::PointCloud<pcl::PointXYZ> >("/head_mount_kinect/depth_registered/points", 1);
       }
 #endif //USE_ROS_VISION
+
+
+      // initialize python for all vision threads
+#ifdef USE_PYTHON
+      PythonHelper* pyInstance = PythonHelper::getInstance();
+      pyInstance->initializePython();
+#endif //USE_PYTHON
     }
 
     Capture::~Capture() {
@@ -318,6 +324,14 @@ namespace diarc {
       if (saveToAVIstarted) {
         stopAviWrite();
       }
+
+
+      // finalize python stuff
+#ifdef USE_PYTHON
+      PythonHelper* pyInstance = PythonHelper::getInstance();
+      pyInstance->finalizePython();
+
+#endif // USE_PYTHON
     }
 
     bool Capture::capture(const double transform[]) {

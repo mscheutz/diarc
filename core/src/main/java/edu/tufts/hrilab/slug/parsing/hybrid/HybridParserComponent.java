@@ -183,6 +183,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
       }
       cacheParser = createInstance(CachedParserComponent.class, cacheArgs, false);
     }
+    unknownListener = Factory.createSymbol("unknown");
   }
 
   /**

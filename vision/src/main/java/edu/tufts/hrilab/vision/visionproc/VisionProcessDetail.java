@@ -21,7 +21,7 @@ public class VisionProcessDetail<T extends Enum<T>> {
     private final T type;
     private final int img_width;
     private final int img_height;
-    private ArrayList<ImageProcessorType> dependencies = new ArrayList<ImageProcessorType>(); //image proc types this depends on (e.g., sift, blort detector, etc.)
+    private final List<ImageProcessorType> dependencies = new ArrayList<>(); //image proc types this depends on (e.g., sift, blort detector, etc.)
 
     public VisionProcessDetail(final T detectorType, final int imgWidth, final int imgHeight) {
         type = detectorType;

@@ -29,6 +29,10 @@ namespace diarc {
               pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr());
       void pointCloudToDepthAndColor(cv::Mat depth, cv::Mat color,
               pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud);
+      void pointCloudToDepth(cv::Mat depth, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud);
+      void pointCloudToDepthWithinReferenceCube(cv::Mat depth,
+                                                pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud,
+                                                float refCubeSize);
       //void pointCloudToDepthAndColor(cv::Mat depth, cv::Mat color,
       //        pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud);
 

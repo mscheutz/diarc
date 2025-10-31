@@ -41,7 +41,7 @@ extern double mean_dist_model;
 /*				mean_dist -- Mean distance
 /*	Return:		0 -- Succeed
 /**************************************************************************************/
-BOOL IsSmallTriangle( MYPOINT *Pnt, int *ValidPnt, double mean_dist )
+BBOOL IsSmallTriangle( MYPOINT *Pnt, int *ValidPnt, double mean_dist )
 {
 	double Dist1 = GetDistance( Pnt[ValidPnt[0]].x, Pnt[ValidPnt[0]].y, Pnt[ValidPnt[1]].x, Pnt[ValidPnt[1]].y );
 	if( Dist1 < 0.8*mean_dist )
@@ -411,7 +411,7 @@ int AffineEstLMS( MYPOINT *PntModel, int nPntModel, MYPOINT *PntDeform, int nPnt
 			}
 
 			//Only large triangles, which are reliable, are use to estimate the affine transformation.
-			BOOL IsSmall = IsSmallTriangle( PntModel, &ValidPnt[nStart], mean_dist_model );
+			BBOOL IsSmall = IsSmallTriangle( PntModel, &ValidPnt[nStart], mean_dist_model );
 			if( IsSmall == FALSE )
 			{
 				//Estimate the affine transformation

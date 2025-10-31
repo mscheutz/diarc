@@ -9,7 +9,7 @@ import edu.tufts.hrilab.fol.Predicate;
     if (op:==(?typeId, -1)) {
       op:log("error", "Could not instantiate visual search.");
 
-      !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "unknown(?objectRef)");
+      !failCond = op:createPredicate("unknown(?objectRef)");
       exit(FAIL, !failCond);
     }
 }
@@ -22,7 +22,7 @@ import edu.tufts.hrilab.fol.Predicate;
     if (op:==(!typeId, -1)) {
       op:log("error", "Could not instantiate visual search.");
 
-      !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "unknown(?objectRef)");
+      !failCond = op:createPredicate("unknown(?objectRef)");
       exit(FAIL, !failCond);
     }
 
@@ -43,7 +43,11 @@ import edu.tufts.hrilab.fol.Predicate;
 
   if (op:isVariable(!x)) {
     // look for "any" objects
-    !anySearch = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "any(X)");
+    !anySearch = op:createPredicate("all(X)");
+    act:startVisualSearch(!anySearch);
+
+    // look for "unknown" objects
+    !anySearch = op:createPredicate("unknown(X)");
     act:startVisualSearch(!anySearch);
 
     // get resulting refs from search(es)
@@ -66,6 +70,9 @@ import edu.tufts.hrilab.fol.Predicate;
       op:add(?return, !bindings);
     }
   }
+
+  // stop all visual searches
+  tsc:stopAllSearches();
 }
 
 // ?actor looks for ?objectRef in current FOV and returns list of ?tokenIds
@@ -78,7 +85,7 @@ import edu.tufts.hrilab.fol.Predicate;
     ?tokenIds = act:getTokenIds(?objectRef);
 
     // for now, explicitly update belief with resultPred
-    !resultPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "see(?actor,?objectRef)");
+    !resultPred = op:createPredicate("see(?actor,?objectRef)");
     if (op:isEmpty(?tokenIds)) {
       op:log("debug", "No object(s) found.");
       act:retractBelief(!resultPred);
@@ -101,7 +108,7 @@ import edu.tufts.hrilab.fol.Predicate;
     ?tokenIds = act:lookForObject(?objectRef);
     if (op:isEmpty(?tokenIds)) {
       op:log("warn", "No objects found. Exiting.");
-      !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(see(?actor, ?objectRef))");
+      !failCond = op:createPredicate("not(see(?actor, ?objectRef))");
       exit(FAIL, !failCond);
     } else {
       ?tokenId = op:get(?tokenIds, 0);

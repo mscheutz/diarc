@@ -254,7 +254,7 @@ public class ElevatorBoardingComponent extends DiarcComponent {
   private Pose getRelativePoseFromGlobal(String globalFrame, String relativeFrame, Matrix4d relativePose) {
     Matrix4d matTf = null;
     try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTransform"));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getTransform").argTypes(String.class, String.class));
       matTf = tsi.call(Matrix4d.class, globalFrame, relativeFrame);
     } catch (TRADEException e) {
       log.error("unable to get transform for frame " + globalFrame + " to " + relativeFrame, e);

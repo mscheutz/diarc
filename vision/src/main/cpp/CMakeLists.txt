@@ -33,7 +33,7 @@ ADD_DEFINITIONS(-DBOOST_FILESYSTEM_DEPRECATED)
 # turn no return-value warnings into errors
 ADD_DEFINITIONS(-Werror=return-type)
 
-# set explciit cmake policies
+# set explicit cmake policies
 CMAKE_POLICY(SET CMP0012 NEW)
 if(CMAKE_VERSION VERSION_LESS "3.13")
   message("Please consider upgrading CMake to 3.13 or newer")
@@ -67,6 +67,16 @@ FIND_PACKAGE( SWIG 3.0 REQUIRED COMPONENTS java )
 # OpenCV (required)
 FIND_PACKAGE( OpenCV REQUIRED )
 INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
+
+# PyBind11 (required)
+FIND_PACKAGE(pybind11)
+if (pybind11_FOUND)
+	add_definitions("-DUSE_PYTHON")
+	FIND_PACKAGE (Python3 COMPONENTS Interpreter Development)
+	INCLUDE_DIRECTORIES(${Python3_INCLUDE_DIRS})
+	message("Python3_LIBRARIES:${Python3_LIBRARIES}")
+	message("pybind11_LIBRARIES:${pybind11_LIBRARIES}")
+endif (pybind11_FOUND)
 
 # check for dnn module
 FIND_PACKAGE( OpenCV 3.4 QUIET OPTIONAL_COMPONENTS dnn)
@@ -121,6 +131,7 @@ endif(OPENNI2_FOUND)
 
 # Boost (required) -- this is only needed to patch the bug in PCLConfig.cmake that leaves out the "thread" component
 find_package(Boost COMPONENTS system filesystem date_time iostreams thread)
+include_directories(${Boost_INCLUDE_DIRS})
 
 # SWIG (required)
 FIND_PACKAGE(SWIG REQUIRED)
@@ -145,28 +156,8 @@ LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/third_party/vlfeat/bin/glnxa64 )
     ADD_DEFINITIONS(-DUSE_REALSENSE)
  endif(REALSENSE_FOUND)
 
-SET(USE_PCL_PEOPLE 0 CACHE BOOL "Use PCL People Detection. Currently not finished." )
-if (USE_PCL_PEOPLE)
-	if (PCL_GPU_PEOPLE_LIBRARIES)
-		SET(PCL_GPU_PEOPLE_FOUND ON)
-		ADD_DEFINITIONS(-DUSE_PCL_PEOPLE)
-		message("PCL_GPU_PEOPLE_FOUND:${PCL_GPU_PEOPLE_FOUND}")
-	endif(PCL_GPU_PEOPLE_LIBRARIES)
-
-
-	# CUDA
-	FIND_PACKAGE(CUDA)
-	if(CUDA_FOUND)
-		#Include the FindCUDA script
-		INCLUDE(FindCUDA)
-
-		INCLUDE_DIRECTORIES(${CUDA_INCLUDE_DIRS})
-		LINK_DIRECTORIES(${CUDA_LIBRARY_DIRS})
-	endif(CUDA_FOUND)
-endif(USE_PCL_PEOPLE)
-
 # ROS
-OPTION(USE_ROS "Turn on/off integration with ROS." ON)
+OPTION(USE_ROS "Turn on/off integration with ROS." OFF)
 IF(USE_ROS)
 	FIND_PACKAGE(roscpp)
 	FIND_PACKAGE(rosconsole)
@@ -190,10 +181,44 @@ IF(USE_ROS)
 	ENDIF (roscpp_FOUND AND rosconsole_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf_FOUND AND pcl_ros_FOUND)
 ENDIF(USE_ROS)
 
-# TODO: FREENECT
-if(FREENECT_FOUND)
-ADD_DEFINITIONS(-DUSE_KINECT)
-endif(FREENECT_FOUND)
+
+# ROS 2
+OPTION(USE_ROS2 "Turn on/off integration with ROS2." OFF)
+IF(USE_ROS2)
+	FIND_PACKAGE(rclcpp)
+	FIND_PACKAGE(rcl_interfaces)
+	FIND_PACKAGE(sensor_msgs)
+	FIND_PACKAGE(stereo_msgs)
+	FIND_PACKAGE(image_transport)
+	FIND_PACKAGE(cv_bridge)
+	FIND_PACKAGE(tf2)
+	FIND_PACKAGE(pcl_conversions)
+	IF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf2_FOUND AND pcl_conversions_FOUND)
+#		message("FOUND ALL THE ROS2 DEPENDENCIES!")
+		INCLUDE_DIRECTORIES(${rclcpp_INCLUDE_DIRS})
+#		message("rclcpp_INCLUDE_DIRS:${rrcl_interfaces_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${rcl_interfaces_INCLUDE_DIRS})
+#		message("rclcpp_INCLUDE_DIRS:${rclcpp_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${sensor_msgs_INCLUDE_DIRS})
+#		message("sensor_msgs_INCLUDE_DIRS:${sensor_msgs_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${stereo_msgs_INCLUDE_DIRS})
+#		message("stereo_msgs_INCLUDE_DIRS:${stereo_msgs_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${image_transport_INCLUDE_DIRS})
+#		message("image_transport_INCLUDE_DIRS:${image_transport_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${cv_bridge_INCLUDE_DIRS})
+#		message("cv_bridge_INCLUDE_DIRS:${cv_bridge_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${tf2_INCLUDE_DIRS})
+#		message("tf2_INCLUDE_DIRS:${tf2_INCLUDE_DIRS}")
+		INCLUDE_DIRECTORIES(${pcl_conversions_INCLUDE_DIRS})
+#		message("pcl_conversions_INCLUDE_DIRS:${pcl_conversions_INCLUDE_DIRS}")
+
+		# TODO: why isn't this included automatically?
+		INCLUDE_DIRECTORIES("/opt/ros/humble/include/image_transport")
+		INCLUDE_DIRECTORIES("/opt/ros/humble/include/cv_bridge")
+
+		ADD_DEFINITIONS(-DUSE_ROS2_VISION)
+	ENDIF (rclcpp_FOUND AND rcl_interfaces_FOUND AND sensor_msgs_FOUND AND stereo_msgs_FOUND AND image_transport_FOUND AND cv_bridge_FOUND AND tf2_FOUND AND pcl_conversions_FOUND)
+ENDIF(USE_ROS2)
 
 # V4R (OLD version)
 #FIND_PACKAGE(v4r) #TODO: write proper FindV4R cmake module
@@ -272,6 +297,9 @@ endif(ZBAR_FOUND)
 #  ADD_SUBDIRECTORY(test)
 #endif(GTest_FOUND)
 
+if (pybind11_FOUND)
+  ADD_SUBDIRECTORY(pyvis)
+endif (pybind11_FOUND)
 ADD_SUBDIRECTORY(capture)
 ADD_SUBDIRECTORY(common)
 ADD_SUBDIRECTORY(detector)
