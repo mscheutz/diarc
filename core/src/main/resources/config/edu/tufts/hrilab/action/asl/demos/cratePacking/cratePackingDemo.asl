@@ -270,10 +270,10 @@ import java.lang.Boolean;
     op:log(debug, "[closeGripper] closing gripper");
     Boolean !result;
     !result = tsc:closeGripper();
-    if (op:equals(!result, false)) {
-      !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor, item))");
-      exit(FAIL_POSTCONDITIONS, !failCond);
-    }
+//    if (op:equals(!result, false)) {
+//      !failCond = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(holding(?actor, item))");
+//      exit(FAIL_POSTCONDITIONS, !failCond);
+//    }
  }
 
 // Demo Utilities //
