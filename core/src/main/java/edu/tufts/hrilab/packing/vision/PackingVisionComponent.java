@@ -13,7 +13,6 @@ import org.bytedeco.javacv.Frame;
 
 import javax.imageio.ImageIO;
 
-import static org.bytedeco.opencv.global.opencv_imgproc.cvtColor;
 import static org.bytedeco.opencv.global.opencv_videoio.CAP_PROP_AUTO_EXPOSURE;
 import static org.opencv.videoio.Videoio.CAP_PROP_EXPOSURE;
 
@@ -31,7 +30,6 @@ public class PackingVisionComponent extends DiarcComponent {
 
 
   private OpenCVFrameGrabber frameGrabber;
-  private OpenCVFrameConverter.ToMat matConverter;
   private Java2DFrameConverter frameConverter;
   int cameraId = -1;
   int imageWidth = 640;
@@ -60,12 +58,11 @@ public class PackingVisionComponent extends DiarcComponent {
 
   private boolean setupCapture() {
     frameGrabber = new OpenCVFrameGrabber(cameraId);
-    frameGrabber.setOption(CAP_PROP_AUTO_EXPOSURE, 1);
+//    frameGrabber.setOption(CAP_PROP_AUTO_EXPOSURE, 1);
 //    frameGrabber.setOption(CAP_PROP_EXPOSURE, 0.7);
-    frameGrabber.setOption(CAP_PROP_EXPOSURE, 100);
+//    frameGrabber.setOption(CAP_PROP_EXPOSURE, 100);
     frameGrabber.setImageWidth(imageWidth);
     frameGrabber.setImageHeight(imageHeight);
-    matConverter = new OpenCVFrameConverter.ToMat();
     frameConverter = new Java2DFrameConverter();
     try {
       frameGrabber.start();

@@ -18,6 +18,7 @@ import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -725,5 +726,23 @@ public class CratePackingComponent extends DiarcComponent {
   @TRADEService
   public void setAlpha(double alpha) {
     visionProcessor.setA(alpha);
+  }
+
+  @TRADEService
+  public void saveImage() {
+    BufferedImage image;
+    try {
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImage"));
+      image = tsi.call(BufferedImage.class);
+    } catch (TRADEException ex) {
+      throw new RuntimeException(ex);
+    }
+    try {
+      String homeDir = System.getProperty("user.home");
+      String outputPath = Paths.get(homeDir, ".diarc","calibration").toString();
+      ImageIO.write(image, "png", new File(outputPath + ++imgNum + ".png"));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

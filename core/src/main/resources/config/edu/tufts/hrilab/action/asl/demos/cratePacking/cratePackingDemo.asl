@@ -382,3 +382,71 @@ import java.lang.Boolean;
     act:lookForAndMoveToBox();
     op:log(debug, "[closeGripperFailureRecovery] finished recovery");
 }
+
+() = getCalibrationImages() {
+
+    MPose !currentPose;
+
+    act:goToPoseDirect(robotonepose_0);
+    !currentPose = tsc:getPoseFromSymbol(robotonepose_0:pose);
+
+    act:rotateToEE("default");
+
+    tsc:saveImage();
+    tsc:moveCRelative(1.5708);
+    tsc:saveImage();
+    tsc:moveCRelative(-3.1415);
+    tsc:saveImage();
+    tsc:moveCRelative(1.5708);
+
+    tsc:moveZRelative(0.075);
+    tsc:saveImage();
+    tsc:moveCRelative(1.5708);
+    tsc:saveImage();
+    tsc:moveCRelative(-3.1415);
+    tsc:saveImage();
+    tsc:moveCRelative(1.5708);
+
+    tsc:moveZRelative(-0.150);
+    tsc:saveImage();
+    tsc:moveCRelative(1.5708);
+    tsc:saveImage();
+    tsc:moveCRelative(-3.1415);
+    tsc:saveImage();
+    tsc:moveCRelative(1.5708);
+
+}
+
+() = getCalibrationImagesManual() {
+
+    MPose !currentPose;
+
+    act:goToPoseDirect(robotonepose_0);
+    !currentPose = tsc:getPoseFromSymbol(robotonepose_0:pose);
+
+    act:rotateToEE("default");
+
+    !bindings = act:askQuestionFromString(?actor, "is it ready", val(X));
+    tsc:saveImage();
+    !bindings = act:askQuestionFromString(?actor, "is it ready", val(X));
+    tsc:saveImage();
+    !bindings = act:askQuestionFromString(?actor, "is it ready", val(X));
+    tsc:saveImage();
+
+    tsc:moveZRelative(0.075);
+    !bindings = act:askQuestionFromString(?actor, "is it ready", val(X));
+    tsc:saveImage();
+    !bindings = act:askQuestionFromString(?actor, "is it ready", val(X));
+    tsc:saveImage();
+    !bindings = act:askQuestionFromString(?actor, "is it ready", val(X));
+    tsc:saveImage();
+
+    tsc:moveZRelative(-0.150);
+    !bindings = act:askQuestionFromString(?actor, "is it ready", val(X));
+    tsc:saveImage();
+    !bindings = act:askQuestionFromString(?actor, "is it ready", val(X));
+    tsc:saveImage();
+    !bindings = act:askQuestionFromString(?actor, "is it ready", val(X));
+    tsc:saveImage();
+
+}
