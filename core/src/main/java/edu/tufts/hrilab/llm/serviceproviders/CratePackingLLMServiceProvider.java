@@ -1088,9 +1088,18 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     exposedReplyList.add(entry);
     entry = new LLMSemanticEntry("replaced(packingCrate)",
             "Acknowledgement that a full crate has been replaced with an empty one",
-            "\"I have placed a new crate\" or \"done\"",
+            "\"I have placed a new crate\"",
             "交換が完了しました",
             "replaced(packingCrate)",
+            10,
+            "REPLY"
+    );
+    exposedReplyList.add(entry);
+    entry = new LLMSemanticEntry("didIt(request)",
+            "Acknowledgement that the user completed the system's request",
+            "\"I did it\" or \"done\"",
+            "",
+            "didIt(request)",
             10,
             "REPLY"
     );
@@ -1531,6 +1540,11 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
     example = new LLMNLGExample("goToPoseDirect(robotone,%examplePose:pose)",
             "Did you mean to ask me to go to the %examplePose pose?",
             "%examplePose番にしてください、という指示でしょうか",
+            "QUESTION");
+    validationExampleList.add(example);
+    example = new LLMNLGExample("didIt(request)",
+            "Did you mean to say that you completed the request?",
+            "",
             "QUESTION");
     validationExampleList.add(example);
   }

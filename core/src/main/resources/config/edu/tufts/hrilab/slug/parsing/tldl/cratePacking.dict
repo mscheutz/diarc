@@ -42,7 +42,7 @@ start packing; VERBI; packItemsIntoCrates
 begin packing; VERBI; packItemsIntoCrates
 I would like to set the packing parameters; VERBI; configurePackingParameters
 
-done; VAL; replaced(packingCrate)
+done; VAL; didIt(request)
 the crate has been replaced; VAL; replaced(packingCrate)
 
 suspend current task; VERBI ; suspendSystemGoalsBlocking
@@ -69,4 +69,5 @@ get images; C; getCalibrationImages(?ADDRESSEE)
 manual get images; C; getCalibrationImagesManual(?ADDRESSEE)
 
 %test auto calibration; C; testAutoCalibration(?ADDRESSEE);
-calibrate offset; C; adjustForDetectionOffset(?ADDRESSEE)
+calibrate offset; C; runGraspCalibration(?ADDRESSEE)
+run grasp calibration; C; runGraspCalibration(?ADDRESSEE)

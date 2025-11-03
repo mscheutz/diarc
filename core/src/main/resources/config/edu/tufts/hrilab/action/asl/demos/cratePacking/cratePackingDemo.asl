@@ -416,7 +416,7 @@ import java.lang.Boolean;
 
 }
 
-() = adjustForDetectionOffset() {
+() = runGraspCalibration() {
     MPose !pose;
     Float !surfaceHeight;
     Float !destHeight;
@@ -428,10 +428,12 @@ import java.lang.Boolean;
     Double !x;
     Double !y;
     Double !theta;
+    List !responseFormList;
+    Predicate !responseForm;
 
     !tmp = tsc:getPackedItemHeight();
     !destHeight = op:*(1.0, !tmp);
-    !pose= tsc:getPoseFromSymbol(robotonepose_0:pose);
+    !pose = tsc:getPoseFromSymbol(robotonepose_0:pose);
     !surfaceHeight = op:invokeMethod(!pose, "getSurfaceHeight");
     !surfaceHeight = op:*(!surfaceHeight, 1000);
     !destHeight = op:+(!destHeight, !surfaceHeight);
@@ -439,9 +441,18 @@ import java.lang.Boolean;
     !poseZ = op:invokeMethod(!pose, "getZ");
     !destHeight = op:-(!destHeight, !poseZ);
 
+
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:createPredicate("val(X)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:createPredicate("replaced(X)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:createPredicate("didIt(X)");
+    op:add(!responseFormList,!responseForm);
+
     act:goToPoseDirect(robotonepose_0:pose);
     act:closeGripper();
-    act:askQuestion(?actor, ask(ackWhen(placed(item, gripper))), val(X)); //todo: eric replace with semantics that match heuristics for other NLG examples
+    act:askQuestion(?actor, ask(ackWhen(placed(item, gripper))), !responseFormList);
     act:rotateToEE(gripper);
     !goalZ = op:/(!destHeight, 1000);
     op:log(debug, "[adjustForDetectionOffset] goal Z height is: !goalZ");

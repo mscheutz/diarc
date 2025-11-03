@@ -377,9 +377,18 @@ import java.lang.Boolean;
     Variable !x = "X";
     Symbol !response;
     Boolean !answered = false;
+    List !responseFormList;
+    Predicate !responseForm;
 
     //!bindings = act:askQuestionFromString(?actor, "I have finished packing this crate, please let me know when you have replaced it with an empty one", replaced(packingCrate));
-    !bindings = act:askQuestion(?actor, then(report(complete(pack(?actor,crate))),ask(ackWhen(replaced(packedCrate,emptyCrate)))), replaced(packingCrate));
+
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:createPredicate("replaced(X)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:createPredicate("didIt(X)");
+    op:add(!responseFormList,!responseForm);
+
+    !bindings = act:askQuestion(?actor, then(report(complete(pack(?actor,crate))),ask(ackWhen(replaced(packedCrate,emptyCrate)))), !responseFormList);
     //Asked not to have this
     //act:generateResponseFromString("thank you!");
 
