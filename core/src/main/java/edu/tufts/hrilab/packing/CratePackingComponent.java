@@ -671,6 +671,8 @@ public class CratePackingComponent extends DiarcComponent {
     packedItemL = -1;
     packedItemW = -1;
     packedItemH = -1;
+    visionProcessor.setBoxLengthMeters(-1/1000.0);
+    visionProcessor.setBoxWidthMeters(-1/1000.0);
     if (gui != null) {
       gui.setItemLFieldValue(-1);
       gui.setItemWFieldValue(-1);

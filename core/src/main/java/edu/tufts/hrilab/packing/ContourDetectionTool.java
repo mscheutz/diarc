@@ -22,11 +22,12 @@ public class ContourDetectionTool extends JFrame {
   private final RobotVisionProcessor visionProcessor;
   private JButton startStopCameraButton;
   private JButton setAlphaButton;
-  private JButton saveImageButton;
+  //private JButton saveImageButton;
+  private JLabel lastCalibratedLabel;
   private ContourImagePanel originalPanel, correctedPanel;
   private JLabel infoLabel, resultLabel, dimensionsLabel;
   private JSlider lowThresholdSlider, highThresholdSlider, dilationSlider;
-  private JTextField wField, lField;
+  private JLabel wField, lField;
   private BufferedImage sourceImage;
   private ContourCamera camera;
   private int selectedCamera = -1;
@@ -50,7 +51,8 @@ public class ContourDetectionTool extends JFrame {
     JPanel mainControlsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
 
-    this.selectedCamera = visionProcessor.defaultCamera;
+    int defaultCamera = robotVisionProcessor.defaultCamera;
+    this.selectedCamera = defaultCamera;
     setCamera(selectedCamera);
 
     cameraSelectionBox = new JComboBox<>();
@@ -67,25 +69,33 @@ public class ContourDetectionTool extends JFrame {
     startStopCameraButton = new JButton("Start/Stop Camera");
     mainControlsPanel.add(startStopCameraButton);
     mainControlsPanel.add(new JSeparator(SwingConstants.VERTICAL));
-    mainControlsPanel.add(new JLabel("Box W (m):"));
-    wField = new JTextField("0.155", 5);  // default width of box
+    mainControlsPanel.add(new JLabel("Box W (mm):"));
+    //wField = new JTextField(String.valueOf(boxWidthMeters*1000), 5);  // default width of box
+    wField = new JLabel(String.valueOf(robotVisionProcessor.getBoxWidthMeters()*1000));  // default width of box
     mainControlsPanel.add(wField);
-    mainControlsPanel.add(new JLabel("L (m):"));
-    lField = new JTextField("0.225", 5);  // default length of box
+    mainControlsPanel.add(new JLabel("L (mm):"));
+    //lField = new JTextField(String.valueOf(boxLengthMeters*1000), 5);  // default length of box
+    lField = new JLabel(String.valueOf(robotVisionProcessor.getBoxLengthMeters()*1000));  // default length of box
     mainControlsPanel.add(lField);
     setAlphaButton = new JButton("Set Calibration");
-    saveImageButton = new JButton("Save Image");
+    //saveImageButton = new JButton("Save Image");
+    if (robotVisionProcessor.getA() != -1) {
+      lastCalibratedLabel = new JLabel(String.format("Last Calibrated with (Low/High/Iter): %d, %d, %d", robotVisionProcessor.getCannyLowThreshold(), robotVisionProcessor.getCannyHighThreshold(), robotVisionProcessor.getDilationIterations()));
+    } else {
+      lastCalibratedLabel = new JLabel(String.format("Not Calibrated, hit set calibration when a box has been detected"));
+    }
 
     JPanel slidersPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
     // default canny edge detection values that worked on all the test images
-    lowThresholdSlider = createSlider(0, 255, visionProcessor.getCannyLowThreshold(), "Canny Low Threshold");
-    highThresholdSlider = createSlider(0, 255, visionProcessor.getCannyHighThreshold(), "Canny High Threshold");
-    dilationSlider = createSlider(0, 10, visionProcessor.getDilationIterations(), "Dilation Iterations");
+    lowThresholdSlider = createSlider(0, 255, robotVisionProcessor.getCannyLowThreshold(), "Canny Low Threshold");
+    highThresholdSlider = createSlider(0, 255, robotVisionProcessor.getCannyHighThreshold(), "Canny High Threshold");
+    dilationSlider = createSlider(0, 10, robotVisionProcessor.getDilationIterations(), "Dilation Iterations");
     slidersPanel.add(lowThresholdSlider.getParent());
     slidersPanel.add(highThresholdSlider.getParent());
     slidersPanel.add(dilationSlider.getParent());
     slidersPanel.add(setAlphaButton);
-    slidersPanel.add(saveImageButton);
+    //slidersPanel.add(saveImageButton);
+    slidersPanel.add(lastCalibratedLabel);
 
     lowThresholdSlider.addChangeListener(e -> visionProcessor.setCannyLowThreshold(lowThresholdSlider.getValue()));
     highThresholdSlider.addChangeListener(e -> visionProcessor.setCannyHighThreshold(highThresholdSlider.getValue()));
@@ -114,7 +124,7 @@ public class ContourDetectionTool extends JFrame {
     startStopCameraButton.addActionListener(e -> startCameraCapture());
 
     setAlphaButton.addActionListener(e -> setAlpha());
-    saveImageButton.addActionListener(e -> saveImage());
+    //saveImageButton.addActionListener(e -> saveImage());
 
     Timer timer = new Timer(500, e -> {
       if (capture) {
@@ -145,12 +155,19 @@ public class ContourDetectionTool extends JFrame {
   }
 
   private void setAlpha() {
-    try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("setAlpha"));
-      tsi.call(void.class, alpha);
-    } catch (TRADEException e) {
-      log.error("[setAlpha] error calling trade service to set value of constant value a", e);
+    if (visionProcessor != null && alpha != -1) {
+      visionProcessor.setA(alpha);
     }
+    //if (alpha != -1) {
+    //  try {
+    //    TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("setAlpha"));
+    //    tsi.call(void.class, alpha);
+    //  } catch (TRADEException e) {
+    //    log.error("[setAlpha] error calling trade service to set value of constant value a", e);
+    //  }
+    //} else {
+    //  log.warn("[setAlpha] TODO: display error message that no box has been detected");
+    //}
   }
 
   private void setCamera(int selectedCamera){
@@ -175,8 +192,18 @@ public class ContourDetectionTool extends JFrame {
     } catch (TRADEException e) {
       log.error("[getAvailableCameras] error calling TRADE service to get available cameras.", e);
     }
+    int previouslySetCamera = selectedCamera;
+    int i = 0;
+    int id = -1;
     for (PackingCameraInfo packingCameraInfo : camerasList) {
       cameraSelectionBox.addItem(packingCameraInfo);
+      if (packingCameraInfo.id() == previouslySetCamera) {
+        id = i;
+      }
+      i++;
+    }
+    if (id != -1) {
+      cameraSelectionBox.setSelectedIndex(id);
     }
     log.warn("[getAvailableCameras] cameras were found: " + camerasList);
     SwingUtilities.invokeLater(() -> {
@@ -248,6 +275,7 @@ public class ContourDetectionTool extends JFrame {
     if (minRectangle != null) {
       recalculateFromCorners(minRectangle);
     } else {
+      this.alpha = -1;
       infoLabel.setText(String.format("Could not find object. LowT: %d, HighT: %d, Dilations: %d", lowT, highT, dilations));
       originalPanel.setImage(sourceImage, null, null, null);
       correctedPanel.setImage(null, null, null, null);
@@ -334,5 +362,17 @@ public class ContourDetectionTool extends JFrame {
 
   public int getSelectedCamera() {
     return selectedCamera;
+  }
+
+  public void setWFieldValue(double value) {
+    wField.setText(String.valueOf(value));
+  }
+
+  public void setLFieldValue(double value) {
+    lField.setText(String.valueOf(value));
+  }
+
+  public void setCalibrationValues(int cannyLowThreshold, int cannyHighThreshold, int dilationIterations) {
+    lastCalibratedLabel.setText(String.format("Last Calibrated with (Low/High/Iter): %d, %d, %d", cannyLowThreshold, cannyHighThreshold, dilationIterations));
   }
 }

@@ -2,7 +2,6 @@ package edu.tufts.hrilab.packing;
 
 import com.google.gson.Gson;
 import edu.tufts.hrilab.packing.gson.PackingVisionSettingsJson;
-import edu.tufts.hrilab.slug.dialogue.ResponseGeneration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +25,9 @@ public class RobotVisionProcessor {
   private int cannyLowThreshold = 0;
   private int cannyHighThreshold = 80;
   private int dilationIterations = 1;
+  private int calibratedCannyLowThreshold = -1;
+  private int calibratedCannyHighThreshold = -1;
+  private int calibratedDilationIterations = -1;
   private ContourDetectionTool tool;
 
   private final int PIXEL_DIFFERENCE_THRESHOLD = 30;
@@ -62,11 +64,16 @@ public class RobotVisionProcessor {
       }
       PackingVisionSettingsJson settings = gson.fromJson(json.toString(), PackingVisionSettingsJson.class);
 
-      this.cannyLowThreshold = settings.lowThreshold;
-      this.cannyHighThreshold = settings.highThreshold;
-      this.dilationIterations = settings.dilationIterations;
-      this.a = settings.alpha;
-      this.defaultCamera = settings.selectedCamera;
+      if (settings != null) {
+        this.cannyLowThreshold = settings.lowThreshold;
+        this.cannyHighThreshold = settings.highThreshold;
+        this.dilationIterations = settings.dilationIterations;
+        this.calibratedCannyLowThreshold = settings.lowThreshold;
+        this.calibratedCannyHighThreshold = settings.highThreshold;
+        this.calibratedDilationIterations = settings.dilationIterations;
+        this.a = settings.alpha;
+        this.defaultCamera = settings.selectedCamera;
+      }
     }
     SwingUtilities.invokeLater(() -> {
       tool = new ContourDetectionTool(this);
@@ -177,14 +184,38 @@ public class RobotVisionProcessor {
 
   public void setBoxWidthMeters(double boxWidthMeters) {
     this.boxWidthMeters = boxWidthMeters;
+    if (tool != null) {
+      tool.setWFieldValue(boxWidthMeters * 1000);
+    }
   }
 
   public void setBoxLengthMeters(double boxLengthMeters) {
     this.boxLengthMeters = boxLengthMeters;
+    if (tool != null) {
+      tool.setLFieldValue(boxLengthMeters * 1000);
+    }
+  }
+
+  public double getBoxWidthMeters() {
+    return boxWidthMeters;
+  }
+
+  public double getBoxLengthMeters() {
+    return boxLengthMeters;
   }
 
   public void setA(double a) {
     this.a = a;
+    calibratedCannyLowThreshold = cannyLowThreshold;
+    calibratedCannyHighThreshold = cannyHighThreshold;
+    calibratedDilationIterations = dilationIterations;
+    if (tool != null) {
+      tool.setCalibrationValues(cannyLowThreshold, cannyHighThreshold, dilationIterations);
+    }
+  }
+
+  public double getA() {
+    return a;
   }
 
   public int getCannyLowThreshold() {
@@ -216,7 +247,7 @@ public class RobotVisionProcessor {
       Writer writer = new FileWriter(settingsFile);
       Gson gson = new Gson();
 
-      PackingVisionSettingsJson settings = new PackingVisionSettingsJson(cannyLowThreshold, cannyHighThreshold, dilationIterations, a, tool.getSelectedCamera());
+      PackingVisionSettingsJson settings = new PackingVisionSettingsJson(calibratedCannyLowThreshold, calibratedCannyHighThreshold, calibratedDilationIterations, a, tool.getSelectedCamera());
       gson.toJson(settings, writer);
       writer.flush();
     } catch (IOException e) {
