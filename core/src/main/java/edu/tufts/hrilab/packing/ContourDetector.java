@@ -1,228 +1,406 @@
 package edu.tufts.hrilab.packing;
-
-import java.awt.*;
+// Author: Matthias Scheutz
+// Date: 11/02/2025
+import java.awt.Point;
+import java.awt.Color;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.awt.Graphics2D;
 
 public class ContourDetector {
-    /**
-     * find the tightest-fitting rectangle around the largest contour in the image
-     * @param image with image of the box
-     * @param lowThreshold the lower threshold for the Canny edge detector
-     * @param highThreshold the upper threshold for the Canny edge detector
-     * @param dilationIterations the number of times to apply the dilation.
-     * @return a list of 4 points representing the corners of the minimum area rectangle, or null if none found
-     see also
-     https://blog.finxter.com/5-best-ways-to-detect-a-rectangle-and-square-in-an-image-using-opencv-python/
-     */
-    public static List<Point> findLargestObjectRectangle(BufferedImage image, int lowThreshold, int highThreshold, int dilationIterations) {
-        // get the edge detection with specified parameters
-        BufferedImage edges = cannyEdgeDetection(image, lowThreshold, highThreshold);
-        
-        // dilate to close gaps with specified iterations
-        BufferedImage dilated = dilate(edges, dilationIterations);
-        
-        // find all external contours
-        List<List<Point>> allContours = findExternalContours(dilated);
 
-        if (allContours.isEmpty()) {
-            return null;
-        }
+  public record DetectionResult(
+          List<List<Point>> allObjectContours,
+          List<Point> bestFitRectangle,
+          int missedPixels,
+          int falsePositivePixels
+  ) {}
 
-        // get the largest contour
-        List<Point> largestContour = allContours.stream()
-                .max(Comparator.comparingInt(List::size))
-                .orElse(null);
-
-        if (largestContour == null || largestContour.size() < 3) {
-            return null;
-        }
-
-        // and compute the convex hull
-        List<Point> hull = getConvexHull(largestContour);
-
-        // then find the minimum area rectangle using rotating calipers
-        return getMinimumAreaRectangle(hull);
+  public static List<Point> findLargestObjectRectangle(BufferedImage image, int lowThreshold, int highThreshold, int dilationIterations) {
+    DetectionResult result = detectForSingleParamSet(image, lowThreshold, highThreshold, dilationIterations);
+    if (result == null) {
+      return null;
     }
-    
-    private static List<Point> getMinimumAreaRectangle(List<Point> hull) {
-        double minArea = Double.MAX_VALUE;
-        double[] bestRectangle = null;
+    return result.bestFitRectangle();
+  }
 
-        for (int i = 0; i < hull.size(); i++) {
-            Point p1 = hull.get(i);
-            Point p2 = hull.get((i + 1) % hull.size());
-
-            double angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-            double cos = Math.cos(-angle);
-            double sin = Math.sin(-angle);
-
-            double minX = Double.MAX_VALUE, maxX = Double.MIN_VALUE;
-            double minY = Double.MAX_VALUE, maxY = Double.MIN_VALUE;
-
-            for (Point p : hull) {
-                double rotatedX = p.x * cos - p.y * sin;
-                double rotatedY = p.x * sin + p.y * cos;
-                minX = Math.min(minX, rotatedX);
-                maxX = Math.max(maxX, rotatedX);
-                minY = Math.min(minY, rotatedY);
-                maxY = Math.max(maxY, rotatedY);
-            }
-
-            double area = (maxX - minX) * (maxY - minY);
-            if (area < minArea) {
-                minArea = area;
-                bestRectangle = new double[]{angle, minX, minY, maxX, maxY};
-            }
-        }
-
-        if (bestRectangle == null) return null;
-
-        double angle = bestRectangle[0];
-        double cos = Math.cos(angle);
-        double sin = Math.sin(angle);
-        
-        Point[] corners = new Point[4];
-        corners[0] = new Point((int)(bestRectangle[1] * cos - bestRectangle[2] * sin), (int)(bestRectangle[1] * sin + bestRectangle[2] * cos));
-        corners[1] = new Point((int)(bestRectangle[3] * cos - bestRectangle[2] * sin), (int)(bestRectangle[3] * sin + bestRectangle[2] * cos));
-        corners[2] = new Point((int)(bestRectangle[3] * cos - bestRectangle[4] * sin), (int)(bestRectangle[3] * sin + bestRectangle[4] * cos));
-        corners[3] = new Point((int)(bestRectangle[1] * cos - bestRectangle[4] * sin), (int)(bestRectangle[1] * sin + bestRectangle[4] * cos));
-        
-        return List.of(corners);
-    }
-    
-    private static List<Point> getConvexHull(List<Point> points) {
-        if (points.size() <= 3) return new ArrayList<>(points);
-        points.sort(Comparator.comparingInt((Point p) -> p.x).thenComparingInt((Point p) -> p.y));
-        List<Point> hull = new ArrayList<>();
-        for (Point p : points) {
-            while (hull.size() >= 2 && crossProduct(hull.get(hull.size()-2), hull.get(hull.size()-1), p) <= 0) {
-                hull.remove(hull.size()-1);
-            }
-            hull.add(p);
-        }
-        int lowerHullSize = hull.size();
-        for (int i = points.size() - 2; i >= 0; i--) {
-            Point p = points.get(i);
-            while (hull.size() > lowerHullSize && crossProduct(hull.get(hull.size()-2), hull.get(hull.size()-1), p) <= 0) {
-                hull.remove(hull.size()-1);
-            }
-            hull.add(p);
-        }
-        hull.remove(hull.size()-1);
-        return hull;
-    }
-    private static long crossProduct(Point a, Point b, Point c) {
-        return (long)(b.x - a.x) * (c.y - a.y) - (long)(b.y - a.y) * (c.x - a.x);
+  private static List<List<Point>> findExternalContours(BufferedImage image) {
+    int width = image.getWidth();
+    int height = image.getHeight();
+    int[][] data = new int[height][width];
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        data[y][x] = (image.getRGB(x, y) & 0xFF) > 0 ? 1 : 0;
+      }
     }
 
-    private static BufferedImage cannyEdgeDetection(BufferedImage image, int lowThreshold, int highThreshold) {
-        int width = image.getWidth();
-        int height = image.getHeight();
-        BufferedImage edgeImage = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
-        int[][] gray = new int[width][height];
-        int[][] magnitude = new int[width][height];
-        for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
-            int rgb = image.getRGB(x, y);
-            gray[x][y] = (((rgb >> 16) & 0xFF) + ((rgb >> 8) & 0xFF) + (rgb & 0xFF)) / 3;
-        }
-        int[] sobelX = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
-        int[] sobelY = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
-        for (int y = 1; y < height - 1; y++) for (int x = 1; x < width - 1; x++) {
-            int gx = 0, gy = 0;
-            for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
-                int i = (dy + 1) * 3 + (dx + 1);
-                gx += gray[x + dx][y + dy] * sobelX[i];
-                gy += gray[x + dx][y + dy] * sobelY[i];
+    List<List<Point>> contours = new ArrayList<>();
+    int contourId = 1;
+
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        if (data[y][x] == 1) {
+          contourId++;
+          List<Point> contour = new ArrayList<>();
+          Point startPoint = new Point(x, y);
+          Point currentPoint = new Point(x, y - 1);
+
+          // previous:
+          // boolean isOuter = (x == 0 || data[y][x - 1] == 0);
+          boolean isOuter = (x == 0 || y == 0 || x == width - 1 || y == height - 1 || data[y][x - 1] == 0);
+
+
+          Point nextPoint = findNextSuzukiPoint(startPoint, currentPoint, data, contourId);
+          if (nextPoint != null) {
+            contour.add(startPoint);
+            currentPoint = startPoint;
+
+            while (!nextPoint.equals(startPoint)) {
+              contour.add(nextPoint);
+              Point prevPoint = currentPoint;
+              currentPoint = nextPoint;
+              nextPoint = findNextSuzukiPoint(currentPoint, prevPoint, data, contourId);
+              if (nextPoint == null) break;
             }
-            magnitude[x][y] = (int) Math.hypot(gx, gy);
+          }
+
+          if (!contour.isEmpty()) {
+            if (isOuter) {
+              contours.add(contour);
+            }
+            for (Point p : contour) {
+              if (data[p.y][p.x] == 1) {
+                data[p.y][p.x] = contourId;
+              }
+            }
+          }
         }
-        for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
-            if (magnitude[x][y] >= highThreshold) {
-                edgeImage.setRGB(x, y, 0xFFFFFF);
-            } else if (magnitude[x][y] < lowThreshold) {
-                edgeImage.setRGB(x, y, 0x000000);
-            } else {
-                boolean connected = false;
-                for (int dy = -1; dy <= 1 && !connected; dy++) for (int dx = -1; dx <= 1; dx++) {
-                    if (x+dx < 0 || x+dx >= width || y+dy < 0 || y+dy >= height) continue;
-                    if (magnitude[x+dx][y+dy] >= highThreshold) {
-                        connected = true;
-                        break;
+      }
+    }
+    return contours;
+  }
+
+  private static Point findNextSuzukiPoint(Point current, Point previous, int[][] data, int contourId) {
+    int[] dx = {0, 1, 1, 1, 0, -1, -1, -1};
+    int[] dy = {-1, -1, 0, 1, 1, 1, 0, -1};
+
+    int startIdx = 0;
+    for (int i = 0; i < 8; i++) {
+      if (current.x + dx[i] == previous.x && current.y + dy[i] == previous.y) {
+        startIdx = (i + 1) % 8;
+        break;
+      }
+    }
+
+    for (int i = 0; i < 8; i++) {
+      int checkIdx = (startIdx + i) % 8;
+      int nextX = current.x + dx[checkIdx];
+      int nextY = current.y + dy[checkIdx];
+
+      if (nextX >= 0 && nextX < data[0].length && nextY >= 0 && nextY < data.length && data[nextY][nextX] != 0) {
+        if (data[nextY][nextX] == 1) {
+          data[nextY][nextX] = contourId;
+        }
+        return new Point(nextX, nextY);
+      }
+    }
+    return null;
+  }
+
+  public static DetectionResult findBestRectangleWithCoordinateDescent(BufferedImage image) {
+    int lowT = 50;
+    int dilations = 3;
+    double highTRatio = 2.5;
+
+    DetectionResult bestResult = null;
+    double bestCost = Double.MAX_VALUE;
+
+    bestResult = getResultForParams(image, lowT, (int)(lowT * highTRatio), dilations);
+    if (bestResult != null) {
+      bestCost = calculateColorStdDev(image, bestResult.bestFitRectangle());
+    }
+
+    final int maxCycles = 5;
+    for (int cycle = 0; cycle < maxCycles; cycle++) {
+      boolean improved = false;
+
+      int[] lowTSteps = {-20, 20, -10, 10};
+      for (int step : lowTSteps) {
+        int nextLowT = Math.max(10, Math.min(150, lowT + step));
+        int nextHighT = (int)(nextLowT * highTRatio);
+        DetectionResult result = getResultForParams(image, nextLowT, nextHighT, dilations);
+        if (result == null) continue;
+        double cost = calculateColorStdDev(image, result.bestFitRectangle());
+        if (cost < bestCost) {
+          bestCost = cost;
+          bestResult = result;
+          lowT = nextLowT;
+          improved = true;
+        }
+      }
+
+      int[] dilationSteps = {-1, 1};
+      for (int step : dilationSteps) {
+        int nextDilations = Math.max(1, Math.min(8, dilations + step));
+        int currentHighT = (int)(lowT * highTRatio);
+        DetectionResult result = getResultForParams(image, lowT, currentHighT, nextDilations);
+        if (result == null) continue;
+        double cost = calculateColorStdDev(image, result.bestFitRectangle());
+        if (cost < bestCost) {
+          bestCost = cost;
+          bestResult = result;
+          dilations = nextDilations;
+          improved = true;
+        }
+      }
+
+      double[] ratioSteps = {-0.5, 0.5, -0.2, 0.2};
+      for (double step : ratioSteps) {
+        double nextRatio = Math.max(2.0, Math.min(5.0, highTRatio + step));
+        int nextHighT = (int)(lowT * nextRatio);
+        DetectionResult result = getResultForParams(image, lowT, nextHighT, dilations);
+        if (result == null) continue;
+        double cost = calculateColorStdDev(image, result.bestFitRectangle());
+        if (cost < bestCost) {
+          bestCost = cost;
+          bestResult = result;
+          highTRatio = nextRatio;
+          improved = true;
+        }
+      }
+
+      if (!improved) {
+        System.out.printf("Search converged in cycle %d.\n", cycle + 1);
+        break;
+      }
+    }
+
+    if (bestResult != null) {
+      System.out.printf("Coordinate descent found best rectangle with color std dev: %.2f\n", bestCost);
+    } else {
+      System.out.println("Warning: Could not find any valid, in-bounds rectangle during parameter search.");
+    }
+
+    return bestResult;
+  }
+
+  private static DetectionResult getResultForParams(BufferedImage image, int lowT, int highT, int dilations) {
+    DetectionResult result = detectForSingleParamSet(image, lowT, highT, dilations);
+    if (result != null && result.bestFitRectangle() != null && !result.bestFitRectangle().isEmpty()) {
+      if (isRectangleWithinBounds(result.bestFitRectangle(), image.getWidth(), image.getHeight())) {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  private static boolean isRectangleWithinBounds(List<Point> rect, int imageWidth, int imageHeight) {
+    if (rect == null) return false;
+    for (Point p : rect) {
+      if (p.x < 0 || p.x >= imageWidth || p.y < 0 || p.y >= imageHeight) return false;
+    }
+    return true;
+  }
+
+  private static double calculateColorStdDev(BufferedImage image, List<Point> rect) {
+    if (rect == null || rect.isEmpty()) return Double.MAX_VALUE;
+
+    Polygon poly = new Polygon();
+    for (Point p : rect) poly.addPoint(p.x, p.y);
+    Rectangle bounds = poly.getBounds();
+
+    List<Double> luminances = new ArrayList<>();
+    for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
+      for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
+        if (x >= 0 && x < image.getWidth() && y >= 0 && y < image.getHeight() && poly.contains(x, y)) {
+          Color c = new Color(image.getRGB(x, y));
+          luminances.add(0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue());
+        }
+      }
+    }
+
+    if (luminances.size() < 50) return Double.MAX_VALUE;
+
+    double sum = 0.0, standardDeviation = 0.0;
+    for(double num : luminances) sum += num;
+    double mean = sum / luminances.size();
+    for(double num: luminances) standardDeviation += Math.pow(num - mean, 2);
+
+    return Math.sqrt(standardDeviation / luminances.size());
+  }
+
+  public static DetectionResult detectForSingleParamSet(BufferedImage image, int lowThreshold, int highThreshold, int dilationIterations) {
+    BufferedImage edges = cannyEdgeDetection(image, lowThreshold, highThreshold);
+    BufferedImage dilated = dilate(edges, dilationIterations);
+    List<List<Point>> allContours = findExternalContours(dilated);
+
+    if (allContours.isEmpty()) return null;
+
+    final double sizeThreshold = allContours.stream().max(Comparator.comparingInt(List::size)).map(List::size).orElse(0) * 0.10;
+    List<List<Point>> significantContours = allContours.stream()
+            .filter(c -> c.size() >= sizeThreshold)
+            .collect(Collectors.toList());
+
+    if (significantContours.isEmpty()) return null;
+
+    List<Point> allObjectPoints = significantContours.stream().flatMap(List::stream).collect(Collectors.toList());
+    if (allObjectPoints.size() < 3) return null;
+
+    List<Point> hull = getConvexHull(allObjectPoints);
+
+    return getBestFitRectangleIoU(hull, significantContours, image.getWidth(), image.getHeight());
+  }
+
+  private static DetectionResult getBestFitRectangleIoU(List<Point> hull, List<List<Point>> contours, int imageWidth, int imageHeight) {
+    BufferedImage contourMask = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_BYTE_GRAY);
+    Graphics2D g2d = contourMask.createGraphics();
+    g2d.setColor(Color.WHITE);
+    List<Point> allContourPoints = new ArrayList<>();
+    for (List<Point> contour : contours) {
+      Polygon p = new Polygon();
+      for (Point pt : contour) p.addPoint(pt.x, pt.y);
+      g2d.fill(p);
+      allContourPoints.addAll(contour);
+    }
+    g2d.dispose();
+
+    int totalContourPixels = allContourPoints.size();
+    if (totalContourPixels == 0) return null;
+
+    double maxIoU = -1.0;
+    List<Point> bestRectangle = null;
+
+    for (int i = 0; i < hull.size(); i++) {
+      Point p1 = hull.get(i);
+      Point p2 = hull.get((i + 1) % hull.size());
+      double angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+      List<Point> candidateRect = getMinimumAreaRectangleForAngle(hull, angle);
+      if (candidateRect == null) continue;
+
+      Polygon rectPoly = new Polygon();
+      for(Point p : candidateRect) rectPoly.addPoint(p.x, p.y);
+      Rectangle bounds = rectPoly.getBounds();
+      int intersection = 0, rectPixels = 0;
+
+      for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
+        for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
+          if (x < 0 || x >= imageWidth || y < 0 || y >= imageHeight) continue;
+          if (rectPoly.contains(x, y)) {
+            rectPixels++;
+            if ((contourMask.getRGB(x, y) & 0xFF) > 0) intersection++;
+          }
+        }
+      }
+      double union = totalContourPixels + rectPixels - intersection;
+      double iou = (union > 0) ? (double)intersection / union : 0;
+
+      if (iou > maxIoU) {
+        maxIoU = iou;
+        bestRectangle = candidateRect;
+      }
+    }
+
+    if (bestRectangle == null) return null;
+
+    // count the true negatives and false positives
+    // can skip unless we want to use them
+	/*
+        int missedCount = 0;
+        int falsePositiveCount = 0;
+
+        Polygon bestRectPoly = new Polygon();
+        for(Point p : bestRectangle) bestRectPoly.addPoint(p.x, p.y);
+
+        for(Point p : allContourPoints) {
+            if (!bestRectPoly.contains(p)) {
+                missedCount++;
+            }
+        }
+
+        Rectangle bounds = bestRectPoly.getBounds();
+        for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
+            for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
+                if (x >= 0 && x < imageWidth && y >= 0 && y < imageHeight && bestRectPoly.contains(x, y)) {
+                    if ((contourMask.getRGB(x, y) & 0xFF) == 0) {
+                        falsePositiveCount++;
                     }
                 }
-                edgeImage.setRGB(x, y, connected ? 0xFFFFFF : 0x000000);
             }
         }
-        return edgeImage;
-    }
-    
-    private static BufferedImage dilate(BufferedImage image, int iterations) {
-        int width = image.getWidth();
-        int height = image.getHeight();
-        BufferedImage current = image;
-        for (int i = 0; i < iterations; i++) {
-            BufferedImage next = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
-            for (int y = 1; y < height - 1; y++) {
-                for (int x = 1; x < width - 1; x++) {
-                    int maxVal = 0;
-                    for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) {
-                        maxVal = Math.max(maxVal, current.getRGB(x + dx, y + dy) & 0xFF);
-                    }
-                    next.setRGB(x, y, new Color(maxVal, maxVal, maxVal).getRGB());
-                }
-            }
-            current = next;
-        }
-        return current;
-    }
 
-    private static List<List<Point>> findExternalContours(BufferedImage image) {
-        int width = image.getWidth();
-        int height = image.getHeight();
-        List<List<Point>> contours = new ArrayList<>();
-        boolean[][] visited = new boolean[width][height];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                if ((image.getRGB(x, y) & 0xFF) > 0 && !visited[x][y]) {
-                    List<Point> contour = new ArrayList<>();
-                    Point start = new Point(x, y);
-                    Point current = start;
-                    Point last = new Point(x - 1, y);
-                    do {
-                        contour.add(current);
-                        visited[current.x][current.y] = true;
-                        Point next = findNextContourPoint(current, last, image, visited);
-                        last = current;
-                        current = next;
-                    } while (current != null && !current.equals(start));
-                    contours.add(contour);
-                }
-            }
-        }
-        return contours;
+        return new DetectionResult(contours, bestRectangle, missedCount, falsePositiveCount);
+	*/
+
+    // this needs to be replaced by the above if the counts are used
+    return new DetectionResult(contours, bestRectangle, 0, 0);
+  }
+
+  private static List<Point> getMinimumAreaRectangleForAngle(List<Point> hull, double angle) {
+    double cos = Math.cos(-angle); double sin = Math.sin(-angle);
+    double minX = Double.MAX_VALUE, maxX = Double.MIN_VALUE, minY = Double.MAX_VALUE, maxY = Double.MIN_VALUE;
+    for (Point p : hull) {
+      double rotatedX = p.x * cos - p.y * sin;
+      double rotatedY = p.x * sin + p.y * cos;
+      minX = Math.min(minX, rotatedX); maxX = Math.max(maxX, rotatedX);
+      minY = Math.min(minY, rotatedY); maxY = Math.max(maxY, rotatedY);
     }
-    
-    private static Point findNextContourPoint(Point current, Point last, BufferedImage image, boolean[][] visited) {
-        int[] dx = {1, 1, 0, -1, -1, -1, 0, 1};
-        int[] dy = {0, 1, 1, 1, 0, -1, -1, -1};
-        int startIdx = 0;
-        for(int i=0; i<8; i++) {
-            if (current.x + dx[i] == last.x && current.y + dy[i] == last.y) {
-                startIdx = (i + 1) % 8;
-                break;
-            }
-        }
-        for(int i=0; i<8; i++) {
-            int checkIdx = (startIdx + i) % 8;
-            int nextX = current.x + dx[checkIdx];
-            int nextY = current.y + dy[checkIdx];
-            if (nextX >= 0 && nextX < image.getWidth() && nextY >= 0 && nextY < image.getHeight() && (image.getRGB(nextX, nextY) & 0xFF) > 0) {
-                return new Point(nextX, nextY);
-            }
-        }
-        return null;
+    double invCos = Math.cos(angle); double invSin = Math.sin(angle);
+    Point[] corners = new Point[4];
+    corners[0] = new Point((int)(minX * invCos - minY * invSin), (int)(minX * invSin + minY * invCos));
+    corners[1] = new Point((int)(maxX * invCos - minY * invSin), (int)(maxX * invSin + minY * invCos));
+    corners[2] = new Point((int)(maxX * invCos - maxY * invSin), (int)(maxX * invSin + maxY * invCos));
+    corners[3] = new Point((int)(minX * invCos - maxY * invSin), (int)(minX * invSin + maxY * invCos));
+    return List.of(corners);
+  }
+
+  private static List<Point> getConvexHull(List<Point> points) {
+    if (points.size() <= 3) return new ArrayList<>(points);
+    // do we need to make a copy and sort the copy?
+    points.sort(Comparator.comparingInt((Point p) -> p.x).thenComparingInt((Point p) -> p.y));
+    List<Point> hull = new ArrayList<>();
+    for (Point p : points) { while (hull.size() >= 2 && crossProduct(hull.get(hull.size()-2), hull.get(hull.size()-1), p) <= 0) hull.remove(hull.size()-1); hull.add(p); }
+    int lowerHullSize = hull.size();
+    for (int i = points.size() - 2; i >= 0; i--) { Point p = points.get(i); while (hull.size() > lowerHullSize && crossProduct(hull.get(hull.size()-2), hull.get(hull.size()-1), p) <= 0) hull.remove(hull.size()-1); hull.add(p); }
+    hull.remove(hull.size()-1); return hull;
+  }
+
+  private static long crossProduct(Point a, Point b, Point c) {
+    return (long)(b.x - a.x) * (c.y - a.y) - (long)(b.y - a.y) * (c.x - a.x);
+  }
+
+  private static BufferedImage cannyEdgeDetection(BufferedImage image, int lowThreshold, int highThreshold) {
+    int width = image.getWidth(); int height = image.getHeight(); BufferedImage edgeImage = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+    int[][] gray = new int[width][height]; int[][] magnitude = new int[width][height];
+    for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) { int rgb = image.getRGB(x, y); gray[x][y] = (((rgb >> 16) & 0xFF) + ((rgb >> 8) & 0xFF) + (rgb & 0xFF)) / 3; }
+    int[] sobelX = {-1, 0, 1, -2, 0, 2, -1, 0, 1}; int[] sobelY = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
+    for (int y = 1; y < height - 1; y++) for (int x = 1; x < width - 1; x++) {
+      int gx = 0, gy = 0; for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) { int i = (dy + 1) * 3 + (dx + 1); gx += gray[x + dx][y + dy] * sobelX[i]; gy += gray[x + dx][y + dy] * sobelY[i]; }
+      magnitude[x][y] = (int) Math.hypot(gx, gy);
     }
+    for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
+      if (magnitude[x][y] >= highThreshold) edgeImage.setRGB(x, y, 0xFFFFFF); else if (magnitude[x][y] < lowThreshold) edgeImage.setRGB(x, y, 0x000000);
+      else { boolean connected = false; for (int dy = -1; dy <= 1 && !connected; dy++) for (int dx = -1; dx <= 1; dx++) { if (x + dx < 0 || x + dx >= width || y + dy < 0 || y + dy >= height) continue; if (magnitude[x + dx][y + dy] >= highThreshold) { connected = true; break; } } edgeImage.setRGB(x, y, connected ? 0xFFFFFF : 0x000000); }
+    }
+    return edgeImage;
+  }
+
+  private static BufferedImage dilate(BufferedImage image, int iterations) {
+    int width = image.getWidth(); int height = image.getHeight(); BufferedImage current = image;
+    for (int i = 0; i < iterations; i++) {
+      BufferedImage next = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+      for (int y = 1; y < height - 1; y++) for (int x = 1; x < width - 1; x++) {
+        int maxVal = 0; for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++) { maxVal = Math.max(maxVal, current.getRGB(x + dx, y + dy) & 0xFF); }
+        next.setRGB(x, y, new Color(maxVal, maxVal, maxVal).getRGB());
+      }
+      current = next;
+    }
+    return current;
+  }
 }

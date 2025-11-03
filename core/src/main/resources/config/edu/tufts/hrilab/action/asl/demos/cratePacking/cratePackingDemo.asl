@@ -135,17 +135,19 @@ import java.lang.Boolean;
 
     !tmp = tsc:getPackedItemHeight();
     !boxHeight = op:*(1.0, !tmp);
-    op:log(error, "[looforafafsdafdsa] boxHeight !boxHeight");
-    op:log(error, "[looforafafsdafdsa] zOffset !zOffset");
+    op:log(debug, "[lookForAndMoveToBox] boxHeight !boxHeight");
     !currentPose = tsc:getPoseFromSymbol(robotonepose_0:pose);
+    op:log(debug, "[lookForAndMoveToBox] currentPose (conveyor) !currentPose");
     !surfaceHeight = op:invokeMethod(!currentPose, "getSurfaceHeight");
     !surfaceHeight = op:*(!surfaceHeight, 1000);
-    op:log(error, "[looforafafsdafdsa] surfaceHeight !surfaceHeight");
+    op:log(debug, "[lookForAndMoveToBox]  surfaceHeight !surfaceHeight");
     !boxHeight = op:+(!boxHeight, !surfaceHeight);
-    op:log(error, "[looforafafsdafdsa] boxHeight !boxHeight");
+    op:log(debug, "[lookForAndMoveToBox] boxHeight !boxHeight");
 
     !currentPose = tsc:getCurrentPose();
+    op:log(debug, "[lookForAndMoveToBox] currentPose (robot) !currentPose");
     !goal = tsc:calculateRelativeMovement(!currentPose, !x, !y, !theta, !boxHeight, !zOffset);
+    op:log(debug, "[lookForAndMoveToBox] goal !goal");
     act:rotateToEE("gripper");
     tsc:goToPose(!goal);
 }
@@ -449,4 +451,9 @@ import java.lang.Boolean;
     !bindings = act:askQuestionFromString(?actor, "is it ready", val(X));
     tsc:saveImage();
 
+}
+
+
+() = testAutoCalibration() {
+    tsc:runFullAutoCalibration(robotonepose_0:pose,-50.0);
 }

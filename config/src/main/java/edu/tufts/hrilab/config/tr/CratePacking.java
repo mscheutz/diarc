@@ -3,6 +3,7 @@ package edu.tufts.hrilab.config.tr;
 import ai.thinkingrobots.mtracs.TRACSBackendClient;
 import ai.thinkingrobots.mtracs.interfaces.CR800ComponentInterface;
 import ai.thinkingrobots.mtracs.util.Util;
+import ai.thinkingrobots.mtracs.packing.RobotCalibrator;
 import com.google.gson.Gson;
 import edu.tufts.hrilab.diarc.DiarcConfiguration;
 import edu.tufts.hrilab.fol.Factory;
@@ -264,6 +265,8 @@ public class CratePacking extends DiarcConfiguration {
                 simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker user -addressee robotone -config cratePacking.simspeech");
             }
         }
+
+        //createInstance(RobotCalibrator.class,"");
 
         cratePackingComponent.setGui(new CratePackingGui(cratePackingComponent, hybridParserComponent, hybridNLGComponent, serviceProvider, japanese));
     }
