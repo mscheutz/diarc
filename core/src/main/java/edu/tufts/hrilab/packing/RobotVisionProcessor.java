@@ -22,7 +22,6 @@ public class RobotVisionProcessor {
   public int defaultCamera;
   private double boxWidthMeters;
   private double boxLengthMeters;
-  private final double cameraZDistanceMeters;
   private int cannyLowThreshold = 0;
   private int cannyHighThreshold = 80;
   private int dilationIterations = 1;
@@ -34,12 +33,10 @@ public class RobotVisionProcessor {
   private double a = -1;
   private static final Logger log = LoggerFactory.getLogger(RobotVisionProcessor.class);
 
-  private String visionsSettingsFile = "visionSettings";
 
-  public RobotVisionProcessor(double boxWidthMeters, double boxLengthMeters, double cameraZDistanceMeters) {
+  public RobotVisionProcessor(double boxWidthMeters, double boxLengthMeters) {
     this.boxWidthMeters = boxWidthMeters;
     this.boxLengthMeters = boxLengthMeters;
-    this.cameraZDistanceMeters = cameraZDistanceMeters;
 
     String homeDir = System.getProperty("user.home");
     settingsFile = Paths.get(homeDir, ".diarc","visionSettings").toString();
@@ -127,8 +124,8 @@ public class RobotVisionProcessor {
     double shiftY_pixels = rectCenterY - imageCenterY;
 
     // convert the pixel shift into a real-world shift in meters
-    double realWorldShiftX = shiftX_pixels / a;
-    double realWorldShiftY = shiftY_pixels / a;
+    double realWorldShiftX = (shiftX_pixels) / a;
+    double realWorldShiftY = (shiftY_pixels) / a;
 
     // calculate the rotation required in degrees
     double rotationAngleRad = Math.atan2(widthEdgeP2.y - widthEdgeP1.y, widthEdgeP2.x - widthEdgeP1.x);

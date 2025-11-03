@@ -57,6 +57,9 @@ public class CratePackingComponent extends DiarcComponent {
   CratePackingGui gui;
   private BufferedImage previousImage;
   private boolean cancel = false;
+  private double tcpAdjustX = 0;
+  private double tcpAdjustY = 0;
+  private double tcpAdjustTheta = 0;
 
   public CratePackingComponent() {
     crateL = -1;
@@ -84,7 +87,7 @@ public class CratePackingComponent extends DiarcComponent {
   @Override
   public void init() {
     super.init();
-    this.visionProcessor = new RobotVisionProcessor(packedItemW/1000.0, packedItemL/1000.0, cameraHeightMM/1000.0);
+    this.visionProcessor = new RobotVisionProcessor(packedItemW/1000.0, packedItemL/1000.0);
     //SwingUtilities.invokeLater(() -> {
     //  gui = new CratePackingGui(this);
     //  gui.setVisible(true);});
@@ -574,6 +577,11 @@ public class CratePackingComponent extends DiarcComponent {
 
   @TRADEService
   public Vec3 calculateRobotAdjustment() {
+    return calculateRobotAdjustment(false);
+  }
+
+  @TRADEService
+  public Vec3 calculateRobotAdjustment(boolean ignoreAdjustment) {
     if (mock) {
       try {
         Thread.sleep(1000);
@@ -596,7 +604,17 @@ public class CratePackingComponent extends DiarcComponent {
     } else if (rotationAngleRad < -(Math.PI/2)) {
       rotationAngleRad = rotationAngleRad + (2 * Math.PI);
     }
-    return new Vec3(result.getX() * 1000, -1 * result.getY() * 1000, rotationAngleRad);
+    double xOffset, yOffset, thetaOffset;
+    if (ignoreAdjustment) {
+      xOffset = 0;
+      yOffset = 0;
+      thetaOffset = 0;
+    } else {
+      xOffset = tcpAdjustX;
+      yOffset = tcpAdjustY;
+      thetaOffset = tcpAdjustTheta;
+    }
+    return new Vec3(result.getX() * 1000 + xOffset, -1 * result.getY() * 1000 + yOffset, rotationAngleRad + thetaOffset);
   }
 
   private boolean detectStartMotion() {
@@ -744,5 +762,13 @@ public class CratePackingComponent extends DiarcComponent {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  //in mm and radians
+  @TRADEService
+  public void setTCPAdjustFromError(double dx, double dy, double dtheta)  {
+    tcpAdjustX =  -dx;
+    tcpAdjustY = -dy;
+    tcpAdjustTheta = -dtheta;
   }
 }

@@ -22,7 +22,6 @@ public class ContourDetectionTool extends JFrame {
   private final RobotVisionProcessor visionProcessor;
   private JButton startStopCameraButton;
   private JButton setAlphaButton;
-  private JButton saveImageButton;
   private ContourImagePanel originalPanel, correctedPanel;
   private JLabel infoLabel, resultLabel, dimensionsLabel;
   private JSlider lowThresholdSlider, highThresholdSlider, dilationSlider;
@@ -74,7 +73,6 @@ public class ContourDetectionTool extends JFrame {
     lField = new JTextField("0.225", 5);  // default length of box
     mainControlsPanel.add(lField);
     setAlphaButton = new JButton("Set Calibration");
-    saveImageButton = new JButton("Save Image");
 
     JPanel slidersPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
     // default canny edge detection values that worked on all the test images
@@ -85,7 +83,6 @@ public class ContourDetectionTool extends JFrame {
     slidersPanel.add(highThresholdSlider.getParent());
     slidersPanel.add(dilationSlider.getParent());
     slidersPanel.add(setAlphaButton);
-    slidersPanel.add(saveImageButton);
 
     lowThresholdSlider.addChangeListener(e -> visionProcessor.setCannyLowThreshold(lowThresholdSlider.getValue()));
     highThresholdSlider.addChangeListener(e -> visionProcessor.setCannyHighThreshold(highThresholdSlider.getValue()));
@@ -114,7 +111,6 @@ public class ContourDetectionTool extends JFrame {
     startStopCameraButton.addActionListener(e -> startCameraCapture());
 
     setAlphaButton.addActionListener(e -> setAlpha());
-    saveImageButton.addActionListener(e -> saveImage());
 
     Timer timer = new Timer(500, e -> {
       if (capture) {
@@ -146,7 +142,10 @@ public class ContourDetectionTool extends JFrame {
 
   private void setAlpha() {
     try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("setAlpha"));
+      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImage"));
+      sourceImage = tsi.call(BufferedImage.class);
+      processImage();
+      tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("setAlpha"));
       tsi.call(void.class, alpha);
     } catch (TRADEException e) {
       log.error("[setAlpha] error calling trade service to set value of constant value a", e);
@@ -183,21 +182,6 @@ public class ContourDetectionTool extends JFrame {
       cameraSelectionBox.repaint();
       this.setVisible(true);
     });
-  }
-
-  private void saveImage() {
-    try {
-      TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImage"));
-      sourceImage = tsi.call(BufferedImage.class);
-      processImage();
-    } catch (TRADEException ex) {
-      throw new RuntimeException(ex);
-    }
-    try {
-      ImageIO.write(sourceImage, "png", new File("/home/pete/matthias/" + ++imgNum + ".png"));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private void startCameraCapture() {
