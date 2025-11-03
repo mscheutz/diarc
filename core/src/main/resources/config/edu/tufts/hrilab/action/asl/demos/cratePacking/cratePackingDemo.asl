@@ -430,6 +430,7 @@ import java.lang.Boolean;
     Double !theta;
     List !responseFormList;
     Predicate !responseForm;
+    Predicate !failure;
 
     !tmp = tsc:getPackedItemHeight();
     !destHeight = op:*(1.0, !tmp);
@@ -462,6 +463,11 @@ import java.lang.Boolean;
     act:goToPoseDirect(robotonepose_0:pose);
     act:rotateToEE(default);
     !adjustment = tsc:calculateRobotAdjustment(!true);
+    if (op:isNull(!adjustment)) {
+        //todo: actually say something useful here. these semantics don't have generation examples currently
+        !failure = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(see(item))");
+        exit(FAIL_PRECONDITIONS, !failure);
+    }
     !x = op:invokeMethod(!adjustment, "getX");
     !y = op:invokeMethod(!adjustment, "getY");
     !theta = op:invokeMethod(!adjustment, "getZ");

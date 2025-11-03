@@ -285,8 +285,8 @@ public class ContourDetectionTool extends JFrame {
   private void recalculateFromCorners(List<Point> corners) {
     double objectWidthW, objectLengthL, distanceZ;
     try {
-      objectWidthW = Double.parseDouble(wField.getText());
-      objectLengthL = Double.parseDouble(lField.getText());
+      objectWidthW = Double.parseDouble(wField.getText()) / 1000;
+      objectLengthL = Double.parseDouble(lField.getText()) / 1000;
     } catch (NumberFormatException ex) {
       infoLabel.setText("Invalid dimensions (W, L, Z). Please enter valid numbers.");
       return;
