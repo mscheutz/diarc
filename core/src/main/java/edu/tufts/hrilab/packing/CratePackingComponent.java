@@ -773,4 +773,16 @@ public class CratePackingComponent extends DiarcComponent {
     tcpAdjustY = -dy;
     tcpAdjustTheta = -dtheta;
   }
+
+  public double getTcpAdjustX() {
+    return tcpAdjustX;
+  }
+
+  public double getTcpAdjustY() {
+    return tcpAdjustY;
+  }
+
+  public double getTcpAdjustTheta() {
+    return tcpAdjustTheta;
+  }
 }

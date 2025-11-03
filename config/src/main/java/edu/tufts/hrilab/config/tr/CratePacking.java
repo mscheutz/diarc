@@ -279,8 +279,11 @@ public class CratePacking extends DiarcConfiguration {
       private int itemW;
       private int itemH;
       private int tolerance;
+      private double tcpAdjustX;
+      private double tcpAdjustY;
+      private double tcpAdjustTheta;
 
-      public PackingParams(int crateL, int crateW, int crateH, int itemL, int itemW, int itemH, int tolerance) {
+      public PackingParams(int crateL, int crateW, int crateH, int itemL, int itemW, int itemH, int tolerance, double tcpAdjustX, double tcpAdjustY, double tcpAdjustTheta) {
         this.crateL = crateL;
         this.crateW = crateW;
         this.crateH = crateH;
@@ -288,6 +291,9 @@ public class CratePacking extends DiarcConfiguration {
         this.itemW = itemW;
         this.itemH = itemH;
         this.tolerance = tolerance;
+        this.tcpAdjustX = tcpAdjustX;
+        this.tcpAdjustY = tcpAdjustY;
+        this.tcpAdjustTheta = tcpAdjustTheta;
       }
     }
 
@@ -304,6 +310,7 @@ public class CratePacking extends DiarcConfiguration {
           cratePackingComponent.setCrateDimensions(params.crateL, params.crateW, params.crateH);
           cratePackingComponent.setPackedItemDimensions(params.itemL, params.itemW, params.itemH);
           cratePackingComponent.setTolerance(params.tolerance);
+          cratePackingComponent.setTCPAdjustFromError(-params.tcpAdjustX, -params.tcpAdjustY, -params.tcpAdjustTheta);
           log.info("[loadCratePackingSettings] loaded from file");
           //cratePackingComponent.solveCratePacking3D();
         } else {
@@ -329,7 +336,10 @@ public class CratePacking extends DiarcConfiguration {
         int itemW = cratePackingComponent.getPackedItemWidth();
         int itemH = cratePackingComponent.getPackedItemHeight();
         int tolerance = cratePackingComponent.getTolerance();
-        PackingParams params = new PackingParams(crateL, crateW, crateH, itemL, itemW, itemH, tolerance);
+        double tcpAdjustX = cratePackingComponent.getTcpAdjustX();
+        double tcpAdjustY = cratePackingComponent.getTcpAdjustY();
+        double tcpAdjustTheta = cratePackingComponent.getTcpAdjustTheta();
+        PackingParams params = new PackingParams(crateL, crateW, crateH, itemL, itemW, itemH, tolerance, tcpAdjustX, tcpAdjustY, tcpAdjustTheta);
         gson.toJson(params, writer);
         writer.flush();
         writer.close();
