@@ -166,43 +166,6 @@ import java.lang.Boolean;
     }
 }
 
-//() = putDownInCrate(Float ?dx, Float ?dy, Float ?dz, Float ?dc) {
-//    onInterrupt :{
-//        cancel: act:putDownInCrateCancel(!tracker, !heightUp, !origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc);
-//    }
-//
-//    MPose !origin;
-//    Float !height;
-//    Double !heightUp;
-//    Symbol !robotone = "robotone:agent";
-//    Integer !tracker = 0;
-//
-//    Float !zero = 0.0f;
-//    Float !surfaceHeight;
-//    MPose !updated;
-//    Float !dctmp;
-//
-//    !dctmp = op:*(?dc, 1.0f);
-//
-//    op:log(error, "dz ?dz");
-//
-//    !origin = tsc:getPoseFromSymbol(robotonepose_1:pose);
-//    act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
-//
-//    !updated = tsc:getCurrentPose();
-//
-//    !surfaceHeight = op:invokeMethod(!origin, "getSurfaceHeight");
-//    !height = op:+(!surfaceHeight, ?dz);
-//    op:log(error, "height !height");
-//
-//    !tracker = op:++(!tracker);
-//    tsc:moveToZ(!origin, !height, !dctmp);
-//    tsc:openGripper();
-//    act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
-//    !tracker = op:++(!tracker);
-//    op:log(debug, "done putting down crate");
-//}
-
 () = putDownInCrate(Float ?dx, Float ?dy, Float ?dz, Float ?dc) {
     onInterrupt :{
         cancel: act:putDownInCrateCancel(!tracker, !heightUp, !origin, ?dx, ?dy, ?dz, !zero, !zero, ?dc);
@@ -401,7 +364,7 @@ import java.lang.Boolean;
     tsc:saveImage();
     tsc:moveCRelative(1.5708);
 
-    tsc:moveZRelative(0.075);
+    tsc:moveZRelative(-0.05);
     tsc:saveImage();
     tsc:moveCRelative(1.5708);
     tsc:saveImage();
@@ -409,7 +372,7 @@ import java.lang.Boolean;
     tsc:saveImage();
     tsc:moveCRelative(1.5708);
 
-    tsc:moveZRelative(-0.150);
+    tsc:moveZRelative(0.10);
     tsc:saveImage();
     tsc:moveCRelative(1.5708);
     tsc:saveImage();
@@ -451,6 +414,60 @@ import java.lang.Boolean;
     !bindings = act:askQuestionFromString(?actor, "is it ready", val(X));
     tsc:saveImage();
 
+}
+
+() = runGraspCalibration() {
+    MPose !pose;
+    Float !surfaceHeight;
+    Float !destHeight;
+    Integer !tmp;
+    Double !goalZ;
+    Vec3 !adjustment;
+    Boolean !true = true;
+    Float !poseZ;
+    Double !x;
+    Double !y;
+    Double !theta;
+    List !responseFormList;
+    Predicate !responseForm;
+
+    !tmp = tsc:getPackedItemHeight();
+    !destHeight = op:*(1.0, !tmp);
+    !pose = tsc:getPoseFromSymbol(robotonepose_0:pose);
+    !surfaceHeight = op:invokeMethod(!pose, "getSurfaceHeight");
+    !surfaceHeight = op:*(!surfaceHeight, 1000);
+    !destHeight = op:+(!destHeight, !surfaceHeight);
+
+    !poseZ = op:invokeMethod(!pose, "getZ");
+    !destHeight = op:-(!destHeight, !poseZ);
+
+
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:createPredicate("val(X)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:createPredicate("replaced(X)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:createPredicate("didIt(X)");
+    op:add(!responseFormList,!responseForm);
+
+    act:goToPoseDirect(robotonepose_0:pose);
+    act:closeGripper();
+    act:askQuestion(?actor, ask(ackWhen(placed(item, gripper))), !responseFormList);
+    act:rotateToEE(gripper);
+    !goalZ = op:/(!destHeight, 1000);
+    op:log(debug, "[adjustForDetectionOffset] goal Z height is: !goalZ");
+    tsc:moveZRelative(!goalZ);
+    act:openGripper();
+    tsc:moveZRelative(.3);
+    act:goToPoseDirect(robotonepose_0:pose);
+    act:rotateToEE(default);
+    !adjustment = tsc:calculateRobotAdjustment(!true);
+    !x = op:invokeMethod(!adjustment, "getX");
+    !y = op:invokeMethod(!adjustment, "getY");
+    !theta = op:invokeMethod(!adjustment, "getZ");
+
+    tsc:setTCPAdjustFromError(!x, !y, !theta);
+    op:log(info, "[adjustForDetectionOffset] adjustment set to detection result: !x (x), !y (y), !theta (theta)");
 }
 
 
