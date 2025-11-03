@@ -135,13 +135,19 @@ import java.lang.Boolean;
 
     !tmp = tsc:getPackedItemHeight();
     !boxHeight = op:*(1.0, !tmp);
+    op:log(debug, "[lookForAndMoveToBox] boxHeight !boxHeight");
     !currentPose = tsc:getPoseFromSymbol(robotonepose_0:pose);
+    op:log(debug, "[lookForAndMoveToBox] currentPose (conveyor) !currentPose");
     !surfaceHeight = op:invokeMethod(!currentPose, "getSurfaceHeight");
     !surfaceHeight = op:*(!surfaceHeight, 1000);
+    op:log(debug, "[lookForAndMoveToBox]  surfaceHeight !surfaceHeight");
     !boxHeight = op:+(!boxHeight, !surfaceHeight);
+    op:log(debug, "[lookForAndMoveToBox] boxHeight !boxHeight");
 
     !currentPose = tsc:getCurrentPose();
+    op:log(debug, "[lookForAndMoveToBox] currentPose (robot) !currentPose");
     !goal = tsc:calculateRelativeMovement(!currentPose, !x, !y, !theta, !boxHeight, !zOffset);
+    op:log(debug, "[lookForAndMoveToBox] goal !goal");
     act:rotateToEE("gripper");
     tsc:goToPose(!goal);
 }
@@ -451,4 +457,9 @@ import java.lang.Boolean;
 
     tsc:setTCPAdjustFromError(!x, !y, !theta);
     op:log(info, "[adjustForDetectionOffset] adjustment set to detection result: !x (x), !y (y), !theta (theta)");
+}
+
+
+() = testAutoCalibration() {
+    tsc:runFullAutoCalibration(robotonepose_0:pose,-50.0);
 }

@@ -67,4 +67,6 @@ option; VAL/NUM; #x.option($x)
 
 get images; C; getCalibrationImages(?ADDRESSEE)
 manual get images; C; getCalibrationImagesManual(?ADDRESSEE)
+
+%test auto calibration; C; testAutoCalibration(?ADDRESSEE);
 calibrate offset; C; adjustForDetectionOffset(?ADDRESSEE)
