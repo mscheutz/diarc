@@ -186,6 +186,7 @@ import java.lang.Boolean;
     act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
 
     !surfaceHeight = op:invokeMethod(!origin, "getSurfaceHeight");
+    !surfaceHeight = op:*(!surfaceHeight, 1000);
     !height = op:+(!surfaceHeight, ?dz);
     op:log(error, "height !height");
 
@@ -193,11 +194,11 @@ import java.lang.Boolean;
 
     !difference = op:-(!currentZ, !height);
     !difference = op:/(!difference, 1000);
-    op:log(error, "[dsafdadsafadsdfas] height: !height, currentZ: !currentZ, difference: !difference");
 
 
     !heightUp = op:*(!difference, -1);
     !tracker = op:++(!tracker);
+    op:log(info, "[putDownInCrate] dz: ?dz, surfaceHeight: !surfaceHeight, currentZ: !currentZ, height: !height, difference: !difference, heightUp: !heightUp");
     tsc:moveZRelative(!heightUp);
     tsc:openGripper();
     tsc:moveZRelative(!difference);
