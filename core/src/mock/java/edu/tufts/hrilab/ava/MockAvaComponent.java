@@ -432,11 +432,30 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   @Override
   public void listenForWWandASR() {
     listenForWW = true;
-    //TODO: Configure paths/get resources better
-    //args:--whisper_model, --ww_model_path, --ww_detection_thresh
+    //TODO: What of the below do we want to expose through the config?
+    //args:
+    // --model_size: "tiny", "base", "small", "medium", "large"
+    // --ww_model_path: ~/.diarc/python/ww/models/hey_eyva_model_float32.tflite
+    // --ww_detection_thresh: 0.8
+    // --use_faster_whisper
+    // --asr_use_gpu
+    // --asr_mode: 1 == local, 2 == remote
+    // --endpoint: http://<ip>:5000/
     String home = System.getProperty("user.home");
-    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py");
-    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--use_faster_whisper");
+
+    // moonshine base cpu
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py");
+
+    // fasterwhisper small gpu
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--model_size","small","--use_faster_whisper","--asr_mode","1","--asr_use_gpu");
+
+    // remote fasterwhisper small gpu
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py","--use_faster_whisper","--asr_mode","2","--endpoint", "http://localhost:5000/");
+
+    //********If haven't updated ww env and script, use the below*******
+    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
+
     processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
     try {
       Process process = processBuilder.start();
