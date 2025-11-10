@@ -4,10 +4,13 @@ AVA has a specific set of semantic forms it understands and also only knows abou
 ###
 SEMANTIC FORMS: Represents the total set of possible targets of your translations. Any word preceded by a ? in semantics is a variable. A variable will be replaced with the actual value of that piece of information in your translation. variables followed by :location are TYPED variables. TYPED variables can ONLY be replaced a value from the corresponding entity list, nothing else.
 ##
+The following semantic forms represent user instructions to the system:
 %actionList
 #
+The following semantic forms represent user instructions of actions which were previously manually taught through the use of the learnNewTask and endActionLearning actions. They will be referred to directly by their names when instructed by the user:
 %learnedActions%
 ##
+The following semantic forms represent user replies to questions from the system:
 val(yes)
 Description: Affirmative response to a yes/no question
 Example Translation: "yeah" -> {"Semantics":"val(yes)","Input Type":"REPLY","Confidence":"10"}

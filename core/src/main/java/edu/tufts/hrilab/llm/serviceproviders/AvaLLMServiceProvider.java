@@ -659,7 +659,8 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         try {
             List<Predicate> learnedActionPredicates = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLearnedActionPredicates")).call(List.class);
             for (Predicate pred : learnedActionPredicates) {
-                learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n", pred, pred.getName());
+              learnedActionsString += String.format("%s\n#\n", pred);
+              //learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n", pred, pred.getName());
             }
             retrievedLearnedActions = true;
         } catch (TRADEException e) {
@@ -672,7 +673,8 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         if (entry.isScript() && entry.getDBFile() == null && !entry.getName().equals("planned")) {
             log.info("[handleDatabaseAddition] have learned action {}", entry.getName());
             //learnedActions.add(entry);
-            learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n",entry.getSignature(false),entry.getName());
+            //learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n",entry.getSignature(false),entry.getName());
+            learnedActionsString += String.format("%s\n#\n", entry.getSignature(false));
         }
     }
 
