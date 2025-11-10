@@ -151,7 +151,7 @@ class SpotTRADEWrapper:
             return (False, "error msg")
 
     def moveToPoseImpedanceControl(self, groupName, point, orientation):
-        logging.info(f"moveToPoseImpedanceControl method called. point: {point} orientation: {orientation}")
+        logging.debug(f"moveToPoseImpedanceControl method called. point: {point} orientation: {orientation}")
 
         try:
             # Set up stiffness and damping matrices. Note: if these values are set too high,
@@ -174,7 +174,7 @@ class SpotTRADEWrapper:
             impedance_cmd = arm_command_pb2.ArmImpedanceCommand.Request(
                 root_frame_name=BODY_FRAME_NAME, task_tform_desired_tool=hand_trajectory,
                 diagonal_stiffness_matrix=stiffness, diagonal_damping_matrix=damping,
-                max_force_mag=DoubleValue(value=5.0), max_torque_mag=DoubleValue(value=5.0))
+                max_force_mag=DoubleValue(value=20.0), max_torque_mag=DoubleValue(value=20.0))
             arm_command = arm_command_pb2.ArmCommand.Request(
                 arm_impedance_command=impedance_cmd)
             synchronized_command = synchronized_command_pb2.SynchronizedCommand.Request(

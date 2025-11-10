@@ -82,13 +82,16 @@ class AnalysisEnv(gym.Env):
             ################################
 
             # Use moveTo for absolute positioning in odom frame
-            logging.info(f"moveToPose method called. point: {target} orientation: {body_orient_hand}")
+            logging.debug(f"calling moveTo with point: {target} orientation: {body_orient_hand}")
             ret = self.trade.call_trade("moveTo", [], "arm", target, body_orient_hand)
             # ret = True
             
             # Get achieved position
             achieved_position = self._get_current_position()
             logging.info(f"AnalysisEnv achieved: {achieved_position}")
+
+            distance = np.linalg.norm(target_position - achieved_position)
+            logging.info(f"AnalysisEnv target movement error: {distance}")
             
             info = {
                 "trade_return": ret,
