@@ -68,10 +68,16 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Tuple3d;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import static java.lang.Double.parseDouble;
 import static java.lang.System.getProperty;
@@ -1501,18 +1507,41 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   public void toggleDisplay() {
     String homeDir = System.getProperty("user.home");
     String scriptDir = Paths.get(homeDir, ".diarc").toString();
-    String statusCommand = "/bin/bash " + scriptDir + "getDisplay.sh";
+    String statusCommand = "/bin/bash " + scriptDir + "/getDisplay.sh";
     log.info("[toggleDisplay] status command: " + statusCommand);
     String statusResult = callLocal(statusCommand);
     log.info("[toggleDisplay] status result: " + statusResult);
-    List<String> results = Arrays.stream(statusResult.split("MainVideoSource")).toList();
-    int id = Integer.valueOf(results.get(1).substring(1,1));
+
+
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder builder = null;
+    try {
+      builder = factory.newDocumentBuilder();
+    } catch (ParserConfigurationException e) {
+      throw new RuntimeException(e);
+    }
+    Document doc = null;
+    try {
+      doc = builder.parse(
+              new ByteArrayInputStream(statusResult.getBytes("UTF-8"))
+      );
+    } catch (SAXException e) {
+      throw new RuntimeException(e);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    String value;
+    NodeList nodes = doc.getElementsByTagName("MainVideoSource");
+    value = nodes.item(0).getTextContent();
+
+    int id = Integer.parseInt(value);
     log.info("[toggleDisplay] id of current display input: " + id);
     String command;
     if (id == 1) {
-      command = "/bin/bash " + scriptDir + "setDisplay2.sh";
+      command = "/bin/bash " + scriptDir + "/setDisplay2.sh";
     } else {
-      command = "/bin/bash " + scriptDir + "setDisplay1.sh";
+      command = "/bin/bash " + scriptDir + "/setDisplay1.sh";
     }
     String result = callLocal(command);
     log.info("[toggleDisplay] result: " + result);
