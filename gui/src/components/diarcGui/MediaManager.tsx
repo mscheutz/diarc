@@ -67,6 +67,8 @@ const MediaManager: React.FC<Props> = ({
     const [data, setData] = useState<Entry[]>([]);
     const [selectedIds, setSelectedIds] = useState<String[]>([]);
 
+    const [mediaKey, setMediaKey] = useState(0); // ★ bump this to hard-remount table
+
     useEffect(() => {
 
         if (lastMessage === null) return;
@@ -80,6 +82,8 @@ const MediaManager: React.FC<Props> = ({
 
         setData(media);
 
+        setMediaKey(k => k + 1);
+
     }, [path, lastMessage]);
 
     const handleDelete = () => {
@@ -92,6 +96,7 @@ const MediaManager: React.FC<Props> = ({
             document.getElementById(id).checked = false;
         })
         setSelectedIds([])
+        setMediaKey(k => k + 1);
     };
 
     const handleUpload = () => {
@@ -101,7 +106,7 @@ const MediaManager: React.FC<Props> = ({
 
         const formData = new FormData()
         formData.append("file", file);
-        fetch(baseUrl + 'api/files/upload', {
+        fetch(baseUrl + '/api/files/upload', {
             method: 'POST',
             body: formData,
             mode: 'no-cors',
@@ -109,10 +114,15 @@ const MediaManager: React.FC<Props> = ({
             .then((data) => console.log(data))
             .catch((err) => console.error(err));
 
-        sendMessage(JSON.stringify({
-            path: path,
-            method: "refresh"
-        }));
+        setTimeout(() => {
+            sendMessage(JSON.stringify({
+                path: path,
+                method: "refresh",
+                nonce: Date.now() // ★
+            }));
+        }, 400);
+
+        setMediaKey(k => k + 1);
     };
 
     const handleItemSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -204,6 +214,7 @@ const MediaManager: React.FC<Props> = ({
             <div className="grow flex flex-col overflow-auto min-h-0
                                             basis-0">
                 <MediaTable
+                    key={mediaKey}
                     data={data}
                     handleSelect={handleItemSelect}
                 />
