@@ -259,7 +259,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
 
   @Override
   public Pair<Point3d, Quat4d> getPose() {
-    log.info("[getPose] called.");
+    log.debug("[getPose] called.");
     return new MutablePair<>(new Point3d(), new Quat4d());
   }
 
@@ -438,23 +438,23 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     // --ww_model_path: ~/.diarc/python/ww/models/hey_eyva_model_float32.tflite
     // --ww_detection_thresh: 0.8
     // --use_faster_whisper
-    // --asr_use_gpu
+    // --gpu
     // --asr_mode: 1 == local, 2 == remote
     // --endpoint: http://<ip>:5000/
     String home = System.getProperty("user.home");
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--use_faster_whisper");
 
     // moonshine base cpu
-    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py");
+    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py");
 
     // fasterwhisper small gpu
-    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--model_size","small","--use_faster_whisper","--asr_mode","1","--asr_use_gpu");
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--model_size","small","--use_faster_whisper","--asr_mode","1","--gpu");
 
     // remote fasterwhisper small gpu
     //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py","--use_faster_whisper","--asr_mode","2","--endpoint", "http://localhost:5000/");
 
     //********If haven't updated ww env and script, use the below*******
-    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
 
     processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
     try {
@@ -464,26 +464,24 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
       String result = "";
       while (listenForWW) {
         while (result.isEmpty()) {
+          //// Wake Word ////
           //Wait for WW detection
           while (is.available() == 0 && listenForWW) {
             Thread.sleep(100);
           }
+          //WW detected, check if due to model trigger or external interrupt (mute or shutdown)
           if (!listenForWW) {
             break;
           }
-          //Clear stream buffer of message indicating WW detection
+          //Read message indicating WW detection from stream buffer
           StringBuilder s = new StringBuilder();
           while (is.available() != 0) {
             s.append((char) is.read());
           }
           log.info(s.toString());
-          //Display on screen that we are listening
-          try {
-            TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class, Long.class));
-            service.call(void.class,"Understanding speech",15);
-          } catch (TRADEException e) {
-            log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
-          }
+          //Display on screen that we are now listening using ASR
+          displayText("Understanding speech", 10000);
+          //Also play audio indicating listening status
           if (shouldDing) {
             playAudioClip("ding.wav");
             try {
@@ -495,6 +493,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             shouldDing = true;
           }
 
+          //// ASR ////
           //Wait for ASR result:
           log.info("waiting for ASR result");
           while (is.available() == 0) {
@@ -506,57 +505,90 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
             s.append((char) is.read());
           }
           result = s.toString();
-          //If ASR timed out, loop back to WW detection
-          if (result.equals("<unk>\n")) {
-            playAudioClip("negativeASRResult.wav");
-            result = "";
+        }
+
+        //Parse ASR result - form: <prefix> <speech>
+        //  <unk> == base failure case - ASR timed out before detecting any voice activity or was unable to transcribe anything
+        //  <cutoff> == false positive ww detection heuristics triggered on python side - attempt to parse, but fail silently if so
+        //  <full> == base success case  - have full ASR results
+        boolean cutoff_result = false;
+        //If ASR timed out, loop back to WW detection
+        if (!result.isEmpty()) {
+          //  TODO: Do we want this distinction between vad triggering without any transcription vs no vad at all?
+          if (result.equals("<unk>\n") || result.equals("<novad>\n")) {
+            if (result.equals("<unk>\n")) {
+              // ASR couldn't parse, play low toned beep and loop to top
+              playAudioClip("negativeASRResult.wav");
+            }
             try {
               TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
               service.call(void.class);
             } catch (TRADEException e) {
               log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
             }
-          } else {
-            playAudioClip("positiveASRResult.wav");
-            try {
-              TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
-              service.call(void.class,"Recognized Speech: " + result);
-            } catch (TRADEException e) {
-              log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+            if (result.equals("<novad>\n")) {
+              displayText("<No voice input detected>", 5000);
             }
-            new Thread(() -> {
-              try {
-                Thread.sleep(5000);
-              } catch (InterruptedException e) {
-                log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
-              }
-              try {
-                TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
-                service.call(void.class);
-              } catch (TRADEException e) {
-                log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
-              }
-            }).start();
+            result = "";
+            continue;
+          } else if (result.startsWith("<cutoff> ")) {
+            // ASR detected potential false positive - attempt to parse before handling
+            result = result.substring(9);
+            cutoff_result = true;
+          } else {
+            // Positive ASR detection, play high toned beep, display understood text, and attempt to parse
+            if (result.startsWith("<full> ")) {
+              result = result.substring(7);
+            } else {
+              log.warn("[listenForWWandASR] unknown or no result prefix detected, is run_ww_and_asr.py up to date?");
+            }
+            playAudioClip("positiveASRResult.wav");
+            displayText("Recognized Speech: " + result, 5000);
           }
         }
-        if (!result.isEmpty()) {
-          result = result.trim().toLowerCase();
-          result = result.replaceAll("\\p{Punct}", "");
-          Utterance utterance = new Utterance.Builder()
-                  .setSpeaker(speaker)
-                  .setAddressee(Factory.createSymbol("ava"))
-                  .setWords(Arrays.asList(result.trim().split(" ")))
-                  .setUtteranceType(UtteranceType.UNKNOWN)
-                  .setIsInputUtterance(true)
-                  .build();
+
+        // Reformat ASR result to prevent parser issues, create utterance
+        result = result.trim().toLowerCase();
+        result = result.replaceAll("\\p{Punct}", "");
+        Utterance utterance = new Utterance.Builder()
+                .setSpeaker(speaker)
+                .setAddressee(Factory.createSymbol("ava"))
+                .setWords(Arrays.asList(result.trim().split(" ")))
+                .setUtteranceType(UtteranceType.UNKNOWN)
+                .setIsInputUtterance(true)
+                .build();
+
+        // Experimental <cutoff> ww false positive effort //
+        //Attempt to parse first, if input can't be parsed, then assume false positive ww detection in this case and do not
+        // make noticeable to the user that something happened
+        if (cutoff_result) {
           try {
-            TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
-            log.info("Reported utterance \"" + result + "\"");
+            utterance = TRADE.getAvailableService(new TRADEServiceConstraints().name("parseUtterance").argTypes(Utterance.class)).call(Utterance.class, utterance);
           } catch (TRADEException ex) {
-            log.warn("Failed to report speech \"" + result + "\"");
+            log.error("[listenForWWAndASR] error calling parseUtterance", ex);
           }
-          result = "";
+          if (utterance.getType() == UtteranceType.UNKNOWN) {
+            //TODO: How should this be phrased?
+            displayText("<Input could not be understood and detected as potential background noise>", 10000);
+            result = "";
+            continue;
+          } else {
+            // Present successful parse as normal
+            //TODO: how does this practically look when interacting with the robot?
+            playAudioClip("positiveASRResult.wav");
+            displayText("Recognized Speech: " + result, 5000);
+          }
         }
+
+        //Pass ASR result off to dialogue pipeline and loop to top to continue listening for further input
+        try {
+          TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
+          log.info("Reported utterance \"" + result + "\"");
+        } catch (TRADEException ex) {
+          log.warn("Failed to report speech \"" + result + "\"");
+        }
+
+        result = "";
       }
       is.close();
       ww_process_os.close();
@@ -568,6 +600,28 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     } catch (IOException | InterruptedException e) {
       log.error("error running process",e);
     }
+  }
+
+  private void displayText(String text, int duration) {
+    try {
+      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
+      service.call(void.class,text);
+    } catch (TRADEException e) {
+      log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+    }
+    new Thread(() -> {
+      try {
+        Thread.sleep(duration);
+      } catch (InterruptedException e) {
+        log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
+      }
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+        service.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+      }
+    }).start();
   }
 
   @Override
