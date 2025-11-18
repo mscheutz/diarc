@@ -15,9 +15,9 @@ const Navbar = () => {
                     Thinking Robots | Ava Robotics
                 </Button>
             </div>
-            {/*<div className="w-auto h-auto">
+           <div className="w-auto h-auto">
                 <ThemeToggle />
-            </div>*/}
+            </div>
         </div>
     );
 };

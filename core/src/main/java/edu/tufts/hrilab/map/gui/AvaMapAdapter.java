@@ -23,18 +23,18 @@ import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.imageio.ImageIO;
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Handles WebSocket messages for MapComponent-related functionalities within the web interface.
@@ -139,11 +139,11 @@ public class AvaMapAdapter extends GuiAdapter {
    * Update local current FloorMap and current floor number.
    */
   private void fetchMapImage() {
+    //todo: we can't serialize java images (hooked into host image rendering apparently) naively. this is only going to work on a single host, and needs to be fixed.
     try {
       mapImages = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapImages").argTypes().inGroups(this.groups.toArray(new String[0]))).call(List.class);
     } catch (TRADEException e) {
       log.error("Error getting map.", e);
-      mapImages = new ArrayList<>();
     }
   }
 
@@ -227,7 +227,7 @@ public class AvaMapAdapter extends GuiAdapter {
         response.addProperty("message", "Map data fetched successfully.");
         response.addProperty("path", getPath());
       } catch (ImageReadException | ImageWriteException | IOException e) {
-        log.error("Error converting map PGM to PNG");
+        log.error("Error converting map PGM to PNG", e);
         response.addProperty("success", false);
         response.addProperty("error", "Failed to retrieve map data.");
         response.addProperty("path", getPath());
@@ -386,18 +386,20 @@ public class AvaMapAdapter extends GuiAdapter {
 
     try {
       // Fetch the description from the TRADE service
-      Map<Symbol, PoseReference> knownPoses = TRADE.getAvailableService(new TRADEServiceConstraints().name("getMapReferences").argTypes().inGroups(this.groups.toArray(new String[0])))
+      Map<Symbol, Point3d> knownPoses = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLocationsOnMap").argTypes().inGroups(this.groups.toArray(new String[0])))
               .call(Map.class);
 
+      Map<Symbol, String> poseNames = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLocationNames").argTypes(List.class).inGroups(this.groups.toArray(new String[0])))
+              .call(Map.class, knownPoses.keySet().stream().toList());
       // Loop through each line to extract information
       for (Symbol refId : knownPoses.keySet()) {
-        PoseReference ref = knownPoses.get(refId);
+        Point3d refPose = knownPoses.get(refId);
 
         JsonObject positionJson = new JsonObject();
-        Point2d pixelPosition = mapToPixel(ref.getPose().getLeft());
+        Point2d pixelPosition = mapToPixel(refPose);
         positionJson.addProperty("x", pixelPosition.x);
         positionJson.addProperty("y", pixelPosition.y);
-        positionJson.addProperty("description", ref.properties.get(0).getName());
+        positionJson.addProperty("description", poseNames.get(refId));
         knownPosesJson.add(refId.getName(), positionJson);
       }
       response.add("keyLocations", knownPosesJson);

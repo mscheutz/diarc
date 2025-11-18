@@ -8,10 +8,11 @@ import GoalSubmission from "../goalSubmission/GoalSubmission";
 import VisionManager from "../vision/VisionManager";
 import TradeServiceViewer from "../tradeService/TradeServiceViewer";
 import AvaBehaviorTab from "../AvaBehaviorTab"
+import MediaManager from "../MediaManager"
 
 const handlerRoots: string[] =
     //["actionProgrammer", "belief", "chat", "goalViewer", "goalManager", "map", "vision", "tradeService"];
-    ["actionProgrammer", "chat", "goalViewer", "goalQueueViewer", "vision", "tradeService", "avaBehaviors", "map"];
+    ["actionProgrammer", "chat", "goalViewer", "goalQueueViewer", "vision", "tradeService", "avaBehaviors",  "media"];
 
 const handlers = {
     "actionProgrammer": {
@@ -35,10 +36,6 @@ const handlers = {
         tabName: "Goal Submission",
         component: GoalSubmission
     },
-    "map": {
-        tabName: "Map Viewer",
-        component: MapViewer
-    },
     "tradeService": {
         tabName: "TRADE Service Viewer",
         component: TradeServiceViewer
@@ -50,6 +47,10 @@ const handlers = {
     "avaBehaviors": {
         tabName: "Task Submission",
         component: AvaBehaviorTab
+    },
+    "media": {
+        tabName: "Media Management",
+        component: MediaManager
     },
 };
 
@@ -77,6 +78,11 @@ const scheduledColumns = [
     "Repeat Until"
 ]
 
+const mediaColumns = [
+    "Filename",
+    "File type"
+]
+
 type Option = {
     value: string,
     label: string
@@ -102,7 +108,7 @@ const statuses: string[] = [
     "failed"
 ]
 
-export {columns, pastColumns, scheduledColumns, sortCriteria, statuses};
+export {columns, pastColumns, scheduledColumns, sortCriteria, statuses, mediaColumns};
 export type { Option };
 
 const LOCAL_STORAGE_KEY: string = "goalSubmissionPresets";

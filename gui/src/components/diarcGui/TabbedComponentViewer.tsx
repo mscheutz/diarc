@@ -1,4 +1,5 @@
 // IMPORTS //
+// @ts-ignore
 import React from "react";
 
 // NPM packages
@@ -71,7 +72,8 @@ const TabbedComponentViewer: React.FC<Props> = (
         sendMessage,
         readyState,
         lastMessage,
-        wsBaseUrl
+        wsBaseUrl,
+        generalBaseUrl,
     }) => {
 
     return (
@@ -114,6 +116,7 @@ const TabbedComponentViewer: React.FC<Props> = (
                         lastMessage: MessageEvent<any> | null,
                         sendMessage: SendMessage,
                         readyState: ReadyState
+                        baseUrl: String
                     }> =
                         handlers[root].component;
 
@@ -127,6 +130,7 @@ const TabbedComponentViewer: React.FC<Props> = (
                                 lastMessage={lastMessage}
                                 sendMessage={sendMessage}
                                 readyState={readyState}
+                                baseUrl={generalBaseUrl}
                             />
                         </TabPanel>
                     );

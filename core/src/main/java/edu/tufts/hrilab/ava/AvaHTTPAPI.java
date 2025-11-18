@@ -601,8 +601,13 @@ public class AvaHTTPAPI implements AvaAPIInterface {
       }
       Gson gson = new Gson();
       RMSListTagsResponse resObj = new RMSListTagsResponse();
-      resObj.response = gson.fromJson(res, ListTagsResponse.class);
-      listTagsResponses.add(resObj);
+      try {
+        resObj.response = gson.fromJson(res, ListTagsResponse.class);
+        listTagsResponses.add(resObj);
+      } catch (Exception ex) {
+        log.warn("Error making request to " + uri, ex);
+        log.warn("json respoonse: " + res);
+      }
     }
 
     if (listTagsResponses.isEmpty()) {

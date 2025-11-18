@@ -6,6 +6,7 @@ package edu.tufts.hrilab.ava;
 
 import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
+import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.ava.message.AvaMoveGoal;
 import edu.tufts.hrilab.ava.message.response.*;
 import edu.tufts.hrilab.consultant.pose.PoseReference;
@@ -26,12 +27,8 @@ import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 
 import java.awt.image.BufferedImage;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -46,6 +43,7 @@ import java.net.URISyntaxException;
 
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
+import edu.tufts.hrilab.util.Http;
 import edu.tufts.hrilab.util.RotationHelpers;
 import edu.tufts.hrilab.util.Convert;
 import org.apache.commons.cli.CommandLine;
@@ -63,16 +61,23 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.imageio.ImageIO;
 import javax.sound.sampled.*;
 import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Tuple3d;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import static java.lang.Double.parseDouble;
 import static java.lang.System.getProperty;
@@ -100,10 +105,6 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private Thread sleepForDurationThread = null;
   private Symbol speaker = Factory.createSymbol("local_user");
 
-  /**
-   * HACK: assumes location_0 reference in MapComponent consultant is the dock.
-   * TODO: expose new RR service to get reference for a set of properties.
-   */
   private Symbol dockLocation;
 
   private final int dockingTimeout = 90; //30 seconds
@@ -128,6 +129,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
   private boolean listenForWW = true;
+  private int mixerID;
 
   public AvaComponent() {
     super();
@@ -274,18 +276,27 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
 //    setZLift(0);
     getCameraHeightMax();
+
+    mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
   }
 
   private void adjustDockTags(Map<String, Pair<Point3d, Quat4d>> allTags, List<String> dockTags) {
+    if (allTags.isEmpty()) {
+      return;
+    }
+    log.info(allTags.toString());
+    log.info(dockTags.toString());
     for (String name : dockTags) {
       Pair<Point3d, Quat4d> pose = allTags.get(name);
-      Vector3d orientationVec = RotationHelpers.quaternionToNormVect(pose.getRight());
-      Point3d position = pose.getLeft();
-      log.info("adjusting dock tag " + name + " with position " + pose.getLeft());
-      position.add(orientationVec);
-      Pair<Point3d, Quat4d> newPose = new MutablePair<>(position, pose.getRight());
-      log.info("new position for " + name + " is " + newPose.getLeft());
-      allTags.put(name, newPose);
+      if (pose != null) {
+        Vector3d orientationVec = RotationHelpers.quaternionToNormVect(pose.getRight());
+        Point3d position = pose.getLeft();
+        log.info("adjusting dock tag " + name + " with position " + pose.getLeft());
+        position.add(orientationVec);
+        Pair<Point3d, Quat4d> newPose = new MutablePair<>(position, pose.getRight());
+        log.info("new position for " + name + " is " + newPose.getLeft());
+        allTags.put(name, newPose);
+      }
     }
   }
 
@@ -692,8 +703,18 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @TRADEService
-  public List<BufferedImage> getMapImages() {
-    return mapImages;
+  public List<byte[]> getMapImages() {
+    List<byte[]> toReturn = new ArrayList<>();
+    for (BufferedImage image : mapImages) {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try {
+        ImageIO.write(image, "png", baos); // Choose your desired format
+      } catch (IOException e) {
+        log.error("[getMapImages] exception writing map image to serializable format");
+      }
+      toReturn.add(baos.toByteArray());
+    }
+    return toReturn;
   }
 
   @TRADEService
@@ -968,9 +989,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     Map<String, Pair<Point3d, Quat4d>> toReturn = new HashMap<>();
     for (RMSListTagsResponse res : resList) {
       for (Tag tag : res.response.tags.values()) {
-        Point3d point = new Point3d(parseDouble(tag.position.x), parseDouble(tag.position.y), 0);
-        Quat4d quat4d = Convert.convertToQuat4d(parseDouble(tag.position.theta), 0, 0);
-        toReturn.put(tag.name, new MutablePair<>(point, quat4d));
+        if ("true".equals(tag.attributes.get("tracs"))) {
+          Point3d point = new Point3d(parseDouble(tag.position.x), parseDouble(tag.position.y), 0);
+          Quat4d quat4d = Convert.convertToQuat4d(parseDouble(tag.position.theta), 0, 0);
+          toReturn.put(tag.name, new MutablePair<>(point, quat4d));
+        }
       }
     }
     return toReturn;
@@ -982,10 +1005,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     for (RMSListTagsResponse res : resList) {
       for (Tag tag : res.response.tags.values()) {
         if ("Dock".equals(tag.attributes.get("TagType"))) {
-          toReturn.add(tag.name);
+            toReturn.add(tag.name);
+          }
         }
       }
-    }
     return toReturn;
   }
 
@@ -1162,14 +1185,17 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   public void playAudioClip(String fileName) {
     try {
       String homeDir = System.getProperty("user.home");
-      File audioFile = new File(Paths.get(homeDir, ".diarc","ava",fileName).toString());
+      String path = Paths.get(homeDir, ".diarc","ava",fileName).toString();
+      log.info("[playAudioClip] playing audio clip at path: " + path);
+      File audioFile = new File(path);
       AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
       AudioFormat format = audioStream.getFormat();
       DataLine.Info info = new DataLine.Info(Clip.class, format);
       Clip audioClip = (Clip) AudioSystem.getLine(info);
+      audioClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
       audioClip.open(audioStream);
       FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
-      control.setValue(-16f);
+      control.setValue(20f * (float) Math.log10(0.3));
       audioClip.start();
       Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
       audioClip.close();
@@ -1231,7 +1257,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
           while (is.available() != 0) {
             s.append((char) is.read());
           }
-          log.info(s.toString());
+          log.info("[listenForWWandASR] reading from inputstream: " + s.toString());
           //Display on screen that we are now listening using ASR
           displayText("Understanding speech", 10000);
           //Also play audio indicating listening status
@@ -1548,4 +1574,68 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   public void disableAdminMode() {
     speaker = Factory.createSymbol("local_visitor");
   }
+
+  @TRADEService
+  @Action
+  public void toggleDisplay() {
+    String homeDir = System.getProperty("user.home");
+    String scriptDir = Paths.get(homeDir, ".diarc").toString();
+    String statusCommand = "/bin/bash " + scriptDir + "/getDisplay.sh";
+    log.info("[toggleDisplay] status command: " + statusCommand);
+    String statusResult = callLocal(statusCommand);
+    log.info("[toggleDisplay] status result: " + statusResult);
+
+
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder builder = null;
+    try {
+      builder = factory.newDocumentBuilder();
+    } catch (ParserConfigurationException e) {
+      throw new RuntimeException(e);
+    }
+    Document doc = null;
+    try {
+      doc = builder.parse(
+              new ByteArrayInputStream(statusResult.getBytes("UTF-8"))
+      );
+    } catch (SAXException e) {
+      throw new RuntimeException(e);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    String value;
+    NodeList nodes = doc.getElementsByTagName("MainVideoSource");
+    value = nodes.item(0).getTextContent();
+
+    int id = Integer.parseInt(value);
+    log.info("[toggleDisplay] id of current display input: " + id);
+    String command;
+    if (id == 1) {
+      command = "/bin/bash " + scriptDir + "/setDisplay2.sh";
+    } else {
+      command = "/bin/bash " + scriptDir + "/setDisplay1.sh";
+    }
+    String result = callLocal(command);
+    log.info("[toggleDisplay] result: " + result);
+  }
+
+  private String callLocal(String command) {
+    StringBuilder result = new StringBuilder();
+    String s;
+    try {
+      Process p = Runtime.getRuntime().exec(command);
+      BufferedReader br = new BufferedReader(
+              new InputStreamReader(p.getInputStream()));
+      while ((s = br.readLine()) != null)
+        result.append(s);
+      p.waitFor();
+      log.info("[callLocal] p: " + p);
+      p.destroy();
+    } catch (Exception e) {
+      log.error("[showTRACS] error changing display input");
+    }
+    return result.toString();
+  }
+
 }

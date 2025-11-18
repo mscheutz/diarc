@@ -247,7 +247,7 @@ const ChatViewer: React.FC<Props> = ({
                 }
                 newChats.push({
                     robotName: name,
-                    profileImagePath: "/heroimage.svg",
+                    profileImagePath: "./heroimage.svg",
                     messageList: [],
                     focusThisChat: setCurrentChat
                 });
