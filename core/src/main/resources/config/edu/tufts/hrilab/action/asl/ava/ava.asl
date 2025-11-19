@@ -615,7 +615,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     Symbol !addl;
     Boolean !success;
 
-    !bindings = act:askQuestionFromString(?actor, "How long should the inactivity timeout be?", relativeTime(X,Y));
+    !bindings = act:askQuestionFromString(user, "How long should the inactivity timeout be?", relativeTime(X,Y));
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -635,7 +635,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     Variable !x = "X";
     Predicate !goalPredicate;
 
-    !bindings = act:askQuestionFromString(?actor, "What should the new kiosk action be?", taskPredicate(X));
+    !bindings = act:askQuestionFromString(user, "What should the new kiosk action be?", taskPredicate(X));
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }

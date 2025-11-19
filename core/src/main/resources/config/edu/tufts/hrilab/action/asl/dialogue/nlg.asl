@@ -16,6 +16,7 @@ import java.util.Map;
   */
 () = communicateUtterance(Utterance ?utterance) {
     String !text;
+    Symbol !addressee;
 
     // if utterance does not have words, call NLG actions to turn
     // semantics into words
@@ -34,7 +35,11 @@ import java.util.Map;
     // get text from utterance, and say it
     !text = op:invokeMethod(?utterance, "getWordsAsString");
     op:log("debug", "calling sayText: !text");
-    act:sayText(!text);
+    //TODO: Ava specific, look into how to do somewhere else
+    !addressee = op:invokeMethod(?utterance, "getAddressee");
+    if (~op:equalsValue(!addressee,"webapp")) {
+        act:sayText(!text);
+    }
 }
 
 /**
@@ -194,6 +199,7 @@ import java.util.Map;
   ?answerBindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
   Long !count = 0;
   Symbol !speaker;
+  Symbol !addressee;
   Integer !tracker = 0;
   String !questionString;
 
@@ -208,6 +214,7 @@ import java.util.Map;
   }
 
   !speaker = op:invokeMethod(?utterance, "getSpeaker");
+  !addressee = op:invokeMethod(?utterance, "getAddressee");
   while (op:invokeMethod(?answerBindings,"isEmpty") && op:lt(!count, ?attempts)) {
     !count = op:++(!count);
 
@@ -217,7 +224,11 @@ import java.util.Map;
       async {
         act:communicateUtterance(?utterance);
         //TODO: Specific to domains which contain a wakeword (currently Ava domain) Think about how to allow this behavior to be generally configurable
-//        act:triggerWW();
+        //TODO: addressee only currently correctly set during validation, not from questions from within scripts
+        //if (op:equalsValue(!addressee,"local_user") || op:equalsValue(!addressee,"local_visitor") || op:equalsValue(!addressee,"user")) {
+        if (op:equalsValue(!addressee,"local_user") || op:equalsValue(!addressee,"local_visitor")) {
+            act:triggerWW();
+        }
       }
       !tracker = op:newObject("java.lang.Integer", 1);
     }
