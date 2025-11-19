@@ -172,6 +172,12 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   @Override
   public Utterance parseUtterance(Utterance incoming) {
 
+    //TODO: AvaDemo "hack" to prevent duplicate parsing when checking for false positive wakeword triggers
+    if (incoming.getSemantics() != null) {
+      log.info("[parseUtterance] receiving utterance with set semantics. Please unset before calling parseUtterance if desiring a new result");
+      return incoming;
+    }
+
     Future<Utterance> llmFuture = null;
     Future<Utterance> tldlFuture = null;
     Future<Utterance> cachedFuture = null;
