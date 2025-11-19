@@ -1118,12 +1118,19 @@ public class ExecutionManager implements GoalListener {
    * @return The GoalStatus after the soonest update occurred or the timeout duration elapsed without an update
    */
   public GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout) {
+    return waitForNextGoalStatusUpdate(gid, timeout, null);
+  }
+  public GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout, GoalStatus startStatus) {
     Goal goal = getGoal(gid);
     if (goal == null || goal.getStatus().isTerminated()) {
       return null;
     }
 
-    return waitForNextGoalStatusUpdate(goal, timeout);
+    if (startStatus == null) {
+      startStatus = goal.getStatus();
+    }
+
+    return waitForNextGoalStatusUpdate(goal, timeout, startStatus);
   }
 
   /**
@@ -1133,10 +1140,9 @@ public class ExecutionManager implements GoalListener {
    * @param timeout
    * @return The GoalStatus after the soonest update occurred or the timeout duration elapsed without an update
    */
-  protected GoalStatus waitForNextGoalStatusUpdate(Goal goal, long timeout) {
+  protected GoalStatus waitForNextGoalStatusUpdate(Goal goal, long timeout, GoalStatus startStatus) {
     goalStatusUpdateLock.lock();
     long startTime = System.currentTimeMillis();
-    GoalStatus startStatus = goal.getStatus();
     try {
       while (goal.getStatus() == startStatus && (timeout == 0 || (System.currentTimeMillis() - startTime < timeout))) {
         //TODO: even with this impl, doesn't handle if there are multiple listeners on the same goal

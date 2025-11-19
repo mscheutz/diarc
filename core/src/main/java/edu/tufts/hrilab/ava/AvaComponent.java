@@ -132,6 +132,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private boolean shouldDingReady = true;
   private boolean listenForWW = true;
   private int mixerID = -1;
+  private boolean haveDisplay = true;
 
   public AvaComponent() {
     super();
@@ -1358,50 +1359,50 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             playAudioClip("positiveASRResult.wav");
             displayText("Recognized Speech: " + result, 5000);
           }
-        }
 
-        // Reformat ASR result to prevent parser issues, create utterance
-        result = result.trim().toLowerCase();
-        result = result.replaceAll("\\p{Punct}", "");
-        Utterance utterance = new Utterance.Builder()
-                .setSpeaker(speaker)
-                .setAddressee(Factory.createSymbol("ava"))
-                .setWords(Arrays.asList(result.trim().split(" ")))
-                .setUtteranceType(UtteranceType.UNKNOWN)
-                .setIsInputUtterance(true)
-                .build();
+          // Reformat ASR result to prevent parser issues, create utterance
+          result = result.trim().toLowerCase();
+          result = result.replaceAll("\\p{Punct}", "");
+          Utterance utterance = new Utterance.Builder()
+                  .setSpeaker(speaker)
+                  .setAddressee(Factory.createSymbol("ava"))
+                  .setWords(Arrays.asList(result.trim().split(" ")))
+                  .setUtteranceType(UtteranceType.UNKNOWN)
+                  .setIsInputUtterance(true)
+                  .build();
 
-        // Experimental <cutoff> ww false positive effort //
-        //Attempt to parse first, if input can't be parsed, then assume false positive ww detection in this case and do not
-        // make noticeable to the user that something happened
-        if (cutoff_result) {
+          // Experimental <cutoff> ww false positive effort //
+          //Attempt to parse first, if input can't be parsed, then assume false positive ww detection in this case and do not
+          // make noticeable to the user that something happened
+          if (cutoff_result) {
+            try {
+              utterance = TRADE.getAvailableService(new TRADEServiceConstraints().name("parseUtterance").argTypes(Utterance.class)).call(Utterance.class, utterance);
+            } catch (TRADEException ex) {
+              log.error("[listenForWWAndASR] error calling parseUtterance", ex);
+            }
+            if (utterance.getType() == UtteranceType.UNKNOWN) {
+              //TODO: How should this be phrased?
+              displayText("<Input could not be understood and detected as potential background noise>", 10000);
+              result = "";
+              continue;
+            } else {
+              // Present successful parse as normal
+              //TODO: how does this practically look when interacting with the robot?
+              playAudioClip("positiveASRResult.wav");
+              displayText("Recognized Speech: " + result, 5000);
+            }
+          }
+
+          //Pass ASR result off to dialogue pipeline and loop to top to continue listening for further input
           try {
-            utterance = TRADE.getAvailableService(new TRADEServiceConstraints().name("parseUtterance").argTypes(Utterance.class)).call(Utterance.class, utterance);
+            TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
+            log.info("Reported utterance \"" + result + "\"");
           } catch (TRADEException ex) {
-            log.error("[listenForWWAndASR] error calling parseUtterance", ex);
+            log.warn("Failed to report speech \"" + result + "\"");
           }
-          if (utterance.getType() == UtteranceType.UNKNOWN) {
-            //TODO: How should this be phrased?
-            displayText("<Input could not be understood and detected as potential background noise>", 10000);
-            result = "";
-            continue;
-          } else {
-            // Present successful parse as normal
-            //TODO: how does this practically look when interacting with the robot?
-            playAudioClip("positiveASRResult.wav");
-            displayText("Recognized Speech: " + result, 5000);
-          }
-        }
 
-        //Pass ASR result off to dialogue pipeline and loop to top to continue listening for further input
-        try {
-          TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
-          log.info("Reported utterance \"" + result + "\"");
-        } catch (TRADEException ex) {
-          log.warn("Failed to report speech \"" + result + "\"");
+          result = "";
         }
-
-        result = "";
       }
       is.close();
       ww_process_os.close();
@@ -1610,7 +1611,6 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   @TRADEService
-  @Action
   public void toggleDisplay() {
     String homeDir = System.getProperty("user.home");
     String scriptDir = Paths.get(homeDir, ".diarc").toString();
@@ -1652,6 +1652,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
     String result = callLocal(command);
     log.info("[toggleDisplay] result: " + result);
+    //TODO: what is proper error handling/result when switch failed?
+    haveDisplay = !haveDisplay;
+  }
+  @TRADEService
+  public boolean getHaveDisplay() {
+    return haveDisplay;
   }
 
   private String callLocal(String command) {

@@ -17,6 +17,7 @@ import edu.tufts.hrilab.action.justification.Justification;
     Predicate !freezeGoal;
     Justification !failureConditions;
     GoalStatus !status;
+    java.lang.Long !timeout = 0;
 
     //Suspend system goal for agent
     !goalIds = tsc:suspendSystemGoals(?actor);
@@ -32,9 +33,8 @@ import edu.tufts.hrilab.action.justification.Justification;
         //Wait for goal to be suspended
         !goalId = op:get(!goalIds,0);
         !status = tsc:getGoalStatus(!goalId);
-        if (~op:equalsValue(!status,SUSPENDED)) {
-            !status = tsc:waitForNextGoalStatusUpdate(!goalId);
-        }
+        op:log("debug","[suspendSystemGoalsBlocking] have initial status for goal to suspend: !status");
+        !status = tsc:waitForNextGoalStatusUpdate(!goalId,!timeout,!status);
         op:log("debug","[suspendSystemGoalsBlocking] have status update for suspended goal: !status");
         //Need to write this way because we can't short circuit ||, throws exception when comparing null
         if (~op:isNull(!status)) {

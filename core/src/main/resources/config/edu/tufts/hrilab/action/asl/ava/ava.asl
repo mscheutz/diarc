@@ -654,3 +654,28 @@ import edu.tufts.hrilab.action.goal.Goal;
         act:generateResponseFromString("I have removed the task from the queue.");
     }
 }
+
+() = toggleDisplay() {
+    Predicate !ww_and_asr_goal;
+    Boolean !haveDisplay;
+
+    !ww_and_asr_goal = op:createPredicate("listenForWWandASR(?actor)");
+    !haveDisplay = tsc:getHaveDisplay();
+    if (op:equalsValue(!haveDisplay,true)) {
+        try {
+            op:log("debug","[toggleDisplay] suspending ww and asr goal");
+            act:suspendGoalBlocking(!ww_and_asr_goal);
+        } catch(FAIL) {
+            op:log("warn","[toggleDisplay] could not suspend listenForWWandASR");
+        }
+    } else {
+        try {
+            op:log("debug","[toggleDisplay] resuming ww and asr goal");
+            act:resumeGoal(!ww_and_asr_goal);
+        } catch(FAIL) {
+            op:log("warn","[toggleDisplay] could not resume listenForWWandASR");
+        }
+    }
+    op:log("debug","[toggleDisplay] calling tsc");
+    tsc:toggleDisplay();
+}
