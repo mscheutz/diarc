@@ -10,6 +10,7 @@ import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.action.annotations.OnInterrupt;
 import edu.tufts.hrilab.action.justification.ConditionJustification;
 import edu.tufts.hrilab.action.justification.Justification;
+import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.ava.message.response.HTTPMapResponse;
 import edu.tufts.hrilab.ava.message.response.HTTPMapsResponse;
 import edu.tufts.hrilab.ava.message.response.ListTagsResponse;
@@ -29,6 +30,8 @@ import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.util.Convert;
 import edu.tufts.hrilab.util.RotationHelpers;
 import edu.tufts.hrilab.util.Util;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -62,6 +65,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -85,6 +89,23 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private List<String> dockNames = new ArrayList<>();
   private Thread sleepForDurationThread = null;
   private Symbol speaker = Factory.createSymbol("local_user");
+  private int mixerID = -1;
+
+  @Override
+  protected void parseArgs(CommandLine cmdLine) {
+    if (cmdLine.hasOption("matchMixer")) {
+      String matchString = String.join(" ", cmdLine.getOptionValues("matchMixer"));
+      mixerID = ConfigurableMicrophone.matchMixer(matchString);
+      log.debug("Matching mixer string \"" + matchString + "\"");
+    }
+  }
+
+  @Override
+  protected List<Option> additionalUsageInfo() {
+    List<Option> options = new ArrayList<>();
+    options.add(Option.builder("matchMixer").hasArgs().argName("name").desc("String to match for mixer in case of device re-ordering. Do not quote argument if spaces needed.").build());
+    return options;
+  }
 
   @Override
   public void init() {
@@ -405,24 +426,52 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     }
   }
 
-  @TRADEService
+  //TODO: Move back strictly to this component? Initially moved method to MaryTTS component while debugging to see if locking
+  // and line management was part of the issue, but don't believe it is actually necessary
+  //@TRADEService
   public void playAudioClip(String fileName) {
+    log.info("[playAudioClip] calling method on MaryTTSComponent");
+    String homeDir = System.getProperty("user.home");
+    String path = Paths.get(homeDir, ".diarc","ava",fileName).toString();
     try {
-      String homeDir = System.getProperty("user.home");
-      File audioFile = new File(Paths.get(homeDir, ".diarc","ava",fileName).toString());
-      AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
-      AudioFormat format = audioStream.getFormat();
-      DataLine.Info info = new DataLine.Info(Clip.class, format);
-      Clip audioClip = (Clip) AudioSystem.getLine(info);
-      audioClip.open(audioStream);
-      FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
-      control.setValue(-12f);
-      audioClip.start();
-      Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
-      audioClip.close();
-      audioStream.close();
-    } catch (Exception e) {
-      log.error("[listenForWWandASR] error playing ww detection audio clip", e);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class)).call(void.class, path);
+    } catch (TRADEException e) {
+      log.debug("[playAudioClip] exception calling playAudioClip in MaryTTSComponent. Attempting locally", e);
+      try {
+        log.info("[playAudioClip] playing audio clip at path: " + path);
+        File audioFile = new File(path);
+        AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+
+        AudioFormat format = audioStream.getFormat();
+        Clip audioClip;
+        if (mixerID == -1) {
+          DataLine.Info info = new DataLine.Info(Clip.class, format);
+          audioClip = (Clip) AudioSystem.getLine(info);
+        } else {
+          audioClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
+        }
+        audioClip.open(audioStream);
+        FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+        control.setValue(20f * (float) Math.log10(0.3));
+
+        AtomicBoolean isDone = new AtomicBoolean(false);
+        Clip finalPlaybackClip = audioClip;
+        audioClip.addLineListener(event -> {
+          if (event.getType() == LineEvent.Type.STOP) {
+            finalPlaybackClip.close();
+            isDone.set(true);
+          }
+        });
+        audioClip.loop(0);
+        audioClip.start();
+
+        while (!isDone.get()) {
+          Util.Sleep(100);
+        }
+        audioStream.close();
+      } catch (Exception ex) {
+        log.error("[playAudioClip] error playing audio clip", ex);
+      }
     }
   }
   @Override

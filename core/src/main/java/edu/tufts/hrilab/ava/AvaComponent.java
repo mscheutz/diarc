@@ -46,6 +46,7 @@ import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.util.Http;
 import edu.tufts.hrilab.util.RotationHelpers;
 import edu.tufts.hrilab.util.Convert;
+import edu.tufts.hrilab.util.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -58,6 +59,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -129,7 +131,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
   private boolean listenForWW = true;
-  private int mixerID;
+  private int mixerID = -1;
 
   public AvaComponent() {
     super();
@@ -144,6 +146,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     options.add(Option.builder("z_lift_thresh").hasArg().argName("z_lift_threshold").desc("Set the Z lift threshold in meters (default: " + zLiftThresh + ")").build());
     options.add(Option.builder("camera_tilt_thresh").hasArg().argName("camera_til_threshold").desc("Set the camera tilt threshold  (default: " + cameraTiltThresh + ")").build());
     options.add(Option.builder("camera_height").hasArg().argName("camera_height").desc("Set the height of the camera in meters (default:" + cameraHeight + ")").build());
+    options.add(Option.builder("matchMixer").hasArgs().argName("name").desc("String to match for mixer in case of device re-ordering. Do not quote argument if spaces needed.").build());
     return options;
   }
 
@@ -185,6 +188,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
     if (cmdLine.hasOption("camera_height")) {
       cameraHeight = Double.valueOf(cmdLine.getOptionValue("camera_height"));
+    }
+
+    if (cmdLine.hasOption("matchMixer")) {
+      String matchString = String.join(" ", cmdLine.getOptionValues("matchMixer"));
+      mixerID = ConfigurableMicrophone.matchMixer(matchString);
+      log.debug("Matching mixer string \"" + matchString + "\"");
     }
 
   }
@@ -277,7 +286,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 //    setZLift(0);
     getCameraHeightMax();
 
-    mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
+    //mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
   }
 
   private void adjustDockTags(Map<String, Pair<Point3d, Quat4d>> allTags, List<String> dockTags) {
@@ -1181,27 +1190,52 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
   }
 
-  @TRADEService
+  //TODO: Move back strictly to this component? Initially moved method to MaryTTS component while debugging to see if locking
+  // and line management was part of the issue, but don't believe it is actually necessary
+  //@TRADEService
   public void playAudioClip(String fileName) {
+    log.info("[playAudioClip] calling method on MaryTTSComponent");
+    String homeDir = System.getProperty("user.home");
+    String path = Paths.get(homeDir, ".diarc", "ava", fileName).toString();
     try {
-      String homeDir = System.getProperty("user.home");
-      String path = Paths.get(homeDir, ".diarc","ava",fileName).toString();
-      log.info("[playAudioClip] playing audio clip at path: " + path);
-      File audioFile = new File(path);
-      AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
-      AudioFormat format = audioStream.getFormat();
-      DataLine.Info info = new DataLine.Info(Clip.class, format);
-      Clip audioClip = (Clip) AudioSystem.getLine(info);
-      audioClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
-      audioClip.open(audioStream);
-      FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
-      control.setValue(20f * (float) Math.log10(0.3));
-      audioClip.start();
-      Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
-      audioClip.close();
-      audioStream.close();
-    } catch (Exception e) {
-      log.error("[listenForWWandASR] error playing ww detection audio clip", e);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class)).call(void.class, path);
+    } catch (TRADEException e) {
+      log.debug("[playAudioClip] exception calling playAudioClip in MaryTTSComponent. Attempting locally", e);
+      try {
+        log.info("[playAudioClip] playing audio clip at path: " + path);
+        File audioFile = new File(path);
+        AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+
+        AudioFormat format = audioStream.getFormat();
+        Clip audioClip;
+        if (mixerID == -1) {
+          DataLine.Info info = new DataLine.Info(Clip.class, format);
+          audioClip = (Clip) AudioSystem.getLine(info);
+        } else {
+          audioClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
+        }
+        audioClip.open(audioStream);
+        FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+        control.setValue(20f * (float) Math.log10(0.3));
+
+        AtomicBoolean isDone = new AtomicBoolean(false);
+        Clip finalPlaybackClip = audioClip;
+        audioClip.addLineListener(event -> {
+          if (event.getType() == LineEvent.Type.STOP) {
+            finalPlaybackClip.close();
+            isDone.set(true);
+          }
+        });
+        audioClip.loop(0);
+        audioClip.start();
+
+        while (!isDone.get()) {
+          Util.Sleep(100);
+        }
+        audioStream.close();
+      } catch (Exception ex) {
+        log.error("[playAudioClip] error playing audio clip", ex);
+      }
     }
   }
   @Override
