@@ -655,27 +655,56 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
-() = toggleDisplay() {
-    Predicate !ww_and_asr_goal;
-    Boolean !haveDisplay;
+//() = toggleDisplay() {
+//    Predicate !ww_and_asr_goal;
+//    Boolean !haveDisplay;
+//
+//    !ww_and_asr_goal = op:createPredicate("listenForWWandASR(?actor)");
+//    !haveDisplay = tsc:getHaveDisplay();
+//    if (op:equalsValue(!haveDisplay,true)) {
+//        try {
+//            op:log("debug","[toggleDisplay] suspending ww and asr goal");
+//            act:suspendGoalBlocking(!ww_and_asr_goal);
+//        } catch(FAIL) {
+//            op:log("warn","[toggleDisplay] could not suspend listenForWWandASR");
+//        }
+//    } else {
+//        try {
+//            op:log("debug","[toggleDisplay] resuming ww and asr goal");
+//            act:resumeGoal(!ww_and_asr_goal);
+//        } catch(FAIL) {
+//            op:log("warn","[toggleDisplay] could not resume listenForWWandASR");
+//        }
+//    }
+//    op:log("debug","[toggleDisplay] calling tsc");
+//    tsc:toggleDisplay();
+//}
 
-    !ww_and_asr_goal = op:createPredicate("listenForWWandASR(?actor)");
-    !haveDisplay = tsc:getHaveDisplay();
-    if (op:equalsValue(!haveDisplay,true)) {
+() = switchDisplayToTelepresence() {
+    //TODO: is it technically unsafe if this action gets canceled/suspended before its first step that !ww_and_asr_goal is null?
+    onInterrupt : {
+        resume: act:suspendGoalBlocking(!ww_and_asr_goal);
+        cancel: act:resumeGoal(!ww_and_asr_goal);
+        suspend: act:resumeGoal(!ww_and_asr_goal);
+    }
+    Predicate !ww_and_asr_goal = op:createPredicate("listenForWWandASR(?actor)");
+
+    try {
+        op:log("debug","[switchDisplayToTelepresence] suspending ww and asr goal");
+        act:suspendGoalBlocking(!ww_and_asr_goal);
+    } catch(FAIL) {
+        op:log("warn","[switchDisplayToTelepresence] could not suspend listenForWWandASR");
+    }
+
+    op:log("debug","[switchDisplayToTelepresence] calling tsc");
+    act:switchDisplayToTelepresencePrimitive();
+
+    noInterrupt {
         try {
-            op:log("debug","[toggleDisplay] suspending ww and asr goal");
-            act:suspendGoalBlocking(!ww_and_asr_goal);
-        } catch(FAIL) {
-            op:log("warn","[toggleDisplay] could not suspend listenForWWandASR");
-        }
-    } else {
-        try {
-            op:log("debug","[toggleDisplay] resuming ww and asr goal");
+            op:log("debug","[switchDisplayToTelepresence] resuming ww and asr goal");
             act:resumeGoal(!ww_and_asr_goal);
         } catch(FAIL) {
-            op:log("warn","[toggleDisplay] could not resume listenForWWandASR");
+            op:log("warn","[switchDisplayToTelepresence] could not resume listenForWWandASR");
         }
     }
-    op:log("debug","[toggleDisplay] calling tsc");
-    tsc:toggleDisplay();
 }

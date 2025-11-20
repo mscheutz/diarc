@@ -90,7 +90,9 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   private Thread sleepForDurationThread = null;
   private Symbol speaker = Factory.createSymbol("local_user");
   private int mixerID = -1;
-  boolean haveDisplay = true;
+  //boolean haveDisplay = true;
+  private Lock displayLock = new ReentrantLock();
+  private Condition telepresenceCondition = displayLock.newCondition();
 
   @Override
   protected void parseArgs(CommandLine cmdLine) {
@@ -945,14 +947,24 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     speaker = Factory.createSymbol("local_visitor");
   }
 
-
   @TRADEService
-  public void toggleDisplay() {
+  @Action
+  public void switchDisplayToTRACS() {
+    displayLock.lock();
+    telepresenceCondition.signal();
+    displayLock.unlock();
+  }
+
+  @OnInterrupt(onCancelServiceCall = "switchDisplayToTRACS()", onSuspendServiceCall = "switchDisplayToTRACS()")
+  @TRADEService
+  @Action
+  public void switchDisplayToTelepresencePrimitive() {
+    //Switch to telepresence
     String homeDir = System.getProperty("user.home");
     String scriptDir = Paths.get(homeDir, ".diarc").toString();
     String statusCommand = "/bin/bash " + scriptDir + "getDisplay.sh";
     String statusResult = callLocal(statusCommand);
-    log.info("[toggleDisplay] status result: " + statusResult);
+    log.info("[switchDisplayToTelepresence] status result: " + statusResult);
     List<String> results = Arrays.stream(statusResult.split("MainVideoSource")).toList();
     int id;
     if (results.size() > 1) {
@@ -960,22 +972,61 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     } else {
       id = 0;
     }
-    log.info("[toggleDisplay] id of current display input: " + id);
-    String command;
-    if (id == 1) {
-      command = "/bin/bash " + scriptDir + "setDisplay2.sh";
-    } else {
-      command = "/bin/bash " + scriptDir + "setDisplay1.sh";
+    log.info("[switchDisplayToTelepresence] id of current display input: " + id);
+    //TODO: Error handling based on current state due to external forces? What to do if already in telepresence display
+    if (id != 1) {
+      log.warn("[switchDisplayToTelepresence] already in telepresence display?");
     }
-    String result = callLocal(command);
-    log.info("[toggleDisplay] result: " + result);
+    String result = callLocal("/bin/bash " + scriptDir + "setDisplay1.sh");
+    log.info("[switchDisplayToTelepresence] to telepresence result: " + result);
     //TODO: what is proper error handling/result when switch failed?
-    haveDisplay = !haveDisplay;
+
+    //Wait until condition is signalled by switchDisplayToTRACS
+    try {
+      displayLock.lock();
+      telepresenceCondition.await();
+      displayLock.unlock();
+    } catch (InterruptedException e) {
+      log.error("[switchDisplayToTelepresence] interrupted waiting on telepresence condition",e);
+    }
+
+    //TODO: What if out of telepresence display externally? Won't trigger anything here
+    //      Double check current display again?
+    //Switch back to TRACS
+    result = callLocal("/bin/bash " + scriptDir + "setDisplay2.sh");
+    log.info("[switchDisplayToTelepresence] to TRACS result: " + result);
   }
-  @TRADEService
-  public boolean getHaveDisplay() {
-    return haveDisplay;
-  }
+
+  //@TRADEService
+  //public void toggleDisplay() {
+  //  String homeDir = System.getProperty("user.home");
+  //  String scriptDir = Paths.get(homeDir, ".diarc").toString();
+  //  String statusCommand = "/bin/bash " + scriptDir + "getDisplay.sh";
+  //  String statusResult = callLocal(statusCommand);
+  //  log.info("[toggleDisplay] status result: " + statusResult);
+  //  List<String> results = Arrays.stream(statusResult.split("MainVideoSource")).toList();
+  //  int id;
+  //  if (results.size() > 1) {
+  //    id = Integer.valueOf(results.get(1).substring(1,1));
+  //  } else {
+  //    id = 0;
+  //  }
+  //  log.info("[toggleDisplay] id of current display input: " + id);
+  //  String command;
+  //  if (id == 1) {
+  //    command = "/bin/bash " + scriptDir + "setDisplay2.sh";
+  //  } else {
+  //    command = "/bin/bash " + scriptDir + "setDisplay1.sh";
+  //  }
+  //  String result = callLocal(command);
+  //  log.info("[toggleDisplay] result: " + result);
+  //  //TODO: what is proper error handling/result when switch failed?
+  //  haveDisplay = !haveDisplay;
+  //}
+  //@TRADEService
+  //public boolean getHaveDisplay() {
+  //  return haveDisplay;
+  //}
 
   private String callLocal(String command) {
     StringBuilder result = new StringBuilder();

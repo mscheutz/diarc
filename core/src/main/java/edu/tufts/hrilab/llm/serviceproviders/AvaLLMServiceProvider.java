@@ -1103,10 +1103,20 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "disable admin mode",
                 "disableAdminMode()", 10);
         exposedActionList.add(entry);
-      entry = new LLMActionEntry("toggleDisplay()",
-              "Change the output on your display between the two possible inputs",
-              "toggle display",
-              "toggleDisplay()", 10);
+      //entry = new LLMActionEntry("toggleDisplay()",
+      //        "Change the output on your display between the two possible inputs",
+      //        "toggle display",
+      //        "toggleDisplay()", 10);
+      //exposedActionList.add(entry);
+      entry = new LLMActionEntry("switchDisplayToTelepresence()",
+              "Change the output on your display to the telepresence stream",
+              "start telepresence",
+              "switchDisplayToTelepresence()", 10);
+      exposedActionList.add(entry);
+      entry = new LLMActionEntry("switchDisplayToTRACS()",
+              "Change the output on your display to what is shown by TRACS, the default setting",
+              "return to TRACS",
+              "switchDisplayToTRACS()", 10);
       exposedActionList.add(entry);
     }
 }
