@@ -196,7 +196,6 @@ import java.util.Map;
  **/
 (Map ?answerBindings) = askQuestionFromUtterance(Utterance ?utterance, List ?responseForms, long ?attempts, long ?duration) {
   //Communicate the utterance ?attempts times (default 1) while waiting for ?duration seconds
-  ?answerBindings = op:newHashMap("edu.tufts.hrilab.fol.Variable", "edu.tufts.hrilab.fol.Symbol");
   Long !count = 0;
   Symbol !speaker;
   Symbol !addressee;
@@ -215,7 +214,7 @@ import java.util.Map;
 
   !speaker = op:invokeMethod(?utterance, "getSpeaker");
   !addressee = op:invokeMethod(?utterance, "getAddressee");
-  while (op:invokeMethod(?answerBindings,"isEmpty") && op:lt(!count, ?attempts)) {
+  while (op:isNull(?answerBindings) && op:lt(!count, ?attempts)) {
     !count = op:++(!count);
 
     // communicate utterance (which also updates dialogue history)

@@ -170,7 +170,7 @@
 
     //If not acknowledged and ran out of tries -> clear screen, return to original location, and
     //  say that we could not find the requested patient
-    if(op:invokeMethod(!ackAnswerBindings, "isEmpty")) {
+    if(op:isNull(!ackAnswerBindings) || op:invokeMethod(!ackAnswerBindings, "isEmpty")) {
 //        op:log("info", "[escort] going to destination to communicate failure to find patient");
         act:generateResponseFromString("I could not find the requested patient ?name");
     } else {

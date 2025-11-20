@@ -26,7 +26,7 @@ public class Answer {
   public Answer() {
     this.responseLock = new ReentrantLock();
     this.responseCondition = responseLock.newCondition();
-    this.answerBindings = new HashMap<>();
+    //this.answerBindings = new HashMap<>();
   }
 
   public Lock getResponseLock() {
