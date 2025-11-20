@@ -499,7 +499,7 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
 
       if (volume < 1.0f) {
         FloatControl gainControl = (FloatControl) playbackClip.getControl(FloatControl.Type.MASTER_GAIN);
-        gainControl.setValue(10f * (float) Math.log10(volume*0.5));
+        gainControl.setValue(10f * (float) Math.log10(volume * 0.1));
       }
 
       playbackClip.loop(0);
