@@ -43,7 +43,8 @@ public:
     KCF,
     CMT,
     RELATION,
-    V4R
+    V4R,
+    TAPNET
   };
 
   /** @brief - ObjectTracker factory method

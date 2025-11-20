@@ -38,7 +38,7 @@ Optional fields:
   <!--  <detector type="dnn" trackers="kcf,cmt" config="yolov3/yolov3.json"/>-->
   <detector type="elevatordoordetector" trackers="kcf, cmt" config="elevatordoordetector/elevatordoordetector.json"/>
   <detector type="fastsam" trackers="kcf,cmt" config="fastsam/fastsam.json"/>
-  <detector type="haar" trackers="kcf,cmt" config="haar/haars.xml"/>
+  <detector type="haar" trackers="tapnet" config="haar/haars.xml"/>
   <detector type="hough" trackers="kcf,cmt" config="hough/houghs.xml"/>
   <detector type="motion" trackers="generic" depends="opticalflow" config="motion/motion.xml"/>
   <detector type="openpose" trackers="generic"  config="openpose/openpose.xml" required="openpose"/>

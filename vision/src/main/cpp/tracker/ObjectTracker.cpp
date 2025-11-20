@@ -29,6 +29,8 @@
 
 #include <boost/unordered/unordered_set.hpp>
 
+#include "TapnetTracker.hpp"
+
 using namespace diarc::stm;
 
 // NOTE: not named "diarc.tracker.ObjectTracker" because there could be non-static
@@ -52,6 +54,13 @@ ObjectTracker::get(const TrackerType type, const long long &processorId, const i
       return V4RTracker::Ptr(new V4RTracker(processorId, imgWidth, imgHeight));
 #else
     LOG4CXX_ERROR(factoryLogger, "V4RTracker not available. Did you compile with V4R?");
+#endif
+
+  case TAPNET:
+#ifdef USE_PYTHON
+    return TapnetTracker::Ptr(new TapnetTracker(processorId, imgWidth, imgHeight));
+#else
+    LOG4CXX_ERROR(factoryLogger, "Tapnet not available. Did you compile with Python?");
 #endif
       break;
   }
