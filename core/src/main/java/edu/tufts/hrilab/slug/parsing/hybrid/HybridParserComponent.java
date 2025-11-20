@@ -51,6 +51,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
   private String[] cacheLoads = null;
   private boolean cachePersist = false;
   private boolean cacheTldl = false;
+  private boolean cacheLLM = true;
   private String llm = null;
   private String prompt = null;
   private Symbol unknownListener = null;
@@ -69,6 +70,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     options.add(Option.builder("cacheName").hasArg().argName("string").desc("Name of cache").build());
     options.add(Option.builder("cachePersist").argName("file").desc("Persist cache in on users computer").build());
     options.add(Option.builder("cacheTldl").desc("Cache TLDL parses").build());
+    options.add(Option.builder("noCacheLLM").desc("Do not cache LLM parses directly in this component when confirmation is turned off").build());
     options.add(Option.builder("noConfirmation").argName("boolean").desc("Ask human to confirm LLM parser response for cache").build());
     options.add(Option.builder("patternMatching").desc("use pattern matching parser").build());
     options.add(Option.builder("tldlNoUpdateAddressee").desc("TLDL: do not update addressee after direct address").build());
@@ -109,6 +111,10 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
     if (useCache && cmdLine.hasOption("cacheTldl")) {
       cacheTldl = true;
       log.debug("Cache TLDL parses");
+    }
+    if (useCache && cmdLine.hasOption("noCacheLLM")) {
+      cacheLLM = false;
+      log.debug("Not caching LLM parses here (may still occur in nlu.asl)");
     }
     if (cmdLine.hasOption("noConfirmation")) {
       confirmation = false;
@@ -267,7 +273,7 @@ public class HybridParserComponent extends DiarcComponent implements NLUInterfac
         output = llmOutput;
         if (confirmation) {
           output.setNeedsValidation(true);
-        } else if (useCache) {
+        } else if (useCache && cacheLLM) {
           cacheParse(output);
         }
       }

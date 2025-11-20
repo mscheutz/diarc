@@ -97,7 +97,7 @@ public class AvaDemo extends DiarcConfiguration {
     //EW: Adding noConfirmation, but still setting needsValidation in AvaLLMServiceProvider so it will perform validation.
     //  Doing to add the possibility of generating failure responses from the Ava service provider without affecting other domains
     //  (to prevent nonsensical tldl failure responses from being used)
-    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -noConfirmation";
+    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -noConfirmation -noCacheLLM";
     if (useLLMParser) {
       parserArgs += " -llm";
     }
