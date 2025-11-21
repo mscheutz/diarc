@@ -106,6 +106,7 @@ void OwlV2Detector::handleCaptureNotification(CaptureNotification::ConstPtr noti
     for (descriptor_iter = descriptors->begin(); descriptor_iter != descriptors->end(); ++descriptor_iter) {
       std::string label = descriptor_iter->first.getName();
       labels.push_back(label);
+      LOG4CXX_DEBUG(logger, boost::format("[handleCaptureNotification] adding label: %s") % label.c_str());
     }
 
     py::list pyLabels;
@@ -157,9 +158,13 @@ MemoryObject::VecPtr OwlV2Detector::createMemoryObjects(py::list boxes, py::list
 
   for (int i = 0; i < boxes.size(); ++i) {
     py::list pyBox = py::cast<py::list>(boxes[i]);
-    cv::Rect bbox = cv::Rect(pyBox[0].cast<int>(), pyBox[1].cast<int>(), pyBox[2].cast<int>(), pyBox[3].cast<int>());
+    int x1 = pyBox[0].cast<int>();
+    int y1 = pyBox[1].cast<int>();
+    int x2 = pyBox[2].cast<int>();
+    int y2 = pyBox[3].cast<int>();
+    cv::Rect bbox = cv::Rect(x1, y1, x2-x1, y2-y1);
     float conf = confs[i].cast<float>();
-    std::string label = confs[i].cast<std::string>();
+    std::string label = labels[i].cast<std::string>();
     for (auto descriptor_iter = descriptors->begin(); descriptor_iter != descriptors->end(); ++descriptor_iter) {
       if (descriptor_iter->first.getName() == label) {
         // create MemoryObject for each relevant typeId

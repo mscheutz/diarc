@@ -52,7 +52,7 @@ if __name__ == '__main__':
     image = cv2.resize(image, (640, 480))
 
     owlv2 = Owlv2()
-    boxes, scores, labels = owlv2.detect(image, ["face", "person"], "cpu", 0.2)
+    boxes, scores, labels = owlv2.detect(image, ["face"], 0.2)
 
     # Draw detection results on image
     for box, score, label in zip(boxes, scores, labels):
