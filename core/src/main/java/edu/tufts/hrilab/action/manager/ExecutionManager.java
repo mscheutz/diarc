@@ -868,12 +868,15 @@ public class ExecutionManager implements GoalListener {
         for (Goal activeGoal : activeGoals) {
           if (!activeGoal.getStatus().isTerminated()) {
             GoalStatus currentStatus = activeGoal.getStatus();
-            //TODO: Revisit this - kiosk goals cannot be canceled within this function due to held locks and multithreaded
-            //      nature of AI interruption stopping execution and disjoint status update listener cleaning up the goal itself
+            //TODO: Revisit this - kiosk goals cannot be canceled within this function properly due to held locks and multithreaded
+            //      nature of AI interruption stopping execution and disjoint status update listener cleaning up the goal itself.
+            //      The goal will be canceled, but not move collections or release resources
             if (activeGoal.getPriorityTier() == PriorityTier.KIOSK) {
               //superseded kiosk goals can be canceled and discarded rather than suspended and added to pending
               if (cancelActiveGoal(activeGoal)) {
                 waitForGoalStatus(activeGoal, GoalStatus.CANCELED);
+                //Shouldn't be necessary, needed until deadlock issues are fixed
+                unlockResources(activeGoal);
               }
             } else {
               if (currentStatus == GoalStatus.ACTIVE) {
