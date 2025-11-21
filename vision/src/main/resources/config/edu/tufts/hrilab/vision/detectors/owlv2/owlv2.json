@@ -5,7 +5,7 @@
   },
   "predicates": [
     {
-      "name": "owl"
+      "name": "handle"
     },
     {
       "name": "person"

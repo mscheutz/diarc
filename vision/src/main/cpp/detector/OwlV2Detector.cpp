@@ -5,7 +5,6 @@
 #include <cfloat>
 #include <boost/lexical_cast.hpp>
 #include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
 #include "capture/util/CaptureUtilities.hpp"
@@ -99,7 +98,15 @@ void OwlV2Detector::handleCaptureNotification(CaptureNotification::ConstPtr noti
     // results[3] --> [conf1, conf2, ...]
     // results[4] --> [name1, name2, ...]
     py::array_t<uchar> pyFrame = PythonUtils::convertMatToNumpy(frame);
-    std::vector<std::string> labels = {"person", "face"}; // TODO: populate this with search predicates
+
+    // populate labels with current descriptors to process
+    std::vector<std::string> labels;
+    TypesByDescriptorConstPtr descriptors = getDescriptors();
+    TypesByDescriptor::const_iterator descriptor_iter;
+    for (descriptor_iter = descriptors->begin(); descriptor_iter != descriptors->end(); ++descriptor_iter) {
+      std::string label = descriptor_iter->first.getName();
+      labels.push_back(label);
+    }
 
     py::list pyLabels;
     for (const auto& label : labels) {
@@ -114,7 +121,7 @@ void OwlV2Detector::handleCaptureNotification(CaptureNotification::ConstPtr noti
     LOG4CXX_DEBUG(logger, "[handleCaptureNotification] 3");
 
     // populate MOs and send notifications
-    newObjects = createMemoryObjects(results[0].cast<py::list>(), results[1].cast<py::list>(),
+    newObjects = createMemoryObjects(results[0].cast<py::list>(), results[1].cast<py::list>(), results[2].cast<py::list>(),
                                                                  notification->captureData);
     sendDetectionNotifications(newObjects);
 
@@ -140,35 +147,34 @@ void OwlV2Detector::handleCaptureNotification(CaptureNotification::ConstPtr noti
   }
 }
 
-MemoryObject::VecPtr OwlV2Detector::createMemoryObjects(py::list boxes, py::list confs,
+MemoryObject::VecPtr OwlV2Detector::createMemoryObjects(py::list boxes, py::list confs, py::list labels,
                                                           CaptureData::ConstPtr captureData) {
   // get current descriptors to process
   TypesByDescriptorConstPtr descriptors = getDescriptors();
 
-  std::tr1::unordered_set<long long>::const_iterator typeIds_itr;
   MemoryObject::VecPtr newObjs(new MemoryObject::Vec());
   LOG4CXX_DEBUG(logger, boost::format("[createMemoryObjects] num detected objects: %d") % boxes.size());
-  for (TypesByDescriptor::const_iterator descriptor_iter = descriptors->begin(); descriptor_iter != descriptors->end(); ++descriptor_iter) {
-    for (int i = 0; i < boxes.size(); ++i) {
-      py::list pyBox = py::cast<py::list>(boxes[i]);
-      cv::Rect bbox = cv::Rect(pyBox[0].cast<int>(), pyBox[1].cast<int>(), pyBox[2].cast<int>(), pyBox[3].cast<int>());
-      float conf = confs[i].cast<float>();
 
-      // create MemoryObject for each relevant typeId
-      for (typeIds_itr = descriptor_iter->second.begin(); typeIds_itr != descriptor_iter->second.end(); ++typeIds_itr) {
-        MemoryObjectMask::Ptr moMask(new MemoryObjectMask(captureData, bbox));
-        MemoryObject::Ptr newObj(
-          new MemoryObject(*typeIds_itr, descriptor_iter->first.getArg(0), captureData, moMask));
-        newObj->addValidationResult(conf, descriptor_iter->first);
-        newObjs->push_back(newObj);
+  for (int i = 0; i < boxes.size(); ++i) {
+    py::list pyBox = py::cast<py::list>(boxes[i]);
+    cv::Rect bbox = cv::Rect(pyBox[0].cast<int>(), pyBox[1].cast<int>(), pyBox[2].cast<int>(), pyBox[3].cast<int>());
+    float conf = confs[i].cast<float>();
+    std::string label = confs[i].cast<std::string>();
+    for (auto descriptor_iter = descriptors->begin(); descriptor_iter != descriptors->end(); ++descriptor_iter) {
+      if (descriptor_iter->first.getName() == label) {
+        // create MemoryObject for each relevant typeId
+        for (auto typeIds_itr = descriptor_iter->second.begin(); typeIds_itr != descriptor_iter->second.end(); ++typeIds_itr) {
+          MemoryObjectMask::Ptr moMask(new MemoryObjectMask(captureData, bbox));
+          MemoryObject::Ptr newObj(
+            new MemoryObject(*typeIds_itr, descriptor_iter->first.getArg(0), captureData, moMask));
+          newObj->addValidationResult(conf, descriptor_iter->first);
+          newObjs->push_back(newObj);
 
-        auto bbox = newObj->getDetectionMask()->getBoundingBox();
-        LOG4CXX_DEBUG(logger, boost::format("Detected MO with box:(%d,%d) %dx%d.")
-            % bbox.x % bbox.y % bbox.width % bbox.height);
+          auto bbox = newObj->getDetectionMask()->getBoundingBox();
+          LOG4CXX_DEBUG(logger, boost::format("Detected MO with box:(%d,%d) %dx%d.")
+              % bbox.x % bbox.y % bbox.width % bbox.height);
+        }
       }
-
-//      cv::imshow("binary", binary);
-//      cv::waitKey(0);
     }
   }
 

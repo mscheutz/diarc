@@ -32,7 +32,7 @@ private:
   pybind11::object OwlV2DetectorClass;
   pybind11::object owlV2Detector;
 
-  diarc::stm::MemoryObject::VecPtr createMemoryObjects(pybind11::list masks, pybind11::list confs, CaptureData::ConstPtr captureData);
+  diarc::stm::MemoryObject::VecPtr createMemoryObjects(pybind11::list masks, pybind11::list confs, pybind11::list labels, CaptureData::ConstPtr captureData);
 };
 
 #endif  //OWLV2DETECTOR_HPP
