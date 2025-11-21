@@ -566,7 +566,7 @@ public class AvaDisplayComponent extends DiarcComponent {
     //  dialogueManager.addMessage(words, speaker);
     //  unsetIdle();
     //}
-    if (utterance.getSpeaker().getName().equals("ava")) {
+    if (utterance.getSpeaker().getName().equals("ava") && !utterance.getAddressee().getName().equals("webapp")) {
       new Thread(() -> {
         //String displayedText = "Ava: " + utterance.getWordsAsString() + "\n" + currentText;
         //displayText(displayedText);

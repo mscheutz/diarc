@@ -738,6 +738,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 case "reportIsVideoSaved":
                 case "sayText":
                 case "say":
+                case "reportBatteryLevel":
                     return true;
                 default:
                     return false;
