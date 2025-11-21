@@ -1,155 +1,186 @@
+# diarc/flex/env/RevoluteEnv.py
 import sys
 import logging
-
+import numpy as np
+import gymnasium as gym
+from javax.vecmath import Point3d, Vector3d, Quat4d
 from diarc.pytrade.wrapper import TRADEWrapper
-from javax.vecmath import Point3d, Matrix4d, Vector3d, Quat4d
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-import gymnasium as gym
-import numpy as np
+
 
 class RevoluteEnv(gym.Env):
     """
-    DIARC Gymnasium environment for prismatic object manipulation.
+    DIARC Gymnasium environment for revolute joint manipulation.
 
-    State:
-        [joint_axis_x, joint_axis_y, joint_axis_z,
-        displacement_x, displacement_y, displacement_z]
-        - joint_axis: a 3D unit vector indicating the current force application axis.
-        - displacement: difference between current end-effector position and initial position.
-
-    Action:
-      [force_direction (3D), force_scale (scalar ∈ [0,1])]
-
-      The applied force is computed as:
-          applied_force = normalize(force_direction) * force_scale * max_force
+    State: [joint_axis(3), displacement(3)]
+    Action: [dx, dy, dz] - 3D movement delta in odom frame
     """
+    
     def __init__(self, trade: TRADEWrapper):
         self.trade = trade
         self.joint_type = 'revolute'
         self.joint_params = None
-        self.action_scale = 0.05
-        self.success_angle = 10
+        self.action_scale = 0.02
+        
         self.init_tf = None
-        self.curr_tf = None
-        self.tf_src_frame = 'gpe'
+        self.tf_src_frame = 'odom'
         self.tf_dst_frame = 'hand'
-
-        # TODO: are the action and observation spaces correct?
-        # Define observation space: joint_axis (3) and displacement (3)
-        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32)
-        # Define action space: force_direction (3) and force_scale (1)
-        self.action_space = gym.spaces.Box(low=np.array([-1, -1, -1, 0]), high=np.array([1, 1, 1, 1]), dtype=np.float32)
-
-    def _set_init_state(self):
-        # get the initial hand position (first step only)
-        if self.init_tf is None:
-            self.init_tf = self.trade.call_trade("getTransformTo", [], self.tf_src_frame, self.tf_dst_frame)
-
-    def _get_obs(self):
-        # Get the initial hand position
-        trans = Vector3d()
-        self.init_tf.get(trans)
-        initial_hand_pos = np.array([trans.x, trans.y, trans.z])
-
-        # Get the current hand position
-        curr_tf = self.trade.call_trade("getTransformTo", [], self.tf_src_frame, self.tf_dst_frame)
+        
+        self.observation_space = gym.spaces.Box(
+            low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32
+        )
+        self.action_space = gym.spaces.Box(
+            low=np.array([-1, -1, -1]), 
+            high=np.array([1, 1, 1]), 
+            dtype=np.float32
+        )
+    
+    def _get_current_position(self) -> np.ndarray:
+        """Get current gripper position in odom frame."""
+        curr_tf = self.trade.call_trade("getTransform", [],
+                                       self.tf_src_frame, self.tf_dst_frame)
         trans = Vector3d()
         curr_tf.get(trans)
-        current_hand_pos = np.array([trans.x, trans.y, trans.z])
-
-        state_vector = self._construct_state_vector(current_hand_pos, initial_hand_pos)
-        return state_vector
-
-        # convert returned observations into target observation data type
-        # return np.random.uniform(-np.pi, np.pi, size=(6,))
-
-    def _check_manipulation_success(self, state_vector):
-        joint_center = self.joint_params['center']
-        initial_vec = initial_hand_pos - joint_center
-        current_vec = current_hand_pos - joint_center
-        cos_angle = np.dot(initial_vec, current_vec) / (np.linalg.norm(initial_vec) * np.linalg.norm(current_vec))
-        angle_rad = np.arccos(np.clip(cos_angle, -1, 1))
-        angle_deg = np.degrees(angle_rad)
-        success = angle_deg >= self.success_angle
-        print(f"Revolute angle: {angle_deg:.1f}° (threshold: {self.success_angle:.1f}°)")
-        return success
-
-    def _construct_state_vector(self, current_position, initial_position):
-        """
-        Construct state vector for policy input.
-
-        Args:
-            current_position: Current gripper position [x, y, z]
-            initial_position: Initial grasp position [x, y, z]
-
-        Returns:
-            np.array: State vector [joint_axis_x, joint_axis_y, joint_axis_z,
-                                   displacement_x, displacement_y, displacement_z]
-        """
+        return np.array([trans.x, trans.y, trans.z])
+    
+    def _construct_state_vector(self, current_position: np.ndarray, 
+                            initial_position: np.ndarray) -> np.ndarray:
+        """Construct state vector for revolute policy input."""
         if self.joint_params is None:
-            raise ValueError("Must analyze trajectory first!")
-
-        # Calculate displacement from initial position
-        displacement = current_position - initial_position
-
-        # Get normalized joint axis
+            raise ValueError("joint_params must be set before reset/step")
+        
+        # Get joint parameters
         joint_axis = self.joint_params["axis"]
         joint_axis = joint_axis / np.linalg.norm(joint_axis)
-
-        # Construct state: [joint_axis (3D), displacement (3D)]
-        state = np.concatenate([joint_axis, displacement])
-
+        joint_center = self.joint_params["center"]  # pr
+        
+        # For revolute: vt = (pt - pr) - [(pt - pr)·hr]hr
+        vector_to_point = current_position - joint_center  # pt - pr
+        
+        # Project onto rotation axis
+        projection_on_axis = np.dot(vector_to_point, joint_axis) * joint_axis
+        
+        # vt is the component perpendicular to the axis
+        vt = vector_to_point - projection_on_axis
+        
+        # State: [hr, vt]
+        state = np.concatenate([joint_axis, vt])
+        
         return state.astype(np.float32)
-
+    
     def reset(self, seed=None, options=None):
-        # reset the initial hand position
-        self.init_tf = None
-
-        return self._get_obs(), {}
-
-    def step(self, action):
-        # set initial hand position
-        self._set_init_state()
-
+        """Reset environment and capture initial state."""
+        super().reset(seed=seed)
+        
+        self.init_tf = self.trade.call_trade("getTransform", [],
+                                            self.tf_src_frame, self.tf_dst_frame)
+        
+        trans = Vector3d()
+        self.init_tf.get(trans)
+        initial_position = np.array([trans.x, trans.y, trans.z])
+        
+        obs = self._construct_state_vector(initial_position, initial_position)
+        info = {"initial_position": initial_position}
+        
+        return obs, info
+    
+    def step(self, action: np.ndarray):
+        """Execute action via TRADE using absolute positioning in odom frame."""
         if len(action.shape) > 1:
             action = action.flatten()
-
-        # TODO: why is this needed?
-        action[0] = -action[0]  # Invert x action direction for Spot
-
-        # Execute movement
+        
+        # Action is delta in odom frame
+        delta_odom = action * self.action_scale
+        
         try:
-            deltas = action * self.action_scale
-            d_yaw = np.radians(self.success_angle) / self.max_steps
-            print(f"deltas = {deltas} dyaws = {d_yaw}")
-            spot.push_object(dx=deltas[0], dy=deltas[1], d_yaw=d_yaw, dt=3)
+            # Get current position in odom frame
+            current_pos = self._get_current_position()
+            
+            # Calculate target position in odom frame
+            target_pos = current_pos + delta_odom
+            
+            logging.info(f"Current position: {current_pos}")
+            logging.info(f"Delta: {delta_odom}")
+            logging.info(f"Target position: {target_pos}")
+            
+            # Get current orientation to maintain it
+            odom_tf_hand = self.trade.call_trade("getTransform", [],
+                                           self.tf_src_frame, self.tf_dst_frame)
+            orient = Quat4d()
+            odom_tf_hand.get(orient)
+            
+            # Use moveTo for absolute positioning in odom frame
+            target = Point3d(target_pos[0], target_pos[1], target_pos[2])
 
-            # make trade call(s) to execute action
-            ret = self.trade.call_trade("moveTo", [], "arm", target_pose)
 
+            #################### transform to "body" frame
+            body_tf_odom = self.trade.call_trade("getTransform", [],"body", "odom")
+            # position from odom frame to body frame
+            body_tf_odom.transform(target)
+            # orientation from odom frame to body frame
+            body_orient_hand = Quat4d()
+            body_tf_hand = self.trade.call_trade("getTransform", [],"body", "hand")
+            body_tf_hand.get(body_orient_hand)
+            # body_tf_odom.get(orient)
+            # orient.mul(odom_orient)
+            ################################
+
+            ret = self.trade.call_trade("moveTo", [], "arm", target, body_orient_hand)
+            
             # Get new observation
-            state_vector = self._get_obs()
-
-            # Check success
-            terminated = self._check_manipulation_success(state_vector)
-
-            return state_vector, None, terminated, False, {}
-
+            initial_trans = Vector3d()
+            self.init_tf.get(initial_trans)
+            initial_position = np.array([initial_trans.x, initial_trans.y, initial_trans.z])
+            
+            current_position = self._get_current_position()
+            obs = self._construct_state_vector(current_position, initial_position)
+            
+            info = {"trade_return": ret}
+            
+            return obs, 0.0, False, False, info
+            
         except Exception as e:
-            logging.error(f"Error executing step. {e}")
+            logging.error(f"Error executing step: {e}")
+            try:
+                initial_trans = Vector3d()
+                self.init_tf.get(initial_trans)
+                initial_position = np.array([initial_trans.x, initial_trans.y, initial_trans.z])
+                current_position = self._get_current_position()
+                obs = self._construct_state_vector(current_position, initial_position)
+            except:
+                obs = np.zeros(6, dtype=np.float32)
+            
+            return obs, 0.0, False, True, {"error": str(e)}
+
 
 # Test the environment
 if __name__ == "__main__":
-    env = RevoluteEnv(trade = TRADEWrapper())
-
-    obs, _ = env.reset()
-
-    for _ in range(10):
-        action = env.action_space.sample()  # Random action
-        print(action)
-        obs, reward, done, _, _ = env.step(action)
-        if done:
+    env = RevoluteEnv(trade=TRADEWrapper())
+    
+    # Set joint params for revolute joint
+    env.joint_params = {
+        "center": np.array([0.5, 0.0, 0.5]),  # Rotation center
+        "radius": 0.3,
+        "axis": np.array([0.0, 0.0, 1.0]),    # Vertical rotation axis
+        "error": 0.01
+    }
+    
+    print("\n1. Resetting environment...")
+    obs, info = env.reset()
+    print(f"   Initial observation: {obs}")
+    print(f"   Initial position: {info['initial_position']}")
+    
+    print("\n2. Executing 3 test actions...")
+    for i in range(3):
+        action = env.action_space.sample()
+        print(f"\n   Step {i+1}:")
+        print(f"   - Action: {action}")
+        
+        obs, reward, terminated, truncated, info = env.step(action)
+        print(f"   - New displacement: {obs[3:]}")
+        
+        if terminated or truncated:
             break
-
-    env.close()
+    
+    print("\n3. Test complete!")
