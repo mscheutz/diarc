@@ -26,7 +26,7 @@ import java.util.List;
 //  Symbol !defaultLocation = location_0:location;
 //
 //  recovery: {
-////    failedActions: {pickUpObject(self:agent, X:physobj)}
+////    failedActions: {grabObject(self:agent, X:physobj)}
 //    failureReasons: {failedGrasp(X)}
 ////    actionStatuses: {FAIL}
 //  }
@@ -157,22 +157,26 @@ import java.util.List;
 }
 
 () = pickUp(Symbol ?object:physobj) {
+    act:grab(?object);
+//    act:gotocarrypose();
+}
+
+() = grab(Symbol ?object:physobj) {
     //act:goToPose(detection);
     act:openGripper(arm);
     act:startVisualSearch(?object);
     try {
       act:findObject(?object);
       //act:pauseCapture();
-      act:pickUpObject(?object);
+      act:grabObject(?object);
     } catch() {
-      op:log("info", "[pickUp] IN CATCH BLOCK");
+      op:log("info", "[grab] IN CATCH BLOCK");
       exit(FAIL);
     } finally {
-      op:log("info", "[pickUp] IN FINALLY BLOCK");
+      op:log("info", "[grab] IN FINALLY BLOCK");
 //      act:resumeCapture();
       act:stopVisualSearch(?object);
     }
-//    act:gotocarrypose();
 }
 
 () = putDown() {

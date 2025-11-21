@@ -94,7 +94,7 @@ lift; VERBT; pickUp
 raise; VERBT; pickUp
 
 % grab(?ADDRESSEE, REF:physobj)
-grab; VERBT; grabObject
+grab; VERBT; grab
 pull out; VERBT; pullOut
 % open the door by; VERBT; openDoor
 push; VERBT; pushButton

@@ -654,7 +654,7 @@ class SpotTRADEWrapper:
 
     @handle_return
     @JOverride
-    def pickUpObject(self, refId):
+    def grabObject(self, refId):
         try:
 
             # TODO: choose ray vs pixel based on contents in MO (i.e., if mo.getLocation() has nan values)
@@ -701,7 +701,7 @@ class SpotTRADEWrapper:
             grasp.grasp_params.manipulation_camera_source = 2
 
             # setting grasp params restricts the types of objects that can be picked up (top-down vs side, etc),
-            # so it doesn't make for a very general pickUpObject method
+            # so it doesn't make for a very general grabObject method
             set_grasp_params = False
             if set_grasp_params:
                 # We can specify where in the gripper we want to grasp. About halfway is generally good for
@@ -735,7 +735,7 @@ class SpotTRADEWrapper:
             return success, msg, cmd_id
 
         except Exception as e:
-            logging.error(f"Error calling pickUpObject: {traceback.format_exc()}")
+            logging.error(f"Error calling grabObject: {traceback.format_exc()}")
             return False, "error msg"
 
     @handle_return

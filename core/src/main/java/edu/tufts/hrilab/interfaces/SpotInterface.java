@@ -55,5 +55,5 @@ public interface SpotInterface {
   @Action
   @TRADEService
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
-  Justification pickUpObject(Symbol refId);
+  Justification grabObject(Symbol refId);
 }
