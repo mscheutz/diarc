@@ -196,6 +196,7 @@ import java.util.Map;
  **/
 (Map ?answerBindings) = askQuestionFromUtterance(Utterance ?utterance, List ?responseForms, long ?attempts, long ?duration) {
   //Communicate the utterance ?attempts times (default 1) while waiting for ?duration seconds
+  ?answerBindings = op:setNull();
   Long !count = 0;
   Symbol !speaker;
   Symbol !addressee;
