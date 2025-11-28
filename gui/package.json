@@ -64,8 +64,11 @@
     "zod": "^3.23.8"
   },
   "scripts": {
-    "launchGui": "react-scripts start",
-    "eject": "react-scripts eject"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "launchGui": "react-scripts start"
   },
   "eslintConfig": {
     "extends": [
