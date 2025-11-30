@@ -1,21 +1,17 @@
 // IMPORTS //
 // @ts-ignore
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-// NPM packages
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
 import { ReadyState, SendMessage } from "react-use-websocket";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 
-// Internal imports
 import { handlerRoots, handlers } from "./util/constants";
-
 import "./util/StyleOverrides.css";
 import { Button } from "../Button";
 
-// CONSTANTS //
 const flexTabPanelClass = "hidden flex-col min-h-0 grow";
 
 type UnavailablePanelMode = "connecting" | "unavailable";
@@ -30,10 +26,13 @@ interface Props {
     availableEndpoints: string[];
     sendMessage: SendMessage;
     readyState: ReadyState;
-    lastMessage: WebSocketEventMap["message"] | null; // Type for WebSocket message
+    lastMessage: WebSocketEventMap["message"] | null;
     wsBaseUrl: string;
     generalBaseUrl: URL | string;
     onReloadWebsocket: () => void;
+
+    // NEW: did the WS ever complete an open handshake in this session
+    hasEverOpened: boolean;
 }
 
 const UnavailablePanel: React.FC<UnavailablePanelProps> = ({
@@ -46,13 +45,10 @@ const UnavailablePanel: React.FC<UnavailablePanelProps> = ({
     return (
         <div
             className="flex flex-col space-y-5 fixed
-                            top-1/2 left-1/2 translate-x-[-50%]
-                            translate-y-[-50%] items-center"
+                        top-1/2 left-1/2 translate-x-[-50%]
+                        translate-y-[-50%] items-center"
         >
-            <div
-                className="flex flex-row justify-center
-                                justify-items-center"
-            >
+            <div className="flex flex-row justify-center justify-items-center">
                 <FontAwesomeIcon
                     icon={faTriangleExclamation}
                     size="10x"
@@ -70,7 +66,6 @@ const UnavailablePanel: React.FC<UnavailablePanelProps> = ({
                     : "No endpoints found. The backend may be down or unreachable."}
             </div>
 
-            {/* Show a button in both modes, but do a *soft* WS reload not a full page reload */}
             <Button onClick={onReloadWebsocket}>
                 {isConnecting ? "Try again" : "Reload connection"}
             </Button>
@@ -86,60 +81,98 @@ const TabbedComponentViewer: React.FC<Props> = ({
                                                     wsBaseUrl,
                                                     generalBaseUrl,
                                                     onReloadWebsocket,
+                                                    hasEverOpened,
                                                 }) => {
     const [hasEverHadEndpoints, setHasEverHadEndpoints] = useState(false);
 
-    // NEW: track whether the initial connection has timed out
+    // Track whether the *initial* connection attempt effectively timed out
     const [initialConnectionTimedOut, setInitialConnectionTimedOut] =
         useState(false);
 
+    // Single timeout handle for the initial connect path
+    const initialTimeoutRef = useRef<number | null>(null);
+
+    // Once we’ve seen any endpoints, remember that permanently
     useEffect(() => {
         if (!hasEverHadEndpoints && availableEndpoints.length > 0) {
             setHasEverHadEndpoints(true);
-            setInitialConnectionTimedOut(false); // reset if it finally succeeds
+            setInitialConnectionTimedOut(false);
+            if (initialTimeoutRef.current !== null) {
+                window.clearTimeout(initialTimeoutRef.current);
+                initialTimeoutRef.current = null;
+            }
         }
     }, [availableEndpoints, hasEverHadEndpoints]);
 
+    // Initial connection timeout logic: handles the iOS/slow-device “stuck connecting” case.
     useEffect(() => {
-        if (initialConnectionTimedOut && readyState === ReadyState.OPEN) {
-            setInitialConnectionTimedOut(false);
-        }
-    }, [initialConnectionTimedOut, readyState]);
+        const noEndpointsYet =
+            !hasEverHadEndpoints && availableEndpoints.length === 0;
 
-    // NEW: connection timeout for the "first connect" case
-    useEffect(() => {
-        // Only care about the "first-ever" connection and while we have no endpoints
-        if (hasEverHadEndpoints || availableEndpoints.length > 0) {
+        // If we've already had endpoints, or currently have some, this whole mechanism is irrelevant.
+        if (!noEndpointsYet) {
+            if (initialTimeoutRef.current !== null) {
+                window.clearTimeout(initialTimeoutRef.current);
+                initialTimeoutRef.current = null;
+            }
+            if (initialConnectionTimedOut) {
+                setInitialConnectionTimedOut(false);
+            }
             return;
         }
 
-        if (readyState === ReadyState.CONNECTING) {
-            const timeoutMs = 8000; // tune as desired
-            const timer = window.setTimeout(() => {
-                if (
-                    !hasEverHadEndpoints &&
-                    availableEndpoints.length === 0 &&
-                    readyState === ReadyState.CONNECTING
-                ) {
-                    console.warn(
-                        "Initial WS connection timed out; marking as unavailable"
-                    );
-                    setInitialConnectionTimedOut(true);
-                }
-            }, timeoutMs);
+        const isConnecting = readyState === ReadyState.CONNECTING;
 
-            return () => window.clearTimeout(timer);
+        // Only arm the timeout while in the very first CONNECTING phase
+        if (isConnecting && !initialConnectionTimedOut) {
+            const timeoutMs = 8000; // tune as needed
+
+            if (initialTimeoutRef.current === null) {
+                initialTimeoutRef.current = window.setTimeout(() => {
+                    // Recheck conditions on timeout fire to avoid stale state
+                    const stillNoEndpoints =
+                        !hasEverHadEndpoints && availableEndpoints.length === 0;
+                    if (stillNoEndpoints) {
+                        console.warn(
+                            "Initial WS connection timed out; marking as unavailable"
+                        );
+                        setInitialConnectionTimedOut(true);
+                    }
+                }, timeoutMs);
+            }
+        } else {
+            // Not CONNECTING anymore, clear any pending timeout.
+            if (initialTimeoutRef.current !== null) {
+                window.clearTimeout(initialTimeoutRef.current);
+                initialTimeoutRef.current = null;
+            }
         }
-    }, [readyState, hasEverHadEndpoints, availableEndpoints.length]);
+
+        return () => {
+            if (initialTimeoutRef.current !== null) {
+                window.clearTimeout(initialTimeoutRef.current);
+                initialTimeoutRef.current = null;
+            }
+        };
+    }, [
+        readyState,
+        hasEverHadEndpoints,
+        availableEndpoints.length,
+        initialConnectionTimedOut,
+    ]);
 
     const isClosedState = readyState === ReadyState.CLOSED;
 
+    // Show fullscreen panel only when:
+    //  - we never had endpoints, and currently have none, OR
+    //  - the initial connection timed out
     const shouldShowUnavailablePanel =
         (availableEndpoints.length === 0 && !hasEverHadEndpoints) ||
         initialConnectionTimedOut;
 
+    // Decide whether the panel says "Connecting..." or "Unavailable"
     const unavailableMode: UnavailablePanelMode =
-        (shouldShowUnavailablePanel && isClosedState) || initialConnectionTimedOut
+        initialConnectionTimedOut || isClosedState || hasEverOpened
             ? "unavailable"
             : "connecting";
 
