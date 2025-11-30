@@ -18,7 +18,7 @@ public class AvaDemo extends DiarcConfiguration {
   boolean useLLMNLG = true;
   String service = "openai";
   String model = "Qwen/Qwen3-14B-AWQ";
-  String openaiEndpoint = "http://209.38.62.200:8000/qwen";
+  String openaiEndpoint = "http://209.38.51.186:8000/qwen";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
   private String speakerId = "";

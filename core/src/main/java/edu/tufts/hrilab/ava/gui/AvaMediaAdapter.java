@@ -49,17 +49,17 @@ public class AvaMediaAdapter extends GuiAdapter {
   }
 
   private void deleteMedia(JsonArray ids) {
+    log.info("[deleteMedia] deleteMedia called");
     for (JsonElement id : ids) {
       Path path;
       String name = id.getAsString();
-      if (name.split("\\.")[1].equals(".mp4")) {
-        path = Paths.get(userVideoDir, name);
-      } else {
-        path = Paths.get(userImageDir, name);
-      }
       TRADEServiceInfo tsi = null;
+      //todo: actually check which dir you should be deleting from instead of just doing both
       try {
         tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("deleteMedia").argTypes(String.class));
+        path = Paths.get(userVideoDir, name);
+        tsi.call(void.class, path.toString());
+        path = Paths.get(userImageDir, name);
         tsi.call(void.class, path.toString());
       } catch (TRADEException e) {
         log.error("[deleteMedia] error calling TRADE service to delete media", e);

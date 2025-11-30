@@ -153,6 +153,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   @TRADEService
   public void deleteMedia(String path) {
     try {
+      log.error("[deleteMedia] deleteMedia called on path: " + path);
       Files.deleteIfExists(Path.of(path));
     } catch (IOException e) {
       log.error("[deleteMedia] failed to delete media file: " + path, e);

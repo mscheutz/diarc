@@ -28,6 +28,8 @@ import edu.tufts.hrilab.fol.Variable;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -43,6 +45,7 @@ import java.net.URISyntaxException;
 
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.common.UtteranceType;
+import edu.tufts.hrilab.util.Http;
 import edu.tufts.hrilab.util.RotationHelpers;
 import edu.tufts.hrilab.util.Convert;
 import org.apache.commons.cli.CommandLine;
@@ -67,10 +70,19 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Quat4d;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Tuple3d;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import static java.lang.Double.parseDouble;
 import static java.lang.System.getProperty;
@@ -274,15 +286,22 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   }
 
   private void adjustDockTags(Map<String, Pair<Point3d, Quat4d>> allTags, List<String> dockTags) {
+    if (allTags.isEmpty()) {
+      return;
+    }
+    log.info(allTags.toString());
+    log.info(dockTags.toString());
     for (String name : dockTags) {
       Pair<Point3d, Quat4d> pose = allTags.get(name);
-      Vector3d orientationVec = RotationHelpers.quaternionToNormVect(pose.getRight());
-      Point3d position = pose.getLeft();
-      log.info("adjusting dock tag " + name + " with position " + pose.getLeft());
-      position.add(orientationVec);
-      Pair<Point3d, Quat4d> newPose = new MutablePair<>(position, pose.getRight());
-      log.info("new position for " + name + " is " + newPose.getLeft());
-      allTags.put(name, newPose);
+      if (pose != null) {
+        Vector3d orientationVec = RotationHelpers.quaternionToNormVect(pose.getRight());
+        Point3d position = pose.getLeft();
+        log.info("adjusting dock tag " + name + " with position " + pose.getLeft());
+        position.add(orientationVec);
+        Pair<Point3d, Quat4d> newPose = new MutablePair<>(position, pose.getRight());
+        log.info("new position for " + name + " is " + newPose.getLeft());
+        allTags.put(name, newPose);
+      }
     }
   }
 
@@ -975,9 +994,11 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     Map<String, Pair<Point3d, Quat4d>> toReturn = new HashMap<>();
     for (RMSListTagsResponse res : resList) {
       for (Tag tag : res.response.tags.values()) {
-        Point3d point = new Point3d(parseDouble(tag.position.x), parseDouble(tag.position.y), 0);
-        Quat4d quat4d = Convert.convertToQuat4d(parseDouble(tag.position.theta), 0, 0);
-        toReturn.put(tag.name, new MutablePair<>(point, quat4d));
+        if ("true".equals(tag.attributes.get("tracs"))) {
+          Point3d point = new Point3d(parseDouble(tag.position.x), parseDouble(tag.position.y), 0);
+          Quat4d quat4d = Convert.convertToQuat4d(parseDouble(tag.position.theta), 0, 0);
+          toReturn.put(tag.name, new MutablePair<>(point, quat4d));
+        }
       }
     }
     return toReturn;
@@ -1485,4 +1506,15 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   public void disableAdminMode() {
     speaker = Factory.createSymbol("local_visitor");
   }
+
+//  @TRADEService
+//  @Action
+//  public void toggleDisplay() {
+//    try {
+//      CodecToggleHdmiWithRecovery.toggle();
+//    } catch (Exception e) {
+//      log.error("[toggleDisplay] exception when toggling via xml/http api", e);
+//    }
+//  }
+
 }
