@@ -1,73 +1,105 @@
 import "./App.css";
 import React, { useEffect, useState } from "react";
-import useWebSocket from "react-use-websocket";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 import Providers from "./components/Providers";
 import Navbar from "./components/Navbar";
 import TabbedComponentViewer from "./components/diarcGui/TabbedComponentViewer";
 
 function App() {
-    const siteId = process.env.REACT_APP_SITE_ID;          // e.g. "tufts"
-    const serverAddress = process.env.REACT_APP_SERVER_ADDR; // e.g. "209.38.51.186"
+    const siteId = process.env.REACT_APP_SITE_ID;
+    const baseAddr = process.env.REACT_APP_SERVER_ADDR;
 
-    if (!serverAddress) {
-        throw new Error("REACT_APP_SERVER_ADDRESS is not defined");
+    if (!baseAddr) {
+        console.error("REACT_APP_SERVER_ADDR is not defined");
     }
 
-    // You can change this to another env var if you ever want a dynamic port
-    const port = 8000;
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsHost = baseAddr ?? window.location.hostname;
+    const wsPort = "8000";
 
-    // Base HTTP URL: http://209.38.51.186:8000
-    const baseHttpUrl = new URL(`http://${serverAddress}:${port}`);
+    let wsPath = "/";
+    if (siteId) {
+        wsPath = `/${siteId}/`;
+    }
 
-    // --- Build WebSocket URL ---
-    const wsUrl = new URL(baseHttpUrl.toString());
-    // Convert http/https -> ws/wss, keep host + port
-    wsUrl.protocol = wsUrl.protocol === "https:" ? "wss:" : "ws:";
+    const baseWebSocketUrl = `${wsProtocol}//${wsHost}:${wsPort}${wsPath}ws`;
 
-    // Path: "/tufts/ws" or "/ws"
-    const basePath = siteId ? `/${siteId}` : "";
-    wsUrl.pathname = `${basePath}/ws`;
-    wsUrl.search = "";
-    wsUrl.hash = "";
-
-    const webSocketUrl = wsUrl.toString();
-
-    // --- Build HTTP base URL for REST calls ---
-    const httpBaseUrl = new URL(baseHttpUrl.toString());
-    // Path: "/tufts" or "/"
-    httpBaseUrl.pathname = basePath || "/";
-    httpBaseUrl.search = "";
-    httpBaseUrl.hash = "";
+    const httpProtocol = wsProtocol === "wss:" ? "https:" : "http:";
+    const httpBaseUrl = new URL(`${httpProtocol}//${wsHost}:${wsPort}${wsPath}`);
 
     const [availableEndpoints, setAvailableEndpoints] = useState<string[]>([]);
 
-    console.log("WS URL at runtime:", webSocketUrl);
-    const { lastMessage, sendMessage, readyState } = useWebSocket(webSocketUrl);
+    // NEW: versioned URL to force new socket instances
+    const [socketUrl, setSocketUrl] = useState<string>(baseWebSocketUrl);
 
-    useEffect(() => {
-        if (lastMessage === null) return;
-        const data = JSON.parse(lastMessage.data);
-        if (data.paths) {
-            setAvailableEndpoints(data.paths);
-        }
-    }, [lastMessage]);
-
-    useEffect(() => {
-        if (readyState === 1) {
+    const {
+        lastMessage,
+        sendMessage,
+        readyState,
+        getWebSocket,
+    } = useWebSocket(socketUrl, {
+        share: true,
+        retryOnError: true,
+        reconnectAttempts: Infinity,
+        reconnectInterval: 2000,
+        shouldReconnect: () => true,
+        onOpen: () => {
+            console.log("WS OPEN:", socketUrl);
             sendMessage(
                 JSON.stringify({
                     path: "",
                     method: "init",
                 })
             );
+        },
+        onClose: (event) => {
+            console.warn(
+                "WS CLOSED:",
+                socketUrl,
+                "code:",
+                event.code,
+                "reason:",
+                event.reason
+            );
+        },
+        onError: (event) => {
+            console.error("WS ERROR:", event);
+        },
+    });
+
+    useEffect(() => {
+        if (lastMessage === null) return;
+        try {
+            const data = JSON.parse(lastMessage.data);
+            if (data.paths) {
+                setAvailableEndpoints(data.paths);
+            }
+        } catch (e) {
+            console.error("Failed to parse WS message:", e, lastMessage.data);
         }
-    }, [readyState, sendMessage]);
+    }, [lastMessage]);
+
+    const handleReloadWebsocket = () => {
+        console.log("Manually triggering WS reconnect");
+        const ws = getWebSocket();
+
+        // Close current socket (if any)
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.close(1000, "Manual reload requested");
+        } else if (ws && ws.readyState !== WebSocket.CLOSED) {
+            ws.close();
+        }
+
+        // Force react-use-websocket to allocate a *new* instance
+        const nonce = Date.now();
+        const urlWithoutQuery = baseWebSocketUrl.split("?")[0];
+        const newUrl = `${urlWithoutQuery}?reload=${nonce}`;
+        console.log("Setting new socket URL:", newUrl);
+        setSocketUrl(newUrl);
+    };
 
     return (
-        <div
-            className="flex flex-col items-center h-dvh shrink-0
-                  w-full pb-10 md:gap-10"
-        >
+        <div className="flex flex-col items-center h-dvh shrink-0 w-full pb-10 md:gap-10">
             <Providers>
                 <Navbar />
                 <TabbedComponentViewer
@@ -75,8 +107,9 @@ function App() {
                     sendMessage={sendMessage}
                     readyState={readyState}
                     lastMessage={lastMessage}
-                    wsBaseUrl={webSocketUrl}
+                    wsBaseUrl={socketUrl}
                     generalBaseUrl={httpBaseUrl}
+                    onReloadWebsocket={handleReloadWebsocket}
                 />
             </Providers>
         </div>
