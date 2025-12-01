@@ -23,11 +23,11 @@ public class ThisConext extends ArgumentBasedContext {
   @Override
   protected void setupArguments(List<? extends Object> inputArgs, List<? extends Object> returnArgs) {
     inputArgs.forEach(arg -> {
-      ActionBinding actionBinding = new ActionBinding.Builder(arg.toString(), arg.getClass()).setIsLocal(true).build();
+      ActionBinding actionBinding = new ActionBinding.Builder(arg.toString(), arg instanceof String ? getArgumentType((String)arg) : arg.getClass()).setIsLocal(true).build();
       this.arguments.put(actionBinding.getName(), actionBinding);
     });
     returnArgs.forEach(arg -> {
-      ActionBinding actionBinding = new ActionBinding.Builder(arg.toString(), arg.getClass()).setIsLocal(true).setIsReturn(true).build();
+      ActionBinding actionBinding = new ActionBinding.Builder(arg.toString(), arg instanceof String ? getArgumentType((String)arg) : arg.getClass()).setIsLocal(true).setIsReturn(true).build();
       this.arguments.put(actionBinding.getName(), actionBinding);
     });
   }

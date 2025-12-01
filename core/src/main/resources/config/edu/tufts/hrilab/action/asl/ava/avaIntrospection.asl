@@ -32,13 +32,15 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
     Boolean !blockingTaskExists;
+    Symbol !submitter;
+    !submitter = this:getOriginalSubmitter();
 
     !blockingTaskExists = act:blockingTaskExists();
     if (op:equals(!blockingTaskExists,true)) {
         act:generateResponseFromString("I cannot list all of my saved locations while performing another task, please try again when I am not busy");
     } else {
         !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "describeAllKnownLocationsAction(?actor)");
-        !goalID = act:submitGoal(!state,!execType,!priorityTier);
+        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
         !goalStatus = act:joinOnGoal(!goalID);
     }
 }
@@ -119,13 +121,15 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
     Boolean !blockingTaskExists;
+    Symbol !submitter;
+    !submitter = this:getOriginalSubmitter();
 
     !blockingTaskExists = act:blockingTaskExists();
     if (op:equals(!blockingTaskExists,true)) {
         act:generateResponseFromString("I cannot list taught actions while performing another task, please try again when I am not busy");
     } else {
         !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reportTaughtActionsAction(?actor)");
-        !goalID = act:submitGoal(!state,!execType,!priorityTier);
+        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
         !goalStatus = act:joinOnGoal(!goalID);
     }
 }
@@ -149,7 +153,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     } else {
         !numTaught = op:invokeMethod(!taughtActions,"size");
         if (op:gt(!numTaught,5)) {
-            !bindings = act:askQuestionFromString(user,"I have been taught !numTaught new actions. How many should I list at a time?", amount(X));
+            !bindings = act:askQuestionFromString("I have been taught !numTaught new actions. How many should I list at a time?", amount(X));
             if (op:invokeMethod(!bindings,"isEmpty")) {
                 exit(FAIL,not(wasAnswered(myQuestion)));
             }
@@ -162,7 +166,7 @@ import edu.tufts.hrilab.action.goal.Goal;
             if (op:gt(!numToReport,0)) {
                 foreach (!actionPred : !taughtActions) {
                     if (op:equals(!numReported,!numToReport)) {
-                        !bindings = act:askQuestionFromString(user,"Would you like me to keep going?", val(X));
+                        !bindings = act:askQuestionFromString("Would you like me to keep going?", val(X));
                         if (op:invokeMethod(!bindings,"isEmpty")) {
                             exit(FAIL,not(wasAnswered(myQuestion)));
                         }
@@ -214,13 +218,13 @@ import edu.tufts.hrilab.action.goal.Goal;
         exit(FAIL,retrieve(exposedActionList));
     } else {
         !numPredefined = op:invokeMethod(!instructableActions,"size");
-        !bindings = act:askQuestionFromString(user,"I have !numPredefined predefined actions. Would you like me to start listing them out?", val(X));
+        !bindings = act:askQuestionFromString("I have !numPredefined predefined actions. Would you like me to start listing them out?", val(X));
         if (op:invokeMethod(!bindings,"isEmpty")) {
             exit(FAIL,not(wasAnswered(myQuestion)));
         }
         !confirmation = op:get(!bindings, !x);
         if (op:equalsValue(!confirmation, yes)) {
-            !bindings = act:askQuestionFromString(user,"How many should I list at a time?", amount(X));
+            !bindings = act:askQuestionFromString("How many should I list at a time?", amount(X));
             if (op:invokeMethod(!bindings,"isEmpty")) {
                 exit(FAIL,not(wasAnswered(myQuestion)));
             }
@@ -233,7 +237,7 @@ import edu.tufts.hrilab.action.goal.Goal;
             if (op:gt(!numToReport,0)) {
                 foreach (!actionName : !instructableActions) {
                     if (op:equals(!numReported,!numToReport)) {
-                        !bindings = act:askQuestionFromString(user,"Would you like me to keep going?", val(X));
+                        !bindings = act:askQuestionFromString("Would you like me to keep going?", val(X));
                         if (op:invokeMethod(!bindings,"isEmpty")) {
                             exit(FAIL,not(wasAnswered(myQuestion)));
                         }
@@ -290,13 +294,15 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
     Boolean !blockingTaskExists;
+    Symbol !submitter;
+    !submitter = this:getOriginalSubmitter();
 
     !blockingTaskExists = act:blockingTaskExists();
     if (op:equals(!blockingTaskExists,true)) {
         act:generateResponseFromString("I cannot list instructable actions while performing another task, please try again when I am not busy");
     } else {
         !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reportInstructableActionsAction(?actor)");
-        !goalID = act:submitGoal(!state,!execType,!priorityTier);
+        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
         !goalStatus = act:joinOnGoal(!goalID);
     }
 }
@@ -307,7 +313,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     Variable !x = "X";
     Boolean !validResponse = false;
 
-    !bindings = act:askQuestionFromString(user,"Would you like me to report all of the actions I have been taught, my predefined actions, or both?", actionType(X));
+    !bindings = act:askQuestionFromString("Would you like me to report all of the actions I have been taught, my predefined actions, or both?", actionType(X));
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
@@ -438,6 +444,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
     Boolean !blockingTaskExists;
+    Symbol !submitter;
+    !submitter = this:getOriginalSubmitter();
 
     !blockingTaskExists = act:blockingTaskExists();
     if (op:equals(!blockingTaskExists,true)) {
@@ -445,7 +453,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     } else {
         //TODO: if the current action is the kiosk action, then submit with SKIPPENDING priority?
         !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "listSavedVideosAction(?actor)");
-        !goalID = act:submitGoal(!state,!execType,!priorityTier);
+        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
         !goalStatus = act:joinOnGoal(!goalID);
     }
 }
@@ -496,6 +504,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
     edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
     Boolean !blockingTaskExists;
+    Symbol !submitter;
+    !submitter = this:getOriginalSubmitter();
 
     !blockingTaskExists = act:blockingTaskExists();
     if (op:equals(!blockingTaskExists,true)) {
@@ -503,7 +513,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     } else {
         //TODO: if the current action is the kiosk action, then submit with SKIPPENDING priority?
         !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "listSavedImagesAction(?actor)");
-        !goalID = act:submitGoal(!state,!execType,!priorityTier);
+        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
         !goalStatus = act:joinOnGoal(!goalID);
     }
 }

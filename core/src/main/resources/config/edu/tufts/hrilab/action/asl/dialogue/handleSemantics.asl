@@ -438,7 +438,8 @@ import java.lang.Integer;
     !madeTentativeAccept = op:newObject("java.lang.Boolean", "true");
 
 
-    !goalID = act:submitGoal(?state,!execType,?priority);
+    !goalID = act:submitGoal(?state,!execType,?priority,?speaker);
+    //!goalID = act:submitGoal(?state,!execType,?priority);
     !goalStatus = act:joinOnGoal(!goalID, 1000);
 //    if (~op:invokeMethod(!goalStatus, "isTerminated")) {
 //      op:log("debug", "tentative accept for ?state with status !goalStatus");
@@ -507,7 +508,7 @@ import java.lang.Integer;
                 act:generateResponseFromString(!agent);
             }
             act:suspendWaitForResponse(agent(X),?actor,false);
-            !bindings = act:askQuestionFromString(?actor, "Which one did you mean to address?", agent(X));
+            !bindings = act:askQuestionFromString("Which one did you mean to address?", agent(X));
             act:resumeWaitForResponse(agent(X),?actor);
             if (~op:invokeMethod(!bindings,"isEmpty")) {
                 !response = op:get(!bindings,!x);
@@ -569,7 +570,7 @@ import java.lang.Integer;
             act:generateResponseFromString("Option !spokenIndex: !questionString");
         }
         act:suspendWaitForResponse(option(X),?actor,false);
-        !bindings = act:askQuestionFromString(?actor, "Which question did you mean to answer?", option(X));
+        !bindings = act:askQuestionFromString("Which question did you mean to answer?", option(X));
         act:resumeWaitForResponse(option(X),?actor);
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);

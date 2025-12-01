@@ -39,6 +39,8 @@ import java.util.Map;
     !addressee = op:invokeMethod(?utterance, "getAddressee");
     if (~op:equalsValue(!addressee,"webapp")) {
         act:sayText(!text);
+    } else {
+        op:log("info","publishing in webapp chat: !text");
     }
 }
 
@@ -48,8 +50,19 @@ import java.util.Map;
 () = generateResponseFromString(String ?words) {
     op:log("debug", "[generateResponse] words: ?words");
 
-    Symbol !listener = person; // TODO: how to set this in general?
+    Symbol !listener;
+    !listener = this:getOriginalSubmitter();
     Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !listener);
+    UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
+    op:invokeMethod(!utterance, "setType", !type);
+    op:invokeMethod(!utterance, "setWords", ?words);
+    act:communicateUtterance(!utterance);
+}
+
+() = generateResponseFromString(Symbol ?addressee, String ?words) {
+    op:log("debug", "[generateResponse] addressee: ?addressee words: ?words");
+
+    Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
     UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
     op:invokeMethod(!utterance, "setType", !type);
     op:invokeMethod(!utterance, "setWords", ?words);
@@ -62,7 +75,8 @@ import java.util.Map;
 () = generateResponse(Predicate ?semantics) {
     op:log("debug", "[generateResponse] semantics: ?semantics");
 
-    Symbol !addressee = person; // TODO: how to set this in general?
+    Symbol !addressee;
+    !addressee = this:getOriginalSubmitter();
     Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !addressee);
     UtteranceType !type = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.UtteranceType", "valueOf", "REPLY");
     op:invokeMethod(!utterance, "setType", !type);
@@ -130,6 +144,12 @@ import java.util.Map;
     ?answerBindings = act:askQuestion(?addressee, ?questionSemantics, !responseForms, ?attempts, ?duration);
 }
 
+(Map ?answerBindings) = askQuestionFromString(String ?words, Predicate ?responseForm, long ?attempts=1, long ?duration=-1) {
+    Symbol !addressee;
+    !addressee = this:getOriginalSubmitter();
+    ?answerBindings = act:askQuestionFromString(!addressee, ?words, ?responseForm, ?attempts, ?duration);
+}
+
 /**
  * Convenience method for communicating an utterance and then waiting for a response.
  * The question to be asked is specified in first-order-logic form.
@@ -140,7 +160,7 @@ import java.util.Map;
  * ?attempts - number of times to re-ask the questions if there's no response within ?duration
  * ?duration - ?duration to wait for response
  */
-(Map ?answerBindings) = askQuestion(Symbol ?addressee, Predicate ?questionSemantics, Predicate ?responseForms, long ?attempts=1, long ?duration=-1) {
+(Map ?answerBindings) = askQuestion(Symbol ?addressee, Predicate ?questionSemantics, List ?responseForms, long ?attempts=1, long ?duration=-1) {
 
   // build question utterance
   Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, ?addressee);
@@ -150,6 +170,12 @@ import java.util.Map;
 
   // ask question and wait for response
   ?answerBindings = act:askQuestionFromUtterance(!utterance, ?responseForms, ?attempts, ?duration);
+}
+
+(Map ?answerBindings) = askQuestionFromString(String ?words, List ?responseForms, long ?attempts=1, long ?duration=-1) {
+    Symbol !addressee;
+    !addressee = this:getOriginalSubmitter();
+    ?answerBindings = act:askQuestionFromString(!addressee, ?words, ?responseForms, ?attempts, ?duration);
 }
 
 (Map ?answerBindings) = askQuestionFromString(Symbol ?addressee, String ?words, Predicate ?responseForm, long ?attempts=1, long ?duration=-1) {

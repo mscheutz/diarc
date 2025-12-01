@@ -20,7 +20,7 @@ import edu.tufts.hrilab.cognex.consultant.CognexReference;
   Symbol !robotone = "robotone:agent";
   Symbol !robottwo = "robottwo:agent";
 
-  (!bindings) = act:askQuestionFromString(!addressee,"which Cognex job is used to detect it", job(X));
+  (!bindings) = act:askQuestionFromString("which Cognex job is used to detect it", job(X));
   (!jobID) = op:get(!bindings, !x);
 
   //todo: this whole thing should be addressed to the team, rather than just to one robot.
