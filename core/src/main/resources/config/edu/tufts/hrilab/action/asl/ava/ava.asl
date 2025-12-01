@@ -467,8 +467,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
     !responseBinding = op:get(!bindings, !x);
     !tourName = op:getName(!responseBinding);
-    //TODO: what had caused this to be necessary? Was it ASL parser not being comfortable with action names with spaces?
-    !tourName = op:invokeMethod(!tourName, "replaceAll", " +", "");
+    //TODO: asl parser cannot handle action names with spaces, extend parser or do something like this?
+    !tourName = op:invokeMethod(!tourName, "replaceAll", " +", "_");
 
     //////////// Question Asking for tour's initial location ////////////
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
