@@ -30,84 +30,59 @@ type TableProps = {
 }
 
 type FileManagementProps = {
-    handleUpload: () => void,
     handleDelete: () => void,
     handleFileSelect: () => void,
-    selectedFileName: string | null,
     isUploading: boolean,
     uploadStatus: 'idle' | 'success' | 'error',
+    hasSelection: boolean,
 }
 
 const FileManagement: React.FC<FileManagementProps> = ({
-                                                       handleUpload, handleDelete, handleFileSelect, selectedFileName, isUploading, uploadStatus
-                                                   }) => {
+    handleDelete, handleFileSelect, isUploading, uploadStatus, hasSelection
+}) => {
     return (
-        <div className="flex flex-col gap-3 shadow-md border border-1
-                        border-[#d1dbe3] rounded-md p-4 bg-white">
-            <div className="flex flex-row gap-2 items-center">
-                <Button
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
-                    title="Select a file to upload"
-                    onClick={handleFileSelect}
-                    disabled={isUploading}>
-                    📁 Choose File
-                </Button>
-                {selectedFileName && (
-                    <span className="text-sm text-gray-700 px-3 py-1 bg-gray-100 rounded-md border border-gray-300">
-                        {selectedFileName}
-                    </span>
-                )}
-                {uploadStatus === 'success' && (
-                    <span className="text-sm text-green-700 px-3 py-1 bg-green-100 rounded-md border border-green-300">
-                        ✓ Upload successful
-                    </span>
-                )}
-                {uploadStatus === 'error' && (
-                    <span className="text-sm text-red-700 px-3 py-1 bg-red-100 rounded-md border border-red-300">
-                        ✗ Upload failed
-                    </span>
-                )}
-            </div>
-            <div className="flex flex-row gap-2">
-                <Button
-                    className="grow px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    title="Upload the selected file"
-                    onClick={handleUpload}
-                    disabled={!selectedFileName || isUploading}
-                    isLoading={isUploading}>
-                    ⬆️ Upload
-                </Button>
-                <Button
-                    className="grow px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors"
-                    title="Delete selected media"
-                    onClick={handleDelete}
-                    disabled={isUploading}>
-                    🗑️ Delete Selected
-                </Button>
-            </div>
+        <div className="flex flex-row gap-2 items-center">
+            <Button
+                title="Upload a file"
+                onClick={handleFileSelect}
+                disabled={isUploading}
+                isLoading={isUploading}>
+                {isUploading ? "Uploading..." : "Upload File"}
+            </Button>
+            <Button
+                variant="destructive"
+                title="Delete selected media"
+                onClick={handleDelete}
+                disabled={isUploading || !hasSelection}>
+                Delete Selected
+            </Button>
+            {uploadStatus === 'success' && (
+                <span className="text-sm text-green-700 dark:text-green-400 px-3 py-1 bg-green-100 dark:bg-green-900/30 rounded-md border border-green-300 dark:border-green-700">
+                    {"\u2713"} Uploaded
+                </span>
+            )}
+            {uploadStatus === 'error' && (
+                <span className="text-sm text-red-700 dark:text-red-400 px-3 py-1 bg-red-100 dark:bg-red-900/30 rounded-md border border-red-300 dark:border-red-700">
+                    {"\u2717"} Failed
+                </span>
+            )}
         </div>
     );
 };
 
 const MediaManager: React.FC<Props> = ({
-    path, lastMessage, sendMessage, readyState, baseUrl/* other input names */
+    path, lastMessage, sendMessage, readyState, baseUrl
 }) => {
-
-    //STATE & CALLBACKS
     const [data, setData] = useState<Entry[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [mediaKey, setMediaKey] = useState(0); // ★ bump this to hard-remount table
+    const [mediaKey, setMediaKey] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
     useEffect(() => {
-
         if (lastMessage === null) return;
         const newData = JSON.parse(lastMessage.data);
         if (!newData.path || newData.path !== path) return;
-
-        console.log(lastMessage.data)
-        console.log(newData)
 
         const media = newData.media;
 
@@ -133,18 +108,13 @@ const MediaManager: React.FC<Props> = ({
         setMediaKey(k => k + 1);
     };
 
-    const handleUpload = async () => {
-        console.log(baseUrl);
-        if (!file) {
-            return;
-        }
-
+    const uploadFile = async (fileToUpload: File) => {
         setIsUploading(true);
         setUploadStatus('idle');
 
         try {
             const formData = new FormData();
-            formData.append("file", file);
+            formData.append("file", fileToUpload);
             
             await fetch(baseUrl + '/api/files/upload', {
                 method: 'POST',
@@ -153,7 +123,6 @@ const MediaManager: React.FC<Props> = ({
             });
 
             setUploadStatus('success');
-            console.log('Upload completed');
 
             setTimeout(() => {
                 sendMessage(JSON.stringify({
@@ -163,7 +132,6 @@ const MediaManager: React.FC<Props> = ({
                 }));
             }, 400);
 
-            // Clear the file selection after upload
             setFile(null);
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
@@ -171,7 +139,6 @@ const MediaManager: React.FC<Props> = ({
 
             setMediaKey(k => k + 1);
 
-            // Clear success message after 3 seconds
             setTimeout(() => {
                 setUploadStatus('idle');
             }, 3000);
@@ -197,9 +164,11 @@ const MediaManager: React.FC<Props> = ({
     const [file, setFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
+            const selectedFile = e.target.files[0];
+            setFile(selectedFile);
+            await uploadFile(selectedFile);
         }
     };
 
@@ -212,15 +181,15 @@ const MediaManager: React.FC<Props> = ({
     ) => {
         return (
             <div className="grow flex flex-col min-h-0 basis-0">
-                <table className="border border-[#d1dbe3]">
+                <table className="border border-border">
                     <caption className="hidden">Media table</caption>
                     <thead>
-                    <tr className="bg-sky-100">
-                        <th className="border border-[#d1dbe3] p-1">
+                    <tr className="bg-accent">
+                        <th className="border border-border p-1">
                             Select
                         </th>
                         {mediaColumns.map((col, index) =>
-                            <th className="border border-[#d1dbe3] p-1"
+                            <th className="border border-border p-1"
                                 key={index}>
                                 {col}
                             </th>
@@ -231,9 +200,9 @@ const MediaManager: React.FC<Props> = ({
                     <tbody>
                     {data.map((row, index ) =>
                             <tr
-                                className="even:bg-slate-100"
+                                className="even:bg-muted"
                                 key={index}>
-                                <td className="border border-[#d1dbe3] px-1 text-center">
+                                <td className="border border-border px-1 text-center">
                                     <input
                                         type="checkbox"
                                         defaultChecked={selectedIds.includes(row.name)}
@@ -244,7 +213,7 @@ const MediaManager: React.FC<Props> = ({
                                     />
                                 </td>
                                 {toArray(row).map((prop, index) =>
-                                    <td className="border border-[#d1dbe3] px-1"
+                                    <td className="border border-border px-1"
                                         key={index}>
                                         <label
                                             htmlFor={row.name}
@@ -270,10 +239,10 @@ const MediaManager: React.FC<Props> = ({
     }, [path, sendMessage]);
 
     return (
-        <div className="shadow-md border border-1 border-[#d1dbe3]
+        <div className="shadow-md border border-border
                                         p-3 flex flex-col justify-start gap-3
-                                        rounded-md grow w-3/4">
-            <p className="text-lg font-semibold text-gray-800">Available Media</p>
+                                        rounded-md grow w-3/4 bg-card">
+            <p className="text-lg font-semibold">Available Media</p>
             <div className="grow flex flex-col overflow-auto min-h-0
                                             basis-0">
                 <MediaTable
@@ -290,12 +259,11 @@ const MediaManager: React.FC<Props> = ({
                 accept="image/*,video/*,audio/*"
             />
             <FileManagement 
-                handleUpload={handleUpload} 
                 handleDelete={handleDelete}
                 handleFileSelect={handleFileSelect}
-                selectedFileName={file?.name || null}
                 isUploading={isUploading}
                 uploadStatus={uploadStatus}
+                hasSelection={selectedIds.length > 0}
             />
         </div>
     );

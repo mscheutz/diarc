@@ -1,8 +1,3 @@
-/*
- *      PURPOSE: contains the logic for interacting with services
- *               (i.e. actually sends the post and get requests)
- */
-
 export const getServices = async () => {
     try {
         const response = await fetch(`http://${process.env.REACT_APP_SERVER_ADDR}:8000/services`);
@@ -18,7 +13,6 @@ export const getServices = async () => {
 
         return serviceList;
     } catch (error) {
-        // setError({ status: true, msg: error.message });
         console.error(
             "There has been a problem with your fetch operation:",
             error

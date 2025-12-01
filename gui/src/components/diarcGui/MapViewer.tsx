@@ -4,8 +4,6 @@ import { ReadyState, SendMessage } from 'react-use-websocket';
 import ConnectionIndicator from './util/ConnectionIndicator';
 import "./util/StyleOverrides.css";
 
-// import localImage from '../../map.png';
-
 type Position = { x: number, y: number, z: number };
 type Orientation = { x: number, y: number, z: number, w: number };
 type RobotPixelPosition = { x: number, y: number };
@@ -64,11 +62,9 @@ function computeClickCoordinates(rect, xPad, yPad, canvas, image, scale) {
 function mapCoordinates(x, y, rect, xPad, yPad, canvas, image, scale) {
     const coords = computeClickCoordinates(rect, xPad, yPad, canvas, image, scale);
 
-    // Calculate the percentage of x and y within their ranges
     const xPercent = (x - coords.clickX_leftmost) / (coords.clickX_rightmost - coords.clickX_leftmost);
     const yPercent = (y - coords.clickY_top) / (coords.clickY_bottom - coords.clickY_top);
 
-    // Map the percentages to the image's coordinate system
     const imgX = xPercent * image.width;
     const imgY = yPercent * image.height;
 
@@ -111,7 +107,6 @@ const useState2 = initVal => {
 }
 
 const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState }) => {
-    // State //
     const [poseData, setPoseData] = useState<Pose | null>(null);
     const [responseMsg, setResponseMsg] = useState<string>("");
     const [isChanged, setIsChanged] = useState(false);
@@ -125,7 +120,6 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
     const [mouseUpListener, setMouseUpListener] = useState2(null);
     const [mouseWheelListener, setMouseWheelListener] = useState2(null);
 
-    // State for drawing calculations
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const locationsCanvasRef = useRef<HTMLCanvasElement>(null);
     const robotCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -134,7 +128,6 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
     const scaleRef = useRef<number>(1);
     const imageRef = useRef<HTMLImageElement | null>(null);
 
-    // Handle received messages
     useEffect(() => {
         if (!lastMessage) return;
         const data = JSON.parse(lastMessage.data);
@@ -142,9 +135,9 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
         if (!data.path || data.path !== path) return;
 
         if (data.error) {
-            alert(data.error); // Alert the user about the error
+            alert(data.error);
             console.error("Error received:", data.error);
-            return; // Stop processing further as there was an error
+            return;
         }
 
         if (data.mapImageUrl) {
@@ -173,7 +166,6 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
         }
     }, [isChanged]);
 
-    // Sends various requests to the WebSocket
     const sendWebSocketRequest = useCallback((action: string, additionalData: object, path?: string) => {
         const payload = { action, ...additionalData };
         if (path) {
@@ -194,7 +186,6 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
     const handleNavigateToPoint = useCallback(() => {
         const x = prompt("Enter X coordinate:");
         const y = prompt("Enter Y coordinate:");
-        // Default values for orientation
         const quatX = 0;
         const quatY = 0;
         const quatZ = 0;
@@ -223,32 +214,8 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
 
         const clickX = event.clientX - rect.left;
         const clickY = event.clientY - rect.top;
-
-        //// Ensure all references are valid
-        //if (imageRef.current && xPadRef.current !== undefined && yPadRef.current !== undefined && scaleRef.current !== undefined) {
-        //    const { current: image } = imageRef;
-        //    const { current: xPad } = xPadRef;
-        //    const { current: yPad } = yPadRef;
-        //    const { current: scale } = scaleRef;
-
-        //    const imageCoordinates = mapCoordinates(clickX, clickY, rect, xPad, yPad, canvasRef.current, image, scale);
-
-        //    console.log(`Image Coordinates: X=${imageCoordinates.imgX}, Y=${imageCoordinates.imgY}`);
-
-        //    sendWebSocketRequest('navigateToPoint', {
-        //        x: imageCoordinates.imgX,
-        //        y: imageCoordinates.imgY,
-        //        quatX: 0,   // Assume defaults for orientation
-        //        quatY: 0,
-        //        quatZ: 0,
-        //        quatW: 1
-        //    }, path);
-
-        //    console.log(`Navigating to Image Coordinates: X=${imageCoordinates.imgX}, Y=${imageCoordinates.imgY}`);
-        //}
     }, [sendWebSocketRequest, path]);
 
-    //TODO: This can't be the correct way to do this. Was trying things until something worked...
     useEffect(() => {
         if (init) {
             const canvas = canvasRef.current!;
@@ -342,17 +309,14 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
 
         if (!mapImageUrl || !init) {
             context.clearRect(0, 0, 1920, 1080);
-            context.fillStyle = "#000000";
+            context.fillStyle = "#888888";
             context.textBaseline = "middle";
             context.textAlign = "center";
             context.font = "40px Ubuntu";
             context.fillText("Map not loaded", canvas.width / 2, canvas.height / 2);
         } else {
             const image = new Image();
-            // image.src = mapImageUrl;
-            // image.src = localImage;
             image.onload = () => {
-                // Image scaling logic
                 const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
                 const xPad = (canvas.width / 2) - (image.width / 2) * scale;
                 const yPad = (canvas.height / 2) - (image.height / 2) * scale;
@@ -362,7 +326,6 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
                 context.setTransform(temp[2], 0, 0, temp[2], temp[0], temp[1]);
                 context.drawImage(image, xPad, yPad, image.width * scale, image.height * scale);
 
-                // Update refs
                 xPadRef.current = xPad;
                 yPadRef.current = yPad;
                 scaleRef.current = scale;
@@ -373,8 +336,6 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
         [mapImageUrl, viewportTransform, init]
     );
 
-
-    //Robot position
     useEffect(() => {
         const robotCv = robotCanvasRef.current;
         if (robotCv != null) {
@@ -382,7 +343,6 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
             if (!mapImageUrl || !init) {
                 return
             } else {
-                // Draw the robot position if it exists
                 if (poseData) {
                     robotCtx.clearRect(0,0,1920,1080)
                     var temp = viewportTransform.slice()
@@ -397,10 +357,7 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
         [poseData, viewportTransform, init]
     );
 
-    //Locations
     useEffect(() => {
-        //Swap to location canvas
-        //use viewportTransform in useEffect
         const locationsCv = locationsCanvasRef.current;
         if (locationsCv != null) {
             const locationsCtx = locationsCv.getContext("2d")!;
@@ -411,7 +368,6 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
                 locationsCtx.clearRect(0,0,1920,1080)
                 var temp = viewportTransform.slice()
                 locationsCtx.setTransform(temp[2], 0, 0, temp[2], temp[0], temp[1]);
-                // Draw Key Locations
                 Object.entries(keyLocations).forEach(([key, location]) => {
                     const locX = xPadRef.current + location.x * scaleRef.current;
                     const locY = yPadRef.current + location.y * scaleRef.current;
@@ -419,7 +375,6 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
                     drawText(locationsCtx, extractLocationNumber(key), locX, locY, scaleRef.current, 'black');
                 });
 
-                // Draw Past Locations
                 Object.entries(pastLocations).forEach(([key, location]) => {
                     const locX = xPadRef.current + location.x * scaleRef.current;
                     const locY = yPadRef.current + location.y * scaleRef.current;
@@ -437,9 +392,8 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
     }, [path, sendMessage]);
 
     return (
-        <div className="map-container h-full w-full flex flex-col gap-5 outline
-                        outline-1 outline-[#d1dbe3] items-center p-5 rounded-md">
-            {/* Button menu */}
+        <div className="map-container h-full w-full flex flex-col gap-5 border
+                        border-border items-center p-5 rounded-md bg-card">
             <div className="flex flex-row justify-center gap-2 items-center w-full relative">
                 <div className="flex flex-row gap-2">
                     <Button onClick={() => sendWebSocketRequest('fetchMapData', {}, path)}>
@@ -460,7 +414,7 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
                 </div>
                 {/*
                 {responseMsg && (
-                    <div className={`font-bold absolute right-0 top-1/2 transform -translate-y-1/2 transition-colors duration-2000 ${isChanged ? 'text-red-500' : 'text-black'}`}>
+                    <div className={`font-bold absolute right-0 top-1/2 transform -translate-y-1/2 transition-colors duration-2000 ${isChanged ? 'text-red-500' : 'text-foreground'}`}>
                         {responseMsg}
                     </div>
                 )}
@@ -488,7 +442,7 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
 
                     <div className="key-locations">
                         <div className="w-full font-bold">Location Key:</div>
-                        {Locations2Elements(keyLocations, 'text-black')}
+                        {Locations2Elements(keyLocations, 'text-foreground')}
                     </div>
                 </div>
             </div>

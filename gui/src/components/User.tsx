@@ -5,7 +5,6 @@ const User = () => {
   const [messages, setMessages] = useState<string[]>([]);
   const [inputMessage, setInputMessage] = useState('');
 
-  // Initialize WebSocket connection
   const connect = () => {
     const websocket = new WebSocket('ws://${process.env.REACT_APP_SERVER_ADDR}:8000/user');
     websocket.onmessage = (event) => {
@@ -24,7 +23,6 @@ const User = () => {
     };
   };
 
-  // Disconnect WebSocket
   const disconnect = () => {
     if (ws) {
       ws.close();
@@ -32,15 +30,13 @@ const User = () => {
     }
   };
 
-  // Send a message
   const sendMessage = () => {
     if (ws && ws.readyState === WebSocket.OPEN && inputMessage) {
       ws.send(JSON.stringify({ 'user': inputMessage }));
-      setInputMessage(''); // Clear input after sending
+      setInputMessage('');
     }
   };
 
-  // Cleanup WebSocket on component unmount
   useEffect(() => {
     return () => {
       if (ws) {

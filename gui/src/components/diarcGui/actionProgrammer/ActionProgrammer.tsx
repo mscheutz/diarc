@@ -1,7 +1,5 @@
-// IMPORTS
 import React, { useEffect, useState } from "react";
 
-// NPM packages
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 import ActionBuilder from "./ActionBuilder";
 import FileBrowser from "./FileBrowser";
@@ -16,13 +14,6 @@ type Props = {
     sendMessage: SendMessage,
     readyState: ReadyState
 };
-/**
- * ActionProgrammer. A GUI component that allows end users to create and save
- * new action scripts using an editor, as well as build new actions out of
- * existing ones using a form-like interface.
- * @author Lucien Bao
- * @version 1.0
- */
 const ActionProgrammer: React.FC<Props> = ({
     path, lastMessage, sendMessage, readyState
 }) => {
@@ -50,31 +41,26 @@ const ActionProgrammer: React.FC<Props> = ({
     useEffect(() => {
         sendMessage(JSON.stringify({
             path: path,
-            method: "" // no action required, just send an update of files
+            method: ""
         }))
     }, [path, sendMessage]);
 
-    // File browser
     const [fileTree, setFileTree] = useState<object>({
         id: "0",
         name: "asl",
         children: [{ name: "folder" }]
     });
 
-    // Action builder
     const [actionsAvailable, setActionsAvailable] = useState<string[]>([]);
 
-    // File editor
     const [fileName, setFileName] = useState<string>("");
     const [fileContents, setFileContents] = useState<string>("");
     const [isCustomFile, setisCustomFile] = useState<boolean>(false);
 
-    // DOM //
     return (
         <div className="min-h-0 grow w-full flex flex-col border shadow-md
-                        border-1 border-[#d1dbe3] items-center p-5 gap-5
-                        rounded-md justify-items-stretch">
-            {/* Mobile: tabbed view */}
+                        border-border items-center p-5 gap-5
+                        rounded-md justify-items-stretch bg-card">
             <Tabs
                 className="displayFlexImportant flex-col min-h-0 grow w-full"
                 id="mediumHide"
@@ -116,13 +102,11 @@ const ActionProgrammer: React.FC<Props> = ({
                 </TabPanel>
             </Tabs>
 
-            {/* Large screens: file tree + tabs */}
             <Allotment
-                className="h-full overflow-scroll border border-1 border-[#d1dbe3]
+                className="h-full overflow-scroll border border-border
                            hidden md:block shadow-md rounded-md"
                 snap
             >
-                {/* Left pane: file browser */}
                 <Allotment.Pane
                     preferredSize="30%"
                     minSize={200}
@@ -135,7 +119,6 @@ const ActionProgrammer: React.FC<Props> = ({
                     />
                 </Allotment.Pane>
 
-                {/* Right panel: tabs for action programmer + file editor */}
                 <Allotment.Pane
                     className="overflow-y-auto"
                     minSize={300}

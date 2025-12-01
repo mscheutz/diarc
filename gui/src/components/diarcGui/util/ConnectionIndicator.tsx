@@ -1,7 +1,5 @@
-// IMPORTS //
 import React from "react";
 
-// NPM packages
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ReadyState } from "react-use-websocket";
 import { faBan, faCheck, faQuestion, faSync } from "@fortawesome/free-solid-svg-icons";
@@ -11,54 +9,52 @@ type Props = {
     readyState: ReadyState
 }
 
-/**
- * ConnectionIndicator. Defines a component which shows the status of a
- * WebSocket connection.
- * @author Lucien Bao
- * @version 1.0
- */
-const ConnectionIndicator: React.FC<Props> = ({
-    readyState
-}) => {
-    const connectionStatus = {
-        [ReadyState.CONNECTING]: 'connecting',
-        [ReadyState.OPEN]: 'connected',
-        [ReadyState.CLOSING]: 'connection closing',
-        [ReadyState.CLOSED]: 'connection closed',
-        [ReadyState.UNINSTANTIATED]: 'uninstantiated',
+const ConnectionIndicator: React.FC<Props> = ({ readyState }) => {
+    const config = {
+        [ReadyState.CONNECTING]: {
+            label: "Connecting",
+            icon: faSync,
+            className: "text-amber-600 dark:text-amber-400",
+            spin: true
+        },
+        [ReadyState.OPEN]: {
+            label: "Connected",
+            icon: faCheck,
+            className: "text-green-600 dark:text-green-400",
+            spin: false
+        },
+        [ReadyState.CLOSING]: {
+            label: "Closing",
+            icon: faSync,
+            className: "text-amber-600 dark:text-amber-400",
+            spin: true
+        },
+        [ReadyState.CLOSED]: {
+            label: "Disconnected",
+            icon: faBan,
+            className: "text-red-600 dark:text-red-400",
+            spin: false
+        },
+        [ReadyState.UNINSTANTIATED]: {
+            label: "Initializing",
+            icon: faQuestion,
+            className: "text-muted-foreground",
+            spin: false
+        },
     }[readyState];
 
-    const statusColor = {
-        [ReadyState.CONNECTING]: '#efd402',
-        [ReadyState.OPEN]: '#00a505',
-        [ReadyState.CLOSING]: '#efd402',
-        [ReadyState.CLOSED]: '#e00b00',
-        [ReadyState.UNINSTANTIATED]: '#efd402',
-    }[readyState]
-
-    const statusIcon = {
-        [ReadyState.CONNECTING]: faSync,
-        [ReadyState.OPEN]: faCheck,
-        [ReadyState.CLOSING]: faSync,
-        [ReadyState.CLOSED]: faBan,
-        [ReadyState.UNINSTANTIATED]: faQuestion,
-    }[readyState]
-
-    // DOM //
     return (
-        <div className='outline outline-1 p-2 outline-[#e5e7eb]
-                        shadow-md text-center w-full rounded-md flex flex-row
-                        items-center justify-center gap-3'>
-            <p>
-                Status: &nbsp;
-                <FontAwesomeIcon icon={statusIcon}
-                    color={statusColor}></FontAwesomeIcon>
-                {" " + connectionStatus}
-            </p>
-            {readyState === ReadyState.CLOSED &&
-                <Button onClick={() => window.location.reload()}>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card text-sm">
+            <span className="text-muted-foreground">Connection:</span>
+            <span className={`flex items-center gap-1.5 ${config.className}`}>
+                <FontAwesomeIcon icon={config.icon} className="h-3 w-3" spin={config.spin} />
+                {config.label}
+            </span>
+            {readyState === ReadyState.CLOSED && (
+                <Button size="sm" variant="outline" onClick={() => window.location.reload()}>
                     Reload
-                </Button>}
+                </Button>
+            )}
         </div>
     );
 };

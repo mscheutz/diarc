@@ -1,18 +1,14 @@
-// IMPORTS //
 import React, { useState, useEffect, useCallback, FormEvent } from "react";
 
-// NPM packages
 import { ReadyState, SendMessage } from "react-use-websocket";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 import Select from "react-select"
 
-// Internal imports
 import ConnectionIndicator from "./util/ConnectionIndicator";
 import { Button } from "../Button";
 import { Option } from "./util/constants";
 import "./util/StyleOverrides.css";
 
-// CONSTANTS //
 const MEMORY_LEVEL_OPTIONS: Option[] = [
     { value: "universal", label: "Universal" },
     { value: "episodic", label: "Episodic" },
@@ -26,17 +22,9 @@ type Props = {
     readyState: ReadyState
 };
 
-/**
- * BeliefViewer. Defines a component which displays a dynamic list of beliefs
- * and a belief timeline. It also includes an input to query, assert, and
- * retract beliefs.
- * @author Lucien Bao
- * @version 1.0
- */
 const BeliefViewer: React.FC<Props> = ({
     path, lastMessage, sendMessage, readyState
 }) => {
-    // SET UP STATE //
     const [desiredMemoryLevel, setDesiredMemoryLevel] =
         useState<Option>(MEMORY_LEVEL_OPTIONS[2]);
     const [currentMemoryLevel, setCurrentMemoryLevel] =
@@ -72,7 +60,6 @@ const BeliefViewer: React.FC<Props> = ({
         }));
     }, [sendMessage, path]);
 
-    // CALLBACKS //
     const generateBeliefTimeline = useCallback(() => {
         return (
             timelineBeliefs.length > 0 ?
@@ -83,7 +70,7 @@ const BeliefViewer: React.FC<Props> = ({
                         <p
                             key={index}
                             title={value[1] as string}
-                            className={value[0] ? "text-green-600" : "text-red-600"}>
+                            className={value[0] ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
                             {value[1]}
                         </p>
                     )
@@ -149,14 +136,13 @@ const BeliefViewer: React.FC<Props> = ({
         }));
     };
 
-    // DOM //
     return (
         <div className="flex flex-col w-full min-h-0 basis-0 grow border
-                        border-1 p-5 border-[#d1dbe3] justify-stretch
-                        shadow-md rounded-md gap-5">
-            <div className="flex flex-row rounded-md shadow-md border border-1
-                            p-2 border-[#d1dbe3] gap-5 items-center
-                            justify-evenly">
+                        border-border p-5 justify-stretch
+                        shadow-md rounded-md gap-5 bg-card">
+            <div className="flex flex-row rounded-md shadow-md border
+                            p-2 border-border gap-5 items-center
+                            justify-evenly bg-card">
                 <label className="grow text-center">
                     Memory level
                 </label>
@@ -166,6 +152,13 @@ const BeliefViewer: React.FC<Props> = ({
                     value={desiredMemoryLevel}
                     // @ts-ignore
                     onChange={setDesiredMemoryLevel}
+                    classNames={{
+                        control: () => '!bg-background !border-border',
+                        menu: () => '!bg-popover !border-border',
+                        option: (state) => state.isFocused ? '!bg-accent' : '!bg-popover',
+                        singleValue: () => '!text-foreground',
+                        input: () => '!text-foreground',
+                    }}
                 />
                 <Button
                     type="button"
@@ -179,7 +172,6 @@ const BeliefViewer: React.FC<Props> = ({
                 </Button>
             </div>
 
-            {/* Main display (mobile) */}
             <Tabs className="flex flex-col min-h-0 grow md:hidden">
                 <TabList>
                     <Tab>Belief Timeline</Tab>
@@ -187,32 +179,31 @@ const BeliefViewer: React.FC<Props> = ({
                 </TabList>
 
                 <TabPanel className="flex flex-col min-h-0 grow shrink hidden">
-                    <div className="rounded-md shadow-md border border-1 p-2
-                                    border-[#d1dbe3] overflow-scroll text-sm
-                                    grow">
+                    <div className="rounded-md shadow-md border p-2
+                                    border-border overflow-scroll text-sm
+                                    grow bg-card">
                         {generateBeliefTimeline()}
                     </div>
                 </TabPanel>
                 <TabPanel className="flex flex-col min-h-0 grow shrink hidden">
-                    <div className="rounded-md shadow-md border border-1 p-2
-                                    border-[#d1dbe3] overflow-scroll text-sm
-                                    grow">
+                    <div className="rounded-md shadow-md border p-2
+                                    border-border overflow-scroll text-sm
+                                    grow bg-card">
                         {generateCurrentBeliefs()}
                     </div>
                 </TabPanel>
             </Tabs>
 
-            {/* Main display (large screen) */}
             <div className="grow grid-cols-2 gap-5 hidden md:grid min-h-0">
                 <div className="grow flex flex-col min-h-0 rounded-md shadow-md
-                                border border-1 p-2 border-[#d1dbe3]">
+                                border p-2 border-border bg-card">
                     <div className="mb-1 text-lg">Belief Timeline</div>
                     <div className="overflow-scroll text-sm min-h-0 grow text-nowrap">
                         {generateBeliefTimeline()}
                     </div>
                 </div>
                 <div className="grow flex flex-col min-h-0 rounded-md shadow-md
-                                border border-1 p-2 border-[#d1dbe3]">
+                                border p-2 border-border bg-card">
                     <div className="mb-1 text-lg">Current Beliefs</div>
                     <div className="overflow-scroll text-sm min-h-0 grow text-nowrap">
                         {generateCurrentBeliefs()}
@@ -220,17 +211,16 @@ const BeliefViewer: React.FC<Props> = ({
                 </div>
             </div>
 
-            {/* Menu */}
-            <div className="shadow-md border border-1 border-[#d1dbe3]
-                            p-3 rounded-md">
+            <div className="shadow-md border border-border
+                            p-3 rounded-md bg-card">
                 <form onSubmit={(e) => handleSubmit(e)}>
                     <div className="justify-center gap-3 grid grid-cols-1
                                     md:flex md:flex-row md:flex-wrap">
                         <input
                             type="text"
                             className="block box-border rounded text-sm border
-                               border-slate-500 font-mono grow p-2
-                               overflow-x-auto self-stretch"
+                               border-input bg-background text-foreground font-mono grow p-2
+                               overflow-x-auto self-stretch focus:outline-none focus:ring-2 focus:ring-ring"
                             placeholder="Query/assert/retract..."
                             value={inputValue}
                             onChange={(e) => {

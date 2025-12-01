@@ -1,10 +1,3 @@
-/**
- * @author Lucien Bao
- * @version 0.9
- * @date 21 June 2024
- * VideoStream. Defines a video player component for the vision subproject.
- */
-
 import React, { useState, useEffect, useRef } from "react";
 
 import { Button } from "../../Button";
@@ -27,7 +20,6 @@ const VideoStream: React.FC<Props> = ({
     const videoCanvasRef = useRef(null);
     const depthCanvasRef = useRef(null);
 
-    // Handle WebSocket messages
     useEffect(() => {
         if (!lastMessage || !lastMessage.data) return;
         try {
@@ -35,9 +27,8 @@ const VideoStream: React.FC<Props> = ({
             if (!message.path || message.path !== path) return;
             const imageData = message.imageData;
             const depthData = message.depthData;
-            const detections = message.detectionData || []; // Now expects an array, even if empty
+            const detections = message.detectionData || [];
 
-            // Image stream handling
             if (videoCanvasRef.current && videoEnabled) {
                 const canvas = videoCanvasRef.current;
                 const ctx = canvas.getContext('2d');
@@ -81,12 +72,12 @@ const VideoStream: React.FC<Props> = ({
                 if (videoCanvasRef.current) {
                     const canvas = videoCanvasRef.current;
                     const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas if both streams are disabled
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
                 }
                 if (depthCanvasRef.current) {
                     const canvas = depthCanvasRef.current;
                     const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas if both streams are disabled
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
                 }
             }
         } catch (error) {
@@ -124,26 +115,24 @@ const VideoStream: React.FC<Props> = ({
     };
 
     return (
-        <div className="min-h-0 grow w-full flex flex-col outline shadow-md
-                      outline-1 outline-[#d1dbe3] items-center p-5 gap-5
-                      rounded-md justify-items-stretch">
-            {/* Video stream/placeholder */}
+        <div className="min-h-0 grow w-full flex flex-col border shadow-md
+                      border-border items-center p-5 gap-5
+                      rounded-md justify-items-stretch bg-card">
             {videoEnabled ? (
                 <canvas ref={videoCanvasRef} alt="Video Stream" />
             ) : depthEnabled ? (
                 <canvas ref={depthCanvasRef} alt="Depth Stream" />
             ) : (
                 <div className="min-h-0 min-w-0 grow h-full w-full
-                                outline outline-1 outline-[#d1dbe3]
-                                rounded-md shadow-md bg-gray-300
+                                border border-border
+                                rounded-md shadow-md bg-muted
                                 items-center justify-center flex flex-col">
-                    <p className="text-lg">Capture has been disabled.</p>
+                    <p className="text-lg text-muted-foreground">Capture has been disabled.</p>
                 </div>
             )}
-            {/* Menu */}
-            <div className="shadow-md outline outline-1 outline-[#d1dbe3]
+            <div className="shadow-md border border-border
                             p-3 rounded-md justify-center gap-3 flex flex-row
-                            w-full items-center">
+                            w-full items-center bg-card">
 
                 <Button
                     type="button"

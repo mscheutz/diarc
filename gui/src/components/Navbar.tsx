@@ -1,24 +1,27 @@
 
 
 import React from "react";
-import { Button } from "./Button";
 import { ThemeToggle } from "./ThemeToggle";
 
 const Navbar = () => {
+    const siteId = process.env.REACT_APP_SITE_ID;
+
     return (
-        <div className="w-full h-auto bg-slate-900 p-2 flex align-center
-                        justify-between dark:bg-slate-100 fixed top-0
-                        overflow-scroll z-50">
-            <div className="w-auto flex align-center">
-                <Button variant="link" className="text-white dark:text-black">
-                    {" "}
-                    Thinking Robots | Ava Robotics
-                </Button>
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 sm:px-6">
+            <div className="flex items-end gap-2">
+                <img 
+                    src="/logo.png" 
+                    alt="Thinking Robots" 
+                    className="h-10 w-auto"
+                />
+                {siteId && (
+                    <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-px rounded uppercase tracking-wider mb-[3px]">
+                        {siteId}
+                    </span>
+                )}
             </div>
-           <div className="w-auto h-auto">
-                <ThemeToggle />
-            </div>
-        </div>
+            <ThemeToggle />
+        </header>
     );
 };
 

@@ -5,12 +5,13 @@ import useWebSocket from "react-use-websocket";
 import Providers from "./components/Providers";
 import Navbar from "./components/Navbar";
 import TabbedComponentViewer from "./components/diarcGui/TabbedComponentViewer";
+import RobotMessageToast from "./components/diarcGui/RobotMessageToast";
 
 type EndpointList = string[];
 
 function buildWsUrl(): string {
-    const siteId = process.env.REACT_APP_SITE_ID; // e.g. "tufts"
-    const baseAddr = process.env.REACT_APP_SERVER_ADDR; // e.g. "209.38.51.186"
+    const siteId = process.env.REACT_APP_SITE_ID;
+    const baseAddr = process.env.REACT_APP_SERVER_ADDR;
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = baseAddr ?? window.location.hostname;
@@ -24,17 +25,23 @@ function buildHttpBaseUrl(wsUrl: string): URL {
     const url = new URL(wsUrl);
     url.protocol = url.protocol === "wss:" ? "https:" : "http:";
 
-    // strip trailing /ws so the base URL points at the site root
     if (url.pathname.endsWith("/ws")) {
-        url.pathname = url.pathname.slice(0, -2); // remove "ws"
+        url.pathname = url.pathname.slice(0, -2);
     }
 
     return url;
 }
 
+type RobotMessage = {
+    sender: string;
+    message: string;
+    timestamp: number;
+};
+
 const App: React.FC = () => {
     const [availableEndpoints, setAvailableEndpoints] = useState<EndpointList>([]);
     const [hasEverOpened, setHasEverOpened] = useState(false);
+    const [latestRobotMessage, setLatestRobotMessage] = useState<RobotMessage | null>(null);
 
     const webSocketUrl = useMemo(() => buildWsUrl(), []);
     const httpBaseUrl = useMemo(
@@ -58,7 +65,6 @@ const App: React.FC = () => {
             console.log("WS OPEN:", webSocketUrl);
             setHasEverOpened(true);
 
-            // On open, request initial endpoints
             sendMessage(
                 JSON.stringify({
                     path: "",
@@ -91,12 +97,22 @@ const App: React.FC = () => {
             if (Array.isArray(data.paths)) {
                 setAvailableEndpoints(data.paths);
             }
+            if (data.path?.includes("chat") && data.sender && data.message) {
+                console.log("Chat message received:", { sender: data.sender, recipient: data.recipient, message: data.message?.substring(0, 50) });
+                const isOutgoingMessage = !!data.recipient;
+                if (!isOutgoingMessage) {
+                    setLatestRobotMessage({
+                        sender: data.sender,
+                        message: data.message,
+                        timestamp: Date.now(),
+                    });
+                }
+            }
         } catch (e) {
             console.error("Failed to parse WS message:", e, lastMessage.data);
         }
     }, [lastMessage]);
 
-    // Manual "reload websocket" that triggers reconnect without full page reload
     const handleReloadWebsocket = () => {
         console.log("Manually triggering WS reconnect");
         const ws = getWebSocket();
@@ -110,21 +126,32 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col items-center h-dvh shrink-0 w-full pb-10 md:gap-10">
-            <Providers>
+        <Providers>
+            <div className="flex h-screen w-full flex-col overflow-hidden bg-background">
                 <Navbar />
-                <TabbedComponentViewer
-                    availableEndpoints={availableEndpoints}
-                    sendMessage={sendMessage}
-                    readyState={readyState}
-                    lastMessage={lastMessage}
-                    wsBaseUrl={webSocketUrl}
-                    generalBaseUrl={httpBaseUrl}
-                    onReloadWebsocket={handleReloadWebsocket}
-                    hasEverOpened={hasEverOpened}
-                />
-            </Providers>
-        </div>
+                <main className="flex flex-1 flex-col overflow-hidden p-4 sm:p-6">
+                    <div className="flex flex-1 flex-col min-h-0 w-full max-w-6xl mx-auto">
+                        <TabbedComponentViewer
+                            availableEndpoints={availableEndpoints}
+                            sendMessage={sendMessage}
+                            readyState={readyState}
+                            lastMessage={lastMessage}
+                            wsBaseUrl={webSocketUrl}
+                            generalBaseUrl={httpBaseUrl}
+                            onReloadWebsocket={handleReloadWebsocket}
+                            hasEverOpened={hasEverOpened}
+                        />
+                    </div>
+                </main>
+                {latestRobotMessage && (
+                    <RobotMessageToast
+                        sender={latestRobotMessage.sender}
+                        message={latestRobotMessage.message}
+                        timestamp={latestRobotMessage.timestamp}
+                    />
+                )}
+            </div>
+        </Providers>
     );
 };
 

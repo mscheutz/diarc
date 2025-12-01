@@ -11,12 +11,6 @@ type Props = {
     setSubmissionStatus: React.Dispatch<SetStateAction<string>>
 };
 
-/**
- * ManagePresets. Subcomponent which shows a list of selectable stored
- * presets and buttons to submit and remove them.
- * @author Lucien Bao
- * @version 1.0
- */
 const ManagePresets: React.FC<Props> = (
     {sendMessage, path, setLastGoalSubmitted, setSubmissionStatus}
 ) => {
@@ -39,7 +33,7 @@ const ManagePresets: React.FC<Props> = (
             {
                 type: "custom",
                 formData: {
-                    custom: goal // get rid of starting 's' char
+                    custom: goal
                 },
                 path: path
             }
@@ -47,7 +41,7 @@ const ManagePresets: React.FC<Props> = (
     }
     //@ts-ignore
     const deleteCallback = (e: MouseEvent<HTMLButtonElement, MouseEvent>) => {
-        const id: string = e.target.id.slice(1); // get rid of starting 'd' char
+        const id: string = e.target.id.slice(1);
         const removed: string[] = presets.filter((value) => value !== id);
         const newJSON: string = JSON.stringify(removed);
         localStorage.setItem(LOCAL_STORAGE_KEY, newJSON);
@@ -55,28 +49,40 @@ const ManagePresets: React.FC<Props> = (
     }
 
     return (
-        <div className="flex flex-col overflow-auto">
-            {presets.map((value, index) =>
-                <div
-                    key={index}
-                    className="p-1 flex flex-row items-center justify-between
-                               even:bg-slate-200"
-                >
-                    <p className="font-mono px-1">{value}</p>
-                    <div className="flex flex-row gap-2">
-                        <Button
-                            onClick={submitCallback}
-                            id={"s" + value}
+        <div className="flex flex-col h-full min-h-0">
+            {presets.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center p-4">
+                    <p className="text-sm text-muted-foreground text-center">
+                        No saved presets yet
+                    </p>
+                </div>
+            ) : (
+                <div className="flex-1 overflow-auto">
+                    {presets.map((value, index) => (
+                        <div
+                            key={index}
+                            className="group flex items-center justify-between gap-2 px-3 py-2
+                                       border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors"
                         >
-                            Submit
-                        </Button>
-                        <Button
-                            onClick={deleteCallback}
-                            id={"d" + value}
-                        >
-                            Delete
-                        </Button>
-                    </div>
+                            <code className="text-xs font-mono text-foreground truncate flex-1">
+                                {value}
+                            </code>
+                            <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                                <Button onClick={submitCallback} id={"s" + value} size="sm">
+                                    Run
+                                </Button>
+                                <Button
+                                    onClick={deleteCallback}
+                                    id={"d" + value}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                >
+                                    {"\u00D7"}
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>

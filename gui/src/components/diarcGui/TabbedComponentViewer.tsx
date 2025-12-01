@@ -1,6 +1,3 @@
-// TabbedComponentViewer.tsx
-
-// IMPORTS //
 import React, { useEffect, useState } from "react";
 
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
@@ -13,8 +10,7 @@ import { handlers } from "./util/constants";
 import "./util/StyleOverrides.css";
 import { Button } from "../Button";
 
-// CONSTANTS //
-const flexTabPanelClass = "hidden flex-col min-h-0 grow";
+const flexTabPanelClass = "hidden flex-col flex-1 min-h-0 overflow-auto";
 
 type UnavailablePanelMode = "connecting" | "unavailable";
 
@@ -35,14 +31,9 @@ interface Props {
     hasEverOpened: boolean;
 }
 
-// Derive types from handlers
 type HandlerKey = keyof typeof handlers;
 type HandlerConfig = (typeof handlers)[HandlerKey];
 
-/**
- * Given a path, find the corresponding handler config and its root prefix.
- * This avoids indexing handlers with a plain `string` key.
- */
 function findHandlerForPath(
     path: string
 ): { root: string; handler: HandlerConfig } | null {
@@ -83,7 +74,7 @@ const UnavailablePanel: React.FC<UnavailablePanelProps> = ({
                 WebSocket URL: {wsBaseUrl}
                 <br />
                 {isConnecting
-                    ? "Attempting to reach backend and discover endpoints…"
+                    ? "Attempting to reach backend and discover endpoints..."
                     : "No endpoints found. The backend may be down or unreachable."}
             </div>
 
@@ -93,6 +84,8 @@ const UnavailablePanel: React.FC<UnavailablePanelProps> = ({
         </div>
     );
 };
+
+const TAB_STORAGE_KEY = "diarc_selected_tab";
 
 const TabbedComponentViewer: React.FC<Props> = ({
                                                     availableEndpoints,
@@ -107,8 +100,25 @@ const TabbedComponentViewer: React.FC<Props> = ({
     const [hasEverHadEndpoints, setHasEverHadEndpoints] = useState(false);
     const [initialConnectionTimedOut, setInitialConnectionTimedOut] =
         useState(false);
+    
+    const [selectedTabIndex, setSelectedTabIndex] = useState<number>(() => {
+        const stored = sessionStorage.getItem(TAB_STORAGE_KEY);
+        return stored ? parseInt(stored, 10) : 0;
+    });
 
-    // Track if we have *ever* seen endpoints, and reset timeout if so.
+    const handleTabSelect = (index: number) => {
+        setSelectedTabIndex(index);
+        sessionStorage.setItem(TAB_STORAGE_KEY, index.toString());
+    };
+
+    useEffect(() => {
+        const sortedEndpoints = availableEndpoints.slice().sort();
+        if (sortedEndpoints.length > 0 && selectedTabIndex >= sortedEndpoints.length) {
+            setSelectedTabIndex(0);
+            sessionStorage.setItem(TAB_STORAGE_KEY, "0");
+        }
+    }, [availableEndpoints, selectedTabIndex]);
+
     useEffect(() => {
         if (!hasEverHadEndpoints && availableEndpoints.length > 0) {
             setHasEverHadEndpoints(true);
@@ -116,9 +126,7 @@ const TabbedComponentViewer: React.FC<Props> = ({
         }
     }, [availableEndpoints, hasEverHadEndpoints]);
 
-    // Initial connection timeout: protects the "first connect" case on flaky devices (e.g. iOS).
     useEffect(() => {
-        // If we've already had endpoints, or currently have some, we don't care.
         if (hasEverHadEndpoints || availableEndpoints.length > 0) {
             if (initialConnectionTimedOut) {
                 setInitialConnectionTimedOut(false);
@@ -126,7 +134,6 @@ const TabbedComponentViewer: React.FC<Props> = ({
             return;
         }
 
-        // Only start timeout once we've seen at least one open attempt.
         if (!hasEverOpened) {
             if (initialConnectionTimedOut) {
                 setInitialConnectionTimedOut(false);
@@ -134,7 +141,6 @@ const TabbedComponentViewer: React.FC<Props> = ({
             return;
         }
 
-        // If we're not currently CONNECTING, clear any timeout state and bail.
         if (readyState !== ReadyState.CONNECTING) {
             if (initialConnectionTimedOut) {
                 setInitialConnectionTimedOut(false);
@@ -142,9 +148,8 @@ const TabbedComponentViewer: React.FC<Props> = ({
             return;
         }
 
-        const timeoutMs = 8000; // tune as needed
+        const timeoutMs = 8000;
         const timer = window.setTimeout(() => {
-            // At the time of firing, treat "no endpoints yet" as a timeout condition.
             if (!hasEverHadEndpoints && availableEndpoints.length === 0) {
                 console.warn(
                     "Initial WS connection timed out; marking as unavailable"
@@ -175,7 +180,9 @@ const TabbedComponentViewer: React.FC<Props> = ({
 
     return (
         <Tabs
-            className="displayFlexImportant flex-col min-h-0 grow w-full mt-20 md:w-5/6"
+            className="displayFlexImportant flex-col flex-1 min-h-0 w-full overflow-hidden"
+            selectedIndex={selectedTabIndex}
+            onSelect={handleTabSelect}
         >
             <TabList
                 hidden={availableEndpoints.length === 0 && !hasEverHadEndpoints}

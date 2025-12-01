@@ -1,7 +1,5 @@
-// IMPORTS //
 import React, { useCallback, useEffect, useState } from 'react';
 
-// NPM packages
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css"
 import {
     MainContainer,
@@ -18,14 +16,10 @@ import {
 } from "@chatscope/chat-ui-kit-react";
 import { ReadyState, SendMessage } from 'react-use-websocket';
 
-// Internal imports
 import ConnectionIndicator from './util/ConnectionIndicator';
 import "./util/StyleOverrides.css"
 
-// UTILITY //
 type MessageProps = {
-    // Subset of 'model' prop at
-    // https://chatscope.io/storybook/react/?path=/docs/components-message--docs
     message: string,
     sender: string,
     direction: "incoming" | "outgoing" | 0 | 1,
@@ -43,7 +37,6 @@ type Chat = {
 }
 export type { Chat };
 
-// Remove line breaks from messages when sending
 const clean = (message: string) => {
     return message.replace(/(<.*?>)/gm, "").replace(/(\r\n|\n|\r)/gm, "")
 }
@@ -82,18 +75,9 @@ type Props = {
     readyState: ReadyState
 };
 
-/**
- * ChatViewer. Defines a chat interface component for issuing commands and
- * receiving feedback through DIARC.
- * @author Lucien Bao
- * @version 1.0
- */
 const ChatViewer: React.FC<Props> = ({
     path, lastMessage, sendMessage, readyState
 }) => {
-    // SET UP MOBILE NAVIGATION //
-    // Adapted from "Toggle conversation list using the back button" example at
-    // https://chatscope.io/storybook/react/?path=/docs/components-maincontainer--docs
     const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
     const [sidebarStyle, setSidebarStyle] = useState<object>({});
     const [chatContainerStyle, setChatContainerStyle] = useState<object>({});
@@ -121,7 +105,6 @@ const ChatViewer: React.FC<Props> = ({
     }, [sidebarVisible, setSidebarVisible, setSidebarStyle,
         setChatContainerStyle])
 
-    // COMPONENT CREATION METHODS //
     const createConversation = (chat: Chat, index: number) => {
         return (
             <Conversation
@@ -171,13 +154,14 @@ const ChatViewer: React.FC<Props> = ({
     }) => {
         return (
             <>
-                {sender !== chats[currentChat].robotName
-                    && <div
+                {sender !== chats[currentChat].robotName && (
+                    <div
                         key={"sentby" + index}
-                        className="text-right"
+                        className="text-right text-xs text-muted-foreground mb-1"
                     >
                         {sender}
-                    </div>}
+                    </div>
+                )}
                 <Message key={index} model={{
                     message: message,
                     sender: sender,
@@ -188,7 +172,6 @@ const ChatViewer: React.FC<Props> = ({
         )
     }
 
-    // SET UP STATE //
     const [currentChat, setCurrentChat] = useState<number>(0);
 
     const [chats, setChats] = useState<Chat[]>([
@@ -232,7 +215,6 @@ const ChatViewer: React.FC<Props> = ({
             newChats = chats.slice();
         }
 
-        // Update list of robot names; idempotent
         if (data.names) {
             const names = (data.names as string)
                 .slice(1, -1)
@@ -286,10 +268,8 @@ const ChatViewer: React.FC<Props> = ({
             </ConversationList>
         );
     },
-        // we use chats.toString() to make sure the value is changing
         [lastMessage, chats.toString()]);
 
-    // One-time get the list of chats to show
     useEffect(() => {
         sendMessage(JSON.stringify({
             path: path,
@@ -314,7 +294,7 @@ const ChatViewer: React.FC<Props> = ({
 
     let chatContainer = (
         chats.length === 0 ? <div/> :
-        <ChatContainer className='w-3/4' style={chatContainerStyle}>
+        <ChatContainer style={chatContainerStyle}>
             {createConversationHeader(chats[currentChat])}
 
             <MessageList>
@@ -329,36 +309,23 @@ const ChatViewer: React.FC<Props> = ({
 
             <MessageInput
                 autoFocus
-                placeholder={"Talk with " + chats[currentChat].robotName
-                    + "..."}
+                placeholder={"Message " + chats[currentChat].robotName + "..."}
                 attachButton={false}
                 onSend={(message) => handleSendMessage(message)}
             />
         </ChatContainer>
     );
 
-    // DOM //
     return (
-        <div className="flex flex-col w-full min-h-0 basis-0 grow border
-                        border-1 border-[#d1dbe3] justify-between shadow-md
-                        rounded-md p-3 gap-3 md:p-5 md:gap-5">
-            {/*<NameInput username={username} setUsername={setUsername} />*/}
-
-            <MainContainer className='rounded-md shadow-md' responsive>
+        <div className="flex flex-col w-full h-full min-h-0 flex-1">
+            <MainContainer className="rounded-lg border border-border overflow-hidden" responsive>
                 <Sidebar position="left" style={sidebarStyle}>
-                    <div className="flex flex-col justify-between h-full">
-
-                        <div className="flex flex-col space-y-1 md:space-y-2
-                                        p-1 md:p-2">
-                            {conversations}
-                        </div>
+                    <div className="h-full overflow-auto">
+                        {conversations}
                     </div>
                 </Sidebar>
-
                 {chatContainer}
             </MainContainer>
-
-            {/*<ConnectionIndicator readyState={readyState} />*/}
         </div>
     );
 }

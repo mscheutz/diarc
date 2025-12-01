@@ -2,10 +2,8 @@
 
 import * as React from "react";
 import { useTheme } from "next-themes";
-import { cn } from "../lib/util";
-
 import Icons from "./Icons";
-import { Button, buttonVariants } from "./Button";
+import { Button } from "./Button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -20,13 +18,11 @@ export function ThemeToggle() {
             <DropdownMenuTrigger asChild>
                 <Button
                     size="md"
-                    className={cn(
-                        buttonVariants({ variant: "outline" }),
-                        "dark:bg-slate-100"
-                    )}
+                    variant="outline"
+                    className="relative"
                 >
-                    <Icons.Sun className="rotate-0 scale-110 transition-all hover:text-slate-800 dark:-rotate-90 dark:scale-0 dark:text-slate-400 dark:hover:text-slate-100 text-slate-100" />
-                    <Icons.Moon className="absolute rotate-90 scale-0 transition-all hover:text-slate-900 dark:rotate-0 dark:scale-110 dark:text-slate-800 dark:hover:text-slate-100" />
+                    <Icons.Sun className="h-5 w-5 text-foreground rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Icons.Moon className="absolute h-5 w-5 text-foreground rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                     <span className="sr-only">Toggle theme</span>
                 </Button>
             </DropdownMenuTrigger>

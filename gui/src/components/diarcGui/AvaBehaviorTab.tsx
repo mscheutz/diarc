@@ -7,7 +7,6 @@ type Props = {
     lastMessage: MessageEvent<any> | null,
     sendMessage: SendMessage,
     readyState: ReadyState,
-    // other inputs that you need
 };
 
 const getInitialState = () => {
@@ -16,7 +15,7 @@ const getInitialState = () => {
 }
 
 const MyNewComponent: React.FC<Props> = ({
-    path, lastMessage, sendMessage, readyState, /* other input names */
+    path, lastMessage, sendMessage, readyState,
 }) => {
 
     const [customBehaviorCommands, setCustomBehaviorCommands] = useState<string[]>(getInitialState);
@@ -27,37 +26,28 @@ const MyNewComponent: React.FC<Props> = ({
         const data = JSON.parse(lastMessage.data);
         if(!data.path || data.path !== path) return;
 
-        // Do stuff with data here
     }, [path, lastMessage]);
 
     const generateCustomBehaviors = useCallback(() => {
-        return (
-            customBehaviorCommands
-                    .map((value) =>
-                        <div className="flex flex-row rounded-md shadow-md border border-1
-                                        p-2 border-[#d1dbe3] gap-5 items-center
-                                        justify-evenly">
-                            <label className="w-1/2 text-center">
-                                "{value}"
-                            </label>
-                            <Button
-                                type="button"
-                                className="w-5/12"
-                                title="Submit Action"
-                                onClick={() => handleSubmit(value)}
-                            >
-                                Submit
-                            </Button>
-                            <Button
-                                type="button"
-                                className="w-1/12 text-2xl"
-                                onClick={() => handleRemoveCustomBehavior(value)}
-                            >
-                                -
-                            </Button>
-                        </div>
-                    )
-        );
+        return customBehaviorCommands.map((value, index) => (
+            <div key={index} className="flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors">
+                <code className="text-xs font-mono text-foreground truncate flex-1 mr-2">{value}</code>
+                <div className="flex gap-1 shrink-0">
+                    <Button type="button" size="sm" onClick={() => handleSubmit(value)}>
+                        Run
+                    </Button>
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleRemoveCustomBehavior(value)}
+                    >
+                        {"\u00D7"}
+                    </Button>
+                </div>
+            </div>
+        ));
     }, [customBehaviorCommands]);
 
     const handleAddCustomBehavior = () => {
@@ -87,163 +77,77 @@ const MyNewComponent: React.FC<Props> = ({
     };
 
     return (
-        <div className="flex flex-col w-full min-h-0 basis-0 grow border
-                        border-1 p-5 border-[#d1dbe3] justify-stretch
-                        shadow-md rounded-md gap-5 overflow-scroll">
-
-            <div className="flex flex-col w-full basis-0 grow border
-                            border-1 p-5 border-[#d1dbe3] justify-stretch
-                            shadow-md rounded-md gap-5">
-
-                <div className="w-full text-center font-bold">
-                        Predefined Behaviors
-                </div>
-
-                <div className="flex flex-row rounded-md shadow-md border border-1
-                                p-2 border-[#d1dbe3] gap-5 items-center
-                                justify-evenly">
-                    <label className="text-center w-1/2">
-                        Pause Current Task
-                    </label>
-                    <Button
-                        type="button"
-                        className="w-1/2"
-                        title="Submit Action"
-                        onClick={() => handleSubmit("pause")}
-                    >
-                        Submit
-                    </Button>
-                </div>
-
-                <div className="flex flex-row rounded-md shadow-md border border-1
-                                p-2 border-[#d1dbe3] gap-5 items-center
-                                justify-evenly">
-                    <label className="w-1/2 text-center">
-                        Resume Current Task
-                    </label>
-                    <Button
-                        type="button"
-                        className="w-1/2"
-                        title="Submit Action"
-                        onClick={() => handleSubmit("resume")}
-                    >
-                        Submit
-                    </Button>
-                </div>
-
-                <div className="flex flex-row rounded-md shadow-md border border-1
-                                p-2 border-[#d1dbe3] gap-5 items-center
-                                justify-evenly">
-                    <label className="w-1/2 text-center">
-                        Cancel Current Task
-                    </label>
-                    <Button
-                        type="button"
-                        className="w-1/2"
-                        title="Submit Action"
+        <div className="flex flex-col w-full min-h-0 flex-1 gap-4 overflow-auto">
+            <div className="w-full space-y-4">
+                <div className="flex gap-3">
+                    <div className="flex-1 border border-border rounded-md bg-card overflow-hidden">
+                        <div className="px-3 py-2 border-b border-border bg-muted/30">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                Quick Actions
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-border">
+                            {[
+                                { label: "Pause", cmd: "pause" },
+                                { label: "Resume", cmd: "resume" },
+                                { label: "Go to Dock", cmd: "go home" },
+                                { label: "Schedule Task", cmd: "add a new scheduled task" },
+                                { label: "Modify Schedule", cmd: "modify a scheduled task" },
+                                { label: "Teach Action", cmd: "i will teach you a new task" },
+                            ].map(({ label, cmd }) => (
+                                <button
+                                    key={cmd}
+                                    onClick={() => handleSubmit(cmd)}
+                                    className="px-3 py-2.5 text-xs font-medium bg-card hover:bg-muted/50 transition-colors text-left text-foreground"
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <button
                         onClick={() => handleSubmit("stop")}
+                        className="shrink-0 self-stretch px-4 rounded-md border border-destructive/40 
+                                   text-xs font-medium text-destructive bg-destructive/5 
+                                   hover:bg-destructive hover:text-white hover:border-destructive
+                                   transition-colors"
                     >
-                        Submit
-                    </Button>
+                        Cancel
+                    </button>
                 </div>
 
-                <div className="flex flex-row rounded-md shadow-md border border-1
-                                p-2 border-[#d1dbe3] gap-5 items-center
-                                justify-evenly">
-                    <label className="w-1/2 text-center">
-                        Go to Dock
-                    </label>
-                    <Button
-                        type="button"
-                        className="w-1/2"
-                        title="Submit Action"
-                        onClick={() => handleSubmit("go home")}
-                    >
-                        Submit
-                    </Button>
-                </div>
-
-                <div className="flex flex-row rounded-md shadow-md border border-1
-                                p-2 border-[#d1dbe3] gap-5 items-center
-                                justify-evenly">
-                    <label className="w-1/2 text-center">
-                        Begin Scheduling a Task
-                    </label>
-                    <Button
-                        type="button"
-                        className="w-1/2"
-                        title="Submit Action"
-                        onClick={() => handleSubmit("add a new scheduled task")}
-                    >
-                        Submit
-                    </Button>
-                </div>
-
-                <div className="flex flex-row rounded-md shadow-md border border-1
-                                p-2 border-[#d1dbe3] gap-5 items-center
-                                justify-evenly">
-                    <label className="w-1/2 text-center">
-                        Begin Modifying a Scheduled Task
-                    </label>
-                    <Button
-                        type="button"
-                        className="w-1/2"
-                        title="Submit Action"
-                        onClick={() => handleSubmit("modify a scheduled task")}
-                    >
-                        Submit
-                    </Button>
-                </div>
-
-                <div className="flex flex-row rounded-md shadow-md border border-1
-                                p-2 border-[#d1dbe3] gap-5 items-center
-                                justify-evenly">
-                    <label className="w-1/2 text-center">
-                        Begin Teaching a New Action
-                    </label>
-                    <Button
-                        type="button"
-                        className="w-1/2"
-                        title="Submit Action"
-                        onClick={() => handleSubmit("i will teach you a new task")}
-                    >
-                        Submit
-                    </Button>
-                </div>
-            </div>
-
-            <div className="flex flex-col w-full basis-0 grow border
-                            border-1 p-5 border-[#d1dbe3] justify-stretch
-                            shadow-md rounded-md gap-5">
-
-                <div className="w-full text-center font-bold">
-                        Custom Behaviors
-                </div>
-
-                {generateCustomBehaviors()}
-
-                <div className="flex flex-row
-                                p-2 gap-5 items-center
-                                justify-evenly">
+                <div className="border border-border rounded-md bg-card flex flex-col overflow-hidden max-h-80">
+                    <div className="px-3 py-2 border-b border-border bg-muted/30 flex items-center justify-between shrink-0">
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Custom Commands
+                        </span>
+                    </div>
+                    <div className="flex-1 min-h-0 overflow-auto">
+                        {customBehaviorCommands.length === 0 ? (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                                No custom commands yet
+                            </div>
+                        ) : (
+                            <div className="divide-y divide-border">
+                                {generateCustomBehaviors()}
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex gap-2 p-3 border-t border-border bg-muted/30 shrink-0">
                         <input
                             type="text"
-                            className="block box-border rounded text-sm border
-                               border-slate-500 font-mono grow p-2
-                               overflow-x-auto self-stretch"
-                            placeholder="Behavior Command..."
+                            className="flex-1 h-8 rounded-md text-sm border border-input bg-background 
+                                       text-foreground px-3 font-mono placeholder:text-muted-foreground
+                                       focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                            placeholder="Enter command..."
                             value={newBehaviorCommand}
-                            onChange={(e) => {
-                                setNewBehaviorCommand(e.target.value);
-                            }}
-                            autoFocus
-                            required
-                        >
-                        </input>
-                    <Button
-                        className="text-2xl"
-                        onClick={() => handleAddCustomBehavior(newBehaviorCommand)}>
-                        +
-                    </Button>
+                            onChange={(e) => setNewBehaviorCommand(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && handleAddCustomBehavior()}
+                        />
+                        <Button size="sm" onClick={() => handleAddCustomBehavior()}>
+                            Add
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

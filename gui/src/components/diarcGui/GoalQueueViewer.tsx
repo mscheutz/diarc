@@ -1,18 +1,14 @@
-// IMPORTS //
 import React, { useState, useEffect, ChangeEvent, ChangeEventHandler } from "react";
 
-// NPM packages
 import { SendMessage, ReadyState } from "react-use-websocket";
 import Select from "react-select"
 
-// Internal imports
 import ConnectionIndicator from "./util/ConnectionIndicator";
 import { Button } from "../Button";
 import { columns, scheduledColumns, pastColumns, Option, sortCriteria, statuses } from "./util/constants";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircleInfo} from "@fortawesome/free-solid-svg-icons";
 
-// SUBCOMPONENTS //
 type ChangeStatusProps = {
     handleSuspend: () => void,
     handleResume: () => void,
@@ -23,8 +19,8 @@ const ChangeStatus: React.FC<ChangeStatusProps> = ({
     handleSuspend, handleResume, handleCancel
 }) => {
     return (
-        <div className="flex flex-row gap-2 shadow-md border border-1
-                        border-[#d1dbe3] rounded-md p-3">
+        <div className="flex flex-row gap-2 shadow-md border
+                        border-border rounded-md p-3 bg-card">
             <label className="self-center text-lg">Change status:</label>
             <div className="grow flex flex-row gap-2 overflow-scroll">
                 <Button
@@ -61,14 +57,21 @@ const SortGoals: React.FC<SortGoalsProps> = ({
     sortCriterion, setSortCriterion, sortAscending, handleRadioSelect
 }) => {
     return (
-        <div className="flex flex-col gap-2 shadow-md border border-1
-                        border-[#d1dbe3] rounded-md p-3">
+        <div className="flex flex-col gap-2 shadow-md border
+                        border-border rounded-md p-3 bg-card">
             <label className="text-lg">Sort goals</label>
             <Select
                 options={sortCriteria}
                 value={sortCriterion}
                 //@ts-ignore
                 onChange={setSortCriterion}
+                classNames={{
+                    control: () => '!bg-background !border-border',
+                    menu: () => '!bg-popover !border-border',
+                    option: (state) => state.isFocused ? '!bg-accent' : '!bg-popover',
+                    singleValue: () => '!text-foreground',
+                    input: () => '!text-foreground',
+                }}
             />
 
             <div className="flex flex-col">
@@ -102,8 +105,8 @@ const FilterGoals: React.FC<FilterGoalsProps> = (
 ) => {
     return (
         <div className="flex flex-col gap-2
-                        shadow-md border border-1
-                        border-[#d1dbe3] rounded-md p-3">
+                        shadow-md border
+                        border-border rounded-md p-3 bg-card">
             <label className="text-lg">Filter goals</label>
             <label>Actor</label>
             <input
@@ -111,7 +114,8 @@ const FilterGoals: React.FC<FilterGoalsProps> = (
                 value={filteredActor}
                 onChange={onChangeFilteredActor}
                 className="block box-border w-full rounded mt-1 mb-2 text-sm
-                           border border-slate-500 p-2 font-mono"
+                           border border-input bg-background text-foreground p-2 font-mono
+                           focus:outline-none focus:ring-2 focus:ring-ring"
             />
 
             <label>Statuses</label>
@@ -174,27 +178,48 @@ const toScheduledArray = (e: Entry) => {
 type GoalTableProps = {
     data: Entry[],
     handleSelect: any,
+    handleSelectAll: (ids: number[], selected: boolean) => void,
+    selectedIds: number[],
     filteredActor: string,
     selectedStatuses: string[]
 }
 
 const GoalTable: React.FC<GoalTableProps> = (
-    { data, handleSelect, filteredActor, selectedStatuses }
+    { data, handleSelect, handleSelectAll, selectedIds, filteredActor, selectedStatuses }
 ) => {
     let activeGoals = [], pastGoals = []
     data.forEach((g) => (g.status === "active" || g.status === "suspended" || g.status === "pending" ? activeGoals : pastGoals).push(g));
+
+    const visibleActiveGoals = activeGoals.filter(
+        (row) => selectedStatuses.includes(row.status) && row.actor.includes(filteredActor)
+    );
+    const visibleActiveIds = visibleActiveGoals.map((row) => row.id);
+    const allSelected = visibleActiveIds.length > 0 && visibleActiveIds.every((id) => selectedIds.includes(id));
+    const someSelected = visibleActiveIds.some((id) => selectedIds.includes(id));
+
+    const onSelectAllChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        handleSelectAll(visibleActiveIds, e.target.checked);
+    };
+
     return (
         <div className="grow flex flex-col min-h-0 basis-0">
         <p className="text-lg pt-5">Current Goals</p>
-        <table className="border border-[#d1dbe3]">
+        <table className="border border-border">
             <caption className="hidden">Goal table</caption>
             <thead>
-                <tr className="bg-sky-100">
-                    <th className="border border-[#d1dbe3] p-1">
-                        Select
+                <tr className="bg-accent">
+                    <th className="border border-border p-1">
+                        <input
+                            type="checkbox"
+                            checked={allSelected}
+                            ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
+                            onChange={onSelectAllChange}
+                            className="cursor-pointer"
+                            title="Select all"
+                        />
                     </th>
                     {columns.map((col, index) =>
-                        <th className="border border-[#d1dbe3] p-1"
+                        <th className="border border-border p-1"
                             key={index}>
                             {col}
                         </th>
@@ -208,19 +233,20 @@ const GoalTable: React.FC<GoalTableProps> = (
                     element === row.status) !== undefined
                     && row.actor.includes(filteredActor)
                     && <tr
-                        className="even:bg-slate-100"
+                        className="even:bg-muted"
                         key={index}>
-                        <td className="border border-[#d1dbe3] px-1 text-center">
+                        <td className="border border-border px-1 text-center">
                             <input
                                 type="checkbox"
                                 value={row.id}
                                 id={row.id + ""}
+                                checked={selectedIds.includes(row.id)}
                                 onChange={handleSelect}
                                 className="cursor-pointer"
                             />
                         </td>
                         {toArray(row).map((prop, index) =>
-                            <td className="border border-[#d1dbe3] px-1"
+                            <td className="border border-border px-1"
                                 key={index}>
                                 <label
                                     htmlFor={row.id + ""}
@@ -237,12 +263,12 @@ const GoalTable: React.FC<GoalTableProps> = (
         </table>
 
         <p className="text-lg pt-5">Past Goals</p>
-        <table className="border border-[#d1dbe3]">
+        <table className="border border-border">
             <caption className="hidden">Past Goal table</caption>
             <thead>
-                <tr className="bg-sky-100">
+                <tr className="bg-accent">
                     {pastColumns.map((col, index) =>
-                        <th className="border border-[#d1dbe3] p-1"
+                        <th className="border border-border p-1"
                             key={index}>
                             {col}
                         </th>
@@ -256,10 +282,10 @@ const GoalTable: React.FC<GoalTableProps> = (
                     element === row.status) !== undefined
                     && row.actor.includes(filteredActor)
                     && <tr
-                        className="even:bg-slate-100"
+                        className="even:bg-muted"
                         key={index}>
                         {toPastArray(row).map((prop, index) =>
-                            <td className="border border-[#d1dbe3] px-1"
+                            <td className="border border-border px-1"
                                 key={index}>
                                 <label
                                     htmlFor={row.id + ""}
@@ -282,12 +308,12 @@ const ScheduledGoalTable: React.FC<GoalTableProps> = (
     { scheduledData, handleSelect, filteredActor, selectedStatuses }
 ) => {
     return (
-        <table className="border border-[#d1dbe3]">
+        <table className="border border-border">
             <caption className="hidden">Scheduled Goal Table</caption>
             <thead>
-                <tr className="bg-sky-100">
+                <tr className="bg-accent">
                     {scheduledColumns.map((col, index) =>
-                        <th className="border border-[#d1dbe3] p-1"
+                        <th className="border border-border p-1"
                             key={index}>
                             {col}
                         </th>
@@ -299,10 +325,10 @@ const ScheduledGoalTable: React.FC<GoalTableProps> = (
                 {scheduledData.map((row, index) =>
                 (row.actor.includes(filteredActor)
                     && <tr
-                        className="even:bg-slate-100"
+                        className="even:bg-muted"
                         key={index}>
                         {toScheduledArray(row).map((prop, index) =>
-                            <td className="border border-[#d1dbe3] px-1"
+                            <td className="border border-border px-1"
                                 key={index}>
                                 <label
                                     htmlFor={row.id + ""}
@@ -327,37 +353,32 @@ type Props = {
     readyState: ReadyState
 };
 
-/**
- * GoalViewer. Defines a component which shows a dynamic table of robot goals
- * and has options for filtering and performing operations on them.
- * @author Lucien Bao
- * @version 1.0
- */
 const GoalViewer: React.FC<Props> = ({
     path, lastMessage, sendMessage, readyState
 }) => {
-    // STATE & CALLBACKS //
-    // SortGoals
     const [sortCriterion, setSortCriterion] = useState<Option>(sortCriteria[3]);
     const [sortAscending, setSortAscending] = useState<boolean>(true);
-    // FilterGoals
     const [filteredActor, setFilteredActor] = useState<string>("");
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>(statuses);
-    // GoalTable
     const [data, setData] = useState<Entry[]>([]);
     const [scheduledData, setScheduledData] = useState<Entry[]>([]);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-    // CALLBACKS //
     const handleGoalSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        console.log('selectedIds: ' + selectedIds);
-        console.log(e);
         if (e.target.checked)
-            // `+` will convert string to number
             setSelectedIds(selectedIds.concat(+e.target.value))
         else
             setSelectedIds(selectedIds.filter((element) =>
                 element !== +e.target.value))
+    };
+
+    const handleSelectAll = (ids: number[], selected: boolean) => {
+        if (selected) {
+            const newIds = [...new Set([...selectedIds, ...ids])];
+            setSelectedIds(newIds);
+        } else {
+            setSelectedIds(selectedIds.filter((id) => !ids.includes(id)));
+        }
     };
 
     const handleSuspend = () => {
@@ -382,9 +403,6 @@ const GoalViewer: React.FC<Props> = ({
             "method": "cancel",
             "ids": selectedIds
         }))
-        selectedIds.forEach(id => {
-            document.getElementById(id).checked = false;
-        })
         setSelectedIds([])
     };
 
@@ -404,20 +422,9 @@ const GoalViewer: React.FC<Props> = ({
                 element !== e.target.id))
     };
 
-    // INPUT //
     useEffect(() => {
         const sorted = (array: Entry[]) => {
-            //TODO: add here if sort should be based on multiple factors in descending priority
             const compareRaw = (entry0: Entry, entry1: Entry) => {
-                //const propName = sortCriterion.value;
-                //if (propName === "priority" || propName === "id")
-                //   return entry0[propName] - entry1[propName];
-                //if (entry0[propName] < entry1[propName])
-                //   return -1;
-                //if (entry0[propName] > entry1[propName])
-                //   return 1;
-                //return 0;
-
                 if (entry0["status"] === "pending") {
                     if (entry1["status"] === "pending") {
                         if (entry0["id"] < entry1["id"]) {
@@ -499,43 +506,18 @@ const GoalViewer: React.FC<Props> = ({
         }));
     }, [path, sendMessage]);
 
-    // DOM //
     return (
         <div className="flex flex-col w-full min-h-0 basis-0 grow border
-                        border-1 p-5 border-[#d1dbe3] justify-stretch
-                        shadow-md rounded-md gap-5">
-            <div className="shadow-md border border-1 border-[#d1dbe3]
+                        border-border p-5 justify-stretch
+                        shadow-md rounded-md gap-5 bg-card">
+            <div className="shadow-md border border-border
                             p-5 flex flex-col justify-start gap-5
-                            rounded-md grow">
+                            rounded-md grow bg-card">
 
                 <div className="flex flex-row gap-5 grow min-h-0 basis-0">
-                    {/* Filter menu */}
-                    {/*
-                    <div className="flex flex-col gap-5 overflow-y-auto grow
-                                    w-1/4">
-                        <ChangeStatus handleSuspend={handleSuspend}
-                            handleCancel={handleCancel} handleResume={handleResume} />
-
-                        <SortGoals
-                            sortCriterion={sortCriterion}
-                            setSortCriterion={setSortCriterion}
-                            sortAscending={sortAscending}
-                            handleRadioSelect={handleRadioSelect}
-                        />
-
-                        <FilterGoals
-                            filteredActor={filteredActor}
-                            selectedStatuses={selectedStatuses}
-                            onChangeFilteredActor={handleActorSelect}
-                            onSelectStatus={handleStatusSelect}
-                        />
-                    </div>
-                    */}
-
-                    {/* Table */}
-                    <div className="shadow-md border border-1 border-[#d1dbe3]
+                    <div className="shadow-md border border-border
                                     p-3 flex flex-col justify-start gap-3
-                                    rounded-md grow overflow-auto w-3/4">
+                                    rounded-md grow overflow-auto w-3/4 bg-card">
                         <div className="grow flex flex-col min-h-0
                                         basis-0">
                             <p className="text-lg">Scheduled Goals</p>
@@ -548,6 +530,8 @@ const GoalViewer: React.FC<Props> = ({
                             <GoalTable
                                 data={data}
                                 handleSelect={handleGoalSelect}
+                                handleSelectAll={handleSelectAll}
+                                selectedIds={selectedIds}
                                 filteredActor={filteredActor}
                                 selectedStatuses={selectedStatuses}
                             />

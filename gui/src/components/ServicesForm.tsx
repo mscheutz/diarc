@@ -25,39 +25,14 @@ interface ServicesFormProps {
     serviceEntries: [string, Map<string, Set<string>>][];
 }
 
-/* 
- * 
- *      To the person that is working on this over the summer 
- *      it might be a good idea to take the code that opens modals to be abstracted away into it's 
- *      component and pass in relevant info. 
- * 
- *      Just a suggestion though, I ran out of time implementing it before the semester ran out. 
- *      Remove this comment as you see fit. Best of luck! 
- */ 
-
 const ServicesForm: React.FC<ServicesFormProps> = ({ serviceEntries }) => {
-    /* used to open dropdown list from popover component */
     const [open, setOpen] = useState<boolean>(false);
-
-    /* used to display the currently selected item from the combobox */
     const [service, setService] = useState<string>("");
-
-    /* used to collect all of the parameters being selected from services list */
     const [serviceParams, setServiceParams] = useState<string[]>([]);
-
-    /* collection of services fetched from the backend, a state wrapper for serviceEntries */
     const [services, setServices] = useState<string[]>([]);
-
-    /* used to represent the backend response, null if something bad went wrong */
     const [backendResponse, backendSetResponse] = useState<string | null>(null);
-
-    /* used to open the results modal */
     const [openResults, setOpenResults] = useState<boolean>(false);
-
-    /* used for opening the validation error message popup */
     const [inputError, setInputError] = useState<string>("");
-
-    /* contains the error message for form validation */
     const [openErrorModal, setOpenErrorModal] = useState<boolean>(false);
 
     const handleClick = (data: string) => {
@@ -84,16 +59,12 @@ const ServicesForm: React.FC<ServicesFormProps> = ({ serviceEntries }) => {
     }, []);
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        /* stops the form form auto refreshing */
         event.preventDefault();
-
-        /* resets state invariants for error handling */
         setOpenErrorModal(false);
         setInputError("");
 
         const params: any[] = [];
 
-        /* input validation only for types int and double for now */
         const validateType = (data: any, type: string) => {
             switch (type) {
                 case "int":
@@ -156,10 +127,6 @@ const ServicesForm: React.FC<ServicesFormProps> = ({ serviceEntries }) => {
             return;
         }
 
-        /*
-         * regular expression removes the parantheses and everything inside of the parantheses
-         * - this is required because the backend does not have parentheses in the POST request
-        */
        const url =
             `http://${process.env.REACT_APP_SERVER_ADDR}:8000/invoke-service?serviceName=` +
             service.replace(/\([^()]*\)/g, "");
@@ -174,7 +141,6 @@ const ServicesForm: React.FC<ServicesFormProps> = ({ serviceEntries }) => {
         };
 
         if (params.length) {
-            /* this is cursed code : should figure out a way to work around this */
             fetchOptions.body = JSON.stringify([
                 ...params,
             ] as unknown as BodyInit);
