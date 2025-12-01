@@ -970,7 +970,7 @@ public abstract class Context {
         break;
 
       case THIS:
-        c = new ThisConext(this, this.stateMachine, command, inputArgs, eSpec.getReturnArgs());
+        c = new ThisConext(this, this.stateMachine, command, inputArgs, eSpec.getReturnArgs(), actor);
         break;
 
       case CONTROL:
