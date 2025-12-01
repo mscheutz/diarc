@@ -25,3 +25,8 @@ core/bin/
 diarcRos/bin/
 vision/bin/
 /node_modules/
+logs
+*.workspace
+*code-workspace
+*.log
+*.lock
