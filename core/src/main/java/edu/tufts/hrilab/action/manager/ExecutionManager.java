@@ -2443,7 +2443,7 @@ public class ExecutionManager implements GoalListener {
       if (actions.isEmpty()) {
         return new ConditionJustification(false, Factory.createPredicate("knowAction", actionSignature));
       }
-      actions = actions.stream().filter(action -> action.getDBFile().equals(learnedActionsFile) || action.getDBFile() == null).toList();
+      actions = actions.stream().filter(action -> action.getDBFile() == null || action.getDBFile().equals(learnedActionsFile)).toList();
       if (actions.isEmpty()) {
         return new ConditionJustification(false, Factory.createPredicate("taughtAction", actionSignature));
       }
@@ -2451,11 +2451,20 @@ public class ExecutionManager implements GoalListener {
         //Remove from DB
         Database.getActionDB().removeAction(action);
         //Remove from file
-        if (action.getDBFile() != null) {
+        String actionFile = action.getDBFile();
+        if (actionFile == null) {
+          actionFile = learnedActionsFile;
+        }
+        if (actionFile != null) {
           List<ActionDBEntry> learnedActions = loadLearnedActions(false);
           boolean removed = learnedActions.remove(action);
           if (!removed) {
-            log.warn("action was not found in learned file");
+            //TODO: Look into - get two different ActionDBEntry objects when retrieving from DB vs from file if learned
+            //  during this instance of TRACS. If present on startup, then the same object is returned and matches above
+            removed = learnedActions.removeIf(a -> a.getType().equals(action.getType()) && a.getRoles().size() == action.getRoles().size());
+            if (!removed) {
+              log.warn("action was not found in learned file");
+            }
           }
           ActionScriptLanguageWriter writer = new ActionScriptLanguageWriter();
           writer.writeToFile(learnedActions, learnedActionsFile);
