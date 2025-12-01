@@ -969,9 +969,14 @@ public abstract class Context {
         c = new ObservationContext(this, this.stateMachine, command, inputArgs, actor, Observable.TRUE);
         break;
 
+      case THIS:
+        c = new ThisConext(this, this.stateMachine, command, inputArgs, eSpec.getReturnArgs());
+        break;
+
       case CONTROL:
         log.error("Error: addEvent is not compatible with controls");
         break;
+
     }
 
     //add new child context to childContexts
