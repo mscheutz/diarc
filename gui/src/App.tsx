@@ -83,7 +83,6 @@ const App: React.FC = () => {
         },
     });
 
-    // Parse incoming messages and update available endpoints
     useEffect(() => {
         if (!lastMessage?.data) return;
 

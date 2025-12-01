@@ -1,6 +1,7 @@
+// TabbedComponentViewer.tsx
+
 // IMPORTS //
-// @ts-ignore
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
@@ -8,10 +9,11 @@ import { ReadyState, SendMessage } from "react-use-websocket";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 
-import { handlerRoots, handlers } from "./util/constants";
+import { handlers } from "./util/constants";
 import "./util/StyleOverrides.css";
 import { Button } from "../Button";
 
+// CONSTANTS //
 const flexTabPanelClass = "hidden flex-col min-h-0 grow";
 
 type UnavailablePanelMode = "connecting" | "unavailable";
@@ -30,9 +32,28 @@ interface Props {
     wsBaseUrl: string;
     generalBaseUrl: URL | string;
     onReloadWebsocket: () => void;
-
-    // NEW: did the WS ever complete an open handshake in this session
     hasEverOpened: boolean;
+}
+
+// Derive types from handlers
+type HandlerKey = keyof typeof handlers;
+type HandlerConfig = (typeof handlers)[HandlerKey];
+
+/**
+ * Given a path, find the corresponding handler config and its root prefix.
+ * This avoids indexing handlers with a plain `string` key.
+ */
+function findHandlerForPath(
+    path: string
+): { root: string; handler: HandlerConfig } | null {
+    const entry = Object.entries(handlers).find(([root]) =>
+        path.startsWith(root)
+    );
+
+    if (!entry) return null;
+
+    const [root, handler] = entry as [string, HandlerConfig];
+    return { root, handler };
 }
 
 const UnavailablePanel: React.FC<UnavailablePanelProps> = ({
@@ -45,14 +66,14 @@ const UnavailablePanel: React.FC<UnavailablePanelProps> = ({
     return (
         <div
             className="flex flex-col space-y-5 fixed
-                        top-1/2 left-1/2 translate-x-[-50%]
-                        translate-y-[-50%] items-center"
+                       top-1/2 left-1/2 translate-x-[-50%]
+                       translate-y-[-50%] items-center"
         >
             <div className="flex flex-row justify-center justify-items-center">
                 <FontAwesomeIcon
                     icon={faTriangleExclamation}
                     size="10x"
-                    color={"#f0a900"}
+                    color="#f0a900"
                 />
             </div>
             <div className="text-4xl text-center">
@@ -84,102 +105,77 @@ const TabbedComponentViewer: React.FC<Props> = ({
                                                     hasEverOpened,
                                                 }) => {
     const [hasEverHadEndpoints, setHasEverHadEndpoints] = useState(false);
-
-    // Track whether the *initial* connection attempt effectively timed out
     const [initialConnectionTimedOut, setInitialConnectionTimedOut] =
         useState(false);
 
-    // Single timeout handle for the initial connect path
-    const initialTimeoutRef = useRef<number | null>(null);
-
-    // Once we’ve seen any endpoints, remember that permanently
+    // Track if we have *ever* seen endpoints, and reset timeout if so.
     useEffect(() => {
         if (!hasEverHadEndpoints && availableEndpoints.length > 0) {
             setHasEverHadEndpoints(true);
             setInitialConnectionTimedOut(false);
-            if (initialTimeoutRef.current !== null) {
-                window.clearTimeout(initialTimeoutRef.current);
-                initialTimeoutRef.current = null;
-            }
         }
     }, [availableEndpoints, hasEverHadEndpoints]);
 
-    // Initial connection timeout logic: handles the iOS/slow-device “stuck connecting” case.
+    // Initial connection timeout: protects the "first connect" case on flaky devices (e.g. iOS).
     useEffect(() => {
-        const noEndpointsYet =
-            !hasEverHadEndpoints && availableEndpoints.length === 0;
-
-        // If we've already had endpoints, or currently have some, this whole mechanism is irrelevant.
-        if (!noEndpointsYet) {
-            if (initialTimeoutRef.current !== null) {
-                window.clearTimeout(initialTimeoutRef.current);
-                initialTimeoutRef.current = null;
-            }
+        // If we've already had endpoints, or currently have some, we don't care.
+        if (hasEverHadEndpoints || availableEndpoints.length > 0) {
             if (initialConnectionTimedOut) {
                 setInitialConnectionTimedOut(false);
             }
             return;
         }
 
-        const isConnecting = readyState === ReadyState.CONNECTING;
-
-        // Only arm the timeout while in the very first CONNECTING phase
-        if (isConnecting && !initialConnectionTimedOut) {
-            const timeoutMs = 8000; // tune as needed
-
-            if (initialTimeoutRef.current === null) {
-                initialTimeoutRef.current = window.setTimeout(() => {
-                    // Recheck conditions on timeout fire to avoid stale state
-                    const stillNoEndpoints =
-                        !hasEverHadEndpoints && availableEndpoints.length === 0;
-                    if (stillNoEndpoints) {
-                        console.warn(
-                            "Initial WS connection timed out; marking as unavailable"
-                        );
-                        setInitialConnectionTimedOut(true);
-                    }
-                }, timeoutMs);
+        // Only start timeout once we've seen at least one open attempt.
+        if (!hasEverOpened) {
+            if (initialConnectionTimedOut) {
+                setInitialConnectionTimedOut(false);
             }
-        } else {
-            // Not CONNECTING anymore, clear any pending timeout.
-            if (initialTimeoutRef.current !== null) {
-                window.clearTimeout(initialTimeoutRef.current);
-                initialTimeoutRef.current = null;
-            }
+            return;
         }
 
-        return () => {
-            if (initialTimeoutRef.current !== null) {
-                window.clearTimeout(initialTimeoutRef.current);
-                initialTimeoutRef.current = null;
+        // If we're not currently CONNECTING, clear any timeout state and bail.
+        if (readyState !== ReadyState.CONNECTING) {
+            if (initialConnectionTimedOut) {
+                setInitialConnectionTimedOut(false);
             }
-        };
+            return;
+        }
+
+        const timeoutMs = 8000; // tune as needed
+        const timer = window.setTimeout(() => {
+            // At the time of firing, treat "no endpoints yet" as a timeout condition.
+            if (!hasEverHadEndpoints && availableEndpoints.length === 0) {
+                console.warn(
+                    "Initial WS connection timed out; marking as unavailable"
+                );
+                setInitialConnectionTimedOut(true);
+            }
+        }, timeoutMs);
+
+        return () => window.clearTimeout(timer);
     }, [
         readyState,
         hasEverHadEndpoints,
         availableEndpoints.length,
         initialConnectionTimedOut,
+        hasEverOpened,
     ]);
 
     const isClosedState = readyState === ReadyState.CLOSED;
 
-    // Show fullscreen panel only when:
-    //  - we never had endpoints, and currently have none, OR
-    //  - the initial connection timed out
     const shouldShowUnavailablePanel =
         (availableEndpoints.length === 0 && !hasEverHadEndpoints) ||
         initialConnectionTimedOut;
 
-    // Decide whether the panel says "Connecting..." or "Unavailable"
     const unavailableMode: UnavailablePanelMode =
-        initialConnectionTimedOut || isClosedState || hasEverOpened
+        (shouldShowUnavailablePanel && isClosedState) || initialConnectionTimedOut
             ? "unavailable"
             : "connecting";
 
     return (
         <Tabs
-            className="displayFlexImportant flex-col min-h-0 grow w-full mt-20
-                         w-full md:w-5/6"
+            className="displayFlexImportant flex-col min-h-0 grow w-full mt-20 md:w-5/6"
         >
             <TabList
                 hidden={availableEndpoints.length === 0 && !hasEverHadEndpoints}
@@ -188,27 +184,24 @@ const TabbedComponentViewer: React.FC<Props> = ({
                 {availableEndpoints.length === 0 && hasEverHadEndpoints && (
                     <Tab>Unavailable</Tab>
                 )}
-                {
-                    //@ts-ignore
-                    availableEndpoints.toSorted().map((path, index) => {
-                        const root = handlerRoots.find((root) =>
-                            path.startsWith(root)
-                        );
-                        if (!root) return null;
+
+                {availableEndpoints
+                    .slice()
+                    .sort()
+                    .map((path) => {
+                        const match = findHandlerForPath(path);
+                        if (!match) return null;
+
+                        const { root, handler } = match;
+                        const label =
+                            handler.tabName + path.substring(root.length);
+
                         return (
-                            <Tab
-                                key={index}
-                                title={
-                                    handlers[root].tabName +
-                                    path.substring(root.length)
-                                }
-                            >
-                                {handlers[root].tabName +
-                                    path.substring(root.length)}
+                            <Tab key={path} title={label}>
+                                {label}
                             </Tab>
                         );
-                    })
-                }
+                    })}
             </TabList>
 
             {shouldShowUnavailablePanel && (
@@ -221,26 +214,28 @@ const TabbedComponentViewer: React.FC<Props> = ({
                 </TabPanel>
             )}
 
-            {
-                //@ts-ignore
-                availableEndpoints.toSorted().map((path, index) => {
-                    const root = handlerRoots.find((root) =>
-                        path.startsWith(root)
-                    );
-                    if (!root) return null;
+            {availableEndpoints
+                .slice()
+                .sort()
+                .map((path) => {
+                    const match = findHandlerForPath(path);
+                    if (!match) return null;
 
-                    const Component: React.FC<{
+                    const { handler } = match;
+
+                    const Component = handler
+                        .component as React.FC<{
                         path: string;
                         lastMessage: MessageEvent<any> | null;
                         sendMessage: SendMessage;
                         readyState: ReadyState;
                         baseUrl: string | URL;
-                    }> = handlers[root].component;
+                    }>;
 
                     return (
                         <TabPanel
                             className={flexTabPanelClass}
-                            key={index}
+                            key={path}
                             forceRender
                         >
                             <Component
@@ -252,8 +247,7 @@ const TabbedComponentViewer: React.FC<Props> = ({
                             />
                         </TabPanel>
                     );
-                })
-            }
+                })}
         </Tabs>
     );
 };

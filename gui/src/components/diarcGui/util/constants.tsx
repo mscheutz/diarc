@@ -19,10 +19,10 @@ const handlers = {
         tabName: "Action Programmer",
         component: ActionProgrammer
     },
-    "belief": {
-        tabName: "Belief Viewer",
-        component: BeliefViewer
-    },
+    // "belief": {
+    //     tabName: "Belief Viewer",
+    //     component: BeliefViewer
+    // },
     "chat": {
         tabName: "Chat Viewer",
         component: ChatViewer
@@ -32,10 +32,10 @@ const handlers = {
 //         component: GoalViewer
         component: GoalQueueViewer
     },
-    "goalManager": {
-        tabName: "Goal Submission",
-        component: GoalSubmission
-    },
+    // "goalManager": {
+    //     tabName: "Goal Submission",
+    //     component: GoalSubmission
+    // },
     "tradeService": {
         tabName: "TRADE Service Viewer",
         component: TradeServiceViewer
