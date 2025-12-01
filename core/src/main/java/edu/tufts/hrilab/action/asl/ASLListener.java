@@ -1,4 +1,4 @@
-// Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.1
+// Generated from /home/eric/code/diarc/core/src/main/java/edu/tufts/hrilab/action/asl/ASL.g4 by ANTLR 4.13.2
 package edu.tufts.hrilab.action.asl;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -617,16 +617,6 @@ public interface ASLListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitRecoveryMaximumAttempts(ASLParser.RecoveryMaximumAttemptsContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link ASLParser#locks}.
-	 * @param ctx the parse tree
-	 */
-	void enterLocks(ASLParser.LocksContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link ASLParser#locks}.
-	 * @param ctx the parse tree
-	 */
-	void exitLocks(ASLParser.LocksContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ASLParser#spec}.
 	 * @param ctx the parse tree

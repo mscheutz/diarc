@@ -124,7 +124,6 @@ public class TradeServiceContext extends ArgumentBasedContext {
         if (firstArg) {
           // first arg is ?actor -- leave out of TSI call
           firstArg = false;
-          continue;
         } else if (arg.isReturn) {
           if (returnArg != null) {
             log.error("More than one return value in executeAction for primitive action: " + tsi);
