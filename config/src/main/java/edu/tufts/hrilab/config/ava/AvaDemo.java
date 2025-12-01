@@ -21,7 +21,7 @@ public class AvaDemo extends DiarcConfiguration {
   String openaiEndpoint = "https://dashboard.thinkingrobots.ai/qwen";
   boolean usePrivateEndpoint = false; //Do not set to true, use arg
   private String locationRefs = "refs/locations.json";
-  private String speakerId = "";
+  private String speakerId = "Direct Audio Device: HDA Intel PCH, HDMI 0, HDMI 0";
   private boolean initKiosk = true;
   private boolean persistKiosk = true;
   private String mediaDir = "ava";
@@ -52,6 +52,7 @@ public class AvaDemo extends DiarcConfiguration {
     }
     if (cmdLine.hasOption("mock")) {
       useMockAva = true;
+      speakerId = "";
     }
     if (cmdLine.hasOption("useMic")) {
       useMicrophone = true;
@@ -93,7 +94,10 @@ public class AvaDemo extends DiarcConfiguration {
   public void runConfiguration() {
     log.info("Starting Ava Demo Config");
 
-    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist";
+    //EW: Adding noConfirmation, but still setting needsValidation in AvaLLMServiceProvider so it will perform validation.
+    //  Doing to add the possibility of generating failure responses from the Ava service provider without affecting other domains
+    //  (to prevent nonsensical tldl failure responses from being used)
+    String parserArgs = "-tldl avadict.dict avaTemplate.dict -cache -cacheName ava -cachePersist -noConfirmation -noCacheLLM";
     if (useLLMParser) {
       parserArgs += " -llm";
     }
@@ -128,7 +132,11 @@ public class AvaDemo extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker webapp -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, " -female -volume 0.3 -showMixers");// -matchMixer Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
+    String maryTTSArgs = " -female -volume 0.1 -showMixers";
+    if (!speakerId.isEmpty()) {
+      maryTTSArgs += " -matchMixer " + speakerId;
+    }
+    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, maryTTSArgs);// -matchMixer Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
     //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://92.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
 //      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");
@@ -156,6 +164,9 @@ public class AvaDemo extends DiarcConfiguration {
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);
     } else {
+      if (!speakerId.isEmpty()) {
+        avaArgs += " -matchMixer " + speakerId;
+      }
       createInstance(edu.tufts.hrilab.ava.AvaComponent.class, avaArgs);
     }
 

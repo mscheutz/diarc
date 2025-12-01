@@ -24,6 +24,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.io.IOUtils;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -455,6 +456,66 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
       log.error("exception in textToSpeech", ex);
       speaking = false;
       return false;
+    }
+  }
+
+  //TODO: move back to AvaComponent? or does clipLock and tracking actually matter?
+  @TRADEService
+  public void playAudioClip(String path) {
+    speaking = true;
+    AtomicBoolean isDone = new AtomicBoolean(false);
+
+    try {
+      log.info("[playAudioClip] playing audio clip at path: " + path);
+      File audioFile = new File(path);
+      ais = AudioSystem.getAudioInputStream(audioFile);
+
+      Clip playbackClip = null;
+
+      try {
+        if (mixerID == -1) {
+          playbackClip = AudioSystem.getClip();
+        } else {
+          playbackClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
+        }
+        playbackClip.open(ais);
+
+        // LineListener to close the clip when done
+        Clip finalPlaybackClip = playbackClip;
+        playbackClip.addLineListener(event -> {
+          if (event.getType() == LineEvent.Type.STOP) {
+            finalPlaybackClip.close();
+            isDone.set(true);
+          }
+        });
+        clipLock.lock();
+        currentPlaybackClips.add(playbackClip);
+        clipLock.unlock();
+      } catch (LineUnavailableException ex) {
+        log.error("line unavailable", ex);
+      } catch (IOException ex) {
+        log.error("io exception reading file", ex);
+      }
+
+      if (volume < 1.0f) {
+        FloatControl gainControl = (FloatControl) playbackClip.getControl(FloatControl.Type.MASTER_GAIN);
+        gainControl.setValue(10f * (float) Math.log10(volume * 0.1));
+      }
+
+      playbackClip.loop(0);
+      playbackClip.start();
+
+      while (!isDone.get()) {
+        Util.Sleep(100);
+      }
+      clipLock.lock();
+      currentPlaybackClips.remove(playbackClip);
+      clipLock.unlock();
+      log.debug("Exiting textToSpeech");
+      speaking = false;
+    } catch (Exception ex) {
+      log.error("exception in textToSpeech", ex);
+      speaking = false;
     }
   }
 

@@ -48,6 +48,7 @@ import edu.tufts.hrilab.slug.common.UtteranceType;
 import edu.tufts.hrilab.util.Http;
 import edu.tufts.hrilab.util.RotationHelpers;
 import edu.tufts.hrilab.util.Convert;
+import edu.tufts.hrilab.util.Util;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -60,6 +61,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -134,7 +136,10 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   private OutputStream ready_process_os = null;
   private boolean shouldDingReady = true;
   private boolean listenForWW = true;
-  private int mixerID;
+  private int mixerID = -1;
+  //boolean haveDisplay = true;
+  private Lock displayLock = new ReentrantLock();
+  private Condition telepresenceCondition = displayLock.newCondition();
 
   public AvaComponent() {
     super();
@@ -149,6 +154,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     options.add(Option.builder("z_lift_thresh").hasArg().argName("z_lift_threshold").desc("Set the Z lift threshold in meters (default: " + zLiftThresh + ")").build());
     options.add(Option.builder("camera_tilt_thresh").hasArg().argName("camera_til_threshold").desc("Set the camera tilt threshold  (default: " + cameraTiltThresh + ")").build());
     options.add(Option.builder("camera_height").hasArg().argName("camera_height").desc("Set the height of the camera in meters (default:" + cameraHeight + ")").build());
+    options.add(Option.builder("matchMixer").hasArgs().argName("name").desc("String to match for mixer in case of device re-ordering. Do not quote argument if spaces needed.").build());
     return options;
   }
 
@@ -190,6 +196,12 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 
     if (cmdLine.hasOption("camera_height")) {
       cameraHeight = Double.valueOf(cmdLine.getOptionValue("camera_height"));
+    }
+
+    if (cmdLine.hasOption("matchMixer")) {
+      String matchString = String.join(" ", cmdLine.getOptionValues("matchMixer"));
+      mixerID = ConfigurableMicrophone.matchMixer(matchString);
+      log.debug("Matching mixer string \"" + matchString + "\"");
     }
 
   }
@@ -282,7 +294,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
 //    setZLift(0);
     getCameraHeightMax();
 
-    mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
+    //mixerID = ConfigurableMicrophone.matchMixer("Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
   }
 
   private void adjustDockTags(Map<String, Pair<Point3d, Quat4d>> allTags, List<String> dockTags) {
@@ -1186,27 +1198,52 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
   }
 
-  @TRADEService
+  //TODO: Move back strictly to this component? Initially moved method to MaryTTS component while debugging to see if locking
+  // and line management was part of the issue, but don't believe it is actually necessary
+  //@TRADEService
   public void playAudioClip(String fileName) {
+    log.info("[playAudioClip] calling method on MaryTTSComponent");
+    String homeDir = System.getProperty("user.home");
+    String path = Paths.get(homeDir, ".diarc", "ava", fileName).toString();
     try {
-      String homeDir = System.getProperty("user.home");
-      String path = Paths.get(homeDir, ".diarc","ava",fileName).toString();
-      log.info("[playAudioClip] playing audio clip at path: " + path);
-      File audioFile = new File(path);
-      AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
-      AudioFormat format = audioStream.getFormat();
-      DataLine.Info info = new DataLine.Info(Clip.class, format);
-      Clip audioClip = (Clip) AudioSystem.getLine(info);
-      audioClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
-      audioClip.open(audioStream);
-      FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
-      control.setValue(20f * (float) Math.log10(0.3));
-      audioClip.start();
-      Thread.sleep(1000); //TODO: implement LineListener and actually block a correct amount of time
-      audioClip.close();
-      audioStream.close();
-    } catch (Exception e) {
-      log.error("[listenForWWandASR] error playing ww detection audio clip", e);
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class)).call(void.class, path);
+    } catch (TRADEException e) {
+      log.debug("[playAudioClip] exception calling playAudioClip in MaryTTSComponent. Attempting locally", e);
+      try {
+        log.info("[playAudioClip] playing audio clip at path: " + path);
+        File audioFile = new File(path);
+        AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+
+        AudioFormat format = audioStream.getFormat();
+        Clip audioClip;
+        if (mixerID == -1) {
+          DataLine.Info info = new DataLine.Info(Clip.class, format);
+          audioClip = (Clip) AudioSystem.getLine(info);
+        } else {
+          audioClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
+        }
+        audioClip.open(audioStream);
+        FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
+        control.setValue(20f * (float) Math.log10(0.3));
+
+        AtomicBoolean isDone = new AtomicBoolean(false);
+        Clip finalPlaybackClip = audioClip;
+        audioClip.addLineListener(event -> {
+          if (event.getType() == LineEvent.Type.STOP) {
+            finalPlaybackClip.close();
+            isDone.set(true);
+          }
+        });
+        audioClip.loop(0);
+        audioClip.start();
+
+        while (!isDone.get()) {
+          Util.Sleep(100);
+        }
+        audioStream.close();
+      } catch (Exception ex) {
+        log.error("[playAudioClip] error playing audio clip", ex);
+      }
     }
   }
   @Override
@@ -1216,11 +1253,30 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @Override
   public void listenForWWandASR() {
     listenForWW = true;
-    //TODO: Configure paths/get resources better
-    //args:--whisper_model, --ww_model_path, --ww_detection_thresh
+    //TODO: What of the below do we want to expose through the config?
+    //args:
+    // --model_size: "tiny", "base", "small", "medium", "large"
+    // --ww_model_path: ~/.diarc/python/ww/models/hey_eyva_model_float32.tflite
+    // --ww_detection_thresh: 0.8
+    // --use_faster_whisper
+    // --gpu
+    // --asr_mode: 1 == local, 2 == remote
+    // --endpoint: http://<ip>:5000/
     String home = System.getProperty("user.home");
-    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py");
-//    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--use_faster_whisper");
+
+    // moonshine base cpu
+    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py");
+
+    // fasterwhisper small gpu
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py", "--model_size","small","--use_faster_whisper","--asr_mode","1","--gpu");
+
+    // remote fasterwhisper small gpu
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ww_and_asr.py","--use_faster_whisper","--asr_mode","2","--endpoint", "http://localhost:5000/");
+
+    //********If haven't updated ww env and script, use the below*******
+    //ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", home+"/.diarc/python/ww/run_ww_and_asr.py", "--whisper_model", "base.en");
+
     processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
     try {
       Process process = processBuilder.start();
@@ -1229,26 +1285,24 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       String result = "";
       while (listenForWW) {
         while (result.isEmpty()) {
+          //// Wake Word ////
           //Wait for WW detection
           while (is.available() == 0 && listenForWW) {
             Thread.sleep(100);
           }
+          //WW detected, check if due to model trigger or external interrupt (mute or shutdown)
           if (!listenForWW) {
             break;
           }
-          //Clear stream buffer of message indicating WW detection
+          //Read message indicating WW detection from stream buffer
           StringBuilder s = new StringBuilder();
           while (is.available() != 0) {
             s.append((char) is.read());
           }
           log.info("[listenForWWandASR] reading from inputstream: " + s.toString());
-          //Display on screen that we are listening
-          try {
-            TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class,Long.class));
-            service.call(void.class,"Understanding speech",15);
-          } catch (TRADEException e) {
-            log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
-          }
+          //Display on screen that we are now listening using ASR
+          displayText("Understanding speech", 10000);
+          //Also play audio indicating listening status
           if (shouldDing) {
             playAudioClip("ding.wav");
             try {
@@ -1260,6 +1314,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             shouldDing = true;
           }
 
+          //// ASR ////
           //Wait for ASR result:
           log.info("waiting for ASR result");
           while (is.available() == 0) {
@@ -1271,40 +1326,48 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
             s.append((char) is.read());
           }
           result = s.toString();
-          //If ASR timed out, loop back to WW detection
-          if (result.equals("<unk>\n")) {
-            playAudioClip("negativeASRResult.wav");
-            result = "";
+        }
+
+        //Parse ASR result - form: <prefix> <speech>
+        //  <unk> == base failure case - ASR timed out before detecting any voice activity or was unable to transcribe anything
+        //  <cutoff> == false positive ww detection heuristics triggered on python side - attempt to parse, but fail silently if so
+        //  <full> == base success case  - have full ASR results
+        boolean cutoff_result = false;
+        //If ASR timed out, loop back to WW detection
+        if (!result.isEmpty()) {
+          //  TODO: Do we want this distinction between vad triggering without any transcription vs no vad at all?
+          if (result.equals("<unk>\n") || result.equals("<novad>\n")) {
+            if (result.equals("<unk>\n")) {
+              // ASR couldn't parse, play low toned beep and loop to top
+              playAudioClip("negativeASRResult.wav");
+            }
             try {
               TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
               service.call(void.class);
             } catch (TRADEException e) {
               log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
             }
-          } else {
-            playAudioClip("positiveASRResult.wav");
-            try {
-              TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
-              service.call(void.class,"Recognized Speech: " + result);
-            } catch (TRADEException e) {
-              log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+            if (result.equals("<novad>\n")) {
+              displayText("<No voice input detected>", 5000);
             }
-            new Thread(() -> {
-              try {
-                Thread.sleep(5000);
-              } catch (InterruptedException e) {
-                log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
-              }
-              try {
-                TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
-                service.call(void.class);
-              } catch (TRADEException e) {
-                log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
-              }
-            }).start();
+            result = "";
+            continue;
+          } else if (result.startsWith("<cutoff> ")) {
+            // ASR detected potential false positive - attempt to parse before handling
+            result = result.substring(9);
+            cutoff_result = true;
+          } else {
+            // Positive ASR detection, play high toned beep, display understood text, and attempt to parse
+            if (result.startsWith("<full> ")) {
+              result = result.substring(7);
+            } else {
+              log.warn("[listenForWWandASR] unknown or no result prefix detected, is run_ww_and_asr.py up to date?");
+            }
+            playAudioClip("positiveASRResult.wav");
+            displayText("Recognized Speech: " + result, 5000);
           }
-        }
-        if (!result.isEmpty()) {
+
+          // Reformat ASR result to prevent parser issues, create utterance
           result = result.trim().toLowerCase();
           result = result.replaceAll("\\p{Punct}", "");
           Utterance utterance = new Utterance.Builder()
@@ -1314,12 +1377,37 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
                   .setUtteranceType(UtteranceType.UNKNOWN)
                   .setIsInputUtterance(true)
                   .build();
+
+          // Experimental <cutoff> ww false positive effort //
+          //Attempt to parse first, if input can't be parsed, then assume false positive ww detection in this case and do not
+          // make noticeable to the user that something happened
+          if (cutoff_result) {
+            try {
+              utterance = TRADE.getAvailableService(new TRADEServiceConstraints().name("parseUtterance").argTypes(Utterance.class)).call(Utterance.class, utterance);
+            } catch (TRADEException ex) {
+              log.error("[listenForWWAndASR] error calling parseUtterance", ex);
+            }
+            if (utterance.getType() == UtteranceType.UNKNOWN) {
+              //TODO: How should this be phrased?
+              displayText("<Input could not be understood and detected as potential background noise>", 10000);
+              result = "";
+              continue;
+            } else {
+              // Present successful parse as normal
+              //TODO: how does this practically look when interacting with the robot?
+              playAudioClip("positiveASRResult.wav");
+              displayText("Recognized Speech: " + result, 5000);
+            }
+          }
+
+          //Pass ASR result off to dialogue pipeline and loop to top to continue listening for further input
           try {
             TRADE.getAvailableService(new TRADEServiceConstraints().name("reportRecognizedSpeech").argTypes(Utterance.class)).call(void.class, utterance);
             log.info("Reported utterance \"" + result + "\"");
           } catch (TRADEException ex) {
             log.warn("Failed to report speech \"" + result + "\"");
           }
+
           result = "";
         }
       }
@@ -1333,6 +1421,28 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     } catch (IOException | InterruptedException e) {
       log.error("error running process",e);
     }
+  }
+
+  private void displayText(String text, int duration) {
+    try {
+      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
+      service.call(void.class,text);
+    } catch (TRADEException e) {
+      log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+    }
+    new Thread(() -> {
+      try {
+        Thread.sleep(duration);
+      } catch (InterruptedException e) {
+        log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
+      }
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+        service.call(void.class);
+      } catch (TRADEException e) {
+        log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+      }
+    }).start();
   }
 
   @Override
@@ -1507,14 +1617,122 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     speaker = Factory.createSymbol("local_visitor");
   }
 
-//  @TRADEService
-//  @Action
-//  public void toggleDisplay() {
-//    try {
-//      CodecToggleHdmiWithRecovery.toggle();
-//    } catch (Exception e) {
-//      log.error("[toggleDisplay] exception when toggling via xml/http api", e);
-//    }
-//  }
+  @TRADEService
+  @Action
+  public void switchDisplayToTRACS() {
+    displayLock.lock();
+    telepresenceCondition.signal();
+    displayLock.unlock();
+  }
+
+  @OnInterrupt(onCancelServiceCall = "switchDisplayToTRACS()", onSuspendServiceCall = "switchDisplayToTRACS()")
+  @TRADEService
+  @Action
+  public void switchDisplayToTelepresencePrimitive() {
+    //Switch to telepresence
+    String homeDir = System.getProperty("user.home");
+    String scriptDir = Paths.get(homeDir, ".diarc").toString();
+    String statusCommand = "/bin/bash " + scriptDir + "getDisplay.sh";
+    String statusResult = callLocal(statusCommand);
+    log.info("[switchDisplayToTelepresence] status result: " + statusResult);
+    List<String> results = Arrays.stream(statusResult.split("MainVideoSource")).toList();
+    int id;
+    if (results.size() > 1) {
+      id = Integer.valueOf(results.get(1).substring(1,1));
+    } else {
+      id = 0;
+    }
+    log.info("[switchDisplayToTelepresence] id of current display input: " + id);
+    //TODO: Error handling based on current state due to external forces? What to do if already in telepresence display
+    if (id == 1) {
+      log.warn("[switchDisplayToTelepresence] already in telepresence display?");
+    }
+    String result = callLocal("/bin/bash " + scriptDir + "setDisplay2.sh");
+    log.info("[switchDisplayToTelepresence] to telepresence result: " + result);
+    //TODO: what is proper error handling/result when switch failed?
+
+    //Wait until condition is signalled by switchDisplayToTRACS
+    try {
+      displayLock.lock();
+      telepresenceCondition.await();
+      displayLock.unlock();
+    } catch (InterruptedException e) {
+      log.error("[switchDisplayToTelepresence] interrupted waiting on telepresence condition",e);
+    }
+
+    //TODO: What if out of telepresence display externally? Won't trigger anything here
+    //      Double check current display again?
+    //Switch back to TRACS
+    result = callLocal("/bin/bash " + scriptDir + "setDisplay1.sh");
+    log.info("[switchDisplayToTelepresence] to TRACS result: " + result);
+  }
+
+  //@TRADEService
+  //public void toggleDisplay() {
+  //  String homeDir = System.getProperty("user.home");
+  //  String scriptDir = Paths.get(homeDir, ".diarc").toString();
+  //  String statusCommand = "/bin/bash " + scriptDir + "/getDisplay.sh";
+  //  log.info("[toggleDisplay] status command: " + statusCommand);
+  //  String statusResult = callLocal(statusCommand);
+  //  log.info("[toggleDisplay] status result: " + statusResult);
+
+
+  //  DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+  //  DocumentBuilder builder = null;
+  //  try {
+  //    builder = factory.newDocumentBuilder();
+  //  } catch (ParserConfigurationException e) {
+  //    throw new RuntimeException(e);
+  //  }
+  //  Document doc = null;
+  //  try {
+  //    doc = builder.parse(
+  //            new ByteArrayInputStream(statusResult.getBytes("UTF-8"))
+  //    );
+  //  } catch (SAXException e) {
+  //    throw new RuntimeException(e);
+  //  } catch (IOException e) {
+  //    throw new RuntimeException(e);
+  //  }
+
+  //  String value;
+  //  NodeList nodes = doc.getElementsByTagName("MainVideoSource");
+  //  value = nodes.item(0).getTextContent();
+
+  //  int id = Integer.parseInt(value);
+  //  log.info("[toggleDisplay] id of current display input: " + id);
+  //  String command;
+  //  if (id == 1) {
+  //    command = "/bin/bash " + scriptDir + "/setDisplay2.sh";
+  //  } else {
+  //    command = "/bin/bash " + scriptDir + "/setDisplay1.sh";
+  //  }
+  //  String result = callLocal(command);
+  //  log.info("[toggleDisplay] result: " + result);
+  //  //TODO: what is proper error handling/result when switch failed?
+  //  haveDisplay = !haveDisplay;
+  //}
+  //@TRADEService
+  //public boolean getHaveDisplay() {
+  //  return haveDisplay;
+  //}
+
+  private String callLocal(String command) {
+    StringBuilder result = new StringBuilder();
+    String s;
+    try {
+      Process p = Runtime.getRuntime().exec(command);
+      BufferedReader br = new BufferedReader(
+              new InputStreamReader(p.getInputStream()));
+      while ((s = br.readLine()) != null)
+        result.append(s);
+      p.waitFor();
+      log.info("[callLocal] p: " + p);
+      p.destroy();
+    } catch (Exception e) {
+      log.error("[showTRACS] error changing display input");
+    }
+    return result.toString();
+  }
 
 }

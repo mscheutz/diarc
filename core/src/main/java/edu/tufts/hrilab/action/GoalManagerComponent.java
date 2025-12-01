@@ -1168,8 +1168,24 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
   @TRADEService
   @Action
   @OnInterrupt(onCancelServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)", onSuspendServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)")
-  protected GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout) {
+  public GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout) {
     return em.waitForNextGoalStatusUpdate(gid,timeout);
+  }
+
+  /**
+   * Wait until a particular goal has its goal status updated to any new value.
+   *
+   * @param gid the goal id to check on
+   * @param timeout max amount of time to wait. 0 == indefinite
+   * @param startStatus the initial status of the supplied goal - supply if worried about synchronization between checks and calls to this method
+   * @return The GoalStatus after the soonest update occurred. Returns null if the goal is not found, the goal is
+   *          already terminated, or if the timeout duration elapses without an updated
+   */
+  @TRADEService
+  @Action
+  @OnInterrupt(onCancelServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)", onSuspendServiceCall = "interruptWaitForNextGoalStatusUpdate(?gid)")
+  public GoalStatus waitForNextGoalStatusUpdate(long gid, long timeout, GoalStatus startStatus) {
+    return em.waitForNextGoalStatusUpdate(gid,timeout, startStatus);
   }
 
   @TRADEService

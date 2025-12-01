@@ -119,6 +119,11 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     @Override
     public Utterance parseNLUCompletionResponse(Utterance incomingUtterance, Completion llmResponse) {
         try {
+            Utterance.Builder failure = new Utterance.Builder();
+            failure.setSpeaker(incomingUtterance.getSpeaker());
+            failure.setAddressee(incomingUtterance.getAddressee());
+            failure.setSemantics(Factory.createPredicate("error("+incomingUtterance.getAddressee()+",and(report,not(understand(" + incomingUtterance.getAddressee() + ",that)),ask(pleaseTryAgain))"));
+            failure.setWords(incomingUtterance.getWords());
             Utterance.Builder output = new Utterance.Builder(incomingUtterance);
             log.info(llmResponse.getText());
             String responseString = llmResponse.getText();
@@ -127,7 +132,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             Matcher m = semanticsPattern.matcher(responseString);
             if (!m.matches()) {
                 log.error("[AvaLLMServiceProvider] cannot find Semantics or input type result in LLM response");
-                return incomingUtterance;
+                return failure.build();
             }
             Predicate semantics = Factory.createPredicate(m.group(m.groupCount()));
 
@@ -135,21 +140,21 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             m = typePattern.matcher(responseString);
             if (!m.matches()) {
                 log.error("[AvaLLMServiceProvider] cannot find Input Type result in LLM response");
-                return incomingUtterance;
+                return failure.build();
             }
             UtteranceType utteranceType;
             try {
                 utteranceType = UtteranceType.valueOf(m.group(m.groupCount()).trim());
             } catch (IllegalArgumentException e) {
                 log.error("[AvaLLMServiceProvider] generated Input Type {} invalid", m.group(m.groupCount()));
-                return incomingUtterance;
+                return failure.build();
             }
 
             Pattern confidencePattern = Pattern.compile(".*\"?Confidence\"?\\s*:\\s*\"?(.*?)\"?\\s*}.*", Pattern.DOTALL);
             m = confidencePattern.matcher(responseString);
             if (!m.matches()) {
                 log.error("[AvaLLMServiceProvider] cannot find Confidence result in LLM response");
-                return incomingUtterance;
+                return failure.build();
             }
             String confidenceString = m.group(m.groupCount()).trim();
             int confidence = Integer.parseInt(confidenceString);
@@ -157,7 +162,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 log.info("[spotPickAndPlaceLLMServiceProvider] llm indicated parse result as low confidence ({})", confidence);
                 //TODO: start conversation and recovery dialogue?
                 //      Cache result so that script can be entered based on utterance/agent/something?
-                return incomingUtterance;
+                return failure.build();
             }
 
             output.setUtteranceType(utteranceType);
@@ -170,7 +175,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             }
             processedArguments = processSemantics(semantics, processedArguments, varMap, output, incomingUtterance.getAddressee().getName());
             if (processedArguments == null) {
-                return incomingUtterance;
+                return failure.build();
             }
             output.setSemantics(Factory.createPredicate(semantics.getName(), processedArguments));
             output.setNeedsValidation(true);
@@ -180,7 +185,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             if (parsed) {
                 return result;
             } else {
-                return incomingUtterance;
+                return failure.build();
             }
         } catch (Exception e) {
             log.warn("[parseNLUCompletionResponse]",e);
@@ -659,7 +664,8 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         try {
             List<Predicate> learnedActionPredicates = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLearnedActionPredicates")).call(List.class);
             for (Predicate pred : learnedActionPredicates) {
-                learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n", pred, pred.getName());
+              learnedActionsString += String.format("%s\n#\n", pred);
+              //learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n", pred, pred.getName());
             }
             retrievedLearnedActions = true;
         } catch (TRADEException e) {
@@ -672,7 +678,8 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         if (entry.isScript() && entry.getDBFile() == null && !entry.getName().equals("planned")) {
             log.info("[handleDatabaseAddition] have learned action {}", entry.getName());
             //learnedActions.add(entry);
-            learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n",entry.getSignature(false),entry.getName());
+            //learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n",entry.getSignature(false),entry.getName());
+            learnedActionsString += String.format("%s\n#\n", entry.getSignature(false));
         }
     }
 
@@ -731,6 +738,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 case "reportIsVideoSaved":
                 case "sayText":
                 case "say":
+                case "reportBatteryLevel":
                     return true;
                 default:
                     return false;
@@ -1096,10 +1104,20 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "disable admin mode",
                 "disableAdminMode()", 10);
         exposedActionList.add(entry);
-      entry = new LLMActionEntry("toggleDisplay()",
-              "Change the output on your display between the two possible inputs",
-              "toggle display",
-              "toggleDisplay()", 10);
+      //entry = new LLMActionEntry("toggleDisplay()",
+      //        "Change the output on your display between the two possible inputs",
+      //        "toggle display",
+      //        "toggleDisplay()", 10);
+      //exposedActionList.add(entry);
+      entry = new LLMActionEntry("switchDisplayToTelepresence()",
+              "Change the output on your display to the telepresence stream",
+              "start telepresence",
+              "switchDisplayToTelepresence()", 10);
+      exposedActionList.add(entry);
+      entry = new LLMActionEntry("switchDisplayToTRACS()",
+              "Change the output on your display to what is shown by TRACS, the default setting",
+              "return to TRACS",
+              "switchDisplayToTRACS()", 10);
       exposedActionList.add(entry);
     }
 }
