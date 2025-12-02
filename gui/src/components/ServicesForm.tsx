@@ -20,6 +20,7 @@ import { Button } from "../components/Button";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "../lib/util";
 import { queryServices } from "../api/services/route";
+import { config } from "../config";
 
 interface ServicesFormProps {
     serviceEntries: [string, Map<string, Set<string>>][];
@@ -128,7 +129,7 @@ const ServicesForm: React.FC<ServicesFormProps> = ({ serviceEntries }) => {
         }
 
        const url =
-            `http://${process.env.REACT_APP_SERVER_ADDR}:8000/invoke-service?serviceName=` +
+            `http://${config.serverAddr}:8000/invoke-service?serviceName=` +
             service.replace(/\([^()]*\)/g, "");
 
         const fetchOptions: RequestInit = {

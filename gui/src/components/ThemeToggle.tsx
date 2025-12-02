@@ -1,9 +1,7 @@
-
-
 import * as React from "react";
 import { useTheme } from "next-themes";
 import Icons from "./Icons";
-import { Button } from "./Button";
+import { Button } from "../@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -17,7 +15,7 @@ export function ThemeToggle() {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button
-                    size="md"
+                    size="icon"
                     variant="outline"
                     className="relative"
                 >

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { config } from '../config';
 
 const User = () => {
   const [ws, setWs] = useState<WebSocket | null>(null);
@@ -6,7 +7,7 @@ const User = () => {
   const [inputMessage, setInputMessage] = useState('');
 
   const connect = () => {
-    const websocket = new WebSocket('ws://${process.env.REACT_APP_SERVER_ADDR}:8000/user');
+    const websocket = new WebSocket(`ws://${config.serverAddr}:8000/user`);
     websocket.onmessage = (event) => {
       setMessages((prevMessages) => [...prevMessages, event.data]);
     };

@@ -103,8 +103,7 @@ const ChatViewer: React.FC<Props> = ({
             setSidebarStyle({});
             setChatContainerStyle({});
         }
-    }, [sidebarVisible, setSidebarVisible, setSidebarStyle,
-        setChatContainerStyle])
+    }, [sidebarVisible])
 
     const createConversation = (chat: Chat, index: number) => {
         return (
@@ -268,15 +267,14 @@ const ChatViewer: React.FC<Props> = ({
                 {newChats.map((chat, index) => createConversation(chat, index))}
             </ConversationList>
         );
-    },
-        [lastMessage, chats.toString()]);
+    }, [lastMessage, path, sendMessage]);
 
     useEffect(() => {
         sendMessage(JSON.stringify({
             path: path,
             method: "startup"
         }))
-    }, [path]);
+    }, [path, sendMessage]);
 
     useEffect(() => {
         if (!focusRobot) return;

@@ -1,4 +1,3 @@
-import "./App.css";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import useWebSocket from "react-use-websocket";
 
@@ -6,15 +5,17 @@ import Providers from "./components/Providers";
 import Navbar from "./components/Navbar";
 import TabbedComponentViewer from "./components/diarcGui/TabbedComponentViewer";
 import RobotMessageToast from "./components/diarcGui/RobotMessageToast";
+import Login from "./components/Login";
+import { useAuth } from "./contexts/AuthContext";
+import { config } from "./config";
 
 type EndpointList = string[];
 
 function buildWsUrl(): string {
-    const siteId = process.env.REACT_APP_SITE_ID;
-    const baseAddr = process.env.REACT_APP_SERVER_ADDR;
+    const { siteId, serverAddr } = config;
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const host = baseAddr ?? window.location.hostname;
+    const host = serverAddr ?? window.location.hostname;
     const port = "8000";
     const pathPrefix = siteId ? `/${siteId}/` : "/";
 
@@ -38,7 +39,7 @@ type RobotMessage = {
     timestamp: number;
 };
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
     const [availableEndpoints, setAvailableEndpoints] = useState<EndpointList>([]);
     const [hasEverOpened, setHasEverOpened] = useState(false);
     const [latestRobotMessage, setLatestRobotMessage] = useState<RobotMessage | null>(null);
@@ -148,36 +149,48 @@ const App: React.FC = () => {
     };
 
     return (
-        <Providers>
-            <div className="flex h-screen w-full flex-col overflow-hidden bg-background">
-                <Navbar />
-                <main className="flex flex-1 flex-col overflow-hidden p-4 sm:p-6">
-                    <div className="flex flex-1 flex-col min-h-0 w-full max-w-6xl mx-auto">
-                        <TabbedComponentViewer
-                            availableEndpoints={availableEndpoints}
-                            sendMessage={sendMessage}
-                            readyState={readyState}
-                            lastMessage={lastMessage}
-                            wsBaseUrl={webSocketUrl}
-                            generalBaseUrl={httpBaseUrl}
-                            onReloadWebsocket={handleReloadWebsocket}
-                            hasEverOpened={hasEverOpened}
-                            onTabChange={setCurrentTabPath}
-                            requestedTabPath={requestedTabPath}
-                            focusRobot={focusRobot}
-                        />
-                    </div>
-                </main>
-                {latestRobotMessage && !isOnChatTab && (
-                    <RobotMessageToast
-                        sender={latestRobotMessage.sender}
-                        message={latestRobotMessage.message}
-                        timestamp={latestRobotMessage.timestamp}
-                        onOpenChat={handleOpenChat}
-                        onDismiss={() => setLatestRobotMessage(null)}
+        <div className="flex h-screen w-full flex-col overflow-hidden bg-background">
+            <Navbar />
+            <main className="flex flex-1 flex-col overflow-hidden p-4 sm:p-6">
+                <div className="flex flex-1 flex-col min-h-0 w-full max-w-6xl mx-auto">
+                    <TabbedComponentViewer
+                        availableEndpoints={availableEndpoints}
+                        sendMessage={sendMessage}
+                        readyState={readyState}
+                        lastMessage={lastMessage}
+                        wsBaseUrl={webSocketUrl}
+                        generalBaseUrl={httpBaseUrl}
+                        onReloadWebsocket={handleReloadWebsocket}
+                        hasEverOpened={hasEverOpened}
+                        onTabChange={setCurrentTabPath}
+                        requestedTabPath={requestedTabPath}
+                        focusRobot={focusRobot}
                     />
-                )}
-            </div>
+                </div>
+            </main>
+            {latestRobotMessage && !isOnChatTab && (
+                <RobotMessageToast
+                    sender={latestRobotMessage.sender}
+                    message={latestRobotMessage.message}
+                    timestamp={latestRobotMessage.timestamp}
+                    onOpenChat={handleOpenChat}
+                    onDismiss={() => setLatestRobotMessage(null)}
+                />
+            )}
+        </div>
+    );
+};
+
+const AppRouter: React.FC = () => {
+    const { isAuthenticated } = useAuth();
+
+    return isAuthenticated ? <AppContent /> : <Login />;
+};
+
+const App: React.FC = () => {
+    return (
+        <Providers>
+            <AppRouter />
         </Providers>
     );
 };

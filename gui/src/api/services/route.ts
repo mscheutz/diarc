@@ -1,6 +1,8 @@
+import { config } from '../../config';
+
 export const getServices = async () => {
     try {
-        const response = await fetch(`http://${process.env.REACT_APP_SERVER_ADDR}:8000/services`);
+        const response = await fetch(`http://${config.serverAddr}:8000/services`);
         if (!response.ok) {
             throw new Error("Network response was not ok");
         }
@@ -25,7 +27,7 @@ export const queryServices = async (
     service: string
 ) => {
     const url =
-        `http://${process.env.REACT_APP_SERVER_ADDR}:8000/invoke-service?serviceName=` +
+        `http://${config.serverAddr}:8000/invoke-service?serviceName=` +
         service.replace(/\([^()]*\)/g, "");
 
     try {

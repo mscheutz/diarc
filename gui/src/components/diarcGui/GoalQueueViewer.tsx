@@ -63,8 +63,7 @@ const SortGoals: React.FC<SortGoalsProps> = ({
             <Select
                 options={sortCriteria}
                 value={sortCriterion}
-                //@ts-ignore
-                onChange={setSortCriterion}
+                onChange={(option) => option && setSortCriterion(option)}
                 classNames={{
                     control: () => '!bg-background !border-border',
                     menu: () => '!bg-popover !border-border',
@@ -139,12 +138,10 @@ type Entry = {
     status: string,
     start: string,
     end: string,
-    //priority: number,
-    //id: number,
+    id: number,
     failureReason?: string,
     scheduled: boolean,
     interval: string
-
 };
 
 const toArray = (e: Entry) => {
@@ -304,7 +301,14 @@ const GoalTable: React.FC<GoalTableProps> = (
     );
 };
 
-const ScheduledGoalTable: React.FC<GoalTableProps> = (
+type ScheduledGoalTableProps = {
+    scheduledData: Entry[],
+    handleSelect: (e: React.ChangeEvent<HTMLInputElement>) => void,
+    filteredActor: string,
+    selectedStatuses: string[]
+};
+
+const ScheduledGoalTable: React.FC<ScheduledGoalTableProps> = (
     { scheduledData, handleSelect, filteredActor, selectedStatuses }
 ) => {
     return (
@@ -406,7 +410,7 @@ const GoalViewer: React.FC<Props> = ({
         setSelectedIds([])
     };
 
-    const handleRadioSelect = (e) => {
+    const handleRadioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSortAscending(e.target.value === "ascending");
     };
 
@@ -465,8 +469,7 @@ const GoalViewer: React.FC<Props> = ({
                     : -compareRaw(entry0, entry1);
             };
 
-            //@ts-ignore
-            const copy = array.slice();
+            const copy = [...array];
             return copy.sort(compare);
         };
 
@@ -477,10 +480,8 @@ const GoalViewer: React.FC<Props> = ({
         const newData = JSON.parse(lastMessage.data);
         if (!newData.path || newData.path !== path) return;
 
-        console.log(lastMessage.data)
-        console.log(newData)
-        const newScheduledGoals = newData.goals.filter(e => e.scheduled)
-        const newGoals = newData.goals.filter(e => !e.scheduled)
+        const newScheduledGoals = newData.goals.filter((e: Entry) => e.scheduled)
+        const newGoals = newData.goals.filter((e: Entry) => !e.scheduled)
 
         setData(prevData => {
             const mergedMap = new Map(

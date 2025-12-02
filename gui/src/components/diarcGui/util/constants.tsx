@@ -1,41 +1,35 @@
 import ActionProgrammer from "../actionProgrammer/ActionProgrammer";
-import BeliefViewer from "../BeliefViewer";
 import ChatViewer from "../ChatViewer";
-import GoalViewer from "../GoalViewer";
 import GoalQueueViewer from "../GoalQueueViewer";
-import MapViewer from "../MapViewer";
-import GoalSubmission from "../goalSubmission/GoalSubmission";
 import VisionManager from "../vision/VisionManager";
 import TradeServiceViewer from "../tradeService/TradeServiceViewer";
-import AvaBehaviorTab from "../AvaBehaviorTab"
-import MediaManager from "../MediaManager"
+import AvaBehaviorTab from "../AvaBehaviorTab";
+import MediaManager from "../MediaManager";
 
-const handlerRoots: string[] =
-    //["actionProgrammer", "belief", "chat", "goalViewer", "goalManager", "map", "vision", "tradeService"];
-    ["actionProgrammer", "chat", "goalViewer", "goalQueueViewer", "vision", "tradeService", "avaBehaviors",  "media"];
+const handlerRoots: string[] = [
+    "actionProgrammer",
+    "chat",
+    "goalViewer",
+    "goalQueueViewer",
+    "vision",
+    "tradeService",
+    "avaBehaviors",
+    "media"
+];
 
 const handlers = {
     "actionProgrammer": {
         tabName: "Action Programmer",
         component: ActionProgrammer
     },
-    // "belief": {
-    //     tabName: "Belief Viewer",
-    //     component: BeliefViewer
-    // },
     "chat": {
         tabName: "Chat Viewer",
         component: ChatViewer
     },
     "goalViewer": {
         tabName: "Goal Viewer",
-//         component: GoalViewer
         component: GoalQueueViewer
     },
-    // "goalManager": {
-    //     tabName: "Goal Submission",
-    //     component: GoalSubmission
-    // },
     "tradeService": {
         tabName: "TRADE Service Viewer",
         component: TradeServiceViewer
@@ -60,8 +54,6 @@ const columns = [
     "Goal",
     "Status",
     "Start time",
-//     "Priority",
-//     "ID",
 ];
 
 const pastColumns = [
@@ -94,8 +86,6 @@ const sortCriteria: Option[] = [
     { value: "status", label: "Status" },
     { value: "start", label: "Start time" },
     { value: "end", label: "End time" },
-//     { value: "priority", label: "Priority" },
-//     { value: "id", label: "ID" },
 ]
 
 const statuses: string[] = [
