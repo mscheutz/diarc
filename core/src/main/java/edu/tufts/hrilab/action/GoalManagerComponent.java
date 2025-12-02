@@ -581,41 +581,6 @@ public class GoalManagerComponent extends DiarcComponent implements GuiProvider 
     return submitGoal(g, type, priorityTier, priority);
   }
 
-  //EXPERIMENTAL/SHORT TERM PATCH - addition of "submitter"
-  /**
-   * Submit a goal to be achieved.
-   *
-   * @param g            the goal in goal(actor,state) or action(actor,args) form
-   * @param type         action execution type
-   * @param priorityTierSymbol priority tier for the submitted goal (overrides default value)
-   * @param submitter    the entity (currently only the speaker if a dialogue goal) triggering this goal submission
-   * @return the goal ID (for checking status)
-   */
-  @TRADEService
-  @Action
-  public long submitGoal(Predicate g, ExecutionType type, Symbol priorityTierSymbol, Symbol submitter) {
-    log.debug("[submitGoal]: " + g + " with execution type: " + type + " and priority tier: " + priorityTierSymbol);
-
-    PriorityTier priorityTier = PriorityTier.fromString(priorityTierSymbol.toString());
-    long priority = getPriorityForGoal(g);
-    if (priorityTier == null || priorityTier == PriorityTier.UNINITIALIZED) {
-      priorityTier = getPriorityTierForGoal(g);
-    }
-    return submitGoal(g, type, priorityTier, priority, submitter);
-  }
-  /**
-   * Submit a goal to be achieved.
-   *
-   * @param g            the goal in goal(actor,state) or action(actor,args) form
-   * @param type         action execution type
-   * @param priorityTier priority tier for the submitted goal (overrides default value)
-   * @return the goal ID (for checking status)
-   */
-  @TRADEService
-  @Action
-  public long submitGoal(Predicate g, ExecutionType type, Symbol priorityTier) {
-    return submitGoal(g, type, PriorityTier.fromString(priorityTier.toString()));
-  }
   /**
    * Submit a goal to be achieved.
    *

@@ -5,6 +5,7 @@
 package edu.tufts.hrilab.demos;
 
 import edu.tufts.hrilab.action.execution.ExecutionType;
+import edu.tufts.hrilab.action.goal.PriorityTier;
 import edu.tufts.hrilab.config.MockTwoNaoDemo;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -37,7 +38,7 @@ public class TwoNaoDemoTest extends GenerativeDiarcIntegrationTest {
     addServiceToObserve("assertBelief", Term.class);
     addServiceToObserve("retractBelief", Term.class);
     addServiceToObserve("submitGoal", Predicate.class);
-    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, Symbol.class);
+    addServiceToObserve("submitGoal", Predicate.class, ExecutionType.class, PriorityTier.class);
     addServiceToObserve("joinOnGoal", Long.class);
     addServiceToObserve("sayText", String.class);
 

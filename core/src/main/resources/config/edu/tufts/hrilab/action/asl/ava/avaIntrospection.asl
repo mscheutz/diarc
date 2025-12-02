@@ -25,27 +25,28 @@ import edu.tufts.hrilab.action.goal.Goal;
     act:generateResponse(at(?actor, !currentLocation));
 }
 
+//() = describeAllKnownLocations() {
+//    Predicate !state;
+//    java.lang.Long !goalID;
+//    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+//    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+//    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
+//    Boolean !blockingTaskExists;
+//    Symbol !submitter;
+//    !submitter = this:getOriginalSubmitter();
+//
+//    !blockingTaskExists = act:blockingTaskExists();
+//    if (op:equals(!blockingTaskExists,true)) {
+//        act:generateResponseFromString("I cannot list all of my saved locations while performing another task, please try again when I am not busy");
+//    } else {
+//        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "describeAllKnownLocationsAction(?actor)");
+//        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
+//        !goalStatus = act:joinOnGoal(!goalID);
+//    }
+//}
+
+//() = describeAllKnownLocationsAction() {
 () = describeAllKnownLocations() {
-    Predicate !state;
-    java.lang.Long !goalID;
-    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
-    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
-    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
-    Boolean !blockingTaskExists;
-    Symbol !submitter;
-    !submitter = this:getOriginalSubmitter();
-
-    !blockingTaskExists = act:blockingTaskExists();
-    if (op:equals(!blockingTaskExists,true)) {
-        act:generateResponseFromString("I cannot list all of my saved locations while performing another task, please try again when I am not busy");
-    } else {
-        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "describeAllKnownLocationsAction(?actor)");
-        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
-        !goalStatus = act:joinOnGoal(!goalID);
-    }
-}
-
-() = describeAllKnownLocationsAction() {
     List !locationNames;
     java.lang.String !locationName;
 
@@ -114,27 +115,28 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
+//() = reportTaughtActions() {
+//    Predicate !state;
+//    java.lang.Long !goalID;
+//    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+//    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+//    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
+//    Boolean !blockingTaskExists;
+//    Symbol !submitter;
+//    !submitter = this:getOriginalSubmitter();
+//
+//    !blockingTaskExists = act:blockingTaskExists();
+//    if (op:equals(!blockingTaskExists,true)) {
+//        act:generateResponseFromString("I cannot list taught actions while performing another task, please try again when I am not busy");
+//    } else {
+//        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reportTaughtActionsAction(?actor)");
+//        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
+//        !goalStatus = act:joinOnGoal(!goalID);
+//    }
+//}
+//
+//() = reportTaughtActionsAction() {
 () = reportTaughtActions() {
-    Predicate !state;
-    java.lang.Long !goalID;
-    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
-    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
-    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
-    Boolean !blockingTaskExists;
-    Symbol !submitter;
-    !submitter = this:getOriginalSubmitter();
-
-    !blockingTaskExists = act:blockingTaskExists();
-    if (op:equals(!blockingTaskExists,true)) {
-        act:generateResponseFromString("I cannot list taught actions while performing another task, please try again when I am not busy");
-    } else {
-        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reportTaughtActionsAction(?actor)");
-        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
-        !goalStatus = act:joinOnGoal(!goalID);
-    }
-}
-
-() = reportTaughtActionsAction() {
     List !taughtActions;
     Predicate !actionPred;
     Integer !numTaught;
@@ -152,50 +154,50 @@ import edu.tufts.hrilab.action.goal.Goal;
         act:generateResponseFromString("I have not been taught any new actions");
     } else {
         !numTaught = op:invokeMethod(!taughtActions,"size");
-        if (op:gt(!numTaught,5)) {
-            !bindings = act:askQuestionFromString("I have been taught !numTaught new actions. How many should I list at a time?", amount(X));
-            if (op:invokeMethod(!bindings,"isEmpty")) {
-                exit(FAIL,not(wasAnswered(myQuestion)));
-            }
-            !numToReportString = op:get(!bindings, !x);
-            if (op:equalsValue(!numToReportString,"all")) {
-                !numToReport = op:newObject("java.lang.Integer", !numTaught);
-            } else {
-                !numToReport = op:newObject("java.lang.Integer", !numToReportString);
-            }
-            if (op:gt(!numToReport,0)) {
-                foreach (!actionPred : !taughtActions) {
-                    if (op:equals(!numReported,!numToReport)) {
-                        !bindings = act:askQuestionFromString("Would you like me to keep going?", val(X));
-                        if (op:invokeMethod(!bindings,"isEmpty")) {
-                            exit(FAIL,not(wasAnswered(myQuestion)));
-                        }
-                        !confirmation = op:get(!bindings, !x);
-                        if (op:equalsValue(!confirmation, yes)) {
-                            !numReported = op:newObject("java.lang.Integer", 0);
-                        } else {
-                            //weird hack to get desired control flow ('break' from loop)
-                            !numReported = op:++(!numReported);
-                        }
-                    } elseif (op:lt(!numReported,!numToReport)) {
-                        !actionName = op:getName(!actionPred);
-                        act:generateResponseFromString(!actionName);
-                        !numReported = op:++(!numReported);
-                    }
-                }
-                act:generateResponseFromString("I am done listing the actions I have been taught");
-            } else {
-            act:generateResponseFromString("Sorry, I am exiting this conversation context. Please try again and supply a positive number");
-            }
-        } else {
-            act:generateResponseFromString("I have been taught !numTaught new actions. They are named");
-            foreach (!actionPred : !taughtActions) {
-                //!reportedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "iHaveBeenTaughtTo(!actionPred)");
-                //act:generateResponse(!reportedPred);
-                !actionName = op:getName(!actionPred);
-                act:generateResponseFromString(!actionName);
-            }
+        //if (op:gt(!numTaught,5)) {
+        //    !bindings = act:askQuestionFromString("I have been taught !numTaught new actions. How many should I list at a time?", amount(X));
+        //    if (op:invokeMethod(!bindings,"isEmpty")) {
+        //        exit(FAIL,not(wasAnswered(myQuestion)));
+        //    }
+        //    !numToReportString = op:get(!bindings, !x);
+        //    if (op:equalsValue(!numToReportString,"all")) {
+        //        !numToReport = op:newObject("java.lang.Integer", !numTaught);
+        //    } else {
+        //        !numToReport = op:newObject("java.lang.Integer", !numToReportString);
+        //    }
+        //    if (op:gt(!numToReport,0)) {
+        //        foreach (!actionPred : !taughtActions) {
+        //            if (op:equals(!numReported,!numToReport)) {
+        //                !bindings = act:askQuestionFromString("Would you like me to keep going?", val(X));
+        //                if (op:invokeMethod(!bindings,"isEmpty")) {
+        //                    exit(FAIL,not(wasAnswered(myQuestion)));
+        //                }
+        //                !confirmation = op:get(!bindings, !x);
+        //                if (op:equalsValue(!confirmation, yes)) {
+        //                    !numReported = op:newObject("java.lang.Integer", 0);
+        //                } else {
+        //                    //weird hack to get desired control flow ('break' from loop)
+        //                    !numReported = op:++(!numReported);
+        //                }
+        //            } elseif (op:lt(!numReported,!numToReport)) {
+        //                !actionName = op:getName(!actionPred);
+        //                act:generateResponseFromString(!actionName);
+        //                !numReported = op:++(!numReported);
+        //            }
+        //        }
+        //        act:generateResponseFromString("I am done listing the actions I have been taught");
+        //    } else {
+        //    act:generateResponseFromString("Sorry, I am exiting this conversation context. Please try again and supply a positive number");
+        //    }
+        //} else {
+        act:generateResponseFromString("I have been taught !numTaught new actions. They are named");
+        foreach (!actionPred : !taughtActions) {
+            //!reportedPred = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "iHaveBeenTaughtTo(!actionPred)");
+            //act:generateResponse(!reportedPred);
+            !actionName = op:getName(!actionPred);
+            act:generateResponseFromString(!actionName);
         }
+        //}
     }
 }
 
@@ -212,6 +214,13 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !numToReportString;
     Integer !numToReport;
     Integer !numReported = 0;
+
+    //Boolean !blockingTaskExists;
+    //!blockingTaskExists = act:blockingTaskExists();
+    //if (op:equals(!blockingTaskExists,true)) {
+    //    act:generateResponseFromString("I cannot list predefined actions while performing another task, please try again when I am not busy");
+    //    return;
+    //}
 
     !instructableActions = tsc:getInstructableActions();
     if (op:isEmpty(!instructableActions)) {
@@ -286,28 +295,29 @@ import edu.tufts.hrilab.action.goal.Goal;
 }
 
 
-//TODO: LLM only - fail gracefully if no LLM present
+////TODO: LLM only - fail gracefully if no LLM present
+//() = reportInstructableActions() {
+//    Predicate !state;
+//    java.lang.Long !goalID;
+//    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+//    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+//    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
+//    Boolean !blockingTaskExists;
+//    Symbol !submitter;
+//    !submitter = this:getOriginalSubmitter();
+//
+//    !blockingTaskExists = act:blockingTaskExists();
+//    if (op:equals(!blockingTaskExists,true)) {
+//        act:generateResponseFromString("I cannot list instructable actions while performing another task, please try again when I am not busy");
+//    } else {
+//        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reportInstructableActionsAction(?actor)");
+//        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
+//        !goalStatus = act:joinOnGoal(!goalID);
+//    }
+//}
+
+//() = reportInstructableActionsAction() {
 () = reportInstructableActions() {
-    Predicate !state;
-    java.lang.Long !goalID;
-    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
-    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
-    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
-    Boolean !blockingTaskExists;
-    Symbol !submitter;
-    !submitter = this:getOriginalSubmitter();
-
-    !blockingTaskExists = act:blockingTaskExists();
-    if (op:equals(!blockingTaskExists,true)) {
-        act:generateResponseFromString("I cannot list instructable actions while performing another task, please try again when I am not busy");
-    } else {
-        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "reportInstructableActionsAction(?actor)");
-        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
-        !goalStatus = act:joinOnGoal(!goalID);
-    }
-}
-
-() = reportInstructableActionsAction() {
     Map !bindings;
     Symbol !type;
     Variable !x = "X";
@@ -321,7 +331,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     !type = op:get(!bindings, !x);
     if (op:equalsValue(!type,"taught") || op:equalsValue(!type,"both")) {
         !validResponse = op:newObject("java.lang.Boolean", true);
-        act:reportTaughtActionsAction();
+        act:reportTaughtActions();
     }
     if (op:equalsValue(!type,"predefined") || op:equalsValue(!type,"both")) {
         !validResponse = op:newObject("java.lang.Boolean", true);
@@ -437,28 +447,29 @@ import edu.tufts.hrilab.action.goal.Goal;
     act:generateResponse(!kioskGoalPredicate);
 }
 
+//() = listSavedVideos() {
+//    Predicate !state;
+//    java.lang.Long !goalID;
+//    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+//    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+//    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
+//    Boolean !blockingTaskExists;
+//    Symbol !submitter;
+//    !submitter = this:getOriginalSubmitter();
+//
+//    !blockingTaskExists = act:blockingTaskExists();
+//    if (op:equals(!blockingTaskExists,true)) {
+//        act:generateResponseFromString("I cannot list saved videos while performing another task, please try again when I am not busy");
+//    } else {
+//        //TODO: if the current action is the kiosk action, then submit with SKIPPENDING priority?
+//        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "listSavedVideosAction(?actor)");
+//        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
+//        !goalStatus = act:joinOnGoal(!goalID);
+//    }
+//}
+
+//() = listSavedVideosAction() {
 () = listSavedVideos() {
-    Predicate !state;
-    java.lang.Long !goalID;
-    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
-    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
-    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
-    Boolean !blockingTaskExists;
-    Symbol !submitter;
-    !submitter = this:getOriginalSubmitter();
-
-    !blockingTaskExists = act:blockingTaskExists();
-    if (op:equals(!blockingTaskExists,true)) {
-        act:generateResponseFromString("I cannot list saved videos while performing another task, please try again when I am not busy");
-    } else {
-        //TODO: if the current action is the kiosk action, then submit with SKIPPENDING priority?
-        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "listSavedVideosAction(?actor)");
-        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
-        !goalStatus = act:joinOnGoal(!goalID);
-    }
-}
-
-() = listSavedVideosAction() {
     List !videoNames;
     Integer !numVideos;
     String !videoName;
@@ -497,28 +508,29 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
+//() = listSavedImages() {
+//    Predicate !state;
+//    java.lang.Long !goalID;
+//    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
+//    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
+//    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
+//    Boolean !blockingTaskExists;
+//    Symbol !submitter;
+//    !submitter = this:getOriginalSubmitter();
+//
+//    !blockingTaskExists = act:blockingTaskExists();
+//    if (op:equals(!blockingTaskExists,true)) {
+//        act:generateResponseFromString("I cannot list saved images while performing another task, please try again when I am not busy");
+//    } else {
+//        //TODO: if the current action is the kiosk action, then submit with SKIPPENDING priority?
+//        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "listSavedImagesAction(?actor)");
+//        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
+//        !goalStatus = act:joinOnGoal(!goalID);
+//    }
+//}
+
+//() = listSavedImagesAction() {
 () = listSavedImages() {
-    Predicate !state;
-    java.lang.Long !goalID;
-    edu.tufts.hrilab.action.goal.GoalStatus !goalStatus;
-    edu.tufts.hrilab.action.execution.ExecutionType !execType = ACT;
-    edu.tufts.hrilab.action.goal.PriorityTier !priorityTier = HIGH;
-    Boolean !blockingTaskExists;
-    Symbol !submitter;
-    !submitter = this:getOriginalSubmitter();
-
-    !blockingTaskExists = act:blockingTaskExists();
-    if (op:equals(!blockingTaskExists,true)) {
-        act:generateResponseFromString("I cannot list saved images while performing another task, please try again when I am not busy");
-    } else {
-        //TODO: if the current action is the kiosk action, then submit with SKIPPENDING priority?
-        !state = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "listSavedImagesAction(?actor)");
-        !goalID = act:submitGoal(!state,!execType,!priorityTier,!submitter);
-        !goalStatus = act:joinOnGoal(!goalID);
-    }
-}
-
-() = listSavedImagesAction() {
     List !imageNames;
     Integer !numImages;
     String !imageName;
