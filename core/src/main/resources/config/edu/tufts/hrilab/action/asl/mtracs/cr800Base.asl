@@ -52,7 +52,7 @@
 
  (!speaker) = op:newObject("edu.tufts.hrilab.fol.Symbol",?actor);
 
-  (!bindings) = act:askQuestion(!speaker,"what is its offset", val(X,Y));
+  (!bindings) = act:askQuestion("what is its offset", val(X,Y));
   (!z) = op:get(!bindings, !x);
   tsc:recordPose(?poseName,!z);
 

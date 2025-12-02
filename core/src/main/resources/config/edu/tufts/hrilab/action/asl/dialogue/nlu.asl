@@ -128,7 +128,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
       } elseif (op:equalsValue(!response, no())) {
         // ask for human to rephrase their request
         op:log("debug", "Utterance not validated. Asking to rephrase.");
-        act:sayText("please rephrase");
+        act:generateResponseFromString(!speaker, "please rephrase");
         return;
       } else {
         op:log("error", "Unexpected question response: !response");

@@ -119,7 +119,7 @@
   op:log(debug, "lg !likeGoal");
   //submit modify goal
 
-  !bindings = act:askQuestionFromString(!speaker,"what are the differences", mod(X,Y));
+  !bindings = act:askQuestionFromString("what are the differences", mod(X,Y));
   !modification = op:get(!bindings, !x);
   !modName = op:getName(!modification);
   !location = op:get(!bindings, !y);
@@ -127,14 +127,14 @@
   act:modifyAction(!likeGoal,!modification,!location);
 
 //
-  !bindings = act:askQuestionFromString(!speaker,"okay are there any more differences", mod(X,Y));
+  !bindings = act:askQuestionFromString("okay are there any more differences", mod(X,Y));
   !modification = op:get(!bindings, !x);
   !modName = op:getName(!modification);
   !location = op:get(!bindings, !y);
   while(op:!=(!modName,"none")){
     op:log(debug, "modification !modification");
     act:modifyAction(!newScriptGoal,!modification,!location);
-    !bindings = act:askQuestionFromString(!speaker,"okay are there any more differences", mod(X,Y));
+    !bindings = act:askQuestionFromString("okay are there any more differences", mod(X,Y));
     !modification = op:get(!bindings, !x);
     !location = op:get(!bindings, !y);
     !modName = op:getName(!modification);

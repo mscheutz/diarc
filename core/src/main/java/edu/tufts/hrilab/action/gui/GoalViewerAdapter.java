@@ -17,6 +17,7 @@ import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.gui.GuiAdapter;
 
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -389,13 +390,6 @@ public class GoalViewerAdapter extends GuiAdapter {
         log.warn("[handleMessage] Exception displaying text", e);
       }
     }).start();
-
-    try {
-      TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class));
-      service.call(void.class,"ding.wav");
-    } catch (TRADEException e) {
-      log.warn("[handleMessage] exception playing audio clip on Ava", e);
-    }
   }
 
   /**

@@ -272,7 +272,7 @@ import java.util.List;
     //how do we handle instantiating the objects that we will want at these locations? do we have the same objectAt preconditions? isn't that an issue since we don't do direct perception with the spot?
     act:moveArmToCarryPosition();
     act:openGripper();
-    ?self.act:askQuestionFromString(evan, "Can I please have ?item", val(X));
+    ?self.act:askQuestionFromString("Can I please have ?item", val(X));
     act:closeGripper();
     op:sleep(1000);
     act:moveArmOverBody();

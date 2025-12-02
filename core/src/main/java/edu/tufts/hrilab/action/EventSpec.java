@@ -330,7 +330,8 @@ public final class EventSpec implements Serializable {
     CONTROL,
     OPERATOR,
     GOAL,
-    TSC;
+    TSC,
+    THIS;
 
     public static EventType fromString(String eventStr) {
       if (eventStr != null) {

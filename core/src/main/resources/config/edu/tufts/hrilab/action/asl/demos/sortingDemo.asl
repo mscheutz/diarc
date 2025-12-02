@@ -77,7 +77,7 @@
   edu.tufts.hrilab.fol.Variable !x = "X";
   java.util.Map !bindings;
 
-  (!bindings) = act:askQuestionFromString(?actor,"which Cognex job is used to detect it", job(X));
+  (!bindings) = act:askQuestionFromString("which Cognex job is used to detect it", job(X));
   (!jobID) = op:get(!bindings, !x);
   tsc:addDetectionType(?item,!jobID);
 

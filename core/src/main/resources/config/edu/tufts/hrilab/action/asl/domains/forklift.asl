@@ -98,7 +98,7 @@ import edu.tufts.hrilab.fol.Variable;
     }
 
 
-    !binding = act:askQuestionFromString(?actor,"Do you want to optimize for cargo, weight, or time?", val(X));
+    !binding = act:askQuestionFromString("Do you want to optimize for cargo, weight, or time?", val(X));
     Symbol !metric = op:get(!binding, !key);
 
     Predicate !goal;
@@ -127,7 +127,7 @@ import edu.tufts.hrilab.fol.Variable;
     java.util.Map !bindings;
     Predicate !tmp;
     Variable !x = "X";
-    !bindings = act:askQuestionFromString(?actor,"What is the weight capacity of ?zone?", val(X));
+    !bindings = act:askQuestionFromString("What is the weight capacity of ?zone?", val(X));
     ?weight = op:get(!bindings, !x);
 
     act:generateResponseFromString("Okay.");

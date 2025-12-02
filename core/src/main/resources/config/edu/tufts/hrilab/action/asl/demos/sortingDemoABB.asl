@@ -26,7 +26,7 @@
 
 //  act:submitTTSRequest(?actor,listener,"okay");
 
-  (!bindings) = act:askQuestionFromString(!speaker,"what is its offset", val(X,Y));
+  (!bindings) = act:askQuestionFromString("what is its offset", val(X,Y));
   (!z) = op:get(!bindings, !x);
   act:recordPose(?poseName,!z);
 
@@ -43,7 +43,7 @@
 
 //  act:submitTTSRequest(?actor,listener,"okay");
 
-  (!bindings) = act:askQuestionFromString(!speaker,"which Cognex job is used to detect it", job(X));
+  (!bindings) = act:askQuestionFromString("which Cognex job is used to detect it", job(X));
   (!jobID) = op:get(!bindings, !x);
   tsc:addDetectionType(?item,!jobID);
 
