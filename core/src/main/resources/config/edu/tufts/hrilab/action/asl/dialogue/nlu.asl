@@ -47,6 +47,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
     op:log("debug", "parser results: ?utterance");
 
     // parser error handling
+    java.lang.String !semanticsName;
     Symbol !semantics = op:invokeMethod(?utterance, "getSemantics");
     if (op:isNull(!semantics)) {
       act:updateDialogueHistory(?utterance);
@@ -55,6 +56,16 @@ import edu.tufts.hrilab.slug.common.Utterance;
       !semantics = op:invokeStaticMethod("edu.tufts.hrilab.fol.Factory", "createPredicate", "not(understand(!addressee,that))");
       !addressee.act:handleError(!speaker, !addressee, !semantics, direct);
       return;
+    } else {
+        //Ava specific change to allow custom error messages from hybridParser - remove
+        !semanticsName = op:getName(!semantics);
+        if (op:equals(!semanticsName,"error")) {
+            act:updateDialogueHistory(?utterance);
+            !speaker = op:invokeMethod(?utterance, "getSpeaker");
+            !addressee = op:invokeMethod(?utterance, "getAddressee");
+            act:handleError(!speaker, !addressee, !semantics, direct);
+            return;
+        }
     }
 
     // perform reference resolution
@@ -120,7 +131,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
 
       if (op:isNull(!response)) {
         op:log("debug", "Utterance validation aborted, not processing utterance");
-        act:sayText("Okay, I am ignoring the previous command"); //TODO: not sure about this
+        act:generateResponseFromString(!speaker, "Okay, I am ignoring the previous command"); //TODO: not sure about this
         return;
       } elseif (op:equalsValue(!response, yes())) {
         op:log("debug", "Utterance validated.");
