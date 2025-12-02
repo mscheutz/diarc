@@ -30,3 +30,4 @@ logs
 *code-workspace
 *.log
 *.lock
+*.workspace
