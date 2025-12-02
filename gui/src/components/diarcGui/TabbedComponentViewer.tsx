@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
@@ -29,6 +29,9 @@ interface Props {
     generalBaseUrl: URL | string;
     onReloadWebsocket: () => void;
     hasEverOpened: boolean;
+    onTabChange?: (tabPath: string | null) => void;
+    requestedTabPath?: string | null;
+    focusRobot?: string | null;
 }
 
 type HandlerKey = keyof typeof handlers;
@@ -96,6 +99,9 @@ const TabbedComponentViewer: React.FC<Props> = ({
                                                     generalBaseUrl,
                                                     onReloadWebsocket,
                                                     hasEverOpened,
+                                                    onTabChange,
+                                                    requestedTabPath,
+                                                    focusRobot,
                                                 }) => {
     const [hasEverHadEndpoints, setHasEverHadEndpoints] = useState(false);
     const [initialConnectionTimedOut, setInitialConnectionTimedOut] =
@@ -106,18 +112,36 @@ const TabbedComponentViewer: React.FC<Props> = ({
         return stored ? parseInt(stored, 10) : 0;
     });
 
+    const sortedEndpoints = useMemo(
+        () => availableEndpoints.slice().sort().filter(p => findHandlerForPath(p) !== null),
+        [availableEndpoints]
+    );
+
     const handleTabSelect = (index: number) => {
         setSelectedTabIndex(index);
         sessionStorage.setItem(TAB_STORAGE_KEY, index.toString());
+        onTabChange?.(sortedEndpoints[index] ?? null);
     };
 
     useEffect(() => {
-        const sortedEndpoints = availableEndpoints.slice().sort();
-        if (sortedEndpoints.length > 0 && selectedTabIndex >= sortedEndpoints.length) {
+        if (!requestedTabPath || sortedEndpoints.length === 0) return;
+        const index = sortedEndpoints.findIndex(p => p.startsWith(requestedTabPath));
+        if (index >= 0) {
+            setSelectedTabIndex(index);
+            sessionStorage.setItem(TAB_STORAGE_KEY, index.toString());
+        }
+    }, [requestedTabPath, sortedEndpoints]);
+
+    useEffect(() => {
+        if (sortedEndpoints.length === 0) return;
+        let idx = selectedTabIndex;
+        if (idx >= sortedEndpoints.length) {
+            idx = 0;
             setSelectedTabIndex(0);
             sessionStorage.setItem(TAB_STORAGE_KEY, "0");
         }
-    }, [availableEndpoints, selectedTabIndex]);
+        onTabChange?.(sortedEndpoints[idx] ?? null);
+    }, [sortedEndpoints, selectedTabIndex, onTabChange]);
 
     useEffect(() => {
         if (!hasEverHadEndpoints && availableEndpoints.length > 0) {
@@ -192,10 +216,7 @@ const TabbedComponentViewer: React.FC<Props> = ({
                     <Tab>Unavailable</Tab>
                 )}
 
-                {availableEndpoints
-                    .slice()
-                    .sort()
-                    .map((path) => {
+                {sortedEndpoints.map((path) => {
                         const match = findHandlerForPath(path);
                         if (!match) return null;
 
@@ -221,14 +242,12 @@ const TabbedComponentViewer: React.FC<Props> = ({
                 </TabPanel>
             )}
 
-            {availableEndpoints
-                .slice()
-                .sort()
-                .map((path) => {
+            {sortedEndpoints.map((path) => {
                     const match = findHandlerForPath(path);
                     if (!match) return null;
 
                     const { handler } = match;
+                    const isChat = path.startsWith("chat");
 
                     const Component = handler
                         .component as React.FC<{
@@ -237,6 +256,7 @@ const TabbedComponentViewer: React.FC<Props> = ({
                         sendMessage: SendMessage;
                         readyState: ReadyState;
                         baseUrl: string | URL;
+                        focusRobot?: string | null;
                     }>;
 
                     return (
@@ -251,6 +271,7 @@ const TabbedComponentViewer: React.FC<Props> = ({
                                 sendMessage={sendMessage}
                                 readyState={readyState}
                                 baseUrl={generalBaseUrl}
+                                {...(isChat && focusRobot ? { focusRobot } : {})}
                             />
                         </TabPanel>
                     );

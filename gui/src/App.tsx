@@ -1,5 +1,5 @@
 import "./App.css";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import useWebSocket from "react-use-websocket";
 
 import Providers from "./components/Providers";
@@ -42,6 +42,23 @@ const App: React.FC = () => {
     const [availableEndpoints, setAvailableEndpoints] = useState<EndpointList>([]);
     const [hasEverOpened, setHasEverOpened] = useState(false);
     const [latestRobotMessage, setLatestRobotMessage] = useState<RobotMessage | null>(null);
+    const [currentTabPath, setCurrentTabPath] = useState<string | null>(null);
+    const [requestedTabPath, setRequestedTabPath] = useState<string | null>(null);
+    const [focusRobot, setFocusRobot] = useState<string | null>(null);
+
+    const isOnChatTab = currentTabPath?.startsWith("chat") ?? false;
+
+    const handleOpenChat = useCallback((robotName: string) => {
+        setRequestedTabPath("chat");
+        setFocusRobot(robotName);
+    }, []);
+
+    useEffect(() => {
+        if (isOnChatTab && requestedTabPath === "chat") {
+            setRequestedTabPath(null);
+            setTimeout(() => setFocusRobot(null), 500);
+        }
+    }, [isOnChatTab, requestedTabPath]);
 
     const webSocketUrl = useMemo(() => buildWsUrl(), []);
     const httpBaseUrl = useMemo(
@@ -97,10 +114,9 @@ const App: React.FC = () => {
             if (Array.isArray(data.paths)) {
                 setAvailableEndpoints(data.paths);
             }
-            if (data.path?.includes("chat") && data.sender && data.message) {
-                console.log("Chat message received:", { sender: data.sender, recipient: data.recipient, message: data.message?.substring(0, 50) });
-                const isOutgoingMessage = !!data.recipient;
-                if (!isOutgoingMessage) {
+            if (data.message && typeof data.message === "string" && data.sender && data.recipient) {
+                const isIncomingRobotMessage = data.recipient === "webapp" || data.recipient === "local_user";
+                if (isIncomingRobotMessage) {
                     setLatestRobotMessage({
                         sender: data.sender,
                         message: data.message,
@@ -112,6 +128,12 @@ const App: React.FC = () => {
             console.error("Failed to parse WS message:", e, lastMessage.data);
         }
     }, [lastMessage]);
+
+    useEffect(() => {
+        if (!latestRobotMessage) return;
+        const timer = setTimeout(() => setLatestRobotMessage(null), 8000);
+        return () => clearTimeout(timer);
+    }, [latestRobotMessage?.timestamp]);
 
     const handleReloadWebsocket = () => {
         console.log("Manually triggering WS reconnect");
@@ -140,14 +162,19 @@ const App: React.FC = () => {
                             generalBaseUrl={httpBaseUrl}
                             onReloadWebsocket={handleReloadWebsocket}
                             hasEverOpened={hasEverOpened}
+                            onTabChange={setCurrentTabPath}
+                            requestedTabPath={requestedTabPath}
+                            focusRobot={focusRobot}
                         />
                     </div>
                 </main>
-                {latestRobotMessage && (
+                {latestRobotMessage && !isOnChatTab && (
                     <RobotMessageToast
                         sender={latestRobotMessage.sender}
                         message={latestRobotMessage.message}
                         timestamp={latestRobotMessage.timestamp}
+                        onOpenChat={handleOpenChat}
+                        onDismiss={() => setLatestRobotMessage(null)}
                     />
                 )}
             </div>

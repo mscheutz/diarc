@@ -30,22 +30,22 @@ const MyNewComponent: React.FC<Props> = ({
 
     const generateCustomBehaviors = useCallback(() => {
         return customBehaviorCommands.map((value, index) => (
-            <div key={index} className="flex items-center justify-between px-3 py-2 hover:bg-muted/30 transition-colors">
-                <code className="text-xs font-mono text-foreground truncate flex-1 mr-2">{value}</code>
-                <div className="flex gap-1 shrink-0">
-                    <Button type="button" size="sm" onClick={() => handleSubmit(value)}>
-                        Run
-                    </Button>
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleRemoveCustomBehavior(value)}
-                    >
-                        {"\u00D7"}
-                    </Button>
-                </div>
+            <div key={index} className="relative group border border-border rounded-md bg-card overflow-hidden">
+                <button
+                    onClick={() => handleSubmit(value)}
+                    className="w-full px-3 py-2.5 pr-7 text-xs font-medium hover:bg-muted/50 transition-colors text-left text-foreground break-words"
+                >
+                    {value}
+                </button>
+                <button
+                    onClick={(e) => { e.stopPropagation(); handleRemoveCustomBehavior(value); }}
+                    className="absolute top-1 right-1 h-5 w-5 flex items-center justify-center rounded
+                               text-primary/70 hover:text-primary hover:bg-primary/20
+                               transition-colors text-sm font-bold"
+                    title="Remove"
+                >
+                    {"\u00D7"}
+                </button>
             </div>
         ));
     }, [customBehaviorCommands]);
@@ -116,30 +116,28 @@ const MyNewComponent: React.FC<Props> = ({
                     </button>
                 </div>
 
-                <div className="border border-border rounded-md bg-card flex flex-col overflow-hidden max-h-80">
-                    <div className="px-3 py-2 border-b border-border bg-muted/30 flex items-center justify-between shrink-0">
+                <div className="border border-border rounded-md bg-card overflow-hidden">
+                    <div className="px-3 py-2 border-b border-border bg-muted/30">
                         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Custom Commands
                         </span>
                     </div>
-                    <div className="flex-1 min-h-0 overflow-auto">
-                        {customBehaviorCommands.length === 0 ? (
-                            <div className="p-4 text-center text-sm text-muted-foreground">
-                                No custom commands yet
-                            </div>
-                        ) : (
-                            <div className="divide-y divide-border">
-                                {generateCustomBehaviors()}
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex gap-2 p-3 border-t border-border bg-muted/30 shrink-0">
+                    {customBehaviorCommands.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                            No custom commands yet
+                        </div>
+                    ) : (
+                        <div className="flex flex-wrap gap-2 p-3">
+                            {generateCustomBehaviors()}
+                        </div>
+                    )}
+                    <div className="flex gap-2 p-3 border-t border-border bg-muted/30">
                         <input
                             type="text"
                             className="flex-1 h-8 rounded-md text-sm border border-input bg-background 
-                                       text-foreground px-3 font-mono placeholder:text-muted-foreground
+                                       text-foreground px-3 placeholder:text-muted-foreground
                                        focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                            placeholder="Enter command..."
+                            placeholder="Add custom command..."
                             value={newBehaviorCommand}
                             onChange={(e) => setNewBehaviorCommand(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleAddCustomBehavior()}

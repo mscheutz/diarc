@@ -72,11 +72,12 @@ type Props = {
     path: string,
     lastMessage: MessageEvent<any> | null,
     sendMessage: SendMessage,
-    readyState: ReadyState
+    readyState: ReadyState,
+    focusRobot?: string | null
 };
 
 const ChatViewer: React.FC<Props> = ({
-    path, lastMessage, sendMessage, readyState
+    path, lastMessage, sendMessage, readyState, focusRobot
 }) => {
     const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
     const [sidebarStyle, setSidebarStyle] = useState<object>({});
@@ -276,6 +277,15 @@ const ChatViewer: React.FC<Props> = ({
             method: "startup"
         }))
     }, [path]);
+
+    useEffect(() => {
+        if (!focusRobot) return;
+        const index = chats.findIndex(chat => chat.robotName === focusRobot);
+        if (index >= 0) {
+            setCurrentChat(index);
+            setSidebarVisible(false);
+        }
+    }, [focusRobot, chats]);
 
     const handleSendMessage = (message: string) => {
         message = clean(message)

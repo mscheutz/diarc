@@ -208,7 +208,7 @@ const GoalTable: React.FC<GoalTableProps> = (
             <caption className="hidden">Goal table</caption>
             <thead>
                 <tr className="bg-accent">
-                    <th className="border border-border p-1">
+                    <th className="border border-border px-1 text-center">
                         <input
                             type="checkbox"
                             checked={allSelected}

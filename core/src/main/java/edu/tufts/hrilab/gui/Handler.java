@@ -19,10 +19,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A WebSocket handler which instantiates <code>GuiAdapter</code>s when their
@@ -48,7 +45,7 @@ public class Handler extends TextWebSocketHandler {
   /**
    * The current session.
    */
-  private ArrayList<WebSocketSession> sessions;
+  private HashSet<WebSocketSession> sessions;
 
   /**
    * Maps adapter paths to their references.
@@ -68,7 +65,7 @@ public class Handler extends TextWebSocketHandler {
    * Constructor. Private so as to force use of the factory method.
    */
   private Handler() {
-    sessions = new ArrayList<>();
+    sessions = new HashSet<>();
     adapterMap = new HashMap<>();
   }
 
@@ -144,17 +141,21 @@ public class Handler extends TextWebSocketHandler {
     sendMessage(message, sessions);
   }
 
-  private synchronized void sendMessage(String message, ArrayList<WebSocketSession> sessions) throws IOException {
+  private synchronized void sendMessage(String message, Set<WebSocketSession> sessions) throws IOException {
     if (sessions.isEmpty()) return;
     for (WebSocketSession session : sessions) {
-      session.sendMessage(new TextMessage(message));
+      if (session == null) {
+        sessions.remove(session);
+      } else {
+        session.sendMessage(new TextMessage(message));
+      }
     }
   }
 
   /**
    * Send the client an update on which adapters are available.
    */
-  private void sendAdapterUpdate(ArrayList<WebSocketSession> sessions) {
+  private void sendAdapterUpdate(Set<WebSocketSession> sessions) {
     JsonArray paths = new JsonArray();
     synchronized (adapterLock) {
       for (String path : adapterMap.keySet()) {
@@ -202,7 +203,7 @@ public class Handler extends TextWebSocketHandler {
     if (!this.sessions.contains(session)) {
       this.sessions.add(session);
     }
-    ArrayList<WebSocketSession> sessions = new ArrayList<>();
+    Set<WebSocketSession> sessions = new HashSet<>();
     sessions.add(session);
     sendAdapterUpdate(sessions);
   }
