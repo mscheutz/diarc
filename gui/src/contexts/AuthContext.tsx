@@ -18,9 +18,18 @@ const STORAGE_KEY_AUTH_TOKEN = 'diarc_auth_token';
 const STORAGE_KEY_USERNAME = 'diarc_username';
 const STORAGE_KEY_IS_ADMIN = 'diarc_is_admin';
 
+function buildApiPath(endpoint: string): string {
+    const siteId = config.siteId;
+    if (siteId) {
+        return `/${siteId}${endpoint}`;
+    }
+    return endpoint;
+}
+
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     try {
-        const response = await fetch(endpoint, {
+        const fullPath = buildApiPath(endpoint);
+        const response = await fetch(fullPath, {
             ...options,
             headers: {
                 'Content-Type': 'application/json',

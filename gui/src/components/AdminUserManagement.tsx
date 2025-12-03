@@ -63,7 +63,8 @@ const AdminUserManagement: React.FC = () => {
         
         setIsLoadingUsers(true);
         try {
-            const response = await fetch(`/api/auth/users?token=${token}&siteId=${config.siteId || ''}`);
+            const apiPath = config.siteId ? `/${config.siteId}/api/auth/users` : '/api/auth/users';
+            const response = await fetch(`${apiPath}?token=${token}&siteId=${config.siteId || ''}`);
             if (response.ok) {
                 const data = await response.json();
                 setUsers(data);

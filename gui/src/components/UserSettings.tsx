@@ -21,7 +21,7 @@ interface ChangePasswordFormData {
 }
 
 const UserSettings: React.FC = () => {
-    const { username } = useAuth();
+    const { username, changePassword } = useAuth();
     const [open, setOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -47,28 +47,9 @@ const UserSettings: React.FC = () => {
         }
 
         try {
-            const token = localStorage.getItem('diarc_auth_token');
-            if (!token) {
-                setError('Please log in again');
-                setIsLoading(false);
-                return;
-            }
+            const result = await changePassword(data.currentPassword, data.newPassword);
 
-            const response = await fetch('/api/auth/change-password', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    token,
-                    currentPassword: data.currentPassword,
-                    newPassword: data.newPassword,
-                }),
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
+            if (result.success) {
                 setSuccess(true);
                 form.reset();
                 setTimeout(() => {
