@@ -82,6 +82,9 @@ const ChatViewer: React.FC<Props> = ({
     const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
     const [sidebarStyle, setSidebarStyle] = useState<object>({});
     const [chatContainerStyle, setChatContainerStyle] = useState<object>({});
+    const [hasLoadedHistory, setHasLoadedHistory] = useState<boolean>(false);
+    const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
+    const [pendingHistoryMessages, setPendingHistoryMessages] = useState<any[]>([]);
 
     const handleBackClick = useCallback(() => {
         setSidebarVisible(true);
@@ -207,6 +210,17 @@ const ChatViewer: React.FC<Props> = ({
             return;
         }
 
+        if (data.historyComplete) {
+            setHasLoadedHistory(true);
+            setIsLoadingHistory(false);
+            return;
+        }
+
+        if (isLoadingHistory && data.message) {
+            setPendingHistoryMessages(prev => [...prev, data]);
+            return;
+        }
+
         let newChats: Chat[];
         if (!chats[0].robotName) {
             newChats = chats.slice(1);
@@ -267,13 +281,24 @@ const ChatViewer: React.FC<Props> = ({
                 {newChats.map((chat, index) => createConversation(chat, index))}
             </ConversationList>
         );
-    }, [lastMessage, path, sendMessage]);
+    }, [lastMessage, path, sendMessage, isLoadingHistory]);
 
     useEffect(() => {
+        setHasLoadedHistory(false);
+        setIsLoadingHistory(true);
+        setPendingHistoryMessages([]);
+        
         sendMessage(JSON.stringify({
             path: path,
             method: "startup"
-        }))
+        }));
+        
+        const historyTimeout = setTimeout(() => {
+            setIsLoadingHistory(false);
+            setHasLoadedHistory(true);
+        }, 2000);
+        
+        return () => clearTimeout(historyTimeout);
     }, [path, sendMessage]);
 
     useEffect(() => {
@@ -284,6 +309,48 @@ const ChatViewer: React.FC<Props> = ({
             setSidebarVisible(false);
         }
     }, [focusRobot, chats]);
+
+    useEffect(() => {
+        if (isLoadingHistory || pendingHistoryMessages.length === 0) return;
+
+        let newChats = chats.slice();
+        
+        for (const data of pendingHistoryMessages) {
+            for (const chat of newChats) {
+                if (chat.robotName === data.sender) {
+                    chat.messageList = [
+                        ...chat.messageList,
+                        {
+                            message: data.message,
+                            sender: chat.robotName,
+                            direction: "incoming" as const,
+                            position: "single" as const
+                        }
+                    ].slice(-100);
+                    break;
+                } else if (chat.robotName === data.recipient) {
+                    chat.messageList = [
+                        ...chat.messageList,
+                        {
+                            message: data.message,
+                            sender: data.sender,
+                            direction: "outgoing" as const,
+                            position: "single" as const
+                        }
+                    ].slice(-100);
+                    break;
+                }
+            }
+        }
+        
+        setChats(newChats);
+        setConversations(
+            <ConversationList>
+                {newChats.map((chat, index) => createConversation(chat, index))}
+            </ConversationList>
+        );
+        setPendingHistoryMessages([]);
+    }, [isLoadingHistory, pendingHistoryMessages]);
 
     const handleSendMessage = (message: string) => {
         message = clean(message)

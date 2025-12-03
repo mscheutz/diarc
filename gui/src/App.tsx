@@ -46,6 +46,7 @@ const AppContent: React.FC = () => {
     const [currentTabPath, setCurrentTabPath] = useState<string | null>(null);
     const [requestedTabPath, setRequestedTabPath] = useState<string | null>(null);
     const [focusRobot, setFocusRobot] = useState<string | null>(null);
+    const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
     const isOnChatTab = currentTabPath?.startsWith("chat") ?? false;
 
@@ -82,6 +83,7 @@ const AppContent: React.FC = () => {
         onOpen: () => {
             console.log("WS OPEN:", webSocketUrl);
             setHasEverOpened(true);
+            setIsInitialLoad(true);
 
             sendMessage(
                 JSON.stringify({
@@ -89,6 +91,10 @@ const AppContent: React.FC = () => {
                     method: "init",
                 })
             );
+            
+            setTimeout(() => {
+                setIsInitialLoad(false);
+            }, 2500);
         },
 
         onClose: (event) => {
@@ -117,7 +123,7 @@ const AppContent: React.FC = () => {
             }
             if (data.message && typeof data.message === "string" && data.sender && data.recipient) {
                 const isIncomingRobotMessage = data.recipient === "webapp" || data.recipient === "local_user";
-                if (isIncomingRobotMessage) {
+                if (isIncomingRobotMessage && !isInitialLoad) {
                     setLatestRobotMessage({
                         sender: data.sender,
                         message: data.message,
@@ -128,7 +134,7 @@ const AppContent: React.FC = () => {
         } catch (e) {
             console.error("Failed to parse WS message:", e, lastMessage.data);
         }
-    }, [lastMessage]);
+    }, [lastMessage, isInitialLoad]);
 
     useEffect(() => {
         if (!latestRobotMessage) return;
