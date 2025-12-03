@@ -5,7 +5,7 @@ import { ReadyState, SendMessage } from "react-use-websocket";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 
-import VisionSearches from "./VisionSearches.tsx";
+import VisionSearches from "./VisionSearches";
 
 const flexTabPanelClass = "hidden flex-col min-h-0 grow";
 

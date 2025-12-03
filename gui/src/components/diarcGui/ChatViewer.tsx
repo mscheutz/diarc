@@ -243,8 +243,8 @@ const ChatViewer: React.FC<Props> = ({
                     {
                         message: data.message,
                         sender: chat.robotName,
-                        direction: "incoming",
-                        position: "single"
+                        direction: "incoming" as const,
+                        position: "single" as const
                     }
                 ].slice(-100);
                 break;
@@ -254,8 +254,8 @@ const ChatViewer: React.FC<Props> = ({
                     {
                         message: data.message,
                         sender: data.sender,
-                        direction: "outgoing",
-                        position: "single"
+                        direction: "outgoing" as const,
+                        position: "single" as const
                     }
                 ].slice(-100)
                 break;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { ReadyState, SendMessage } from "react-use-websocket";
 
 import TreeView, { flattenTree } from "react-accessible-treeview";
 
@@ -97,7 +98,7 @@ const VisionSearches: React.FC<Props> = ({
         clearSelection();
     };
 
-    const handleSelectSearch = ({ element }) => {
+    const handleSelectSearch = ({ element }: { element: any }) => {
         const selectedSearch = searches.find(search => search.id === element.id);
         if (!selectedSearch) return;
 
@@ -159,67 +160,67 @@ const VisionSearches: React.FC<Props> = ({
         clearSelection();
     };
 
-    const handleTrackerDisplayChange = (event) => {
+    const handleTrackerDisplayChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const display = event.target.checked;
         setTrackerDisplay(display);
     };
 
-    const generateEntry = ({ name, metadata }) => {
+    const generateEntry = ({ name, metadata }: { name: string; metadata: any }) => {
         return name
-            + (metadata && (" [" + metadata.constraints.map((c) => " " + c.value) + " ]"))
+            + (metadata && (" [" + metadata.constraints.map((c: any) => " " + c.value) + " ]"))
     };
 
-    const isValidFormat = (inputValue) => {
+    const isValidFormat = (inputValue: string) => {
         return displayConstraintOptions.some(option => {
             const regex = new RegExp(`^${option.value}\\(.+\\)$`);
             return regex.test(inputValue);
         });
     };
 
-    const handleCreateOption = (inputValue) => {
+    const handleCreateOption = (inputValue: string) => {
         if (isValidFormat(inputValue)) {
-            const newOption = { value: inputValue, label: inputValue };
+            const newOption = { value: inputValue, label: inputValue, category: '' };
             setSelectedConstraints(prevState => [...prevState, newOption]);
         } else {
             alert('Invalid format. Must be in the format providedOption(VAR)');
         }
     };
 
-    const isOptionDisabled = (option) => {
+    const isOptionDisabled = (option: Option) => {
         return displayConstraintOptions.some(o => o.value === option.value);
     };
 
     const customStyles = {
-        control: (provided) => ({
+        control: (provided: any) => ({
             ...provided,
             backgroundColor: 'hsl(var(--background))',
             borderColor: 'hsl(var(--border))',
         }),
-        menu: (provided) => ({
+        menu: (provided: any) => ({
             ...provided,
             backgroundColor: 'hsl(var(--popover))',
             borderColor: 'hsl(var(--border))',
         }),
-        option: (provided, state) => ({
+        option: (provided: any, state: any) => ({
             ...provided,
             color: state.isDisabled ? 'hsl(var(--muted-foreground))' : 'hsl(var(--foreground))',
             backgroundColor: state.isFocused ? 'hsl(var(--accent))' : 'hsl(var(--popover))',
             cursor: 'default'
         }),
-        singleValue: (provided) => ({
+        singleValue: (provided: any) => ({
             ...provided,
             color: 'hsl(var(--foreground))',
         }),
-        input: (provided) => ({
+        input: (provided: any) => ({
             ...provided,
             color: 'hsl(var(--foreground))',
         }),
-        multiValue: (provided, state) => ({
+        multiValue: (provided: any, state: any) => ({
             ...provided,
             display: state.data.isFixed ? 'none' : provided.display,
             backgroundColor: 'hsl(var(--accent))',
         }),
-        multiValueLabel: (provided) => ({
+        multiValueLabel: (provided: any) => ({
             ...provided,
             color: 'hsl(var(--accent-foreground))',
         }),
@@ -324,8 +325,7 @@ const VisionSearches: React.FC<Props> = ({
                                                 </p>
                                             </div>
                                         )}
-                                        isSelected={(element) => element.id === selectedSearchId}
-                                        key={forceRender}
+                                        key={forceRender.toString()}
                                     />
                                 </div> : <p className="p-2 text-muted-foreground">No searches to view.</p>
                             }

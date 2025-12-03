@@ -184,7 +184,7 @@ type GoalTableProps = {
 const GoalTable: React.FC<GoalTableProps> = (
     { data, handleSelect, handleSelectAll, selectedIds, filteredActor, selectedStatuses }
 ) => {
-    let activeGoals = [], pastGoals = []
+    let activeGoals: Entry[] = [], pastGoals: Entry[] = []
     data.forEach((g) => (g.status === "active" || g.status === "suspended" || g.status === "pending" ? activeGoals : pastGoals).push(g));
 
     const visibleActiveGoals = activeGoals.filter(
@@ -378,7 +378,7 @@ const GoalViewer: React.FC<Props> = ({
 
     const handleSelectAll = (ids: number[], selected: boolean) => {
         if (selected) {
-            const newIds = [...new Set([...selectedIds, ...ids])];
+            const newIds = Array.from(new Set([...selectedIds, ...ids]));
             setSelectedIds(newIds);
         } else {
             setSelectedIds(selectedIds.filter((id) => !ids.includes(id)));
@@ -526,6 +526,7 @@ const GoalViewer: React.FC<Props> = ({
                                 scheduledData={scheduledData}
                                 handleSelect={handleGoalSelect}
                                 filteredActor={filteredActor}
+                                selectedStatuses={selectedStatuses}
                             />
 
                             <GoalTable

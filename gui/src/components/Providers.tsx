@@ -9,6 +9,7 @@ interface ProvidersProps {
 
 const Providers: FC<ProvidersProps> = ({ children }) => {
     return (
+        // @ts-ignore
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <AuthProvider>
                 {children}

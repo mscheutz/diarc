@@ -19,7 +19,7 @@ const FileEditor: React.FC<Props> = ({
     fileName, setFileName, fileContents, setFileContents,
     isCustomFile, setIsCustomFile, sendMessage, path
 }) => {
-    const handleChange = (newValue) => {
+    const handleChange = (newValue: string | undefined) => {
         setFileContents(newValue as string);
     };
 

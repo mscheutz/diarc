@@ -19,7 +19,8 @@ const linkToPredicate = (link: ActionChainLink) => {
         .concat(")");
 };
 
-export { ActionChainLink, linkToPredicate };
+export type { ActionChainLink };
+export { linkToPredicate };
 
 type Props = {
     actionChain: ActionChainLink[],
@@ -37,26 +38,26 @@ const ActionChain: React.FC<Props> = ({
     handleArgInputChange, getArgumentNames, addToChain
 }) => {
     const selectStyles = {
-        control: (provided) => ({
+        control: (provided: any) => ({
             ...provided,
             backgroundColor: 'hsl(var(--background))',
             borderColor: 'hsl(var(--border))',
         }),
-        menu: (provided) => ({
+        menu: (provided: any) => ({
             ...provided,
             backgroundColor: 'hsl(var(--popover))',
             borderColor: 'hsl(var(--border))',
         }),
-        option: (provided, state) => ({
+        option: (provided: any, state: any) => ({
             ...provided,
             backgroundColor: state.isFocused ? 'hsl(var(--accent))' : 'hsl(var(--popover))',
             color: 'hsl(var(--foreground))',
         }),
-        singleValue: (provided) => ({
+        singleValue: (provided: any) => ({
             ...provided,
             color: 'hsl(var(--foreground))',
         }),
-        input: (provided) => ({
+        input: (provided: any) => ({
             ...provided,
             color: 'hsl(var(--foreground))',
         }),

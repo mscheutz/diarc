@@ -173,8 +173,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             } else {
                 return { success: false, error: result.error || 'Failed to change password' };
             }
-        } catch (error: any) {
-            return { success: false, error: error.message || 'Failed to change password' };
+        } catch (error) {
+            return { success: false, error: error instanceof Error ? error.message : 'Failed to change password' };
         }
     };
 
@@ -213,8 +213,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             } else {
                 return { success: false, error: result.error || 'Failed to create user' };
             }
-        } catch (error: any) {
-            return { success: false, error: error.message || 'Failed to create user' };
+        } catch (error) {
+            return { success: false, error: error instanceof Error ? error.message : 'Failed to create user' };
         }
     };
 

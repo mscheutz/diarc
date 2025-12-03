@@ -53,14 +53,12 @@ public class AvaMapAdapter extends GuiAdapter {
   double mapScaleX;
   double mapScaleY;
   private boolean mock = false;
-  private boolean runRobotPosThread = true;
 
   //==========================================================================
   // Constructors
   //==========================================================================
   public AvaMapAdapter(Collection<String> groups) {
     super(groups);
-    startRobotPosThread();
   }
 
   //======================================================================
@@ -120,20 +118,6 @@ public class AvaMapAdapter extends GuiAdapter {
   //======================================================================
   // Methods
   //======================================================================
-
-  //TODO: need to update map tsx to handle live updates gracefully
-  private void startRobotPosThread() {
-    new Thread(() -> {
-      while (runRobotPosThread) {
-        try {
-          Thread.sleep(5000);
-          fetchRobotPose();
-        } catch (InterruptedException e) {
-          log.error("[listenForWWandASR] exception sleeping in clearDisplay thread");
-        }
-      }
-    }).start();
-  }
 
   /**
    * Update local current FloorMap and current floor number.
@@ -440,9 +424,5 @@ public class AvaMapAdapter extends GuiAdapter {
   @Override
   protected boolean providesTradeServices() {
     return false;
-  }
-
-  public void shutdown() {
-    runRobotPosThread = false;
   }
 }

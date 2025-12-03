@@ -83,12 +83,12 @@ const ServiceComponent: React.FC<ServiceComponentProps> = ({
 
 type Service = {
     "name": string,
-    "returnType", string,
+    "returnType": string,
     "params": string[],
     "paramTypes": string[],
     "id": number
 }
-export { Service };
+export type { Service };
 
 type Props = {
     path: string,

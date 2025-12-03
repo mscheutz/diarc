@@ -31,6 +31,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
     )}
     {...props}>
     {children}
+    {/* @ts-ignore */}
     <LuChevronRight className='ml-auto h-4 w-4' />
   </DropdownMenuPrimitive.SubTrigger>
 ))
@@ -103,6 +104,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
     {...props}>
     <span className='absolute left-2 flex h-3.5 w-3.5 items-center justify-center'>
       <DropdownMenuPrimitive.ItemIndicator>
+        {/* @ts-ignore */}
         <LuCheck className='h-4 w-4' />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>
@@ -125,6 +127,7 @@ const DropdownMenuRadioItem = React.forwardRef<
     {...props}>
     <span className='absolute left-2 flex h-3.5 w-3.5 items-center justify-center'>
       <DropdownMenuPrimitive.ItemIndicator>
+        {/* @ts-ignore */}
         <LuCircle className='h-2 w-2 fill-current' />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>

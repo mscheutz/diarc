@@ -61,13 +61,13 @@ const MyNewComponent: React.FC<Props> = ({
       setNewBehaviorCommand("");
     };
 
-    const handleRemoveCustomBehavior = (command) => {
+    const handleRemoveCustomBehavior = (command: string) => {
       const newCommands = customBehaviorCommands.filter(c => c !== command)
       setCustomBehaviorCommands(newCommands)
       sessionStorage.setItem("customBehaviorCommands", JSON.stringify(newCommands))
     };
 
-    const handleSubmit = (command) => {
+    const handleSubmit = (command: string) => {
         sendMessage(JSON.stringify({
             "path": path,
             "input": command,

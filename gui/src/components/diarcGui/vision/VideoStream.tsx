@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { ReadyState, SendMessage } from "react-use-websocket";
 
 import { Button } from "../../Button";
 import ConnectionIndicator from "../util/ConnectionIndicator";
@@ -17,8 +18,8 @@ const VideoStream: React.FC<Props> = ({
 
     const [videoEnabled, setVideoEnabled] = useState(false);
     const [depthEnabled, setDepthEnabled] = useState(false);
-    const videoCanvasRef = useRef(null);
-    const depthCanvasRef = useRef(null);
+    const videoCanvasRef = useRef<HTMLCanvasElement>(null);
+    const depthCanvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
         if (!lastMessage || !lastMessage.data) return;
@@ -32,6 +33,7 @@ const VideoStream: React.FC<Props> = ({
             if (videoCanvasRef.current && videoEnabled) {
                 const canvas = videoCanvasRef.current;
                 const ctx = canvas.getContext('2d');
+                if (!ctx) return;
                 const image = new Image();
                 image.onload = () => {
                     canvas.width = image.width;
@@ -40,7 +42,7 @@ const VideoStream: React.FC<Props> = ({
                     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
                     if (trackerDisplay) {
-                        detections.forEach(detection => {
+                        detections.forEach((detection: any) => {
                             if (detection && detection.boundingBox) {
                                 ctx.beginPath();
                                 ctx.rect(
@@ -60,6 +62,7 @@ const VideoStream: React.FC<Props> = ({
             } else if (depthCanvasRef.current && depthEnabled) {
                 const canvas = depthCanvasRef.current;
                 const ctx = canvas.getContext('2d');
+                if (!ctx) return;
                 const image = new Image();
                 image.onload = () => {
                     canvas.width = image.width;
@@ -72,12 +75,12 @@ const VideoStream: React.FC<Props> = ({
                 if (videoCanvasRef.current) {
                     const canvas = videoCanvasRef.current;
                     const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
                 }
                 if (depthCanvasRef.current) {
                     const canvas = depthCanvasRef.current;
                     const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
                 }
             }
         } catch (error) {
@@ -119,9 +122,9 @@ const VideoStream: React.FC<Props> = ({
                       border-border items-center p-5 gap-5
                       rounded-md justify-items-stretch bg-card">
             {videoEnabled ? (
-                <canvas ref={videoCanvasRef} alt="Video Stream" />
+                <canvas ref={videoCanvasRef} />
             ) : depthEnabled ? (
-                <canvas ref={depthCanvasRef} alt="Depth Stream" />
+                <canvas ref={depthCanvasRef} />
             ) : (
                 <div className="min-h-0 min-w-0 grow h-full w-full
                                 border border-border

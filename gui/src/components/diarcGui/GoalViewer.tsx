@@ -265,7 +265,7 @@ const GoalViewer: React.FC<Props> = ({
         }))
     };
 
-    const handleRadioSelect = (e) => {
+    const handleRadioSelect = (e: ChangeEvent<HTMLInputElement>) => {
         setSortAscending(e.target.value === "ascending");
     };
 
@@ -284,12 +284,15 @@ const GoalViewer: React.FC<Props> = ({
     useEffect(() => {
         const sorted = (array: Entry[]) => {
             const compareRaw = (entry0: Entry, entry1: Entry) => {
-                const propName = sortCriterion.value;
+                const propName = sortCriterion.value as keyof Entry;
                 if (propName === "priority" || propName === "id")
                     return entry0[propName] - entry1[propName];
-                if (entry0[propName] < entry1[propName])
+                const val0 = entry0[propName];
+                const val1 = entry1[propName];
+                if (val0 === undefined || val1 === undefined) return 0;
+                if (val0 < val1)
                     return -1;
-                if (entry0[propName] > entry1[propName])
+                if (val0 > val1)
                     return 1;
                 return 0;
             };

@@ -36,7 +36,7 @@ export const queryServices = async (
     } catch (error) {
         console.error(
             "something went wrong with the backend request",
-            error.message
+            error instanceof Error ? error.message : String(error)
         );
         throw new Error("Something went wrong fetching backend request");
     }
