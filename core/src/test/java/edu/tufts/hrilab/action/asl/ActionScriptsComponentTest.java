@@ -330,7 +330,6 @@ public class ActionScriptsComponentTest {
     }
   }
 
-
   @Test
   public void testFOLOperators() {
 
@@ -339,6 +338,16 @@ public class ActionScriptsComponentTest {
 
     // create goal and execute
     executeAndCheckGoal(Factory.createPredicate("createPredicateTest(self:agent)"), GoalStatus.SUCCEEDED);
+  }
+
+  @Test
+  public void testTHIS() {
+
+    String filename = aslPath + "this_tests.asl";
+    Database.getInstance().loadDatabaseFromFile(filename);
+
+    // create goal and execute
+    executeAndCheckGoal(Factory.createPredicate("aslThisTest(self:agent)"), GoalStatus.SUCCEEDED);
   }
 
   /**
