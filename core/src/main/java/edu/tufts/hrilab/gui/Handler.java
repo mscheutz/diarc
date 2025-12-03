@@ -20,6 +20,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A WebSocket handler which instantiates <code>GuiAdapter</code>s when their
@@ -43,9 +44,9 @@ public class Handler extends TextWebSocketHandler {
   // Fields
   //==========================================================================
   /**
-   * The current session.
+   * The current sessions.
    */
-  private HashSet<WebSocketSession> sessions;
+  private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
 
   /**
    * Maps adapter paths to their references.
@@ -65,7 +66,6 @@ public class Handler extends TextWebSocketHandler {
    * Constructor. Private so as to force use of the factory method.
    */
   private Handler() {
-    sessions = new HashSet<>();
     adapterMap = new HashMap<>();
   }
 
@@ -143,11 +143,17 @@ public class Handler extends TextWebSocketHandler {
 
   private synchronized void sendMessage(String message, Set<WebSocketSession> sessions) throws IOException {
     if (sessions.isEmpty()) return;
-    for (WebSocketSession session : sessions) {
-      if (session == null) {
-        sessions.remove(session);
+    Iterator<WebSocketSession> iterator = sessions.iterator();
+    while (iterator.hasNext()) {
+      WebSocketSession session = iterator.next();
+      if (session == null || !session.isOpen()) {
+        iterator.remove();
       } else {
-        session.sendMessage(new TextMessage(message));
+        try {
+          session.sendMessage(new TextMessage(message));
+        } catch (IOException e) {
+          iterator.remove();
+        }
       }
     }
   }
@@ -200,9 +206,7 @@ public class Handler extends TextWebSocketHandler {
   public void afterConnectionEstablished(@Nonnull WebSocketSession session)
           throws Exception {
     super.afterConnectionEstablished(session);
-    if (!this.sessions.contains(session)) {
-      this.sessions.add(session);
-    }
+    this.sessions.add(session);
     Set<WebSocketSession> sessions = new HashSet<>();
     sessions.add(session);
     sendAdapterUpdate(sessions);
