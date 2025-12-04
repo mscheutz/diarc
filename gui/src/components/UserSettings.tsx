@@ -20,8 +20,12 @@ interface ChangePasswordFormData {
     confirmPassword: string;
 }
 
-const UserSettings: React.FC = () => {
-    const { username, changePassword } = useAuth();
+interface UserSettingsProps {
+    trigger?: React.ReactNode;
+}
+
+const UserSettings: React.FC<UserSettingsProps> = ({ trigger }) => {
+    const { changePassword } = useAuth();
     const [open, setOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -67,12 +71,16 @@ const UserSettings: React.FC = () => {
         }
     };
 
+    const defaultTrigger = (
+        <Button variant="secondary" size="sm" className="text-sm h-8">
+            Change Password
+        </Button>
+    );
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-sm">
-                    Change Password
-                </Button>
+                {trigger || defaultTrigger}
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
@@ -194,4 +202,3 @@ const UserSettings: React.FC = () => {
 };
 
 export default UserSettings;
-

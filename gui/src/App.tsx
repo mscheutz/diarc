@@ -55,6 +55,10 @@ const AppContent: React.FC = () => {
         setFocusRobot(robotName);
     }, []);
 
+    const handleLogoClick = useCallback(() => {
+        setRequestedTabPath("chat");
+    }, []);
+
     useEffect(() => {
         if (isOnChatTab && requestedTabPath === "chat") {
             setRequestedTabPath(null);
@@ -140,7 +144,7 @@ const AppContent: React.FC = () => {
         if (!latestRobotMessage) return;
         const timer = setTimeout(() => setLatestRobotMessage(null), 8000);
         return () => clearTimeout(timer);
-    }, [latestRobotMessage?.timestamp]);
+    }, [latestRobotMessage]);
 
     const handleReloadWebsocket = () => {
         console.log("Manually triggering WS reconnect");
@@ -156,7 +160,7 @@ const AppContent: React.FC = () => {
 
     return (
         <div className="flex h-screen w-full flex-col overflow-hidden bg-background">
-            <Navbar />
+            <Navbar onLogoClick={handleLogoClick} />
             <main className="flex flex-1 flex-col overflow-hidden p-4 sm:p-6">
                 <div className="flex flex-1 flex-col min-h-0 w-full max-w-6xl mx-auto">
                     <TabbedComponentViewer

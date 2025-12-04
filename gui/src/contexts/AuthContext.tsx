@@ -9,6 +9,7 @@ interface AuthContextType {
     token: string | null;
     changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
     addUser: (username: string, password: string, isAdmin: boolean, sites: string[]) => Promise<{ success: boolean; error?: string }>;
+    deleteUser: (usernameToDelete: string) => Promise<{ success: boolean; error?: string }>;
     isAdmin: boolean;
 }
 
@@ -54,20 +55,28 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+    const isDevMode = config.devMode;
+
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+        if (isDevMode) return true;
         return !!localStorage.getItem(STORAGE_KEY_AUTH_TOKEN);
     });
     const [username, setUsername] = useState<string | null>(() => {
+        if (isDevMode) return 'dev-user';
         return localStorage.getItem(STORAGE_KEY_USERNAME);
     });
     const [token, setToken] = useState<string | null>(() => {
+        if (isDevMode) return 'dev-token';
         return localStorage.getItem(STORAGE_KEY_AUTH_TOKEN);
     });
     const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+        if (isDevMode) return true;
         return localStorage.getItem(STORAGE_KEY_IS_ADMIN) === 'true';
     });
 
     useEffect(() => {
+        if (isDevMode) return;
+
         const verifySession = async () => {
             const storedToken = localStorage.getItem(STORAGE_KEY_AUTH_TOKEN);
             if (storedToken) {
@@ -97,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
         };
         verifySession();
-    }, []);
+    }, [isDevMode]);
 
     const login = async (usernameInput: string, passwordInput: string): Promise<boolean> => {
         try {
@@ -128,6 +137,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     const logout = async () => {
+        if (isDevMode) return;
+
         const currentToken = token || localStorage.getItem(STORAGE_KEY_AUTH_TOKEN);
         if (currentToken) {
             try {
@@ -218,6 +229,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     };
 
+    const deleteUser = async (usernameToDelete: string): Promise<{ success: boolean; error?: string }> => {
+        try {
+            if (!isAdmin) {
+                return { success: false, error: 'Admin access required' };
+            }
+
+            const currentToken = token || localStorage.getItem(STORAGE_KEY_AUTH_TOKEN);
+            if (!currentToken) {
+                return { success: false, error: 'Not authenticated' };
+            }
+
+            if (!usernameToDelete || usernameToDelete.trim().length === 0) {
+                return { success: false, error: 'Username is required' };
+            }
+
+            const result = await apiRequest<{ success: boolean; error?: string }>('/api/auth/delete-user', {
+                method: 'POST',
+                body: JSON.stringify({
+                    adminToken: currentToken,
+                    usernameToDelete: usernameToDelete,
+                }),
+            });
+
+            if (result.success) {
+                return { success: true };
+            } else {
+                return { success: false, error: result.error || 'Failed to delete user' };
+            }
+        } catch (error) {
+            return { success: false, error: error instanceof Error ? error.message : 'Failed to delete user' };
+        }
+    };
+
     return (
         <AuthContext.Provider value={{ 
             isAuthenticated, 
@@ -227,6 +271,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             token,
             changePassword,
             addUser,
+            deleteUser,
             isAdmin,
         }}>
             {children}

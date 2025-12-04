@@ -3,8 +3,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
 import { ReadyState, SendMessage } from "react-use-websocket";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 
 import { handlers } from "./util/constants";
 import "./util/StyleOverrides.css";
@@ -15,7 +13,6 @@ const flexTabPanelClass = "hidden flex-col flex-1 min-h-0 overflow-auto";
 type UnavailablePanelMode = "connecting" | "unavailable";
 
 type UnavailablePanelProps = {
-    wsBaseUrl: string;
     mode: UnavailablePanelMode;
     onReloadWebsocket: () => void;
 };
@@ -50,39 +47,50 @@ function findHandlerForPath(
     return { root, handler };
 }
 
+const Spinner: React.FC<{ size?: string }> = ({ size = "w-16 h-16" }) => (
+    <svg
+        className={`${size} animate-spin text-primary`}
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+    >
+        <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+        />
+        <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        />
+    </svg>
+);
+
 const UnavailablePanel: React.FC<UnavailablePanelProps> = ({
-                                                               wsBaseUrl,
-                                                               mode,
-                                                               onReloadWebsocket,
-                                                           }) => {
+    mode,
+    onReloadWebsocket,
+}) => {
     const isConnecting = mode === "connecting";
 
     return (
-        <div
-            className="flex flex-col space-y-5 fixed
-                       top-1/2 left-1/2 translate-x-[-50%]
-                       translate-y-[-50%] items-center"
-        >
-            <div className="flex flex-row justify-center justify-items-center">
-                <FontAwesomeIcon
-                    icon={faTriangleExclamation}
-                    size="10x"
-                    color="#f0a900"
-                />
+        <div className="flex flex-col items-center justify-center h-full gap-6 p-8">
+            <Spinner />
+            <div className="text-center space-y-2">
+                <h2 className="text-2xl font-medium text-foreground">
+                    {isConnecting ? "Connecting to robot..." : "Waiting for backend..."}
+                </h2>
+                <p className="text-muted-foreground">
+                    {isConnecting
+                        ? "This usually takes a few seconds"
+                        : "The robot backend is starting up or temporarily unavailable"}
+                </p>
             </div>
-            <div className="text-4xl text-center">
-                {isConnecting ? "Connecting..." : "Unavailable"}
-            </div>
-            <div className="text-center">
-                WebSocket URL: {wsBaseUrl}
-                <br />
-                {isConnecting
-                    ? "Attempting to reach backend and discover endpoints..."
-                    : "No endpoints found. The backend may be down or unreachable."}
-            </div>
-
-            <Button onClick={onReloadWebsocket}>
-                {isConnecting ? "Try again" : "Reload connection"}
+            <Button variant="outline" onClick={onReloadWebsocket}>
+                Retry connection
             </Button>
         </div>
     );
@@ -152,55 +160,37 @@ const TabbedComponentViewer: React.FC<Props> = ({
 
     useEffect(() => {
         if (hasEverHadEndpoints || availableEndpoints.length > 0) {
-            if (initialConnectionTimedOut) {
-                setInitialConnectionTimedOut(false);
-            }
+            setInitialConnectionTimedOut(false);
             return;
         }
 
-        if (!hasEverOpened) {
-            if (initialConnectionTimedOut) {
-                setInitialConnectionTimedOut(false);
-            }
-            return;
-        }
-
-        if (readyState !== ReadyState.CONNECTING) {
-            if (initialConnectionTimedOut) {
-                setInitialConnectionTimedOut(false);
-            }
-            return;
-        }
-
-        const timeoutMs = 8000;
+        const timeoutMs = 5000;
         const timer = window.setTimeout(() => {
             if (!hasEverHadEndpoints && availableEndpoints.length === 0) {
-                console.warn(
-                    "Initial WS connection timed out; marking as unavailable"
-                );
                 setInitialConnectionTimedOut(true);
             }
         }, timeoutMs);
 
         return () => window.clearTimeout(timer);
-    }, [
-        readyState,
-        hasEverHadEndpoints,
-        availableEndpoints.length,
-        initialConnectionTimedOut,
-        hasEverOpened,
-    ]);
-
-    const isClosedState = readyState === ReadyState.CLOSED;
+    }, [hasEverHadEndpoints, availableEndpoints.length]);
 
     const shouldShowUnavailablePanel =
-        (availableEndpoints.length === 0 && !hasEverHadEndpoints) ||
-        initialConnectionTimedOut;
+        availableEndpoints.length === 0 && !hasEverHadEndpoints;
 
+    const isActivelyConnecting = readyState === ReadyState.CONNECTING || readyState === ReadyState.OPEN;
     const unavailableMode: UnavailablePanelMode =
-        (shouldShowUnavailablePanel && isClosedState) || initialConnectionTimedOut
-            ? "unavailable"
-            : "connecting";
+        isActivelyConnecting && !initialConnectionTimedOut ? "connecting" : "unavailable";
+
+    if (shouldShowUnavailablePanel) {
+        return (
+            <div className="flex-1 min-h-0 w-full">
+                <UnavailablePanel
+                    mode={unavailableMode}
+                    onReloadWebsocket={onReloadWebsocket}
+                />
+            </div>
+        );
+    }
 
     return (
         <Tabs
@@ -208,14 +198,7 @@ const TabbedComponentViewer: React.FC<Props> = ({
             selectedIndex={selectedTabIndex}
             onSelect={handleTabSelect}
         >
-            <TabList
-                hidden={availableEndpoints.length === 0 && !hasEverHadEndpoints}
-                className="select-none"
-            >
-                {availableEndpoints.length === 0 && hasEverHadEndpoints && (
-                    <Tab>Unavailable</Tab>
-                )}
-
+            <TabList className="select-none">
                 {sortedEndpoints.map((path) => {
                         const match = findHandlerForPath(path);
                         if (!match) return null;
@@ -231,16 +214,6 @@ const TabbedComponentViewer: React.FC<Props> = ({
                         );
                     })}
             </TabList>
-
-            {shouldShowUnavailablePanel && (
-                <TabPanel className={flexTabPanelClass}>
-                    <UnavailablePanel
-                        wsBaseUrl={wsBaseUrl}
-                        mode={unavailableMode}
-                        onReloadWebsocket={onReloadWebsocket}
-                    />
-                </TabPanel>
-            )}
 
             {sortedEndpoints.map((path) => {
                     const match = findHandlerForPath(path);

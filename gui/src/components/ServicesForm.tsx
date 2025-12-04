@@ -137,7 +137,6 @@ const ServicesForm: React.FC<ServicesFormProps> = ({ serviceEntries }) => {
             mode: "cors",
             headers: {
                 "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
             },
         };
 

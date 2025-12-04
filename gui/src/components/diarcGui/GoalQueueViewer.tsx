@@ -1,11 +1,9 @@
-import React, { useState, useEffect, ChangeEvent, ChangeEventHandler } from "react";
+import React, { useState, useEffect } from "react";
 
 import { SendMessage, ReadyState } from "react-use-websocket";
-import Select from "react-select"
 
-import ConnectionIndicator from "./util/ConnectionIndicator";
 import { Button } from "../Button";
-import { columns, scheduledColumns, pastColumns, Option, sortCriteria, statuses } from "./util/constants";
+import { columns, scheduledColumns, pastColumns, statuses } from "./util/constants";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircleInfo} from "@fortawesome/free-solid-svg-icons";
 
@@ -42,92 +40,6 @@ const ChangeStatus: React.FC<ChangeStatusProps> = ({
                     Cancel
                 </Button>
             </div>
-        </div>
-    );
-};
-
-type SortGoalsProps = {
-    sortCriterion: Option,
-    setSortCriterion: any,
-    sortAscending: boolean,
-    handleRadioSelect: any
-};
-
-const SortGoals: React.FC<SortGoalsProps> = ({
-    sortCriterion, setSortCriterion, sortAscending, handleRadioSelect
-}) => {
-    return (
-        <div className="flex flex-col gap-2 shadow-md border
-                        border-border rounded-md p-3 bg-card">
-            <label className="text-lg">Sort goals</label>
-            <Select
-                options={sortCriteria}
-                value={sortCriterion}
-                onChange={(option) => option && setSortCriterion(option)}
-                classNames={{
-                    control: () => '!bg-background !border-border',
-                    menu: () => '!bg-popover !border-border',
-                    option: (state) => state.isFocused ? '!bg-accent' : '!bg-popover',
-                    singleValue: () => '!text-foreground',
-                    input: () => '!text-foreground',
-                }}
-            />
-
-            <div className="flex flex-col">
-                <div className="flex flex-row gap-1">
-                    <input type="radio" name="sortOrder" id="ascending"
-                        value="ascending" checked={sortAscending}
-                        onChange={handleRadioSelect} />
-                    <label htmlFor="ascending">Ascending</label>
-                </div>
-
-                <div className="flex flex-row gap-1">
-                    <input type="radio" name="sortOrder" id="descending"
-                        value="descending" checked={!sortAscending}
-                        onChange={handleRadioSelect} />
-                    <label htmlFor="descending">Descending</label>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-type FilterGoalsProps = {
-    filteredActor: string,
-    selectedStatuses: string[],
-    onChangeFilteredActor: ChangeEventHandler<HTMLInputElement>,
-    onSelectStatus: ChangeEventHandler<HTMLInputElement>
-};
-
-const FilterGoals: React.FC<FilterGoalsProps> = (
-    { filteredActor, selectedStatuses, onChangeFilteredActor, onSelectStatus }
-) => {
-    return (
-        <div className="flex flex-col gap-2
-                        shadow-md border
-                        border-border rounded-md p-3 bg-card">
-            <label className="text-lg">Filter goals</label>
-            <label>Actor</label>
-            <input
-                type="text"
-                value={filteredActor}
-                onChange={onChangeFilteredActor}
-                className="block box-border w-full rounded mt-1 mb-2 text-sm
-                           border border-input bg-background text-foreground p-2 font-mono
-                           focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-
-            <label>Statuses</label>
-            {statuses.map((status, index) =>
-                <div key={index} className="flex flex-row gap-1">
-                    <input type="checkbox" id={status} onChange={onSelectStatus}
-                        checked={selectedStatuses.find(element =>
-                            element === status) !== undefined} />
-                    <label htmlFor={status} >
-                        {status.slice(0, 1).toUpperCase() + status.slice(1)}
-                    </label>
-                </div>
-            )}
         </div>
     );
 };
@@ -358,12 +270,11 @@ type Props = {
 };
 
 const GoalViewer: React.FC<Props> = ({
-    path, lastMessage, sendMessage, readyState
+    path, lastMessage, sendMessage
 }) => {
-    const [sortCriterion, setSortCriterion] = useState<Option>(sortCriteria[3]);
-    const [sortAscending, setSortAscending] = useState<boolean>(true);
-    const [filteredActor, setFilteredActor] = useState<string>("");
-    const [selectedStatuses, setSelectedStatuses] = useState<string[]>(statuses);
+    const [sortAscending] = useState<boolean>(true);
+    const [filteredActor] = useState<string>("");
+    const [selectedStatuses] = useState<string[]>(statuses);
     const [data, setData] = useState<Entry[]>([]);
     const [scheduledData, setScheduledData] = useState<Entry[]>([]);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -408,22 +319,6 @@ const GoalViewer: React.FC<Props> = ({
             "ids": selectedIds
         }))
         setSelectedIds([])
-    };
-
-    const handleRadioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSortAscending(e.target.value === "ascending");
-    };
-
-    const handleActorSelect = (e: ChangeEvent<HTMLInputElement>) => {
-        setFilteredActor(e.target.value);
-    };
-
-    const handleStatusSelect = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.checked)
-            setSelectedStatuses(selectedStatuses.concat(e.target.id))
-        else
-            setSelectedStatuses(selectedStatuses.filter((element) =>
-                element !== e.target.id))
     };
 
     useEffect(() => {
@@ -498,7 +393,7 @@ const GoalViewer: React.FC<Props> = ({
             const mergedArray = Array.from(mergedMap.values());
             return sorted(mergedArray);
         });
-    }, [lastMessage, sortAscending, sortCriterion, path]);
+    }, [lastMessage, sortAscending, path]);
 
     useEffect(() => {
         sendMessage(JSON.stringify({

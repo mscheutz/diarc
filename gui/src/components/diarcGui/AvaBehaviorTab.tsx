@@ -28,19 +28,34 @@ const MyNewComponent: React.FC<Props> = ({
 
     }, [path, lastMessage]);
 
+    const handleRemoveCustomBehavior = useCallback((command: string) => {
+      const newCommands = customBehaviorCommands.filter(c => c !== command)
+      setCustomBehaviorCommands(newCommands)
+      sessionStorage.setItem("customBehaviorCommands", JSON.stringify(newCommands))
+    }, [customBehaviorCommands]);
+
+    const handleSubmit = useCallback((command: string) => {
+        sendMessage(JSON.stringify({
+            "path": path,
+            "input": command,
+            "speaker": "webapp",
+            "addressee": "ava"
+        }));
+    }, [sendMessage, path]);
+
     const generateCustomBehaviors = useCallback(() => {
         return customBehaviorCommands.map((value, index) => (
-            <div key={index} className="relative group border border-border rounded-md bg-card overflow-hidden">
+            <div key={index} className="relative group rounded-md bg-muted overflow-hidden">
                 <button
                     onClick={() => handleSubmit(value)}
-                    className="w-full px-3 py-2.5 pr-7 text-xs font-medium hover:bg-muted/50 transition-colors text-left text-foreground break-words"
+                    className="w-full px-3 py-2.5 pr-7 text-xs font-medium hover:bg-muted/70 active:bg-muted/50 transition-colors text-left text-foreground break-words"
                 >
                     {value}
                 </button>
                 <button
                     onClick={(e) => { e.stopPropagation(); handleRemoveCustomBehavior(value); }}
                     className="absolute top-1 right-1 h-5 w-5 flex items-center justify-center rounded
-                               text-primary/70 hover:text-primary hover:bg-primary/20
+                               text-muted-foreground hover:text-destructive hover:bg-destructive/20
                                transition-colors text-sm font-bold"
                     title="Remove"
                 >
@@ -48,7 +63,7 @@ const MyNewComponent: React.FC<Props> = ({
                 </button>
             </div>
         ));
-    }, [customBehaviorCommands]);
+    }, [customBehaviorCommands, handleSubmit, handleRemoveCustomBehavior]);
 
     const handleAddCustomBehavior = () => {
       if (newBehaviorCommand.length === 0) return;
@@ -61,21 +76,6 @@ const MyNewComponent: React.FC<Props> = ({
       setNewBehaviorCommand("");
     };
 
-    const handleRemoveCustomBehavior = (command: string) => {
-      const newCommands = customBehaviorCommands.filter(c => c !== command)
-      setCustomBehaviorCommands(newCommands)
-      sessionStorage.setItem("customBehaviorCommands", JSON.stringify(newCommands))
-    };
-
-    const handleSubmit = (command: string) => {
-        sendMessage(JSON.stringify({
-            "path": path,
-            "input": command,
-            "speaker": "webapp",
-            "addressee": "ava"
-        }));
-    };
-
     return (
         <div className="flex flex-col w-full min-h-0 flex-1 gap-4 overflow-auto">
             <div className="w-full space-y-4">
@@ -86,7 +86,7 @@ const MyNewComponent: React.FC<Props> = ({
                                 Quick Actions
                             </span>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-border">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2">
                             {[
                                 { label: "Pause", cmd: "pause" },
                                 { label: "Resume", cmd: "resume" },
@@ -98,7 +98,7 @@ const MyNewComponent: React.FC<Props> = ({
                                 <button
                                     key={cmd}
                                     onClick={() => handleSubmit(cmd)}
-                                    className="px-3 py-2.5 text-xs font-medium bg-card hover:bg-muted/50 transition-colors text-left text-foreground"
+                                    className="px-3 py-2.5 text-xs font-medium rounded-md bg-muted hover:bg-muted/70 active:bg-muted/50 transition-colors text-left text-foreground"
                                 >
                                     {label}
                                 </button>

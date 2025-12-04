@@ -5,6 +5,7 @@ import VisionManager from "../vision/VisionManager";
 import TradeServiceViewer from "../tradeService/TradeServiceViewer";
 import AvaBehaviorTab from "../AvaBehaviorTab";
 import MediaManager from "../MediaManager";
+// import MapViewer from "../MapViewer";
 
 const handlerRoots: string[] = [
     "actionProgrammer",
@@ -14,7 +15,8 @@ const handlerRoots: string[] = [
     "vision",
     "tradeService",
     "avaBehaviors",
-    "media"
+    "media",
+    // "map"
 ];
 
 const handlers = {
@@ -46,6 +48,10 @@ const handlers = {
         tabName: "Media Management",
         component: MediaManager
     },
+    // "map": {
+    //     tabName: "Map",
+    //     component: MapViewer
+    // },
 };
 
 export { handlerRoots, handlers };

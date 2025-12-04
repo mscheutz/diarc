@@ -13,20 +13,6 @@ type Locations = { [key: string]: Location };
 
 export type { Position, Orientation, RobotPixelPosition, Pose, Location, Locations };
 
-const position2String = (pose: Pose | null) => {
-    if (pose === null)
-        return "Position not known";
-
-    return `<strong>Position</strong> <br>X: ${pose.position.x},<br>Y: ${pose.position.y},<br>Z: ${pose.position.z}`;
-};
-
-const orientation2String = (pose: Pose | null) => {
-    if (pose === null)
-        return "Orientation not known";
-
-    return `<strong>Orientation</strong> <br>X: ${pose.orientation.x},<br>Y: ${pose.orientation.y},<br>Z: ${pose.orientation.z},<br>W: ${pose.orientation.w}`;
-};
-
 const Locations2Elements = (Locations: Locations, tailwindClass: string): JSX.Element[] => {
     const sortedKeys = Object.keys(Locations).sort((a, b) => {
         const numA = parseInt(a.substring(a.lastIndexOf('_') + 1), 10);
@@ -44,35 +30,6 @@ const Locations2Elements = (Locations: Locations, tailwindClass: string): JSX.El
         </p>
     ));
 };
-
-function computeClickCoordinates(rect: any, xPad: number, yPad: number, canvas: any, image: any, scale: number) {
-    const clickX_leftmost = xPad / canvas.width * rect.width;
-    const clickX_rightmost = (xPad + image.width * scale) / canvas.width * rect.width;
-    const clickY_top = yPad / canvas.height * rect.height;
-    const clickY_bottom = (yPad + image.height * scale) / canvas.height * rect.height;
-
-    return {
-        clickX_leftmost,
-        clickX_rightmost,
-        clickY_top,
-        clickY_bottom
-    };
-}
-
-function mapCoordinates(x: number, y: number, rect: any, xPad: number, yPad: number, canvas: any, image: any, scale: number) {
-    const coords = computeClickCoordinates(rect, xPad, yPad, canvas, image, scale);
-
-    const xPercent = (x - coords.clickX_leftmost) / (coords.clickX_rightmost - coords.clickX_leftmost);
-    const yPercent = (y - coords.clickY_top) / (coords.clickY_bottom - coords.clickY_top);
-
-    const imgX = xPercent * image.width;
-    const imgY = yPercent * image.height;
-
-    return {
-        imgX,
-        imgY
-    };
-}
 
 const drawDot = (context: any, x: number, y: number, radius: number, color: string) => {
     context.fillStyle = color;
@@ -95,7 +52,8 @@ type Props = {
     path: string,
     lastMessage: MessageEvent<any> | null,
     sendMessage: SendMessage,
-    readyState: ReadyState
+    readyState: ReadyState,
+    baseUrl: string | URL
 };
 
 const useState2 = (initVal: any) => {
@@ -106,10 +64,8 @@ const useState2 = (initVal: any) => {
   return [state, setState]
 }
 
-const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState }) => {
+const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState, baseUrl }) => {
     const [poseData, setPoseData] = useState<Pose | null>(null);
-    const [responseMsg, setResponseMsg] = useState<string>("");
-    const [isChanged, setIsChanged] = useState(false);
     const [keyLocations, setKeyLocations] = useState<Locations>({});
     const [pastLocations, setPastLocations] = useState<Locations>({});
     const [mapImageUrl, setMapImageUrl] = useState<string>("");
@@ -141,8 +97,10 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
         }
 
         if (data.mapImageUrl) {
-            setMapImageUrl(data.mapImageUrl);
-            setRefresh(refresh + 1);
+            const url = new URL(baseUrl);
+            url.pathname = url.pathname.replace(/\/$/, '') + new URL(data.mapImageUrl).pathname;
+            setMapImageUrl(url.toString());
+            setRefresh(r => r + 1);
         }
         if (data.position && data.orientation) {
             setPoseData({ position: data.position, orientation: data.orientation, robotPixelPosition: data.robotPixelPosition });
@@ -153,77 +111,24 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
         if (data.pastLocations) {
             setPastLocations(data.pastLocations);
         }
-        if (data.message) {
-            setResponseMsg(`${data.success ? 'Success: ' : 'Failure: '} ${data.message}`);
-            setIsChanged(true);
-        }
-    }, [lastMessage, path]);
+    }, [lastMessage, path, baseUrl]);
 
-    useEffect(() => {
-        if (isChanged) {
-            const timeout = setTimeout(() => setIsChanged(false), 2000);
-            return () => clearTimeout(timeout);
-        }
-    }, [isChanged]);
-
-    const sendWebSocketRequest = useCallback((action: string, additionalData: object, path?: string) => {
+    const sendWebSocketRequest = useCallback((action: string, additionalData: object, actionPath?: string) => {
         const payload: any = { action, ...additionalData };
-        if (path) {
-            payload.path = path;
+        if (actionPath) {
+            payload.path = actionPath;
         }
         sendMessage(JSON.stringify(payload));
     }, [sendMessage]);
 
-    const handleGoToLocation = useCallback(() => {
-        const symbol = prompt("Enter the symbol for the location (e.g., location_0:location): ");
-        if (symbol && symbol.trim() !== '') {
-            sendWebSocketRequest('goToLocation', { locationSymbol: symbol.trim() }, path);
-        } else {
-            alert("Please enter a valid Symbol for the location in the format of name:type");
-        }
-    }, [sendWebSocketRequest, path]);
-
-    const handleNavigateToPoint = useCallback(() => {
-        const x = prompt("Enter X coordinate:");
-        const y = prompt("Enter Y coordinate:");
-        const quatX = 0;
-        const quatY = 0;
-        const quatZ = 0;
-        const quatW = 1;
-
-        if (x && y && !isNaN(Number(x)) && !isNaN(Number(y))) {
-            const newX = Number(x);
-            const newY = Number(y);
-
-            sendWebSocketRequest('navigateToPoint', {
-                x: newX,
-                y: newY,
-                quatX: quatX,
-                quatY: quatY,
-                quatZ: quatZ,
-                quatW: quatW
-            }, path);
-        } else {
-            alert("Please enter valid numerical coordinates.");
-        }
-    }, [sendWebSocketRequest, path]);
-
-    const handleCanvasClick = useCallback((event: React.MouseEvent) => {
-        const rect = canvasRef.current?.getBoundingClientRect();
-        if (!rect) return;
-
-        const clickX = event.clientX - rect.left;
-        const clickY = event.clientY - rect.top;
-    }, [sendWebSocketRequest, path]);
-
     useEffect(() => {
         if (init) {
             const canvas = canvasRef.current!;
-            const context = canvas.getContext("2d")!;
+            canvas.getContext("2d")!;
             const robotCv = robotCanvasRef.current!;
-            const robotCtx = robotCv.getContext("2d")!;
+            robotCv.getContext("2d")!;
             const locationsCv = locationsCanvasRef.current!;
-            const locationsCtx = locationsCv.getContext("2d")!;
+            locationsCv.getContext("2d")!;
 
             const internalViewportT = [0,0,1]
             canvas.width = 1920;
@@ -249,20 +154,32 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
               setViewportTransform(temp);
             }
 
-             const updateZooming = (e: WheelEvent) => {
-              const localX = e.clientX;
-              const localY = e.clientY;
+            const updateZooming = (e: WheelEvent) => {
+              e.preventDefault();
+              
+              // Get canvas-relative coordinates for proper focal point
+              const rect = robotCv.getBoundingClientRect();
+              const localX = e.clientX - rect.left;
+              const localY = e.clientY - rect.top;
 
               const previousScale = internalViewportT[2];
+              
+              // Calculate new scale with min/max limits to prevent axis flip
+              let newScale = previousScale + e.deltaY * -0.001;
+              newScale = Math.max(0.1, Math.min(10, newScale));
+              
+              // Skip if scale didn't change (at limits)
+              if (newScale === previousScale) return;
 
-              const newScale = internalViewportT[2] += e.deltaY * -0.001;
-
-              const newX = localX - (localX - internalViewportT[0]) * (newScale / previousScale);
-              const newY = localY - (localY - internalViewportT[1]) * (newScale / previousScale);
+              // Zoom toward mouse position
+              const scaleRatio = newScale / previousScale;
+              const newX = localX - (localX - internalViewportT[0]) * scaleRatio;
+              const newY = localY - (localY - internalViewportT[1]) * scaleRatio;
 
               internalViewportT[0] = newX;
               internalViewportT[1] = newY;
               internalViewportT[2] = newScale;
+              
               var temp = internalViewportT.slice()
               setViewportTransform(temp);
             }
@@ -298,9 +215,8 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
             setMouseWheelListener(onMouseWheel);
             setViewportTransform([0,0,1]);
         }
-    },
-        [init, refresh]
-    );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [init, refresh]);
 
     useEffect(() => {
         setInit(true)
@@ -330,7 +246,8 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
                 yPadRef.current = yPad;
                 scaleRef.current = scale;
                 imageRef.current = image;
-            }
+            };
+            image.src = mapImageUrl;
         }
     },
         [mapImageUrl, viewportTransform, init]
@@ -353,9 +270,8 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
                 }
             }
         }
-    },
-        [poseData, viewportTransform, init]
-    );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [poseData, viewportTransform, init]);
 
     useEffect(() => {
         const locationsCv = locationsCanvasRef.current;
@@ -383,12 +299,12 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
                 });
             }
         }
-    },
-        [keyLocations, pastLocations, viewportTransform, init]
-    );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [keyLocations, pastLocations, viewportTransform, init]);
 
     useEffect(() => {
         sendWebSocketRequest('startup', {}, path);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [path, sendMessage]);
 
     useEffect(() => {
@@ -431,7 +347,7 @@ const MapViewer: React.FC<Props> = ({ path, lastMessage, sendMessage, readyState
             <div className="flex flex-row justify-center gap-5 h-full w-full">
                 <div className="Map w-9/12 parent">
                     <div className="w-full h-full z-2">
-                    <canvas ref={canvasRef} className="w-full h-full" onClick={handleCanvasClick} />
+                    <canvas ref={canvasRef} className="w-full h-full" />
                     </div>
                     <div className="w-full h-full z-1">
                     <canvas ref={locationsCanvasRef} className="w-full h-full"/>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '../@/components/ui/button';
 import { Input } from '../@/components/ui/input';
@@ -34,15 +34,21 @@ interface User {
 const KNOWN_SITES = ['ava1', 'tufts', 'tusdm', 'ava2'];
 
 const AdminUserManagement: React.FC = () => {
-    const { isAdmin: userIsAdmin, username, addUser } = useAuth();
+    const { isAdmin: userIsAdmin, username, addUser, deleteUser } = useAuth();
     const [open, setOpen] = useState(false);
     const [users, setUsers] = useState<User[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
-    const isSuperAdmin = username?.toLowerCase() === 'ogion';
+    // Check if current user is a multi-site admin (has access to all sites)
+    const isSuperAdmin = useMemo(() => {
+        if (!username || users.length === 0) return false;
+        const currentUser = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+        return currentUser?.isAdmin && (currentUser?.sites.length === 0);
+    }, [username, users]);
 
     const form = useForm<AddUserFormData>({
         defaultValues: {
@@ -55,7 +61,7 @@ const AdminUserManagement: React.FC = () => {
         },
     });
 
-    const loadUsers = async () => {
+    const loadUsers = useCallback(async () => {
         if (!userIsAdmin) return;
         
         const token = localStorage.getItem('diarc_auth_token');
@@ -74,13 +80,28 @@ const AdminUserManagement: React.FC = () => {
         } finally {
             setIsLoadingUsers(false);
         }
-    };
+    }, [userIsAdmin]);
 
     useEffect(() => {
         if (open && userIsAdmin) {
             loadUsers();
         }
-    }, [open, userIsAdmin]);
+    }, [open, userIsAdmin, loadUsers]);
+
+    const handleDeleteUser = async () => {
+        if (!userToDelete) return;
+        const result = await deleteUser(userToDelete);
+        if (result.success) {
+            setUserToDelete(null);
+            loadUsers();
+        } else {
+            setError(result.error || 'Failed to delete user');
+        }
+    };
+
+    const canDeleteUser = (user: User) => 
+        user.username.toLowerCase() !== 'ogion' && 
+        user.username.toLowerCase() !== username?.toLowerCase();
 
     const onSubmit = async (data: AddUserFormData) => {
         setError(null);
@@ -131,7 +152,7 @@ const AdminUserManagement: React.FC = () => {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-sm">
+                <Button variant="secondary" size="sm" className="text-sm h-8 hover:bg-muted/70 active:bg-muted/50">
                     Manage Users
                 </Button>
             </DialogTrigger>
@@ -161,8 +182,21 @@ const AdminUserManagement: React.FC = () => {
                                                     <span className="text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded">Admin</span>
                                                 )}
                                             </div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {user.sites.length === 0 ? 'Multi-site' : user.sites.join(', ')}
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-muted-foreground">
+                                                    {user.sites.length === 0 ? 'Multi-site' : user.sites.join(', ')}
+                                                </span>
+                                                {canDeleteUser(user) && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        onClick={() => setUserToDelete(user.username)}
+                                                    >
+                                                        Delete
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
                                     ))
@@ -170,6 +204,18 @@ const AdminUserManagement: React.FC = () => {
                             </div>
                         )}
                     </div>
+
+                    <Dialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+                        <DialogContent className="max-w-sm">
+                            <DialogHeader>
+                                <DialogTitle>Delete {userToDelete}?</DialogTitle>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setUserToDelete(null)}>Cancel</Button>
+                                <Button variant="destructive" onClick={handleDeleteUser}>Delete</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
 
                     <div>
                         <h3 className="text-sm font-semibold mb-2">Add New User</h3>
@@ -288,11 +334,11 @@ const AdminUserManagement: React.FC = () => {
                                                 />
                                             </FormControl>
                                             <div className="space-y-1 leading-none">
-                                                <FormLabel>Multi-site Access</FormLabel>
+                                                <FormLabel>Multi-site Admin (Access to All Sites)</FormLabel>
                                                 <p className="text-xs text-muted-foreground">
                                                     {isSuperAdmin 
-                                                        ? 'Allow access to all sites (only Ogion can create multi-site users)'
-                                                        : 'Only Ogion can create multi-site users'}
+                                                        ? 'Grants unlimited access to ALL sites. When enabled, site selection below is disabled. Only superadmins can create multi-site admin users.'
+                                                        : 'Only superadmins (multi-site admins) can create multi-site admin users (unlimited access to all sites)'}
                                                 </p>
                                             </div>
                                         </FormItem>
@@ -301,8 +347,13 @@ const AdminUserManagement: React.FC = () => {
 
                                 {!multiSite && (
                                     <div className="space-y-2">
-                                        <FormLabel className="text-sm">Site Access</FormLabel>
-                                        <div className="space-y-2">
+                                        <div className="space-y-1">
+                                            <FormLabel className="text-sm">Select Specific Sites</FormLabel>
+                                            <p className="text-xs text-muted-foreground">
+                                                Choose which sites this user can access. You can select multiple sites. If none are selected, the user will be assigned to the current site ({config.siteId || 'default'}).
+                                            </p>
+                                        </div>
+                                        <div className="space-y-2 border rounded-md p-3">
                                             {KNOWN_SITES.map((site) => (
                                                 <FormField
                                                     key={site}

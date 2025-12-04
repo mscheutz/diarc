@@ -32,16 +32,36 @@ type TableProps = {
 type FileManagementProps = {
     handleDelete: () => void,
     handleFileSelect: () => void,
+    handleCancelUpload: () => void,
     isUploading: boolean,
     uploadStatus: 'idle' | 'success' | 'error',
+    uploadError: string | null,
+    uploadProgress: number,
     hasSelection: boolean,
 }
 
+const CHUNK_SIZE = 5 * 1024 * 1024;
+
+const ProgressBar: React.FC<{ progress: number }> = ({ progress }) => (
+    <div className="flex items-center gap-2 min-w-[200px]">
+        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+            <div 
+                className="h-full bg-primary transition-all duration-300 ease-out"
+                style={{ width: `${progress}%` }}
+            />
+        </div>
+        <span className="text-sm text-muted-foreground min-w-[3ch]">
+            {Math.round(progress)}%
+        </span>
+    </div>
+);
+
 const FileManagement: React.FC<FileManagementProps> = ({
-    handleDelete, handleFileSelect, isUploading, uploadStatus, hasSelection
+    handleDelete, handleFileSelect, handleCancelUpload, isUploading, 
+    uploadStatus, uploadError, uploadProgress, hasSelection
 }) => {
     return (
-        <div className="flex flex-row gap-2 items-center">
+        <div className="flex flex-row gap-2 items-center flex-wrap">
             <Button
                 title="Upload a file"
                 onClick={handleFileSelect}
@@ -49,6 +69,14 @@ const FileManagement: React.FC<FileManagementProps> = ({
                 isLoading={isUploading}>
                 {isUploading ? "Uploading..." : "Upload File"}
             </Button>
+            {isUploading && (
+                <Button
+                    variant="outline"
+                    title="Cancel upload"
+                    onClick={handleCancelUpload}>
+                    Cancel
+                </Button>
+            )}
             <Button
                 variant="destructive"
                 title="Delete selected media"
@@ -56,6 +84,9 @@ const FileManagement: React.FC<FileManagementProps> = ({
                 disabled={isUploading || !hasSelection}>
                 Delete Selected
             </Button>
+            {isUploading && (
+                <ProgressBar progress={uploadProgress} />
+            )}
             {uploadStatus === 'success' && (
                 <span className="text-sm text-green-700 dark:text-green-400 px-3 py-1 bg-green-100 dark:bg-green-900/30 rounded-md border border-green-300 dark:border-green-700">
                     {"\u2713"} Uploaded
@@ -63,7 +94,7 @@ const FileManagement: React.FC<FileManagementProps> = ({
             )}
             {uploadStatus === 'error' && (
                 <span className="text-sm text-red-700 dark:text-red-400 px-3 py-1 bg-red-100 dark:bg-red-900/30 rounded-md border border-red-300 dark:border-red-700">
-                    {"\u2717"} Failed
+                    {"\u2717"} {uploadError || 'Upload failed'}
                 </span>
             )}
         </div>
@@ -78,6 +109,9 @@ const MediaManager: React.FC<Props> = ({
     const [mediaKey, setMediaKey] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const currentUploadRef = useRef<{ uploadId: string; cancelled: boolean } | null>(null);
 
     useEffect(() => {
         if (lastMessage === null) return;
@@ -108,20 +142,84 @@ const MediaManager: React.FC<Props> = ({
         setMediaKey(k => k + 1);
     };
 
-    const uploadFile = async (fileToUpload: File) => {
+    const generateUploadId = () => {
+        return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+    };
+
+    const uploadFileChunked = async (fileToUpload: File) => {
+        const uploadId = generateUploadId();
+        currentUploadRef.current = { uploadId, cancelled: false };
+        
         setIsUploading(true);
         setUploadStatus('idle');
+        setUploadError(null);
+        setUploadProgress(0);
+
+        const totalChunks = Math.ceil(fileToUpload.size / CHUNK_SIZE);
 
         try {
-            const formData = new FormData();
-            formData.append("file", fileToUpload);
-            
-            await fetch(baseUrl + '/api/files/upload', {
-                method: 'POST',
-                body: formData,
-                mode: 'no-cors',
+            const initUrl = new URL('api/files/upload/init', baseUrl);
+            const initParams = new URLSearchParams({
+                uploadId,
+                fileName: fileToUpload.name,
+                totalChunks: totalChunks.toString(),
             });
 
+            const initResponse = await fetch(`${initUrl}?${initParams}`, {
+                method: 'POST',
+            });
+
+            if (!initResponse.ok) {
+                throw new Error(`Failed to initialize upload: ${initResponse.status}`);
+            }
+
+            for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+                if (currentUploadRef.current?.cancelled) {
+                    throw new Error('Upload cancelled');
+                }
+
+                const start = chunkIndex * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, fileToUpload.size);
+                const chunk = fileToUpload.slice(start, end);
+
+                const chunkUrl = new URL('api/files/upload/chunk', baseUrl);
+                const formData = new FormData();
+                formData.append('chunk', chunk, `chunk-${chunkIndex}`);
+
+                const chunkParams = new URLSearchParams({
+                    uploadId,
+                    chunkIndex: chunkIndex.toString(),
+                });
+
+                const chunkResponse = await fetch(`${chunkUrl}?${chunkParams}`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!chunkResponse.ok) {
+                    throw new Error(`Failed to upload chunk ${chunkIndex}: ${chunkResponse.status}`);
+                }
+
+                const progress = ((chunkIndex + 1) / totalChunks) * 95;
+                setUploadProgress(progress);
+            }
+
+            if (currentUploadRef.current?.cancelled) {
+                throw new Error('Upload cancelled');
+            }
+
+            const completeUrl = new URL('api/files/upload/complete', baseUrl);
+            const completeParams = new URLSearchParams({ uploadId });
+
+            const completeResponse = await fetch(`${completeUrl}?${completeParams}`, {
+                method: 'POST',
+            });
+
+            if (!completeResponse.ok) {
+                throw new Error(`Failed to complete upload: ${completeResponse.status}`);
+            }
+
+            setUploadProgress(100);
             setUploadStatus('success');
 
             setTimeout(() => {
@@ -132,7 +230,6 @@ const MediaManager: React.FC<Props> = ({
                 }));
             }, 400);
 
-            setFile(null);
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
@@ -141,15 +238,52 @@ const MediaManager: React.FC<Props> = ({
 
             setTimeout(() => {
                 setUploadStatus('idle');
+                setUploadProgress(0);
             }, 3000);
+
         } catch (err) {
             console.error('Upload error:', err);
-            setUploadStatus('error');
-            setTimeout(() => {
+            if (currentUploadRef.current && !currentUploadRef.current.cancelled) {
+                try {
+                    const cancelUrl = new URL('api/files/upload/cancel', baseUrl);
+                    const cancelParams = new URLSearchParams({ uploadId });
+                    await fetch(`${cancelUrl}?${cancelParams}`, { method: 'POST' });
+                } catch {
+                    // Ignore cancel errors
+                }
+            }
+
+            const isCancelled = err instanceof Error && err.message === 'Upload cancelled';
+            
+            if (!isCancelled) {
+                setUploadStatus('error');
+                setUploadError(err instanceof Error ? err.message : 'Upload failed');
+                setTimeout(() => {
+                    setUploadStatus('idle');
+                    setUploadError(null);
+                }, 5000);
+            } else {
                 setUploadStatus('idle');
-            }, 5000);
+            }
+            setUploadProgress(0);
         } finally {
             setIsUploading(false);
+            currentUploadRef.current = null;
+        }
+    };
+
+    const handleCancelUpload = async () => {
+        if (currentUploadRef.current) {
+            currentUploadRef.current.cancelled = true;
+            try {
+                const cancelUrl = new URL('api/files/upload/cancel', baseUrl);
+                const cancelParams = new URLSearchParams({ 
+                    uploadId: currentUploadRef.current.uploadId 
+                });
+                await fetch(`${cancelUrl}?${cancelParams}`, { method: 'POST' });
+            } catch {
+                // Ignore errors
+            }
         }
     };
 
@@ -161,14 +295,12 @@ const MediaManager: React.FC<Props> = ({
                 element !== e.target.value))
     };
 
-    const [file, setFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const selectedFile = e.target.files[0];
-            setFile(selectedFile);
-            await uploadFile(selectedFile);
+            await uploadFileChunked(selectedFile);
         }
     };
 
@@ -261,8 +393,11 @@ const MediaManager: React.FC<Props> = ({
             <FileManagement 
                 handleDelete={handleDelete}
                 handleFileSelect={handleFileSelect}
+                handleCancelUpload={handleCancelUpload}
                 isUploading={isUploading}
                 uploadStatus={uploadStatus}
+                uploadError={uploadError}
+                uploadProgress={uploadProgress}
                 hasSelection={selectedIds.length > 0}
             />
         </div>

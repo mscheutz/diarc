@@ -16,7 +16,6 @@ import {
 } from "@chatscope/chat-ui-kit-react";
 import { ReadyState, SendMessage } from 'react-use-websocket';
 
-import ConnectionIndicator from './util/ConnectionIndicator';
 import "./util/StyleOverrides.css"
 
 type MessageProps = {
@@ -41,33 +40,6 @@ const clean = (message: string) => {
     return message.replace(/(<.*?>)/gm, "").replace(/(\r\n|\n|\r)/gm, "")
 }
 
-type NameInputProps = {
-    username: string,
-    setUsername: React.Dispatch<React.SetStateAction<string>>,
-}
-
-const NameInput: React.FC<NameInputProps> = ({
-    username, setUsername
-}) => {
-    return (
-        <div className="flex-1 items-center justify-center
-                        flex-col space-y-1 flex">
-            <label className='self-start text-xs'>
-                Speaker name
-            </label>
-            <MessageInput
-                className='w-full overflow-scroll'
-                attachButton={false}
-                sendButton={false}
-                placeholder='Set your name here'
-                onChange={(innerText) => setUsername(innerText)}
-                sendOnReturnDisabled={true}
-                value={username}
-            />
-        </div>
-    );
-};
-
 type Props = {
     path: string,
     lastMessage: MessageEvent<any> | null,
@@ -82,7 +54,6 @@ const ChatViewer: React.FC<Props> = ({
     const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
     const [sidebarStyle, setSidebarStyle] = useState<object>({});
     const [chatContainerStyle, setChatContainerStyle] = useState<object>({});
-    const [hasLoadedHistory, setHasLoadedHistory] = useState<boolean>(false);
     const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
     const [pendingHistoryMessages, setPendingHistoryMessages] = useState<any[]>([]);
 
@@ -192,14 +163,7 @@ const ChatViewer: React.FC<Props> = ({
         </ConversationList>
     );
 
-    const [username, setUsername] = useState<string>("webapp");
-
-    const askForAgents = () => {
-        sendMessage(JSON.stringify({
-            "path": path,
-            "method": "sendAgents",
-        }))
-    };
+    const [username] = useState<string>("webapp");
 
     useEffect(() => {
         if (!lastMessage) return;
@@ -211,7 +175,6 @@ const ChatViewer: React.FC<Props> = ({
         }
 
         if (data.historyComplete) {
-            setHasLoadedHistory(true);
             setIsLoadingHistory(false);
             return;
         }
@@ -281,10 +244,10 @@ const ChatViewer: React.FC<Props> = ({
                 {newChats.map((chat, index) => createConversation(chat, index))}
             </ConversationList>
         );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lastMessage, path, sendMessage, isLoadingHistory]);
 
     useEffect(() => {
-        setHasLoadedHistory(false);
         setIsLoadingHistory(true);
         setPendingHistoryMessages([]);
         
@@ -295,7 +258,6 @@ const ChatViewer: React.FC<Props> = ({
         
         const historyTimeout = setTimeout(() => {
             setIsLoadingHistory(false);
-            setHasLoadedHistory(true);
         }, 2000);
         
         return () => clearTimeout(historyTimeout);
@@ -350,6 +312,7 @@ const ChatViewer: React.FC<Props> = ({
             </ConversationList>
         );
         setPendingHistoryMessages([]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoadingHistory, pendingHistoryMessages]);
 
     const handleSendMessage = (message: string) => {
