@@ -35,7 +35,14 @@ public class AvaHybridParserComponent extends HybridParserComponent {
     if (utterance.getSemantics() == null) {
       return utterance;
     }
-    Predicate semantics = (Predicate) utterance.getSemantics();
+    Predicate semantics;
+    try {
+      //TODO: In what other cases are semantics not a predicate? ("Hello")
+      semantics = (Predicate) utterance.getSemantics();
+    } catch (ClassCastException ignored) {
+      //Don't care about this case, so just return the original parse
+      return utterance;
+    }
 
     //Copying Utterance so we don't modify what was put into the cache (if not using validation)
     Utterance output = new Utterance.Builder(utterance).build();
