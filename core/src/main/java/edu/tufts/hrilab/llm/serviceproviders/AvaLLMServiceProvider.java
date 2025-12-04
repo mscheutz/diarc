@@ -686,8 +686,10 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     public void registerForNotifications() {
         try {
             TRADEServiceInfo registerService = TRADE.getAvailableService(new TRADEServiceConstraints().name("registerGoalManagerNotification").argTypes(TRADEServiceInfo.class, NotificationType.class));
-            TRADEServiceInfo notificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseAddition").argTypes(ActionDBEntry.class));
-            registerService.call(void.class, notificationHandler, NotificationType.DATABASE_ADDITION);
+            TRADEServiceInfo additionNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseAddition").argTypes(ActionDBEntry.class));
+            registerService.call(void.class, additionNotificationHandler, NotificationType.DATABASE_ADDITION);
+            TRADEServiceInfo removalNotificationHandler = TRADE.getAvailableService(new TRADEServiceConstraints().name("handleDatabaseRemoval").argTypes(ActionDBEntry.class));
+            registerService.call(void.class, removalNotificationHandler, NotificationType.DATABASE_REMOVAL);
             registeredForNewActions = true;
             log.info("[registerForNotifications] successfully registered for database additions");
         } catch (TRADEException e) {
@@ -719,6 +721,14 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             learnedActionsString += String.format("%s\n#\n", pred);
             learnedActionNames.add(pred.getName());
         }
+    }
+
+    @TRADEService
+    public void handleDatabaseRemoval(ActionDBEntry entry) throws TRADEException {
+        Predicate pred = entry.getSignature(false);
+        learnedActionsString = learnedActionsString.replace(String.format("%s\n#\n", pred),"");
+        learnedActionNames.remove(pred.getName());
+        //TODO: should ideally remove any cache entries relevant to this action
     }
 
     @Override
