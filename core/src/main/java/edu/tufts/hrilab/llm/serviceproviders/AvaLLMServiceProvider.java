@@ -37,6 +37,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     private boolean registeredForNewActions = false;
     private boolean retrievedLearnedActions = false;
     private String learnedActionsString = "";
+    private List<String> learnedActionNames = new ArrayList<>();
     //TODO: All of this information should potentially be spread out to different parts of the system and gathered here
     //  on startup rather than hardcoded. E.g. descriptions from ActionDBEntries (asl pre-existing and new java annotations),
     //  NL examples from various parsers, selection of exposed actions from config, ... This is a fairly large architectural
@@ -333,7 +334,29 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         String output = m.group(m.groupCount());
         outgoingUtterance.setWords(List.of(output.split(" ")));
 
+        //TODO: ideally this check and override would occur somewhere else, but currently have learned action information here nicely
+      if (outgoingUtterance.getSemantics().getName().equals("mean")) {
+        checkForLearnedActionInstructionValidation(outgoingUtterance);
+      }
+
         return outgoingUtterance;
+    }
+
+    private void checkForLearnedActionInstructionValidation(Utterance utterance) {
+      Predicate semantics;
+      List<Term> boundSemantics = utterance.getBoundSemantics();
+      if (boundSemantics.isEmpty()) {
+        semantics = (Predicate) utterance.getSemantics();
+      } else {
+        semantics = (Predicate) boundSemantics.get(0);
+      }
+      List<Symbol> args = semantics.getArgs();
+      if (args.size() > 1) {
+        String name = args.get(1).getName();
+        if (learnedActionNames.contains(name)) {
+          utterance.setWords(String.format("Did you mean to ask me to perform the \"%s\" action?",String.join(" ", name.split("_"))));
+        }
+      }
     }
 
     @Override
@@ -665,6 +688,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             List<Predicate> learnedActionPredicates = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLearnedActionPredicates")).call(List.class);
             for (Predicate pred : learnedActionPredicates) {
               learnedActionsString += String.format("%s\n#\n", pred);
+              learnedActionNames.add(pred.getName());
               //learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n", pred, pred.getName());
             }
             retrievedLearnedActions = true;
@@ -679,7 +703,9 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             log.info("[handleDatabaseAddition] have learned action {}", entry.getName());
             //learnedActions.add(entry);
             //learnedActionsString += String.format("%s\nDescription: The user has previously manually taught the definition of this action through the use of the learnNewTask and endActionLearning actions. It will be referred to as \"%s\" when instructed by the user.\n#\n",entry.getSignature(false),entry.getName());
-            learnedActionsString += String.format("%s\n#\n", entry.getSignature(false));
+            Predicate pred = entry.getSignature(false);
+            learnedActionsString += String.format("%s\n#\n", pred);
+            learnedActionNames.add(pred.getName());
         }
     }
 
