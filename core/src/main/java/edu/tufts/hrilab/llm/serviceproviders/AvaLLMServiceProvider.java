@@ -45,19 +45,32 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
     private class LLMActionEntry {
         String signature;
         String description;
-        LLMNLExample example;
+        List<LLMNLExample> examples;
 
         LLMActionEntry(String signature, String description, LLMNLExample example) {
             this.signature = signature;
             this.description = description;
-            this.example = example;
+            this.examples = List.of(example);
         }
 
         LLMActionEntry(String signature, String description, String exampleInstruction, String exampleTranslation, int exampleConfidence) {
             this.signature = signature;
             this.description = description;
-            this.example = new LLMNLExample(exampleInstruction, exampleTranslation, exampleConfidence);
+            this.examples = List.of(new LLMNLExample(exampleInstruction, exampleTranslation, exampleConfidence));
         }
+
+      LLMActionEntry(String signature, String description, List<String> exampleInstructions, List<String> exampleTranslations, int exampleConfidence) {
+        this.signature = signature;
+        this.description = description;
+        this.examples = new ArrayList<>();
+        if (exampleInstructions.size() != exampleTranslations.size()) {
+          log.error("[LLMActionEntry] provided instruction and translation lists differ in size");
+        } else {
+          for (int i = 0; i < exampleInstructions.size(); i++) {
+            this.examples.add(new LLMNLExample(exampleInstructions.get(i), exampleTranslations.get(i), exampleConfidence));
+          }
+        }
+      }
 
         public String toString(boolean nlu) {
             String signatureString = signature;
@@ -73,15 +86,17 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
             String output = signatureString + "\n" +
                   "Description: " + description + "\n";
             if (nlu) {
-                output +=
-                        "Example Translation: \"" +
-                                example.instruction +
-                                "\" -> {\"Semantics\":\"" +
-                                example.semantics +
-                                "\",\"Input Type\":\"INSTRUCT\",\"Confidence\":\"" +
-                                example.confidence +
-                                "\"}\n";
-            }
+                for (LLMNLExample example : examples) {
+                    output +=
+                            "Example Translation: \"" +
+                                    example.instruction +
+                                    "\" -> {\"Semantics\":\"" +
+                                    example.semantics +
+                                    "\",\"Input Type\":\"INSTRUCT\",\"Confidence\":\"" +
+                                    example.confidence +
+                                    "\"}\n";
+                  }
+              }
             output += "#\n";
             return output;
         }
@@ -976,10 +991,16 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         //        "what locations are in %examplePath",
         //        "describeAllLocationsOnPatrolPath(%examplePath:path)", 10);
         //exposedActionList.add(entry);
+        List<String> questionExamples = new ArrayList<>();
+        List<String> questionTranslations = new ArrayList<>();
+        questionExamples.add("could you repeat that");
+        questionExamples.add("what is the question");
+        questionTranslations.add("repeatLastQuestion()");
+        questionTranslations.add("repeatLastQuestion()");
         entry = new LLMActionEntry("repeatLastQuestion()",
                 "You repeat the last question you asked, which the human still needs to answer",
-                "could you repeat that",
-                "repeatLastQuestion()", 10);
+                questionExamples,
+                questionTranslations, 10);
         exposedActionList.add(entry);
         entry = new LLMActionEntry("reportTaughtActions()",
                 "You list all of the actions which have been taught to you by a user",
