@@ -59,32 +59,39 @@ import edu.tufts.hrilab.action.justification.Justification;
     }
     op:log(debug, "[scheduleGoal] time/units: !time/!addl");
 
-    !bindings = act:askQuestionFromString("Should this task be repeated?", val(X));
+    !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+    !responseForm = op:createPredicate("val(X)");
+    op:add(!responseFormList,!responseForm);
+    !responseForm = op:createPredicate("relativeTime(X,Y)");
+    op:add(!responseFormList,!responseForm);
+    !bindings = act:askQuestionFromString("Should this task be repeated?", !responseFormList);
     if (op:invokeMethod(!bindings,"isEmpty")) {
         exit(FAIL,not(wasAnswered(myQuestion)));
     }
     !confirmation = op:get(!bindings, !x);
 
-    if (op:equalsValue(!confirmation, yes())) {
-      //Only allowing relativeTime(X,Y) response form here for code simplicity.
-      !bindings = act:askQuestionFromString("How often?", !responseForm);
-      if (op:invokeMethod(!bindings,"isEmpty")) {
-          exit(FAIL,not(wasAnswered(myQuestion)));
-      }
-      !interval = op:get(!bindings, !x);
-      !intervalUnits = op:get(!bindings, !y);
-
-      if (op:equals(!relativeTime,true)) {
-        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, period(!interval, !intervalUnits), start(!time, !addl))"); // TODO: EAK: is this right?
-      } else {
-        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, period(!interval, !intervalUnits), start(!time))"); // TODO: EAK: is this right?
-      }
+    if (op:equalsValue(!confirmation, no())) {
+        if (op:equals(!relativeTime,true)) {
+            !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, start(!time, !addl))"); // TODO: EAK: is this right?
+        } else {
+            !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, start(!time))"); // TODO: EAK: is this right?
+        }
     } else {
-      if (op:equals(!relativeTime,true)) {
-        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, start(!time, !addl))"); // TODO: EAK: is this right?
-      } else {
-        !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, start(!time))"); // TODO: EAK: is this right?
-      }
+        if (op:equalsValue(!confirmation, yes())) {
+            //Only allowing relativeTime(X,Y) response form here for code simplicity.
+            !bindings = act:askQuestionFromString("How often?", !responseForm);
+            if (op:invokeMethod(!bindings,"isEmpty")) {
+                exit(FAIL,not(wasAnswered(myQuestion)));
+            }
+        }
+        !interval = op:get(!bindings, !x);
+        !intervalUnits = op:get(!bindings, !y);
+
+        if (op:equals(!relativeTime,true)) {
+            !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, period(!interval, !intervalUnits), start(!time, !addl))"); // TODO: EAK: is this right?
+        } else {
+            !scheduledGoal = op:createPredicate("scheduled(!goalPredicate, period(!interval, !intervalUnits), start(!time))"); // TODO: EAK: is this right?
+        }
     }
     op:log(info, "[scheduleGoal] scheduledGoal: !scheduledGoal");
 

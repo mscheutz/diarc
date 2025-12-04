@@ -603,7 +603,7 @@ public class LearningState {
     }
 
     //Reference symbol
-    if (s.matches("(.+)_\\d+:\\1")) {
+    if (s.matches(".*(.+)_\\d+:\\1")) {
       return false;
     }
 

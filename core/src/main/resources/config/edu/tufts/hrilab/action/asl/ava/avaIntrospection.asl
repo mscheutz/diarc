@@ -214,6 +214,8 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !numToReportString;
     Integer !numToReport;
     Integer !numReported = 0;
+    java.util.List !responseFormList;
+    Predicate !responseForm;
 
     //Boolean !blockingTaskExists;
     //!blockingTaskExists = act:blockingTaskExists();
@@ -227,15 +229,24 @@ import edu.tufts.hrilab.action.goal.Goal;
         exit(FAIL,retrieve(exposedActionList));
     } else {
         !numPredefined = op:invokeMethod(!instructableActions,"size");
-        !bindings = act:askQuestionFromString("I have !numPredefined predefined actions. Would you like me to start listing them out?", val(X));
+        !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
+        !responseForm = op:createPredicate("val(X)");
+        op:add(!responseFormList,!responseForm);
+        !responseForm = op:createPredicate("amount(X)");
+        op:add(!responseFormList,!responseForm);
+        !bindings = act:askQuestionFromString("I have !numPredefined predefined actions. Would you like me to start listing them out?", !responseFormList);
         if (op:invokeMethod(!bindings,"isEmpty")) {
             exit(FAIL,not(wasAnswered(myQuestion)));
         }
         !confirmation = op:get(!bindings, !x);
-        if (op:equalsValue(!confirmation, yes)) {
-            !bindings = act:askQuestionFromString("How many should I list at a time?", amount(X));
-            if (op:invokeMethod(!bindings,"isEmpty")) {
-                exit(FAIL,not(wasAnswered(myQuestion)));
+        if (op:equalsValue(!confirmation, no)) {
+            act:generateResponseFromString("Okay, not listing any predefined actions");
+        } else {
+            if (op:equalsValue(!confirmation, yes)) {
+                !bindings = act:askQuestionFromString("How many should I list at a time?", amount(X));
+                if (op:invokeMethod(!bindings,"isEmpty")) {
+                    exit(FAIL,not(wasAnswered(myQuestion)));
+                }
             }
             !numToReportString = op:get(!bindings, !x);
             if (op:equalsValue(!numToReportString,"all")) {
@@ -267,8 +278,6 @@ import edu.tufts.hrilab.action.goal.Goal;
             } else {
             act:generateResponseFromString("Sorry, I am exiting this conversation context. Please try again and supply a positive number");
             }
-        } else {
-            act:generateResponseFromString("Okay, not listing any predefined actions");
         }
     }
 }

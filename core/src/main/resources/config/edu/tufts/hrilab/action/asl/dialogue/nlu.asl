@@ -86,8 +86,11 @@ import edu.tufts.hrilab.slug.common.Utterance;
     Symbol !utteranceSymbol;
     Predicate !response;
     java.util.Map !bindings;
+    java.util.List !suspendedQids;
+    java.lang.Long !qid;
     edu.tufts.hrilab.fol.Variable !x = "X";
     Utterance !timeoutUtterance;
+    java.lang.String !validationUtteranceString;
     if (op:invokeMethod(?utterance, "needsValidation")) {
       op:log("debug", "Validating utterance: ?utterance");
       !addressee = op:invokeMethod(?utterance, "getAddressee");
@@ -109,10 +112,14 @@ import edu.tufts.hrilab.slug.common.Utterance;
       !language = op:invokeMethod(?utterance,"getLanguage");
       op:invokeMethod(!queryUtterance,"setLanguage",!language);
 
+      //TODO: Revisit - This reasoning can be extended to catch if you are conflicting with a generic yes/no question vs
+              //        another validation question specifically (and whether the target of validation is yes/no itself)
+              //        Overall, what happens to validation questions when other input is received should be discussed
+              //        ^practically seen that novice users often miss or ignore validation questions
       //Wrapping question in suspend/resume for val(X) in case of validation of a yes/no answer. Only potential awkwardness
       //  arises if the goal prompting the original question is canceled, then answering the validation question will cause
       //  the validated response to hit nothing.
-      act:suspendWaitForResponse(val(X),!addressee,false);
+      !suspendedQids = act:suspendWaitForResponse(val(X),!addressee,false);
       !bindings = !addressee.act:askQuestionFromUtterance(!queryUtterance, val(X),1,60);
       //Experimental: Validation Questions time out after 1 minute
       if (op:isNull(!bindings)) {
@@ -120,14 +127,18 @@ import edu.tufts.hrilab.slug.common.Utterance;
         //Updating Dialogue history to give users looking at conversation history some indication that this happened
         //  (because understanding of context of time passed is harder to resolve when looking at chat)
         !timeoutUtterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !addressee);
-        //TODO: how specific should this message be?
-        op:invokeMethod(!timeoutUtterance, "setWords", "(previous disambiguation question has timed out)");
+        !validationUtteranceString = op:invokeMethod(!queryUtterance,"getWordsAsString");
+        op:invokeMethod(!timeoutUtterance, "setWords", "(previous disambiguation question \"!validationUtteranceString\" has timed out without being answered)");
         //TODO: (Ava only) should we display this on the Ava screen?
         act:updateDialogueHistory(!timeoutUtterance);
         return;
       }
       !response = op:get(!bindings, !x);
-      act:resumeWaitForResponse(val(X),!addressee);
+      if (~op:isEmpty(!suspendedQids)) {
+          foreach(!qid : !suspendedQids) {
+              act:resumeWaitForResponse(!qid,!addressee);
+          }
+      }
 
       if (op:isNull(!response)) {
         op:log("debug", "Utterance validation aborted, not processing utterance");
@@ -139,7 +150,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
       } elseif (op:equalsValue(!response, no())) {
         // ask for human to rephrase their request
         op:log("debug", "Utterance not validated. Asking to rephrase.");
-        act:generateResponseFromString(!speaker, "please rephrase");
+        act:generateResponseFromString(!speaker, "please try to submit your instruction again with different phrasing");
         return;
       } else {
         op:log("error", "Unexpected question response: !response");

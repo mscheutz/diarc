@@ -19,6 +19,7 @@ import edu.tufts.hrilab.fol.Term;
 import edu.tufts.hrilab.fol.Variable;
 import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.slug.dialogue.gui.DialogueGui;
+import edu.tufts.hrilab.util.IdGenerator;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,6 +49,7 @@ public class DialogueComponent extends DiarcComponent {
   private ConcurrentHashMap<Symbol,Set<Question>> questionsPerAgent = new ConcurrentHashMap<>();
   private List<Symbol> allowGoalsWithOpenQuestionsFor = new ArrayList<>();
   private Map<Symbol,Set<Symbol>> agentHierarchy = new HashMap<>();
+  private static final IdGenerator idGenerator = new IdGenerator();
 
   private boolean showDialogueGui = false;
   private DialogueGui dialogueGui;
@@ -310,7 +313,7 @@ public class DialogueComponent extends DiarcComponent {
     }
 
     speaker = speaker.toUntyped();
-    Question question = new Question(questionString, responseForms);
+    Question question = new Question(questionString, responseForms, idGenerator.getNext());
     Set<Question> currentQuestions = questionsPerAgent.get(speaker);
     if (currentQuestions == null) {
       log.warn("[waitForResponse] unexpected speaker encountered {}", speaker);
@@ -349,21 +352,13 @@ public class DialogueComponent extends DiarcComponent {
     if (matchingQuestions.isEmpty()) {
       //No direct match
       if (answerSemantics.getName().equals("abort")) {
-        //If universal exit semantics, then 'cancel' question with the most recent timestamp
+        //If universal exit semantics, then 'cancel' question with the most recent qid
         //TODO: should this case just act as a match to any/all? If multiple current questions then ask to disambiguate?
         //TODO: allow inner semantics to either match specific question or be general "most recent" symbol?
-        AtomicReference<Question> question = new AtomicReference<>();
-        long maxTimestamp = -1;
-        currentQuestions.forEach(q -> {
-          if (q.getTimestamp() > maxTimestamp) {
-            question.set(q);
-          }
-        });
-        if (question.get() != null) {
-          Question mostRecent = question.get();
-          if (mostRecent != null) {
-            matchingQuestionPerAgent.put(listener,List.of(mostRecent));
-          }
+        Optional<Question> opt = currentQuestions.stream().max(Comparator.comparingLong(Question::getQid));
+        if (opt.isPresent()) {
+          Question mostRecent = opt.get();
+          matchingQuestionPerAgent.put(listener,List.of(mostRecent));
         }
       } else {
         //Check children if no matching question is found
@@ -394,6 +389,7 @@ public class DialogueComponent extends DiarcComponent {
     }
   }
 
+  //TODO: extend signature variations this method can be called with
   /**
    * Remove the question corresponding to the provided string and response semantics from the current question
    * collection and signal the answer condition without setting response bindings
@@ -417,6 +413,8 @@ public class DialogueComponent extends DiarcComponent {
     }
   }
 
+  //TODO: Extend signature variations this method can be called with
+  //      Also, more explicitly define "exactMatch" vs "anyMatch" variations of response forms
   /**
    * Suspend the question(s) corresponding to the provided response semantics. Optionally unlock the answer to
    *  unblock waitForResponse call(s).
@@ -426,24 +424,45 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void suspendWaitForResponse(Term responseForm, Symbol listener, boolean unlock) {
+  public List<Long> suspendWaitForResponse(Term responseForm, Symbol listener, boolean unlock) {
+    log.debug("[suspendWaitForResponse] suspending responseForm {}", responseForm);
     listener = listener.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
     List<Question> matchingQuestions = currentQuestions.stream()
             .filter(q -> q.isActive() && q.hasMatchingResponseForm(responseForm))
             .toList();
+    return suspendQuestions(matchingQuestions, unlock);
+  }
 
-    if (matchingQuestions.size() > 1) {
-      log.warn("[suspendWaitForResponse] suspending multiple questions");
-    }
+  @TRADEService
+  @Action
+  public List<Long> suspendWaitForResponse(List<Term> responseForms, Symbol listener, boolean unlock) {
+    log.debug("[suspendWaitForResponse] suspending responseForms {}", responseForms);
+    listener = listener.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(listener);
+    //get matching question(s)
+    List<Question> matchingQuestions = currentQuestions.stream()
+            .filter(q -> q.isActive() && q.hasMatchingResponseForms(responseForms))
+            .toList();
 
-    for (Question question : matchingQuestions) {
-      question.suspend();
-      if (unlock) {
-        question.endWaitForResponse();
+    return suspendQuestions(matchingQuestions, unlock);
+  }
+
+  private List<Long> suspendQuestions(List<Question> questions, boolean unlock) {
+    log.debug("[suspendQuestions] suspending questions: {}", questions);
+    List<Long> matchingQids = new ArrayList<>();
+    if (questions != null) {
+      for (Question question : questions) {
+        question.suspend();
+        if (unlock) {
+          question.endWaitForResponse();
+        }
+        matchingQids.add(question.getQid());
       }
     }
+    log.debug("[suspendQuestions] suspended qids: {}", matchingQids);
+    return matchingQids;
   }
 
   /**
@@ -455,7 +474,8 @@ public class DialogueComponent extends DiarcComponent {
    */
   @TRADEService
   @Action
-  public void resumeWaitForResponse(Term responseForm, Symbol listener) {
+  public List<Long> resumeWaitForResponse(Term responseForm, Symbol listener) {
+    log.debug("[resumeWaitForResponse] resuming responseForm {}", responseForm);
     listener = listener.toUntyped();
     Set<Question>currentQuestions = questionsPerAgent.get(listener);
     //get matching question(s)
@@ -463,13 +483,46 @@ public class DialogueComponent extends DiarcComponent {
             .filter(q -> !q.isActive() && q.hasMatchingResponseForm(responseForm))
             .toList();
 
-    if (matchingQuestions.size() > 1) {
-      log.warn("[resumeWaitForResponse] suspending multiple questions");
-    }
+    return resumeQuestions(matchingQuestions);
+  }
+  @TRADEService
+  @Action
+  public List<Long> resumeWaitForResponse(List<Term> responseForms, Symbol listener) {
+    log.debug("[resumeWaitForResponse] resuming responseForms {}", responseForms);
+    listener = listener.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(listener);
+    //get matching question(s)
+    List<Question> matchingQuestions = currentQuestions.stream()
+            .filter(q -> !q.isActive() && q.hasMatchingResponseForms(responseForms))
+            .toList();
 
-    for (Question question : matchingQuestions) {
-      question.resume();
+    return resumeQuestions(matchingQuestions);
+  }
+  @TRADEService
+  @Action
+  public boolean resumeWaitForResponse(long qid, Symbol listener) {
+    log.debug("[resumeWaitForResponse] resuming qid: {}", qid);
+    Set<Question>currentQuestions = questionsPerAgent.get(listener);
+    Optional<Question> matchingQuestion = currentQuestions.stream().filter(q->q.getQid() == qid).findFirst();
+    boolean found = matchingQuestion.isPresent();
+    if (found) {
+      matchingQuestion.get().resume();
     }
+    log.debug("[resumeWaitForResponse] returning: {}", found);
+    return found;
+  }
+
+  private List<Long> resumeQuestions(List<Question> questions) {
+    log.debug("[resumeQuestions] resuming questions: {}", questions);
+    List<Long> matchingQids = new ArrayList<>();
+    if (questions != null) {
+      for (Question question : questions) {
+        question.resume();
+        matchingQids.add(question.getQid());
+      }
+    }
+    log.debug("[resumeQuestions] resuming qids: {}", matchingQids);
+    return matchingQids;
   }
 
   @TRADEService
@@ -500,9 +553,16 @@ public class DialogueComponent extends DiarcComponent {
     if (currentQuestions.isEmpty()) {
       return "";
     } else {
-      Question mostRecentQuestion = currentQuestions.stream().max(Comparator.comparingLong(Question::getTimestamp)).get();
+      Question mostRecentQuestion = currentQuestions.stream().max(Comparator.comparingLong(Question::getQid)).get();
       return mostRecentQuestion.getQuestionString();
     }
+  }
+
+  @TRADEService
+  public List<String> getAllQuestions(Symbol agent) {
+    agent = agent.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(agent);
+    return currentQuestions.stream().sorted(Comparator.comparingLong(Question::getQid)).map(Question::getQuestionString).toList();
   }
 
   @TRADEService
@@ -512,8 +572,15 @@ public class DialogueComponent extends DiarcComponent {
     if (currentQuestions.isEmpty()) {
       return new ArrayList<>();
     } else {
-      Question mostRecentQuestion = currentQuestions.stream().max(Comparator.comparingLong(Question::getTimestamp)).get();
+      Question mostRecentQuestion = currentQuestions.stream().max(Comparator.comparingLong(Question::getQid)).get();
       return mostRecentQuestion.getResponseForms();
     }
+  }
+
+  @TRADEService
+  public List<List<Term>> getAllQuestionResponseForms(Symbol agent) {
+    agent = agent.toUntyped();
+    Set<Question>currentQuestions = questionsPerAgent.get(agent);
+    return currentQuestions.stream().sorted(Comparator.comparingLong(Question::getQid)).map(Question::getResponseForms).toList();
   }
 }
