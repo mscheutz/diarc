@@ -51,11 +51,21 @@ type Props = {
 const ChatViewer: React.FC<Props> = ({
     path, lastMessage, sendMessage, readyState, focusRobot
 }) => {
-    const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
+    const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
+    const [sidebarVisible, setSidebarVisible] = useState<boolean>(false);
     const [sidebarStyle, setSidebarStyle] = useState<object>({});
     const [chatContainerStyle, setChatContainerStyle] = useState<object>({});
     const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
     const [pendingHistoryMessages, setPendingHistoryMessages] = useState<any[]>([]);
+
+    // Listen for window resize to update mobile state
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleBackClick = useCallback(() => {
         setSidebarVisible(true);
@@ -65,6 +75,13 @@ const ChatViewer: React.FC<Props> = ({
     }, [setSidebarVisible]);
 
     useEffect(() => {
+        // On desktop, always show both sidebar and chat side-by-side
+        if (!isMobile) {
+            setSidebarStyle({});
+            setChatContainerStyle({});
+            return;
+        }
+        // On mobile, toggle between sidebar and chat
         if (sidebarVisible) {
             setSidebarStyle({
                 display: "flex",
@@ -74,10 +91,10 @@ const ChatViewer: React.FC<Props> = ({
             });
             setChatContainerStyle({ display: "none" });
         } else {
-            setSidebarStyle({});
+            setSidebarStyle({ display: "none" });
             setChatContainerStyle({});
         }
-    }, [sidebarVisible])
+    }, [sidebarVisible, isMobile])
 
     const createConversation = (chat: Chat, index: number) => {
         return (
@@ -110,7 +127,7 @@ const ChatViewer: React.FC<Props> = ({
     const createConversationHeader = (chat: Chat) => {
         return (
             <ConversationHeader>
-                <ConversationHeader.Back onClick={() => handleBackClick()} />
+                {isMobile && <ConversationHeader.Back onClick={() => handleBackClick()} />}
                 <Avatar
                     name={chat.robotName}
                     src={chat.profileImagePath}
@@ -131,7 +148,7 @@ const ChatViewer: React.FC<Props> = ({
                 {sender !== chats[currentChat].robotName && (
                     <div
                         key={"sentby" + index}
-                        className="text-right text-[10px] text-muted-foreground mb-px"
+                        className="text-right text-xs text-muted-foreground mb-px"
                     >
                         {sender}
                     </div>

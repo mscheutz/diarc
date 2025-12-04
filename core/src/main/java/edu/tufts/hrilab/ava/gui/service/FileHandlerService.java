@@ -8,6 +8,7 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import ai.thinkingrobots.trade.TRADEServiceInfo;
+import edu.tufts.hrilab.ava.MediaTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -55,20 +56,25 @@ public class FileHandlerService {
   }
 
   public String store(MultipartFile file) {
-    String[] split = file.getOriginalFilename().split("\\.");
-    Path targetLocation = Path.of("");
-    if (split[1].equals("mp4")) {
-      targetLocation = Paths.get(userVideoDir, file.getOriginalFilename());
-    } else if  (split[1].equals("png")) {
-      targetLocation = Paths.get(userImageDir, file.getOriginalFilename());
+    String filename = file.getOriginalFilename();
+    Path targetLocation;
+    
+    if (MediaTypes.isVideo(filename)) {
+      targetLocation = Paths.get(userVideoDir, filename);
+    } else if (MediaTypes.isImage(filename)) {
+      targetLocation = Paths.get(userImageDir, filename);
+    } else {
+      // Default to video directory for unknown types
+      targetLocation = Paths.get(userVideoDir, filename);
     }
+    
     log.info("[store] path: " + targetLocation);
     try {
       Files.copy(file.getInputStream(), targetLocation);
     } catch (IOException e) {
       log.error("[store] error attempting to write file from stream");
     }
-    return file.getOriginalFilename();
+    return filename;
   }
 
   public boolean initChunkedUpload(String uploadId, String fileName, int totalChunks) {
@@ -108,15 +114,14 @@ public class FileHandlerService {
     }
 
     try {
-      String[] split = info.fileName.split("\\.");
-      String ext = split.length > 1 ? split[split.length - 1].toLowerCase() : "";
       Path targetLocation;
       
-      if (ext.equals("mp4") || ext.equals("mov") || ext.equals("avi") || ext.equals("webm")) {
+      if (MediaTypes.isVideo(info.fileName)) {
         targetLocation = Paths.get(userVideoDir, info.fileName);
-      } else if (ext.equals("png") || ext.equals("jpg") || ext.equals("jpeg") || ext.equals("gif")) {
+      } else if (MediaTypes.isImage(info.fileName)) {
         targetLocation = Paths.get(userImageDir, info.fileName);
       } else {
+        // Default to video directory for unknown types
         targetLocation = Paths.get(userVideoDir, info.fileName);
       }
 

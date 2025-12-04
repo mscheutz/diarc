@@ -7,6 +7,7 @@ import ai.thinkingrobots.trade.TRADEServiceInfo;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import edu.tufts.hrilab.ava.MediaTypes;
 import edu.tufts.hrilab.ava.gui.service.FileHandlerService;
 import edu.tufts.hrilab.gui.GuiAdapter;
 
@@ -101,12 +102,7 @@ public class AvaMediaAdapter extends GuiAdapter {
     for (String mediaFileName : mediaFileNames) {
       JsonObject jsonObject = new JsonObject();
       jsonObject.addProperty("name", mediaFileName);
-      String[] strings = mediaFileName.split("\\.");
-      if (strings[1].equals("mp4")) {
-        jsonObject.addProperty("type", "video");
-      } else {
-        jsonObject.addProperty("type", "image");
-      }
+      jsonObject.addProperty("type", MediaTypes.getMediaType(mediaFileName));
       jsonArray.add(jsonObject);
     }
     return jsonArray;

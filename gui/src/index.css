@@ -53,6 +53,9 @@
   * {
     @apply border-border;
   }
+  html {
+    font-size: 19px; /* Bump from default 16px for better desktop readability */
+  }
   body {
     @apply bg-background text-foreground;
     margin: 0;

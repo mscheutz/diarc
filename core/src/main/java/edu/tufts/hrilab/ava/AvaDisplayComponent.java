@@ -37,6 +37,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -104,10 +105,10 @@ public class AvaDisplayComponent extends DiarcComponent {
   @TRADEService
   public void refreshMedia() {
     if (!videoDir.equals("")) {
-      videos = getMediaFromDir(videoDir, ".mp4");
-      idleImages = getMediaFromDir(idleImageDir, ".png");
+      videos = getMediaFromDir(videoDir, MediaTypes.VIDEO_EXTENSIONS);
+      idleImages = getMediaFromDir(idleImageDir, MediaTypes.IMAGE_EXTENSIONS);
       idleImages = idleImages.stream().sorted().toList();
-      userImages = getMediaFromDir(userImageDir, ".png");
+      userImages = getMediaFromDir(userImageDir, MediaTypes.IMAGE_EXTENSIONS);
       userImages = userImages.stream().sorted().toList();
     }
   }
@@ -118,10 +119,13 @@ public class AvaDisplayComponent extends DiarcComponent {
     return Paths.get(diarcDirPath, videoDir).toString();
   }
 
-  private List<String> getMediaFromDir(String videoDir, String fileType) {
-    String videoDirPath = getMediaPath(videoDir);
-    File dir = new File(videoDirPath);
-    File[] files = dir.listFiles((dir1, name) -> name.toLowerCase().endsWith(fileType));
+  private List<String> getMediaFromDir(String mediaDir, Set<String> extensions) {
+    String mediaDirPath = getMediaPath(mediaDir);
+    File dir = new File(mediaDirPath);
+    File[] files = dir.listFiles((dir1, name) -> {
+      String ext = MediaTypes.getExtension(name);
+      return extensions.contains(ext);
+    });
     List<String> toReturn = List.of();
     if (files != null) {
       List<File> fileList = List.of(files);

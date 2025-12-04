@@ -29,6 +29,7 @@ type FileManagementProps = {
 }
 
 const CHUNK_SIZE = 5 * 1024 * 1024;
+const MAX_CONCURRENT_CHUNKS = 4; // Number of chunks to upload in parallel
 
 const ProgressBar: React.FC<{ progress: number }> = ({ progress }) => (
     <div className="flex items-center gap-2 w-full sm:w-auto sm:min-w-[160px]">
@@ -168,7 +169,9 @@ const MediaManager: React.FC<Props> = ({
                 throw new Error(`Failed to initialize upload: ${initResponse.status}`);
             }
 
-            for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            let completedCount = 0;
+
+            const uploadChunk = async (chunkIndex: number): Promise<void> => {
                 if (currentUploadRef.current?.cancelled) {
                     throw new Error('Upload cancelled');
                 }
@@ -195,9 +198,31 @@ const MediaManager: React.FC<Props> = ({
                     throw new Error(`Failed to upload chunk ${chunkIndex}: ${chunkResponse.status}`);
                 }
 
-                const progress = ((chunkIndex + 1) / totalChunks) * 95;
-                setUploadProgress(progress);
+                completedCount++;
+                setUploadProgress((completedCount / totalChunks) * 95);
+            };
+
+            const chunks = Array.from({ length: totalChunks }, (_, i) => i);
+            const activeUploads: Promise<void>[] = [];
+
+            for (const chunkIndex of chunks) {
+                if (currentUploadRef.current?.cancelled) {
+                    throw new Error('Upload cancelled');
+                }
+
+                while (activeUploads.length >= MAX_CONCURRENT_CHUNKS) {
+                    await Promise.race(activeUploads);
+                }
+
+                const promise = uploadChunk(chunkIndex);
+                activeUploads.push(promise);
+                promise.finally(() => {
+                    const idx = activeUploads.indexOf(promise);
+                    if (idx > -1) activeUploads.splice(idx, 1);
+                });
             }
+
+            await Promise.all(activeUploads);
 
             if (currentUploadRef.current?.cancelled) {
                 throw new Error('Upload cancelled');
@@ -354,13 +379,13 @@ const MediaManager: React.FC<Props> = ({
                     
                     <div key={mediaKey} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <div className="text-[10px] text-muted-foreground border-b border-border pb-1 mb-1">
+                            <div className="text-xs text-muted-foreground border-b border-border pb-1 mb-1">
                                 IMAGES {images.length > 0 && `(${images.length})`}
                             </div>
                             <MediaList items={images} handleSelect={handleItemSelect} />
                         </div>
                         <div>
-                            <div className="text-[10px] text-muted-foreground border-b border-border pb-1 mb-1">
+                            <div className="text-xs text-muted-foreground border-b border-border pb-1 mb-1">
                                 VIDEOS {videos.length > 0 && `(${videos.length})`}
                             </div>
                             <MediaList items={videos} handleSelect={handleItemSelect} />
@@ -369,7 +394,7 @@ const MediaManager: React.FC<Props> = ({
                     
                     {other.length > 0 && (
                         <div className="mt-3">
-                            <div className="text-[10px] text-muted-foreground border-b border-border pb-1 mb-1">
+                            <div className="text-xs text-muted-foreground border-b border-border pb-1 mb-1">
                                 OTHER {`(${other.length})`}
                             </div>
                             <MediaList items={other} handleSelect={handleItemSelect} />
