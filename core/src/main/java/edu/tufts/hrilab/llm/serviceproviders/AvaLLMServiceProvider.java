@@ -639,7 +639,8 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         promptVars.put("%imageList", imageList);
         promptVars.put("%worldState", getWorldStateString(utterance.getAddressee()));
         promptVars.put("%goals", getGoalString(utterance.getAddressee()));
-        promptVars.put("%questionList", getCurrentQuestionsString(utterance.getAddressee()));
+        String questionString = getCurrentQuestionsString(utterance.getAddressee());
+        promptVars.put("%questionList", questionString);
         promptVars.put("%learnedActions%",learnedActionsString);
         promptVars.put("%exampleLocation", locations.isEmpty() ? "test location" : locations.get(0));
         promptVars.put("%examplePath", patrolPaths.isEmpty() ? "test path" : patrolPaths.get(0));
@@ -647,8 +648,12 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         currentChat.setSystem(nluSystemPrompt.apply(promptVars));
         //promptVars.clear();
         promptVars.put("%utterance", utterance.getWordsAsString());
-        currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
-
+        if (questionString.startsWith("What is the name of the task") || questionString.startsWith("What would you like the action to go on this upcoming tour sequence to be called?")) {
+         //TODO: Quick pre testing-deployment hack - do this through contextual parallel prompting or dialogue recovery instead
+          currentChat.addUserMessage("Reminder, the current question from the system is as follows:\n"+questionString+"\nIf the input does not make sense as any other sort of instruction, it is likely directly a form the desired taskName.\n"+nluUserPrompt.apply(promptVars));
+        } else {
+          currentChat.addUserMessage(nluUserPrompt.apply(promptVars));
+        }
         return currentChat;
     }
 
