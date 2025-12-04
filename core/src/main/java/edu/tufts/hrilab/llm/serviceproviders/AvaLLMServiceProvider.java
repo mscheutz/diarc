@@ -275,31 +275,28 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 processedArguments.add(Factory.createPredicate(arg.getName(), innerArgs));
             } else {
                 String argString = arg.toString();
-                if (argString.startsWith("?")) {
-                    if (unpopulatedArgSafe) {
-                        processedArguments.add(Factory.createSymbol(argString.substring(1).split(":")[0]));
-                        continue;
-                    } else {
-                        log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}", argString);
-                        return null;
-                    }
+
+                // Reject any unpopulated arguments returned by the LLM, unless the semantics specifically allow for that
+                if (unpopulatedArgSafe && argString.startsWith("?")) {
+                    processedArguments.add(Factory.createSymbol(argString.substring(1).split(":")[0]));
+                    continue;
+                } else if (argString.startsWith("?") || (argString.length() == 1 && Character.isUpperCase(argString.charAt(0)))) {
+                    log.warn("[parseNLUCompletionResponse] NLU parse has unpopulated argument present, failing: {}", argString);
+                    return null;
                 }
+
+                // Add types to references
+                // TODO: remove this and make the LLM add types itself. Right now any conflicting literal will be processed as a ref
                 Symbol argSymbol;
                 String descriptorType = getDescriptorType(actor,argString);
-                //String descriptorType = "";
-                ////TODO: remove this - make LLM add types itself. Right now any conflicting literal will be processed as a ref
-                //if (!semantics.getName().endsWith("Name")) {
-                //    getDescriptorType(actor, argString);
-                //}
                 if (descriptorType.isEmpty()) {
                     argSymbol = Factory.createFOL(argString);
                 } else {
-                    //v2 only
                     argSymbol = Factory.createSymbol(argString, descriptorType);
                 }
 
-                //TODO: replace with all types which are refs (or in general should be anything which is not an agent?)
-                //Should generally be any reference, just know in this case all references will be locations
+                // Replace reference symbol with Variable and add supplemental semantics
+                //TODO: do this dynamically for all types which are refs (should be anything which is not an agent?)
                 if (argSymbol != null && (argSymbol.getType().equals("location"))) {
                     if (!varMap.containsKey(argSymbol)) {
                         Variable var = Factory.createVariable("VAR" + varMap.size() + ":" + argSymbol.getType());
