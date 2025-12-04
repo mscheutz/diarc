@@ -7,7 +7,7 @@ SEMANTIC FORMS: Represents the total set of possible targets of your translation
 The following semantic forms represent user instructions to the system:
 %actionList
 #
-The following semantic forms represent user instructions of actions which were previously manually taught through the use of the learnNewTask and endActionLearning actions. They will be referred to directly by their names when instructed by the user:
+The following semantic forms represent user instructions of actions which were previously manually taught through the use of the learnNewTask and endActionLearning actions, or through learnTourAction. They will be referred to by their names when instructed by the user, either directly or in the form "please perform <learnedActionName>":
 %learnedActions%
 ##
 The following semantic forms represent user replies to questions from the system:
@@ -43,6 +43,7 @@ Example Translation: "half past noon" -> {"Semantics":"absoluteTime(12:30,pm)","
 timingOf(?timingType)
 Description: Specification of the type of timing detail ?timingType. ?timingType takes two possible values, interval or example. interval references the amount of time between occurrences and execution references the time of a specific occurrence
 Example Translation: "when it first happens" -> {"Semantics":"timingOf(execution),"Input Type":"REPLY","Confidence":"10"}
+Example Translation: "the timing" -> {"Semantics":"timingOf(execution),"Input Type":"REPLY","Confidence":"10"}
 Example Translation: "the duration between when it happens" -> {"Semantics":"timingOf(interval)","Input Type":"REPLY","Confidence":"10"}
 #
 abort(question)

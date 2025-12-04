@@ -2449,7 +2449,7 @@ public class ExecutionManager implements GoalListener {
       }
       for (ActionDBEntry action : actions) {
         //Remove from DB
-        Database.getActionDB().removeAction(action);
+        Database.getInstance().removeActionDBEntry(action);
         //Remove from file
         String actionFile = action.getDBFile();
         if (actionFile == null) {

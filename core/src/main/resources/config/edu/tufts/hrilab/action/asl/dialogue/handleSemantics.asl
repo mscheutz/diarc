@@ -510,7 +510,7 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
                 act:generateResponseFromString(?speaker, !agent);
             }
             act:suspendWaitForResponse(agent(X),?actor,false);
-            !bindings = act:askQuestionFromString("Which one did you mean to address?", agent(X));
+            !bindings = act:askQuestionFromString(?speaker,"Which one did you mean to address?", agent(X));
             act:resumeWaitForResponse(agent(X),?actor);
             if (~op:invokeMethod(!bindings,"isEmpty")) {
                 !response = op:get(!bindings,!x);
@@ -572,7 +572,7 @@ import edu.tufts.hrilab.action.goal.PriorityTier;
             act:generateResponseFromString(?speaker, "Option !spokenIndex: !questionString");
         }
         act:suspendWaitForResponse(option(X),?actor,false);
-        !bindings = act:askQuestionFromString("Which question did you mean to answer?", option(X));
+        !bindings = act:askQuestionFromString(?speaker, "Which question did you mean to answer?", option(X));
         act:resumeWaitForResponse(option(X),?actor);
         if (~op:invokeMethod(!bindings,"isEmpty")) {
             !response = op:get(!bindings,!x);
