@@ -140,6 +140,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   //boolean haveDisplay = true;
   private Lock displayLock = new ReentrantLock();
   private Condition telepresenceCondition = displayLock.newCondition();
+  private CiscoCodecAPI ciscoCodecAPI = new CiscoCodecAPI();
 
   public AvaComponent() {
     super();
@@ -1629,27 +1630,13 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
   @TRADEService
   @Action
   public void switchDisplayToTelepresencePrimitive() {
-    //Switch to telepresence
-    String homeDir = System.getProperty("user.home");
-    String scriptDir = Paths.get(homeDir, ".diarc").toString();
-    String statusCommand = "/bin/bash " + scriptDir + "getDisplay.sh";
-    String statusResult = callLocal(statusCommand);
-    log.info("[switchDisplayToTelepresence] status result: " + statusResult);
-    List<String> results = Arrays.stream(statusResult.split("MainVideoSource")).toList();
-    int id;
-    if (results.size() > 1) {
-      id = Integer.valueOf(results.get(1).substring(1,1));
+    //Switch to telepresence (PC 1 on the Cisco codec)
+    boolean success = ciscoCodecAPI.switchToTelepresence();
+    if (success) {
+      log.info("[switchDisplayToTelepresence] successfully switched to telepresence display");
     } else {
-      id = 0;
+      log.error("[switchDisplayToTelepresence] failed to switch to telepresence display");
     }
-    log.info("[switchDisplayToTelepresence] id of current display input: " + id);
-    //TODO: Error handling based on current state due to external forces? What to do if already in telepresence display
-    if (id == 1) {
-      log.warn("[switchDisplayToTelepresence] already in telepresence display?");
-    }
-    String result = callLocal("/bin/bash " + scriptDir + "setDisplay2.sh");
-    log.info("[switchDisplayToTelepresence] to telepresence result: " + result);
-    //TODO: what is proper error handling/result when switch failed?
 
     //Wait until condition is signalled by switchDisplayToTRACS
     try {
@@ -1657,14 +1644,16 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
       telepresenceCondition.await();
       displayLock.unlock();
     } catch (InterruptedException e) {
-      log.error("[switchDisplayToTelepresence] interrupted waiting on telepresence condition",e);
+      log.error("[switchDisplayToTelepresence] interrupted waiting on telepresence condition", e);
     }
 
-    //TODO: What if out of telepresence display externally? Won't trigger anything here
-    //      Double check current display again?
-    //Switch back to TRACS
-    result = callLocal("/bin/bash " + scriptDir + "setDisplay1.sh");
-    log.info("[switchDisplayToTelepresence] to TRACS result: " + result);
+    //Switch back to TRACS (PC 2 on the Cisco codec)
+    success = ciscoCodecAPI.switchToTRACS();
+    if (success) {
+      log.info("[switchDisplayToTelepresence] successfully switched back to TRACS display");
+    } else {
+      log.error("[switchDisplayToTelepresence] failed to switch back to TRACS display");
+    }
   }
 
   //@TRADEService
