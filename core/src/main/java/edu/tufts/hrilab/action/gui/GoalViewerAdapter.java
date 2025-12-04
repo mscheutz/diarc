@@ -177,7 +177,7 @@ public class GoalViewerAdapter extends GuiAdapter {
         case "stopDemo":
           return "Stop Demo";
         case "reportBatteryLevel":
-          return "Report batter level";
+          return "Report battery level";
         case "sit":
           return "Sit";
         case "stand":

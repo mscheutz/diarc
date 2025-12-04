@@ -13,7 +13,7 @@
 }
 
 .marginRightImportant {
-    margin-right: 1em !important;
+    margin-right: 0.5rem !important;
 }
 
 .parent {
@@ -111,11 +111,14 @@
 .cs-main-container {
     background-color: hsl(var(--card)) !important;
     border: none !important;
-    border-radius: 0.5rem !important;
+    border-radius: 0.375rem !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
 }
 
 .cs-main-container__inner {
     background-color: hsl(var(--card)) !important;
+    min-width: 0 !important;
 }
 
 .cs-typing-indicator {
@@ -132,8 +135,9 @@
 
 .cs-conversation {
     background-color: transparent !important;
-    border-radius: 0.375rem !important;
-    margin: 0.25rem 0.5rem !important;
+    border-radius: 0.25rem !important;
+    margin: 0.125rem 0.375rem !important;
+    padding: 0.375rem 0.5rem !important;
 }
 
 .cs-conversation:hover {
@@ -147,45 +151,66 @@
 .cs-conversation__name {
     color: hsl(var(--foreground)) !important;
     font-weight: 500 !important;
-    font-size: 0.875rem !important;
+    font-size: 0.8125rem !important;
 }
 
 .cs-conversation__info {
     color: hsl(var(--muted-foreground)) !important;
-    font-size: 0.75rem !important;
+    font-size: 0.6875rem !important;
 }
 
 .cs-conversation__last-sender {
     color: hsl(var(--muted-foreground)) !important;
-    font-size: 0.75rem !important;
+    font-size: 0.6875rem !important;
 }
 
 .cs-message-input {
     background-color: hsl(var(--card)) !important;
     border-top: 1px solid hsl(var(--border)) !important;
-    padding: 0.75rem !important;
+    padding: 0.5rem !important;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom)) !important;
+    flex-shrink: 0 !important;
+}
+
+.cs-message-input__content-editor-container {
+    flex: 1 !important;
+    min-width: 0 !important;
 }
 
 .cs-message-input__content-editor-wrapper {
     background-color: hsl(var(--background)) !important;
     border: 1px solid hsl(var(--border)) !important;
-    border-radius: 0.5rem !important;
+    border-radius: 0.375rem !important;
+    flex: 1 !important;
+    min-width: 0 !important;
 }
 
 .cs-message-input__content-editor {
     background-color: hsl(var(--background)) !important;
     color: hsl(var(--foreground)) !important;
     font-size: 0.875rem !important;
+    min-height: 1.25rem !important;
+    max-height: 5rem !important;
+    padding: 0.375rem 0.5rem !important;
 }
 
 .cs-message-input__content-editor[data-placeholder]:empty:before {
     color: hsl(var(--muted-foreground)) !important;
+    font-size: 0.8125rem !important;
+}
+
+.cs-message-input__tools {
+    flex-shrink: 0 !important;
 }
 
 .cs-button--send {
     background-color: hsl(var(--primary)) !important;
     color: hsl(var(--primary-foreground)) !important;
-    border-radius: 0.375rem !important;
+    border-radius: 0.25rem !important;
+    padding: 0.5rem !important;
+    min-width: 2.5rem !important;
+    height: 2.5rem !important;
+    flex-shrink: 0 !important;
 }
 
 .cs-button--send:hover {
@@ -194,7 +219,7 @@
 
 .cs-message-list {
     background-color: hsl(var(--background)) !important;
-    padding: 1rem !important;
+    padding: 0.5rem !important;
 }
 
 .cs-message-list__scroll-wrapper {
@@ -218,31 +243,41 @@
 }
 
 .cs-message {
-    font-size: 0.875rem !important;
+    font-size: 0.8125rem !important;
+    margin-bottom: 0.125rem !important;
 }
 
 .cs-message__content {
     background-color: hsl(var(--muted)) !important;
     color: hsl(var(--foreground)) !important;
-    border-radius: 0.75rem !important;
-    padding: 0.625rem 0.875rem !important;
+    border-radius: 0.5rem !important;
+    padding: 0.375rem 0.625rem !important;
 }
 
 .cs-message--incoming .cs-message__content {
     background-color: hsl(var(--muted)) !important;
-    border-bottom-left-radius: 0.25rem !important;
+    border-bottom-left-radius: 0.125rem !important;
 }
 
 .cs-message--outgoing .cs-message__content {
     background-color: hsl(var(--primary)) !important;
     color: hsl(var(--primary-foreground)) !important;
-    border-bottom-right-radius: 0.25rem !important;
+    border-bottom-right-radius: 0.125rem !important;
+}
+
+.cs-message-group {
+    margin-bottom: 0.25rem !important;
+}
+
+.cs-message-group__messages {
+    gap: 0.125rem !important;
 }
 
 .cs-conversation-header {
     background-color: hsl(var(--card)) !important;
     border-bottom: 1px solid hsl(var(--border)) !important;
-    padding: 0.75rem 1rem !important;
+    padding: 0.5rem 0.75rem !important;
+    min-height: 0 !important;
 }
 
 .cs-conversation-header__content {
@@ -255,12 +290,13 @@
 
 .cs-conversation-header__user-name {
     color: hsl(var(--foreground)) !important;
-    font-weight: 600 !important;
-    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    font-size: 0.8125rem !important;
 }
 
 .cs-conversation-header__back {
     color: hsl(var(--muted-foreground)) !important;
+    padding: 0.25rem !important;
 }
 
 .cs-conversation-header__back:hover {
@@ -270,10 +306,14 @@
 .cs-sidebar {
     background-color: hsl(var(--card)) !important;
     border-right: 1px solid hsl(var(--border)) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
 }
 
 .cs-chat-container {
     background-color: hsl(var(--background)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
 }
 
 .cs-chat-container > div {
@@ -284,12 +324,64 @@
     background-color: transparent !important;
 }
 
+/* Fix mobile chat layout */
+@media (max-width: 640px) {
+    .cs-main-container {
+        border-radius: 0.25rem !important;
+    }
+    
+    .cs-message-input {
+        padding: 0.375rem !important;
+        padding-bottom: max(0.375rem, env(safe-area-inset-bottom)) !important;
+        gap: 0.25rem !important;
+    }
+    
+    .cs-message-input__content-editor-wrapper {
+        margin-right: 0 !important;
+    }
+    
+    .cs-message__content {
+        max-width: 85% !important;
+    }
+    
+    .cs-conversation-header {
+        padding: 0.375rem 0.5rem !important;
+    }
+    
+    .cs-button--send {
+        min-width: 2.25rem !important;
+        height: 2.25rem !important;
+        padding: 0.375rem !important;
+    }
+}
+
+/* Ensure input area doesn't overflow */
+.cs-message-input > div {
+    min-width: 0 !important;
+    flex: 1 !important;
+}
+
+.cs-message-input__tools {
+    margin-left: 0.25rem !important;
+}
+
 .cs-avatar {
-    border-radius: 0.5rem !important;
+    border-radius: 0.25rem !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
 }
 
 .cs-avatar__img {
-    border-radius: 0.5rem !important;
+    border-radius: 0.25rem !important;
+}
+
+.cs-conversation .cs-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
 }
 
 .split-view-view {

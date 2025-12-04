@@ -88,12 +88,9 @@ const MyNewComponent: React.FC<Props> = ({
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2">
                             {[
-                                { label: "Pause", cmd: "pause" },
-                                { label: "Resume", cmd: "resume" },
                                 { label: "Go to Dock", cmd: "go home" },
-                                { label: "Schedule Task", cmd: "add a new scheduled task" },
-                                { label: "Modify Schedule", cmd: "modify a scheduled task" },
-                                { label: "Teach Action", cmd: "i will teach you a new task" },
+                                { label: "Set display to TRACS", cmd: "switch display to TRACS" },
+                                { label: "Set display to Telepresence", cmd: "switch display to Telepresence" },
                             ].map(({ label, cmd }) => (
                                 <button
                                     key={cmd}

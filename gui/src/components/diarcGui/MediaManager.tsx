@@ -1,7 +1,6 @@
 import React, {useState, useEffect, ChangeEvent, useRef} from "react";
 import { ReadyState, SendMessage } from "react-use-websocket";
 import { Button } from "../Button";
-import {mediaColumns} from "./util/constants";
 
 type Props = {
     path: string,
@@ -17,17 +16,6 @@ type Entry = {
     mediaType?: string,
 };
 
-const toArray = (e: Entry) => {
-    return [
-        e.name,
-        e.type,
-    ];
-};
-
-type TableProps = {
-    data: Entry[],
-    handleSelect: (e: React.ChangeEvent<HTMLInputElement>) => void,
-}
 
 type FileManagementProps = {
     handleDelete: () => void,
@@ -43,14 +31,14 @@ type FileManagementProps = {
 const CHUNK_SIZE = 5 * 1024 * 1024;
 
 const ProgressBar: React.FC<{ progress: number }> = ({ progress }) => (
-    <div className="flex items-center gap-2 min-w-[200px]">
+    <div className="flex items-center gap-2 w-full sm:w-auto sm:min-w-[160px]">
         <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
             <div 
                 className="h-full bg-primary transition-all duration-300 ease-out"
                 style={{ width: `${progress}%` }}
             />
         </div>
-        <span className="text-sm text-muted-foreground min-w-[3ch]">
+        <span className="text-xs text-muted-foreground tabular-nums">
             {Math.round(progress)}%
         </span>
     </div>
@@ -61,41 +49,48 @@ const FileManagement: React.FC<FileManagementProps> = ({
     uploadStatus, uploadError, uploadProgress, hasSelection
 }) => {
     return (
-        <div className="flex flex-row gap-2 items-center flex-wrap">
-            <Button
-                title="Upload a file"
-                onClick={handleFileSelect}
-                disabled={isUploading}
-                isLoading={isUploading}>
-                {isUploading ? "Uploading..." : "Upload File"}
-            </Button>
-            {isUploading && (
+        <div className="space-y-3 pt-3 border-t border-border">
+            {/* Action buttons - responsive grid */}
+            <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex gap-2 flex-1">
+                    <Button
+                        size="sm"
+                        className="flex-1 sm:flex-none"
+                        title="Upload a file"
+                        onClick={handleFileSelect}
+                        disabled={isUploading}
+                        isLoading={isUploading}>
+                        {isUploading ? "Uploading..." : "Upload File"}
+                    </Button>
+                    {isUploading && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            title="Cancel upload"
+                            onClick={handleCancelUpload}>
+                            Cancel
+                        </Button>
+                    )}
+                </div>
                 <Button
-                    variant="outline"
-                    title="Cancel upload"
-                    onClick={handleCancelUpload}>
-                    Cancel
+                    size="sm"
+                    variant="destructive"
+                    className="w-full sm:w-auto"
+                    title="Delete selected media"
+                    onClick={handleDelete}
+                    disabled={isUploading || !hasSelection}>
+                    Delete Selected
                 </Button>
-            )}
-            <Button
-                variant="destructive"
-                title="Delete selected media"
-                onClick={handleDelete}
-                disabled={isUploading || !hasSelection}>
-                Delete Selected
-            </Button>
-            {isUploading && (
-                <ProgressBar progress={uploadProgress} />
-            )}
+            </div>
+            
+            {/* Progress and status indicators */}
+            {isUploading && <ProgressBar progress={uploadProgress} />}
+            
             {uploadStatus === 'success' && (
-                <span className="text-sm text-green-700 dark:text-green-400 px-3 py-1 bg-green-100 dark:bg-green-900/30 rounded-md border border-green-300 dark:border-green-700">
-                    {"\u2713"} Uploaded
-                </span>
+                <span className="text-xs text-muted-foreground">✓ Done</span>
             )}
             {uploadStatus === 'error' && (
-                <span className="text-sm text-red-700 dark:text-red-400 px-3 py-1 bg-red-100 dark:bg-red-900/30 rounded-md border border-red-300 dark:border-red-700">
-                    {"\u2717"} {uploadError || 'Upload failed'}
-                </span>
+                <span className="text-xs text-destructive">✗ {uploadError || 'Failed'}</span>
             )}
         </div>
     );
@@ -308,60 +303,39 @@ const MediaManager: React.FC<Props> = ({
         fileInputRef.current?.click();
     };
 
-    const MediaTable: React.FC<TableProps> = (
-        { data, handleSelect}
-    ) => {
-        return (
-            <div className="grow flex flex-col min-h-0 basis-0">
-                <table className="border border-border">
-                    <caption className="hidden">Media table</caption>
-                    <thead>
-                    <tr className="bg-accent">
-                        <th className="border border-border p-1">
-                            Select
-                        </th>
-                        {mediaColumns.map((col, index) =>
-                            <th className="border border-border p-1"
-                                key={index}>
-                                {col}
-                            </th>
-                        )}
-                    </tr>
-                    </thead>
 
-                    <tbody>
-                    {data.map((row, index ) =>
-                            <tr
-                                className="even:bg-muted"
-                                key={index}>
-                                <td className="border border-border px-1 text-center">
-                                    <input
-                                        type="checkbox"
-                                        defaultChecked={selectedIds.includes(row.name)}
-                                        value={row.name}
-                                        id={row.name}
-                                        onChange={handleSelect}
-                                        className="cursor-pointer"
-                                    />
-                                </td>
-                                {toArray(row).map((prop, index) =>
-                                    <td className="border border-border px-1"
-                                        key={index}>
-                                        <label
-                                            htmlFor={row.name}
-                                            className="cursor-pointer"
-                                            title="">
-                                            {prop + ""}&nbsp;
-                                        </label>
-                                    </td>
-                                )}
-                            </tr>
-                    )}
-                    </tbody>
-                </table>
+    const MediaList: React.FC<{ items: Entry[], handleSelect: (e: React.ChangeEvent<HTMLInputElement>) => void }> = ({ items, handleSelect }) => {
+        if (items.length === 0) {
+            return <p className="text-xs text-muted-foreground py-2">—</p>;
+        }
+        return (
+            <div className="space-y-0.5">
+                {items.map((row) => (
+                    <label
+                        key={row.name}
+                        className={`flex items-center gap-1.5 py-0.5 px-1 -mx-1 rounded-sm text-xs cursor-pointer hover:bg-muted/50 ${
+                            selectedIds.includes(row.name) ? "bg-primary/10" : ""
+                        }`}
+                    >
+                        <input
+                            type="checkbox"
+                            defaultChecked={selectedIds.includes(row.name)}
+                            value={row.name}
+                            id={row.name}
+                            onChange={handleSelect}
+                            className="shrink-0"
+                        />
+                        <span className="truncate">{row.name}</span>
+                    </label>
+                ))}
             </div>
         );
     };
+
+    const sortedData = [...data].sort((a, b) => a.name.localeCompare(b.name));
+    const images = sortedData.filter(item => item.type.startsWith('image'));
+    const videos = sortedData.filter(item => item.type.startsWith('video'));
+    const other = sortedData.filter(item => !item.type.startsWith('image') && !item.type.startsWith('video'));
 
     useEffect(() => {
         sendMessage(JSON.stringify({
@@ -371,35 +345,59 @@ const MediaManager: React.FC<Props> = ({
     }, [path, sendMessage]);
 
     return (
-        <div className="shadow-md border border-border
-                                        p-3 flex flex-col justify-start gap-3
-                                        rounded-md grow w-3/4 bg-card">
-            <p className="text-lg font-semibold">Available Media</p>
-            <div className="grow flex flex-col overflow-auto min-h-0
-                                            basis-0">
-                <MediaTable
-                    key={mediaKey}
-                    data={data}
-                    handleSelect={handleItemSelect}
+        <div className="flex flex-col w-full min-h-0 flex-1 p-2 sm:p-3 gap-2 overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col border border-border rounded bg-card overflow-hidden">
+                <div className="flex-1 min-h-0 overflow-y-auto p-2 sm:p-3">
+                    {selectedIds.length > 0 && (
+                        <div className="text-xs text-muted-foreground mb-2">{selectedIds.length} selected</div>
+                    )}
+                    
+                    <div key={mediaKey} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <div className="text-[10px] text-muted-foreground border-b border-border pb-1 mb-1">
+                                IMAGES {images.length > 0 && `(${images.length})`}
+                            </div>
+                            <MediaList items={images} handleSelect={handleItemSelect} />
+                        </div>
+                        <div>
+                            <div className="text-[10px] text-muted-foreground border-b border-border pb-1 mb-1">
+                                VIDEOS {videos.length > 0 && `(${videos.length})`}
+                            </div>
+                            <MediaList items={videos} handleSelect={handleItemSelect} />
+                        </div>
+                    </div>
+                    
+                    {other.length > 0 && (
+                        <div className="mt-3">
+                            <div className="text-[10px] text-muted-foreground border-b border-border pb-1 mb-1">
+                                OTHER {`(${other.length})`}
+                            </div>
+                            <MediaList items={other} handleSelect={handleItemSelect} />
+                        </div>
+                    )}
+                </div>
+                
+                <input 
+                    type="file" 
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/*,video/*,audio/*"
                 />
+                
+                <div className="px-2 sm:px-3 pb-2 sm:pb-3 shrink-0">
+                    <FileManagement 
+                        handleDelete={handleDelete}
+                        handleFileSelect={handleFileSelect}
+                        handleCancelUpload={handleCancelUpload}
+                        isUploading={isUploading}
+                        uploadStatus={uploadStatus}
+                        uploadError={uploadError}
+                        uploadProgress={uploadProgress}
+                        hasSelection={selectedIds.length > 0}
+                    />
+                </div>
             </div>
-            <input 
-                type="file" 
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept="image/*,video/*,audio/*"
-            />
-            <FileManagement 
-                handleDelete={handleDelete}
-                handleFileSelect={handleFileSelect}
-                handleCancelUpload={handleCancelUpload}
-                isUploading={isUploading}
-                uploadStatus={uploadStatus}
-                uploadError={uploadError}
-                uploadProgress={uploadProgress}
-                hasSelection={selectedIds.length > 0}
-            />
         </div>
     );
 };

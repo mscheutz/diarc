@@ -131,7 +131,7 @@ const ChatViewer: React.FC<Props> = ({
                 {sender !== chats[currentChat].robotName && (
                     <div
                         key={"sentby" + index}
-                        className="text-right text-xs text-muted-foreground mb-1"
+                        className="text-right text-[10px] text-muted-foreground mb-px"
                     >
                         {sender}
                     </div>
@@ -355,8 +355,8 @@ const ChatViewer: React.FC<Props> = ({
     );
 
     return (
-        <div className="flex flex-col w-full h-full min-h-0 flex-1">
-            <MainContainer className="rounded-lg border border-border overflow-hidden" responsive>
+        <div className="flex flex-col w-full min-h-0 flex-1 p-1 sm:p-2">
+            <MainContainer className="rounded border border-border overflow-hidden flex-1 min-w-0" responsive>
                 <Sidebar position="left" style={sidebarStyle}>
                     <div className="h-full overflow-auto">
                         {conversations}
