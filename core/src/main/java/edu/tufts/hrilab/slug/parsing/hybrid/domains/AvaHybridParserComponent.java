@@ -4,6 +4,7 @@ import ai.thinkingrobots.trade.TRADE;
 import ai.thinkingrobots.trade.TRADEException;
 import ai.thinkingrobots.trade.TRADEServiceConstraints;
 import edu.tufts.hrilab.action.goal.PriorityTier;
+import edu.tufts.hrilab.action.learning.ActionLearningStatus;
 import edu.tufts.hrilab.fol.Factory;
 import edu.tufts.hrilab.fol.Predicate;
 import edu.tufts.hrilab.fol.Symbol;
@@ -54,6 +55,24 @@ public class AvaHybridParserComponent extends HybridParserComponent {
       expectedResponseForms = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestionResponseForm").argTypes(Symbol.class)).call(List.class, output.getAddressee());
     } catch (TRADEException e) {
       log.error("[applyContextToOutput] unable to get last question response form", e);
+    }
+
+    if (semantics.getName().equals("displayNamedImage") || semantics.getName().equals("displayNamedImageAtLocation")) {
+      try {
+        ActionLearningStatus status = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLearningStatus").argTypes(Symbol.class)).call(ActionLearningStatus.class, output.getAddressee());;
+        if (status == ActionLearningStatus.ACTIVE) {
+          Utterance.Builder failure = new Utterance.Builder();
+          failure.setSpeaker(utterance.getSpeaker());
+          failure.setAddressee(utterance.getAddressee());
+          failure.setSemantics(Factory.createPredicate("error(" + utterance.getAddressee() + ",please(repeatYourInstructionIncludingADurationToDisplayTheImage))"));
+          failure.setWords(utterance.getWords());
+          output = failure.build();
+          modifiedUtteranceUids.add(output.getUid());
+          return output;
+        }
+      } catch (TRADEException e) {
+        log.error("[applyContextToOutput] error getting action learning status", e);
+      }
     }
 
     //If getting endActionLearning while a pending question exists seeking location(X), swap to location(none)
