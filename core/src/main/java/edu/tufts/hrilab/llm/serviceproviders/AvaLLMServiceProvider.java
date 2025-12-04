@@ -1131,10 +1131,17 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
                 "i will teach you a new task",
                 "learnNewTask()", 10);
         exposedActionList.add(entry);
+        List<String> endLearningExamples = new ArrayList<>();
+        //Make version of constructor which takes in one translation and multiple examples
+        List<String> endLearningTranslations = new ArrayList<>();
+        endLearningExamples.add("those are the steps of the task");
+        endLearningExamples.add("im done");
+        endLearningTranslations.add("endActionLearning()");
+        endLearningTranslations.add("endActionLearning()");
         entry = new LLMActionEntry("endActionLearning()",
                 "You conclude learning the steps of a new instructable action",
-                "those are the steps of the task",
-                "endActionLearning()", 10);
+                endLearningExamples,
+                endLearningTranslations, 10);
         exposedActionList.add(entry);
         entry = new LLMActionEntry("describeCurrentLocation()",
                 "You report what location you believe you are currently at",

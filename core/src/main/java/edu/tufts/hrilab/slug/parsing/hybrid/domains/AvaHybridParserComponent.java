@@ -52,20 +52,18 @@ public class AvaHybridParserComponent extends HybridParserComponent {
     //If getting endActionLearning while a pending question exists seeking location(X), swap to location(none)
     if (semantics.getName().equals("endActionLearning")) {
       if (expectedResponseForms.contains(Factory.createPredicate("location","X"))) {
-        output.setSemantics(Factory.createPredicate("location","none"));
+        semantics = Factory.createPredicate("location","none");
+        output.setSemantics(semantics);
         output.setType(UtteranceType.REPLY);
         modifiedUtteranceUids.add(output.getUid());
-        return output;
       }
-    }
-
-    //If getting location(none) while action learning is present and no question for location(X) exists, swap to endActionLearning
-    if (semantics.equals(Factory.createPredicate("location","none"))) {
+    } else if (semantics.equals(Factory.createPredicate("location","none"))) {
+      //If getting location(none) while action learning is present and no question for location(X) exists, swap to endActionLearning
       if (!expectedResponseForms.contains(Factory.createPredicate("location","X"))) {
-        output.setSemantics(Factory.createPredicate("endActionLearning", output.getAddressee()));
+        semantics = Factory.createPredicate("endActionLearning", output.getAddressee());
+        output.setSemantics(semantics);
         output.setType(UtteranceType.INSTRUCT);
         modifiedUtteranceUids.add(output.getUid());
-        return output;
       }
     }
 
@@ -83,6 +81,18 @@ public class AvaHybridParserComponent extends HybridParserComponent {
               modifiedUtteranceUids.add(output.getUid());
               //TODO: Do we want to set needsValidation to true here?
               return output;
+            } else {
+              try {
+                String questionString = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestion").argTypes(Symbol.class)).call(String.class, output.getAddressee());
+                if (questionString.equals("how do you perform the task") && semantics.getName().equals("endActionLearning")) {
+                  output.setSemantics(Factory.createPredicate("taskPredicate","none"));
+                  output.setType(UtteranceType.REPLY);
+                  modifiedUtteranceUids.add(output.getUid());
+                  return output;
+                }
+              } catch (TRADEException e) {
+                log.error("[applyContextToOutput] unable to get last question response form", e);
+              }
             }
           } catch (TRADEException e) {
             log.error("[applyContextToOutput] unable to get priority tier for output goal", e);
@@ -91,7 +101,7 @@ public class AvaHybridParserComponent extends HybridParserComponent {
       }
     }
 
-    return utterance;
+    return output;
   }
 
   @Override

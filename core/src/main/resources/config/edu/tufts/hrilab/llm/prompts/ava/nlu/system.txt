@@ -31,6 +31,7 @@ taskPredicate(?actionPredicate)
 Description: Specification of a task represented by ?actionPredicate. ?actionPredicate should be replaced by a populated instance of an INSTRUCT Semantics from the previous examples.
 Example Translation: "the task is to go to %exampleLocation" -> {"Semantics":"taskPredicate(goToLocation(%exampleLocation:location))","Input Type":"REPLY","Confidence":"10"}
 Example Translation: "to say hello" -> {"Semantics":"taskPredicate(say(hello))","Input Type":"REPLY","Confidence":"10"}
+Example Translation: "yes, to say hello" -> {"Semantics":"taskPredicate(say(hello))","Input Type":"REPLY","Confidence":"10"}
 #
 relativeTime(?duration, ?timeUnit)
 Description: A relative time duration defined by amount ?duration and scale ?timeUnit.
