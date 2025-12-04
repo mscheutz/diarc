@@ -1256,7 +1256,7 @@ public class AvaLLMServiceProvider extends LLMServiceProvider {
         videoTranslations.add("playVideo(%exampleVideo:video,default)");
         videoInstructions.add("Play videos at %exampleLocation");
         videoTranslations.add("playVideo(default,%exampleLocation:location)");
-        videoInstructions.add("Go to %exampleLocation and play the %exampleVideo video");
+        videoInstructions.add("Go to %exampleLocation then play the %exampleVideo video");
         videoTranslations.add("playVideo(%exampleVideo:video,%exampleLocation:location)");
         entry = new LLMActionEntry("playVideo(?videoName:video,?location:location)",
                 "You begin playback of a video from your saved collection at some location. This action is special and has different meanings based on how it is parameterized. It has two arguments, the video to be played and the location to play it at. The user can instruct this action with any number of these things defined or not defined. If a user does not supply a specific value for any of these arguments, fill it in with the value \"default\". A value of default for the video means that the video played will be the next video in your saved collection, continuing where you left off. For locations, it means that you will play the video at your current location.",
