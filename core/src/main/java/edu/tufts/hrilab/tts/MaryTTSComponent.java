@@ -429,8 +429,12 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
           clipLock.unlock();
         } catch (LineUnavailableException ex) {
           log.error("line unavailable", ex);
+          speaking = false;
+          return false;
         } catch (IOException ex) {
           log.error("io exception reading file", ex);
+          speaking = false;
+          return false;
         }
 
         if (volume < 1.0f) {
@@ -493,8 +497,12 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
         clipLock.unlock();
       } catch (LineUnavailableException ex) {
         log.error("line unavailable", ex);
+        speaking = false;
+        return;
       } catch (IOException ex) {
         log.error("io exception reading file", ex);
+        speaking = false;
+        return;
       }
 
       if (volume < 1.0f) {
