@@ -51,11 +51,7 @@ public class ContourDetector {
           List<Point> contour = new ArrayList<>();
           Point startPoint = new Point(x, y);
           Point currentPoint = new Point(x, y - 1);
-
-          // previous:
-          // boolean isOuter = (x == 0 || data[y][x - 1] == 0);
           boolean isOuter = (x == 0 || y == 0 || x == width - 1 || y == height - 1 || data[y][x - 1] == 0);
-
 
           Point nextPoint = findNextSuzukiPoint(startPoint, currentPoint, data, contourId);
           if (nextPoint != null) {
@@ -72,13 +68,9 @@ public class ContourDetector {
           }
 
           if (!contour.isEmpty()) {
-            if (isOuter) {
-              contours.add(contour);
-            }
+            if (isOuter) contours.add(contour);
             for (Point p : contour) {
-              if (data[p.y][p.x] == 1) {
-                data[p.y][p.x] = contourId;
-              }
+              if (data[p.y][p.x] == 1) data[p.y][p.x] = contourId;
             }
           }
         }
@@ -105,9 +97,7 @@ public class ContourDetector {
       int nextY = current.y + dy[checkIdx];
 
       if (nextX >= 0 && nextX < data[0].length && nextY >= 0 && nextY < data.length && data[nextY][nextX] != 0) {
-        if (data[nextY][nextX] == 1) {
-          data[nextY][nextX] = contourId;
-        }
+        if (data[nextY][nextX] == 1) data[nextY][nextX] = contourId;
         return new Point(nextX, nextY);
       }
     }
@@ -309,36 +299,6 @@ public class ContourDetector {
 
     if (bestRectangle == null) return null;
 
-    // count the true negatives and false positives
-    // can skip unless we want to use them
-	/*
-        int missedCount = 0;
-        int falsePositiveCount = 0;
-
-        Polygon bestRectPoly = new Polygon();
-        for(Point p : bestRectangle) bestRectPoly.addPoint(p.x, p.y);
-
-        for(Point p : allContourPoints) {
-            if (!bestRectPoly.contains(p)) {
-                missedCount++;
-            }
-        }
-
-        Rectangle bounds = bestRectPoly.getBounds();
-        for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
-            for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
-                if (x >= 0 && x < imageWidth && y >= 0 && y < imageHeight && bestRectPoly.contains(x, y)) {
-                    if ((contourMask.getRGB(x, y) & 0xFF) == 0) {
-                        falsePositiveCount++;
-                    }
-                }
-            }
-        }
-
-        return new DetectionResult(contours, bestRectangle, missedCount, falsePositiveCount);
-	*/
-
-    // this needs to be replaced by the above if the counts are used
     return new DetectionResult(contours, bestRectangle, 0, 0);
   }
 
@@ -362,12 +322,12 @@ public class ContourDetector {
 
   private static List<Point> getConvexHull(List<Point> points) {
     if (points.size() <= 3) return new ArrayList<>(points);
-    // do we need to make a copy and sort the copy?
-    points.sort(Comparator.comparingInt((Point p) -> p.x).thenComparingInt((Point p) -> p.y));
+    List<Point> sortedPoints = new ArrayList<>(points);
+    sortedPoints.sort(Comparator.comparingInt((Point p) -> p.x).thenComparingInt((Point p) -> p.y));
     List<Point> hull = new ArrayList<>();
-    for (Point p : points) { while (hull.size() >= 2 && crossProduct(hull.get(hull.size()-2), hull.get(hull.size()-1), p) <= 0) hull.remove(hull.size()-1); hull.add(p); }
+    for (Point p : sortedPoints) { while (hull.size() >= 2 && crossProduct(hull.get(hull.size()-2), hull.get(hull.size()-1), p) <= 0) hull.remove(hull.size()-1); hull.add(p); }
     int lowerHullSize = hull.size();
-    for (int i = points.size() - 2; i >= 0; i--) { Point p = points.get(i); while (hull.size() > lowerHullSize && crossProduct(hull.get(hull.size()-2), hull.get(hull.size()-1), p) <= 0) hull.remove(hull.size()-1); hull.add(p); }
+    for (int i = sortedPoints.size() - 2; i >= 0; i--) { Point p = sortedPoints.get(i); while (hull.size() > lowerHullSize && crossProduct(hull.get(hull.size()-2), hull.get(hull.size()-1), p) <= 0) hull.remove(hull.size()-1); hull.add(p); }
     hull.remove(hull.size()-1); return hull;
   }
 

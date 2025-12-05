@@ -8,7 +8,7 @@ public class Vec3 {
     public Vec3(double x, double y, double z) {
         this.x = x;
         this.y = y;
-	this.z = z;
+        this.z = z;
     }
 
     public Vec3 subtract(Vec3 other) {
@@ -27,7 +27,7 @@ public class Vec3 {
         for (Vec3 vec : vectors) {
             sumX += vec.x;
             sumY += vec.y;
-	    sumZ += vec.z;
+            sumZ += vec.z;
         }
         return new Vec3(sumX / vectors.size(), sumY / vectors.size(), sumZ / vectors.size());
     }
