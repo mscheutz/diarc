@@ -34,7 +34,7 @@ public class CratePacking extends DiarcConfiguration {
 
 
   private static final String TIER = "2 robot; action learning;";
-  private final boolean production = true;
+  private final boolean production = false;
 
   private boolean mock = false;
   private CR800ComponentInterface assista;
@@ -43,7 +43,7 @@ public class CratePacking extends DiarcConfiguration {
   boolean useLLMNLG = true;
   String service = "openai";
   String model = "Qwen/Qwen3-14B-AWQ";
-  String openaiEndpoint = "http://dashboard.thinkingrobots.ai:8000/qwen";
+  String openaiEndpoint = "https://dashboard.thinkingrobots.ai/qwen";
   boolean japanese = false;
   boolean usePrivateEndpoint = false; //DO NOT CHANGE THIS TO TRUE
   private boolean cachePersist = false;

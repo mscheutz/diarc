@@ -109,6 +109,7 @@ import java.lang.Boolean;
     Integer !tmp;
 
     Double !boxHeight;
+    //Double !zOffset = -8.6; //todo: hardcoded offset. see graspItem as well.
     Double !zOffset = 0.0; //todo: hardcoded offset. see graspItem as well.
     Float !surfaceHeight;
 
