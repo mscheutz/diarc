@@ -10,6 +10,7 @@ vision/build/
 vision/src/swig/
 .idea/
 .vscode/
+.settings/
 .env
 docs/
 vision/src/main/cpp/cmake-build-debug/
