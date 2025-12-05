@@ -412,6 +412,21 @@ public class CratePackingComponent extends DiarcComponent {
   }
 
   @TRADEService
+  public void setCannyLowThreshold(int value) {
+    visionProcessor.setCannyLowThreshold(value);
+  }
+
+  @TRADEService
+  public void setCannyHighThreshold(int value) {
+    visionProcessor.setCannyHighThreshold(value);
+  }
+
+  @TRADEService
+  public void setDilationIterations(int value) {
+    visionProcessor.setDilationIterations(value);
+  }
+
+  @TRADEService
   public PackingResult3D getCachedPackingResult3D() {
     if (cachedResult == null) {
       log.warn("[getCachedPackingResult3D]  No cached packing result found, run solveCratePacking3D first");
