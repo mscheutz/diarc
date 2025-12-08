@@ -287,7 +287,7 @@ public class ChatAdapter extends GuiAdapter {
             .setIsInputUtterance(true)
             .build();
 
-    signalAvaExternalCommandReceived();
+    //signalAvaExternalCommandReceived();
 
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints()

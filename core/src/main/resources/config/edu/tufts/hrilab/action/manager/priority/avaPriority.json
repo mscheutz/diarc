@@ -23,6 +23,10 @@
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   },
+  "interruptListenForWWandASR": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
   "testDialogueComponent": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
@@ -164,6 +168,18 @@
     "priorityTier": "SKIPPENDING"
   },
   "switchDisplayToTRACS": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "setMaryTTSVolume": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "stopIdleImageCycle": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "startIdleImageCycle": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
   }

@@ -64,7 +64,7 @@ public class AvaGUIAdapter extends GuiAdapter {
 
   @Override
   protected void handleMessage(JsonObject message) {
-    signalAvaExternalCommandReceived();
+    //signalAvaExternalCommandReceived();
     String input = message.get("input").getAsString();
     String speaker = message.get("speaker").getAsString();
     String addressee = message.get("addressee").getAsString();

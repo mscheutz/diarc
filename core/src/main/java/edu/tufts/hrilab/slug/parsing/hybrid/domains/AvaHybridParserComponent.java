@@ -110,7 +110,7 @@ public class AvaHybridParserComponent extends HybridParserComponent {
             } else {
               try {
                 String questionString = TRADE.getAvailableService(new TRADEServiceConstraints().name("getLastQuestion").argTypes(Symbol.class)).call(String.class, output.getAddressee());
-                if (questionString.equals("how do you perform the task") && semantics.getName().equals("endActionLearning")) {
+                if (questionString.equals("how do you perform the task") && (semantics.getName().equals("endActionLearning") || semantics.getName().equals("endTaskLearning"))) {
                   output.setSemantics(Factory.createPredicate("taskPredicate","none"));
                   output.setType(UtteranceType.REPLY);
                   modifiedUtteranceUids.add(output.getUid());

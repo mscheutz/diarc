@@ -166,6 +166,7 @@ public interface AvaInterface extends MoveBaseInterface, LidarInterface {
   @Action
   public void listenForWWandASR();
   @TRADEService
+  @Action
   public void interruptListenForWWandASR();
 
   @TRADEService
