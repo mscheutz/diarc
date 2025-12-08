@@ -447,7 +447,7 @@ i will teach you a new task; C; learnNewTask(?ADDRESSEE)
 the task name is; VAL/LIT*; #x.taskName($x)
 it will be called; VAL/LIT*; #x.taskName($x)
 task greet; VAL; taskName(greet)
-i am done teaching; C; endTaskLearning(?ADDRESSEE)
+i am done teaching; C; endActionLearning(?ADDRESSEE)
 
 say; C/LIT*; #x.say(?ADDRESSEE, $x)
 %greet; C; greet(?ADDRESSEE)
@@ -514,3 +514,10 @@ remove the task from the queue at position; C/LIT* ; #x.cancelTaskInQueueByIndex
 
 enable admin mode; VERBI; enableAdminMode
 disable admin mode; VERBI; disableAdminMode
+
+disable_ww_listen; VERBI; interruptListenForWWandASR
+enable_ww_listen; VERBI; listenForWWandASR
+set output volume to; C/LIT* ; #x.setMaryTTSVolume(?ADDRESSEE,$x)
+set output volume; C/LIT* ; #x.setMaryTTSVolume(?ADDRESSEE,$x)
+start idle image cycle; VERBI; startIdleImageCycle
+stop idle image cycle; VERBI; stopIdleImageCycle

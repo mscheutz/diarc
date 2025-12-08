@@ -38,6 +38,7 @@ import edu.tufts.hrilab.action.goal.Goal;
     String !locName = tsc:getMapReferenceName(?dstLoc);
 
     act:goToLocation(?escorteeLoc);
+    //TODO: make this toggleable through a setting/language
 //    async {
         act:say("Hello ?escortee. Please come with me, I will show you to !locName."); // Please say Ready when you are ready to go");
 //    }
@@ -326,15 +327,32 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
-() = learnNewTaskOnResume(Integer ?tracker, Predicate ?taskName) {
-    if (op:equals(?tracker,1)) {
+() = learnNewTaskOnResume(Integer ?tracker, String ?taskName, Predicate ?actionSignature) {
+    //if (op:gt(?tracker,1)) {
+    //    tsc:resumeActionLearning(?actor,?actionSignature);
+    //}
+    if (op:equals(?tracker,3)) {
         act:learningPrompt(?taskName);
     }
 }
 
+//() = learnNewTaskOnSuspend(Integer ?tracker, String ?taskName, Predicate ?actionSignature) {
+//    if (op:gt(?tracker,1)) {
+//        tsc:pauseActionLearning(?actor,?actionSignature);
+//    }
+//}
+//
+//() = learnNewTaskOnCancel(Integer ?tracker, String ?taskName, Predicate ?actionSignature) {
+//    if (op:gt(?tracker,1)) {
+//        tsc:cancelActionLearning(?actor,?actionSignature);
+//    }
+//}
+
 () = learnNewTask() {
-    onInterrupt :{
-        resume: act:learnNewTaskOnResume(!tracker,!taskName);
+    onInterrupt : {
+        resume: act:learnNewTaskOnResume(!tracker, !taskName, !actionSignature);
+        //suspend: act:learnNewTaskOnSuspend(!tracker, !taskName, !actionSignature);
+        //cancel: act:learnNewTaskOnCancel(!tracker, !taskName, !actionSignature);
     }
     Predicate !actionSignature;
     Predicate !pred;
@@ -360,6 +378,7 @@ import edu.tufts.hrilab.action.goal.Goal;
         act:learnAction(!actionSignature);
     }
     act:waitForActionLearningStart(!actionSignature);
+    !tracker = op:++(!tracker);
 
     op:log(info, !taskName);
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");

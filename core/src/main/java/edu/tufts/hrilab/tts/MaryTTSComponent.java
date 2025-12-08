@@ -528,6 +528,27 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
   }
 
   @TRADEService
+  @Action
+  public void setMaryTTSVolume(String volumeStr) {
+    try {
+      if (volumeStr.startsWith("\"") && volumeStr.endsWith("\"")) {
+        volumeStr = volumeStr.substring(1,volumeStr.length()-1);
+      }
+      volume = Float.parseFloat(volumeStr);
+      if (volume < 0.0f) {
+        volume = 0.0f;
+        log.warn("volume argument " + volumeStr + " < 0.0, using 0.0");
+      } else if (volume > 1.0f) {
+        volume = 1.0f;
+        log.warn("volume argument " + volumeStr + " > 1.0, using 1.0");
+      }
+      log.debug("setting volume " + volume);
+    } catch (NumberFormatException e) {
+      log.error("[setMaryTTSVolume] cannot parse volume string {}", volumeStr, e);
+    }
+  }
+
+  @TRADEService
   public String getConfigFile() {
     return Resources.createFilepath(defaultConfigPath, config);
   }
@@ -867,15 +888,7 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
     }
     if (cmdLine.hasOption("volume")) {
       volumeStr = cmdLine.getOptionValue("volume");
-      volume = Float.parseFloat(volumeStr);
-      if (volume < 0.0f) {
-        volume = 0.0f;
-        log.warn("volume argument " + volumeStr + " < 0.0, using 0.0");
-      } else if (volume > 1.0f) {
-        volume = 1.0f;
-        log.warn("volume argument " + volumeStr + " > 1.0, using 1.0");
-      }
-      log.debug("setting volume " + volume);
+      setMaryTTSVolume(volumeStr);
     }
     if (cmdLine.hasOption("showMixers")) {
       ConfigurableMicrophone.showMixers();
