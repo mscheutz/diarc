@@ -686,7 +686,7 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
   @Override
   public void waitForReadyAck() {
     String home = System.getProperty("user.home");
-    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.9", "-u", home+"/.diarc/python/ww/run_ready_ww.py");
+    ProcessBuilder processBuilder = new ProcessBuilder(home+"/.diarc/python/ww/venv/bin/python3.10", "-u", home+"/.diarc/python/ww/run_ready_ww.py");
     processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT); //For debugging
     try {
       Process process = processBuilder.start();

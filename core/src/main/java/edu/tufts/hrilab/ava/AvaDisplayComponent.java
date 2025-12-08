@@ -85,6 +85,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   private List<String> userImages = new ArrayList<>();
   private int currentImage = -1;
   private int trLogoIndex = 0;
+  private boolean idleImageCycleRunning = true;
 
   @Override
   protected void init() {
@@ -261,7 +262,7 @@ public class AvaDisplayComponent extends DiarcComponent {
   }
 
   private void continueIdleImageCycle() {
-    if (!videoPlaying && !userImageDisplayed) {
+    if (!videoPlaying && !userImageDisplayed && idleImageCycleRunning) {
       try {
         SwingUtilities.invokeAndWait(() -> {
                   displayIdleImage(idleImages.get(currentImage), -1);
@@ -277,6 +278,19 @@ public class AvaDisplayComponent extends DiarcComponent {
         currentImage++;
       }
     }
+  }
+
+  @TRADEService
+  @Action
+  public void stopIdleImageCycle() {
+    idleImageCycleRunning = false;
+  }
+
+  @TRADEService
+  @Action
+  public void startIdleImageCycle() {
+    idleImageCycleRunning = true;
+    continueIdleImageCycle();
   }
 
   /**
@@ -588,6 +602,34 @@ public class AvaDisplayComponent extends DiarcComponent {
         }
         displayText("Ava: " + utterance.getWordsAsString());
       }).start();
+    } else if (utterance.getSpeaker().getName().equals("webapp") && utterance.getAddressee().getName().equals("ava")) {
+      try {
+        TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("displayText").argTypes(String.class));
+        service.call(void.class,"Received External Command...");
+      } catch (TRADEException e) {
+        log.warn("[transcribeAndReportSpeech] Exception displaying text", e);
+      }
+      new Thread(() -> {
+        try {
+          Thread.sleep(5000);
+        } catch (InterruptedException e) {
+          log.error("[handleMessage] exception sleeping in clearDisplay thread");
+        }
+        try {
+          TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("clearText").argTypes());
+          service.call(void.class);
+        } catch (TRADEException e) {
+          log.warn("[handleMessage] Exception displaying text", e);
+        }
+      }).start();
+
+      // Removed from chatAdapter and AvaGuiAdapter - want to add just this to either case?
+      //try {
+      //  TRADEServiceInfo service = TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class));
+      //  service.call(void.class,"ding.wav");
+      //} catch (TRADEException e) {
+      //  log.warn("[handleMessage] exception playing audio clip on Ava", e);
+      //}
     }
   }
 
