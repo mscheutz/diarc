@@ -2553,14 +2553,13 @@ public class ExecutionManager implements GoalListener {
       return false;
     }
 
-    //What should happen here?
-    if (g.getPriorityTier().equals(PriorityTier.URGENT)) {
-      log.warn("[handOffToLearning] encountered goal with URGENT priority, were you trying to supersede action learning?");
-    }
-
     AgentTeam agentTeam = originalAgentTeam;
     while (agentTeam != null) {
       if (agentTeam.getLearningStatus() == ActionLearningStatus.ACTIVE) {
+        //What should happen here?
+        if (g.getPriorityTier().equals(PriorityTier.URGENT)) {
+          log.warn("[handOffToLearning] encountered goal with URGENT priority, were you trying to supersede action learning?");
+        }
         log.debug("[handOffToLearning] handing {} off to action learning", g);
         agentTeam.addLearningGoal(g);
         if (!agentTeam.shouldExecute()) {

@@ -1193,6 +1193,22 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
   }
 
+  @TRADEService
+  @Action
+  public void playAudioFile(String fileName) {
+    log.info("[playAudioFile] {}", fileName);
+    if (fileName.startsWith("\"") && fileName.endsWith("\"")) {
+      fileName = fileName.substring(1,fileName.length()-1);
+    }
+    String homeDir = System.getProperty("user.home");
+    String path = Paths.get(homeDir, ".diarc", "ava", fileName).toString();
+    try {
+      TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class)).call(void.class, path);
+    } catch (TRADEException e) {
+      log.error("[playAudioFile] could not call TRADE service", e);
+    }
+  }
+
   //TODO: Move back strictly to this component? Initially moved method to MaryTTS component while debugging to see if locking
   // and line management was part of the issue, but don't believe it is actually necessary
   //@TRADEService

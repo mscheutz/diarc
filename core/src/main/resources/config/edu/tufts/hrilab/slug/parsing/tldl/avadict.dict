@@ -449,6 +449,7 @@ it will be called; VAL/LIT*; #x.taskName($x)
 task greet; VAL; taskName(greet)
 i am done teaching; C; endActionLearning(?ADDRESSEE)
 
+%skippending say; C/LIT*; #x.skippendingsay(?ADDRESSEE, $x)
 say; C/LIT*; #x.say(?ADDRESSEE, $x)
 %greet; C; greet(?ADDRESSEE)
 
@@ -521,3 +522,5 @@ set output volume to; C/LIT* ; #x.setMaryTTSVolume(?ADDRESSEE,$x)
 set output volume; C/LIT* ; #x.setMaryTTSVolume(?ADDRESSEE,$x)
 start idle image cycle; VERBI; startIdleImageCycle
 stop idle image cycle; VERBI; stopIdleImageCycle
+
+play audio file; C/LIT*; #x.playAudioFile(?ADDRESSEE,$x)

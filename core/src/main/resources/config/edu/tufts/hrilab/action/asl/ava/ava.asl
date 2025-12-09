@@ -440,6 +440,10 @@ import edu.tufts.hrilab.action.goal.Goal;
     }
 }
 
+() = skippendingsay(String ?literal) {
+    act:say(?literal);
+}
+
 () = say(String ?literal) {
     Symbol !listener = this:getOriginalSubmitter();
     edu.tufts.hrilab.slug.common.Utterance !utterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !listener);
