@@ -159,7 +159,7 @@ public class AvaDemo extends DiarcConfiguration {
 //    }
 
     if (useDisplay) {
-      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 10");
+      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 80 -videoAudioDevice hdmi:CARD=PCH,DEV=0");
     }
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);
