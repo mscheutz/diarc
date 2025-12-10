@@ -5,10 +5,8 @@ import java.awt.Point;
 import java.awt.Color;
 import java.awt.Polygon;
 import java.awt.Rectangle;
-import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -102,128 +100,6 @@ public class ContourDetector {
       }
     }
     return null;
-  }
-
-  public static DetectionResult findBestRectangleWithCoordinateDescent(BufferedImage image) {
-    int lowT = 50;
-    int dilations = 3;
-    double highTRatio = 2.5;
-
-    DetectionResult bestResult = null;
-    double bestCost = Double.MAX_VALUE;
-
-    bestResult = getResultForParams(image, lowT, (int)(lowT * highTRatio), dilations);
-    if (bestResult != null) {
-      bestCost = calculateColorStdDev(image, bestResult.bestFitRectangle());
-    }
-
-    final int maxCycles = 5;
-    for (int cycle = 0; cycle < maxCycles; cycle++) {
-      boolean improved = false;
-
-      int[] lowTSteps = {-20, 20, -10, 10};
-      for (int step : lowTSteps) {
-        int nextLowT = Math.max(10, Math.min(150, lowT + step));
-        int nextHighT = (int)(nextLowT * highTRatio);
-        DetectionResult result = getResultForParams(image, nextLowT, nextHighT, dilations);
-        if (result == null) continue;
-        double cost = calculateColorStdDev(image, result.bestFitRectangle());
-        if (cost < bestCost) {
-          bestCost = cost;
-          bestResult = result;
-          lowT = nextLowT;
-          improved = true;
-        }
-      }
-
-      int[] dilationSteps = {-1, 1};
-      for (int step : dilationSteps) {
-        int nextDilations = Math.max(1, Math.min(8, dilations + step));
-        int currentHighT = (int)(lowT * highTRatio);
-        DetectionResult result = getResultForParams(image, lowT, currentHighT, nextDilations);
-        if (result == null) continue;
-        double cost = calculateColorStdDev(image, result.bestFitRectangle());
-        if (cost < bestCost) {
-          bestCost = cost;
-          bestResult = result;
-          dilations = nextDilations;
-          improved = true;
-        }
-      }
-
-      double[] ratioSteps = {-0.5, 0.5, -0.2, 0.2};
-      for (double step : ratioSteps) {
-        double nextRatio = Math.max(2.0, Math.min(5.0, highTRatio + step));
-        int nextHighT = (int)(lowT * nextRatio);
-        DetectionResult result = getResultForParams(image, lowT, nextHighT, dilations);
-        if (result == null) continue;
-        double cost = calculateColorStdDev(image, result.bestFitRectangle());
-        if (cost < bestCost) {
-          bestCost = cost;
-          bestResult = result;
-          highTRatio = nextRatio;
-          improved = true;
-        }
-      }
-
-      if (!improved) {
-        System.out.printf("Search converged in cycle %d.\n", cycle + 1);
-        break;
-      }
-    }
-
-    if (bestResult != null) {
-      System.out.printf("Coordinate descent found best rectangle with color std dev: %.2f\n", bestCost);
-    } else {
-      System.out.println("Warning: Could not find any valid, in-bounds rectangle during parameter search.");
-    }
-
-    return bestResult;
-  }
-
-  private static DetectionResult getResultForParams(BufferedImage image, int lowT, int highT, int dilations) {
-    DetectionResult result = detectForSingleParamSet(image, lowT, highT, dilations);
-    if (result != null && result.bestFitRectangle() != null && !result.bestFitRectangle().isEmpty()) {
-      if (isRectangleWithinBounds(result.bestFitRectangle(), image.getWidth(), image.getHeight())) {
-        return result;
-      }
-    }
-    return null;
-  }
-
-  private static boolean isRectangleWithinBounds(List<Point> rect, int imageWidth, int imageHeight) {
-    if (rect == null) return false;
-    for (Point p : rect) {
-      if (p.x < 0 || p.x >= imageWidth || p.y < 0 || p.y >= imageHeight) return false;
-    }
-    return true;
-  }
-
-  private static double calculateColorStdDev(BufferedImage image, List<Point> rect) {
-    if (rect == null || rect.isEmpty()) return Double.MAX_VALUE;
-
-    Polygon poly = new Polygon();
-    for (Point p : rect) poly.addPoint(p.x, p.y);
-    Rectangle bounds = poly.getBounds();
-
-    List<Double> luminances = new ArrayList<>();
-    for (int y = bounds.y; y < bounds.y + bounds.height; y++) {
-      for (int x = bounds.x; x < bounds.x + bounds.width; x++) {
-        if (x >= 0 && x < image.getWidth() && y >= 0 && y < image.getHeight() && poly.contains(x, y)) {
-          Color c = new Color(image.getRGB(x, y));
-          luminances.add(0.299 * c.getRed() + 0.587 * c.getGreen() + 0.114 * c.getBlue());
-        }
-      }
-    }
-
-    if (luminances.size() < 50) return Double.MAX_VALUE;
-
-    double sum = 0.0, standardDeviation = 0.0;
-    for(double num : luminances) sum += num;
-    double mean = sum / luminances.size();
-    for(double num: luminances) standardDeviation += Math.pow(num - mean, 2);
-
-    return Math.sqrt(standardDeviation / luminances.size());
   }
 
   public static DetectionResult detectForSingleParamSet(BufferedImage image, int lowThreshold, int highThreshold, int dilationIterations) {

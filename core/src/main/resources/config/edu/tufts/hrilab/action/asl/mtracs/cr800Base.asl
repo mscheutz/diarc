@@ -82,13 +82,7 @@
 
 //====================== Gripper Switching =====================
 () = rotateToEE["changes TCP of robot to refer to a new EE attached to the cuff at a different offset"](edu.tufts.hrilab.fol.Symbol ?gripperType) {
-    ai.thinkingrobots.mtracs.util.MPose !currentPose;
-    ai.thinkingrobots.mtracs.util.MPose !newTCP;
-    (!currentPose) = tsc:getCurrentPose();
-     op:log(debug, "getting tcp for ?gripperType in rotate");
-    (!newTCP) = tsc:getTCPForEE(?gripperType);
-    tsc:alternateEE(!newTCP);
-    tsc:goToPose(!currentPose);
+    tsc:alternateEE(?gripperType);
 }
 
 () = putAwayGripper(edu.tufts.hrilab.fol.Symbol ?gripperType) {

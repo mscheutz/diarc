@@ -45,12 +45,15 @@ import java.lang.Boolean;
     op:log(warn, "[doDemo] packing result: !result");
     !itemsPerLayer = tsc:getNumberOfItemsPerLayer();
     tsc:setCratePackingStatus("packing");
+    act:rotateToEE(default);
     act:goToPosePrimitive("robotonepose_0:pose");
     for (!i=0; !i lt ?numItems; !i ++) {
         tsc:incrementPackingItemNum();
         act:lookForAndMoveToBox();
         act:graspItemWrapper();
-        act:goToPosePrimitive("robotonepose_0:pose");
+        //TODO: replace with moving to intermediate safe point
+        //act:goToPosePrimitive("robotonepose_0:pose");
+        tsc:moveZRelative(0.2);
 
         //get values from packing info
         !item = tsc:getNextPackedItem();
@@ -64,18 +67,13 @@ import java.lang.Boolean;
         !zOffset = op:*(!boxHeight, !tmp);
         act:putDownInCrate(!centerX, !centerY, !zOffset, !angle);
         tsc:incrementNumPackedItems();
-        //TODO TODO: can we undo this now that we added incrementPackingItemNum?
-        //TODO: test on real robot
-        //      1. this doesn't break functionality
-        //      2. setting the number to pack to the number which is in the crate while the arm is on the way back to
-        //          the conveyor breaks from this loop before packing more
         //Putting this at the bottom of the loop so that changing the number of items to pack per crate has a chance
         //  to be caught before picking up the next item
+        act:rotateToEE(default);
         act:goToPosePrimitive("robotonepose_0:pose");
         ?numItems = tsc:getCurrentCrateCapacity();
     }
     tsc:setCratePackingStatus("complete");
-    //TODO: whether we do this or not depends partially on whether we ack or not in main loop
     act:goToPosePrimitive("robotonepose_0:pose");
 }
 
@@ -84,9 +82,7 @@ import java.lang.Boolean;
 }
 
 () = graspItem() {
-    tsc:moveZRelative(-0.00); //todo: hardcoded zOffset. also in lookForAndMoveToBox
     act:closeGripper();
-    tsc:moveZRelative(0.3);
 }
 
 () = lookForAndMoveToBox() {
@@ -109,11 +105,8 @@ import java.lang.Boolean;
     Integer !tmp;
 
     Double !boxHeight;
-    //Double !zOffset = -8.6; //todo: hardcoded offset. see graspItem as well.
-    Double !zOffset = 0.0; //todo: hardcoded offset. see graspItem as well.
+    Double !zOffset = 0.0;
     Float !surfaceHeight;
-
-    act:rotateToEE(default);
 
     !adjustment = tsc:calculateRobotAdjustment();
 
@@ -202,6 +195,7 @@ import java.lang.Boolean;
     op:log(info, "[putDownInCrate] dz: ?dz, surfaceHeight: !surfaceHeight, currentZ: !currentZ, height: !height, difference: !difference, heightUp: !heightUp");
     tsc:moveZRelative(!heightUp);
     tsc:openGripper();
+    //TODO: can be removed potentially - or replaced with moveTo safe spot on crate edge
     tsc:moveZRelative(!difference);
     !tracker = op:++(!tracker);
     op:log(debug, "done putting down crate");
@@ -343,7 +337,7 @@ import java.lang.Boolean;
 
     op:log(debug, "[closeGripperFailureRecovery] starting recovery");
     act:openGripper();
-    tsc:moveZRelative(0.3);
+    act:rotateToEE(default);
     act:goToPosePrimitive("robotonepose_0:pose");
     act:generateResponse("report(and(failedToGrasp(?actor,item),tryingAgain))");
     act:lookForAndMoveToBox();
@@ -421,7 +415,7 @@ import java.lang.Boolean;
 () = runGraspCalibration() {
     MPose !pose;
     Float !surfaceHeight;
-    Float !destHeight;
+    Double !destHeight;
     Integer !tmp;
     Double !goalZ;
     Vec3 !adjustment;
@@ -434,16 +428,19 @@ import java.lang.Boolean;
     Predicate !responseForm;
     Predicate !failure;
 
+    act:rotateToEE(default);
+    act:goToPoseDirect(robotonepose_0:pose);
+
+    !pose = tsc:getPoseFromSymbol(robotonepose_0:pose);
     !tmp = tsc:getPackedItemHeight();
     !destHeight = op:*(1.0, !tmp);
-    !pose = tsc:getPoseFromSymbol(robotonepose_0:pose);
     !surfaceHeight = op:invokeMethod(!pose, "getSurfaceHeight");
     !surfaceHeight = op:*(!surfaceHeight, 1000);
     !destHeight = op:+(!destHeight, !surfaceHeight);
 
-    !poseZ = op:invokeMethod(!pose, "getZ");
-    !destHeight = op:-(!destHeight, !poseZ);
-
+    !pose = tsc:getCurrentPose();
+    //TODO: just setZ instead
+    !pose = tsc:calculateRelativeMovement(!pose, 0.0, 0.0, 0.0, !destHeight, 0.0);
 
     !responseFormList = op:newArrayList("edu.tufts.hrilab.fol.Predicate");
     !responseForm = op:createPredicate("val(X)");
@@ -453,17 +450,14 @@ import java.lang.Boolean;
     !responseForm = op:createPredicate("didIt(X)");
     op:add(!responseFormList,!responseForm);
 
-    act:goToPoseDirect(robotonepose_0:pose);
     act:closeGripper();
     act:askQuestion(?actor, ask(ackWhen(placed(item, gripper))), !responseFormList);
     act:rotateToEE(gripper);
-    !goalZ = op:/(!destHeight, 1000);
-    op:log(debug, "[adjustForDetectionOffset] goal Z height is: !goalZ");
-    tsc:moveZRelative(!goalZ);
+    tsc:goToPose(!pose);
     act:openGripper();
-    tsc:moveZRelative(.3);
-    act:goToPoseDirect(robotonepose_0:pose);
+    tsc:moveZRelative(0.05);
     act:rotateToEE(default);
+    act:goToPoseDirect(robotonepose_0:pose);
     !adjustment = tsc:calculateRobotAdjustment(!true);
     if (op:isNull(!adjustment)) {
         //todo: actually say something useful here. these semantics don't have generation examples currently

@@ -764,7 +764,7 @@ public class CratePackingComponent extends DiarcComponent {
   }
 
   @TRADEService
-  public void saveImage() {
+  public BufferedImage saveImage() {
     BufferedImage image;
     try {
       TRADEServiceInfo tsi = TRADE.getAvailableService(new TRADEServiceConstraints().name("getImage"));
@@ -779,6 +779,7 @@ public class CratePackingComponent extends DiarcComponent {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+    return image;
   }
 
   //in mm and radians
