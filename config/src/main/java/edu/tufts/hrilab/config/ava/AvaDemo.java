@@ -132,7 +132,7 @@ public class AvaDemo extends DiarcConfiguration {
       createInstance(edu.tufts.hrilab.simspeech.SimSpeechRecognitionComponent.class, "-config ava.simspeech -speaker webapp -addressee ava");
     }
 //    createInstance(edu.tufts.hrilab.simspeech.SimSpeechProductionComponent.class, "");
-    String maryTTSArgs = " -female -volume 0.1 -showMixers";
+    String maryTTSArgs = " -female -volume 0.4 -showMixers";
     if (!speakerId.isEmpty()) {
       maryTTSArgs += " -matchMixer " + speakerId;
     }
@@ -159,7 +159,7 @@ public class AvaDemo extends DiarcConfiguration {
 //    }
 
     if (useDisplay) {
-      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 80 -videoAudioDevice hdmi:CARD=PCH,DEV=0");
+      createInstance(edu.tufts.hrilab.ava.AvaDisplayComponent.class, ((useGUI) ? "" : "-fullscreen") + " -chat -mediaDir " + mediaDir + " -videoVolume 90 -videoAudioDevice hdmi:CARD=PCH,DEV=0");
     }
     if (useMockAva) {
       createInstance(edu.tufts.hrilab.ava.MockAvaComponent.class, avaArgs);
