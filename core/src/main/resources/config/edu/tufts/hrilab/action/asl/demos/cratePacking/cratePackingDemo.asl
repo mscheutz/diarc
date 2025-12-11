@@ -187,6 +187,7 @@ import java.lang.Boolean;
     !currentZ = op:invokeMethod(!origin, "getZ");
 
     !difference = op:-(!currentZ, !height);
+    !difference = op:-(!difference, 10); //To prevent items from flipping during tight packing
     !difference = op:/(!difference, 1000);
 
 

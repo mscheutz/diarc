@@ -192,19 +192,21 @@ public class CratePackingComponent extends DiarcComponent {
     int totalCount = numLayers * layerResult.count;
 
     if (tolerance <= 0) {
+      //TODO: if positive tolerance is < 2*crate_side_tolerance then will have less side tolerance
+      int crate_side_tolerance = 10; //2 //1
       for (Rectangle item : layerResult.rectangles) {
         double centerX = item.getCenterX();
         double centerY = item.getCenterY();
         int itemL = item.width - tolerance;
         int itemW = item.height - tolerance;
-        if (centerX <= (itemL / 2.0)) {
+        if (centerX <= (itemL / 2.0)+crate_side_tolerance) {
           //If touching edge, apply entire offset to avoid overlap/hitting
           //Setting to 1 rather than 0 to give implicit 1mm clearance for edges of the container
-          item.x = 2;
+          item.x = crate_side_tolerance;
           item.width = itemL;
-        } else if (centerX + itemL / 2. > crateLength) {
+        } else if (centerX + itemL / 2. + crate_side_tolerance > crateLength) {
           //If touching edge, apply entire offset to avoid overlap/hitting
-          item.x = crateLength - itemL - 2;//+1
+          item.x = crateLength - itemL - crate_side_tolerance;
           item.width = itemL;
         } else {
           //For accurate visualization/logging purposes
@@ -217,11 +219,11 @@ public class CratePackingComponent extends DiarcComponent {
           // to the nature of the algorithm as long the items are homogenous and only allow the two orientations.
         }
 
-        if (centerY <= (itemW / 2.0)) {
-          item.y = 2;
+        if (centerY <= (itemW / 2.0)+crate_side_tolerance) {
+          item.y = crate_side_tolerance;
           item.height = itemW;
-        } else if (centerY + itemW / 2. > crateW) {
-          item.y = crateW - itemW - 2;//+1
+        } else if (centerY + itemW / 2. + crate_side_tolerance > crateW) {
+          item.y = crateW - itemW - crate_side_tolerance;
           item.height = itemW;
         } else {
           if (tolerance != 0) {

@@ -266,7 +266,7 @@ public class CratePacking extends DiarcConfiguration {
             }
         }
 
-        //createInstance(RobotCalibrator.class,"");
+        createInstance(RobotCalibrator.class,"");
 
         cratePackingComponent.setGui(new CratePackingGui(cratePackingComponent, hybridParserComponent, hybridNLGComponent, serviceProvider, japanese));
     }
