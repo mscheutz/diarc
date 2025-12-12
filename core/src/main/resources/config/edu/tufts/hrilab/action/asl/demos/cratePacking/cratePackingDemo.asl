@@ -137,6 +137,8 @@ import java.lang.Boolean;
     op:log(debug, "[lookForAndMoveToBox]  surfaceHeight !surfaceHeight");
     !boxHeight = op:+(!boxHeight, !surfaceHeight);
     op:log(debug, "[lookForAndMoveToBox] boxHeight !boxHeight");
+    !boxHeight = op:-(!boxHeight, 8);
+    op:log(debug, "[lookForAndMoveToBox] boxHeight !boxHeight");
 
     !currentPose = tsc:getCurrentPose();
     op:log(debug, "[lookForAndMoveToBox] currentPose (robot) !currentPose");
@@ -187,7 +189,7 @@ import java.lang.Boolean;
     !currentZ = op:invokeMethod(!origin, "getZ");
 
     !difference = op:-(!currentZ, !height);
-    !difference = op:-(!difference, 10); //To prevent items from flipping during tight packing
+    !difference = op:-(!difference, 25); //To prevent items from flipping during tight packing
     !difference = op:/(!difference, 1000);
 
 
