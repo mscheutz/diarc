@@ -23,9 +23,14 @@ import java.lang.Boolean;
     act:goToPosePrimitiveNoAdjust(?pose);
 }
 
+() = packCrateOnCancel() {
+    tsc:setCratePackingStatus("canceled");
+    act:rotateToEE(default);
+}
+
 () = packCrate(Integer ?numItems) {
      onInterrupt :{
-         cancel: tsc:setCratePackingStatus("canceled");
+         cancel: act:packCrateOnCancel();
      }
     PackedItem !item;
     Double !centerX;
