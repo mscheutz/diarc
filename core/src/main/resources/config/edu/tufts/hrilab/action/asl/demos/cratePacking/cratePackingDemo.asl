@@ -194,7 +194,7 @@ import java.lang.Boolean;
     !currentZ = op:invokeMethod(!origin, "getZ");
 
     !difference = op:-(!currentZ, !height);
-    !difference = op:-(!difference, 25); //To prevent items from flipping during tight packing
+    !difference = op:-(!difference, 35); //To prevent items from flipping during tight packing
     !difference = op:/(!difference, 1000);
 
 
@@ -445,6 +445,7 @@ import java.lang.Boolean;
     !surfaceHeight = op:invokeMethod(!pose, "getSurfaceHeight");
     !surfaceHeight = op:*(!surfaceHeight, 1000);
     !destHeight = op:+(!destHeight, !surfaceHeight);
+    !destHeight = op:-(!destHeight, 8);
 
     !pose = tsc:getCurrentPose();
     //TODO: just setZ instead
