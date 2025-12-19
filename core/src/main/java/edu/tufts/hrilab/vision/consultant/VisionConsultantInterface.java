@@ -4,14 +4,11 @@
 
 package edu.tufts.hrilab.vision.consultant;
 
-import ai.thinkingrobots.trade.TRADEService;
 import edu.tufts.hrilab.fol.Symbol;
-import edu.tufts.hrilab.action.annotations.Action;
 import edu.tufts.hrilab.interfaces.ConsultantInterface;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
 import java.util.List;
 
-//TODO:brad: should this exist at all?
 public interface VisionConsultantInterface extends ConsultantInterface {
 
   /**
@@ -19,8 +16,6 @@ public interface VisionConsultantInterface extends ConsultantInterface {
    * @param objectRef
    * @return
    */
-  @TRADEService
-  @Action
   Long getTypeId(Symbol objectRef);
 
   /**
@@ -31,8 +26,6 @@ public interface VisionConsultantInterface extends ConsultantInterface {
    * @param objectRef
    * @return
    */
-  @TRADEService
-  @Action
   List<MemoryObject> getTokens(Symbol objectRef);
 
   /**
@@ -43,8 +36,6 @@ public interface VisionConsultantInterface extends ConsultantInterface {
    * @param objectRef
    * @return
    */
-  @TRADEService
-  @Action
   List<Long> getTokenIds(Symbol objectRef);
 
 }

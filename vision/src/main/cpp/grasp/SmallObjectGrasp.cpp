@@ -19,10 +19,10 @@
 
 using namespace diarc::grasp;
 
-SmallObjectGrasp::SmallObjectGrasp()
+SmallObjectGrasp::SmallObjectGrasp(const std::string &config)
     : size_thresh(0.07),
       gripper_depth(0.07) {
-  logger = log4cxx::Logger::getLogger("diarc.detector.grasp.SmallObjectGrasp");
+  logger = log4cxx::Logger::getLogger("diarc.grasp.SmallObjectGrasp");
 }
 
 SmallObjectGrasp::~SmallObjectGrasp() {

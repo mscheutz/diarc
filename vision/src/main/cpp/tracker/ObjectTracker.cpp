@@ -30,6 +30,7 @@
 #include <boost/unordered/unordered_set.hpp>
 
 #include "TapnetTracker.hpp"
+#include "point_clouds/PCLFunctions.hpp"
 
 using namespace diarc::stm;
 
@@ -433,9 +434,14 @@ int ObjectTracker::mergeObject(MemoryObject::Ptr newlyDetectedObject) {
   }
 
   //no match found, add new MemoryObject to Tracker
+  bool saveNewObjectToFile = false;
   if (!matchFound) {
     if (canTrack(newlyDetectedObject)) { //tracker can reject object
       LOG4CXX_TRACE(logger, "[mergeObject] adding object to tracker.");
+      if (saveNewObjectToFile) {
+        std::string filename = "/dev/shm/tracked_" + std::to_string(counter++) + ".pcd";
+        pcl::io::savePCDFile(filename, *(newlyDetectedObject->getDetectionMask()->getObjectPointCloudRGB()));
+      }
       startTracking(newlyDetectedObject);
       ++numAddedObjects;
     }

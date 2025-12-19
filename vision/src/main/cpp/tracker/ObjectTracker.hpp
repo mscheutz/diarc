@@ -179,6 +179,9 @@ private:
   static log4cxx::LoggerPtr factoryLogger;
   bool publishToROS;
 
+  //! counter for saving tracked objects to file
+  int counter = 0;
+
   // // ros::NodeHandle* nh;
   // ros::Publisher pub;
   // // geometry_msgs::TrackedObjects::Ptr tracked_objects_msg_;

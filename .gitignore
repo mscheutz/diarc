@@ -7,6 +7,7 @@ core/src/main/resources/*-test.properties
 core/src/main/resources/serviceDocumentation.json
 diarcRos/build/
 vision/build/
+vision/data/
 vision/src/swig/
 .idea/
 .vscode/

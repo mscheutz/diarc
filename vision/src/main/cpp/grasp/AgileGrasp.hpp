@@ -27,14 +27,13 @@ namespace diarc {
       typedef boost::shared_ptr<AgileGrasp> Ptr;
       typedef boost::shared_ptr<const AgileGrasp> ConstPtr;
 
-      AgileGrasp();
+      AgileGrasp(const std::string &config);
       ~AgileGrasp();
-
-      void loadConfig(const std::string &config);
 
       std::vector<Grasp> calculateGraspPoses(pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud, const cv::Mat &transform);
 
      private:
+      void loadConfig(const std::string &config);
 
       //! Computes the pose for PR2-like gripper: quaternion and points
       void calculateGraspPose(const Handle& antipodal, pcl::PointCloud<pcl::PointXYZ>::Ptr& points, Eigen::Quaternionf & quat);
