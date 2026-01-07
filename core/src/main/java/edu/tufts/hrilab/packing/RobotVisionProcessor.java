@@ -239,6 +239,21 @@ public class RobotVisionProcessor {
     this.dilationIterations = value;
   }
 
+  public void setCalibratedCannyLowThreshold(int value) {
+    this.calibratedCannyLowThreshold = value;
+    this.cannyLowThreshold = value;
+  }
+
+  public void setCalibratedCannyHighThreshold(int value) {
+    this.calibratedCannyHighThreshold = value;
+    this.cannyHighThreshold = value;
+  }
+
+  public void setCalibratedDilationIterations(int value) {
+    this.calibratedDilationIterations = value;
+    this.dilationIterations = value;
+  }
+
   public void writeSettings() {
     try {
       Writer writer = new FileWriter(settingsFile);
