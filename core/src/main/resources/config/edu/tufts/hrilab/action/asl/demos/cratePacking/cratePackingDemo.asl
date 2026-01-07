@@ -36,11 +36,17 @@ import java.lang.Boolean;
     Double !centerX;
     Double !centerY;
     Double !angle;
+    Double !halfangle;
     PackingResult3D !result;
     Float !boxHeight;
     Integer !tmp;
     Float !zOffset;
     Integer !itemsPerLayer;
+    MPose !waypoint;
+    List !waypoints;
+    Float !zero = 0.0f;
+    Integer !itemsInLowerLayers;
+    Integer !itemsInCurrentLayer;
 
     !tmp = tsc:getPackedItemHeight();
     !boxHeight = op:*(1.0f, !tmp);
@@ -72,10 +78,25 @@ import java.lang.Boolean;
         !zOffset = op:*(!boxHeight, !tmp);
         act:putDownInCrate(!centerX, !centerY, !zOffset, !angle);
         tsc:incrementNumPackedItems();
+
         //Putting this at the bottom of the loop so that changing the number of items to pack per crate has a chance
         //  to be caught before picking up the next item
+        //TODO: need to figure out the best abstraction for generating and sending movement commands with waypoints
+            //  with respect to when TCP adjustments are made. Explicitly not adding adjustment here because it will be later
+        !waypoints = op:newArrayList("ai.thinkingrobots.mtracs.util.MPose");
+        !waypoint = tsc:getCurrentPose();
         act:rotateToEE(default);
-        act:goToPosePrimitive("robotonepose_0:pose");
+        !waypoint = act:getAdjustedPose(!waypoint, !zero, !zero, 20, !zero, !zero, !zero, gripper);
+        op:add(!waypoints,!waypoint);
+        !waypoint = tsc:getPoseFromSymbol(robotonepose_3:pose);
+        !halfangle = op:/(!angle,2);
+        !waypoint = act:getAdjustedPose(!waypoint, !zero, !zero, !zero, !zero, !zero, !halfangle, gripper);
+        op:add(!waypoints,!waypoint);
+        !waypoint = tsc:getPoseFromSymbol(robotonepose_0:pose);
+        //!waypoint = act:getAdjustedPose(!waypoint, !zero, !zero, !zero, !zero, !zero, !zero, default);
+        op:add(!waypoints,!waypoint);
+        act:goToPose(!waypoints);
+
         ?numItems = tsc:getCurrentCrateCapacity();
     }
     tsc:setCratePackingStatus("complete");
@@ -183,8 +204,20 @@ import java.lang.Boolean;
     Float !zero = 0.0f;
     Double !difference;
 
+    MPose !waypoint;
+    List !waypoints = op:newArrayList("ai.thinkingrobots.mtracs.util.MPose");
+    Double !halfangle;
+
+    //TODO: need to figure out the best abstraction for generating and sending movement commands with waypoints
+        //  with respect to when TCP adjustments are made. Explicitly not adding adjustment here because it will be later
+    !halfangle = op:/(?dc,2);
+    !waypoint = tsc:getPoseFromSymbol(robotonepose_2:pose);
+    !waypoint = act:getAdjustedPose(!waypoint, !zero, !zero, !zero, !zero, !zero, !halfangle, default);
+    op:add(!waypoints,!waypoint);
+
     !origin = tsc:getPoseFromSymbol(robotonepose_1:pose);
-    act:moveToAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc);
+    !waypoint = act:getAdjustedPose(!origin, ?dx, ?dy, !zero, !zero, !zero, ?dc, default);
+    op:add(!waypoints,!waypoint);
 
     !surfaceHeight = op:invokeMethod(!origin, "getSurfaceHeight");
     !surfaceHeight = op:*(!surfaceHeight, 1000);
@@ -195,16 +228,15 @@ import java.lang.Boolean;
 
     !difference = op:-(!currentZ, !height);
     !difference = op:-(!difference, 35); //To prevent items from flipping during tight packing
-    !difference = op:/(!difference, 1000);
-
 
     !heightUp = op:*(!difference, -1);
     !tracker = op:++(!tracker);
     op:log(info, "[putDownInCrate] dz: ?dz, surfaceHeight: !surfaceHeight, currentZ: !currentZ, height: !height, difference: !difference, heightUp: !heightUp");
-    tsc:moveZRelative(!heightUp);
+    !waypoint = act:getAdjustedPose(!waypoint, !zero, !zero, !heightUp, !zero, !zero, !zero, default);
+    op:add(!waypoints,!waypoint);
+    act:goToPose(!waypoints);
+
     tsc:openGripper();
-    //TODO: can be removed potentially - or replaced with moveTo safe spot on crate edge
-    tsc:moveZRelative(!difference);
     !tracker = op:++(!tracker);
     op:log(debug, "done putting down crate");
 }
