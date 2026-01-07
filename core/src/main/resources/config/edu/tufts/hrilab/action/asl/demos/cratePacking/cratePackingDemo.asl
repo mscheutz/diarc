@@ -62,9 +62,6 @@ import java.lang.Boolean;
         tsc:incrementPackingItemNum();
         act:lookForAndMoveToBox();
         act:graspItemWrapper();
-        //TODO: replace with moving to intermediate safe point
-        //act:goToPosePrimitive("robotonepose_0:pose");
-        tsc:moveZRelative(0.2);
 
         //get values from packing info
         !item = tsc:getNextPackedItem();
@@ -74,8 +71,14 @@ import java.lang.Boolean;
         op:log(info, "[doDemo] putting down item at !centerX, !centerY, !angle");
 
         !tmp = op:/(!i,!itemsPerLayer);
+        !itemsInLowerLayers = op:*(!tmp,!itemsPerLayer);
+        !itemsInCurrentLayer = op:-(!i,!itemsInLowerLayers);
         !tmp = op:+(!tmp,1);
         !zOffset = op:*(!boxHeight, !tmp);
+        //Not applying zOffset to the first item in each layer - would cause the item to slide/bounce out of place on the drop
+        if (op:equals(!itemsInCurrentLayer,0)) {
+            !zOffset = op:-(!zOffset,25);
+        }
         act:putDownInCrate(!centerX, !centerY, !zOffset, !angle);
         tsc:incrementNumPackedItems();
 
@@ -163,7 +166,7 @@ import java.lang.Boolean;
     op:log(debug, "[lookForAndMoveToBox]  surfaceHeight !surfaceHeight");
     !boxHeight = op:+(!boxHeight, !surfaceHeight);
     op:log(debug, "[lookForAndMoveToBox] boxHeight !boxHeight");
-    !boxHeight = op:-(!boxHeight, 8);
+    !boxHeight = op:-(!boxHeight, 12);
     op:log(debug, "[lookForAndMoveToBox] boxHeight !boxHeight");
 
     !currentPose = tsc:getCurrentPose();
@@ -477,7 +480,7 @@ import java.lang.Boolean;
     !surfaceHeight = op:invokeMethod(!pose, "getSurfaceHeight");
     !surfaceHeight = op:*(!surfaceHeight, 1000);
     !destHeight = op:+(!destHeight, !surfaceHeight);
-    !destHeight = op:-(!destHeight, 8);
+    !destHeight = op:-(!destHeight, 12);
 
     !pose = tsc:getCurrentPose();
     //TODO: just setZ instead

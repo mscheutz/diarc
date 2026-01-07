@@ -193,7 +193,7 @@ public class CratePackingComponent extends DiarcComponent {
 
     if (tolerance <= 0) {
       //TODO: if positive tolerance is < 2*crate_side_tolerance then will have less side tolerance
-      int crate_side_tolerance = 10; //2 //1
+      int crate_side_tolerance = 5; //2 //1
       for (Rectangle item : layerResult.rectangles) {
         double centerX = item.getCenterX();
         double centerY = item.getCenterY();
@@ -415,17 +415,17 @@ public class CratePackingComponent extends DiarcComponent {
 
   @TRADEService
   public void setCannyLowThreshold(int value) {
-    visionProcessor.setCannyLowThreshold(value);
+    visionProcessor.setCalibratedCannyLowThreshold(value);
   }
 
   @TRADEService
   public void setCannyHighThreshold(int value) {
-    visionProcessor.setCannyHighThreshold(value);
+    visionProcessor.setCalibratedCannyHighThreshold(value);
   }
 
   @TRADEService
   public void setDilationIterations(int value) {
-    visionProcessor.setDilationIterations(value);
+    visionProcessor.setCalibratedDilationIterations(value);
   }
 
   @TRADEService

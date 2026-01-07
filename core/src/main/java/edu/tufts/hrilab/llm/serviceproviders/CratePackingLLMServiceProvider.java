@@ -635,6 +635,7 @@ public class CratePackingLLMServiceProvider extends LLMServiceProvider {
         case "reportPackedItemLength":
         case "setNumberOfItemsToPackPerCrate":
         case "reportNumberOfItemsInCrate":
+        case "reportUnsetPackingParameters":
         case "repeatLastQuestion":
         case "describeCurrentGoal":
         case "reportTaughtActions":

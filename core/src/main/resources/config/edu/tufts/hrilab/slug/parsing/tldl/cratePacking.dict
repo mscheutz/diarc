@@ -32,6 +32,8 @@ no; VAL; val(no)
 はい; VAL; val(yes);
 いいえ; VAL ; val(no);
 
+$225 mm; VAL; sizeInMM(225)
+
 millimeters; VAL\NUM; #x.sizeInMM($x)
 mm; VAL\NUM; #x.sizeInMM($x)
 mmです; VAL\NUM; #x.sizeInMM($x)
@@ -56,6 +58,9 @@ what did you ask me; VERBI; repeatLastQuestion
 hi; G ; hi
 hi there; G ; hi_there
 hello; G ; hello
+hello assista; G ; hello
+hello assistant; G ; hello
+hello sister; G ; hello
 
 check holding; C; checkHolding(?ADDRESSEE)
 open gripper; C; openGripper(?ADDRESSEE)
@@ -72,3 +77,5 @@ manual get images; C; getCalibrationImagesManual(?ADDRESSEE)
 calibrate offset; C; runGraspCalibration(?ADDRESSEE)
 run grasp calibration; C; runGraspCalibration(?ADDRESSEE)
 run vision calibration; C; runFullCalibration(?ADDRESSEE)
+
+reset demo C; resetDemo(?ADDRESSEE)

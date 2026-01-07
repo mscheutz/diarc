@@ -262,7 +262,7 @@ public class CratePacking extends DiarcConfiguration {
             }
         } else {
             if (useAssista) {
-                simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker user -addressee robotone -config cratePacking.simspeech");
+                simspeech = createInstance(SimSpeechRecognitionComponent.class, "-speaker eric -addressee robotone -config cratePacking.simspeech");
             }
         }
 
