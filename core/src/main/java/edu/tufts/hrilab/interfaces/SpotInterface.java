@@ -52,6 +52,13 @@ public interface SpotInterface {
   @TRADEService
   void bindLocationToCurrentPose(Symbol refId);
 
+  /**
+   * TODO: remove this in favor of the graspObject method in the ArmCInterface
+   *
+   * @param refId
+   * @return
+   */
+  @Deprecated
   @Action
   @TRADEService
   @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")

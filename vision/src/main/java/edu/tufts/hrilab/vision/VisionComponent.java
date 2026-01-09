@@ -571,9 +571,14 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
   }
 
   @Override
-  public Long getTypeId(Symbol objectRef) {
-    log.debug("[getTypeId] objectRef: " + objectRef);
-    return Vision.consultant.getTypeId(objectRef);
+  public Long getTypeId(Symbol descriptor) {
+    log.debug("[getTypeId] descriptor: " + descriptor);
+
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(Vision.consultant.getKBName())) {
+      return Vision.consultant.getTypeId(descriptor);
+    } else {
+      return getTypeId(List.of(descriptor));
+    }
   }
 
   @Override
@@ -665,6 +670,16 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
   }
 
   @Override
+  public List<Long> getTokenIds(Symbol descriptor) {
+    // if descriptor is actually a reference resolution id
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(Vision.consultant.getKBName())) {
+      return Vision.consultant.getTokenIds(descriptor);
+    } else {
+      return getTokenIds(List.of(descriptor));
+    }
+  }
+
+  @Override
   public List<MemoryObject> getTokens() {
     log.trace("[getTokens] called.");
 
@@ -706,6 +721,16 @@ public class VisionComponent extends DiarcComponent implements VisionInterface, 
     log.trace(String.format("getTokens (by descriptors): %s", descriptors));
     long typeId = getTypeId(descriptors);
     return getTokens(typeId);
+  }
+
+  @Override
+  public List<MemoryObject> getTokens(Symbol descriptor) {
+    // if descriptor is actually a reference resolution id
+    if (!descriptor.isTerm() && !descriptor.isPredicate() && descriptor.getName().startsWith(Vision.consultant.getKBName())) {
+      return Vision.consultant.getTokens(descriptor);
+    } else {
+      return getTokens(List.of(descriptor));
+    }
   }
 
   @Override

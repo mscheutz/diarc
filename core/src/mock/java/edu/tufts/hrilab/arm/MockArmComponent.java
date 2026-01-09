@@ -259,6 +259,11 @@ public class MockArmComponent extends DiarcComponent implements MockArmInterface
     }
 
     @Override
+    public Justification stop() {
+        return new ConditionJustification(true);
+    }
+
+    @Override
     public boolean startPouring(double ang) {
         log.info("Start Pouring, angle: " + ang);
         Util.Sleep(sleepDuration);

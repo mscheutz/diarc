@@ -11,7 +11,7 @@
       "config": "gpd/gpd.cfg"
     },
     {
-      "name": "smallobject",
+      "name": "small_object",
       "priority": 2
     }
   ]

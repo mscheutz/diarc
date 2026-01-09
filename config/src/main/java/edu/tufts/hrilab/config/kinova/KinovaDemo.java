@@ -16,7 +16,7 @@ public class KinovaDemo extends DiarcConfiguration {
   @Override
   public void runConfiguration() {
     // optional VisionComponent if your kortex arm has a realsense camera on the wrist and you have the ros_kortex_vision package running
-    // createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-cameraFrame camera_color_frame -capture kinova.xml -refs refs/visionRefs.json");
+    // createInstance(edu.tufts.hrilab.vision.VisionComponent.class, "-cameraFrame camera_color_frame -capture kinova.xml");
 
     createInstance(MoveItComponent.class, "-config kortex.json");
     createInstance(GoalManagerComponent.class,

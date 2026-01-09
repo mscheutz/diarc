@@ -398,22 +398,20 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
     applyCarryingConstraints = false;
   }
 
-  @TRADEService
-  @Action
-  public boolean interrupt() {
+  @Override
+  public Justification stop() {
     //There does exist a stop command on the move group in move it source, but it is not currently implemented in
     //our GenericMoveGroup implementation. Since subsequent calls overwrite previous ones, I think that the following
     //should be a simpler way to achieve the stop, as long as it doesn't require planning time.
-    Pair<Point3d, Quat4d> curPose = getPose(endEffectorNames.get("manipulator"));
-    return moveToRelative("manipulator", curPose.getLeft(), curPose.getRight()).getValue();
+    return moveToRelative(moveItConfig.defaultGroupName, new Point3d(0,0,0), new Quat4d(0,0,0,1));
   }
 
   @Override
-  @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
   public Justification moveTo(String groupName, Symbol refId) {
     return moveTo(groupName, refId, new ArrayList<>());
   }
 
+  @Override
   public Justification moveTo(String groupName, Symbol refId, List<? extends Term> constraints) {
     log.debug("[moveTo(group,refId,constraints)] method entered with constraints: " + constraints);
 
@@ -1444,7 +1442,7 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
   @TRADEService
   @Action
   public Justification recordEEPose(Symbol poseName) {
-    Pair<Point3d, Quat4d> curPose = getEEPose("manipulator");
+    Pair<Point3d, Quat4d> curPose = getEEPose(moveItConfig.defaultGroupName);
     eePoses.put(poseName.getName(), curPose);
 
     List<Term> props = new ArrayList<>();
@@ -1477,24 +1475,23 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
   @TRADEService
   @Action
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   public Justification goToEEPose(Symbol poseName) {
     Pair<Point3d, Quat4d> goalPose = eePoses.get(poseName.getName());
     if (goalPose == null) {
       log.error("[goToEEPose] Unable to go to ee pose that hasn't been saved yet, exiting.");
       return new ConditionJustification(false, Factory.createPredicate("known(endEffectorPose)"));
     }
-    return moveTo("manipulator", goalPose.getLeft(), goalPose.getRight(), null, null);
+    return moveTo(moveItConfig.defaultGroupName, goalPose.getLeft(), goalPose.getRight(), null, null);
   }
 
 
   @Override
-  @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
   public Justification goToPose(Symbol pose_name) {
     return goToPose(moveItConfig.defaultGroupName, pose_name);
   }
 
   @Override
-  @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
   public Justification goToPose(String groupName, Symbol poseName) {
     boolean result = false;
     groupName = groupNameSafetyClean(groupName);
@@ -1973,9 +1970,9 @@ public class MoveItComponent extends DiarcComponent implements MoveItInterface {
 
   @TRADEService
   @Action
-  @OnInterrupt(onCancelServiceCall = "interrupt()", onSuspendServiceCall = "interrupt()")
+  @OnInterrupt(onCancelServiceCall = "stop()", onSuspendServiceCall = "stop()")
   public Justification pour(boolean forward) {
-    String group_name = "manipulator";
+    String group_name = moveItConfig.defaultGroupName;
 
     //Todo: Will: very very manual - fix later
     JointState curr = jointStateSub.getCurrentJointState();

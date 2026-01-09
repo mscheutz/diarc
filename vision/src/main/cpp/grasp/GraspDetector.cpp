@@ -92,7 +92,7 @@ void GraspDetector::initialize(const std::string& configFile) {
     int priority = graspInfo["priority"].asInt();
     std::string configFile = dir + graspInfo.get("config", "").asString();
 
-    if (name == "small_object") {
+    if (name == "small_object" || name == "smallobject") {
       smallObjectGrasp = SmallObjectGrasp::Ptr(new SmallObjectGrasp(configFile));
     } else if (name == "agile") {
 #if defined(USE_AGILEGRASP)

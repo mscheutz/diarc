@@ -278,4 +278,9 @@ public class MockSpotComponent extends DiarcComponent implements ArmInterface {
     public Justification pressObject(String group_name, Symbol refID){
         return new ConditionJustification(true);
     }
+
+    @Override
+    public Justification stop() {
+        return new ConditionJustification(true);
+    }
 }

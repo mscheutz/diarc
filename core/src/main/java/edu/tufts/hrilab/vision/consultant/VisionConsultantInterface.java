@@ -7,12 +7,14 @@ package edu.tufts.hrilab.vision.consultant;
 import edu.tufts.hrilab.fol.Symbol;
 import edu.tufts.hrilab.interfaces.ConsultantInterface;
 import edu.tufts.hrilab.vision.stm.MemoryObject;
+
 import java.util.List;
 
 public interface VisionConsultantInterface extends ConsultantInterface {
 
   /**
    * Get the underlying vision typeId associated with the object reference.
+   *
    * @param objectRef
    * @return
    */
@@ -23,6 +25,7 @@ public interface VisionConsultantInterface extends ConsultantInterface {
    * getTokens method that takes in a typeId. In the future, this should
    * probably not automatically start a visual search, but instead look through LTM
    * which currently doesn't exist.
+   *
    * @param objectRef
    * @return
    */
@@ -33,6 +36,7 @@ public interface VisionConsultantInterface extends ConsultantInterface {
    * getTokenIds method that takes in a typeId. In the future, this should
    * probably not automatically start a visual search, but instead look through LTM
    * which currently doesn't exist.
+   *
    * @param objectRef
    * @return
    */
