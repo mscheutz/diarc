@@ -33,15 +33,7 @@ import java.util.Map;
     op:log("debug", "done updating dialogue history");
 
     // get text from utterance, and say it
-    !text = op:invokeMethod(?utterance, "getWordsAsString");
-    op:log("debug", "calling sayText: !text");
-    //TODO: Ava specific, look into how to do somewhere else
-    !addressee = op:invokeMethod(?utterance, "getAddressee");
-    if (~op:equalsValue(!addressee,"webapp")) {
-        act:sayText(!text);
-    } else {
-        op:log("info","publishing in webapp chat: !text");
-    }
+    act:sayText(?utterance);
 }
 
 /**

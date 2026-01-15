@@ -17,6 +17,7 @@ import edu.tufts.hrilab.asr.ConfigurableMicrophone;
 import edu.tufts.hrilab.diarc.DiarcComponent;
 import edu.tufts.hrilab.interfaces.SpeechProductionInterface;
 import edu.tufts.hrilab.interfaces.VoiceProsodyInterface;
+import edu.tufts.hrilab.slug.common.Utterance;
 import edu.tufts.hrilab.util.Util;
 import edu.tufts.hrilab.util.resource.Resources;
 import marytts.util.MaryUtils;
@@ -55,7 +56,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-public final class MaryTTSComponent extends DiarcComponent implements SpeechProductionInterface, VoiceProsodyInterface {
+public class MaryTTSComponent extends DiarcComponent implements SpeechProductionInterface, VoiceProsodyInterface {
 
   private MaryDataType inputType;//.TEXT or .RAWMARYXML
   private MaryDataType outputType;
@@ -297,11 +298,21 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
   }
 
   @Override
+  public boolean sayText(Utterance utterance) {
+    return sayText(utterance.getWordsAsString(), true);
+  }
+
+  @Override
   public boolean sayText(String text) {
 //    if (this.enabled) {
     sayText(text, true);
 //    }
       return true;
+  }
+
+  @Override
+  public boolean sayText(Utterance utterance, boolean wait) {
+    return sayText(utterance.getWordsAsString(), wait);
   }
 
   /**

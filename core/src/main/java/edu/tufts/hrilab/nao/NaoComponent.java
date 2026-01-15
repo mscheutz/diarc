@@ -17,6 +17,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 
+import edu.tufts.hrilab.slug.common.Utterance;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.slf4j.Logger;
@@ -420,8 +421,18 @@ public class NaoComponent extends DiarcComponent implements NaoInterface {
   }
 
   @Override
+  public boolean sayText(Utterance utterance) {
+    return sayText(utterance, true);
+  }
+
+  @Override
   public boolean sayText(String text) {
     return sayText(text, true);
+  }
+
+  @Override
+  public boolean sayText(Utterance utterance, boolean wait) {
+    return sayText(utterance, wait);
   }
 
   @Override

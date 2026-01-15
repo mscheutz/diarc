@@ -136,7 +136,8 @@ public class AvaDemo extends DiarcConfiguration {
     if (!speakerId.isEmpty()) {
       maryTTSArgs += " -matchMixer " + speakerId;
     }
-    createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, maryTTSArgs);// -matchMixer Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
+    createInstance(edu.tufts.hrilab.ava.tts.AvaMaryTTSComponent.class, maryTTSArgs);// -matchMixer Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
+    //createInstance(edu.tufts.hrilab.tts.MaryTTSComponent.class, maryTTSArgs);// -matchMixer Direct Audio Device: HDA Intel PCH, HDMI 0, CS-CODECPLU-3");
     //createInstance(edu.tufts.hrilab.tts.opentts.OpenTTSComponent.class, "-endpoint http://92.168.122.140:5500 -voice coqui-tts:en_ljspeech -cache");
 
 //      createInstance(edu.tufts.hrilab.asr.sphinx4.Sphinx4Component.class, "-showMixers -matchMixer Direct Audio Device: ReSpeaker 4 Mic Array -speaker patient -addressee self -grammar ava -config ava.xml");
