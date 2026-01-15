@@ -12,8 +12,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ThisConext extends ArgumentBasedContext {
-  public ThisConext(Context caller, StateMachine sm, String cmd, List<? extends Object> inputArgs, List<? extends Object> returnArgs, Symbol actor) {
+public class ThisContext extends ArgumentBasedContext {
+  public ThisContext(Context caller, StateMachine sm, String cmd, List<? extends Object> inputArgs, List<? extends Object> returnArgs, Symbol actor) {
     super(caller, sm, cmd);
     addArgument("?actor", Symbol.class, actor, false, false); // add ?actor as first arg in context
     setupArguments(inputArgs, returnArgs);
@@ -77,7 +77,7 @@ public class ThisConext extends ArgumentBasedContext {
         method = StandardJavaMethods.getMethod(targetContext.getClass(), this.cmd, argBindings);
       }
     } catch (NoSuchMethodException e) {
-      log.error("ThisConext method has no such method: {}", this.cmd);
+      log.error("ThisContext method has no such method: {}", this.cmd);
     }
 
     // attempt to call method
@@ -98,7 +98,7 @@ public class ThisConext extends ArgumentBasedContext {
         redistributeArguments();
       }
     } catch (Throwable e) {
-      log.error("ThisConext threw an exception while calling method: {}", this.cmd, e);
+      log.error("ThisContext threw an exception while calling method: {}", this.cmd, e);
     }
 
   }
