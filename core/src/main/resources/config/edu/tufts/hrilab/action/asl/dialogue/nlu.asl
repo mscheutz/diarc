@@ -57,7 +57,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
       !addressee.act:handleError(!speaker, !addressee, !semantics, direct);
       return;
     } else {
-        //Ava specific change to allow custom error messages from hybridParser - remove
+        //Originally Ava specific change to allow custom error messages from hybridParser - universally desired?
         !semanticsName = op:getName(!semantics);
         if (op:equals(!semanticsName,"error")) {
             act:updateDialogueHistory(?utterance);
@@ -129,7 +129,7 @@ import edu.tufts.hrilab.slug.common.Utterance;
         !timeoutUtterance = op:invokeStaticMethod("edu.tufts.hrilab.slug.common.Utterance", "createOutputUtterance", ?actor, !addressee);
         !validationUtteranceString = op:invokeMethod(!queryUtterance,"getWordsAsString");
         op:invokeMethod(!timeoutUtterance, "setWords", "(previous disambiguation question \"!validationUtteranceString\" has timed out without being answered)");
-        //TODO: (Ava only) should we display this on the Ava screen?
+        //TODO: Where all should this be displayed? <- conditional on domain and what displays exist where
         act:updateDialogueHistory(!timeoutUtterance);
         return;
       }

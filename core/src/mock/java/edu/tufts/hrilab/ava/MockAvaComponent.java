@@ -172,6 +172,16 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     //}
   }
 
+  //@Override
+  //protected void postRegistrationInit() {
+  //  // register to get notified of "registerForDialogueHistoryNotifications" service
+  //  try {
+  //    TRADE.registerNotificationNowOrWhenJoined(this, new TRADEServiceConstraints().name("registerForDialogueHistoryNotifications").argTypes(TRADEServiceInfo.class), "registerDialogueCallback");
+  //  } catch (TRADEException e) {
+  //    log.error("Error trying to register for registerForDialogueHistoryNotifications service.", e);
+  //  }
+  //}
+
   @Override
   public void displayRobot(TRADEServiceInfo displayService) {
     try {
@@ -1027,4 +1037,25 @@ public class MockAvaComponent extends DiarcComponent implements AvaInterface {
     return result.toString();
   }
 
+  ///**
+  // * Registers avaDisplayDialogueCallback as the callback service for dialog events.
+  // */
+  //@TRADEService
+  //public void registerDialogueCallback(TRADEServiceInfo service) {
+  //  TRADEServiceInfo myService = this.getMyService("avaDialogueCallback", Utterance.class, Boolean.class);
+  //  try {
+  //    service.call(void.class, myService);
+  //  } catch (TRADEException e) {
+  //    log.error("Error registering for dialogue history notifications.", e);
+  //  }
+  //}
+
+  ////Cannot do this with current nlg.asl script because it interrupts the sayText, needs to be synchronous
+  //@TRADEService
+  //public void avaDialogueCallback(Utterance u, boolean newUtterance) {
+  //  //TODO: Agent name matches should be generally pulled from specific demo configuration somehow
+  //  if (u.getType().equals(UtteranceType.QUESTION) && (u.getAddressee().getName().equals("local_user") || u.getAddressee().getName().equals("local_visitor"))) {
+  //    triggerWW();
+  //  }
+  //}
 }

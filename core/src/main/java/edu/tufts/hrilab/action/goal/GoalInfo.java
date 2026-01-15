@@ -85,7 +85,7 @@ public class GoalInfo implements Serializable {
   public boolean isLearningGoal = false;
 
   /**
-   * EXPERIMENTAL/QUICK PATCH
+   * EXPERIMENTAL
    * The entity (currently only the speaker if a dialogue goal) triggering this goal submission
    */
   public Symbol submitter = Factory.createSymbol("unknown");

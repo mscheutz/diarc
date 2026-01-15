@@ -75,15 +75,6 @@ public class AvaDemo extends DiarcConfiguration {
     if (cmdLine.hasOption("privateEndpoint")) {
       log.warn("You have configured the system to use the privately hosted HuggingFace endpoint.");// THIS COSTS MONEY AND SHOULD NOT BE USED FOR FRIVOLOUS TESTING. If you are doing this intentionally, please enter 1 into the console");
       usePrivateEndpoint = true;
-      //System.out.println("Enter: ");
-      //Scanner reader = new Scanner(System.in);
-      //int in = reader.nextInt();
-      //if (in == 1) {
-      //  log.warn("using private endpoint");
-      //  usePrivateEndpoint = true;
-      //} else {
-      //  log.warn("not using private endpoint");
-      //}
     } if (cmdLine.hasOption("disableDisplay")) {
       useDisplay = false;
     }
@@ -105,7 +96,6 @@ public class AvaDemo extends DiarcConfiguration {
     createInstance(edu.tufts.hrilab.slug.pragmatics.PragmaticsComponent.class, "-pragrules demos.prag");
     createInstance(edu.tufts.hrilab.slug.refResolution.ReferenceResolutionComponent.class);
     createInstance(edu.tufts.hrilab.slug.dialogue.DialogueComponent.class);
-//    createInstance(edu.tufts.hrilab.slug.nlg.SimpleNLGComponent.class);
     String nlgArgs = "-simpleNLG -cache -cacheName ava-reverse -cachePersist";
     if (useLLMNLG) {
       nlgArgs += " -llm";
