@@ -1215,9 +1215,6 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     }
   }
 
-  //TODO: Move back strictly to this component? Initially moved method to MaryTTS component while debugging to see if locking
-  // and line management was part of the issue, but don't believe it is actually necessary
-  //@TRADEService
   public void playAudioClip(String fileName) {
     log.info("[playAudioClip] calling method on MaryTTSComponent");
     String homeDir = System.getProperty("user.home");
@@ -1225,42 +1222,7 @@ public class AvaComponent extends DiarcComponent implements AvaInterface {
     try {
       TRADE.getAvailableService(new TRADEServiceConstraints().name("playAudioClip").argTypes(String.class)).call(void.class, path);
     } catch (TRADEException e) {
-      log.debug("[playAudioClip] exception calling playAudioClip in MaryTTSComponent. Attempting locally", e);
-      try {
-        log.info("[playAudioClip] playing audio clip at path: " + path);
-        File audioFile = new File(path);
-        AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
-
-        AudioFormat format = audioStream.getFormat();
-        Clip audioClip;
-        if (mixerID == -1) {
-          DataLine.Info info = new DataLine.Info(Clip.class, format);
-          audioClip = (Clip) AudioSystem.getLine(info);
-        } else {
-          audioClip = AudioSystem.getClip(AudioSystem.getMixerInfo()[mixerID]);
-        }
-        audioClip.open(audioStream);
-        FloatControl control = (FloatControl) audioClip.getControl(FloatControl.Type.MASTER_GAIN);
-        control.setValue(20f * (float) Math.log10(0.3));
-
-        AtomicBoolean isDone = new AtomicBoolean(false);
-        Clip finalPlaybackClip = audioClip;
-        audioClip.addLineListener(event -> {
-          if (event.getType() == LineEvent.Type.STOP) {
-            finalPlaybackClip.close();
-            isDone.set(true);
-          }
-        });
-        audioClip.loop(0);
-        audioClip.start();
-
-        while (!isDone.get()) {
-          Util.Sleep(100);
-        }
-        audioStream.close();
-      } catch (Exception ex) {
-        log.error("[playAudioClip] error playing audio clip", ex);
-      }
+      log.debug("[playAudioClip] exception calling playAudioClip in MaryTTSComponent.", e);
     }
   }
   @Override

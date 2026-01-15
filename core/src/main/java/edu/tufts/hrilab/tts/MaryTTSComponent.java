@@ -463,7 +463,6 @@ public final class MaryTTSComponent extends DiarcComponent implements SpeechProd
     }
   }
 
-  //TODO: move back to AvaComponent? or does clipLock and tracking actually matter?
   @TRADEService
   public void playAudioClip(String path) {
     speaking = true;
