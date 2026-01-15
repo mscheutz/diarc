@@ -182,5 +182,13 @@
   "startIdleImageCycle": {
     "priority": 1,
     "priorityTier": "SKIPPENDING"
+  },
+  "skippendingsay": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
+  },
+  "playAudioFile": {
+    "priority": 1,
+    "priorityTier": "SKIPPENDING"
   }
 }

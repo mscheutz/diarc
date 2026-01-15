@@ -95,7 +95,7 @@ public class GoalManagerNotifier implements DatabaseListener, GoalListener {
         } catch (TRADEException | NullPointerException e) {
           log.error("Exception sending goalStatusChanged notification.", e);
           //TODO: what is the scope of TRADEExceptions for which we want to unregister the service?
-          if (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null")) {
+          if (e.getMessage() != null && (e.getMessage().startsWith("Service not available any longer") || e.getMessage().equals("Cannot read field \"lock\" because \"tsi\" is null"))) {
             servicesToRemove.add(callback);
           }
         }
